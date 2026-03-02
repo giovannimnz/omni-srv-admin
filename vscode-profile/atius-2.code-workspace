@@ -2,11 +2,11 @@
 	"folders": [
 		{
 			"name": "ats",
-			"path": "../../../GitHub/ats"
+			"path": "../../ats"
 		},
 		{
 			"name": "GitHub",
-			"path": "../../../GitHub"
+			"path": "../.."
 		},
 		{
 			"name": "atius",
@@ -15,6 +15,10 @@
 		{
 			"name": "docker",
 			"path": "../../../docker"
+		},
+		{
+			"name": "Programs",
+			"path": "../../../Programs"
 		},
 		{
 			"name": "ubuntu",
