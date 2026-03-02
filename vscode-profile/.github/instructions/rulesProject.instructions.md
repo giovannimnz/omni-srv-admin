@@ -4,7 +4,7 @@ applyTo: '**'
 ## Sobre o Projeto
 
 
-Este repositório é dedicado ao desenvolvimento do **Starboy Postgres**, um software completo e modular para trading automatizado em futuros, com suporte a múltiplas corretoras (Binance, Bybit, MEXC), uso intensivo de Python, Node.js e PostgreSQL. O sistema abrange desde a coleta e tratamento de dados de mercado, execução e automação de estratégias, integração com APIs de exchanges, até rotinas de monitoramento, análise e backtesting (o backtest é apenas uma das funções do sistema).
+Este repositório é dedicado ao desenvolvimento do **ats**, um software completo e modular para trading automatizado em futuros, com suporte a múltiplas corretoras (Binance, Bybit, MEXC), uso intensivo de Python, Node.js e PostgreSQL. O sistema abrange desde a coleta e tratamento de dados de mercado, execução e automação de estratégias, integração com APIs de exchanges, até rotinas de monitoramento, análise e backtesting (o backtest é apenas uma das funções do sistema).
 
 **Principais características:**
 - Trading automatizado em futuros (multi-corretora: Binance, Bybit, MEXC)
