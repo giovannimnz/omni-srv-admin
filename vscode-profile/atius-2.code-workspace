@@ -1,0 +1,27 @@
+{
+	"folders": [
+		{
+			"name": "ats",
+			"path": "../../../GitHub/ats"
+		},
+		{
+			"name": "GitHub",
+			"path": "../../../GitHub"
+		},
+		{
+			"name": "atius",
+			"path": "../../../atius"
+		},
+		{
+			"name": "docker",
+			"path": "../../../docker"
+		},
+		{
+			"name": "ubuntu",
+			"path": "../../.."
+		}
+	],
+	"settings": {
+		"python.defaultInterpreterPath": "/usr/bin/python3"
+	}
+}
