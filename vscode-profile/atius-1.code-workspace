@@ -34,6 +34,7 @@
 		}
 	],
 	"settings": {
-		"python.defaultInterpreterPath": "/usr/bin/python3"
+		"python.defaultInterpreterPath": "/usr/bin/python3",
+		"chat.tools.terminal.ignoreDefaultAutoApproveRules": true
 	}
 }
