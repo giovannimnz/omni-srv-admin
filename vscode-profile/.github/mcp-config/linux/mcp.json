@@ -1,0 +1,90 @@
+{
+    "servers": {
+        "postgres": {
+            "command": "docker",
+            "args": [
+                "run",
+                "-i",
+                "--rm",
+                "-e",
+                "DATABASE_URI",
+                "crystaldba/postgres-mcp",
+                "--access-mode=unrestricted"
+            ],
+            "env": {
+                "DATABASE_URI": "postgresql://postgres:Bkfigt!546@10.1.1.1:8745/AtiusPrd"
+            },
+            "type": "stdio"
+        },
+        "context7": {
+            "type": "http",
+            "url": "https://mcp.context7.com/mcp",
+            "headers": {
+                "CONTEXT7_API_KEY": "ctx7sk-88fce70b-6f67-4d7f-a241-a930eb5a338a"
+            }
+        },
+        "sequentialthinking": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-sequential-thinking"
+            ],
+            "type": "stdio"
+        },
+        "filesystem": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "."
+            ],
+            "type": "stdio"
+        },
+        "brave": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-brave-search"
+            ],
+            "env": {
+                "BRAVE_API_KEY": "BSAw5ls9E7_C_nE8Bz9VNne84cRWU4d"
+            },
+            "type": "stdio"
+        },
+        "github": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-github"
+            ],
+            "env": {
+                "GITHUB_PERSONAL_ACCESS_TOKEN": "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"
+            },
+            "type": "stdio"
+        },
+        "microsoft/playwright-mcp": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "@playwright/mcp@latest",
+                "--browser",
+                "chrome",
+                "--executable-path",
+                "/home/ubuntu/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
+            ],
+            "env": {
+                "PLAYWRIGHT_BROWSERS_PATH": "/home/ubuntu/.cache/ms-playwright",
+                "PLAYWRIGHT_MCP_BROWSER": "chrome",
+                "PLAYWRIGHT_MCP_EXECUTABLE_PATH": "/home/ubuntu/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
+            },
+            "gallery": "https://api.mcp.github.com/v0/servers/41b79849-7e6c-4fc7-82c0-5a611ea21523",
+            "version": "0.0.1-seed"
+        }
+    },
+    "inputs": [
+        {
+            "type": "promptString",
+            "id": "apiKey"
+        }
+    ]
+}

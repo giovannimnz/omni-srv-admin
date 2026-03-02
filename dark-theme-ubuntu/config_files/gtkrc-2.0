@@ -1,0 +1,56 @@
+style "dark-style" {
+    # Cores Principais
+    bg[NORMAL] = "#222222"
+    bg[PRELIGHT] = "#333333"
+    bg[ACTIVE] = "#111111"
+    bg[SELECTED] = "#444444"
+    bg[INSENSITIVE] = "#222222"
+
+    fg[NORMAL] = "#ffffff"
+    fg[PRELIGHT] = "#ffffff"
+    fg[ACTIVE] = "#ffffff"
+    fg[SELECTED] = "#ffffff"
+    fg[INSENSITIVE] = "#888888"
+
+    text[NORMAL] = "#ffffff"
+    text[PRELIGHT] = "#ffffff"
+    text[ACTIVE] = "#ffffff"
+    text[SELECTED] = "#ffffff"
+    text[INSENSITIVE] = "#888888"
+
+    # Fundo de Inputs e Listas (Contraste com o BG)
+    base[NORMAL] = "#181818"
+    base[PRELIGHT] = "#333333"
+    base[ACTIVE] = "#444444"
+    base[SELECTED] = "#444444"
+    base[INSENSITIVE] = "#222222"
+
+    # Estilo de Linhas e Tabelas
+    GtkTreeView::odd-row-color = "#1c1c1c"
+    GtkTreeView::even-row-color = "#181818"
+    GtkTreeView::allow-rules = 1
+    GtkTreeView::indent-expanders = 1
+}
+
+# Estilo para os Separadores (Divisores de janelas)
+style "separator-style" {
+    bg[NORMAL] = "#444444" # Cor de destaque para o divisor
+    bg[ACTIVE] = "#555555"
+    bg[PRELIGHT] = "#555555"
+}
+
+# Estilo para os Cabeçalhos de Colunas
+style "column-header" {
+    bg[NORMAL] = "#2d2d2d"
+    fg[NORMAL] = "#ffffff"
+}
+
+gtk-font-name="SF Pro Display 10"
+
+widget "*" style "dark-style"
+class "GtkWidget" style "dark-style"
+class "GtkEntry" style "dark-style"
+class "GtkTreeView" style "dark-style"
+class "GtkSeparator" style "separator-style"
+class "GtkPaned" style "separator-style"
+widget_class "*.<GtkTreeView>.<GtkButton>" style "column-header"

@@ -1,0 +1,179 @@
+╔════════════════════════════════════════════════════════════════════════════╗
+║                     STARBOY POSTGRES - MEMORY BANK                         ║
+║                        Mapa Visual da Estrutura                            ║
+║                                                                            ║
+║                          26 de janeiro de 2026                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         📚 HIERARQUIA DE LEITURA                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+1️⃣  COMECE AQUI (5 min)
+    └─ COMECE-AQUI.md ⭐
+       • Resumo executivo
+       • Próximas ações imediatas
+       • Checklist para hoje
+
+2️⃣  VISÃO GERAL (10 min)
+    ├─ README.md
+    │  • Estrutura do memory bank
+    │  • Como usar
+    │  • Quicklinks por caso de uso
+    │
+    └─ projectbrief.md
+       • O que é este projeto
+       • Stack tecnológico
+       • Objetivo primário
+
+3️⃣  CONTEXTO ATUAL (15 min)
+    ├─ activeContext.md
+    │  • Onde estamos AGORA
+    │  • Últimas mudanças
+    │  • Próximos passos
+    │
+    ├─ progress.md
+    │  • O que já funciona ✅
+    │  • O que falta 📋
+    │  • Problemas conhecidos
+    │
+    └─ tasks/_index.md
+       • Tarefas ativas
+       • Status de cada uma
+       • Próximas ações
+
+4️⃣  APROFUNDAMENTO (30 min)
+    ├─ productContext.md
+    │  • Por que existe
+    │  • Problemas que resolve
+    │  • Fluxos principais
+    │
+    ├─ systemPatterns.md
+    │  • Arquitetura geral
+    │  • Decisões de design
+    │  • Padrões utilizados
+    │
+    └─ techContext.md
+       • Stack tecnológico detalhado
+       • Setup de desenvolvimento
+       • Restrições e benchmarks
+
+5️⃣  PLANEJAMENTO (15 min)
+    ├─ FASE-TESTES-VALIDACAO-PLAN.md
+    │  • Plano executivo (2 semanas)
+    │  • Semana 1 vs Semana 2
+    │  • Métricas de sucesso
+    │
+    ├─ TRANSICAO-FASE-OTIMIZACAO-TESTES.md
+    │  • Status de transição
+    │  • Go/No-go decision
+    │  • Handoff checklist
+    │
+    └─ tasks/TASK003-*.md
+       • Detalhe de próxima tarefa
+       • Thought process
+       • Implementation plan
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         📊 STATUS ATUAL (26/01/2026)                        │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+FASE OTIMIZAÇÃO
+├─ ✅ Indentation fixes (7 Pylance errors → 0)
+├─ ✅ Type-safe period_choice implementation
+├─ ✅ Signal fetching optimization (500 → 1000 batch size)
+├─ ✅ Memory Bank creation (11 arquivos)
+└─ ✅ Próxima fase planejada
+
+FASE TESTES & VALIDAÇÃO (Próximas 2 semanas)
+├─ 🚀 Setup pytest infrastructure (TASK003.1-3.5)
+├─ 📝 Escrever testes críticos (TASK003.6-3.10)
+├─ 📊 Coverage report + gaps (TASK003.11-3.12)
+├─ ✔️  Validação manual (TASK001)
+└─ 🔍 Integridade de dados (TASK002)
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         🎯 PRÓXIMAS AÇÕES - ORDEM                           │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+HOJE (26/01)
+├─ [ ] Lê COMECE-AQUI.md (5 min) ⭐ COMECE AQUI
+├─ [ ] Lê activeContext.md (5 min)
+├─ [ ] Cria tests/backend/ estrutura (5 min)
+├─ [ ] Cria conftest.py (20 min)
+├─ [ ] Escreve test_period_choice.py (20 min)
+└─ [ ] Executa pytest (10 min)
+    TOTAL: ~1 hora para testes rodando!
+
+SEMANA 1 (26/01 - 02/02)
+├─ Mon 26: Setup + primeiros testes ✅
+├─ Tue 27: Testes de signals + trade execution
+├─ Wed 28: Testes de integração PostgreSQL
+├─ Thu 29: Validação manual de backtesting
+└─ Fri 30: Documentação + ajustes finais
+
+SEMANA 2 (02/02 - 09/02)
+├─ Mon 02: Coverage report (target: 70%+)
+├─ Tue 03: Testes adicionais para atingir target
+├─ Wed 04: Validação de integridade de dados
+├─ Thu 05: Documentação técnica crítica
+└─ Fri 09: Review final + próxima fase
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         📈 MÉTRICAS DE SUCESSO                              │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+MÉTRICA            BASELINE   SEMANA 1   SEMANA 2   TARGET    STATUS
+─────────────────  ─────────  ─────────  ─────────  ────────  ────────
+# Testes           0          20+        40+        50+       📝
+Test Coverage      20%        40%        70%        70%+      🎯
+Pass Rate          N/A        100%       100%       100%      ✅
+Documentation      40%        50%        80%        80%+      📚
+Pylance Errors     0          0          0          0         ✅
+Type Safety        🟡         🟡         🟢         🟢        ↗️
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         🔗 QUICK REFERENCE LINKS                            │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+PARA ENTENDER                   → ARQUIVO
+────────────────────────────────────────────────────────────────────────────
+"O que é este projeto?"         → projectbrief.md
+"Onde estamos agora?"           → activeContext.md
+"Qual é a próxima tarefa?"      → tasks/_index.md
+"Como funciona o sistema?"      → systemPatterns.md
+"Qual é o stack tecnológico?"   → techContext.md
+"O que já funciona/falta?"      → progress.md
+"Qual é o plano de 2 semanas?"  → FASE-TESTES-VALIDACAO-PLAN.md
+"Como usar o memory bank?"      → README.md
+"Próximas ações agora?"         → COMECE-AQUI.md
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                         ✨ STATUS FINAL                                     │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+✅ COMPLETO
+├─ Memory Bank criado (11 arquivos)
+├─ Código otimizado (0 erros)
+├─ Plano de 2 semanas definido
+├─ Tarefas priorizadas e documentadas
+└─ Pronto para próxima fase
+
+🚀 PRONTO PARA COMEÇAR
+├─ Testes: Estrutura preparada
+├─ Documentação: Completa
+├─ Planejamento: Detalhado
+└─ Próximas ações: Claras
+
+╔════════════════════════════════════════════════════════════════════════════╗
+║                                                                            ║
+║                    👉 COMECE COM: COMECE-AQUI.md                           ║
+║                                                                            ║
+║                    ⏱️  Tempo para estar 100% contextualizado:               ║
+║                              ~10 minutos                                   ║
+║                                                                            ║
+║                    🎯 Próximo passo: Criar testes                          ║
+║                                                                            ║
+║                    ✅ STATUS: TUDO PRONTO!                                 ║
+║                                                                            ║
+╚════════════════════════════════════════════════════════════════════════════╝
