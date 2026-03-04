@@ -138,6 +138,11 @@ Plugin {
   }
 }
 Plugin {
+  type=volumealsa
+  Config {
+  }
+}
+Plugin {
   type=dclock
   Config {
     ClockFmt=%R

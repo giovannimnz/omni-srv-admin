@@ -32,15 +32,25 @@ smart_run() {
     fi
 }
 
-# Função de instalação silenciosa
+# Função de instalação silenciosa (com update e retry)
 install_pkg() {
     PACKAGE=$1
     if ! dpkg -s "$PACKAGE" &> /dev/null && ! command -v "$PACKAGE" &> /dev/null; then
         echo -e "${YELLOW}Instalando $PACKAGE...${NC}"
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$PACKAGE" >/dev/null 2>&1
-        return $?
+        if [ $? -ne 0 ]; then
+            echo -e "${YELLOW}Falha na instalação. Atualizando repositórios e tentando novamente...${NC}"
+            sudo apt-get update -qq
+            sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$PACKAGE" >/dev/null 2>&1
+            if [ $? -ne 0 ]; then
+                echo -e "${RED}ERRO: Não foi possível instalar $PACKAGE.${NC}"
+                return 1
+            fi
+        fi
+        echo -e "${GREEN}$PACKAGE instalado com sucesso.${NC}"
+        return 0
     else
-        echo -e "${GREEN}$PACKAGE já instalado.${NC}"
+        echo -e "${GREEN}$PACKAGE já está instalado.${NC}"
         return 0
     fi
 }
@@ -103,12 +113,18 @@ echo ""
 echo -e "${GREEN}--- Etapa 3: Utilitários do Painel ---${NC}"
 install_pkg "network-manager-gnome"
 install_pkg "copyq"
+install_pkg "alsa-utils"
 
 AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
 mkdir -p ~/.config/lxsession/LXDE
 touch "$AUTOSTART_FILE"
 grep -q "^@nm-applet" "$AUTOSTART_FILE" || echo "@nm-applet" >> "$AUTOSTART_FILE"
-grep -q "^@copyq" "$AUTOSTART_FILE" || echo "@copyq" >> "$AUTOSTART_FILE"
+# Garante comando de exibição correto
+if grep -q "@copyq" "$AUTOSTART_FILE"; then
+    sed -i 's/@copyq.*/@copyq --start-server show/' "$AUTOSTART_FILE"
+else
+    echo "@copyq --start-server show" >> "$AUTOSTART_FILE"
+fi
 
 # Teclado ABNT2 (Padrão)
 sed -i '/@setxkbmap/d' "$AUTOSTART_FILE"
@@ -178,6 +194,17 @@ if command -v lxpanel &> /dev/null; then
     cp "${CONFIG_DIR}/gtkrc-2.0" ~/.gtkrc-2.0
     cp "${CONFIG_DIR}/desktop.conf" ~/.config/lxsession/LXDE/desktop.conf
     cp "${CONFIG_DIR}/panel" ~/.config/lxpanel/LXDE/panels/panel
+
+    # Configura autostart para garantir itens do painel (Rede, CopyQ)
+    AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
+    if [ -f "$AUTOSTART_FILE" ]; then
+        grep -q "@nm-applet" "$AUTOSTART_FILE" || echo "@nm-applet" >> "$AUTOSTART_FILE"
+        if grep -q "@copyq" "$AUTOSTART_FILE"; then
+            sed -i 's/@copyq.*/@copyq --start-server show/' "$AUTOSTART_FILE"
+        else
+            echo "@copyq --start-server show" >> "$AUTOSTART_FILE"
+        fi
+    fi
 
     # Tema Openbox
     if [ -d "$THEME_DIR/Dark-Onyx" ]; then

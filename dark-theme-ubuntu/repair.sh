@@ -17,9 +17,16 @@ install_pkg() {
     if ! dpkg -s "$PACKAGE" &> /dev/null && ! command -v "$PACKAGE" &> /dev/null; then
         echo -e "${YELLOW}Instalando $PACKAGE...${NC}"
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$PACKAGE" >/dev/null 2>&1
+        if [ $? -ne 0 ]; then
+             echo -e "${YELLOW}Falha. Atualizando repositórios e tentando novamente...${NC}"
+             sudo apt-get update -qq
+             sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$PACKAGE" >/dev/null 2>&1
+        fi
         return $?
+    else
+        echo -e "${GREEN}$PACKAGE já está instalado.${NC}"
+        return 0
     fi
-    return 0
 }
 
 # 1. Checagem do Sublime Text
@@ -58,11 +65,20 @@ fi
 echo -e "${YELLOW}Checando Utilitários do Painel...${NC}"
 install_pkg "network-manager-gnome"
 install_pkg "copyq"
+install_pkg "alsa-utils"
 
 AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
 if [ -f "$AUTOSTART_FILE" ]; then
     grep -q "^@nm-applet" "$AUTOSTART_FILE" || { echo "@nm-applet" >> "$AUTOSTART_FILE"; echo -e "${GREEN}Adicionado nm-applet ao autostart.${NC}"; }
-    grep -q "^@copyq" "$AUTOSTART_FILE" || { echo "@copyq" >> "$AUTOSTART_FILE"; echo -e "${GREEN}Adicionado copyq ao autostart.${NC}"; }
+    
+    # Garante CopyQ com flag para mostrar interface
+    if grep -q "@copyq" "$AUTOSTART_FILE"; then
+        sed -i 's/@copyq.*/@copyq --start-server show/' "$AUTOSTART_FILE"
+        echo -e "${GREEN}Atualizado copyq no autostart.${NC}"
+    else
+        echo "@copyq --start-server show" >> "$AUTOSTART_FILE"
+        echo -e "${GREEN}Adicionado copyq ao autostart.${NC}"
+    fi
 
     # Configuração de Teclado ABNT2 (Padrão)
     sed -i '/@setxkbmap/d' "$AUTOSTART_FILE"
@@ -105,7 +121,19 @@ if [ -f "$PANEL_FILE" ]; then
     lxpanelctl restart
 fi
 
-# 4. Fix AltGr para apps Electron (VSCode, Chromium)
+# 4. Fix Autostart (CopyQ, Network)
+echo -e "${YELLOW}Configurando autostart...${NC}"
+AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
+if [ -f "$AUTOSTART_FILE" ]; then
+    grep -q "@nm-applet" "$AUTOSTART_FILE" || echo "@nm-applet" >> "$AUTOSTART_FILE"
+    if grep -q "@copyq" "$AUTOSTART_FILE"; then
+        sed -i 's/@copyq.*/@copyq --start-server show/' "$AUTOSTART_FILE"
+    else
+        echo "@copyq --start-server show" >> "$AUTOSTART_FILE"
+    fi
+fi
+
+# 5. Fix AltGr para apps Electron (VSCode, Chromium)
 echo -e "${YELLOW}Checando fix AltGr para Electron...${NC}"
 
 # VSCode: Configura keyboard.dispatch=keyCode
