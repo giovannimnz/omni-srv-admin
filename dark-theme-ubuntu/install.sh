@@ -1,5 +1,5 @@
 #!/bin/bash
-# Script de Instalação Suprema: Tema + Zsh + Fontes + Sublime Text
+# Script de Instalação Suprema: Tema + Zsh + Fontes + Sublime Text + Ferramentas
 # Autor: Gemini CLI
 
 # Cores
@@ -11,7 +11,7 @@ NC='\033[0m'
 CONFIG_DIR=$(dirname "$0")/config_files
 THEME_DIR=$(dirname "$0")/themes
 FONT_DIR=$(dirname "$0")/fonts
-BACKUP_DIR=~/lxde-theme-backup-$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="$(cd "$(dirname "$0")" && pwd)/lxde-theme-backup-$(date +%Y%m%d_%H%M%S)"
 
 # ==============================================================================
 # 0. INICIALIZAÇÃO E PERMISSÕES (SUDO AUTOMÁTICO)
@@ -38,27 +38,47 @@ install_pkg() {
     if ! dpkg -s "$PACKAGE" &> /dev/null && ! command -v "$PACKAGE" &> /dev/null; then
         echo -e "${YELLOW}Instalando $PACKAGE...${NC}"
         sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "$PACKAGE" >/dev/null 2>&1
+        return $?
     else
         echo -e "${GREEN}$PACKAGE já instalado.${NC}"
+        return 0
     fi
 }
 
 # ==============================================================================
-# 1. INSTALAÇÃO DO SUBLIME TEXT (ARM64)
+# 1. INSTALAÇÃO DO SUBLIME TEXT
 # ==============================================================================
 echo ""
 echo -e "${GREEN}--- Etapa 1: Sublime Text (Editor Padrão) ---${NC}"
 
 if ! command -v subl &> /dev/null; then
+    sudo mkdir -p /etc/apt/trusted.gpg.d/
+    install_pkg "apt-transport-https"
+    install_pkg "wget"
+    install_pkg "curl"
+    install_pkg "gpg"
+
     smart_run wget -qO - https://download.sublimetext.com/sublimehq-pub.gpg | gpg --dearmor | sudo tee /etc/apt/trusted.gpg.d/sublimehq-archive.gpg > /dev/null
     echo "deb https://download.sublimetext.com/ apt/stable/" | sudo tee /etc/apt/sources.list.d/sublime-text.list
     sudo apt-get update -qq
-    install_pkg "sublime-text"
+    
+    if ! install_pkg "sublime-text"; then
+        echo -e "${YELLOW}Falha ao instalar o Sublime pelo repositório. Tentando via deb direto...${NC}"
+        ARCH=$(dpkg --print-architecture)
+        if [ "$ARCH" = "arm64" ] || [ "$ARCH" = "aarch64" ]; then
+            wget -qO /tmp/sublime-text.deb https://download.sublimetext.com/sublime-text_build-3211_arm64.deb
+        else
+            wget -qO /tmp/sublime-text.deb https://download.sublimetext.com/sublime-text_build-3211_amd64.deb
+        fi
+        sudo dpkg -i /tmp/sublime-text.deb || sudo apt-get install -f -y
+    fi
 fi
 
-# Configura como padrão
-xdg-mime default sublime_text.desktop text/plain >/dev/null 2>&1
-sudo sed -i 's/Categories=TextEditor;Development;/Categories=Utility;TextEditor;Development;/g' /usr/share/applications/sublime_text.desktop
+# Configura como padrão se existir
+if [ -f /usr/share/applications/sublime_text.desktop ]; then
+    xdg-mime default sublime_text.desktop text/plain >/dev/null 2>&1
+    sudo sed -i 's/Categories=TextEditor;Development;/Categories=Utility;TextEditor;Development;/g' /usr/share/applications/sublime_text.desktop
+fi
 
 # ==============================================================================
 # 2. INSTALAÇÃO DE FONTES (Apple, Microsoft, Tahoma)
@@ -77,10 +97,73 @@ if [ -d "$FONT_DIR" ]; then
 fi
 
 # ==============================================================================
-# 3. AMBIENTE GRÁFICO (LXDE/Openbox)
+# 3. UTILITÁRIOS DO PAINEL (Rede, Teclado, Área de Transferência)
 # ==============================================================================
 echo ""
-echo -e "${GREEN}--- Etapa 3: Visual e Contraste ---${NC}"
+echo -e "${GREEN}--- Etapa 3: Utilitários do Painel ---${NC}"
+install_pkg "network-manager-gnome"
+install_pkg "copyq"
+
+AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
+mkdir -p ~/.config/lxsession/LXDE
+touch "$AUTOSTART_FILE"
+grep -q "^@nm-applet" "$AUTOSTART_FILE" || echo "@nm-applet" >> "$AUTOSTART_FILE"
+grep -q "^@copyq" "$AUTOSTART_FILE" || echo "@copyq" >> "$AUTOSTART_FILE"
+
+# Teclado ABNT2 (Padrão)
+sed -i '/@setxkbmap/d' "$AUTOSTART_FILE"
+sed -i '/@xmodmap/d' "$AUTOSTART_FILE"
+echo '@setxkbmap -model pc105 -layout br -variant abnt2 -option lv3:ralt_switch' >> "$AUTOSTART_FILE"
+
+# Indicador de teclado em imagem com rótulo "PT"
+if [ -d "/usr/share/lxpanel/images/xkb-flags" ]; then
+    echo -e "${YELLOW}Ajustando indicador do teclado para PT...${NC}"
+    install_pkg "imagemagick"
+    convert -size 300x170 xc:'#2b2b2b' -font DejaVu-Sans-Bold -pointsize 96 -fill '#cccccc' -gravity center -annotate +0-6 "PT" -fill '#228B22' -draw 'rectangle 0,150 300,170' PNG24:/tmp/pt_flag.png
+    sudo cp /tmp/pt_flag.png '/usr/share/lxpanel/images/xkb-flags/br(abnt.png'
+    sudo cp /tmp/pt_flag.png '/usr/share/lxpanel/images/xkb-flags/br(abnt2).png'
+    sudo cp /tmp/pt_flag.png /usr/share/lxpanel/images/xkb-flags/br.png
+    rm -f /tmp/pt_flag.png
+fi
+
+# ==============================================================================
+# 3.1 FIX ALTGR PARA ELECTRON (VSCode, Chromium) EM SESSÕES REMOTAS
+# ==============================================================================
+echo ""
+echo -e "${GREEN}--- Etapa 3.1: Fix AltGr para apps Electron ---${NC}"
+
+# VSCode: Configura keyboard.dispatch=keyCode para corrigir AltGr
+VSCODE_SETTINGS=~/.config/Code/User/settings.json
+mkdir -p ~/.config/Code/User
+python3 - << 'PY'
+import json, os
+path = os.path.expanduser('~/.config/Code/User/settings.json')
+try:
+    with open(path, 'r', encoding='utf-8') as f:
+        data = json.load(f)
+except Exception:
+    data = {}
+data['keyboard.dispatch'] = 'keyCode'
+with open(path, 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+    f.write('\n')
+PY
+
+# Chromium/Brave: Configura flag para corrigir dispatch de teclado
+for FLAGS_FILE in ~/.config/chromium-flags.conf ~/.config/brave-flags.conf ~/.config/electron-flags.conf; do
+    if [ ! -f "$FLAGS_FILE" ] || ! grep -q 'gtk-version' "$FLAGS_FILE" 2>/dev/null; then
+        echo "--gtk-version=4" >> "$FLAGS_FILE"
+    fi
+done
+
+# Aplicar configuração de teclado (ABNT2) na sessão atual
+setxkbmap -model pc105 -layout br -variant abnt2 -option lv3:ralt_switch 2>/dev/null
+
+# ==============================================================================
+# 4. AMBIENTE GRÁFICO (LXDE/Openbox)
+# ==============================================================================
+echo ""
+echo -e "${GREEN}--- Etapa 4: Visual e Contraste ---${NC}"
 
 if command -v lxpanel &> /dev/null; then
     install_pkg "gtk2-engines-pixbuf"
@@ -106,10 +189,10 @@ if command -v lxpanel &> /dev/null; then
 fi
 
 # ==============================================================================
-# 4. ZSH E OH MY ZSH
+# 5. ZSH E OH MY ZSH
 # ==============================================================================
 echo ""
-echo -e "${GREEN}--- Etapa 4: Terminal Zsh ---${NC}"
+echo -e "${GREEN}--- Etapa 5: Terminal Zsh ---${NC}"
 
 install_pkg "zsh"
 install_pkg "git"
@@ -134,10 +217,11 @@ grep -q "PROMPT='%{\$fg\[green\]%}%n@%m%{\$reset_color%}:%{\$fg\[blue\]%}%~%{\$r
 [ "$(basename "$SHELL")" != "zsh" ] && sudo chsh -s "$(which zsh)" "$USER"
 
 # ==============================================================================
-# 5. FINALIZAÇÃO
+# 6. FINALIZAÇÃO
 # ==============================================================================
 echo ""
 echo -e "${GREEN}INSTALAÇÃO CONCLUÍDA COM SUCESSO!${NC}"
 smart_run lxpanelctl restart
 echo "O Sublime Text foi definido como editor padrão e adicionado ao painel."
+echo "Aplicativos do painel (Rede, Idioma e Copyq) foram configurados para iniciar e exibirem no tray permanentemente."
 echo "Tudo pronto! Faça logout e login para aplicar todas as mudanças."

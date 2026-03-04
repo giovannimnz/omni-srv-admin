@@ -110,7 +110,7 @@ source $ZSH/oh-my-zsh.sh
 # --- Migrated from .bashrc ---
 # Custom Aliases
 alias upgrade-sec='sudo unattended-upgrade -v'
-alias gemini='NODE_NO_WARNINGS=1 /home/ubuntu/.nvm/versions/node/v24.13.1/bin/gemini'
+alias gemini='NODE_NO_WARNINGS=1 $HOME/.nvm/versions/node/v24.13.1/bin/gemini'
 alias pwsh="$HOME/powershell/pwsh"
 
 # Path additions

@@ -5,11 +5,12 @@
 GREEN='\033[0;32m'
 NC='\033[0m'
 
-# Encontra o diretório de backup mais recente
-BACKUP_DIR=$(find ~ -maxdepth 1 -type d -name "lxde-theme-backup-*" | sort -r | head -n 1)
+# Encontra o diretório de backup mais recente no mesmo local do script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+BACKUP_DIR=$(find "$SCRIPT_DIR" -maxdepth 1 -type d -name "lxde-theme-backup-*" | sort -r | head -n 1)
 
 if [ -z "${BACKUP_DIR}" ]; then
-    echo "Erro: Nenhum diretório de backup 'lxde-theme-backup-*' encontrado no seu diretório home."
+    echo "Erro: Nenhum diretório de backup 'lxde-theme-backup-*' encontrado no diretório: $SCRIPT_DIR"
     exit 1
 fi
 
