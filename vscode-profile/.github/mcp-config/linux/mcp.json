@@ -16,6 +16,22 @@
             },
             "type": "stdio"
         },
+        "postgres-horistic": {
+            "command": "docker",
+            "args": [
+                "run",
+                "-i",
+                "--rm",
+                "-e",
+                "DATABASE_URI",
+                "crystaldba/postgres-mcp",
+                "--access-mode=unrestricted"
+            ],
+            "env": {
+                "DATABASE_URI": "postgresql://postgres:Bkfigt!546@10.1.1.1:8745/horistic"
+            },
+            "type": "stdio"
+        },
         "context7": {
             "type": "http",
             "url": "https://mcp.context7.com/mcp",
@@ -69,16 +85,46 @@
                 "@playwright/mcp@latest",
                 "--browser",
                 "chrome",
+                "--headless",
+                "--caps",
+                "vision",
+                "--output-dir",
+                ".playwright-mcp/prints/desktop",
                 "--executable-path",
                 "/home/ubuntu/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
             ],
             "env": {
                 "PLAYWRIGHT_BROWSERS_PATH": "/home/ubuntu/.cache/ms-playwright",
                 "PLAYWRIGHT_MCP_BROWSER": "chrome",
+                "PLAYWRIGHT_MCP_HEADLESS": "true",
                 "PLAYWRIGHT_MCP_EXECUTABLE_PATH": "/home/ubuntu/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
             },
             "gallery": "https://api.mcp.github.com/v0/servers/41b79849-7e6c-4fc7-82c0-5a611ea21523",
             "version": "0.0.1-seed"
+        },
+        "playwright-mobile": {
+            "type": "stdio",
+            "command": "npx",
+            "args": [
+                "@playwright/mcp@latest",
+                "--browser",
+                "chrome",
+                "--headless",
+                "--caps",
+                "vision",
+                "--device",
+                "iPhone 15",
+                "--output-dir",
+                ".playwright-mcp/prints/mobile",
+                "--executable-path",
+                "/home/ubuntu/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
+            ],
+            "env": {
+                "PLAYWRIGHT_BROWSERS_PATH": "/home/ubuntu/.cache/ms-playwright",
+                "PLAYWRIGHT_MCP_BROWSER": "chrome",
+                "PLAYWRIGHT_MCP_HEADLESS": "true",
+                "PLAYWRIGHT_MCP_EXECUTABLE_PATH": "/home/ubuntu/.cache/ms-playwright/chromium-1208/chrome-linux/chrome"
+            }
         }
     },
     "inputs": [
