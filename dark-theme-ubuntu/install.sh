@@ -118,6 +118,9 @@ install_pkg "alsa-utils"
 AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
 mkdir -p ~/.config/lxsession/LXDE
 touch "$AUTOSTART_FILE"
+grep -q "^@lxpanel --profile LXDE" "$AUTOSTART_FILE" || echo "@lxpanel --profile LXDE" >> "$AUTOSTART_FILE"
+grep -q "^@pcmanfm --desktop --profile LXDE" "$AUTOSTART_FILE" || echo "@pcmanfm --desktop --profile LXDE" >> "$AUTOSTART_FILE"
+grep -q "^@xscreensaver -no-splash" "$AUTOSTART_FILE" || echo "@xscreensaver -no-splash" >> "$AUTOSTART_FILE"
 grep -q "^@nm-applet" "$AUTOSTART_FILE" || echo "@nm-applet" >> "$AUTOSTART_FILE"
 # Garante comando de exibição correto
 if grep -q "@copyq" "$AUTOSTART_FILE"; then
@@ -193,6 +196,7 @@ if command -v lxpanel &> /dev/null; then
 
     cp "${CONFIG_DIR}/gtkrc-2.0" ~/.gtkrc-2.0
     cp "${CONFIG_DIR}/desktop.conf" ~/.config/lxsession/LXDE/desktop.conf
+    mkdir -p ~/.config/lxpanel/LXDE/panels
     cp "${CONFIG_DIR}/panel" ~/.config/lxpanel/LXDE/panels/panel
 
     # Configura autostart para garantir itens do painel (Rede, CopyQ)
@@ -248,7 +252,9 @@ grep -q "PROMPT='%{\$fg\[green\]%}%n@%m%{\$reset_color%}:%{\$fg\[blue\]%}%~%{\$r
 # ==============================================================================
 echo ""
 echo -e "${GREEN}INSTALAÇÃO CONCLUÍDA COM SUCESSO!${NC}"
-smart_run lxpanelctl restart
+lxpanelctl restart >/dev/null 2>&1 || true
+sleep 1
+pgrep -x lxpanel >/dev/null || nohup lxpanel --profile LXDE >/dev/null 2>&1 &
 echo "O Sublime Text foi definido como editor padrão e adicionado ao painel."
 echo "Aplicativos do painel (Rede, Idioma e Copyq) foram configurados para iniciar e exibirem no tray permanentemente."
 echo "Tudo pronto! Faça logout e login para aplicar todas as mudanças."

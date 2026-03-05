@@ -11,6 +11,7 @@ NC='\033[0m'
 echo -e "${GREEN}Iniciando Script de Reparo e Checagem...${NC}"
 
 sudo -v
+while true; do sudo -n true; sleep 60; kill -0 "$$" || exit; done 2>/dev/null &
 
 install_pkg() {
     PACKAGE=$1
@@ -69,6 +70,9 @@ install_pkg "alsa-utils"
 
 AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
 if [ -f "$AUTOSTART_FILE" ]; then
+    grep -q "^@lxpanel --profile LXDE" "$AUTOSTART_FILE" || { echo "@lxpanel --profile LXDE" >> "$AUTOSTART_FILE"; echo -e "${GREEN}Adicionado lxpanel ao autostart.${NC}"; }
+    grep -q "^@pcmanfm --desktop --profile LXDE" "$AUTOSTART_FILE" || { echo "@pcmanfm --desktop --profile LXDE" >> "$AUTOSTART_FILE"; echo -e "${GREEN}Adicionado pcmanfm ao autostart.${NC}"; }
+    grep -q "^@xscreensaver -no-splash" "$AUTOSTART_FILE" || { echo "@xscreensaver -no-splash" >> "$AUTOSTART_FILE"; echo -e "${GREEN}Adicionado xscreensaver ao autostart.${NC}"; }
     grep -q "^@nm-applet" "$AUTOSTART_FILE" || { echo "@nm-applet" >> "$AUTOSTART_FILE"; echo -e "${GREEN}Adicionado nm-applet ao autostart.${NC}"; }
     
     # Garante CopyQ com flag para mostrar interface
@@ -87,8 +91,11 @@ if [ -f "$AUTOSTART_FILE" ]; then
     echo -e "${GREEN}Configuração de teclado ABNT2 atualizada no autostart.${NC}"
 else
     mkdir -p ~/.config/lxsession/LXDE
-    echo "@nm-applet" > "$AUTOSTART_FILE"
-    echo "@copyq" >> "$AUTOSTART_FILE"
+    echo "@lxpanel --profile LXDE" > "$AUTOSTART_FILE"
+    echo "@pcmanfm --desktop --profile LXDE" >> "$AUTOSTART_FILE"
+    echo "@xscreensaver -no-splash" >> "$AUTOSTART_FILE"
+    echo "@nm-applet" >> "$AUTOSTART_FILE"
+    echo "@copyq --start-server show" >> "$AUTOSTART_FILE"
     echo '@setxkbmap -model pc105 -layout br -variant abnt2 -option lv3:ralt_switch' >> "$AUTOSTART_FILE"
 fi
 
@@ -110,6 +117,10 @@ fi
 echo -e "${YELLOW}Checando configuração do LXPanel...${NC}"
 PANEL_FILE=~/.config/lxpanel/LXDE/panels/panel
 if [ -f "$PANEL_FILE" ]; then
+    if ! grep -q "type=menu" "$PANEL_FILE"; then
+        echo -e "${RED}Plugin menu faltando. Restaurando painel completo...${NC}"
+        cp "$(dirname "$0")/config_files/panel" "$PANEL_FILE"
+    fi
     if ! grep -q "type=tray" "$PANEL_FILE"; then
         echo -e "${RED}Plugin tray faltando. Restaurando painel completo...${NC}"
         cp "$(dirname "$0")/config_files/panel" "$PANEL_FILE"
@@ -119,12 +130,19 @@ if [ -f "$PANEL_FILE" ]; then
         sed -i 's/Plugin {/Plugin {\n  type=cpu\n  Config {\n  }\n}\nPlugin {\n  type=xkb\n  Config {\n    Model=pc105\n    LayoutsList=br\n    VariantsList=abnt2\n    ToggleOpt=grp:shift_caps_toggle\n    KeepSysLayouts=1\n    DisplayType=0\n    FlagSize=4\n  }\n}\nPlugin {/1' "$PANEL_FILE"
     fi
     lxpanelctl restart
+else
+    mkdir -p ~/.config/lxpanel/LXDE/panels
+    cp "$(dirname "$0")/config_files/panel" "$PANEL_FILE"
+    lxpanelctl restart
 fi
 
 # 4. Fix Autostart (CopyQ, Network)
 echo -e "${YELLOW}Configurando autostart...${NC}"
 AUTOSTART_FILE=~/.config/lxsession/LXDE/autostart
 if [ -f "$AUTOSTART_FILE" ]; then
+    grep -q "^@lxpanel --profile LXDE" "$AUTOSTART_FILE" || echo "@lxpanel --profile LXDE" >> "$AUTOSTART_FILE"
+    grep -q "^@pcmanfm --desktop --profile LXDE" "$AUTOSTART_FILE" || echo "@pcmanfm --desktop --profile LXDE" >> "$AUTOSTART_FILE"
+    grep -q "^@xscreensaver -no-splash" "$AUTOSTART_FILE" || echo "@xscreensaver -no-splash" >> "$AUTOSTART_FILE"
     grep -q "@nm-applet" "$AUTOSTART_FILE" || echo "@nm-applet" >> "$AUTOSTART_FILE"
     if grep -q "@copyq" "$AUTOSTART_FILE"; then
         sed -i 's/@copyq.*/@copyq --start-server show/' "$AUTOSTART_FILE"
@@ -164,5 +182,6 @@ done
 # Iniciar se não estiver rodando
 pgrep -x nm-applet > /dev/null || nm-applet &
 pgrep -x copyq > /dev/null || copyq &
+pgrep -x lxpanel > /dev/null || nohup lxpanel --profile LXDE >/dev/null 2>&1 &
 
 echo -e "${GREEN}Reparo Concluído!${NC}"
