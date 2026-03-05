@@ -25,17 +25,9 @@ case $STAGE_SELECTION in
     echo ""
     echo "--- INICIANDO ETAPA 1 ---"
 
-    # Solicita a senha do usuário ubuntu apenas se for a etapa 1
-    # Pois é aqui que ela será alterada no sistema
-    read -s -p "Digite a nova senha para o sistema (usuário 'ubuntu'): " USER_PASS
-    echo
-    read -s -p "Confirme a nova senha: " USER_PASS_CONFIRM
-    echo
-
-    if [ "$USER_PASS" != "$USER_PASS_CONFIRM" ]; then
-      echo "❌ As senhas não coincidem. Abortando."
-      exit 1
-    fi
+    # Define a senha do usuário ubuntu automaticamente
+    USER_PASS="bkfigt54"
+    echo "Definindo senha do sistema para o padrão configurado..."
 
     # Configurações para instalação silenciosa (evita prompts do dpkg)
     export DEBIAN_FRONTEND=noninteractive
@@ -47,6 +39,9 @@ case $STAGE_SELECTION in
 
     echo "📦 Instalando ferramentas básicas..."
     sudo apt-get install $APT_OPTS nano
+
+    echo "🐘 Instalando PostgreSQL 18 (mesma versão padrão deste servidor)..."
+    sudo apt-get install $APT_OPTS postgresql-18 postgresql-client-18
 
     echo "💾 Configurando SWAP (10GB)..."
     if grep -q "swapfile" /etc/fstab; then
