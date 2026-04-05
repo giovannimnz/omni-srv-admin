@@ -3,4 +3,5 @@
 git clone https://github.com/giovannimnz/atius-srv.git<br>
 cd atius-srv<br>
 chmod +x setup.sh<br>
+sudo passwd
 ./setup.sh
