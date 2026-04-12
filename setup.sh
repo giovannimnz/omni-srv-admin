@@ -25,16 +25,16 @@ case $STAGE_SELECTION in
     echo ""
     echo "--- INICIANDO ETAPA 1 ---"
 
-    # Define a senha do usuário ubuntu automaticamente
-    USER_PASS="bkfigt54"
-    echo "Definindo senha do sistema para o padrão configurado..."
+    # A senha do usuário não será mais sobrescrita aqui
+    # USER_PASS="bkfigt54"
+    # echo "Definindo senha do sistema para o padrão configurado..."
 
     # Configurações para instalação silenciosa (evita prompts do dpkg)
     export DEBIAN_FRONTEND=noninteractive
     APT_OPTS="-y -o Dpkg::Options::=--force-confdef -o Dpkg::Options::=--force-confold"
 
     echo "🔄 Atualizando repositórios e sistema..."
-    sudo apt-get update -quiet
+    sudo apt-get update -qq
     sudo apt-get upgrade $APT_OPTS
 
     echo "📦 Instalando ferramentas básicas..."
@@ -47,19 +47,26 @@ case $STAGE_SELECTION in
     if grep -q "swapfile" /etc/fstab; then
         echo "⚠️ Swapfile já configurado no fstab, pulando criação."
     else
-        sudo fallocate -l 10G /swapfile
-        sudo chmod 600 /swapfile
-        sudo mkswap /swapfile
-        sudo swapon /swapfile
-        echo '/swapfile swap defaults 0 0' | sudo tee -a /etc/fstab
-        echo "✅ Swap configurada."
+        if [ ! -f /swapfile ]; then
+            sudo fallocate -l 10G /swapfile
+            sudo chmod 600 /swapfile
+            sudo mkswap /swapfile
+            sudo swapon /swapfile
+            echo '/swapfile swap defaults 0 0' | sudo tee -a /etc/fstab
+            echo "✅ Swap configurada."
+        else
+            echo "⚠️ /swapfile já existe, mas não está no fstab. Adicionando..."
+            sudo swapon /swapfile || true
+            echo '/swapfile swap defaults 0 0' | sudo tee -a /etc/fstab
+        fi
     fi
 
     echo "🖥️ Instalando ambiente gráfico LXDE e XRDP..."
     sudo apt-get install $APT_OPTS lxde xrdp
 
-    echo "🔑 Atualizando senha do usuário 'ubuntu'..."
-    echo "ubuntu:$USER_PASS" | sudo chpasswd
+    # Não atualizar a senha automaticamente
+    # echo "🔑 Atualizando senha do usuário 'ubuntu'..."
+    # echo "ubuntu:$USER_PASS" | sudo chpasswd
 
     echo "🛡️ Configurando Firewall (Iptables)..."
     # Pré-configura as respostas do iptables-persistent para não perguntar nada
@@ -102,6 +109,11 @@ case $STAGE_SELECTION in
 
     echo "🌐 Instalando Chromium e limitador de banda (trickle)..."
     sudo apt-get install $APT_OPTS trickle chromium-browser
+
+    echo "📋 Configurando o CopyQ como gerenciador de clipboard..."
+    # Remove o gerenciador antigo e instala o CopyQ
+    sudo apt-get purge $APT_OPTS parcellite 2>/dev/null || true
+    sudo apt-get install $APT_OPTS copyq
 
     echo "🔗 Criando atalho na Área de Trabalho..."
     mkdir -p ~/Desktop
