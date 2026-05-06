@@ -1,0 +1,158 @@
+# Roadmap: Atius Server (atius-srv)
+
+**Milestone:** v1.0 — Domain Foundation
+**Goal:** Servidor 10.1.1.1 como domínio Linux completo (identidade, SSO, file shares) com migração de VPN e coexistência com Apache2
+
+---
+
+## Phase 1: Preparação do Host ✅ DONE
+**Goal:** Host pronto para FreeIPA — hostname FQDN, NTP, portas livres
+
+**Requirements:** PREP-01, PREP-02, PREP-03, PREP-04, PREP-05
+
+**Completed:** 2026-04-19
+
+**Results:**
+- FQDN configurado, Chrony NTP sincronizado
+- Portas 80/443 liberadas (Apache2 migrado)
+- Portas alternativas definidas: Apache2 9080/9444
+
+**Success Criteria (all passed):**
+1. `hostname -f` retorna FQDN ✓
+2. `chronyc tracking` mostra NTP sincronizado ✓
+3. `ss -tlnp | grep -E ':(80|443)'` não mostra Apache2 ✓
+4. Portas alternativas documentadas ✓
+5. `/etc/hosts` e DNS resolvem FQDN corretamente ✓
+
+---
+
+## Phase 2: Migração Apache2 para Portas Alternativas ✅ DONE
+**Goal:** Apache2 funcionando em portas alternativas com todos os 60+ vhosts acessíveis
+
+**Requirements:** APCH-01, APCH-02, APCH-03, APCH-04
+
+**Completed:** 2026-04-19
+
+**Results:**
+- Apache2 migrado para portas 9080/9444
+- 37 HTTP + 40 HTTPS vhosts migrados
+- Cloudflare Origin Rules criadas: port 443 → origin 9444 (66 hostnames)
+
+**Success Criteria (all passed):**
+1. Apache2 Listen configurado para portas alternativas ✓
+2. 60+ vhosts funcionais nas novas portas ✓
+3. Cloudflare Origin Rules aplicadas ✓
+4. Rollback script disponível ✓
+
+---
+
+## Phase 3: FreeIPA Server Container
+**Goal:** FreeIPA rodando em container Docker AlmaLinux 9, acessível e operacional
+
+**Requirements:** FIPA-01, FIPA-02, FIPA-03, FIPA-04, FIPA-05, FIPA-06
+
+**Depends on:** Phase 1 (portas 80/443 livres), Phase 2 (Apache2 migrado)
+
+**Plans:** 3 plans
+- [ ] 03-01-PLAN.md — Infrastructure setup: directories, passwords, docker-compose.yml
+- [ ] 03-02-PLAN.md — Container launch and unattended FreeIPA installation
+- [ ] 03-03-PLAN.md — Backup script, verification smoke tests, first backup
+
+**Success Criteria:**
+1. Container FreeIPA rodando (`docker ps` mostra container healthy)
+2. `ipa user-find --all` funciona (CLI acessível)
+3. Web UI acessível em `https://10.1.1.1/ipa/ui` ou FQDN
+4. Realm ATIUS.COM.BR criado e funcional
+5. DNS interno do FreeIPA responde queries para hosts do domínio
+6. Backup criado (`ipa-backup`)
+
+**Risk:** VERY HIGH — ARM64 container build from source, potencial CA setup com `crypto.fips_enabled` bug
+
+---
+
+## Phase 4: Samba Domain Member
+**Goal:** Samba nativo no host autenticando via FreeIPA/Kerberos, shares acessíveis
+
+**Requirements:** SAM-01, SAM-02, SAM-03, SAM-04, SAM-05
+
+**Depends on:** Phase 3 (FreeIPA operacional)
+
+**Success Criteria:**
+1. `ipa-adtrust-install` executado sem erros no container
+2. `ipa-client-samba` configurado no host
+3. `kinit` com usuário FreeIPA funciona no host Samba
+4. `smbclient -L //10.1.1.1` lista shares sem pedir senha (Kerberos)
+5. Arquivos do 10.1.1.2 migrados com ownership correto
+
+**Risk:** MEDIUM — `ipa-adtrust-install` no container pode precisar packages extras; UID/GID remapping delicado
+
+---
+
+## Phase 5: Migração WireGuard + CoreDNS
+**Goal:** Servidor 10.1.1.1 como servidor VPN principal, peers conectados, CoreDNS funcionando
+
+**Requirements:** MIG-01, MIG-02, MIG-03, MIG-04
+
+**Depends on:** Phase 3 (FreeIPA DNS operacional)
+
+**Success Criteria:**
+1. WireGuard ativo em 10.1.1.1 (`wg show` mostra interface)
+2. Pelo menos 2 peers conectados e pingando via VPN
+3. CoreDNS resolvendo queries internas
+4. Server 10.1.1.2 não é mais servidor VPN primário
+5. DNS interno resolve nomes de hosts via FreeIPA
+
+**Risk:** MEDIUM — Migração de VPN causa downtime temporário; peers precisam reconfiguração
+
+---
+
+## Phase 6: Keycloak SSO
+**Goal:** Keycloak nativo rodando, federado no FreeIPA, login OIDC funcional
+
+**Requirements:** KEY-01, KEY-02, KEY-03, KEY-04, KEY-05
+
+**Depends on:** Phase 3 (FreeIPA LDAP estável)
+
+**Success Criteria:**
+1. Keycloak rodando via systemd (`systemctl status keycloak`)
+2. Admin console acessível em `auth.atius.com.br:PORT`
+3. User federation com FreeIPA funcionando (usuários FreeIPA aparecem no Keycloak)
+4. Login OIDC funciona via browser com credenciais FreeIPA
+5. Conta admin local existe e funciona (backup access)
+
+**Risk:** MEDIUM — LDAP federation TLS com FreeIPA CA pode causar NPE; attribute mapping pode precisar ajustes
+
+---
+
+## Phase 7: Coexistência e Client Enrollment
+**Goal:** Tudo integrado, máquinas clientes ingressam no domínio, SSOs coexistem
+
+**Requirements:** COEX-01, COEX-02, COEX-03, COEX-04, CLNT-01, CLNT-02, CLNT-03
+
+**Depends on:** Phase 3 (FreeIPA), Phase 5 (WireGuard), Phase 6 (Keycloak)
+
+**Success Criteria:**
+1. Apache2 SSO existente ainda funciona (apps Atius acessíveis)
+2. Keycloak SSO funciona em paralelo (sem conflito)
+3. CoreDNS encaminha para FreeIPA DNS (queries internas resolvidas)
+4. Máquina de teste executa `ipa-client-install` com sucesso
+5. Login na máquina de teste com usuário FreeIPA funciona
+6. `sudo` com regras do FreeIPA aplicadas na máquina cliente
+
+**Risk:** LOW — Validação final, maioria dos riscos já mitigados nas fases anteriores
+
+---
+
+## Phase Summary
+
+| # | Phase | Goal | Requirements | Status | Risk |
+|---|-------|------|--------------|--------|------|
+| 1 | Preparação do Host | Host pronto para FreeIPA | 5 | ✅ DONE | HIGH |
+| 2 | Migração Apache2 | Apache2 em portas alternativas | 4 | ✅ DONE | HIGH |
+| 3 | FreeIPA Server | FreeIPA container operacional | 6 | Pending | VERY HIGH |
+| 4 | Samba Domain Member | Samba com auth FreeIPA | 5 | Pending | MEDIUM |
+| 5 | Migração WireGuard | VPN no 10.1.1.1 | 4 | Pending | MEDIUM |
+| 6 | Keycloak SSO | SSO web com OIDC | 5 | Pending | MEDIUM |
+| 7 | Coexistência + Clients | Tudo integrado, clients enrolled | 7 | Pending | LOW |
+
+**Total:** 7 phases | 39 requirements mapped | 36 requirements covered ✓
