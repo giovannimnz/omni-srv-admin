@@ -130,3 +130,6 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# Atius Domain Infrastructure (repo separado)
+domain-infrastructure/
