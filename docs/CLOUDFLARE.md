@@ -13,8 +13,10 @@ Cloudflare é usado como CDN, proxy reverso e DNS manager para os domínios `ati
 | **Email** | `giovannimunizds@gmail.com` |
 | **Account ID** | `cd986c150252827c1df07dcceaa92b4b` |
 | **Account Name** | Giovanni Account |
+| **User ID** | `ad7349df756c5077ea311f63a3e76700` |
+| **Account Created** | 2025-05-18 |
 | **Role** | Super Administrator — All Privileges |
-| **Global API Key** | `cfk_Br...REDACTED` |
+| **Global API Key** | `cfk_Br...` (ver `~/.zshrc` em atius-srv-1) |
 | **Auth Method** | `X-Auth-Email` + `X-Auth-Key` headers (NÃO usar Bearer) |
 
 ### Credenciais no Ambiente
@@ -33,8 +35,8 @@ export CF_ACCOUNT_NAME="Giovanni Account"
 
 | Domain | Zone ID | Status | Plan | DNS Records |
 |--------|---------|--------|------|-------------|
-| `atius.com.br` | `5b998a5d911f5a4102b6179df7f4518d` | active | Free Website | 60 |
-| `zentrius.com.br` | `c07d652ec384c614418c28411ceed4ab` | active | Free Website | ? |
+| `atius.com.br` | `5b998a5d911f5a4102b6179df7f4518d` | active | Free Website | 60 (39 proxied, 21 DNS-only) |
+| `zentrius.com.br` | `c07d652ec384c614418c28411ceed4ab` | active | Free Website | 3 (SPF/DMARC only) |
 
 ```bash
 export CF_ZONE_ID_ATIUS="5b998a5d911f5a4102b6179df7f4518d"
