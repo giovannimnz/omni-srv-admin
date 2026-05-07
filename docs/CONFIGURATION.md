@@ -238,6 +238,12 @@ Managed via `ecosystem.config.js` with helper functions:
 **Location:** `/etc/ssl/cloudflare/`
 - Cloudflare origin certificates for `*.atius.com.br` and `*.horistic.com`
 
+### Cloudflare Configuration
+
+**Full documentation:** `docs/CLOUDFLARE.md`
+- Global API Key, zones, DNS records, API endpoints, permissions
+- Aliases para API (cf-zones, cf-dns-atius, cf-verify, cf-user-tokens)
+
 ---
 
 ## 5. Network Configuration
