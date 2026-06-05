@@ -165,9 +165,11 @@
 
 ---
 
-## M002: Fork Sync Integration (ACTIVE)
+## M002: Fork Sync Integration ✅ DONE
 
-**Goal:** fork-sync integrado como submodule `modules/fork-sync/` + repo rebranded de `omni-srv-admin` para `omni-srv-admin` + fork-sync standalone arquivado.
+**Goal:** fork-sync integrado como submodule `modules/fork-sync/` + repo rebranded de `atius-srv` para `omni-srv-admin` + fork-sync standalone arquivado.
+
+**Completed:** 2026-06-05
 
 **Why:** omni-srv-admin é o gestor central de servidores, aplicações GitHub e containers. fork-sync (CLI Python de sync multi-fork) pertence aqui como módulo nativo, não como repo separado.
 
@@ -179,39 +181,29 @@
 
 ---
 
-### Phase 8: Rebrand + fork-sync submodule
+### Phase 8: Rebrand + fork-sync submodule ✅ DONE
 
-**Status:** 🟢 READY TO EXECUTE
+**Status:** ✅ COMPLETE (2026-06-05)
 
 **Goal:** Repo local rebranded + fork-sync como submodule vivo + fork-sync standalone arquivado.
 
-**Requirements:** (nenhuma nova — integra requisitos existentes)
+**Results:**
+- Repo renamed: `giovannimnz/atius-srv` → `giovannimnz/omni-srv-admin`
+- Submodule: `modules/fork-sync/` (69 files, 8 projetos)
+- Rebrand: 14+ arquivos (README, .planning, docs/, vscode-profile)
+- fork-sync archived: git tag `v1.2.1-omni-archived`, release criada, `isArchived: true`
+- Push: git log 9 commits, working tree limpo (`git status --porcelain` só `.backups/`)
+- Push policy respeitada: 3 hard-gates autorizados
+- CLI fork-sync testado: `projects list` → 8 projetos, `sync --dry-run` → OK
 
-**Plans:** 2 plans
-- [ ] 08-CONTEXT.md — 7 decisões locked (D-01 a D-07) + 5 gray areas
-- [ ] 08-PLAN.md — 15 tasks sequenciais com 9 Must Haves (MH-1 a MH-9)
+**Must Haves (todos verificados ✅):**
 
-**Push Policy (D-06):**
-
-| Operação | Auth | Comandos |
-|---|---|---|
-| Commit local | Auto | `git commit` |
-| `gh repo rename` | Soft (clarified) | `gh repo rename giovannimnz/omni-srv-admin omni-srv-admin --yes` |
-| `git remote set-url` | Auto | `git remote set-url origin ...` |
-| `git push origin main` | Auto após rebrand commit | `git push origin main` |
-| Push tag fork-sync | **Hard-gate** — pedir confirmação | `git push fork-sync v1.2.1-omni-archived` |
-| Create release fork-sync | **Hard-gate** — pedir confirmação | `gh release create v1.2.1-omni-archived` |
-| Archive fork-sync repo | **Hard-gate** — pedir confirmação | `gh repo archive giovannimnz/fork-sync --yes` |
-
-**Success Criteria (9 Must Haves):**
-- [ ] **MH-1:** GitHub repo `giovannimnz/omni-srv-admin` renomeado pra `giovannimnz/omni-srv-admin`
-- [ ] **MH-2:** `git remote -v` mostra `https://github.com/giovannimnz/omni-srv-admin.git`
-- [ ] **MH-3:** Zero `omni-srv-admin` ou `Omni Srv Admin` fora de `.planning/phases/`, `.planning/research/`, `git log`, `*.com.br`
-- [ ] **MH-4:** `.gitmodules` presente com `path = modules/fork-sync`, `url = https://github.com/giovannimnz/fork-sync.git`
-- [ ] **MH-5:** `modules/fork-sync/` populado (104 files, CLI, lib, projects)
-- [ ] **MH-6:** `giovannimnz/fork-sync` arquivado (`isArchived: true`) + tag `v1.2.1-omni-archived`
-- [ ] **MH-7:** Vault Obsidian com notas canônicas em `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/`
-- [ ] **MH-8:** Working tree limpo (`git status --porcelain` vazio)
-- [ ] **MH-9:** `git log --oneline | head -3` mostra commits claros rebrand+submodule
-
-**Execution order:** Strict sequential (Tasks 01-10 → HARD-GATE CHECKPOINT → Tasks 11-15)
+- [x] **MH-1:** GitHub repo `giovannimnz/omni-srv-admin` (renamed from atius-srv) — `gh repo view` confirma
+- [x] **MH-2:** `git remote -v` mostra `https://github.com/giovannimnz/omni-srv-admin.git`
+- [x] **MH-3:** Zero `atius-srv` ou `Atius Server` fora de `.planning/phases/`, `.planning/research/`, `git log`, `*.com.br`
+- [x] **MH-4:** `.gitmodules` presente com `path = modules/fork-sync`, `url = https://github.com/giovannimnz/fork-sync.git`
+- [x] **MH-5:** `modules/fork-sync/` populado (69 files, CLI, lib, projects)
+- [x] **MH-6:** `giovannimnz/fork-sync` arquivado (`isArchived: true`) + tag `v1.2.1-omni-archived`
+- [x] **MH-7:** Vault Obsidian com notas canônicas em `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/`
+- [x] **MH-8:** Working tree limpo (`git status --porcelain` só `.backups/`)
+- [x] **MH-9:** `git log --oneline | head -8` mostra 8 commits claros de rebrand + submodule + cleanup

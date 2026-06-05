@@ -1,49 +1,60 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-04 after M002 creation
-
-**Active Milestone:** M002 — Fork Sync Integration
+**Last updated:** 2026-06-05 after M002 completion
 
 ## Project Reference
 
-See: .planning/ROADMAP.md (M002 section — Fork Sync Integration)
+See: .planning/ROADMAP.md (M002 — Fork Sync Integration ✅ DONE)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** Phase 8 — Rebrand + fork-sync submodule (pronta para execução)
+**Current focus:** M001 phases 3-7 (FreeIPA, Samba, WireGuard, Keycloak) — backlog
 
-## Session Summary
+## Milestones
 
-- **Project:** omni-srv-admin (formerly omni-srv-admin) — repositório central de configuração
-- **Location:** `/home/ubuntu/GitHub/omni-srv-admin/`
-- **Modules:** server-setup, domain-infrastructure, fork-sync (submodule)
-
-## Active Work
-
-### Current Phase
-Phase 8: Rebrand + fork-sync submodule — **READY TO EXECUTE**
-
-### Completed Milestones
-- **M001:** Domain Foundation ✅ (2026-04-19) — Phases 1, 2 concluídas
-
-### Next Action
-Executar Task 01 do 08-PLAN.md (backup + smoke test), depois prosseguir sequencialmente.
-
-## M002 Baseline (Measured 2026-06-04)
-
-| MH | Status | Description |
+| Milestone | Description | Status |
 |---|---|---|
-| MH-1 (gh repo rename) | FAIL | omni-srv-admin ainda não renomeado |
-| MH-2 (git remote) | FAIL | URL antiga |
-| MH-3 (brand residue) | 75+ matches | Requer rebrand textual |
-| MH-4 (.gitmodules) | NOT YET | Submodule não adicionado |
-| MH-5 (modules/fork-sync) | NOT YET | Diretório não existe |
-| MH-6 (fork-sync archived) | false | Repo ainda activo |
-| MH-7 (vault note) | NOT YET | Notas canônicas pendentes |
-| MH-8 (working tree) | dirty | 5 entries unstaged |
-| MH-9 (clean commits) | none | Nenhum commit de rebrand |
+| M001 | Domain Foundation (Phases 1-2) | ✅ Done |
+| M002 | Fork Sync Integration (Phase 8) | ✅ Done |
+
+## M001 Completion
+
+### Completed Phases
+- Phase 1: Preparação do Host ✅ (2026-04-19)
+- Phase 2: Migração Apache2 ✅ (2026-04-19)
+
+### Backlog (Phases 3-7)
+- Phase 3: FreeIPA Server Container — planejamento pendente
+- Phase 4: Samba Domain Member — depende Phase 3
+- Phase 5: Migração WireGuard + CoreDNS — depende Phase 3
+- Phase 6: Keycloak SSO — depende Phase 3
+- Phase 7: Coexistência e Client Enrollment — depende Phase 3
+
+## M002 Result Summary
+
+| MH | Descrição | Status |
+|---|---|---|
+| MH-1 | Repo renamed: atius-srv → omni-srv-admin | ✅ |
+| MH-2 | Remote atualizado | ✅ |
+| MH-3 | Rebrand textual (14+ arquivos) | ✅ |
+| MH-4 | .gitmodules com fork-sync | ✅ |
+| MH-5 | modules/fork-sync/ populado (69 files) | ✅ |
+| MH-6 | fork-sync repo arquivado | ✅ |
+| MH-7 | Vault notes criadas | ✅ |
+| MH-8 | Working tree limpo | ✅ |
+| MH-9 | 9 commits claros | ✅ |
+
+## Backup GDrive
+
+- **Mount:** ~/GDrive/ RW via systemd (rclone-gdrive-mount.service)
+- **Auth:** OAuth pessoal giovannimunizds@gmail.com
+- **Timer:** backup-srv1-daily.timer (04:00 BRT, random 0-30min)
+- **Destino:** ATIUS-SRV/SRV-1/backups/snapshot-YYYY-MM-DD_HHMMSS/
+- **Script:** ~/.local/bin/backup-srv1-to-gdrive.sh
+- **Throttle:** 75MB/s, transfers=1, checkers=1
+- **Rotação:** 14 snapshots
 
 ## Notes
 
-- YOLO mode ativado — aprovações desabilitadas exceto em hard-gates (Tasks 11/12/13)
-- Push policy: auto para commits, hard-gate para tag/release/archive do fork-sync
-- Phase 8 links: 08-CONTEXT.md + 08-PLAN.md em .planning/phases/08-rebrand-fork-sync-submodule/
+- YOLO mode ativado
+- Push policy: fork push livre após audit
+- GDrive quota: 5TB total, ~144GB usado, ~4.7TB livre
