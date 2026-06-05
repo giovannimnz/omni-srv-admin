@@ -1,4 +1,0 @@
-[submodule "modules/fork-sync"]
-	path = modules/fork-sync
-	url = https://github.com/giovannimnz/fork-sync.git
-	branch = main

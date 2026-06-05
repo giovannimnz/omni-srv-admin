@@ -1,0 +1,136 @@
+---
+title: Referência da API
+description: Documentação completa dos endpoints da API do Atius AI Router
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Visão Geral
+
+O Atius AI Router expõe uma API REST **100% compatível com OpenAI** e **Anthropic**. Isso significa que qualquer SDK ou ferramenta que funcione com OpenAI funciona com o Atius AI Router — basta trocar a `base_url`.
+
+<Callout type="info">
+A especificação OpenAPI completa está disponível em
+[/docs.json](/docs.json). Use essa URL para gerar SDKs
+automaticamente ou testar com ferramentas como Postman/Insomnia.
+</Callout>
+
+## Base URL
+
+```
+https://router.atius.com.br/v1
+```
+
+Para desenvolvimento local:
+
+```
+http://localhost:3030/v1
+```
+
+## Autenticação
+
+Todas as requisições devem incluir um header `Authorization`:
+
+```bash
+Authorization: Bearer <seu-token>
+```
+
+Para gerar um token:
+
+1. Faça login no painel admin em `/login`
+2. Vá em **Tokens** > **Criar novo token**
+3. Copie o token gerado (começa com `sk-`)
+
+## Endpoints Principais
+
+<Callout type="tip">
+Todos os endpoints abaixo seguem a **especificação OpenAI padrão**. Para
+detalhes completos, consulte a [documentação oficial da OpenAI](https://platform.openai.com/docs/api-reference).
+</Callout>
+
+### Chat Completions
+
+```bash
+curl -X POST https://router.atius.com.br/v1/chat/completions \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "gpt-4",
+    "messages": [
+      {"role": "user", "content": "Olá!"}
+    ]
+  }'
+```
+
+Resposta (200 OK):
+
+```json
+{
+  "id": "chatcmpl-123",
+  "object": "chat.completion",
+  "created": 1677652288,
+  "model": "gpt-4",
+  "choices": [{
+    "index": 0,
+    "message": {"role": "assistant", "content": "Olá! Como posso ajudar?"},
+    "finish_reason": "stop"
+  }],
+  "usage": {"prompt_tokens": 5, "completion_tokens": 9, "total_tokens": 14}
+}
+```
+
+### Embeddings
+
+```bash
+curl -X POST https://router.atius.com.br/v1/embeddings \
+  -H "Authorization: Bearer $TOKEN" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "text-embedding-3-small",
+    "input": "Texto para embedding"
+  }'
+```
+
+### Listar Modelos
+
+```bash
+curl https://router.atius.com.br/v1/models \
+  -H "Authorization: Bearer $TOKEN"
+```
+
+### Anthropic Messages (compatível)
+
+```bash
+curl -X POST https://router.atius.com.br/v1/messages \
+  -H "x-api-key: $TOKEN" \
+  -H "anthropic-version: 2023-06-01" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "claude-3-5-sonnet-20241022",
+    "max_tokens": 1024,
+    "messages": [{"role": "user", "content": "Olá!"}]
+  }'
+```
+
+## Códigos de Erro
+
+| Código | Significado |
+|--------|-------------|
+| 400 | Requisição inválida (parâmetros faltando ou inválidos) |
+| 401 | Token ausente, inválido ou expirado |
+| 403 | Token sem permissão para o modelo solicitado |
+| 404 | Modelo ou endpoint não encontrado |
+| 429 | Limite de taxa excedido |
+| 500 | Erro interno do servidor |
+| 502 | Provedor upstream falhou |
+| 503 | Sistema em manutenção ou sobrecarregado |
+
+## Rate Limiting
+
+O Atius AI Router implementa rate limiting por token. Os limites são configurados pelo admin e podem ser visualizados no painel admin.
+
+## Próximos Passos
+
+- 🐳 [SDK Python OpenAI](https://github.com/openai/openai-python) funciona sem mudanças
+- 🔄 [Guia de Migração de OpenAI](https://platform.openai.com/docs/guides/migration)
+- 📖 [Documentação completa da OpenAI API](https://platform.openai.com/docs/api-reference)

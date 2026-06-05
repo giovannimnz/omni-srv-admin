@@ -1,0 +1,66 @@
+project: Atius Router Docs
+upstream: https://github.com/giovannimnz/new-api-docs-v1
+upstream_branch: main
+origin_branch: main
+origin: https://github.com/giovannimnz/new-api-docs-v1
+
+# ========== PROTECTED PATHS ==========
+# These paths are customized in the Atius fork and must NOT be
+# overwritten during upstream merges. The merge-upstream.sh script
+# uses `git checkout --ours` for each of these to preserve our
+# branding/translation.
+protected_paths:
+  # === Branding: Atius logo + svg replacements (was newapi.svg) ===
+  - public/assets/atius-logo.svg
+  - public/assets/newapi.svg          # overwritten with Atius logo SVG
+
+  # === Layout: nav title, logo source, GitHub link (was "New API") ===
+  - src/lib/layout.shared.tsx
+
+  # === Layout: page title + description (i18n) ===
+  - src/app/[lang]/layout.tsx
+
+  # === Home: hero copy, partners emptied, Atius links ===
+  - src/app/[lang]/(home)/page.tsx
+
+  # === Home: client-side (was QuantumNous references) ===
+  - src/app/[lang]/(home)/page.client.tsx
+
+  # === Metadata: baseUrl hardcoded to router.atius.com.br ===
+  - src/lib/metadata.ts
+
+  # === Search: GitHub link updated ===
+  - src/components/search.tsx
+
+  # === Footer metadata ===
+  - src/app/layout.tsx
+
+  # === Build config: trailingSlash + allowedOrigins ===
+  - next.config.mjs
+
+  # === TypeScript types: needed for build ===
+  - tsconfig.json
+
+  # === Build: new file we maintain (was not in upstream) ===
+  - Dockerfile
+
+  # === Brand assets: copy of upstream logo but we may swap to ours ===
+  - public/favicon.ico
+
+  # === GitHub workflows (we have our own deploy hooks) ===
+  - .github/workflows/scheduled-build.yml
+  - .github/workflows/translate.yml
+
+# ========== DOCS: Atius-branded PT-BR primary ==========
+# These are NEW pages translated to Brazilian Portuguese that we
+# add to the upstream docs site. They're "protected" so upstream
+# doesn't try to "translate" them and break our PT-BR content.
+# The .mdx pages live under content/docs/pt/ (parallel to content/docs/en/).
+protected_globs:
+  - "content/docs/pt/**"
+
+# ========== MERGE SETTINGS ==========
+merge_strategy: theirs
+version_scheme: "v{upstream_version}-rf{N}"
+notification_level: all
+ai_decision_threshold: conflicts

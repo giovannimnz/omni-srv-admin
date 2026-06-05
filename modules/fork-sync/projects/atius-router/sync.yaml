@@ -1,0 +1,36 @@
+project: Atius Router
+upstream: https://github.com/QuantumNous/new-api
+upstream_branch: main
+origin_branch: main
+fork_repo: router-ai-atius  # slug real no GitHub (display name "Atius Router" diverge)
+fork: /home/ubuntu/docker/Atius/router-ai-atius
+
+protected_paths:
+  # Feature: Python middleware (model enrichment layer)
+  - integration/middleware/model_detailed.py
+  # Feature: Docker Compose with Python middleware service
+  - docker-compose.yml
+  # Feature: Environment template
+  - .env.example
+  # Feature: i18n Brazilian Portuguese (PT-BR)
+  - i18n/locales/pt-BR.yaml
+  - i18n/i18n.go
+  - web/default/src/i18n/locales/pt-BR.json
+  - web/default/src/i18n/config.ts
+  - web/default/src/components/language-switcher.tsx
+  # Feature: Documentation (PT-BR primary, EN translated)
+  - README.md
+  - README.en.md
+  - docs/
+  # Feature: GSD planning artifacts
+  - .planning/
+  # Feature: Version file
+  - VERSION
+  # Feature: Custom branding
+  - web/default/public/logo.png
+  - web/default/public/favicon.ico
+
+merge_strategy: theirs
+version_scheme: "v{upstream_version}-rf{N}"
+notification_level: all
+ai_decision_threshold: conflicts

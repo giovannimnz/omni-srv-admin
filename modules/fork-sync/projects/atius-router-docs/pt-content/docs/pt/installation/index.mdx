@@ -1,0 +1,88 @@
+---
+title: Instalação e Implantação
+description: Escolha o método de implantação adequado para você
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import {
+  Container,
+  Boxes,
+  Server,
+  Network,
+  Code2,
+  Settings,
+  RefreshCw,
+  FileCode,
+} from 'lucide-react';
+
+## Visão Geral
+
+O Atius AI Router suporta múltiplos métodos de implantação. Você pode escolher a solução mais adequada com base no seu conhecimento técnico e cenário de uso.
+
+<Callout type="tip">
+**Recomendação para produção**: Para implantações em produção, recomendamos o **Docker Compose** com PostgreSQL e Redis externos. Veja [Docker Compose Deployment](/pt/docs/installation/deployment-methods/docker-compose-installation).
+</Callout>
+
+## Métodos de Implantação
+
+<Cards>
+  <Card
+    icon={<Boxes />}
+    title="Implantação com Docker Compose"
+    description="Orquestre múltiplos serviços usando Docker Compose, adequado para ambientes de produção."
+    href="/pt/docs/installation/deployment-methods/docker-compose-installation"
+  />
+  <Card
+    icon={<Container />}
+    title="Implantação com Container Docker Único"
+    description="Implantação rápida usando imagem Docker, adequado para uso pessoal."
+    href="/pt/docs/installation/deployment-methods/docker-installation"
+  />
+  <Card
+    icon={<Server />}
+    title="Implantação via 1Panel"
+    description="Implantação rápida através da interface gráfica do 1Panel."
+    href="/pt/docs/installation/deployment-methods/1panel-installation"
+  />
+  <Card
+    icon={<Server />}
+    title="Implantação via Baota Panel"
+    description="Implantação rápida através da interface gráfica do Baota Panel."
+    href="/pt/docs/installation/deployment-methods/bt-docker-installation"
+  />
+  <Card
+    icon={<Network />}
+    title="Implantação em Cluster"
+    description="Implantação distribuída multi-nó para alta disponibilidade e balanceamento de carga."
+    href="/pt/docs/installation/deployment-methods/cluster-deployment"
+  />
+  <Card
+    icon={<Code2 />}
+    title="Desenvolvimento Local"
+    description="Adequado para desenvolvedores contribuindo com código e customizando funcionalidades."
+    href="/pt/docs/installation/deployment-methods/local-development"
+  />
+</Cards>
+
+## Configuração e Manutenção
+
+<Cards>
+  <Card
+    icon={<FileCode />}
+    title="Configuração do docker-compose.yml"
+    description="Explicação detalhada dos parâmetros do arquivo de configuração Docker Compose."
+    href="/pt/docs/installation/config-maintenance/docker-compose-yml"
+  />
+  <Card
+    icon={<Settings />}
+    title="Configuração de Variáveis de Ambiente"
+    description="Guia completo de configuração de variáveis de ambiente e melhores práticas."
+    href="/pt/docs/installation/config-maintenance/environment-variables"
+  />
+  <Card
+    icon={<RefreshCw />}
+    title="Atualização do Sistema"
+    description="Aprenda como atualizar o Atius AI Router para a versão mais recente com segurança."
+    href="/pt/docs/installation/config-maintenance/system-update"
+  />
+</Cards>

@@ -1,0 +1,4 @@
+{
+  "title": "Métodos de Implantação",
+  "pages": ["docker-compose-installation", "docker-installation", "1panel-installation", "bt-docker-installation", "cluster-deployment", "local-development"]
+}

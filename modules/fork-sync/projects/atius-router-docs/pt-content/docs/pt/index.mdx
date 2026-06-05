@@ -1,0 +1,73 @@
+---
+title: Início Rápido
+description: Escolha o método de implantação que melhor se adapta às suas necessidades
+---
+
+import {
+  Server,
+  Network,
+  Code2,
+  Headphones,
+  Bot,
+  Handshake,
+  Container,
+  Boxes,
+} from 'lucide-react';
+
+## Seleção do Método de Implantação
+
+Escolha o método de implantação apropriado com base no seu ambiente e nos requisitos técnicos.
+
+<Cards>
+  <Card
+    icon={<Boxes />}
+    title="Implantação com Docker Compose"
+    description="Orquestre múltiplos serviços com Docker Compose, adequado para ambientes de produção ou cenários que requerem dependências como MySQL e Redis."
+    href="/pt/docs/installation/deployment-methods/docker-compose-installation"
+  />
+  <Card
+    icon={<Container />}
+    title="Implantação com Container Docker Único"
+    description="Implante rapidamente o Atius AI Router usando uma imagem Docker, adequado para uso pessoal ou aplicações de pequena escala."
+    href="/pt/docs/installation/deployment-methods/docker-installation"
+  />
+  <Card
+    icon={<Server />}
+    title="Implantação via 1Panel"
+    description="Implantação rápida através da interface gráfica do 1Panel, adequada para usuários não familiarizados com linha de comando."
+    href="/pt/docs/installation/deployment-methods/1panel-installation"
+  />
+  <Card
+    icon={<Server />}
+    title="Implantação via Baota Panel"
+    description="Implantação rápida através da interface gráfica do Baota Panel, adequada para usuários não familiarizados com linha de comando."
+    href="/pt/docs/installation/deployment-methods/bt-docker-installation"
+  />
+  <Card
+    icon={<Network />}
+    title="Implantação em Cluster"
+    description="Implantação distribuída multi-nó para alta disponibilidade, balanceamento de carga e escalabilidade horizontal, adequada para aplicações de grande escala e cenários corporativos."
+    href="/pt/docs/installation/deployment-methods/cluster-deployment"
+  />
+  <Card
+    icon={<Code2 />}
+    title="Implantação para Desenvolvimento Local"
+    description="Adequado para desenvolvedores contribuindo com código e desenvolvimento customizado, fornecendo um guia completo de desenvolvimento local."
+    href="/pt/docs/installation/deployment-methods/local-development"
+  />
+</Cards>
+
+## Por que escolher o Atius AI Router?
+
+O **Atius AI Router** é uma versão *hardened* do QuantumNous/new-api, otimizada para ambientes de produção. Agrega mais de 40 provedores de IA atrás de uma única API compatível com OpenAI/Anthropic, com:
+
+- ✅ **Implantação em produção**: Configurações testadas em ambientes de alta carga
+- ✅ **Compatibilidade total**: API 100% compatível com OpenAI e Anthropic
+- ✅ **Suporte a múltiplos idiomas**: Documentação em PT-BR, EN, ZH e JA
+- ✅ **Open-source**: Licença MIT, código aberto em [github.com/giovannimnz/router-ai-atius](https://github.com/giovannimnz/router-ai-atius)
+
+<Callout type="info">
+Esta é a documentação do **Atius AI Router**, um fork do projeto original
+QuantumNous/new-api. Para a documentação original em inglês, acesse
+[/en/docs](/en/docs).
+</Callout>

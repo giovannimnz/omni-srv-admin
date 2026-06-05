@@ -1,0 +1,22 @@
+project: project-with-submodules
+upstream: https://github.com/owner/upstream-repo
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/GitHub/forks/ProjectName
+protected_paths:
+  - README.md
+  - docs/
+  - libs/shared/
+merge_strategy: merge
+auto_push: true
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-rf"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
+
+# Submodules (opcional, em arquivo .gitmodules separado):
+# [submodule "docs"]
+#   path = docs
+#   url = https://github.com/giovannimnz/project-docs.git
+#   branch = main

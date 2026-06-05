@@ -1,0 +1,46 @@
+project: AionUi
+upstream: https://github.com/iOfficeAI/AionUi
+upstream_branch: main
+origin_branch: main
+protected_paths:
+  # Feature: Web Directory Selection (visual folder picker on WebUI)
+  - src/renderer/components/workspace/WorkspaceFolderSelect.tsx
+  - src/renderer/pages/guid/components/GuidActionRow.tsx
+  - src/renderer/components/settings/DirectorySelectionModal.tsx
+  - src/process/webserver/directoryApi.ts
+  - tests/unit/renderer/components/WorkspaceFolderSelect.dom.test.tsx
+  # Feature: Server-side theme persistence (eliminates theme flash on load)
+  - src/renderer/hooks/system/useTheme.ts
+  - src/process/webserver/routes/staticRoutes.ts
+  - src/process/services/UserSettingsService.ts
+  - src/process/webserver/routes/userSettingsRoutes.ts
+  - src/process/webserver/setup.ts
+  - src/process/webserver/index.ts
+  # Feature: API route refactor (generic /api endpoint moved to index.ts)
+  # CRITICAL: protects the removal — prevents upstream re-adding it to apiRoutes.ts
+  - src/process/webserver/routes/apiRoutes.ts
+  # Feature: Network/binding config for remote WebUI access
+  - electron.vite.config.ts
+  # Feature: Service worker (cache version + /_next exclusion for proper routing)
+  - public/sw.js
+  # Feature: PM2 deployment configs
+  - ecosystem.aionui-web.config.js
+  - ecosystem.config.js
+  - start-aionui.sh
+  # Feature: Fork project documentation
+  - HERMES.md
+  # Feature: Hermes ACP toolset upgrade (hermes-acp → hermes-api-server for full tools)
+  - /home/ubuntu/.hermes/hermes-agent/acp_adapter/session.py
+  # Feature: Hermes Gateway Adapter (HTTP adapter for Hermes CLI — standalone REST API)
+  - hermes_gateway_adapter/
+  # Feature: Hermes ACP adapter bug fixes (errno 36 control chars, null usage)
+  - /home/ubuntu/.hermes/hermes-agent/agent/skill_commands.py
+  - /home/ubuntu/.hermes/hermes-agent/gateway/platforms/base.py
+  - /home/ubuntu/.hermes/hermes-agent/tools/skills_tool.py
+merge_strategy: merge
+auto_push: true
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-rf"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"

@@ -1,0 +1,88 @@
+# Spec-Horus — fork-sync configuration
+# Managed by: ~/GitHub/omni-srv-admin/modules/fork-sync/
+#
+# Spec-Horus NÃO é um fork — é um wrapper que vendoria o gsd-core upstream.
+# O "upstream" efetivo é o gsd-core (open-gsd/gsd-core), puxado via
+# `git clone --depth 1` no momento do install.
+#
+# Este sync.yaml existe para que o fork-sync possa:
+#   1. Versionar releases do spec-horus
+#   2. Fazer deploy no Hermes (install local ou global)
+#   3. Documentar atualizações no manual versionado
+#   4. Rodar sync diário via PM2 cron
+
+project: horus-spec-driven
+display_name: "horus-spec-driven — Multi-CLI Wrapper for GSD Core"
+
+# Estratégia de "upstream": pull do gsd-core + rebrand + install
+# Não é um fork convencional — o upstream é tratado como vendor.
+upstream_type: vendor
+vendor_source: https://github.com/open-gsd/gsd-core
+vendor_branch: main
+vendor_method: "shallow clone (git clone --depth 1)"
+
+# O repo do spec-horus É o fork (no sentido fork-sync, embora
+# tecnicamente não seja um fork do gsd-core)
+fork: /home/ubuntu/GitHub/spec-horus
+fork_branch: master
+fork_origin: https://github.com/giovannimnz/spec-horus
+
+# ── Protected paths (NUNCA sobrescrevidos por merge upstream) ───────────
+protected_paths:
+  # Core adapters (Hermes-specific, não existem no upstream)
+  - bin/lib/horus-sdk-adapter/
+  - bin/lib/content-converters/
+  - bin/lib/frontmatter-converters/
+  - bin/lib/subagent-adapter/
+  # Config files
+  - spec-horus.json
+  - runtimes/
+  - docs/
+  # Own scripts
+  - bin/rebrand.js
+  - bin/install.js
+  - bin/sync.js
+  # Docs
+  - README.md
+  - SETUP.md
+  - CHANGELOG.md
+  - LICENSE
+
+# ── Merge strategy ──────────────────────────────────────────────────────
+# Como NÃO é um fork, o "merge" é: pull vendor → rebrand → install
+merge_strategy: custom
+merge_script: /home/ubuntu/GitHub/spec-horus/bin/install.js
+merge_args: ["sync", "--all", "--global"]
+merge_description: |
+  1. Pull gsd-core latest (git clone --depth 1 open-gsd/gsd-core)
+  2. Build wordlist (gsd → shd/shq/shp)
+  3. Apply content + frontmatter converters per runtime
+  4. Install em Hermes, Claude, Codex, Gemini (e demais habilitados)
+  5. Install horus-sdk-adapter skill no Hermes
+
+# ── Deploy ──────────────────────────────────────────────────────────────
+deploy:
+  enabled: true
+  method: npm
+  targets:
+    - runtime: hermes
+      home: ~/.hermes
+      mode: global
+    - runtime: claude
+      home: ~/.claude
+      mode: global
+  post_deploy:
+    - "spec-horus detect"
+    - "spec-horus wordlist | head -3"
+
+# ── Version scheme ──────────────────────────────────────────────────────
+version_scheme:
+  format: "v{spec_horus_version}+gsd{gsd_core_version}"
+  spec_horus_version_file: /home/ubuntu/GitHub/spec-horus/package.json
+  gsd_core_version_tracked: true
+
+# ── Notifications ───────────────────────────────────────────────────────
+notification_level: all
+
+# ── AI decision threshold ───────────────────────────────────────────────
+ai_decision_threshold: important

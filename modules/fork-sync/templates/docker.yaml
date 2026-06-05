@@ -1,0 +1,13 @@
+project: project-name
+upstream: https://github.com/owner/upstream-repo
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/docker/Atius/project-name
+protected_paths:
+  - docker-compose.yml
+  - .env.example
+  - README.md
+merge_strategy: theirs
+version_scheme: "v{upstream_version}-rf{N}"
+notification_level: all
+ai_decision_threshold: conflicts

@@ -1,0 +1,17 @@
+project: get-shit-done
+upstream: https://github.com/gsd-build/get-shit-done
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/GitHub/forks/get-shit-done
+protected_paths:
+  # Custom GSD profiles e skills
+  - profiles/
+  - skills/
+  - README.md
+merge_strategy: merge
+auto_push: true
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-rf"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"

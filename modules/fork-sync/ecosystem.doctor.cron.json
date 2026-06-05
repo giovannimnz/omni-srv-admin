@@ -1,0 +1,16 @@
+{
+  "name": "fork-sync-doctor",
+  "script": "/home/ubuntu/fork-sync/cli/scripts/run_doctor.sh",
+  "cron_restart": "0 7 * * *",
+  "cwd": "/home/ubuntu/fork-sync",
+  "interpreter": "none",
+  "watch": false,
+  "autorestart": false,
+  "env": {
+    "FORK_SYNC_ROOT": "/home/ubuntu/fork-sync"
+  },
+  "log_file": "/home/ubuntu/fork-sync/logs/pm2-doctor.log",
+  "error_file": "/home/ubuntu/fork-sync/logs/pm2-doctor-error.log",
+  "out_file": "/home/ubuntu/fork-sync/logs/pm2-doctor-out.log",
+  "time": true
+}

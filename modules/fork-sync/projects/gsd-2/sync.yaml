@@ -1,0 +1,17 @@
+project: gsd-2
+upstream: https://github.com/gsd-build/gsd-2
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/GitHub/forks/gsd-2
+protected_paths:
+  # Custom workflows e templates
+  - workflows/
+  - templates/
+  - README.md
+merge_strategy: merge
+auto_push: true
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-rf"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"

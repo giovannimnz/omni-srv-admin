@@ -1,0 +1,4 @@
+{
+  "title": "Referência da API",
+  "pages": ["---", "ai-model", "ai-model/chat", "ai-model/embeddings", "ai-model/models", "management"]
+}

@@ -1,0 +1,123 @@
+---
+title: Implantação com Docker Compose
+description: Como implantar o Atius AI Router usando Docker Compose com PostgreSQL e Redis
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Visão Geral
+
+Docker Compose é o método de implantação recomendado para **ambientes de produção**. Ele orquestra múltiplos serviços (new-api, PostgreSQL, Redis) em containers isolados, fornecendo:
+
+- ✅ Isolamento de processos
+- ✅ Persistência de dados (volumes Docker)
+- ✅ Fácil escalabilidade
+- ✅ Reproducibilidade do ambiente
+
+## Pré-requisitos
+
+Antes de começar, certifique-se de ter:
+
+- **Docker** >= 20.10
+- **Docker Compose** >= v2.0
+- **Git** (para clonar o repositório)
+- 2 GB de RAM mínimo (4 GB recomendado para produção)
+- 10 GB de espaço em disco
+
+<Callout type="warning">
+**Importante**: Este guia assume um sistema Linux com Docker instalado.
+Para Windows ou macOS, use Docker Desktop.
+</Callout>
+
+## Passo 1: Clonar o Repositório
+
+```bash
+git clone https://github.com/giovannimnz/router-ai-atius.git
+cd router-ai-atius
+```
+
+## Passo 2: Configurar Variáveis de Ambiente
+
+Copie o arquivo de template e edite:
+
+```bash
+cp .env.example .env
+nano .env  # ou vim .env
+```
+
+As variáveis mais importantes são:
+
+| Variável | Descrição | Padrão |
+|----------|-----------|--------|
+| `POSTGRES_PASSWORD` | Senha do PostgreSQL (gere uma forte!) | `change-me-in-production` |
+| `REDIS_PASSWORD` | Senha do Redis (gere uma forte!) | `change-me-in-production` |
+| `SESSION_SECRET` | Chave de criptografia das sessões (gere uma forte!) | `router-ai-atius-secret-key` |
+| `POSTGRES_DB` | Nome do banco de dados | `DBRouterAiAtius` |
+| `POSTGRES_USER` | Usuário do banco | `admin` |
+
+<Callout type="danger">
+**NUNCA** use as senhas padrão em produção. Use `openssl rand -hex 32`
+para gerar chaves seguras.
+</Callout>
+
+## Passo 3: Subir os Serviços
+
+```bash
+podman-compose up -d
+```
+
+ou com Docker Compose (legado):
+
+```bash
+docker compose up -d
+```
+
+Aguarde ~30 segundos para os serviços iniciarem. Verifique o status:
+
+```bash
+podman ps
+# ou
+docker ps
+```
+
+## Passo 4: Verificar a Instalação
+
+Acesse o painel admin no navegador:
+
+```
+http://<seu-ip>:3030
+```
+
+O login padrão é:
+- **Usuário**: definido em `INITIAL_ADMIN_USERNAME` (padrão: `admin`)
+- **Senha**: definida em `INITIAL_ADMIN_PASSWORD`
+
+<Callout type="info">
+**Recomendado**: Altere a senha do admin imediatamente após o primeiro login.
+</Callout>
+
+## Comandos Úteis
+
+```bash
+# Ver logs em tempo real
+podman-compose logs -f
+
+# Reiniciar serviços
+podman-compose restart
+
+# Parar tudo
+podman-compose down
+
+# Backup do banco
+podman exec router-ai-atius-db pg_dump -U admin DBRouterAiAtius > backup.sql
+
+# Restaurar backup
+cat backup.sql | podman exec -i router-ai-atius-db psql -U admin DBRouterAiAtius
+```
+
+## Próximos Passos
+
+- 📖 [Configuração de Variáveis de Ambiente](/pt/docs/installation/config-maintenance/environment-variables)
+- 🔧 [Configuração Avançada do Docker Compose](/pt/docs/installation/config-maintenance/docker-compose-yml)
+- 🔄 [Como Atualizar o Sistema](/pt/docs/installation/config-maintenance/system-update)
+- 🌐 [Configurar Proxy Reverso (Apache/Nginx)](/pt/docs/installation/reverse-proxy)

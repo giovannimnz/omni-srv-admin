@@ -138,7 +138,5 @@ domain-infrastructure/
 .bg-shell/
 
 # Submodule: fork-sync volatile paths
-modules/fork-sync/logs/
-modules/fork-sync/.translate-cache/
-modules/fork-sync/cli/fork_sync.egg-info/
-modules/fork-sync/scripts/
+__pycache__/**
+*.pyc

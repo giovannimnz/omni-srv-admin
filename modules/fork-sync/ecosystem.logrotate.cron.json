@@ -1,0 +1,16 @@
+{
+  "name": "fork-sync-logrotate",
+  "script": "/home/ubuntu/fork-sync/cli/scripts/run_logrotate.sh",
+  "cron_restart": "0 3 * * *",
+  "cwd": "/home/ubuntu/fork-sync",
+  "interpreter": "none",
+  "watch": false,
+  "autorestart": false,
+  "env": {
+    "FORK_SYNC_ROOT": "/home/ubuntu/fork-sync"
+  },
+  "log_file": "/home/ubuntu/fork-sync/logs/pm2-logrotate.log",
+  "error_file": "/home/ubuntu/fork-sync/logs/pm2-logrotate-error.log",
+  "out_file": "/home/ubuntu/fork-sync/logs/pm2-logrotate-out.log",
+  "time": true
+}

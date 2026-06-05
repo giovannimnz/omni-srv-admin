@@ -1,0 +1,17 @@
+{
+  "name": "fork-sync-daily",
+  "script": "/home/ubuntu/fork-sync/cli/scripts/run_sync_all.sh",
+  "args": ["--apply"],
+  "cron_restart": "0 8 * * *",
+  "cwd": "/home/ubuntu/fork-sync",
+  "interpreter": "none",
+  "watch": false,
+  "autorestart": false,
+  "env": {
+    "FORK_SYNC_ROOT": "/home/ubuntu/fork-sync"
+  },
+  "log_file": "/home/ubuntu/fork-sync/logs/pm2-daily-sync.log",
+  "error_file": "/home/ubuntu/fork-sync/logs/pm2-daily-sync-error.log",
+  "out_file": "/home/ubuntu/fork-sync/logs/pm2-daily-sync-out.log",
+  "time": true
+}

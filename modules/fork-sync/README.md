@@ -1,0 +1,845 @@
+# Fork Sync — Gestão Unificada de Forks
+
+> **CLI + biblioteca** para sincronizar múltiplos forks com seus respectivos upstreams,
+> com deploy Docker opcional, versionamento semântico e suporte a submodules.
+
+[![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)](https://www.python.org/)
+[![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](LICENSE)
+[![CLI: click](https://img.shields.io/badge/CLI-click-0099cc.svg)](https://palletsprojects.com/p/click/)
+[![Inspired by: CLI-Anything](https://img.shields.io/badge/inspirado%20em-CLI--Anything-HKUDS-orange.svg)](https://github.com/HKUDS/CLI-Anything)
+
+---
+
+## Índice
+
+1. [Visão Geral](#1-visão-geral)
+2. [Por que este CLI existe](#2-por-que-este-cli-existe)
+3. [Arquitetura](#3-arquitetura)
+4. [Instalação](#4-instalação)
+5. [Uso Rápido](#5-uso-rápido)
+6. [Adicionar Novo Fork (Projeto)](#6-adicionar-novo-fork-projeto)
+7. [Submodules — O que são e como usar](#7-submodules--o-que-são-e-como-usar)
+8. [Deploy Docker — Quando e Como](#8-deploy-docker--quando-e-como)
+9. [Auto-Discovery — Quando um fork/upstream some](#9-auto-discovery--quando-um-forkupstream-some)
+10. [Manuais de Atualização](#10-manuais-de-atualização)
+11. [Serviço PM2 (Long-lived + Cron)](#11-serviço-pm2-long-lived--cron)
+12. [Logs e Rotação Automática](#12-logs-e-rotação-automática)
+13. [Release Notes em PT-BR](#13-release-notes-em-pt-br)
+14. [Política de Secrets e Dados Sensíveis](#14-política-de-secrets-e-dados-sensíveis)
+15. [Estrutura do Repositório](#15-estrutura-do-repositório)
+16. [Modo REPL (Interativo)](#16-modo-repl-interativo)
+17. [Saída JSON (Integração com Agentes)](#17-saída-json-integração-com-agentes)
+18. [Backward Compatibility — Scripts Bash Legados](#18-backward-compatibility--scripts-bash-legados)
+19. [Troubleshooting](#19-troubleshooting)
+20. [Roadmap / Expansão](#20-roadmap--expansão)
+21. [Contribuindo](#21-contribuindo)
+22. [Referências](#22-referências)
+23. [Licença](#23-licença)
+
+---
+
+## 1. Visão Geral
+
+`fork-sync` é uma CLI unificada para gerenciar **N forks** de uma só vez. Cada fork é
+configurado declarativamente num arquivo `projects/<nome>/sync.yaml` e pode opcionalmente
+ter um `deploy.yaml` para build/push Docker.
+
+```bash
+fork-sync projects list                          # ver todos os forks configurados
+fork-sync sync aionui --dry-run                  # simula merge com upstream
+fork-sync sync atius-router --deploy             # merge + build/push Docker
+fork-sync logs --project aionui --tail 50        # ver últimas 50 linhas do log
+fork-sync repl                                   # modo interativo
+fork-sync --json projects list | jq .            # output estruturado para agents
+```
+
+**Projetos atualmente configurados (8):**
+
+| Projeto | Fork | Upstream | Deploy |
+|---|---|---|---|
+| `aionui` | `giovannimnz/AionUi` | `iOfficeAI/AionUi` | — |
+| `atius-router` | `giovannimnz/router-ai-atius` | `QuantumNous/new-api` | Docker |
+| `atius-router-docs` | `giovannimnz/...` | docs own | — |
+| `hermes-agent` | `giovannimnz/hermes-agent` | `NousResearch/hermes-agent` | — |
+| `hermes-os` | `giovannimnz/hermes-os` | `fathah/hermes-desktop` | — |
+| `gsd-2` | `giovannimnz/gsd-2` | `gsd-build/gsd-2` | — |
+| `bruno` | `giovannimnz/bruno` | `usebruno/bruno` | — |
+| `get-shit-done` | `giovannimnz/get-shit-done` | `gsd-build/get-shit-done` | — |
+
+> Lista sempre atualizada via `fork-sync projects list`.
+
+---
+
+## 2. Por que este CLI existe
+
+O problema original (2026-05): eu tinha **2 forks** com rebrand (AionUi, atius-router)
+que precisavam de sync diário com upstream + cron + Telegram. Resolvi com scripts bash
+em `bin/sync.sh`.
+
+Em junho/2026 cheguei a **7 forks** (`giovannimnz/AionUi`, `router-ai-atius`,
+`hermes-agent`, `hermes-os`, `gsd-2`, `bruno`, `get-shit-done`). Cada um com:
+
+- upstream diferente
+- paths próprios a proteger (rebrand, customizações)
+- cronograma próprio
+- eventualmente submodules (ex: docs como submodule do atius-router)
+- eventualmente deploy Docker
+
+A bash + YAML começou a não escalar. **Precisava de:**
+1. Listagem centralizada de projetos (uma chamada vê todos)
+2. Saída estruturada (JSON) pra integrar com agentes/automação
+3. REPL interativo (estilo CLI-Anything) pra operar vários forks sem digitar
+4. Suporte de primeira classe a submodules
+5. Política explícita de **nunca** commitar secrets
+
+`fork-sync` resolve isso num único binário Python com Click + prompt_toolkit.
+
+---
+
+## 3. Arquitetura
+
+```
+fork-sync (repo giovannimnz/fork-sync)
+│
+├── cli/                          # Python package (CLI principal)
+│   ├── setup.py                  # pip install -e cli/
+│   └── fork_sync/
+│       ├── __init__.py
+│       ├── __main__.py           # python -m fork_sync
+│       ├── cli.py                # Click group + comandos
+│       └── core/
+    ├── config.py         # paths (REPO_ROOT, PROJECTS_DIR, BIN_DIR...)
+    ├── registry.py       # listagem/carregamento de projetos
+    ├── sync_runner.py    # delega para bash scripts (compat)
+    ├── discovery.py      # auto-find forks/upstreams sumidos (gh search)
+    ├── manuals.py        # manuais de atualização versionados
+    ├── logrotate.py      # rotação gzip + retenção de logs
+    ├── release_notes.py  # release notes em PT-BR (busca+parse+traduz+merge)
+    └── repl.py           # REPL interativo (prompt_toolkit)
+│
+├── projects/                     # ← CONFIGURAÇÃO DECLARATIVA (git-tracked)
+│   ├── aionui/
+│   │   ├── sync.yaml             # OBRIGATÓRIO: upstream, protected_paths, etc.
+│   │   └── .gitmodules           # OPCIONAL: se o fork usa submodules
+│   ├── atius-router/
+│   │   ├── sync.yaml
+│   │   └── deploy.yaml           # OPCIONAL: build/push Docker
+│   ├── hermes-agent/
+│   │   └── sync.yaml
+│   └── ...                       # um diretório por fork
+│
+├── bin/                          # Scripts bash legados (gitignored, local only)
+│   ├── sync.sh                   # motor principal (v1, bash)
+│   ├── detect-release.sh
+│   ├── deploy.sh
+│   └── merge-upstream.sh
+│
+├── lib/                          # Helpers bash (gitignored, local only)
+│   ├── github.sh
+│   ├── git.sh
+│   └── telegram.sh
+│
+├── scripts/                      # Installer + utilidades
+│   └── fork-sync-install.sh
+│
+├── logs/                         # Logs de execução (gitignored)
+│
+├── templates/                    # Templates de sync.yaml por tipo de projeto
+│   ├── basic.yaml                # fork simples, sem deploy
+│   ├── docker.yaml               # fork com deploy Docker
+│   └── submodule.yaml            # fork com submodules
+│
+├── docs/                         # Documentação adicional (gitignored, opcional)
+│
+├── SECRETS.md                    # ← POLÍTICA DE DADOS SENSÍVEIS (ler antes de contribuir)
+├── README.md                     # ← este arquivo
+├── VERSIONS.md                   # changelog de versões
+├── CONTRIBUTING.md
+└── LICENSE
+```
+
+**Princípios:**
+
+- **Configuração é código.** `projects/<name>/sync.yaml` é o source-of-truth. Adicionar
+  fork = adicionar diretório + YAML. Remover fork = remover diretório.
+- **Bash não desaparece.** `bin/sync.sh foo bar` continua funcionando. Python CLI
+  *encapsula*, não substitui. Quem prefere bash usa bash.
+- **Secrets nunca no repo.** `.gitignore` bloqueia `.env`, `*.local`, `*.key`, `*.pem`,
+  `secrets/`, etc. Política explícita em [`SECRETS.md`](SECRETS.md).
+- **Submodules são primeira-classe.** Cada projeto pode ter `.gitmodules` ao lado do
+  `sync.yaml`. O CLI detecta e mostra em `projects show`.
+- **Saída dual: humana e JSON.** Default é legível (com cores via `rich`). `--json`
+  vira machine-readable pra integrar com Hermes Agent, cron, ou outros tools.
+
+---
+
+## 4. Instalação
+
+### 4.1. Via installer (recomendado)
+
+```bash
+curl -sL https://raw.githubusercontent.com/giovannimnz/fork-sync/main/scripts/fork-sync-install.sh | bash
+```
+
+Isso clona o repo em `~/fork-sync/`, instala o CLI em modo editável (`pip install -e cli/`),
+e cria symlinks em `~/bin/` pros scripts bash legados.
+
+### 4.2. Manual
+
+```bash
+git clone https://github.com/giovannimnz/fork-sync.git ~/fork-sync
+cd ~/fork-sync/cli
+pip install -e .
+```
+
+### 4.3. Dependências do sistema
+
+```bash
+# Ubuntu/Debian
+sudo apt install -y git curl jq bash
+
+# Opcional (recomendado)
+pip install rich  # saída colorida
+```
+
+### 4.4. Verificar instalação
+
+```bash
+fork-sync version
+# → version: 1.0.0
+#   repo_root: /home/ubuntu/fork-sync
+
+fork-sync --help
+```
+
+---
+
+## 5. Uso Rápido
+
+```bash
+# Ver todos os projetos configurados
+fork-sync projects list
+
+# Detalhes de um projeto
+fork-sync projects show aionui
+
+# Detectar novo release no upstream
+fork-sync detect aionui
+
+# Sincronizar (dry-run primeiro SEMPRE)
+fork-sync sync aionui --dry-run
+
+# Sincronizar de verdade
+fork-sync sync aionui --repo-path ~/GitHub/forks/AionUi
+
+# Sync + deploy Docker (só para projetos com deploy.yaml)
+fork-sync sync atius-router --deploy
+
+# Ver logs
+fork-sync logs --project aionui --tail 30
+
+# Modo interativo
+fork-sync repl
+```
+
+---
+
+## 6. Adicionar Novo Fork (Projeto)
+
+Existem **duas formas** de adicionar um projeto: via CLI ou manualmente.
+
+### 6.1. Via CLI (recomendado)
+
+```bash
+fork-sync projects add meufork \
+  --upstream https://github.com/owner/upstream \
+  --fork ~/GitHub/forks/MeuFork \
+  --branch main \
+  --protected-paths README.md \
+  --protected-paths src/folder/ \
+  --merge-strategy merge
+```
+
+### 6.2. Manualmente (mais controle)
+
+Criar `projects/<nome>/sync.yaml`:
+
+```yaml
+project: Nome Exibido
+upstream: https://github.com/owner/repo-upstream
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/GitHub/forks/MeuFork
+protected_paths:
+  - README.md
+  - src/meu-rebrand/
+  - config/local.yaml
+merge_strategy: merge          # merge | ours | theirs
+auto_push: true
+notification_level: all        # all | conflicts | errors | none
+ai_decision_threshold: conflicts  # conflicts | important | all
+version_scheme:
+  suffix: "-rf"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
+```
+
+Ver [`templates/`](templates/) para exemplos prontos.
+
+### 6.3. Validar
+
+```bash
+fork-sync projects show meufork
+fork-sync detect meufork
+fork-sync sync meufork --dry-run
+```
+
+---
+
+## 7. Submodules — O que são e como usar
+
+> **Conceito Git:** submodules permitem que um repositório Git hospede outros repos
+> Git como subdiretórios. Útil quando o fork depende de um sub-projeto versionado
+> independentemente (ex: `docs/`, `shared-lib/`, `frontend-v2/`).
+
+### 7.1. Quando usar submodules no fork-sync
+
+Cenários típicos:
+- **Documentação externa** versionada em repo separado (ex: atius-router-docs)
+  embutida como `docs/` no router
+- **Bibliotecas compartilhadas** entre forks (ex: common-i18n)
+- **Sub-projetos com ciclo de release próprio** (ex: módulo de pagamentos com
+  versão semântica independente)
+
+### 7.2. Como declarar
+
+Criar `projects/<nome>/.gitmodules` ao lado do `sync.yaml`:
+
+```ini
+[submodule "docs"]
+	path = docs
+	url = https://github.com/giovannimnz/atius-router-docs.git
+	branch = main
+
+[submodule "shared-lib"]
+	path = libs/shared
+	url = git@github.com:giovannimnz/common-lib.git
+	branch = main
+```
+
+### 7.3. O que o fork-sync faz diferente
+
+- Detecta submodules em `projects show <nome>` e lista
+- `protected_paths` aceita paths de submódulos (`libs/shared/**` etc.)
+- `sync_runner` delega `git submodule update --init --recursive` ao `sync.sh`
+- Se um submodule 404, sync cai em `needs_review` com mensagem clara
+
+### 7.4. Inicializar submódulos após clone
+
+```bash
+# Manual
+git -C ~/GitHub/forks/MeuFork submodule update --init --recursive
+
+# Via fork-sync (wrapper)
+fork-sync sync meufork --init-submodules
+```
+
+---
+
+## 8. Deploy Docker — Quando e Como
+
+### 8.1. Quando configurar
+
+Só faz sentido se o fork gera **uma imagem Docker publicada** (ex: `ghcr.io/...`).
+Exemplos atuais: `atius-router` (roda `new-api` em container).
+
+### 8.2. Estrutura
+
+Criar `projects/<nome>/deploy.yaml`:
+
+```yaml
+project: atius-router
+image: ghcr.io/giovannimnz/router-ai-atius
+docker_compose_path: /home/ubuntu/docker/Atius/router-ai-atius
+container_name: new-api
+health_endpoint: https://router.atius.com.br/v1/models
+health_token: ""                # vazio → set via env (NUNCA commitado)
+platforms:
+  - linux/arm64
+  - linux/amd64
+```
+
+### 8.3. Uso
+
+```bash
+# Deploy standalone (sem sync)
+fork-sync deploy atius-router
+
+# Sync + deploy
+fork-sync sync atius-router --deploy
+
+# Dry-run
+fork-sync deploy atius-router --dry-run
+```
+
+### 8.4. Health check
+
+Pós-deploy, o `deploy.sh` faz:
+1. `docker buildx build --platform ... --push`
+2. `docker compose stop/rm/up -d`
+3. `curl $health_endpoint` (com `health_token` do env)
+4. Telegram notifica `deployed` ou `deploy_failed`
+
+---
+
+## 9. Auto-Discovery — Quando um fork/upstream some
+
+**Problema:** `sync.yaml` referencia `owner/repo` (upstream) e path local (fork). Se
+qualquer um sumir (renomeado, deletado, transferido, movido de máquina), sync quebra.
+
+**Solução:** módulo `core/discovery.py` faz auto-find via `gh search`.
+
+```bash
+# Diagnóstico: 1 projeto
+fork-sync discover check aionui
+# → schema: v1
+#   local_status: missing  ← problema!
+#   upstreams[0]: iOfficeAI/AionUi (exists: true)
+#   candidates: []         ← (se missing, viria lista de candidatos)
+
+# Auto-heal: procura em dirs comuns, sugere novo upstream
+fork-sync discover heal aionui --dry-run
+# → { "actions": [{"type": "local_fork_found", "found_at": "/home/ubuntu/GitHub/forks/AionUi"}] }
+
+# Aplicar patches
+fork-sync discover heal aionui --apply
+```
+
+**Heurísticas de busca:**
+- Match exato de nome: score 0.9
+- Match de nome + mesmo owner: 0.85
+- Fork do próprio giovannimnz: 0.7-0.95 (assume fork atual)
+- Penaliza archived/disabled: -0.3
+
+**Comando global** (varre todos os projetos):
+```bash
+fork-sync doctor
+# → lista issues, project_reports detalhados
+```
+
+---
+
+## 10. Manuais de Atualização
+
+Cada projeto tem 1 manual versionado em `manuals/<projeto>.md`. Documenta:
+- Estratégia de merge (passo-a-passo)
+- Como adaptar rebrand
+- Como reagir a breaking changes
+- Troubleshooting específico
+- Histórico de syncs
+
+```bash
+# Gerar manual inicial (esqueleto a partir do sync.yaml)
+fork-sync manuals generate aionui
+# → /home/ubuntu/fork-sync/manuals/aionui.md (v1)
+
+# Listar
+fork-sync manuals list
+
+# Ver conteúdo
+fork-sync manuals show aionui
+
+# Adicionar entry após sync bem-sucedido
+fork-sync manuals record-sync aionui --status success --version v2.1.11 --notes "0 conflitos"
+
+# Adicionar conteúdo a uma seção
+fork-sync manuals update aionui "7. Troubleshooting" "- Logs em PT-BR: ver docs/i18n.md"
+```
+
+**Versionamento:** frontmatter YAML tem `version:`, `created:`, `last_updated:`.
+Cada sync bem-sucedido adiciona linha na tabela "Histórico de Versões do Manual".
+
+**Regenerar** (sobrescreve):
+```bash
+fork-sync manuals generate aionui --regenerate
+# CUIDADO: apaga edições manuais
+```
+
+---
+
+## 11. Serviço PM2 (Long-lived + Cron)
+
+Documentação completa em [`docs/PM2-SERVICE.md`](docs/PM2-SERVICE.md). Resumo:
+
+```bash
+# Instalar todos os serviços
+~/fork-sync/cli/scripts/pm2-setup.sh install all
+
+# Status
+~/fork-sync/cli/scripts/pm2-setup.sh status
+
+# Logs
+~/fork-sync/cli/scripts/pm2-setup.sh logs fork-sync-daily
+
+# Remover
+~/fork-sync/cli/scripts/pm2-setup.sh remove all
+```
+
+**Serviços:**
+
+| Serviço | Cron (UTC) | Função |
+|---|---|---|
+| `fork-sync-scheduler` | — | REPL long-lived |
+| `fork-sync-doctor` | `0 7 * * *` | Diagnóstico diário |
+| `fork-sync-logrotate` | `0 3 * * *` | Rotação de logs |
+| `fork-sync-daily` | `0 8 * * *` | Sync de todos os projetos |
+
+**Auto-start no boot:**
+```bash
+pm2 startup && pm2 save
+```
+
+---
+
+## 12. Logs e Rotação Automática
+
+Logs em `~/fork-sync/logs/`, formato `sync-<project>-<YYYYMMDD>.log`.
+
+```bash
+# Ver últimas 20 linhas do log mais recente
+fork-sync logs --tail 20
+
+# Filtrar por projeto
+fork-sync logs --project aionui --tail 50
+
+# Data específica
+fork-sync logs --project aionui --date 20260604
+
+# Uso de disco
+fork-sync logs --disk
+# → total_files: 30, total_size_mb: 0.23
+
+# Rotação manual (dry-run primeiro)
+fork-sync logs --rotate
+# → { "compressed": [...], "deleted": [...], "stats": {...} }
+
+# Aplicar
+fork-sync logs --rotate --apply
+```
+
+**Política de rotação (configurável via env):**
+- `FORK_SYNC_LOG_RETENTION_DAYS=30` (default)
+- `FORK_SYNC_KEEP_PER_PROJECT=5` (default)
+- `FORK_SYNC_MAX_LOG_SIZE_MB=50` (default)
+
+**Comportamento:**
+- Logs de dias anteriores: comprimidos com gzip (nível 6)
+- Logs > 30 dias OU além do top-5 por projeto: deletados
+- Log do dia atual: nunca removido
+- Idempotente: pode rodar múltiplas vezes
+
+**Integração com PM2:**
+- Serviço `fork-sync-logrotate` roda todo dia às 3h UTC
+- Logs PM2 (`pm2-*.log`) também ficam em `logs/` e são rotacionados pelo mesmo mecanismo
+
+---
+
+## 13. Release Notes em PT-BR
+
+Documentação completa em [`docs/RELEASE-NOTES.md`](docs/RELEASE-NOTES.md). Resumo:
+
+**Problema:** releases do nosso fork eram inúteis ("Sync release based on upstream...").
+**Solução:** módulo `core/release_notes.py` busca release do upstream, parseia
+estrutura, traduz pra PT-BR, adiciona marca d'água do fork.
+
+```bash
+# Preview (sem salvar)
+fork-sync release preview aionui --upstream-version 2.1.10
+
+# Gerar + salvar local em manuals/<projeto>/releases/<tag>.md
+fork-sync release generate aionui --upstream-version 2.1.10 --rf 2 --save-local
+
+# Com arquivos divergentes do fork
+fork-sync release generate aionui --upstream-version 2.1.10 --rf 2 \
+    --changed-files src/rebrand.ts \
+    --changed-files README.md
+
+# Sem tradução
+fork-sync release generate aionui --upstream-version 2.1.10 --no-translate
+
+# Listar geradas
+fork-sync release list aionui
+```
+
+**Saída (5 destaques, 1 bug fix, 1 under the hood, 18 commits, 25 assets, 6900 chars):**
+
+```markdown
+# v2.1.10-rf2
+
+Esta é uma versão de estabilidade e confiabilidade focada em...
+
+## Destaques
+- **Confiabilidade da sessão ACP** — Os modelos agora permanecem...
+- **Mensagens de erro mais claras** — Erros de workspace path agora mostram...
+
+## Correções de Bugs
+- A configuração "perto da bandeja" agora é salva corretamente...
+
+## Nos Bastidores
+- Falhas de inicialização do backend agora reportam diagnósticos...
+
+## O Que Mudou
+- `01e0271` fix(desktop): persist close-to-tray setting (#3150) — @kaizhou-lab
+- ...
+
+## Contribuidores
+- @IceyLiu
+- @kaizhou-lab
+- @piorpua
+
+## Binários e Artefatos
+- [AionUi-2.1.10-linux-amd64.deb](...) — 218 MB
+- ...
+
+---
+
+🔗 **Upstream original:** https://github.com/iOfficeAI/AionUi
+📦 **Repositório fork:** https://github.com/giovannimnz/AionUi
+🏷️ **Tag:** v2.1.10-rf2 • **Sincronizado em:** 2026-06-04
+🤖 **Gerado automaticamente por:** fork-sync
+```
+
+**Integração com `bin/create-release.sh`:** o script bash legado foi refatorado
+para chamar `fork-sync release generate --json` e usar o `body` retornado. Zero
+duplicação de lógica.
+
+**Cache de tradução** em `.translate-cache/` (sha256-keyed). Limpar com
+`rm -rf .translate-cache/` para forçar re-tradução.
+
+**Tradutor:** GoogleTranslator (deep-translator) por default, custo zero. Plugar
+LLM (OpenAI/MiniMax) é trocar uma função.
+
+---
+
+## 14. Política de Secrets e Dados Sensíveis
+
+> **Ler [`SECRETS.md`](SECRETS.md) antes de contribuir. Resumo:**
+
+**NUNCA** commitar no `fork-sync`:
+- Senhas, tokens, API keys, certificados, `.env`, `*.key`, `*.pem`
+- URLs internas com credenciais (ex: `https://user:pass@host/...`)
+- Health tokens, tokens de Telegram, GitHub PATs
+- Paths absolutos de servidores de produção (ex: `/home/ubuntu/producao-secret/`)
+
+**SEMPRE** usar:
+- Variáveis de ambiente para secrets (`.env` local, **gitignored**)
+- Placeholders em YAML: `health_token: ""` + comentário `# Set via env or secret manager`
+- `***` em logs e outputs (`sed 's/=.*/=***/'`)
+- `.gitignore` agressivo (já incluído)
+
+**Auditoria:** rodar `gitleaks` ou `trufflehog` antes de push em fork público.
+
+---
+
+## 15. Estrutura do Repositório
+
+| Path | Git-tracked? | Função |
+|---|---|---|
+| `cli/` | sim | CLI Python (pip install -e) |
+| `projects/<name>/sync.yaml` | sim | Config declarativa de cada fork |
+| `projects/<name>/deploy.yaml` | sim | Deploy Docker (opcional) |
+| `projects/<name>/.gitmodules` | sim | Submodules do fork (opcional) |
+| `bin/*.sh` | **não** (gitignored) | Scripts bash legados (local only) |
+| `lib/*.sh` | **não** (gitignored) | Helpers bash |
+| `logs/` | **não** (gitignored) | Histórico de execuções |
+| `templates/` | sim | Templates de sync.yaml |
+| `docs/` | opcional | Documentação adicional |
+| `SECRETS.md` | sim | Política de secrets |
+| `README.md` | sim | Este arquivo |
+| `VERSIONS.md` | sim | Changelog |
+| `LICENSE` | sim | MIT |
+
+---
+
+## 16. Modo REPL (Interativo)
+
+Inspirado no padrão CLI-Anything (HKUDS): REPL com histórico e tab-completion.
+
+```bash
+$ fork-sync repl
+fork-sync REPL — digite 'help' para comandos, 'exit' para sair
+fork-sync> projects list
+3 projeto(s) configurado(s):
+...
+fork-sync> sync aionui --dry-run
+[INFO] Detectando release...
+[INFO] NEW_RELEASE=false, VERSION=v2.1.6
+[INFO] Nada a fazer.
+fork-sync> exit
+Bye.
+```
+
+Comandos disponíveis no REPL: `projects list|show`, `sync`, `detect`, `deploy`,
+`logs`, `help`, `exit`.
+
+---
+
+## 17. Saída JSON (Integração com Agentes)
+
+Para integrar com agentes (Hermes, LangChain, etc.) ou automação:
+
+```bash
+fork-sync --json projects list | jq '.[].name'
+# → "aionui"
+# → "atius-router"
+# → ...
+
+fork-sync --json projects show aionui | jq '.protected_paths | length'
+# → 24
+
+fork-sync --json sync aionui --dry-run | jq '.status'
+# → "success"
+```
+
+Exit codes estruturados:
+- `0` = success
+- `1` = runtime error
+- `2` = not found
+- outros = exception não-tratada
+
+---
+
+## 18. Backward Compatibility — Scripts Bash Legados
+
+O Python CLI **NÃO** substitui os scripts bash. Ele encapsula.
+
+```bash
+# Funciona como antes (v1 do projeto)
+~/fork-sync/bin/sync.sh aionui ~/GitHub/forks/AionUi
+
+# Funciona com symlink
+~/bin/sync.sh aionui ~/GitHub/forks/AionUi
+
+# Funciona com CLI (preferido)
+fork-sync sync aionui --repo-path ~/GitHub/forks/AionUi
+```
+
+**Por que manter bash?**
+- 1 hermes/vez no mesmo repo. Cron jobs bash são simples de monitorar
+- Scripts bash funcionam em qualquer servidor (sem dependência Python)
+- Bash é debugável com `bash -x sync.sh`
+
+Quando o fork-sync v2 sair com lógica 100% Python, vai ser via opt-in.
+
+---
+
+## 19. Troubleshooting
+
+### 14.1. `fork-sync: command not found`
+
+```bash
+# Verificar instalação
+pip show fork-sync
+
+# Reinstalar
+cd ~/fork-sync/cli && pip install -e .
+
+# Adicionar ~/bin ao PATH se necessário
+echo 'export PATH="$HOME/bin:$PATH"' >> ~/.bashrc
+```
+
+### 14.2. `ModuleNotFoundError: No module named 'fork_sync'`
+
+```bash
+cd ~/fork-sync/cli
+pip install -e . --force-reinstall
+```
+
+### 14.3. Sync cai em `needs_review` mas sem conflito real
+
+**Causa:** AI Decision Engine (Hermes Gateway) indisponível.
+
+```bash
+curl -s http://localhost:8201/health || echo "gateway down"
+```
+
+Ver [`docs/troubleshooting-ai-gateway.md`](docs/troubleshooting-ai-gateway.md) (quando
+disponível).
+
+### 14.4. Deploy Docker falha com `health check timeout`
+
+```bash
+# 1. Verificar container
+docker ps -a | grep <container_name>
+
+# 2. Logs do container
+docker logs <container_name> --tail 50
+
+# 3. Testar health endpoint manualmente
+curl -v $health_endpoint -H "Authorization: Bearer $HEALTH_TOKEN"
+```
+
+### 14.5. Submodule 404
+
+```bash
+# Inicializar
+git -C ~/GitHub/forks/MeuFork submodule update --init --recursive
+
+# Verificar URL no .gitmodules
+cat projects/meufork/.gitmodules
+```
+
+---
+
+## 20. Roadmap / Expansão
+
+### v1.2 (atual)
+- [x] **Release notes PT-BR** (`release generate|list|preview`) — busca upstream, parseia, traduz, marca fork
+- [x] `bin/create-release.sh` refatorado pra usar o novo módulo (zero duplicação)
+- [x] Cache de tradução em `.translate-cache/`
+- [x] Suporte a `--changed-files` (arquivos divergentes do fork)
+
+### v1.1
+- [x] **Auto-discovery** (`discover check|heal`) — acha forks/upstreams sumidos
+- [x] **Manuais de atualização** (`manuals generate|show|update|record-sync`)
+- [x] **Serviço PM2** com 4 processos (REPL + 3 cron)
+- [x] **Rotação de logs** (gzip + retenção configurável)
+- [x] **Doctor** — diagnóstico global de paths, deps, secrets policy
+
+### v1.1 (próximo)
+- [ ] `--init-submodules` flag
+- [ ] `fork-sync projects validate` (checa se paths existem)
+- [ ] Schema v2 (multi-upstream + custom strategy) — ver `docs/SCHEMA-V2-PROPOSTA.md`
+- [ ] Plugin Python entry_points pra `merge.strategy: custom`
+- [ ] `gsd-caveman-hermes` — exemplo real de fusão (get-shit-done + hermes-agent)
+
+### v2.0 (futuro)
+- [ ] Lógica 100% Python (bash opcional)
+- [ ] Web UI (FastAPI + Next.js) em `cli/web/`
+- [ ] Suporte a múltiplos upstreams por projeto
+- [ ] Integração nativa com Telegram (sem env vars)
+
+---
+
+## 21. Contribuindo
+
+PRs são bem-vindos. Antes:
+1. Ler [`SECRETS.md`](SECRETS.md) — zero secrets no repo
+2. Não commitar logs, `.env`, `*.local`
+3. Para novo fork, adicionar `projects/<name>/sync.yaml` (não commitar o repo do fork)
+4. Atualizar tabela de "Projetos atualmente configurados" no README
+
+---
+
+## 22. Referências
+
+- [CLI-Anything (HKUDS)](https://github.com/HKUDS/CLI-Anything) — inspiração arquitetural
+- [Click](https://palletsprojects.com/p/click/) — framework CLI
+- [prompt_toolkit](https://python-prompt-toolkit.readthedocs.io/) — REPL
+- [Hermes Agent](https://github.com/NousResearch/hermes-agent) — AI agent
+- Skill `fork-sync-engine` (Hermes internal) — versão bash v1
+
+---
+
+## 23. Licença
+
+MIT © 2026 Giovanni Muniz

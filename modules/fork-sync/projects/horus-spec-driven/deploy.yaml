@@ -1,0 +1,34 @@
+# Spec-Horus — deploy configuration
+# Managed by fork-sync. Triggered after sync (if deploy.enabled in sync.yaml).
+
+project: spec-horus
+display_name: Spec-Horus
+image: n/a  # Not a Docker project — installs via node + npm
+docker_compose_path: n/a
+
+# ── Install method ──────────────────────────────────────────────────────
+install:
+  method: cli
+  command: "node /home/ubuntu/GitHub/spec-horus/bin/install.js install --all --global"
+  description: |
+    Runs spec-horus install for all detected runtimes.
+    Hermes, Claude Code (global), Codex, Gemini, and Copilot (local, if .github/ exists).
+
+# ── Health check ─────────────────────────────────────────────────────────
+health:
+  method: cli
+  command: "node /home/ubuntu/GitHub/spec-horus/bin/install.js detect"
+  expected_output: "hermes"
+  description: "Verifies Hermes is detected. Other runtimes are optional."
+  timeout_seconds: 10
+
+# ── Rollback ────────────────────────────────────────────────────────────
+rollback:
+  method: git
+  command: "git -C /home/ubuntu/GitHub/spec-horus checkout HEAD~1 && node bin/install.js install --all --global"
+  description: "Rolls back spec-horus to previous commit and reinstalls."
+
+# ── Platforms ───────────────────────────────────────────────────────────
+platforms:
+  - linux/arm64  # Oracle Cloud, Apple Silicon Linux VMs
+  - linux/amd64  # PC servers

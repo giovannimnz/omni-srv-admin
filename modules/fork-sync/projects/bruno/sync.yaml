@@ -1,0 +1,17 @@
+project: bruno
+upstream: https://github.com/usebruno/bruno
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/GitHub/forks/bruno
+protected_paths:
+  # Custom collections e environments
+  - collections/
+  - environments/
+  - README.md
+merge_strategy: merge
+auto_push: true
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-rf"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"

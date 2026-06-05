@@ -1,0 +1,54 @@
+---
+title: Guia de Funcionalidades
+description: Explore os recursos do Atius AI Router
+---
+
+import { Card, Cards } from 'fumadocs-ui/components/card';
+import { BookOpen, History, Network } from 'lucide-react';
+
+## Bem-vindo ao Guia de Funcionalidades
+
+Aqui você encontra documentação detalhada sobre como usar o Atius AI Router de forma eficaz.
+
+<Cards>
+  <Card
+    icon={<BookOpen />}
+    title="Introdução ao Projeto"
+    description="Visão geral do Atius AI Router, seus objetivos e como ele se diferencia do upstream."
+    href="/pt/docs/guide/project-introduction"
+  />
+  <Card
+    icon={<Network />}
+    title="Arquitetura Técnica"
+    description="Como os componentes do Atius AI Router se conectam: new-api Go, middleware Python, PostgreSQL, Redis."
+    href="/pt/docs/guide/technical-architecture"
+  />
+  <Card
+    icon={<BookOpen />}
+    title="Conceitos Básicos"
+    description="Tokens, channels, groups, rates, e outros conceitos essenciais."
+    href="/pt/docs/guide/wiki/basic-concepts/features-introduction"
+  />
+  <Card
+    icon={<History />}
+    title="Changelog"
+    description="Histórico de versões e mudanças importantes."
+    href="/pt/docs/guide/wiki/changelog"
+  />
+</Cards>
+
+## Por que Atius AI Router?
+
+O **Atius AI Router** é um fork de produção do [QuantumNous/new-api](https://github.com/QuantumNous/new-api) com:
+
+- ✅ **Hardening de produção**: Configurações testadas em ambientes de alta carga
+- ✅ **Documentação em PT-BR**: Suporte nativo para o português brasileiro
+- ✅ **Compatibilidade total**: 100% compatível com a API OpenAI
+- ✅ **Open-source**: Licença MIT, código auditável
+
+<Callout type="info">
+Para a documentação original em inglês, acesse
+[/en/docs/guide](/en/docs/guide). O conteúdo em PT-BR é
+mantido pela equipe Atius e pode ter pequenas divergências em
+detalhes técnicos.
+</Callout>

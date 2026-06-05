@@ -1,0 +1,55 @@
+---
+title: Implantação com Container Docker Único
+description: Implantação rápida do Atius AI Router usando Docker
+---
+
+import { Callout } from 'fumadocs-ui/components/callout';
+
+## Visão Geral
+
+Para **uso pessoal** ou **aplicações de pequena escala**, você pode implantar o Atius AI Router como um único container Docker com SQLite. Esta abordagem é mais simples mas **não é recomendada para produção**.
+
+<Callout type="warning">
+**Limitado a ~100 req/min**: A configuração com SQLite e container único não escala para alta carga. Use Docker Compose com PostgreSQL + Redis para produção.
+</Callout>
+
+## Passo 1: Criar a Rede Docker
+
+```bash
+docker network create atius-ai-router_internal
+```
+
+## Passo 2: Subir o Container
+
+```bash
+docker run -d \
+  --name router-ai-atius \
+  --network atius-ai-router_internal \
+  -p 3030:3000 \
+  -v /opt/router-ai-atius/data:/data \
+  -e SQL_DSN="sqlite:///data/one-api.db" \
+  -e REDIS_CONN_STRING="" \
+  -e SESSION_SECRET="$(openssl rand -hex 32)" \
+  -e TZ=America/Sao_Paulo \
+  --restart unless-stopped \
+  ghcr.io/giovannimnz/router-ai-atius:latest
+```
+
+## Passo 3: Verificar
+
+```bash
+docker logs -f router-ai-atius
+```
+
+Aguarde até ver:
+
+```
+INFO: Atius AI Router ready in 3000ms
+```
+
+Acesse `http://<seu-ip>:3030` no navegador.
+
+## Próximos Passos
+
+- 📦 [Migrar para Docker Compose (produção)](/pt/docs/installation/deployment-methods/docker-compose-installation)
+- 🔧 [Configurar Backup Automático](/pt/docs/installation/config-maintenance/backup)
