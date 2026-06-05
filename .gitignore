@@ -136,3 +136,9 @@ domain-infrastructure/
 
 # Background process manifests (ephemeral)
 .bg-shell/
+
+# Submodule: fork-sync volatile paths
+modules/fork-sync/logs/
+modules/fork-sync/.translate-cache/
+modules/fork-sync/cli/fork_sync.egg-info/
+modules/fork-sync/scripts/
