@@ -23,10 +23,10 @@
 4. ✅ **Testes**: Backend (10 cenários) + E2E Playwright (5 cenários) criados
 
 ### Correções Recentes (16/02/2026)
-1. ✅ **Infra Rebrand**: documentação `docs/infrastructure` consolidada com naming Atius
+1. ✅ **Infra Rebrand**: documentação `docs/infrastructure` consolidada com naming Omni
 2. ✅ **PM2**: naming `atius-*` padronizado, processo legado `bybit-starboy-h-1` removido
 3. ✅ **Portas produção**: `.env` alinhado para `8015/3015`
-4. ✅ **PostgreSQL**: backup íntegro de `horistic` restaurado em `AtiusPrd` e `AtiusDev`
+4. ✅ **PostgreSQL**: backup íntegro de `horistic` restaurado em `OmniPrd` e `OmniDev`
 5. ✅ **Validação de integridade**: paridade de contagem de dados entre origem e destinos (`ROW_COUNT_PARITY=OK`)
 
 ### Sistema de Persistência

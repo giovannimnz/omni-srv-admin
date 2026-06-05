@@ -1,7 +1,7 @@
 # Active Context: Starboy Postgres
 
 **Data**: 16 de fevereiro de 2026
-**Fase**: Migração Infra/PM2/Postgres para Atius ✅ CONCLUÍDO
+**Fase**: Migração Infra/PM2/Postgres para Omni ✅ CONCLUÍDO
 
 ## Sessão Atual (16/02/2026) - Infra + Banco + PM2
 
@@ -10,7 +10,7 @@
 1. ✅ **Rebranding e alinhamento de portas**
    - `config/.env`: produção em `API_PORT=8015` e `FRONTEND_PORT=3015`
    - `ecosystem.config.js`: processo `bybit-atius-8`, frontend em `3015`
-   - `ecosystem.testnet.config.js`: `DB_NAME=AtiusDev`, caminhos ajustados para `/home/ubuntu/GitHub/ats`
+   - `ecosystem.testnet.config.js`: `DB_NAME=OmniDev`, caminhos ajustados para `/home/ubuntu/GitHub/ats`
 
 2. ✅ **Scripts PostgreSQL reconstruídos (`scripts/postgres`)**
    - Backup com validação (`dump + toc + sha256 + meta`)
@@ -19,7 +19,7 @@
 
 3. ✅ **Execução real de migração de banco**
    - Backup gerado: `horistic-20260216-200537.dump`
-   - Restore concluído em `AtiusPrd` e `AtiusDev`
+   - Restore concluído em `OmniPrd` e `OmniDev`
    - Paridade de dados validada por contagem exata por tabela: `ROW_COUNT_PARITY=OK`
 
 4. ✅ **PM2 ATS em execução**

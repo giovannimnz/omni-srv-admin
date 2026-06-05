@@ -35,7 +35,7 @@
 - [TASK007] Feedback de Execução de Ordens no Painel Semi-Automático - ✅ 11/02/2026
 - [TASK008] UID Obrigatório, Labels Alvo, Manual Target, Dashboard Balance - ✅ 12/02/2026
 - [TASK009] DIVAP Signal Generator & PineScript Strategy - ✅ 15/02/2026
-- [TASK010] Migração Infra/PM2/Postgres para Atius - ✅ 16/02/2026
+- [TASK010] Migração Infra/PM2/Postgres para Omni - ✅ 16/02/2026
 
 ---
 

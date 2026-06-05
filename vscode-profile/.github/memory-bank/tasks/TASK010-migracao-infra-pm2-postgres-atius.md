@@ -1,4 +1,4 @@
-# [TASK010] - Migração Infra/PM2/Postgres para Atius
+# [TASK010] - Migração Infra/PM2/Postgres para Omni
 
 **Status:** Completed  
 **Added:** 16/02/2026  
@@ -6,7 +6,7 @@
 
 ## Original Request
 
-Atualizar documentação de infraestrutura com rebranding completo, corrigir naming/portas em PM2 e configs, reconstruir scripts PostgreSQL, executar backup completo de `horistic`, validar integridade, restaurar em `AtiusPrd` e `AtiusDev`, e subir ATS em PM2 usando `AtiusPrd`.
+Atualizar documentação de infraestrutura com rebranding completo, corrigir naming/portas em PM2 e configs, reconstruir scripts PostgreSQL, executar backup completo de `horistic`, validar integridade, restaurar em `OmniPrd` e `OmniDev`, e subir ATS em PM2 usando `OmniPrd`.
 
 ## Thought Process
 
@@ -23,7 +23,7 @@ Atualizar documentação de infraestrutura com rebranding completo, corrigir nam
 - [x] Rebuild completo de `scripts/postgres/*`
 - [x] Atualizar docs em `docs/infrastructure/*` e renomear arquivos com `ATIUS`
 - [x] Executar backup de `horistic` com validações
-- [x] Restaurar em `AtiusPrd` e `AtiusDev`
+- [x] Restaurar em `OmniPrd` e `OmniDev`
 - [x] Validar integridade (estrutura + contagem exata)
 - [x] Subir PM2 do ATS e remover processos legados `horistic-*`
 
@@ -40,8 +40,8 @@ Atualizar documentação de infraestrutura com rebranding completo, corrigir nam
 | 10.3 | Rebuild scripts postgres | Complete | 16/02 | backup/restore/vacuum robustos |
 | 10.4 | Rebrand docs infraestrutura | Complete | 16/02 | arquivos renomeados para `ATIUS` |
 | 10.5 | Backup horistic | Complete | 16/02 | dump + toc + sha256 + meta |
-| 10.6 | Restore AtiusPrd | Complete | 16/02 | sucesso, 34 tabelas públicas no restore log |
-| 10.7 | Restore AtiusDev | Complete | 16/02 | sucesso, 34 tabelas públicas no restore log |
+| 10.6 | Restore OmniPrd | Complete | 16/02 | sucesso, 34 tabelas públicas no restore log |
+| 10.7 | Restore OmniDev | Complete | 16/02 | sucesso, 34 tabelas públicas no restore log |
 | 10.8 | Validação de paridade | Complete | 16/02 | `ROW_COUNT_PARITY=OK` |
 | 10.9 | PM2 start ATS | Complete | 16/02 | stack `atius-*` online |
 
@@ -52,7 +52,7 @@ Atualizar documentação de infraestrutura com rebranding completo, corrigir nam
 - Corrigido naming PM2 legado (`starboy/horistic` -> `atius`)
 - Scripts de Postgres reconstruídos com `set -Eeuo pipefail`, checksum e validação de TOC
 - Backup criado: `horistic-20260216-200537.dump`
-- Restore concluído com sucesso em `AtiusPrd` e `AtiusDev`
+- Restore concluído com sucesso em `OmniPrd` e `OmniDev`
 - Integridade validada com contagem exata por tabela (`ROW_COUNT_PARITY=OK`)
 - PM2 iniciado com ecosystem atualizado; processos legados `horistic-*` removidos
 - Ajuste final do `atius-web` para subir em `3015` via `next start -p 3015`

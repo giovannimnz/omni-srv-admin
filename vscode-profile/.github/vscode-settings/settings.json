@@ -861,7 +861,7 @@
     "docker-compose down",
     "docker-compose up -d",
     "docker exec openclaw-gateway node openclaw.mjs channels status --probe",
-    "docker exec openclaw-gateway node openclaw.mjs message send --channel telegram --target @AgentAlfred_Atius_bot --message \"Teste de mensagem do OpenClaw Docker\"",
+    "docker exec openclaw-gateway node openclaw.mjs message send --channel telegram --target @AgentAlfred_Omni_bot --message \"Teste de mensagem do OpenClaw Docker\"",
     "docker exec openclaw-gateway node openclaw.mjs message send --channel telegram --target 542031379 --message \"Teste de mensagem do OpenClaw Docker - Mensagem de verificação\"",
     "docker exec openclaw-gateway node openclaw.mjs agent --to 542031379 --message \"Por favor, confirme que está funcionando corretamente. Esta é uma mensagem de teste do sistema OpenClaw Docker.\" --deliver",
     "docker exec openclaw-gateway node openclaw.mjs gateway status",
