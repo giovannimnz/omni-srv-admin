@@ -1,88 +1,88 @@
-# horus-spec-driven — fork-sync configuration
-# Managed by: ~/GitHub/omni-srv-admin/modules/fork-sync/
+# Horus Spec Driven — fork-sync configuration
+# Project: horus-spec-driven
+# Wrapper over open-gsd/gsd-core with role-based unified commands
 #
-# horus-spec-driven NÃO é um fork — é um wrapper que vendoria o gsd-core upstream.
-# O "upstream" efetivo é o gsd-core (open-gsd/gsd-core), puxado via
-# `git clone --depth 1` no momento do install.
-#
-# Este sync.yaml existe para que o fork-sync possa:
-#   1. Versionar releases do horus-spec-driven
-#   2. Fazer deploy no Hermes (install local ou global)
-#   3. Documentar atualizações no manual versionado
-#   4. Rodar sync diário via PM2 cron
+# 67 upstream commands → 17 unified hsd commands (75% reduction)
+# Categories: PO (Product Owner), PM (Project Manager), FRONT, BACK, QA
 
-project: horus-spec-driven
-display_name: "horus-spec-driven — Multi-CLI Wrapper for GSD Core"
+project: Horus-Spec-Driven
+display_name: "Horus Spec Driven — Multi-CLI Wrapper for GSD Core"
 
-# Estratégia de "upstream": pull do gsd-core + rebrand + install
-# Não é um fork convencional — o upstream é tratado como vendor.
 upstream_type: vendor
 vendor_source: https://github.com/open-gsd/gsd-core
 vendor_branch: main
 vendor_method: "shallow clone (git clone --depth 1)"
 
-# O repo do horus-spec-driven É o fork (no sentido fork-sync, embora
-# tecnicamente não seja um fork do gsd-core)
 fork: /home/ubuntu/GitHub/horus-spec-driven
 fork_branch: master
 fork_origin: https://github.com/giovannimnz/horus-spec-driven
 
-# ── Protected paths (NUNCA sobrescrevidos por merge upstream) ───────────
+# ── Protected paths (NUNCA sobrescritos) ───────────────────────
 protected_paths:
-  # Core adapters (Hermes-specific, não existem no upstream)
   - bin/lib/horus-sdk-adapter/
   - bin/lib/content-converters/
   - bin/lib/frontmatter-converters/
   - bin/lib/subagent-adapter/
-  # Config files
-  - horus-spec-driven.json
-  - runtimes/
-  - docs/
-  # Own scripts
+  - bin/lib/layout.js
   - bin/rebrand.js
   - bin/install.js
   - bin/sync.js
-  # Docs
+  - runtimes/
+  - docs/
+  - spec-horus.json
   - README.md
   - SETUP.md
   - CHANGELOG.md
   - LICENSE
 
-# ── Merge strategy ──────────────────────────────────────────────────────
-# Como NÃO é um fork, o "merge" é: pull vendor → rebrand → install
 merge_strategy: custom
 merge_script: /home/ubuntu/GitHub/horus-spec-driven/bin/install.js
 merge_args: ["sync", "--all", "--global"]
 merge_description: |
-  1. Pull gsd-core latest (git clone --depth 1 open-gsd/gsd-core)
-  2. Build wordlist (gsd → shd/shq/shp)
+  1. Pull gsd-core latest (git clone --depth 1)
+  2. Build unified wordlist (gsd-X → hsd-{role}-Y)
   3. Apply content + frontmatter converters per runtime
-  4. Install em Hermes, Claude, Codex, Gemini (e demais habilitados)
-  5. Install horus-sdk-adapter skill no Hermes
+  4. Install em Hermes (skills/hsd/), Claude, Codex, Gemini, Copilot
+  5. Install horus-sdk-adapter skill
 
-# ── Deploy ──────────────────────────────────────────────────────────────
 deploy:
   enabled: true
-  method: npm
+  method: cli
   targets:
     - runtime: hermes
       home: ~/.hermes
       mode: global
+      dest_subpath: skills/hsd
     - runtime: claude
       home: ~/.claude
       mode: global
   post_deploy:
-    - "horus-spec-driven detect"
-    - "horus-spec-driven wordlist | head -3"
+    - "node ~/GitHub/horus-spec-driven/bin/install.js detect"
 
-# ── Version scheme ──────────────────────────────────────────────────────
-version_scheme:
-  format: "v{horus_spec_driven_version}+gsd{gsd_core_version}"
-  horus_spec_driven_version_file: /home/ubuntu/GitHub/horus-spec-driven/package.json
-  gsd_core_version_tracked: true
-
-# ── Notifications ───────────────────────────────────────────────────────
 notification_level: all
-
-# ── AI decision threshold ───────────────────────────────────────────────
 ai_decision_threshold: important
+
+# ── Slash Commands (17 unified) ─────────────────────────────────
+unified_commands:
+  po:  # Product Owner
+    - hsd-po-discover   # explore, spike, sketch, capture, map-codebase
+    - hsd-po-new        # new-project, new-milestone
+    - hsd-po-define     # discuss-phase, spec-phase, mvp-phase
+    - hsd-po-inbox      # inbox
+  pm:  # Project Manager
+    - hsd-pm-plan       # plan-phase, ultraplan-phase, ai-integration-phase
+    - hsd-pm-exec       # execute-phase, autonomous, quick, fast
+    - hsd-pm-track      # progress, workstreams, thread, phase, stats, graphify
+    - hsd-pm-config     # config, settings, profile-user
+    - hsd-pm-ship       # ship, pr-branch, complete-milestone, milestone-summary
+    - hsd-pm-manage     # manager, surface, pause-work, resume-work, help
+  front:  # Frontend
+    - hsd-front-ui      # ui-phase, ui-review
+  back:  # Backend
+    - hsd-back-debug    # debug, forensics
+    - hsd-back-maintain # docs-update, extract-learnings, ingest-docs, import, cleanup
+    - hsd-back-context  # ns-context
+  qa:  # Quality Assurance
+    - hsd-qa-validate   # validate-phase, verify-work, health, add-tests
+    - hsd-qa-audit      # audit-fix, audit-milestone, audit-uat
+    - hsd-qa-review     # code-review, eval-review, review, review-backlog, secure-phase

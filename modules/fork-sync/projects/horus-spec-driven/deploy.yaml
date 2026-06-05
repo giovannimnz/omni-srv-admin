@@ -1,34 +1,26 @@
-# horus-spec-driven — deploy configuration
-# Managed by fork-sync. Triggered after sync (if deploy.enabled in sync.yaml).
-
+# Horus Spec Driven — deploy configuration
 project: horus-spec-driven
-display_name: horus-spec-driven
-image: n/a  # Not a Docker project — installs via node + npm
+display_name: Horus Spec Driven
+image: n/a
 docker_compose_path: n/a
 
-# ── Install method ──────────────────────────────────────────────────────
 install:
   method: cli
   command: "node /home/ubuntu/GitHub/horus-spec-driven/bin/install.js install --all --global"
   description: |
-    Runs horus-spec-driven install for all detected runtimes.
-    Hermes, Claude Code (global), Codex, Gemini, and Copilot (local, if .github/ exists).
+    Instala 17 comandos unificados (5 roles: PO, PM, FRONT, BACK, QA)
+    em todos os runtimes detectados (Hermes, Claude Code, etc.)
 
-# ── Health check ─────────────────────────────────────────────────────────
 health:
   method: cli
   command: "node /home/ubuntu/GitHub/horus-spec-driven/bin/install.js detect"
   expected_output: "hermes"
-  description: "Verifies Hermes is detected. Other runtimes are optional."
   timeout_seconds: 10
 
-# ── Rollback ────────────────────────────────────────────────────────────
 rollback:
   method: git
   command: "git -C /home/ubuntu/GitHub/horus-spec-driven checkout HEAD~1 && node bin/install.js install --all --global"
-  description: "Rolls back horus-spec-driven to previous commit and reinstalls."
 
-# ── Platforms ───────────────────────────────────────────────────────────
 platforms:
-  - linux/arm64  # Oracle Cloud, Apple Silicon Linux VMs
-  - linux/amd64  # PC servers
+  - linux/arm64
+  - linux/amd64
