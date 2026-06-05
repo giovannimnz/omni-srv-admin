@@ -36,11 +36,12 @@ setup(
             "pytest-cov>=4.0.0",
         ],
     },
-    entry_points={
-        "console_scripts": [
-            "fork-sync=fork_sync.cli:main",
-        ],
-    },
+    # CLI movida para omni (
+    # entry_points={
+    #     "console_scripts": [
+    #         "fork-sync=fork_sync.cli:main",
+    #     ],
+    # },
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",

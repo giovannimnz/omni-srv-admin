@@ -11,8 +11,8 @@
     "nyquist_validation": true,
     "auto_advance": false
   },
-  "currentMilestone": "M002",
-  "currentPhase": "08",
+  "currentMilestone": "M003",
+  "currentPhase": "09",
   "milestones": [
     {
       "id": "M001",
@@ -24,10 +24,18 @@
     {
       "id": "M002",
       "name": "Fork Sync Integration",
+      "status": "done",
+      "completed": "2026-06-05",
+      "phases": ["08"],
+      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv → omni-srv-admin"
+    },
+    {
+      "id": "M003",
+      "name": "Omni CLI Expansion",
       "status": "active",
-      "phase": "08",
-      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv → omni-srv-admin",
-      "depends_on": "M001"
+      "phase": "09",
+      "goal": "omni CLI unificada com subcomandos admin, deploy, backup",
+      "depends_on": "M002"
     }
   ],
   "_created": "2026-05-06",

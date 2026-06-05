@@ -2,7 +2,7 @@
 # Project: horus-spec-driven
 # Wrapper over open-gsd/gsd-core with role-based unified commands
 #
-# 67 upstream commands → 17 unified hsd commands (75% reduction)
+# 67 upstream commands → 3 roles + config hsd commands (75% reduction)
 # Categories: PO (Product Owner), PM (Project Manager), FRONT, BACK, QA
 
 project: Horus-Spec-Driven
@@ -62,7 +62,7 @@ deploy:
 notification_level: all
 ai_decision_threshold: important
 
-# ── Slash Commands (17 unified) ─────────────────────────────────
+# ── Slash Commands (3 roles + config) ─────────────────────────────────
 unified_commands:
   po:  # Product Owner
     - hsd-po-discover   # explore, spike, sketch, capture, map-codebase

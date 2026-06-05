@@ -1,10 +1,16 @@
 # Architecture
 
-**Analysis Date:** 2026-04-19
+**Analysis Date:** 2026-06-05
 
 ## Pattern Overview
 
-**Overall:** Multi-application monorepo with PM2 process orchestration, Docker for infrastructure services, and Apache as reverse proxy/SSL termination.
+**Overall:** Server administration tools repository with Click-based Python CLI. Modular architecture where `omni` CLI orchestrates subcommands from separate packages.
+
+**Key Characteristics:**
+- Single entry point (`omni`) dispatches to modular subcommand groups
+- `fork-sync` lib imported dynamically by `omni` CLI (no separate binary)
+- Bash scripts for server provisioning (setup.sh, iptables)
+- All Python packages using setuptools (setup.py, not pyproject.toml)
 
 **Key Characteristics:**
 - Two primary trading platforms (Atius, Horistic) sharing the same codebase fork under `/home/ubuntu/GitHub/`

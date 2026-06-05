@@ -12,7 +12,7 @@ last_updated: 2026-06-05
 
 horus-spec-driven é um **wrapper multi-CLI** sobre o `open-gsd/gsd-core`. Ele:
 
-1. Vendoria o gsd-core (shallow clone em `vendor/gsd-core/`)
+1. Vendoria o gsd-core (shallow clone em `modules/gsd-core/`)
 2. Aplica **rebrand** automático: `gsd-*` → `shd-*` (dev), `shq-*` (qa), `shp-*` (params)
 3. Converte o conteúdo para formato nativo de cada runtime (5 content converters + 5 frontmatter converters)
 4. Instala nos runtimes configurados (Hermes, Claude Code, Codex, Gemini CLI, GitHub Copilot)
@@ -32,7 +32,7 @@ horus-spec-driven é um **wrapper multi-CLI** sobre o `open-gsd/gsd-core`. Ele:
 
 O horus-spec-driven **não é um fork** — é um wrapper. O "sync" consiste em:
 
-1. `git clone --depth 1 open-gsd/gsd-core vendor/gsd-core/`
+1. `git clone --depth 1 open-gsd/gsd-core modules/gsd-core/`
 2. `node bin/install.js install --all --global` (rebrand + content converte + install)
 
 Arquivos protegidos (NUNCA sobrescritos):
@@ -83,10 +83,10 @@ O horus-spec-driven renomeia `gsd-*` → `shd-*` / `shq-*` / `shp-*` com wordlis
 
 ## Troubleshooting
 
-### "vendor/gsd-core/ missing"
+### "modules/gsd-core/ missing"
 
 ```bash
-rm -rf vendor/
+rm -rf modules/
 node bin/install.js install --runtime=hermes --global
 ```
 

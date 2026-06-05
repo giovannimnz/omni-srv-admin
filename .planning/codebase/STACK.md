@@ -1,52 +1,52 @@
 # Technology Stack
 
-**Analysis Date:** 2026-04-19
+**Analysis Date:** 2026-06-05
 
 ## Languages
 
 **Primary:**
-- **TypeScript/JavaScript** (ES2020+) — Backend API (`GitHub/atius/backend/`), frontend (`GitHub/atius/frontend/`), Horistic (`GitHub/horistic/`), pm2.web (`docker/pm2.web/`)
-- **Python** 3.11+ — Backtesting, data analysis, MEXC browser automation, trading signal processing (`GitHub/atius/backend/`, `GitHub/horistic/`)
-
-**Secondary:**
-- **Bash** 5.x — Infrastructure scripts (`atius-srv/setup.sh`, `start.sh`, `restart-containers.sh`, `install-chromium.sh`)
+- **Python** 3.10+ — CLI tooling (omni CLI, fork-sync lib, Click framework)
+- **Bash** 5.x — Setup scripts, deployment helpers, automation
 
 ## Runtime
 
 **Environment:**
-- **Node.js** v24.13.1 (managed via NVM 0.39.7, default alias)
-- **npm** 11.8.0
-- **Python** 3.10.12 (system) / 3.11 (via `uv` at `~/.local/bin/uv` for project use)
-- Lockfile: `package-lock.json` present; `uv.lock` present for Python
+- **Python** 3.10.12 (system) managed via `uv`
+- **Node.js** (for horus-spec-driven CLI wrapper via bin/install.js)
 
 **Package Manager:**
-- npm for JavaScript/TypeScript
-- `uv` for Python (pinned to 3.11 in `.python-version`)
+- `pip` (setuptools) for Python packages
+- `uv` for project-level Python management
 
 ## Frameworks
 
-**Core Backend:**
-- **Fastify** v5.7.1 — Primary API framework (`backend/server/api.js`) with plugins for CORS, cookies, Helmet, rate-limit, static, Swagger
-- **Express** v5.1.0 — Also present in dependencies (legacy/auxiliary routes)
-- **Uvicorn** (via pyproject.toml) — ASGI server for Python FastAPI services
+**CLI Framework:**
+- **Click** v8.0+ — CLI framework for Python (both omni and fork-sync)
+- **prompt-toolkit** v3.0+ — REPL mode (fork-sync)
+- **Rich** v13.0+ — Terminal output formatting (fork-sync)
+- **PyYAML** v6.0+ — YAML config parsing
 
-**Core Frontend:**
-- **Next.js** v14.2.29 — React SSR/SSG (`GitHub/atius/frontend/`)
-- **React** v18.2.0 — UI framework
-- **Tailwind CSS** — Styling with `tailwind.config.js`
-- **shadcn/ui** — Component library (Radix UI primitives)
-- **Recharts** — Charting/data visualization
+**No application frameworks** — omni-srv-admin is a server administration repo, not a web app.
 
-**Python Stack:**
-- **FastAPI** v0.135.3 — Python REST API (`pyproject.toml`)
-- **Pandas** v2.3.3 — Data analysis and processing
-- **NumPy** <2 — Numerical computing
-- **CCXT** v4.5.46 — Crypto exchange unified API
-- **VectorBT** v0.28.2 — Algorithmic trading backtesting
-- **Lightweight Charts** v2.1 — Trading chart visualization
+## Key Dependencies
 
-**Process Management:**
-- **PM2** v6.0.14 — Process manager (`ecosystem.config.js`) with 10+ app instances across API, frontend, webhook signals, bot launchers, browser automation
+| Package | Version | Purpose |
+|---------|---------|---------|
+| click | ^8.0 | CLI framework |
+| prompt-toolkit | ^3.0 | REPL mode |
+| rich | ^13.0 | Terminal formatting |
+| pyyaml | ^6.0 | Config parsing |
+| setuptools | — | Package installation |
+
+## Infrastructure
+
+| Tool | Version | Purpose |
+|------|---------|---------|
+| iptables | — | Firewall rules |
+| systemd | — | Service management |
+| crontab | — | Scheduled tasks |
+| rsync | — | File sync/backup |
+
 
 **Testing:**
 - **Jest** v30.0.5 — Backend unit/integration tests

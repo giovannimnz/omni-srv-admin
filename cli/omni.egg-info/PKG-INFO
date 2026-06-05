@@ -1,0 +1,21 @@
+Metadata-Version: 2.4
+Name: omni
+Version: 0.1.0
+Summary: CLI unificada para administração de servidores e gestão de forks
+Home-page: https://github.com/giovannimnz/omni-srv-admin
+Author: Giovanni Muniz
+Author-email: munizgiovanni@hotmail.com
+Classifier: Development Status :: 3 - Alpha
+Classifier: Intended Audience :: Developers
+Classifier: Topic :: System :: Systems Administration
+Classifier: License :: OSI Approved :: MIT License
+Classifier: Programming Language :: Python :: 3
+Requires-Python: >=3.10
+Requires-Dist: click>=8.0.0
+Dynamic: author
+Dynamic: author-email
+Dynamic: classifier
+Dynamic: home-page
+Dynamic: requires-dist
+Dynamic: requires-python
+Dynamic: summary

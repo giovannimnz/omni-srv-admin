@@ -14,10 +14,13 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 - ✓ **SRV-01**: Script `setup.sh` executa provisionamento base do servidor — tooling, usuários, permissões
 - ✓ **SRV-02**: Regras iptables salvas e restauráveis em `/etc/iptables/`
-- ✓ **SRV-03**: Apache2 com 60+ vhosts funcionando como reverse proxy (antes da migração)
 - ✓ **SRV-04**: ~25 containers Docker rodando (Portainer, Plane, n8n, Open WebUI, Paperclip, Jenkins)
 - ✓ **SRV-05**: PostgreSQL 17 (porta 8745) e MongoDB (porta 27017) operacionais
 - ✓ **SRV-06**: PM2 gerenciando API, frontend, webhooks e bots de trading
+- ✓ **CLI-01**: `omni` CLI instalado via pip editable (`cli/`)
+- ✓ **CLI-02**: `fork-sync` integrado como subcomando `omni fork-sync`
+- ✓ **CLI-03**: `fork-sync` lib-only (sem entry point próprio)
+- ✓ **CLI-04**: 9 forks gerenciados via `omni fork-sync projects list`
 
 ### Active
 
@@ -34,6 +37,12 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 - [ ] **MIG-02**: Samba migrado de 10.1.1.2 para 10.1.1.1
 - [ ] **COEX-01**: SSO existente no Apache2 (~/GitHub/atius) NÃO é afetado durante implementação
 - [ ] **COEX-02**: Ambos SSO (Apache2 e Keycloak) coexistem sem conflito
+
+#### Módulo: Omni CLI Unificado
+- [ ] **OMNI-01**: `omni admin` — comandos de administração do servidor (status, health, services)
+- [ ] **OMNI-02**: `omni deploy` — deploy de projetos/containers (wrapping fork-sync deploy)
+- [ ] **OMNI-03**: `omni backup` — backup e restore de dados/configs
+- [ ] **OMNI-04**: Documentação e --help completos para todos subcomandos
 
 #### Módulo: Server Setup (base)
 - [ ] **SET-01**: `setup.sh` documentado e idempotente

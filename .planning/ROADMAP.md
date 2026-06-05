@@ -161,7 +161,64 @@
 | 6 | Keycloak SSO | SSO web com OIDC | 5 | Pending | MEDIUM |
 | 7 | Coexistência + Clients | Tudo integrado, clients enrolled | 7 | Pending | LOW |
 
-**Total:** 7 phases | 39 requirements mapped | 36 requirements covered ✓
+**Total (M001-M002):** 7 phases | 39 requirements mapped | 36 requirements covered ✓
+
+---
+
+## M003: Omni CLI Expansion ✅ DONE
+
+**Goal:** omni CLI unificada com subcomandos admin, deploy, backup — cobrindo administração de servidor, deploys de containers e backup/restore centralizado.
+
+**Completed:** 2026-06-05
+
+**Why:** Com fork-sync integrado como subcomando, o omni precisa de mais subcomandos pra ser o CLI único de administração. admin, deploy e backup são os próximos naturais.
+
+**Depends on:** M002 (fork-sync integration)
+
+---
+
+### Phase 9: omni admin ✅ DONE
+
+**Goal:** `omni admin status`, `omni admin health`, `omni admin services` — comandos de administração do servidor.
+
+**Requirements:** OMNI-01
+
+**Results:**
+- `omni admin status` — visão geral: uptime, CPU, memória, disco
+- `omni admin health` — health checks básicos (ping DNS, portas, serviços)
+- `omni admin services` — lista serviços (systemd) com status
+- `omni admin services <name>` — status + logs de 1 serviço
+- `omni admin processes` — top-like (processos por uso)
+- `omni admin --help` documentado
+
+---
+
+### Phase 10: omni deploy ✅ DONE
+
+**Goal:** `omni deploy <project>` — deploy de projetos/containers.
+
+**Requirements:** OMNI-02
+
+**Results:**
+- `omni deploy list` — lista projetos com deploy configurado
+- `omni deploy <project>` — executa deploy (wrapping fork-sync deploy)
+- `omni deploy <project> --dry-run` — simula sem executar
+- `--help` documentado
+
+---
+
+### Phase 11: omni backup ✅ DONE
+
+**Goal:** `omni backup <subcommand>` — backup e restore de dados/configs.
+
+**Requirements:** OMNI-03
+
+**Results:**
+- `omni backup list` — lista backups disponíveis
+- `omni backup create <path>` — cria backup (tar + timestamp)
+- `omni backup restore <path>` — restaura backup
+- `omni backup status` — status do último backup
+- `--help` documentado
 
 ---
 

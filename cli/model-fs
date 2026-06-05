@@ -1,0 +1,59 @@
+#!/usr/bin/env bash
+# /model-fs — Model Fast Switch
+# Troca para o último modelo usado (toggle entre atual e anterior).
+# Estado persistido em ~/.hermes/state/model_history.json
+set -euo pipefail
+
+HERMES_HOME="${HERMES_HOME:-$HOME/.hermes}"
+CONFIG="$HERMES_HOME/config.yaml"
+STATE_DIR="$HERMES_HOME/state"
+HIST="$STATE_DIR/model_history.json"
+
+mkdir -p "$STATE_DIR"
+[[ -f "$HIST" ]] || echo '{"current":"","previous":""}' > "$HIST"
+
+# current model: lê de config.yaml
+current() {
+  awk '/^  default:/{print $2; exit}' "$CONFIG" 2>/dev/null || echo ""
+}
+
+# provider: campo provider dentro de model:
+current_provider() {
+  awk '/^model:/{f=1; next} f && /provider:/{print $2; exit}' "$CONFIG" 2>/dev/null || echo ""
+}
+
+CUR_MODEL=$(current)
+CUR_PROV=$(current_provider)
+PREV_MODEL=$(python3 -c "import json,sys; d=json.load(open('$HIST')); print(d.get('previous',''))" 2>/dev/null || echo "")
+PREV_PROV=$(python3 -c "import json,sys; d=json.load(open('$HIST')); print(d.get('previous_provider',''))" 2>/dev/null || echo "")
+
+if [[ -z "$PREV_MODEL" ]]; then
+  echo "Sem histórico anterior. Use /model <nome> pelo menos uma vez."
+  exit 1
+fi
+
+if [[ "$CUR_MODEL" == "$PREV_MODEL" && "$CUR_PROV" == "$PREV_PROV" ]]; then
+  echo "Já estás no modelo anterior ($PREV_MODEL)."
+  exit 0
+fi
+
+# Atualiza histórico: previous recebe o current, current recebe o target
+python3 - "$HIST" "$CUR_MODEL" "$CUR_PROV" "$PREV_MODEL" "$PREV_PROV" <<'PY'
+import json, sys
+path, cur_m, cur_p, prev_m, prev_p = sys.argv[1:6]
+d = {"current": cur_m, "current_provider": cur_p,
+     "previous": prev_m, "previous_provider": prev_p}
+# swap
+d_new = {"current": prev_m, "current_provider": prev_p,
+         "previous": cur_m, "previous_provider": cur_p}
+json.dump(d_new, open(path, "w"), indent=2)
+PY
+
+# Aplica via hermes config set
+hermes config set model.default "$PREV_MODEL" >/dev/null
+if [[ -n "$PREV_PROV" ]]; then
+  hermes config set model.provider "$PREV_PROV" >/dev/null
+fi
+
+echo "Switch: $CUR_MODEL ($CUR_PROV) → $PREV_MODEL ($PREV_PROV)"
+echo "Histórico atualizado. /model-fs novamente volta para o anterior."

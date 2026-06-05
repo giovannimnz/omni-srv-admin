@@ -1,54 +1,39 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-04-19
+**Analysis Date:** 2026-06-05
 
 ## Directory Layout
 
 ```
-/home/ubuntu/
-├── GitHub/                      # Primary source code repositories
-│   ├── atius/                   # Trading platform (primary)
-│   │   ├── backend/             # Node.js + Python backend
-│   │   ├── frontend/            # Next.js frontend
-│   │   ├── tests/               # Test suites
-│   │   ├── scripts/             # Automation scripts
-│   │   ├── utils/               # Shared utilities
-│   │   ├── config/              # Environment configs
-│   │   ├── docs/                # Documentation
-│   │   └── ecosystem.config.js  # PM2 process definitions
-│   ├── horistic/                # Trading platform (fork/variant)
-│   │   ├── backend/             # Same structure as atius
-│   │   ├── frontend/            # Same structure as atius
-│   │   └── ecosystem.config.js  # PM2 config (smaller footprint)
-│   ├── forks/                   # Project forks
-│   ├── painel-divap/            # Divap dashboard panel
-│   ├── atius-srv/               # Server management scripts
-│   ├── VideoDownloader/         # Video downloader utility
-│   └── vision-mcp/              # Vision MCP project
-├── docker/                      # Docker Compose stacks
-│   ├── ai-apps/                 # AI infrastructure stack
-│   │   ├── transformer-router/  # AI code router
-│   │   ├── openclaw/            # Claude code instance
-│   │   ├── open-webui/          # Open WebUI
-│   │   ├── n8n/                 # Automation platform
-│   │   ├── picoclaw-pers/       # Personal Claude instance
-│   │   └── paperclip-pers/      # Personal Paperclip
-│   ├── AtiusCapital/            # Atius infrastructure stack
-│   │   ├── jenkins/             # Jenkins CI/CD
-│   │   ├── paperclip-atius/     # Atius Paperclip instance
-│   │   ├── picoclaw-atius/      # Atius Claude instance
-│   │   ├── plane-app/           # Project management
-│   │   ├── get-shit-done-adapter/
-│   │   └── browserAutomation/
-│   └── pm2.web/                 # PM2 web dashboard
-├── atius/                       # Legacy/production deployment
-│   ├── starboy/                 # Older version of trading platform
-│   ├── util/                    # Utility scripts
-│   └── docs/                    # Documentation
-├── bin/                         # User-level CLI scripts
-├── .gsd/                        # GSD planning state
-└── backups/                     # Backup directory
-```
+/home/ubuntu/GitHub/omni-srv-admin/
+├── cli/                       # CLI tools (Python setuptools)
+│   ├── setup.py               # omni CLI entry point (console_scripts)
+│   └── omni/                  # omni package
+│       ├── __init__.py        # v0.1.0
+│       ├── __main__.py        # python -m omni
+│       └── cli.py             # Click group → fork-sync + subcommands
+├── modules/
+│   └── fork-sync/             # fork-sync lib (CLI via omni)
+│       ├── cli/               # fork-sync Python package (lib-only, no entry point)
+│       │   ├── setup.py
+│       │   └── fork_sync/
+│       │       ├── cli.py     # Click group (imported by omni)
+│       │       ├── core/      # Core modules (config, sync, deploy, etc.)
+│       │       └── __init__.py
+│       └── projects/          # Project configs (sync.yaml per fork)
+├── antivirus/                 # Antivirus scan scripts
+├── dark-theme-ubuntu/         # Desktop theme (LXDE/Apple fonts)
+├── docs/                      # Project documentation
+├── domain-infrastructure/     # FreeIPA + Keycloak + Samba
+├── iptables/                  # Firewall rules
+├── vscode-profile/            # VSCode config + memory bank
+├── setup.sh                   # Base server provisioning
+└── .planning/                 # GSD planning artifacts
+    ├── PROJECT.md
+    ├── ROADMAP.md
+    ├── config.json
+    ├── codebase/              # Codebase map (this file)
+    └── phases/                # Phase plans
 
 ## Directory Purposes
 

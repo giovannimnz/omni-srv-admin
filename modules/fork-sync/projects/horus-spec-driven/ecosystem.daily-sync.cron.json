@@ -1,0 +1,19 @@
+{
+  "name": "horus-spec-driven-daily-sync",
+  "script": "/home/ubuntu/GitHub/horus-spec-driven/bin/install.js",
+  "args": ["sync", "--all", "--global"],
+  "cron_restart": "0 8 * * *",
+  "cwd": "/home/ubuntu/GitHub/horus-spec-driven",
+  "interpreter": "node",
+  "watch": false,
+  "autorestart": false,
+  "env": {
+    "SPEC_HORUS_DEBUG": "0",
+    "HERMES_HOME": "/home/ubuntu/.hermes",
+    "CLAUDE_CONFIG_DIR": "/home/ubuntu/.claude"
+  },
+  "log_file": "/home/ubuntu/GitHub/horus-spec-driven/logs/pm2-daily-sync.log",
+  "error_file": "/home/ubuntu/GitHub/horus-spec-driven/logs/pm2-daily-sync-error.log",
+  "out_file": "/home/ubuntu/GitHub/horus-spec-driven/logs/pm2-daily-sync-out.log",
+  "time": true
+}
