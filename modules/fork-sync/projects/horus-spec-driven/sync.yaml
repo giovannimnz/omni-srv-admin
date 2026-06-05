@@ -1,12 +1,12 @@
-# Spec-Horus — fork-sync configuration
+# horus-spec-driven — fork-sync configuration
 # Managed by: ~/GitHub/omni-srv-admin/modules/fork-sync/
 #
-# Spec-Horus NÃO é um fork — é um wrapper que vendoria o gsd-core upstream.
+# horus-spec-driven NÃO é um fork — é um wrapper que vendoria o gsd-core upstream.
 # O "upstream" efetivo é o gsd-core (open-gsd/gsd-core), puxado via
 # `git clone --depth 1` no momento do install.
 #
 # Este sync.yaml existe para que o fork-sync possa:
-#   1. Versionar releases do spec-horus
+#   1. Versionar releases do horus-spec-driven
 #   2. Fazer deploy no Hermes (install local ou global)
 #   3. Documentar atualizações no manual versionado
 #   4. Rodar sync diário via PM2 cron
@@ -21,11 +21,11 @@ vendor_source: https://github.com/open-gsd/gsd-core
 vendor_branch: main
 vendor_method: "shallow clone (git clone --depth 1)"
 
-# O repo do spec-horus É o fork (no sentido fork-sync, embora
+# O repo do horus-spec-driven É o fork (no sentido fork-sync, embora
 # tecnicamente não seja um fork do gsd-core)
-fork: /home/ubuntu/GitHub/spec-horus
+fork: /home/ubuntu/GitHub/horus-spec-driven
 fork_branch: master
-fork_origin: https://github.com/giovannimnz/spec-horus
+fork_origin: https://github.com/giovannimnz/horus-spec-driven
 
 # ── Protected paths (NUNCA sobrescrevidos por merge upstream) ───────────
 protected_paths:
@@ -35,7 +35,7 @@ protected_paths:
   - bin/lib/frontmatter-converters/
   - bin/lib/subagent-adapter/
   # Config files
-  - spec-horus.json
+  - horus-spec-driven.json
   - runtimes/
   - docs/
   # Own scripts
@@ -51,7 +51,7 @@ protected_paths:
 # ── Merge strategy ──────────────────────────────────────────────────────
 # Como NÃO é um fork, o "merge" é: pull vendor → rebrand → install
 merge_strategy: custom
-merge_script: /home/ubuntu/GitHub/spec-horus/bin/install.js
+merge_script: /home/ubuntu/GitHub/horus-spec-driven/bin/install.js
 merge_args: ["sync", "--all", "--global"]
 merge_description: |
   1. Pull gsd-core latest (git clone --depth 1 open-gsd/gsd-core)
@@ -72,13 +72,13 @@ deploy:
       home: ~/.claude
       mode: global
   post_deploy:
-    - "spec-horus detect"
-    - "spec-horus wordlist | head -3"
+    - "horus-spec-driven detect"
+    - "horus-spec-driven wordlist | head -3"
 
 # ── Version scheme ──────────────────────────────────────────────────────
 version_scheme:
-  format: "v{spec_horus_version}+gsd{gsd_core_version}"
-  spec_horus_version_file: /home/ubuntu/GitHub/spec-horus/package.json
+  format: "v{horus_spec_driven_version}+gsd{gsd_core_version}"
+  horus_spec_driven_version_file: /home/ubuntu/GitHub/horus-spec-driven/package.json
   gsd_core_version_tracked: true
 
 # ── Notifications ───────────────────────────────────────────────────────

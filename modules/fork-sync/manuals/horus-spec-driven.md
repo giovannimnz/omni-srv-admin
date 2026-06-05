@@ -1,16 +1,16 @@
 ---
-project: spec-horus
+project: horus-spec-driven
 version: v2.1.0
 upstream: https://github.com/open-gsd/gsd-core
 created: 2026-06-05
 last_updated: 2026-06-05
 ---
 
-# Spec-Horus — Manual de Atualização
+# horus-spec-driven — Manual de Atualização
 
 ## Visão Geral
 
-Spec-Horus é um **wrapper multi-CLI** sobre o `open-gsd/gsd-core`. Ele:
+horus-spec-driven é um **wrapper multi-CLI** sobre o `open-gsd/gsd-core`. Ele:
 
 1. Vendoria o gsd-core (shallow clone em `vendor/gsd-core/`)
 2. Aplica **rebrand** automático: `gsd-*` → `shd-*` (dev), `shq-*` (qa), `shp-*` (params)
@@ -30,7 +30,7 @@ Spec-Horus é um **wrapper multi-CLI** sobre o `open-gsd/gsd-core`. Ele:
 
 ## Estratégia Sync
 
-O Spec-Horus **não é um fork** — é um wrapper. O "sync" consiste em:
+O horus-spec-driven **não é um fork** — é um wrapper. O "sync" consiste em:
 
 1. `git clone --depth 1 open-gsd/gsd-core vendor/gsd-core/`
 2. `node bin/install.js install --all --global` (rebrand + content converte + install)
@@ -43,7 +43,7 @@ Arquivos protegidos (NUNCA sobrescritos):
 - `bin/lib/subagent-adapter/` — neutralização de subagent_type
 - `bin/lib/layout.js` — kind-driven install layout
 - `runtimes/` — specs de paths por CLI
-- `spec-horus.json` — configuração do usuário
+- `horus-spec-driven.json` — configuração do usuário
 - `bin/rebrand.js` — engine de rebrand (wordlist)
 - `bin/install.js` — instalador
 - `bin/sync.js` — auto-update
@@ -59,7 +59,7 @@ Arquivos protegidos (NUNCA sobrescritos):
 | `bin/lib/subagent-adapter/` | Neutralização de subagents Claude-centric |
 | `bin/lib/layout.js` | Layout kind-driven portado do gsd-core |
 | `runtimes/` | Specs de paths por CLI |
-| `spec-horus.json` | Config do usuário (runtimes, prefixos) |
+| `horus-spec-driven.json` | Config do usuário (runtimes, prefixos) |
 | `bin/rebrand.js` | Engine de rebrand (wordlist) |
 | `bin/install.js` | Pipeline install |
 | `bin/sync.js` | Pipeline sync |
@@ -68,13 +68,13 @@ Arquivos protegidos (NUNCA sobrescritos):
 
 ## Rebrand
 
-O Spec-Horus renomeia `gsd-*` → `shd-*` / `shq-*` / `shp-*` com wordlist dinâmica:
+O horus-spec-driven renomeia `gsd-*` → `shd-*` / `shq-*` / `shp-*` com wordlist dinâmica:
 
 | Categoria | Prefixo | Substrings de gatilho | Exemplo |
 |---|---|---|---|
-| Spec-Horus Development | `shd` | (default) | `gsd-new-project` → `shd-new-project` |
-| Spec-Horus QA | `shq` | validate, verify, audit, review, eval, secure, check | `gsd-validate-phase` → `shq-validate-phase` |
-| Spec-Horus Params | `shp` | config, settings, params, profile-user | `gsd-config` → `shp-config` |
+| horus-spec-driven Development | `shd` | (default) | `gsd-new-project` → `shd-new-project` |
+| horus-spec-driven QA | `shq` | validate, verify, audit, review, eval, secure, check | `gsd-validate-phase` → `shq-validate-phase` |
+| horus-spec-driven Params | `shp` | config, settings, params, profile-user | `gsd-config` → `shp-config` |
 
 ## Breaking Changes (v2.0.0 → v2.1.0)
 
