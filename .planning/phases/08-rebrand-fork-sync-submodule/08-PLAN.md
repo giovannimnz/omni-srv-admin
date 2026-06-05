@@ -1,0 +1,1056 @@
+---
+phase: 8
+name: rebrand-fork-sync-submodule
+created: 2026-06-04
+method: inline (gsd-plan-phase §1.6 shortcut — gsd-planner subagent not available in CLI Agent)
+generator: gsd-plan-phase (adapted to Hermes CLI Agent per P7 + inline-plan-guard)
+status: planned
+---
+
+# Phase 8 — Plan: Rebrand + fork-sync submodule
+
+**Goal:** Repo local `omni-srv-admin` rebranded + `giovannimnz/atius-srv` no
+GitHub renomeado pra `giovannimnz/omni-srv-admin` + `fork-sync` embutido
+como submodule vivo em `modules/fork-sync/` + repo `giovannimnz/fork-sync`
+arquivado com tag final.
+
+**Must Haves (success criteria — measured inline-plan-guard):**
+
+- [ ] **MH-1:** GitHub repo `giovannimnz/atius-srv` renomeado pra
+  `giovannimnz/omni-srv-admin` — verificado via
+  `gh repo view giovannimnz/omni-srv-admin --json name` retorna `"name":"omni-srv-admin"`
+- [ ] **MH-2:** `git remote -v` no local mostra
+  `https://github.com/giovannimnz/omni-srv-admin.git` em origin
+- [ ] **MH-3:** Zero ocorrências de `atius-srv` (literal) ou `Atius Server`
+  (frase) no working tree **fora de** `.planning/phases/`,
+  `.planning/research/`, `git log`, e `*.com.br` references DNS
+  — verificado via
+  `grep -rI "atius-srv\|Atius Server" --exclude-dir=.git --exclude-dir=.planning --exclude=*.log` retorna 0
+- [ ] **MH-4:** `.gitmodules` presente no root do omni-srv-admin com
+  `path = modules/fork-sync`, `url = https://github.com/giovannimnz/fork-sync.git`,
+  `branch = main` — verificado via
+  `cat .gitmodules`
+- [ ] **MH-5:** `modules/fork-sync/` populado com fork-sync completo (104
+  files, 796K) — verificado via
+  `ls modules/fork-sync/ | wc -l >= 10` E
+  `test -d modules/fork-sync/cli/fork_sync && echo OK`
+- [ ] **MH-6:** `giovannimnz/fork-sync` no GitHub arquivado (`isArchived:
+  true`) com tag `v1.2.1-omni-archived` apontando pro último commit —
+  verificado via
+  `gh repo view giovannimnz/fork-sync --json isArchived,name` E
+  `gh release view v1.2.1-omni-archived --repo giovannimnz/fork-sync`
+- [ ] **MH-7:** Vault Obsidian tem nota canônica
+  `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/omni-srv-admin.md` E
+  nota do submodule
+  `omni-srv-admin/fork-sync-submodule.md` — verificado via
+  `test -f ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/omni-srv-admin.md`
+- [ ] **MH-8:** Working tree do `omni-srv-admin` limpo (sem untracked
+  `.bg-shell/`, sem `docs/SERVER-AUDIT-20260506.md` solto, sem
+  `docs/DEVELOPMENT.md` modified) — verificado via
+  `git status --porcelain` retorna vazio após rebase final
+- [ ] **MH-9:** `git log --oneline | head -3` mostra commits claros
+  rebrand+submodule com mensagem descritiva
+
+---
+
+## Push Policy (per D-06)
+
+| Operação | Auth | Comando |
+|---|---|---|
+| Commit local | Auto | `git commit` |
+| `gh repo rename` | Soft (já clarified) | `gh repo rename giovannimnz/atius-srv omni-srv-admin --yes` |
+| `git remote set-url` | Auto | `git remote set-url origin ...` |
+| `git push origin main` | Auto após rebrand commit | `git push origin main` |
+| Commit pre-archive no fork-sync | Auto | `cd ~/fork-sync && git commit` |
+| Tag local `v1.2.1-omni-archived` | Auto | `cd ~/fork-sync && git tag -a ...` |
+| `git push fork-sync v1.2.1-omni-archived` | **Hard-gate** — pedir "pode dar push da tag?" | `git push fork-sync v1.2.1-omni-archived` |
+| `gh release create` | **Hard-gate** | `gh release create v1.2.1-omni-archived --repo giovannimnz/fork-sync` |
+| `gh repo archive` | **Hard-gate** | `gh repo archive giovannimnz/fork-sync --yes` |
+| Force push | **PROIBIDO** | — |
+
+---
+
+## Tasks
+
+### Task 01: Backup + smoke test do estado atual
+
+**read_first:**
+- `~/GitHub/omni-srv-admin/.planning/STATE.md` (state atual)
+- `~/GitHub/omni-srv-admin/.planning/ROADMAP.md` (roadmap)
+- `~/GitHub/obsidian-vault/ideaverse/91-Diarios/2026-06-04.md` (daily note)
+
+**acceptance_criteria:**
+- Backup do working tree em `~/GitHub/omni-srv-admin/.backups/phase08-pre-YYYYMMDD.tar.gz` (exclui `.git/`, `node_modules/`)
+- Daily note do dia existe; caso contrário, criar `91-Diarios/2026-06-04.md` com header padrão
+- `git status --porcelain` documentado no log
+
+**action:**
+```bash
+# Backup
+mkdir -p ~/GitHub/omni-srv-admin/.backups
+cd ~/GitHub/omni-srv-admin
+tar --exclude='.git' --exclude='node_modules' --exclude='.backups' \
+  -czf .backups/phase08-pre-$(date +%Y%m%d-%H%M%S).tar.gz .
+
+# Daily note
+mkdir -p ~/GitHub/obsidian-vault/ideaverse/91-Diarios
+test -f ~/GitHub/obsidian-vault/ideaverse/91-Diarios/2026-06-04.md || \
+  cat > ~/GitHub/obsidian-vault/ideaverse/91-Diarios/2026-06-04.md <<'EOF'
+# 2026-06-04
+
+## Active
+- [[omni-srv-admin]] — Phase 8 rebrand + fork-sync submodule
+EOF
+
+# Smoke
+git status --porcelain | tee /tmp/omni-phase08-pre-status.txt
+```
+
+**verify:** `ls -la ~/GitHub/omni-srv-admin/.backups/ | tail -1` mostra
+tarball não-vazio; `wc -l /tmp/omni-phase08-pre-status.txt` reporta número
+de linhas modified/untracked pra baseline.
+
+---
+
+### Task 02: Limpar working tree do omni-srv-admin
+
+**read_first:**
+- `git status --porcelain` (output do Task 01)
+- `docs/DEVELOPMENT.md` (modificado)
+- `dark-theme-ubuntu/lxde-theme-backup-20260406_001953/.zshrc.backup` (deleted)
+
+**acceptance_criteria:**
+- `docs/DEVELOPMENT.md` modifications commitadas ou revertidas
+  (decisão: reverter com `git checkout docs/DEVELOPMENT.md` — não há
+  mudança semântica)
+- `.zshrc.backup` deletion commitada (`git rm` ou `git add -u`)
+- `docs/SERVER-AUDIT-20260506.md` (untracked) commitado (era `gsd-audit` output)
+- `.bg-shell/manifest.json` (untracked) adicionado ao `.gitignore` ou commitado
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+# Reverter modificação sem semântica
+git checkout -- docs/DEVELOPMENT.md
+
+# Aceitar deletion
+git add -u dark-theme-ubuntu/lxde-theme-backup-20260406_001953/.zshrc.backup
+git commit -m "chore: cleanup theme backup .zshrc
+
+Removed obsolete zsh backup from 2026-04-06 theme install.
+No functional impact."
+
+# Commit audit doc
+git add docs/SERVER-AUDIT-20260506.md
+git commit -m "docs: server audit 2026-05-06 (gsd-audit output)
+
+Snapshot do estado do servidor pós-merge de domain-infrastructure.
+Referência histórica para phase 8 rebrand."
+
+# Ignorar .bg-shell (artefato de background process)
+echo "" >> .gitignore
+echo "# Background process manifests (ephemeral)" >> .gitignore
+echo ".bg-shell/" >> .gitignore
+git add .gitignore
+git commit -m "chore: ignore .bg-shell manifests (ephemeral)"
+```
+
+**verify:** `git status --porcelain` retorna apenas o `.gitignore` (após
+último commit) ou vazio.
+
+---
+
+### Task 03: Renomear repo GitHub `atius-srv` → `omni-srv-admin`
+
+**read_first:**
+- Task 02 output (working tree limpo)
+- `git remote -v` (origin atual)
+
+**acceptance_criteria:**
+- `gh repo view giovannimnz/omni-srv-admin --json name` retorna
+  `{"name":"omni-srv-admin"}`
+- `git remote get-url origin` retorna
+  `https://github.com/giovannimnz/omni-srv-admin.git`
+- `git fetch origin` funciona sem erro
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+
+# Renomear no GitHub
+gh repo rename giovannimnz/atius-srv omni-srv-admin --yes
+
+# Atualizar remote local
+git remote set-url origin https://github.com/giovannimnz/omni-srv-admin.git
+
+# Verificar
+gh repo view giovannimnz/omni-srv-admin --json name,url
+git remote -v
+git fetch origin
+```
+
+**verify:** output mostra `name: omni-srv-admin`, `url: ...omni-srv-admin`,
+fetch OK sem 404.
+
+**⚠️ Soft-gate (já clarificado):** renomeação destrutiva. Se falhar (repo
+não owned, redirect quebrado), reportar SHA e parar.
+
+---
+
+### Task 04: Limpar working tree do fork-sync (pre-submodule)
+
+**read_first:**
+- `~/fork-sync/manuals/hermes-os.md` (modified)
+- `~/fork-sync/projects/hermes-os/sync.yaml` (modified)
+- `~/fork-sync/CHANGELOG.md` ou `~/fork-sync/VERSIONS.md` (versão atual)
+
+**acceptance_criteria:**
+- `manuals/hermes-os.md` e `projects/hermes-os/sync.yaml` modifications
+  commitadas com mensagem descritiva
+- `fork-sync/CHANGELOG.md` (ou equivalente) atualizado pra v1.2.1-omni-archived
+- Working tree limpo: `cd ~/fork-sync && git status --porcelain` retorna vazio
+
+**action:**
+```bash
+cd ~/fork-sync
+
+# Ver diff antes de commitar
+git diff manuals/hermes-os.md | head -50
+git diff projects/hermes-os/sync.yaml | head -50
+
+# Commit
+git add manuals/hermes-os.md projects/hermes-os/sync.yaml
+git commit -m "docs(hermes-os): manual regen + sync.yaml protection update
+
+Fork-sync v1.2.1 release notes PT-BR + updated protected paths
+for hermes-os webapp cross-promo banner.
+
+Pre-archive snapshot — final commit before giovannimnz/fork-sync
+becomes submodule of giovannimnz/omni-srv-admin."
+
+# Verificar versão
+cat VERSIONS.md | head -20
+```
+
+**verify:** `git log --oneline | head -3` mostra commit limpo.
+`git status --porcelain` vazio.
+
+---
+
+### Task 05: Tag `v1.2.1-omni-archived` no fork-sync (local, sem push)
+
+**read_first:**
+- `~/fork-sync/VERSIONS.md` (versão atual)
+- `~/fork-sync/CHANGELOG.md` (último changelog)
+
+**acceptance_criteria:**
+- Tag `v1.2.1-omni-archived` existe localmente em `~/fork-sync`
+- `git show v1.2.1-omni-archived` mostra tag anotada com mensagem
+  explicando o archive
+
+**action:**
+```bash
+cd ~/fork-sync
+git tag -a v1.2.1-omni-archived -m "Final release — fork-sync archived as submodule
+
+This is the last release of giovannimnz/fork-sync as a standalone
+repository. The codebase has been migrated to:
+
+  giovannimnz/omni-srv-admin/modules/fork-sync/
+
+This tag marks the snapshot at which fork-sync was embedded as a
+git submodule in omni-srv-admin. Future commits to fork-sync
+should be made in the submodule path of omni-srv-admin.
+
+See: https://github.com/giovannimnz/omni-srv-admin/blob/main/modules/fork-sync/VERSIONS.md"
+git tag -l | grep v1.2.1
+```
+
+**verify:** `git tag -l v1.2.1*` mostra a tag. `git show
+v1.2.1-omni-archived --no-patch` mostra annotation.
+
+**⚠️ Push da tag é hard-gate (Task 07).**
+
+---
+
+### Task 06: Adicionar fork-sync como submodule em `modules/fork-sync/`
+
+**read_first:**
+- `~/GitHub/omni-srv-admin/.gitmodules` (não existe ainda)
+- `~/GitHub/omni-srv-admin/.gitignore` (path atual)
+- `~/fork-sync/CHANGELOG.md` (release notes)
+
+**acceptance_criteria:**
+- `git submodule status` mostra
+  `abc123... modules/fork-sync (v1.2.1-omni-archived)` ou similar
+- `cat .gitmodules` mostra 1 entry com path/url/branch corretos
+- `ls modules/fork-sync/ | wc -l >= 10` (fork-sync populado)
+- `cat modules/fork-sync/cli/fork_sync/cli.py | head` mostra conteúdo
+  Python (não symlink quebrado)
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+
+# Backup pre-submodule add (defesa em profundidade)
+tar --exclude='.git' --exclude='node_modules' --exclude='.backups' \
+  -czf .backups/phase08-pre-submodule-$(date +%Y%m%d-%H%M%S).tar.gz .
+
+# Add submodule
+git submodule add \
+  --branch main \
+  https://github.com/giovannimnz/fork-sync.git \
+  modules/fork-sync
+
+# Init + checkout
+git submodule update --init --recursive
+
+# Verificar
+git submodule status
+cat .gitmodules
+ls modules/fork-sync/ | head -10
+```
+
+**verify:** `git status --porcelain` mostra `.gitmodules` modified +
+`modules/fork-sync` untracked-with-intent (novo). `git diff --cached
+.gitmodules` mostra entry correta.
+
+**Pitfalls:**
+- Se credential helper falhar (HTTPS sem token), `git submodule add` vai
+  retornar 403. **Fix:** `git config --global credential.helper store` ou
+  usar `gh auth setup-git` (gh já autenticado).
+- Se `modules/fork-sync/` já existir (ex: tentativa anterior), o comando
+  falha. **Fix:** `rm -rf modules/fork-sync && git submodule add ...`.
+
+---
+
+### Task 07: Ignorar arquivos voláteis do submodule + commit
+
+**read_first:**
+- `~/GitHub/omni-srv-admin/.gitignore`
+- `~/GitHub/omni-srv-admin/modules/fork-sync/.gitignore` (já existe)
+- `git status --porcelain` (após Task 06)
+
+**acceptance_criteria:**
+- `.gitignore` do omni-srv-admin inclui:
+  - `modules/fork-sync/logs/`
+  - `modules/fork-sync/.translate-cache/`
+  - `modules/fork-sync/cli/fork_sync.egg-info/`
+- `cd modules/fork-sync && git status` (dentro do submodule) mostra
+  working tree dirty (artefatos locais que ficaram pra trás)
+- Working tree do omni-srv-admin limpo: `git status --porcelain` mostra
+  apenas `.gitignore` e `.gitmodules` modificados
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+
+# Atualizar .gitignore
+cat >> .gitignore <<'EOF'
+
+# Submodule: fork-sync volatile paths
+modules/fork-sync/logs/
+modules/fork-sync/.translate-cache/
+modules/fork-sync/cli/fork_sync.egg-info/
+modules/fork-sync/scripts/
+EOF
+
+# Confirmar artefatos do submodule não vazam pro omni-srv-admin
+git status --porcelain
+git submodule foreach 'git status --porcelain | head -5'
+```
+
+**verify:** `git status --porcelain` no root mostra apenas 2 paths
+modificados (`.gitignore`, `.gitmodules`) e 1 untracked (`modules/fork-sync`
+mas com intent-to-add).
+
+---
+
+### Task 08: Rebrand textual — README, AGENTS, .planning, docs/
+
+**read_first:**
+- `~/GitHub/omni-srv-admin/README.md`
+- `~/GitHub/omni-srv-admin/AGENTS.md`
+- `~/GitHub/omni-srv-admin/.planning/PROJECT.md`
+- `~/GitHub/omni-srv-admin/.planning/REQUIREMENTS.md`
+- `~/GitHub/omni-srv-admin/.planning/ROADMAP.md`
+- `~/GitHub/omni-srv-admin/.planning/STATE.md`
+- `~/GitHub/omni-srv-admin/docs/ARCHITECTURE.md`
+- `~/GitHub/omni-srv-admin/docs/CONFIGURATION.md`
+- `~/GitHub/omni-srv-admin/docs/DEVELOPMENT.md`
+- `~/GitHub/omni-srv-admin/docs/GETTING-STARTED.md`
+- `~/GitHub/omni-srv-admin/docs/TESTING.md`
+- `~/GitHub/omni-srv-admin/docs/CLOUDFLARE.md`
+- `~/GitHub/omni-srv-admin/docs/SERVER-AUDIT-20260506.md`
+- `~/GitHub/omni-srv-admin/RECOVERY_LOG.md`
+- `~/GitHub/omni-srv-admin/domain-infrastructure/CLAUDE.md`
+- `~/GitHub/omni-srv-admin/setup.sh`
+
+**acceptance_criteria:**
+- Zero `atius-srv` (literal) e zero `Atius Server` (frase) em todos os
+  arquivos acima (preservando DNS `*.atius.com.br` e paths `.com.br`)
+- `git grep -n "Atius Server" -- ':!*.com.br'` retorna 0 matches
+- `git grep -n "atius-srv" -- ':!*.com.br' ':!.git' ':!*.log'` retorna
+  0 matches
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+
+# 1) Header do README: "Atius Server" → "Omni Srv Admin"
+sed -i 's|# Atius Server (atius-srv)|# Omni Srv Admin (omni-srv-admin)|g' README.md
+sed -i 's|Repositório central de configuração e provisionamento do servidor Atius (10.1.1.1 Oracle Cloud)|Repositório central de configuração e provisionamento multi-tenant do servidor omni (10.1.1.1 Oracle Cloud)|g' README.md
+
+# 2) Clone URL
+sed -i 's|git clone https://github.com/giovannimnz/atius-srv.git|git clone https://github.com/giovannimnz/omni-srv-admin.git|g' README.md
+sed -i 's|cd atius-srv|cd omni-srv-admin|g' README.md
+
+# 3) .planning/*.md
+for f in .planning/PROJECT.md .planning/REQUIREMENTS.md .planning/ROADMAP.md .planning/STATE.md; do
+  sed -i 's|Atius Server (atius-srv)|Omni Srv Admin (omni-srv-admin)|g' "$f"
+  sed -i 's|atius-srv|omni-srv-admin|g' "$f"
+done
+
+# 4) docs/*.md
+for f in docs/*.md; do
+  sed -i 's|Atius Server|Omni Srv Admin|g' "$f"
+  sed -i 's|atius-srv|omni-srv-admin|g' "$f"
+done
+
+# 5) domain-infrastructure/CLAUDE.md
+sed -i 's|Atius Domain Infrastructure|Omni Domain Infrastructure|g' domain-infrastructure/CLAUDE.md
+sed -i 's|10.1.1.1|10.1.1.1|g' domain-infrastructure/CLAUDE.md  # IP mantém
+
+# 6) RECOVERY_LOG.md
+sed -i 's|atius-srv|omni-srv-admin|g' RECOVERY_LOG.md
+
+# 7) setup.sh header
+sed -i 's|atius-srv|omni-srv-admin|g' setup.sh
+sed -i 's|Atius Server|Omni Srv Admin|g' setup.sh
+
+# 8) AGENTS.md
+echo "" >> AGENTS.md
+echo "## Project Identity" >> AGENTS.md
+echo "" >> AGENTS.md
+echo "- **Repo name:** omni-srv-admin (formerly atius-srv)" >> AGENTS.md
+echo "- **Display name:** Omni Srv Admin" >> AGENTS.md
+echo "- **Domain:** atius.com.br (DNS preserved — production domain)" >> AGENTS.md
+echo "- **Host:** 10.1.1.1 (Oracle Cloud ARM64, Ubuntu 22.04)" >> AGENTS.md
+
+# Verificação
+echo "=== Occurrences restantes ===" 
+git grep -n "Atius Server" | head
+git grep -n "atius-srv" | grep -v ".atius.com.br" | grep -v "com.br" | head
+```
+
+**verify:** ambos `git grep` retornam 0 (ou apenas matches em `.com.br`
+DNS que são preservados).
+
+**Pitfalls:**
+- `sed -i` em batch pode quebrar markdown. Conferir diff depois com
+  `git diff docs/ README.md | head -100`.
+- Preservar `atius.com.br` (DNS) — não substituir. Usar `grep -v` na
+  verificação pra filtrar.
+
+---
+
+### Task 09: Rebrand — vscode-profile e arquivos auxiliares
+
+**read_first:**
+- Task 08 output (status pós-rebrand principal)
+- `~/GitHub/omni-srv-admin/.gitignore` (paths `atius-*`)
+- `~/GitHub/omni-srv-admin/vscode-profile/.github/memory-bank/progress.md`
+- `~/GitHub/omni-srv-admin/vscode-profile/.github/memory-bank/tasks/_index.md`
+- `~/GitHub/omni-srv-admin/vscode-profile/.github/memory-bank/activeContext.md`
+- `~/GitHub/omni-srv-admin/vscode-profile/.github/memory-bank/tasks/TASK010-migracao-infra-pm2-postgres-atius.md`
+- `~/GitHub/omni-srv-admin/vscode-profile/.github/mcp-config/linux/mcp.json`
+- `~/GitHub/omni-srv-admin/vscode-profile/.github/vscode-settings/settings.json`
+
+**acceptance_criteria:**
+- Todos os 6 arquivos acima rebranded
+- `.gitignore` paths `atius-*` atualizados pra `omni-*` (ou `omni-srv-admin-*`)
+- `git grep "Atius\|atius-srv"` retorna apenas matches em `.com.br` DNS
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+
+# vscode-profile memory bank
+for f in \
+  vscode-profile/.github/memory-bank/progress.md \
+  vscode-profile/.github/memory-bank/tasks/_index.md \
+  vscode-profile/.github/memory-bank/activeContext.md \
+  vscode-profile/.github/memory-bank/tasks/TASK010-migracao-infra-pm2-postgres-atius.md; do
+  sed -i 's|Atius|Omni|g' "$f"
+  sed -i 's|atius-srv|omni-srv-admin|g' "$f"
+  mv "$f" "$(dirname $f)/$(basename $f | sed 's|atius|omni-srv-admin|')" 2>/dev/null || true
+done
+
+# mcp-config + vscode-settings
+sed -i 's|atius-srv|omni-srv-admin|g' vscode-profile/.github/mcp-config/linux/mcp.json
+sed -i 's|atius-srv|omni-srv-admin|g' vscode-profile/.github/vscode-settings/settings.json
+
+# .gitignore paths
+sed -i 's|atius-\*|omni-srv-admin-*|g' .gitignore  # se houver
+
+# Re-verify
+git grep -n "Atius Server\|atius-srv" | grep -v ".com.br" | grep -v "atius.com.br"
+```
+
+**verify:** `git grep` retorna 0 matches fora de DNS.
+
+---
+
+### Task 10: Commit rebrand + submodule + push origin
+
+**read_first:**
+- `git status --porcelain` (final state pré-commit)
+- Task 06 output (submodule status)
+- Task 08/09 output (rebrand complete)
+
+**acceptance_criteria:**
+- 1 commit unificado OU 2-3 commits lógicos:
+  - `chore: rename to omni-srv-admin (rebrand + remote update)`
+  - `feat: add fork-sync as submodule (modules/fork-sync)`
+  - `docs: rebrand text across README, .planning, docs/`
+- `git push origin main` retorna `* [new branch] main -> main` ou
+  `Everything up-to-date`
+- Working tree pós-push: `git status` retorna `Your branch is up to date`
+
+**action:**
+```bash
+cd ~/GitHub/omni-srv-admin
+
+# Stage
+git add -A
+
+# Commits lógicos (3 commits preferidos — melhor pra git history)
+git reset HEAD~  # caso tenha commit acidental
+
+git add .gitmodules .gitignore modules/fork-sync
+git commit -m "feat: add fork-sync as submodule (modules/fork-sync)
+
+Embeds giovannimnz/fork-sync.git at modules/fork-sync/, branch main.
+The fork-sync repo is being archived (see D-04 in 08-CONTEXT.md);
+this submodule is now the canonical location.
+
+Volatile paths (logs, .translate-cache, scripts/) gitignored."
+
+git add README.md AGENTS.md
+git commit -m "chore: rebrand to Omni Srv Admin (README + AGENTS)"
+
+git add .planning/ docs/ domain-infrastructure/ RECOVERY_LOG.md setup.sh
+git add vscode-profile/
+git commit -m "docs: rebrand text across planning, docs, and config
+
+Atius Server → Omni Srv Admin; atius-srv → omni-srv-admin.
+DNS atius.com.br preserved (production domain).
+References: 08-CONTEXT.md D-01, 08-PLAN.md Task 08/09."
+
+# Push
+git push origin main
+```
+
+**verify:** `git log --oneline | head -5` mostra 3 commits claros.
+`git push` retorna sucesso. `gh repo view giovannimnz/omni-srv-admin
+--json name,description` mostra nome correto.
+
+**⚠️ Auto:** push é autorizado (fork do user, rollback trivial).
+
+---
+
+### Task 11: Push tag `v1.2.1-omni-archived` no fork-sync
+
+**read_first:**
+- Task 05 output (tag local criada)
+- Task 10 output (omni-srv-admin push OK)
+
+**acceptance_criteria:**
+- Tag pushed com sucesso
+- `git ls-remote --tags fork-sync | grep v1.2.1-omni-archived` mostra SHA
+
+**action:**
+```bash
+cd ~/fork-sync
+git push fork-sync v1.2.1-omni-archived
+git ls-remote --tags fork-sync | grep v1.2.1
+```
+
+**verify:** tag visível no remote.
+
+**⚠️ Hard-gate:** ANTES de executar, pedir confirmação explícita:
+"fork-sync tag push: pode dar push da tag v1.2.1-omni-archived pro
+remote giovannimnz/fork-sync? (irreversível sem gh API admin)".
+
+---
+
+### Task 12: Create GitHub release `v1.2.1-omni-archived` no fork-sync
+
+**read_first:**
+- Task 11 output (tag pushed)
+- `~/fork-sync/CHANGELOG.md` (release notes)
+- `~/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-04-fork-sync-v1.2-release-notes-pt-br.md` (notas PT-BR existentes)
+
+**acceptance_criteria:**
+- `gh release view v1.2.1-omni-archived --repo giovannimnz/fork-sync`
+  mostra release publicada
+- Release notes apontam pro submodule
+
+**action:**
+```bash
+# Criar release notes inline
+cat > /tmp/fork-sync-final-release.md <<'EOF'
+# v1.2.1-omni-archived
+
+**Esta é a release final do `giovannimnz/fork-sync` como repo standalone.**
+
+O codebase foi migrado como submodule para
+[`giovannimnz/omni-srv-admin/modules/fork-sync/`](https://github.com/giovannimnz/omni-srv-admin/tree/main/modules/fork-sync/).
+
+## Migração
+
+- **Novo local canônico:** [omni-srv-admin/modules/fork-sync](https://github.com/giovannimnz/omni-srv-admin/tree/main/modules/fork-sync/)
+- **Submodule path:** `modules/fork-sync/`
+- **Branch pinada:** `main`
+- **Commit de migração:** ver `omni-srv-admin` commit `feat: add fork-sync as submodule`
+
+## O que muda
+
+- Commits futuros ao fork-sync devem ser feitos **dentro do submodule**
+  (em `omni-srv-admin/modules/fork-sync/`)
+- Pull requests upstream (QuantumNous/new-api, etc.) continuam
+  suportados via submodule
+- Releases versionados continuam em `omni-srv-admin`
+
+## Versão
+
+Esta tag captura o último estado standalone (v1.2.1 PT-BR release notes)
+antes do archive.
+EOF
+
+gh release create v1.2.1-omni-archived \
+  --repo giovannimnz/fork-sync \
+  --title "v1.2.1-omni-archived (Final)" \
+  --notes-file /tmp/fork-sync-final-release.md
+```
+
+**verify:** `gh release view v1.2.1-omni-archived --repo
+giovannimnz/fork-sync` retorna 200 com body.
+
+**⚠️ Hard-gate:** ANTES de executar, pedir confirmação.
+
+---
+
+### Task 13: Archive `giovannimnz/fork-sync` no GitHub
+
+**read_first:**
+- Task 12 output (release criada)
+- `gh repo view giovannimnz/fork-sync --json isArchived` (current state)
+
+**acceptance_criteria:**
+- `gh repo view giovannimnz/fork-sync --json isArchived` retorna `true`
+- Repo aparece como "Archived" no GitHub
+
+**action:**
+```bash
+gh repo archive giovannimnz/fork-sync --yes
+gh repo view giovannimnz/fork-sync --json isArchived,name
+```
+
+**verify:** output `{"isArchived":true,"name":"fork-sync"}`.
+
+**⚠️ Hard-gate:** ANTES de executar, pedir confirmação:
+"giovannimnz/fork-sync → archive: o repo vai ficar read-only
+permanentemente. Issues e PRs não podem ser criados. Confirma?"
+
+---
+
+### Task 14: Vault Obsidian — notas canônicas
+
+**read_first:**
+- `~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/atius/`
+  (estrutura existente)
+- `~/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-04-fork-sync-v1.2-release-notes-pt-br.md`
+- `~/GitHub/obsidian-vault/ideaverse/21.03-Decisoes-Arquitetura/2026-06-04-fork-sync-cli-python.md`
+- `~/GitHub/obsidian-vault/ideaverse/91-Diarios/2026-06-04.md`
+
+**acceptance_criteria:**
+- `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/omni-srv-admin.md` existe
+  com frontmatter YAML + seções (Overview, Módulos, Rebrand, References)
+- `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/fork-sync-submodule.md`
+  existe com comandos úteis
+- `20-PROJETOS/21-PROJETOS-ATIVOS/atius/` movido pra
+  `22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand/` com nota de arquivamento
+- `21.03-Decisoes-Arquitetura/2026-06-04-omni-srv-rebrand.md` criado
+- `60-LOGS/2026-06-04-omni-srv-admin-rebrand-phase8.md` criado
+- Daily note `91-Diarios/2026-06-04.md` atualizado com entrada Phase 8
+- Todos os `[[wiki-links]]` apontam pra paths kebab-case existentes
+
+**action:**
+```bash
+mkdir -p ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+
+# 1) Nota canônica do projeto
+cat > ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/omni-srv-admin.md <<'EOF'
+---
+type: project
+status: active
+created: 2026-06-04
+github: giovannimnz/omni-srv-admin
+host: 10.1.1.1
+platform: Oracle Cloud ARM64 / Ubuntu 22.04
+display_name: Omni Srv Admin
+tags: [omni-srv-admin, gsd-v1, server-admin, multi-tenant]
+---
+
+# Omni Srv Admin (omni-srv-admin)
+
+Repositório central de configuração e provisionamento do servidor omni
+(10.1.1.1 Oracle Cloud). Sucessor rebranded de [[22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand|atius-srv]].
+
+## Escopo
+
+- Configuração base do servidor (setup.sh, iptables, WireGuard)
+- Antiviral (antivirus/)
+- Tema desktop (dark-theme-ubuntu/)
+- Módulo Domain Infrastructure (FreeIPA + Keycloak + Samba)
+- Submodule: [[fork-sync-submodule|fork-sync]] (CLI Python + sync engine)
+
+## Módulos
+
+| Módulo | Path | Função |
+|---|---|---|
+| server-setup | `setup.sh`, `iptables/` | Provisionamento base |
+| domain-infrastructure | `domain-infrastructure/` | FreeIPA/Keycloak/Samba |
+| fork-sync submodule | `modules/fork-sync/` | CLI Python de sync de forks |
+| dark-theme | `dark-theme-ubuntu/` | Tema LXDE/Apple fonts |
+| vscode-profile | `vscode-profile/` | Perfil VSCode + memory bank |
+
+## Stack
+
+- Ubuntu 22.04 ARM64 (Oracle Cloud)
+- Node.js 24.13.1, Python 3.11 (uv)
+- PostgreSQL 17 (8745), MongoDB (27017)
+- Apache2 com 60+ vhosts
+- Docker + containerd
+- PM2 + systemd
+
+## Phases Ativas (GSD v1)
+
+| # | Phase | Status |
+|---|---|---|
+| 1 | Preparação do Host | ✅ DONE (2026-04-19) |
+| 2 | Migração Apache2 | ✅ DONE (2026-04-19) |
+| 3 | FreeIPA Server Container | ⏳ Planned (3 sub-plans) |
+| 4-7 | Samba/WireGuard/Keycloak/Clients | 📋 Backlog |
+| 8 | **Rebrand + fork-sync submodule** | 🟢 Active (esta nota) |
+
+## References
+
+- [[../../../21.03-Decisoes-Arquitetura/2026-06-04-omni-srv-rebrand|Decisão de rebrand]]
+- [[../../../60-LOGS/2026-06-04-omni-srv-admin-rebrand-phase8|Log de execução]]
+- [[22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand|Histórico: atius-srv]]
+- GitHub: https://github.com/giovannimnz/omni-srv-admin
+EOF
+
+# 2) Nota do submodule
+cat > ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/fork-sync-submodule.md <<'EOF'
+---
+type: submodule
+parent: omni-srv-admin
+created: 2026-06-04
+github: giovannimnz/fork-sync (archived)
+local_path: modules/fork-sync/
+branch: main
+tags: [submodule, fork-sync, python-cli]
+---
+
+# fork-sync submodule
+
+`fork-sync` é um submodule de [[omni-srv-admin|omni-srv-admin]] localizado em
+`modules/fork-sync/`. Foi migrado do repo standalone
+`giovannimnz/fork-sync` (que foi arquivado em 2026-06-04 com tag
+`v1.2.1-omni-archived`).
+
+## Função
+
+CLI Python para sincronizar forks com seus upstreams. Gerencia 9
+projetos (aionui, atius-router, atius-router-docs, bruno, get-shit-done,
+gsd-2, hermes-agent, hermes-os) com `sync.yaml` por projeto e
+`protected_paths` preservados em conflito.
+
+## Comandos
+
+```bash
+# Clone omni-srv-admin (submodule NÃO clona por padrão)
+git clone https://github.com/giovannimnz/omni-srv-admin.git
+cd omni-srv-admin
+git submodule update --init --recursive
+
+# Update submodule
+git submodule update --remote modules/fork-sync
+
+# Entrar no submodule
+cd modules/fork-sync
+git checkout main
+git pull
+```
+
+## Estrutura
+
+- `bin/` — scripts bash (sync.sh, deploy.sh, merge-upstream.sh, etc.)
+- `cli/fork_sync/` — CLI Python (`cli.py`, `__main__.py`)
+- `lib/` — bibliotecas (git.sh, github.sh, telegram.sh, patch-logo.py)
+- `projects/` — 9 projetos com `sync.yaml` cada
+- `templates/` — templates de sync (basic, deploy, docker, submodule)
+- `manuals/` — manuais PT-BR auto-gerados por projeto
+- `logs/` — volátil (gitignored)
+- `scripts/` — gitignored (artefato)
+
+## References
+
+- [[../../../21.03-Decisoes-Arquitetura/2026-06-04-fork-sync-cli-python|Decisão fork-sync CLI Python]]
+- [[../../../60-LOGS/2026-06-04-fork-sync-v1.2-release-notes-pt-br|Release v1.2 PT-BR]]
+EOF
+
+# 3) Arquivar nota antiga atius
+mkdir -p ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand
+mv ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/atius/* \
+   ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand/ 2>/dev/null || true
+mv ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/atius \
+   ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand 2>/dev/null || true
+
+# 4) Decisão arquitetural
+cat > ~/GitHub/obsidian-vault/ideaverse/21.03-Decisoes-Arquitetura/2026-06-04-omni-srv-rebrand.md <<'EOF'
+---
+type: decision
+date: 2026-06-04
+status: accepted
+tags: [omni-srv-admin, rebrand, fork-sync, submodule]
+---
+
+# Decisão: Rebrand atius-srv → omni-srv-admin + fork-sync submodule
+
+## Contexto
+
+O repositório `giovannimnz/atius-srv` representava especificamente o
+servidor Atius (10.1.1.1) com escopo Linux domain (FreeIPA/Keycloak/Samba).
+Com a evolução do fork-sync como CLI Python modular e multi-fork, e a
+necessidade de gerenciar múltiplos projetos além do Atius, faz sentido
+rebranding para "Omni Srv Admin" (administração omni de servidor) com
+fork-sync embutido como submodule.
+
+## Decisão
+
+1. **Repo rename:** `giovannimnz/atius-srv` → `giovannimnz/omni-srv-admin`
+   (via `gh repo rename`).
+2. **Rebrand textual:** ~95 ocorrências em 19 arquivos (README, AGENTS,
+   .planning, docs/, vscode-profile/).
+3. **fork-sync vira submodule:** `modules/fork-sync/` linkado em
+   `https://github.com/giovannimnz/fork-sync.git` (branch main).
+4. **Repo fork-sync arquivado:** tag `v1.2.1-omni-archived` + release
+   notes + `gh repo archive`.
+
+## Trade-offs
+
+- **Pro:** vendor-neutral naming, multi-tenant, fork-sync versionado
+  independentemente.
+- **Con:** GitHub redirect por 90+ dias (mínimo impacto).
+- **Con:** Git submodule workflow mais complexo que monorepo (1 comando
+  extra no clone: `git submodule update --init --recursive`).
+
+## Reversibilidade
+
+- `git revert` do commit de rebrand (1-3 commits).
+- `gh repo unarchive giovannimnz/fork-sync` (requer owner).
+- Submodule pode ser desfeito com `git submodule deinit` + `rm -rf
+  modules/fork-sync`.
+
+## References
+
+- [[../20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/omni-srv-admin|omni-srv-admin]]
+- [[../20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/fork-sync-submodule|fork-sync-submodule]]
+- 08-CONTEXT.md (decision log)
+EOF
+
+# 5) Log de execução
+cat > ~/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-04-omni-srv-admin-rebrand-phase8.md <<'EOF'
+---
+type: log
+date: 2026-06-04
+phase: 8
+project: omni-srv-admin
+status: planned
+tags: [omni-srv-admin, rebrand, fork-sync, phase-8, gsd]
+---
+
+# Phase 8 — Rebrand + fork-sync submodule (Log)
+
+## Tarefas
+
+- [ ] Task 01: Backup + smoke test
+- [ ] Task 02: Limpar working tree
+- [ ] Task 03: Renomear repo GitHub
+- [ ] Task 04: Limpar working tree fork-sync
+- [ ] Task 05: Tag v1.2.1-omni-archived (local)
+- [ ] Task 06: Adicionar fork-sync como submodule
+- [ ] Task 07: Gitignore volatile paths
+- [ ] Task 08: Rebrand textual principal
+- [ ] Task 09: Rebrand vscode-profile + auxiliares
+- [ ] Task 10: Commit + push omni-srv-admin
+- [ ] Task 11: Push tag fork-sync (HARD-GATE)
+- [ ] Task 12: Create release fork-sync (HARD-GATE)
+- [ ] Task 13: Archive fork-sync (HARD-GATE)
+- [ ] Task 14: Vault Obsidian
+
+## Push Policy
+
+| Operação | Auth |
+|---|---|
+| Commit local | Auto |
+| `gh repo rename` | Soft (clarified) |
+| `git push origin main` | Auto |
+| Push tag + release + archive | **HARD-GATE** (Task 11/12/13) |
+
+## References
+
+- 08-CONTEXT.md
+- 08-PLAN.md
+EOF
+
+# 6) Daily note update
+cat >> ~/GitHub/obsidian-vault/ideaverse/91-Diarios/2026-06-04.md <<'EOF'
+
+## Phase 8 — Rebrand + fork-sync submodule
+
+Started: 2026-06-04
+Plan: [[../../GitHub/omni-srv-admin/.planning/phases/08-rebrand-fork-sync-submodule/08-CONTEXT|08-CONTEXT.md]] + 08-PLAN.md
+
+Decisões:
+- Repo rename atius-srv → omni-srv-admin
+- fork-sync vira submodule (modules/fork-sync/)
+- giovannimnz/fork-sync arquivado com tag v1.2.1-omni-archived
+EOF
+```
+
+**verify:** `find ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin -type f` mostra 2 arquivos. `find ~/GitHub/obsidian-vault/ideaverse/20-PROJETOS/22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand -type f` mostra arquivos movidos. `git grep` no vault (se for repo) confirma links válidos.
+
+---
+
+### Task 15: Commit vault + smoke final
+
+**read_first:**
+- Task 14 output (notas vault criadas)
+- `~/GitHub/obsidian-vault/ideaverse/` (repo Obsidian)
+
+**acceptance_criteria:**
+- Vault commit + push (se remote configurado)
+- `~/GitHub/omni-srv-admin` working tree limpo
+- `git log --oneline | head -5` mostra 3 commits rebrand/submodule
+- Smoke: `cd ~/GitHub/omni-srv-admin && git submodule status && gh repo view giovannimnz/omni-srv-admin --json name,isArchived && gh repo view giovannimnz/fork-sync --json isArchived,name`
+
+**action:**
+```bash
+# Vault
+cd ~/GitHub/obsidian-vault/ideaverse
+git add 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/ \
+        20-PROJETOS/22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand/ \
+        21.03-Decisoes-Arquitetura/2026-06-04-omni-srv-rebrand.md \
+        60-LOGS/2026-06-04-omni-srv-admin-rebrand-phase8.md \
+        91-Diarios/2026-06-04.md
+git commit -m "docs(omni-srv-admin): phase 8 rebrand + fork-sync submodule
+
+- New canonical note: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/
+- Submodule note: fork-sync-submodule.md
+- Archived old atius/ folder to 22-PROJETOS-ARQUIVADOS/atius-2026-06-04-rebrand
+- Decisão arquitetural registrada em 21.03-Decisoes-Arquitetura/
+- Log de execução phase 8
+- Daily note 2026-06-04 atualizada"
+git push origin master 2>&1 || echo "WARN: vault push falhou (verificar remote)"
+
+# Smoke final omni-srv-admin
+cd ~/GitHub/omni-srv-admin
+echo "=== Submodule status ==="
+git submodule status
+echo "=== Git log ==="
+git log --oneline | head -5
+echo "=== Repo omni ==="
+gh repo view giovannimnz/omni-srv-admin --json name,isArchived,description
+echo "=== Repo fork-sync ==="
+gh repo view giovannimnz/fork-sync --json isArchived,name
+echo "=== Working tree ==="
+git status --porcelain
+```
+
+**verify:** todos os comandos retornam sem erro. Smoke confirma:
+- `omni-srv-admin`: `isArchived: false`, `name: omni-srv-admin`
+- `fork-sync`: `isArchived: true`, `name: fork-sync`
+- `git submodule status`: mostra SHA do fork-sync
+- Working tree: vazio
+
+---
+
+## Pitfalls
+
+| Pitfall | Mitigation |
+|---|---|
+| `gh repo rename` falha por ownership | User já é owner; se falhar, `gh repo fork` e re-rename. |
+| `git submodule add` 403 (HTTPS sem token) | `gh auth setup-git` resolve via credential helper. |
+| `modules/fork-sync` já existe (tentativa anterior) | `rm -rf modules/fork-sync .git/modules/modules/fork-sync` antes de `git submodule add`. |
+| `sed` quebra markdown (regex em URLs/code blocks) | Conferir `git diff` em batch antes de commit. |
+| `git push origin main` rejeitado (working tree dirty) | Tasks 02 + 04 + 07 garantem working tree limpo antes do push. |
+| `gh repo archive` requer owner + repo not archived | `gh auth status` confirma. Se já archived, skip. |
+| Vault push falha (no remote / wrong branch) | `git remote -v` no vault; se master sem upstream, commit local-only + flag pro user. |
+| DNS `atius.com.br` acidentalmente renomeado | Verificação `git grep "atius-srv" | grep -v ".com.br"` antes de commit. |
+| `egg-info/` regenerado pelo setup.py polui git | `.gitignore` atualizado (Task 07) + verificação `git submodule foreach git status`. |
+
+---
+
+## Quality Gates (pre-execution)
+
+- [x] **QG-1:** CONTEXT.md criado com 7 decisões locked (D-01..D-07) +
+  5 gray areas com P5 default aplicado (G-01..G-05)
+- [x] **QG-2:** PLAN.md com 15 tasks, todas com `read_first`,
+  `acceptance_criteria`, `action`, `verify`
+- [x] **QG-3:** 9 Must Haves derivados do goal (MH-1..MH-9) — todos
+  mensuráveis com comandos de verificação
+- [x] **QG-4:** Push policy explícita (4 níveis: auto, soft, hard, proibido)
+- [x] **QG-5:** Inline-plan-guard satisfeito: medições reais
+  (95 ocorrências, 19 arquivos, 21 .planning files, 104 fork-sync files)
+- [x] **QG-6:** Pitfalls catalogados com mitigações
+- [x] **QG-7:** Vault mapping completo (6 notas afetadas/criadas)
+
+## Inline Plan Guard Validation
+
+| Métrica | Medido (pré-plan) | Critério | Achievable? |
+|---|---|---|---|
+| README lines | 201 | Rebrand total | ✓ |
+| docs/ files | 7 | Rebrand todos | ✓ |
+| .planning files | 21 (4 top + 17 phases) | Rebrand top 4 only | ✓ |
+| "Atius/atius-srv" matches | 95 (excl. .planning) + 102 (incl) | 0 (excl. .com.br) | ✓ |
+| fork-sync files | 104 | Submodule 100% | ✓ |
+| Phase count | 7 (3 with files) | Phase 8 = next int | ✓ (sequential P1) |
+
+## Execution Order
+
+Sequencial (1 → 15), mas Tasks 04/05 fork-sync podem ser feitas em paralelo
+com Tasks 01-03 omni-srv-admin se user autorizar.
+
+Recomendado: **strict sequential** (1, 2, 3, 4, 5, 6, 7, 8, 9, 10, **HARD
+GATE CHECKPOINT**, 11, **HARD GATE CHECKPOINT**, 12, **HARD GATE
+CHECKPOINT**, 13, 14, 15). Hard-gates bloqueiam push destrutivo sem
+confirmação explícita.
+
+## Branch Strategy
+
+- **omni-srv-admin:** continuar em `main` (D-03 G-03). Commits diretos.
+- **fork-sync:** continuar em `main` (Tasks 04-05), tag local
+  (Task 05), push tag (Task 11) + release (Task 12) + archive (Task 13)
+  são hard-gated.
+- **vault:** continuar em `master` (configuração atual).
+
+## Definition of Done
+
+Todos os 9 Must Haves passam verificação + vault commit + smoke final
+(Task 15) sem erros. Push policy respeitada (4 hard-gates Tasks
+11/12/13 com confirmação explícita).
