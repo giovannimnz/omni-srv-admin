@@ -1,6 +1,6 @@
-# Atius Server (atius-srv)
+# Omni Srv Admin (omni-srv-admin)
 
-Repositório central de configuração e provisionamento do servidor Atius (10.1.1.1 Oracle Cloud). Contém scripts de instalação padrão, configurações de rede (iptables, WireGuard), antiviral, tema desktop, e o módulo de Infraestrutura de Domínio Linux (FreeIPA + Keycloak + Samba) para autenticação centralizada e SSO web.
+Repositório central de configuração e provisionamento multi-tenant do servidor omni (10.1.1.1 Oracle Cloud). Contém scripts de instalação padrão, configurações de rede (iptables, WireGuard), antiviral, tema desktop, e o módulo de Infraestrutura de Domínio Linux (FreeIPA + Keycloak + Samba) para autenticação centralizada e SSO web.
 
 **Core Value:** Servidor Atius sempre provisionado, documentado e operante — com identidade centralizada para login unificado de todas as máquinas Linux e SSO web funcionando em paralelo.
 
@@ -94,8 +94,8 @@ Perfil e extensões do VSCode para o ambiente de desenvolvimento.
 
 ```bash
 # Clone o repositório
-git clone https://github.com/giovannimnz/atius-srv.git
-cd atius-srv
+git clone https://github.com/giovannimnz/omni-srv-admin.git
+cd omni-srv-admin
 
 # Torne o script executável
 chmod +x setup.sh
