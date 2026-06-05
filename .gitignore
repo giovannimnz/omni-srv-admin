@@ -133,3 +133,6 @@ dist
 
 # Atius Domain Infrastructure (repo separado)
 domain-infrastructure/
+
+# Background process manifests (ephemeral)
+.bg-shell/
