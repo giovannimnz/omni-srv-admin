@@ -1,34 +1,49 @@
-# State: Atius Server (atius-srv)
+# State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-05-06 after merge with domain-infrastructure .planning
+**Last updated:** 2026-06-04 after M002 creation
+
+**Active Milestone:** M002 — Fork Sync Integration
 
 ## Project Reference
 
-See: .planning/PROJECT.md (updated 2026-05-06 after merge)
+See: .planning/ROADMAP.md (M002 section — Fork Sync Integration)
 
-**Core value:** Servidor Atius sempre provisionado e operante com identidade centralizada
-**Current focus:** Phase 3 — FreeIPA Server Container (próxima fase a executar)
+**Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
+**Current focus:** Phase 8 — Rebrand + fork-sync submodule (pronta para execução)
 
 ## Session Summary
 
-- **Project:** atius-srv — repositório central de configuração do servidor Atius (10.1.1.1)
-- **Modules:** server-setup (base) + domain-infrastructure (identidade/SSO)
-- **Location:** `/home/ubuntu/GitHub/atius-srv/`
+- **Project:** omni-srv-admin (formerly omni-srv-admin) — repositório central de configuração
+- **Location:** `/home/ubuntu/GitHub/omni-srv-admin/`
+- **Modules:** server-setup, domain-infrastructure, fork-sync (submodule)
 
 ## Active Work
 
 ### Current Phase
-Phase 3: FreeIPA Server Container — planejamento pendente (3 planos: 03-01 a 03-03)
+Phase 8: Rebrand + fork-sync submodule — **READY TO EXECUTE**
 
-### Completed Phases
-- Phase 1: Preparação do Host ✅ (2026-04-19)
-- Phase 2: Migração Apache2 ✅ (2026-04-19)
+### Completed Milestones
+- **M001:** Domain Foundation ✅ (2026-04-19) — Phases 1, 2 concluídas
 
 ### Next Action
-Executar `/gsd-plan-phase 3` para planejar Phase 3 — FreeIPA Server Container
+Executar Task 01 do 08-PLAN.md (backup + smoke test), depois prosseguir sequencialmente.
+
+## M002 Baseline (Measured 2026-06-04)
+
+| MH | Status | Description |
+|---|---|---|
+| MH-1 (gh repo rename) | FAIL | omni-srv-admin ainda não renomeado |
+| MH-2 (git remote) | FAIL | URL antiga |
+| MH-3 (brand residue) | 75+ matches | Requer rebrand textual |
+| MH-4 (.gitmodules) | NOT YET | Submodule não adicionado |
+| MH-5 (modules/fork-sync) | NOT YET | Diretório não existe |
+| MH-6 (fork-sync archived) | false | Repo ainda activo |
+| MH-7 (vault note) | NOT YET | Notas canônicas pendentes |
+| MH-8 (working tree) | dirty | 5 entries unstaged |
+| MH-9 (clean commits) | none | Nenhum commit de rebrand |
 
 ## Notes
 
-- domain-infrastructure .planning mergeado em atius-srv .planning (2026-05-06)
-- domain-infrastructure .planning a ser deletado após merge
-- YOLO mode ativado — aprovações desabilitadas
+- YOLO mode ativado — aprovações desabilitadas exceto em hard-gates (Tasks 11/12/13)
+- Push policy: auto para commits, hard-gate para tag/release/archive do fork-sync
+- Phase 8 links: 08-CONTEXT.md + 08-PLAN.md em .planning/phases/08-rebrand-fork-sync-submodule/

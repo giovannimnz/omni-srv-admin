@@ -1,7 +1,7 @@
 # ATIUS-SRV-1 — Full Server Audit Report
 **Server:** ATIUS-SRV-1 (10.1.1.1)  
 **Generated:** $(date -u)  
-**Project:** atius-srv (commit 2b244ac)  
+**Project:** omni-srv-admin (commit 2b244ac)  
 
 ---
 
@@ -88,7 +88,7 @@ Listen ports:   80, 443, 9080, 8443, 8081, 8084
 
 ---
 
-## Undocumented Services (NOT in atius-srv project)
+## Undocumented Services (NOT in omni-srv-admin project)
 
 ### 🔴 Docker Containers (não documentados)
 
@@ -126,7 +126,7 @@ Listen ports:   80, 443, 9080, 8443, 8081, 8084
 | Hermes dashboard | 8082 | hermes dashboard --port 8082 | Hermes web UI |
 | Paperclip Vhost | 8084 | Apache2 vhost | paperclip.atius.com.br |
 
-### 🔴 PM2 Processes (atius-srv vs atius-srv project)
+### 🔴 PM2 Processes (omni-srv-admin vs omni-srv-admin project)
 
 | Processo | Portas | Namespace | Status |
 |---|---|---|---|
@@ -145,14 +145,14 @@ Listen ports:   80, 443, 9080, 8443, 8081, 8084
 | horistic-web | — | horistic | online |
 | horistic-webhook-signals | 8099 | default | online |
 
-**Nota:** "horistic" e "aionui" são projetos separados de atius-srv. Não há documentação cruzando esses projetos.
+**Nota:** "horistic" e "aionui" são projetos separados de omni-srv-admin. Não há documentação cruzando esses projetos.
 
 ---
 
 ## iptables State
 
 ### ✅ Regraz Documentadas
-- `/home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf` existe (118 linhas, jan 23 2025)
+- `/home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf` existe (118 linhas, jan 23 2025)
 - BACKUP ANTIGO — não reflete estado atual
 
 ### Regras Ativas (não documentadas)
@@ -177,7 +177,7 @@ OUTPUT:
 
 **Problema:** 
 - Backup iptables é de jan 2025 — 4 meses desatualizado
-- Regras atuais (MongoDB, MAILCOW, WireGuard) NÃO estão no projeto atius-srv
+- Regras atuais (MongoDB, MAILCOW, WireGuard) NÃO estão no projeto omni-srv-admin
 - WireGuard (`wg0`) está no FORWARD chain mas Phase 5 (WireGuard migration) não começou
 
 ---
@@ -262,7 +262,7 @@ docker rename angry_yonath <nome-significativo>
 
 ### 6. Atualizar backup iptables
 ```bash
-sudo iptables-save > /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4-$(date +%Y%m%d).conf
+sudo iptables-save > /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4-$(date +%Y%m%d).conf
 ```
 
 ### 7. Atualizar STATE.md do projeto

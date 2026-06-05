@@ -1,11 +1,11 @@
-# Development Guide - atius-srv
+# Development Guide - omni-srv-admin
 
 Repository for provisioning and maintaining the Atius server (10.1.1.1 Oracle Cloud).
 
 ## Repository Overview
 
 ```
-/home/ubuntu/GitHub/atius-srv/
+/home/ubuntu/GitHub/omni-srv-admin/
 ├── setup.sh                    # Two-stage server setup script
 ├── iptables/                   # Firewall rules backup (IPv4/IPv6)
 ├── domain-infrastructure/       # Linux domain services (FreeIPA, Keycloak, Samba)
@@ -81,7 +81,7 @@ This module is under active development (Phase 3 in ROADMAP.md).
 **Key constraints:**
 - FreeIPA runs in Docker AlmaLinux 9 (no native Ubuntu package)
 - Apache2 moved to ports 9080/9444 to free 80/443 for FreeIPA
-- FQDN required: `atius-srv-1.atius.com.br`
+- FQDN required: `omni-srv-admin-1.atius.com.br`
 - Existing Apache2 SSO must not be affected
 
 ### Antivirus Scripts (antivirus/)
@@ -262,7 +262,7 @@ To add a new module to the repository:
 
 - **FreeIPA in Docker**: Native package unavailable on Ubuntu 22.04 (bug #1875114)
 - **Port allocation**: Apache2 uses 9080/9444, FreeIPA uses 80/443
-- **Hostname**: Must be FQDN (`atius-srv-1.atius.com.br`) for FreeIPA
+- **Hostname**: Must be FQDN (`omni-srv-admin-1.atius.com.br`) for FreeIPA
 - **Coexistence**: Apache2 SSO in ~/GitHub/atius must not be affected
 - **ARM64**: Oracle Cloud Infrastructure uses ARM64/aarch64
 

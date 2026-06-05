@@ -11,6 +11,25 @@
     "nyquist_validation": true,
     "auto_advance": false
   },
+  "currentMilestone": "M002",
+  "currentPhase": "08",
+  "milestones": [
+    {
+      "id": "M001",
+      "name": "Domain Foundation",
+      "status": "done",
+      "completed": "2026-04-19",
+      "phases": ["01", "02"]
+    },
+    {
+      "id": "M002",
+      "name": "Fork Sync Integration",
+      "status": "active",
+      "phase": "08",
+      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv → omni-srv-admin",
+      "depends_on": "M001"
+    }
+  ],
   "_created": "2026-05-06",
-  "_note": "Merged from domain-infrastructure .planning. domain-infrastructure is now a module of atius-srv."
+  "_note": "Merged from domain-infrastructure .planning. domain-infrastructure is now a module of omni-srv-admin."
 }

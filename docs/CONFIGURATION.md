@@ -1,14 +1,14 @@
-# Configuration Guide - atius-srv
+# Configuration Guide - omni-srv-admin
 
 ## Overview
 
-This document describes all configuration options for the atius-srv server provisioning system, including setup.sh variables, firewall rules, domain infrastructure settings, and environment variables.
+This document describes all configuration options for the omni-srv-admin server provisioning system, including setup.sh variables, firewall rules, domain infrastructure settings, and environment variables.
 
 ---
 
 ## 1. setup.sh Variables
 
-**Location:** `/home/ubuntu/GitHub/atius-srv/setup.sh`
+**Location:** `/home/ubuntu/GitHub/omni-srv-admin/setup.sh`
 
 ### Stage Selection Variable
 
@@ -61,7 +61,7 @@ trickle -d 31250 -u 18750 chromium-browser %U
 
 ## 2. iptables Firewall Rules
 
-**Location:** `/home/ubuntu/GitHub/atius-srv/iptables/`
+**Location:** `/home/ubuntu/GitHub/omni-srv-admin/iptables/`
 
 ### Files
 
@@ -139,7 +139,7 @@ sudo netfilter-persistent save
 
 ## 3. Domain Infrastructure Configuration
 
-**Location:** `/home/ubuntu/GitHub/atius-srv/domain-infrastructure/`
+**Location:** `/home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/`
 
 ### Directory Structure
 
@@ -196,7 +196,7 @@ Currently empty (`.gitkeep`). Will contain:
 
 | Constraint | Details |
 |------------|---------|
-| **Hostname** | Must be FQDN: `atius-srv-1.atius.com.br` |
+| **Hostname** | Must be FQDN: `omni-srv-admin-1.atius.com.br` |
 | **Apache2** | Moved to 9080/9444 to free 80/443 |
 | **DNS** | CoreDNS coexistence with FreeIPA BIND |
 | **SSO** | Existing Apache2 SSO at `~/GitHub/atius` must not be affected |
@@ -252,7 +252,7 @@ Managed via `ecosystem.config.js` with helper functions:
 
 | Property | Value |
 |----------|-------|
-| **Hostname** | `atius-srv-1.atius.com.br` |
+| **Hostname** | `omni-srv-admin-1.atius.com.br` |
 | **Primary IP** | `10.1.1.1` |
 | **WireGuard VPN** | `10.1.1.0/24` |
 | **Platform** | Oracle Cloud Infrastructure (ARM64) |
@@ -285,7 +285,7 @@ Managed via `ecosystem.config.js` with helper functions:
 
 ## 6. Dark Theme Configuration
 
-**Location:** `/home/ubuntu/GitHub/atius-srv/dark-theme-ubuntu/`
+**Location:** `/home/ubuntu/GitHub/omni-srv-admin/dark-theme-ubuntu/`
 
 ### Scripts
 
@@ -313,7 +313,7 @@ trickle -d 31250 -u 18750 chromium-browser
 
 ## 7. Antivirus Configuration
 
-**Location:** `/home/ubuntu/GitHub/atius-srv/antivirus/`
+**Location:** `/home/ubuntu/GitHub/omni-srv-admin/antivirus/`
 
 ### Scripts
 
@@ -333,7 +333,7 @@ trickle -d 31250 -u 18750 chromium-browser
 ### Applying Firewall Rules
 
 ```bash
-cd /home/ubuntu/GitHub/atius-srv
+cd /home/ubuntu/GitHub/omni-srv-admin
 sudo ./setup.sh
 # Select stage 1 for firewall restoration
 ```
@@ -356,7 +356,7 @@ GitHub/atius/config/.env  # Main application environment (~58 variables)
 
 | Path | Description |
 |------|-------------|
-| `/home/ubuntu/GitHub/atius-srv/` | Repository root |
+| `/home/ubuntu/GitHub/omni-srv-admin/` | Repository root |
 | `/home/ubuntu/GitHub/atius/` | Application code |
 | `~/.pm2/` | PM2 process manager home |
 | `/etc/ssl/cloudflare/` | SSL certificates |

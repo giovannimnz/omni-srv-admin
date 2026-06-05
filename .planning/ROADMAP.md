@@ -1,7 +1,11 @@
-# Roadmap: Atius Server (atius-srv)
+# Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Milestone:** v1.0 — Domain Foundation
-**Goal:** Servidor 10.1.1.1 como domínio Linux completo (identidade, SSO, file shares) com migração de VPN e coexistência com Apache2
+**Active Milestone:** M002 — Fork Sync Integration
+**Milestone Goal:** fork-sync integrado como submodule + repo rebranded de omni-srv-admin para omni-srv-admin
+
+---
+
+## M001: v1.0 — Domain Foundation ✅ DONE
 
 ---
 
@@ -158,3 +162,56 @@
 | 7 | Coexistência + Clients | Tudo integrado, clients enrolled | 7 | Pending | LOW |
 
 **Total:** 7 phases | 39 requirements mapped | 36 requirements covered ✓
+
+---
+
+## M002: Fork Sync Integration (ACTIVE)
+
+**Goal:** fork-sync integrado como submodule `modules/fork-sync/` + repo rebranded de `omni-srv-admin` para `omni-srv-admin` + fork-sync standalone arquivado.
+
+**Why:** omni-srv-admin é o gestor central de servidores, aplicações GitHub e containers. fork-sync (CLI Python de sync multi-fork) pertence aqui como módulo nativo, não como repo separado.
+
+**Depends on:** M001 (preparação de host + infra concluída)
+
+**Links:**
+- Context: `.planning/phases/08-rebrand-fork-sync-submodule/08-CONTEXT.md`
+- Plan: `.planning/phases/08-rebrand-fork-sync-submodule/08-PLAN.md`
+
+---
+
+### Phase 8: Rebrand + fork-sync submodule
+
+**Status:** 🟢 READY TO EXECUTE
+
+**Goal:** Repo local rebranded + fork-sync como submodule vivo + fork-sync standalone arquivado.
+
+**Requirements:** (nenhuma nova — integra requisitos existentes)
+
+**Plans:** 2 plans
+- [ ] 08-CONTEXT.md — 7 decisões locked (D-01 a D-07) + 5 gray areas
+- [ ] 08-PLAN.md — 15 tasks sequenciais com 9 Must Haves (MH-1 a MH-9)
+
+**Push Policy (D-06):**
+
+| Operação | Auth | Comandos |
+|---|---|---|
+| Commit local | Auto | `git commit` |
+| `gh repo rename` | Soft (clarified) | `gh repo rename giovannimnz/omni-srv-admin omni-srv-admin --yes` |
+| `git remote set-url` | Auto | `git remote set-url origin ...` |
+| `git push origin main` | Auto após rebrand commit | `git push origin main` |
+| Push tag fork-sync | **Hard-gate** — pedir confirmação | `git push fork-sync v1.2.1-omni-archived` |
+| Create release fork-sync | **Hard-gate** — pedir confirmação | `gh release create v1.2.1-omni-archived` |
+| Archive fork-sync repo | **Hard-gate** — pedir confirmação | `gh repo archive giovannimnz/fork-sync --yes` |
+
+**Success Criteria (9 Must Haves):**
+- [ ] **MH-1:** GitHub repo `giovannimnz/omni-srv-admin` renomeado pra `giovannimnz/omni-srv-admin`
+- [ ] **MH-2:** `git remote -v` mostra `https://github.com/giovannimnz/omni-srv-admin.git`
+- [ ] **MH-3:** Zero `omni-srv-admin` ou `Omni Srv Admin` fora de `.planning/phases/`, `.planning/research/`, `git log`, `*.com.br`
+- [ ] **MH-4:** `.gitmodules` presente com `path = modules/fork-sync`, `url = https://github.com/giovannimnz/fork-sync.git`
+- [ ] **MH-5:** `modules/fork-sync/` populado (104 files, CLI, lib, projects)
+- [ ] **MH-6:** `giovannimnz/fork-sync` arquivado (`isArchived: true`) + tag `v1.2.1-omni-archived`
+- [ ] **MH-7:** Vault Obsidian com notas canônicas em `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/`
+- [ ] **MH-8:** Working tree limpo (`git status --porcelain` vazio)
+- [ ] **MH-9:** `git log --oneline | head -3` mostra commits claros rebrand+submodule
+
+**Execution order:** Strict sequential (Tasks 01-10 → HARD-GATE CHECKPOINT → Tasks 11-15)

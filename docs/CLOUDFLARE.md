@@ -1,4 +1,4 @@
-# Cloudflare Configuration — atius-srv
+# Cloudflare Configuration — omni-srv-admin
 
 ## Overview
 
@@ -16,7 +16,7 @@ Cloudflare é usado como CDN, proxy reverso e DNS manager para os domínios `ati
 | **User ID** | `ad7349df756c5077ea311f63a3e76700` |
 | **Account Created** | 2025-05-18 |
 | **Role** | Super Administrator — All Privileges |
-| **Global API Key** | `cfk_Br...` (ver `~/.zshrc` em atius-srv-1) |
+| **Global API Key** | `cfk_Br...` (ver `~/.zshrc` em omni-srv-admin-1) |
 | **Auth Method** | `X-Auth-Email` + `X-Auth-Key` headers (NÃO usar Bearer) |
 
 ### Credenciais no Ambiente

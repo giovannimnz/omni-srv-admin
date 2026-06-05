@@ -1,4 +1,4 @@
-# Atius Server (atius-srv)
+# Omni Srv Admin (omni-srv-admin)
 
 ## What This Is
 
@@ -70,7 +70,7 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 - **[Compatibilidade]**: SSO existente no Apache2 (~/GitHub/atius) NÃO pode ser afetado — coexistência obrigatória
 - **[Portas]**: Apache2 movido para portas alternativas (9080/9444) para liberar 80/443 ao FreeIPA
 - **[FreeIPA]**: Rodará em container Docker AlmaLinux 9 (não existe freeipa-server no Ubuntu)
-- **[Hostname]**: FreeIPA requer FQDN — hostname deve ser `atius-srv-1.atius.com.br`
+- **[Hostname]**: FreeIPA requer FQDN — hostname deve ser `omni-srv-admin-1.atius.com.br`
 - **[Rede]**: Todas as máquinas acessíveis via WireGuard 10.1.1.0/24
 - **[DNS]**: CoreDNS existente precisa coexistir com DNS do FreeIPA (BIND interno)
 
@@ -85,7 +85,7 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 | Samba com auth via FreeIPA/Kerberos | Integração nativa com identidade centralizada | — Pending |
 | Apache2 movido para 9080/9444 | FreeIPA precisa 80/443; 8080 já ocupado por Docker | ✓ Good |
 | Horistic excluído do escopo | Domínio próprio, projeto independente | ✓ Good |
-| domain-infrastructure como módulo do atius-srv | Unificação do repositório servidor | — Pending |
+| domain-infrastructure como módulo do omni-srv-admin | Unificação do repositório servidor | — Pending |
 
 ## Evolution
 

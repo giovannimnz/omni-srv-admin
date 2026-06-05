@@ -1,4 +1,4 @@
-# Manual Testing Guide — atius-srv
+# Manual Testing Guide — omni-srv-admin
 
 This repository is a server configuration repo with no automated test suite.
 All validation is performed manually. This document describes the procedures
@@ -14,7 +14,7 @@ script's logic is sound without executing privileged operations.
 ### 1.1 Syntax Check
 
 ```bash
-bash -n /home/ubuntu/GitHub/atius-srv/setup.sh
+bash -n /home/ubuntu/GitHub/omni-srv-admin/setup.sh
 ```
 
 Expected: no output (exit code 0). Any syntax error is printed to stderr.
@@ -44,7 +44,7 @@ the repo root:
 
 ```bash
 # Verify from the repo root
-cd /home/ubuntu/GitHub/atius-srv
+cd /home/ubuntu/GitHub/omni-srv-admin
 [ -d iptables ]          && echo "iptables/ dir: OK"  || echo "iptables/ dir: MISSING"
 [ -f iptables/iptables-backup-v4.conf ] && echo "v4 rules: OK"  || echo "v4 rules: MISSING"
 [ -f iptables/iptables-backup-v6.conf ] && echo "v6 rules: OK"  || echo "v6 rules: MISSING"
@@ -53,7 +53,7 @@ cd /home/ubuntu/GitHub/atius-srv
 ### 1.4 Stage 2 Dependency Check
 
 ```bash
-cd /home/ubuntu/GitHub/atius-srv
+cd /home/ubuntu/GitHub/omni-srv-admin
 [ -f dark-theme-ubuntu/install.sh ] && echo "theme install.sh: OK" || echo "theme install.sh: MISSING"
 ```
 
@@ -63,7 +63,7 @@ To simulate Stage 1 without running any privileged commands, use:
 
 ```bash
 # Preview the apt commands that would run (print-only simulation)
-grep -E "^[[:space:]]+sudo apt-get" /home/ubuntu/GitHub/atius-srv/setup.sh
+grep -E "^[[:space:]]+sudo apt-get" /home/ubuntu/GitHub/omni-srv-admin/setup.sh
 ```
 
 Review the output — confirm no unexpected packages and that all `apt-get`
@@ -81,10 +81,10 @@ and persisted with `netfilter-persistent`.
 
 ```bash
 # Confirm files are non-empty and valid iptables-save format
-wc -l /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf
-wc -l /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v6.conf
-grep -c "^COMMIT$" /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf
-grep -c "^\\*filter$" /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf
+wc -l /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf
+wc -l /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v6.conf
+grep -c "^COMMIT$" /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf
+grep -c "^\\*filter$" /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf
 ```
 
 Expected: both files have lines, v4 contains `*filter` and `COMMIT` markers.
@@ -113,7 +113,7 @@ PATTERNS=(
 )
 
 for p in "${PATTERNS[@]}"; do
-  if grep -q "$p" /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf; then
+  if grep -q "$p" /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf; then
     echo "FOUND: $p"
   else
     echo "MISSING: $p"
@@ -134,12 +134,12 @@ running rules:
 sudo iptables -L INPUT -n --line-numbers
 
 # Show saved rules for the same
-grep -A 100 "^\*filter" /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf \
+grep -A 100 "^\*filter" /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf \
   | grep -A 100 ":INPUT"
 
 # Diff live vs saved (simplified)
 sudo iptables-save > /tmp/live-iptables.conf
-diff /tmp/live-iptables.conf /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v4.conf
+diff /tmp/live-iptables.conf /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v4.conf
 ```
 
 Differences in counters (`[123:45678]`) are expected and harmless. Focus on
@@ -149,7 +149,7 @@ rule order and policy changes.
 
 ```bash
 # Confirm v6 file has DROP or ACCEPT policy for INPUT
-grep -E "^:INPUT" /home/ubuntu/GitHub/atius-srv/iptables/iptables-backup-v6.conf
+grep -E "^:INPUT" /home/ubuntu/GitHub/omni-srv-admin/iptables/iptables-backup-v6.conf
 ```
 
 ---
@@ -164,7 +164,7 @@ files that exist.
 ### 3.1 Docker Configuration Review
 
 ```bash
-ls -la /home/ubuntu/GitHub/atius-srv/domain-infrastructure/docker/
+ls -la /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/docker/
 ```
 
 Expected: at minimum one Dockerfile or `docker-compose.yml`. If the directory
@@ -175,10 +175,10 @@ If Docker files exist:
 
 ```bash
 # Verify Dockerfile references a compatible base image (AlmaLinux 9)
-grep -E "^FROM" /home/ubuntu/GitHub/atius-srv/domain-infrastructure/docker/Dockerfile
+grep -E "^FROM" /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/docker/Dockerfile
 
 # Check docker-compose.yml has required services: freeipa, keycloak
-grep -E "freeipa|keycloak" /home/ubuntu/GitHub/atius-srv/domain-infrastructure/docker/docker-compose.yml
+grep -E "freeipa|keycloak" /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/docker/docker-compose.yml
 ```
 
 ### 3.2 FreeIPA Container Ports (from CLAUDE.md constraints)
@@ -199,7 +199,7 @@ Validate these ports are declared in the Docker compose file:
 
 ```bash
 grep -E "80|443|389|636|88|464" \
-  /home/ubuntu/GitHub/atius-srv/domain-infrastructure/docker/docker-compose.yml
+  /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/docker/docker-compose.yml
 ```
 
 ### 3.3 Keycloak Configuration Check
@@ -210,7 +210,7 @@ LDAP. Verify the expected realm/user federation settings are documented in
 
 ```bash
 # Look for Keycloak references
-grep -i "keycloak" /home/ubuntu/GitHub/atius-srv/domain-infrastructure/CLAUDE.md | head -10
+grep -i "keycloak" /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/CLAUDE.md | head -10
 ```
 
 ### 3.4 Network and DNS Constraints (CLAUDE.md)
@@ -218,7 +218,7 @@ grep -i "keycloak" /home/ubuntu/GitHub/atius-srv/domain-infrastructure/CLAUDE.md
 According to `CLAUDE.md`:
 
 - FreeIPA runs on container Docker AlmaLinux 9 base.
-- Hostname must be FQDN: `atius-srv-1.atius.com.br`.
+- Hostname must be FQDN: `omni-srv-admin-1.atius.com.br`.
 - Apache2 is moved to ports `9080/9443` to free `80/443` for FreeIPA.
 - Port 8080 is already in use and needs investigation before FreeIPA can claim it.
 - CoreDNS (on `10.1.1.2`) must coexist with FreeIPA's internal BIND.
@@ -227,7 +227,7 @@ Validate these constraints are noted:
 
 ```bash
 grep -i "8080\|9080\|hostname\|FQDN\|coredns" \
-  /home/ubuntu/GitHub/atius-srv/domain-infrastructure/CLAUDE.md
+  /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/CLAUDE.md
 ```
 
 If deploying, confirm `hostname` on the target system before provisioning
@@ -246,10 +246,10 @@ repo under `domain-infrastructure/`. When they are added, validate:
 
 ```bash
 # After files are added, check for WireGuard config presence
-find /home/ubuntu/GitHub/atius-srv/domain-infrastructure/ -name "*.conf" -o -name "wg0.conf"
+find /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/ -name "*.conf" -o -name "wg0.conf"
 
 # After files are added, check for Samba config
-find /home/ubuntu/GitHub/atius-srv/domain-infrastructure/ -name "smb.conf"
+find /home/ubuntu/GitHub/omni-srv-admin/domain-infrastructure/ -name "smb.conf"
 ```
 
 ---
@@ -264,7 +264,7 @@ Before running `setup.sh` on a clean server, run through each section above:
 [ ] All required INPUT ports present in iptables-backup-v4.conf
 [ ] dark-theme-ubuntu/install.sh exists (for Stage 2)
 [ ] domain-infrastructure/docker/ has Dockerfile or compose file
-[ ] Hostname is FQDN (atius-srv-1.atius.com.br) before FreeIPA install
+[ ] Hostname is FQDN (omni-srv-admin-1.atius.com.br) before FreeIPA install
 [ ] Port 8080 conflict resolved before FreeIPA claims port 80/443
 [ ] Apache2 moved to 9080/9443 (if FreeIPA will be deployed)
 ```

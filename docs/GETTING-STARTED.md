@@ -1,4 +1,4 @@
-# Getting Started with atius-srv
+# Getting Started with omni-srv-admin
 
 ## Prerequisites
 
@@ -12,8 +12,8 @@
 
 ```bash
 # 1. Clone the repository
-git clone https://github.com/giovannimnz/atius-srv.git
-cd atius-srv
+git clone https://github.com/giovannimnz/omni-srv-admin.git
+cd omni-srv-admin
 
 # 2. Make setup script executable
 chmod +x setup.sh

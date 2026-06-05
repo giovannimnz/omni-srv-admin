@@ -1,4 +1,4 @@
-# Requirements: Atius Server (atius-srv)
+# Requirements: Omni Srv Admin (omni-srv-admin)
 
 **Defined:** 2026-05-06 (merged from atius-srv + domain-infrastructure)
 **Core Value:** Servidor Atius sempre provisionado e operante com identidade centralizada

@@ -1,4 +1,4 @@
-# Atius Server (atius-srv) Architecture
+# Omni Srv Admin (omni-srv-admin) Architecture
 
 ## Overview
 
@@ -6,7 +6,7 @@ Repository for provisioning and maintaining the Atius server (10.1.1.1 Oracle Cl
 
 ## Server Role
 
-- **Hostname**: atius-srv-1.atius.com.br
+- **Hostname**: omni-srv-admin-1.atius.com.br
 - **IP Address**: 10.1.1.1 (WireGuard VPN: 10.1.1.0/24)
 - **Platform**: Oracle Cloud Infrastructure (ARM64/aarch64)
 - **OS**: Ubuntu 22.04
@@ -14,7 +14,7 @@ Repository for provisioning and maintaining the Atius server (10.1.1.1 Oracle Cl
 ## Directory Structure
 
 ```
-/home/ubuntu/GitHub/atius-srv/
+/home/ubuntu/GitHub/omni-srv-admin/
 ├── setup.sh                    # Main two-stage setup script
 ├── iptables/                   # Firewall rules backup
 │   ├── iptables-backup-v4.conf
@@ -87,7 +87,7 @@ Linux domain centralization providing Active Directory-like functionality:
 **Constraints**:
 - FreeIPA runs in Docker because `freeipa-server` unavailable on Ubuntu (bug #1875114)
 - Apache2 moved to ports 9080/9444 to free 80/443 for FreeIPA
-- FQDN required: `atius-srv-1.atius.com.br`
+- FQDN required: `omni-srv-admin-1.atius.com.br`
 - Coexistence with existing Apache2 SSO (~/GitHub/atius) mandatory
 
 ### 4. Antivirus Module (antivirus/)
