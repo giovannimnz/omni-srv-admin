@@ -1,17 +1,26 @@
 # Horus Spec Driven — fork-sync configuration
-# Project: horus-spec-driven
-# Wrapper over open-gsd/gsd-core with role-based unified commands
+# Project: horus-spec-driven v4.1
+# Wrapper over open-gsd/gsd-core with 3-role unified commands
 #
-# 67 upstream commands → 3 roles + config hsd commands (75% reduction)
-# Categories: PO (Product Owner), PM (Project Manager), FRONT, BACK, QA
+# 67 upstream commands → dev/pm/qa + config
+#
+# REGRA DE FILTRAGEM AUTOMÁTICA:
+#   Todo comando upstream cujo nome contenha termo após "Ultra" no dicionário
+#   de níveis (wenyan-*, ultra-*, extreme-*, etc.) é automaticamente removido
+#   durante o build da wordlist. Esta regra é aplicada em bin/rebrand.js.
+#
+#   Níveis válidos: lite, full, ultra
+#   Níveis removidos: wenyan-lite, wenyan-full, wenyan-ultra, extreme,
+#                      maximum, insane, godmode, e quaisquer outros
+#                      adicionados pelo upstream após "ultra"
 
 project: Horus-Spec-Driven
 display_name: "Horus Spec Driven — Multi-CLI Wrapper for GSD Core"
 
-upstream_type: vendor
-vendor_source: https://github.com/open-gsd/gsd-core
-vendor_branch: main
-vendor_method: "shallow clone (git clone --depth 1)"
+upstream_type: submodule
+submodule_path: modules/gsd-core
+upstream_url: https://github.com/open-gsd/gsd-core
+upstream_branch: main
 
 fork: /home/ubuntu/GitHub/horus-spec-driven
 fork_branch: master
@@ -25,25 +34,45 @@ protected_paths:
   - bin/lib/subagent-adapter/
   - bin/lib/layout.js
   - bin/rebrand.js
+  - bin/build-unified-skills.cjs
   - bin/install.js
   - bin/sync.js
   - runtimes/
+  - locales/
   - docs/
-  - spec-horus.json
+  - horus-spec-driven.json
   - README.md
+  - README-en.md
   - SETUP.md
   - CHANGELOG.md
   - LICENSE
+  - modules/README.md
+
+# ── Filtro de comandos upstream ─────────────────────────────────
+upstream_filter:
+  enabled: true
+  description: "Remove comandos com níveis além de Ultra (wenyan-*, extreme-*, etc.)"
+  rule: "strip_levels_beyond_ultra"
+  levels:
+    valid: ["lite", "full", "ultra"]
+    strip:
+      - "wenyan-lite"
+      - "wenyan-full"
+      - "wenyan-ultra"
+      - "extreme"
+      - "maximum"
+      - "insane"
+      - "godmode"
 
 merge_strategy: custom
 merge_script: /home/ubuntu/GitHub/horus-spec-driven/bin/install.js
 merge_args: ["sync", "--all", "--global"]
 merge_description: |
-  1. Pull gsd-core latest (git clone --depth 1)
-  2. Build unified wordlist (gsd-X → hsd-{role}-Y)
+  1. git submodule update --remote modules/gsd-core
+  2. Build unified wordlist (gsd-X → hsd-{role}) + upstream_filter
   3. Apply content + frontmatter converters per runtime
   4. Install em Hermes (skills/hsd/), Claude, Codex, Gemini, Copilot
-  5. Install horus-sdk-adapter skill
+  5. Install horus-sdk-adapter + agentes de role
 
 deploy:
   enabled: true
@@ -62,27 +91,13 @@ deploy:
 notification_level: all
 ai_decision_threshold: important
 
-# ── Slash Commands (3 roles + config) ─────────────────────────────────
+# ── Slash Commands (3 roles + config) ──────────────────────────
 unified_commands:
-  po:  # Product Owner
-    - hsd-po-discover   # explore, spike, sketch, capture, map-codebase
-    - hsd-po-new        # new-project, new-milestone
-    - hsd-po-define     # discuss-phase, spec-phase, mvp-phase
-    - hsd-po-inbox      # inbox
-  pm:  # Project Manager
-    - hsd-pm-plan       # plan-phase, ultraplan-phase, ai-integration-phase
-    - hsd-pm-exec       # execute-phase, autonomous, quick, fast
-    - hsd-pm-track      # progress, workstreams, thread, phase, stats, graphify
-    - hsd-pm-config     # config, settings, profile-user
-    - hsd-pm-ship       # ship, pr-branch, complete-milestone, milestone-summary
-    - hsd-pm-manage     # manager, surface, pause-work, resume-work, help
-  front:  # Frontend
-    - hsd-front-ui      # ui-phase, ui-review
-  back:  # Backend
-    - hsd-back-debug    # debug, forensics
-    - hsd-back-maintain # docs-update, extract-learnings, ingest-docs, import, cleanup
-    - hsd-back-context  # ns-context
-  qa:  # Quality Assurance
-    - hsd-qa-validate   # validate-phase, verify-work, health, add-tests
-    - hsd-qa-audit      # audit-fix, audit-milestone, audit-uat
-    - hsd-qa-review     # code-review, eval-review, review, review-backlog, secure-phase
+  dev:
+    - hsd-dev       # discover define plan build debug maintain ui
+  pm:
+    - hsd-pm        # new track ship config manage
+  qa:
+    - hsd-qa        # validate audit review
+  config:
+    - hsd-config    # language compression agents
