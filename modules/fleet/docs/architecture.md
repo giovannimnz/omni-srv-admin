@@ -7,7 +7,8 @@
 ## Layers
 
 ```text
-hosts/*.yaml       -> inventory and constraints
+inventory/hosts/*.yaml     -> host inventory and constraints
+inventory/remotes/*.yaml   -> remote mounts, labels, and UX mapping
 modules/*          -> reusable or host-specific capability
 cli/omni/*         -> command surface
 ~/.logs/           -> local operational logs per host

@@ -1,268 +1,456 @@
-# Omni Srv Admin (omni-srv-admin)
+# Omni SRV Admin
 
-Repositório central de configuração e provisionamento multi-tenant do servidor omni (10.1.1.1 Oracle Cloud). Contém scripts de instalação padrão, configurações de rede (iptables, WireGuard), antiviral, tema desktop, e o módulo de Infraestrutura de Domínio Linux (FreeIPA + Keycloak + Samba) para autenticação centralizada e SSO web.
+> Fleet-first server administration for the Atius infrastructure.
+>
+> One repo to inventory hosts, operate local services, manage backups, normalize remote mounts, keep documentation current, and scale Giovanni's infrastructure from one Oracle VM to a multi-server/mobile/workstation fleet.
 
-**Core Value:** Servidor Atius sempre provisionado, documentado e operante — com identidade centralizada para login unificado de todas as máquinas Linux e SSO web funcionando em paralelo.
+[![scope](https://img.shields.io/badge/scope-fleet--admin-0d1117?style=flat&labelColor=30363d)](#)
+[![host](https://img.shields.io/badge/primary--host-atius--srv--1-1f6feb?style=flat)](#)
+[![cli](https://img.shields.io/badge/cli-omni-7c3aed?style=flat)](#)
+[![backup](https://img.shields.io/badge/backups-gdrive%20%2B%20smb-238636?style=flat)](#)
+[![docs](https://img.shields.io/badge/docs-agent--first-f97316?style=flat)](#)
 
 ---
 
-## Stack
+## TL;DR
 
-- **OS:** Ubuntu 22.04 (Oracle Cloud Infrastructure, ARM64)
-- **Node.js:** v24.13.1 via NVM
-- **Python:** 3.11 via `uv`
-- **Database:** PostgreSQL 17 (porta 8745), MongoDB (porta 27017)
-- **Reverse Proxy:** Apache2 com 60+ vhosts
-- **Container Runtime:** Docker + containerd (~25 containers)
-- **Process Manager:** PM2 (API, frontend, webhooks, bots de trading)
-- **Domain:** atius.com.br via Cloudflare
-- **Rede:** WireGuard VPN 10.1.1.0/24
+`omni-srv-admin` é o centro operacional versionado para administrar:
+
+- servidores Oracle OCI (`atius-srv-1`, `atius-srv-2`, `atius-srv-3`)
+- desktop/workstations Linux
+- Termux/PRoot no Galaxy S23
+- módulos locais do SRV-1
+- backup/offload/cleanup
+- mounts remotos e labels no PCManFM/LXDE
+- fork sync e documentação operacional
+
+Comando principal:
+
+```bash
+omni --help
+```
+
+Comandos mais usados:
+
+```bash
+omni fleet list
+omni fleet show atius-srv-1
+omni srv1-ops status
+omni srv1-ops logs --limit 30
+omni remote-manager list
+omni remote-manager rename-label srv1-shared-smb Shared --dry-run
+omni xrdp-abnt2 validate
+omni fork-sync projects list
+```
+
+---
+
+## Filosofia
+
+### 1. Fleet-first
+
+O repo não é mais só "scripts do SRV-1". Ele é um sistema de administração multi-host.
+
+Cada host tem inventário, constraints, backup policy, módulos aplicáveis e documentação.
+
+### 2. Módulos pequenos e separados
+
+Cada domínio operacional fica isolado:
+
+- `srv1-ops` para automações locais do ATIUS-SRV-1
+- `fleet` para inventário multi-host
+- `remote-manager` para mounts/remotes/labels
+- `xrdp-abnt2` para teclado/desktop remoto
+- `fork-sync` para sincronização de forks
+
+### 3. Paths técnicos estáveis, labels humanos flexíveis
+
+Exemplo real:
+
+```text
+mount path técnico: /home/ubuntu/Shared_smb
+label visual:       Shared
+```
+
+Renomear o label não quebra scripts.
+
+```bash
+omni remote-manager rename-label srv1-shared-smb Shared
+```
+
+### 4. Backup antes de mudança
+
+Operação destrutiva ou reorganização estrutural exige snapshot antes.
+
+### 5. Documentação é parte da execução
+
+Sem documentação, a tarefa não terminou.
+
+---
+
+## Estrutura canônica
+
+```text
+omni-srv-admin/
+├── cli/                         # Python package: comando `omni`
+│   └── omni/
+│       ├── cli.py               # root CLI + comandos legados
+│       ├── fleet.py             # `omni fleet ...`
+│       ├── remote_manager.py    # `omni remote-manager ...`
+│       ├── srv1_ops.py          # `omni srv1-ops ...`
+│       └── xrdp_abnt2.py        # `omni xrdp-abnt2 ...`
+├── inventory/                   # fonte de verdade da fleet
+│   ├── hosts/                   # inventário por host
+│   ├── groups/                  # agrupamentos futuros
+│   └── remotes/                 # mounts/remotes/bookmarks
+├── modules/                     # módulos operacionais
+│   ├── fleet/                   # arquitetura e rollout multi-host
+│   ├── remote-manager/          # remotes, mounts, PCManFM/LXDE Places
+│   ├── srv1-ops/                # backups, logs, cleanup, sync vault
+│   ├── xrdp-abnt2/              # guard teclado ABNT2 para XRDP/LXDE
+│   └── fork-sync/               # submodule: sincronização de forks
+├── docs/                        # documentação GitHub/readable
+│   ├── architecture/            # visão arquitetural
+│   ├── fleet/                   # multi-servidor
+│   ├── operations/              # runbooks operacionais
+│   ├── reference/               # referências e schemas
+│   ├── runbooks/                # guias executáveis
+│   └── legacy-home-docs/        # docs antigas migradas
+├── domain-infrastructure/       # FreeIPA/Keycloak/Samba legado/infra
+├── dark-theme-ubuntu/           # LXDE/Openbox/SF fonts
+├── antivirus/                   # scripts antivírus legados
+└── vscode-profile/              # perfis/workspaces VSCode
+```
+
+---
+
+## Inventory
+
+### Hosts
+
+Hosts ficam em:
+
+```text
+inventory/hosts/*.yaml
+```
+
+Hosts atuais:
+
+| Host | Papel | Estado | Observação |
+|---|---|---|---|
+| `atius-srv-1` | production | active | Oracle OCI / Ubuntu 22.04 / PRD |
+| `atius-srv-2` | development | planned | DEV/Zentrius |
+| `atius-srv-3` | sandbox | planned | ARM sandbox |
+| `giovanni-s23-termux` | mobile-node | planned | Android Termux host |
+| `giovanni-s23-proot` | mobile-ubuntu | planned | Ubuntu PRoot no S23 |
+| `dell-inspiron-3520` | personal-workstation | planned | desktop pessoal Linux |
+| `support-template` | temporary-support | template | suporte remoto com escopo explícito |
+
+Exemplo:
+
+```bash
+omni fleet list
+omni fleet show atius-srv-1
+```
+
+### Remotes
+
+Remotes ficam em:
+
+```text
+inventory/remotes/*.yaml
+```
+
+Remote atual:
+
+| Remote | Tipo | Host | Source | Mount | Label |
+|---|---|---|---|---|---|
+| `srv1-shared-smb` | CIFS | `atius-srv-1` | `//10.1.1.2/Shared` | `/home/ubuntu/Shared_smb` | `Shared_smb` |
+
+Renomear label visual:
+
+```bash
+omni remote-manager rename-label srv1-shared-smb Shared
+```
+
+---
+
+## CLI
+
+### Instalação editable
+
+```bash
+cd /home/ubuntu/GitHub/omni-srv-admin
+pip install -e cli/
+```
+
+### Root
+
+```bash
+omni --help
+omni version
+```
+
+### Fleet
+
+```bash
+omni fleet list
+omni fleet show atius-srv-1
+omni fleet status
+```
+
+Status atual: inventário e status local. Execução remota destrutiva ainda não está habilitada.
+
+### Remote Manager
+
+```bash
+omni remote-manager list
+omni remote-manager show srv1-shared-smb
+omni remote-manager places
+omni remote-manager status
+omni remote-manager rename-label srv1-shared-smb Shared --dry-run
+omni remote-manager rename-label srv1-shared-smb Shared
+```
+
+O comando `rename-label`:
+
+- altera `~/.config/gtk-3.0/bookmarks`
+- atualiza `inventory/remotes/<remote>.yaml`
+- preserva `mount_path`
+- não edita `/etc/fstab`
+- não desmonta CIFS
+- não renomeia diretórios
+
+### SRV-1 Ops
+
+```bash
+omni srv1-ops list
+omni srv1-ops status
+omni srv1-ops logs --limit 30
+omni srv1-ops run sync-vault
+omni srv1-ops run cleanup-local --dry-run
+omni srv1-ops run backup-gdrive
+omni srv1-ops run offload-dotbackups
+```
+
+### XRDP ABNT2
+
+```bash
+omni xrdp-abnt2 status
+omni xrdp-abnt2 validate
+omni xrdp-abnt2 diff
+omni xrdp-abnt2 install
+```
+
+### Fork Sync
+
+```bash
+omni fork-sync projects list
+omni fork-sync sync aionui --repo-path /home/ubuntu/GitHub/forks/AionUi
+omni fork-sync manuals list
+```
 
 ---
 
 ## Módulos
 
-### domain-infrastructure/
-FreeIPA + Keycloak + Samba para autenticação centralizada e SSO web.
+### `modules/fleet/`
 
-- FreeIPA rodando em container Docker (AlmaLinux 9) — LDAP + Kerberos + CA
-- Keycloak nativo no OS, federado no LDAP do FreeIPA
-- Samba com autenticação via FreeIPA/Kerberos
-- SSO web funcional em `auth.atius.com.br`
-- Compartilhamentos de arquivos acessíveis por máquinas no domínio
-- Migração de WireGuard e Samba do servidor 10.1.1.2 para 10.1.1.1
+Responsável por:
 
-**Estrutura:**
-```
-domain-infrastructure/
-├── CLAUDE.md       # Documentação detalhada do projeto
-├── configs/        # Configurações de FreeIPA, Keycloak, Samba
-├── docker/         # Dockerfiles e compose para FreeIPA
-└── scripts/        # Scripts de provisionamento
+- inventário multi-host
+- arquitetura de orquestração
+- rollout gradual
+- restrições por tipo de host
+
+Docs:
+
+```text
+modules/fleet/README.md
+modules/fleet/docs/architecture.md
+modules/fleet/docs/rollout-plan.md
 ```
 
-### iptables/
-Regras de firewall salvas e restauráveis.
+### `modules/remote-manager/`
 
-- `iptables-backup-v4.conf` — Regras IPv4
-- `iptables-backup-v6.conf` — Regras IPv6
-- Aplicadas automaticamente pelo `setup.sh` e persistidas com `netfilter-persistent`
+Responsável por:
 
-### antivirus/
-Scripts de monitoramento e verificação antiviral.
+- mapeamentos remotos
+- labels visuais de remotes
+- PCManFM/LXDE Places
+- GTK bookmarks
+- futura integração com rsync, Samba e GDrive
 
-- `monitor.sh` — Monitoramento contínuo
-- `scan.sh` — Verificação sob demanda
+Docs:
 
-### dark-theme-ubuntu/
-Tema dark personalizado para LXDE + Zsh + Fontes Apple + Sublime Text.
-
-- Sublime Text ARM64 como editor padrão
-- Modo escuro completo com alto contraste
-- Fontes Apple (SF Pro, SF Mono, etc.) e Microsoft Core Fonts
-- Oh My Zsh com plugins de syntax highlighting
-
-**Estrutura:**
-```
-dark-theme-ubuntu/
-├── install.sh      # Script de instalação
-├── repair.sh       # Script de reparo
-├── uninstall.sh    # Script de desinstalação
-├── themes/         # Arquivos de tema LXDE/Openbox
-├── fonts/          # Fontes Apple e Microsoft
-└── config_files/   # Configurações do sistema
+```text
+modules/remote-manager/README.md
+modules/remote-manager/docs/remote-mapping-labels.md
 ```
 
-### modules/xrdp-abnt2/
-Guard operacional para manter XRDP + LXDE em Português Brasil ABNT2 no fluxo Windows 11 RDP → Ubuntu.
+### `modules/srv1-ops/`
 
-- Mapeia `00010416`, `0000F010` e fallback `00000409` para `br(abnt2)`
-- Instala keymaps XRDP ABNT2 idênticos para todos os layouts críticos
-- Aplica `setxkbmap br abnt2` no início da sessão e mantém watchdog a cada 5s
-- Reaplica a correção após updates via hook APT/DPKG
-- Integrado ao CLI: `omni xrdp-abnt2 status|validate|diff|install`
+Responsável por automações locais do `atius-srv-1`:
 
-**Estrutura:**
-```
-modules/xrdp-abnt2/
-├── README.md        # Runbook canônico
-├── files/           # Assets instaláveis em /etc, /usr/local e ~/bin
-├── scripts/         # Wrappers install/validate
-└── docs/            # Histórico original migrado
-```
+- sync do vault
+- backup para GDrive
+- offload de `~/.backups`
+- cleanup local
+- backup SMB legado
+- health-check Atius web
+- logs em `~/.logs`
 
-### modules/srv1-ops/
-Automações operacionais locais do ATIUS-SRV-1 centralizadas no `omni-srv-admin`.
+### `modules/xrdp-abnt2/`
 
-- Scripts antes espalhados por `~/scripts`, `~/bin` e `~/.local/bin`
-- Logs locais em `~/.logs/` com retenção 15 dias
-- Backup SRV-1 para GDrive em `ATIUS-SRV/SRV-1/Backup/`
-- CLI: `omni srv1-ops list|status|logs|run`
+Responsável por manter teclado ABNT2 no fluxo Windows 11 RDP → Ubuntu LXDE.
 
-**Estrutura:**
-```
-modules/srv1-ops/
-├── README.md        # Runbook canônico
-├── scripts/         # sync-vault, backup, cleanup, offload
-├── systemd/         # services/timers gerenciados
-├── docs/            # source-map e notas de migração
-└── configs/         # configs futuras
-```
+### `modules/fork-sync/`
 
-### modules/fleet/ + hosts/
-Inventário e base de orquestração multi-computacional.
-
-- Hosts cadastrados em `hosts/*.yaml`
-- Classes: Oracle OCI, Termux, PRoot Ubuntu, workstation Ubuntu, suporte remoto temporário
-- CLI inicial: `omni fleet list|show|status`
-- Execução remota ainda planejada, não habilitada
-
-**Estrutura:**
-```
-hosts/
-├── atius-srv-1.yaml
-├── atius-srv-2.yaml
-├── atius-srv-3.yaml
-├── giovanni-s23-termux.yaml
-├── giovanni-s23-proot.yaml
-├── dell-inspiron-3520.yaml
-└── support-template.yaml
-
-modules/fleet/
-├── README.md
-├── configs/config.yaml
-└── docs/
-```
-
-### vscode-profile/
-Perfil e extensões do VSCode para o ambiente de desenvolvimento.
-
-- `Giovanni (ubuntu).code-profile` — Backup do perfil
-- `Extensions/` — Extensões pré-instaladas
-- `atius-1.code-workspace`, `atius-2.code-workspace` — Workspaces
+Submodule/lib para sincronização de forks com proteção de customizações.
 
 ---
 
-## Instalação
+## Backup e logs
 
-### Requisitos
+### Logs locais
 
-- Ubuntu 22.04 (Oracle Cloud Infrastructure, ARM64)
-- Acesso sudo
-- Git
+```text
+/home/ubuntu/.logs/
+```
 
-### Passos
+Retenção local padrão: 15 dias.
+
+### Backup SRV-1
+
+Destino GDrive:
+
+```text
+giovanni-drive:ATIUS-SRV/SRV-1/Backup/
+```
+
+Mapa:
+
+```text
+modules/srv1-ops/configs/backup-map.yaml
+```
+
+### Timers relevantes
 
 ```bash
-# Clone o repositório
-git clone https://github.com/giovannimnz/omni-srv-admin.git
-cd omni-srv-admin
-
-# Torne o script executável
-chmod +x setup.sh
-
-# Execute (necessário rodar como sudo)
-sudo ./setup.sh
+systemctl --user list-timers --all | grep -E 'backup|cleanup|offload'
 ```
 
-### Instalação em 2 Etapas
+---
 
-O script `setup.sh` é dividido em duas etapas:
+## Remote Manager: renomear `Shared_smb` para `Shared`
 
-**Etapa 1 — Preparação do Sistema:**
-- Atualização do sistema
-- Instalação de tooling básico (nano)
-- PostgreSQL 18
-- Configuração de SWAP (10GB)
-- Instalação de LXDE + XRDP (ambiente gráfico)
-- Instalação e configuração de iptables + iptables-persistent
-- Restauração das regras de firewall salvas em `iptables/`
-- **Ao final, o servidor será reiniciado automaticamente**
+O SRV-1 tem mount CIFS estável:
 
-**Etapa 2 — Aplicativos e Tema:**
-- Chromium + trickle (limitador de banda)
-- CopyQ (gerenciador de clipboard)
-- Atalho na área de trabalho
-- Instalação do tema dark (dark-theme-ubuntu/install.sh)
+```text
+/home/ubuntu/Shared_smb
+```
+
+Para mostrar outro nome no PCManFM/LXDE Places:
 
 ```bash
-# Após reiniciar, conecte-se via RDP/SSH e execute novamente
-sudo ./setup.sh
-# Selecione a opção 2
+omni remote-manager rename-label srv1-shared-smb Shared --dry-run
+omni remote-manager rename-label srv1-shared-smb Shared
+```
+
+Validação:
+
+```bash
+omni remote-manager places | grep Shared
+findmnt -R /home/ubuntu/Shared_smb
+```
+
+Por que não renomear o diretório direto?
+
+- backup scripts usam `/home/ubuntu/Shared_smb`
+- `/etc/fstab` usa `/home/ubuntu/Shared_smb`
+- systemd automount usa o path
+- docs e runbooks usam o path
+- renomear path exige migração separada
+
+---
+
+## Fluxo seguro de mudança
+
+Antes de alterar infraestrutura:
+
+```bash
+git status --short
+mkdir -p /home/ubuntu/.backups/<task>
+cp -a ~/.config/systemd/user /home/ubuntu/.backups/<task>/systemd-user
+crontab -l > /home/ubuntu/.backups/<task>/crontab.bak
+```
+
+Durante:
+
+```bash
+# editar módulo certo
+# validar comando
+# atualizar docs
+# atualizar vault
+```
+
+Depois:
+
+```bash
+python3 -m compileall cli/omni
+omni fleet status
+omni remote-manager status
+omni srv1-ops status
 ```
 
 ---
 
-## Ambiente Atual
+## Roadmap
 
-| Servidor | Função |
-|----------|--------|
-| 10.1.1.1 | Este servidor: Atius apps (PM2), ~25 containers Docker, PostgreSQL 17, MongoDB, Apache2 |
-| 10.1.1.2 | WireGuard VPN + CoreDNS + Samba (será migrado para 10.1.1.1) |
-| 10.1.1.3 | Apache2 para Horistic |
+### Curto prazo
 
----
+- [x] Inventário em `inventory/hosts/`.
+- [x] Remotes em `inventory/remotes/`.
+- [x] `omni remote-manager rename-label`.
+- [x] Docs GitHub reorganizadas.
+- [ ] Schema YAML formal para hosts/remotes.
+- [ ] `omni fleet doctor`.
+- [ ] `omni fleet backup-plan <host>`.
 
-## Validações
+### Médio prazo
 
-| ID | Descrição | Status |
-|----|-----------|--------|
-| SRV-01 | Script `setup.sh` executa provisionamento base | ✓ |
-| SRV-02 | Regras iptables salvas em `/etc/iptables/` | ✓ |
-| SRV-03 | Apache2 com 60+ vhosts funcionando como reverse proxy | ✓ |
-| SRV-04 | ~25 containers Docker rodando | ✓ |
-| SRV-05 | PostgreSQL 17 (8745) e MongoDB (27017) operacionais | ✓ |
-| SRV-06 | PM2 gerenciando API, frontend, webhooks e bots | ✓ |
+- [ ] `omni fleet ssh <host>`.
+- [ ] `omni fleet run <host> <safe-command>` com allowlist.
+- [ ] `omni remote-manager mount-check`.
+- [ ] `omni remote-manager rsync-plan`.
+- [ ] `omni backup verify <host>`.
 
----
+### Longo prazo
 
-## Restrições
-
-- **FreeIPA:** Não existe `freeipa-server` no Ubuntu 22.04 (bug #1875114). Solução: container Docker AlmaLinux 9
-- **Apache2:** Movido para portas 9080/9443 para liberar 80/443 ao FreeIPA
-- **Hostname:** FreeIPA requer FQDN — deve ser `atius-srv-1.atius.com.br`
-- **DNS:** CoreDNS existente precisa coexistir com DNS do FreeIPA (BIND interno)
-- **SSO existente:** Apache2 SSO em `~/GitHub/atius` NÃO pode ser afetado — coexistência obrigatória
+- [ ] suporte remoto temporário auditável.
+- [ ] policies por classe de host.
+- [ ] dashboards de saúde multi-host.
+- [ ] sync cruzado SRV-1/SRV-2/SRV-3.
 
 ---
 
-## Estrutura do Repositório
+## Segurança
 
-```
-atius-srv/
-├── README.md                  # Este arquivo
-├── AGENTS.md                  # GSD agents marker
-├── LICENSE
-├── RECOVERY_LOG.md            # Log de recuperação
-├── setup.sh                   # Script de instalação em 2 etapas
-├── .gitignore
-├── .planning/                  # Planejamento do projeto
-│   └── PROJECT.md
-├── antivirus/                  # Módulo: Scripts antivirais
-│   ├── monitor.sh
-│   └── scan.sh
-├── dark-theme-ubuntu/          # Módulo: Tema dark para LXDE
-│   ├── install.sh
-│   ├── repair.sh
-│   ├── uninstall.sh
-│   ├── themes/
-│   ├── fonts/
-│   └── config_files/
-├── domain-infrastructure/       # Módulo: FreeIPA + Keycloak + Samba
-│   ├── CLAUDE.md
-│   ├── configs/
-│   ├── docker/
-│   └── scripts/
-├── iptables/                   # Módulo: Firewall
-│   ├── iptables-backup-v4.conf
-│   └── iptables-backup-v6.conf
-├── modules/
-│   └── xrdp-abnt2/             # Guard XRDP ABNT2 integrado ao omni CLI
-│       ├── README.md
-│       ├── files/
-│       ├── scripts/
-│       └── docs/
-└── vscode-profile/             # Módulo: Perfil VSCode
-    ├── Giovanni (ubuntu).code-profile
-    └── Extensions/
-```
+- Não armazenar senhas em docs.
+- Não commitar `.backups/`.
+- Não aplicar scripts SRV-1 em Termux/PRoot.
+- Não habilitar execução remota ampla sem allowlist.
+- Não rodar cleanup destrutivo sem backup e validação.
+- Não renomear mount path sem plano de migração.
+
+---
+
+## Links rápidos
+
+- `docs/architecture/overview.md`
+- `docs/fleet/inventory-model.md`
+- `docs/operations/remote-manager.md`
+- `docs/operations/srv1-ops.md`
+- `modules/remote-manager/README.md`
+- `modules/srv1-ops/README.md`
+- `modules/fleet/README.md`

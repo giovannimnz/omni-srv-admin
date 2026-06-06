@@ -1,5 +1,6 @@
 default_log_dir: ~/.logs/fleet
-host_inventory_dir: hosts
+host_inventory_dir: inventory/hosts
+remote_inventory_dir: inventory/remotes
 require_explicit_host: true
 require_backup_before_write: true
 support_mode:

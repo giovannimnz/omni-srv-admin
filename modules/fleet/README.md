@@ -15,7 +15,7 @@ Supported categories:
 
 ## Rules
 
-- Every managed host has a file in `hosts/<id>.yaml`.
+- Every managed host has a file in `inventory/hosts/<id>.yaml`.
 - Host-specific scripts live in `modules/<host-or-domain>/`.
 - Cross-host logic lives in `modules/fleet/` or a reusable domain module.
 - Never run SRV-1 scripts on another host unless the host profile explicitly enables the module.
@@ -37,14 +37,18 @@ omni fleet backup-plan atius-srv-1
 
 ```text
 omni-srv-admin/
-├── hosts/
-│   ├── atius-srv-1.yaml
-│   ├── atius-srv-2.yaml
-│   ├── atius-srv-3.yaml
-│   ├── giovanni-s23-termux.yaml
-│   ├── giovanni-s23-proot.yaml
-│   ├── dell-inspiron-3520.yaml
-│   └── support-template.yaml
+├── inventory/
+│   ├── hosts/
+│   │   ├── atius-srv-1.yaml
+│   │   ├── atius-srv-2.yaml
+│   │   ├── atius-srv-3.yaml
+│   │   ├── giovanni-s23-termux.yaml
+│   │   ├── giovanni-s23-proot.yaml
+│   │   ├── dell-inspiron-3520.yaml
+│   │   └── support-template.yaml
+│   ├── groups/
+│   └── remotes/
+│       └── srv1-shared-smb.yaml
 └── modules/fleet/
     ├── README.md
     ├── docs/
@@ -87,5 +91,7 @@ omni-srv-admin/
 
 ## Links
 
-- `../../hosts/`
+- `../../inventory/hosts/`
+- `../../inventory/remotes/`
+- `../remote-manager/README.md`
 - `../srv1-ops/README.md`

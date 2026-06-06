@@ -1,130 +1,99 @@
-# Getting Started with omni-srv-admin
+# Getting Started
 
-## Prerequisites
-
-- A clean Ubuntu 22.04 installation (or compatible Debian-based Linux)
-- Internet connection
-- User with sudo privileges
-
----
-
-## Quick Setup
+## Instalar CLI
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/giovannimnz/omni-srv-admin.git
-cd omni-srv-admin
-
-# 2. Make setup script executable
-chmod +x setup.sh
-
-# 3. Run the setup script
-sudo ./setup.sh
+cd /home/ubuntu/GitHub/omni-srv-admin
+pip install -e cli/
+omni --help
 ```
 
-The `setup.sh` is a two-stage automated setup script:
+## Primeiros comandos
 
-- **Stage 1**: System preparation (Swap, LXDE, XRDP, firewall). Requires reboot after completion.
-- **Stage 2**: Applications and theme installation (Chromium, CopyQ, Dark Theme). Run after Stage 1 and reboot.
-
----
-
-## Per-Module Instructions
-
-### 1. antivirus/
-
-Anti-malware and monitoring scripts for system security.
-
-**scan.sh** - Full system virus/malware scan (ClamAV, rkhunter, chkrootkit)
 ```bash
-cd antivirus
-chmod +x scan.sh
-sudo ./scan.sh
+omni fleet list
+omni fleet status
+omni remote-manager list
+omni srv1-ops status
 ```
-Logs are saved to `antivirus/` directory.
 
-**monitor.sh** - CPU usage monitoring and suspicious process detection
+## Ver inventário de host
+
 ```bash
-cd antivirus
-chmod +x monitor.sh
-./monitor.sh
+omni fleet show atius-srv-1
 ```
-Output saved to `antivirus/monitor.log`.
 
----
+Fonte:
 
-### 2. dark-theme-ubuntu/
+```text
+inventory/hosts/atius-srv-1.yaml
+```
 
-Complete dark theme package for Ubuntu LXDE (Sublime Text, Apple fonts, Zsh, LXDE/Openbox dark styling).
+## Ver remote/mount
 
-**install.sh** - Apply dark theme to the system
 ```bash
-cd dark-theme-ubuntu
-chmod +x install.sh
-./install.sh
+omni remote-manager show srv1-shared-smb
 ```
 
-**uninstall.sh** - Restore original theme
+Fonte:
+
+```text
+inventory/remotes/srv1-shared-smb.yaml
+```
+
+## Renomear label visual do SMB
+
+Dry-run:
+
 ```bash
-cd dark-theme-ubuntu
-chmod +x uninstall.sh
-sudo ./uninstall.sh
+omni remote-manager rename-label srv1-shared-smb Shared --dry-run
 ```
 
-**repair.sh** - Repair theme if something breaks
+Aplicar:
+
 ```bash
-cd dark-theme-ubuntu
-chmod +x repair.sh
-sudo ./repair.sh
+omni remote-manager rename-label srv1-shared-smb Shared
 ```
 
----
+Validar:
 
-### 3. domain-infrastructure/
-
-Centralized Linux domain architecture with FreeIPA (Docker-based), Keycloak SSO, and Samba file sharing.
-
-Refer to `domain-infrastructure/CLAUDE.md` for full architecture details and implementation guide.
-
----
-
-### 4. iptables/
-
-Firewall backup and restore rules for IPv4 and IPv6.
-
-**Files:**
-- `iptables-backup-v4.conf` - IPv4 firewall rules
-- `iptables-backup-v6.conf` - IPv6 firewall rules
-
-Rules are automatically applied during Stage 1 of `setup.sh` if this directory exists.
-
-To manually restore rules:
 ```bash
-sudo iptables-restore < iptables/iptables-backup-v4.conf
-sudo ip6tables-restore < iptables/iptables-backup-v6.conf
-sudo netfilter-persistent save
+omni remote-manager places | grep Shared
+findmnt -R /home/ubuntu/Shared_smb
 ```
 
----
+## Rodar operação SRV-1
 
-### 5. vscode-profile/
+```bash
+omni srv1-ops list
+omni srv1-ops logs --limit 30
+omni srv1-ops run cleanup-local --dry-run
+```
 
-VS Code configuration profiles and extensions for development.
+## Validar teclado XRDP ABNT2
 
-**Extensions folder:** `vscode-profile/Extensions/` - Pre-configured VS Code extensions
+```bash
+omni xrdp-abnt2 validate
+```
 
-**Workspace files:** `.code-workspace` files for multi-folder workspace setups
+## Regras antes de mexer
 
-To use a profile:
-1. Open VS Code
-2. File > Open Workspace from File
-3. Select desired `.code-workspace` file
+1. Consultar vault.
+2. Fazer backup se a mudança for estrutural/destrutiva.
+3. Alterar o módulo correto.
+4. Rodar validação.
+5. Atualizar README/docs/vault.
+6. Só então considerar commit.
 
----
+## Onde colocar coisas novas
 
-## Notes
-
-- Run `setup.sh` Stage 1 first, reboot, then run Stage 2
-- Some operations require sudo password — ensure you have sudo access
-- Stage 2 requires running after reboot and connecting via RDP or SSH
-- The dark theme installer may prompt for sudo password automatically if needed
+| Coisa | Onde |
+|---|---|
+| Host novo | `inventory/hosts/<id>.yaml` |
+| Remote/mount novo | `inventory/remotes/<id>.yaml` |
+| Script SRV-1 | `modules/srv1-ops/scripts/` |
+| Script de mount/remote | `modules/remote-manager/scripts/` |
+| Doc GitHub | `docs/<area>/` |
+| Runbook do módulo | `modules/<module>/README.md` |
+| Decisão | vault `21.03-Decisoes-Arquitetura.md` |
+| Worklog | vault `21.04-Log-Trabalho.md` + `60-LOGS/64-Worklogs-Agrupados/` |
