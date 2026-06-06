@@ -91,6 +91,24 @@ modules/xrdp-abnt2/
 └── docs/            # Histórico original migrado
 ```
 
+### modules/srv1-ops/
+Automações operacionais locais do ATIUS-SRV-1 centralizadas no `omni-srv-admin`.
+
+- Scripts antes espalhados por `~/scripts`, `~/bin` e `~/.local/bin`
+- Logs locais em `~/.logs/` com retenção 15 dias
+- Backup SRV-1 para GDrive em `ATIUS-SRV/SRV-1/Backup/`
+- CLI: `omni srv1-ops list|status|logs|run`
+
+**Estrutura:**
+```
+modules/srv1-ops/
+├── README.md        # Runbook canônico
+├── scripts/         # sync-vault, backup, cleanup, offload
+├── systemd/         # services/timers gerenciados
+├── docs/            # source-map e notas de migração
+└── configs/         # configs futuras
+```
+
 ### vscode-profile/
 Perfil e extensões do VSCode para o ambiente de desenvolvimento.
 

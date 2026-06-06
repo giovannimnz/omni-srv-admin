@@ -1,0 +1,15 @@
+[Unit]
+Description=Backup diário SRV-1 → GDrive (04:00 BRT)
+Requires=backup-srv1-daily.service
+
+[Timer]
+OnCalendar=*-*-* 04:00:00 America/Sao_Paulo
+# Tolerância de 15min se a máquina desligar no horário
+AccuracySec=15min
+# Persistir se perder o trigger
+Persistent=true
+# Aleatorizar 0-30min pra não martelar quota da API
+RandomizedDelaySec=30min
+
+[Install]
+WantedBy=timers.target

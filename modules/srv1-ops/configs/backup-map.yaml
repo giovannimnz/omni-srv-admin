@@ -1,0 +1,57 @@
+# Backup mapping — SRV-1
+
+remote: "giovanni-drive:"
+base: ATIUS-SRV/SRV-1/Backup
+
+sources:
+  github:
+    source: /home/ubuntu/GitHub
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/GitHub
+    excludes:
+      - node_modules/**
+      - .venv/**
+      - .git/**
+      - dist/**
+      - build/**
+      - .next/**
+  docker:
+    source: /home/ubuntu/docker
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/docker
+    excludes:
+      - '*/data/postgres*'
+      - '*/postgres_data/**'
+      - '*/db-data/**'
+      - '*/jenkins_home/**'
+      - '*/node_modules/**'
+  hermes:
+    source: /home/ubuntu/.hermes
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/.hermes
+  config:
+    source: /home/ubuntu/.config
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/.config
+  local-bin:
+    source: /home/ubuntu/.local/bin
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/.local/bin
+  logs:
+    source: /home/ubuntu/.logs
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/.logs
+    retention_local_days: 15
+  dotbackups:
+    source: /home/ubuntu/.backups
+    dest: ATIUS-SRV/SRV-1/Backup/home/ubuntu/.backups
+    policy: copy-verify-delete
+  shared-smb:
+    source: /home/ubuntu/Shared_smb
+    dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/Shared_smb
+
+skeleton_created:
+  - ATIUS-SRV/SRV-1/Backup/snapshots/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/GitHub/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/docker/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/.hermes/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/.config/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/.local/bin/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/.logs/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/.backups/
+  - ATIUS-SRV/SRV-1/Backup/home/ubuntu/Shared_smb/
+  - ATIUS-SRV/SRV-1/Backup/manifests/

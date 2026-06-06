@@ -1,0 +1,12 @@
+[Unit]
+Description=Offload ~/.backups to GDrive daily after backup-srv1
+Requires=offload-dotbackups-to-gdrive.service
+
+[Timer]
+OnCalendar=*-*-* 05:30:00 America/Sao_Paulo
+AccuracySec=10min
+Persistent=true
+RandomizedDelaySec=20min
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,18 @@
+[Unit]
+Description=Backup pastas criticas para SMB //10.1.1.2/Shared (rsync, nao pesa local)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/backup-to-smb.sh
+WorkingDirectory=%h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+# Se o SMB nao tiver montado, nao morre — rsync falha limpo e logamos
+Restart=no
+
+[Install]
+WantedBy=default.target

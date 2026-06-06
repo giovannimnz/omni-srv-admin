@@ -1,0 +1,16 @@
+[Unit]
+Description=Limpeza semanal SRV-1 (domingo 03:00 BRT)
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/README.md
+
+[Timer]
+# Domingo 03:00 BRT com random 0-30min (espalha carga)
+OnCalendar=Sun *-*-* 03:00:00
+RandomizedDelaySec=1800
+# Persistente: se perdeu wakeup, roda no próximo boot
+Persistent=true
+# Unit activation: 30min após boot (defesa em profundidade)
+OnBootSec=30min
+OnUnitActiveSec=7d
+
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,15 @@
+[Unit]
+Description=Limpeza semanal do host SRV-1 (/tmp, caches, podman, logs)
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/README.md
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/cleanup-local.sh
+Environment=PATH=/home/ubuntu/.nvm/versions/node/v24.13.1/bin:/home/ubuntu/.local/bin:/usr/local/bin:/usr/bin:/bin
+# Capturar output no journal (cleanup-local.log tem o log de negócio via tee)
+# Cleanup não bloqueia boot nem falha serviço
+Nice=19
+IOSchedulingClass=idle
+
+[Install]
+WantedBy=default.target

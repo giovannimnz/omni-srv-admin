@@ -1,0 +1,19 @@
+[Unit]
+Description=Backup completo do SRV-1 para Google Drive
+Documentation=https://github.com/giovannimnz/omni-srv-admin
+# Rclone mount é opcional — o script usa rclone copy direto via API
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh
+StandardOutput=journal
+StandardError=journal
+WorkingDirectory=%h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=default.target

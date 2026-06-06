@@ -1,0 +1,18 @@
+[Unit]
+Description=Offload ~/.backups to GDrive after integrity verification
+Documentation=https://github.com/giovannimnz/omni-srv-admin
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh
+StandardOutput=journal
+StandardError=journal
+WorkingDirectory=%h
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=default.target
