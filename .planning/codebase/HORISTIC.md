@@ -1,7 +1,7 @@
 # Horistic Trading Platform — Codebase Map
 
 **Analysis Date:** 2026-04-19
-**Repository:** `/home/ubuntu/GitHub/horistic`
+**Repository:** `/home/ubuntu/GitHub/Atius-Capital/horistic`
 **Domain:** `horistic.com` (multi-subdomain)
 **Server:** `10.1.1.1` (shared with other projects), proxied to `10.1.1.3` via Apache2
 

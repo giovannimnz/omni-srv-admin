@@ -69,19 +69,19 @@ atsius-srv-1 (Oracle Cloud / Ubuntu 22.04 / ARM64)
 
 | Component | Type | Location |
 |-----------|------|----------|
-| Fastify API server | Node.js HTTP server | `~/GitHub/atius/backend/server/api.js` |
-| Next.js frontend | React SSR | `~/GitHub/atius/frontend/` |
-| Exchange adapters | CCXT-based | `~/GitHub/atius/backend/exchanges/{exchange}/` |
-| Signal processor | Python | `~/GitHub/atius/backend/` |
-| PM2 ecosystem | Process config | `~/GitHub/atius/ecosystem.config.js` |
+| Fastify API server | Node.js HTTP server | `~/GitHub/Atius-Capital/ats/backend/server/api.js` |
+| Next.js frontend | React SSR | `~/GitHub/Atius-Capital/ats/frontend/` |
+| Exchange adapters | CCXT-based | `~/GitHub/Atius-Capital/ats/backend/exchanges/{exchange}/` |
+| Signal processor | Python | `~/GitHub/Atius-Capital/ats/backend/` |
+| PM2 ecosystem | Process config | `~/GitHub/Atius-Capital/ats/ecosystem.config.js` |
 | Atius AI Router | New-API fork | `~/docker/Atius/router-ai-atius/` |
 
 ## Directory Structure
 
 | Directory | Purpose |
 |-----------|---------|
-| `~/GitHub/atius/` | Atius Trade System — main trading platform |
-| `~/GitHub/horistic/` | Horistic — futures trading platform |
+| `~/GitHub/Atius-Capital/ats/` | Atius Trade System — main trading platform |
+| `~/GitHub/Atius-Capital/horistic/` | Horistic — futures trading platform |
 | `~/GitHub/caveman/` | Caveman CLI compression tools |
 | `~/GitHub/agent/` | Hermes Agent PostgreSQL memory provider |
 | `~/GitHub/forks/` | Forked third-party repositories |

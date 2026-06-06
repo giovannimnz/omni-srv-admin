@@ -128,7 +128,7 @@
 
 - **Issue:** `atius-unified-bot-launcher` has **2185 restarts**, `horistic-unified-bot-launcher` has **2507 restarts**
 - **Pattern:** One-shot architecture — runs one cycle, exits, PM2 restarts after 60s delay. This is by design but generates excessive restart counts that mask real crash signals.
-- **Files:** `/home/ubuntu/GitHub/atius/backend/services/unified-bot-launcher.js`
+- **Files:** `/home/ubuntu/GitHub/Atius-Capital/ats/backend/services/unified-bot-launcher.js`
 - **Secondary issue:** Launcher repeatedly warns about accounts in wrong namespace (`⚠️ Conta 44 ... em namespace "default". Normalizando para "atius"`) — namespace correction happens every cycle
 - **Fix approach:** Fix the namespace assignments so accounts are created in the correct namespace initially. Consider a long-running daemon pattern instead of one-shot.
 
@@ -195,8 +195,8 @@
 
 ### SSO Middleware Depends on Apache Forwarded Headers
 
-- **Issue:** The SSO implementation in `/home/ubuntu/GitHub/atius/frontend/src/middleware.ts` relies on `x-forwarded-host` header set by Apache reverse proxy
-- **Files:** `/home/ubuntu/GitHub/atius/frontend/src/middleware.ts`
+- **Issue:** The SSO implementation in `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/middleware.ts` relies on `x-forwarded-host` header set by Apache reverse proxy
+- **Files:** `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/middleware.ts`
 - **Pattern:** `const forwardedHost = request.headers.get('x-forwarded-host')` — extracts hostname from Apache proxy to determine subdomain permissions
 - **Risk:** If Apache proxy configuration changes or `RequestHeader set X-Forwarded-Host` is removed, SSO breaks silently (falls back to `host` header which may be wrong behind proxy)
 - **Current SSO coverage:** Subdomain-to-permission mapping for backtest, dashboard, painel (admin), strategy, admin
@@ -227,7 +227,7 @@
 ### Horistic Launcher Namespace Loop
 
 - **Symptoms:** `horistic-unified-bot-launcher` (2507 restarts) repeatedly removes and recreates worker accounts for accounts 12 and 15
-- **Files:** `/home/ubuntu/GitHub/atius/backend/services/unified-bot-launcher.js`
+- **Files:** `/home/ubuntu/GitHub/Atius-Capital/ats/backend/services/unified-bot-launcher.js`
 - **Trigger:** Accounts 12 (SemFiltro) and 15 (Copy7030) are being created in namespace `default` instead of `horistic`
 - **Workaround:** Manually delete and recreate these PM2 processes in the correct namespace
 

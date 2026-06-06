@@ -66,7 +66,7 @@ Nenhum todo folded nesta fase.
 ### Apache2 Configuration
 - `/etc/apache2/ports.conf` — Current Listen directives
 - `/etc/apache2/sites-enabled/` — Current vhost configurations (60+)
-- `~/GitHub/atius/` — Apache2 vhost configs managed by Atius app
+- `~/GitHub/Atius-Capital/ats/` — Apache2 vhost configs managed by Atius app
 
 ### Infrastructure
 - `/etc/hosts` — Current hostname and FQDN resolution

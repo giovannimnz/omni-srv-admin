@@ -24,35 +24,35 @@
 
 ### API Layer (Fastify)
 - Purpose: REST API + WebSocket endpoints for trading platform
-- Location: `GitHub/atius/backend/server/api.js`
+- Location: `GitHub/Atius-Capital/ats/backend/server/api.js`
 - Contains: Route registration, plugin setup, WebSocket server, CORS, Helmet, Swagger
 - Depends on: Database layer, exchange APIs, auth middleware
 - Used by: Next.js frontend, external webhook integrations
 
 ### Backend Domain Layer
 - Purpose: Trading logic, exchange integrations, indicators, bot management
-- Location: `GitHub/atius/backend/`
+- Location: `GitHub/Atius-Capital/ats/backend/`
 - Contains: Exchange adapters, indicators (Python), services, backtest engine
 - Depends on: Database connection (`backend/core/database/conexao.js`), external exchange APIs
 - Used by: API routes, bot launcher, session management
 
 ### Frontend Layer (Next.js)
 - Purpose: User-facing dashboard and trading interface
-- Location: `GitHub/atius/frontend/`
+- Location: `GitHub/Atius-Capital/ats/frontend/`
 - Contains: App Router routes, React components, middleware for auth
 - Depends on: Backend API (`/api/` routes proxy to `api.atius.com.br`)
 - Used by: End users (traders)
 
 ### Exchange Adapter Layer
 - Purpose: Exchange-specific API bindings and automation
-- Location: `GitHub/atius/backend/exchanges/{binance,bingx,bybit,hyperliquid,mexc,okx}/`
+- Location: `GitHub/Atius-Capital/ats/backend/exchanges/{binance,bingx,bybit,hyperliquid,mexc,okx}/`
 - Contains: REST wrappers, WebSocket streams, services, monitoring, strategies
 - Depends on: Exchange SDKs (binance-api-node, @nktkas/hyperliquid)
 - Used by: API routes, bot processes, unified launcher
 
 ### Process Orchestration Layer (PM2)
 - Purpose: Manage all application processes with restart policies
-- Location: `GitHub/atius/ecosystem.config.js`
+- Location: `GitHub/Atius-Capital/ats/ecosystem.config.js`
 - Contains: App definitions for API, frontend, webhooks, Python workers, session healers
 - Depends on: Node.js + uv (Python runner)
 - Used by: `pm2-ubuntu.service` systemd unit

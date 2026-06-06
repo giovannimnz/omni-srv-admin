@@ -7,8 +7,8 @@ The home server contains multiple projects. The primary development targets are:
 
 | Project | Location | Stack |
 |---------|----------|-------|
-| Atius Trade System | `~/GitHub/atius/` | Node.js/Fastify + Next.js + Python |
-| Horistic | `~/GitHub/horistic/` | Node.js + Next.js + Python |
+| Atius Trade System | `~/GitHub/Atius-Capital/ats/` | Node.js/Fastify + Next.js + Python |
+| Horistic | `~/GitHub/Atius-Capital/horistic/` | Node.js + Next.js + Python |
 | Atius AI Router | `~/docker/Atius/router-ai-atius/` | Go (New-API fork) |
 
 ## Atius Trade System (ATS)
@@ -17,7 +17,7 @@ The home server contains multiple projects. The primary development targets are:
 
 ```bash
 # Clone/pull
-cd ~/GitHub/atius
+cd ~/GitHub/Atius-Capital/ats
 git pull
 
 # Install dependencies
@@ -93,13 +93,13 @@ docker compose up -d
 
 | Script | Location | Purpose |
 |--------|----------|---------|
-| `start.sh` | `~/GitHub/atius/` | ATS service orchestration |
+| `start.sh` | `~/GitHub/Atius-Capital/ats/` | ATS service orchestration |
 | `setup.sh` | `~/atius-srv/` | Server initial setup |
 | `restart-containers.sh` | `~/atius-srv/` | Docker container restart |
 | `install-chromium.sh` | `~/atius-srv/` | Browser automation setup |
 
 ## VS Code Remote Development
 
-The server has a `.code-workspace` file at `~/GitHub/atius/atius.code-workspace` for VS Code remote SSH development.
+The server has a `.code-workspace` file at `~/GitHub/Atius-Capital/ats/atius.code-workspace` for VS Code remote SSH development.
 
-Launch config at `~/GitHub/atius/launch.json` for debugger attachment.
+Launch config at `~/GitHub/Atius-Capital/ats/launch.json` for debugger attachment.

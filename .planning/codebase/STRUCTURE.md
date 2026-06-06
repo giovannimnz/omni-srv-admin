@@ -37,7 +37,7 @@
 
 ## Directory Purposes
 
-### `/home/ubuntu/GitHub/atius/` - Primary Application
+### `/home/ubuntu/GitHub/Atius-Capital/ats/` - Primary Application
 - Purpose: Main trading platform monorepo
 - Contains: Backend (Node.js + Python), Frontend (Next.js), tests, docs
 - Key files:
@@ -46,7 +46,7 @@
   - `start.sh` — Build/start/stop orchestration script
   - `Jenkinsfile` — CI/CD pipeline definition
 
-### `/home/ubuntu/GitHub/atius/backend/` - Backend Logic
+### `/home/ubuntu/GitHub/Atius-Capital/ats/backend/` - Backend Logic
 - Purpose: Server-side trading logic, exchange integrations, indicators
 - Contains:
   - `server/api.js` — Fastify API entry point (24KB)
@@ -60,7 +60,7 @@
   - `telegram/` — Telegram bot integration
   - `utils/` — Python utilities (market data, backtest, time)
 
-### `/home/ubuntu/GitHub/atius/frontend/` - Frontend
+### `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/` - Frontend
 - Purpose: Next.js 14 App Router trading dashboard
 - Contains:
   - `src/app/` — App Router pages (admin, api, backtest, dashboard, login, painel, sinal, strategy)
@@ -72,7 +72,7 @@
   - `next.config.mjs` — Next.js configuration
   - `tailwind.config.js` — Tailwind CSS config
 
-### `/home/ubuntu/GitHub/atius/tests/` - Test Suites
+### `/home/ubuntu/GitHub/Atius-Capital/ats/tests/` - Test Suites
 - Purpose: Unit, integration, runtime, and E2E tests
 - Contains:
   - `backend/` — Backend test suites (by exchange, service, auth)
@@ -103,7 +103,7 @@
   - `bonsai` / `bonsai-repatch` — Patch management tools
   - `pm2ns` — PM2 namespace script
 
-### `/home/ubuntu/GitHub/horistic/` — Secondary Application
+### `/home/ubuntu/GitHub/Atius-Capital/horistic/` — Secondary Application
 - Purpose: Trading platform variant/fork
 - Contains: Same directory structure as `atius/` but smaller footprint
 - Key files: `ecosystem.config.js` (5KB vs 15KB for atius)
@@ -111,36 +111,36 @@
 ## Key File Locations
 
 ### Entry Points
-- `GitHub/atius/backend/server/api.js`: Fastify API server (port 8015)
-- `GitHub/atius/frontend/src/app/`: Next.js App Router
-- `GitHub/atius/ecosystem.config.js`: PM2 process definitions
-- `GitHub/atius/start.sh`: Build/start orchestration
+- `GitHub/Atius-Capital/ats/backend/server/api.js`: Fastify API server (port 8015)
+- `GitHub/Atius-Capital/ats/frontend/src/app/`: Next.js App Router
+- `GitHub/Atius-Capital/ats/ecosystem.config.js`: PM2 process definitions
+- `GitHub/Atius-Capital/ats/start.sh`: Build/start orchestration
 
 ### Configuration
-- `GitHub/atius/config/.env`: Environment variables (sourced by api.js)
-- `GitHub/atius/tsconfig.json`: TypeScript config
-- `GitHub/atius/jest.config.js`: Jest test runner config
-- `GitHub/atius/playwright.config.js`: Playwright E2E config
-- `GitHub/atius/pyproject.toml`: Python project config (uv)
-- `GitHub/atius/.python-version`: Pinned Python version (3.11)
+- `GitHub/Atius-Capital/ats/config/.env`: Environment variables (sourced by api.js)
+- `GitHub/Atius-Capital/ats/tsconfig.json`: TypeScript config
+- `GitHub/Atius-Capital/ats/jest.config.js`: Jest test runner config
+- `GitHub/Atius-Capital/ats/playwright.config.js`: Playwright E2E config
+- `GitHub/Atius-Capital/ats/pyproject.toml`: Python project config (uv)
+- `GitHub/Atius-Capital/ats/.python-version`: Pinned Python version (3.11)
 
 ### Core Logic
-- `GitHub/atius/backend/core/database/conexao.js`: MySQL connection pool (Node.js)
-- `GitHub/atius/backend/core/database/conexao.py`: MySQL connection pool (Python)
-- `GitHub/atius/backend/server/api.js`: Main API server
-- `GitHub/atius/backend/services/botProcessManager.js`: Bot process management
-- `GitHub/atius/backend/services/unified-bot-launcher.js`: Unified bot launcher
+- `GitHub/Atius-Capital/ats/backend/core/database/conexao.js`: MySQL connection pool (Node.js)
+- `GitHub/Atius-Capital/ats/backend/core/database/conexao.py`: MySQL connection pool (Python)
+- `GitHub/Atius-Capital/ats/backend/server/api.js`: Main API server
+- `GitHub/Atius-Capital/ats/backend/services/botProcessManager.js`: Bot process management
+- `GitHub/Atius-Capital/ats/backend/services/unified-bot-launcher.js`: Unified bot launcher
 
 ### Database & Migrations
-- `GitHub/atius/backend/core/database/`: Connection management
-- `GitHub/atius/backend/core/migrations/`: Database migrations
-- `GitHub/atius/backend/core/backups/`: Database backup utilities
+- `GitHub/Atius-Capital/ats/backend/core/database/`: Connection management
+- `GitHub/Atius-Capital/ats/backend/core/migrations/`: Database migrations
+- `GitHub/Atius-Capital/ats/backend/core/backups/`: Database backup utilities
 
 ### Testing
-- `GitHub/atius/tests/backend/`: Backend test suites
-- `GitHub/atius/tests/frontend/`: Frontend E2E tests
-- `GitHub/atius/tests/backtest/`: Backtest validation
-- `GitHub/atius/tests/mocks/`: Test fixtures
+- `GitHub/Atius-Capital/ats/tests/backend/`: Backend test suites
+- `GitHub/Atius-Capital/ats/tests/frontend/`: Frontend E2E tests
+- `GitHub/Atius-Capital/ats/tests/backtest/`: Backtest validation
+- `GitHub/Atius-Capital/ats/tests/mocks/`: Test fixtures
 
 ## Naming Conventions
 

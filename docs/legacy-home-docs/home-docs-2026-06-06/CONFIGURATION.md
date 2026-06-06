@@ -5,7 +5,7 @@
 
 ## Environment Variables
 
-Critical environment variables for ATS. See `~/GitHub/atius/config/.env` for the full list (58 variables).
+Critical environment variables for ATS. See `~/GitHub/Atius-Capital/ats/config/.env` for the full list (58 variables).
 
 | Variable | Required | Default | Description |
 |----------|----------|---------|-------------|
@@ -22,9 +22,9 @@ Critical environment variables for ATS. See `~/GitHub/atius/config/.env` for the
 
 | File | Purpose |
 |------|---------|
-| `~/GitHub/atius/config/.env` | Primary env vars for ATS (58 variables) |
-| `~/GitHub/atius/ecosystem.config.js` | PM2 process definitions |
-| `~/GitHub/atius/ecosystem.testnet.config.js` | PM2 testnet process definitions |
+| `~/GitHub/Atius-Capital/ats/config/.env` | Primary env vars for ATS (58 variables) |
+| `~/GitHub/Atius-Capital/ats/ecosystem.config.js` | PM2 process definitions |
+| `~/GitHub/Atius-Capital/ats/ecosystem.testnet.config.js` | PM2 testnet process definitions |
 | `~/.bashrc` | Shell configuration |
 | `~/.config/nvim/` | Neovim config |
 | `~/.hermes/config.yaml` | Hermes Agent configuration |
@@ -46,7 +46,7 @@ PM2 home: `~/.pm2`
 
 PM2 is wrapped by `pm2-ubuntu.service` (systemd) for auto-restart on boot.
 
-Key ecosystem file: `~/GitHub/atius/ecosystem.config.js`
+Key ecosystem file: `~/GitHub/Atius-Capital/ats/ecosystem.config.js`
 
 ## Database Configuration
 

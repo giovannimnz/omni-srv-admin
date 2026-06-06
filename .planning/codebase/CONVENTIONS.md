@@ -4,7 +4,7 @@
 
 ## Project Overview
 
-The Atius Trade System (ATS) is a multi-exchange crypto trading platform at `~/GitHub/atius/`. It is a polyglot project: **JavaScript/Node.js** backend with **Fastify**, **Python** services (indicators, browser automation), and a **Next.js/TypeScript** frontend. PM2 orchestrates all processes in production.
+The Atius Trade System (ATS) is a multi-exchange crypto trading platform at `~/GitHub/Atius-Capital/ats/`. It is a polyglot project: **JavaScript/Node.js** backend with **Fastify**, **Python** services (indicators, browser automation), and a **Next.js/TypeScript** frontend. PM2 orchestrates all processes in production.
 
 ## Naming Patterns
 
@@ -56,7 +56,7 @@ The Atius Trade System (ATS) is a multi-exchange crypto trading platform at `~/G
 ## Code Style
 
 **Formatting:**
-- No project-level Prettier or ESLint config at root `~/GitHub/atius/`
+- No project-level Prettier or ESLint config at root `~/GitHub/Atius-Capital/ats/`
 - Frontend uses Next.js built-in ESLint: `frontend/.eslintrc.json` extends `next/core-web-vitals`
 - No `.prettierrc` at project level
 - Indentation: 2 spaces (JS/TS), 4 spaces (Python)

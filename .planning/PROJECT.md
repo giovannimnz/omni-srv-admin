@@ -35,7 +35,7 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 - [ ] **SAM-02**: Compartilhamentos de arquivos acessíveis por máquinas no domínio
 - [ ] **MIG-01**: WireGuard migrado de 10.1.1.2 para 10.1.1.1
 - [ ] **MIG-02**: Samba migrado de 10.1.1.2 para 10.1.1.1
-- [ ] **COEX-01**: SSO existente no Apache2 (~/GitHub/atius) NÃO é afetado durante implementação
+- [ ] **COEX-01**: SSO existente no Apache2 (~/GitHub/Atius-Capital/ats) NÃO é afetado durante implementação
 - [ ] **COEX-02**: Ambos SSO (Apache2 e Keycloak) coexistem sem conflito
 
 #### Módulo: Omni CLI Unificado
@@ -50,7 +50,7 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 ### Out of Scope
 
-- Horistic (~/GitHub/horistic) — projeto separado com domínio próprio
+- Horistic (~/GitHub/Atius-Capital/horistic) — projeto separado com domínio próprio
 - Migração de apps existentes para Keycloak — foco na infra primeiro
 - Integração com Windows/Mac — ambiente 100% Linux
 - FreeIPA nativo no Ubuntu — bug #1875114 impede; container é a solução
@@ -76,7 +76,7 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 ## Constraints
 
-- **[Compatibilidade]**: SSO existente no Apache2 (~/GitHub/atius) NÃO pode ser afetado — coexistência obrigatória
+- **[Compatibilidade]**: SSO existente no Apache2 (~/GitHub/Atius-Capital/ats) NÃO pode ser afetado — coexistência obrigatória
 - **[Portas]**: Apache2 movido para portas alternativas (9080/9444) para liberar 80/443 ao FreeIPA
 - **[FreeIPA]**: Rodará em container Docker AlmaLinux 9 (não existe freeipa-server no Ubuntu)
 - **[Hostname]**: FreeIPA requer FQDN — hostname deve ser `omni-srv-admin-1.atius.com.br`

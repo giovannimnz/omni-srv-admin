@@ -923,7 +923,7 @@
     "type:",
     "content: [",
     "timeout 180s curl",
-    "\"url\": \"data:image/png;base64,'base64 -w 0 /home/ubuntu/GitHub/ats/backend/indicators/pine/prints/Img_v17.png'\"",
+    "\"url\": \"data:image/png;base64,'base64 -w 0 /home/ubuntu/GitHub/Atius-Capital/ats/backend/indicators/pine/prints/Img_v17.png'\"",
     "\"image_url\": {",
     "\"type\": \"image_url\",",
     "\"text\": \"Descreva esta imagem e identifique os principais elementos visuais, como gráficos, indicadores, padrões de trading, ou qualquer informação financeira relevante.\"",

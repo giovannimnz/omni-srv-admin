@@ -59,7 +59,7 @@
 
 ### Coexistência e Integração
 
-- [ ] **COEX-01**: SSO existente no Apache2 (~/GitHub/atius) NÃO é afetado
+- [ ] **COEX-01**: SSO existente no Apache2 (~/GitHub/Atius-Capital/ats) NÃO é afetado
 - [ ] **COEX-02**: Apache2 e FreeIPA coexistem sem conflito de portas
 - [ ] **COEX-03**: CoreDNS encaminha queries para FreeIPA DNS
 - [ ] **COEX-04**: Todas as máquinas na rede WireGuard resolvem nomes internos

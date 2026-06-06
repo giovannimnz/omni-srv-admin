@@ -10,7 +10,7 @@
 1. ✅ **Rebranding e alinhamento de portas**
    - `config/.env`: produção em `API_PORT=8015` e `FRONTEND_PORT=3015`
    - `ecosystem.config.js`: processo `bybit-atius-8`, frontend em `3015`
-   - `ecosystem.testnet.config.js`: `DB_NAME=OmniDev`, caminhos ajustados para `/home/ubuntu/GitHub/ats`
+   - `ecosystem.testnet.config.js`: `DB_NAME=OmniDev`, caminhos ajustados para `/home/ubuntu/GitHub/Atius-Capital/ats`
 
 2. ✅ **Scripts PostgreSQL reconstruídos (`scripts/postgres`)**
    - Backup com validação (`dump + toc + sha256 + meta`)

@@ -138,7 +138,7 @@
 **CI Pipeline:**
 - **Jenkins** (Docker, port 8085)
   - Image: custom `atius-jenkins:lts-node`
-  - Workspace: mounted `/home/ubuntu/GitHub/atius`
+  - Workspace: mounted `/home/ubuntu/GitHub/Atius-Capital/ats`
   - Pipeline: `Jenkinsfile` with stages for deps, deterministic tests, runtime tests, live API tests
   - Docker-in-Docker enabled (security warning noted in compose)
   - Plane integration: `PLANE-INTEGRATION.md`
@@ -167,7 +167,7 @@
 - Database credentials (PostgreSQL, MongoDB) — 58 total variables
 
 **Secrets location:**
-- `.env` files: `GitHub/atius/config/.env`
+- `.env` files: `GitHub/Atius-Capital/ats/config/.env`
 - Docker compose envs: inline in compose files (pm2.web MongoDB URI)
 - SSL certs: `/etc/ssl/cloudflare/` (Cloudflare origin certs)
 - SSH keys: `~/.ssh/`

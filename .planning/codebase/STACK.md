@@ -101,7 +101,7 @@
 ## Configuration
 
 **Environment:**
-- `.env` files in `GitHub/atius/config/.env` (58 variables)
+- `.env` files in `GitHub/Atius-Capital/ats/config/.env` (58 variables)
 - `dotenv` loaded at entry point (`backend/server/api.js`)
 - PM2 env vars in `ecosystem.config.js` via `withNodeEnv()` and `withUvEnv()`
 - Critical: `JWT_SECRET` required at startup, `API_PORT: 8015`, `FRONTEND_PORT: 3015`

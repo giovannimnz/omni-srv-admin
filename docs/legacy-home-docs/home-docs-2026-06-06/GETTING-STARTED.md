@@ -45,7 +45,7 @@ Expected: Plane stack containers (plane-mq, plane-db, plane-webl).
 ### Clone/pull the project
 
 ```bash
-cd ~/GitHub/atius
+cd ~/GitHub/Atius-Capital/ats
 git pull
 ```
 
@@ -74,7 +74,7 @@ npm install
 | SSH connection refused | Verify WireGuard VPN is active; try public IP instead |
 | PM2 process not starting | Check `pm2 logs atius-api` for startup errors |
 | Database connection failed | Verify PostgreSQL is running on port 8745 |
-| `JWT_SECRET` not set | Set in `~/GitHub/atius/config/.env` before starting API |
+| `JWT_SECRET` not set | Set in `~/GitHub/Atius-Capital/ats/config/.env` before starting API |
 
 ## Next Steps
 

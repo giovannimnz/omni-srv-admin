@@ -14,7 +14,7 @@
 ### ATS
 
 ```bash
-cd ~/GitHub/atius
+cd ~/GitHub/Atius-Capital/ats
 
 # All tests
 npm test
@@ -32,14 +32,14 @@ npm run test:watch
 ### Horistic
 
 ```bash
-cd ~/GitHub/horistic
+cd ~/GitHub/Atius-Capital/horistic
 npm test
 ```
 
 ### Python (pytest)
 
 ```bash
-cd ~/GitHub/atius
+cd ~/GitHub/Atius-Capital/ats
 pytest
 # or with uv
 uv run pytest
@@ -61,7 +61,7 @@ Coverage thresholds: **not configured** (no `coverageThreshold` set).
 
 ## Playwright E2E
 
-Playwright is used for browser automation and exchange testing (`~/GitHub/atius/backend/exchanges/mexc/automation/`).
+Playwright is used for browser automation and exchange testing (`~/GitHub/Atius-Capital/ats/backend/exchanges/mexc/automation/`).
 
 Embedded Chromium at:
 ```
@@ -71,9 +71,9 @@ backend/exchanges/mexc/automation/browser/bin/chromium
 ## Test Results
 
 Test output and reports stored in:
-- `~/GitHub/atius/test-results/`
-- `~/GitHub/atius/tests/`
+- `~/GitHub/Atius-Capital/ats/test-results/`
+- `~/GitHub/Atius-Capital/ats/tests/`
 
 ## CI Integration
 
-No GitHub Actions workflows detected for this project. Jenkinsfile present at `~/GitHub/atius/Jenkinsfile` for CI pipeline.
+No GitHub Actions workflows detected for this project. Jenkinsfile present at `~/GitHub/Atius-Capital/ats/Jenkinsfile` for CI pipeline.
