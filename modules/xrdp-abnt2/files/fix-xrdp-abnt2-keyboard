@@ -1,0 +1,16 @@
+#!/bin/sh
+set -eu
+
+src="/usr/local/share/xrdp-abnt2"
+dst="/etc/xrdp"
+
+[ -d "$dst" ] || exit 0
+[ -f "$src/xrdp_keyboard.ini" ] || exit 0
+[ -f "$src/km-abnt2.ini" ] || exit 0
+[ -f "$src/startwm.sh" ] || exit 0
+
+install -o nobody -g nogroup -m 644 "$src/xrdp_keyboard.ini" "$dst/xrdp_keyboard.ini"
+install -o nobody -g nogroup -m 644 "$src/km-abnt2.ini" "$dst/km-00000409.ini"
+install -o nobody -g nogroup -m 644 "$src/km-abnt2.ini" "$dst/km-00010416.ini"
+install -o nobody -g nogroup -m 644 "$src/km-abnt2.ini" "$dst/km-0000f010.ini"
+install -o nobody -g nogroup -m 755 "$src/startwm.sh" "$dst/startwm.sh"

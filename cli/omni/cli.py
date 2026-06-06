@@ -19,11 +19,15 @@ from pathlib import Path
 
 import click
 from omni import __version__
+from omni.xrdp_abnt2 import xrdp_abnt2
 
 
 @click.group()
 def cli():
     """omni — administração de servidores e gestão de forks."""
+
+
+cli.add_command(xrdp_abnt2)
 
 
 # ═══════════════════════════════════════════════════════════════

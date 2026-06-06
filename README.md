@@ -73,6 +73,24 @@ dark-theme-ubuntu/
 └── config_files/   # Configurações do sistema
 ```
 
+### modules/xrdp-abnt2/
+Guard operacional para manter XRDP + LXDE em Português Brasil ABNT2 no fluxo Windows 11 RDP → Ubuntu.
+
+- Mapeia `00010416`, `0000F010` e fallback `00000409` para `br(abnt2)`
+- Instala keymaps XRDP ABNT2 idênticos para todos os layouts críticos
+- Aplica `setxkbmap br abnt2` no início da sessão e mantém watchdog a cada 5s
+- Reaplica a correção após updates via hook APT/DPKG
+- Integrado ao CLI: `omni xrdp-abnt2 status|validate|diff|install`
+
+**Estrutura:**
+```
+modules/xrdp-abnt2/
+├── README.md        # Runbook canônico
+├── files/           # Assets instaláveis em /etc, /usr/local e ~/bin
+├── scripts/         # Wrappers install/validate
+└── docs/            # Histórico original migrado
+```
+
 ### vscode-profile/
 Perfil e extensões do VSCode para o ambiente de desenvolvimento.
 
@@ -195,6 +213,12 @@ atius-srv/
 ├── iptables/                   # Módulo: Firewall
 │   ├── iptables-backup-v4.conf
 │   └── iptables-backup-v6.conf
+├── modules/
+│   └── xrdp-abnt2/             # Guard XRDP ABNT2 integrado ao omni CLI
+│       ├── README.md
+│       ├── files/
+│       ├── scripts/
+│       └── docs/
 └── vscode-profile/             # Módulo: Perfil VSCode
     ├── Giovanni (ubuntu).code-profile
     └── Extensions/

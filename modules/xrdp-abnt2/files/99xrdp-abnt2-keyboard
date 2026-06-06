@@ -1,0 +1,1 @@
+DPkg::Post-Invoke { "/usr/local/sbin/fix-xrdp-abnt2-keyboard || true"; };
