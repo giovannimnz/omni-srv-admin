@@ -1,0 +1,35 @@
+# Conservative Codex context filter for omni-srv-admin
+# Keep: .planning/, inventory/, docs/, cli/, modules/remote-manager/, modules/srv1-ops/
+# Ignore only heavy/generated/noise paths.
+
+.git/
+node_modules/
+bower_components/
+web_modules/
+.next/
+out/
+dist/
+coverage/
+.nyc_output/
+.cache/
+.parcel-cache/
+.tmp/
+tmp/
+
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+.vscode/
+.bg-shell/
+.backups/
+
+# Separate large/volatile area; load only when the task is explicitly about it.
+modules/fork-sync/
+
+# Legacy migrated docs; usually noise for current work.
+docs/legacy-home-docs/
