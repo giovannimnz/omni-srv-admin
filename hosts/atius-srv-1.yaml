@@ -1,0 +1,29 @@
+id: atius-srv-1
+aliases:
+  - srv1
+  - atius
+role: production
+owner: giovanni
+access:
+  ssh: ubuntu@10.1.1.1
+  public_ip: 137.131.190.161
+  vpn_ip: 10.1.1.1
+platform:
+  provider: oracle-oci
+  os: ubuntu-22.04
+  arch: arm64
+  desktop: lxde-xrdp
+status: active
+modules:
+  - srv1-ops
+  - xrdp-abnt2
+  - fork-sync
+  - domain-infrastructure
+logs:
+  local_dir: /home/ubuntu/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/SRV-1/Backup
+  map: modules/srv1-ops/configs/backup-map.yaml
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

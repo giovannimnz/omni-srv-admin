@@ -1,0 +1,23 @@
+id: atius-srv-2
+aliases:
+  - srv2
+  - zentrius
+role: development
+owner: giovanni
+access:
+  ssh: ubuntu@10.1.1.2
+  public_ip: 129.148.47.32
+  vpn_ip: 10.1.1.2
+platform:
+  provider: oracle-oci
+  os: ubuntu
+  arch: arm64
+status: planned
+modules: []
+logs:
+  local_dir: /home/ubuntu/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/SRV-2/Backup
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

@@ -21,6 +21,7 @@ import click
 from omni import __version__
 from omni.xrdp_abnt2 import xrdp_abnt2
 from omni.srv1_ops import srv1_ops
+from omni.fleet import fleet
 
 
 @click.group()
@@ -30,6 +31,7 @@ def cli():
 
 cli.add_command(xrdp_abnt2)
 cli.add_command(srv1_ops)
+cli.add_command(fleet)
 
 
 # ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,25 @@
+id: dell-inspiron-3520
+aliases:
+  - dell-3520
+  - giovanni-pc-ubuntu
+role: personal-workstation
+owner: giovanni
+access:
+  ssh: TBD
+platform:
+  provider: local-pc
+  model: dell-inspiron-3520
+  os: ubuntu-26.04
+  arch: amd64
+status: planned
+modules: []
+constraints:
+  - personal-machine
+  - avoid-server-assumptions
+logs:
+  local_dir: /home/giovanni/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/DELL-INSPIRON-3520/Backup
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

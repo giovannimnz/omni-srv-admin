@@ -1,0 +1,25 @@
+id: support-template
+aliases:
+  - remote-support
+role: temporary-support
+authorization: explicit-required
+owner: external
+access:
+  ssh: provided-per-incident
+platform:
+  provider: unknown
+  os: unknown
+status: template
+modules: []
+constraints:
+  - do-not-persist-secrets
+  - do-not-store-personal-data-without-consent
+  - audit-log-required
+  - backup-before-change
+logs:
+  local_dir: .logs
+  retention_days: incident-scoped
+backup:
+  policy: explicit-scope-only
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

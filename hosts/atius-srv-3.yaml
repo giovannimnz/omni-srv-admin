@@ -1,0 +1,21 @@
+id: atius-srv-3
+aliases:
+  - srv3
+role: sandbox
+owner: giovanni
+access:
+  ssh: ubuntu@10.1.1.7
+  vpn_ip: 10.1.1.7
+platform:
+  provider: oracle-oci
+  os: ubuntu
+  arch: arm64
+status: planned
+modules: []
+logs:
+  local_dir: /home/ubuntu/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/SRV-3/Backup
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

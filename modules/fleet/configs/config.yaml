@@ -1,0 +1,21 @@
+default_log_dir: ~/.logs/fleet
+host_inventory_dir: hosts
+require_explicit_host: true
+require_backup_before_write: true
+support_mode:
+  allow_external_hosts: true
+  require_authorization_note: true
+  persist_credentials: false
+host_classes:
+  oracle-oci:
+    scheduler: systemd-user
+    default_user: ubuntu
+  android-termux:
+    scheduler: cronie-runsv
+    default_home: /data/data/com.termux/files/home
+  android-proot-distro:
+    scheduler: limited
+    default_user: ubuntu
+  local-pc:
+    scheduler: systemd-user
+    personal_data_caution: true

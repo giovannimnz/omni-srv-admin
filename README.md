@@ -109,6 +109,31 @@ modules/srv1-ops/
 └── configs/         # configs futuras
 ```
 
+### modules/fleet/ + hosts/
+Inventário e base de orquestração multi-computacional.
+
+- Hosts cadastrados em `hosts/*.yaml`
+- Classes: Oracle OCI, Termux, PRoot Ubuntu, workstation Ubuntu, suporte remoto temporário
+- CLI inicial: `omni fleet list|show|status`
+- Execução remota ainda planejada, não habilitada
+
+**Estrutura:**
+```
+hosts/
+├── atius-srv-1.yaml
+├── atius-srv-2.yaml
+├── atius-srv-3.yaml
+├── giovanni-s23-termux.yaml
+├── giovanni-s23-proot.yaml
+├── dell-inspiron-3520.yaml
+└── support-template.yaml
+
+modules/fleet/
+├── README.md
+├── configs/config.yaml
+└── docs/
+```
+
 ### vscode-profile/
 Perfil e extensões do VSCode para o ambiente de desenvolvimento.
 

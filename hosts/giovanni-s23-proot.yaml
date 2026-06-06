@@ -1,0 +1,25 @@
+id: giovanni-s23-proot
+aliases:
+  - s23-proot
+  - galaxy-s23-ubuntu-proot
+role: mobile-ubuntu
+owner: giovanni
+access:
+  ssh: TBD
+platform:
+  provider: android-proot-distro
+  device: samsung-galaxy-s23
+  os: ubuntu-proot
+  arch: arm64
+status: planned
+modules: []
+constraints:
+  - proot-no-real-systemd-by-default
+  - storage-bound-to-android
+logs:
+  local_dir: /home/ubuntu/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/GIOVANNI-S23-PROOT/Backup
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

@@ -1,0 +1,27 @@
+id: giovanni-s23-termux
+aliases:
+  - s23-termux
+  - galaxy-s23-termux
+role: mobile-node
+owner: giovanni
+access:
+  ssh: ubuntu@10.1.1.5:8022
+  vpn_ip: 10.1.1.5
+platform:
+  provider: android-termux
+  device: samsung-galaxy-s23
+  os: termux
+  arch: arm64
+status: planned
+modules: []
+constraints:
+  - no-systemd
+  - termux-paths
+  - cronie-runsv-for-scheduled-jobs
+logs:
+  local_dir: /data/data/com.termux/files/home/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/GIOVANNI-S23/Backup
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
