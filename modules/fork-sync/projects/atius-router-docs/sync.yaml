@@ -4,6 +4,14 @@ upstream_branch: main
 origin_branch: main
 origin: https://github.com/giovannimnz/new-api-docs-v1
 
+# Phase 09: docs agora vive como submodule em router-ai-atius.
+# O script fork-sync-docs.sh opera diretamente no submodule path.
+# O repo de trabalho não é mais um clone standalone, mas sim
+# router-ai-atius/docs/atius-router-docs/.
+deploy_type: systemd-user
+service_name: atius-router-docs.service
+service_port: 3003
+
 # ========== PROTECTED PATHS ==========
 # These paths are customized in the Atius fork and must NOT be
 # overwritten during upstream merges. The merge-upstream.sh script

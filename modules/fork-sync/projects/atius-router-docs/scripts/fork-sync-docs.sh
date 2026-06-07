@@ -3,26 +3,29 @@
 #
 # Chamado pelo cron diário (0 8 * * *). Pode também ser rodado
 # manualmente:
-#   $0 /home/ubuntu/GitHub/forks/AtiusRouterDocs [--rebuild] [--deploy]
+#   $0 [--rebuild] [--deploy]
 #
 # O que faz:
 #   1. Detecta novo release do upstream QuantumNous/new-api-docs-v1
-#   2. Clone (ou git pull) o repo do fork
-#   3. Aplica merge upstream (com protected_paths preservados)
-#   4. Roda post-merge.sh (rebrand Atius + Dockerfile + logo swap)
-#   5. Copia docs PT-BR (content/docs/pt/) para o repo
-#   6. Build da imagem Docker (via Podman)
-#   7. Restart do container router-ai-atius-docs
-#   8. Verifica /en/docs/ retorna 200
+#   2. Entra no submodule docs/atius-router-docs/ dentro de router-ai-atius
+#   3. Puxa upstream e aplica merge (com protected_paths preservados)
+#   4. Roda post-merge.sh (rebrand Atius + logo swap)
+#   5. Copia docs PT-BR (content/docs/pt/) para o submodule
+#   6. Build (bun run build)
+#   7. Restart do systemd user service atius-router-docs.service
+#   8. Verifica /pt/ retorna 200
 #
 # Outputs:
 #   - Log: /home/ubuntu/fork-sync/logs/sync-atius-router-docs-YYYYMMDD.log
-#   - GitHub release: v{upstream_version}-rf{N}
+#
+# NOTA (Phase 09): O target operacional agora é o submodule dentro
+# de router-ai-atius/docs/atius-router-docs/. O checkout standalone
+# legado /home/ubuntu/docker/Atius/atius-router-docs permanece
+# apenas como rollback source até cutover final validado.
 
 set -euo pipefail
 
 # === Args ===
-REPO_PATH=""
 REBUILD=false
 DEPLOY=false
 
@@ -31,15 +34,15 @@ while [[ $# -gt 0 ]]; do
     --rebuild) REBUILD=true ;;
     --deploy) DEPLOY=true ;;
     *)
-      if [ -z "$REPO_PATH" ]; then
-        REPO_PATH="$1"
-      fi
+      echo "Usage: $0 [--rebuild] [--deploy]"
+      exit 1
       ;;
   esac
   shift
 done
 
-REPO_PATH="${REPO_PATH:-/home/ubuntu/GitHub/forks/AtiusRouterDocs}"
+ROUTER_REPO="/home/ubuntu/docker/Atius/router-ai-atius"
+REPO_PATH="$ROUTER_REPO/docs/atius-router-docs"
 SOURCE_DIR="/home/ubuntu/fork-sync"
 PROJECT="atius-router-docs"
 SYNC_YAML="$SOURCE_DIR/projects/$PROJECT/sync.yaml"
@@ -47,7 +50,7 @@ LOG_DIR="$SOURCE_DIR/logs"
 DATE=$(date +%Y%m%d)
 LOG_FILE="$LOG_DIR/sync-${PROJECT}-${DATE}.log"
 
-mkdir -p "$LOG_DIR" "$(dirname "$REPO_PATH")"
+mkdir -p "$LOG_DIR"
 
 log() {
   local level="${1:-INFO}"
@@ -58,28 +61,22 @@ log() {
 
 # === 1. Load config ===
 log "INFO" "Starting $PROJECT sync (rebuild=$REBUILD deploy=$DEPLOY)"
-log "INFO" "Repo: $REPO_PATH"
+log "INFO" "Submodule path: $REPO_PATH"
 log "INFO" "Log: $LOG_FILE"
 
 UPSTREAM=$(grep '^upstream:' "$SYNC_YAML" | sed 's/upstream: *//')
 UPSTREAM_BRANCH=$(grep '^upstream_branch:' "$SYNC_YAML" | sed 's/upstream_branch: *//')
-ORIGIN_BRANCH=$(grep '^origin_branch:' "$SYNC_YAML" | sed 's/origin_branch: *//')
 
 log "INFO" "Upstream: $UPSTREAM (branch: $UPSTREAM_BRANCH)"
-log "INFO" "Origin: $ORIGIN_BRANCH"
 
-# === 2. Clone or update the repo ===
-if [ ! -d "$REPO_PATH/.git" ]; then
-  log "INFO" "Cloning fork from giovannimnz/atius-ai-router-docs..."
-  # (in our case the fork doesn't exist yet on GitHub; we use the
-  # Atius Router docs as the local working repo, or create a fresh
-  # local clone from upstream)
-  if [ -d /home/ubuntu/docker/Atius/router-ai-atius/integration/docs ]; then
-    log "INFO" "Using local integration/docs/ as starting point"
-    # ... (this path is for first-time setup; production would clone
-    # from a private Atius fork on GitHub)
-  fi
+# === 2. Ensure submodule is initialized ===
+if [ ! -f "$REPO_PATH/package.json" ]; then
+  log "INFO" "Initializing submodule at $REPO_PATH..."
+  cd "$ROUTER_REPO"
+  git submodule update --init --recursive
 fi
+
+cd "$REPO_PATH"
 
 # === 3. Detect new release ===
 log "INFO" "Checking for new upstream release..."
@@ -98,29 +95,20 @@ if [ "$NEW_VERSION" = "$LAST_SYNC" ] && [ "$REBUILD" = false ]; then
   exit 0
 fi
 
-# === 4. Clone fresh from upstream (if repo doesn't exist) ===
-if [ ! -d "$REPO_PATH/.git" ]; then
-  log "INFO" "Cloning fresh from upstream $UPSTREAM..."
-  git clone --depth=1 --branch="$UPSTREAM_BRANCH" "$UPSTREAM" "$REPO_PATH"
-  cd "$REPO_PATH"
-  # Add our fork as origin
-  ORIGIN_URL=$(grep '^origin:' "$SYNC_YAML" 2>/dev/null | sed 's/origin: *//' || true)
-  if [ -n "$ORIGIN_URL" ]; then
-    git remote add origin "$ORIGIN_URL"
-  fi
-fi
+# === 4. Fetch upstream and merge ===
+log "INFO" "Adding upstream remote (if needed)..."
+git remote get-url upstream 2>/dev/null || git remote add upstream "$UPSTREAM"
+git fetch upstream "$UPSTREAM_BRANCH"
 
-# === 5. Merge upstream ===
 log "INFO" "Running merge-upstream.sh..."
 "$SOURCE_DIR/bin/merge-upstream.sh" "$PROJECT" "$REPO_PATH" "$NEW_VERSION" 2>&1 | tee -a "$LOG_FILE"
 
-# === 6. Copy Atius PT-BR docs into the repo ===
+# === 5. Copy Atius PT-BR docs into the submodule ===
 log "INFO" "Copying PT-BR docs from $SOURCE_DIR/projects/$PROJECT/pt-content/..."
 PT_SRC="$SOURCE_DIR/projects/$PROJECT/pt-content"
 PT_DST="$REPO_PATH/content/docs/pt"
-if [ -d "$PT_SRC" ]; then
+if [ -d "$PT_SRC/docs/pt" ]; then
   mkdir -p "$PT_DST"
-  # Use rsync if available (preserves git), else cp -r
   if command -v rsync >/dev/null 2>&1; then
     rsync -a --delete "$PT_SRC/docs/pt/" "$PT_DST/"
   else
@@ -134,36 +122,43 @@ if [ -d "$PT_SRC" ]; then
       commit -m "feat(i18n): sync PT-BR docs from Atius fork-sync" 2>&1 | tee -a "$LOG_FILE" || true
 fi
 
-# === 7. Build the docs image ===
+# === 6. Build ===
 if [ "$REBUILD" = true ] || [ "$DEPLOY" = true ] || [ "$NEW_VERSION" != "$LAST_SYNC" ]; then
-  log "INFO" "Building docs image (podman build)..."
-  if [ -d "$REPO_PATH" ]; then
-    # Build with a tag
-    IMAGE_TAG="router-ai-atius-docs:rf$(date +%s)"
-    cd "$REPO_PATH"
-    podman build -t "$IMAGE_TAG" -t router-ai-atius-docs:local . 2>&1 | tee -a "$LOG_FILE" | tail -5
-    log "INFO" "Image built: $IMAGE_TAG"
-  fi
+  log "INFO" "Installing dependencies (bun install)..."
+  cd "$REPO_PATH"
+  bun install 2>&1 | tee -a "$LOG_FILE" | tail -3
+
+  log "INFO" "Building docs (bun run build)..."
+  bun run build 2>&1 | tee -a "$LOG_FILE" | tail -5
+  log "INFO" "Build complete"
 fi
 
-# === 8. Deploy (restart container) ===
+# === 7. Deploy (restart systemd user service) ===
 if [ "$DEPLOY" = true ] || [ "$NEW_VERSION" != "$LAST_SYNC" ]; then
-  log "INFO" "Restarting router-ai-atius-docs container..."
-  podman rm -f router-ai-atius-docs 2>&1 | tee -a "$LOG_FILE" || true
-  # Find a way to start the container (via podman-compose or manual)
-  if [ -f /home/ubuntu/docker/Atius/router-ai-atius/podman-compose.yml ]; then
-    cd /home/ubuntu/docker/Atius/router-ai-atius
-    ~/.local/bin/podman-compose up -d router-ai-atius-docs 2>&1 | tee -a "$LOG_FILE" | tail -3
-  fi
+  log "INFO" "Restarting atius-router-docs.service..."
+  systemctl --user daemon-reload
+  systemctl --user restart atius-router-docs.service
+  log "INFO" "Service restarted"
+
   # Wait for healthy
   for i in $(seq 1 30); do
-    if curl -sf https://router.atius.com.br/en/ >/dev/null 2>&1; then
-      log "INFO" "Container is healthy (got 200 from /en/)"
+    if curl -sf http://127.0.0.1:3003/pt/ >/dev/null 2>&1; then
+      log "INFO" "Service is healthy (got 200 from /pt/)"
       break
     fi
-    log "INFO" "Waiting for container... ($i/30)"
+    log "INFO" "Waiting for service... ($i/30)"
     sleep 2
   done
+fi
+
+# === 8. Commit submodule reference bump in router-ai-atius ===
+if [ "$(cd "$REPO_PATH" && git rev-parse HEAD)" != "$(cd "$ROUTER_REPO" && git submodule status docs/atius-router-docs | awk '{print substr($1,1,length($1)-1)}' 2>/dev/null || true)" ]; then
+  log "INFO" "Updating submodule reference in router-ai-atius..."
+  cd "$ROUTER_REPO"
+  git add docs/atius-router-docs
+  git -c user.email="giovannimnz@users.noreply.github.com" \
+      -c user.name="Atius Bot" \
+      commit -m "chore(docs): bump submodule to $(cd "$REPO_PATH" && git rev-parse --short HEAD)" 2>&1 | tee -a "$LOG_FILE" || true
 fi
 
 # === 9. Save last_sync version ===
