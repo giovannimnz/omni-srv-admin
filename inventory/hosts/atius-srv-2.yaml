@@ -12,12 +12,16 @@ platform:
   provider: oracle-oci
   os: ubuntu
   arch: arm64
-status: planned
+status: active
 modules: []
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
 backup:
   gdrive_base: ATIUS-SRV/SRV-2/Backup
+cleanup:
+  last_run: 2026-06-06
+  disk_before: 84%
+  disk_after: 70%
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

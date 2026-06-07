@@ -1,4 +1,6 @@
 #!/bin/bash
+# Pre-backup: rodar cleanup local para liberar espaco antes do upload
+/home/ubuntu/.local/bin/cleanup-local.sh >> /home/ubuntu/.logs/pre-backup-cleanup.log 2>&1
 # backup-srv1-to-gdrive.sh — Backup COMPLETO do SRV-1 para Google Drive
 # ---------------------------------------------------------------
 # Destino: giovanni-drive:ATIUS-SRV/SRV-1/Backup/snapshots/
