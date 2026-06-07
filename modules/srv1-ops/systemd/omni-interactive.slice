@@ -1,0 +1,14 @@
+[Unit]
+Description=Omni interactive heavy apps slice
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+
+[Slice]
+CPUQuota=125%
+CPUWeight=50
+MemoryHigh=4G
+MemoryMax=6G
+MemorySwapMax=512M
+IOReadBandwidthMax=/dev/sda 40M
+IOWriteBandwidthMax=/dev/sda 20M
+IOWeight=50
+TasksMax=4096

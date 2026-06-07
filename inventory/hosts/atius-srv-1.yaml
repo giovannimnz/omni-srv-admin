@@ -25,5 +25,12 @@ logs:
 backup:
   gdrive_base: ATIUS-SRV/SRV-1/Backup
   map: modules/srv1-ops/configs/backup-map.yaml
+resource_governor:
+  config: modules/srv1-ops/configs/resource-governor.env
+  log_dir: /home/ubuntu/.logs/resource-governor
+  profiles:
+    - builds
+    - interactive
+    - transfers
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

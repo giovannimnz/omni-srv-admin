@@ -1,0 +1,14 @@
+[Unit]
+Description=Omni build workloads slice
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+
+[Slice]
+CPUQuota=200%
+CPUWeight=100
+MemoryHigh=6G
+MemoryMax=8G
+MemorySwapMax=1G
+IOReadBandwidthMax=/dev/sda 60M
+IOWriteBandwidthMax=/dev/sda 30M
+IOWeight=100
+TasksMax=8192

@@ -3,6 +3,7 @@
 # ----------------------------------------------------------------------------
 # Roda via systemd user timer (cleanup-local-weekly.timer)
 # Frequência: semanal, domingo 03:00 BRT (com random 0-30min)
+# Também pode rodar como hygiene pós-build com CLEANUP_MODE=build-hygiene
 #
 # CATEGORIAS:
 #   1. /tmp antigos (extraídos root-like, binários soltos)
@@ -25,6 +26,7 @@ export PATH="$HOME/.nvm/versions/node/v24.13.1/bin:$HOME/.local/bin:$HOME/.local
 LOG="$HOME/.logs/cleanup-local.log"
 TIMESTAMP=$(date '+%Y-%m-%d_%H%M%S')
 DRY_RUN="${DRY_RUN:-0}"  # 1 = dry run, 0 = real
+CLEANUP_MODE="${CLEANUP_MODE:-weekly}"  # weekly | build-hygiene
 
 mkdir -p "$(dirname "$LOG")"
 
@@ -34,12 +36,16 @@ log() {
 
 # Banner
 log "=========================================="
-log "CLEANUP SRV-1 INÍCIO — modo=$([ "$DRY_RUN" = "1" ] && echo "DRY-RUN" || echo "REAL")"
+log "CLEANUP SRV-1 INÍCIO — modo=$([ "$DRY_RUN" = "1" ] && echo "DRY-RUN" || echo "REAL") cleanup_mode=$CLEANUP_MODE"
 log "Disco ANTES: $(df -h / | tail -1 | awk '{print $4}') livre"
 log "=========================================="
 
 # === FASE 1: /tmp antigos ===
 cleanup_tmp() {
+    if [[ "$CLEANUP_MODE" = "build-hygiene" ]]; then
+        log "FASE 1 — /tmp antigos (skip em build-hygiene)"
+        return 0
+    fi
     log "FASE 1 — /tmp antigos (>3d, com whitelist)"
 
     # Whitelist: nunca remover
@@ -133,19 +139,42 @@ cleanup_caches() {
             pip cache purge 2>&1 | tail -2 | tee -a "$LOG"
         fi
     fi
+
+    local EXTRA_CACHE_PATHS=(
+        "$HOME/.cache/codex-update-manager"
+        "$HOME/.cache/ms-playwright"
+        "$HOME/.cache/go-build"
+        "$HOME/.cache/copilot"
+        "$HOME/.cache/node-gyp"
+        "$HOME/.cache/codex-desktop"
+    )
+    for cache_path in "${EXTRA_CACHE_PATHS[@]}"; do
+        [[ ! -d "$cache_path" ]] && continue
+        local size=$(du -sh "$cache_path" 2>/dev/null | cut -f1)
+        log "  extra cache: $size  $cache_path"
+        if [[ "$DRY_RUN" = "0" ]]; then
+            rm -rf "$cache_path"/* 2>/dev/null || true
+        fi
+    done
 }
 
-# === FASE 3: Podman dangling (idempotente, seguro) ===
+# === FASE 3: Podman/Docker build garbage ===
 cleanup_podman() {
-    log "FASE 3 — Podman dangling (somente unused)"
+    log "FASE 3 — Podman/Docker build garbage"
 
-    # NÃO usar -a flag: prune -a remove imagens com nome. Só dangling
     if [[ "$DRY_RUN" = "1" ]]; then
         local count=$(podman images -f dangling=true -q 2>/dev/null | wc -l)
         log "  DRY podman image prune: $count dangling images"
+        local docker_count=$(docker images -f dangling=true -q 2>/dev/null | wc -l)
+        log "  DRY docker image prune: $docker_count dangling images"
     else
         podman image prune -f 2>&1 | tail -3 | tee -a "$LOG"
+        if podman system prune --help >/dev/null 2>&1; then
+            log "  podman builder prune indisponível nesta versão; mantendo image/volume prune conservador"
+        fi
         podman volume prune -f 2>&1 | tail -3 | tee -a "$LOG"
+        docker image prune -f 2>&1 | tail -3 | tee -a "$LOG" || true
+        docker builder prune -f 2>&1 | tail -3 | tee -a "$LOG" || true
     fi
 }
 
@@ -183,6 +212,10 @@ cleanup_logs() {
 
 # === FASE 5: Journal vacuum (defesa em profundidade) ===
 cleanup_journal() {
+    if [[ "$CLEANUP_MODE" = "build-hygiene" ]]; then
+        log "FASE 5 — Journal systemd (skip em build-hygiene)"
+        return 0
+    fi
     log "FASE 5 — Journal systemd"
     local usage=$(journalctl --disk-usage 2>/dev/null | grep -oE "[0-9.]+[MGK]" | head -1)
     log "  Journal: $usage"

@@ -1,0 +1,12 @@
+[Unit]
+Description=Resource governor heavier daily audit
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-audit.py
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

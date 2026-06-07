@@ -66,6 +66,8 @@ findmnt -R /home/ubuntu/Shared_smb
 
 ```bash
 omni srv1-ops list
+omni srv1-ops resources status
+omni srv1-ops resources install
 omni srv1-ops logs --limit 30
 omni srv1-ops run cleanup-local --dry-run
 ```
@@ -92,6 +94,7 @@ omni xrdp-abnt2 validate
 | Host novo | `inventory/hosts/<id>.yaml` |
 | Remote/mount novo | `inventory/remotes/<id>.yaml` |
 | Script SRV-1 | `modules/srv1-ops/scripts/` |
+| Profile de recursos SRV-1 | `modules/srv1-ops/configs/resource-governor.env` |
 | Script de mount/remote | `modules/remote-manager/scripts/` |
 | Doc GitHub | `docs/<area>/` |
 | Runbook do módulo | `modules/<module>/README.md` |

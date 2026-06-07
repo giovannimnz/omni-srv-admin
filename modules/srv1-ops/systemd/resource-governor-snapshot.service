@@ -1,0 +1,12 @@
+[Unit]
+Description=Resource governor lightweight snapshot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-snapshot.py
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7

@@ -1,0 +1,11 @@
+[Unit]
+Description=Run resource governor daily artifact audit
+
+[Timer]
+OnCalendar=*-*-* 02:40:00
+AccuracySec=5min
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target

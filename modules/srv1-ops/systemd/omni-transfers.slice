@@ -1,0 +1,14 @@
+[Unit]
+Description=Omni transfer and backup slice
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+
+[Slice]
+CPUQuota=100%
+CPUWeight=25
+MemoryHigh=1G
+MemoryMax=2G
+MemorySwapMax=256M
+IOReadBandwidthMax=/dev/sda 70M
+IOWriteBandwidthMax=/dev/sda 35M
+IOWeight=25
+TasksMax=2048

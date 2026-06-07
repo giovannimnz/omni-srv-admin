@@ -36,6 +36,8 @@ Comandos mais usados:
 omni fleet list
 omni fleet show atius-srv-1
 omni srv1-ops status
+omni srv1-ops resources status
+omni srv1-ops resources install
 omni srv1-ops logs --limit 30
 omni remote-manager list
 omni remote-manager rename-label srv1-shared-smb Shared --dry-run
@@ -227,6 +229,12 @@ O comando `rename-label`:
 omni srv1-ops list
 omni srv1-ops status
 omni srv1-ops logs --limit 30
+omni srv1-ops resources profiles
+omni srv1-ops resources status
+omni srv1-ops resources install
+omni srv1-ops resources logs
+omni srv1-ops resources watchdog
+omni srv1-ops resources run builds -- podman build -t my-app .
 omni srv1-ops run sync-vault
 omni srv1-ops run cleanup-local --dry-run
 omni srv1-ops run backup-gdrive
@@ -296,6 +304,8 @@ Responsável por automações locais do `atius-srv-1`:
 - backup para GDrive
 - offload de `~/.backups`
 - cleanup local
+- resource governor + performance logs + post-build hygiene
+- watchdog + auto-adjust de profiles em pressão crítica
 - backup SMB legado
 - health-check Atius web
 - logs em `~/.logs`
@@ -332,12 +342,13 @@ Mapa:
 
 ```text
 modules/srv1-ops/configs/backup-map.yaml
+modules/srv1-ops/configs/resource-governor.env
 ```
 
 ### Timers relevantes
 
 ```bash
-systemctl --user list-timers --all | grep -E 'backup|cleanup|offload'
+systemctl --user list-timers --all | grep -E 'backup|cleanup|offload|resource-governor'
 ```
 
 ---
