@@ -1,16 +1,41 @@
 project: hermes-os
+display_name: "Hermes OS — Electron + Web Universal App"
 upstream: https://github.com/fathah/hermes-desktop
 upstream_branch: main
 origin_branch: main
 fork: /home/ubuntu/GitHub/forks/hermes-os
-protected_paths:
-  # Rebrand e identidade
-  - README.md
-  - package.json
 merge_strategy: merge
 auto_push: true
 notification_level: all
 ai_decision_threshold: conflicts
 version_scheme:
-  suffix: "-rf"
+  suffix: "-ho"
   counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
+
+# ── Protected paths (NUNCA sobrescritos pelo upstream) ─────────────
+# Webapp: código próprio, patches, config de sync
+# Desktop adapter WebAdapter: runtime, isRemoteMode
+# ConnectGateway: CSS + import
+# Layout: reasoning bubbles, token count, electron mode
+# Desktop-client: gatewayAdapter stub, webAdapter electron mode
+protected_paths:
+  # Webapp próprio (não existe no upstream)
+  - packages/hermes-os-webapp/
+  # Desktop client patches
+  - packages/desktop-client/src/adapters/webAdapter.ts
+  - packages/desktop-client/src/adapters/gatewayAdapter.ts
+  # Desktop renderer patches (ConnectGateway CSS, Layout reasoning, plan 03)
+  - packages/hermes-os-desktop/src/renderer/src/screens/ConnectGateway/
+  - packages/hermes-os-desktop/src/renderer/src/screens/Layout/Layout.tsx
+  - packages/hermes-os-desktop/src/renderer/src/assets/main.css
+  # Project management
+  - .planning/
+  - SETUP.md
+  - CHANGELOG.md
+
+# ── Post-sync hook ─────────────────────────────────────────────────
+# Após cada sync do upstream, atualiza o webapp e faz rebuild
+post_sync:
+  enabled: true
+  script: "packages/hermes-os-webapp/sync.sh"
+  description: "Copia renderer + shared do Electron, aplica patches, rebuild webapp"
