@@ -3,7 +3,7 @@
 # Cron recomendado: "0 8 * * *" (8h UTC = 5h BRT — antes do expediente)
 
 set -euo pipefail
-LOG_DIR="/home/ubuntu/fork-sync/logs"
+LOG_DIR="/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync/logs"
 mkdir -p "$LOG_DIR"
 TS=$(date +%Y%m%d)
 LOG="$LOG_DIR/sync-all-$TS.log"

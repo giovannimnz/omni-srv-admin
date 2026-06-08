@@ -9,7 +9,7 @@
 #   ./pm2-setup.sh logs
 
 set -euo pipefail
-HERE="$(cd "$(dirname "$0")/.." && pwd)"
+HERE="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$HERE"
 
 ACTION="${1:-status}"

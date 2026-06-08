@@ -1,17 +1,17 @@
 {
   "name": "fork-sync-daily",
-  "script": "/home/ubuntu/fork-sync/cli/scripts/run_sync_all.sh",
+  "script": "/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync/cli/scripts/run_sync_all.sh",
   "args": ["--apply"],
   "cron_restart": "0 8 * * *",
-  "cwd": "/home/ubuntu/fork-sync",
+  "cwd": "/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync",
   "interpreter": "none",
   "watch": false,
   "autorestart": false,
   "env": {
-    "FORK_SYNC_ROOT": "/home/ubuntu/fork-sync"
+    "FORK_SYNC_ROOT": "/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync"
   },
-  "log_file": "/home/ubuntu/fork-sync/logs/pm2-daily-sync.log",
-  "error_file": "/home/ubuntu/fork-sync/logs/pm2-daily-sync-error.log",
-  "out_file": "/home/ubuntu/fork-sync/logs/pm2-daily-sync-out.log",
+  "log_file": "/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync/logs/pm2-daily-sync.log",
+  "error_file": "/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync/logs/pm2-daily-sync-error.log",
+  "out_file": "/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync/logs/pm2-daily-sync-out.log",
   "time": true
 }

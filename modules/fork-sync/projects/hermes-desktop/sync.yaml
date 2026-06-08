@@ -1,0 +1,29 @@
+project: hermes-desktop
+display_name: "Hermes Desktop — upstream fork module inside hermes-os"
+upstream: https://github.com/fathah/hermes-desktop
+upstream_branch: main
+origin_branch: main
+fork: /home/ubuntu/GitHub/hermes-os/hermes-desktop
+merge_strategy: merge
+auto_push: false
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-hd"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
+
+# ── Protected paths (NUNCA sobrescritos pelo upstream) ─────────────
+# hermes-frontend é derivado local e NÃO deve ser tocado pelo upstream do desktop
+# desktop-client adapter é local
+# patches de gateway/layout são locais
+protected_paths:
+  - src/renderer/src/screens/ConnectGateway/
+  - src/renderer/src/screens/Layout/Layout.tsx
+  - src/renderer/src/assets/main.css
+  - resources/
+  - electron.vite.config.ts
+
+post_sync:
+  enabled: true
+  script: "/home/ubuntu/GitHub/hermes-os/hermes-frontend/sync.sh"
+  description: "Atualiza o hermes-frontend a partir do hermes-desktop e depois rebuilda o frontend"
