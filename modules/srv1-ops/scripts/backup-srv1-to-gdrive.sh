@@ -35,10 +35,10 @@ DEST="${REMOTE}${BASE_PATH}/snapshot-$DATE"
 RCLONE_CONFIG="$HOME/.config/rclone/rclone.conf"
 
 # === THROTTLE I/O ===
-# Oracle OCI SSD: 65-70MB/s teto real (single drive)
-# BWLIMIT=75MB/s = 75000KB/s = 85% do teto (safe)
-# checkers=1 reduz queries API para evitar rate limit
-BWLIMIT_KBPS=75000
+# Regra: 85% teto GLOBAL da maquina, 50% teto por unico processo de transferencia.
+# SRV-1 max write real ~108MB/s -> 50% por processo = 54MB/s.
+# checkers=1 reduz queries API para evitar rate limit.
+BWLIMIT_KBPS=54000
 TRANSFERS=1
 CHECKERS=1
 

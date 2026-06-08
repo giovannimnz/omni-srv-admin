@@ -29,6 +29,7 @@ SCRIPT_MAP = {
     "resource-snapshot": SCRIPTS / "resource-governor-snapshot.py",
     "resource-audit": SCRIPTS / "resource-governor-audit.py",
     "resource-watchdog": SCRIPTS / "resource-governor-watchdog.py",
+    "cgroup-init": SCRIPTS / "resource-governor-cgroup-init.sh",
 }
 
 RESOURCE_PROFILE_KEYS = {
@@ -62,6 +63,7 @@ RESOURCE_UNIT_NAMES = [
     "resource-governor-audit.service",
     "resource-governor-audit.timer",
     "resource-governor-watchdog.service",
+    "resource-governor-cgroup-init.service",
 ]
 
 RISKY_EXECUTABLES = {
@@ -382,6 +384,10 @@ def resource_run(profile: str, dry_run: bool, schedule_hygiene: bool | None, com
                 f"em +{config.get('RG_POST_BUILD_CLEANUP_DELAY')} / +{config.get('RG_POST_BUILD_SNAPSHOT_DELAY')} / +{config.get('RG_POST_BUILD_AUDIT_DELAY')}"
             )
         return
+
+    # systemd 249 user instance bug: CPUQuota/IO*BandwidthMax não são escritos
+    # nos cgroups. Forçamos limites via cgroup-init antes de rodar.
+    _run(["bash", str(SCRIPT_MAP["cgroup-init"])], env=_user_systemd_env())
 
     rc = _run(cmd, env=_user_systemd_env())
     if should_schedule:

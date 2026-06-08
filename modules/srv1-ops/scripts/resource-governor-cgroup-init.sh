@@ -1,0 +1,120 @@
+#!/usr/bin/env bash
+# resource-governor-cgroup-init.sh
+# Workaround: systemd 249 user instance não aplica CPUQuota / IO*BandwidthMax
+# ao cgroup filesystem. Escrevemos diretamente nos arquivos cgroup.
+#
+# Roda no boot (via systemd user service e no start/restart de cada slice).
+#
+# Source: https://github.com/giovannimnz/omni-srv-admin
+set -euo pipefail
+
+OMNI_SRV_ADMIN="${OMNI_SRV_ADMIN:-/home/ubuntu/GitHub/omni-srv-admin}"
+CONFIG="${OMNI_SRV_ADMIN}/modules/srv1-ops/configs/resource-governor.env"
+RUNTIME_OVERRIDE="${HOME}/.config/omni/resource-governor.runtime.env"
+
+# --- resolve config: base + runtime override ---
+declare -A CFG
+load_env() {
+    local path="$1"
+    [[ -f "$path" ]] || return 0
+    while IFS='=' read -r key value; do
+        key="${key%%[[:space:]]#*}"
+        key="$(echo "$key" | xargs)"
+        value="$(echo "$value" | xargs)"
+        [[ -z "$key" || "$key" == \#* ]] && continue
+        CFG["$key"]="$value"
+    done < "$path"
+}
+load_env "$CONFIG"
+load_env "$RUNTIME_OVERRIDE"
+
+# --- helpers ---
+quote() { echo "$@" | sed "s/^['\"]//;s/['\"]$//"; }
+
+get() {
+    local key="$1" default="$2"
+    local val="${CFG[$key]:-$default}"
+    quote "$val"
+}
+
+cpu_quota_to_cg() {
+    local pct="$1"
+    pct="${pct%\%}"
+    # pct pode ser tipo "125%" ou "125"
+    local period=100000
+    local quota=$(LC_ALL=C awk "BEGIN{printf \"%d\", $pct * $period / 100}")
+    echo "${quota} ${period}"
+}
+
+io_bw_to_cg() {
+    local bw="$1"
+    # Remove sufixo M/k/etc
+    bw="${bw%M}"
+    bw="${bw%m}"
+    echo "${bw}000000"
+}
+
+USER_ID=$(id -u)
+CGROUP_BASE="/sys/fs/cgroup/user.slice/user-${USER_ID}.slice/user@${USER_ID}.service/omni.slice"
+
+# --- 1. Ensure omni.slice has cpu+io in subtree_control ---
+OMNI_SLICE="${CGROUP_BASE}"
+if [[ -d "$OMNI_SLICE" ]]; then
+    current_sub=$(cat "$OMNI_SLICE/cgroup.subtree_control" 2>/dev/null || echo "")
+    for ctl in cpu io; do
+        if ! echo "$current_sub" | grep -q "$ctl"; then
+            echo "+$ctl" > "$OMNI_SLICE/cgroup.subtree_control" 2>/dev/null || true
+        fi
+    done
+fi
+
+# --- 2. Per-profile: enable controllers + write limits ---
+declare -A PROFILES
+PROFILES["builds"]="BUILDS"
+PROFILES["interactive"]="INTERACTIVE"
+PROFILES["transfers"]="TRANSFERS"
+
+for profile in builds interactive transfers; do
+    key="${PROFILES[$profile]}"
+    slice="omni-${profile}.slice"
+    cg_path="${OMNI_SLICE}/${slice}"
+
+    # Start slice if inactive
+    if [[ -d "$cg_path" ]]; then
+        XDG_RUNTIME_DIR=/run/user/${USER_ID} \
+        DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/${USER_ID}/bus}" \
+        systemctl --user start "${slice}" 2>/dev/null || true
+    fi
+
+    # Ensure cgroup dir exists
+    [[ -d "$cg_path" ]] || continue
+
+    # Enable controllers for children (so scopes get files)
+    for ctl in cpu io memory pids; do
+        cur=$(cat "$cg_path/cgroup.subtree_control" 2>/dev/null || echo "")
+        if ! echo "$cur" | grep -q "$ctl"; then
+            echo "+$ctl" > "$cg_path/cgroup.subtree_control" 2>/dev/null || true
+        fi
+    done
+
+    # --- cpu.max ---
+    cpu_quota=$(get "RG_PROFILE_${key}_CPU_QUOTA" "100%")
+    cg_cpu=$(cpu_quota_to_cg "$cpu_quota")
+    echo "$cg_cpu" > "$cg_path/cpu.max" 2>/dev/null || true
+
+    # --- io.max ---
+    root_dev=$(get "RG_ROOT_DEVICE" "/dev/sda")
+    dev_major_minor=$(stat -c '%t %T' "$root_dev" 2>/dev/null || echo "8 0")
+    dev_major=$((0x${dev_major_minor% *}))
+    dev_minor=$((0x${dev_major_minor#* }))
+
+    io_read=$(get "RG_PROFILE_${key}_IO_READ_BW" "")
+    io_write=$(get "RG_PROFILE_${key}_IO_WRITE_BW" "")
+    if [[ -n "$io_read" || -n "$io_write" ]]; then
+        rbps=$(io_bw_to_cg "${io_read:-0}")
+        wbps=$(io_bw_to_cg "${io_write:-0}")
+        echo "${dev_major}:${dev_minor} rbps=${rbps} wbps=${wbps}" > "$cg_path/io.max" 2>/dev/null || true
+    fi
+done
+
+echo "cgroup-init: $(date -Isec) completou"

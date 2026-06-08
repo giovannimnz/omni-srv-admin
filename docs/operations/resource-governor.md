@@ -258,7 +258,37 @@ modules/srv1-ops/systemd/omni-interactive.slice
 modules/srv1-ops/systemd/omni-transfers.slice
 ```
 
-## Rollout recomendado
+## Workaround: systemd 249 user instance bug
+
+systemd 249 (user instance) **não escreve `CPUQuota` e `IO*BandwidthMax`**
+nos arquivos cgroup v2, mesmo definidos nos `.slice` units e passados
+via `-p` ao `systemd-run --scope`.
+
+Problemas observados:
+
+- `cpu.max` fica `max 100000` (unlimited) mesmo com `CPUQuota=200%`
+- `io.max` fica vazio mesmo com `IOReadBandwidthMax=60M`
+- `MemoryMax`, `MemoryHigh`, `TasksMax` funcionam normalmente
+- Só as propriedades do `memory` e `pids` controllers são aplicadas
+
+### Solução: `resource-governor-cgroup-init.sh`
+
+Script que escreve os limites diretamente nos cgroup files:
+
+- Ativa `cpu` + `io` no `subtree_control` do `omni.slice` pai
+- Ativa `cpu io memory pids` no `subtree_control` de cada `omni-*.slice`
+- Escreve `cpu.max`, `io.max` com os valores do config + runtime override
+
+**`resource-governor-cgroup-init.service`** (oneshot) roda no boot via
+`systemd --user`, ativado por `default.target`.
+
+**Integração no watchdog:** quando muda o runtime override (conservative ↔ base),
+o watchdog chama `cgroup-init` para aplicar os novos limites nos cgroups.
+
+**Integração no `resources run`:** antes de executar o comando, chama
+`cgroup-init` para garantir que os limites estão atualizados.
+
+## Fase 1 — já implementado no repo
 
 ### Fase 1 — já implementado no repo
 

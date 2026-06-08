@@ -40,6 +40,13 @@ sources:
     source: /home/ubuntu/.backups
     dest: ATIUS-SRV/SRV-1/Backup/home/ubuntu/.backups
     policy: copy-verify-delete
+  retired-artifacts:
+    policy: backup-verify-delete
+    schedule: daily-06-15-brt
+    notes:
+      - usa rclone copy/rcat direto; nao usa mount ~/GDrive para writes grandes
+      - alvos atuais: open-webui, hermes-pers, paperclip-pers (se aparecerem)
+      - script: modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh
   shared-smb:
     source: /home/ubuntu/Shared_smb
     dest: ATIUS-SRV/SRV-1/Backup/snapshots/snapshot-YYYY-MM-DD_HHMMSS/home/ubuntu/Shared_smb

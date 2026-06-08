@@ -23,10 +23,15 @@ LOG="${HOME_DIR}/.logs/offload-dotbackups-to-gdrive.log"
 LOCK="/tmp/offload-dotbackups-to-gdrive.lock"
 MIN_AGE_MINUTES="${MIN_AGE_MINUTES:-10}"
 DELETE_AFTER_VERIFY="${DELETE_AFTER_VERIFY:-1}"
-BWLIMIT_KBPS="${BWLIMIT_KBPS:-75000}"
+BWLIMIT_KBPS="${BWLIMIT_KBPS:-54000}"
 TRANSFERS="${TRANSFERS:-1}"
 CHECKERS="${CHECKERS:-1}"
+ARCHIVE_THRESHOLD_FILES="${ARCHIVE_THRESHOLD_FILES:-20000}"
+ARCHIVE_THRESHOLD_BYTES="${ARCHIVE_THRESHOLD_BYTES:-1073741824}"
+TMP_DIR="/tmp/offload-dotbackups"
 EXIT_CODE=0
+
+mkdir -p "$TMP_DIR"
 
 mkdir -p "$(dirname "$LOG")" "$SRC_DIR"
 
@@ -96,6 +101,28 @@ local_bytes() {
     fi
 }
 
+should_archive_item() {
+    local item="$1"
+    local files bytes
+    files=$(local_count "$item")
+    bytes=$(local_bytes "$item")
+    [ "$files" -ge "$ARCHIVE_THRESHOLD_FILES" ] || [ "$bytes" -ge "$ARCHIVE_THRESHOLD_BYTES" ]
+}
+
+archive_remote_path() {
+    local item="$1"
+    local name
+    name=$(basename "$item")
+    printf '%s%s/%s.tar.gz' "$REMOTE" "$BASE_PATH" "$name"
+}
+
+manifest_remote_path() {
+    local item="$1"
+    local name
+    name=$(basename "$item")
+    printf '%s%s/%s.manifest.json' "$REMOTE" "$BASE_PATH" "$name"
+}
+
 remote_count() {
     local dest="$1"
     rclone lsf "$dest" --recursive --files-only --config="$RCLONE_CONFIG" 2>/dev/null | wc -l | tr -d ' '
@@ -103,8 +130,56 @@ remote_count() {
 
 remote_bytes() {
     local dest="$1"
-    rclone size "$dest" --json --config="$RCLONE_CONFIG" 2>/dev/null \
-        | python3 -c 'import json,sys; print(json.load(sys.stdin).get("bytes",0))' 2>/dev/null || echo 0
+    local bytes
+    bytes=$(rclone size "$dest" --json --config="$RCLONE_CONFIG" 2>/dev/null \
+        | python3 -c 'import json,sys; print(json.load(sys.stdin).get("bytes",0))' 2>/dev/null || echo 0)
+    if [ "$bytes" = "0" ]; then
+        # Single-file remote path fallback
+        bytes=$(rclone lsjson "$dest" --config="$RCLONE_CONFIG" 2>/dev/null \
+            | python3 -c 'import json,sys; d=json.load(sys.stdin); print((d[0].get("Size",0) if isinstance(d,list) and d else 0))' 2>/dev/null || echo 0)
+    fi
+    echo "$bytes"
+}
+
+archive_item() {
+    local item="$1"
+    local label archive_dest manifest_dest manifest_tmp local_files local_size
+    label=$(basename "$item")
+    archive_dest=$(archive_remote_path "$item")
+    manifest_dest=$(manifest_remote_path "$item")
+    manifest_tmp=$(mktemp "$TMP_DIR/${label}.manifest.XXXXXX.json")
+    local_files=$(local_count "$item")
+    local_size=$(local_bytes "$item")
+
+    printf '{"name":"%s","local_files":%s,"local_bytes":%s,"created_at":"%s"}\n' \
+      "$label" "$local_files" "$local_size" "$(date -Iseconds)" > "$manifest_tmp"
+
+    log "ARCHIVE $label files=$local_files bytes=$local_size -> $archive_dest"
+    if (cd "$(dirname "$item")" && ionice -c 2 -n 7 nice -n 19 tar cf - "$label" 2>/dev/null \
+        | pigz --fast \
+        | pv -q -L "${BWLIMIT_KBPS}k" -W \
+        | rclone rcat "$archive_dest" --config="$RCLONE_CONFIG" --bwlimit="${BWLIMIT_KBPS}k" --retries=3 --low-level-retries=5 --log-level=ERROR); then
+        if retry_rclone "manifest:$label" copyto "$manifest_tmp" "$manifest_dest" \
+            --transfers=1 --checkers=1 --bwlimit="${BWLIMIT_KBPS}k" \
+            --retries=3 --low-level-retries=5 --log-level=ERROR; then
+            rm -f "$manifest_tmp"
+            return 0
+        fi
+    fi
+    rm -f "$manifest_tmp"
+    return 1
+}
+
+verify_archive_item() {
+    local item="$1"
+    local label archive_dest manifest_dest archive_bytes manifest_bytes
+    label=$(basename "$item")
+    archive_dest=$(archive_remote_path "$item")
+    manifest_dest=$(manifest_remote_path "$item")
+    archive_bytes=$(remote_bytes "$archive_dest")
+    manifest_bytes=$(remote_bytes "$manifest_dest")
+    log "VERIFY-ARCHIVE $label archive_bytes=$archive_bytes manifest_bytes=$manifest_bytes"
+    [ "$archive_bytes" -gt 0 ] && [ "$manifest_bytes" -gt 0 ]
 }
 
 copy_item() {
@@ -183,7 +258,25 @@ main() {
         label=$(basename "$item")
         dest=$(remote_path_for_item "$item")
         log "COPY  $label -> $dest"
-        if copy_item "$item" "$dest" && verify_item "$item" "$dest"; then
+        if [ -d "$item" ] && should_archive_item "$item"; then
+            if archive_item "$item" && verify_archive_item "$item"; then
+                log "OK    verified-archive $label"
+                if [ "$DELETE_AFTER_VERIFY" = "1" ]; then
+                    rm -rf --one-file-system "$item"
+                    if [ ! -e "$item" ]; then
+                        log "DELETE local $label"
+                    else
+                        log "FAIL  delete-local $label"
+                        EXIT_CODE=1
+                    fi
+                else
+                    log "KEEP  local $label delete_after_verify=0"
+                fi
+            else
+                log "KEEP  local $label archive_verify_failed"
+                EXIT_CODE=1
+            fi
+        elif copy_item "$item" "$dest" && verify_item "$item" "$dest"; then
             log "OK    verified $label"
             if [ "$DELETE_AFTER_VERIFY" = "1" ]; then
                 rm -rf --one-file-system "$item"
