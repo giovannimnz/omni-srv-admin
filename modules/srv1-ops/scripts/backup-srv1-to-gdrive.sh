@@ -153,6 +153,15 @@ EXCLUDE_HERMES=(
 
 bkp "hermes" "$HOME/.hermes" "home/ubuntu/.hermes" "${EXCLUDE_HERMES[@]}"
 
+# === 3b. gbrain (v0.42.36.0) — config + install scripts, NOT the DB (it's in Postgres) ===
+EXCLUDE_GBRAIN=(
+    --exclude="*.lock"           # gbrain transient lockfiles
+    --exclude=".locks/**"        # lock directory
+    --exclude="last-update-check" # transient update-check cache
+    --exclude="embed-cache/**"   # if any local embed cache materializes
+)
+bkp "gbrain" "$HOME/.gbrain" "home/ubuntu/.gbrain" "${EXCLUDE_GBRAIN[@]}"
+
 # === 4. Shared SMB snapshots (espelho) ===
 bkp "shared-smb" "$HOME/Shared_smb" "home/ubuntu/Shared_smb"
 
