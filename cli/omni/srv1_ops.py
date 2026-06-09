@@ -30,6 +30,7 @@ SCRIPT_MAP = {
     "resource-audit": SCRIPTS / "resource-governor-audit.py",
     "resource-watchdog": SCRIPTS / "resource-governor-watchdog.py",
     "cgroup-init": SCRIPTS / "resource-governor-cgroup-init.sh",
+    "patcher": SCRIPTS / "resource-governor-patcher.py",
 }
 
 RESOURCE_PROFILE_KEYS = {
@@ -64,6 +65,7 @@ RESOURCE_UNIT_NAMES = [
     "resource-governor-audit.timer",
     "resource-governor-watchdog.service",
     "resource-governor-cgroup-init.service",
+    "resource-governor-patcher.service",
 ]
 
 RISKY_EXECUTABLES = {
