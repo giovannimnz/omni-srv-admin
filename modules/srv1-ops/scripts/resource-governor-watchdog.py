@@ -33,9 +33,10 @@ DEFAULTS = {
     'RG_WATCHDOG_RECOVERY_DISK_PCT': '92',
     'RG_WATCHDOG_RECOVERY_SWAP_PCT': '70',
     'RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB': '4096',
-    'RG_WATCHDOG_POLL_INTERVAL_SEC': '1',
-    'RG_WATCHDOG_PERF_WRITE_INTERVAL_SEC': '30',
+    'RG_WATCHDOG_POLL_INTERVAL_SEC': '5',
+    'RG_WATCHDOG_PERF_WRITE_INTERVAL_SEC': '60',
     'RG_WATCHDOG_PERF_WINDOW_SIZE': '300',
+    'RG_WATCHDOG_RECOVERY_HYSTERESIS_CYCLES': '5',
 }
 
 # Cgroup v2 paths for resource enforcement (global 85% machine ceiling)
@@ -309,6 +310,8 @@ def main() -> int:
 
         # Action: threshold detected
         if reasons:
+            # Reset healthy streak on threshold breach
+            state['healthy_streak'] = 0
             # Apply runtime override
             runtime_path.parent.mkdir(parents=True, exist_ok=True)
             if state.get('runtime_mode') != 'conservative':
@@ -353,17 +356,24 @@ def main() -> int:
 
         else:
             state['last_reasons'] = []
+            # 2026-06-11 fix: hysteresis — require N consecutive healthy cycles
+            # before exiting conservative mode (was: 1 cycle = flapping bug)
+            healthy_streak = state.get('healthy_streak', 0) + 1
+            state['healthy_streak'] = healthy_streak
+            HYSTERESIS_CYCLES = int(config.get('RG_WATCHDOG_RECOVERY_HYSTERESIS_CYCLES', '5'))
             # Recovery check
             recovered = (
-                system_data['disk_pct'] <= float(config['RG_WATCHDOG_RECOVERY_DISK_PCT'])
+                healthy_streak >= HYSTERESIS_CYCLES
+                and system_data['disk_pct'] <= float(config['RG_WATCHDOG_RECOVERY_DISK_PCT'])
                 and system_data['swap_pct'] <= float(config['RG_WATCHDOG_RECOVERY_SWAP_PCT'])
                 and system_data['mem_available_mib'] >= float(config['RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB'])
             )
             if recovered and state.get('runtime_mode') == 'conservative' and runtime_path.exists():
                 runtime_path.unlink()
                 state['runtime_mode'] = 'base'
+                state['healthy_streak'] = 0
                 cgroup_actions = remove_cgroup_limits()
-                append_log(log_path, f'cgroup-unlimited {" ".join(cgroup_actions)} disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]}')
+                append_log(log_path, f'cgroup-unlimited {" ".join(cgroup_actions)} disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]} healthy_streak={healthy_streak}')
                 # Restore per-profile limits to base values
                 cgroup_init_script = SCRIPT.parent / 'resource-governor-cgroup-init.sh'
                 if cgroup_init_script.exists():

@@ -80,6 +80,37 @@ INTERACTIVE_PATTERNS = [
     (r'(^|/)(electron|electron-builder|Codex)(\s|$)', 'interactive', 'electron'),
 ]
 
+# 2026-06-11: catch-all bucket for processes that don't match build/transfer/interactive
+# patterns. Goal: tame generic CPU hogs (yes, find /, dd, cat large_file) by parking
+# them in a low-priority cgroup instead of letting them run unrestricted in session-*.scope.
+# Brando limits: low cpu.weight, low io.weight, no memory cap (they may legitimately
+# need RAM) — just deprioritize them under load.
+GENERIC_PATTERNS = [
+    (r'(^|/)yes(\s|$)', 'generic', 'yes'),
+    (r'(^|/)(dd|sync)(\s|$)', 'generic', 'dd-sync'),
+    (r'(^|/)find(\s|$)', 'generic', 'find'),
+    (r'(^|/)sort(\s|$)', 'generic', 'sort'),
+    (r'(^|/)xargs(\s|$)', 'generic', 'xargs'),
+    (r'(^|/)(grep|egrep|fgrep|rg)(\s|$)', 'generic', 'grep'),
+    (r'(^|/)awk(\s|$)', 'generic', 'awk'),
+    (r'(^|/)sed(\s|$)', 'generic', 'sed'),
+    (r'(^|/)tr(\s|$)', 'generic', 'tr'),
+    (r'(^|/)cut(\s|$)', 'generic', 'cut'),
+    (r'(^|/)wc(\s|$)', 'generic', 'wc'),
+    (r'(^|/)head(\s|$)', 'generic', 'head'),
+    (r'(^|/)tail(\s|$)', 'generic', 'tail'),
+    (r'(^|/)(sha1sum|sha256sum|md5sum|b2sum)(\s|$)', 'generic', 'hash'),
+    (r'(^|/)base64(\s|$)', 'generic', 'base64'),
+    (r'(^|/)xxd(\s|$)', 'generic', 'xxd'),
+    (r'(^|/)od(\s|$)', 'generic', 'od'),
+    (r'(^|/)hexdump(\s|$)', 'generic', 'hexdump'),
+    (r'(^|/)strace(\s|$)', 'generic', 'strace'),
+    (r'(^|/)ltrace(\s|$)', 'generic', 'ltrace'),
+    (r'(^|/)gdb(\s|$)', 'generic', 'gdb'),
+    (r'(^|/)valgrind(\s|$)', 'generic', 'valgrind'),
+    (r'(^|/)perf(\s|$)', 'generic', 'perf'),
+]
+
 # Nunca mover
 PROTECTED_PATTERNS = [
     r'(^|/)systemd(\s|$)',
@@ -104,6 +135,34 @@ DEFAULTS = {
     'RG_PATCHER_MIN_AGE_SEC': '5',
     'RG_PATCHER_DRY_RUN': '0',
 }
+
+# 2026-06-11: inviolable services (NUNCA mover de cgroup, NUNCA limitar).
+# Carregado de configs/inviolable-services.env no startup. Cada linha é uma regex
+# que casa em cmdline OU comm. Adicionar aqui = tripla proteção:
+#   1. patcher pula migração
+#   2. OOM killer recebe -1000 via systemd
+#   3. inviolable-watchdog.sh relança em <1s se cair
+INVIOLABLE_PATTERNS_PATH = Path(__file__).parent.parent / 'configs' / 'inviolable-services.env'
+INVIOLABLE_PATTERNS = [
+    # Built-in defaults (sempre ativos, mesmo se arquivo não existir)
+    r'(^|/)(sshd|xrdp|xrdp-sesman|xrdp-chansrv|polkitd|networkd-dispat|systemd-logind|dbus-(daemon|broker))(\s|$)',
+    r'(^|/)(apache2|nginx|httpd|caddy|haproxy|traefik|pm2-runtime)(\s|$)',
+    r'(^|/)(wg-quick|wg-crypt|wg0)(\s|$)',
+    r'atius-(router|web|web-healthcheck|router-docs)',
+    r'(^|/)(horistic|Atius-Capital|Atius|horistic-(api|backend))',
+    # 2026-06-11: ATS (Atius Trading System) — sistema paralelo
+    r'(^|/)(divap\.py|nodriver_worker|backend\.indicators\.strategy_builder)',
+    r'ats/backend',
+    # 2026-06-11: podman containers do Atius Router (conmon monitora)
+    r'router-ai-atius',
+    r'conmon.*router-ai-atius',
+    r'hermes-(telegram|ws-gateway|os-webapp|gateway|agent|acp)',
+    r'(^|/)gbrain(\s|$)',
+    r'(^|/)gdrive-mount(\s|$)',
+    r'resource-governor-(watchdog|patcher|audit|snapshot|cgroup-init)',
+    r'srv1-(monitor-mission|ops)',
+    r'inviolable-watchdog',
+]
 
 RUNNING = True
 
@@ -141,11 +200,15 @@ def is_protected(cmd: str, comm: str) -> bool:
     for pat in PROTECTED_PATTERNS:
         if re.search(pat, cmd) or re.search(pat, comm):
             return True
+    # 2026-06-11: inviolable services — ABSOLUTELY never migrate
+    for pat in INVIOLABLE_PATTERNS:
+        if re.search(pat, cmd) or re.search(pat, comm):
+            return True
     return False
 
 
 def classify(cmd: str) -> tuple[str, str] | None:
-    for pat, slice_name, reason in BUILD_PATTERNS + TRANSFER_PATTERNS + INTERACTIVE_PATTERNS:
+    for pat, slice_name, reason in BUILD_PATTERNS + TRANSFER_PATTERNS + INTERACTIVE_PATTERNS + GENERIC_PATTERNS:
         if re.search(pat, cmd):
             return slice_name, reason
     return None
@@ -260,10 +323,10 @@ def ensure_user_cgroup_subtree() -> None:
 
 
 def ensure_omni_cgroups_exist() -> dict[str, Path]:
-    """Create /sys/fs/cgroup/user.slice/user-1001.slice/omni-{builds,interactive,transfers}
+    """Create /sys/fs/cgroup/user.slice/user-1001.slice/omni-{builds,interactive,transfers,generic}
     as plain cgroup dirs (not systemd slices) and chown to ubuntu."""
     out = {}
-    for name in ('builds', 'interactive', 'transfers'):
+    for name in ('builds', 'interactive', 'transfers', 'generic', 'protected'):
         path = CGROUP_USER / f'omni-{name}'
         if not path.exists():
             try:
@@ -381,8 +444,24 @@ def main() -> int:
     min_age = int(config['RG_PATCHER_MIN_AGE_SEC'])
     dry_run = config['RG_PATCHER_DRY_RUN'] == '1'
 
+    # 2026-06-11: load additional inviolable patterns from external file (if exists)
+    if INVIOLABLE_PATTERNS_PATH.exists():
+        try:
+            for raw in INVIOLABLE_PATTERNS_PATH.read_text().splitlines():
+                line = raw.strip()
+                if not line or line.startswith('#') or ' ' not in line:
+                    # file format: comment OR "pattern   rest" — only take the first token
+                    if not line or line.startswith('#'):
+                        continue
+                # take first whitespace-delimited token as the pattern
+                pat = line.split()[0] if line.split() else ''
+                if pat:
+                    INVIOLABLE_PATTERNS.append(pat)
+        except Exception as exc:
+            log(f'inviolable-patterns-load-failed: {exc}')
+
     LOG_FILE.parent.mkdir(parents=True, exist_ok=True)
-    log(f'patcher-start poll={poll}s cpu>={cpu_thr}% mem>={mem_thr//1024}MiB dry_run={dry_run}')
+    log(f'patcher-start poll={poll}s cpu>={cpu_thr}% mem>={mem_thr//1024}MiB dry_run={dry_run} inviolable_patterns={len(INVIOLABLE_PATTERNS)}')
 
     # Per-PID CPU tracking
     cpu_samples: dict[int, deque] = {}
@@ -407,11 +486,19 @@ def main() -> int:
         except (PermissionError, FileNotFoundError) as exc:
             log(f'user-slice cpu.max write failed: {exc}')
 
-    # Per-profile cgroup v2 limits (per-process 50% cap)
+    # Per-profile cgroup v2 limits (per-process 50% cap).
+    # 2026-06-11: 'generic' bucket is a catch-all for unclassified heavy procs
+    # (yes, find /, dd, sort, strace, etc). Brando limits — low cpu.weight + io.weight
+    # deprioritize them under contention, but no memory cap (legitimately RAM-hungry).
     PROFILE_LIMITS = {
-        'builds':     {'cpu': '200000 100000', 'io': '8:0 rbps=60000000 wbps=54000000',  'mem': '6G'},
-        'interactive':{'cpu': '200000 100000', 'io': '8:0 rbps=60000000 wbps=54000000',  'mem': '4G'},
-        'transfers':  {'cpu': '100000 100000', 'io': '8:0 rbps=60000000 wbps=30000000',  'mem': '2G'},
+        'builds':     {'cpu': '200000 100000', 'io': '8:0 rbps=60000000 wbps=54000000',  'mem': '6G', 'cpu_weight': 200, 'io_weight': 200},
+        'interactive':{'cpu': '200000 100000', 'io': '8:0 rbps=60000000 wbps=54000000',  'mem': '4G', 'cpu_weight': 500, 'io_weight': 500},
+        'transfers':  {'cpu': '100000 100000', 'io': '8:0 rbps=60000000 wbps=30000000',  'mem': '2G', 'cpu_weight': 100, 'io_weight': 100},
+        'generic':    {'cpu':  '50000 100000', 'io': '8:0 rbps=20000000 wbps=10000000',  'mem': 'max', 'cpu_weight':  25, 'io_weight':  25},
+        # 2026-06-11: 'protected' = inviolable services. ZERO limits (max max max).
+        # Weight alto (1000) garante prioridade sob contenção. memory.max=max para
+        # nunca ser OOM-killed. cgroup.procs vazio — apenas referenciado por hardening.
+        'protected':  {'cpu':  'max 100000',  'io': '8:0 rbps=max wbps=max riops=max wiops=max', 'mem': 'max', 'cpu_weight': 1000, 'io_weight': 1000},
     }
     for name, path in omni_paths.items():
         limits = PROFILE_LIMITS[name]
@@ -422,16 +509,30 @@ def main() -> int:
             subprocess.run(['sudo', 'tee', str(path / 'io.max')],
                            input=f"{limits['io']}\n",
                            capture_output=True, text=True, check=False)
+            # cpu.weight + io.weight for fair-share scheduling under contention
+            if 'cpu_weight' in limits:
+                subprocess.run(['sudo', 'tee', str(path / 'cpu.weight')],
+                               input=f"{limits['cpu_weight']}\n",
+                               capture_output=True, text=True, check=False)
+            if 'io_weight' in limits:
+                subprocess.run(['sudo', 'tee', str(path / 'io.weight')],
+                               input=f"{limits['io_weight']}\n",
+                               capture_output=True, text=True, check=False)
             # memory.max in bytes
-            mem_bytes = {
-                '6G': 6 * 1024 * 1024 * 1024,
-                '4G': 4 * 1024 * 1024 * 1024,
-                '2G': 2 * 1024 * 1024 * 1024,
-            }[limits['mem']]
-            subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
-                           input=f"{mem_bytes}\n",
-                           capture_output=True, text=True, check=False)
-            log(f'omni-{name}: cpu={limits["cpu"]} io={limits["io"]} mem={limits["mem"]}')
+            if limits['mem'] == 'max':
+                subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
+                               input="max\n",
+                               capture_output=True, text=True, check=False)
+            else:
+                mem_bytes = {
+                    '6G': 6 * 1024 * 1024 * 1024,
+                    '4G': 4 * 1024 * 1024 * 1024,
+                    '2G': 2 * 1024 * 1024 * 1024,
+                }[limits['mem']]
+                subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
+                               input=f"{mem_bytes}\n",
+                               capture_output=True, text=True, check=False)
+            log(f'omni-{name}: cpu={limits["cpu"]} io={limits["io"]} mem={limits["mem"]} cpu.weight={limits.get("cpu_weight","-")} io.weight={limits.get("io_weight","-")}')
         except Exception as exc:
             log(f'omni-{name} limit-set-failed: {exc}')
 
