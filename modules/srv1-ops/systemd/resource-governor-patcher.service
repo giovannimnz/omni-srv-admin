@@ -15,6 +15,7 @@ MemoryMax=256M
 CPUQuota=20%
 TimeoutStopSec=15
 OOMPolicy=stop
+OOMScoreAdjust=-1000
 Nice=15
 IOSchedulingClass=idle
 
