@@ -375,7 +375,7 @@ def main() -> int:
     signal.signal(signal.SIGINT, handle_signal)
 
     config = load_config()
-    poll = float(config['RG_PATCHER_POLL_INTERVAL_SEC'])
+    poll = 10  # 2026-06-11 fix: 2s -> 10s to avoid hammering /proc
     cpu_thr = float(config['RG_PATCHER_CPU_THRESHOLD_PCT'])
     mem_thr = float(config['RG_PATCHER_MEM_THRESHOLD_MIB']) * 1024  # KiB
     min_age = int(config['RG_PATCHER_MIN_AGE_SEC'])

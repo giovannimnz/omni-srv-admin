@@ -88,9 +88,15 @@ def load_config() -> dict[str, str]:
             data[key.strip()] = value.strip().strip('"').strip("'")
     return data
 
-def run_cmd(cmd: list[str], env: dict | None = None) -> tuple[int, str]:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
-    return proc.returncode, (proc.stdout.strip() or proc.stderr.strip())
+def run_cmd(cmd: list[str], env: dict | None = None, timeout: int = 3) -> tuple[int, str]:
+    """Run external command with hard timeout. 2026-06-11 fix: no-timeout blocked watchdog forever."""
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env, timeout=timeout)
+        return proc.returncode, (proc.stdout.strip() or proc.stderr.strip())
+    except subprocess.TimeoutExpired:
+        return 124, f'timeout-after-{timeout}s'
+    except Exception as exc:
+        return 1, f'exc:{type(exc).__name__}:{exc}'
 
 def load_json(path: Path, default: dict | None = None) -> dict:
     if not path.exists():
@@ -134,10 +140,13 @@ def sample_processes() -> dict:
     result: dict = {}
     env = os.environ.copy()
     env['LC_ALL'] = 'C'
-    out = subprocess.run(
-        ['ps', '-eo', 'pid=,pcpu=,pmem=,rss=,comm=,args=', '--sort=-pcpu'],
-        capture_output=True, text=True, check=False, env=env
-    ).stdout
+    try:
+        out = subprocess.run(
+            ['ps', '-eo', 'pid=,pcpu=,pmem=,rss=,comm=,args=', '--sort=-pcpu'],
+            capture_output=True, text=True, check=False, env=env, timeout=3,
+        ).stdout
+    except subprocess.TimeoutExpired:
+        out = ''
     ts = datetime.now().astimezone().isoformat()
     for line in out.splitlines():
         parts = line.split(None, 5)
@@ -253,9 +262,11 @@ def main() -> int:
     state.setdefault('last_cleanup_ts', 0.0)
     state.setdefault('last_audit_ts', 0.0)
     state.setdefault('total_cycles', 0)
+    state.setdefault('last_state_write_ts', 0.0)  # 2026-06-11 fix: throttle state writes
 
     process_windows: dict[str, PerfWindow] = {}
     last_write_ts = time.time()
+    last_state_write_ts = 0.0  # 2026-06-11 fix: write state at most every 30s
     last_cleanup_ts = state.get('last_cleanup_ts', 0.0)
     last_audit_ts = state.get('last_audit_ts', 0.0)
 
@@ -270,7 +281,12 @@ def main() -> int:
         system_data = sample_system()
         process_data = sample_processes()
 
-        # Track all processes in windows
+        # Track all processes in windows — 2026-06-11 fix: cap at 200 entries (LRU) to avoid memory blowup
+        if len(process_windows) > 200:
+            # Drop oldest (FIFO by insertion order)
+            drop_n = len(process_windows) - 200
+            for name in list(process_windows.keys())[:drop_n]:
+                process_windows.pop(name, None)
         for pid, pinfo in process_data.items():
             name = pinfo['name']
             if name not in process_windows:
@@ -399,7 +415,7 @@ def main() -> int:
 
             last_write_ts = current_ts
 
-        # Save state
+        # Save state — 2026-06-11 fix: throttled to 30s, not every cycle (was 1s = I/O blocker)
         state['last_system'] = {
             'disk_pct': system_data['disk_pct'],
             'swap_pct': system_data['swap_pct'],
@@ -407,7 +423,9 @@ def main() -> int:
         }
         state['last_cleanup_ts'] = last_cleanup_ts
         state['last_audit_ts'] = last_audit_ts
-        write_json(state_path, state)
+        if (current_ts - last_state_write_ts) >= 30:
+            write_json(state_path, state)
+            last_state_write_ts = current_ts
 
         # Sleep for remaining of cycle
         elapsed = time.time() - cycle_start
