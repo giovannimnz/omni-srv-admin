@@ -1,8 +1,8 @@
 ---
 project: atius-router
-version: 1
+version: 2
 created: 2026-06-04
-last_updated: 2026-06-04
+last_updated: 2026-06-11
 generator: fork-sync manuals generate
 ---
 
@@ -27,22 +27,29 @@ generator: fork-sync manuals generate
 ## 3. Estratégia de Sync — Passo a Passo
 
 1. **Estratégia:** `theirs`
-2. Conflitos são resolvidos a favor do upstream (rebrand fica em `protected_paths`)
-3. **Deploy Docker:** `fork-sync sync <PROJETO> --deploy`
-4. Health check pós-deploy: ver `deploy.yaml.health_endpoint`
+2. Dry-run sempre antes; se o fork estiver sujo, criar checkpoint local antes do sync real
+3. Merge real usa `--no-commit` + restauração dos `protected_paths`
+4. Se restar conflito fora de `protected_paths`, o merge é abortado
+5. **Deploy Docker:** rodar separadamente depois do sync
 
 ## 4. Paths Protegidos (rebrand)
 
 Estes paths são preservados em conflito (nunca sobrescritos pelo upstream):
 
-- `integration/middleware/model_detailed.py`
+- `integration/middleware/`
+- `Dockerfile.fast`
 - `docker-compose.yml`
-- `.env.example`
-- `i18n/locales/pt-BR.yaml`
+- `i18n/locales/pt.yaml`
 - `i18n/i18n.go`
-- `web/default/src/i18n/locales/pt-BR.json`
+- `web/default/src/i18n/locales/*.json`
 - `web/default/src/i18n/config.ts`
-- `web/default/src/components/language-switcher.tsx`
+- `controller/codex_*.go`
+- `service/codex_*.go`
+- `relay/channel/codex/`
+- `service/openaicompat/policy.go`
+- `dto/channel_settings.go`
+- `router/api-router.go`
+- `web/default/src/features/channels/`
 - `README.md`
 - `README.en.md`
 - `docs/`
@@ -56,7 +63,7 @@ Estes paths são preservados em conflito (nunca sobrescritos pelo upstream):
 Documentar aqui as customizações que diferenciam este fork do upstream:
 
 - **Identidade visual:** logos, cores, naming
-- **Funcionalidades extras:** patches próprios
+- **Funcionalidades extras:** Codex OAuth/device/models + middleware
 - **Configurações locais:** endpoints, paths
 - **i18n:** traduções adicionadas
 
@@ -65,7 +72,8 @@ essa customização existe (issue, ticket, decisão arquitetural).
 
 Exemplo:
 - `web/default/public/logo.png` — Logo do Atius, não usar o do new-api upstream
-- `i18n/locales/pt-BR.yaml` — Tradução PT-BR adicionada manualmente
+- `i18n/locales/pt.yaml` — Tradução PT-BR adicionada manualmente
+- `controller/codex_*.go` — Fluxos do canal Codex fora do upstream
 
 Se adicionar rebrand:
 1. Adicionar path em `protected_paths` no `sync.yaml`
@@ -108,6 +116,7 @@ _Documentar aqui problemas recorrentes deste fork._
 | Versão | Data | Mudança |
 |--------|------|---------|
 | 1 | 2026-06-04 | Geração inicial via `fork-sync manuals generate` |
+| 2 | 2026-06-11 | Paths protegidos realinhados com o fork atual e sync runner com preflight/checkpoint |
 
 ---
 
