@@ -238,7 +238,20 @@
 
 ---
 
-### Phase 8: Rebrand + fork-sync submodule ✅ DONE
+## Phase 8: Rebrand fork-sync submodule
+
+## Phase 9: Mission Guardian — Servidor 100% Auto-Guardado
+**Goal:** Mission Guardian daemon 24/7 que amostra 22 métricas a cada 60s em SQLite, auto-tune de cgroups, forecasting de disk fill, incident response playbooks, e agente DevOps/Redes "HoristicOps" treinando on-call.
+
+**Requirements:** MGR-01, MGR-02, MGR-03, MGR-04, MGR-05, MGR-06, MGR-07, MGR-08
+
+**Status:** PLANNED (2026-06-11)
+
+**Context:** Mission 4h srv1-monitor-mission identificou 8 gaps em monitoramento (gaps em tcp/fd/network, sem correlação temporal, sem agente de plantão, sem auto-balanceamento preditivo, disk fill sem forecasting, cleanup rc=124, logrotate quebrado). Tripla proteção commitada em `eaad0cc` (inviolable v2, 68 patterns, hysteresis, generic bucket). Esta phase evolui de reativo → proativo.
+
+**Research:** inline (researcher subagent 503; manual probes via execute_code)
+**Plans:** 5 (01=daemon core, 02=disk forecast + correlation, 03=auto-tune weights, 04=cleanup+logrotate, 05=HoristicOps agent)
+**Wave:** 1 = {01, 02, 03}, 2 = {04 ∥ 05}
 
 **Status:** ✅ COMPLETE (2026-06-05)
 
