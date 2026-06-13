@@ -23,10 +23,10 @@ status: complete
 - `inventory/hosts/atius-srv-1.yaml`, `atius-srv-2.yaml` e `atius-srv-3.yaml`
   já existem e devem continuar canônicos.
 - O vault tem histórico de `omni-srv-admin` como centro operacional, incluindo
-  fleet docs, remote manager, fleet-backup, Podman cutover e planejamento K3s.
-- O plano K3s/Portainer já existe, mas depende de decisões de inventário,
-  capacidade, secrets, backup e controle de mudanças que pertencem a um control
-  plane anterior.
+  fleet docs, remote manager, fleet-backup e Podman cutover.
+- Futuros milestones de container/orquestração dependem de decisões de
+  inventário, capacidade, secrets, backup e controle de mudanças que pertencem
+  a um control plane anterior.
 
 ## Official Research
 
@@ -116,7 +116,7 @@ Future Podman/K3s
   tokens or serials.
 - **Agent blast radius:** node agents must be minimal and human-gated for
   destructive updates.
-- **Premature K3s coupling:** M004 must define contracts, not install
+- **Premature orchestration coupling:** M004 must define contracts, not install
   Kubernetes.
 
 ## Conclusion
@@ -124,5 +124,5 @@ Future Podman/K3s
 M004 should ship the control plane contract first. The minimum valuable output is
 a clear server/node model, schema/migration plan, PgBouncer rule, heartbeat,
 program registry, version/update plan flow, license handling rule and audit
-contract. M005 K3s can then use this foundation rather than duplicating fleet
-state.
+contract. Future container/orchestration milestones can then use this foundation
+rather than duplicating fleet state.

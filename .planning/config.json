@@ -46,15 +46,6 @@
       "phases": ["12"],
       "goal": "base operacional multi-host com install server/node, inventario, PostgreSQL central via PgBouncer, registry, versoes, licencas, auditoria e contrato futuro com Podman/K3s",
       "depends_on": "M003"
-    },
-    {
-      "id": "M005",
-      "name": "K3s HA Cluster + Portainer",
-      "status": "planned",
-      "phase": "13",
-      "phases": ["13"],
-      "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
-      "depends_on": "M004"
     }
   ],
   "_created": "2026-05-06",

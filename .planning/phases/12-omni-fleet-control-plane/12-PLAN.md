@@ -62,7 +62,7 @@ M004 Fleet Control Plane
     - program/version reporter
     - approved update executor
 
-M005 K3s/Portainer
+Future Podman/K3s integration
   - consumes M004 inventory/state/audit contracts
 ```
 
@@ -78,13 +78,11 @@ M005 K3s/Portainer
 - PgBouncer is mandatory for node/client DB access.
 - Inventory remains source-of-truth; DB stores operational state/projections.
 - Destructive update execution must require an approved update plan.
-- K3s/Podman work stays deferred to M005+.
+- K3s/Podman work stays deferred to a separate milestone/branch.
 
 ## Acceptance
 
 - `FCP-01..FCP-10` exist in `.planning/REQUIREMENTS.md`.
-- ROADMAP shows `M004 / Phase 12` as Fleet Control Plane and `M005 / Phase 13`
-  as K3s HA Cluster + Portainer.
+- ROADMAP shows `M004 / Phase 12` as Fleet Control Plane.
 - Phase artifacts exist under `.planning/phases/12-omni-fleet-control-plane/`.
-- K3s artifacts are renumbered under `.planning/phases/13-k3s-ha-portainer-oci/`.
-- STATE/config point to M004 Phase 12 as active and M005 Phase 13 as planned.
+- STATE/config point to M004 Phase 12 as active.

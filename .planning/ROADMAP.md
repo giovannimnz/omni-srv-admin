@@ -263,52 +263,11 @@
 
 ---
 
-## M005: K3s HA Cluster + Portainer
-
-**Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
-
-**Status:** PLANNED (2026-06-13)
-
-**Depends on:** M004 concluído, SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
-
-**Why:** Evoluir de gestão por Docker/Podman locais para Kubernetes HA leve, sem expor API/etcd/Portainer publicamente e usando a base operacional criada no Fleet Control Plane.
-
-**Preservation:** O plano original foi preservado no commit `7ce6d4b` na branch `codex/k3s-portainer-oci-plan` antes da renumeração.
-
-**Phases:** 13
-
----
-
-### Phase 13: K3s HA + Portainer Milestone Plan ✅ PLANNED
-
-**Goal:** Planejar bootstrap K3s HA com embedded etcd, Portainer CE via Helm, Cloudflare Tunnel para `portainer.atius.com.br`, e gates de backup/rollback.
-
-**Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, PRT-01, PRT-02, CFL-01, SEC-01
-
-**Status:** PLANNED (2026-06-13)
-
-**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao futuro upgrade do SRV-1 para 24.04, aos riscos locais de disco/GDrive/portas e ao novo pré-requisito M004.
-
-**Plans:** 1
-- [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (ready, human-gated)
-
-**Success Criteria:**
-1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/13-k3s-ha-portainer-oci/`
-2. Plano exige SRV-1 em Ubuntu 24.04 antes de instalação real
-3. Plano não abre 6443/2379-2380/8472/10250 para internet pública
-4. Plano expõe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
-5. Plano consome o inventário/contratos definidos no M004 quando for executado
-
-**Risk:** HIGH — rede privada/WireGuard precisa estar estável, SRV-3 tem histórico de disco quase cheio, e Portainer/Apache atuais não podem ser quebrados.
-
----
-
-## M004-M005 Phase Summary
+## M004 Phase Summary
 
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
 | M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ PLANNED | MEDIUM |
-| M005 | 13 | K3s HA + Portainer Milestone Plan | Context/research/runbook K3s | ✅ PLANNED | HIGH |
 
 ---
 

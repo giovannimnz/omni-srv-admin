@@ -99,24 +99,6 @@
 - [ ] **FCP-09**: Ações relevantes devem gerar auditoria/logs com ator, host, ação, alvo, resultado e timestamp.
 - [ ] **FCP-10**: O design deve expor contrato futuro para Podman/K3s consumir inventário, status, programs, versions e audit events sem implementar a orquestração nesta phase.
 
-### K3s HA Cluster
-
-- [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
-- [ ] **K3S-02**: Embedded etcd funcional com quorum 2/3 e snapshots configurados.
-- [ ] **K3S-03**: K3s usa apenas rede privada `10.1.1.0/24` para API, etcd, kubelet e Flannel.
-- [ ] **K3S-04**: SRV-1 atualizado para Ubuntu 24.04 antes da instalacao real do cluster.
-- [ ] **K3S-05**: Traefik e ServiceLB padrao do K3s desabilitados no v1 para evitar conflito com Apache/portas atuais.
-
-### Portainer on Kubernetes
-
-- [ ] **PRT-01**: Portainer CE LTS instalado no namespace `portainer` via Helm, com persistencia e `nodeSelector` adequado ao storage local.
-- [ ] **PRT-02**: Portainer do cluster acessivel em `https://portainer.atius.com.br` sem remover o Portainer antigo em `docker.atius.com.br`.
-
-### Cloudflare + Security
-
-- [ ] **CFL-01**: Cloudflare Tunnel remoto publica `portainer.atius.com.br` via replicas `cloudflared` no cluster, token em Kubernetes Secret e fora do git.
-- [ ] **SEC-01**: OCI NSG/Security List e firewall local bloqueiam acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer.
-
 ## Out of Scope
 
 | Feature | Reason |
@@ -142,16 +124,13 @@
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
 | FCP-01 → FCP-10 | Phase 12 | Planned |
-| K3S-01 → K3S-05 | Phase 13 | Planned |
-| PRT-01 → PRT-02 | Phase 13 | Planned |
-| CFL-01, SEC-01 | Phase 13 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 19 total
-- Mapped to phases: 58
+- v3 requirements: 10 total
+- Mapped to phases: 49
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after M004 Fleet Control Plane and M005 K3s ordering*
+*Last updated: 2026-06-13 after M004 Fleet Control Plane planning*

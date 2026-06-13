@@ -12,18 +12,17 @@ status: locked
 ## Objective
 
 Planejar a fundação do Omni Fleet Control Plane no repo
-`/home/ubuntu/GitHub/omni-srv-admin`, antes do milestone K3s/Portainer. Esta
-phase cria a base operacional para administrar `ATIUS-SRV-1`, `ATIUS-SRV-2` e
-`ATIUS-SRV-3`: inventário, instalação `server`/`node`, PostgreSQL central via
-PgBouncer, heartbeat, registry de programas, controle de versões, licenças,
-auditoria e contrato futuro para Podman/K3s.
+`/home/ubuntu/GitHub/omni-srv-admin`. Esta phase cria a base operacional para
+administrar `ATIUS-SRV-1`, `ATIUS-SRV-2` e `ATIUS-SRV-3`: inventário,
+instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat,
+registry de programas, controle de versões, licenças, auditoria e contrato
+futuro para Podman/K3s.
 
 ## Locked Decisions
 
-### D-01: M004 vem antes de K3s
+### D-01: M004 define a base operacional
 
-**Decisão:** `Omni Fleet Control Plane` é `M004 / Phase 12`. `K3s HA Cluster +
-Portainer` vira `M005 / Phase 13`.
+**Decisão:** `Omni Fleet Control Plane` é `M004 / Phase 12`.
 
 **Rationale:** O Fleet Control Plane fornece inventário, estado, auditoria,
 licenças e update plans. K3s/Podman devem consumir essa base em vez de criar uma
@@ -33,9 +32,6 @@ segunda fonte de verdade.
 
 **Decisão:** A branch recomendada e usada para esta reorganização é
 `codex/omni-fleet-control-plane-m004`.
-
-**Preservação:** O plano K3s original foi preservado no commit `7ce6d4b` na
-branch `codex/k3s-portainer-oci-plan` antes da renumeração.
 
 ### D-03: Repo canônico
 
@@ -81,11 +77,11 @@ vault. O banco pode guardar apenas `secret_ref` ou metadata não sensível.
 alvo, resultado, timestamp e metadata mínima. Update plans devem ser gerados e
 aprovados antes de execução.
 
-### D-10: K3s/Podman ficam como integração futura
+### D-10: Podman/K3s ficam como integração futura
 
 **Decisão:** M004 define contracts para Podman/K3s consumirem inventário,
 status, programs, versions e audit events. Instalar K3s, migrar workloads ou
-trocar Portainer é escopo do M005+.
+trocar Portainer é escopo de outro milestone/branch.
 
 ## Canonical References
 
@@ -103,11 +99,9 @@ trocar Portainer é escopo do M005+.
   `https://www.postgresql.org/docs/current/app-pgdump.html`
 - PgBouncer docs: `https://www.pgbouncer.org/config.html`
 - Vault: `60-LOGS/64-Worklogs-Agrupados/2026-06-06-omni-srv-admin-fleet-docs-remote-manager.md`
-- Vault: `60-LOGS/2026-06-13-k3s-ha-portainer-oci-plan.md`
 
 ## Deferred Ideas
 
-- Instalação real de K3s HA e Portainer em `portainer.atius.com.br`.
 - Migração de workloads Docker/Podman para K3s.
 - UI web/dashboard para o control plane.
 - Compra/renovação automatizada de licenças.

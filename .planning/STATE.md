@@ -1,13 +1,13 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M004 Fleet Control Plane and M005 K3s ordering
+**Last updated:** 2026-06-13 after M004 Fleet Control Plane planning
 
 ## Project Reference
 
 See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane, with M005 K3s HA Cluster + Portainer queued after the fleet foundation
+**Current focus:** M004 Omni Fleet Control Plane
 
 ## Milestones
 
@@ -17,7 +17,6 @@ See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
 | M004 | Omni Fleet Control Plane (Phase 12) | Active |
-| M005 | K3s HA Cluster + Portainer (Phase 13) | Planned |
 
 ## M001 Completion
 
@@ -57,22 +56,11 @@ See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
 | PLAN | `12-01-PLAN.md` para Fleet Control Plane Foundation | ✅ |
 | Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault | Open |
 
-## M004-M005 Phase Breakdown
+## M004 Phase Breakdown
 
 | Milestone | Phase | Descrição | Status |
 |---|---:|---|---|
 | M004 | 12 | Fleet Control Plane Foundation | Planned |
-| M005 | 13 | K3s HA + Portainer Milestone Plan | Planned |
-
-## M005 Preservation Summary
-
-| Item | Descrição | Status |
-|---|---|---|
-| Preserved branch | `codex/k3s-portainer-oci-plan` | ✅ |
-| Preserved commit | `7ce6d4b` (`docs: plan k3s ha portainer milestone`) | ✅ |
-| Renumbered phase | `.planning/phases/13-k3s-ha-portainer-oci/` | ✅ |
-| Portainer target | `portainer.atius.com.br` | ✅ |
-| Blocker | Não instalar enquanto SRV-1 não estiver em Ubuntu 24.04 e SRV-3 sem folga de disco | Open |
 
 ## Backup GDrive
 
