@@ -27,6 +27,9 @@ requirements_addressed:
   - PRT-02
   - CFL-01
   - SEC-01
+  - OBS-01
+  - OBS-02
+  - OBS-03
 ---
 
 # Phase 13 — Master Plan
@@ -34,8 +37,9 @@ requirements_addressed:
 ## Goal
 
 Montar, em fase posterior de execucao, um cluster K3s HA nos tres servidores
-OCI ARM64 e publicar o Portainer do cluster em `portainer.atius.com.br`, sem
-quebrar o Portainer antigo, Apache, Docker/Podman ou os servicos atuais.
+OCI ARM64, publicar o Portainer do cluster em `portainer.atius.com.br`, e
+adicionar Prometheus/Grafana com gatilhos para Omni Fleet, sem quebrar o
+Portainer antigo, Apache, Docker/Podman ou os servicos atuais.
 
 ## Scope
 
@@ -66,6 +70,7 @@ K3s HA:
 |---|---|---|---|
 | 13-01 | K3s HA bootstrap + Portainer exposure | blocked before live mutation | Single executable runbook with human checkpoints |
 | 13-02 | PTP fallback mesh design | planned | Full-mesh fallback before production-ready |
+| 13-03 | Observability + Fleet control loop | planned | Prometheus/Grafana after bootstrap; Alertmanager signals Omni Fleet |
 
 ## Hard Gates
 
@@ -77,7 +82,8 @@ K3s HA:
 - OCI firewall must be audited per OCI account; host firewall must restrict K3s
   ports to `wg0` private node traffic only.
 - No public exposure of 6443, 2379-2380, 8472, 10250, Portainer NodePort.
-- Cloudflare Tunnel token must never be committed.
+- Cloudflare Tunnel token must never be committed. Token/DNS is a publication
+  gate for Portainer/Grafana, not a K3s bootstrap gate.
 - SRV-1 swap must be disabled and persisted off before K3s starts.
 - PTP fallback is not required for the first blocked bootstrap attempt, but is
   required before declaring the cluster production-ready.
@@ -98,7 +104,13 @@ The 3 servers are in different OCI accounts, so OCI gates are per-account.
 - `kubectl -n kube-system get pods` all Ready.
 - `kubectl -n portainer get deploy,svc,pvc` healthy.
 - `kubectl -n cloudflared get deploy,pods` healthy with >=2 ready replicas.
+- `kubectl -n monitoring get pods,svc,pvc` healthy for Prometheus, Grafana,
+  Alertmanager, node-exporter and kube-state-metrics.
 - `https://portainer.atius.com.br` opens Portainer initial setup/login through Cloudflare.
+- Grafana is private by default and public only through Cloudflare Access if
+  `grafana.atius.com.br` is enabled.
+- Prometheus/Alertmanager remain internal `ClusterIP`; alerts create Omni Fleet
+  events/plans instead of executing host commands directly.
 - Legacy `docker.atius.com.br` state is documented and not used as an M005 dependency.
 - PTP fallback design has a tested failover/rollback plan or is explicitly
   waived before production-ready.

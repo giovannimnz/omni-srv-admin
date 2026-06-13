@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M005 — K3s HA Cluster + Portainer
-**Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br; execução live bloqueada até snapshots/OCI/Cloudflare/aprovação
+**Active Milestone:** M005 — K3s HA Cluster + Portainer + Observability
+**Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br e observability Prometheus/Grafana; execução live bloqueada até snapshots/OCI/firewall/aprovação, e publicação UI bloqueada até Cloudflare token/DNS/Access
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
@@ -235,9 +235,9 @@
 
 ---
 
-## M005: K3s HA Cluster + Portainer
+## M005: K3s HA Cluster + Portainer + Observability
 
-**Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+**Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br` e observability Prometheus/Grafana integrada ao Omni Fleet.
 
 **Status:** PREFLIGHT PASSED; LIVE INSTALL GATED (2026-06-13)
 
@@ -251,19 +251,20 @@
 
 ---
 
-### Phase 13: K3s HA + Portainer Milestone Plan
+### Phase 13: K3s HA + Portainer + Observability Milestone Plan
 
-**Goal:** Planejar bootstrap K3s HA com embedded etcd, preparar templates seguros, executar preflight read-only, aplicar limpeza segura de logs, e manter Portainer CE via Helm/Cloudflare Tunnel gated para `portainer.atius.com.br`.
+**Goal:** Planejar bootstrap K3s HA com embedded etcd, preparar templates seguros, executar preflight read-only, aplicar limpeza segura de logs, manter Portainer CE via Helm/Cloudflare Tunnel gated para `portainer.atius.com.br`, e adicionar observability Prometheus/Grafana com gatilhos para Omni Fleet.
 
-**Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, K3S-06, PRT-01, PRT-02, CFL-01, SEC-01
+**Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, K3S-06, PRT-01, PRT-02, CFL-01, SEC-01, OBS-01, OBS-02, OBS-03
 
 **Status:** EXECUTION CHECKPOINT BLOCKED BEFORE LIVE MUTATION (2026-06-13)
 
 **Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao fato de cada servidor estar em uma conta OCI diferente, ao legado `docker.atius.com.br`, aos 3 nos ja validados em Ubuntu 24.04.4, aos riscos locais de disco/GDrive/portas, ao pré-requisito M004 em branch separada e ao novo subplano de fallback PTP.
 
-**Plans:** 2
+**Plans:** 3
 - [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (blocked before live mutation, human-gated)
 - [ ] 13-02-PLAN.md — PTP fallback mesh design for SRV-1/SRV-2/SRV-3
+- [ ] 13-03-PLAN.md — Prometheus/Grafana observability + Omni Fleet control loop
 - [x] 13-PREFLIGHT-2026-06-13.md — preflight read-only + log cleanup safe changes
 - [x] 13-EXECUTION-CHECKPOINT-2026-06-13.md — live read-only checkpoint + gates
 
@@ -273,6 +274,7 @@
 - SRV-3: Ubuntu 24.04.4 LTS, aarch64, 137G free, private routes/ping ok.
 - Docker JSON log rotation installed on SRV-2 and SRV-3 using the versioned config in `modules/k3s-ha-portainer-oci/logrotate/docker-json-containers`.
 - K3s config templates, Portainer Helm values and Cloudflare deployment template are prepared without secrets.
+- kube-prometheus-stack values template is prepared without secrets; Grafana admin credentials remain shell/Kubernetes Secret only.
 
 **Success Criteria:**
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/13-k3s-ha-portainer-oci/`
@@ -282,8 +284,10 @@
 5. Plano consome o inventário/contratos definidos no M004 quando for executado
 6. Live install remains blocked until OCI snapshots/firewall per OCI account and Cloudflare Tunnel token are confirmed
 7. Fallback PTP full-mesh documentado antes de declarar production-ready
+8. Observability instalada sem expor Prometheus/Alertmanager publicamente
+9. Alertmanager aciona Omni Fleet via eventos/planos auditados, não comandos host diretos
 
-**Risk:** HIGH — rede privada/WireGuard precisa estar estável, fallback PTP ainda precisa desenho, e Portainer/Apache atuais não podem ser quebrados.
+**Risk:** HIGH — rede privada/WireGuard precisa estar estável, fallback PTP ainda precisa desenho, Portainer/Apache atuais não podem ser quebrados, e Prometheus/Grafana precisam limite de disco/RAM para não virar nova fonte de carga.
 
 ---
 
@@ -291,7 +295,7 @@
 
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
-| M005 | 13 | K3s HA + Portainer Milestone Plan | Execution checkpoint + executable templates | BLOCKED BEFORE LIVE MUTATION | HIGH |
+| M005 | 13 | K3s HA + Portainer + Observability Milestone Plan | Execution checkpoint + executable templates | BLOCKED BEFORE LIVE MUTATION | HIGH |
 
 ---
 

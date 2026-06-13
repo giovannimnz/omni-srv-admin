@@ -86,6 +86,12 @@ Findings:
 - etcd em HA precisa de numero impar; em 3 servidores, quorum e 2.
 - Server nodes rodam Kubernetes API/control plane e tambem hospedam o datastore.
 - K3s suporta ARM64.
+- Em embedded etcd, os valores criticos de rede/componentes precisam ser iguais
+  em todos os server nodes; para M005 os templates fixam explicitamente
+  `cluster-cidr=10.42.0.0/16`, `service-cidr=10.43.0.0/16`,
+  `cluster-dns=10.43.0.10`, `cluster-domain=cluster.local`,
+  `flannel-backend=vxlan`, `disable=traefik,servicelb` e
+  `secrets-encryption=true`.
 - Portas internas necessarias:
   - TCP 6443: K3s supervisor / Kubernetes API, acessivel pelos nos.
   - TCP 2379-2380: etcd entre server nodes.
@@ -102,8 +108,8 @@ Implications:
 - Instalar via config file em cada servidor para evitar comandos gigantes e
   facilitar auditoria/rollback.
 - Usar `--node-ip` e `--advertise-address` com `10.1.1.x`.
-- Configurar `--tls-san` com IP privado e nome interno, nao com hostname publico
-  do Portainer.
+- Configurar `--tls-san` com os IPs privados e nomes internos dos 3 server
+  nodes, nao com hostname publico do Portainer.
 
 ### Portainer CE on Kubernetes
 
@@ -128,7 +134,11 @@ Implications:
 
 - No v1, usar Helm LTS, namespace `portainer`, default StorageClass local-path,
   `nodeSelector.kubernetes.io/hostname=atius-srv-1`.
-- Nao usar NodePort/LoadBalancer para Portainer.
+- Nao usar NodePort/LoadBalancer para Portainer; usar `service.type=ClusterIP`.
+- Fixar explicitamente CE com `enterpriseEdition.enabled=false` e
+  `image.repository=portainer/portainer-ce`.
+- Configurar `trusted_origins.domains=portainer.atius.com.br` no chart para
+  alinhar o reverse proxy/tunnel ao dominio publico final.
 - Expor via Cloudflare Tunnel para o Service interno.
 
 ### Cloudflare Tunnel on Kubernetes
@@ -159,6 +169,36 @@ Implications:
   ou `http://portainer.portainer.svc.cluster.local:9000`, dependendo do TLS
   interno escolhido no Helm.
 - Cloudflare Access deve proteger a UI administrativa.
+
+### Observability: metrics-server vs Prometheus/Grafana
+
+Fontes:
+- https://docs.k3s.io/networking/networking-services#metrics-server
+- https://github.com/prometheus-community/helm-charts/tree/main/charts/kube-prometheus-stack
+- https://github.com/prometheus-operator/prometheus-operator
+
+Findings:
+
+- K3s empacota `metrics-server`, suficiente para metricas recentes usadas por
+  Kubernetes (`kubectl top`, autoscaling basico), mas nao substitui historico,
+  dashboards, alertas e correlacao operacional.
+- `kube-prometheus-stack` e o caminho padrao via Helm para Prometheus Operator,
+  Prometheus, Alertmanager, Grafana, node-exporter e kube-state-metrics.
+- Prometheus/Alertmanager sao sistemas de observacao e alerta; nao devem ser
+  usados como executor direto de comandos de host.
+- Em ambiente pequeno ARM64/OCI, Prometheus precisa limites de CPU/RAM,
+  retencao curta e PVC dimensionado para nao virar fonte de carga/disco.
+
+Implications:
+
+- Adicionar `13-03-PLAN.md` depois do bootstrap K3s/Portainer.
+- Instalar o stack no namespace `monitoring` com `ClusterIP`, sem
+  NodePort/LoadBalancer publico.
+- Grafana pode ser exposto por `grafana.atius.com.br` apenas via Cloudflare
+  Tunnel + Access.
+- Prometheus e Alertmanager permanecem internos.
+- Alertmanager deve criar eventos/planos no Omni Fleet; a execucao de acoes
+  passa por `DbOmniFleet`, `TbFleetCommands`, `TbUpdatePlans` e auditoria.
 
 ### OCI networking
 

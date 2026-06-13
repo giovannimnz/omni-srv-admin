@@ -109,6 +109,12 @@ in `codex/omni-fleet-control-plane-m004`.
 - [ ] **CFL-01**: Cloudflare Tunnel remoto publica `portainer.atius.com.br` via replicas `cloudflared` no cluster, token em Kubernetes Secret e fora do git.
 - [ ] **SEC-01**: Cada conta OCI dos 3 servidores bloqueia acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer; host firewall permite K3s apenas em `wg0`/`10.1.1.0/24`.
 
+### Observability + Fleet Control Loop
+
+- [ ] **OBS-01**: `kube-prometheus-stack` instalado no namespace `monitoring` com Prometheus, Alertmanager, Grafana, node-exporter e kube-state-metrics sem NodePort/LoadBalancer publico.
+- [ ] **OBS-02**: Grafana acessivel apenas por port-forward privado ou Cloudflare Tunnel + Access; Prometheus e Alertmanager permanecem internos.
+- [ ] **OBS-03**: Alertas geram eventos/planos para o Omni Fleet; nenhuma acao destrutiva ou restart de servico e executada diretamente por Prometheus/Alertmanager.
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -136,11 +142,12 @@ in `codex/omni-fleet-control-plane-m004`.
 | K3S-01 → K3S-06 | Phase 13 | Planned |
 | PRT-01 → PRT-02 | Phase 13 | Planned |
 | CFL-01, SEC-01 | Phase 13 | Planned |
+| OBS-01 → OBS-03 | Phase 13 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 10 total
-- Mapped to phases: 49
+- v3 requirements: 13 total
+- Mapped to phases: 52
 - Unmapped: 0 ✓
 
 ---

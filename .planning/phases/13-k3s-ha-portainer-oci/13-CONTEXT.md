@@ -156,6 +156,21 @@ dependencia em rede privada OCI comum.
 tenancy. Como os 3 servidores estao em contas diferentes, o plano tem que tratar
 OCI como underlay publico/independente e usar overlays para trafego privado.
 
+### D-14: Observability com Prometheus/Grafana e execucao pelo Omni Fleet
+
+**Decisao:** Adicionar `13-03-PLAN.md` para instalar `kube-prometheus-stack`
+depois do bootstrap K3s/Portainer. Grafana pode ser publicado por Cloudflare
+Tunnel + Access. Prometheus e Alertmanager permanecem internos.
+
+**Regra critica:** Prometheus e Alertmanager nao executam comandos nos hosts.
+Eles detectam e notificam. O Omni Fleet executa qualquer ajuste real usando
+`DbOmniFleet`, `TbUpdatePlans`, `TbFleetCommands`, politicas allowlist,
+auditoria e rollback.
+
+**Rationale:** O usuario quer monitoramento e controle de carga/processos. A
+separacao reduz risco: observability gera sinal; o Fleet aplica politica com
+contexto operacional e trilha de auditoria.
+
 ## Canonical References
 
 - `planejamento_cluster_k3s_portainer_oci.pdf` — blueprint fornecido pelo usuario.
@@ -173,6 +188,7 @@ OCI como underlay publico/independente e usar overlays para trafego privado.
   SRV-1 para 24.04.
 - `60-LOGS/2026-06-13-m005-oci-separate-accounts.md` no vault — registro da
   premissa de contas OCI separadas.
+- `13-03-PLAN.md` — observability e control loop Prometheus/Grafana -> Omni Fleet.
 
 ## Deferred Ideas
 
@@ -180,5 +196,6 @@ OCI como underlay publico/independente e usar overlays para trafego privado.
 - Traefik/Ingress oficial para apps publicas.
 - GitOps com Argo CD/Flux.
 - Fallback PTP full-mesh SRV-1/SRV-2/SRV-3 conforme `13-02-PLAN.md`.
+- Regras Prometheus/Alertmanager detalhadas e endpoint webhook do Omni Fleet.
 - Migrar apps existentes para K3s.
 - Limpar ou reaproveitar explicitamente o legado `docker.atius.com.br`.

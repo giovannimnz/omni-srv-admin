@@ -100,6 +100,21 @@ firewall OCI e auditoria de ingresso publico sao gates por conta. A rede privada
 do K3s continua sendo overlay criptografado (`wg0`, e PTP depois), nao rede OCI
 comum.
 
+### 9. Prometheus/Grafana e controle de processos
+
+**Pedido novo:** avaliar instalar Prometheus/Grafana e usar isso para controlar
+processos/carga como extensao do load balancer/controller do Omni.
+
+**Decisao:** adicionar `13-03-PLAN.md`. K3s ja traz `metrics-server`, mas ele
+serve para metricas recentes do Kubernetes, nao historico operacional completo.
+Prometheus/Grafana entram para historico, dashboards e alertas; Alertmanager
+envia sinais; Omni Fleet continua sendo o executor de politicas.
+
+**Limite de seguranca:** Prometheus/Alertmanager nao devem matar processos,
+reiniciar servicos, deletar arquivos ou alterar firewall diretamente. Qualquer
+acao real passa por M004: `DbOmniFleet`, `TbFleetCommands`, `TbUpdatePlans`,
+auditoria e allowlist.
+
 ## Decisoes finais
 
 - Branch: `codex/k3s-portainer-oci-plan`.
@@ -112,6 +127,8 @@ comum.
 - Backups: serializados; snapshot antes de qualquer instalacao.
 - Fallback PTP: subplano `13-02`, production-ready gate.
 - OCI: gates por conta OCI; sem NSG unico compartilhado.
+- Observability: subplano `13-03`, Prometheus/Grafana privados, Alertmanager
+  sinaliza Omni Fleet, sem execucao direta de comandos host.
 
 ## Deferred
 
@@ -120,3 +137,5 @@ comum.
 - GitOps.
 - Migracao de workloads.
 - Implementacao do fallback PTP apos desenho `13-02`.
+- Endpoint webhook e politicas detalhadas do Omni Fleet para alertas do
+  Alertmanager.
