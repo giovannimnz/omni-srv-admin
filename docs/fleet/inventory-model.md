@@ -22,7 +22,7 @@ access:
   vpn_ip: 10.1.1.1
 platform:
   provider: oracle-oci
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   arch: arm64
 status: active
 modules:

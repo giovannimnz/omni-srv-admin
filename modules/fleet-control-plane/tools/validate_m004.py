@@ -287,6 +287,36 @@ def _live_host_identity(host_id: str) -> ScenarioResult:
     return scenario
 
 
+def _live_repo_presence(host_id: str) -> ScenarioResult:
+    _, host = _load_host(host_id)
+    target = _nested(host, "access", "ssh")
+    if not target or target == "TBD":
+        return _blocked(f"M004-LIVE-REPO-{host_id}", f"{host_id} omni-srv-admin repo installed", "live")
+    remote = (
+        "set -eu; "
+        "repo=\"$HOME/GitHub/omni-srv-admin\"; "
+        "test -d \"$repo/.git\"; "
+        "cd \"$repo\"; "
+        "PYTHONPATH=cli python3 -m omni --help >/tmp/omni-m004-cli-smoke.out; "
+        "echo repo=$repo; "
+        "echo branch=$(git branch --show-current); "
+        "echo head=$(git rev-parse --short HEAD); "
+        "echo status_count=$(git status --porcelain | wc -l); "
+        "echo cli_smoke=PASS"
+    )
+    code, stdout, stderr, rendered = _ssh(target, remote, timeout=20)
+    evidence = stdout.splitlines() or [stderr]
+    result = _ok if code == 0 and any("cli_smoke=PASS" in line for line in evidence) else _fail
+    scenario = result(
+        f"M004-LIVE-REPO-{host_id}",
+        f"{host_id} omni-srv-admin repo installed and CLI works",
+        "live",
+        evidence,
+    )
+    scenario.commands = [rendered]
+    return scenario
+
+
 def _live_mesh_ping(source_id: str, target_id: str) -> ScenarioResult:
     _, source = _load_host(source_id)
     _, target = _load_host(target_id)
@@ -359,6 +389,34 @@ def _live_node_pgbouncer_path(node_id: str) -> ScenarioResult:
     return scenario
 
 
+def _live_fleet_db_query(host_id: str) -> ScenarioResult:
+    _, host = _load_host(host_id)
+    target = _nested(host, "access", "ssh")
+    if not target or target == "TBD":
+        return _blocked(f"M004-LIVE-DB-{host_id}", f"{host_id} queries omni_fleet through PgBouncer", "live")
+    remote = (
+        "set -eu; "
+        ". /etc/omni-srv-admin/fleet-db.env; "
+        "export PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGSSLMODE; "
+        "echo endpoint=${PGHOST}:${PGPORT}/${PGDATABASE}; "
+        "test \"${PGHOST}:${PGPORT}\" = \"10.1.1.1:6432\"; "
+        "psql -Atc \"select current_database() || chr(58) || current_user\"; "
+        "psql -Atc \"select 'hosts=' || count(*) from hosts union all select 'nodes=' || count(*) from nodes order by 1\""
+    )
+    code, stdout, stderr, rendered = _ssh(target, remote, timeout=20)
+    evidence = stdout.splitlines() or [stderr]
+    expected = {"endpoint=10.1.1.1:6432/omni_fleet", "omni_fleet:omni_fleet", "hosts=3", "nodes=3"}
+    result = _ok if code == 0 and expected.issubset(set(evidence)) else _fail
+    scenario = result(
+        f"M004-LIVE-DB-{host_id}",
+        f"{host_id} queries central omni_fleet DB through PgBouncer",
+        "live",
+        evidence,
+    )
+    scenario.commands = [rendered]
+    return scenario
+
+
 def _live_node_direct_postgres_blocked(node_id: str) -> ScenarioResult:
     _, node = _load_host(node_id)
     _, server = _load_host(SERVER_HOST)
@@ -390,11 +448,14 @@ def live_scenarios() -> list[ScenarioResult]:
     results: list[ScenarioResult] = []
     for host_id in TARGET_HOSTS:
         results.append(_live_host_identity(host_id))
+        results.append(_live_repo_presence(host_id))
     for source_id in TARGET_HOSTS:
         for target_id in TARGET_HOSTS:
             if source_id != target_id:
                 results.append(_live_mesh_ping(source_id, target_id))
     results.append(_live_pgbouncer_server())
+    for host_id in TARGET_HOSTS:
+        results.append(_live_fleet_db_query(host_id))
     for host_id in NODE_HOSTS:
         results.append(_live_node_pgbouncer_path(host_id))
         results.append(_live_node_direct_postgres_blocked(host_id))
@@ -424,7 +485,7 @@ def _summary(results: list[ScenarioResult]) -> dict[str, Any]:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--live", action="store_true", help="Run read-only SSH probes against SRV1/SRV2/SRV3.")
+    parser.add_argument("--live", action="store_true", help="Run SSH, repo, network and read-only DB probes against SRV1/SRV2/SRV3.")
     parser.add_argument("--json", action="store_true", help="Emit JSON report.")
     args = parser.parse_args()
 

@@ -2,18 +2,18 @@
 
 ## Scope
 
-M004 turns the existing fleet inventory into an explicit control-plane contract.
-It does not install K3s, Podman orchestration, PostgreSQL, PgBouncer or node
-agents on real hosts yet. Live installation remains blocked until the operator
-approves secret storage, first-server timing, and execution policy.
+M004 turns the existing fleet inventory into a live control-plane foundation.
+It does not install K3s or Podman orchestration. It does establish the shared
+`omni-srv-admin` repo on SRV1/SRV2/SRV3, central PostgreSQL database
+`omni_fleet` on SRV-1, and PgBouncer-only database access for clients/nodes.
 
 The target cluster names are:
 
 | Host | Initial role | Notes |
 |---|---|---|
-| `ATIUS-SRV-1` | control-plane server | Ubuntu 24.04.4 baseline confirmed locally on 2026-06-13; live install still gated |
-| `ATIUS-SRV-2` | node | Future managed node |
-| `ATIUS-SRV-3` | node | Future managed node |
+| `ATIUS-SRV-1` | control-plane server | Ubuntu 24.04.4; DB owner for `omni_fleet` |
+| `ATIUS-SRV-2` | node | Ubuntu 24.04.4; repo and PgBouncer DB path validated |
+| `ATIUS-SRV-3` | node | Ubuntu 24.04.4; repo and PgBouncer DB path validated |
 
 K3s and Portainer remain in M005/Phase 13. Portainer's planned public hostname
 is `portainer.atius.com.br`.
@@ -53,8 +53,9 @@ PYTHONPATH=cli python3 -m omni fleet install node --host atius-srv-2
 PYTHONPATH=cli python3 -m omni fleet install node --host atius-srv-3
 ```
 
-Current M004 commands are dry-run contract renderers. `--apply` is intentionally
-blocked in this branch.
+Current M004 install/update commands remain dry-run renderers. The live
+foundation was applied manually with backups and validation; generic `--apply`
+is still blocked until service-agent execution is implemented.
 
 Server responsibilities:
 
@@ -116,6 +117,11 @@ SRV-1 live enforcement:
 - PgBouncer listens on `127.0.0.1:6432` and `10.1.1.1:6432`.
 - PostgreSQL direct port `8745` remains local for server-side maintenance.
 - SRV-2/SRV-3 must connect to `10.1.1.1:6432`; direct `10.1.1.1:8745` is blocked.
+- Live M004 database is `omni_fleet` on SRV-1.
+- SRV-1/SRV-2/SRV-3 read `/etc/omni-srv-admin/fleet-db.env` and query
+  `omni_fleet` through PgBouncer.
+- PgBouncer auth currently remains compatible with existing services; stricter
+  auth is a follow-up hardening item, not a reason to bypass PgBouncer.
 
 ## Data Model
 

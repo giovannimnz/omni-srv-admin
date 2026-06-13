@@ -9,7 +9,7 @@ clara a ordem dos milestones e onde cada plano completo vive.
 
 | Milestone | Phase | Name | Canonical branch | Full artifacts | Status |
 |---|---:|---|---|---|---|
-| M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Contract validated; live PgBouncer node access passed |
+| M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Live implemented; repos and central DB validated |
 | M005 | 13 | K3s HA Cluster + Portainer | `codex/k3s-portainer-oci-plan` | `.planning/phases/13-k3s-ha-portainer-oci/` | Planned |
 
 ## Separation Rule
@@ -27,7 +27,7 @@ future contract consumed by Podman/K3s.
 
 M005 must not be executed before:
 
-- M004 contracts are accepted or explicitly waived.
+- M004 live implementation remains healthy: repos on SRV1/SRV2/SRV3, central DB on SRV-1, nodes through PgBouncer.
 - SRV-1 is upgraded to Ubuntu 24.04.
 - Preflight for `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` passes.
 - Portainer exposure target remains `portainer.atius.com.br`.

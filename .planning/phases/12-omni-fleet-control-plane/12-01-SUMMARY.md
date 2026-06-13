@@ -63,23 +63,22 @@ scripts/verify-m004-fleet-control-plane.sh
 PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live --json
 ```
 
-Expected result for the final command: blocked with an error because live
-execution is not enabled in M004.
-
 Latest validation result:
 
 - pytest: `12 passed`
 - offline harness: `6 PASS`, `0 FAIL`
-- live read-only harness: `20 PASS`, `0 BLOCKED`, `0 FAIL`
+- live harness: `26 PASS`, `0 BLOCKED`, `0 FAIL`
 
-SRV-2/SRV-3 reach PgBouncer on `10.1.1.1:6432`. Direct PostgreSQL access from
-SRV-2/SRV-3 to `10.1.1.1:8745` is blocked by `omni-pg-access-guard`.
+SRV-1/SRV-2/SRV-3 have `~/GitHub/omni-srv-admin`, query central DB
+`omni_fleet` through PgBouncer on `10.1.1.1:6432`, and direct PostgreSQL access
+from SRV-2/SRV-3 to `10.1.1.1:8745` is blocked by `omni-pg-access-guard`.
 
 ## Remaining Gates
 
-- Approve secret/license storage outside git, logs, `.planning` and vault.
-- SRV-1 baseline is confirmed locally as Ubuntu 24.04.4 LTS on aarch64; re-run
-  preflight immediately before live server install.
-- Decide CLI-only vs API + CLI for the first live implementation.
+- Keep `/etc/omni-srv-admin/fleet-db.env` outside git, logs, `.planning` and vault.
+- Move PgBouncer global auth from compatibility `trust` to stricter auth in a
+  separate hardening task after checking existing services.
+- Decide CLI-only vs API + CLI for the first service-agent implementation.
 - Approve update-plan policy before any node applies changes.
-- Run M005 only after these contracts are accepted or explicitly waived.
+- Run M005 only after the current IP/port baseline is consulted and a new
+  pre/post network snapshot is stored in the vault.
