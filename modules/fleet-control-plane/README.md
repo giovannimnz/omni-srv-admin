@@ -20,6 +20,7 @@ shape and safe CLI surface.
 | `tests/test_m004_contract.py` | Pytest coverage for the M004 contract |
 | `scripts/omni-pg-access-guard.sh` | SRV-1 firewall guard: PgBouncer allowed, direct PostgreSQL blocked |
 | `scripts/install-omni-fleet-agent.sh` | User-systemd installer for the local node agent |
+| `scripts/configure-fleet-direct-peers.sh` | Public-IP SSH fallback aliases and peer map; no public DB exposure |
 | `systemd/omni-pg-access-guard.service` | Boot-time service for the firewall guard |
 | `systemd/omni-fleet-agent.service` | Persistent local node agent service |
 
@@ -64,6 +65,9 @@ SRV-2 CLI
 
 There is no direct SSH apply path in this model.
 
+Direct fallback is SSH/probe only. PgBouncer remains private on
+`10.1.1.1:6432`; do not expose `DbOmniFleet` on public IP.
+
 Initial allowlist table: `TbFleetCommands`.
 
 - `omni.noop`: enabled for validation.
@@ -78,6 +82,14 @@ Install local user agent after migration `0003` is applied:
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-1
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-2
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-3
+```
+
+Configure direct public-IP SSH fallback aliases:
+
+```bash
+modules/fleet-control-plane/scripts/configure-fleet-direct-peers.sh
+ssh atius-srv-2-direct hostname
+ssh atius-srv-3-direct hostname
 ```
 
 ## Live M004 State

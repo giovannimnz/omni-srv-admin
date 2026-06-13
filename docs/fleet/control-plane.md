@@ -329,6 +329,37 @@ The installer writes `/etc/omni-srv-admin/fleet-agent.env`, copies
 and enables the service. This should not drop RDP/XRDP; it only starts a user
 service loop.
 
+## Direct IP Fallback
+
+WireGuard remains the primary network. If the VPN is down, the safe fallback is
+direct public-IP SSH/probe, not public database access.
+
+```bash
+modules/fleet-control-plane/scripts/configure-fleet-direct-peers.sh
+ssh atius-srv-1-direct hostname
+ssh atius-srv-2-direct hostname
+ssh atius-srv-3-direct hostname
+```
+
+The script writes:
+
+- `/etc/omni-srv-admin/fleet-peers.json`
+- a backed-up `~/.ssh/config` block with `*-vpn` and `*-direct` aliases
+
+`fleet-peers.json` explicitly records:
+
+```json
+{
+  "database": {
+    "primary": "10.1.1.1:6432",
+    "public_fallback_enabled": false
+  }
+}
+```
+
+Rationale: opening PgBouncer/PostgreSQL on public IP would increase blast
+radius. Direct public IP is for emergency SSH/probe and future bootstrap only.
+
 ## License And Secret Policy
 
 License records store metadata only:
