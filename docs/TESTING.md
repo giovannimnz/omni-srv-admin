@@ -103,7 +103,6 @@ PATTERNS=(
   "-p tcp --dport 5000"
   "-p tcp --dport 5050"
   "-p tcp --dport 8000"
-  "-p tcp --dport 8745"
   "-p tcp --dport 8080"
   "-p tcp --dport 27813"
   "-p tcp --dport 28497"
@@ -120,6 +119,10 @@ for p in "${PATTERNS[@]}"; do
   fi
 done
 ```
+
+PostgreSQL direct access must not be restored as a broad `ACCEPT` rule.
+SRV-2/SRV-3 database clients must use PgBouncer on `10.1.1.1:6432`; direct
+PostgreSQL on `10.1.1.1:8745` is blocked by the `OMNI-PG-ACCESS` chain.
 
 All should report `FOUND`. Missing entries indicate a port that would not be
 opened after `setup.sh` runs.
@@ -279,8 +282,8 @@ After running `setup.sh` Stage 1 and rebooting:
 # Verify swap is active
 swapon --show
 
-# Verify iptables-persistent loaded the saved rules
-sudo iptables -L INPUT -n | grep -E "3389|3399|80|443|8745"
+# Verify iptables-persistent loaded the saved rules and PgBouncer guard
+sudo iptables -L INPUT -n | grep -E "3389|3399|80|443|6432|8745|OMNI-PG-ACCESS"
 
 # Verify netfilter-persistent service is enabled
 systemctl is-enabled netfilter-persistent
