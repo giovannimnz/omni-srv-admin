@@ -86,12 +86,13 @@ aprovados antes de execução.
 status, programs, versions e audit events. Instalar K3s, migrar workloads ou
 trocar Portainer é escopo de outro milestone/branch.
 
-### D-11: `omni_fleet` é o DB do `omni-srv-admin`
+### D-11: `DbOmniFleet` é o DB do `omni-srv-admin`
 
-**Decisão:** Não criar banco paralelo para `omni-srv-admin`. O banco live
-`omni_fleet` continua com esse nome por compatibilidade, mas passa a ser o DB
-canônico do `omni-srv-admin` para runtime state, ops scopes, parâmetros,
-configs e slash-command registry.
+**Decisão:** Não criar banco paralelo para `omni-srv-admin`. O banco live é
+`DbOmniFleet` e passa a ser o DB canônico do `omni-srv-admin` para runtime
+state, ops scopes, parâmetros, configs e slash-command registry. As tabelas
+usam prefixo `Tb` com CamelCase quoted, por exemplo `TbHosts`,
+`TbUpdatePlans` e `TbSlashCommands`.
 
 ### D-12: Ops por servidor com config no DB
 
@@ -104,7 +105,7 @@ Parâmetros e configs mutáveis devem ser resolvidos do PostgreSQL via PgBouncer
 **Decisão:** Slash commands agent-facing devem ser registrados no DB e seguir a
 convenção CLI-Anything/`clianything`. O alvo futuro para cobrir operações do
 repo é `cli-anything-omni-srv-admin`; comandos ad hoc são temporários até
-entrarem em `slash_commands`.
+entrarem em `TbSlashCommands`.
 
 ## Canonical References
 

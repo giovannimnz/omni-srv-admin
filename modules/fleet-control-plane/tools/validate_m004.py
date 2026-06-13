@@ -22,6 +22,20 @@ from omni import fleet as fleet_module  # noqa: E402
 TARGET_HOSTS = ("atius-srv-1", "atius-srv-2", "atius-srv-3")
 SERVER_HOST = "atius-srv-1"
 NODE_HOSTS = ("atius-srv-2", "atius-srv-3")
+FLEET_DATABASE = "DbOmniFleet"
+FLEET_TABLES = (
+    "TbHosts",
+    "TbNodes",
+    "TbPrograms",
+    "TbVersions",
+    "TbUpdatePlans",
+    "TbLicenses",
+    "TbAuditEvents",
+    "TbOpsScopes",
+    "TbConfigItems",
+    "TbSlashCommands",
+    "TbSlashCommandBindings",
+)
 
 
 @dataclass
@@ -186,26 +200,16 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
     config = fleet_module._simple_yaml(
         (REPO / "modules/fleet-control-plane/configs/control-plane.example.yaml").read_text()
     )
-    required_tables = (
-        "hosts",
-        "nodes",
-        "programs",
-        "versions",
-        "update_plans",
-        "licenses",
-        "audit_events",
-        "ops_scopes",
-        "config_items",
-        "slash_commands",
-        "slash_command_bindings",
-    )
-    missing_tables = [table for table in required_tables if f"CREATE TABLE IF NOT EXISTS {table}" not in schema]
+    missing_tables = [
+        table for table in FLEET_TABLES if f'CREATE TABLE IF NOT EXISTS "{table}"' not in schema
+    ]
     database = config.get("database", {}) if isinstance(config.get("database"), dict) else {}
     pgbouncer = config.get("pgbouncer", {}) if isinstance(config.get("pgbouncer"), dict) else {}
     direct_access = database.get("direct_access", {}) if isinstance(database.get("direct_access"), dict) else {}
     denied = direct_access.get("denied_for", [])
     evidence = [
-        f"tables={','.join(required_tables)}",
+        f"database={database.get('database')}",
+        f"tables={','.join(FLEET_TABLES)}",
         f"pgbouncer.required_for_clients={pgbouncer.get('required_for_clients')}",
         f"pgbouncer.listen_host={pgbouncer.get('listen_host')}",
         f"pgbouncer.listen_port={pgbouncer.get('listen_port')}",
@@ -223,7 +227,9 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
         return _fail("M004-OFF-04", "direct PostgreSQL access denied for nodes/clients", "offline", evidence)
     if '"config_source":"database"' not in schema or "provider TEXT NOT NULL DEFAULT 'cli-anything'" not in schema:
         return _fail("M004-OFF-04", "ops configs and slash commands must be database-backed", "offline", evidence)
-    licenses_block = schema.lower().split("create table if not exists licenses", 1)[1].split(");", 1)[0]
+    if database.get("database") != FLEET_DATABASE:
+        return _fail("M004-OFF-04", "database name uses Db prefix and CamelCase", "offline", evidence)
+    licenses_block = schema.split('CREATE TABLE IF NOT EXISTS "TbLicenses"', 1)[1].split(");", 1)[0]
     license_columns = {
         line.strip().split(" ", 1)[0]
         for line in licenses_block.splitlines()
@@ -412,7 +418,7 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
     _, host = _load_host(host_id)
     target = _nested(host, "access", "ssh")
     if not target or target == "TBD":
-        return _blocked(f"M004-LIVE-DB-{host_id}", f"{host_id} queries omni_fleet through PgBouncer", "live")
+        return _blocked(f"M004-LIVE-DB-{host_id}", f"{host_id} queries {FLEET_DATABASE} through PgBouncer", "live")
     remote = (
         "set -eu; "
         ". /etc/omni-srv-admin/fleet-db.env; "
@@ -420,25 +426,25 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         "echo endpoint=${PGHOST}:${PGPORT}/${PGDATABASE}; "
         "test \"${PGHOST}:${PGPORT}\" = \"10.1.1.1:6432\"; "
         "psql -Atc \"select current_database() || chr(58) || current_user\"; "
-        "psql -Atc \"select 'hosts=' || count(*) from hosts union all select 'nodes=' || count(*) from nodes order by 1\"; "
-        "psql -Atc \"select 'ops_scopes=' || count(*) from ops_scopes union all select 'config_items=' || count(*) from config_items union all select 'slash_commands=' || count(*) from slash_commands union all select 'slash_command_bindings=' || count(*) from slash_command_bindings order by 1\""
+        "psql -Atc \"select 'TbHosts=' || count(*) from \\\"TbHosts\\\" union all select 'TbNodes=' || count(*) from \\\"TbNodes\\\" order by 1\"; "
+        "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" order by 1\""
     )
     code, stdout, stderr, rendered = _ssh(target, remote, timeout=20)
     evidence = stdout.splitlines() or [stderr]
     expected = {
-        "endpoint=10.1.1.1:6432/omni_fleet",
-        "omni_fleet:omni_fleet",
-        "hosts=3",
-        "nodes=3",
-        "ops_scopes=3",
-        "config_items=1",
-        "slash_commands=6",
-        "slash_command_bindings=18",
+        f"endpoint=10.1.1.1:6432/{FLEET_DATABASE}",
+        f"{FLEET_DATABASE}:omni_fleet",
+        "TbHosts=3",
+        "TbNodes=3",
+        "TbOpsScopes=3",
+        "TbConfigItems=1",
+        "TbSlashCommands=6",
+        "TbSlashCommandBindings=18",
     }
     result = _ok if code == 0 and expected.issubset(set(evidence)) else _fail
     scenario = result(
         f"M004-LIVE-DB-{host_id}",
-        f"{host_id} queries central omni_fleet DB through PgBouncer",
+        f"{host_id} queries central {FLEET_DATABASE} DB through PgBouncer",
         "live",
         evidence,
     )

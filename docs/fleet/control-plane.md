@@ -5,15 +5,15 @@
 M004 turns the existing fleet inventory into a live control-plane foundation.
 It does not install K3s or Podman orchestration. It does establish the shared
 `omni-srv-admin` repo on SRV1/SRV2/SRV3, central PostgreSQL database
-`omni_fleet` on SRV-1, and PgBouncer-only database access for clients/nodes.
-`omni_fleet` is the PostgreSQL database for `omni-srv-admin`; the name remains
-for compatibility, while ownership is broader than fleet inventory.
+`DbOmniFleet` on SRV-1, and PgBouncer-only database access for clients/nodes.
+`DbOmniFleet` is the PostgreSQL database for `omni-srv-admin`; tables use
+quoted `Tb...` identifiers such as `TbHosts` and `TbUpdatePlans`.
 
 The target cluster names are:
 
 | Host | Initial role | Notes |
 |---|---|---|
-| `ATIUS-SRV-1` | control-plane server | Ubuntu 24.04.4; DB owner for `omni_fleet` |
+| `ATIUS-SRV-1` | control-plane server | Ubuntu 24.04.4; DB owner for `DbOmniFleet` |
 | `ATIUS-SRV-2` | node | Ubuntu 24.04.4; repo and PgBouncer DB path validated |
 | `ATIUS-SRV-3` | node | Ubuntu 24.04.4; repo and PgBouncer DB path validated |
 
@@ -103,8 +103,8 @@ Migration and backup contract:
 
 ```bash
 # Example future runbook commands; not executed by M004.
-pg_dump --format=custom --file fleet-control-plane.dump omni_fleet
-pg_restore --clean --if-exists --dbname omni_fleet fleet-control-plane.dump
+pg_dump --format=custom --file fleet-control-plane.dump DbOmniFleet
+pg_restore --clean --if-exists --dbname DbOmniFleet fleet-control-plane.dump
 ```
 
 PgBouncer ownership:
@@ -123,11 +123,11 @@ SRV-1 live enforcement:
 - PgBouncer listens on `127.0.0.1:6432` and `10.1.1.1:6432`.
 - PostgreSQL direct port `8745` remains local for server-side maintenance.
 - SRV-2/SRV-3 must connect to `10.1.1.1:6432`; direct `10.1.1.1:8745` is blocked.
-- Live M004 database is `omni_fleet` on SRV-1.
-- `omni_fleet` is also the canonical `omni-srv-admin` database for ops/config
+- Live M004 database is `DbOmniFleet` on SRV-1.
+- `DbOmniFleet` is also the canonical `omni-srv-admin` database for ops/config
   state; do not create parallel local config stores for the same facts.
 - SRV-1/SRV-2/SRV-3 read `/etc/omni-srv-admin/fleet-db.env` and query
-  `omni_fleet` through PgBouncer.
+  `DbOmniFleet` through PgBouncer.
 - PgBouncer auth currently remains compatible with existing services; stricter
   auth is a follow-up hardening item, not a reason to bypass PgBouncer.
 
@@ -137,17 +137,17 @@ Versioned schema lives in `modules/fleet-control-plane/migrations/`.
 
 | Table | Purpose | Requirement |
 |---|---|---|
-| `hosts` | Reviewed inventory projection | FCP-02 |
-| `nodes` | Runtime install mode, agent version, health and heartbeat | FCP-01, FCP-05 |
-| `programs` | Installed program registry by host | FCP-06 |
-| `versions` | Desired/current version state and update policy | FCP-07 |
-| `update_plans` | Proposed changes, approval state and execution result | FCP-07 |
-| `licenses` | License metadata and `secret_ref` only | FCP-08 |
-| `audit_events` | Actor, host, action, target, result and timestamp | FCP-09 |
-| `ops_scopes` | Per-host ops areas such as `srv1-ops`, `srv2-ops`, `srv3-ops` | FCP-11, FCP-12 |
-| `config_items` | Runtime parameters/config values stored in DB, with `secret_ref` for sensitive data | FCP-11, FCP-12 |
-| `slash_commands` | Slash-command catalog using CLI-Anything as provider | FCP-13 |
-| `slash_command_bindings` | Command-to-host/scope policy and apply mode | FCP-13 |
+| `TbHosts` | Reviewed inventory projection | FCP-02 |
+| `TbNodes` | Runtime install mode, agent version, health and heartbeat | FCP-01, FCP-05 |
+| `TbPrograms` | Installed program registry by host | FCP-06 |
+| `TbVersions` | Desired/current version state and update policy | FCP-07 |
+| `TbUpdatePlans` | Proposed changes, approval state and execution result | FCP-07 |
+| `TbLicenses` | License metadata and `secret_ref` only | FCP-08 |
+| `TbAuditEvents` | Actor, host, action, target, result and timestamp | FCP-09 |
+| `TbOpsScopes` | Per-host ops areas such as `srv1-ops`, `srv2-ops`, `srv3-ops` | FCP-11, FCP-12 |
+| `TbConfigItems` | Runtime parameters/config values stored in DB, with `secret_ref` for sensitive data | FCP-11, FCP-12 |
+| `TbSlashCommands` | Slash-command catalog using CLI-Anything as provider | FCP-13 |
+| `TbSlashCommandBindings` | Command-to-host/scope policy and apply mode | FCP-13 |
 
 Future Podman/K3s work consumes these contracts rather than inventing a separate
 source of truth.
@@ -158,9 +158,9 @@ Each server gets an explicit ops scope:
 
 | Scope | Host | Directory | Runtime truth |
 |---|---|---|---|
-| `srv1-ops` | `atius-srv-1` | `modules/srv1-ops` | PostgreSQL `config_items` |
-| `srv2-ops` | `atius-srv-2` | `modules/srv2-ops` | PostgreSQL `config_items` |
-| `srv3-ops` | `atius-srv-3` | `modules/srv3-ops` | PostgreSQL `config_items` |
+| `srv1-ops` | `atius-srv-1` | `modules/srv1-ops` | PostgreSQL `TbConfigItems` |
+| `srv2-ops` | `atius-srv-2` | `modules/srv2-ops` | PostgreSQL `TbConfigItems` |
+| `srv3-ops` | `atius-srv-3` | `modules/srv3-ops` | PostgreSQL `TbConfigItems` |
 
 The filesystem directories remain useful for scripts, templates, bootstrap,
 exported examples and versioned code. Operational parameters and mutable config
@@ -183,7 +183,7 @@ CLI-Anything convention as the integration model. The baseline command set is:
 
 The long-term target is `cli-anything-omni-srv-admin` for slash-command coverage
 of all high-value `omni-srv-admin` workflows. Ad-hoc slash commands should be
-treated as temporary until represented in `slash_commands`.
+treated as temporary until represented in `TbSlashCommands`.
 
 ## Heartbeat
 

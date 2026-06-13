@@ -49,8 +49,8 @@ from nodes as blocked.
 - SRV-1: `~/GitHub/omni-srv-admin` exists; local dirty work is preserved.
 - SRV-2: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean.
 - SRV-3: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean.
-- SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
-- `omni_fleet` is the canonical PostgreSQL database for `omni-srv-admin`
+- SRV-1: PostgreSQL database `DbOmniFleet` exists with the initial schema.
+- `DbOmniFleet` is the canonical PostgreSQL database for `omni-srv-admin`
   runtime state, ops scopes, config items, parameters and slash-command
   registry.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points to PgBouncer at
@@ -62,13 +62,13 @@ from nodes as blocked.
 Each server has an ops scope: `srv1-ops`, `srv2-ops`, `srv3-ops`. The directories
 under `modules/*-ops` contain scripts, templates, bootstrap and exported
 examples. Runtime parameters and mutable config belong in PostgreSQL
-`config_items` and must be read through PgBouncer. Sensitive values use
+`TbConfigItems` and must be read through PgBouncer. Sensitive values use
 `secret_ref`; raw secrets stay out of DB, git, logs and vault.
 
 ## Slash Command Rule
 
 Agent-facing slash commands should be represented in PostgreSQL
-`slash_commands` and use CLI-Anything conventions. Baseline commands are
+`TbSlashCommands` and use CLI-Anything conventions. Baseline commands are
 `/cli-anything`, `/cli-anything:refine`, `/cli-anything:test`,
 `/cli-anything:validate`, `/cli-anything:list` and planned `/omni-srv-admin`.
 
