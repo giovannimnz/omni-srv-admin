@@ -46,8 +46,8 @@ from nodes as blocked.
 ## Live M004 State
 
 - SRV-1: `~/GitHub/omni-srv-admin` exists; local dirty work is preserved.
-- SRV-2: `~/GitHub/omni-srv-admin` exists at `main@88d35c7`, worktree clean.
-- SRV-3: `~/GitHub/omni-srv-admin` exists at `main@88d35c7`, worktree clean.
+- SRV-2: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean.
+- SRV-3: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean.
 - SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points to PgBouncer at
   `10.1.1.1:6432`.
