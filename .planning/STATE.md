@@ -5,9 +5,10 @@
 ## Project Reference
 
 See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
+See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane
+**Current focus:** M004 Omni Fleet Control Plane; M005 K3s HA Cluster + Portainer is queued in its separate branch.
 
 ## Milestones
 
@@ -16,7 +17,8 @@ See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12) | Active |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Active |
+| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Planned |
 
 ## M001 Completion
 

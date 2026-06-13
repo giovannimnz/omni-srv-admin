@@ -86,6 +86,10 @@
 
 ## v3 Requirements
 
+Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
+This branch owns the M004/Fleet requirements below; M005/K3s requirements live
+in `codex/k3s-portainer-oci-plan`.
+
 ### Omni Fleet Control Plane
 
 - [ ] **FCP-01**: `omni-srv-admin` deve instalar/configurar um host como `server` ou `node`, com papéis explícitos e idempotência básica.

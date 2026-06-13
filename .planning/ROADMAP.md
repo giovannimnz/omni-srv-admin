@@ -2,6 +2,7 @@
 
 **Active Milestone:** M004 — Omni Fleet Control Plane
 **Milestone Goal:** criar a base operacional multi-host antes do K3s: inventário, instalação server/node, PostgreSQL central via PgBouncer, versões, licenças, auditoria e integração futura com Podman/K3s
+**Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
 
@@ -268,6 +269,20 @@
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
 | M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ PLANNED | MEDIUM |
+
+---
+
+## M005: K3s HA Cluster + Portainer — queued reference
+
+**Canonical branch:** `codex/k3s-portainer-oci-plan`
+
+**Phase:** 13
+
+**Status:** PLANNED on dedicated branch
+
+**Scope note:** Esta branch Fleet nao carrega os artefatos completos do K3s. Ela registra M005 apenas como proximo milestone para que o Fleet exponha os contratos que K3s/Portainer vao consumir.
+
+**Portainer target:** `portainer.atius.com.br`
 
 ---
 
