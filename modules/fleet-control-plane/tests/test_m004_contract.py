@@ -194,6 +194,7 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
         (REPO / "modules/fleet-control-plane/configs/control-plane.example.yaml").read_text()
     )
 
+    assert config["database"]["database"] == "DbOmniFleet"
     assert config["database"]["logical_owner"] == "omni-srv-admin"
     assert "ops-scopes" in config["database"]["canonical_for"]
     assert "slash-command-registry" in config["database"]["canonical_for"]
@@ -212,26 +213,26 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
 
 def test_migration_schema_has_required_tables_and_secret_refs_only():
     schema = "\n".join(
-        path.read_text().lower()
+        path.read_text()
         for path in sorted((REPO / "modules/fleet-control-plane/migrations").glob("*.sql"))
     )
 
     for table in (
-        "hosts",
-        "nodes",
-        "programs",
-        "versions",
-        "update_plans",
-        "licenses",
-        "audit_events",
-        "ops_scopes",
-        "config_items",
-        "slash_commands",
-        "slash_command_bindings",
+        "TbHosts",
+        "TbNodes",
+        "TbPrograms",
+        "TbVersions",
+        "TbUpdatePlans",
+        "TbLicenses",
+        "TbAuditEvents",
+        "TbOpsScopes",
+        "TbConfigItems",
+        "TbSlashCommands",
+        "TbSlashCommandBindings",
     ):
-        assert f"create table if not exists {table}" in schema
-    assert "secret_ref text not null" in schema
-    assert "provider text not null default 'cli-anything'" in schema
+        assert f'CREATE TABLE IF NOT EXISTS "{table}"' in schema
+    assert "secret_ref TEXT NOT NULL" in schema
+    assert "provider TEXT NOT NULL DEFAULT 'cli-anything'" in schema
     assert "'/omni-srv-admin', 'cli-anything'" in schema
     assert '"config_source":"database"' in schema
     for forbidden in ("license_key", "raw_secret", "password text", "token text", "serial text"):

@@ -103,17 +103,17 @@ Future Podman/K3s
 
 | Table | Purpose |
 |---|---|
-| `hosts` | Canonical host projection from inventory: name, role, IPs, OS, arch, tags |
-| `nodes` | Runtime node state: install mode, agent version, heartbeat, health |
-| `programs` | Installed program registry by host: name, install type, version, source |
-| `versions` | Desired/current version state and update policy |
-| `update_plans` | Proposed changes, approval status, execution result |
-| `licenses` | License metadata, status, expiry, scope and `secret_ref` |
-| `audit_events` | Actor, host, action, target, result, timestamp, metadata |
-| `ops_scopes` | Per-host ops areas such as `srv1-ops`, `srv2-ops`, `srv3-ops` |
-| `config_items` | DB-backed runtime parameters/configs with `secret_ref` for sensitive values |
-| `slash_commands` | CLI-Anything slash-command registry |
-| `slash_command_bindings` | Command-to-host/scope apply policy |
+| `TbHosts` | Canonical host projection from inventory: name, role, IPs, OS, arch, tags |
+| `TbNodes` | Runtime node state: install mode, agent version, heartbeat, health |
+| `TbPrograms` | Installed program registry by host: name, install type, version, source |
+| `TbVersions` | Desired/current version state and update policy |
+| `TbUpdatePlans` | Proposed changes, approval status, execution result |
+| `TbLicenses` | License metadata, status, expiry, scope and `secret_ref` |
+| `TbAuditEvents` | Actor, host, action, target, result, timestamp, metadata |
+| `TbOpsScopes` | Per-host ops areas such as `srv1-ops`, `srv2-ops`, `srv3-ops` |
+| `TbConfigItems` | DB-backed runtime parameters/configs with `secret_ref` for sensitive values |
+| `TbSlashCommands` | CLI-Anything slash-command registry |
+| `TbSlashCommandBindings` | Command-to-host/scope apply policy |
 
 ## Risks
 

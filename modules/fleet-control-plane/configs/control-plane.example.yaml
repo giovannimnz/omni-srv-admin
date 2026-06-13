@@ -6,7 +6,7 @@ server:
 
 database:
   engine: postgresql
-  database: omni_fleet
+  database: DbOmniFleet
   logical_owner: omni-srv-admin
   canonical_for:
     - fleet-inventory-projection
@@ -36,7 +36,7 @@ pgbouncer:
 inventory:
   source: inventory/hosts
   source_of_truth: true
-  database_projection: hosts
+  database_projection: TbHosts
 
 ops:
   config_source: database

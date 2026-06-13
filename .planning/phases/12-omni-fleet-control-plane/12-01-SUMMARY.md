@@ -24,10 +24,10 @@ human gates.
 - `modules/fleet-control-plane/configs/control-plane.example.yaml` defines the
   non-secret runtime config shape.
 - `modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql` defines
-  the initial PostgreSQL schema for hosts, nodes, programs, versions,
-  update_plans, licenses and audit_events.
+  the initial PostgreSQL schema for `TbHosts`, `TbNodes`, `TbPrograms`,
+  `TbVersions`, `TbUpdatePlans`, `TbLicenses` and `TbAuditEvents`.
 - `modules/fleet-control-plane/migrations/0002_ops_config_slash_commands.sql`
-  extends `omni_fleet` into the canonical `omni-srv-admin` DB for ops scopes,
+  extends `DbOmniFleet` into the canonical `omni-srv-admin` DB for ops scopes,
   config items, runtime parameters and CLI-Anything slash-command registry.
 - `cli/omni/fleet.py` exposes safe M004 commands:
   - `omni fleet validate-inventory`
@@ -75,13 +75,13 @@ Latest validation result:
 
 Migration `0002` applied live through PgBouncer and added:
 
-- `ops_scopes`
-- `config_items`
-- `slash_commands`
-- `slash_command_bindings`
+- `TbOpsScopes`
+- `TbConfigItems`
+- `TbSlashCommands`
+- `TbSlashCommandBindings`
 
 SRV-1/SRV-2/SRV-3 have `~/GitHub/omni-srv-admin`, query central DB
-`omni_fleet` through PgBouncer on `10.1.1.1:6432`, and direct PostgreSQL access
+`DbOmniFleet` through PgBouncer on `10.1.1.1:6432`, and direct PostgreSQL access
 from SRV-2/SRV-3 to `10.1.1.1:8745` is blocked by `omni-pg-access-guard`.
 
 ## Remaining Gates

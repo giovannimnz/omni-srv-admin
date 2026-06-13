@@ -255,12 +255,12 @@
 **Implementation Results:**
 - `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
 - `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
-- `omni_fleet` is documented and migrated as the canonical PostgreSQL database for `omni-srv-admin` runtime state, ops scopes, config items, parameters and slash-command registry.
-- `ops_scopes`, `config_items`, `slash_commands` and `slash_command_bindings` are defined by migration `0002`.
+- `DbOmniFleet` is documented and migrated as the canonical PostgreSQL database for `omni-srv-admin` runtime state, ops scopes, config items, parameters and slash-command registry.
+- `TbOpsScopes`, `TbConfigItems`, `TbSlashCommands` and `TbSlashCommandBindings` are defined by migration `0002`.
 - Slash commands are represented with CLI-Anything/`clianything` metadata, including `/cli-anything*` and planned `/omni-srv-admin`.
 - `~/GitHub/omni-srv-admin` is present on SRV-1/SRV-2/SRV-3; SRV-2/SRV-3 track `main` with clean worktrees.
-- SRV-1 hosts PostgreSQL database `omni_fleet`; hosts/nodes/programs inventory is seeded.
-- SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `omni_fleet` through PgBouncer at `10.1.1.1:6432`.
+- SRV-1 hosts PostgreSQL database `DbOmniFleet`; `TbHosts`/`TbNodes`/`TbPrograms` inventory is seeded.
+- SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `DbOmniFleet` through PgBouncer at `10.1.1.1:6432`.
 - `omni fleet validate-inventory` validates all 7 inventory hosts.
 - `omni fleet install server|node` renders idempotent dry-run plans and blocks live `--apply`.
 - `omni fleet heartbeat`, `programs`, `update-plan`, `audit` and `status --all` expose the runtime contracts without touching remote hosts.

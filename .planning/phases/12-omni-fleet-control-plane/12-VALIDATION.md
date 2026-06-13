@@ -13,7 +13,7 @@ branch: codex/omni-fleet-control-plane-m004
 
 M004 is implemented for the intended live base. The live SRV1/SRV2/SRV3 network
 is reachable, each host has `~/GitHub/omni-srv-admin`, SRV-1 owns central
-database `omni_fleet`, all three hosts can query it through PgBouncer, and
+database `DbOmniFleet`, all three hosts can query it through PgBouncer, and
 direct PostgreSQL access from nodes is blocked. The schema also carries the
 ops/config/slash-command extension required for `omni-srv-admin` to stop using
 local files as mutable runtime config stores.
@@ -44,7 +44,7 @@ PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live
 | `~/GitHub/omni-srv-admin` repo + CLI smoke | 3 PASS |
 | VPN full-mesh ping | 6 PASS |
 | SRV-1 PostgreSQL/PgBouncer readiness | 1 PASS |
-| Central `omni_fleet` query through PgBouncer | 3 PASS |
+| Central `DbOmniFleet` query through PgBouncer | 3 PASS |
 | Node PgBouncer access on `10.1.1.1:6432` | 2 PASS |
 | Node direct PostgreSQL access blocked on `10.1.1.1:8745` | 2 PASS |
 
@@ -87,7 +87,7 @@ Current live state:
 
 1. SRV-1 PgBouncer listens on `10.1.1.1:6432`.
 2. SRV-2 and SRV-3 connect to PgBouncer successfully.
-3. SRV-1/SRV-2/SRV-3 query `omni_fleet` through PgBouncer successfully.
+3. SRV-1/SRV-2/SRV-3 query `DbOmniFleet` through PgBouncer successfully.
 4. SRV-2 and SRV-3 cannot connect to direct PostgreSQL on `10.1.1.1:8745`.
 5. PgBouncer auth material remains outside git/log/vault.
 6. Firewall enforcement is installed through `omni-pg-access-guard`.
@@ -97,15 +97,15 @@ Current live state:
 - SRV-1: `~/GitHub/omni-srv-admin` exists; local dirty work is preserved and was not overwritten.
 - SRV-2: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean, CLI smoke passed.
 - SRV-3: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean, CLI smoke passed.
-- SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
+- SRV-1: PostgreSQL database `DbOmniFleet` exists with the initial schema.
 - SRV-1: migration `0002_ops_config_slash_commands.sql` defines
-  `ops_scopes`, `config_items`, `slash_commands` and `slash_command_bindings`.
+  `TbOpsScopes`, `TbConfigItems`, `TbSlashCommands` and `TbSlashCommandBindings`.
 - SRV-1: migration `0002` applied live through PgBouncer with
-  `ops_scopes=3`, `config_items=1`, `slash_commands=6`,
-  `slash_command_bindings=18`.
-- SRV-1: `omni_fleet` is the DB for `omni-srv-admin` runtime state, not only
+  `TbOpsScopes=3`, `TbConfigItems=1`, `TbSlashCommands=6`,
+  `TbSlashCommandBindings=18`.
+- SRV-1: `DbOmniFleet` is the DB for `omni-srv-admin` runtime state, not only
   fleet inventory.
-- SRV-1: `hosts`, `nodes` and `programs` tables are seeded from the intended SRV1/SRV2/SRV3 fleet base.
+- SRV-1: `TbHosts`, `TbNodes` and `TbPrograms` tables are seeded from the intended SRV1/SRV2/SRV3 fleet base.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points clients to `10.1.1.1:6432`.
 - Secrets remain outside git/log/vault.
 
@@ -126,6 +126,30 @@ Backups were created under `/root/omni-pg-access-backups/` on SRV-1 and
 The live DB/PgBouncer change also backed up SRV-1 PgBouncer files under
 `/root/omni-fleet-live-backups/`.
 
+## DB/Table CamelCase Rename
+
+Applied after user correction on 2026-06-13:
+
+- Database renamed from `omni_fleet` to `DbOmniFleet`.
+- Tables renamed from lowercase names to quoted `Tb...` names:
+  `TbHosts`, `TbNodes`, `TbPrograms`, `TbVersions`, `TbUpdatePlans`,
+  `TbLicenses`, `TbAuditEvents`, `TbOpsScopes`, `TbConfigItems`,
+  `TbSlashCommands`, `TbSlashCommandBindings`.
+- PgBouncer database alias updated to `DbOmniFleet`.
+- `/etc/omni-srv-admin/fleet-db.env` on SRV-1/SRV-2/SRV-3 now uses
+  `PGDATABASE=DbOmniFleet`.
+
+Backup before rename:
+
+- `/root/omni-fleet-db-rename-backups/20260613_145401/omni_fleet_pre_rename.dump`
+- `/root/omni-fleet-db-rename-backups/20260613_145401/pgbouncer.ini.pre-rename`
+- `/root/omni-fleet-db-rename-backups/20260613_145401/fleet-db.env.srv1.pre-rename`
+
+Post-rename validation:
+
+- `OMNI_M004_LIVE=1 scripts/verify-m004-fleet-control-plane.sh`
+- Result: `26 PASS`, `0 BLOCKED`, `0 FAIL`.
+
 ## Multi-Agent Review Inputs
 
 Two independent agents reviewed the validation scope:
@@ -144,10 +168,10 @@ blocked until the live control plane is intentionally deployed.
 
 The user rule captured after live validation is now part of M004:
 
-- `omni_fleet` remains the live DB name, but is the canonical PostgreSQL DB for
+- `DbOmniFleet` is the live DB name and canonical PostgreSQL DB for
   `omni-srv-admin`.
 - Each server has an ops scope: `srv1-ops`, `srv2-ops`, `srv3-ops`.
 - Mutable parameters/configs must be read from DB via PgBouncer; files are
   bootstrap/templates/exported examples.
-- Slash commands must be represented in `slash_commands` using
+- Slash commands must be represented in `TbSlashCommands` using
   CLI-Anything/`clianything` conventions.
