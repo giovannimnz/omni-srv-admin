@@ -1,0 +1,11 @@
+[Unit]
+Description=Timer que dispara rclone-fleet-queue a cada 30min
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=30min
+Persistent=true
+Unit=rclone-fleet-queue.service
+
+[Install]
+WantedBy=timers.target
