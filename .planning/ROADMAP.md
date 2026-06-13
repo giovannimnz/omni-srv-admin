@@ -282,7 +282,7 @@
 3. Plano não abre 6443/2379-2380/8472/10250 para internet pública
 4. Plano expõe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
 5. Plano consome o inventário/contratos definidos no M004 quando for executado
-6. Live install remains blocked until OCI snapshots/firewall per OCI account and Cloudflare Tunnel token are confirmed
+6. Live install remains blocked until OCI snapshots/firewall per OCI account, M004 acceptance/health and human approval are confirmed
 7. Fallback PTP full-mesh documentado antes de declarar production-ready
 8. Observability instalada sem expor Prometheus/Alertmanager publicamente
 9. Alertmanager aciona Omni Fleet via eventos/planos auditados, não comandos host diretos

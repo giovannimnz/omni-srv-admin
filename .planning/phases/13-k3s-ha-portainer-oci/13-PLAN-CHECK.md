@@ -31,13 +31,17 @@
 - SRV-1/SRV-2/SRV-3 are upgraded and postchecked on Ubuntu 24.04.4 LTS.
 - Confirm OCI snapshots/backups per OCI account.
 - Confirm OCI public-ingress closure in each OCI account and host firewall rules for `wg0`.
-- Create/provide Cloudflare Tunnel token out-of-band.
+- Confirm M004 Fleet Control Plane is accepted or explicitly waived, and current
+  Fleet telemetry is healthy enough for M005 execution.
+- Create/provide Cloudflare Tunnel token out-of-band before publishing
+  Portainer/Grafana.
 - Complete or explicitly waive PTP fallback design before production-ready.
 - Approve destructive K3s rollback if needed.
 
 ## Verdict
 
 The node preflight is executable-ready after safe log cleanup, but live install
-is still blocked until OCI snapshots/backups, OCI/host firewall rules, the
-Cloudflare Tunnel token and human approval are confirmed. Do not install K3s
-before those gates.
+is still blocked until OCI snapshots/backups, OCI/host firewall rules, M004
+acceptance/health and human approval are confirmed. Cloudflare token/DNS/Access
+blocks UI publication, not K3s bootstrap. Do not install K3s before the
+bootstrap gates.
