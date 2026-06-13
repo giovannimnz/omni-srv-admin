@@ -35,6 +35,7 @@ tmp_env="$(mktemp)"
 cat >"$tmp_env" <<EOF
 OMNI_HOST_ID=$host_id
 OMNI_AGENT_INTERVAL_SECONDS=30
+OMNI_REPO_DIR=$ROOT
 EOF
 sudo install -m 0644 "$tmp_env" "$ENV_DST"
 rm -f "$tmp_env"
