@@ -105,6 +105,8 @@ in `codex/k3s-portainer-oci-plan`.
 - [ ] **FCP-11**: O PostgreSQL central deve ser o DB canônico do `omni-srv-admin` para runtime state, ops scopes, parâmetros, configs e registry de comandos; arquivos ficam como bootstrap/template/export.
 - [ ] **FCP-12**: Cada servidor deve ter um ops scope explícito (`srv1-ops`, `srv2-ops`, `srv3-ops`) e parâmetros/configs mutáveis devem ser resolvidos do DB via PgBouncer.
 - [ ] **FCP-13**: Slash commands agent-facing devem ser registrados no DB e seguir convenção CLI-Anything/`clianything`, incluindo `/cli-anything*` e o alvo futuro `/omni-srv-admin`.
+- [ ] **FCP-14**: Cada node deve rodar um agent local capaz de reclamar e executar somente update plans aprovados, allowlisted e destinados ao próprio host, gravando resultado e auditoria no DB.
+- [ ] **FCP-15**: Cada servidor deve conseguir monitorar os demais via `DbOmniFleet`/PgBouncer, com telemetria de load, CPU, memória, disco, I/O, service health e fallback local quando o DB estiver indisponível.
 
 ## Out of Scope
 
@@ -130,11 +132,11 @@ in `codex/k3s-portainer-oci-plan`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| FCP-01 → FCP-13 | Phase 12 | Live implemented; DB-backed ops/config/slash registry added |
+| FCP-01 → FCP-15 | Phase 12 | Live implemented; DB-backed ops/config/slash registry and agent executor/monitoring contract added |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 13 total
+- v3 requirements: 15 total
 - Mapped to phases: 52
 - Unmapped: 0 ✓
 

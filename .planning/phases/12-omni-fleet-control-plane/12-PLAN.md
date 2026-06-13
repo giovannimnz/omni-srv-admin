@@ -30,6 +30,8 @@ requirements_addressed:
   - FCP-11
   - FCP-12
   - FCP-13
+  - FCP-14
+  - FCP-15
 ---
 
 # Phase 12 — Master Plan
@@ -40,8 +42,9 @@ Criar a fundação planejada do Omni Fleet Control Plane para que o
 `omni-srv-admin` controle a frota antes de instalar K3s/Portainer: modo
 `server`/`node`, inventário como fonte de verdade, PostgreSQL central via
 PgBouncer, heartbeat/status, registry de programas, version/update plans,
-ops scopes por servidor, parâmetros/configs no DB, slash commands via
-CLI-Anything, licenças sem secrets e auditoria.
+agent executor local allowlisted, monitoramento cross-server, ops scopes por
+servidor, parâmetros/configs no DB, slash commands via CLI-Anything, licenças
+sem secrets e auditoria.
 
 ## Scope
 
@@ -61,6 +64,7 @@ M004 Fleet Control Plane
     - ops/config registry
     - slash command registry
     - scheduler/update planner
+    - fleet telemetry reader
     - audit registry
 
   node:
@@ -68,6 +72,7 @@ M004 Fleet Control Plane
     - heartbeat/status
     - program/version reporter
     - approved update executor
+    - resource telemetry collector
 
 Future Podman/K3s integration
   - consumes M004 inventory/state/audit contracts
@@ -87,12 +92,13 @@ Future Podman/K3s integration
 - PostgreSQL is canonical for ops scopes, mutable configs, runtime parameters
   and slash-command registry.
 - Slash commands use CLI-Anything conventions.
-- Destructive update execution must require an approved update plan.
+- Destructive update execution must require an approved update plan, command allowlist and local execution by the target host's agent.
+- Every SRV must be able to monitor the others through central telemetry and local fallback cache.
 - K3s/Podman work stays deferred to a separate milestone/branch.
 
 ## Acceptance
 
-- `FCP-01..FCP-13` exist in `.planning/REQUIREMENTS.md`.
+- `FCP-01..FCP-15` exist in `.planning/REQUIREMENTS.md`.
 - ROADMAP shows `M004 / Phase 12` as Fleet Control Plane.
 - Phase artifacts exist under `.planning/phases/12-omni-fleet-control-plane/`.
 - STATE/config point to M004 Phase 12 as active.

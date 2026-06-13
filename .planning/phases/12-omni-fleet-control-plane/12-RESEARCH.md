@@ -70,6 +70,7 @@ omni CLI / API
 Fleet nodes
   -> local agent
   -> heartbeat/status
+  -> resource telemetry
   -> program inventory
   -> update plan executor
   -> PgBouncer
@@ -94,8 +95,10 @@ Future Podman/K3s
 
 - Install as a lightweight agent.
 - Report heartbeat and health.
+- Report load, CPU, memory, disk, I/O, PSI and service health for monitoring.
 - Report installed programs and versions.
 - Execute approved update plans only.
+- Claim only plans targeted to the local host; no direct SSH apply.
 - Never log secrets.
 - Connect to DB through PgBouncer only.
 
@@ -114,6 +117,9 @@ Future Podman/K3s
 | `TbConfigItems` | DB-backed runtime parameters/configs with `secret_ref` for sensitive values |
 | `TbSlashCommands` | CLI-Anything slash-command registry |
 | `TbSlashCommandBindings` | Command-to-host/scope apply policy |
+| `TbFleetCommands` | Agent command allowlist with host scope |
+| `TbNodeTelemetry` | Cross-server monitoring/resource observations |
+| `TbNodeResourcePolicies` | Per-host limits for active demand/load balancing |
 
 ## Risks
 
@@ -126,6 +132,10 @@ Future Podman/K3s
   tokens or serials.
 - **Agent blast radius:** node agents must be minimal and human-gated for
   destructive updates.
+- **Queue races:** update plans need lease/lock/idempotency so multiple agents
+  cannot execute the same plan.
+- **Monitoring drift:** stale heartbeats must degrade rather than reporting
+  old `healthy` states as current.
 - **Premature orchestration coupling:** M004 must define contracts, not install
   Kubernetes.
 - **Slash command drift:** ad-hoc slash commands can diverge from DB state unless

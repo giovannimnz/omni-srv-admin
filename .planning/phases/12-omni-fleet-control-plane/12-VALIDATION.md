@@ -3,7 +3,7 @@ phase: 12
 name: omni-fleet-control-plane
 date: 2026-06-13
 status: live-implemented
-method: pytest + offline harness + live SSH/repo/DB probes + multi-agent scenario review
+method: pytest + offline harness + live SSH/repo/DB probes + multi-agent scenario review + agent executor validation
 branch: codex/omni-fleet-control-plane-m004
 ---
 
@@ -15,8 +15,8 @@ M004 is implemented for the intended live base. The live SRV1/SRV2/SRV3 network
 is reachable, each host has `~/GitHub/omni-srv-admin`, SRV-1 owns central
 database `DbOmniFleet`, all three hosts can query it through PgBouncer, and
 direct PostgreSQL access from nodes is blocked. The schema also carries the
-ops/config/slash-command extension required for `omni-srv-admin` to stop using
-local files as mutable runtime config stores.
+ops/config/slash-command extension and now defines the agent executor/monitoring
+extension required for update plans and cross-server resource visibility.
 
 ## Automated Commands
 
@@ -35,6 +35,7 @@ PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live
 | M004-OFF-04 | PostgreSQL + PgBouncer + license + ops/config/slash schema contract | PASS |
 | M004-OFF-05 | heartbeat + program registry + audit contracts | PASS |
 | M004-OFF-06 | future Podman/K3s contract is documented | PASS |
+| M004-OFF-07 | agent executor, PgBouncer guard and fleet monitoring contract | PASS |
 
 ## Live Read-Only Results
 
@@ -48,7 +49,23 @@ PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live
 | Node PgBouncer access on `10.1.1.1:6432` | 2 PASS |
 | Node direct PostgreSQL access blocked on `10.1.1.1:8745` | 2 PASS |
 
-Live summary: `26 PASS`, `0 BLOCKED`, `0 FAIL`.
+Live summary after migration `0003`: `27 PASS`, `0 BLOCKED`, `0 FAIL`.
+
+## Agent Executor + Monitoring Scenarios
+
+| Scenario | Expected Result | Current Coverage |
+|---|---|---|
+| SRV-2 requests SRV-3 work | `queue-update` writes a plan to `TbUpdatePlans`; SRV-2 does not execute it locally | pytest + offline contract |
+| SRV-3 executes local plan | `agent once/loop` claims only `host_id=atius-srv-3` approved rows, runs allowlisted command locally and writes redacted result | pytest + offline contract |
+| Pending plan | Agent rejects `approval_state=pending` | pytest |
+| Unknown command | Agent rejects command not in `TbFleetCommands`/local allowlist | pytest |
+| Wrong host command | Host-specific allowlist blocks `omni.resource.snapshot` on SRV-3 | pytest |
+| PgBouncer outage | `monitor hosts` degrades to local cache; no direct PostgreSQL fallback | pytest |
+| Resource inputs | Heartbeat collects load, CPU count, memory, disk, I/O, PSI and service health | pytest |
+
+Migration `0003` is applied live. Full live telemetry still requires deploying
+this branch to `~/GitHub/omni-srv-admin` and enabling `omni-fleet-agent.service`
+on SRV-2/SRV-3.
 
 ## Host Evidence
 
@@ -103,6 +120,9 @@ Current live state:
 - SRV-1: migration `0002` applied live through PgBouncer with
   `TbOpsScopes=3`, `TbConfigItems=1`, `TbSlashCommands=6`,
   `TbSlashCommandBindings=18`.
+- SRV-1: migration `0003_agent_executor_monitoring.sql` applied live through
+  PgBouncer with `TbFleetCommands=4`, `TbNodeResourcePolicies=3` and
+  `TbNodeTelemetry=1` after SRV-1 heartbeat.
 - SRV-1: `DbOmniFleet` is the DB for `omni-srv-admin` runtime state, not only
   fleet inventory.
 - SRV-1: `TbHosts`, `TbNodes` and `TbPrograms` tables are seeded from the intended SRV1/SRV2/SRV3 fleet base.
