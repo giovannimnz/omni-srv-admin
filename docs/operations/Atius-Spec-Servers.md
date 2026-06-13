@@ -16,8 +16,9 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 | Disco real | **186,26 GiB** (200 GB nominal) |
 | Tipo de disco | Oracle Block Volume (rotational=1, HDD-backed) |
 | Escrita máxima | 108 MB/s (SRV-1) a 124 MB/s (SRV-2) |
-| SO | Ubuntu 22.04.5 LTS |
-| Kernel | 6.8.0-1050-oracle |
+| SO | Ubuntu 24.04.4 LTS |
+| Kernel | 6.17.0-1016-oracle |
+| Snapshot atual | 2026-06-13 M005 execution checkpoint |
 
 ## Limite de 50% por Processo
 
@@ -35,9 +36,15 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 
 | Máquina | IP Público | IP VPN | Disco usado | RAM disp. | Write max | 50% write |
 |---|---|---|---|---|---|---|
-| **SRV-1** | 137.131.190.161 | 10.1.1.1 | **95%** (12G livre) | ~8,5 GiB | 108 MB/s | **54 MB/s** |
-| **SRV-2** | 129.148.47.32 | 10.1.1.2 | **71%** (58G livre) | ~17 GiB | 124 MB/s | **62 MB/s** |
-| **SRV-3** | 136.248.126.12 | 10.1.1.7 | **97%** (7,8G livre) | ~17 GiB | ~108 MB/s | **~54 MB/s** |
+| **SRV-1** | 137.131.190.161 | 10.1.1.1 | **70%** (60G livre) | ~10 GiB | 108 MB/s | **54 MB/s** |
+| **SRV-2** | 129.148.47.32 | 10.1.1.2 | **70%** (60G livre) | ~18 GiB | 124 MB/s | **62 MB/s** |
+| **SRV-3** | 136.248.126.12 | 10.1.1.7 | **30%** (137G livre) | ~21 GiB | ~108 MB/s | **~54 MB/s** |
+
+## K3s M005 Notes
+
+- Rede de cluster escolhida: WireGuard `wg0` / `10.1.1.0/24`.
+- SRV-1 ainda tem `/swapfile` ativo; desabilitar e persistir `swapoff` antes do install K3s.
+- SRV-2 e SRV-3 nao reportaram swap ativo no checkpoint de 2026-06-13.
 
 ## Exemplo Prático
 

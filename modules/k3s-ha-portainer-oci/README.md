@@ -6,6 +6,7 @@ This module keeps the K3s HA + Portainer setup reproducible without committing
 tokens or live kubeconfig files. The current branch is ready up to preflight and
 template generation. Live installation remains gated by OCI snapshots,
 OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
+The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
 
 ## Contents
 
@@ -32,7 +33,12 @@ OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
 sudo install -d -m 700 /etc/rancher/k3s
 sudo sh -c 'umask 077; openssl rand -hex 32 > /etc/rancher/k3s/cluster-token'
 sudo install -m 600 modules/k3s-ha-portainer-oci/k3s/config-srv1.example.yaml /etc/rancher/k3s/config.yaml
-sudo sed -i "s/<K3S_CLUSTER_TOKEN>/$(sudo cat /etc/rancher/k3s/cluster-token)/" /etc/rancher/k3s/config.yaml
+sudo python3 - <<'PY'
+from pathlib import Path
+cfg = Path("/etc/rancher/k3s/config.yaml")
+token = Path("/etc/rancher/k3s/cluster-token").read_text().strip()
+cfg.write_text(cfg.read_text().replace("<K3S_CLUSTER_TOKEN>", token))
+PY
 curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=stable sh -
 ```
 

@@ -1,6 +1,6 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M005 K3s HA Portainer preflight
+**Last updated:** 2026-06-13 after M005 K3s HA Portainer execution checkpoint
 
 ## Project Reference
 
@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M005 — K3s HA Cluster + Portainer)
 See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M005 K3s HA Cluster + Portainer, Phase 13 preflight passed; live install remains gated by OCI snapshots/firewall and Cloudflare Tunnel token. M004 Fleet Control Plane remains in its separate branch.
+**Current focus:** M005 K3s HA Cluster + Portainer, Phase 13 execution stopped before live mutation; live install remains gated by OCI snapshots/backups, OCI/host firewall, Cloudflare Tunnel token and human approval. M004 Fleet Control Plane remains in its separate branch.
 
 ## Milestones
 
@@ -18,7 +18,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
 | M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract implemented |
-| M005 | K3s HA Cluster + Portainer (Phase 13) | Preflight passed; live gates open |
+| M005 | K3s HA Cluster + Portainer (Phase 13) | Execution checkpoint blocked before live mutation |
 
 ## M001 Completion
 
@@ -57,15 +57,16 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | RESEARCH | PDF + docs oficiais K3s/Portainer/Cloudflare/OCI/Ubuntu + repo/vault local | ✅ |
 | PLAN | `13-01-PLAN.md` human-gated para bootstrap K3s HA + Portainer + Cloudflare Tunnel | ✅ |
 | PREFLIGHT | `13-PREFLIGHT-2026-06-13.md` registra leitura dos 3 nós, limpeza segura de logs e gates restantes | ✅ |
+| EXECUTION CHECKPOINT | `13-EXECUTION-CHECKPOINT-2026-06-13.md` registra validacao live read-only, WireGuard `wg0`, Ubuntu 24.04.4 nos 3 hosts e bloqueio antes da Task 5 | ✅ |
 | Templates | `modules/k3s-ha-portainer-oci/` com configs K3s, Portainer values, cloudflared deployment e logrotate | ✅ |
 | Prerequisite | M004 Fleet Control Plane tratado em branch separada | Open until accepted/merged |
-| Blocker | Não instalar enquanto snapshots/backup OCI, firewall OCI e Cloudflare Tunnel token não forem confirmados | Open |
+| Blocker | Não instalar enquanto snapshots/backup OCI, firewall OCI/host, Cloudflare Tunnel token e aprovação humana não forem confirmados | Open |
 
 ## M005 Phase Breakdown
 
 | Phase | Descrição | Status |
 |---|---|---|
-| 13 | K3s HA + Portainer Milestone Plan | Preflight passed; live execution gated |
+| 13 | K3s HA + Portainer Milestone Plan | Execution checkpoint blocked before live mutation |
 
 ## Backup GDrive
 

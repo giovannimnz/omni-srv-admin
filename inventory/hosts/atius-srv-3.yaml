@@ -5,10 +5,11 @@ role: sandbox
 owner: giovanni
 access:
   ssh: ubuntu@10.1.1.7
+  public_ip: 136.248.126.12
   vpn_ip: 10.1.1.7
 platform:
   provider: oracle-oci
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   arch: arm64
 status: active
 modules: []
@@ -20,7 +21,7 @@ backup:
 cleanup:
   last_run: 2026-06-13
   disk_before: 97%
-  disk_after: 75%
-  action: k3s-preflight-docker-log-cleanup
+  disk_after: 30%
+  action: k3s-preflight-docker-log-cleanup-and-ubuntu2404-upgrade
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

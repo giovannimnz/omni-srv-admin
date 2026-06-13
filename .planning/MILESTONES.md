@@ -10,7 +10,7 @@ clara a ordem dos milestones e onde cada plano completo vive.
 | Milestone | Phase | Name | Canonical branch | Full artifacts | Status |
 |---|---:|---|---|---|---|
 | M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Contract implemented; separate branch |
-| M005 | 13 | K3s HA Cluster + Portainer | `codex/k3s-portainer-oci-plan` | `.planning/phases/13-k3s-ha-portainer-oci/` | Preflight passed; live gates open |
+| M005 | 13 | K3s HA Cluster + Portainer | `codex/k3s-portainer-oci-plan` | `.planning/phases/13-k3s-ha-portainer-oci/` | Execution checkpoint blocked before live mutation |
 
 ## Separation Rule
 
@@ -28,8 +28,8 @@ future contract consumed by Podman/K3s.
 M005 must not be executed before:
 
 - M004 contracts are accepted or explicitly waived.
-- SRV-1 is upgraded to Ubuntu 24.04.
+- SRV-1/SRV-2/SRV-3 are upgraded to Ubuntu 24.04.
 - Preflight for `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` passes.
-- OCI snapshots/backups and OCI firewall rules are confirmed.
+- OCI snapshots/backups, OCI public-ingress closure and host firewall rules for `wg0` are confirmed.
 - Cloudflare Tunnel token is supplied out-of-band.
 - Portainer exposure target remains `portainer.atius.com.br`.

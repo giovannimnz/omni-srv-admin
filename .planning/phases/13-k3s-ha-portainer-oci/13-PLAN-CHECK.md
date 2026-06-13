@@ -1,7 +1,7 @@
 # Phase 13 Plan Check
 
 **Date:** 2026-06-13
-**Status:** PASSED WITH HUMAN GATES; PREFLIGHT PASSED 2026-06-13
+**Status:** PASSED WITH HUMAN GATES; EXECUTION CHECKPOINT BLOCKED BEFORE LIVE MUTATION 2026-06-13
 
 ## Checks
 
@@ -9,7 +9,7 @@
 - User requirements captured:
   - branch created first
   - cluster nodes `ATIUS-SRV-1/2/3`
-  - SRV-1 must be Ubuntu 24.04 before real setup
+  - SRV-1/SRV-2/SRV-3 must be Ubuntu 24.04 before real setup
   - Portainer target `portainer.atius.com.br`
 - Official-doc constraints included:
   - K3s embedded etcd needs 3+ server nodes and odd quorum
@@ -21,19 +21,20 @@
 - Existing local risks included:
   - SRV-1/SRV-3 disk pressure
   - GDrive parallel backup rate-limit history
-  - existing Portainer on `docker.atius.com.br`
+  - legacy Portainer on `docker.atius.com.br` is intentionally disabled and not an M005 dependency
   - Apache/port conflicts avoided by disabling Traefik/ServiceLB
 
 ## Required Human Gates
 
-- SRV-1 is upgraded and postchecked on Ubuntu 24.04.4 LTS.
+- SRV-1/SRV-2/SRV-3 are upgraded and postchecked on Ubuntu 24.04.4 LTS.
 - Confirm OCI snapshots/backups.
-- Confirm OCI NSG/Security List rules.
+- Confirm OCI public-ingress closure and host firewall rules for `wg0`.
 - Create/provide Cloudflare Tunnel token out-of-band.
 - Approve destructive K3s rollback if needed.
 
 ## Verdict
 
 The node preflight is executable-ready after safe log cleanup, but live install
-is still blocked until OCI snapshots/backups, OCI firewall rules and the
-Cloudflare Tunnel token are confirmed. Do not install K3s before those gates.
+is still blocked until OCI snapshots/backups, OCI/host firewall rules, the
+Cloudflare Tunnel token and human approval are confirmed. Do not install K3s
+before those gates.

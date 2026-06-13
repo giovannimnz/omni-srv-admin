@@ -38,15 +38,15 @@ workloads, sem workers dedicados na primeira montagem.
 **Rationale:** 3 servidores e o minimo correto para quorum etcd com tolerancia
 a perda de 1 no. O PDF anexado recomenda exatamente esse desenho.
 
-### D-03: SRV-1 no Ubuntu 24.04 antes da montagem real
+### D-03: Todos os nos no Ubuntu 24.04 antes da montagem real
 
-**Decisao:** Nao instalar K3s no SRV-1 enquanto ele ainda estiver em 22.04. A
-montagem real so com SRV-1 ja atualizado para Ubuntu 24.04 LTS. SRV-2 e SRV-3
-podem entrar inicialmente em 22.04 se os preflights passarem; upgrades deles
-ficam para fase posterior e sequencial.
+**Decisao:** Nao instalar K3s enquanto algum dos 3 nos estiver fora do Ubuntu
+24.04 LTS. Em 2026-06-13, o checkpoint de execucao confirmou `ATIUS-SRV-1`,
+`ATIUS-SRV-2` e `ATIUS-SRV-3` em Ubuntu 24.04.4 LTS.
 
-**Rationale:** O usuario informou que este servidor sera atualizado antes, e os
-demais so depois. O plano precisa aceitar essa transicao sem bloquear o cluster.
+**Rationale:** O usuario informou que a montagem real aconteceria ja em 24.04.
+Como os tres servidores ja foram atualizados, a instalacao pode exigir uma base
+homogenea e reduzir variaveis de debug.
 
 ### D-04: Canal K3s estavel, nunca `latest`
 
@@ -56,13 +56,17 @@ preflight. Nao usar `latest`.
 **Rationale:** Em 2026-06, Kubernetes/K3s tem multiplas minors ativas. `latest`
 pode pular para uma minor nova demais; `stable` reduz surpresa operacional.
 
-### D-05: Inter-node somente pela rede privada `10.1.1.0/24`
+### D-05: Inter-node somente pela WireGuard `wg0` / `10.1.1.0/24`
 
 **Decisao:** K3s deve anunciar e usar `10.1.1.x` como `node-ip` e
-`advertise-address`. Antes da instalacao, validar se essa rede e VCN privada,
-WireGuard ou outra interface. Se `10.1.1.x` estiver instavel, parar.
+`advertise-address`, e o Flannel deve ser fixado em `flannel-iface: wg0`.
+O checkpoint de 2026-06-13 confirmou `wg0` nos tres hosts:
+`10.1.1.1/32`, `10.1.1.2/24`, `10.1.1.7/32`.
 
-**Rationale:** API, etcd, kubelet e Flannel nao devem usar IP publico.
+**Rationale:** API, etcd, kubelet e Flannel nao devem usar IP publico. Os IPs
+OCI VCN `10.0.0.x` existem, mas nao sao a rede canonica deste K3s v1. OCI
+NSG/Security List deve impedir exposicao publica; a permissao inter-node do
+K3s acontece pela VPN/host firewall em `wg0`.
 
 ### D-06: Desabilitar Traefik e ServiceLB no v1
 
@@ -79,8 +83,8 @@ hosts. O v1 deve ser zero-conflito com Apache, Docker e Podman existentes.
 `https://portainer.atius.com.br`.
 
 **Nao fazer:** reaproveitar `docker.atius.com.br` ou abrir NodePort/LoadBalancer
-publico. O Portainer antigo em `docker.atius.com.br` permanece ate cutover
-explicito.
+publico. O Portainer antigo em `docker.atius.com.br` ja foi parado/desabilitado
+em trabalho operacional anterior; M005 nao deve depender dele nem ressuscita-lo.
 
 ### D-08: Cloudflare Tunnel em vez de OCI Load Balancer
 
@@ -111,6 +115,15 @@ devem ser seriais, nunca paralelos.
 **Rationale:** Ha precedente de rate limit no GDrive com backups paralelos, e
 SRV-1/SRV-3 estao com disco pressionado.
 
+### D-11: Tokens nunca em argumentos de processo
+
+**Decisao:** Substituicoes de `K3S_CLUSTER_TOKEN` e criacao do Secret do
+Cloudflare Tunnel devem usar arquivo com permissao `0600` ou stdin. Nao usar
+`sed`/`kubectl --from-literal` com token expandido em `argv`.
+
+**Rationale:** Tokens em argumentos de processo podem aparecer em `ps`, logs de
+auditoria ou historico de shell.
+
 ## Canonical References
 
 - `planejamento_cluster_k3s_portainer_oci.pdf` — blueprint fornecido pelo usuario.
@@ -122,6 +135,8 @@ SRV-1/SRV-3 estao com disco pressionado.
 - `docs/CLOUDFLARE.md` — padrao atual do dominio `atius.com.br` no Cloudflare.
 - `61-Incidents/2026-06-12-podman-cutover-srv1-portainer-cuts.md` no vault —
   estado atual do Portainer antigo.
+- `60-LOGS/2026-06-13-containers-portainer-mailcow-gitlab-fixes.md` no vault —
+  Portainer antigo parado e vhost `portainer.atius.com.br` apontando para `127.0.0.1:9005`.
 - `60-LOGS/2026-06-12-ubuntu2404-express-prep.md` no vault — preparo do upgrade
   SRV-1 para 24.04.
 
@@ -130,6 +145,5 @@ SRV-1/SRV-3 estao com disco pressionado.
 - Longhorn ou OCI CSI para storage distribuido.
 - Traefik/Ingress oficial para apps publicas.
 - GitOps com Argo CD/Flux.
-- Upgrade SRV-2/SRV-3 para Ubuntu 24.04.
 - Migrar apps existentes para K3s.
-- Desativar o Portainer antigo em `docker.atius.com.br`.
+- Limpar ou reaproveitar explicitamente o legado `docker.atius.com.br`.

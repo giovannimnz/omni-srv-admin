@@ -3,6 +3,7 @@ token: "<K3S_CLUSTER_TOKEN>"
 node-name: "atius-srv-2"
 node-ip: "10.1.1.2"
 advertise-address: "10.1.1.2"
+flannel-iface: "wg0"
 write-kubeconfig-mode: "0600"
 tls-san:
   - "10.1.1.1"

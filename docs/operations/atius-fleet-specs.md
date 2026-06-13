@@ -14,16 +14,17 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 | Disco nominal | 200 GB |
 | Disco real (formatado) | **186.26 GiB** |
 | Tipo de disco | Oracle Block Volume (rotational=1, HDD-backed) |
-| OS | Ubuntu 22.04.5 LTS |
-| Kernel | 6.8.0-1050-oracle |
+| OS | Ubuntu 24.04.4 LTS |
+| Kernel | 6.17.0-1016-oracle |
+| Current snapshot | 2026-06-13 M005 execution checkpoint |
 
 ## Máquinas
 
 | Máquina | IP Público | IP VPN | Disco usado | RAM disp. | Write max | 85% safe |
 |---|---|---|---|---|---|---|
-| **SRV-1** | 137.131.190.161 | 10.1.1.1 | **95%** (12G livre) | ~8.5 GiB | **108 MB/s** | **92 MB/s** |
-| **SRV-2** | 129.148.47.32 | 10.1.1.2 | **71%** (58G livre) | ~17 GiB | **124 MB/s** | **105 MB/s** |
-| **SRV-3** | 136.248.126.12 | 10.1.1.7 | **97%** (7.8G livre) | ~17 GiB | ~108 MB/s | ~92 MB/s |
+| **SRV-1** | 137.131.190.161 | 10.1.1.1 | **70%** (60G livre) | ~10 GiB | **108 MB/s** | **92 MB/s** |
+| **SRV-2** | 129.148.47.32 | 10.1.1.2 | **70%** (60G livre) | ~18 GiB | **124 MB/s** | **105 MB/s** |
+| **SRV-3** | 136.248.126.12 | 10.1.1.7 | **30%** (137G livre) | ~21 GiB | ~108 MB/s | ~92 MB/s |
 
 ## Conversões
 
@@ -32,6 +33,8 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 - Disco (200 GB nominal): 200 × 10⁹ ÷ 1024³ = **186.26 GiB**
 - 85% write limit SRV-1: 108 × 0.85 = **92 MB/s**
 - 85% write limit SRV-2: 124 × 0.85 = **105 MB/s**
+- K3s network decision: WireGuard `wg0` / `10.1.1.0/24`.
+- K3s swap gate: SRV-1 still has `/swapfile` active; disable and persist swap off before installation.
 
 ## I/O Limiting
 

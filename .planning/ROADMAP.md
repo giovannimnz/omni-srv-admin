@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
 **Active Milestone:** M005 — K3s HA Cluster + Portainer
-**Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br
+**Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br; execução live bloqueada até snapshots/OCI/Cloudflare/aprovação
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---

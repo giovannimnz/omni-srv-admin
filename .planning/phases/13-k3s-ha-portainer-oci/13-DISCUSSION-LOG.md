@@ -34,9 +34,11 @@ maquinas, preserva quorum 2/3 e aproveita os recursos existentes.
 - Instalar misto 24.04/22.04.
 - Instalar ja em 22.04 e migrar depois.
 
-**Decisao:** SRV-1 obrigatoriamente 24.04 antes da montagem; SRV-2/SRV-3 podem
-entrar depois com 22.04 se passarem preflight. Upgrade deles fica pos-cluster,
-um no por vez.
+**Decisao original:** SRV-1 obrigatoriamente 24.04 antes da montagem; SRV-2/SRV-3
+poderiam entrar depois com 22.04 se passassem preflight.
+
+**Superseded em 2026-06-13:** SRV-1/SRV-2/SRV-3 ja estao em Ubuntu 24.04.4 LTS
+no checkpoint de execucao. A montagem real agora exige os tres em 24.04.
 
 ### 3. Exposicao do Portainer
 
