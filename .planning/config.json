@@ -45,7 +45,7 @@
       "phase": "12",
       "phases": ["12"],
       "branch": "codex/omni-fleet-control-plane-m004",
-      "artifact_scope": "canonical_full_plan_on_branch",
+      "artifact_scope": "canonical_full_plan",
       "goal": "base operacional multi-host com install server/node, inventario, PostgreSQL central via PgBouncer, registry, versoes, licencas, auditoria e contrato futuro com Podman/K3s",
       "depends_on": "M003"
     },
@@ -56,7 +56,7 @@
       "phase": "13",
       "phases": ["13"],
       "branch": "codex/k3s-portainer-oci-plan",
-      "artifact_scope": "canonical_full_plan_on_branch",
+      "artifact_scope": "separate_branch_reference",
       "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
       "depends_on": "M004"
     }

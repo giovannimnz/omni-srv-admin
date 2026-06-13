@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
 **Active Milestone:** M004 — Omni Fleet Control Plane
-**Milestone Goal:** M004 cria a base operacional multi-host; M005/K3s fica na fila depois do Fleet.
+**Milestone Goal:** criar a base operacional multi-host antes do K3s: inventário, instalação server/node, PostgreSQL central via PgBouncer, versões, licenças, auditoria e integração futura com Podman/K3s
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
@@ -225,31 +225,74 @@
 
 ## M004: Omni Fleet Control Plane
 
-**Goal:** Criar a base operacional multi-host antes de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat/status, registry de programas, version/update plans, licenças sem secrets, auditoria e contrato futuro com Podman/K3s.
+**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat, registry de programas, version/update plans, licenças sem secrets no git/log/vault, auditoria e contrato futuro com Podman/K3s.
 
-**Status:** CONTRACT IMPLEMENTED ON BRANCH (2026-06-13)
+**Status:** CONTRACT VALIDATED; LIVE PGBOUNCER NODE ACCESS PASSED (2026-06-13)
 
-**Canonical branch:** `codex/omni-fleet-control-plane-m004`
+**Depends on:** M003 (Omni CLI Expansion)
 
-**Phase:** 12
+**Why:** O Fleet Control Plane vem antes do K3s porque resolve controle operacional e governança da frota. K3s/Podman entram depois consumindo inventário, estado, auditoria e contracts já definidos.
 
-**Full artifacts:** `.planning/phases/12-omni-fleet-control-plane/` on the canonical branch.
+**Branch:** `codex/omni-fleet-control-plane-m004`
+
+**Phases:** 12
 
 ---
 
-## M005: K3s HA Cluster + Portainer
+### Phase 12: Fleet Control Plane Foundation ✅ CONTRACT IMPLEMENTED
 
-**Goal:** Planejar cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+**Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, version planner, licenças e auditoria.
 
-**Status:** PREFLIGHT PASSED ON BRANCH; LIVE INSTALL GATED (2026-06-13)
+**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10
 
-**Depends on:** M004 Fleet Control Plane, SRV-1 atualizado para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados.
+**Status:** CONTRACT VALIDATED (2026-06-13); live install blocked by remaining human gates
+
+**Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
+
+**Plans:** 1
+- [x] 12-01-PLAN.md — Fleet Control Plane Foundation (implemented as safe contract, live execution gated)
+
+**Implementation Results:**
+- `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
+- `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
+- `omni fleet validate-inventory` validates all 7 inventory hosts.
+- `omni fleet install server|node` renders idempotent dry-run plans and blocks live `--apply`.
+- `omni fleet heartbeat`, `programs`, `update-plan`, `audit` and `status --all` expose the runtime contracts without touching remote hosts.
+
+**Success Criteria:**
+1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
+2. Requirements `FCP-01..FCP-10` definidos e rastreados para Phase 12
+3. Desenho server/node e inventory source-of-truth travado
+4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
+5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
+6. Live install remains gated until secret storage and final host preflight are approved
+7. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
+
+**Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.
+
+---
+
+## M004 Phase Summary
+
+| Milestone | # | Phase | Goal | Status | Risk |
+|---|---:|---|---|---|---|
+| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ CONTRACT VALIDATED / PGBOUNCER PASSED | MEDIUM |
+
+---
+
+## M005: K3s HA Cluster + Portainer — queued reference
 
 **Canonical branch:** `codex/k3s-portainer-oci-plan`
 
 **Phase:** 13
 
-**Full artifacts:** `.planning/phases/13-k3s-ha-portainer-oci/` on the canonical branch.
+**Status:** PREFLIGHT PASSED ON BRANCH; LIVE INSTALL GATED (2026-06-13)
+
+**Depends on:** M004 Fleet Control Plane, SRV-1 atualizado para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados.
+
+**Scope note:** O plano K3s/Portainer vive na branch dedicada. Este roadmap registra M005 como proximo milestone para que o Fleet exponha os contratos que K3s/Portainer vao consumir.
+
+**Portainer target:** `portainer.atius.com.br`
 
 **Branch result:** `codex/k3s-portainer-oci-plan` has preflight report
 `13-PREFLIGHT-2026-06-13.md`, safe templates under

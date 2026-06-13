@@ -1,0 +1,42 @@
+# Example only. Do not place secrets in this file.
+server:
+  host_id: atius-srv-1
+  install_mode: server
+  service_user: omni-fleet
+
+database:
+  engine: postgresql
+  database: omni_fleet
+  migrations_dir: modules/fleet-control-plane/migrations
+  direct_access:
+    allowed_for:
+      - control-plane-migrations
+      - backup-restore-operator
+    denied_for:
+      - fleet-nodes
+      - cli-clients
+
+pgbouncer:
+  required_for_clients: true
+  listen_host: 10.1.1.1
+  listen_port: 6432
+  pool_mode: transaction
+  allowed_client_networks:
+    - 10.1.1.0/24
+  auth_ref: secret://omni-fleet/pgbouncer/auth
+
+inventory:
+  source: inventory/hosts
+  source_of_truth: true
+
+audit:
+  local_jsonl: /home/ubuntu/.logs/fleet/audit-events.jsonl
+  redact:
+    - secret_ref
+    - token
+    - password
+    - serial
+
+licenses:
+  store_raw_material: false
+  secret_ref_required: true

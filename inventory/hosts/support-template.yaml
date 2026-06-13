@@ -9,6 +9,7 @@ access:
 platform:
   provider: unknown
   os: unknown
+  arch: unknown
 status: template
 modules: []
 constraints:
