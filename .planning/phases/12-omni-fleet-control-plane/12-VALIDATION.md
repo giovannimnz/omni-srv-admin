@@ -2,8 +2,8 @@
 phase: 12
 name: omni-fleet-control-plane
 date: 2026-06-13
-status: validated
-method: pytest + offline harness + live read-only SSH probes + multi-agent scenario review
+status: live-implemented
+method: pytest + offline harness + live SSH/repo/DB probes + multi-agent scenario review
 branch: codex/omni-fleet-control-plane-m004
 ---
 
@@ -11,9 +11,10 @@ branch: codex/omni-fleet-control-plane-m004
 
 ## Result
 
-M004 is validated as a contract and test harness. The live SRV1/SRV2/SRV3
-network is reachable, PgBouncer is reachable from nodes on the private endpoint,
-and direct PostgreSQL access from nodes is blocked.
+M004 is implemented for the intended live base. The live SRV1/SRV2/SRV3 network
+is reachable, each host has `~/GitHub/omni-srv-admin`, SRV-1 owns central
+database `omni_fleet`, all three hosts can query it through PgBouncer, and
+direct PostgreSQL access from nodes is blocked.
 
 ## Automated Commands
 
@@ -38,19 +39,21 @@ PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live
 | Scope | Result |
 |---|---:|
 | SSH identity probes | 3 PASS |
+| `~/GitHub/omni-srv-admin` repo + CLI smoke | 3 PASS |
 | VPN full-mesh ping | 6 PASS |
 | SRV-1 PostgreSQL/PgBouncer readiness | 1 PASS |
+| Central `omni_fleet` query through PgBouncer | 3 PASS |
 | Node PgBouncer access on `10.1.1.1:6432` | 2 PASS |
 | Node direct PostgreSQL access blocked on `10.1.1.1:8745` | 2 PASS |
 
-Live summary: `20 PASS`, `0 BLOCKED`, `0 FAIL`.
+Live summary: `26 PASS`, `0 BLOCKED`, `0 FAIL`.
 
 ## Host Evidence
 
 | Host | Observed OS | Arch | VPN |
 |---|---|---|---|
 | ATIUS-SRV-1 | Ubuntu 24.04.4 LTS | aarch64 | 10.1.1.1 |
-| ATIUS-SRV-2 | Ubuntu 22.04.5 LTS | aarch64 | 10.1.1.2 |
+| ATIUS-SRV-2 | Ubuntu 24.04.4 LTS | aarch64 | 10.1.1.2 |
 | ATIUS-SRV-3 | Ubuntu 24.04.4 LTS | aarch64 | 10.1.1.7 |
 
 ## Master/Slave Scenario Matrix
@@ -82,9 +85,20 @@ Current live state:
 
 1. SRV-1 PgBouncer listens on `10.1.1.1:6432`.
 2. SRV-2 and SRV-3 connect to PgBouncer successfully.
-3. SRV-2 and SRV-3 cannot connect to direct PostgreSQL on `10.1.1.1:8745`.
-4. PgBouncer auth material remains outside git/log/vault.
-5. Firewall enforcement is installed through `omni-pg-access-guard`.
+3. SRV-1/SRV-2/SRV-3 query `omni_fleet` through PgBouncer successfully.
+4. SRV-2 and SRV-3 cannot connect to direct PostgreSQL on `10.1.1.1:8745`.
+5. PgBouncer auth material remains outside git/log/vault.
+6. Firewall enforcement is installed through `omni-pg-access-guard`.
+
+## Live Repo + DB Rollout
+
+- SRV-1: `~/GitHub/omni-srv-admin` exists; local dirty work is preserved and was not overwritten.
+- SRV-2: `~/GitHub/omni-srv-admin` cloned at `main@35bf94b`, worktree clean, CLI smoke passed.
+- SRV-3: `~/GitHub/omni-srv-admin` cloned at `main@35bf94b`, worktree clean, CLI smoke passed.
+- SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
+- SRV-1: `hosts`, `nodes` and `programs` tables are seeded from the intended SRV1/SRV2/SRV3 fleet base.
+- SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points clients to `10.1.1.1:6432`.
+- Secrets remain outside git/log/vault.
 
 Live changes applied:
 
@@ -100,6 +114,8 @@ Live changes applied:
 
 Backups were created under `/root/omni-pg-access-backups/` on SRV-1 and
 `/root/wg0.conf.pre-pgbouncer-*.bak` on SRV-2 before live edits/restarts.
+The live DB/PgBouncer change also backed up SRV-1 PgBouncer files under
+`/root/omni-fleet-live-backups/`.
 
 ## Multi-Agent Review Inputs
 

@@ -1,6 +1,6 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M004 PgBouncer validation and M005 preflight
+**Last updated:** 2026-06-13 after M004 live repo/DB implementation and M005 preflight
 
 ## Project Reference
 
@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix)
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane contract is implemented and validated. Live node DB access now uses PgBouncer on the private fleet endpoint; M005 K3s HA Cluster + Portainer preflight passed on its branch and live install is gated by OCI snapshots/firewall plus Cloudflare Tunnel token.
+**Current focus:** M004 Omni Fleet Control Plane is live for its intended base: `~/GitHub/omni-srv-admin` exists on SRV1/SRV2/SRV3, SRV-1 owns central PostgreSQL database `omni_fleet`, and SRV-2/SRV-3 query it through PgBouncer on the private endpoint. M005 K3s HA Cluster + Portainer preflight passed on its branch and live install is gated by OCI snapshots/firewall plus Cloudflare Tunnel token.
 
 ## Milestones
 
@@ -17,14 +17,14 @@ See also: .planning/MILESTONES.md
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract validated; live PgBouncer node access passed |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented; repos and central DB validated |
 | M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Preflight passed; live gates open |
 
 ## Active Branch Results
 
 | Milestone | Branch | Result |
 |---|---|---|
-| M004 | `codex/omni-fleet-control-plane-m004` | Fleet Control Plane contract, CLI dry-run commands, schema/config docs, pytest/offline/live validation, PgBouncer private endpoint guard |
+| M004 | `codex/omni-fleet-control-plane-m004` | Live repo rollout, central `omni_fleet` DB, CLI dry-run commands, schema/config docs, pytest/offline/live validation, PgBouncer private endpoint guard |
 | M005 | `codex/k3s-portainer-oci-plan` | K3s/Portainer preflight, safe log cleanup, non-secret templates, vault notes |
 
 ## Live Gates
@@ -72,16 +72,18 @@ See also: .planning/MILESTONES.md
 | Docs | `docs/fleet/control-plane.md` criado com arquitetura, runbook e gates | ✅ |
 | Module | `modules/fleet-control-plane/` criado com config exemplo e migration SQL inicial | ✅ |
 | CLI | `validate-inventory`, `install server/node`, `heartbeat`, `programs`, `update-plan`, `audit`, `status --all` | ✅ |
-| Tests | pytest + offline validation harness + live read-only SRV1/SRV2/SRV3 probes | ✅ |
+| Tests | pytest + offline validation harness + live SRV1/SRV2/SRV3 repo/DB probes | ✅ |
 | Live network | SSH identity and VPN full-mesh passed across SRV1/SRV2/SRV3 | ✅ |
-| PgBouncer | SRV-1 PgBouncer is active on `127.0.0.1:6432` and `10.1.1.1:6432`; SRV-2/SRV-3 reach PgBouncer and direct `8745` is blocked | ✅ |
-| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault, decidir CLI-only vs API+CLI e aprovar preflight final | Open |
+| Repo rollout | `~/GitHub/omni-srv-admin` exists on SRV1/SRV2/SRV3; SRV2/SRV3 are clean at `main@35bf94b`; SRV1 has local work preserved | ✅ |
+| PostgreSQL | SRV-1 database `omni_fleet` exists with initial schema and seeded hosts/nodes/programs | ✅ |
+| PgBouncer | SRV-1 PgBouncer is active on `127.0.0.1:6432` and `10.1.1.1:6432`; SRV-1/SRV-2/SRV-3 query `omni_fleet` via PgBouncer and direct node access to `8745` is blocked | ✅ |
+| Remaining hardening | PgBouncer global auth is still `trust` for compatibility with existing services; move to stricter auth in a separate hardening task | Open |
 
 ## M004 Phase Breakdown
 
 | Milestone | Phase | Descrição | Status |
 |---|---:|---|---|
-| M004 | 12 | Fleet Control Plane Foundation | Contract validated; live PgBouncer node access passed |
+| M004 | 12 | Fleet Control Plane Foundation | Live implemented; repos and central DB validated |
 
 ## Backup GDrive
 

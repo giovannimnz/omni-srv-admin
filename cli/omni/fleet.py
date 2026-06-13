@@ -501,7 +501,7 @@ def status(all_hosts: bool) -> None:
     click.echo(f"repo:  {REPO}")
     click.echo(f"hosts: {hosts_dir} ({'ok' if hosts_dir.exists() else 'missing'})")
     click.echo(f"legacy_hosts: {LEGACY_HOSTS_DIR} ({'present' if LEGACY_HOSTS_DIR.exists() else 'absent'})")
-    click.echo("control_plane: M004 contracts present; live install blocked until gates pass")
+    click.echo("control_plane: M004 live foundation present; generic --apply remains gated")
     click.echo(f"heartbeat_dir: {HEARTBEAT_DIR}")
     click.echo(f"audit_log: {AUDIT_EVENTS}")
     if all_hosts and hosts_dir.exists():

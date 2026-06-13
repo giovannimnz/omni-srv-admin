@@ -2,9 +2,9 @@
 
 M004 foundation for the Omni Fleet Control Plane.
 
-This module is contract-first. It defines the database schema, runtime
-configuration shape and safe CLI surface required before any K3s/Portainer work.
-It does not install services on the hosts yet.
+This module defines and validates the live fleet foundation required before any
+K3s/Portainer work: repo rollout, central database schema, runtime configuration
+shape and safe CLI surface.
 
 ## Current Artifacts
 
@@ -39,9 +39,19 @@ scripts/verify-m004-fleet-control-plane.sh
 OMNI_M004_LIVE=1 scripts/verify-m004-fleet-control-plane.sh
 ```
 
-The live mode is read-only. It uses SSH, ping, service/listener inspection and
-TCP connectivity checks only. It must report PgBouncer node access as blocked
-until the server intentionally exposes PgBouncer on the private fleet endpoint.
+The live mode uses SSH, ping, service/listener inspection, repo smoke checks and
+read-only DB queries through PgBouncer. It must report direct PostgreSQL access
+from nodes as blocked.
+
+## Live M004 State
+
+- SRV-1: `~/GitHub/omni-srv-admin` exists; local dirty work is preserved.
+- SRV-2: `~/GitHub/omni-srv-admin` exists at `main@35bf94b`, worktree clean.
+- SRV-3: `~/GitHub/omni-srv-admin` exists at `main@35bf94b`, worktree clean.
+- SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
+- SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points to PgBouncer at
+  `10.1.1.1:6432`.
+- PgBouncer auth material remains outside git/log/vault.
 
 ## SRV-1 PgBouncer Enforcement
 
