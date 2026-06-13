@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M004 — K3s HA Cluster + Portainer
-**Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br
+**Active Milestone:** M004 — Omni Fleet Control Plane
+**Milestone Goal:** criar a base operacional multi-host antes do K3s: inventário, instalação server/node, PostgreSQL central via PgBouncer, versões, licenças, auditoria e integração futura com Podman/K3s
 
 ---
 
@@ -222,21 +222,64 @@
 
 ---
 
-## M004: K3s HA Cluster + Portainer
+## M004: Omni Fleet Control Plane
 
-**Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat, registry de programas, version/update plans, licenças sem secrets no git/log/vault, auditoria e contrato futuro com Podman/K3s.
 
 **Status:** ACTIVE (2026-06-13)
 
-**Depends on:** SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
+**Depends on:** M003 (Omni CLI Expansion)
 
-**Why:** evoluir de gestao por Docker/Podman locais para uma camada Kubernetes HA leve, sem expor API/etcd/Portainer publicamente e sem quebrar Apache/servicos existentes.
+**Why:** O Fleet Control Plane vem antes do K3s porque resolve controle operacional e governança da frota. K3s/Podman entram depois consumindo inventário, estado, auditoria e contracts já definidos.
 
-**Phases:** 12-16
+**Branch:** `codex/omni-fleet-control-plane-m004`
+
+**Phases:** 12
 
 ---
 
-### Phase 12: K3s HA + Portainer Milestone Plan ✅ PLANNED
+### Phase 12: Fleet Control Plane Foundation ✅ PLANNED
+
+**Goal:** Planejar a fundação do control plane: server/node installer, inventário multi-host, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, version planner, licenças e auditoria.
+
+**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10
+
+**Status:** PLANNED (2026-06-13)
+
+**Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
+
+**Plans:** 1
+- [x] 12-01-PLAN.md — Fleet Control Plane Foundation (ready, human-gated)
+
+**Success Criteria:**
+1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
+2. Requirements `FCP-01..FCP-10` definidos e rastreados para Phase 12
+3. Desenho server/node e inventory source-of-truth travado
+4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
+5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
+6. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
+
+**Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.
+
+---
+
+## M005: K3s HA Cluster + Portainer
+
+**Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+
+**Status:** PLANNED (2026-06-13)
+
+**Depends on:** M004 concluído, SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
+
+**Why:** Evoluir de gestão por Docker/Podman locais para Kubernetes HA leve, sem expor API/etcd/Portainer publicamente e usando a base operacional criada no Fleet Control Plane.
+
+**Preservation:** O plano original foi preservado no commit `7ce6d4b` na branch `codex/k3s-portainer-oci-plan` antes da renumeração.
+
+**Phases:** 13
+
+---
+
+### Phase 13: K3s HA + Portainer Milestone Plan ✅ PLANNED
 
 **Goal:** Planejar bootstrap K3s HA com embedded etcd, Portainer CE via Helm, Cloudflare Tunnel para `portainer.atius.com.br`, e gates de backup/rollback.
 
@@ -244,106 +287,28 @@
 
 **Status:** PLANNED (2026-06-13)
 
-**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao futuro upgrade do SRV-1 para 24.04, e aos riscos locais de disco/GDrive/portas.
+**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao futuro upgrade do SRV-1 para 24.04, aos riscos locais de disco/GDrive/portas e ao novo pré-requisito M004.
 
 **Plans:** 1
-- [x] 12-01-PLAN.md — K3s HA bootstrap + Portainer exposure (ready, human-gated)
+- [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (ready, human-gated)
 
 **Success Criteria:**
-1. Branch de plano criada: `codex/k3s-portainer-oci-plan`
-2. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-k3s-ha-portainer-oci/`
-3. Plano exige SRV-1 em Ubuntu 24.04 antes de instalacao real
-4. Plano nao abre 6443/2379-2380/8472/10250 para internet publica
-5. Plano expoe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
+1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/13-k3s-ha-portainer-oci/`
+2. Plano exige SRV-1 em Ubuntu 24.04 antes de instalação real
+3. Plano não abre 6443/2379-2380/8472/10250 para internet pública
+4. Plano expõe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
+5. Plano consome o inventário/contratos definidos no M004 quando for executado
 
-**Risk:** HIGH — rede privada/WireGuard precisa estar estavel, SRV-3 tem historico de disco quase cheio, e Portainer/Apache atuais nao podem ser quebrados.
+**Risk:** HIGH — rede privada/WireGuard precisa estar estável, SRV-3 tem histórico de disco quase cheio, e Portainer/Apache atuais não podem ser quebrados.
 
 ---
 
-### Phase 13: SRV-1 Ubuntu 24.04 + Fleet Preflight
+## M004-M005 Phase Summary
 
-**Goal:** Atualizar/confirmar SRV-1 em Ubuntu 24.04 e validar os 3 hosts antes de qualquer instalacao K3s.
-
-**Requirements:** K3S-04, SEC-01
-
-**Depends on:** Phase 12
-
-**Success Criteria:**
-1. SRV-1 retorna Ubuntu 24.04 LTS e postcheck do pacote de upgrade aprovado
-2. SRV-1/SRV-2/SRV-3 com tempo sincronizado, rede `10.1.1.0/24` estavel e >=25 GiB livres
-3. Snapshots OCI ou backup equivalente registrados para os 3 servidores
-4. OCI NSG/Security List e firewall local preparados sem expor portas K3s publicamente
-
-**Risk:** HIGH — upgrade de SO e cleanup de disco podem afetar sessoes/servicos existentes.
-
----
-
-### Phase 14: K3s HA Bootstrap
-
-**Goal:** Instalar K3s stable nos 3 servidores como `server` + `worker`, com embedded etcd, secrets encryption, snapshots e Traefik/ServiceLB desabilitados.
-
-**Requirements:** K3S-01, K3S-02, K3S-03, K3S-05, SEC-01
-
-**Depends on:** Phase 13
-
-**Success Criteria:**
-1. `kubectl get nodes -o wide` mostra os 3 nos `Ready` e `arm64`
-2. Roles incluem control-plane/etcd nos 3 servidores
-3. Kube-system healthy e `/readyz?verbose` ok
-4. Etcd snapshot manual e agendamento de snapshots validados
-5. Portas 6443, 2379-2380, 8472 e 10250 continuam privadas
-
-**Risk:** HIGH — quorum etcd, rede privada e discos lentos sao o ponto critico.
-
----
-
-### Phase 15: Portainer CE + Cloudflare Tunnel
-
-**Goal:** Instalar Portainer CE LTS no Kubernetes e publicar `https://portainer.atius.com.br` por Cloudflare Tunnel com Access, preservando `docker.atius.com.br`.
-
-**Requirements:** PRT-01, PRT-02, CFL-01, SEC-01
-
-**Depends on:** Phase 14
-
-**Success Criteria:**
-1. Portainer namespace `portainer`, deployment Ready, PVC Bound
-2. Portainer pinned em `atius-srv-1` enquanto storage for local-path
-3. `cloudflared` com >=2 replicas Ready e token em Secret
-4. `https://portainer.atius.com.br` abre UI via Cloudflare
-5. `docker.atius.com.br` antigo continua funcional ate cutover explicito
-
-**Risk:** MEDIUM — token Cloudflare e Cloudflare Access precisam ser tratados sem vazar segredo.
-
----
-
-### Phase 16: K3s Backup, DR and Acceptance
-
-**Goal:** Fechar o milestone com backup/restore documentado, runbook de disaster recovery e validacao de falha de 1 no.
-
-**Requirements:** K3S-02, K3S-03, PRT-01, PRT-02, CFL-01, SEC-01
-
-**Depends on:** Phase 15
-
-**Success Criteria:**
-1. Runbook de backup etcd + Portainer PVC + configs K3s criado
-2. Restore dry-run ou validacao controlada de snapshots documentada
-3. Teste de indisponibilidade de 1 no mantem cluster com quorum 2/3
-4. Cloudflare Tunnel mantem acesso ao Portainer com pelo menos 1 conector restante
-5. Obsidian e repo atualizados com estado final do milestone
-
-**Risk:** MEDIUM — testes de falha devem ser controlados para nao derrubar servicos de producao.
-
----
-
-## M004 Phase Summary
-
-| # | Phase | Goal | Status | Risk |
-|---|---|---|---|---|
-| 12 | Milestone Plan | Context/research/runbook | ✅ PLANNED | LOW |
-| 13 | SRV-1 24.04 + Preflight | Host readiness | Pending | HIGH |
-| 14 | K3s HA Bootstrap | Cluster core | Pending | HIGH |
-| 15 | Portainer + Tunnel | UI/admin exposure | Pending | MEDIUM |
-| 16 | Backup/DR/Acceptance | Closeout | Pending | MEDIUM |
+| Milestone | # | Phase | Goal | Status | Risk |
+|---|---:|---|---|---|---|
+| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ PLANNED | MEDIUM |
+| M005 | 13 | K3s HA + Portainer Milestone Plan | Context/research/runbook K3s | ✅ PLANNED | HIGH |
 
 ---
 

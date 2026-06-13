@@ -86,6 +86,19 @@
 
 ## v3 Requirements
 
+### Omni Fleet Control Plane
+
+- [ ] **FCP-01**: `omni-srv-admin` deve instalar/configurar um host como `server` ou `node`, com papéis explícitos e idempotência básica.
+- [ ] **FCP-02**: Inventário multi-host deve ser a fonte de verdade para `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` e futuros hosts.
+- [ ] **FCP-03**: PostgreSQL central deve ser migrável via dump/restore e migrations versionadas, sem lock-in em um único host.
+- [ ] **FCP-04**: Clientes e nodes devem acessar PostgreSQL somente via PgBouncer; acesso direto ao PostgreSQL fica restrito ao server/control plane.
+- [ ] **FCP-05**: Nodes devem reportar heartbeat, versão do agent, health/status e último contato.
+- [ ] **FCP-06**: Programas instalados por host devem ser registrados com nome, versão, origem, modo de instalação e ownership.
+- [ ] **FCP-07**: Control plane deve comparar versão atual vs desejada e gerar update plans auditáveis antes de aplicar mudanças.
+- [ ] **FCP-08**: Licenças devem ser controladas por metadata e `secret_ref`, sem secrets em git, logs, `.planning` ou vault.
+- [ ] **FCP-09**: Ações relevantes devem gerar auditoria/logs com ator, host, ação, alvo, resultado e timestamp.
+- [ ] **FCP-10**: O design deve expor contrato futuro para Podman/K3s consumir inventário, status, programs, versions e audit events sem implementar a orquestração nesta phase.
+
 ### K3s HA Cluster
 
 - [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
@@ -128,16 +141,17 @@
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| K3S-01 → K3S-05 | Phases 12-16 | Planned |
-| PRT-01 → PRT-02 | Phases 12, 15-16 | Planned |
-| CFL-01, SEC-01 | Phases 12-16 | Planned |
+| FCP-01 → FCP-10 | Phase 12 | Planned |
+| K3S-01 → K3S-05 | Phase 13 | Planned |
+| PRT-01 → PRT-02 | Phase 13 | Planned |
+| CFL-01, SEC-01 | Phase 13 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 9 total
-- Mapped to phases: 48
+- v3 requirements: 19 total
+- Mapped to phases: 58
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after Phase 12 K3s HA Portainer planning*
+*Last updated: 2026-06-13 after M004 Fleet Control Plane and M005 K3s ordering*
