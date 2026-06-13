@@ -27,11 +27,21 @@ Supported categories:
 omni fleet list
 omni fleet show atius-srv-1
 omni fleet status --all
+omni fleet validate-inventory
+omni fleet install server --host atius-srv-1
+omni fleet install node --host atius-srv-2
+omni fleet heartbeat --host atius-srv-1 --json
+omni fleet programs --host atius-srv-1 --json
+omni fleet update-plan --host atius-srv-1 --program fork-sync --desired-version v4.1 --json
 omni fleet ssh atius-srv-2
 omni fleet run atius-srv-3 'df -h /'
 omni fleet sync-module srv1-ops --target atius-srv-2 --dry-run
 omni fleet backup-plan atius-srv-1
 ```
+
+The control-plane commands above are safe M004 contracts. They render dry-run
+plans and status payloads; live `--apply` execution remains blocked until the
+human gates in `docs/fleet/control-plane.md` pass.
 
 ## Directory layout
 

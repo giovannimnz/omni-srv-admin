@@ -1,6 +1,6 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M004 Fleet Control Plane planning
+**Last updated:** 2026-06-13 after M004 Fleet Control Plane contract implementation
 
 ## Project Reference
 
@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
 See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane; M005 K3s HA Cluster + Portainer is queued in its separate branch.
+**Current focus:** M004 Omni Fleet Control Plane contract is implemented and awaiting live gates; M005 K3s HA Cluster + Portainer is queued in its separate branch.
 
 ## Milestones
 
@@ -17,7 +17,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Active |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract implemented; live gates open |
 | M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Planned |
 
 ## M001 Completion
@@ -47,7 +47,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | MH-8 | Working tree limpo | ✅ |
 | MH-9 | 9 commits claros | ✅ |
 
-## M004 Planning Summary
+## M004 Implementation Summary
 
 | Item | Descrição | Status |
 |---|---|---|
@@ -56,13 +56,16 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | CONTEXT | Decisões travadas para server/node, inventário, DB central, PgBouncer, agents, licenças, auditoria e contrato Podman/K3s | ✅ |
 | RESEARCH | Repo/vault local + PostgreSQL dump/restore + PgBouncer como pooler obrigatório | ✅ |
 | PLAN | `12-01-PLAN.md` para Fleet Control Plane Foundation | ✅ |
-| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault | Open |
+| Docs | `docs/fleet/control-plane.md` criado com arquitetura, runbook e gates | ✅ |
+| Module | `modules/fleet-control-plane/` criado com config exemplo e migration SQL inicial | ✅ |
+| CLI | `validate-inventory`, `install server/node`, `heartbeat`, `programs`, `update-plan`, `audit`, `status --all` | ✅ |
+| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault e confirmar SRV-1 Ubuntu 24.04 | Open |
 
 ## M004 Phase Breakdown
 
 | Milestone | Phase | Descrição | Status |
 |---|---:|---|---|
-| M004 | 12 | Fleet Control Plane Foundation | Planned |
+| M004 | 12 | Fleet Control Plane Foundation | Contract implemented; live execution gated |
 
 ## Backup GDrive
 

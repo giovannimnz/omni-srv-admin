@@ -227,7 +227,7 @@
 
 **Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat, registry de programas, version/update plans, licenças sem secrets no git/log/vault, auditoria e contrato futuro com Podman/K3s.
 
-**Status:** ACTIVE (2026-06-13)
+**Status:** CONTRACT IMPLEMENTED; LIVE EXECUTION GATED (2026-06-13)
 
 **Depends on:** M003 (Omni CLI Expansion)
 
@@ -239,18 +239,25 @@
 
 ---
 
-### Phase 12: Fleet Control Plane Foundation ✅ PLANNED
+### Phase 12: Fleet Control Plane Foundation ✅ CONTRACT IMPLEMENTED
 
-**Goal:** Planejar a fundação do control plane: server/node installer, inventário multi-host, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, version planner, licenças e auditoria.
+**Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, version planner, licenças e auditoria.
 
 **Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10
 
-**Status:** PLANNED (2026-06-13)
+**Status:** CONTRACT IMPLEMENTED (2026-06-13); live install blocked by human gates
 
 **Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
 
 **Plans:** 1
-- [x] 12-01-PLAN.md — Fleet Control Plane Foundation (ready, human-gated)
+- [x] 12-01-PLAN.md — Fleet Control Plane Foundation (implemented as safe contract, live execution gated)
+
+**Implementation Results:**
+- `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
+- `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
+- `omni fleet validate-inventory` validates all 7 inventory hosts.
+- `omni fleet install server|node` renders idempotent dry-run plans and blocks live `--apply`.
+- `omni fleet heartbeat`, `programs`, `update-plan`, `audit` and `status --all` expose the runtime contracts without touching remote hosts.
 
 **Success Criteria:**
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
@@ -258,7 +265,8 @@
 3. Desenho server/node e inventory source-of-truth travado
 4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
 5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
-6. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
+6. Live install remains gated until secret storage is approved and SRV-1 Ubuntu 24.04 baseline is confirmed
+7. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
 
 **Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.
 
@@ -268,7 +276,7 @@
 
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
-| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ PLANNED | MEDIUM |
+| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ CONTRACT IMPLEMENTED | MEDIUM |
 
 ---
 

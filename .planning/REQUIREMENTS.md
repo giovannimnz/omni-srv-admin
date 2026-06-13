@@ -127,7 +127,7 @@ in `codex/k3s-portainer-oci-plan`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| FCP-01 → FCP-10 | Phase 12 | Planned |
+| FCP-01 → FCP-10 | Phase 12 | Contract implemented; live execution gated |
 
 **Coverage:**
 - v1 requirements: 39 total
@@ -137,4 +137,4 @@ in `codex/k3s-portainer-oci-plan`.
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after M004 Fleet Control Plane planning*
+*Last updated: 2026-06-13 after M004 Fleet Control Plane contract implementation*
