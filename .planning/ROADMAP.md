@@ -2,6 +2,7 @@
 
 **Active Milestone:** M005 — K3s HA Cluster + Portainer
 **Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br
+**Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
 
@@ -219,6 +220,18 @@
 - `omni backup restore <path>` — restaura backup
 - `omni backup status` — status do último backup
 - `--help` documentado
+
+---
+
+## M004: Omni Fleet Control Plane — prerequisite reference
+
+**Canonical branch:** `codex/omni-fleet-control-plane-m004`
+
+**Phase:** 12
+
+**Status:** ACTIVE/PLANNED on dedicated branch
+
+**Scope note:** Esta branch K3s nao carrega os artefatos completos do Fleet Control Plane. Ela referencia M004 como prerequisito porque M005 deve consumir inventario, contratos de status, auditoria e governanca definidos no Fleet.
 
 ---
 

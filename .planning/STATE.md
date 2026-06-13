@@ -5,6 +5,7 @@
 ## Project Reference
 
 See: .planning/ROADMAP.md (M005 — K3s HA Cluster + Portainer)
+See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
 **Current focus:** M005 K3s HA Cluster + Portainer, Phase 13 planning. M004 Fleet Control Plane remains in its separate branch.
@@ -16,6 +17,7 @@ See: .planning/ROADMAP.md (M005 — K3s HA Cluster + Portainer)
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Active |
 | M005 | K3s HA Cluster + Portainer (Phase 13) | Planned |
 
 ## M001 Completion
