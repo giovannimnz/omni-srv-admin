@@ -1,13 +1,13 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after Phase 12 K3s HA Portainer planning
+**Last updated:** 2026-06-13 after M005 K3s HA Portainer planning split
 
 ## Project Reference
 
-See: .planning/ROADMAP.md (M004 — K3s HA Cluster + Portainer)
+See: .planning/ROADMAP.md (M005 — K3s HA Cluster + Portainer)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 K3s HA Cluster + Portainer, starting with Phase 12 planning and Phase 13 SRV-1 Ubuntu 24.04/preflight
+**Current focus:** M005 K3s HA Cluster + Portainer, Phase 13 planning. M004 Fleet Control Plane remains in its separate branch.
 
 ## Milestones
 
@@ -16,7 +16,7 @@ See: .planning/ROADMAP.md (M004 — K3s HA Cluster + Portainer)
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | K3s HA Cluster + Portainer (Phases 12-16) | Active |
+| M005 | K3s HA Cluster + Portainer (Phase 13) | Planned |
 
 ## M001 Completion
 
@@ -45,26 +45,23 @@ See: .planning/ROADMAP.md (M004 — K3s HA Cluster + Portainer)
 | MH-8 | Working tree limpo | ✅ |
 | MH-9 | 9 commits claros | ✅ |
 
-## M004 Planning Summary
+## M005 Planning Summary
 
 | Item | Descrição | Status |
 |---|---|---|
-| Branch | `codex/k3s-portainer-oci-plan` criada | ✅ |
-| Phase | `.planning/phases/12-k3s-ha-portainer-oci/` | ✅ |
+| Branch | `codex/k3s-portainer-oci-plan` | ✅ |
+| Phase | `.planning/phases/13-k3s-ha-portainer-oci/` | ✅ |
 | CONTEXT | Decisões travadas para 3 nos K3s server+worker, SRV-1 em 24.04, Portainer em `portainer.atius.com.br` | ✅ |
 | RESEARCH | PDF + docs oficiais K3s/Portainer/Cloudflare/OCI/Ubuntu + repo/vault local | ✅ |
-| PLAN | `12-01-PLAN.md` human-gated para bootstrap K3s HA + Portainer + Cloudflare Tunnel | ✅ |
+| PLAN | `13-01-PLAN.md` human-gated para bootstrap K3s HA + Portainer + Cloudflare Tunnel | ✅ |
+| Prerequisite | M004 Fleet Control Plane tratado em branch separada | Open |
 | Blocker | Não instalar enquanto SRV-1 não estiver em Ubuntu 24.04 e SRV-3 sem folga de disco | Open |
 
-## M004 Phase Breakdown
+## M005 Phase Breakdown
 
 | Phase | Descrição | Status |
 |---|---|---|
-| 12 | K3s HA + Portainer Milestone Plan | Planned |
-| 13 | SRV-1 Ubuntu 24.04 + Fleet Preflight | Pending |
-| 14 | K3s HA Bootstrap | Pending |
-| 15 | Portainer CE + Cloudflare Tunnel | Pending |
-| 16 | K3s Backup, DR and Acceptance | Pending |
+| 13 | K3s HA + Portainer Milestone Plan | Planned |
 
 ## Backup GDrive
 

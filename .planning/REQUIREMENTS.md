@@ -128,9 +128,9 @@
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| K3S-01 → K3S-05 | Phases 12-16 | Planned |
-| PRT-01 → PRT-02 | Phases 12, 15-16 | Planned |
-| CFL-01, SEC-01 | Phases 12-16 | Planned |
+| K3S-01 → K3S-05 | Phase 13 | Planned |
+| PRT-01 → PRT-02 | Phase 13 | Planned |
+| CFL-01, SEC-01 | Phase 13 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
@@ -140,4 +140,4 @@
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after Phase 12 K3s HA Portainer planning*
+*Last updated: 2026-06-13 after M005 Phase 13 K3s HA Portainer planning*

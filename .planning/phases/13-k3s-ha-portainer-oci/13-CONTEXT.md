@@ -1,5 +1,5 @@
 ---
-phase: 12
+phase: 13
 name: k3s-ha-portainer-oci
 created: 2026-06-13
 method: self-discuss + official-doc research
@@ -7,7 +7,7 @@ generator: gsd-discuss-phase adapted to Codex
 status: locked
 ---
 
-# Phase 12 — K3s HA + Portainer on OCI ARM64
+# Phase 13 — K3s HA + Portainer on OCI ARM64
 
 ## Objective
 

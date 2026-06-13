@@ -1,12 +1,12 @@
 ---
-phase: 12
+phase: 13
 name: k3s-ha-portainer-oci
 date: 2026-06-13
 method: self-discussion requested by user
 status: complete
 ---
 
-# Phase 12 — Discussion Log
+# Phase 13 — Discussion Log
 
 ## Prompt do usuario
 
@@ -82,7 +82,7 @@ interface correta. Se for WireGuard instavel, parar antes de instalar.
 ## Decisoes finais
 
 - Branch: `codex/k3s-portainer-oci-plan`.
-- Phase: `12-k3s-ha-portainer-oci`.
+- Phase: `13-k3s-ha-portainer-oci`.
 - K3s: 3 server nodes, embedded etcd, canal `stable`.
 - K3s default ingress/LB: disabled.
 - Portainer: Helm LTS, namespace `portainer`, `portainer.atius.com.br`.

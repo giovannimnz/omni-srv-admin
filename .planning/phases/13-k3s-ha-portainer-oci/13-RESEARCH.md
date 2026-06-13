@@ -1,6 +1,6 @@
 ---
-phase: 12
-padded: 12
+phase: 13
+padded: 13
 slug: k3s-ha-portainer-oci
 name: K3s HA + Portainer on OCI ARM64
 date: 2026-06-13
@@ -8,7 +8,7 @@ method: pdf + repo/vault inspection + official docs + Context7
 status: complete
 ---
 
-# Phase 12 — Research
+# Phase 13 — Research
 
 ## Executive Summary
 

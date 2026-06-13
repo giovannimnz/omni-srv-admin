@@ -11,8 +11,8 @@
     "nyquist_validation": true,
     "auto_advance": false
   },
-  "currentMilestone": "M004",
-  "currentPhase": "12",
+  "currentMilestone": "M005",
+  "currentPhase": "13",
   "milestones": [
     {
       "id": "M001",
@@ -39,13 +39,13 @@
       "depends_on": "M002"
     },
     {
-      "id": "M004",
+      "id": "M005",
       "name": "K3s HA Cluster + Portainer",
-      "status": "active",
-      "phase": "12",
-      "phases": ["12", "13", "14", "15", "16"],
+      "status": "planned",
+      "phase": "13",
+      "phases": ["13"],
       "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
-      "depends_on": "M003"
+      "depends_on": "M004 Fleet Control Plane (separate branch)"
     }
   ],
   "_created": "2026-05-06",

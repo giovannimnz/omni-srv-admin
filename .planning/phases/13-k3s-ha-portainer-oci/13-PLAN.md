@@ -1,6 +1,6 @@
 ---
-phase: 12
-padded: 12
+phase: 13
+padded: 13
 slug: k3s-ha-portainer-oci
 name: K3s HA + Portainer on OCI ARM64
 date: 2026-06-13
@@ -9,9 +9,9 @@ wave: 1
 depends_on: []
 autonomous: false
 files_modified:
-  - .planning/phases/12-k3s-ha-portainer-oci/12-CONTEXT.md
-  - .planning/phases/12-k3s-ha-portainer-oci/12-RESEARCH.md
-  - .planning/phases/12-k3s-ha-portainer-oci/12-01-PLAN.md
+  - .planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md
+  - .planning/phases/13-k3s-ha-portainer-oci/13-RESEARCH.md
+  - .planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md
 requirements_addressed:
   - K3S-01
   - K3S-02
@@ -24,7 +24,7 @@ requirements_addressed:
   - SEC-01
 ---
 
-# Phase 12 — Master Plan
+# Phase 13 — Master Plan
 
 ## Goal
 
@@ -35,7 +35,7 @@ quebrar o Portainer antigo, Apache, Docker/Podman ou os servicos atuais.
 ## Scope
 
 Esta phase e de planejamento. A execucao real deve ser uma phase separada ou a
-execucao do plano `12-01` apos o SRV-1 estar em Ubuntu 24.04.
+execucao do plano `13-01` apos o SRV-1 estar em Ubuntu 24.04.
 
 ## Architecture
 
@@ -57,7 +57,7 @@ K3s HA:
 
 | ID | Name | Status | Notes |
 |---|---|---|---|
-| 12-01 | K3s HA bootstrap + Portainer exposure | ready | Single executable runbook with human checkpoints |
+| 13-01 | K3s HA bootstrap + Portainer exposure | ready | Single executable runbook with human checkpoints |
 
 ## Hard Gates
 
