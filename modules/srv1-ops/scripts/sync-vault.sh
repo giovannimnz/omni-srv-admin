@@ -18,8 +18,15 @@
 # - P5: lock file em /tmp/sync-vault.lock — se /tmp for tmpfs (RAM), sobrevive reboot mas não disk failure
 
 set -uo pipefail
-VAULT="$HOME/GitHub/obsidian-vault/ideaverse"
-LOG="$HOME/.logs/sync-vault.log"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+VAULT="${SYNC_VAULT_REPO:-$HOME/GitHub/obsidian-vault}"
+if [ -n "${SYNC_VAULT_LOG:-}" ]; then
+    LOG="$SYNC_VAULT_LOG"
+elif [ "$SCRIPT_DIR" = "$HOME/scripts" ]; then
+    LOG="$HOME/scripts/sync-vault.log"
+else
+    LOG="$HOME/.logs/sync-vault.log"
+fi
 LOCK="/tmp/sync-vault.lock"
 TELEGRAM_BOT_TOKEN="${SYNC_VAULT_TG_BOT:-}"  # set em ~/.bashrc ou .env
 TELEGRAM_CHAT_ID="${SYNC_VAULT_TG_CHAT:-}"  # chat_id do Giovanni pra alertas
@@ -30,6 +37,18 @@ GITLEAKS_REGEX='(api[_-]?key|token|secret|password|access[_-]?key|auth[_-]?key|c
 GITLEAKS_AWS_REGEX='AKIA[0-9A-Z]{16}'
 GITLEAKS_GHP_REGEX='ghp_[a-zA-Z0-9]{36}'
 GITLEAKS_SK_REGEX='sk-[a-zA-Z0-9]{20,}'
+
+notify_telegram() {
+    local msg="${1:-Sync failed on $(hostname) at $(date '+%H:%M:%S')}"
+    if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
+        return 0  # not configured
+    fi
+    curl -sS -m 10 \
+        -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
+        -d chat_id="$TELEGRAM_CHAT_ID" \
+        -d text="⚠️ sync-vault: $msg" \
+        >/dev/null 2>&1
+}
 
 # === 0. Lock file (evita overlap) ===
 exec 200>"$LOCK"
@@ -64,6 +83,11 @@ branch=$(git symbolic-ref --short HEAD 2>/dev/null)
 if [ -z "$branch" ]; then
     branch="master"  # fallback
 fi
+if ! git fetch origin --prune >> "$LOG" 2>&1; then
+    echo "[$(date '+%H:%M')] FAIL: git fetch origin" >> "$LOG"
+    notify_telegram "FETCH FAILED for $branch on $(hostname)"
+    exit 1
+fi
 # Se o origin não tem o branch atual, tenta alternar
 if ! git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
     for alt in master main; do
@@ -76,7 +100,11 @@ fi
 echo "[$(date '+%H:%M')] Using branch: $branch" >> "$LOG"
 
 # === 3. Fetch + sync ===
-remote=$(git rev-parse "origin/$branch" 2>/dev/null)
+remote=$(git rev-parse "origin/$branch" 2>/dev/null) || {
+    echo "[$(date '+%H:%M')] FAIL: origin/$branch not found" >> "$LOG"
+    notify_telegram "ORIGIN BRANCH NOT FOUND: $branch on $(hostname)"
+    exit 1
+}
 local=$(git rev-parse HEAD)
 
 # 3a. If behind origin, reset (untracked files survive reset --hard)
@@ -103,17 +131,27 @@ if [ "$local" != "$remote" ]; then
 fi
 
 # === 4. Detect local changes (tracked modified + untracked) ===
-git add -u
-untracked=$(git ls-files --others --exclude-standard 2>/dev/null)
-if [ -n "$untracked" ]; then
-    echo "$untracked" | xargs git add
+if ! git add -u >> "$LOG" 2>&1; then
+    echo "[$(date '+%H:%M')] FAIL: git add -u" >> "$LOG"
+    notify_telegram "GIT ADD TRACKED FAILED on $(hostname)"
+    exit 1
 fi
+tmp_untracked=$(mktemp)
+git ls-files -z --others --exclude-standard > "$tmp_untracked"
+if [ -s "$tmp_untracked" ]; then
+    if ! git add --pathspec-from-file="$tmp_untracked" --pathspec-file-nul >> "$LOG" 2>&1; then
+        rm -f "$tmp_untracked"
+        echo "[$(date '+%H:%M')] FAIL: git add untracked" >> "$LOG"
+        notify_telegram "GIT ADD UNTRACKED FAILED on $(hostname)"
+        exit 1
+    fi
+fi
+rm -f "$tmp_untracked"
 
 # === 5. Gitleaks scan on staged content ===
 if ! git diff --cached --quiet; then
-    staged_files=$(git diff --cached --name-only)
     secrets_found=""
-    for f in $staged_files; do
+    while IFS= read -r -d '' f; do
         if [ -f "$f" ]; then
             # Scan for common secret patterns
             if grep -qE "$GITLEAKS_REGEX" "$f" 2>/dev/null; then
@@ -129,7 +167,7 @@ if ! git diff --cached --quiet; then
                 secrets_found="$secrets_found $f:openai_sk"
             fi
         fi
-    done
+    done < <(git diff --cached --name-only -z)
     if [ -n "$secrets_found" ]; then
         echo "[$(date '+%H:%M')] ABORT: secrets detected:$secrets_found" >> "$LOG"
         git reset HEAD >/dev/null 2>&1
@@ -138,13 +176,21 @@ if ! git diff --cached --quiet; then
     fi
 
     count=$(git diff --cached --numstat | wc -l)
-    git commit -m "auto-sync: $(date '+%Y-%m-%d %H:%M')" >> "$LOG" 2>&1
+    if ! git commit -m "auto-sync: $(date '+%Y-%m-%d %H:%M')" >> "$LOG" 2>&1; then
+        echo "[$(date '+%H:%M')] FAIL: git commit" >> "$LOG"
+        notify_telegram "GIT COMMIT FAILED on $(hostname)"
+        exit 1
+    fi
     echo "[$(date '+%H:%M')] Auto-committed: $count file(s)" >> "$LOG"
     local=$(git rev-parse HEAD)
 fi
 
 # === 6. Push if ahead (with retry) ===
-remote=$(git rev-parse "origin/$branch")
+remote=$(git rev-parse "origin/$branch" 2>/dev/null) || {
+    echo "[$(date '+%H:%M')] FAIL: origin/$branch not found before push" >> "$LOG"
+    notify_telegram "ORIGIN BRANCH NOT FOUND BEFORE PUSH: $branch on $(hostname)"
+    exit 1
+}
 if [ "$local" != "$remote" ]; then
     if git log --format=%s "origin/$branch..HEAD" | grep -q .; then
         # Try push with backoff
@@ -172,16 +218,3 @@ fi
 
 # === 7. Notify on success if local had uncommitted state ===
 # (já tá no log, sem necessidade extra)
-
-# === Helper: notify via Telegram ===
-notify_telegram() {
-    local msg="${1:-Sync failed on $(hostname) at $(date '+%H:%M:%S')}"
-    if [ -z "$TELEGRAM_BOT_TOKEN" ] || [ -z "$TELEGRAM_CHAT_ID" ]; then
-        return 0  # not configured
-    fi
-    curl -sS -m 10 \
-        -X POST "https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}/sendMessage" \
-        -d chat_id="$TELEGRAM_CHAT_ID" \
-        -d text="⚠️ sync-vault: $msg" \
-        >/dev/null 2>&1
-}
