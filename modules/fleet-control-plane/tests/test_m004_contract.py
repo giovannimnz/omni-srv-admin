@@ -209,6 +209,10 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
     assert {scope["id"] for scope in config["ops"]["scopes"]} == {"srv1-ops", "srv2-ops", "srv3-ops"}
     assert config["slash_commands"]["provider"] == "cli-anything"
     assert "/omni-srv-admin" in config["slash_commands"]["commands"]
+    assert config["agent"]["executor"] == "local-node-agent"
+    assert config["agent"]["queue_table"] == "TbUpdatePlans"
+    assert config["agent"]["telemetry_table"] == "TbNodeTelemetry"
+    assert config["agent"]["command_allowlist_table"] == "TbFleetCommands"
 
 
 def test_migration_schema_has_required_tables_and_secret_refs_only():
@@ -229,14 +233,189 @@ def test_migration_schema_has_required_tables_and_secret_refs_only():
         "TbConfigItems",
         "TbSlashCommands",
         "TbSlashCommandBindings",
+        "TbFleetCommands",
+        "TbNodeTelemetry",
+        "TbNodeResourcePolicies",
     ):
         assert f'CREATE TABLE IF NOT EXISTS "{table}"' in schema
+    for column in (
+        "target_command TEXT",
+        "lease_owner TEXT",
+        "lease_expires_at TIMESTAMPTZ",
+        "executor_host_id TEXT",
+        "idempotency_key TEXT",
+        "observer_host_id TEXT",
+        "allowed_host_ids JSONB",
+    ):
+        assert column in schema
+    for constraint in (
+        "CkTbUpdatePlansApprovalState",
+        "CkTbUpdatePlansExecutionState",
+        "CkTbUpdatePlansApprovedMetadata",
+        "UqTbUpdatePlansIdempotencyKey",
+        "IdxTbUpdatePlansAgentQueue",
+        "UqTbConfigItemsScopeHostKeyNullSafe",
+        "UqTbSlashCommandBindingsNullSafe",
+    ):
+        assert constraint in schema
     assert "secret_ref TEXT NOT NULL" in schema
     assert "provider TEXT NOT NULL DEFAULT 'cli-anything'" in schema
     assert "'/omni-srv-admin', 'cli-anything'" in schema
+    assert "'omni.noop'" in schema
+    assert "'ubuntu-dark-theme.apply'" in schema
+    assert '"disabled-until-cli-anything-harness"' in schema
     assert '"config_source":"database"' in schema
     for forbidden in ("license_key", "raw_secret", "password text", "token text", "serial text"):
         assert forbidden not in schema
+
+
+def test_db_env_rejects_direct_postgres_endpoint(tmp_path):
+    env_file = tmp_path / "fleet-db.env"
+    env_file.write_text(
+        "\n".join(
+            [
+                "PGHOST=10.1.1.1",
+                "PGPORT=8745",
+                "PGDATABASE=DbOmniFleet",
+                "PGUSER=omni_fleet",
+            ]
+        )
+    )
+
+    try:
+        fleet_module._db_env(env_file)
+    except Exception as exc:
+        assert "esperado PgBouncer 10.1.1.1:6432" in str(exc)
+    else:
+        raise AssertionError("direct PostgreSQL endpoint should be rejected")
+
+
+def test_agent_heartbeat_collects_resource_telemetry(monkeypatch, tmp_path):
+    heartbeat_dir = tmp_path / "heartbeats"
+    telemetry_dir = tmp_path / "telemetry"
+    monkeypatch.setattr(fleet_module, "HEARTBEAT_DIR", heartbeat_dir)
+    monkeypatch.setattr(fleet_module, "TELEMETRY_DIR", telemetry_dir)
+    monkeypatch.setattr(fleet_module, "AUDIT_EVENTS", tmp_path / "audit-events.jsonl")
+
+    result = invoke_fleet("agent", "heartbeat", "--host", "atius-srv-2", "--json")
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["host"] == "atius-srv-2"
+    assert payload["agent_version"] == fleet_module.FLEET_AGENT_VERSION
+    assert payload["health"] in {"healthy", "degraded", "critical"}
+    assert {"count", "load_1m", "pressure"}.issubset(payload["cpu"])
+    assert {"total_bytes", "available_bytes", "used_percent", "pressure"}.issubset(payload["memory"])
+    assert {"root_used_percent", "io", "pressure"}.issubset(payload["disk"])
+    assert (heartbeat_dir / "atius-srv-2.json").exists()
+    assert (telemetry_dir / "atius-srv-2.json").exists()
+
+
+def test_agent_once_executes_only_approved_allowlisted_plan(tmp_path):
+    plan = tmp_path / "plan.json"
+    plan.write_text(
+        json.dumps(
+            {
+                "id": "local-test",
+                "host_id": "atius-srv-2",
+                "target_command": "omni.noop",
+                "command_args": [],
+                "approval_state": "approved",
+                "desired_version": "noop-v1",
+            }
+        )
+    )
+
+    dry_run = invoke_fleet("agent", "once", "--host", "atius-srv-2", "--plan-file", str(plan), "--json")
+    applied = invoke_fleet(
+        "agent",
+        "once",
+        "--host",
+        "atius-srv-2",
+        "--plan-file",
+        str(plan),
+        "--apply",
+        "--json",
+    )
+
+    assert dry_run.exit_code == 0, dry_run.output
+    assert json.loads(dry_run.output)["status"] == "planned"
+    assert applied.exit_code == 0, applied.output
+    payload = json.loads(applied.output)
+    assert payload["status"] == "succeeded"
+    assert "omni.noop ok" in payload["stdout"]
+
+
+def test_agent_rejects_pending_unknown_and_wrong_host_commands(tmp_path):
+    pending = tmp_path / "pending.json"
+    pending.write_text(
+        json.dumps(
+            {
+                "host_id": "atius-srv-2",
+                "target_command": "omni.noop",
+                "command_args": [],
+                "approval_state": "pending",
+            }
+        )
+    )
+    unknown = tmp_path / "unknown.json"
+    unknown.write_text(
+        json.dumps(
+            {
+                "host_id": "atius-srv-2",
+                "target_command": "rm -rf /",
+                "command_args": [],
+                "approval_state": "approved",
+            }
+        )
+    )
+    wrong_host = tmp_path / "wrong-host.json"
+    wrong_host.write_text(
+        json.dumps(
+            {
+                "host_id": "atius-srv-3",
+                "target_command": "omni.resource.snapshot",
+                "command_args": [],
+                "approval_state": "approved",
+            }
+        )
+    )
+
+    for plan in (pending, unknown, wrong_host):
+        result = invoke_fleet("agent", "once", "--host", "atius-srv-2", "--plan-file", str(plan), "--apply")
+        assert result.exit_code != 0
+
+
+def test_monitor_hosts_falls_back_to_local_cache_when_db_unavailable(monkeypatch, tmp_path):
+    heartbeat_dir = tmp_path / "heartbeats"
+    heartbeat_dir.mkdir()
+    (heartbeat_dir / "atius-srv-3.json").write_text(
+        json.dumps(
+            {
+                "status": "healthy",
+                "health": "healthy",
+                "agent_version": fleet_module.FLEET_AGENT_VERSION,
+                "last_contact": "2026-06-13T12:00:00+00:00",
+                "memory": {"used_percent": 51.2},
+                "disk": {"root_used_percent": 74.5},
+            }
+        )
+    )
+    monkeypatch.setattr(fleet_module, "HEARTBEAT_DIR", heartbeat_dir)
+
+    def fail_db(*args, **kwargs):
+        raise RuntimeError("token=raw-secret db down")
+
+    monkeypatch.setattr(fleet_module, "_psql_json", fail_db)
+
+    result = invoke_fleet("monitor", "hosts", "--json")
+
+    assert result.exit_code == 0, result.output
+    payload = json.loads(result.output)
+    assert payload["source"] == "local-cache"
+    assert payload["db_error"] == "***REDACTED***"
+    srv3 = next(host for host in payload["hosts"] if host["host"] == "atius-srv-3")
+    assert srv3["status"] == "healthy"
 
 
 def test_offline_validation_harness_passes_all_contract_scenarios():
@@ -250,4 +429,5 @@ def test_offline_validation_harness_passes_all_contract_scenarios():
         "M004-OFF-04",
         "M004-OFF-05",
         "M004-OFF-06",
+        "M004-OFF-07",
     }

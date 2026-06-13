@@ -7,6 +7,7 @@ import json
 import os
 import subprocess
 import sys
+import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
@@ -35,6 +36,9 @@ FLEET_TABLES = (
     "TbConfigItems",
     "TbSlashCommands",
     "TbSlashCommandBindings",
+    "TbFleetCommands",
+    "TbNodeTelemetry",
+    "TbNodeResourcePolicies",
 )
 
 
@@ -243,12 +247,18 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
 
 def _scenario_heartbeat_programs_audit() -> ScenarioResult:
     evidence: list[str] = []
-    for host_id in TARGET_HOSTS:
-        path, host = _load_host(host_id)
-        heartbeat = fleet_module._heartbeat_payload(host, path)
-        if heartbeat["status"] != "offline" or heartbeat["health"] != "missing-heartbeat":
-            return _fail("M004-OFF-05", "missing heartbeat defaults to offline", "offline", [str(heartbeat)])
-        evidence.append(f"{host_id}: heartbeat={heartbeat['status']}/{heartbeat['health']}")
+    original_heartbeat_dir = fleet_module.HEARTBEAT_DIR
+    with tempfile.TemporaryDirectory(prefix="omni-m004-heartbeats-") as temp_dir:
+        fleet_module.HEARTBEAT_DIR = Path(temp_dir)
+        try:
+            for host_id in TARGET_HOSTS:
+                path, host = _load_host(host_id)
+                heartbeat = fleet_module._heartbeat_payload(host, path)
+                if heartbeat["status"] != "offline" or heartbeat["health"] != "missing-heartbeat":
+                    return _fail("M004-OFF-05", "missing heartbeat defaults to offline", "offline", [str(heartbeat)])
+                evidence.append(f"{host_id}: heartbeat={heartbeat['status']}/{heartbeat['health']}")
+        finally:
+            fleet_module.HEARTBEAT_DIR = original_heartbeat_dir
     srv1_path, srv1 = _load_host(SERVER_HOST)
     programs = fleet_module._program_records(srv1, srv1_path)
     program_names = {record["program"] for record in programs}
@@ -282,6 +292,84 @@ def _scenario_future_integration() -> ScenarioResult:
     return _ok("M004-OFF-06", "future Podman/K3s contract is documented", "offline", evidence)
 
 
+def _scenario_agent_executor_monitoring() -> ScenarioResult:
+    schema = "\n".join(
+        path.read_text()
+        for path in sorted((REPO / "modules/fleet-control-plane/migrations").glob("*.sql"))
+    )
+    required_tokens = [
+        "TbFleetCommands",
+        "TbNodeTelemetry",
+        "TbNodeResourcePolicies",
+        "lease_owner",
+        "lease_expires_at",
+        "executor_host_id",
+        "idempotency_key",
+        "CkTbUpdatePlansApprovedMetadata",
+        "UqTbUpdatePlansIdempotencyKey",
+    ]
+    missing = [token for token in required_tokens if token not in schema]
+    if missing:
+        return _fail("M004-OFF-07", "agent executor + monitoring schema is present", "offline", missing)
+
+    direct_env = Path(tempfile.gettempdir()) / "omni-m004-direct-postgres.env"
+    direct_env.write_text(
+        "\n".join(
+            [
+                "PGHOST=10.1.1.1",
+                "PGPORT=8745",
+                "PGDATABASE=DbOmniFleet",
+                "PGUSER=omni_fleet",
+            ]
+        )
+    )
+    try:
+        fleet_module._db_env(direct_env)
+        return _fail("M004-OFF-07", "agent refuses direct PostgreSQL endpoint", "offline", ["direct endpoint accepted"])
+    except Exception as exc:
+        pgbouncer_evidence = str(exc)
+
+    dry_run = fleet_module._execute_plan(
+        {
+            "id": "offline-noop",
+            "host_id": "atius-srv-2",
+            "target_command": "omni.noop",
+            "command_args": [],
+            "approval_state": "approved",
+            "desired_version": "noop-v1",
+        },
+        apply_changes=False,
+    )
+    if dry_run["status"] != "planned":
+        return _fail("M004-OFF-07", "approved allowlisted plan renders locally", "offline", [str(dry_run)])
+    try:
+        fleet_module._execute_plan(
+            {
+                "host_id": "atius-srv-2",
+                "target_command": "omni.noop",
+                "command_args": [],
+                "approval_state": "pending",
+            },
+            apply_changes=True,
+        )
+        return _fail("M004-OFF-07", "pending plan is rejected", "offline", ["pending accepted"])
+    except Exception as exc:
+        pending_evidence = str(exc)
+
+    telemetry = fleet_module._collect_telemetry("atius-srv-2")
+    for section in ("cpu", "memory", "disk", "service_health"):
+        if section not in telemetry:
+            return _fail("M004-OFF-07", "resource telemetry contains load inputs", "offline", [f"missing {section}"])
+    evidence = [
+        "schema=agent-executor-monitoring",
+        f"pgbouncer_guard={pgbouncer_evidence}",
+        f"dry_run={dry_run['status']}",
+        f"pending_guard={pending_evidence}",
+        f"telemetry_health={telemetry['health']}",
+    ]
+    return _ok("M004-OFF-07", "agent executor, PgBouncer guard and fleet monitoring contract", "offline", evidence)
+
+
 def offline_scenarios() -> list[ScenarioResult]:
     return [
         _scenario_inventory(),
@@ -290,6 +378,7 @@ def offline_scenarios() -> list[ScenarioResult]:
         _scenario_schema_and_pgbouncer(),
         _scenario_heartbeat_programs_audit(),
         _scenario_future_integration(),
+        _scenario_agent_executor_monitoring(),
     ]
 
 
@@ -427,7 +516,7 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         "test \"${PGHOST}:${PGPORT}\" = \"10.1.1.1:6432\"; "
         "psql -Atc \"select current_database() || chr(58) || current_user\"; "
         "psql -Atc \"select 'TbHosts=' || count(*) from \\\"TbHosts\\\" union all select 'TbNodes=' || count(*) from \\\"TbNodes\\\" order by 1\"; "
-        "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" order by 1\""
+        "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" union all select 'TbFleetCommands=' || count(*) from \\\"TbFleetCommands\\\" union all select 'TbNodeResourcePolicies=' || count(*) from \\\"TbNodeResourcePolicies\\\" union all select 'TbNodeTelemetry=' || count(*) from \\\"TbNodeTelemetry\\\" order by 1\""
     )
     code, stdout, stderr, rendered = _ssh(target, remote, timeout=20)
     evidence = stdout.splitlines() or [stderr]
@@ -440,6 +529,8 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         "TbConfigItems=1",
         "TbSlashCommands=6",
         "TbSlashCommandBindings=18",
+        "TbFleetCommands=4",
+        "TbNodeResourcePolicies=3",
     }
     result = _ok if code == 0 and expected.issubset(set(evidence)) else _fail
     scenario = result(

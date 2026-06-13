@@ -63,6 +63,35 @@ slash_commands:
     - /cli-anything:list
     - /omni-srv-admin
 
+agent:
+  executor: local-node-agent
+  queue_table: TbUpdatePlans
+  telemetry_table: TbNodeTelemetry
+  command_allowlist_table: TbFleetCommands
+  resource_policy_table: TbNodeResourcePolicies
+  heartbeat_interval_seconds: 30
+  execution_model:
+    request_source: any-authorized-cli-or-server
+    execution_location: target-host-local-agent
+    no_direct_ssh_apply: true
+    pgbouncer_required: true
+  states:
+    approval:
+      - pending
+      - approved
+      - rejected
+      - cancelled
+    execution:
+      - not-started
+      - queued
+      - claimed
+      - running
+      - retry
+      - succeeded
+      - failed
+      - cancelled
+      - blocked
+
 audit:
   local_jsonl: /home/ubuntu/.logs/fleet/audit-events.jsonl
   redact:

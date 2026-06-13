@@ -107,6 +107,20 @@ convenção CLI-Anything/`clianything`. O alvo futuro para cobrir operações do
 repo é `cli-anything-omni-srv-admin`; comandos ad hoc são temporários até
 entrarem em `TbSlashCommands`.
 
+### D-14: Execução distribuída é local ao host alvo
+
+**Decisão:** Um servidor pode solicitar trabalho para outro via
+`DbOmniFleet`/PgBouncer, mas não aplica remotamente por SSH. O host alvo roda
+`omni-fleet-agent`, reclama apenas seus próprios update plans aprovados,
+executa comandos allowlisted localmente e grava resultado/auditoria no DB.
+
+### D-15: Monitoramento cross-server é requisito central do Omni
+
+**Decisão:** Cada SRV deve conseguir enxergar os demais pela visão central do
+Fleet Control Plane. O agent publica load, CPU, memória, disco, I/O, PSI e
+service health em `TbNodeTelemetry`; `TbNodeResourcePolicies` define limites
+iniciais para decisões de controller ativo e load-balancing.
+
 ## Canonical References
 
 - `README.md` — repo como centro operacional de hosts, backups, mounts e
@@ -118,6 +132,8 @@ entrarem em `TbSlashCommands`.
 - `docs/operations/atius-fleet-specs.md` — recursos e limites dos servidores.
 - `docs/operations/Atius-Spec-Servers.md` — regra operacional de capacidade.
 - `modules/fleet-backup/` — módulo multi-host existente a integrar.
+- `modules/fleet-control-plane/migrations/0003_agent_executor_monitoring.sql`
+  — fila de execução, allowlist, telemetria e resource policies.
 - PostgreSQL docs: `https://www.postgresql.org/docs/current/backup-dump.html`
 - PostgreSQL pg_dump docs:
   `https://www.postgresql.org/docs/current/app-pgdump.html`

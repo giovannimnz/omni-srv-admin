@@ -7,7 +7,8 @@ It does not install K3s or Podman orchestration. It does establish the shared
 `omni-srv-admin` repo on SRV1/SRV2/SRV3, central PostgreSQL database
 `DbOmniFleet` on SRV-1, and PgBouncer-only database access for clients/nodes.
 `DbOmniFleet` is the PostgreSQL database for `omni-srv-admin`; tables use
-quoted `Tb...` identifiers such as `TbHosts` and `TbUpdatePlans`.
+quoted `Tb...` identifiers such as `TbHosts`, `TbUpdatePlans` and
+`TbNodeTelemetry`.
 
 The target cluster names are:
 
@@ -59,7 +60,8 @@ PYTHONPATH=cli python3 -m omni fleet install node --host atius-srv-3
 
 Current M004 install/update commands remain dry-run renderers. The live
 foundation was applied manually with backups and validation; generic `--apply`
-is still blocked until service-agent execution is implemented.
+on `install` and legacy `update-plan` remains blocked. Real execution is now
+modeled through `queue-update` plus the target host's local `omni fleet agent`.
 
 Server responsibilities:
 
@@ -71,6 +73,7 @@ Server responsibilities:
 | Inventory | Imports reviewed `inventory/hosts` projections |
 | Runtime state | Receives heartbeat/status and program inventory |
 | Change control | Generates update plans before execution |
+| Monitoring | Reads fleet telemetry from `TbNodeTelemetry` and falls back to local cache |
 | Audit | Stores audit events for installs, updates, license changes and status mutations |
 | Ops config | Stores per-host ops scopes, parameters and config items in PostgreSQL |
 | Slash commands | Registers agent-facing commands through CLI-Anything-compatible metadata |
@@ -81,7 +84,8 @@ Node responsibilities:
 |---|---|
 | Agent | Reports heartbeat, service health and installed programs |
 | Database access | Uses PgBouncer only |
-| Updates | Executes approved update plans only |
+| Updates | Executes approved update plans only, locally on the target host |
+| Monitoring | Publishes load, CPU, memory, disk, I/O, PSI and service health |
 | Secrets | Never logs raw tokens, serials or license material |
 | Degradation | Keeps local status when server or PgBouncer is unavailable |
 
@@ -148,6 +152,9 @@ Versioned schema lives in `modules/fleet-control-plane/migrations/`.
 | `TbConfigItems` | Runtime parameters/config values stored in DB, with `secret_ref` for sensitive data | FCP-11, FCP-12 |
 | `TbSlashCommands` | Slash-command catalog using CLI-Anything as provider | FCP-13 |
 | `TbSlashCommandBindings` | Command-to-host/scope policy and apply mode | FCP-13 |
+| `TbFleetCommands` | Agent command allowlist and host scope | FCP-14 |
+| `TbNodeTelemetry` | Load, CPU, memory, disk, I/O, pressure and service health samples | FCP-15 |
+| `TbNodeResourcePolicies` | Per-host thresholds for active demand/load-balancing decisions | FCP-15 |
 
 Future Podman/K3s work consumes these contracts rather than inventing a separate
 source of truth.
@@ -207,7 +214,42 @@ Check current contract output:
 
 ```bash
 PYTHONPATH=cli python3 -m omni fleet heartbeat --host atius-srv-1 --json
+PYTHONPATH=cli python3 -m omni fleet agent heartbeat --host atius-srv-1 --json
 ```
+
+`agent heartbeat --db` writes through PgBouncer to `TbNodes` and
+`TbNodeTelemetry`. The command refuses DB env files that do not point to
+`10.1.1.1:6432/DbOmniFleet`; it must not fall back to direct PostgreSQL.
+
+## Cross-Server Monitoring
+
+Any SRV can read the same central status view:
+
+```bash
+PYTHONPATH=cli python3 -m omni fleet monitor hosts
+PYTHONPATH=cli python3 -m omni fleet monitor hosts --json
+```
+
+Default behavior:
+
+1. Read `DbOmniFleet` through PgBouncer.
+2. Return all hosts with status, agent version, last contact, load, memory,
+   disk and service health.
+3. If PgBouncer/DB is unavailable, degrade to local heartbeat cache under
+   `/home/ubuntu/.logs/fleet/heartbeats`.
+4. Do not attempt direct PostgreSQL bypass.
+
+Telemetry exists to support the central Omni idea: active demand control and
+load-balancing decisions based on real resource pressure. Initial inputs are:
+
+| Input | Source |
+|---|---|
+| CPU count and load averages | `os.getloadavg()` / CPU count |
+| Memory total/available/used percent | `/proc/meminfo` |
+| Disk root total/used/used percent | `shutil.disk_usage("/")` |
+| Disk cumulative read/write bytes | `/proc/diskstats` |
+| PSI pressure | `/proc/pressure/{cpu,memory,io}` |
+| Service health | `systemctl is-active` for known Omni services |
 
 ## Program Registry And Update Plans
 
@@ -233,6 +275,59 @@ PYTHONPATH=cli python3 -m omni fleet update-plan \
   --desired-version v4.1 \
   --json
 ```
+
+For executable plans, use `queue-update`. This creates or updates a row in
+`TbUpdatePlans`; it does not SSH into the target host and does not execute on
+the requester.
+
+```bash
+PYTHONPATH=cli python3 -m omni fleet queue-update \
+  --host atius-srv-3 \
+  --program ubuntu-dark-theme \
+  --desired-version 24.04-v1 \
+  --command-key ubuntu-dark-theme.apply \
+  --json
+```
+
+Approved execution is local to the target host:
+
+```bash
+PYTHONPATH=cli python3 -m omni fleet agent once --host atius-srv-3 --db --apply
+PYTHONPATH=cli python3 -m omni fleet agent loop --host atius-srv-3 --apply
+```
+
+Execution rules:
+
+- Agent claims only rows where `host_id` matches its local host.
+- `approval_state=approved`, `approved_by` and `approved_at` are required.
+- `lease_owner`/`lease_expires_at` prevent two agents from executing the same
+  plan.
+- `idempotency_key` prevents duplicate central requests from creating repeated
+  work.
+- `target_command` must exist in `TbFleetCommands` or the local emergency
+  allowlist.
+- Host-specific allowlists prevent an SRV-1-only command from running on SRV-3.
+- Output is redacted before local audit or DB execution output.
+
+The `ubuntu-dark-theme.apply` command key is registered disabled until the
+Ubuntu 24.04 dark-theme module exposes a finalized idempotent CLI-Anything
+harness. This keeps the integration path ready without allowing an unsafe theme
+script to run fleet-wide.
+
+## Agent Service
+
+User-level systemd unit:
+
+```bash
+modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-1
+modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-2
+modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-3
+```
+
+The installer writes `/etc/omni-srv-admin/fleet-agent.env`, copies
+`omni-fleet-agent.service` to `~/.config/systemd/user/`, reloads systemd user
+and enables the service. This should not drop RDP/XRDP; it only starts a user
+service loop.
 
 ## License And Secret Policy
 

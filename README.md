@@ -21,6 +21,7 @@
 - Termux/PRoot no Galaxy S23
 - módulos locais do SRV-1
 - backup/offload/cleanup
+- fleet control plane, agents locais e telemetria cross-server
 - mounts remotos e labels no PCManFM/LXDE
 - fork sync e documentação operacional
 
@@ -35,6 +36,8 @@ Comandos mais usados:
 ```bash
 omni fleet list
 omni fleet show atius-srv-1
+omni fleet monitor hosts
+omni fleet agent heartbeat --host atius-srv-1
 omni srv1-ops status
 omni srv1-ops resources status
 omni srv1-ops resources install
@@ -114,6 +117,7 @@ omni-srv-admin/
 ├── modules/                     # módulos operacionais
 │   ├── fleet/                   # arquitetura e rollout multi-host
 │   │   └── podman-network/      # standard podman networking 3-SRV (containers.conf, netavark, aardvark)
+│   ├── fleet-control-plane/     # DB central, PgBouncer, agent executor, telemetry
 │   ├── remote-manager/          # remotes, mounts, PCManFM/LXDE Places
 │   ├── srv1-ops/                # backups, logs, cleanup, sync vault
 │   ├── xrdp-abnt2/              # guard teclado ABNT2 para XRDP/LXDE

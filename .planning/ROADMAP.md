@@ -225,7 +225,7 @@
 
 ## M004: Omni Fleet Control Plane
 
-**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer como DB canônico do `omni-srv-admin`, heartbeat, registry de programas, ops scopes por servidor, parâmetros/configs no DB, version/update plans, licenças sem secrets no git/log/vault, auditoria, slash commands via CLI-Anything e contrato futuro com Podman/K3s.
+**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer como DB canônico do `omni-srv-admin`, heartbeat, registry de programas, ops scopes por servidor, parâmetros/configs no DB, agent executor local, monitoramento cross-server, version/update plans, licenças sem secrets no git/log/vault, auditoria, slash commands via CLI-Anything e contrato futuro com Podman/K3s.
 
 **Status:** LIVE IMPLEMENTED; REPOS AND CENTRAL DB VALIDATED (2026-06-13)
 
@@ -243,7 +243,7 @@
 
 **Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, ops scopes por servidor, configs/parâmetros no DB, slash commands via CLI-Anything, version planner, licenças e auditoria.
 
-**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10, FCP-11, FCP-12, FCP-13
+**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10, FCP-11, FCP-12, FCP-13, FCP-14, FCP-15
 
 **Status:** LIVE IMPLEMENTED (2026-06-13); repo, central DB and PgBouncer path validated on SRV1/SRV2/SRV3
 
@@ -263,11 +263,13 @@
 - SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `DbOmniFleet` through PgBouncer at `10.1.1.1:6432`.
 - `omni fleet validate-inventory` validates all 7 inventory hosts.
 - `omni fleet install server|node` renders idempotent dry-run plans and blocks live `--apply`.
-- `omni fleet heartbeat`, `programs`, `update-plan`, `audit` and `status --all` expose the runtime contracts without touching remote hosts.
+- `omni fleet heartbeat`, `programs`, `update-plan`, `queue-update`, `agent heartbeat/once/loop`, `monitor hosts`, `audit` and `status --all` expose runtime contracts without direct SSH apply.
+- Agent execution is local to the target host: SRV-2 can request work for SRV-3 through `DbOmniFleet`, but SRV-3's local agent claims and applies it.
+- Fleet monitoring reads central `TbNodeTelemetry` through PgBouncer and falls back to local cache on DB/PgBouncer outage.
 
 **Success Criteria:**
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
-2. Requirements `FCP-01..FCP-13` definidos e rastreados para Phase 12
+2. Requirements `FCP-01..FCP-15` definidos e rastreados para Phase 12
 3. Desenho server/node e inventory source-of-truth travado
 4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
 5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
