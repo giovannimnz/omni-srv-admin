@@ -225,7 +225,7 @@
 
 ## M004: Omni Fleet Control Plane
 
-**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat, registry de programas, version/update plans, licenças sem secrets no git/log/vault, auditoria e contrato futuro com Podman/K3s.
+**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer como DB canônico do `omni-srv-admin`, heartbeat, registry de programas, ops scopes por servidor, parâmetros/configs no DB, version/update plans, licenças sem secrets no git/log/vault, auditoria, slash commands via CLI-Anything e contrato futuro com Podman/K3s.
 
 **Status:** LIVE IMPLEMENTED; REPOS AND CENTRAL DB VALIDATED (2026-06-13)
 
@@ -241,9 +241,9 @@
 
 ### Phase 12: Fleet Control Plane Foundation ✅ LIVE IMPLEMENTED
 
-**Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, version planner, licenças e auditoria.
+**Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, ops scopes por servidor, configs/parâmetros no DB, slash commands via CLI-Anything, version planner, licenças e auditoria.
 
-**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10
+**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10, FCP-11, FCP-12, FCP-13
 
 **Status:** LIVE IMPLEMENTED (2026-06-13); repo, central DB and PgBouncer path validated on SRV1/SRV2/SRV3
 
@@ -255,6 +255,9 @@
 **Implementation Results:**
 - `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
 - `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
+- `omni_fleet` is documented and migrated as the canonical PostgreSQL database for `omni-srv-admin` runtime state, ops scopes, config items, parameters and slash-command registry.
+- `ops_scopes`, `config_items`, `slash_commands` and `slash_command_bindings` are defined by migration `0002`.
+- Slash commands are represented with CLI-Anything/`clianything` metadata, including `/cli-anything*` and planned `/omni-srv-admin`.
 - `~/GitHub/omni-srv-admin` is present on SRV-1/SRV-2/SRV-3; SRV-2/SRV-3 track `main` with clean worktrees.
 - SRV-1 hosts PostgreSQL database `omni_fleet`; hosts/nodes/programs inventory is seeded.
 - SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `omni_fleet` through PgBouncer at `10.1.1.1:6432`.
@@ -264,12 +267,14 @@
 
 **Success Criteria:**
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
-2. Requirements `FCP-01..FCP-10` definidos e rastreados para Phase 12
+2. Requirements `FCP-01..FCP-13` definidos e rastreados para Phase 12
 3. Desenho server/node e inventory source-of-truth travado
 4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
 5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
 6. Secrets remain outside git/log/vault in `/etc/omni-srv-admin/fleet-db.env`
-7. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
+7. Ops scopes por servidor e configs/parâmetros mutáveis ficam no DB, não em arquivos locais como fonte runtime
+8. Slash commands usam CLI-Anything como convenção/registry
+9. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
 
 **Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.
 

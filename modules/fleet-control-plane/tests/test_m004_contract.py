@@ -194,6 +194,9 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
         (REPO / "modules/fleet-control-plane/configs/control-plane.example.yaml").read_text()
     )
 
+    assert config["database"]["logical_owner"] == "omni-srv-admin"
+    assert "ops-scopes" in config["database"]["canonical_for"]
+    assert "slash-command-registry" in config["database"]["canonical_for"]
     assert config["pgbouncer"]["required_for_clients"] is True
     assert config["pgbouncer"]["listen_host"] == "10.1.1.1"
     assert config["pgbouncer"]["listen_port"] == 6432
@@ -201,14 +204,36 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
     assert "fleet-nodes" in config["database"]["direct_access"]["denied_for"]
     assert "cli-clients" in config["database"]["direct_access"]["denied_for"]
     assert "control-plane-migrations" in config["database"]["direct_access"]["allowed_for"]
+    assert config["ops"]["config_source"] == "database"
+    assert {scope["id"] for scope in config["ops"]["scopes"]} == {"srv1-ops", "srv2-ops", "srv3-ops"}
+    assert config["slash_commands"]["provider"] == "cli-anything"
+    assert "/omni-srv-admin" in config["slash_commands"]["commands"]
 
 
 def test_migration_schema_has_required_tables_and_secret_refs_only():
-    schema = (REPO / "modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql").read_text().lower()
+    schema = "\n".join(
+        path.read_text().lower()
+        for path in sorted((REPO / "modules/fleet-control-plane/migrations").glob("*.sql"))
+    )
 
-    for table in ("hosts", "nodes", "programs", "versions", "update_plans", "licenses", "audit_events"):
+    for table in (
+        "hosts",
+        "nodes",
+        "programs",
+        "versions",
+        "update_plans",
+        "licenses",
+        "audit_events",
+        "ops_scopes",
+        "config_items",
+        "slash_commands",
+        "slash_command_bindings",
+    ):
         assert f"create table if not exists {table}" in schema
     assert "secret_ref text not null" in schema
+    assert "provider text not null default 'cli-anything'" in schema
+    assert "'/omni-srv-admin', 'cli-anything'" in schema
+    assert '"config_source":"database"' in schema
     for forbidden in ("license_key", "raw_secret", "password text", "token text", "serial text"):
         assert forbidden not in schema
 

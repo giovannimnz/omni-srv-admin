@@ -179,11 +179,26 @@ def _scenario_cli_contracts() -> ScenarioResult:
 
 
 def _scenario_schema_and_pgbouncer() -> ScenarioResult:
-    schema = (REPO / "modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql").read_text()
+    schema = "\n".join(
+        path.read_text()
+        for path in sorted((REPO / "modules/fleet-control-plane/migrations").glob("*.sql"))
+    )
     config = fleet_module._simple_yaml(
         (REPO / "modules/fleet-control-plane/configs/control-plane.example.yaml").read_text()
     )
-    required_tables = ("hosts", "nodes", "programs", "versions", "update_plans", "licenses", "audit_events")
+    required_tables = (
+        "hosts",
+        "nodes",
+        "programs",
+        "versions",
+        "update_plans",
+        "licenses",
+        "audit_events",
+        "ops_scopes",
+        "config_items",
+        "slash_commands",
+        "slash_command_bindings",
+    )
     missing_tables = [table for table in required_tables if f"CREATE TABLE IF NOT EXISTS {table}" not in schema]
     database = config.get("database", {}) if isinstance(config.get("database"), dict) else {}
     pgbouncer = config.get("pgbouncer", {}) if isinstance(config.get("pgbouncer"), dict) else {}
@@ -195,6 +210,8 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
         f"pgbouncer.listen_host={pgbouncer.get('listen_host')}",
         f"pgbouncer.listen_port={pgbouncer.get('listen_port')}",
         f"database.direct_access.denied_for={denied}",
+        "ops_config_source=database",
+        "slash_commands.provider=cli-anything",
     ]
     if missing_tables:
         return _fail("M004-OFF-04", "PostgreSQL schema contains all FCP tables", "offline", missing_tables)
@@ -204,6 +221,8 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
         return _fail("M004-OFF-04", "PgBouncer listens on private fleet endpoint", "offline", evidence)
     if "fleet-nodes" not in denied or "cli-clients" not in denied:
         return _fail("M004-OFF-04", "direct PostgreSQL access denied for nodes/clients", "offline", evidence)
+    if '"config_source":"database"' not in schema or "provider TEXT NOT NULL DEFAULT 'cli-anything'" not in schema:
+        return _fail("M004-OFF-04", "ops configs and slash commands must be database-backed", "offline", evidence)
     licenses_block = schema.lower().split("create table if not exists licenses", 1)[1].split(");", 1)[0]
     license_columns = {
         line.strip().split(" ", 1)[0]
@@ -213,7 +232,7 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
     forbidden_license_columns = {"license_key", "raw_secret", "password", "token", "serial"}
     if forbidden_license_columns.intersection(license_columns):
         return _fail("M004-OFF-04", "license schema must use secret_ref only", "offline", evidence)
-    return _ok("M004-OFF-04", "PostgreSQL + PgBouncer + license schema contract", "offline", evidence)
+    return _ok("M004-OFF-04", "PostgreSQL + PgBouncer + license + ops/config/slash schema contract", "offline", evidence)
 
 
 def _scenario_heartbeat_programs_audit() -> ScenarioResult:
@@ -401,11 +420,21 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         "echo endpoint=${PGHOST}:${PGPORT}/${PGDATABASE}; "
         "test \"${PGHOST}:${PGPORT}\" = \"10.1.1.1:6432\"; "
         "psql -Atc \"select current_database() || chr(58) || current_user\"; "
-        "psql -Atc \"select 'hosts=' || count(*) from hosts union all select 'nodes=' || count(*) from nodes order by 1\""
+        "psql -Atc \"select 'hosts=' || count(*) from hosts union all select 'nodes=' || count(*) from nodes order by 1\"; "
+        "psql -Atc \"select 'ops_scopes=' || count(*) from ops_scopes union all select 'config_items=' || count(*) from config_items union all select 'slash_commands=' || count(*) from slash_commands union all select 'slash_command_bindings=' || count(*) from slash_command_bindings order by 1\""
     )
     code, stdout, stderr, rendered = _ssh(target, remote, timeout=20)
     evidence = stdout.splitlines() or [stderr]
-    expected = {"endpoint=10.1.1.1:6432/omni_fleet", "omni_fleet:omni_fleet", "hosts=3", "nodes=3"}
+    expected = {
+        "endpoint=10.1.1.1:6432/omni_fleet",
+        "omni_fleet:omni_fleet",
+        "hosts=3",
+        "nodes=3",
+        "ops_scopes=3",
+        "config_items=1",
+        "slash_commands=6",
+        "slash_command_bindings=18",
+    }
     result = _ok if code == 0 and expected.issubset(set(evidence)) else _fail
     scenario = result(
         f"M004-LIVE-DB-{host_id}",

@@ -15,6 +15,7 @@ status: complete
    acoplamento prematuro com Kubernetes?
 3. Quais contratos mínimos permitem versões, licenças, auditoria e integração
    futura com containers?
+4. Como registrar slash commands de forma agent-native sem criar scripts soltos?
 
 ## Local Evidence
 
@@ -27,6 +28,11 @@ status: complete
 - Futuros milestones de container/orquestração dependem de decisões de
   inventário, capacidade, secrets, backup e controle de mudanças que pertencem
   a um control plane anterior.
+- CLI-Anything está local em `/home/ubuntu/GitHub/Programs/CLI-Anything`.
+  Referências relevantes: `README.md`, `codex-skill/SKILL.md`,
+  `opencode-commands/cli-anything.md` e `cli-anything-plugin/HARNESS.md`.
+  O padrão é gerar CLIs `cli-anything-<software>`, com `--json`, REPL, testes e
+  slash commands `/cli-anything*`.
 
 ## Official Research
 
@@ -104,6 +110,10 @@ Future Podman/K3s
 | `update_plans` | Proposed changes, approval status, execution result |
 | `licenses` | License metadata, status, expiry, scope and `secret_ref` |
 | `audit_events` | Actor, host, action, target, result, timestamp, metadata |
+| `ops_scopes` | Per-host ops areas such as `srv1-ops`, `srv2-ops`, `srv3-ops` |
+| `config_items` | DB-backed runtime parameters/configs with `secret_ref` for sensitive values |
+| `slash_commands` | CLI-Anything slash-command registry |
+| `slash_command_bindings` | Command-to-host/scope apply policy |
 
 ## Risks
 
@@ -118,11 +128,14 @@ Future Podman/K3s
   destructive updates.
 - **Premature orchestration coupling:** M004 must define contracts, not install
   Kubernetes.
+- **Slash command drift:** ad-hoc slash commands can diverge from DB state unless
+  every command is registered and validated through the control-plane schema.
 
 ## Conclusion
 
 M004 should ship the control plane contract first. The minimum valuable output is
 a clear server/node model, schema/migration plan, PgBouncer rule, heartbeat,
-program registry, version/update plan flow, license handling rule and audit
-contract. Future container/orchestration milestones can then use this foundation
-rather than duplicating fleet state.
+program registry, DB-backed ops/config state, CLI-Anything slash-command
+registry, version/update plan flow, license handling rule and audit contract.
+Future container/orchestration milestones can then use this foundation rather
+than duplicating fleet state.

@@ -4,7 +4,7 @@ padded: 12
 slug: omni-fleet-control-plane
 name: Fleet Control Plane Foundation
 date: 2026-06-13
-status: ready
+status: live-implemented
 wave: 1
 depends_on: []
 autonomous: false
@@ -27,6 +27,9 @@ requirements_addressed:
   - FCP-08
   - FCP-09
   - FCP-10
+  - FCP-11
+  - FCP-12
+  - FCP-13
 ---
 
 # Phase 12 — Master Plan
@@ -37,12 +40,14 @@ Criar a fundação planejada do Omni Fleet Control Plane para que o
 `omni-srv-admin` controle a frota antes de instalar K3s/Portainer: modo
 `server`/`node`, inventário como fonte de verdade, PostgreSQL central via
 PgBouncer, heartbeat/status, registry de programas, version/update plans,
-licenças sem secrets e auditoria.
+ops scopes por servidor, parâmetros/configs no DB, slash commands via
+CLI-Anything, licenças sem secrets e auditoria.
 
 ## Scope
 
-Esta phase é de planejamento e contrato. Ela não instala K3s, não migra
-workloads, não muda Portainer e não executa alterações destrutivas nos hosts.
+Esta phase criou o contrato e a fundação live: repo nos 3 hosts, DB central no
+SRV-1, PgBouncer para clients/nodes e migrations de runtime state. Ela não
+instala K3s, não migra workloads e não muda Portainer.
 
 ## Architecture
 
@@ -53,6 +58,8 @@ M004 Fleet Control Plane
     - PgBouncer
     - migrations
     - inventory importer
+    - ops/config registry
+    - slash command registry
     - scheduler/update planner
     - audit registry
 
@@ -77,12 +84,15 @@ Future Podman/K3s integration
 - No raw secrets, license keys or tokens in git, logs, `.planning` or vault.
 - PgBouncer is mandatory for node/client DB access.
 - Inventory remains source-of-truth; DB stores operational state/projections.
+- PostgreSQL is canonical for ops scopes, mutable configs, runtime parameters
+  and slash-command registry.
+- Slash commands use CLI-Anything conventions.
 - Destructive update execution must require an approved update plan.
 - K3s/Podman work stays deferred to a separate milestone/branch.
 
 ## Acceptance
 
-- `FCP-01..FCP-10` exist in `.planning/REQUIREMENTS.md`.
+- `FCP-01..FCP-13` exist in `.planning/REQUIREMENTS.md`.
 - ROADMAP shows `M004 / Phase 12` as Fleet Control Plane.
 - Phase artifacts exist under `.planning/phases/12-omni-fleet-control-plane/`.
 - STATE/config point to M004 Phase 12 as active.

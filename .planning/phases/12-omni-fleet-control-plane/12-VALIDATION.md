@@ -14,7 +14,9 @@ branch: codex/omni-fleet-control-plane-m004
 M004 is implemented for the intended live base. The live SRV1/SRV2/SRV3 network
 is reachable, each host has `~/GitHub/omni-srv-admin`, SRV-1 owns central
 database `omni_fleet`, all three hosts can query it through PgBouncer, and
-direct PostgreSQL access from nodes is blocked.
+direct PostgreSQL access from nodes is blocked. The schema also carries the
+ops/config/slash-command extension required for `omni-srv-admin` to stop using
+local files as mutable runtime config stores.
 
 ## Automated Commands
 
@@ -30,7 +32,7 @@ PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live
 | M004-OFF-01 | SRV1/SRV2/SRV3 inventory source-of-truth | PASS |
 | M004-OFF-02 | master/server + node/slave install plan matrix | PASS |
 | M004-OFF-03 | safe CLI dry-run contracts execute; `--apply` blocked | PASS |
-| M004-OFF-04 | PostgreSQL + PgBouncer + license schema contract | PASS |
+| M004-OFF-04 | PostgreSQL + PgBouncer + license + ops/config/slash schema contract | PASS |
 | M004-OFF-05 | heartbeat + program registry + audit contracts | PASS |
 | M004-OFF-06 | future Podman/K3s contract is documented | PASS |
 
@@ -96,6 +98,13 @@ Current live state:
 - SRV-2: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean, CLI smoke passed.
 - SRV-3: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean, CLI smoke passed.
 - SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
+- SRV-1: migration `0002_ops_config_slash_commands.sql` defines
+  `ops_scopes`, `config_items`, `slash_commands` and `slash_command_bindings`.
+- SRV-1: migration `0002` applied live through PgBouncer with
+  `ops_scopes=3`, `config_items=1`, `slash_commands=6`,
+  `slash_command_bindings=18`.
+- SRV-1: `omni_fleet` is the DB for `omni-srv-admin` runtime state, not only
+  fleet inventory.
 - SRV-1: `hosts`, `nodes` and `programs` tables are seeded from the intended SRV1/SRV2/SRV3 fleet base.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points clients to `10.1.1.1:6432`.
 - Secrets remain outside git/log/vault.
@@ -130,3 +139,15 @@ Two independent agents reviewed the validation scope:
 
 Both reviews confirmed that live promote/demote and node DB access must stay
 blocked until the live control plane is intentionally deployed.
+
+## Added DB/CLI-Anything Contract
+
+The user rule captured after live validation is now part of M004:
+
+- `omni_fleet` remains the live DB name, but is the canonical PostgreSQL DB for
+  `omni-srv-admin`.
+- Each server has an ops scope: `srv1-ops`, `srv2-ops`, `srv3-ops`.
+- Mutable parameters/configs must be read from DB via PgBouncer; files are
+  bootstrap/templates/exported examples.
+- Slash commands must be represented in `slash_commands` using
+  CLI-Anything/`clianything` conventions.
