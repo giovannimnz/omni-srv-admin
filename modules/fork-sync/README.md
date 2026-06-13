@@ -47,6 +47,9 @@ ter um `deploy.yaml` para build/push Docker.
 ```bash
 fork-sync projects list                          # ver todos os forks configurados
 fork-sync sync aionui --dry-run                  # simula merge com upstream
+fork-sync sync-all                               # dry-run de todos os projetos ativos
+fork-sync sync-all --apply                       # aplica só projetos com dry-run seguro
+fork-sync containers mirrors                     # diagnostica mirrors migrados/quebrados
 fork-sync sync atius-router --deploy             # merge + build/push Docker
 fork-sync logs --project aionui --tail 50        # ver últimas 50 linhas do log
 fork-sync repl                                   # modo interativo
@@ -170,6 +173,12 @@ fork-sync (repo giovannimnz/fork-sync)
   `sync.yaml`. O CLI detecta e mostra em `projects show`.
 - **Saída dual: humana e JSON.** Default é legível (com cores via `rich`). `--json`
   vira machine-readable pra integrar com Hermes Agent, cron, ou outros tools.
+- **Automerge seguro.** `sync-all --apply` sempre roda dry-run por projeto e só
+  aplica quando não há dirty files, conflitos fora de protected paths ou protected
+  paths obsoletos.
+- **Mirrors de containers auditáveis.** `containers mirrors` detecta `.git`
+  copiado/quebrado em paths migrados para `~/GitHub/containers` antes de qualquer
+  tentativa de trocar o canonical path.
 
 ---
 
@@ -229,8 +238,15 @@ fork-sync detect aionui
 # Sincronizar (dry-run primeiro SEMPRE)
 fork-sync sync aionui --dry-run
 
+# Sincronizar todos os projetos ativos com gate seguro
+fork-sync sync-all
+fork-sync sync-all --apply
+
 # Sincronizar de verdade
 fork-sync sync aionui --repo-path ~/GitHub/forks/AionUi
+
+# Diagnosticar mirrors de containers migrados
+fork-sync containers mirrors
 
 # Sync + deploy Docker (só para projetos com deploy.yaml)
 fork-sync sync atius-router --deploy

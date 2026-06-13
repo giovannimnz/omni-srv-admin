@@ -6,6 +6,8 @@ from pathlib import Path
 import pytest
 
 from fork_sync.core import sync_runner
+from fork_sync.core import automerge
+from fork_sync.core import container_mirrors
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -199,3 +201,54 @@ def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair)
     assert result["status"] == "success"
     assert "ahead by 1" in result["message"]
     assert before == after
+
+
+def test_run_sync_all_applies_only_safe_projects(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        automerge,
+        "list_projects",
+        lambda only_enabled=True: [{"name": "safe"}, {"name": "dirty"}],
+    )
+
+    def fake_run_sync(name, dry_run=False):
+        calls.append((name, dry_run))
+        if name == "safe":
+            return {"status": "success", "can_apply": True, "dirty_files": []}
+        return {"status": "success", "can_apply": False, "dirty_files": ["README.md"]}
+
+    monkeypatch.setattr(automerge, "run_sync", fake_run_sync)
+
+    result = automerge.run_sync_all(apply=True)
+
+    assert result["safe_count"] == 1
+    assert result["applied_count"] == 1
+    assert calls == [("safe", True), ("safe", False), ("dirty", True)]
+
+
+def test_diagnose_container_mirrors_detects_invalid_git_copy(monkeypatch, tmp_path):
+    fork = tmp_path / "fork"
+    mirror = tmp_path / "mirror"
+    _init_repo(fork)
+    mirror.mkdir()
+    (mirror / ".git").mkdir()
+
+    monkeypatch.setattr(
+        container_mirrors,
+        "list_projects",
+        lambda: [
+            {
+                "name": "router",
+                "fork": str(fork),
+                "container_mirror": str(mirror),
+                "container_mirror_status": "invalid_git_copy",
+            }
+        ],
+    )
+
+    result = container_mirrors.diagnose_container_mirrors()
+
+    assert result["invalid_count"] == 1
+    assert result["reports"][0]["fork_git_valid"] is True
+    assert result["reports"][0]["container_mirror_git_valid"] is False
