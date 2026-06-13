@@ -86,10 +86,6 @@
 
 ## v3 Requirements
 
-Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
-This branch owns the M005/K3s requirements below; M004/Fleet requirements live
-in `codex/omni-fleet-control-plane-m004`.
-
 ### K3s HA Cluster
 
 - [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
