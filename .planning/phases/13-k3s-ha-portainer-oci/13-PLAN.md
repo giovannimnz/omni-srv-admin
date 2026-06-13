@@ -41,8 +41,8 @@ quebrar o Portainer antigo, Apache, Docker/Podman ou os servicos atuais.
 
 Esta phase agora tem planejamento, preflight, templates seguros e checkpoint de
 execucao read-only. A execucao real do plano `13-01` continua bloqueada antes
-de qualquer mutacao ate snapshots/backup OCI, firewall OCI/host, token
-Cloudflare Tunnel e aprovacao humana serem confirmados fora do repo.
+de qualquer mutacao ate snapshots/backup OCI por conta OC1, firewall OCI/host,
+token Cloudflare Tunnel e aprovacao humana serem confirmados fora do repo.
 
 ## Architecture
 
@@ -71,9 +71,11 @@ K3s HA:
 
 - SRV-1/SRV-2/SRV-3 must be Ubuntu 24.04 before K3s install. Passed on
   2026-06-13: all three are Ubuntu 24.04.4 LTS.
-- Backups/snapshots of all 3 nodes must exist before mutating servers.
+- Backups/snapshots of all 3 nodes must exist in their respective OC1 accounts
+  before mutating servers.
 - WireGuard `wg0` / `10.1.1.0/24` connectivity must be stable from every node to every node.
-- OCI/host firewall must restrict K3s ports to `wg0` private node traffic only.
+- OCI firewall must be audited per OC1 account; host firewall must restrict K3s
+  ports to `wg0` private node traffic only.
 - No public exposure of 6443, 2379-2380, 8472, 10250, Portainer NodePort.
 - Cloudflare Tunnel token must never be committed.
 - SRV-1 swap must be disabled and persisted off before K3s starts.
@@ -87,6 +89,7 @@ cleanup performed on SRV-2/SRV-3. `13-EXECUTION-CHECKPOINT-2026-06-13.md`
 records the current execution attempt: all three hosts are now Ubuntu 24.04.4,
 K3s is absent, K3s ports are closed as expected pre-install, and live install
 remains blocked by OCI snapshots/firewall, Cloudflare token and human approval.
+The 3 servers are in different OCI/OC1 accounts, so OCI gates are per-account.
 
 ## Acceptance
 

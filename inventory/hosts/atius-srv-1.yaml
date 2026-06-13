@@ -10,6 +10,7 @@ access:
   vpn_ip: 10.1.1.1
 platform:
   provider: oracle-oci
+  account_scope: separate-oc1-account
   os: ubuntu-24.04
   arch: arm64
   desktop: lxde-xrdp

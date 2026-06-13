@@ -91,6 +91,15 @@ SRV-1 <-> SRV-3 e SRV-2 <-> SRV-3. O fallback nao muda o bootstrap `wg0` do
 K3s. Antes de production-ready, o projeto precisa decidir se o PTP sera apenas
 admin/DR ou failover transparente que preserva `10.1.1.x`.
 
+### 8. Contas OCI/OC1 separadas
+
+**Informacao nova:** os 3 servidores estao em contas OCI/OC1 diferentes.
+
+**Decisao:** nao assumir VCN/NSG/Security List compartilhado. Snapshots,
+firewall OCI e auditoria de ingresso publico sao gates por conta. A rede privada
+do K3s continua sendo overlay criptografado (`wg0`, e PTP depois), nao rede OCI
+comum.
+
 ## Decisoes finais
 
 - Branch: `codex/k3s-portainer-oci-plan`.
@@ -102,6 +111,7 @@ admin/DR ou failover transparente que preserva `10.1.1.x`.
 - OCI/host firewall: manter ingresso publico fechado e liberar K3s apenas em `wg0`.
 - Backups: serializados; snapshot antes de qualquer instalacao.
 - Fallback PTP: subplano `13-02`, production-ready gate.
+- OCI: gates por conta OC1; sem NSG unico compartilhado.
 
 ## Deferred
 

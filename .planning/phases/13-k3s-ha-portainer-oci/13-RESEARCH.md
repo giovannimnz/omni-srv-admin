@@ -174,11 +174,14 @@ Findings:
 - NSGs permitem rules aplicadas a VNICs especificas e source/destination por NSG.
 - OCI lembra que firewall do host tambem precisa estar coerente; nao basta abrir
   Security List/NSG.
+- SRV-1, SRV-2 e SRV-3 estao em contas OCI/OC1 diferentes; nao existe premissa
+  de NSG, Security List ou VCN compartilhada entre eles.
 
 Implications:
 
-- Criar/usar NSG `atius-k3s-nodes` se a camada OCI precisar agrupar VNICs.
+- Criar/usar regras OCI separadas em cada conta/tenancy; nao planejar NSG unico.
 - Nao depender de NSG para liberar `10.1.1.0/24`: essa rede e WireGuard overlay.
+- Nao depender de VCN `10.0.0.x` entre contas para K3s v1.
 - Nao abrir 6443, 2379-2380, 8472, 10250 para `0.0.0.0/0`.
 - Host firewall deve permitir K3s apenas em `wg0`/`10.1.1.0/24`.
 - Manter acesso externo ao Portainer apenas pelo Cloudflare Tunnel.
@@ -291,6 +294,8 @@ K3s inter-node traffic is allowed only over WireGuard `wg0` / `10.1.1.0/24`.
 OCI NSG/Security List rules must not expose K3s ports publicly. Host firewall
 rules must prevent the same ports from being reachable on public or OCI VCN
 interfaces unless a later phase deliberately changes that.
+Because the three servers are in different OCI/OC1 accounts, this check is
+performed per account. There is no shared NSG gate.
 
 | Protocol | Port | Source | Destination | Purpose |
 |---|---:|---|---|---|

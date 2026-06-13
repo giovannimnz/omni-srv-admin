@@ -15,6 +15,7 @@
   - K3s embedded etcd needs 3+ server nodes and odd quorum
   - K3s ports restricted to private networking
   - PTP fallback full-mesh tracked as production-ready gate
+  - OCI gates are per account because SRV-1/SRV-2/SRV-3 are in different OC1 accounts
   - Portainer requires namespace `portainer`, RBAC and StorageClass
   - Portainer local storage requires node pinning in multi-node cluster
   - Cloudflare Tunnel token stored as Kubernetes Secret
@@ -28,8 +29,8 @@
 ## Required Human Gates
 
 - SRV-1/SRV-2/SRV-3 are upgraded and postchecked on Ubuntu 24.04.4 LTS.
-- Confirm OCI snapshots/backups.
-- Confirm OCI public-ingress closure and host firewall rules for `wg0`.
+- Confirm OCI snapshots/backups per OC1 account.
+- Confirm OCI public-ingress closure in each OC1 account and host firewall rules for `wg0`.
 - Create/provide Cloudflare Tunnel token out-of-band.
 - Complete or explicitly waive PTP fallback design before production-ready.
 - Approve destructive K3s rollback if needed.

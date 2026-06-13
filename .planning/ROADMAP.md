@@ -241,7 +241,7 @@
 
 **Status:** PREFLIGHT PASSED; LIVE INSTALL GATED (2026-06-13)
 
-**Depends on:** M004 Fleet Control Plane em branch separada, SRV-1 atualizado para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados.
+**Depends on:** M004 Fleet Control Plane em branch separada, SRV-1/SRV-2/SRV-3 atualizados para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados em cada conta OC1.
 
 **Why:** Evoluir de gestão por Docker/Podman locais para Kubernetes HA leve, sem expor API/etcd/Portainer publicamente e usando a base operacional criada no Fleet Control Plane.
 
@@ -259,7 +259,7 @@
 
 **Status:** EXECUTION CHECKPOINT BLOCKED BEFORE LIVE MUTATION (2026-06-13)
 
-**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao legado `docker.atius.com.br`, aos 3 nos ja validados em Ubuntu 24.04.4, aos riscos locais de disco/GDrive/portas, ao pré-requisito M004 em branch separada e ao novo subplano de fallback PTP.
+**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao fato de cada servidor estar em uma conta OCI/OC1 diferente, ao legado `docker.atius.com.br`, aos 3 nos ja validados em Ubuntu 24.04.4, aos riscos locais de disco/GDrive/portas, ao pré-requisito M004 em branch separada e ao novo subplano de fallback PTP.
 
 **Plans:** 2
 - [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (blocked before live mutation, human-gated)
@@ -280,7 +280,7 @@
 3. Plano não abre 6443/2379-2380/8472/10250 para internet pública
 4. Plano expõe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
 5. Plano consome o inventário/contratos definidos no M004 quando for executado
-6. Live install remains blocked until OCI snapshots/firewall and Cloudflare Tunnel token are confirmed
+6. Live install remains blocked until OCI snapshots/firewall per OC1 account and Cloudflare Tunnel token are confirmed
 7. Fallback PTP full-mesh documentado antes de declarar production-ready
 
 **Risk:** HIGH — rede privada/WireGuard precisa estar estável, fallback PTP ainda precisa desenho, e Portainer/Apache atuais não podem ser quebrados.

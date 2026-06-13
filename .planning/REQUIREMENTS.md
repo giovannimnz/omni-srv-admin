@@ -107,7 +107,7 @@ in `codex/omni-fleet-control-plane-m004`.
 ### Cloudflare + Security
 
 - [ ] **CFL-01**: Cloudflare Tunnel remoto publica `portainer.atius.com.br` via replicas `cloudflared` no cluster, token em Kubernetes Secret e fora do git.
-- [ ] **SEC-01**: OCI NSG/Security List e firewall local bloqueiam acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer; host firewall permite K3s apenas em `wg0`/`10.1.1.0/24`.
+- [ ] **SEC-01**: Cada conta OCI/OC1 dos 3 servidores bloqueia acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer; host firewall permite K3s apenas em `wg0`/`10.1.1.0/24`.
 
 ## Out of Scope
 

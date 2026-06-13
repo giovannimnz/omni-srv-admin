@@ -141,6 +141,21 @@ valor se uma falha da malha VPN derruba a comunicacao entre control-plane/etcd.
 Uma malha PTP secundaria reduz o risco, desde que nao introduza split-brain,
 rotas assimetricas ou exposicao publica de portas Kubernetes.
 
+### D-13: Os 3 servidores estao em contas OCI/OC1 diferentes
+
+**Decisao:** Planejar M005 assumindo que SRV-1, SRV-2 e SRV-3 pertencem a contas
+OCI/OC1 diferentes. Nao assumir VCN compartilhada, NSG compartilhado, Security
+List unica ou permissao cross-account automatica.
+
+**Implicacao:** Cada conta precisa de seu proprio snapshot/backup, auditoria de
+ingresso publico e regras de firewall OCI. A comunicacao K3s inter-node deve
+acontecer por overlay criptografado (`wg0` agora, PTP/fallback depois), nao por
+dependencia em rede privada OCI comum.
+
+**Rationale:** NSG/VCN e Security Lists sao limites administrativos da conta/
+tenancy. Como os 3 servidores estao em contas diferentes, o plano tem que tratar
+OCI como underlay publico/independente e usar overlays para trafego privado.
+
 ## Canonical References
 
 - `planejamento_cluster_k3s_portainer_oci.pdf` — blueprint fornecido pelo usuario.
@@ -156,6 +171,8 @@ rotas assimetricas ou exposicao publica de portas Kubernetes.
   Portainer antigo parado e vhost `portainer.atius.com.br` apontando para `127.0.0.1:9005`.
 - `60-LOGS/2026-06-12-ubuntu2404-express-prep.md` no vault — preparo do upgrade
   SRV-1 para 24.04.
+- `60-LOGS/2026-06-13-m005-oci-separate-accounts.md` no vault — registro da
+  premissa de contas OCI/OC1 separadas.
 
 ## Deferred Ideas
 
