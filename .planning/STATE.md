@@ -1,13 +1,14 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-05 after M002 completion
+**Last updated:** 2026-06-13 after M004/M005 branch matrix update
 
 ## Project Reference
 
-See: .planning/ROADMAP.md (M002 — Fork Sync Integration ✅ DONE)
+See: .planning/ROADMAP.md (M004/M005 branch matrix)
+See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M001 phases 3-7 (FreeIPA, Samba, WireGuard, Keycloak) — backlog
+**Current focus:** M004 Fleet Control Plane first, then M005 K3s HA Cluster + Portainer.
 
 ## Milestones
 
@@ -15,6 +16,9 @@ See: .planning/ROADMAP.md (M002 — Fork Sync Integration ✅ DONE)
 |---|---|---|
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
+| M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Active |
+| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Planned |
 
 ## M001 Completion
 

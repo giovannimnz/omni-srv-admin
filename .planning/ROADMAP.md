@@ -1,7 +1,8 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M002 — Fork Sync Integration
-**Milestone Goal:** fork-sync integrado como submodule + repo rebranded de omni-srv-admin para omni-srv-admin
+**Active Milestone:** M004 — Omni Fleet Control Plane
+**Milestone Goal:** M004 cria a base operacional multi-host; M005/K3s fica na fila depois do Fleet.
+**Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
 
@@ -219,6 +220,36 @@
 - `omni backup restore <path>` — restaura backup
 - `omni backup status` — status do último backup
 - `--help` documentado
+
+---
+
+## M004: Omni Fleet Control Plane
+
+**Goal:** Criar a base operacional multi-host antes de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat/status, registry de programas, version/update plans, licenças sem secrets, auditoria e contrato futuro com Podman/K3s.
+
+**Status:** ACTIVE/PLANNED (2026-06-13)
+
+**Canonical branch:** `codex/omni-fleet-control-plane-m004`
+
+**Phase:** 12
+
+**Full artifacts:** `.planning/phases/12-omni-fleet-control-plane/` on the canonical branch.
+
+---
+
+## M005: K3s HA Cluster + Portainer
+
+**Goal:** Planejar cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+
+**Status:** PLANNED (2026-06-13)
+
+**Depends on:** M004 Fleet Control Plane, SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
+
+**Canonical branch:** `codex/k3s-portainer-oci-plan`
+
+**Phase:** 13
+
+**Full artifacts:** `.planning/phases/13-k3s-ha-portainer-oci/` on the canonical branch.
 
 ---
 

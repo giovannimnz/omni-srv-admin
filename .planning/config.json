@@ -11,8 +11,8 @@
     "nyquist_validation": true,
     "auto_advance": false
   },
-  "currentMilestone": "M003",
-  "currentPhase": "09",
+  "currentMilestone": "M004",
+  "currentPhase": "12",
   "milestones": [
     {
       "id": "M001",
@@ -32,10 +32,33 @@
     {
       "id": "M003",
       "name": "Omni CLI Expansion",
-      "status": "active",
-      "phase": "09",
+      "status": "done",
+      "completed": "2026-06-05",
+      "phases": ["09", "10", "11"],
       "goal": "omni CLI unificada com subcomandos admin, deploy, backup",
       "depends_on": "M002"
+    },
+    {
+      "id": "M004",
+      "name": "Omni Fleet Control Plane",
+      "status": "active",
+      "phase": "12",
+      "phases": ["12"],
+      "branch": "codex/omni-fleet-control-plane-m004",
+      "artifact_scope": "canonical_full_plan_on_branch",
+      "goal": "base operacional multi-host com install server/node, inventario, PostgreSQL central via PgBouncer, registry, versoes, licencas, auditoria e contrato futuro com Podman/K3s",
+      "depends_on": "M003"
+    },
+    {
+      "id": "M005",
+      "name": "K3s HA Cluster + Portainer",
+      "status": "planned",
+      "phase": "13",
+      "phases": ["13"],
+      "branch": "codex/k3s-portainer-oci-plan",
+      "artifact_scope": "canonical_full_plan_on_branch",
+      "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
+      "depends_on": "M004"
     }
   ],
   "_created": "2026-05-06",

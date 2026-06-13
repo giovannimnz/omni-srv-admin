@@ -84,6 +84,41 @@
 - **APP-03**: n8n integrado com Keycloak
 - **APP-04**: Open WebUI integrado com Keycloak
 
+## v3 Requirements
+
+Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
+
+### Omni Fleet Control Plane
+
+- [ ] **FCP-01**: `omni-srv-admin` deve instalar/configurar um host como `server` ou `node`, com papéis explícitos e idempotência básica.
+- [ ] **FCP-02**: Inventário multi-host deve ser a fonte de verdade para `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` e futuros hosts.
+- [ ] **FCP-03**: PostgreSQL central deve ser migrável via dump/restore e migrations versionadas, sem lock-in em um único host.
+- [ ] **FCP-04**: Clientes e nodes devem acessar PostgreSQL somente via PgBouncer; acesso direto ao PostgreSQL fica restrito ao server/control plane.
+- [ ] **FCP-05**: Nodes devem reportar heartbeat, versão do agent, health/status e último contato.
+- [ ] **FCP-06**: Programas instalados por host devem ser registrados com nome, versão, origem, modo de instalação e ownership.
+- [ ] **FCP-07**: Control plane deve comparar versão atual vs desejada e gerar update plans auditáveis antes de aplicar mudanças.
+- [ ] **FCP-08**: Licenças devem ser controladas por metadata e `secret_ref`, sem secrets em git, logs, `.planning` ou vault.
+- [ ] **FCP-09**: Ações relevantes devem gerar auditoria/logs com ator, host, ação, alvo, resultado e timestamp.
+- [ ] **FCP-10**: O design deve expor contrato futuro para Podman/K3s consumir inventário, status, programs, versions e audit events sem implementar a orquestração nesta phase.
+
+### K3s HA Cluster
+
+- [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
+- [ ] **K3S-02**: Embedded etcd funcional com quorum 2/3 e snapshots configurados.
+- [ ] **K3S-03**: K3s usa apenas rede privada `10.1.1.0/24` para API, etcd, kubelet e Flannel.
+- [ ] **K3S-04**: SRV-1 atualizado para Ubuntu 24.04 antes da instalacao real do cluster.
+- [ ] **K3S-05**: Traefik e ServiceLB padrao do K3s desabilitados no v1 para evitar conflito com Apache/portas atuais.
+
+### Portainer on Kubernetes
+
+- [ ] **PRT-01**: Portainer CE LTS instalado no namespace `portainer` via Helm, com persistencia e `nodeSelector` adequado ao storage local.
+- [ ] **PRT-02**: Portainer do cluster acessivel em `https://portainer.atius.com.br` sem remover o Portainer antigo em `docker.atius.com.br`.
+
+### Cloudflare + Security
+
+- [ ] **CFL-01**: Cloudflare Tunnel remoto publica `portainer.atius.com.br` via replicas `cloudflared` no cluster, token em Kubernetes Secret e fora do git.
+- [ ] **SEC-01**: OCI NSG/Security List e firewall local bloqueiam acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer.
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -108,12 +143,17 @@
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
+| FCP-01 → FCP-10 | Phase 12 / M004 | Planned |
+| K3S-01 → K3S-05 | Phase 13 / M005 | Planned |
+| PRT-01 → PRT-02 | Phase 13 / M005 | Planned |
+| CFL-01, SEC-01 | Phase 13 / M005 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
-- Mapped to phases: 39
+- v3 requirements: 19 total
+- Mapped to phases: 58
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-05-06 after merge*
+*Last updated: 2026-06-13 after M004/M005 branch matrix update*
