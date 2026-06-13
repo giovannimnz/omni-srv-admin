@@ -7,6 +7,7 @@ import time
 import subprocess
 import signal
 import shutil
+import fcntl
 from datetime import datetime
 from collections import deque
 from pathlib import Path
@@ -22,6 +23,7 @@ DEFAULTS = {
     'RG_LOG_DIR': str(Path.home() / '.logs' / 'resource-governor'),
     'RG_RUNTIME_OVERRIDE_FILE': str(Path.home() / '.config' / 'omni' / 'resource-governor.runtime.env'),
     'RG_WATCHDOG_STATE_FILE': str(Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-watchdog.json'),
+    'RG_WATCHDOG_LOCK_FILE': str(Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-watchdog.lock'),
     'RG_WATCHDOG_LOG_FILE': str(Path.home() / '.logs' / 'resource-governor' / 'watchdog.log'),
     'RG_WATCHDOG_DISK_CRITICAL_PCT': '97',
     'RG_WATCHDOG_SWAP_CRITICAL_PCT': '95',
@@ -33,9 +35,10 @@ DEFAULTS = {
     'RG_WATCHDOG_RECOVERY_DISK_PCT': '92',
     'RG_WATCHDOG_RECOVERY_SWAP_PCT': '70',
     'RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB': '4096',
-    'RG_WATCHDOG_POLL_INTERVAL_SEC': '1',
-    'RG_WATCHDOG_PERF_WRITE_INTERVAL_SEC': '30',
+    'RG_WATCHDOG_POLL_INTERVAL_SEC': '5',
+    'RG_WATCHDOG_PERF_WRITE_INTERVAL_SEC': '60',
     'RG_WATCHDOG_PERF_WINDOW_SIZE': '300',
+    'RG_WATCHDOG_RECOVERY_HYSTERESIS_CYCLES': '5',
 }
 
 # Cgroup v2 paths for resource enforcement (global 85% machine ceiling)
@@ -77,6 +80,41 @@ def handle_signal(signum, _frame):
     global RUNNING
     RUNNING = False
 
+
+def other_watchdog_pids() -> list[int]:
+    current_pid = os.getpid()
+    try:
+        result = subprocess.run(
+            ['ps', '-eo', 'pid=,args='],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+            check=False,
+        )
+    except Exception:
+        return []
+
+    script_path = str(SCRIPT)
+    pids: list[int] = []
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        parts = stripped.split(maxsplit=1)
+        if len(parts) != 2 or not parts[0].isdigit():
+            continue
+        pid = int(parts[0])
+        args = parts[1]
+        if pid == current_pid:
+            continue
+        argv = args.split()
+        if not argv or not Path(argv[0]).name.startswith('python'):
+            continue
+        if any(arg == script_path or arg.endswith('/resource-governor-watchdog.py') for arg in argv[1:]):
+            pids.append(pid)
+    return pids
+
 def load_config() -> dict[str, str]:
     data = DEFAULTS.copy()
     if CONFIG_PATH.exists():
@@ -88,9 +126,15 @@ def load_config() -> dict[str, str]:
             data[key.strip()] = value.strip().strip('"').strip("'")
     return data
 
-def run_cmd(cmd: list[str], env: dict | None = None) -> tuple[int, str]:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
-    return proc.returncode, (proc.stdout.strip() or proc.stderr.strip())
+def run_cmd(cmd: list[str], env: dict | None = None, timeout: int = 3) -> tuple[int, str]:
+    """Run external command with hard timeout. 2026-06-11 fix: no-timeout blocked watchdog forever."""
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env, timeout=timeout)
+        return proc.returncode, (proc.stdout.strip() or proc.stderr.strip())
+    except subprocess.TimeoutExpired:
+        return 124, f'timeout-after-{timeout}s'
+    except Exception as exc:
+        return 1, f'exc:{type(exc).__name__}:{exc}'
 
 def load_json(path: Path, default: dict | None = None) -> dict:
     if not path.exists():
@@ -134,10 +178,13 @@ def sample_processes() -> dict:
     result: dict = {}
     env = os.environ.copy()
     env['LC_ALL'] = 'C'
-    out = subprocess.run(
-        ['ps', '-eo', 'pid=,pcpu=,pmem=,rss=,comm=,args=', '--sort=-pcpu'],
-        capture_output=True, text=True, check=False, env=env
-    ).stdout
+    try:
+        out = subprocess.run(
+            ['ps', '-eo', 'pid=,pcpu=,pmem=,rss=,comm=,args=', '--sort=-pcpu'],
+            capture_output=True, text=True, check=False, env=env, timeout=3,
+        ).stdout
+    except subprocess.TimeoutExpired:
+        out = ''
     ts = datetime.now().astimezone().isoformat()
     for line in out.splitlines():
         parts = line.split(None, 5)
@@ -242,6 +289,22 @@ def main() -> int:
     log_dir = Path(os.path.expanduser(config['RG_LOG_DIR']))
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = Path(os.path.expanduser(config['RG_WATCHDOG_LOG_FILE']))
+    lock_path = Path(os.path.expanduser(config['RG_WATCHDOG_LOCK_FILE']))
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_fh = lock_path.open('w')
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        append_log(log_path, f'lock already running path={lock_path} duplicate_pid={os.getpid()}')
+        return 0
+
+    existing_pids = other_watchdog_pids()
+    if existing_pids:
+        append_log(log_path, f'already running pids={",".join(map(str, existing_pids))} duplicate_pid={os.getpid()} lock={lock_path}')
+        return 0
+    lock_fh.write(str(os.getpid()) + '\n')
+    lock_fh.flush()
+
     state_path = Path(os.path.expanduser(config['RG_WATCHDOG_STATE_FILE']))
     runtime_path = Path(os.path.expanduser(config['RG_RUNTIME_OVERRIDE_FILE']))
     latest_snapshot = log_dir / 'latest.json'
@@ -253,9 +316,11 @@ def main() -> int:
     state.setdefault('last_cleanup_ts', 0.0)
     state.setdefault('last_audit_ts', 0.0)
     state.setdefault('total_cycles', 0)
+    state.setdefault('last_state_write_ts', 0.0)  # 2026-06-11 fix: throttle state writes
 
     process_windows: dict[str, PerfWindow] = {}
     last_write_ts = time.time()
+    last_state_write_ts = 0.0  # 2026-06-11 fix: write state at most every 30s
     last_cleanup_ts = state.get('last_cleanup_ts', 0.0)
     last_audit_ts = state.get('last_audit_ts', 0.0)
 
@@ -270,7 +335,12 @@ def main() -> int:
         system_data = sample_system()
         process_data = sample_processes()
 
-        # Track all processes in windows
+        # Track all processes in windows — 2026-06-11 fix: cap at 200 entries (LRU) to avoid memory blowup
+        if len(process_windows) > 200:
+            # Drop oldest (FIFO by insertion order)
+            drop_n = len(process_windows) - 200
+            for name in list(process_windows.keys())[:drop_n]:
+                process_windows.pop(name, None)
         for pid, pinfo in process_data.items():
             name = pinfo['name']
             if name not in process_windows:
@@ -293,6 +363,8 @@ def main() -> int:
 
         # Action: threshold detected
         if reasons:
+            # Reset healthy streak on threshold breach
+            state['healthy_streak'] = 0
             # Apply runtime override
             runtime_path.parent.mkdir(parents=True, exist_ok=True)
             if state.get('runtime_mode') != 'conservative':
@@ -337,17 +409,24 @@ def main() -> int:
 
         else:
             state['last_reasons'] = []
+            # 2026-06-11 fix: hysteresis — require N consecutive healthy cycles
+            # before exiting conservative mode (was: 1 cycle = flapping bug)
+            healthy_streak = state.get('healthy_streak', 0) + 1
+            state['healthy_streak'] = healthy_streak
+            HYSTERESIS_CYCLES = int(config.get('RG_WATCHDOG_RECOVERY_HYSTERESIS_CYCLES', '5'))
             # Recovery check
             recovered = (
-                system_data['disk_pct'] <= float(config['RG_WATCHDOG_RECOVERY_DISK_PCT'])
+                healthy_streak >= HYSTERESIS_CYCLES
+                and system_data['disk_pct'] <= float(config['RG_WATCHDOG_RECOVERY_DISK_PCT'])
                 and system_data['swap_pct'] <= float(config['RG_WATCHDOG_RECOVERY_SWAP_PCT'])
                 and system_data['mem_available_mib'] >= float(config['RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB'])
             )
             if recovered and state.get('runtime_mode') == 'conservative' and runtime_path.exists():
                 runtime_path.unlink()
                 state['runtime_mode'] = 'base'
+                state['healthy_streak'] = 0
                 cgroup_actions = remove_cgroup_limits()
-                append_log(log_path, f'cgroup-unlimited {" ".join(cgroup_actions)} disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]}')
+                append_log(log_path, f'cgroup-unlimited {" ".join(cgroup_actions)} disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]} healthy_streak={healthy_streak}')
                 # Restore per-profile limits to base values
                 cgroup_init_script = SCRIPT.parent / 'resource-governor-cgroup-init.sh'
                 if cgroup_init_script.exists():
@@ -399,7 +478,7 @@ def main() -> int:
 
             last_write_ts = current_ts
 
-        # Save state
+        # Save state — 2026-06-11 fix: throttled to 30s, not every cycle (was 1s = I/O blocker)
         state['last_system'] = {
             'disk_pct': system_data['disk_pct'],
             'swap_pct': system_data['swap_pct'],
@@ -407,7 +486,9 @@ def main() -> int:
         }
         state['last_cleanup_ts'] = last_cleanup_ts
         state['last_audit_ts'] = last_audit_ts
-        write_json(state_path, state)
+        if (current_ts - last_state_write_ts) >= 30:
+            write_json(state_path, state)
+            last_state_write_ts = current_ts
 
         # Sleep for remaining of cycle
         elapsed = time.time() - cycle_start

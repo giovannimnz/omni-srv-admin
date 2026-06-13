@@ -1,5 +1,5 @@
 [Unit]
-Description=Resource governor watchdog daemon (continuous, 1s poll)
+Description=Resource governor watchdog daemon (continuous, 5s poll)
 Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
 After=network-online.target
 Wants=network-online.target
@@ -8,11 +8,17 @@ Wants=network-online.target
 Type=simple
 ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-watchdog.py
 WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
-Nice=10
-IOSchedulingClass=best-effort
+Nice=15
+IOSchedulingClass=idle
 IOSchedulingPriority=7
 Restart=always
-RestartSec=5
+RestartSec=30
+# 2026-06-11 fix: enforce hard limits so watchdog cannot starve real workload
+MemoryMax=384M
+CPUQuota=30%
+TimeoutStopSec=15
+OOMPolicy=stop
+OOMScoreAdjust=-1000
 
 [Install]
 WantedBy=default.target

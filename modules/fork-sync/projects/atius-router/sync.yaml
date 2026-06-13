@@ -6,27 +6,31 @@ fork_repo: router-ai-atius  # slug real no GitHub (display name "Atius Router" d
 fork: /home/ubuntu/docker/Atius/router-ai-atius
 
 protected_paths:
-  # Feature: Python middleware (model enrichment layer)
-  - integration/middleware/model_detailed.py
-  # Feature: Docker Compose with Python middleware service
+  # Feature: middleware and custom container build chain
+  - integration/middleware/
+  - Dockerfile.fast
+  # Feature: Docker Compose with middleware service
   - docker-compose.yml
-  # Feature: Environment template
-  - .env.example
-  # Feature: i18n Brazilian Portuguese (PT-BR)
-  - i18n/locales/pt-BR.yaml
+  # Feature: i18n Brazilian Portuguese
+  - i18n/locales/pt.yaml
   - i18n/i18n.go
-  - web/default/src/i18n/locales/pt-BR.json
+  - web/default/src/i18n/locales/*.json
   - web/default/src/i18n/config.ts
-  - web/default/src/components/language-switcher.tsx
-  # Feature: Documentation (PT-BR primary, EN translated)
+  # Feature: Codex channel, OAuth/device/model sync and routing overrides
+  - controller/codex_*.go
+  - service/codex_*.go
+  - relay/channel/codex/
+  - service/openaicompat/policy.go
+  - dto/channel_settings.go
+  - router/api-router.go
+  - web/default/src/features/channels/
+  # Feature: Documentation and planning
   - README.md
   - README.en.md
   - docs/
-  # Feature: GSD planning artifacts
   - .planning/
-  # Feature: Version file
+  # Feature: versioning and branding
   - VERSION
-  # Feature: Custom branding
   - web/default/public/logo.png
   - web/default/public/favicon.ico
 

@@ -36,30 +36,35 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 
 ## Protected Files Summary
 
-### Middleware (custom Python enrichment layer)
-- `integration/middleware/model_detailed.py` — model enrichment via Python FastAPI
+### Middleware and containers
+- `integration/middleware/` — FastAPI/Go middleware assets and build files
+- `Dockerfile.fast` — local container customization
 
 ### Infrastructure
 - `docker-compose.yml` — Docker Compose with `model-detailed` Python service
-- `.env.example` — environment template with fork-specific variables
 
 ### i18n — Portuguese Translation
 - `i18n/locales/pt.yaml` — Brazilian Portuguese backend translations (278 keys)
 - `i18n/i18n.go` — added `LangPt`, `normalizeLang("pt")`, `SupportedLanguages()` includes `pt`
 
 ### Frontend i18n
-- `web/default/src/i18n/locales/pt.json` — Brazilian Portuguese frontend translations (3910 keys)
+- `web/default/src/i18n/locales/*.json` — locale updates required by fork-specific channel UX
 - `web/default/src/i18n/config.ts` — added `pt` to `supportedLngs` and `resources`
-- `web/default/src/components/language-switcher.tsx` — added `Português` option
+
+### Codex channel integration
+- `controller/codex_*.go`, `service/codex_*.go` — OAuth/device/model flows
+- `relay/channel/codex/` — Codex adaptor
+- `service/openaicompat/policy.go` — chat-to-responses routing
+- `dto/channel_settings.go`, `router/api-router.go` — API/router deltas
+- `web/default/src/features/channels/` — fork-specific channel UI
 
 ### Documentation (fork-specific, PT-BR primary)
 - `README.md` — Portuguese (BR) README — primary language
 - `README.en.md` — English README — copy of main README
 - `docs/` — documentation folder (ARCHITECTURE, GETTING-STARTED, DEVELOPMENT, TESTING, CONFIGURATION)
 
-### Planning & Scripts
-- `.planning/` — GSD planning artifacts
-- `scripts/` — fork-specific scripts (sync-fork.sh, auto-sync-deploy.sh, deploy-ghcr.sh, version-bump.sh)
+### Planning
+- `.planning/` — planning artifacts tied to the fork roadmap
 
 ### Versioning
 - `VERSION` — fork version file (`0.12.14.2`)
@@ -68,20 +73,12 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 
 ```
 1. git fetch upstream
-2. git merge upstream/main (strategy: theirs = prefer upstream on conflict)
-3. git checkout --ours integration/middleware/model_detailed.py
-4. git checkout --ours docker-compose.yml
-5. git checkout --ours README.md README.en.md
-6. git checkout --ours i18n/locales/pt.yaml i18n/i18n.go
-7. git checkout --ours web/default/src/i18n/locales/pt.json
-8. git checkout --ours web/default/src/i18n/config.ts
-9. git checkout --ours web/default/src/components/language-switcher.tsx
-10. git checkout --ours .planning/
-11. git checkout --ours scripts/
-12. git checkout --ours VERSION
-13. git add -A && git commit -m "chore: restore protected files after upstream merge"
-14. ./scripts/version-bump.sh
-15. git push
+2. verify working tree is clean or checkpoint locally first
+3. snapshot protected files from the fork branch
+4. git merge --no-commit -X theirs upstream/main
+5. restore protected files from the local snapshot
+6. abort if any conflict remains outside protected paths
+7. git commit the merge once the tree is clean
 ```
 
 ## Versioning Scheme

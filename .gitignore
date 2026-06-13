@@ -140,3 +140,8 @@ domain-infrastructure/
 # Submodule: fork-sync volatile paths
 __pycache__/**
 *.pyc
+
+# Backup snapshots from local sed/rewrite (resource-governor-patcher etc)
+*.bak
+*.bak.*
+*.orig

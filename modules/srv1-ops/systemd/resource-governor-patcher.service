@@ -7,9 +7,17 @@ After=default.target omni-builds.slice omni-interactive.slice omni-transfers.sli
 Type=simple
 ExecStart=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-patcher.py
 Restart=always
-RestartSec=10
+RestartSec=30
 StandardOutput=journal
 StandardError=journal
+# 2026-06-11 fix: hard limits
+MemoryMax=256M
+CPUQuota=20%
+TimeoutStopSec=15
+OOMPolicy=stop
+OOMScoreAdjust=-1000
+Nice=15
+IOSchedulingClass=idle
 
 [Install]
 WantedBy=default.target

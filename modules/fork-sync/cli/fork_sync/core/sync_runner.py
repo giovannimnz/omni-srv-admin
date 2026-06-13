@@ -1,22 +1,17 @@
-"""sync_runner — executa sync/deploy/detect delegando aos scripts bash legados.
+"""sync_runner — motor de sync com preservação real de protected_paths."""
 
-Estratégia: o motor Python NÃO substitui o sync.sh. Ele delega, captura stdout/stderr
-e converte em resultado estruturado. Benefícios:
-- Backward compat 100%: scripts bash continuam funcionando com `bin/sync.sh foo bar`
-- Python adiciona: --json, --dry-run cross-cutting, exit codes estruturados
-- Um dia, podemos portar a lógica pra Python puro sem quebrar users
-"""
+from __future__ import annotations
 
-import subprocess
 import os
+import subprocess
 from pathlib import Path
 from typing import Optional
 
-from fork_sync.core.config import SYNC_SH, DEPLOY_SH, DETECT_SH, REPO_ROOT
-from fork_sync.core.registry import load_project, project_exists
+from fork_sync.core.config import DEPLOY_SH, REPO_ROOT
+from fork_sync.core.registry import load_project
 
 
-def _run_script(script: Path, args: list, cwd: Optional[Path] = None) -> dict:
+def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> dict:
     """Roda um script bash e captura resultado estruturado."""
     if not script.exists():
         return {
@@ -31,9 +26,12 @@ def _run_script(script: Path, args: list, cwd: Optional[Path] = None) -> dict:
     env.setdefault("FORK_SYNC_ROOT", str(REPO_ROOT))
     try:
         proc = subprocess.run(
-            cmd, capture_output=True, text=True,
+            cmd,
+            capture_output=True,
+            text=True,
             cwd=str(cwd) if cwd else str(REPO_ROOT),
-            env=env, timeout=600,
+            env=env,
+            timeout=600,
         )
         return {
             "status": "success" if proc.returncode == 0 else "error",
@@ -43,16 +41,88 @@ def _run_script(script: Path, args: list, cwd: Optional[Path] = None) -> dict:
             "command": " ".join(cmd),
         }
     except subprocess.TimeoutExpired:
-        return {"status": "timeout", "error": f"timeout após 600s", "command": " ".join(cmd)}
-    except Exception as e:
-        return {"status": "error", "error": str(e), "command": " ".join(cmd)}
+        return {"status": "timeout", "error": "timeout após 600s", "command": " ".join(cmd)}
+    except Exception as exc:  # pragma: no cover - defensive path
+        return {"status": "error", "error": str(exc), "command": " ".join(cmd)}
+
+
+def _git(repo: Path, args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["git", *args],
+        cwd=str(repo),
+        text=True,
+        capture_output=True,
+        check=check,
+    )
+
+
+def _ensure_upstream_remote(repo: Path, url: str) -> None:
+    remotes = _git(repo, ["remote"], check=False)
+    if "upstream" in remotes.stdout.split():
+        _git(repo, ["remote", "set-url", "upstream", url])
+    else:
+        _git(repo, ["remote", "add", "upstream", url])
+
+
+def _branch(repo: Path) -> str:
+    return _git(repo, ["rev-parse", "--abbrev-ref", "HEAD"]).stdout.strip()
+
+
+def _ahead_behind(repo: Path, upstream_ref: str) -> tuple[int, int]:
+    proc = _git(repo, ["rev-list", "--left-right", "--count", f"HEAD...{upstream_ref}"])
+    ahead_str, behind_str = proc.stdout.strip().split()
+    return int(ahead_str), int(behind_str)
+
+
+def _changed_since(repo: Path, start_ref: str, end_ref: str) -> list[str]:
+    proc = _git(repo, ["diff", "--name-only", f"{start_ref}..{end_ref}"], check=False)
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def _dirty_files(repo: Path) -> list[str]:
+    proc = _git(repo, ["status", "--porcelain", "--untracked-files=all"], check=False)
+    files = []
+    for line in proc.stdout.splitlines():
+        if not line.strip():
+            continue
+        files.append(line[3:] if len(line) > 3 else line)
+    return files
+
+
+def _expand_protected_paths(repo: Path, patterns: list[str]) -> tuple[list[str], list[str]]:
+    matched: set[str] = set()
+    stale: list[str] = []
+    for pattern in patterns:
+        proc = _git(repo, ["ls-files", "--cached", "--", pattern], check=False)
+        files = [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+        if not files:
+            stale.append(pattern)
+            continue
+        matched.update(files)
+    return sorted(matched), stale
+
+
+def _restore_protected_paths(repo: Path, patterns: list[str]) -> None:
+    if not patterns:
+        return
+    _git(repo, ["checkout", "HEAD", "--", *patterns], check=False)
+
+
+def _unmerged_files(repo: Path) -> list[str]:
+    proc = _git(repo, ["diff", "--name-only", "--diff-filter=U"], check=False)
+    return [line.strip() for line in proc.stdout.splitlines() if line.strip()]
+
+
+def _merge_abort(repo: Path) -> None:
+    merge_head = repo / ".git" / "MERGE_HEAD"
+    if merge_head.exists():
+        _git(repo, ["merge", "--abort"], check=False)
 
 
 def run_detect(name: str) -> dict:
     """Detecta novo release."""
     cfg = load_project(name)
-    out = _run_script(DETECT_SH, [name, cfg.get("fork", "")])
-    # Parse NEW_RELEASE= e VERSION= do stdout
+    out = _run_script(REPO_ROOT / "bin" / "detect-release.sh", [name, cfg.get("fork", "")])
     new_release = False
     version = None
     for line in out.get("stdout", "").splitlines():
@@ -65,22 +135,194 @@ def run_detect(name: str) -> dict:
     return out
 
 
-def run_sync(name: str, repo_path: Optional[str] = None,
-             dry_run: bool = False, deploy: bool = False) -> dict:
-    """Sincroniza fork com upstream."""
-    if not project_exists(name):
-        raise FileNotFoundError(f"Projeto '{name}' não existe")
+def run_sync(
+    name: str,
+    repo_path: Optional[str] = None,
+    dry_run: bool = False,
+    deploy: bool = False,
+) -> dict:
+    """Sincroniza fork com upstream preservando protected_paths."""
     cfg = load_project(name)
-    args = [name]
-    if repo_path:
-        args.append(repo_path)
-    elif cfg.get("fork"):
-        args.append(cfg["fork"])
+    repo = Path(repo_path or cfg.get("fork", "")).expanduser().resolve()
+    upstream_url = cfg.get("upstream", "")
+    upstream_branch = cfg.get("upstream_branch", "main")
+    upstream_ref = f"upstream/{upstream_branch}"
+    merge_strategy = cfg.get("merge_strategy", "merge")
+    protected_patterns = list(cfg.get("protected_paths", []))
+
+    if not (repo / ".git").exists():
+        return {
+            "status": "error",
+            "error": f"repo is not a git repository: {repo}",
+            "repo": str(repo),
+        }
+    if not upstream_url:
+        return {
+            "status": "error",
+            "error": f"upstream não configurado em {name}",
+            "repo": str(repo),
+        }
+
+    _ensure_upstream_remote(repo, upstream_url)
+    fetch = _git(repo, ["fetch", "upstream", upstream_branch], check=False)
+    if fetch.returncode != 0:
+        return {
+            "status": "error",
+            "error": f"falha no fetch de {upstream_ref}",
+            "stdout": fetch.stdout,
+            "stderr": fetch.stderr,
+            "repo": str(repo),
+        }
+
+    branch = _branch(repo)
+    local_sha = _git(repo, ["rev-parse", "HEAD"]).stdout.strip()
+    remote_sha = _git(repo, ["rev-parse", upstream_ref]).stdout.strip()
+    merge_base = _git(repo, ["merge-base", "HEAD", upstream_ref]).stdout.strip()
+    ahead, behind = _ahead_behind(repo, upstream_ref)
+    dirty_files = _dirty_files(repo)
+    protected_files, stale_patterns = _expand_protected_paths(repo, protected_patterns)
+    local_changes = set(_changed_since(repo, merge_base, "HEAD"))
+    upstream_changes = set(_changed_since(repo, merge_base, upstream_ref))
+    conflict_candidates = sorted(local_changes & upstream_changes)
+    protected_conflicts = sorted(path for path in conflict_candidates if path in protected_files)
+    unprotected_conflicts = sorted(path for path in conflict_candidates if path not in protected_files)
+
+    result = {
+        "project": name,
+        "repo": str(repo),
+        "branch": branch,
+        "upstream": upstream_url,
+        "upstream_ref": upstream_ref,
+        "local_sha": local_sha,
+        "upstream_sha": remote_sha,
+        "merge_base": merge_base,
+        "ahead": ahead,
+        "behind": behind,
+        "dirty_files": dirty_files,
+        "protected_patterns": protected_patterns,
+        "protected_files": protected_files,
+        "stale_protected_paths": stale_patterns,
+        "conflict_candidates": conflict_candidates,
+        "protected_conflicts": protected_conflicts,
+        "unprotected_conflicts": unprotected_conflicts,
+        "merge_strategy": merge_strategy,
+        "deploy_requested": deploy,
+    }
+
+    if local_sha == remote_sha:
+        result.update(
+            {
+                "status": "success",
+                "message": "Already up to date",
+                "can_apply": not dirty_files and not unprotected_conflicts,
+            }
+        )
+        return result
+
     if dry_run:
-        args.append("--dry-run")
+        result.update(
+            {
+                "status": "success",
+                "message": f"Would merge {upstream_ref} into {branch}",
+                "can_apply": not dirty_files and not unprotected_conflicts,
+            }
+        )
+        return result
+
+    if dirty_files:
+        result.update(
+            {
+                "status": "error",
+                "error": "working tree suja; faça checkpoint local antes do sync",
+            }
+        )
+        return result
+
+    if unprotected_conflicts:
+        result.update(
+            {
+                "status": "error",
+                "error": "mudanças locais e upstream se sobrepõem fora dos protected_paths",
+                "conflict_files": unprotected_conflicts,
+            }
+        )
+        return result
+
+    merge_args = ["merge", "--no-commit", "--no-ff"]
+    if merge_strategy in {"ours", "theirs"}:
+        merge_args.extend(["-X", merge_strategy])
+    merge_args.append(upstream_ref)
+    merge = _git(repo, merge_args, check=False)
+
+    if merge.returncode != 0:
+        unresolved = _unmerged_files(repo)
+        unresolved_unprotected = [path for path in unresolved if path not in protected_files]
+        if unresolved_unprotected:
+            _merge_abort(repo)
+            result.update(
+                {
+                    "status": "error",
+                    "error": "merge gerou conflitos fora dos protected_paths",
+                    "stdout": merge.stdout,
+                    "stderr": merge.stderr,
+                    "conflict_files": unresolved,
+                    "unprotected_conflict_files": unresolved_unprotected,
+                }
+            )
+            return result
+    _restore_protected_paths(repo, protected_patterns)
+    if protected_patterns:
+        _git(repo, ["add", "--", *protected_patterns], check=False)
+
+    remaining = _unmerged_files(repo)
+    if remaining:
+        _merge_abort(repo)
+        result.update(
+            {
+                "status": "error",
+                "error": "merge permaneceu com conflitos após restaurar protected_paths",
+                "stdout": merge.stdout,
+                "stderr": merge.stderr,
+                "conflict_files": remaining,
+            }
+        )
+        return result
+
+    commit_message = f"chore(fork-sync): sync {name} with {upstream_ref}"
+    commit = _git(repo, ["commit", "-m", commit_message], check=False)
+    if commit.returncode != 0:
+        _merge_abort(repo)
+        result.update(
+            {
+                "status": "error",
+                "error": "falha ao criar commit de merge",
+                "stdout": commit.stdout,
+                "stderr": commit.stderr,
+            }
+        )
+        return result
+
+    push_stdout = ""
+    push_stderr = ""
+    if str(cfg.get("auto_push", False)).lower() == "true":
+        push = _git(repo, ["push", "origin", branch], check=False)
+        push_stdout = push.stdout
+        push_stderr = push.stderr
+
+    result.update(
+        {
+            "status": "success",
+            "message": f"Merged {upstream_ref} into {branch}",
+            "merge_stdout": merge.stdout,
+            "merge_stderr": merge.stderr,
+            "commit_sha": _git(repo, ["rev-parse", "HEAD"]).stdout.strip(),
+            "push_stdout": push_stdout,
+            "push_stderr": push_stderr,
+        }
+    )
     if deploy:
-        args.append("--deploy")
-    return _run_script(SYNC_SH, args)
+        result["deploy_note"] = "Deploy flag ignored by sync runner; use deploy command separately."
+    return result
 
 
 def run_deploy(name: str, repo_path: Optional[str] = None, dry_run: bool = False) -> dict:
