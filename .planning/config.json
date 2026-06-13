@@ -11,8 +11,8 @@
     "nyquist_validation": true,
     "auto_advance": false
   },
-  "currentMilestone": "M003",
-  "currentPhase": "09",
+  "currentMilestone": "M004",
+  "currentPhase": "12",
   "milestones": [
     {
       "id": "M001",
@@ -32,10 +32,20 @@
     {
       "id": "M003",
       "name": "Omni CLI Expansion",
-      "status": "active",
-      "phase": "09",
+      "status": "done",
+      "completed": "2026-06-05",
+      "phases": ["09", "10", "11"],
       "goal": "omni CLI unificada com subcomandos admin, deploy, backup",
       "depends_on": "M002"
+    },
+    {
+      "id": "M004",
+      "name": "K3s HA Cluster + Portainer",
+      "status": "active",
+      "phase": "12",
+      "phases": ["12", "13", "14", "15", "16"],
+      "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
+      "depends_on": "M003"
     }
   ],
   "_created": "2026-05-06",

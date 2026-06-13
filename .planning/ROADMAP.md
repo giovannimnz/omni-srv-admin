@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M002 — Fork Sync Integration
-**Milestone Goal:** fork-sync integrado como submodule + repo rebranded de omni-srv-admin para omni-srv-admin
+**Active Milestone:** M004 — K3s HA Cluster + Portainer
+**Milestone Goal:** planejar e preparar cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br
 
 ---
 
@@ -219,6 +219,131 @@
 - `omni backup restore <path>` — restaura backup
 - `omni backup status` — status do último backup
 - `--help` documentado
+
+---
+
+## M004: K3s HA Cluster + Portainer
+
+**Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+
+**Status:** ACTIVE (2026-06-13)
+
+**Depends on:** SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
+
+**Why:** evoluir de gestao por Docker/Podman locais para uma camada Kubernetes HA leve, sem expor API/etcd/Portainer publicamente e sem quebrar Apache/servicos existentes.
+
+**Phases:** 12-16
+
+---
+
+### Phase 12: K3s HA + Portainer Milestone Plan ✅ PLANNED
+
+**Goal:** Planejar bootstrap K3s HA com embedded etcd, Portainer CE via Helm, Cloudflare Tunnel para `portainer.atius.com.br`, e gates de backup/rollback.
+
+**Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, PRT-01, PRT-02, CFL-01, SEC-01
+
+**Status:** PLANNED (2026-06-13)
+
+**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao futuro upgrade do SRV-1 para 24.04, e aos riscos locais de disco/GDrive/portas.
+
+**Plans:** 1
+- [x] 12-01-PLAN.md — K3s HA bootstrap + Portainer exposure (ready, human-gated)
+
+**Success Criteria:**
+1. Branch de plano criada: `codex/k3s-portainer-oci-plan`
+2. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-k3s-ha-portainer-oci/`
+3. Plano exige SRV-1 em Ubuntu 24.04 antes de instalacao real
+4. Plano nao abre 6443/2379-2380/8472/10250 para internet publica
+5. Plano expoe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
+
+**Risk:** HIGH — rede privada/WireGuard precisa estar estavel, SRV-3 tem historico de disco quase cheio, e Portainer/Apache atuais nao podem ser quebrados.
+
+---
+
+### Phase 13: SRV-1 Ubuntu 24.04 + Fleet Preflight
+
+**Goal:** Atualizar/confirmar SRV-1 em Ubuntu 24.04 e validar os 3 hosts antes de qualquer instalacao K3s.
+
+**Requirements:** K3S-04, SEC-01
+
+**Depends on:** Phase 12
+
+**Success Criteria:**
+1. SRV-1 retorna Ubuntu 24.04 LTS e postcheck do pacote de upgrade aprovado
+2. SRV-1/SRV-2/SRV-3 com tempo sincronizado, rede `10.1.1.0/24` estavel e >=25 GiB livres
+3. Snapshots OCI ou backup equivalente registrados para os 3 servidores
+4. OCI NSG/Security List e firewall local preparados sem expor portas K3s publicamente
+
+**Risk:** HIGH — upgrade de SO e cleanup de disco podem afetar sessoes/servicos existentes.
+
+---
+
+### Phase 14: K3s HA Bootstrap
+
+**Goal:** Instalar K3s stable nos 3 servidores como `server` + `worker`, com embedded etcd, secrets encryption, snapshots e Traefik/ServiceLB desabilitados.
+
+**Requirements:** K3S-01, K3S-02, K3S-03, K3S-05, SEC-01
+
+**Depends on:** Phase 13
+
+**Success Criteria:**
+1. `kubectl get nodes -o wide` mostra os 3 nos `Ready` e `arm64`
+2. Roles incluem control-plane/etcd nos 3 servidores
+3. Kube-system healthy e `/readyz?verbose` ok
+4. Etcd snapshot manual e agendamento de snapshots validados
+5. Portas 6443, 2379-2380, 8472 e 10250 continuam privadas
+
+**Risk:** HIGH — quorum etcd, rede privada e discos lentos sao o ponto critico.
+
+---
+
+### Phase 15: Portainer CE + Cloudflare Tunnel
+
+**Goal:** Instalar Portainer CE LTS no Kubernetes e publicar `https://portainer.atius.com.br` por Cloudflare Tunnel com Access, preservando `docker.atius.com.br`.
+
+**Requirements:** PRT-01, PRT-02, CFL-01, SEC-01
+
+**Depends on:** Phase 14
+
+**Success Criteria:**
+1. Portainer namespace `portainer`, deployment Ready, PVC Bound
+2. Portainer pinned em `atius-srv-1` enquanto storage for local-path
+3. `cloudflared` com >=2 replicas Ready e token em Secret
+4. `https://portainer.atius.com.br` abre UI via Cloudflare
+5. `docker.atius.com.br` antigo continua funcional ate cutover explicito
+
+**Risk:** MEDIUM — token Cloudflare e Cloudflare Access precisam ser tratados sem vazar segredo.
+
+---
+
+### Phase 16: K3s Backup, DR and Acceptance
+
+**Goal:** Fechar o milestone com backup/restore documentado, runbook de disaster recovery e validacao de falha de 1 no.
+
+**Requirements:** K3S-02, K3S-03, PRT-01, PRT-02, CFL-01, SEC-01
+
+**Depends on:** Phase 15
+
+**Success Criteria:**
+1. Runbook de backup etcd + Portainer PVC + configs K3s criado
+2. Restore dry-run ou validacao controlada de snapshots documentada
+3. Teste de indisponibilidade de 1 no mantem cluster com quorum 2/3
+4. Cloudflare Tunnel mantem acesso ao Portainer com pelo menos 1 conector restante
+5. Obsidian e repo atualizados com estado final do milestone
+
+**Risk:** MEDIUM — testes de falha devem ser controlados para nao derrubar servicos de producao.
+
+---
+
+## M004 Phase Summary
+
+| # | Phase | Goal | Status | Risk |
+|---|---|---|---|---|
+| 12 | Milestone Plan | Context/research/runbook | ✅ PLANNED | LOW |
+| 13 | SRV-1 24.04 + Preflight | Host readiness | Pending | HIGH |
+| 14 | K3s HA Bootstrap | Cluster core | Pending | HIGH |
+| 15 | Portainer + Tunnel | UI/admin exposure | Pending | MEDIUM |
+| 16 | Backup/DR/Acceptance | Closeout | Pending | MEDIUM |
 
 ---
 
