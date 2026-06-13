@@ -14,6 +14,8 @@ It does not install services on the hosts yet.
 | `migrations/0001_fleet_control_plane.sql` | Initial PostgreSQL schema contract |
 | `../../docs/fleet/control-plane.md` | Architecture, runbook and human gates |
 | `../../cli/omni/fleet.py` | Safe CLI commands for inventory validation and dry-run plans |
+| `tools/validate_m004.py` | Offline contract validation and optional live read-only SRV probes |
+| `tests/test_m004_contract.py` | Pytest coverage for the M004 contract |
 
 ## Safe Commands
 
@@ -27,6 +29,17 @@ PYTHONPATH=cli python3 -m omni fleet update-plan --host atius-srv-1 --program fo
 ```
 
 `--apply` is intentionally blocked in M004.
+
+## Validation
+
+```bash
+scripts/verify-m004-fleet-control-plane.sh
+OMNI_M004_LIVE=1 scripts/verify-m004-fleet-control-plane.sh
+```
+
+The live mode is read-only. It uses SSH, ping, service/listener inspection and
+TCP connectivity checks only. It must report PgBouncer node access as blocked
+until the server intentionally exposes PgBouncer on the private fleet endpoint.
 
 ## Secret Rule
 

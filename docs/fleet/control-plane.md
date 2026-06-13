@@ -106,7 +106,9 @@ PgBouncer ownership:
 |---|---|
 | `pgbouncer.ini` | control-plane server module |
 | `userlist.txt` or auth backend | secret storage, never git |
+| `listen_host` | private server VPN IP, default candidate `10.1.1.1`; never public internet |
 | `listen_port` | control-plane runtime config, default `6432` |
+| allowed clients | private fleet network, default candidate `10.1.1.0/24` |
 | pool mode | deployment config, default candidate `transaction` |
 
 ## Data Model

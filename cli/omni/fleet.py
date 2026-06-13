@@ -30,6 +30,8 @@ REQUIRED_NESTED_FIELDS = (
     ("platform", "arch"),
 )
 
+SENSITIVE_KEYS = {"secret_ref", "token", "password", "serial", "license_key"}
+
 
 def _simple_yaml_value(text: str, key: str, default: str = "") -> str:
     prefix = f"{key}:"
@@ -145,6 +147,26 @@ def _emit(payload: dict[str, Any], json_output: bool) -> None:
             click.echo(json.dumps(value, indent=2, sort_keys=True))
         else:
             click.echo(f"{key}: {value}")
+
+
+def _redact_text(value: str) -> str:
+    lowered = value.lower()
+    if any(key in lowered for key in SENSITIVE_KEYS):
+        return "***REDACTED***"
+    return value
+
+
+def _redact(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            key: "***REDACTED***" if key in SENSITIVE_KEYS else _redact(nested)
+            for key, nested in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    if isinstance(value, str):
+        return _redact_text(value)
+    return value
 
 
 def _install_plan(mode: str, host: dict[str, Any], path: Path) -> dict[str, Any]:
@@ -318,6 +340,8 @@ def validate_inventory(json_output: bool) -> None:
     }
     if json_output:
         click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        if not payload["valid"]:
+            raise click.ClickException("inventário inválido")
         return
     click.echo(f"{payload['host_count']} host(s) em {hosts_dir}")
     for result in results:
@@ -432,8 +456,9 @@ def update_plan(
 
 @fleet.command("audit")
 @click.option("--host", "host_id", default=None, help="Filtra por host.")
+@click.option("--action", default=None, help="Filtra por ação.")
 @click.option("--json", "json_output", is_flag=True, help="Emite eventos em JSON.")
-def audit(host_id: str | None, json_output: bool) -> None:
+def audit(host_id: str | None, action: str | None, json_output: bool) -> None:
     """Lê eventos locais de auditoria quando existirem."""
     events: list[dict[str, Any]] = []
     if AUDIT_EVENTS.exists():
@@ -443,13 +468,16 @@ def audit(host_id: str | None, json_output: bool) -> None:
             try:
                 event = json.loads(line)
             except json.JSONDecodeError:
-                event = {"result": "invalid-json", "raw": line[:120]}
+                event = {"result": "invalid-json", "raw": _redact_text(line[:120])}
             if host_id and event.get("host") != host_id:
                 continue
-            events.append(event)
+            if action and event.get("action") != action:
+                continue
+            events.append(_redact(event))
     payload = {
         "audit_log": str(AUDIT_EVENTS),
         "host": host_id,
+        "action": action,
         "event_count": len(events),
         "events": events,
         "schema": {

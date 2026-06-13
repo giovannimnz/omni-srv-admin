@@ -36,6 +36,15 @@ modified and live install remains blocked by human gates.
   - `omni fleet status --all`
 - `support-template` inventory now includes `platform.arch: unknown`, so the
   minimum inventory validation passes across all host records.
+- `modules/fleet-control-plane/tools/validate_m004.py` validates M004 contract
+  scenarios offline and can run read-only live probes against SRV1/SRV2/SRV3.
+- `modules/fleet-control-plane/tests/test_m004_contract.py` adds pytest coverage
+  for inventory validation, server/node plans, PgBouncer contract, heartbeat,
+  programs, update-plan blocking and audit redaction.
+- `scripts/verify-m004-fleet-control-plane.sh` runs the complete M004 validation
+  suite.
+- `.planning/phases/12-omni-fleet-control-plane/12-VALIDATION.md` records the
+  multi-agent scenario matrix and live validation results.
 
 ## Verification
 
@@ -49,10 +58,23 @@ PYTHONPATH=cli python3 -m omni fleet heartbeat --host atius-srv-1 --json
 PYTHONPATH=cli python3 -m omni fleet programs --host atius-srv-1 --json
 PYTHONPATH=cli python3 -m omni fleet update-plan --host atius-srv-1 --program fork-sync --desired-version v4.1 --json
 PYTHONPATH=cli python3 -m omni fleet install server --host atius-srv-1 --apply
+PYTHONPATH=cli pytest -q modules/fleet-control-plane/tests/test_m004_contract.py
+scripts/verify-m004-fleet-control-plane.sh
+PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live --json
 ```
 
 Expected result for the final command: blocked with an error because live
 execution is not enabled in M004.
+
+Latest validation result:
+
+- pytest: `12 passed`
+- offline harness: `6 PASS`, `0 FAIL`
+- live read-only harness: `18 PASS`, `2 BLOCKED`, `0 FAIL`
+
+The two live blockers are SRV-2/SRV-3 reaching PgBouncer on `10.1.1.1:6432`.
+SRV-1 currently has local PgBouncer readiness on `127.0.0.1:6432`, and direct
+PostgreSQL access from SRV-2/SRV-3 to `10.1.1.1:5432` is blocked.
 
 ## Remaining Gates
 

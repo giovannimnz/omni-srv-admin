@@ -227,7 +227,7 @@
 
 **Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat, registry de programas, version/update plans, licenças sem secrets no git/log/vault, auditoria e contrato futuro com Podman/K3s.
 
-**Status:** CONTRACT IMPLEMENTED; LIVE EXECUTION GATED (2026-06-13)
+**Status:** CONTRACT VALIDATED; LIVE PGBOUNCER NODE ACCESS BLOCKED (2026-06-13)
 
 **Depends on:** M003 (Omni CLI Expansion)
 
@@ -245,7 +245,7 @@
 
 **Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10
 
-**Status:** CONTRACT IMPLEMENTED (2026-06-13); live install blocked by human gates
+**Status:** CONTRACT VALIDATED (2026-06-13); live install blocked by human gates and PgBouncer private endpoint gate
 
 **Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
 
@@ -276,7 +276,7 @@
 
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
-| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ CONTRACT IMPLEMENTED | MEDIUM |
+| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ CONTRACT VALIDATED / PGBOUNCER NODE GATED | MEDIUM |
 
 ---
 
