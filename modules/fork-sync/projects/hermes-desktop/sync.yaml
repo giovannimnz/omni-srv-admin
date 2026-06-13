@@ -1,4 +1,7 @@
 project: hermes-desktop
+enabled: false
+paused: true
+pause_reason: "User requested hermes-os paused for now on 2026-06-13."
 display_name: "Hermes Desktop — upstream fork module inside hermes-os"
 upstream: https://github.com/fathah/hermes-desktop
 upstream_branch: main

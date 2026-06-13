@@ -10,8 +10,11 @@ LOG="$LOG_DIR/sync-all-$TS.log"
 
 echo "[sync-all $TS] start" | tee -a "$LOG"
 
-# Lista todos os projetos
-PROJECTS=$(fork-sync --json projects list 2>/dev/null | python3 -c "import json,sys; [print(p['name']) for p in json.load(sys.stdin)]" 2>/dev/null || true)
+PROJECT_TIMEOUT="${FORK_SYNC_PROJECT_TIMEOUT:-900}"
+
+# Lista todos os projetos habilitados. Projetos com enabled:false ou paused:true
+# ficam fora do daily sync para evitar merge em worktrees obsoletas.
+PROJECTS=$(fork-sync --json projects list --enabled-only 2>/dev/null | python3 -c "import json,sys; [print(p['name']) for p in json.load(sys.stdin)]" 2>/dev/null || true)
 
 if [ -z "$PROJECTS" ]; then
   echo "[sync-all] Nenhum projeto configurado" | tee -a "$LOG"
@@ -22,9 +25,9 @@ for project in $PROJECTS; do
   echo "[sync-all $TS] → $project" | tee -a "$LOG"
   # dry-run primeiro; se --apply for passado, sync real
   if [ "${1:-}" = "--apply" ]; then
-    fork-sync sync "$project" 2>&1 | tee -a "$LOG" || true
+    timeout "$PROJECT_TIMEOUT" fork-sync sync "$project" 2>&1 | tee -a "$LOG" || true
   else
-    fork-sync sync "$project" --dry-run 2>&1 | tee -a "$LOG" || true
+    timeout "$PROJECT_TIMEOUT" fork-sync sync "$project" --dry-run 2>&1 | tee -a "$LOG" || true
   fi
 done
 

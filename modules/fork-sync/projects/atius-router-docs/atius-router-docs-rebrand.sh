@@ -24,6 +24,7 @@
 
 set -euo pipefail
 
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_PATH="${1:-}"
 
 if [ -z "$REPO_PATH" ] || [ ! -d "$REPO_PATH" ]; then
@@ -258,8 +259,8 @@ fi
 # === 10. Dockerfile (multi-stage, we add this if missing) ===
 F="$REPO_PATH/Dockerfile"
 if [ ! -f "$F" ]; then
-  if [ -f /home/ubuntu/fork-sync/projects/atius-router-docs/Dockerfile.template ]; then
-    cp /home/ubuntu/fork-sync/projects/atius-router-docs/Dockerfile.template "$F"
+  if [ -f "$SCRIPT_DIR/Dockerfile.template" ]; then
+    cp "$SCRIPT_DIR/Dockerfile.template" "$F"
     log "Dockerfile created from template"
     CHANGED=$((CHANGED+1))
   else

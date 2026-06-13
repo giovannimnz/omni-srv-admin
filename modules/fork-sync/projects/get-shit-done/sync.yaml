@@ -1,4 +1,7 @@
 project: get-shit-done
+enabled: false
+paused: true
+pause_reason: "Local fork path missing and giovannimnz/get-shit-done does not currently exist; avoid daily sync failures."
 upstream: https://github.com/gsd-build/get-shit-done
 upstream_branch: main
 origin_branch: main

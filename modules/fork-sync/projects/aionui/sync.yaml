@@ -1,7 +1,11 @@
 project: AionUi
+enabled: false
+paused: true
+pause_reason: "Local clone points origin/upstream to iOfficeAI/AionUi; no giovannimnz fork configured for safe auto-push."
 upstream: https://github.com/iOfficeAI/AionUi
 upstream_branch: main
 origin_branch: main
+fork: /home/ubuntu/GitHub/forks/AionUi
 protected_paths:
   # Feature: Web Directory Selection (visual folder picker on WebUI)
   - src/renderer/components/workspace/WorkspaceFolderSelect.tsx
@@ -38,7 +42,7 @@ protected_paths:
   - /home/ubuntu/.hermes/hermes-agent/gateway/platforms/base.py
   - /home/ubuntu/.hermes/hermes-agent/tools/skills_tool.py
 merge_strategy: merge
-auto_push: true
+auto_push: false
 notification_level: all
 ai_decision_threshold: conflicts
 version_scheme:
