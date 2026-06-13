@@ -99,36 +99,13 @@ if ! git rev-parse --verify "origin/$branch" >/dev/null 2>&1; then
 fi
 echo "[$(date '+%H:%M')] Using branch: $branch" >> "$LOG"
 
-# === 3. Fetch + sync ===
+# === 3. Validate origin branch ===
 remote=$(git rev-parse "origin/$branch" 2>/dev/null) || {
     echo "[$(date '+%H:%M')] FAIL: origin/$branch not found" >> "$LOG"
     notify_telegram "ORIGIN BRANCH NOT FOUND: $branch on $(hostname)"
     exit 1
 }
 local=$(git rev-parse HEAD)
-
-# 3a. If behind origin, reset (untracked files survive reset --hard)
-if [ "$local" != "$remote" ]; then
-    behind=$(git rev-list --count "HEAD..origin/$branch" 2>/dev/null || echo 0)
-    if [ "${behind:-0}" -gt 0 ]; then
-        # Check for divergence (local ahead of origin)
-        ahead=$(git rev-list --count "origin/$branch..HEAD" 2>/dev/null || echo 0)
-        if [ "${ahead:-0}" -gt 0 ]; then
-            echo "[$(date '+%H:%M')] WARN: local $ahead commits ahead of origin/$branch — pushing first" >> "$LOG"
-            # Push local commits first
-            if ! git push origin "$branch" >> "$LOG" 2>&1; then
-                echo "[$(date '+%H:%M')] FAIL: push local commits first" >> "$LOG"
-                notify_telegram
-                exit 1
-            fi
-            local=$(git rev-parse HEAD)
-        fi
-        # Now safe to reset
-        git reset --hard "origin/$branch" >> "$LOG" 2>&1
-        echo "[$(date '+%H:%M')] Reset to origin: ${remote:0:8}" >> "$LOG"
-        local=$remote
-    fi
-fi
 
 # === 4. Detect local changes (tracked modified + untracked) ===
 if ! git add -u >> "$LOG" 2>&1; then
@@ -185,7 +162,41 @@ if ! git diff --cached --quiet; then
     local=$(git rev-parse HEAD)
 fi
 
-# === 6. Push if ahead (with retry) ===
+# === 6. Reconcile local commits with origin ===
+if ! git fetch origin --prune >> "$LOG" 2>&1; then
+    echo "[$(date '+%H:%M')] FAIL: git fetch origin before reconcile" >> "$LOG"
+    notify_telegram "FETCH BEFORE RECONCILE FAILED for $branch on $(hostname)"
+    exit 1
+fi
+remote=$(git rev-parse "origin/$branch" 2>/dev/null) || {
+    echo "[$(date '+%H:%M')] FAIL: origin/$branch not found before reconcile" >> "$LOG"
+    notify_telegram "ORIGIN BRANCH NOT FOUND BEFORE RECONCILE: $branch on $(hostname)"
+    exit 1
+}
+local=$(git rev-parse HEAD)
+ahead=$(git rev-list --count "origin/$branch..HEAD" 2>/dev/null || echo 0)
+behind=$(git rev-list --count "HEAD..origin/$branch" 2>/dev/null || echo 0)
+
+if [ "${behind:-0}" -gt 0 ] && [ "${ahead:-0}" -gt 0 ]; then
+    echo "[$(date '+%H:%M')] WARN: diverged from origin/$branch (ahead $ahead, behind $behind) — rebasing" >> "$LOG"
+    if ! git rebase "origin/$branch" >> "$LOG" 2>&1; then
+        git rebase --abort >/dev/null 2>&1 || true
+        echo "[$(date '+%H:%M')] FAIL: rebase origin/$branch" >> "$LOG"
+        notify_telegram "REBASE FAILED for $branch on $(hostname)"
+        exit 1
+    fi
+    local=$(git rev-parse HEAD)
+elif [ "${behind:-0}" -gt 0 ]; then
+    if ! git reset --hard "origin/$branch" >> "$LOG" 2>&1; then
+        echo "[$(date '+%H:%M')] FAIL: reset to origin/$branch" >> "$LOG"
+        notify_telegram "RESET TO ORIGIN FAILED for $branch on $(hostname)"
+        exit 1
+    fi
+    echo "[$(date '+%H:%M')] Reset to origin: ${remote:0:8}" >> "$LOG"
+    local=$(git rev-parse HEAD)
+fi
+
+# === 7. Push if ahead (with retry) ===
 remote=$(git rev-parse "origin/$branch" 2>/dev/null) || {
     echo "[$(date '+%H:%M')] FAIL: origin/$branch not found before push" >> "$LOG"
     notify_telegram "ORIGIN BRANCH NOT FOUND BEFORE PUSH: $branch on $(hostname)"
@@ -204,6 +215,19 @@ if [ "$local" != "$remote" ]; then
             fi
             retry=$((retry + 1))
             echo "[$(date '+%H:%M')] Push failed (retry $retry/$MAX_RETRIES)" >> "$LOG"
+            if git fetch origin --prune >> "$LOG" 2>&1; then
+                behind=$(git rev-list --count "HEAD..origin/$branch" 2>/dev/null || echo 0)
+                if [ "${behind:-0}" -gt 0 ]; then
+                    echo "[$(date '+%H:%M')] Remote advanced during push — rebasing before retry" >> "$LOG"
+                    if ! git rebase "origin/$branch" >> "$LOG" 2>&1; then
+                        git rebase --abort >/dev/null 2>&1 || true
+                        echo "[$(date '+%H:%M')] FAIL: rebase before push retry" >> "$LOG"
+                        notify_telegram "REBASE BEFORE PUSH RETRY FAILED for $branch on $(hostname)"
+                        exit 1
+                    fi
+                    local=$(git rev-parse HEAD)
+                fi
+            fi
             sleep $((retry * 10))  # 10s, 20s, 30s
         done
         if [ $pushed -eq 0 ]; then
