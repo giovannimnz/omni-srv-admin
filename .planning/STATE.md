@@ -1,6 +1,6 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M004/M005 branch matrix update
+**Last updated:** 2026-06-13 after M004 implementation and M005 preflight
 
 ## Project Reference
 
@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix)
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Fleet Control Plane first, then M005 K3s HA Cluster + Portainer.
+**Current focus:** M004 Fleet Control Plane contract is implemented on its branch; M005 K3s HA Cluster + Portainer preflight passed on its branch and live install is gated by OCI snapshots/firewall plus Cloudflare Tunnel token.
 
 ## Milestones
 
@@ -17,8 +17,21 @@ See also: .planning/MILESTONES.md
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Active |
-| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Planned |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract implemented |
+| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Preflight passed; live gates open |
+
+## Active Branch Results
+
+| Milestone | Branch | Result |
+|---|---|---|
+| M004 | `codex/omni-fleet-control-plane-m004` | Fleet Control Plane contract, CLI dry-run commands, schema/config docs, vault notes |
+| M005 | `codex/k3s-portainer-oci-plan` | K3s/Portainer preflight, safe log cleanup, non-secret templates, vault notes |
+
+## Live Gates
+
+- M005 still requires OCI snapshots/backups for all 3 nodes.
+- M005 still requires OCI NSG/Security List confirmation for private K3s ports.
+- M005 still requires Cloudflare Tunnel token supplied outside git/log/vault.
 
 ## M001 Completion
 

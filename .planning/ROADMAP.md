@@ -227,7 +227,7 @@
 
 **Goal:** Criar a base operacional multi-host antes de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat/status, registry de programas, version/update plans, licenças sem secrets, auditoria e contrato futuro com Podman/K3s.
 
-**Status:** ACTIVE/PLANNED (2026-06-13)
+**Status:** CONTRACT IMPLEMENTED ON BRANCH (2026-06-13)
 
 **Canonical branch:** `codex/omni-fleet-control-plane-m004`
 
@@ -241,15 +241,20 @@
 
 **Goal:** Planejar cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
 
-**Status:** PLANNED (2026-06-13)
+**Status:** PREFLIGHT PASSED ON BRANCH; LIVE INSTALL GATED (2026-06-13)
 
-**Depends on:** M004 Fleet Control Plane, SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
+**Depends on:** M004 Fleet Control Plane, SRV-1 atualizado para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados.
 
 **Canonical branch:** `codex/k3s-portainer-oci-plan`
 
 **Phase:** 13
 
 **Full artifacts:** `.planning/phases/13-k3s-ha-portainer-oci/` on the canonical branch.
+
+**Branch result:** `codex/k3s-portainer-oci-plan` has preflight report
+`13-PREFLIGHT-2026-06-13.md`, safe templates under
+`modules/k3s-ha-portainer-oci/`, and live install remains blocked until OCI
+snapshots/firewall and Cloudflare Tunnel token are confirmed.
 
 ---
 
