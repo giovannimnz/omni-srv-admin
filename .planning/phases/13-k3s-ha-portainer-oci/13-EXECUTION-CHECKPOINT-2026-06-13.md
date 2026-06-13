@@ -75,7 +75,7 @@ Template corrections made:
 Do not run Task 5 until all are resolved:
 
 - OCI snapshot IDs or equivalent backup IDs for SRV-1, SRV-2 and SRV-3 are not
-  recorded in their respective OC1 accounts.
+  recorded in their respective OCI accounts.
 - OCI CLI/config is not available in this execution shell, so snapshots and
   per-account security rules were not independently verified.
 - Host firewall rules for K3s ports on `wg0` only are not yet applied/validated.
@@ -88,11 +88,11 @@ Do not run Task 5 until all are resolved:
 ## Next Execution Steps
 
 1. Create/verify OCI snapshots or equivalent backups for all three nodes in
-   their respective OC1 accounts.
+   their respective OCI accounts.
 2. Record snapshot IDs in this phase log before any mutation.
 3. Run serial `/etc` config backups on each node and review tar warnings.
 4. Confirm OCI public ingress keeps `6443`, `2379-2380`, `8472`, `10250` closed
-   in all three OC1 accounts.
+   in all three OCI accounts.
 5. Apply/validate host firewall rules allowing K3s only on `wg0` between
    `10.1.1.x` nodes.
 6. Create Cloudflare Tunnel `atius-k3s-portainer`, configure

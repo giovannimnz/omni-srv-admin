@@ -6,7 +6,7 @@ This module keeps the K3s HA + Portainer setup reproducible without committing
 tokens or live kubeconfig files. The current branch is ready up to preflight and
 template generation. Live installation remains gated by OCI snapshots,
 OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
-SRV-1, SRV-2 and SRV-3 are in separate OCI/OC1 accounts, so all OCI gates are
+SRV-1, SRV-2 and SRV-3 are in separate OCI accounts, so all OCI gates are
 validated per account; there is no shared NSG/VCN assumption.
 The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
 PTP fallback mesh design lives in
@@ -27,7 +27,7 @@ production-ready, but it is not active in these templates.
 ## Still Required Before Install
 
 - OCI snapshots or equivalent backups for all three instances/block volumes in
-  their respective OC1 accounts.
+  their respective OCI accounts.
 - OCI NSG/Security List rules per account keeping K3s ports closed publicly.
 - Cloudflare remotely-managed tunnel `atius-k3s-portainer`.
 - Tunnel token supplied only in the shell as `CLOUDFLARE_TUNNEL_TOKEN`.

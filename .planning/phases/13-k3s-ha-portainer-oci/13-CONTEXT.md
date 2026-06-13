@@ -141,10 +141,10 @@ valor se uma falha da malha VPN derruba a comunicacao entre control-plane/etcd.
 Uma malha PTP secundaria reduz o risco, desde que nao introduza split-brain,
 rotas assimetricas ou exposicao publica de portas Kubernetes.
 
-### D-13: Os 3 servidores estao em contas OCI/OC1 diferentes
+### D-13: Os 3 servidores estao em contas OCI diferentes
 
 **Decisao:** Planejar M005 assumindo que SRV-1, SRV-2 e SRV-3 pertencem a contas
-OCI/OC1 diferentes. Nao assumir VCN compartilhada, NSG compartilhado, Security
+OCI diferentes. Nao assumir VCN compartilhada, NSG compartilhado, Security
 List unica ou permissao cross-account automatica.
 
 **Implicacao:** Cada conta precisa de seu proprio snapshot/backup, auditoria de
@@ -172,7 +172,7 @@ OCI como underlay publico/independente e usar overlays para trafego privado.
 - `60-LOGS/2026-06-12-ubuntu2404-express-prep.md` no vault — preparo do upgrade
   SRV-1 para 24.04.
 - `60-LOGS/2026-06-13-m005-oci-separate-accounts.md` no vault — registro da
-  premissa de contas OCI/OC1 separadas.
+  premissa de contas OCI separadas.
 
 ## Deferred Ideas
 

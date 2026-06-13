@@ -30,7 +30,7 @@ M005 must not be executed before:
 - M004 contracts are accepted or explicitly waived.
 - SRV-1/SRV-2/SRV-3 are upgraded to Ubuntu 24.04.
 - Preflight for `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` passes.
-- OCI snapshots/backups, OCI public-ingress closure in each OC1 account and host firewall rules for `wg0` are confirmed.
+- OCI snapshots/backups, OCI public-ingress closure in each OCI account and host firewall rules for `wg0` are confirmed.
 - Cloudflare Tunnel token is supplied out-of-band.
 - Portainer exposure target remains `portainer.atius.com.br`.
 - PTP fallback mesh is designed and validated before production-ready.

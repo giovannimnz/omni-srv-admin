@@ -10,7 +10,7 @@ access:
   vpn_ip: 10.1.1.2
 platform:
   provider: oracle-oci
-  account_scope: separate-oc1-account
+  account_scope: separate-oci-account
   os: ubuntu-24.04
   arch: arm64
 status: active

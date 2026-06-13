@@ -174,7 +174,7 @@ Findings:
 - NSGs permitem rules aplicadas a VNICs especificas e source/destination por NSG.
 - OCI lembra que firewall do host tambem precisa estar coerente; nao basta abrir
   Security List/NSG.
-- SRV-1, SRV-2 e SRV-3 estao em contas OCI/OC1 diferentes; nao existe premissa
+- SRV-1, SRV-2 e SRV-3 estao em contas OCI diferentes; nao existe premissa
   de NSG, Security List ou VCN compartilhada entre eles.
 
 Implications:
@@ -294,7 +294,7 @@ K3s inter-node traffic is allowed only over WireGuard `wg0` / `10.1.1.0/24`.
 OCI NSG/Security List rules must not expose K3s ports publicly. Host firewall
 rules must prevent the same ports from being reachable on public or OCI VCN
 interfaces unless a later phase deliberately changes that.
-Because the three servers are in different OCI/OC1 accounts, this check is
+Because the three servers are in different OCI accounts, this check is
 performed per account. There is no shared NSG gate.
 
 | Protocol | Port | Source | Destination | Purpose |
