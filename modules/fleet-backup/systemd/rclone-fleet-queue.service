@@ -1,0 +1,15 @@
+[Unit]
+Description=rclone-fleet-queue — processa fila de backups rclone (serial, 1 por server)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/scripts/rclone-fleet-queue.sh run
+Nice=10
+IOSchedulingClass=2
+IOSchedulingPriority=7
+# Logs vão para %h/.logs/rclone-fleet.log (dentro do script)
+
+[Install]
+WantedBy=default.target
