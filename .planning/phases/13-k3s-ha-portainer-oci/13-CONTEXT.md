@@ -124,6 +124,23 @@ Cloudflare Tunnel devem usar arquivo com permissao `0600` ou stdin. Nao usar
 **Rationale:** Tokens em argumentos de processo podem aparecer em `ps`, logs de
 auditoria ou historico de shell.
 
+### D-12: Fallback PTP full-mesh alem do WireGuard
+
+**Decisao:** Adicionar um subplano `13-02` para desenhar uma malha PTP de
+fallback entre as tres pontas: SRV-1 <-> SRV-2, SRV-1 <-> SRV-3 e
+SRV-2 <-> SRV-3.
+
+**Regra critica:** O K3s v1 continua anunciando `10.1.1.x` em `wg0`. Um fallback
+transparente precisa preservar a alcançabilidade desses IPs canonicos via
+roteamento/failover, ou entao deve ser tratado apenas como caminho emergencial
+de administracao/DR. Nao mudar `node-ip`, `advertise-address` ou peers etcd em
+producao sem plano separado de migracao e rollback.
+
+**Rationale:** O WireGuard `wg0` e a rede canonica do v1, mas o cluster HA perde
+valor se uma falha da malha VPN derruba a comunicacao entre control-plane/etcd.
+Uma malha PTP secundaria reduz o risco, desde que nao introduza split-brain,
+rotas assimetricas ou exposicao publica de portas Kubernetes.
+
 ## Canonical References
 
 - `planejamento_cluster_k3s_portainer_oci.pdf` — blueprint fornecido pelo usuario.
@@ -145,5 +162,6 @@ auditoria ou historico de shell.
 - Longhorn ou OCI CSI para storage distribuido.
 - Traefik/Ingress oficial para apps publicas.
 - GitOps com Argo CD/Flux.
+- Fallback PTP full-mesh SRV-1/SRV-2/SRV-3 conforme `13-02-PLAN.md`.
 - Migrar apps existentes para K3s.
 - Limpar ou reaproveitar explicitamente o legado `docker.atius.com.br`.

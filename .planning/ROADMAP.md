@@ -251,36 +251,39 @@
 
 ---
 
-### Phase 13: K3s HA + Portainer Milestone Plan ✅ PREFLIGHT READY
+### Phase 13: K3s HA + Portainer Milestone Plan
 
 **Goal:** Planejar bootstrap K3s HA com embedded etcd, preparar templates seguros, executar preflight read-only, aplicar limpeza segura de logs, e manter Portainer CE via Helm/Cloudflare Tunnel gated para `portainer.atius.com.br`.
 
-**Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, PRT-01, PRT-02, CFL-01, SEC-01
+**Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, K3S-06, PRT-01, PRT-02, CFL-01, SEC-01
 
-**Status:** PREFLIGHT PASSED; LIVE INSTALL GATED (2026-06-13)
+**Status:** EXECUTION CHECKPOINT BLOCKED BEFORE LIVE MUTATION (2026-06-13)
 
-**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao SRV-1 ja validado em Ubuntu 24.04.4, aos riscos locais de disco/GDrive/portas e ao pré-requisito M004 em branch separada.
+**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao legado `docker.atius.com.br`, aos 3 nos ja validados em Ubuntu 24.04.4, aos riscos locais de disco/GDrive/portas, ao pré-requisito M004 em branch separada e ao novo subplano de fallback PTP.
 
-**Plans:** 1
-- [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (ready, human-gated)
+**Plans:** 2
+- [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (blocked before live mutation, human-gated)
+- [ ] 13-02-PLAN.md — PTP fallback mesh design for SRV-1/SRV-2/SRV-3
 - [x] 13-PREFLIGHT-2026-06-13.md — preflight read-only + log cleanup safe changes
+- [x] 13-EXECUTION-CHECKPOINT-2026-06-13.md — live read-only checkpoint + gates
 
 **Preflight Results:**
-- SRV-1: Ubuntu 24.04.4 LTS, aarch64, 46G free, private routes/ping ok.
-- SRV-2: Ubuntu 22.04.5 LTS, aarch64, 26G free after log cleanup, private routes/ping ok.
-- SRV-3: Ubuntu 22.04.5 LTS, aarch64, 50G free after Docker JSON log cleanup, private routes/ping ok.
+- SRV-1: Ubuntu 24.04.4 LTS, aarch64, 60G free, private routes/ping ok.
+- SRV-2: Ubuntu 24.04.4 LTS, aarch64, 60G free, private routes/ping ok.
+- SRV-3: Ubuntu 24.04.4 LTS, aarch64, 137G free, private routes/ping ok.
 - Docker JSON log rotation installed on SRV-2 and SRV-3 using the versioned config in `modules/k3s-ha-portainer-oci/logrotate/docker-json-containers`.
 - K3s config templates, Portainer Helm values and Cloudflare deployment template are prepared without secrets.
 
 **Success Criteria:**
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/13-k3s-ha-portainer-oci/`
-2. Plano exige SRV-1 em Ubuntu 24.04 antes de instalação real
+2. Plano exige SRV-1/SRV-2/SRV-3 em Ubuntu 24.04 antes de instalação real
 3. Plano não abre 6443/2379-2380/8472/10250 para internet pública
 4. Plano expõe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
 5. Plano consome o inventário/contratos definidos no M004 quando for executado
 6. Live install remains blocked until OCI snapshots/firewall and Cloudflare Tunnel token are confirmed
+7. Fallback PTP full-mesh documentado antes de declarar production-ready
 
-**Risk:** HIGH — rede privada/WireGuard precisa estar estável, SRV-3 tem histórico de disco quase cheio, e Portainer/Apache atuais não podem ser quebrados.
+**Risk:** HIGH — rede privada/WireGuard precisa estar estável, fallback PTP ainda precisa desenho, e Portainer/Apache atuais não podem ser quebrados.
 
 ---
 
@@ -288,7 +291,7 @@
 
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
-| M005 | 13 | K3s HA + Portainer Milestone Plan | Preflight + executable templates | ✅ PREFLIGHT READY | HIGH |
+| M005 | 13 | K3s HA + Portainer Milestone Plan | Execution checkpoint + executable templates | BLOCKED BEFORE LIVE MUTATION | HIGH |
 
 ---
 

@@ -43,6 +43,7 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 ## K3s M005 Notes
 
 - Rede de cluster escolhida: WireGuard `wg0` / `10.1.1.0/24`.
+- Fallback PTP full-mesh planejado em `13-02-PLAN.md`; nao ha portas/IPs novos reservados ainda.
 - SRV-1 ainda tem `/swapfile` ativo; desabilitar e persistir `swapoff` antes do install K3s.
 - SRV-2 e SRV-3 nao reportaram swap ativo no checkpoint de 2026-06-13.
 

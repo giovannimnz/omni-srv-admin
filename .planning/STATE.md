@@ -58,9 +58,11 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | PLAN | `13-01-PLAN.md` human-gated para bootstrap K3s HA + Portainer + Cloudflare Tunnel | ✅ |
 | PREFLIGHT | `13-PREFLIGHT-2026-06-13.md` registra leitura dos 3 nós, limpeza segura de logs e gates restantes | ✅ |
 | EXECUTION CHECKPOINT | `13-EXECUTION-CHECKPOINT-2026-06-13.md` registra validacao live read-only, WireGuard `wg0`, Ubuntu 24.04.4 nos 3 hosts e bloqueio antes da Task 5 | ✅ |
+| PTP Fallback | `13-02-PLAN.md` define desenho de fallback PTP full-mesh SRV-1/SRV-2/SRV-3 antes de production-ready | Planned |
 | Templates | `modules/k3s-ha-portainer-oci/` com configs K3s, Portainer values, cloudflared deployment e logrotate | ✅ |
 | Prerequisite | M004 Fleet Control Plane tratado em branch separada | Open until accepted/merged |
 | Blocker | Não instalar enquanto snapshots/backup OCI, firewall OCI/host, Cloudflare Tunnel token e aprovação humana não forem confirmados | Open |
+| Production gate | Não declarar cluster production-ready enquanto fallback PTP não tiver desenho e validação de failover/rollback | Open |
 
 ## M005 Phase Breakdown
 

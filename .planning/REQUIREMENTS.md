@@ -97,6 +97,7 @@ in `codex/omni-fleet-control-plane-m004`.
 - [ ] **K3S-03**: K3s usa apenas WireGuard `wg0` / `10.1.1.0/24` para API, etcd, kubelet e Flannel.
 - [ ] **K3S-04**: SRV-1/SRV-2/SRV-3 atualizados para Ubuntu 24.04 antes da instalacao real do cluster.
 - [ ] **K3S-05**: Traefik e ServiceLB padrao do K3s desabilitados no v1 para evitar conflito com Apache/portas atuais.
+- [ ] **K3S-06**: Plano de fallback PTP full-mesh entre SRV-1/SRV-2/SRV-3 definido antes de declarar o cluster production-ready.
 
 ### Portainer on Kubernetes
 
@@ -132,14 +133,14 @@ in `codex/omni-fleet-control-plane-m004`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| K3S-01 → K3S-05 | Phase 13 | Planned |
+| K3S-01 → K3S-06 | Phase 13 | Planned |
 | PRT-01 → PRT-02 | Phase 13 | Planned |
 | CFL-01, SEC-01 | Phase 13 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 9 total
-- Mapped to phases: 48
+- v3 requirements: 10 total
+- Mapped to phases: 49
 - Unmapped: 0 ✓
 
 ---

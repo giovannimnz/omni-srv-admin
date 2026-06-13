@@ -96,3 +96,10 @@ Do not run Task 5 until all are resolved:
 6. Create Cloudflare Tunnel `atius-k3s-portainer`, configure
    `portainer.atius.com.br`, and provide the token only in shell.
 7. After explicit approval, continue with Task 5.
+
+## Post-Checkpoint Addition
+
+After this checkpoint, PTP fallback full-mesh was added as `13-02-PLAN.md`.
+It does not unblock Task 5 by itself. It is a production-ready gate: design and
+validate SRV-1 <-> SRV-2, SRV-1 <-> SRV-3 and SRV-2 <-> SRV-3 fallback before
+declaring M005 production-ready.

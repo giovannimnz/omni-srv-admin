@@ -78,8 +78,18 @@ Longhorn/CSI vira fase posterior porque SRV-1/SRV-3 estao sem folga de disco.
 - Usar `10.1.1.0/24`.
 - Criar nova rede overlay externa.
 
-**Decisao:** usar `10.1.1.0/24`, desde que preflight prove estabilidade e
-interface correta. Se for WireGuard instavel, parar antes de instalar.
+**Decisao:** usar WireGuard `wg0` / `10.1.1.0/24`, desde que preflight prove
+estabilidade e interface correta. Se for WireGuard instavel, parar antes de
+instalar.
+
+### 7. Fallback PTP alem do WireGuard
+
+**Pedido novo:** adicionar fallback PTP nas tres pontas, alem do WireGuard.
+
+**Decisao:** criar `13-02-PLAN.md` para desenhar full-mesh SRV-1 <-> SRV-2,
+SRV-1 <-> SRV-3 e SRV-2 <-> SRV-3. O fallback nao muda o bootstrap `wg0` do
+K3s. Antes de production-ready, o projeto precisa decidir se o PTP sera apenas
+admin/DR ou failover transparente que preserva `10.1.1.x`.
 
 ## Decisoes finais
 
@@ -89,8 +99,9 @@ interface correta. Se for WireGuard instavel, parar antes de instalar.
 - K3s default ingress/LB: disabled.
 - Portainer: Helm LTS, namespace `portainer`, `portainer.atius.com.br`.
 - Cloudflare: Tunnel remoto com Secret, 2-3 replicas, Access recomendado.
-- OCI/host firewall: liberar portas K3s apenas entre nos privados/NSG.
+- OCI/host firewall: manter ingresso publico fechado e liberar K3s apenas em `wg0`.
 - Backups: serializados; snapshot antes de qualquer instalacao.
+- Fallback PTP: subplano `13-02`, production-ready gate.
 
 ## Deferred
 
@@ -98,4 +109,4 @@ interface correta. Se for WireGuard instavel, parar antes de instalar.
 - Traefik/Ingress publico.
 - GitOps.
 - Migracao de workloads.
-- Upgrade SRV-2/SRV-3.
+- Implementacao do fallback PTP apos desenho `13-02`.

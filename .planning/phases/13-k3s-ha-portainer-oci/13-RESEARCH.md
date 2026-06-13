@@ -249,6 +249,19 @@ Canonical K3s node network is WireGuard `wg0` / `10.1.1.0/24`.
 `node-ip`, `advertise-address`, and `flannel-iface` must stay aligned to this
 interface. OCI VCN `10.0.0.x` addresses are not the K3s v1 node identity.
 
+### PTP fallback readiness
+
+User requested a fallback PTP mesh at the three points in addition to WireGuard.
+This is valuable, but it must be designed as routing/failover, not as a second
+uncoordinated Kubernetes node network. If K3s advertises `10.1.1.x`, transparent
+failover must preserve reachability to those same IPs. A separate PTP CIDR is
+useful for SSH/admin/DR, but not enough to keep API/etcd/kubelet healthy by
+itself.
+
+The PTP plan must map all existing IPs and ports before assigning anything new,
+then decide whether the first implementation is Admin/DR only or transparent
+route fallback.
+
 Commands per node:
 
 ```bash
@@ -311,7 +324,8 @@ Explicitly not public:
     `portainer.atius.com.br`.
 12. Protect Portainer via Cloudflare Access.
 13. Configure etcd snapshots and backup export.
-14. Document result in repo and Obsidian.
+14. Complete `13-02` PTP fallback design before declaring production-ready.
+15. Document result in repo and Obsidian.
 
 ## Pitfalls
 
@@ -353,6 +367,7 @@ Proceed with a conservative v1:
 - K3s HA embedded etcd, 3 server+worker nodes.
 - `stable` channel, config-file based install.
 - WireGuard `wg0` private networking only.
+- PTP fallback planned as separate design before production-ready.
 - Traefik/ServiceLB disabled.
 - Portainer CE LTS via Helm, pinned to SRV-1.
 - Cloudflare Tunnel for `portainer.atius.com.br`.

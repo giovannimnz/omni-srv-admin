@@ -33,3 +33,4 @@ M005 must not be executed before:
 - OCI snapshots/backups, OCI public-ingress closure and host firewall rules for `wg0` are confirmed.
 - Cloudflare Tunnel token is supplied out-of-band.
 - Portainer exposure target remains `portainer.atius.com.br`.
+- PTP fallback mesh is designed and validated before production-ready.

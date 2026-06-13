@@ -14,6 +14,7 @@
 - Official-doc constraints included:
   - K3s embedded etcd needs 3+ server nodes and odd quorum
   - K3s ports restricted to private networking
+  - PTP fallback full-mesh tracked as production-ready gate
   - Portainer requires namespace `portainer`, RBAC and StorageClass
   - Portainer local storage requires node pinning in multi-node cluster
   - Cloudflare Tunnel token stored as Kubernetes Secret
@@ -30,6 +31,7 @@
 - Confirm OCI snapshots/backups.
 - Confirm OCI public-ingress closure and host firewall rules for `wg0`.
 - Create/provide Cloudflare Tunnel token out-of-band.
+- Complete or explicitly waive PTP fallback design before production-ready.
 - Approve destructive K3s rollback if needed.
 
 ## Verdict

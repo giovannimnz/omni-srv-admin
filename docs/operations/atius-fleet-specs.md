@@ -34,6 +34,7 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 - 85% write limit SRV-1: 108 × 0.85 = **92 MB/s**
 - 85% write limit SRV-2: 124 × 0.85 = **105 MB/s**
 - K3s network decision: WireGuard `wg0` / `10.1.1.0/24`.
+- K3s PTP fallback: planned in `13-02-PLAN.md`; no new IPs/ports assigned yet.
 - K3s swap gate: SRV-1 still has `/swapfile` active; disable and persist swap off before installation.
 
 ## I/O Limiting

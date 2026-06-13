@@ -12,6 +12,7 @@ files_modified:
   - .planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md
   - .planning/phases/13-k3s-ha-portainer-oci/13-RESEARCH.md
   - .planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md
+  - .planning/phases/13-k3s-ha-portainer-oci/13-02-PLAN.md
   - .planning/phases/13-k3s-ha-portainer-oci/13-PREFLIGHT-2026-06-13.md
   - .planning/phases/13-k3s-ha-portainer-oci/13-EXECUTION-CHECKPOINT-2026-06-13.md
   - modules/k3s-ha-portainer-oci/
@@ -21,6 +22,7 @@ requirements_addressed:
   - K3S-03
   - K3S-04
   - K3S-05
+  - K3S-06
   - PRT-01
   - PRT-02
   - CFL-01
@@ -63,6 +65,7 @@ K3s HA:
 | ID | Name | Status | Notes |
 |---|---|---|---|
 | 13-01 | K3s HA bootstrap + Portainer exposure | blocked before live mutation | Single executable runbook with human checkpoints |
+| 13-02 | PTP fallback mesh design | planned | Full-mesh fallback before production-ready |
 
 ## Hard Gates
 
@@ -74,6 +77,8 @@ K3s HA:
 - No public exposure of 6443, 2379-2380, 8472, 10250, Portainer NodePort.
 - Cloudflare Tunnel token must never be committed.
 - SRV-1 swap must be disabled and persisted off before K3s starts.
+- PTP fallback is not required for the first blocked bootstrap attempt, but is
+  required before declaring the cluster production-ready.
 
 ## Preflight Status
 
@@ -92,3 +97,5 @@ remains blocked by OCI snapshots/firewall, Cloudflare token and human approval.
 - `kubectl -n cloudflared get deploy,pods` healthy with >=2 ready replicas.
 - `https://portainer.atius.com.br` opens Portainer initial setup/login through Cloudflare.
 - Legacy `docker.atius.com.br` state is documented and not used as an M005 dependency.
+- PTP fallback design has a tested failover/rollback plan or is explicitly
+  waived before production-ready.

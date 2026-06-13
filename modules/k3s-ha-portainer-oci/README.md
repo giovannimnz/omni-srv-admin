@@ -7,6 +7,9 @@ tokens or live kubeconfig files. The current branch is ready up to preflight and
 template generation. Live installation remains gated by OCI snapshots,
 OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
 The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
+PTP fallback mesh design lives in
+`.planning/phases/13-k3s-ha-portainer-oci/13-02-PLAN.md` and is required before
+production-ready, but it is not active in these templates.
 
 ## Contents
 
@@ -26,6 +29,7 @@ The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
 - Cloudflare remotely-managed tunnel `atius-k3s-portainer`.
 - Tunnel token supplied only in the shell as `CLOUDFLARE_TUNNEL_TOKEN`.
 - Human approval to write `/etc/rancher/k3s/config.yaml` and install K3s.
+- PTP fallback full-mesh design before declaring production-ready.
 
 ## Non-secret Install Shape
 
