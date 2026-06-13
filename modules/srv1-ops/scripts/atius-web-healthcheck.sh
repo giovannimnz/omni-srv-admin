@@ -1,11 +1,11 @@
 #!/bin/bash
 # Substitui atius-web-health.sh (cron) — agora roda via systemd user timer
-# Health check do atius-web-3010 (Next.js legacy) na porta 3010. Restart via PM2 se cair.
-# 2026-06-05: porta 3015 → 3010, PM2 app atius-web → atius-web-3010
+# Health check do atius-web (Next.js) na porta ativa 3015. Restart via PM2 se cair.
+# 2026-06-11: contrato vivo reconciliado para porta 3015 / PM2 app atius-web.
 
-HOST="localhost"
-PORT="3010"
-PM2_APP="atius-web-3010"
+HOST="127.0.0.1"
+PORT="3015"
+PM2_APP="atius-web"
 LOG="$HOME/.logs/atius-web-health.log"
 
 mkdir -p "$(dirname "$LOG")"

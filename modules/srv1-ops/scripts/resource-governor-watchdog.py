@@ -7,6 +7,7 @@ import time
 import subprocess
 import signal
 import shutil
+import fcntl
 from datetime import datetime
 from collections import deque
 from pathlib import Path
@@ -22,6 +23,7 @@ DEFAULTS = {
     'RG_LOG_DIR': str(Path.home() / '.logs' / 'resource-governor'),
     'RG_RUNTIME_OVERRIDE_FILE': str(Path.home() / '.config' / 'omni' / 'resource-governor.runtime.env'),
     'RG_WATCHDOG_STATE_FILE': str(Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-watchdog.json'),
+    'RG_WATCHDOG_LOCK_FILE': str(Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-watchdog.lock'),
     'RG_WATCHDOG_LOG_FILE': str(Path.home() / '.logs' / 'resource-governor' / 'watchdog.log'),
     'RG_WATCHDOG_DISK_CRITICAL_PCT': '97',
     'RG_WATCHDOG_SWAP_CRITICAL_PCT': '95',
@@ -77,6 +79,41 @@ RUNNING = True
 def handle_signal(signum, _frame):
     global RUNNING
     RUNNING = False
+
+
+def other_watchdog_pids() -> list[int]:
+    current_pid = os.getpid()
+    try:
+        result = subprocess.run(
+            ['ps', '-eo', 'pid=,args='],
+            text=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            timeout=2,
+            check=False,
+        )
+    except Exception:
+        return []
+
+    script_path = str(SCRIPT)
+    pids: list[int] = []
+    for line in result.stdout.splitlines():
+        stripped = line.strip()
+        if not stripped:
+            continue
+        parts = stripped.split(maxsplit=1)
+        if len(parts) != 2 or not parts[0].isdigit():
+            continue
+        pid = int(parts[0])
+        args = parts[1]
+        if pid == current_pid:
+            continue
+        argv = args.split()
+        if not argv or not Path(argv[0]).name.startswith('python'):
+            continue
+        if any(arg == script_path or arg.endswith('/resource-governor-watchdog.py') for arg in argv[1:]):
+            pids.append(pid)
+    return pids
 
 def load_config() -> dict[str, str]:
     data = DEFAULTS.copy()
@@ -252,6 +289,22 @@ def main() -> int:
     log_dir = Path(os.path.expanduser(config['RG_LOG_DIR']))
     log_dir.mkdir(parents=True, exist_ok=True)
     log_path = Path(os.path.expanduser(config['RG_WATCHDOG_LOG_FILE']))
+    lock_path = Path(os.path.expanduser(config['RG_WATCHDOG_LOCK_FILE']))
+    lock_path.parent.mkdir(parents=True, exist_ok=True)
+    lock_fh = lock_path.open('w')
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        append_log(log_path, f'lock already running path={lock_path} duplicate_pid={os.getpid()}')
+        return 0
+
+    existing_pids = other_watchdog_pids()
+    if existing_pids:
+        append_log(log_path, f'already running pids={",".join(map(str, existing_pids))} duplicate_pid={os.getpid()} lock={lock_path}')
+        return 0
+    lock_fh.write(str(os.getpid()) + '\n')
+    lock_fh.flush()
+
     state_path = Path(os.path.expanduser(config['RG_WATCHDOG_STATE_FILE']))
     runtime_path = Path(os.path.expanduser(config['RG_RUNTIME_OVERRIDE_FILE']))
     latest_snapshot = log_dir / 'latest.json'

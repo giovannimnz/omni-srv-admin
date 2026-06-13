@@ -27,6 +27,7 @@ from __future__ import annotations
 
 import os
 import re
+import sys
 import subprocess
 import time
 import json
@@ -37,6 +38,9 @@ from pathlib import Path
 
 SCRIPT = Path(__file__).resolve()
 MODULE = SCRIPT.parent.parent
+# 2026-06-12: usa lib/metrics.py compartilhado com srv1-mission-checkpoint.sh
+sys.path.insert(0, str(MODULE / 'lib'))
+import metrics  # noqa: E402
 CONFIG_PATH = MODULE / 'configs' / 'resource-governor.env'
 LOG_FILE = Path.home() / '.logs' / 'resource-governor' / 'patcher.log'
 STATE_FILE = Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-patcher.json'
@@ -553,7 +557,10 @@ def main() -> int:
 
         for cand in candidates:
             pid = cand['pid']
-            # CPU% calculation: delta in jiffies / wall time
+            # CPU% calculation: delta in jiffies / wall time.
+            # 2026-06-12 fix: CLK_TCK=100 (10ms/jiffy). CPU% = (delta_jiffies / dt) * 100 / CLK_TCK.
+            # Antes: cpu_pct = jiffies_per_sec → ficava 100× inflado (jiffies/s != %).
+            # Ex: 23 jiffies/s = 0.23 CPU = 23% (errado) → agora 23% corretamente.
             prev = cpu_samples.get(pid)
             cur_jiffies = cand['utime'] + cand['stime']
             now = time.time()
@@ -561,9 +568,7 @@ def main() -> int:
                 prev_jiffies, prev_t = prev[-1]
                 dt = now - prev_t
                 if dt > 0:
-                    jiffies_per_sec = (cur_jiffies - prev_jiffies) / dt
-                    # CLK_TCK = 100 on Linux default
-                    cpu_pct = jiffies_per_sec
+                    cpu_pct = metrics.proc_cpu_pct_from_jiffies(cur_jiffies, prev_jiffies, dt)
                     cand['cpu_pct'] = cpu_pct
                 else:
                     cand['cpu_pct'] = 0
@@ -609,6 +614,13 @@ def main() -> int:
             for m in moved_this_cycle:
                 log(f"  -> {m['pid']} {m['comm']} -> omni-{m['slice']} ({m['reason']}, {m['trigger']})")
             state['last_moves'] = (state.get('last_moves', []) + moved_this_cycle)[-50:]
+        else:
+            # 2026-06-12: log métricas globais (mesma lógica do checkpoint) em ciclos
+            # sem moves — facilita correlacionar patcher com snapshot do sistema.
+            m = metrics.all_metrics()
+            log(f"cycle-idle Mem={m['mem_pct']}% Process={m['proc_pct']}% "
+                f"Disk-Spc={m['disk_spc_pct']}% Disk-RW={m['disk_rw_pct']}% "
+                f"cands={len(candidates)}")
 
         # Periodic cleanup of cpu_samples for dead PIDs
         live_pids = {c['pid'] for c in candidates}
@@ -623,6 +635,7 @@ def main() -> int:
                 'moved_total': state['moved_total'],
                 'last_moves': state['last_moves'][-20:],
                 'last_cycle_ts': datetime.now().astimezone().isoformat(),
+                'last_metrics': metrics.all_metrics(),
             }, indent=2))
         except Exception:
             pass
