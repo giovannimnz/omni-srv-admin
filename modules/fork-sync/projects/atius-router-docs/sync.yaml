@@ -3,6 +3,15 @@ upstream: https://github.com/giovannimnz/new-api-docs-v1
 upstream_branch: main
 origin_branch: main
 origin: https://github.com/giovannimnz/new-api-docs-v1
+fork: /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs
+auto_push: true
+
+# Container migration note:
+# /home/ubuntu/GitHub/containers/Atius/atius-router-docs currently contains an
+# invalid copied .git directory. Keep the valid Git worktree above until the
+# container mirror is repaired or recloned.
+container_mirror: /home/ubuntu/GitHub/containers/Atius/atius-router-docs
+container_mirror_status: invalid_git_copy
 
 # Phase 09: docs agora vive como submodule em router-ai-atius.
 # O script fork-sync-docs.sh opera diretamente no submodule path.

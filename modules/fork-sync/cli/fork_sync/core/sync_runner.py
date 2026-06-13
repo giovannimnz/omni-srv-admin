@@ -11,6 +11,9 @@ from fork_sync.core.config import DEPLOY_SH, REPO_ROOT
 from fork_sync.core.registry import load_project
 
 
+GIT_TIMEOUT = int(os.environ.get("FORK_SYNC_GIT_TIMEOUT", "120"))
+
+
 def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> dict:
     """Roda um script bash e captura resultado estruturado."""
     if not script.exists():
@@ -47,13 +50,19 @@ def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> di
 
 
 def _git(repo: Path, args: list[str], check: bool = True) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["git", *args],
-        cwd=str(repo),
-        text=True,
-        capture_output=True,
-        check=check,
-    )
+    try:
+        return subprocess.run(
+            ["git", *args],
+            cwd=str(repo),
+            text=True,
+            capture_output=True,
+            check=check,
+            timeout=GIT_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            f"git {' '.join(args)} timed out after {GIT_TIMEOUT}s in {repo}"
+        ) from exc
 
 
 def _ensure_upstream_remote(repo: Path, url: str) -> None:
@@ -87,6 +96,32 @@ def _dirty_files(repo: Path) -> list[str]:
             continue
         files.append(line[3:] if len(line) > 3 else line)
     return files
+
+
+def _configured_enabled(cfg: dict) -> bool:
+    if str(cfg.get("enabled", True)).lower() == "false":
+        return False
+    if str(cfg.get("paused", False)).lower() == "true":
+        return False
+    return True
+
+
+def _protected_patterns(cfg: dict) -> list[str]:
+    patterns = []
+    patterns.extend(cfg.get("protected_paths", []) or [])
+    patterns.extend(cfg.get("protected_globs", []) or [])
+    return [str(pattern) for pattern in patterns if str(pattern).strip()]
+
+
+def _split_repo_patterns(patterns: list[str]) -> tuple[list[str], list[str]]:
+    repo_patterns = []
+    external_patterns = []
+    for pattern in patterns:
+        if Path(pattern).is_absolute():
+            external_patterns.append(pattern)
+        else:
+            repo_patterns.append(pattern)
+    return repo_patterns, external_patterns
 
 
 def _expand_protected_paths(repo: Path, patterns: list[str]) -> tuple[list[str], list[str]]:
@@ -143,12 +178,28 @@ def run_sync(
 ) -> dict:
     """Sincroniza fork com upstream preservando protected_paths."""
     cfg = load_project(name)
-    repo = Path(repo_path or cfg.get("fork", "")).expanduser().resolve()
+    if not _configured_enabled(cfg):
+        return {
+            "status": "skipped",
+            "message": cfg.get("pause_reason") or "project disabled/paused in sync.yaml",
+            "project": name,
+        }
+
+    repo_config = repo_path or cfg.get("fork")
+    if not repo_config:
+        return {
+            "status": "error",
+            "error": "fork path missing; set `fork:` in sync.yaml or pass --repo-path",
+            "project": name,
+        }
+
+    repo = Path(repo_config).expanduser().resolve()
     upstream_url = cfg.get("upstream", "")
     upstream_branch = cfg.get("upstream_branch", "main")
     upstream_ref = f"upstream/{upstream_branch}"
     merge_strategy = cfg.get("merge_strategy", "merge")
-    protected_patterns = list(cfg.get("protected_paths", []))
+    protected_patterns_all = _protected_patterns(cfg)
+    protected_patterns, external_protected_patterns = _split_repo_patterns(protected_patterns_all)
 
     if not (repo / ".git").exists():
         return {
@@ -200,6 +251,7 @@ def run_sync(
         "behind": behind,
         "dirty_files": dirty_files,
         "protected_patterns": protected_patterns,
+        "external_protected_patterns": external_protected_patterns,
         "protected_files": protected_files,
         "stale_protected_paths": stale_patterns,
         "conflict_candidates": conflict_candidates,
@@ -215,6 +267,46 @@ def run_sync(
                 "status": "success",
                 "message": "Already up to date",
                 "can_apply": not dirty_files and not unprotected_conflicts,
+            }
+        )
+        return result
+
+    if behind == 0:
+        push_stdout = ""
+        push_stderr = ""
+        push_exit_code = None
+        if not dry_run and dirty_files:
+            result.update(
+                {
+                    "status": "error",
+                    "error": "working tree suja; faça checkpoint local antes do push",
+                }
+            )
+            return result
+        if not dry_run and str(cfg.get("auto_push", False)).lower() == "true":
+            push = _git(repo, ["push", "origin", branch], check=False)
+            push_stdout = push.stdout
+            push_stderr = push.stderr
+            push_exit_code = push.returncode
+            if push.returncode != 0:
+                result.update(
+                    {
+                        "status": "error",
+                        "error": f"push falhou para origin/{branch}",
+                        "push_stdout": push_stdout,
+                        "push_stderr": push_stderr,
+                        "push_exit_code": push_exit_code,
+                    }
+                )
+                return result
+        result.update(
+            {
+                "status": "success",
+                "message": f"Already contains {upstream_ref}; local branch is ahead by {ahead}",
+                "can_apply": not dirty_files,
+                "push_stdout": push_stdout,
+                "push_stderr": push_stderr,
+                "push_exit_code": push_exit_code,
             }
         )
         return result

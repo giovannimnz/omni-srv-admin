@@ -3,7 +3,7 @@
 #
 # Chamado pelo cron diário (0 8 * * *). Pode também ser rodado
 # manualmente:
-#   $0 /home/ubuntu/GitHub/forks/AtiusRouterDocs [--rebuild] [--deploy]
+#   $0 /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs [--rebuild] [--deploy]
 #
 # O que faz:
 #   1. Detecta novo release do upstream QuantumNous/new-api-docs-v1
@@ -39,8 +39,8 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-REPO_PATH="${REPO_PATH:-/home/ubuntu/GitHub/forks/AtiusRouterDocs}"
-SOURCE_DIR="/home/ubuntu/fork-sync"
+REPO_PATH="${REPO_PATH:-/home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs}"
+SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 PROJECT="atius-router-docs"
 SYNC_YAML="$SOURCE_DIR/projects/$PROJECT/sync.yaml"
 LOG_DIR="$SOURCE_DIR/logs"

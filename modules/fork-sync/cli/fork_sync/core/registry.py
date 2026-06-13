@@ -6,6 +6,15 @@ import yaml
 from fork_sync.core.config import PROJECTS_DIR
 
 
+def _project_enabled(data: dict) -> bool:
+    """Return False for configs explicitly paused/disabled."""
+    if str(data.get("enabled", True)).lower() == "false":
+        return False
+    if str(data.get("paused", False)).lower() == "true":
+        return False
+    return True
+
+
 def list_projects(only_enabled: bool = False) -> list:
     """Lista todos os projetos com sync.yaml."""
     if not PROJECTS_DIR.exists():
@@ -22,9 +31,12 @@ def list_projects(only_enabled: bool = False) -> list:
         except Exception as e:
             items.append({"name": p.name, "error": f"YAML parse failed: {e}"})
             continue
+        if only_enabled and not _project_enabled(data):
+            continue
         deploy = p / "deploy.yaml"
         data["name"] = p.name
         data["path"] = str(p)
+        data["enabled"] = _project_enabled(data)
         data["has_deploy"] = deploy.exists()
         data["submodules"] = list(_detect_submodules(p))
         items.append(data)
