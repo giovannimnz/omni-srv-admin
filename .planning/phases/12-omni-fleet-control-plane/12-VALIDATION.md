@@ -93,8 +93,8 @@ Current live state:
 ## Live Repo + DB Rollout
 
 - SRV-1: `~/GitHub/omni-srv-admin` exists; local dirty work is preserved and was not overwritten.
-- SRV-2: `~/GitHub/omni-srv-admin` cloned at `main@35bf94b`, worktree clean, CLI smoke passed.
-- SRV-3: `~/GitHub/omni-srv-admin` cloned at `main@35bf94b`, worktree clean, CLI smoke passed.
+- SRV-2: `~/GitHub/omni-srv-admin` updated to `main@88d35c7`, worktree clean, CLI smoke passed.
+- SRV-3: `~/GitHub/omni-srv-admin` updated to `main@88d35c7`, worktree clean, CLI smoke passed.
 - SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
 - SRV-1: `hosts`, `nodes` and `programs` tables are seeded from the intended SRV1/SRV2/SRV3 fleet base.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points clients to `10.1.1.1:6432`.

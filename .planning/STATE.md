@@ -61,7 +61,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | CLI | `validate-inventory`, `install server/node`, `heartbeat`, `programs`, `update-plan`, `audit`, `status --all` | ✅ |
 | Tests | pytest + offline validation harness + live SRV1/SRV2/SRV3 repo/DB probes | ✅ |
 | Live network | SSH identity and VPN full-mesh passed across SRV1/SRV2/SRV3 | ✅ |
-| Repo rollout | `~/GitHub/omni-srv-admin` exists on SRV1/SRV2/SRV3; SRV2/SRV3 are clean at `main@35bf94b`; SRV1 has local work preserved | ✅ |
+| Repo rollout | `~/GitHub/omni-srv-admin` exists on SRV1/SRV2/SRV3; SRV2/SRV3 are clean at `main@88d35c7`; SRV1 has local work preserved | ✅ |
 | PostgreSQL | SRV-1 database `omni_fleet` exists with initial schema and seeded hosts/nodes/programs | ✅ |
 | PgBouncer | SRV-1 PgBouncer is active on `127.0.0.1:6432` and `10.1.1.1:6432`; SRV-1/SRV-2/SRV-3 query `omni_fleet` via PgBouncer and direct node access to `8745` is blocked | ✅ |
 | Remaining hardening | PgBouncer global auth is still `trust` for compatibility with existing services; move to stricter auth in a separate hardening task | Open |
