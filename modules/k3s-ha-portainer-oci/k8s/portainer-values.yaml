@@ -1,0 +1,15 @@
+service:
+  type: ClusterIP
+
+tls:
+  force: true
+
+image:
+  tag: lts
+
+persistence:
+  enabled: true
+  storageClass: local-path
+
+nodeSelector:
+  kubernetes.io/hostname: atius-srv-1

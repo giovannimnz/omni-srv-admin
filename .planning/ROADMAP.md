@@ -229,7 +229,7 @@
 
 **Phase:** 12
 
-**Status:** ACTIVE/PLANNED on dedicated branch
+**Status:** CONTRACT IMPLEMENTED on dedicated branch
 
 **Scope note:** Esta branch K3s nao carrega os artefatos completos do Fleet Control Plane. Ela referencia M004 como prerequisito porque M005 deve consumir inventario, contratos de status, auditoria e governanca definidos no Fleet.
 
@@ -239,9 +239,9 @@
 
 **Goal:** Cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
 
-**Status:** PLANNED (2026-06-13)
+**Status:** PREFLIGHT PASSED; LIVE INSTALL GATED (2026-06-13)
 
-**Depends on:** M004 Fleet Control Plane em branch separada, SRV-1 atualizado para Ubuntu 24.04 e preflight de rede/disco/backup aprovado.
+**Depends on:** M004 Fleet Control Plane em branch separada, SRV-1 atualizado para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados.
 
 **Why:** Evoluir de gestão por Docker/Podman locais para Kubernetes HA leve, sem expor API/etcd/Portainer publicamente e usando a base operacional criada no Fleet Control Plane.
 
@@ -251,18 +251,26 @@
 
 ---
 
-### Phase 13: K3s HA + Portainer Milestone Plan ✅ PLANNED
+### Phase 13: K3s HA + Portainer Milestone Plan ✅ PREFLIGHT READY
 
-**Goal:** Planejar bootstrap K3s HA com embedded etcd, Portainer CE via Helm, Cloudflare Tunnel para `portainer.atius.com.br`, e gates de backup/rollback.
+**Goal:** Planejar bootstrap K3s HA com embedded etcd, preparar templates seguros, executar preflight read-only, aplicar limpeza segura de logs, e manter Portainer CE via Helm/Cloudflare Tunnel gated para `portainer.atius.com.br`.
 
 **Requirements:** K3S-01, K3S-02, K3S-03, K3S-04, K3S-05, PRT-01, PRT-02, CFL-01, SEC-01
 
-**Status:** PLANNED (2026-06-13)
+**Status:** PREFLIGHT PASSED; LIVE INSTALL GATED (2026-06-13)
 
-**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao futuro upgrade do SRV-1 para 24.04, aos riscos locais de disco/GDrive/portas e ao pré-requisito M004 em branch separada.
+**Context:** O PDF `planejamento_cluster_k3s_portainer_oci.pdf` define a arquitetura desejada: 3 nos server+worker, embedded etcd, Cloudflare Tunnel e Portainer. A phase adapta isso aos IPs reais `10.1.1.1/2/7`, ao Portainer existente em `docker.atius.com.br`, ao SRV-1 ja validado em Ubuntu 24.04.4, aos riscos locais de disco/GDrive/portas e ao pré-requisito M004 em branch separada.
 
 **Plans:** 1
 - [x] 13-01-PLAN.md — K3s HA bootstrap + Portainer exposure (ready, human-gated)
+- [x] 13-PREFLIGHT-2026-06-13.md — preflight read-only + log cleanup safe changes
+
+**Preflight Results:**
+- SRV-1: Ubuntu 24.04.4 LTS, aarch64, 46G free, private routes/ping ok.
+- SRV-2: Ubuntu 22.04.5 LTS, aarch64, 26G free after log cleanup, private routes/ping ok.
+- SRV-3: Ubuntu 22.04.5 LTS, aarch64, 50G free after Docker JSON log cleanup, private routes/ping ok.
+- Docker JSON log rotation installed on SRV-2 and SRV-3 using the versioned config in `modules/k3s-ha-portainer-oci/logrotate/docker-json-containers`.
+- K3s config templates, Portainer Helm values and Cloudflare deployment template are prepared without secrets.
 
 **Success Criteria:**
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/13-k3s-ha-portainer-oci/`
@@ -270,6 +278,7 @@
 3. Plano não abre 6443/2379-2380/8472/10250 para internet pública
 4. Plano expõe Portainer por Cloudflare Tunnel em `portainer.atius.com.br`
 5. Plano consome o inventário/contratos definidos no M004 quando for executado
+6. Live install remains blocked until OCI snapshots/firewall and Cloudflare Tunnel token are confirmed
 
 **Risk:** HIGH — rede privada/WireGuard precisa estar estável, SRV-3 tem histórico de disco quase cheio, e Portainer/Apache atuais não podem ser quebrados.
 
@@ -279,7 +288,7 @@
 
 | Milestone | # | Phase | Goal | Status | Risk |
 |---|---:|---|---|---|---|
-| M005 | 13 | K3s HA + Portainer Milestone Plan | Context/research/runbook K3s | ✅ PLANNED | HIGH |
+| M005 | 13 | K3s HA + Portainer Milestone Plan | Preflight + executable templates | ✅ PREFLIGHT READY | HIGH |
 
 ---
 

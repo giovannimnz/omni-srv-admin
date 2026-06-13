@@ -4,7 +4,7 @@ padded: 13
 slug: k3s-ha-portainer-oci
 name: K3s HA + Portainer on OCI ARM64
 date: 2026-06-13
-status: ready
+status: preflight-ready
 wave: 1
 depends_on: []
 autonomous: false
@@ -12,6 +12,8 @@ files_modified:
   - .planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md
   - .planning/phases/13-k3s-ha-portainer-oci/13-RESEARCH.md
   - .planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md
+  - .planning/phases/13-k3s-ha-portainer-oci/13-PREFLIGHT-2026-06-13.md
+  - modules/k3s-ha-portainer-oci/
 requirements_addressed:
   - K3S-01
   - K3S-02
@@ -34,8 +36,9 @@ quebrar o Portainer antigo, Apache, Docker/Podman ou os servicos atuais.
 
 ## Scope
 
-Esta phase e de planejamento. A execucao real deve ser uma phase separada ou a
-execucao do plano `13-01` apos o SRV-1 estar em Ubuntu 24.04.
+Esta phase agora tem planejamento, preflight e templates seguros. A execucao
+real do plano `13-01` continua bloqueada ate snapshots/backup OCI, firewall OCI
+e token Cloudflare Tunnel serem confirmados fora do repo.
 
 ## Architecture
 
@@ -61,12 +64,19 @@ K3s HA:
 
 ## Hard Gates
 
-- SRV-1 must be Ubuntu 24.04 before K3s install.
+- SRV-1 must be Ubuntu 24.04 before K3s install. Passed on 2026-06-13:
+  Ubuntu 24.04.4 LTS.
 - Backups/snapshots of all 3 nodes must exist before mutating servers.
 - `10.1.1.0/24` connectivity must be stable from every node to every node.
 - OCI/host firewall must restrict K3s ports to private node traffic only.
 - No public exposure of 6443, 2379-2380, 8472, 10250, Portainer NodePort.
 - Cloudflare Tunnel token must never be committed.
+
+## Preflight Status
+
+`13-PREFLIGHT-2026-06-13.md` records read-only node checks and the safe log
+cleanup performed on SRV-2/SRV-3. Disk and private connectivity gates now pass.
+Live install remains blocked by OCI snapshots/firewall and Cloudflare token.
 
 ## Acceptance
 

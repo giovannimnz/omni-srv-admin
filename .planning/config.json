@@ -41,7 +41,7 @@
     {
       "id": "M004",
       "name": "Omni Fleet Control Plane",
-      "status": "active",
+      "status": "contract-implemented",
       "phase": "12",
       "phases": ["12"],
       "branch": "codex/omni-fleet-control-plane-m004",
@@ -52,7 +52,7 @@
     {
       "id": "M005",
       "name": "K3s HA Cluster + Portainer",
-      "status": "planned",
+      "status": "preflight-passed-live-gated",
       "phase": "13",
       "phases": ["13"],
       "branch": "codex/k3s-portainer-oci-plan",

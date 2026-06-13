@@ -1,7 +1,7 @@
 # Phase 13 Plan Check
 
 **Date:** 2026-06-13
-**Status:** PASSED WITH HUMAN GATES
+**Status:** PASSED WITH HUMAN GATES; PREFLIGHT PASSED 2026-06-13
 
 ## Checks
 
@@ -26,7 +26,7 @@
 
 ## Required Human Gates
 
-- Confirm SRV-1 is upgraded and postchecked on Ubuntu 24.04.
+- SRV-1 is upgraded and postchecked on Ubuntu 24.04.4 LTS.
 - Confirm OCI snapshots/backups.
 - Confirm OCI NSG/Security List rules.
 - Create/provide Cloudflare Tunnel token out-of-band.
@@ -34,6 +34,6 @@
 
 ## Verdict
 
-The plan is executable after the SRV-1 Ubuntu 24.04 gate passes. Do not run the
-installation while SRV-1 remains Ubuntu 22.04 or while SRV-3 has insufficient
-disk space.
+The node preflight is executable-ready after safe log cleanup, but live install
+is still blocked until OCI snapshots/backups, OCI firewall rules and the
+Cloudflare Tunnel token are confirmed. Do not install K3s before those gates.

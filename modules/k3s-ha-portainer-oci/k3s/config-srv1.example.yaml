@@ -1,0 +1,18 @@
+cluster-init: true
+token: "<K3S_CLUSTER_TOKEN>"
+node-name: "atius-srv-1"
+node-ip: "10.1.1.1"
+advertise-address: "10.1.1.1"
+write-kubeconfig-mode: "0600"
+tls-san:
+  - "10.1.1.1"
+  - "atius-srv-1"
+disable:
+  - traefik
+  - servicelb
+secrets-encryption: true
+etcd-snapshot-schedule-cron: "0 */6 * * *"
+etcd-snapshot-retention: 28
+kubelet-arg:
+  - "eviction-hard=nodefs.available<10%,imagefs.available<10%,memory.available<500Mi"
+  - "system-reserved=cpu=500m,memory=1Gi,ephemeral-storage=5Gi"

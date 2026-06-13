@@ -1,0 +1,14 @@
+server: "https://10.1.1.1:6443"
+token: "<K3S_CLUSTER_TOKEN>"
+node-name: "atius-srv-3"
+node-ip: "10.1.1.7"
+advertise-address: "10.1.1.7"
+write-kubeconfig-mode: "0600"
+tls-san:
+  - "10.1.1.1"
+  - "10.1.1.7"
+  - "atius-srv-3"
+disable:
+  - traefik
+  - servicelb
+secrets-encryption: true
