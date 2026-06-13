@@ -11,7 +11,7 @@ The target cluster names are:
 
 | Host | Initial role | Notes |
 |---|---|---|
-| `ATIUS-SRV-1` | control-plane server | Planned first server after Ubuntu 24.04 baseline confirmation |
+| `ATIUS-SRV-1` | control-plane server | Ubuntu 24.04.4 baseline confirmed locally on 2026-06-13; live install still gated |
 | `ATIUS-SRV-2` | node | Future managed node |
 | `ATIUS-SRV-3` | node | Future managed node |
 
@@ -215,9 +215,8 @@ PYTHONPATH=cli python3 -m omni fleet audit --json
 
 ## Human Gates Before Live Execution
 
-1. Confirm SRV-1 Ubuntu 24.04 baseline before first server install, or approve a
-   docs-only/bootstrap-only exception.
-2. Approve where secret/license material lives outside git/log/vault.
-3. Approve first implementation shape: CLI-only or API + CLI.
-4. Approve update policy: dry-run, explicit approval, rollback and audit event.
+1. Approve where secret/license material lives outside git/log/vault.
+2. Approve first implementation shape: CLI-only or API + CLI.
+3. Approve update policy: dry-run, explicit approval, rollback and audit event.
+4. Re-run host preflight immediately before live install.
 5. Run M005 only after M004 contracts are accepted and node preflight passes.

@@ -59,7 +59,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | Docs | `docs/fleet/control-plane.md` criado com arquitetura, runbook e gates | ✅ |
 | Module | `modules/fleet-control-plane/` criado com config exemplo e migration SQL inicial | ✅ |
 | CLI | `validate-inventory`, `install server/node`, `heartbeat`, `programs`, `update-plan`, `audit`, `status --all` | ✅ |
-| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault e confirmar SRV-1 Ubuntu 24.04 | Open |
+| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault, decidir CLI-only vs API+CLI e aprovar preflight final | Open |
 
 ## M004 Phase Breakdown
 

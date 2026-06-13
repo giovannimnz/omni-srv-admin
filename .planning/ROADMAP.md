@@ -265,7 +265,7 @@
 3. Desenho server/node e inventory source-of-truth travado
 4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
 5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
-6. Live install remains gated until secret storage is approved and SRV-1 Ubuntu 24.04 baseline is confirmed
+6. Live install remains gated until secret storage and final host preflight are approved
 7. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
 
 **Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.

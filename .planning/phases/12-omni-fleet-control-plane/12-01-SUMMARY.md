@@ -57,8 +57,8 @@ execution is not enabled in M004.
 ## Remaining Gates
 
 - Approve secret/license storage outside git, logs, `.planning` and vault.
-- Confirm SRV-1 is on Ubuntu 24.04 before live server install, or approve a
-  bootstrap-only exception.
+- SRV-1 baseline is confirmed locally as Ubuntu 24.04.4 LTS on aarch64; re-run
+  preflight immediately before live server install.
 - Decide CLI-only vs API + CLI for the first live implementation.
 - Approve update-plan policy before any node applies changes.
 - Run M005 only after these contracts are accepted or explicitly waived.

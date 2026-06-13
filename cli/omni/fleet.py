@@ -188,7 +188,7 @@ def _install_plan(mode: str, host: dict[str, Any], path: Path) -> dict[str, Any]
         ],
         "blocked_until": [
             "storage for secrets/license material is approved outside git/log/vault",
-            "Ubuntu 24.04 target baseline is confirmed for the first server install",
+            "host preflight is confirmed immediately before live execution",
             "operator approves CLI-only vs API+CLI implementation shape",
         ],
     }
