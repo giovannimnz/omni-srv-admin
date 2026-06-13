@@ -63,6 +63,44 @@ def _cfg(upstream: Path, fork: Path, protected_paths: list[str]) -> dict:
     }
 
 
+def test_run_sync_errors_when_fork_path_missing(monkeypatch, tmp_path):
+    cwd = tmp_path / "cwd"
+    _init_repo(cwd)
+    monkeypatch.chdir(cwd)
+    monkeypatch.setattr(
+        sync_runner,
+        "load_project",
+        lambda name: {
+            "upstream": "https://example.invalid/upstream.git",
+            "upstream_branch": "main",
+            "protected_paths": [],
+        },
+    )
+
+    result = sync_runner.run_sync("missing-fork", dry_run=True)
+
+    assert result["status"] == "error"
+    assert "fork path missing" in result["error"]
+    assert _git(cwd, "remote") == ""
+
+
+def test_run_sync_skips_paused_projects(monkeypatch):
+    monkeypatch.setattr(
+        sync_runner,
+        "load_project",
+        lambda name: {
+            "enabled": False,
+            "pause_reason": "maintenance window",
+            "upstream": "https://example.invalid/upstream.git",
+        },
+    )
+
+    result = sync_runner.run_sync("paused", dry_run=True)
+
+    assert result["status"] == "skipped"
+    assert result["message"] == "maintenance window"
+
+
 def test_run_sync_restores_protected_files_after_merge(monkeypatch, repo_pair):
     upstream, fork = repo_pair
     _commit_file(fork, "README.md", "fork readme\n", "fork custom readme")
@@ -111,3 +149,53 @@ def test_run_sync_dry_run_reports_dirty_and_stale_paths(monkeypatch, repo_pair):
     assert result["can_apply"] is False
     assert "README.md" in result["dirty_files"]
     assert "missing/path.txt" in result["stale_protected_paths"]
+
+
+def test_run_sync_dry_run_includes_protected_globs(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(fork, "docs/pt/index.md", "fork docs\n", "fork docs")
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    monkeypatch.setattr(
+        sync_runner,
+        "load_project",
+        lambda name: {
+            "upstream": str(upstream),
+            "upstream_branch": "main",
+            "fork": str(fork),
+            "protected_paths": [],
+            "protected_globs": ["docs/pt/**"],
+            "merge_strategy": "theirs",
+        },
+    )
+
+    result = sync_runner.run_sync("docs", dry_run=True)
+
+    assert result["status"] == "success"
+    assert "docs/pt/index.md" in result["protected_files"]
+
+
+def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(fork, "README.md", "fork readme\n", "fork-only change")
+
+    monkeypatch.setattr(
+        sync_runner,
+        "load_project",
+        lambda name: {
+            "upstream": str(upstream),
+            "upstream_branch": "main",
+            "fork": str(fork),
+            "protected_paths": ["README.md"],
+            "merge_strategy": "theirs",
+            "auto_push": False,
+        },
+    )
+
+    before = _git(fork, "rev-parse", "HEAD")
+    result = sync_runner.run_sync("ahead-only")
+    after = _git(fork, "rev-parse", "HEAD")
+
+    assert result["status"] == "success"
+    assert "ahead by 1" in result["message"]
+    assert before == after

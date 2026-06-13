@@ -4,6 +4,14 @@ upstream_branch: main
 origin_branch: main
 fork_repo: router-ai-atius  # slug real no GitHub (display name "Atius Router" diverge)
 fork: /home/ubuntu/docker/Atius/router-ai-atius
+auto_push: true
+
+# Container migration note:
+# /home/ubuntu/GitHub/containers/Atius/router-ai-atius currently contains an
+# invalid copied .git directory. Keep the valid Git worktree above until the
+# container mirror is repaired or recloned.
+container_mirror: /home/ubuntu/GitHub/containers/Atius/router-ai-atius
+container_mirror_status: invalid_git_copy
 
 protected_paths:
   # Feature: middleware and custom container build chain

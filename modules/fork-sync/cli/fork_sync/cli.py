@@ -489,7 +489,7 @@ def doctor_cmd(project):
                 if not u["exists"]:
                     issues.append(f"[{project}] upstream {u['url']} sumiu — {len(u['candidates'])} candidatos")
     else:
-        for p in list_projects():
+        for p in list_projects(only_enabled=True):
             name = p.get("name")
             d = diagnose_project(name)
             if d.get("local_status") == "missing" or any(not u["exists"] for u in d.get("upstreams", [])):

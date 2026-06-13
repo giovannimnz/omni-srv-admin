@@ -15,6 +15,9 @@
 #                      adicionados pelo upstream após "ultra"
 
 project: Horus-Spec-Driven
+enabled: false
+paused: true
+pause_reason: "Custom submodule sync uses Horus installer; disabled in generic daily fork-sync until custom runner support is implemented."
 display_name: "Horus Spec Driven — Multi-CLI Wrapper for GSD Core"
 
 upstream_type: submodule
@@ -22,7 +25,7 @@ submodule_path: modules/gsd-core
 upstream_url: https://github.com/open-gsd/gsd-core
 upstream_branch: main
 
-fork: /home/ubuntu/GitHub/horus-spec-driven
+fork: /home/ubuntu/GitHub/SDD/horus-spec-driven
 fork_branch: master
 fork_origin: https://github.com/giovannimnz/horus-spec-driven
 

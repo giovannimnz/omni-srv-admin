@@ -1,4 +1,7 @@
 project: gsd-2
+enabled: false
+paused: true
+pause_reason: "Local fork path missing and giovannimnz/gsd-2 does not currently exist; avoid daily sync failures."
 upstream: https://github.com/gsd-build/gsd-2
 upstream_branch: main
 origin_branch: main
