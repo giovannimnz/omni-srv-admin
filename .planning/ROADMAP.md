@@ -255,7 +255,7 @@
 **Implementation Results:**
 - `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
 - `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
-- `~/GitHub/omni-srv-admin` is present on SRV-1/SRV-2/SRV-3; SRV-2/SRV-3 are clean at `main@35bf94b`.
+- `~/GitHub/omni-srv-admin` is present on SRV-1/SRV-2/SRV-3; SRV-2/SRV-3 are clean at `main@88d35c7`.
 - SRV-1 hosts PostgreSQL database `omni_fleet`; hosts/nodes/programs inventory is seeded.
 - SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `omni_fleet` through PgBouncer at `10.1.1.1:6432`.
 - `omni fleet validate-inventory` validates all 7 inventory hosts.
