@@ -111,6 +111,12 @@ PgBouncer ownership:
 | allowed clients | private fleet network, default candidate `10.1.1.0/24` |
 | pool mode | deployment config, default candidate `transaction` |
 
+SRV-1 live enforcement:
+
+- PgBouncer listens on `127.0.0.1:6432` and `10.1.1.1:6432`.
+- PostgreSQL direct port `8745` remains local for server-side maintenance.
+- SRV-2/SRV-3 must connect to `10.1.1.1:6432`; direct `10.1.1.1:8745` is blocked.
+
 ## Data Model
 
 Initial schema lives in

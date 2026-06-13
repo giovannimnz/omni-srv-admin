@@ -16,6 +16,8 @@ It does not install services on the hosts yet.
 | `../../cli/omni/fleet.py` | Safe CLI commands for inventory validation and dry-run plans |
 | `tools/validate_m004.py` | Offline contract validation and optional live read-only SRV probes |
 | `tests/test_m004_contract.py` | Pytest coverage for the M004 contract |
+| `scripts/omni-pg-access-guard.sh` | SRV-1 firewall guard: PgBouncer allowed, direct PostgreSQL blocked |
+| `systemd/omni-pg-access-guard.service` | Boot-time service for the firewall guard |
 
 ## Safe Commands
 
@@ -40,6 +42,13 @@ OMNI_M004_LIVE=1 scripts/verify-m004-fleet-control-plane.sh
 The live mode is read-only. It uses SSH, ping, service/listener inspection and
 TCP connectivity checks only. It must report PgBouncer node access as blocked
 until the server intentionally exposes PgBouncer on the private fleet endpoint.
+
+## SRV-1 PgBouncer Enforcement
+
+Live SRV-1 uses PostgreSQL on `127.0.0.1:8745` and PgBouncer on
+`127.0.0.1:6432` plus `10.1.1.1:6432`. Nodes must use PgBouncer. Direct
+PostgreSQL on `10.1.1.1:8745` is blocked from nodes by
+`omni-pg-access-guard`.
 
 ## Secret Rule
 

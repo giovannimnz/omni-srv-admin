@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004 — Omni Fleet Control Plane)
 See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane contract is implemented and validated. Live node DB access remains blocked until PgBouncer is intentionally exposed on the private fleet endpoint; M005 K3s HA Cluster + Portainer is queued in its separate branch.
+**Current focus:** M004 Omni Fleet Control Plane contract is implemented and validated. Live node DB access now uses PgBouncer on the private fleet endpoint; M005 K3s HA Cluster + Portainer is queued in its separate branch.
 
 ## Milestones
 
@@ -17,7 +17,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract validated; live PgBouncer node access blocked |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract validated; live PgBouncer node access passed |
 | M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Planned |
 
 ## M001 Completion
@@ -61,14 +61,14 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | CLI | `validate-inventory`, `install server/node`, `heartbeat`, `programs`, `update-plan`, `audit`, `status --all` | ✅ |
 | Tests | pytest + offline validation harness + live read-only SRV1/SRV2/SRV3 probes | ✅ |
 | Live network | SSH identity and VPN full-mesh passed across SRV1/SRV2/SRV3 | ✅ |
-| PgBouncer | SRV-1 local PgBouncer is active on `127.0.0.1:6432`; SRV-2/SRV-3 cannot reach `10.1.1.1:6432` yet | Blocked |
-| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault, decidir CLI-only vs API+CLI, expor PgBouncer no endpoint privado e aprovar preflight final | Open |
+| PgBouncer | SRV-1 PgBouncer is active on `127.0.0.1:6432` and `10.1.1.1:6432`; SRV-2/SRV-3 reach PgBouncer and direct `8745` is blocked | ✅ |
+| Blocker | Execução real depende de aprovar storage de secrets/licenças fora do git/log/vault, decidir CLI-only vs API+CLI e aprovar preflight final | Open |
 
 ## M004 Phase Breakdown
 
 | Milestone | Phase | Descrição | Status |
 |---|---:|---|---|
-| M004 | 12 | Fleet Control Plane Foundation | Contract validated; live PgBouncer node access gated |
+| M004 | 12 | Fleet Control Plane Foundation | Contract validated; live PgBouncer node access passed |
 
 ## Backup GDrive
 

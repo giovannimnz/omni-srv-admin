@@ -70,11 +70,10 @@ Latest validation result:
 
 - pytest: `12 passed`
 - offline harness: `6 PASS`, `0 FAIL`
-- live read-only harness: `18 PASS`, `2 BLOCKED`, `0 FAIL`
+- live read-only harness: `20 PASS`, `0 BLOCKED`, `0 FAIL`
 
-The two live blockers are SRV-2/SRV-3 reaching PgBouncer on `10.1.1.1:6432`.
-SRV-1 currently has local PgBouncer readiness on `127.0.0.1:6432`, and direct
-PostgreSQL access from SRV-2/SRV-3 to `10.1.1.1:5432` is blocked.
+SRV-2/SRV-3 reach PgBouncer on `10.1.1.1:6432`. Direct PostgreSQL access from
+SRV-2/SRV-3 to `10.1.1.1:8745` is blocked by `omni-pg-access-guard`.
 
 ## Remaining Gates
 

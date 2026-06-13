@@ -313,7 +313,7 @@ def _live_pgbouncer_server() -> ScenarioResult:
     remote = (
         "set +e; "
         "echo services=$(systemctl is-active postgresql pgbouncer 2>/dev/null | paste -sd, -); "
-        "echo listeners=$(ss -ltn 2>/dev/null | awk '{print $4}' | grep -E '(:5432|:6432)$' | paste -sd, -); "
+        "echo listeners=$(ss -ltn 2>/dev/null | awk '{print $4}' | grep -E '(:8745|:5432|:6432)$' | paste -sd, -); "
         "if command -v pg_isready >/dev/null 2>&1; then pg_isready -h 127.0.0.1 -p 6432; else echo pg_isready=missing; fi"
     )
     code, stdout, stderr, rendered = _ssh(target, remote)
@@ -326,7 +326,7 @@ def _live_pgbouncer_server() -> ScenarioResult:
     )
     if code != 0:
         scenario.status = "FAIL"
-    elif any(":6432" in line for line in evidence):
+    elif any("10.1.1.1:6432" in line for line in evidence):
         scenario.status = "PASS"
     scenario.commands = [rendered]
     return scenario
@@ -366,15 +366,15 @@ def _live_node_direct_postgres_blocked(node_id: str) -> ScenarioResult:
     server_ip = _nested(server, "access", "vpn_ip")
     remote = (
         "set +e; "
-        f"if command -v nc >/dev/null 2>&1; then nc -vz -w2 {server_ip} 5432; "
-        f"else timeout 3 bash -lc '</dev/tcp/{server_ip}/5432'; fi; "
+        f"if command -v nc >/dev/null 2>&1; then nc -vz -w2 {server_ip} 8745; "
+        f"else timeout 3 bash -lc '</dev/tcp/{server_ip}/8745'; fi; "
         "echo rc=$?"
     )
     code, stdout, stderr, rendered = _ssh(ssh_target, remote, timeout=12)
     evidence = stdout.splitlines() or [stderr]
     scenario = _ok(
         f"M004-LIVE-PG-DIRECT-{node_id}",
-        f"{node_id} cannot reach direct PostgreSQL port on server",
+        f"{node_id} cannot reach direct PostgreSQL port 8745 on server",
         "live",
         evidence,
     )

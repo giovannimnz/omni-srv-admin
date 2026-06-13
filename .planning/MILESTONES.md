@@ -9,7 +9,7 @@ clara a ordem dos milestones e onde cada plano completo vive.
 
 | Milestone | Phase | Name | Canonical branch | Full artifacts | Status |
 |---|---:|---|---|---|---|
-| M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Contract validated; live PgBouncer node access blocked |
+| M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Contract validated; live PgBouncer node access passed |
 | M005 | 13 | K3s HA Cluster + Portainer | `codex/k3s-portainer-oci-plan` | `.planning/phases/13-k3s-ha-portainer-oci/` | Planned |
 
 ## Separation Rule

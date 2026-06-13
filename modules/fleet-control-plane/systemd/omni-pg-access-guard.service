@@ -1,0 +1,12 @@
+[Unit]
+Description=Omni PostgreSQL/PgBouncer access guard
+After=network.target
+Before=pgbouncer.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/omni-pg-access-guard.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

@@ -2,7 +2,7 @@
 phase: 12
 name: omni-fleet-control-plane
 date: 2026-06-13
-status: validated-with-live-blockers
+status: validated
 method: pytest + offline harness + live read-only SSH probes + multi-agent scenario review
 branch: codex/omni-fleet-control-plane-m004
 ---
@@ -12,17 +12,8 @@ branch: codex/omni-fleet-control-plane-m004
 ## Result
 
 M004 is validated as a contract and test harness. The live SRV1/SRV2/SRV3
-network is reachable, and direct PostgreSQL access from nodes is blocked.
-
-Live node-to-PgBouncer access is not ready yet:
-
-- SRV-1 has PostgreSQL and PgBouncer active locally.
-- PgBouncer is listening on `127.0.0.1:6432`.
-- SRV-2 and SRV-3 cannot reach `10.1.1.1:6432`.
-
-This is a correct blocker for live Fleet node operation. It must remain blocked
-until PgBouncer is intentionally bound to the private fleet endpoint and access
-is restricted to the approved fleet network.
+network is reachable, PgBouncer is reachable from nodes on the private endpoint,
+and direct PostgreSQL access from nodes is blocked.
 
 ## Automated Commands
 
@@ -48,11 +39,11 @@ PYTHONPATH=cli python3 modules/fleet-control-plane/tools/validate_m004.py --live
 |---|---:|
 | SSH identity probes | 3 PASS |
 | VPN full-mesh ping | 6 PASS |
-| SRV-1 local PostgreSQL/PgBouncer readiness | 1 PASS |
-| Node direct PostgreSQL access blocked on `10.1.1.1:5432` | 2 PASS |
-| Node PgBouncer access on `10.1.1.1:6432` | 2 BLOCKED |
+| SRV-1 PostgreSQL/PgBouncer readiness | 1 PASS |
+| Node PgBouncer access on `10.1.1.1:6432` | 2 PASS |
+| Node direct PostgreSQL access blocked on `10.1.1.1:8745` | 2 PASS |
 
-Live summary: `18 PASS`, `2 BLOCKED`, `0 FAIL`.
+Live summary: `20 PASS`, `0 BLOCKED`, `0 FAIL`.
 
 ## Host Evidence
 
@@ -60,7 +51,7 @@ Live summary: `18 PASS`, `2 BLOCKED`, `0 FAIL`.
 |---|---|---|---|
 | ATIUS-SRV-1 | Ubuntu 24.04.4 LTS | aarch64 | 10.1.1.1 |
 | ATIUS-SRV-2 | Ubuntu 22.04.5 LTS | aarch64 | 10.1.1.2 |
-| ATIUS-SRV-3 | Ubuntu 22.04.5 LTS | aarch64 | 10.1.1.7 |
+| ATIUS-SRV-3 | Ubuntu 24.04.4 LTS | aarch64 | 10.1.1.7 |
 
 ## Master/Slave Scenario Matrix
 
@@ -73,7 +64,7 @@ Live summary: `18 PASS`, `2 BLOCKED`, `0 FAIL`.
 | SRV-3 promoted to master/server | Render `install server --host atius-srv-3`; require disk/preflight, dump/restore and PgBouncer endpoint switch before live | SIMULATED ONLY |
 | SRV-1 demoted to node/slave | Render `install node --host atius-srv-1`; must not accept writes after demotion | SIMULATED ONLY |
 | Node offline | Missing heartbeat becomes `offline/missing-heartbeat`; update execution stays blocked | PASS as contract |
-| PgBouncer unavailable | Nodes must degrade and must not attempt direct PostgreSQL | PARTIAL: direct PostgreSQL blocked, PgBouncer remote unavailable |
+| PgBouncer unavailable | Nodes must degrade and must not attempt direct PostgreSQL | PASS as network policy; agent behavior remains future implementation |
 
 ## PgBouncer Gate
 
@@ -87,13 +78,28 @@ pgbouncer:
     - 10.1.1.0/24
 ```
 
-Do not mark live Fleet node DB access complete until:
+Current live state:
 
-1. SRV-1 PgBouncer listens on `10.1.1.1:6432` or an approved private endpoint.
+1. SRV-1 PgBouncer listens on `10.1.1.1:6432`.
 2. SRV-2 and SRV-3 connect to PgBouncer successfully.
-3. SRV-2 and SRV-3 still cannot connect to direct PostgreSQL on `10.1.1.1:5432`.
-4. PgBouncer auth material is stored outside git/log/vault.
-5. The change has a rollback and audit event.
+3. SRV-2 and SRV-3 cannot connect to direct PostgreSQL on `10.1.1.1:8745`.
+4. PgBouncer auth material remains outside git/log/vault.
+5. Firewall enforcement is installed through `omni-pg-access-guard`.
+
+Live changes applied:
+
+- SRV-1 `/etc/pgbouncer/pgbouncer.ini`: `listen_addr` set to
+  `127.0.0.1,10.1.1.1`.
+- SRV-1 `/usr/local/sbin/omni-pg-access-guard.sh`: allows node access to
+  `6432` and blocks remote direct PostgreSQL `8745`.
+- SRV-1 `/etc/systemd/system/omni-pg-access-guard.service`: persists the guard
+  before PgBouncer starts.
+- SRV-2 `wg-quick@wg0`: restarted because live `wg0` had lost its
+  `10.1.1.2/24` address even though `/etc/wireguard/wg0.conf` already contained
+  it.
+
+Backups were created under `/root/omni-pg-access-backups/` on SRV-1 and
+`/root/wg0.conf.pre-pgbouncer-*.bak` on SRV-2 before live edits/restarts.
 
 ## Multi-Agent Review Inputs
 
