@@ -15,8 +15,9 @@ Planejar a fundação do Omni Fleet Control Plane no repo
 `/home/ubuntu/GitHub/omni-srv-admin`. Esta phase cria a base operacional para
 administrar `ATIUS-SRV-1`, `ATIUS-SRV-2` e `ATIUS-SRV-3`: inventário,
 instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat,
-registry de programas, controle de versões, licenças, auditoria e contrato
-futuro para Podman/K3s.
+registry de programas, ops scopes por servidor, parâmetros/configs no DB,
+controle de versões, licenças, auditoria, slash commands via CLI-Anything e
+contrato futuro para Podman/K3s.
 
 ## Locked Decisions
 
@@ -47,11 +48,13 @@ fica fora deste plano.
 - `node`: roda agent mínimo, heartbeat, coleta local, execução controlada de
   update plans e reporte de estado.
 
-### D-05: Inventário é fonte de verdade
+### D-05: Inventário é fonte de verdade para identidade
 
 **Decisão:** `inventory/hosts/*.yaml` permanece como source-of-truth versionado
-para hosts, rede e papéis. O banco central armazena estado operacional, cache de
-consulta, auditoria e histórico, mas não substitui o inventário versionado.
+para hosts, rede e papéis. O banco central armazena estado operacional, ops
+scopes, parâmetros, configs, registry de comandos, cache de consulta, auditoria
+e histórico, mas não substitui o inventário versionado para identidade dos
+hosts.
 
 ### D-06: PostgreSQL central migrável
 
@@ -82,6 +85,26 @@ aprovados antes de execução.
 **Decisão:** M004 define contracts para Podman/K3s consumirem inventário,
 status, programs, versions e audit events. Instalar K3s, migrar workloads ou
 trocar Portainer é escopo de outro milestone/branch.
+
+### D-11: `omni_fleet` é o DB do `omni-srv-admin`
+
+**Decisão:** Não criar banco paralelo para `omni-srv-admin`. O banco live
+`omni_fleet` continua com esse nome por compatibilidade, mas passa a ser o DB
+canônico do `omni-srv-admin` para runtime state, ops scopes, parâmetros,
+configs e slash-command registry.
+
+### D-12: Ops por servidor com config no DB
+
+**Decisão:** Cada host terá um ops scope (`srv1-ops`, `srv2-ops`, `srv3-ops`).
+Diretórios `modules/*-ops` guardam scripts, templates, bootstrap e exports.
+Parâmetros e configs mutáveis devem ser resolvidos do PostgreSQL via PgBouncer.
+
+### D-13: Slash commands via CLI-Anything
+
+**Decisão:** Slash commands agent-facing devem ser registrados no DB e seguir a
+convenção CLI-Anything/`clianything`. O alvo futuro para cobrir operações do
+repo é `cli-anything-omni-srv-admin`; comandos ad hoc são temporários até
+entrarem em `slash_commands`.
 
 ## Canonical References
 

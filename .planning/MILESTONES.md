@@ -9,7 +9,7 @@ clara a ordem dos milestones e onde cada plano completo vive.
 
 | Milestone | Phase | Name | Canonical branch | Full artifacts | Status |
 |---|---:|---|---|---|---|
-| M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Live implemented; repos and central DB validated |
+| M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Live implemented; repos, central DB and DB-backed ops/config/slash registry validated |
 | M005 | 13 | K3s HA Cluster + Portainer | `codex/k3s-portainer-oci-plan` | `.planning/phases/13-k3s-ha-portainer-oci/` | Planned |
 
 ## Separation Rule
@@ -22,8 +22,9 @@ clara a ordem dos milestones e onde cada plano completo vive.
 
 M004 comes before M005 because Fleet Control Plane defines the operational base:
 inventory, server/node install contract, central PostgreSQL via PgBouncer,
-program registry, versions/update plans, license metadata, audit logs and the
-future contract consumed by Podman/K3s.
+per-host ops scopes, DB-backed configs/parameters, CLI-Anything slash-command
+registry, program registry, versions/update plans, license metadata, audit logs
+and the future contract consumed by Podman/K3s.
 
 M005 must not be executed before:
 

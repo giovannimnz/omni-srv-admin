@@ -3,7 +3,7 @@ phase: 12
 plan: 01
 padded: 12-01
 slug: fleet-control-plane-foundation
-status: contract-implemented
+status: live-implemented
 completed: 2026-06-13
 branch: codex/omni-fleet-control-plane-m004
 ---
@@ -12,8 +12,9 @@ branch: codex/omni-fleet-control-plane-m004
 
 ## Result
 
-M004 now has an implemented, safe control-plane contract. No remote host was
-modified and live install remains blocked by human gates.
+M004 now has an implemented live control-plane foundation. The base repo/DB path
+is active on SRV1/SRV2/SRV3; destructive generic apply paths remain blocked by
+human gates.
 
 ## Delivered
 
@@ -25,6 +26,9 @@ modified and live install remains blocked by human gates.
 - `modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql` defines
   the initial PostgreSQL schema for hosts, nodes, programs, versions,
   update_plans, licenses and audit_events.
+- `modules/fleet-control-plane/migrations/0002_ops_config_slash_commands.sql`
+  extends `omni_fleet` into the canonical `omni-srv-admin` DB for ops scopes,
+  config items, runtime parameters and CLI-Anything slash-command registry.
 - `cli/omni/fleet.py` exposes safe M004 commands:
   - `omni fleet validate-inventory`
   - `omni fleet install server --host <host>`
@@ -69,6 +73,13 @@ Latest validation result:
 - offline harness: `6 PASS`, `0 FAIL`
 - live harness: `26 PASS`, `0 BLOCKED`, `0 FAIL`
 
+Migration `0002` applied live through PgBouncer and added:
+
+- `ops_scopes`
+- `config_items`
+- `slash_commands`
+- `slash_command_bindings`
+
 SRV-1/SRV-2/SRV-3 have `~/GitHub/omni-srv-admin`, query central DB
 `omni_fleet` through PgBouncer on `10.1.1.1:6432`, and direct PostgreSQL access
 from SRV-2/SRV-3 to `10.1.1.1:8745` is blocked by `omni-pg-access-guard`.
@@ -76,6 +87,8 @@ from SRV-2/SRV-3 to `10.1.1.1:8745` is blocked by `omni-pg-access-guard`.
 ## Remaining Gates
 
 - Keep `/etc/omni-srv-admin/fleet-db.env` outside git, logs, `.planning` and vault.
+- Keep mutable ops config and runtime parameters in PostgreSQL; local
+  `modules/*-ops` files are scripts/templates/bootstrap/export only.
 - Move PgBouncer global auth from compatibility `trust` to stricter auth in a
   separate hardening task after checking existing services.
 - Decide CLI-only vs API + CLI for the first service-agent implementation.

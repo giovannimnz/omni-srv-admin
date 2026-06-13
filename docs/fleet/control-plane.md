@@ -6,6 +6,8 @@ M004 turns the existing fleet inventory into a live control-plane foundation.
 It does not install K3s or Podman orchestration. It does establish the shared
 `omni-srv-admin` repo on SRV1/SRV2/SRV3, central PostgreSQL database
 `omni_fleet` on SRV-1, and PgBouncer-only database access for clients/nodes.
+`omni_fleet` is the PostgreSQL database for `omni-srv-admin`; the name remains
+for compatibility, while ownership is broader than fleet inventory.
 
 The target cluster names are:
 
@@ -20,9 +22,11 @@ is `portainer.atius.com.br`.
 
 ## Source Of Truth
 
-`inventory/hosts/*.yaml` remains the source of truth. The database stores a
-projection of reviewed inventory plus runtime state. The database must not become
-an unreviewed second source of truth.
+`inventory/hosts/*.yaml` remains the source of truth for reviewed host identity:
+ids, roles, ownership and access facts. PostgreSQL is the source of truth for
+runtime state, ops scopes, config items, runtime parameters and slash-command
+registry. The database must not become an unreviewed second source for host
+identity.
 
 Minimum host fields:
 
@@ -68,6 +72,8 @@ Server responsibilities:
 | Runtime state | Receives heartbeat/status and program inventory |
 | Change control | Generates update plans before execution |
 | Audit | Stores audit events for installs, updates, license changes and status mutations |
+| Ops config | Stores per-host ops scopes, parameters and config items in PostgreSQL |
+| Slash commands | Registers agent-facing commands through CLI-Anything-compatible metadata |
 
 Node responsibilities:
 
@@ -118,6 +124,8 @@ SRV-1 live enforcement:
 - PostgreSQL direct port `8745` remains local for server-side maintenance.
 - SRV-2/SRV-3 must connect to `10.1.1.1:6432`; direct `10.1.1.1:8745` is blocked.
 - Live M004 database is `omni_fleet` on SRV-1.
+- `omni_fleet` is also the canonical `omni-srv-admin` database for ops/config
+  state; do not create parallel local config stores for the same facts.
 - SRV-1/SRV-2/SRV-3 read `/etc/omni-srv-admin/fleet-db.env` and query
   `omni_fleet` through PgBouncer.
 - PgBouncer auth currently remains compatible with existing services; stricter
@@ -125,8 +133,7 @@ SRV-1 live enforcement:
 
 ## Data Model
 
-Initial schema lives in
-`modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql`.
+Versioned schema lives in `modules/fleet-control-plane/migrations/`.
 
 | Table | Purpose | Requirement |
 |---|---|---|
@@ -137,9 +144,46 @@ Initial schema lives in
 | `update_plans` | Proposed changes, approval state and execution result | FCP-07 |
 | `licenses` | License metadata and `secret_ref` only | FCP-08 |
 | `audit_events` | Actor, host, action, target, result and timestamp | FCP-09 |
+| `ops_scopes` | Per-host ops areas such as `srv1-ops`, `srv2-ops`, `srv3-ops` | FCP-11, FCP-12 |
+| `config_items` | Runtime parameters/config values stored in DB, with `secret_ref` for sensitive data | FCP-11, FCP-12 |
+| `slash_commands` | Slash-command catalog using CLI-Anything as provider | FCP-13 |
+| `slash_command_bindings` | Command-to-host/scope policy and apply mode | FCP-13 |
 
 Future Podman/K3s work consumes these contracts rather than inventing a separate
 source of truth.
+
+## Ops Scopes And Config
+
+Each server gets an explicit ops scope:
+
+| Scope | Host | Directory | Runtime truth |
+|---|---|---|---|
+| `srv1-ops` | `atius-srv-1` | `modules/srv1-ops` | PostgreSQL `config_items` |
+| `srv2-ops` | `atius-srv-2` | `modules/srv2-ops` | PostgreSQL `config_items` |
+| `srv3-ops` | `atius-srv-3` | `modules/srv3-ops` | PostgreSQL `config_items` |
+
+The filesystem directories remain useful for scripts, templates, bootstrap,
+exported examples and versioned code. Operational parameters and mutable config
+must resolve from PostgreSQL through PgBouncer. Sensitive values must be stored
+as `secret_ref`, never raw values.
+
+## CLI-Anything Slash Commands
+
+Agent-facing slash commands are registered in PostgreSQL and use the
+CLI-Anything convention as the integration model. The baseline command set is:
+
+| Command | Provider | Purpose |
+|---|---|---|
+| `/cli-anything` | `cli-anything` | Build a full CLI harness |
+| `/cli-anything:refine` | `cli-anything` | Improve an existing harness |
+| `/cli-anything:test` | `cli-anything` | Run harness tests |
+| `/cli-anything:validate` | `cli-anything` | Validate against `HARNESS.md` |
+| `/cli-anything:list` | `cli-anything` | List available harnesses |
+| `/omni-srv-admin` | `cli-anything` | Planned generated harness for Omni operations |
+
+The long-term target is `cli-anything-omni-srv-admin` for slash-command coverage
+of all high-value `omni-srv-admin` workflows. Ad-hoc slash commands should be
+treated as temporary until represented in `slash_commands`.
 
 ## Heartbeat
 

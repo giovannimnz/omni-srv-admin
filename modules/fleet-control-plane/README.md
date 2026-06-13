@@ -12,6 +12,7 @@ shape and safe CLI surface.
 |---|---|
 | `configs/control-plane.example.yaml` | Example runtime config without secrets |
 | `migrations/0001_fleet_control_plane.sql` | Initial PostgreSQL schema contract |
+| `migrations/0002_ops_config_slash_commands.sql` | Ops scopes, DB-backed config/parameters and CLI-Anything slash-command registry |
 | `../../docs/fleet/control-plane.md` | Architecture, runbook and human gates |
 | `../../cli/omni/fleet.py` | Safe CLI commands for inventory validation and dry-run plans |
 | `tools/validate_m004.py` | Offline contract validation and optional live read-only SRV probes |
@@ -49,9 +50,27 @@ from nodes as blocked.
 - SRV-2: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean.
 - SRV-3: `~/GitHub/omni-srv-admin` tracks `main`, worktree clean.
 - SRV-1: PostgreSQL database `omni_fleet` exists with the initial schema.
+- `omni_fleet` is the canonical PostgreSQL database for `omni-srv-admin`
+  runtime state, ops scopes, config items, parameters and slash-command
+  registry.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points to PgBouncer at
   `10.1.1.1:6432`.
 - PgBouncer auth material remains outside git/log/vault.
+
+## Ops And Config Rule
+
+Each server has an ops scope: `srv1-ops`, `srv2-ops`, `srv3-ops`. The directories
+under `modules/*-ops` contain scripts, templates, bootstrap and exported
+examples. Runtime parameters and mutable config belong in PostgreSQL
+`config_items` and must be read through PgBouncer. Sensitive values use
+`secret_ref`; raw secrets stay out of DB, git, logs and vault.
+
+## Slash Command Rule
+
+Agent-facing slash commands should be represented in PostgreSQL
+`slash_commands` and use CLI-Anything conventions. Baseline commands are
+`/cli-anything`, `/cli-anything:refine`, `/cli-anything:test`,
+`/cli-anything:validate`, `/cli-anything:list` and planned `/omni-srv-admin`.
 
 ## SRV-1 PgBouncer Enforcement
 

@@ -102,6 +102,9 @@ in `codex/k3s-portainer-oci-plan`.
 - [ ] **FCP-08**: Licenças devem ser controladas por metadata e `secret_ref`, sem secrets em git, logs, `.planning` ou vault.
 - [ ] **FCP-09**: Ações relevantes devem gerar auditoria/logs com ator, host, ação, alvo, resultado e timestamp.
 - [ ] **FCP-10**: O design deve expor contrato futuro para Podman/K3s consumir inventário, status, programs, versions e audit events sem implementar a orquestração nesta phase.
+- [ ] **FCP-11**: O PostgreSQL central deve ser o DB canônico do `omni-srv-admin` para runtime state, ops scopes, parâmetros, configs e registry de comandos; arquivos ficam como bootstrap/template/export.
+- [ ] **FCP-12**: Cada servidor deve ter um ops scope explícito (`srv1-ops`, `srv2-ops`, `srv3-ops`) e parâmetros/configs mutáveis devem ser resolvidos do DB via PgBouncer.
+- [ ] **FCP-13**: Slash commands agent-facing devem ser registrados no DB e seguir convenção CLI-Anything/`clianything`, incluindo `/cli-anything*` e o alvo futuro `/omni-srv-admin`.
 
 ## Out of Scope
 
@@ -127,14 +130,14 @@ in `codex/k3s-portainer-oci-plan`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| FCP-01 → FCP-10 | Phase 12 | Contract implemented; live execution gated |
+| FCP-01 → FCP-13 | Phase 12 | Live implemented; DB-backed ops/config/slash registry added |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 10 total
-- Mapped to phases: 49
+- v3 requirements: 13 total
+- Mapped to phases: 52
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after M004 Fleet Control Plane contract implementation*
+*Last updated: 2026-06-13 after M004 DB-backed ops/config/slash-command contract*
