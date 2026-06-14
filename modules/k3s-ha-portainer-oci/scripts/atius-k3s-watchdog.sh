@@ -36,6 +36,24 @@ check_http(){
   return 0
 }
 
+check_http_basic(){
+  local name=$1
+  local url=$2
+  local pattern=$3
+  local pass_file=/home/ubuntu/.secrets/edge-admin-password
+  if [ ! -s "$pass_file" ]; then
+    log "BAD_HTTP_BASIC $name missing edge password file"
+    return 1
+  fi
+  local pass
+  pass=$(cat "$pass_file")
+  if ! curl -skL --max-time 15 -u "giovanni:$pass" "$url" | grep -qi "$pattern"; then
+    log "BAD_HTTP_BASIC $name $url"
+    return 1
+  fi
+  return 0
+}
+
 ensure_local_service k3s
 ensure_remote_k3s 10.1.1.2 SRV-2
 ensure_remote_k3s 10.1.1.7 SRV-3
@@ -56,7 +74,7 @@ fi
 
 check_http portainer https://127.0.0.1:9443/api/system/status 'Version' || sudo -n systemctl restart k3s-portainer-portforward.service
 check_http grafana http://127.0.0.1:3005/api/health 'database' || sudo -n systemctl restart k3s-grafana-portforward.service
-check_http public_portainer https://portainer.atius.com.br/api/system/status 'Version' || true
-check_http public_grafana https://grafana.atius.com.br/api/health 'database' || true
+check_http_basic public_portainer https://portainer.atius.com.br/api/system/status 'Version' || true
+check_http_basic public_grafana https://grafana.atius.com.br/ 'Grafana' || true
 
 log "OK ready_nodes=${ready_nodes:-0}/${total_nodes:-0} notready_pods=${notready_pods:-0}"

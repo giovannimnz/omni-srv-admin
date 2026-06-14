@@ -82,8 +82,9 @@ Checks:
 - `k3s-grafana-portforward.service`.
 - node readiness 3/3.
 - pod container readiness.
-- Portainer local + public HTTP.
-- Grafana local + public HTTP.
+- Portainer local + public HTTP with edge Basic Auth.
+- Grafana local + public HTTP with edge Basic Auth.
+- Watchdog public checks use `/home/ubuntu/.secrets/edge-admin-password`; no password is logged or committed.
 
 ## OCI snapshots
 
