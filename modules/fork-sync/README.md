@@ -56,7 +56,7 @@ fork-sync repl                                   # modo interativo
 fork-sync --json projects list | jq .            # output estruturado para agents
 ```
 
-**Projetos atualmente configurados (8):**
+**Projetos atualmente configurados (9):**
 
 | Projeto | Fork | Upstream | Deploy |
 |---|---|---|---|
@@ -68,8 +68,30 @@ fork-sync --json projects list | jq .            # output estruturado para agent
 | `gsd-2` | `giovannimnz/gsd-2` | `gsd-build/gsd-2` | — |
 | `bruno` | `giovannimnz/bruno` | `usebruno/bruno` | — |
 | `get-shit-done` | `giovannimnz/get-shit-done` | `gsd-build/get-shit-done` | — |
+| `notebooklm-py` | `giovannimnz/notebooklm-py` | `teng-lin/notebooklm-py` | — |
 
 > Lista sempre atualizada via `fork-sync projects list`.
+
+### `notebooklm-py` e bridge Obsidian
+
+O projeto `notebooklm-py` é o fork GitHub real de `teng-lin/notebooklm-py`.
+O repo `notebooklm-obsidian-bridge` continua standalone e delega gestão de
+upstream, versões e updates para este módulo.
+
+```bash
+cd /home/ubuntu/GitHub/omni-srv-admin
+PYTHONPATH=modules/fork-sync/cli python3 -m fork_sync --json sync notebooklm-py --dry-run
+PYTHONPATH=modules/fork-sync/cli python3 -m fork_sync sync-all --apply
+```
+
+O `sync.yaml` de `notebooklm-py` declara:
+
+- PM2 daily sync via `fork-sync-daily` (`sync-all --apply`);
+- `version_scheme` com sufixo `-rf`, counter dir local e template de tag;
+- `post_sync` que roda testes, lint, typecheck, exporter dry-run e verificação
+  do registro fork-sync do bridge;
+- política explícita de não executar upload real NotebookLM, login de browser ou
+  auth interativa.
 
 ---
 
@@ -113,7 +135,7 @@ fork-sync (repo giovannimnz/fork-sync)
 │       └── core/
     ├── config.py         # paths (REPO_ROOT, PROJECTS_DIR, BIN_DIR...)
     ├── registry.py       # listagem/carregamento de projetos
-    ├── sync_runner.py    # delega para bash scripts (compat)
+    ├── sync_runner.py    # motor Python de sync, protected_paths, post_sync e version_plan
     ├── discovery.py      # auto-find forks/upstreams sumidos (gh search)
     ├── manuals.py        # manuais de atualização versionados
     ├── logrotate.py      # rotação gzip + retenção de logs
@@ -176,6 +198,10 @@ fork-sync (repo giovannimnz/fork-sync)
 - **Automerge seguro.** `sync-all --apply` sempre roda dry-run por projeto e só
   aplica quando não há dirty files, conflitos fora de protected paths ou protected
   paths obsoletos.
+- **Validação pós-sync declarativa.** `post_sync` em `sync.yaml` executa checks
+  do projeto dependente depois de merges reais, com `fail_fast` e saída estruturada.
+- **Plano de versionamento por sync.** `version_scheme` aparece no dry-run/resultado
+  com tag template, counter dir e comando sugerido de release notes.
 - **Mirrors de containers auditáveis.** `containers mirrors` detecta `.git`
   copiado/quebrado em paths migrados para `~/GitHub/containers` antes de qualquer
   tentativa de trocar o canonical path.
@@ -215,7 +241,7 @@ pip install rich  # saída colorida
 
 ```bash
 fork-sync version
-# → version: 1.0.0
+# → version: 1.3.0
 #   repo_root: /home/ubuntu/fork-sync
 
 fork-sync --help

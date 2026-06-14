@@ -6,6 +6,12 @@ origin_branch: main
 fork_repo: notebooklm-py
 fork: /home/ubuntu/GitHub/forks/notebooklm-py
 auto_push: true
+schedule:
+  enabled: true
+  runner: fork-sync-daily
+  command: fork-sync sync-all --apply
+  cron: "0 8 * * *"
+  safe_apply_only: true
 
 # No local fork-owned files are protected yet.
 # Add paths here only after they exist in the fork, otherwise dry-runs become noisy.
@@ -16,7 +22,38 @@ notification_level: all
 ai_decision_threshold: conflicts
 version_scheme:
   suffix: "-rf"
+  tag_template: "v{upstream_version}{suffix}{counter}"
   counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
 
 related_repos:
   bridge: https://github.com/giovannimnz/notebooklm-obsidian-bridge
+
+update_management:
+  enabled: true
+  owner_module: omni-srv-admin/modules/fork-sync
+  bridge_repo: /home/ubuntu/GitHub/notebooklm-obsidian-bridge
+  fork_repo: /home/ubuntu/GitHub/forks/notebooklm-py
+  manual: manuals/notebooklm-py.md
+  policy:
+    - sync automatico roda via PM2 daily usando sync-all --apply
+    - sync-all aplica somente dry-runs seguros, sem dirty files e sem conflitos nao protegidos
+    - validacoes do bridge rodam como post_sync somente depois de merge real
+    - upload NotebookLM, auth interativa e browser login continuam proibidos neste modulo
+
+post_sync:
+  enabled: true
+  run_on:
+    - merged
+  fail_fast: true
+  cwd: /home/ubuntu/GitHub/notebooklm-obsidian-bridge
+  commands:
+    - name: bridge-pytest
+      command: ["uv", "run", "pytest"]
+    - name: bridge-ruff
+      command: ["uv", "run", "ruff", "check", "."]
+    - name: bridge-mypy
+      command: ["uv", "run", "mypy", "."]
+    - name: bridge-exporter-dry-run
+      command: ["uv", "run", "python", "execution/obsidian_bundle_export.py", "--dry-run"]
+    - name: bridge-maintenance-no-upload
+      command: ["uv", "run", "python", "execution/nlm_maintenance.py", "--skip-local-checks", "--skip-export", "--check-fork-sync"]

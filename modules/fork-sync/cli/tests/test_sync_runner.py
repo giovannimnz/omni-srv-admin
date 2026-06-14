@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
@@ -153,6 +154,37 @@ def test_run_sync_dry_run_reports_dirty_and_stale_paths(monkeypatch, repo_pair):
     assert "missing/path.txt" in result["stale_protected_paths"]
 
 
+def test_run_sync_dry_run_reports_version_and_post_sync_plan(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["version_scheme"] = {
+        "suffix": "-rf",
+        "counter_dir": "~/.fork-sync/{project}/versions/{upstream_version}",
+    }
+    cfg["post_sync"] = {
+        "enabled": True,
+        "commands": [
+            {
+                "name": "tests",
+                "command": ["python", "-c", "print('ok')"],
+                "cwd": str(fork),
+            }
+        ],
+    }
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("notebooklm-py", dry_run=True)
+
+    assert result["status"] == "success"
+    assert result["version_plan"]["enabled"] is True
+    assert result["version_plan"]["suffix"] == "-rf"
+    assert result["post_sync_plan"]["enabled"] is True
+    assert result["post_sync_plan"]["commands"][0]["name"] == "tests"
+    assert "post_sync" not in result
+
+
 def test_run_sync_dry_run_includes_protected_globs(monkeypatch, repo_pair):
     upstream, fork = repo_pair
     _commit_file(fork, "docs/pt/index.md", "fork docs\n", "fork docs")
@@ -175,6 +207,52 @@ def test_run_sync_dry_run_includes_protected_globs(monkeypatch, repo_pair):
 
     assert result["status"] == "success"
     assert "docs/pt/index.md" in result["protected_files"]
+
+
+def test_run_sync_runs_post_sync_hooks_after_merge(monkeypatch, repo_pair, tmp_path):
+    upstream, fork = repo_pair
+    marker = tmp_path / "hook-ran.txt"
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["post_sync"] = {
+        "enabled": True,
+        "commands": [
+            {
+                "name": "marker",
+                "command": [
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; Path('hook-ran.txt').write_text('ok', encoding='utf-8')",
+                ],
+                "cwd": str(tmp_path),
+            }
+        ],
+    }
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("notebooklm-py")
+
+    assert result["status"] == "success"
+    assert result["post_sync"]["status"] == "success"
+    assert result["post_sync"]["commands"][0]["exit_code"] == 0
+    assert marker.read_text(encoding="utf-8") == "ok"
+
+
+def test_run_sync_reports_push_failure_after_merge(monkeypatch, repo_pair, tmp_path):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+    _git(fork, "remote", "set-url", "origin", str(tmp_path / "missing-origin.git"))
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["auto_push"] = True
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("notebooklm-py")
+
+    assert result["status"] == "error"
+    assert "push falhou" in result["error"]
+    assert result["push_exit_code"] != 0
 
 
 def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair):
