@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix)
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane remains implemented. M005 K3s HA Cluster + Portainer is now live: SRV-1/SRV-2/SRV-3 are K3s `Ready` control-plane+etcd nodes over WireGuard `wg0`, Portainer CE is deployed in the cluster, and `docker.atius.com.br` + `portainer.atius.com.br` return Portainer API status. Observability and Cloudflare Access hardening remain follow-ups.
+**Current focus:** M004 Omni Fleet Control Plane remains implemented. M005 K3s HA Cluster + Portainer is now live: SRV-1/SRV-2/SRV-3 are K3s `Ready` control-plane+etcd nodes over WireGuard `wg0`, Portainer CE is deployed in the cluster, and `docker.atius.com.br` + `portainer.atius.com.br` return Portainer API status. Observability and watchdog are live. Public admin edges are protected with Apache Basic Auth because Cloudflare Access is not enabled on the account; formal OCI snapshot IDs and RWX storage strategy remain follow-ups.
 
 ## Milestones
 
@@ -18,7 +18,7 @@ See also: .planning/MILESTONES.md
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
 | M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented; repos, central DB and DB-backed ops/config/slash registry validated |
-| M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer live; observability/access hardening pending |
+| M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
 
 ## Active Branch Results
 
