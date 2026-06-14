@@ -87,8 +87,9 @@ GDrive backup note: SRV-1 full GDrive backup was already running during executio
 
 ## Remaining Follow-ups
 
-- [ ] Add external uptime/health watchdog for K3s API and Portainer.
-- [ ] Decide if Portainer should remain pinned to SRV-1 via nodeSelector or move to a replicated HA layout with RWX storage.
+- [x] Add external uptime/health watchdog for K3s API, Portainer and Grafana.
+- [x] Add Prometheus/Grafana observability from `13-03-PLAN.md`.
+- [x] Protect public admin edges with Apache Basic Auth fallback.
+- [ ] Enable Cloudflare Access in dashboard, then replace/augment Basic Auth.
 - [ ] Add formal OCI snapshot IDs when available in each OCI account.
-- [ ] Add Cloudflare Access policy before sharing Portainer broadly.
-- [ ] Add Prometheus/Grafana observability from `13-03-PLAN.md`.
+- [ ] Decide if Portainer/Grafana should remain pinned to SRV-1 via nodeSelector or move to replicated HA layout with RWX storage.
