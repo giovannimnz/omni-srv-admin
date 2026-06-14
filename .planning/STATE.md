@@ -1,6 +1,6 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M004 DB-backed ops/config/slash-command contract and M005 preflight
+**Last updated:** 2026-06-14 after M005 live K3s HA bootstrap
 
 ## Project Reference
 
@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix)
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Omni Fleet Control Plane is live for its intended base: `~/GitHub/omni-srv-admin` exists on SRV1/SRV2/SRV3, SRV-1 owns central PostgreSQL database `omni_fleet`, and SRV-2/SRV-3 query it through PgBouncer on the private endpoint. `omni_fleet` is also the canonical `omni-srv-admin` DB for ops scopes, configs, runtime parameters and slash-command registry. M005 K3s HA Cluster + Portainer preflight passed on its branch and live install is gated by OCI snapshots/firewall plus Cloudflare Tunnel token.
+**Current focus:** M004 Omni Fleet Control Plane remains implemented. M005 K3s HA Cluster + Portainer is now live: SRV-1/SRV-2/SRV-3 are K3s `Ready` control-plane+etcd nodes over WireGuard `wg0`, Portainer CE is deployed in the cluster, and `docker.atius.com.br` + `portainer.atius.com.br` return Portainer API status. Observability and Cloudflare Access hardening remain follow-ups.
 
 ## Milestones
 
@@ -18,20 +18,39 @@ See also: .planning/MILESTONES.md
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
 | M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented; repos, central DB and DB-backed ops/config/slash registry validated |
-| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Preflight passed; live gates open |
+| M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer live; observability/access hardening pending |
 
 ## Active Branch Results
 
 | Milestone | Branch | Result |
 |---|---|---|
 | M004 | `codex/omni-fleet-control-plane-m004` | Live repo rollout, central `omni_fleet` DB, DB-backed ops/config/slash registry, CLI dry-run commands, schema/config docs, pytest/offline/live validation, PgBouncer private endpoint guard |
-| M005 | `codex/k3s-portainer-oci-plan` | K3s/Portainer preflight, safe log cleanup, non-secret templates, vault notes |
+| M005 | `docs/m005-k3s-live-bootstrap` | Live K3s HA cluster, Portainer CE, Apache/Cloudflare endpoint validation, post-bootstrap docs |
 
 ## Live Gates
 
-- M005 still requires OCI snapshots/backups for all 3 nodes.
-- M005 still requires OCI NSG/Security List confirmation for private K3s ports.
-- M005 still requires Cloudflare Tunnel token supplied outside git/log/vault.
+- K3s HA live gate: ✅ closed on 2026-06-14.
+- Portainer live gate: ✅ closed on 2026-06-14.
+- Host firewall guard: ✅ `atius-k3s-firewall.service` active on SRV-1/SRV-2/SRV-3.
+- Critical local backups: ✅ created under `~/.backups/k3s-preflight/`.
+- Etcd post-bootstrap snapshot: ✅ saved on SRV-1.
+- OCI snapshot IDs: follow-up for formal cloud rollback record.
+- Cloudflare Access policy: follow-up before broad Portainer sharing.
+- Observability stack: follow-up from M005 observability plan.
+
+## M005 Live Bootstrap Summary
+
+| Item | Descrição | Status |
+|---|---|---|
+| Branch | `docs/m005-k3s-live-bootstrap` | ✅ |
+| Phase | `.planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md` | ✅ |
+| K3s | 3 nodes `Ready`: SRV-1/SRV-2/SRV-3, all `control-plane,etcd` | ✅ |
+| Network | Node IPs on WireGuard: `10.1.1.1`, `10.1.1.2`, `10.1.1.7`; flannel `wg0` | ✅ |
+| Smoke | DaemonSet one pod per node + DNS resolution to `kubernetes.default` | ✅ |
+| Portainer | Portainer CE `2.39.3` deployed via Helm, ClusterIP + local port-forward | ✅ |
+| Edge | `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status | ✅ |
+| Backups | Critical local backups + etcd post-bootstrap snapshot | ✅ |
+| Follow-up | Observability, Cloudflare Access, formal OCI snapshot IDs | Open |
 
 ## M001 Completion
 
