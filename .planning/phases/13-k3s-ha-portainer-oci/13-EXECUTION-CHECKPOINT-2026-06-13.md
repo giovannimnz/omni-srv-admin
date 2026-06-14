@@ -154,3 +154,12 @@ Additional notes:
   disabled and persisted only after the live mutation gates are satisfied.
 - Host firewall remains a blocker: K3s ports must be allowed only over `wg0`
   before install.
+
+
+---
+
+## Live Update — 2026-06-14
+
+Phase 13 moved from `blocked-before-live-mutation` to live cluster after explicit operator instruction to proceed autonomously. See `13-LIVE-BOOTSTRAP-2026-06-14.md`.
+
+Validated result: SRV-1/SRV-2/SRV-3 are K3s `Ready` control-plane+etcd nodes; Portainer CE is deployed and public endpoints `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status `2.39.3`.

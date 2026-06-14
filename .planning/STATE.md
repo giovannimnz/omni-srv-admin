@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M005 — K3s HA Cluster + Portainer + Observability)
 See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M005 K3s HA Cluster + Portainer + Observability, Phase 13 execution stopped before live mutation; K3s install remains gated by OCI snapshots/backups per OCI account, OCI/host firewall and human approval. Cloudflare token/DNS gates UI publication. M004 Fleet Control Plane remains in its separate branch.
+**Current focus:** M005 K3s HA Cluster + Portainer + Observability, Phase 13 live cluster bootstrap completed on 2026-06-14. K3s HA is running on SRV-1/SRV-2/SRV-3 with embedded etcd; Portainer CE is reachable via `docker.atius.com.br` and `portainer.atius.com.br`. M004 Fleet Control Plane remains in its separate branch; observability/Cloudflare Access hardening remains follow-up.
 
 ## Milestones
 
@@ -18,7 +18,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
 | M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract implemented |
-| M005 | K3s HA Cluster + Portainer + Observability (Phase 13) | Execution checkpoint blocked before live mutation |
+| M005 | K3s HA Cluster + Portainer + Observability (Phase 13) | K3s HA + Portainer live; observability/access hardening pending |
 
 ## M001 Completion
 
@@ -57,7 +57,8 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 | RESEARCH | PDF + docs oficiais K3s/Portainer/Cloudflare/OCI/Ubuntu + repo/vault local | ✅ |
 | PLAN | `13-01-PLAN.md` human-gated para bootstrap K3s HA + Portainer + Cloudflare Tunnel | ✅ |
 | PREFLIGHT | `13-PREFLIGHT-2026-06-13.md` registra leitura dos 3 nós, limpeza segura de logs e gates restantes | ✅ |
-| EXECUTION CHECKPOINT | `13-EXECUTION-CHECKPOINT-2026-06-13.md` registra validacao live read-only, WireGuard `wg0`, Ubuntu 24.04.4 nos 3 hosts e bloqueio antes da Task 5 | ✅ |
+| EXECUTION CHECKPOINT | `13-EXECUTION-CHECKPOINT-2026-06-13.md` registra validacao live read-only e depois aponta para o bootstrap live | ✅ |
+| LIVE BOOTSTRAP | `13-LIVE-BOOTSTRAP-2026-06-14.md` registra K3s HA live nos 3 hosts, Portainer CE e validação pública | ✅ |
 | PTP Fallback | `13-02-PLAN.md` define desenho de fallback PTP full-mesh SRV-1/SRV-2/SRV-3 antes de production-ready | Planned |
 | Observability | `13-03-PLAN.md` define Prometheus/Grafana + Alertmanager -> Omni Fleet control loop (`OBS-01`..`OBS-03`) | Planned |
 | Templates | `modules/k3s-ha-portainer-oci/` com configs K3s, Portainer values, kube-prometheus-stack values, cloudflared deployment e logrotate | ✅ |
@@ -70,7 +71,7 @@ See also: .planning/MILESTONES.md (branch/milestone matrix)
 
 | Phase | Descrição | Status |
 |---|---|---|
-| 13 | K3s HA + Portainer + Observability Milestone Plan | Execution checkpoint blocked before live mutation |
+| 13 | K3s HA + Portainer + Observability Milestone Plan | K3s HA + Portainer live; observability/access pending |
 
 ## Backup GDrive
 
