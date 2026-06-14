@@ -33,6 +33,8 @@ Portainer Community Edition is deployed in the cluster and reachable through the
 - Installed Helm `v3.21.1` on SRV-1.
 - Installed Portainer chart `portainer/portainer`, image `portainer/portainer-ce:lts`.
 - Installed persistent Portainer port-forward service: `k3s-portainer-portforward.service`.
+- Initialized Portainer admin account. Password is stored on SRV-1 at `/home/ubuntu/.secrets/portainer-admin-password` with mode `0600` (not committed, not logged).
+- Registered local Kubernetes environment in Portainer as endpoint `atius-k3s` (`Type=5`, URL `https://kubernetes.default.svc`).
 - Updated Apache `portainer.atius.com.br` proxy from `http://127.0.0.1:9005` to `https://127.0.0.1:9443`.
 - Created Cloudflare proxied CNAME `portainer.atius.com.br -> docker.atius.com.br`.
 
@@ -63,6 +65,8 @@ Apache edge:
 | DNS smoke | every smoke pod resolved `kubernetes.default.svc.cluster.local -> 10.43.0.1` |
 | Portainer rollout | `deployment/portainer` successfully rolled out |
 | Portainer local API | `https://127.0.0.1:9443/api/system/status` returned Version `2.39.3` |
+| Portainer admin login | `POST /api/auth` returned JWT; token was not logged |
+| Portainer endpoint | `GET /api/endpoints` returned `ENDPOINT_COUNT=1`, endpoint `atius-k3s`, `Type=5`, `Status=1` |
 | Docker public endpoint | `https://docker.atius.com.br/api/system/status` returned Version `2.39.3` |
 | Portainer public endpoint | `https://portainer.atius.com.br/api/system/status` returned Version `2.39.3` |
 | SRV services | `k3s` active on SRV-1/SRV-2/SRV-3 |
