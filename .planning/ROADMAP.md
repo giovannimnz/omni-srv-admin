@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M004 — Omni Fleet Control Plane
-**Milestone Goal:** M004 cria a base operacional multi-host; M005/K3s fica na fila depois do Fleet.
+**Active Milestone:** M006 — SRV-1 Resource Governance + PM2 Hardening (M004/M005 live)
+**Milestone Goal:** criar a base operacional multi-host antes do K3s: inventário, instalação server/node, PostgreSQL central via PgBouncer, versões, licenças, auditoria e integração futura com Podman/K3s
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
@@ -225,52 +225,106 @@
 
 ## M004: Omni Fleet Control Plane
 
-**Goal:** Criar a base operacional multi-host antes de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat/status, registry de programas, version/update plans, licenças sem secrets, auditoria e contrato futuro com Podman/K3s.
+**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer como DB canônico do `omni-srv-admin`, heartbeat, registry de programas, ops scopes por servidor, parâmetros/configs no DB, version/update plans, licenças sem secrets no git/log/vault, auditoria, slash commands via CLI-Anything e contrato futuro com Podman/K3s.
 
-**Status:** LIVE IMPLEMENTED / VALIDATED ON BRANCH (2026-06-13)
+**Status:** LIVE IMPLEMENTED; REPOS AND CENTRAL DB VALIDATED (2026-06-13)
 
-**Canonical branch:** `codex/omni-fleet-control-plane-m004`
+**Depends on:** M003 (Omni CLI Expansion)
 
-**Phase:** 12
+**Why:** O Fleet Control Plane vem antes do K3s porque resolve controle operacional e governança da frota. K3s/Podman entram depois consumindo inventário, estado, auditoria e contracts já definidos.
 
-**Full artifacts:** `.planning/phases/12-omni-fleet-control-plane/` on the canonical branch.
+**Branch:** `codex/omni-fleet-control-plane-m004`
 
-**Branch result:** `codex/omni-fleet-control-plane-m004` has the full Phase 12 plan and validated live foundation: repos on SRV-1/SRV-2/SRV-3, central `DbOmniFleet` on SRV-1, nodes through PgBouncer, DB-backed ops/config/slash registry, local agent executor and fleet monitoring.
+**Phases:** 12
 
 ---
 
-## M005: K3s HA Cluster + Portainer
+### Phase 12: Fleet Control Plane Foundation ✅ LIVE IMPLEMENTED
 
-**Goal:** Planejar cluster K3s HA nos 3 servidores OCI ARM64 (`ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3`) com Portainer CE publicado em `portainer.atius.com.br`.
+**Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, ops scopes por servidor, configs/parâmetros no DB, slash commands via CLI-Anything, version planner, licenças e auditoria.
 
-**Status:** PREFLIGHT PASSED ON BRANCH; LIVE INSTALL GATED (2026-06-13)
+**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10, FCP-11, FCP-12, FCP-13
 
-**Depends on:** M004 Fleet Control Plane healthy on SRV-1/SRV-2/SRV-3, SRV-1/SRV-2/SRV-3 em Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI, fechamento de ingress publico em cada conta OCI, firewall host em `wg0`, Cloudflare Tunnel token fora do git/log/vault e PTP fallback validado antes de production-ready.
+**Status:** LIVE IMPLEMENTED (2026-06-13); repo, central DB and PgBouncer path validated on SRV1/SRV2/SRV3
 
-**Canonical branch:** `codex/k3s-portainer-oci-plan`
+**Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
+
+**Plans:** 1
+- [x] 12-01-PLAN.md — Fleet Control Plane Foundation (implemented live for repo distribution, DB schema and PgBouncer node path)
+
+**Implementation Results:**
+- `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
+- `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
+- `omni_fleet` is documented and migrated as the canonical PostgreSQL database for `omni-srv-admin` runtime state, ops scopes, config items, parameters and slash-command registry.
+- `ops_scopes`, `config_items`, `slash_commands` and `slash_command_bindings` are defined by migration `0002`.
+- Slash commands are represented with CLI-Anything/`clianything` metadata, including `/cli-anything*` and planned `/omni-srv-admin`.
+- `~/GitHub/omni-srv-admin` is present on SRV-1/SRV-2/SRV-3; SRV-2/SRV-3 track `main` with clean worktrees.
+- SRV-1 hosts PostgreSQL database `omni_fleet`; hosts/nodes/programs inventory is seeded.
+- SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `omni_fleet` through PgBouncer at `10.1.1.1:6432`.
+- `omni fleet validate-inventory` validates all 7 inventory hosts.
+- `omni fleet install server|node` renders idempotent dry-run plans and blocks live `--apply`.
+- `omni fleet heartbeat`, `programs`, `update-plan`, `audit` and `status --all` expose the runtime contracts without touching remote hosts.
+
+**Success Criteria:**
+1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
+2. Requirements `FCP-01..FCP-13` definidos e rastreados para Phase 12
+3. Desenho server/node e inventory source-of-truth travado
+4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
+5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
+6. Secrets remain outside git/log/vault in `/etc/omni-srv-admin/fleet-db.env`
+7. Ops scopes por servidor e configs/parâmetros mutáveis ficam no DB, não em arquivos locais como fonte runtime
+8. Slash commands usam CLI-Anything como convenção/registry
+9. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
+
+**Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.
+
+---
+
+## M004 Phase Summary
+
+| Milestone | # | Phase | Goal | Status | Risk |
+|---|---:|---|---|---|---|
+| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ LIVE IMPLEMENTED / DB PASSED | MEDIUM |
+
+---
+
+## M005: K3s HA Cluster + Portainer — LIVE
+
+**Canonical branch:** `codex/k3s-portainer-oci-plan` (planning) + `docs/m005-k3s-live-bootstrap` (live bootstrap)
 
 **Phase:** 13
 
-**Full artifacts:** `.planning/phases/13-k3s-ha-portainer-oci/` on the canonical branch.
+**Status:** ✅ LIVE (2026-06-14) — 3 nodes `Ready` control-plane+etcd on WireGuard `wg0`; Portainer CE 2.39.3 deployed; `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status.
 
-**Branch result:** `codex/k3s-portainer-oci-plan` has preflight report
-`13-PREFLIGHT-2026-06-13.md`, safe templates under
-`modules/k3s-ha-portainer-oci/`, and live install remains blocked until OCI
-snapshots/firewall, Cloudflare Tunnel token and PTP fallback gates are confirmed.
+**Live nodes:** SRV-1 (10.1.1.1), SRV-2 (10.1.1.2), SRV-3 (10.1.1.7)
+
+**Follow-ups:** OCI snapshot IDs, Cloudflare Access policy, observability stack, RWX storage strategy.
+
+**Branch results:**
+- `codex/k3s-portainer-oci-plan` — preflight, safe templates, network port map
+- `docs/m005-k3s-live-bootstrap` — live bootstrap record
+- `docs/m005-observability-watchdog` — observability + edge watchdog
+- `docs/m005-portainer-admin-endpoint` — Portainer endpoint initialization
+- `docs/m005-watchdog-basic-auth-fix` — edge Basic Auth
+- `docs/m005-gate-review-20260614` — gate review + cooldown policies
+
+**Portainer target:** `portainer.atius.com.br`
+
+**Edge auth:** Apache Basic Auth (Cloudflare Access not enabled on account)
 
 ---
 
-## M006: SRV-1 Resource Governance + PM2 Hardening
+## M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS
 
-**Goal:** Fechar as pendências pós-incidente do `resource-governor`, `inviolable-watchdog` e PM2 no `ATIUS-SRV-1`, transformando a correção live de 2026-06-13 em estado versionado, boot-safe e verificável sem derrubar ATS/Horistic/XRDP.
-
-**Status:** IN PROGRESS (14-01 complete, 2026-06-15)
-
-**Depends on:** Correção live documentada em `/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md`.
+**Canonical branch:** `codex/phase14-resource-governor-14-01`
 
 **Phase:** 14
 
-**Full artifacts:** `.planning/phases/14-resource-governor-pm2-boot-hardening/`
+**Status:** IN PROGRESS (14-01 complete, 2026-06-15)
+
+**Goal:** Fechar as pendências pós-incidente do `resource-governor`, `inviolable-watchdog` e PM2 no `ATIUS-SRV-1`, transformando a correção live de 2026-06-13 em estado versionado, boot-safe e verificável sem derrubar ATS/Horistic/XRDP.
+
+**Depends on:** Correção live documentada em `/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md`. Backup: `/home/ubuntu/.backups/omni-srv-admin-resource-governor-20260613_050527`.
 
 **Progress:** 1/4 execution plans complete (`14-01`).
 
@@ -289,11 +343,13 @@ snapshots/firewall, Cloudflare Tunnel token and PTP fallback gates are confirmed
 - Cleanup de XRDP/PM2 é gateado para não derrubar RDP nem processos de trading sem aprovação explícita.
 - Runbook e rollback versionados apontam para o backup `/home/ubuntu/.backups/omni-srv-admin-resource-governor-20260613_050527`.
 
+**14-01 accomplished:** Governor/inviolable services movidos pra `timers.target`; `inviolable-watchdog.service` timer-triggered sem Install target; `omni srv1-ops resources status` reporta runtime override, stuck jobs, PM2 stale-refs, slices e cgroups diretos; patcher lê `resource-governor.env`.
+
+**Pending:** 14-02 PM2 boot canonicalization, 14-03 boot/login-linger + cgroup validation, 14-04 rollback/runbook.
+
 ---
 
 ## M002: Fork Sync Integration ✅ DONE
-
-**Goal:** fork-sync integrado como submodule `modules/fork-sync/` + repo rebranded de `atius-srv` para `omni-srv-admin` + fork-sync standalone arquivado.
 
 **Completed:** 2026-06-05
 

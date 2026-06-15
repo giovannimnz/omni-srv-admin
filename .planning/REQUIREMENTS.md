@@ -153,12 +153,12 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| FCP-01 → FCP-10 | Phase 12 / M004 | Live implemented / validated on branch |
-| K3S-01 → K3S-05 | Phase 13 / M005 | Execution checkpoint; live mutation gated |
-| PRT-01 → PRT-02 | Phase 13 / M005 | Execution checkpoint; live mutation gated |
-| CFL-01, SEC-01 | Phase 13 / M005 | Execution checkpoint; live mutation gated |
-| RGP-01, RGP-02, RGP-05 | Phase 14 / M006 / 14-01 | Versioned/status complete |
-| RGP-03, RGP-04, RGP-06, RGP-07 | Phase 14 / M006 | Planned |
+| FCP-01 → FCP-13 | Phase 12 / M004 | Live implemented; DB-backed ops/config/slash registry validated |
+| K3S-01 → K3S-05 | Phase 13 / M005 | ✅ Live (K3s HA 3-nodes `Ready` control-plane+etcd on `wg0`) |
+| PRT-01 → PRT-02 | Phase 13 / M005 | ✅ Live (Portainer CE 2.39.3 deployed; `portainer.atius.com.br` returns API status) |
+| CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
+| RGP-01, RGP-02, RGP-05 | Phase 14 / M006 / 14-01 | ✅ Versioned/status complete |
+| RGP-03, RGP-04, RGP-06, RGP-07 | Phase 14 / M006 | Planned (14-02 / 14-03 / 14-04) |
 
 **Coverage:**
 - v1 requirements: 39 total
@@ -168,4 +168,4 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-15 after Phase 14 / 14-01 execution*
+*Last updated: 2026-06-15 after Phase 14 / 14-01 execution and main alignment with origin/main*

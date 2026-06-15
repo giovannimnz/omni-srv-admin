@@ -1,0 +1,76 @@
+# Example only. Do not place secrets in this file.
+server:
+  host_id: atius-srv-1
+  install_mode: server
+  service_user: omni-fleet
+
+database:
+  engine: postgresql
+  database: omni_fleet
+  logical_owner: omni-srv-admin
+  canonical_for:
+    - fleet-inventory-projection
+    - node-runtime-state
+    - ops-scopes
+    - config-items
+    - runtime-parameters
+    - slash-command-registry
+  migrations_dir: modules/fleet-control-plane/migrations
+  direct_access:
+    allowed_for:
+      - control-plane-migrations
+      - backup-restore-operator
+    denied_for:
+      - fleet-nodes
+      - cli-clients
+
+pgbouncer:
+  required_for_clients: true
+  listen_host: 10.1.1.1
+  listen_port: 6432
+  pool_mode: transaction
+  allowed_client_networks:
+    - 10.1.1.0/24
+  auth_ref: secret://omni-fleet/pgbouncer/auth
+
+inventory:
+  source: inventory/hosts
+  source_of_truth: true
+  database_projection: hosts
+
+ops:
+  config_source: database
+  filesystem_dirs_are_bootstrap_only: true
+  scopes:
+    - id: srv1-ops
+      host_id: atius-srv-1
+      path: modules/srv1-ops
+    - id: srv2-ops
+      host_id: atius-srv-2
+      path: modules/srv2-ops
+    - id: srv3-ops
+      host_id: atius-srv-3
+      path: modules/srv3-ops
+
+slash_commands:
+  provider: cli-anything
+  source_of_truth: database
+  commands:
+    - /cli-anything
+    - /cli-anything:refine
+    - /cli-anything:test
+    - /cli-anything:validate
+    - /cli-anything:list
+    - /omni-srv-admin
+
+audit:
+  local_jsonl: /home/ubuntu/.logs/fleet/audit-events.jsonl
+  redact:
+    - secret_ref
+    - token
+    - password
+    - serial
+
+licenses:
+  store_raw_material: false
+  secret_ref_required: true

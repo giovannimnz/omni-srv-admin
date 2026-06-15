@@ -1,6 +1,6 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-15 after Phase 14 / 14-01 execution
+**Last updated:** 2026-06-15 after Phase 14 / 14-01 execution and main alignment with origin/main
 
 ## Project Reference
 
@@ -8,7 +8,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix + M006 resource-governor/PM2 
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M006 Resource Governor + PM2 Boot Hardening is in progress. Plan 14-01 versioned the governor/inviolable artifacts, install dry-run and status coverage. Next up: 14-02 PM2 boot canonicalization and 14-03 boot/login-linger + cgroup validation, both gated before live PM2/XRDP mutation.
+**Current focus:** M005 K3s HA Cluster + Portainer is live (SRV-1/SRV-2/SRV-3 `Ready` control-plane+etcd over WireGuard `wg0`, Portainer CE deployed, `docker.atius.com.br` + `portainer.atius.com.br` return Portainer API status, edge Basic Auth active). M006 Resource Governor + PM2 Boot Hardening is in progress: 14-01 versioned governor/inviolable artifacts, install dry-run and status coverage. Next: 14-02 PM2 boot canonicalization, 14-03 boot/login-linger + cgroup validation, 14-04 rollback/runbook.
 
 ## Milestones
 
@@ -17,27 +17,56 @@ See also: .planning/MILESTONES.md
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented / validated |
-| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Execution checkpoint; blocked before live mutation |
-| M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14) | In progress; 14-01 complete |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented; repos, central DB and DB-backed ops/config/slash registry validated |
+| M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
+| M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14, branch `codex/phase14-resource-governor-14-01`) | In progress; 14-01 complete |
 
 ## Active Branch Results
 
 | Milestone | Branch | Result |
 |---|---|---|
-| M004 | `codex/omni-fleet-control-plane-m004` | Fleet Control Plane live foundation, central DB/PgBouncer node path, DB-backed ops/config/slash registry, local agent executor, fleet monitoring |
-| M005 | `codex/k3s-portainer-oci-plan` | K3s/Portainer execution checkpoint, preflight, network port map, safe log cleanup, non-secret templates, vault notes |
+| M004 | `codex/omni-fleet-control-plane-m004` | Live repo rollout, central `omni_fleet` DB, DB-backed ops/config/slash registry, CLI dry-run commands, schema/config docs, pytest/offline/live validation, PgBouncer private endpoint guard |
+| M005 | `docs/m005-k3s-live-bootstrap` | Live K3s HA cluster, Portainer CE, Apache/Cloudflare endpoint validation, post-bootstrap docs |
 | M006 | `codex/phase14-resource-governor-14-01` | 14-01 committed: governor/inviolable versioning, install/status coverage, PM2 stale-ref detection |
 
 ## Live Gates
 
-- M005 still requires OCI snapshots/backups for all 3 nodes.
-- M005 still requires OCI public-ingress closure in each OCI account plus host firewall rules for private K3s ports over `wg0`.
-- M005 still requires Cloudflare Tunnel token supplied outside git/log/vault.
-- M005 still requires PTP fallback mesh design/validation before production-ready.
+- K3s HA live gate: ✅ closed on 2026-06-14.
+- Portainer live gate: ✅ closed on 2026-06-14.
+- Host firewall guard: ✅ `atius-k3s-firewall.service` active on SRV-1/SRV-2/SRV-3.
+- Critical local backups: ✅ created under `~/.backups/k3s-preflight/`.
+- Etcd post-bootstrap snapshot: ✅ saved on SRV-1.
+- OCI snapshot IDs: follow-up for formal cloud rollback record.
+- Cloudflare Access policy: follow-up before broad Portainer sharing.
+- Observability stack: follow-up from M005 observability plan.
 - M006 live execution must not stop PM2 daemons, trading processes, XRDP, or stale user jobs without an explicit gate and current process snapshot.
 - M006 14-01 found current live stuck jobs: `default.target`, `ats-pm2.service`, `horistic-pm2.service`; these remain gated for 14-02/14-03.
 - M006 14-01 found `pm2-ubuntu.service` still references `/home/ubuntu/ecosystem.atius.js`; this remains gated for 14-02.
+
+## M005 Live Bootstrap Summary
+
+| Item | Descrição | Status |
+|---|---|---|
+| Branch | `docs/m005-k3s-live-bootstrap` | ✅ |
+| Phase | `.planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md` | ✅ |
+| K3s | 3 nodes `Ready`: SRV-1/SRV-2/SRV-3, all `control-plane,etcd` | ✅ |
+| Network | Node IPs on WireGuard: `10.1.1.1`, `10.1.1.2`, `10.1.1.7`; flannel `wg0` | ✅ |
+| Smoke | DaemonSet one pod per node + DNS resolution to `kubernetes.default` | ✅ |
+| Portainer | Portainer CE `2.39.3` deployed via Helm, ClusterIP + local port-forward | ✅ |
+| Edge | `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status | ✅ |
+| Backups | Critical local backups + etcd post-bootstrap snapshot | ✅ |
+| Follow-up | Observability, Cloudflare Access, formal OCI snapshot IDs | Open |
+
+## M006 Progress Summary
+
+| Item | Descrição | Status |
+|---|---|---|
+| Branch | `codex/phase14-resource-governor-14-01` | ✅ |
+| Plan | `.planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md` | ✅ |
+| Governor services | Moved to `timers.target` (out of `default.target`); install dry-run + status coverage; direct cgroup patcher reads `resource-governor.env` | ✅ |
+| Inviolable watchdog | Timer-triggered service, no direct Install target | ✅ |
+| PM2 stale-ref detection | `resource-governor status` reports `pm2-ubuntu.service` → `ecosystem.atius.js` (gated for 14-02) | ✅ |
+| Next | 14-02 PM2 boot canonicalization, 14-03 boot/login-linger + cgroup validation, 14-04 rollback/runbook | Open |
 
 ## M001 Completion
 
@@ -81,3 +110,4 @@ See also: .planning/MILESTONES.md
 - YOLO mode ativado
 - Push policy: fork push livre após audit
 - GDrive quota: 5TB total, ~144GB usado, ~4.7TB livre
+- 2026-06-15: main local aligned with origin/main via merge. 5 docs/m005-* branches ready for archival. M006 stays in-progress on phase14 branch.

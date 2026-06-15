@@ -5,6 +5,7 @@ role: sandbox
 owner: giovanni
 access:
   ssh: ubuntu@10.1.1.7
+  public_ip: 136.248.126.12
   vpn_ip: 10.1.1.7
 platform:
   provider: oracle-oci

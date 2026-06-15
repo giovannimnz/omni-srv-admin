@@ -63,14 +63,27 @@
     {
       "id": "M005",
       "name": "K3s HA Cluster + Portainer",
-      "status": "execution-checkpoint-blocked-before-live-mutation",
+      "status": "live-k3s-portainer-bootstrap-2026-06-14",
       "phase": "13",
       "phases": [
         "13"
       ],
       "branch": "codex/k3s-portainer-oci-plan",
+      "live_branches": [
+        "docs/m005-k3s-live-bootstrap",
+        "docs/m005-observability-watchdog",
+        "docs/m005-portainer-admin-endpoint",
+        "docs/m005-watchdog-basic-auth-fix",
+        "docs/m005-gate-review-20260614"
+      ],
       "artifact_scope": "canonical_full_plan_on_branch",
-      "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
+      "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br (live 2026-06-14)",
+      "follow_ups": [
+        "OCI snapshot IDs",
+        "Cloudflare Access policy",
+        "Observability stack",
+        "RWX storage strategy"
+      ],
       "depends_on": "M004"
     },
     {
