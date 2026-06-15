@@ -19,6 +19,111 @@ modules:
   - xrdp-abnt2
   - fork-sync
   - domain-infrastructure
+apps:
+  - id: jenkins
+    runtime: podman
+    image: localhost/jenkins:podman-latest
+    unit: container-jenkins.service
+    compose: ~/GitHub/containers/jenkins/podman-compose.yml
+    public_url: https://jenkins.atius.com.br/
+    healthcheck_url: http://127.0.0.1:8085/
+    ports:
+      - "8085:8080"
+      - "50000:50000"
+    volumes:
+      - ~/GitHub/containers/jenkins/jenkins_home:/var/jenkins_home:rw
+      - ~/GitHub/atius:/workspace/atius:ro
+    cpus: 2
+    network: srv1-podman
+    install_type: podman-compose
+    current_version: "2.541.3"
+    desired_version: "2.541.3"
+    source: "https://github.com/jenkinsci/jenkins"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    notes:
+      - "Phase 14-05: removed /var/run/docker.sock and /usr/bin/docker mounts (Docker uninstalled in cutover)"
+      - "Use Podman-in-container or delegate to external Podman runners for DinD-equivalent jobs"
+  - id: jenkins-agent
+    runtime: k8s
+    cluster: srv1-k3s
+    namespace: jenkins
+    image: localhost/jenkins:podman-latest
+    manifest: modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml
+    jnlp_target: http://10.1.1.1:8085/  # via WireGuard wg0
+    replicas: 2
+    install_type: k8s-deployment
+    current_version: "0.1.0"
+    desired_version: "0.1.0"
+    source: "https://github.com/jenkinsci/kubernetes-plugin"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    depends_on: [jenkins]
+    notes:
+      - "Phase 14-06: Jenkins agent on K3s, replaces DinD with ephemeral build pods"
+      - "Uses Kubernetes plugin + Pod templates per job type (maven, node, python)"
+      - "JNLP over wg0 (10.1.1.1) — no public exposure"
+  - id: cloudbeaver
+    runtime: podman
+    compose: ~/containers/cloudbeaver/podman-compose.yml
+    public_url: https://cloudbeaver.atius.com.br/
+    healthcheck_url: http://127.0.0.1:8978/
+    ports:
+      - "8978:8978"
+    install_type: podman-compose
+    current_version: "latest"
+    desired_version: "latest"
+    source: "https://github.com/dbeaver/cloudbeaver"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    notes:
+      - "Migrated to Podman during Docker→Podman cutover 2026-06-12; running on srv1-podman"
+  - id: redis
+    runtime: podman
+    image: docker.io/library/redis:7-alpine
+    install_type: podman-compose
+    current_version: "7-alpine"
+    desired_version: "7-alpine"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    notes:
+      - "Migrated to Podman during cutover; part of cloudbeaver pod (srv1-podman network)"
+  - id: postgres
+    runtime: podman
+    image: docker.io/library/postgres:15-alpine
+    install_type: podman-compose
+    current_version: "15-alpine"
+    desired_version: "15-alpine"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    notes:
+      - "Migrated to Podman during cutover; part of cloudbeaver pod (srv1-podman network)"
+  - id: router-ai-atius
+    runtime: podman
+    image: ghcr.io/giovannimnz/router-ai-atius:latest
+    install_type: podman-compose
+    current_version: "latest"
+    desired_version: "latest"
+    source: "https://github.com/giovannimnz/router-ai-atius"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    notes:
+      - "Atius AI Router on SRV-1; published via Cloudflare + Apache"
+  - id: rclone-gdrive-mount
+    runtime: systemd-user
+    unit: rclone-gdrive-mount.service
+    install_type: systemd-user-service
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-15"
+    notes:
+      - "OAuth giovannimunizds@gmail.com; mount ~/GDrive/ RW; 5TB quota"
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15

@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-15)
 
 ## Corpus Check
-- 299 files · ~607,723 words
+- 302 files · ~700,867 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3876 nodes · 4478 edges · 318 communities (262 shown, 56 thin omitted)
+- 4549 nodes · 5148 edges · 436 communities (384 shown, 52 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `19121e29`
+- Built from commit: `f1c98177`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -331,9 +331,127 @@
 - [[_COMMUNITY_Community 315|Community 315]]
 - [[_COMMUNITY_Community 316|Community 316]]
 - [[_COMMUNITY_Community 317|Community 317]]
+- [[_COMMUNITY_Community 318|Community 318]]
+- [[_COMMUNITY_Community 319|Community 319]]
+- [[_COMMUNITY_Community 320|Community 320]]
+- [[_COMMUNITY_Community 321|Community 321]]
+- [[_COMMUNITY_Community 322|Community 322]]
+- [[_COMMUNITY_Community 323|Community 323]]
+- [[_COMMUNITY_Community 324|Community 324]]
+- [[_COMMUNITY_Community 325|Community 325]]
+- [[_COMMUNITY_Community 326|Community 326]]
+- [[_COMMUNITY_Community 327|Community 327]]
+- [[_COMMUNITY_Community 328|Community 328]]
+- [[_COMMUNITY_Community 329|Community 329]]
+- [[_COMMUNITY_Community 330|Community 330]]
+- [[_COMMUNITY_Community 331|Community 331]]
+- [[_COMMUNITY_Community 332|Community 332]]
+- [[_COMMUNITY_Community 333|Community 333]]
+- [[_COMMUNITY_Community 334|Community 334]]
+- [[_COMMUNITY_Community 335|Community 335]]
+- [[_COMMUNITY_Community 336|Community 336]]
+- [[_COMMUNITY_Community 337|Community 337]]
+- [[_COMMUNITY_Community 338|Community 338]]
+- [[_COMMUNITY_Community 339|Community 339]]
+- [[_COMMUNITY_Community 340|Community 340]]
+- [[_COMMUNITY_Community 341|Community 341]]
+- [[_COMMUNITY_Community 342|Community 342]]
+- [[_COMMUNITY_Community 343|Community 343]]
+- [[_COMMUNITY_Community 344|Community 344]]
+- [[_COMMUNITY_Community 345|Community 345]]
+- [[_COMMUNITY_Community 346|Community 346]]
+- [[_COMMUNITY_Community 347|Community 347]]
+- [[_COMMUNITY_Community 348|Community 348]]
+- [[_COMMUNITY_Community 349|Community 349]]
+- [[_COMMUNITY_Community 350|Community 350]]
+- [[_COMMUNITY_Community 351|Community 351]]
+- [[_COMMUNITY_Community 352|Community 352]]
+- [[_COMMUNITY_Community 353|Community 353]]
+- [[_COMMUNITY_Community 354|Community 354]]
+- [[_COMMUNITY_Community 355|Community 355]]
+- [[_COMMUNITY_Community 356|Community 356]]
+- [[_COMMUNITY_Community 357|Community 357]]
+- [[_COMMUNITY_Community 358|Community 358]]
+- [[_COMMUNITY_Community 359|Community 359]]
+- [[_COMMUNITY_Community 360|Community 360]]
+- [[_COMMUNITY_Community 361|Community 361]]
+- [[_COMMUNITY_Community 362|Community 362]]
+- [[_COMMUNITY_Community 363|Community 363]]
+- [[_COMMUNITY_Community 364|Community 364]]
+- [[_COMMUNITY_Community 365|Community 365]]
+- [[_COMMUNITY_Community 366|Community 366]]
+- [[_COMMUNITY_Community 367|Community 367]]
+- [[_COMMUNITY_Community 368|Community 368]]
+- [[_COMMUNITY_Community 369|Community 369]]
+- [[_COMMUNITY_Community 370|Community 370]]
+- [[_COMMUNITY_Community 371|Community 371]]
+- [[_COMMUNITY_Community 372|Community 372]]
+- [[_COMMUNITY_Community 373|Community 373]]
+- [[_COMMUNITY_Community 374|Community 374]]
+- [[_COMMUNITY_Community 375|Community 375]]
+- [[_COMMUNITY_Community 376|Community 376]]
+- [[_COMMUNITY_Community 377|Community 377]]
+- [[_COMMUNITY_Community 378|Community 378]]
+- [[_COMMUNITY_Community 379|Community 379]]
+- [[_COMMUNITY_Community 380|Community 380]]
+- [[_COMMUNITY_Community 381|Community 381]]
+- [[_COMMUNITY_Community 382|Community 382]]
+- [[_COMMUNITY_Community 383|Community 383]]
+- [[_COMMUNITY_Community 384|Community 384]]
+- [[_COMMUNITY_Community 385|Community 385]]
+- [[_COMMUNITY_Community 386|Community 386]]
+- [[_COMMUNITY_Community 387|Community 387]]
+- [[_COMMUNITY_Community 388|Community 388]]
+- [[_COMMUNITY_Community 389|Community 389]]
+- [[_COMMUNITY_Community 390|Community 390]]
+- [[_COMMUNITY_Community 391|Community 391]]
+- [[_COMMUNITY_Community 392|Community 392]]
+- [[_COMMUNITY_Community 393|Community 393]]
+- [[_COMMUNITY_Community 394|Community 394]]
+- [[_COMMUNITY_Community 395|Community 395]]
+- [[_COMMUNITY_Community 396|Community 396]]
+- [[_COMMUNITY_Community 397|Community 397]]
+- [[_COMMUNITY_Community 398|Community 398]]
+- [[_COMMUNITY_Community 399|Community 399]]
+- [[_COMMUNITY_Community 400|Community 400]]
+- [[_COMMUNITY_Community 401|Community 401]]
+- [[_COMMUNITY_Community 402|Community 402]]
+- [[_COMMUNITY_Community 403|Community 403]]
+- [[_COMMUNITY_Community 404|Community 404]]
+- [[_COMMUNITY_Community 405|Community 405]]
+- [[_COMMUNITY_Community 406|Community 406]]
+- [[_COMMUNITY_Community 407|Community 407]]
+- [[_COMMUNITY_Community 408|Community 408]]
+- [[_COMMUNITY_Community 409|Community 409]]
+- [[_COMMUNITY_Community 410|Community 410]]
+- [[_COMMUNITY_Community 411|Community 411]]
+- [[_COMMUNITY_Community 412|Community 412]]
+- [[_COMMUNITY_Community 413|Community 413]]
+- [[_COMMUNITY_Community 414|Community 414]]
+- [[_COMMUNITY_Community 415|Community 415]]
+- [[_COMMUNITY_Community 416|Community 416]]
+- [[_COMMUNITY_Community 417|Community 417]]
+- [[_COMMUNITY_Community 418|Community 418]]
+- [[_COMMUNITY_Community 419|Community 419]]
+- [[_COMMUNITY_Community 420|Community 420]]
+- [[_COMMUNITY_Community 421|Community 421]]
+- [[_COMMUNITY_Community 422|Community 422]]
+- [[_COMMUNITY_Community 423|Community 423]]
+- [[_COMMUNITY_Community 424|Community 424]]
+- [[_COMMUNITY_Community 425|Community 425]]
+- [[_COMMUNITY_Community 426|Community 426]]
+- [[_COMMUNITY_Community 427|Community 427]]
+- [[_COMMUNITY_Community 428|Community 428]]
+- [[_COMMUNITY_Community 429|Community 429]]
+- [[_COMMUNITY_Community 430|Community 430]]
+- [[_COMMUNITY_Community 431|Community 431]]
+- [[_COMMUNITY_Community 432|Community 432]]
+- [[_COMMUNITY_Community 433|Community 433]]
+- [[_COMMUNITY_Community 434|Community 434]]
+- [[_COMMUNITY_Community 435|Community 435]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (291 total, 51 thin omitted)` - 239 edges
+1. `Communities (434 total, 52 thin omitted)` - 381 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
@@ -349,21 +467,21 @@
   cli/omni/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
 - `test_offline_validation_harness_passes_all_contract_scenarios()` --calls--> `offline_scenarios()`  [INFERRED]
   modules/fleet-control-plane/tests/test_m004_contract.py → modules/fleet-control-plane/tools/validate_m004.py
+- `projects_list()` --calls--> `list_projects()`  [INFERRED]
+  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
 - `sync_cmd()` --calls--> `run_sync()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
-- `deploy_cmd()` --calls--> `run_deploy()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
-- `release_generate()` --calls--> `generate_release_notes()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/release_notes.py
+- `sync_all_cmd()` --calls--> `run_sync_all()`  [INFERRED]
+  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/automerge.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (318 total, 56 thin omitted)
+## Communities (436 total, 52 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (34): containers(), discover(), handle_error(), manuals(), manuals_generate(), manuals_list(), manuals_record(), manuals_update() (+26 more)
+Cohesion: 0.05
+Nodes (61): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover() (+53 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.12
@@ -422,8 +540,8 @@ Cohesion: 0.06
 Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.17
-Nodes (29): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+21 more)
+Cohesion: 0.16
+Nodes (31): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+23 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.06
@@ -470,8 +588,8 @@ Cohesion: 0.07
 Nodes (26): 1️⃣ Period Choice Logic (CRITICAL), 2️⃣ Signal Fetching (CRITICAL), 3️⃣ Trade Execution (IMPORTANT), 4️⃣ Database Integration (IMPORTANT), 📞 Bloqueadores Conhecidos, 📋 Checklist Geral da Fase, Config Pytest (`pytest.ini`), 🎯 Definição de "Done" (+18 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.12
-Nodes (16): admin(), backup_create(), backup_list(), backup_restore(), cli(), deploy(), main(), omni — CLI unificada para administração de servidores e gestão de forks.  Uso: (+8 more)
+Cohesion: 0.08
+Nodes (25): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+17 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.08
@@ -510,8 +628,8 @@ Cohesion: 0.09
 Nodes (21): Active Context: Starboy Postgres, Bloqueadores Conhecidos, Comandos PM2 de Referência, Código Modificado (Phase 2.1), Decisões Ativas, Documentação Criada, Fase Imediata: VALIDAÇÃO TRADINGVIEW, Fase Secundária: TESTES E VALIDAÇÃO (+13 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.18
-Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
+Cohesion: 0.14
+Nodes (13): Goal, Motivation, Next, Performance, Phase 14 Plan 05: Jenkins + servicos orfaos: remover deps Docker e validar em dominio publico, Risks, Success Criteria (all met), Task 1: Backup do estado live (+5 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.08
@@ -590,8 +708,8 @@ Cohesion: 0.12
 Nodes (16): Codex channel integration, Documentation (fork-specific, PT-BR primary), Fork Sync — Atius Router, Frontend i18n, i18n — Portuguese Translation, Infrastructure, Merge Flow, Middleware and containers (+8 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.13
-Nodes (20): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+12 more)
+Cohesion: 0.17
+Nodes (16): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+8 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.19
@@ -646,8 +764,8 @@ Cohesion: 0.13
 Nodes (14): 15/02/2026, 16/02/2026, Arquivos Criados/Modificados, Correções DIVAP (16/02/2026), Descobertas Técnicas, Fórmulas Confirmadas (engenharia reversa), Implementation Plan, Limitações Conhecidas (+6 more)
 
 ### Community 71 - "Community 71"
-Cohesion: 0.18
-Nodes (12): _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks)., Return False for configs explicitly paused/disabled., Lista todos os projetos com sync.yaml., Detecta se há .gitmodules ao lado do sync.yaml (submódulo opcional)., doctor_cmd() (+4 more)
+Cohesion: 0.15
+Nodes (14): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply(), _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks). (+6 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.14
@@ -838,8 +956,8 @@ Cohesion: 0.20
 Nodes (9): Configuration, Frameworks, Infrastructure, Key Dependencies, Key Dependencies, Languages, Platform Requirements, Runtime (+1 more)
 
 ### Community 119 - "Community 119"
-Cohesion: 0.12
-Nodes (21): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., Detecta novo release., run_detect(), deploy_cmd(), detect_cmd(), _fork_repo_slug() (+13 more)
+Cohesion: 0.15
+Nodes (12): cli/omni/srv1_ops.py, ast_hash, mtime, semantic_hash, modules/fork-sync/cli/fork_sync/core/automerge.py, ast_hash, mtime, semantic_hash (+4 more)
 
 ### Community 120 - "Community 120"
 Cohesion: 0.20
@@ -1070,8 +1188,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 177 - "Community 177"
-Cohesion: 0.36
-Nodes (8): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., containers_mirrors(), Lista container_mirror e detecta .git copiado/quebrado., Path
+Cohesion: 0.50
+Nodes (4): antivirus/monitor.sh, ast_hash, mtime, semantic_hash
 
 ### Community 178 - "Community 178"
 Cohesion: 0.29
@@ -1255,7 +1373,7 @@ Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
 
 ### Community 223 - "Community 223"
 Cohesion: 0.01
-Nodes (239): Communities (291 total, 51 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+231 more)
+Nodes (381): Communities (434 total, 52 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+373 more)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.50
@@ -1302,8 +1420,8 @@ Cohesion: 0.18
 Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-15), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 287 - "Community 287"
-Cohesion: 0.33
-Nodes (6): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply(), Dry-run de todos os projetos ativos, com automerge seguro opcional., sync_all_cmd()
+Cohesion: 0.18
+Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
 
 ### Community 288 - "Community 288"
 Cohesion: 0.15
@@ -1314,8 +1432,8 @@ Cohesion: 0.83
 Nodes (3): srv1-fix-network.sh script, fail(), log()
 
 ### Community 290 - "Community 290"
-Cohesion: 0.27
-Nodes (29): Any, Path, _blocked(), _fail(), _live_fleet_db_query(), _live_host_identity(), _live_mesh_ping(), _live_node_direct_postgres_blocked() (+21 more)
+Cohesion: 0.14
+Nodes (38): Any, Path, invoke_fleet(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero(), test_inventory_validation_covers_srv1_srv2_srv3() (+30 more)
 
 ### Community 291 - "Community 291"
 Cohesion: 0.08
@@ -1346,8 +1464,8 @@ Cohesion: 0.14
 Nodes (13): Audit, CLI-Anything Slash Commands, Data Model, Heartbeat, Human Gates Before Live Execution, License And Secret Policy, Omni Fleet Control Plane, Ops Scopes And Config (+5 more)
 
 ### Community 298 - "Community 298"
-Cohesion: 0.22
-Nodes (9): invoke_fleet(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero(), test_inventory_validation_covers_srv1_srv2_srv3(), test_offline_validation_harness_passes_all_contract_scenarios(), test_program_registry_projects_inventory_modules() (+1 more)
+Cohesion: 0.50
+Nodes (4): antivirus/scan.sh, ast_hash, mtime, semantic_hash
 
 ### Community 299 - "Community 299"
 Cohesion: 0.15
@@ -1401,22 +1519,510 @@ Nodes (4): cli(), main(), fork-sync — gestão unificada de forks (sync, deploy
 Cohesion: 0.50
 Nodes (3): verify-m004-fleet-control-plane.sh script, OMNI_SRV_ADMIN, PYTHONPATH
 
+### Community 313 - "Community 313"
+Cohesion: 0.50
+Nodes (4): cli/lib/model-history.sh, ast_hash, mtime, semantic_hash
+
+### Community 314 - "Community 314"
+Cohesion: 0.50
+Nodes (4): cli/model-fs, ast_hash, mtime, semantic_hash
+
+### Community 315 - "Community 315"
+Cohesion: 0.50
+Nodes (4): cli/omni/cli.py, ast_hash, mtime, semantic_hash
+
+### Community 316 - "Community 316"
+Cohesion: 0.50
+Nodes (4): cli/omni/fleet_backup.py, ast_hash, mtime, semantic_hash
+
+### Community 317 - "Community 317"
+Cohesion: 0.50
+Nodes (4): cli/omni/fleet.py, ast_hash, mtime, semantic_hash
+
+### Community 318 - "Community 318"
+Cohesion: 0.50
+Nodes (4): cli/omni/__init__.py, ast_hash, mtime, semantic_hash
+
+### Community 319 - "Community 319"
+Cohesion: 0.50
+Nodes (4): cli/omni/__main__.py, ast_hash, mtime, semantic_hash
+
+### Community 320 - "Community 320"
+Cohesion: 0.50
+Nodes (4): cli/omni/remote_manager.py, ast_hash, mtime, semantic_hash
+
+### Community 321 - "Community 321"
+Cohesion: 0.50
+Nodes (4): cli/omni/remote_ops.py, ast_hash, mtime, semantic_hash
+
+### Community 322 - "Community 322"
+Cohesion: 0.50
+Nodes (4): cli/omni/xrdp_abnt2.py, ast_hash, mtime, semantic_hash
+
+### Community 323 - "Community 323"
+Cohesion: 0.50
+Nodes (4): cli/setup.py, ast_hash, mtime, semantic_hash
+
+### Community 324 - "Community 324"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/install.sh, ast_hash, mtime, semantic_hash
+
+### Community 325 - "Community 325"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/repair.sh, ast_hash, mtime, semantic_hash
+
+### Community 326 - "Community 326"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/scripts/dark-themectl.sh, ast_hash, mtime, semantic_hash
+
+### Community 327 - "Community 327"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/uninstall.sh, ast_hash, mtime, semantic_hash
+
+### Community 328 - "Community 328"
+Cohesion: 0.50
+Nodes (4): modules/fleet-autoclean/scripts/fleet-autoclean.sh, ast_hash, mtime, semantic_hash
+
+### Community 329 - "Community 329"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/install-fleet-backup.sh, ast_hash, mtime, semantic_hash
+
+### Community 330 - "Community 330"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/map-docker-to-containers.sh, ast_hash, mtime, semantic_hash
+
+### Community 331 - "Community 331"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/rclone-fleet-queue.sh, ast_hash, mtime, semantic_hash
+
+### Community 332 - "Community 332"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/sync-backup-script.sh, ast_hash, mtime, semantic_hash
+
+### Community 333 - "Community 333"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/bin/deploy.sh, ast_hash, mtime, semantic_hash
+
+### Community 334 - "Community 334"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/bin/detect-release.sh, ast_hash, mtime, semantic_hash
+
+### Community 335 - "Community 335"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/bin/sync.sh, ast_hash, mtime, semantic_hash
+
+### Community 336 - "Community 336"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/cli.py, ast_hash, mtime, semantic_hash
+
+### Community 337 - "Community 337"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/config.py, ast_hash, mtime, semantic_hash
+
+### Community 338 - "Community 338"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/container_mirrors.py, ast_hash, mtime, semantic_hash
+
+### Community 339 - "Community 339"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/discovery.py, ast_hash, mtime, semantic_hash
+
+### Community 340 - "Community 340"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/__init__.py, ast_hash, mtime, semantic_hash
+
+### Community 341 - "Community 341"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/logrotate.py, ast_hash, mtime, semantic_hash
+
+### Community 342 - "Community 342"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/manuals.py, ast_hash, mtime, semantic_hash
+
+### Community 343 - "Community 343"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/registry.py, ast_hash, mtime, semantic_hash
+
+### Community 344 - "Community 344"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/release_notes.py, ast_hash, mtime, semantic_hash
+
+### Community 345 - "Community 345"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/repl.py, ast_hash, mtime, semantic_hash
+
+### Community 346 - "Community 346"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/sync_runner.py, ast_hash, mtime, semantic_hash
+
+### Community 347 - "Community 347"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/__init__.py, ast_hash, mtime, semantic_hash
+
+### Community 348 - "Community 348"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/__main__.py, ast_hash, mtime, semantic_hash
+
+### Community 349 - "Community 349"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/pm2-setup.sh, ast_hash, mtime, semantic_hash
+
+### Community 350 - "Community 350"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/run_doctor.sh, ast_hash, mtime, semantic_hash
+
+### Community 351 - "Community 351"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/run_logrotate.sh, ast_hash, mtime, semantic_hash
+
+### Community 352 - "Community 352"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/run_sync_all.sh, ast_hash, mtime, semantic_hash
+
+### Community 353 - "Community 353"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/setup.py, ast_hash, mtime, semantic_hash
+
+### Community 354 - "Community 354"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/tests/test_sync_runner.py, ast_hash, mtime, semantic_hash
+
+### Community 355 - "Community 355"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/ecosystem.daily-sync.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 356 - "Community 356"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/ecosystem.doctor.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 357 - "Community 357"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/ecosystem.logrotate.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 358 - "Community 358"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh, ast_hash, mtime, semantic_hash
+
+### Community 359 - "Community 359"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/post-merge.sh, ast_hash, mtime, semantic_hash
+
+### Community 360 - "Community 360"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/api/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 361 - "Community 361"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/guide/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 362 - "Community 362"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/deployment-methods/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 363 - "Community 363"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 364 - "Community 364"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 365 - "Community 365"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/scripts/fork-sync-docs.sh, ast_hash, mtime, semantic_hash
+
+### Community 366 - "Community 366"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/horus-spec-driven/ecosystem.daily-sync.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 367 - "Community 367"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/fix-abnt2.sh, ast_hash, mtime, semantic_hash
+
+### Community 368 - "Community 368"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/fix-shared_smb.sh, ast_hash, mtime, semantic_hash
+
+### Community 369 - "Community 369"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-start.sh, ast_hash, mtime, semantic_hash
+
+### Community 370 - "Community 370"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-status.sh, ast_hash, mtime, semantic_hash
+
+### Community 371 - "Community 371"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-stop.sh, ast_hash, mtime, semantic_hash
+
+### Community 372 - "Community 372"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/mount-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 373 - "Community 373"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/optimize_network.sh, ast_hash, mtime, semantic_hash
+
+### Community 374 - "Community 374"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/qbt-postprocess.sh, ast_hash, mtime, semantic_hash
+
+### Community 375 - "Community 375"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/start-aionui.sh, ast_hash, mtime, semantic_hash
+
+### Community 376 - "Community 376"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/start-qbittorrent.sh, ast_hash, mtime, semantic_hash
+
+### Community 377 - "Community 377"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/lib/metrics.py, ast_hash, mtime, semantic_hash
+
+### Community 378 - "Community 378"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/atius-web-healthcheck.sh, ast_hash, mtime, semantic_hash
+
+### Community 379 - "Community 379"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/backup-dangling-to-gdrive.py, ast_hash, mtime, semantic_hash
+
+### Community 380 - "Community 380"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 381 - "Community 381"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/backup-to-smb.sh, ast_hash, mtime, semantic_hash
+
+### Community 382 - "Community 382"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/cleanup-local.sh, ast_hash, mtime, semantic_hash
+
+### Community 383 - "Community 383"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/inviolable-watchdog.sh, ast_hash, mtime, semantic_hash
+
+### Community 384 - "Community 384"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 385 - "Community 385"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 386 - "Community 386"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-audit.py, ast_hash, mtime, semantic_hash
+
+### Community 387 - "Community 387"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-cgroup-init.sh, ast_hash, mtime, semantic_hash
+
+### Community 388 - "Community 388"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-patcher.py, ast_hash, mtime, semantic_hash
+
+### Community 389 - "Community 389"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-snapshot.py, ast_hash, mtime, semantic_hash
+
+### Community 390 - "Community 390"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-status.py, ast_hash, mtime, semantic_hash
+
+### Community 391 - "Community 391"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-watchdog.py, ast_hash, mtime, semantic_hash
+
+### Community 392 - "Community 392"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/server-analysis.py, ast_hash, mtime, semantic_hash
+
+### Community 393 - "Community 393"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/sync-vault.sh, ast_hash, mtime, semantic_hash
+
+### Community 394 - "Community 394"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard, ast_hash, mtime, semantic_hash
+
+### Community 395 - "Community 395"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/files/setxkbmap-abnt2.sh, ast_hash, mtime, semantic_hash
+
+### Community 396 - "Community 396"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/files/startwm.sh, ast_hash, mtime, semantic_hash
+
+### Community 397 - "Community 397"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/scripts/install.sh, ast_hash, mtime, semantic_hash
+
+### Community 398 - "Community 398"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/scripts/validate.sh, ast_hash, mtime, semantic_hash
+
+### Community 399 - "Community 399"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/ARCHITECTURE.md, ast_hash, mtime, semantic_hash
+
+### Community 400 - "Community 400"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/CONCERNS.md, ast_hash, mtime, semantic_hash
+
+### Community 401 - "Community 401"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/CONVENTIONS.md, ast_hash, mtime, semantic_hash
+
+### Community 402 - "Community 402"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/HORISTIC.md, ast_hash, mtime, semantic_hash
+
+### Community 403 - "Community 403"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/INTEGRATIONS.md, ast_hash, mtime, semantic_hash
+
+### Community 404 - "Community 404"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/STACK.md, ast_hash, mtime, semantic_hash
+
+### Community 405 - "Community 405"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/STRUCTURE.md, ast_hash, mtime, semantic_hash
+
+### Community 406 - "Community 406"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/TESTING.md, ast_hash, mtime, semantic_hash
+
+### Community 407 - "Community 407"
+Cohesion: 0.50
+Nodes (4): .planning/config.json, ast_hash, mtime, semantic_hash
+
+### Community 408 - "Community 408"
+Cohesion: 0.50
+Nodes (4): .planning/MILESTONES.md, ast_hash, mtime, semantic_hash
+
+### Community 409 - "Community 409"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-01-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 410 - "Community 410"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-01-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 411 - "Community 411"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-02-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 412 - "Community 412"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-02-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 413 - "Community 413"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-03-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 414 - "Community 414"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-03-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 415 - "Community 415"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-CONTEXT.md, ast_hash, mtime, semantic_hash
+
+### Community 416 - "Community 416"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-DISCUSSION-LOG.md, ast_hash, mtime, semantic_hash
+
+### Community 417 - "Community 417"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-PLAN-CHECK.md, ast_hash, mtime, semantic_hash
+
+### Community 418 - "Community 418"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-RESEARCH.md, ast_hash, mtime, semantic_hash
+
+### Community 419 - "Community 419"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-VERIFICATION.md, ast_hash, mtime, semantic_hash
+
+### Community 420 - "Community 420"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-01-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 421 - "Community 421"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-CONTEXT.md, ast_hash, mtime, semantic_hash
+
+### Community 422 - "Community 422"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-PLAN-CHECK.md, ast_hash, mtime, semantic_hash
+
+### Community 423 - "Community 423"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 424 - "Community 424"
+Cohesion: 0.50
+Nodes (4): .planning/phases/03-freeipa-server-container/03-01-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 425 - "Community 425"
+Cohesion: 0.50
+Nodes (4): .planning/phases/03-freeipa-server-container/03-02-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 426 - "Community 426"
+Cohesion: 0.50
+Nodes (4): .planning/PROJECT.md, ast_hash, mtime, semantic_hash
+
+### Community 427 - "Community 427"
+Cohesion: 0.50
+Nodes (4): .planning/REQUIREMENTS.md, ast_hash, mtime, semantic_hash
+
+### Community 428 - "Community 428"
+Cohesion: 0.50
+Nodes (4): .planning/ROADMAP.md, ast_hash, mtime, semantic_hash
+
+### Community 429 - "Community 429"
+Cohesion: 0.50
+Nodes (4): .planning/STATE.md, ast_hash, mtime, semantic_hash
+
+### Community 430 - "Community 430"
+Cohesion: 0.50
+Nodes (4): setup.sh, ast_hash, mtime, semantic_hash
+
+### Community 431 - "Community 431"
+Cohesion: 0.50
+Nodes (4): vscode-profile/.github/mcp-config/linux/mcp.json, ast_hash, mtime, semantic_hash
+
+### Community 432 - "Community 432"
+Cohesion: 0.50
+Nodes (4): vscode-profile/.github/vscode-settings/settings.json, ast_hash, mtime, semantic_hash
+
+### Community 433 - "Community 433"
+Cohesion: 0.12
+Nodes (15): Goal, Motivation, Next, Out of Scope, Performance, Phase 14 Plan 06: Jenkins Agent on K3s (M005 extension), Risks, Success Criteria (+7 more)
+
+### Community 434 - "Community 434"
+Cohesion: 0.52
+Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
+
 ## Knowledge Gaps
-- **2343 isolated node(s):** `monitor.sh script`, `scan.sh script`, `model-history.sh script`, `Any`, `install.sh script` (+2338 more)
+- **2884 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+2879 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **52 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `_ssh_candidates()` connect `Community 8` to `Community 37`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `Communities (291 total, 51 thin omitted)` connect `Community 223` to `Community 284`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **What connects `monitor.sh script`, `scan.sh script`, `model-history.sh script` to the rest of the system?**
-  _2547 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `Communities (434 total, 52 thin omitted)` connect `Community 223` to `Community 284`?**
+  _High betweenness centrality (0.014) - this node is a cross-community bridge._
+- **Why does `_ssh_candidates()` connect `Community 8` to `Community 287`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
+- **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
+  _3088 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.11901306240928883 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**

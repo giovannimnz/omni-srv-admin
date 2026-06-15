@@ -249,13 +249,14 @@ def _heartbeat_payload(host: dict[str, Any], path: Path) -> dict[str, Any]:
 
 def _program_records(host: dict[str, Any], path: Path) -> list[dict[str, Any]]:
     host_id = _host_id(host, path.stem)
-    modules = host.get("modules") if isinstance(host.get("modules"), list) else []
     records = []
+    modules = host.get("modules") if isinstance(host.get("modules"), list) else []
     for module in modules:
         records.append(
             {
                 "host": host_id,
                 "program": str(module),
+                "kind": "omni-module",
                 "install_type": "omni-module",
                 "current_version": "unknown",
                 "desired_version": "inventory-managed",
@@ -264,6 +265,45 @@ def _program_records(host: dict[str, Any], path: Path) -> list[dict[str, Any]]:
                 "update_policy": "plan-first",
             }
         )
+    apps = host.get("apps")
+    if apps is None:
+        apps = []
+    if not isinstance(apps, list):
+        apps = []
+    for app in apps:
+        if not isinstance(app, dict):
+            continue
+        app_id = str(app.get("id") or app.get("name") or "")
+        if not app_id:
+            continue
+        record: dict[str, object] = {
+            "host": host_id,
+            "program": app_id,
+            "kind": "app",
+            "runtime": str(app.get("runtime") or "unknown"),
+            "install_type": str(app.get("install_type") or "unknown"),
+            "current_version": str(app.get("current_version") or "unknown"),
+            "desired_version": str(app.get("desired_version") or "inventory-managed"),
+            "source": str(app.get("source") or "inventory/hosts"),
+            "managed_by": str(app.get("managed_by") or "omni-srv-admin"),
+            "update_policy": str(app.get("update_policy") or "plan-first"),
+            "last_audited": str(app.get("last_audited") or ""),
+        }
+        if app.get("public_url"):
+            record["public_url"] = str(app["public_url"])
+        if app.get("healthcheck_url"):
+            record["healthcheck_url"] = str(app["healthcheck_url"])
+        if app.get("unit"):
+            record["unit"] = str(app["unit"])
+        if app.get("compose"):
+            record["compose"] = str(app["compose"])
+        if app.get("image"):
+            record["image"] = str(app["image"])
+        if app.get("notes"):
+            notes = app["notes"]
+            note_list: list[str] = list(notes) if isinstance(notes, list) else [str(notes)]
+            record["notes"] = note_list
+        records.append(record)
     return records
 
 

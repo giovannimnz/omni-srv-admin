@@ -63,10 +63,13 @@ See also: .planning/MILESTONES.md
 | Item | Descrição | Status |
 |---|---|---|
 | Branch | `codex/phase14-resource-governor-14-01` | ✅ |
-| Plan | `.planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md` | ✅ |
+| Plan 14-01 | `.planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md` | ✅ |
+| Plan 14-05 | `.planning/phases/14-resource-governor-pm2-boot-hardening/14-05-PLAN.md` (Jenkins + servicos orfaos de Docker) | ✅ |
+| Plan 14-06 | `.planning/phases/14-resource-governor-pm2-boot-hardening/14-06-PLAN.md` (Jenkins agent on K3s, M005 extension) | ready |
 | Governor services | Moved to `timers.target` (out of `default.target`); install dry-run + status coverage; direct cgroup patcher reads `resource-governor.env` | ✅ |
 | Inviolable watchdog | Timer-triggered service, no direct Install target | ✅ |
 | PM2 stale-ref detection | `resource-governor status` reports `pm2-ubuntu.service` → `ecosystem.atius.js` (gated for 14-02) | ✅ |
+| Jenkins docker-deps cleanup | `container-jenkins.service` active (running); removed `/var/run/docker.sock` + `/usr/bin/docker` mounts; validated on `https://jenkins.atius.com.br/` (x-jenkins 2.541.3) | ✅ |
 | Next | 14-02 PM2 boot canonicalization, 14-03 boot/login-linger + cgroup validation, 14-04 rollback/runbook | Open |
 
 ## M001 Completion

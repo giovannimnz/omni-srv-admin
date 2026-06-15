@@ -157,8 +157,11 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | K3S-01 → K3S-05 | Phase 13 / M005 | ✅ Live (K3s HA 3-nodes `Ready` control-plane+etcd on `wg0`) |
 | PRT-01 → PRT-02 | Phase 13 / M005 | ✅ Live (Portainer CE 2.39.3 deployed; `portainer.atius.com.br` returns API status) |
 | CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
+| M005-JENKINS-PODMAN | Phase 13 / M005 / 14-05 | ✅ Jenkins docker-deps removed, validated on `https://jenkins.atius.com.br/` |
+| M005-JENKINS-AGENT | Phase 14 / M006 / 14-06 | Planned (Jenkins agent Deployment in K3s HA cluster) |
 | RGP-01, RGP-02, RGP-05 | Phase 14 / M006 / 14-01 | ✅ Versioned/status complete |
 | RGP-03, RGP-04, RGP-06, RGP-07 | Phase 14 / M006 | Planned (14-02 / 14-03 / 14-04) |
+| RGP-08, RGP-09, RGP-10 | Phase 14 / M006 / 14-05 | ✅ Jenkins docker-deps removed, validated on `https://jenkins.atius.com.br/` |
 
 **Coverage:**
 - v1 requirements: 39 total
