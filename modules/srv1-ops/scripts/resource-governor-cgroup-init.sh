@@ -54,6 +54,28 @@ io_bw_to_cg() {
     echo "${bw}000000"
 }
 
+mem_to_cg() {
+    local mem="$1"
+    [[ -z "$mem" || "$mem" == "max" ]] && { echo "max"; return; }
+    local unit="${mem: -1}"
+    local value="$mem"
+    case "$unit" in
+        K|k|M|m|G|g|T|t)
+            value="${mem%?}"
+            ;;
+        *)
+            unit=""
+            ;;
+    esac
+    case "$unit" in
+        K|k) LC_ALL=C awk "BEGIN{printf \"%d\", $value * 1024}" ;;
+        M|m) LC_ALL=C awk "BEGIN{printf \"%d\", $value * 1024 * 1024}" ;;
+        G|g) LC_ALL=C awk "BEGIN{printf \"%d\", $value * 1024 * 1024 * 1024}" ;;
+        T|t) LC_ALL=C awk "BEGIN{printf \"%d\", $value * 1024 * 1024 * 1024 * 1024}" ;;
+        *) echo "$value" ;;
+    esac
+}
+
 USER_ID=$(id -u)
 CGROUP_BASE="/sys/fs/cgroup/user.slice/user-${USER_ID}.slice/user@${USER_ID}.service/omni.slice"
 
@@ -61,7 +83,7 @@ CGROUP_BASE="/sys/fs/cgroup/user.slice/user-${USER_ID}.slice/user@${USER_ID}.ser
 OMNI_SLICE="${CGROUP_BASE}"
 if [[ -d "$OMNI_SLICE" ]]; then
     current_sub=$(cat "$OMNI_SLICE/cgroup.subtree_control" 2>/dev/null || echo "")
-    for ctl in cpu io; do
+    for ctl in cpu io memory pids; do
         if ! echo "$current_sub" | grep -q "$ctl"; then
             echo "+$ctl" > "$OMNI_SLICE/cgroup.subtree_control" 2>/dev/null || true
         fi
@@ -79,12 +101,10 @@ for profile in builds interactive transfers; do
     slice="omni-${profile}.slice"
     cg_path="${OMNI_SLICE}/${slice}"
 
-    # Start slice if inactive
-    if [[ -d "$cg_path" ]]; then
-        XDG_RUNTIME_DIR=/run/user/${USER_ID} \
-        DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/${USER_ID}/bus}" \
-        systemctl --user start "${slice}" 2>/dev/null || true
-    fi
+    # Start slice even when its cgroup directory does not exist yet.
+    XDG_RUNTIME_DIR=/run/user/${USER_ID} \
+    DBUS_SESSION_BUS_ADDRESS="${DBUS_SESSION_BUS_ADDRESS:-unix:path=/run/user/${USER_ID}/bus}" \
+    systemctl --user start "${slice}" 2>/dev/null || true
 
     # Ensure cgroup dir exists
     [[ -d "$cg_path" ]] || continue
@@ -102,6 +122,9 @@ for profile in builds interactive transfers; do
     cg_cpu=$(cpu_quota_to_cg "$cpu_quota")
     echo "$cg_cpu" > "$cg_path/cpu.max" 2>/dev/null || true
 
+    cpu_weight=$(get "RG_PROFILE_${key}_CPU_WEIGHT" "")
+    [[ -n "$cpu_weight" ]] && echo "$cpu_weight" > "$cg_path/cpu.weight" 2>/dev/null || true
+
     # --- io.max ---
     root_dev=$(get "RG_ROOT_DEVICE" "/dev/sda")
     dev_major_minor=$(stat -c '%t %T' "$root_dev" 2>/dev/null || echo "8 0")
@@ -114,6 +137,21 @@ for profile in builds interactive transfers; do
         rbps=$(io_bw_to_cg "${io_read:-0}")
         wbps=$(io_bw_to_cg "${io_write:-0}")
         echo "${dev_major}:${dev_minor} rbps=${rbps} wbps=${wbps}" > "$cg_path/io.max" 2>/dev/null || true
+    fi
+
+    io_weight=$(get "RG_PROFILE_${key}_IO_WEIGHT" "")
+    [[ -n "$io_weight" ]] && echo "$io_weight" > "$cg_path/io.weight" 2>/dev/null || true
+
+    # --- memory ---
+    memory_high=$(get "RG_PROFILE_${key}_MEMORY_HIGH" "")
+    [[ -n "$memory_high" ]] && echo "$(mem_to_cg "$memory_high")" > "$cg_path/memory.high" 2>/dev/null || true
+
+    memory_max=$(get "RG_PROFILE_${key}_MEMORY_MAX" "")
+    [[ -n "$memory_max" ]] && echo "$(mem_to_cg "$memory_max")" > "$cg_path/memory.max" 2>/dev/null || true
+
+    memory_swap_max=$(get "RG_PROFILE_${key}_MEMORY_SWAP_MAX" "")
+    if [[ -n "$memory_swap_max" && -f "$cg_path/memory.swap.max" ]]; then
+        echo "$(mem_to_cg "$memory_swap_max")" > "$cg_path/memory.swap.max" 2>/dev/null || true
     fi
 done
 

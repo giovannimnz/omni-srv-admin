@@ -1,0 +1,11 @@
+[Unit]
+Description=ATIUS-SRV-1 Inviolable Watchdog timer
+
+[Timer]
+OnBootSec=30s
+OnUnitInactiveSec=30s
+AccuracySec=5s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

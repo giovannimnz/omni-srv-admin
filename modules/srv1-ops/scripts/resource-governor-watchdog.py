@@ -245,7 +245,7 @@ def sample_system() -> dict:
 
 
 def apply_cgroup_limits() -> list[str]:
-    """Apply 50% cgroup v2 limits via sudo. Returns list of actions taken."""
+    """Apply global cgroup v2 safety limits via sudo. Returns list of actions taken."""
     actions = []
     limit = CGROUP_LIMITS.get('cpu')
     if limit:
@@ -421,16 +421,19 @@ def main() -> int:
                 and system_data['swap_pct'] <= float(config['RG_WATCHDOG_RECOVERY_SWAP_PCT'])
                 and system_data['mem_available_mib'] >= float(config['RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB'])
             )
-            if recovered and state.get('runtime_mode') == 'conservative' and runtime_path.exists():
-                runtime_path.unlink()
+            if recovered and state.get('runtime_mode') == 'conservative':
                 state['runtime_mode'] = 'base'
                 state['healthy_streak'] = 0
-                cgroup_actions = remove_cgroup_limits()
-                append_log(log_path, f'cgroup-unlimited {" ".join(cgroup_actions)} disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]} healthy_streak={healthy_streak}')
-                # Restore per-profile limits to base values
-                cgroup_init_script = SCRIPT.parent / 'resource-governor-cgroup-init.sh'
-                if cgroup_init_script.exists():
-                    run_cmd(['/bin/bash', str(cgroup_init_script)])
+                if runtime_path.exists():
+                    runtime_path.unlink()
+                    cgroup_actions = remove_cgroup_limits()
+                    append_log(log_path, f'cgroup-unlimited {" ".join(cgroup_actions)} disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]} healthy_streak={healthy_streak}')
+                    # Restore per-profile limits to base values
+                    cgroup_init_script = SCRIPT.parent / 'resource-governor-cgroup-init.sh'
+                    if cgroup_init_script.exists():
+                        run_cmd(['/bin/bash', str(cgroup_init_script)])
+                else:
+                    append_log(log_path, f'runtime-mode-stale-cleared disk={system_data["disk_pct"]}% swap={system_data["swap_pct"]}% mem={system_data["mem_available_mib"]} healthy_streak={healthy_streak}')
 
         # Write perf data
         current_ts = time.time()

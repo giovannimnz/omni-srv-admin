@@ -13,7 +13,7 @@ Este daemon periodicamente:
      via `echo PID > <slice>/cgroup.procs` (kernel permission: o processo
      só pode ser movido se o user é owner do cgroup de origem E destino.
      Como ambos são do mesmo UID, é permitido.)
-  4. Aplica limite de 50% por processo único também na slice destino.
+  4. Aplica os limites configurados também na slice destino.
 
 Tipos reconhecidos:
   - build:    cargo, rustc, gcc, g++, make, podman build, docker build,
@@ -179,16 +179,177 @@ def log(msg: str) -> None:
         fh.write(line)
 
 
+def load_env_file(path: Path) -> dict[str, str]:
+    data: dict[str, str] = {}
+    if not path.exists():
+        return data
+    for raw in path.read_text().splitlines():
+        line = raw.strip()
+        if not line or line.startswith('#') or '=' not in line:
+            continue
+        key, value = line.split('=', 1)
+        data[key.strip()] = value.strip().strip('"').strip("'")
+    return data
+
+
 def load_config() -> dict[str, str]:
     data = DEFAULTS.copy()
-    if CONFIG_PATH.exists():
-        for raw in CONFIG_PATH.read_text().splitlines():
-            line = raw.strip()
-            if not line or line.startswith('#') or '=' not in line:
-                continue
-            key, value = line.split('=', 1)
-            data[key.strip()] = value.strip().strip('"').strip("'")
+    data.update(load_env_file(CONFIG_PATH))
+    runtime_override = data.get('RG_RUNTIME_OVERRIDE_FILE')
+    if runtime_override:
+        data.update(load_env_file(Path(os.path.expanduser(runtime_override))))
     return data
+
+
+def cpu_quota_to_cgroup(value: str) -> str:
+    quota = value.strip()
+    if not quota or quota == 'max':
+        return 'max 100000'
+    if ' ' in quota:
+        return quota
+    quota = quota.rstrip('%')
+    period = 100000
+    return f'{int(float(quota) * period / 100)} {period}'
+
+
+def memory_to_cgroup(value: str) -> str:
+    size = value.strip()
+    if not size or size == 'max':
+        return 'max'
+    match = re.fullmatch(r'([0-9]+(?:\.[0-9]+)?)([kmgtpe]?i?b?)?', size, re.IGNORECASE)
+    if not match:
+        return size
+    number = float(match.group(1))
+    suffix = (match.group(2) or '').lower().rstrip('b')
+    factor = {
+        '': 1,
+        'k': 1024,
+        'ki': 1024,
+        'm': 1024**2,
+        'mi': 1024**2,
+        'g': 1024**3,
+        'gi': 1024**3,
+        't': 1024**4,
+        'ti': 1024**4,
+    }.get(suffix, 1)
+    return str(int(number * factor))
+
+
+def bandwidth_to_cgroup(value: str) -> str:
+    bw = value.strip()
+    if not bw or bw == 'max':
+        return 'max'
+    match = re.fullmatch(r'([0-9]+(?:\.[0-9]+)?)([kmgt]?i?b?|[kmgt]?)?', bw, re.IGNORECASE)
+    if not match:
+        return bw
+    number = float(match.group(1))
+    suffix = (match.group(2) or '').lower().rstrip('b')
+    factor = {
+        '': 1,
+        'k': 1000,
+        'm': 1000**2,
+        'g': 1000**3,
+        't': 1000**4,
+        'ki': 1024,
+        'mi': 1024**2,
+        'gi': 1024**3,
+        'ti': 1024**4,
+    }.get(suffix, 1)
+    return str(int(number * factor))
+
+
+def cgroup_device(config: dict[str, str]) -> str:
+    root_device = config.get('RG_ROOT_DEVICE') or config.get('RG_DEVICE') or '/dev/sda'
+    if '/' not in root_device:
+        root_device = f'/dev/{root_device}'
+    try:
+        stat_result = os.stat(root_device)
+        return f'{os.major(stat_result.st_rdev)}:{os.minor(stat_result.st_rdev)}'
+    except OSError:
+        return '8:0'
+
+
+def profile_limits_from_config(config: dict[str, str]) -> dict[str, dict[str, object]]:
+    device = cgroup_device(config)
+    profiles = {
+        'builds': 'BUILDS',
+        'interactive': 'INTERACTIVE',
+        'transfers': 'TRANSFERS',
+    }
+    limits: dict[str, dict[str, object]] = {}
+    for name, key in profiles.items():
+        prefix = f'RG_PROFILE_{key}_'
+        rbps = bandwidth_to_cgroup(config.get(prefix + 'IO_READ_BW', 'max'))
+        wbps = bandwidth_to_cgroup(config.get(prefix + 'IO_WRITE_BW', 'max'))
+        limits[name] = {
+            'cpu': cpu_quota_to_cgroup(config.get(prefix + 'CPU_QUOTA', '100%')),
+            'io': f'{device} rbps={rbps} wbps={wbps} riops=max wiops=max',
+            'mem_high': memory_to_cgroup(config.get(prefix + 'MEMORY_HIGH', 'max')),
+            'mem': memory_to_cgroup(config.get(prefix + 'MEMORY_MAX', 'max')),
+            'mem_swap': memory_to_cgroup(config.get(prefix + 'MEMORY_SWAP_MAX', 'max')),
+            'cpu_weight': int(config.get(prefix + 'CPU_WEIGHT', '100')),
+            'io_weight': int(config.get(prefix + 'IO_WEIGHT', '100')),
+        }
+    limits.update({
+        'generic': {
+            'cpu': '50000 100000',
+            'io': f'{device} rbps=20000000 wbps=10000000 riops=max wiops=max',
+            'mem_high': 'max',
+            'mem': 'max',
+            'mem_swap': 'max',
+            'cpu_weight': 25,
+            'io_weight': 25,
+        },
+        'protected': {
+            'cpu': 'max 100000',
+            'io': f'{device} rbps=max wbps=max riops=max wiops=max',
+            'mem_high': 'max',
+            'mem': 'max',
+            'mem_swap': 'max',
+            'cpu_weight': 1000,
+            'io_weight': 1000,
+        },
+    })
+    return limits
+
+
+def apply_profile_limits(omni_paths: dict[str, Path], profile_limits: dict[str, dict[str, object]]) -> None:
+    for name, path in omni_paths.items():
+        limits = profile_limits[name]
+        try:
+            subprocess.run(['sudo', 'tee', str(path / 'cpu.max')],
+                           input=f"{limits['cpu']}\n",
+                           capture_output=True, text=True, check=False)
+            subprocess.run(['sudo', 'tee', str(path / 'io.max')],
+                           input=f"{limits['io']}\n",
+                           capture_output=True, text=True, check=False)
+            # cpu.weight + io.weight for fair-share scheduling under contention
+            if 'cpu_weight' in limits:
+                subprocess.run(['sudo', 'tee', str(path / 'cpu.weight')],
+                               input=f"{limits['cpu_weight']}\n",
+                               capture_output=True, text=True, check=False)
+            if 'io_weight' in limits:
+                subprocess.run(['sudo', 'tee', str(path / 'io.weight')],
+                               input=f"{limits['io_weight']}\n",
+                               capture_output=True, text=True, check=False)
+            subprocess.run(['sudo', 'tee', str(path / 'memory.high')],
+                           input=f"{limits['mem_high']}\n",
+                           capture_output=True, text=True, check=False)
+            if limits['mem'] == 'max':
+                subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
+                               input="max\n",
+                               capture_output=True, text=True, check=False)
+            else:
+                subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
+                               input=f"{limits['mem']}\n",
+                               capture_output=True, text=True, check=False)
+            if (path / 'memory.swap.max').exists():
+                subprocess.run(['sudo', 'tee', str(path / 'memory.swap.max')],
+                               input=f"{limits['mem_swap']}\n",
+                               capture_output=True, text=True, check=False)
+            log(f'omni-{name}: cpu={limits["cpu"]} io={limits["io"]} mem.high={limits["mem_high"]} mem.max={limits["mem"]} mem.swap={limits["mem_swap"]} cpu.weight={limits.get("cpu_weight","-")} io.weight={limits.get("io_weight","-")}')
+        except Exception as exc:
+            log(f'omni-{name} limit-set-failed: {exc}')
 
 
 def handle_signal(signum, _frame):
@@ -442,7 +603,7 @@ def main() -> int:
     signal.signal(signal.SIGINT, handle_signal)
 
     config = load_config()
-    poll = 10  # 2026-06-11 fix: 2s -> 10s to avoid hammering /proc
+    poll = int(config.get('RG_PATCHER_POLL_INTERVAL_SEC', '10'))
     cpu_thr = float(config['RG_PATCHER_CPU_THRESHOLD_PCT'])
     mem_thr = float(config['RG_PATCHER_MEM_THRESHOLD_MIB']) * 1024  # KiB
     min_age = int(config['RG_PATCHER_MIN_AGE_SEC'])
@@ -490,55 +651,12 @@ def main() -> int:
         except (PermissionError, FileNotFoundError) as exc:
             log(f'user-slice cpu.max write failed: {exc}')
 
-    # Per-profile cgroup v2 limits (per-process 50% cap).
+    # Per-profile cgroup v2 limits from resource-governor.env/runtime override.
     # 2026-06-11: 'generic' bucket is a catch-all for unclassified heavy procs
     # (yes, find /, dd, sort, strace, etc). Brando limits — low cpu.weight + io.weight
     # deprioritize them under contention, but no memory cap (legitimately RAM-hungry).
-    PROFILE_LIMITS = {
-        'builds':     {'cpu': '200000 100000', 'io': '8:0 rbps=60000000 wbps=54000000',  'mem': '6G', 'cpu_weight': 200, 'io_weight': 200},
-        'interactive':{'cpu': '200000 100000', 'io': '8:0 rbps=60000000 wbps=54000000',  'mem': '4G', 'cpu_weight': 500, 'io_weight': 500},
-        'transfers':  {'cpu': '100000 100000', 'io': '8:0 rbps=60000000 wbps=30000000',  'mem': '2G', 'cpu_weight': 100, 'io_weight': 100},
-        'generic':    {'cpu':  '50000 100000', 'io': '8:0 rbps=20000000 wbps=10000000',  'mem': 'max', 'cpu_weight':  25, 'io_weight':  25},
-        # 2026-06-11: 'protected' = inviolable services. ZERO limits (max max max).
-        # Weight alto (1000) garante prioridade sob contenção. memory.max=max para
-        # nunca ser OOM-killed. cgroup.procs vazio — apenas referenciado por hardening.
-        'protected':  {'cpu':  'max 100000',  'io': '8:0 rbps=max wbps=max riops=max wiops=max', 'mem': 'max', 'cpu_weight': 1000, 'io_weight': 1000},
-    }
-    for name, path in omni_paths.items():
-        limits = PROFILE_LIMITS[name]
-        try:
-            subprocess.run(['sudo', 'tee', str(path / 'cpu.max')],
-                           input=f"{limits['cpu']}\n",
-                           capture_output=True, text=True, check=False)
-            subprocess.run(['sudo', 'tee', str(path / 'io.max')],
-                           input=f"{limits['io']}\n",
-                           capture_output=True, text=True, check=False)
-            # cpu.weight + io.weight for fair-share scheduling under contention
-            if 'cpu_weight' in limits:
-                subprocess.run(['sudo', 'tee', str(path / 'cpu.weight')],
-                               input=f"{limits['cpu_weight']}\n",
-                               capture_output=True, text=True, check=False)
-            if 'io_weight' in limits:
-                subprocess.run(['sudo', 'tee', str(path / 'io.weight')],
-                               input=f"{limits['io_weight']}\n",
-                               capture_output=True, text=True, check=False)
-            # memory.max in bytes
-            if limits['mem'] == 'max':
-                subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
-                               input="max\n",
-                               capture_output=True, text=True, check=False)
-            else:
-                mem_bytes = {
-                    '6G': 6 * 1024 * 1024 * 1024,
-                    '4G': 4 * 1024 * 1024 * 1024,
-                    '2G': 2 * 1024 * 1024 * 1024,
-                }[limits['mem']]
-                subprocess.run(['sudo', 'tee', str(path / 'memory.max')],
-                               input=f"{mem_bytes}\n",
-                               capture_output=True, text=True, check=False)
-            log(f'omni-{name}: cpu={limits["cpu"]} io={limits["io"]} mem={limits["mem"]} cpu.weight={limits.get("cpu_weight","-")} io.weight={limits.get("io_weight","-")}')
-        except Exception as exc:
-            log(f'omni-{name} limit-set-failed: {exc}')
+    profile_limits = profile_limits_from_config(config)
+    apply_profile_limits(omni_paths, profile_limits)
 
     state = {
         'moved_total': 0,
@@ -550,6 +668,11 @@ def main() -> int:
         cycle_start = time.time()
         # Re-ensure cgroups persist (some cleanup tasks may prune)
         omni_paths = ensure_omni_cgroups_exist()
+        current_limits = profile_limits_from_config(load_config())
+        if current_limits != profile_limits:
+            profile_limits = current_limits
+            apply_profile_limits(omni_paths, profile_limits)
+            log('profile-limits-reloaded')
 
         # Sample all candidates
         candidates = scan_processes(get_my_pid())

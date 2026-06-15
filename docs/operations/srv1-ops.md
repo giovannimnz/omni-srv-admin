@@ -20,6 +20,7 @@ omni srv1-ops status
 omni srv1-ops logs --limit 30
 omni srv1-ops resources profiles
 omni srv1-ops resources status
+omni srv1-ops resources install --dry-run
 omni srv1-ops resources install
 omni srv1-ops resources logs
 omni srv1-ops resources watchdog
@@ -62,7 +63,8 @@ Retenção local: 15 dias.
 - Runtime override live: `~/.config/omni/resource-governor.runtime.env`
 - Runbook detalhado: `docs/operations/resource-governor.md`
 - Gatilho pós-build: o wrapper `omni srv1-ops resources run builds -- ...` agenda cleanup leve após 5 min e revalida snapshot/audit depois.
-- Watchdog contínuo: roda a cada 2 min, observa thresholds críticos e ajusta os profiles live para modo conservador quando necessário.
+- Watchdog contínuo: observa thresholds críticos e ajusta os profiles live para modo conservador quando necessário.
+- Status: reporta units repo/live, services/timers, jobs presos, refs PM2 legadas e cgroups diretos.
 
 ## Timers
 
@@ -96,5 +98,7 @@ modules/srv1-ops/configs/backup-map.yaml
 ## Segurança
 
 - `cleanup-local` deve ter `--dry-run` antes de execução real.
+- `omni srv1-ops resources install --dry-run` deve preceder instalação live.
+- `resources install` não para PM2, XRDP ou SSHD; ações de restart/stop continuam gateadas.
 - `offload-dotbackups` usa copy → verify → delete.
 - Não aplicar delete-after-verify em diretórios vivos (`~/GitHub`, `~/.hermes`, `~/.config`).

@@ -14,6 +14,9 @@ export PATH="/home/ubuntu/.nvm/versions/node/v24.13.1/bin:/home/ubuntu/.bun/bin:
 LOG="/home/ubuntu/.logs/resource-governor/inviolable-watchdog.log"
 STATE_DIR="/home/ubuntu/.local/state/omni/inviolable-watchdog"
 LOCK_FILE="/home/ubuntu/.local/state/omni/inviolable-watchdog.lock"
+PM2_BIN="/home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2"
+ATS_ECOSYSTEM="/home/ubuntu/GitHub/Atius-Capital/ats/ecosystem.config.js"
+HORISTIC_ECOSYSTEM="/home/ubuntu/GitHub/Atius-Capital/horistic/ecosystem.config.js"
 
 DEFAULT_COOLDOWN_SEC="${INVIOLABLE_RESTART_COOLDOWN_SEC:-180}"
 DEFAULT_FAILURE_THRESHOLD="${INVIOLABLE_RESTART_FAILURE_THRESHOLD:-2}"
@@ -119,16 +122,23 @@ process_check() {
   [[ "$count" -ge "$min" ]]
 }
 
+service_or_binary_exists() {
+  local service="$1"
+  local binary="$2"
+  command -v "$binary" >/dev/null 2>&1 ||
+    systemctl list-unit-files "$service" >/dev/null 2>&1
+}
+
 systemctl_user_is_active() {
   timeout 5s systemctl --user is-active --quiet "$1" >/dev/null 2>&1
 }
 
 systemctl_user_start() {
-  timeout 15s systemctl --user start "$1"
+  timeout 15s systemctl --user start --no-block "$1"
 }
 
 systemctl_system_start() {
-  timeout 15s sudo systemctl start "$1"
+  timeout 15s sudo systemctl start --no-block "$1"
 }
 
 start_bg() {
@@ -138,10 +148,32 @@ start_bg() {
   disown
 }
 
+start_system_transient() {
+  local name="$1"
+  shift
+  sudo systemd-run \
+    --unit="inviolable-${name}" \
+    --collect \
+    --property=Restart=on-failure \
+    --property=RestartSec=5 \
+    "$@" > "/tmp/inviolable-${name}.log" 2>&1
+}
+
 pm2_app_online() {
   local app="$1"
-  pm2 jlist 2>/dev/null | jq -e --arg name "$app" \
+  "$PM2_BIN" jlist 2>/dev/null | jq -e --arg name "$app" \
     '.[] | select(.name == $name and .pm2_env.status == "online")' >/dev/null 2>&1
+}
+
+pm2_start_ecosystem() {
+  local ecosystem="$1"
+  timeout 60s "$PM2_BIN" start "$ecosystem" --update-env
+}
+
+pm2_start_ecosystem_only() {
+  local ecosystem="$1"
+  local app="$2"
+  timeout 60s "$PM2_BIN" start "$ecosystem" --only "$app" --update-env
 }
 
 atius_web_ok() {
@@ -187,15 +219,15 @@ hermes_ws_gateway_ok() {
 }
 
 start_sshd() {
-  start_bg "sshd" sudo /usr/sbin/sshd -D
+  systemctl_system_start "ssh" || start_system_transient "sshd" /usr/sbin/sshd -D
 }
 
 start_xrdp() {
-  start_bg "xrdp" sudo /usr/sbin/xrdp --nodaemon
+  start_system_transient "xrdp" /usr/sbin/xrdp --nodaemon
 }
 
 start_xrdp_sesman() {
-  start_bg "xrdp-sesman" sudo /usr/sbin/xrdp-sesman --nodaemon
+  start_system_transient "xrdp-sesman" /usr/sbin/xrdp-sesman --nodaemon
 }
 
 start_wg0() {
@@ -203,11 +235,15 @@ start_wg0() {
 }
 
 start_horistic_api() {
-  if systemctl_user_is_active "horistic-pm2.service"; then
-    pm2 restart horistic-api
-  else
-    systemctl_user_start "horistic-pm2.service"
-  fi
+  pm2_start_ecosystem_only "$HORISTIC_ECOSYSTEM" "horistic-api"
+}
+
+start_atius_web() {
+  pm2_start_ecosystem_only "$ATS_ECOSYSTEM" "atius-web"
+}
+
+start_atius_stack() {
+  pm2_start_ecosystem "$ATS_ECOSYSTEM"
 }
 
 start_router_containers() {
@@ -245,7 +281,9 @@ else
   guarded_relaunch "apache2" 1 "$CRITICAL_COOLDOWN_SEC" systemctl_system_start "apache2"
 fi
 
-if process_check "nginx: master" 1; then
+if ! service_or_binary_exists "nginx.service" "nginx"; then
+  mark_ok "nginx" "not-installed"
+elif process_check "nginx: master" 1; then
   mark_ok "nginx"
 else
   guarded_relaunch "nginx" 1 "$CRITICAL_COOLDOWN_SEC" systemctl_system_start "nginx"
@@ -262,7 +300,7 @@ fi
 if atius_web_ok; then
   mark_ok "atius-web" "pm2-online-port-3015"
 else
-  guarded_relaunch "atius-web" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" systemctl_user_start "atius-web.service"
+  guarded_relaunch "atius-web" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" start_atius_web
 fi
 
 if atius_router_docs_ok; then
@@ -280,7 +318,7 @@ fi
 if atius_pm2_stack_ok; then
   mark_ok "ats-pm2" "pm2-apps-online"
 else
-  guarded_relaunch "ats-pm2" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" systemctl_user_start "ats-pm2.service"
+  guarded_relaunch "ats-pm2" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" start_atius_stack
 fi
 
 if atius_router_containers_ok; then
