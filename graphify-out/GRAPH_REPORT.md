@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-15)
 
 ## Corpus Check
-- 277 files · ~742,206 words
+- 299 files · ~607,723 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3560 nodes · 4030 edges · 291 communities (240 shown, 51 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.8)
+- 3876 nodes · 4478 edges · 318 communities (262 shown, 56 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `95d29dc7`
+- Built from commit: `19121e29`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -304,39 +304,66 @@
 - [[_COMMUNITY_Community 288|Community 288]]
 - [[_COMMUNITY_Community 289|Community 289]]
 - [[_COMMUNITY_Community 290|Community 290]]
+- [[_COMMUNITY_Community 291|Community 291]]
+- [[_COMMUNITY_Community 292|Community 292]]
+- [[_COMMUNITY_Community 293|Community 293]]
+- [[_COMMUNITY_Community 294|Community 294]]
+- [[_COMMUNITY_Community 295|Community 295]]
+- [[_COMMUNITY_Community 296|Community 296]]
+- [[_COMMUNITY_Community 297|Community 297]]
+- [[_COMMUNITY_Community 298|Community 298]]
+- [[_COMMUNITY_Community 299|Community 299]]
+- [[_COMMUNITY_Community 300|Community 300]]
+- [[_COMMUNITY_Community 301|Community 301]]
+- [[_COMMUNITY_Community 302|Community 302]]
+- [[_COMMUNITY_Community 303|Community 303]]
+- [[_COMMUNITY_Community 304|Community 304]]
+- [[_COMMUNITY_Community 305|Community 305]]
+- [[_COMMUNITY_Community 306|Community 306]]
+- [[_COMMUNITY_Community 307|Community 307]]
+- [[_COMMUNITY_Community 308|Community 308]]
+- [[_COMMUNITY_Community 309|Community 309]]
+- [[_COMMUNITY_Community 310|Community 310]]
+- [[_COMMUNITY_Community 311|Community 311]]
+- [[_COMMUNITY_Community 312|Community 312]]
+- [[_COMMUNITY_Community 313|Community 313]]
+- [[_COMMUNITY_Community 314|Community 314]]
+- [[_COMMUNITY_Community 315|Community 315]]
+- [[_COMMUNITY_Community 316|Community 316]]
+- [[_COMMUNITY_Community 317|Community 317]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Communities (291 total, 51 thin omitted)` - 239 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
-5. `run_sync()` - 22 edges
-6. `Phase 3: FreeIPA Server Container - Research` - 18 edges
-7. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 17 edges
-8. `Phase 1: Preparação do Host - Research` - 17 edges
-9. `apply_all()` - 16 edges
-10. `Resource Governor — ATIUS-SRV-1` - 16 edges
+5. `ScenarioResult` - 22 edges
+6. `run_sync()` - 22 edges
+7. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 18 edges
+8. `Phase 3: FreeIPA Server Container - Research` - 18 edges
+9. `Phase 1: Preparação do Host - Research` - 17 edges
+10. `apply_all()` - 16 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `deploy_list()` --calls--> `list_projects()`  [INFERRED]
   cli/omni/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
-- `sync_cmd()` --calls--> `project_exists()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
+- `test_offline_validation_harness_passes_all_contract_scenarios()` --calls--> `offline_scenarios()`  [INFERRED]
+  modules/fleet-control-plane/tests/test_m004_contract.py → modules/fleet-control-plane/tools/validate_m004.py
 - `sync_cmd()` --calls--> `run_sync()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
-- `detect_cmd()` --calls--> `run_detect()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
 - `deploy_cmd()` --calls--> `run_deploy()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
+- `release_generate()` --calls--> `generate_release_notes()`  [INFERRED]
+  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/release_notes.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (291 total, 51 thin omitted)
+## Communities (318 total, 56 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.06
-Nodes (40): cli(), containers(), discover(), handle_error(), main(), manuals(), manuals_generate(), manuals_list() (+32 more)
+Cohesion: 0.07
+Nodes (34): containers(), discover(), handle_error(), manuals(), manuals_generate(), manuals_list(), manuals_record(), manuals_update() (+26 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.12
@@ -395,8 +422,8 @@ Cohesion: 0.06
 Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
 
 ### Community 15 - "Community 15"
-Cohesion: 0.16
-Nodes (31): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+23 more)
+Cohesion: 0.17
+Nodes (29): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+21 more)
 
 ### Community 16 - "Community 16"
 Cohesion: 0.06
@@ -443,8 +470,8 @@ Cohesion: 0.07
 Nodes (26): 1️⃣ Period Choice Logic (CRITICAL), 2️⃣ Signal Fetching (CRITICAL), 3️⃣ Trade Execution (IMPORTANT), 4️⃣ Database Integration (IMPORTANT), 📞 Bloqueadores Conhecidos, 📋 Checklist Geral da Fase, Config Pytest (`pytest.ini`), 🎯 Definição de "Done" (+18 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.08
-Nodes (25): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+17 more)
+Cohesion: 0.12
+Nodes (16): admin(), backup_create(), backup_list(), backup_restore(), cli(), deploy(), main(), omni — CLI unificada para administração de servidores e gestão de forks.  Uso: (+8 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.08
@@ -487,8 +514,8 @@ Cohesion: 0.18
 Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
 
 ### Community 38 - "Community 38"
-Cohesion: 0.09
-Nodes (21): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M005: K3s HA Cluster + Portainer, M006: SRV-1 Resource Governance + PM2 Hardening, Phase 10: omni deploy ✅ DONE, Phase 11: omni backup ✅ DONE (+13 more)
+Cohesion: 0.08
+Nodes (23): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, Phase 10: omni deploy ✅ DONE (+15 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.09
@@ -535,8 +562,8 @@ Cohesion: 0.11
 Nodes (17): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Key Audit Findings, Known Stubs (+9 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.21
-Nodes (17): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+9 more)
+Cohesion: 0.18
+Nodes (19): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+11 more)
 
 ### Community 51 - "Community 51"
 Cohesion: 0.19
@@ -643,8 +670,8 @@ Cohesion: 0.34
 Nodes (13): backup_podman_image(), backup_volume(), is_volume_done(), load_state(), log(), main(), mark_volume_done(), mark_volume_failed() (+5 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.21
-Nodes (12): Path, fleet(), _hosts_dir(), list_hosts(), fleet — multi-host inventory and future orchestration., Inventário multi-computacional e futura orquestração remota., Lista hosts cadastrados em inventory/hosts/*.yaml., Mostra o YAML de um host. (+4 more)
+Cohesion: 0.10
+Nodes (43): Any, Path, audit(), _emit(), fleet(), heartbeat(), _heartbeat_payload(), _host_id() (+35 more)
 
 ### Community 78 - "Community 78"
 Cohesion: 0.15
@@ -723,8 +750,8 @@ Cohesion: 0.18
 Nodes (12): admin_health(), admin_processes(), admin_status(), Health checks básicos: ping, portas, serviços chave., Lista serviços systemd. Se NAME passado, mostra status + logs., Top-like: processos por uso de CPU ou memória., Executa deploy de um projeto (wrapping fork-sync deploy)., Retorna env com LC_ALL=C para parsing consistente. (+4 more)
 
 ### Community 97 - "Community 97"
-Cohesion: 0.17
-Nodes (11): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Live Gates, M001 Completion, M002 Result Summary, Milestones (+3 more)
+Cohesion: 0.14
+Nodes (13): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Live Gates, M001 Completion, M002 Result Summary, M005 Live Bootstrap Summary (+5 more)
 
 ### Community 98 - "Community 98"
 Cohesion: 0.18
@@ -811,8 +838,8 @@ Cohesion: 0.20
 Nodes (9): Configuration, Frameworks, Infrastructure, Key Dependencies, Key Dependencies, Languages, Platform Requirements, Runtime (+1 more)
 
 ### Community 119 - "Community 119"
-Cohesion: 0.15
-Nodes (17): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., deploy_cmd(), detect_cmd(), _fork_repo_slug(), projects_show(), Mostra detalhes de um projeto (sync.yaml + deploy.yaml se existir). (+9 more)
+Cohesion: 0.12
+Nodes (21): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., Detecta novo release., run_detect(), deploy_cmd(), detect_cmd(), _fork_repo_slug() (+13 more)
 
 ### Community 120 - "Community 120"
 Cohesion: 0.20
@@ -1286,25 +1313,113 @@ Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from 
 Cohesion: 0.83
 Nodes (3): srv1-fix-network.sh script, fail(), log()
 
+### Community 290 - "Community 290"
+Cohesion: 0.27
+Nodes (29): Any, Path, _blocked(), _fail(), _live_fleet_db_query(), _live_host_identity(), _live_mesh_ping(), _live_node_direct_postgres_blocked() (+21 more)
+
+### Community 291 - "Community 291"
+Cohesion: 0.08
+Nodes (25): 1. Congelar tráfego de borda e watchdog, 2026-06-15 M005 Decision, 2. Parar K3s em todos os servers, 3. Fazer backup defensivo do DB atual dos peers, 4. Restaurar o snapshot etcd em SRV-1, 5. Reidratar os PVCs `local-path` em SRV-1 antes do primeiro start pós-restore, 6. Subir SRV-1 sozinho, 7. Rejuntar SRV-2 e SRV-3 (+17 more)
+
+### Community 292 - "Community 292"
+Cohesion: 0.11
+Nodes (18): Canonical References, D-01: M004 define a base operacional, D-02: Branch de trabalho do milestone, D-03: Repo canônico, D-04: Modos de instalação, D-05: Inventário é fonte de verdade para identidade, D-06: PostgreSQL central migrável, D-07: PgBouncer obrigatório para clientes (+10 more)
+
+### Community 293 - "Community 293"
+Cohesion: 0.11
+Nodes (18): 2026-06-15 M005 Decision, API/CLI collection path, Cluster/application recovery evidence, Evidence that exists now, Exact rollback path available today, Mandatory per-host OCI restore chain, Manual collection path in OCI console, Non-ambiguous gate closure criteria (+10 more)
+
+### Community 294 - "Community 294"
+Cohesion: 0.11
+Nodes (17): Bottom line, Current direct-IP paths observed, Immediate failures, Operational consequence, Path A: WireGuard API path in use today, Path B: OCI private-IP path exists at L3, but not as a working K3s fallback, Path C: Public-IP path is not available for K3s API, Phase 13 PTP / Direct-IP Fallback Review (+9 more)
+
+### Community 295 - "Community 295"
+Cohesion: 0.13
+Nodes (14): 12-01: Fleet Control Plane Foundation, Human Checkpoints, Objective, Read First, Success Criteria, Task 1 — Freeze milestone order, Task 2 — Define contracts and docs, Task 3 — Design PostgreSQL and PgBouncer (+6 more)
+
+### Community 296 - "Community 296"
+Cohesion: 0.13
+Nodes (14): 13-01: M005 No-Cost Release Gates, Human Checkpoints, Objective, Read First, Secret Handling Rules, Success Criteria, Task 1 - Update release gates and docs, Task 2 - Promote GDrive disaster recovery gate (+6 more)
+
+### Community 297 - "Community 297"
+Cohesion: 0.14
+Nodes (13): Audit, CLI-Anything Slash Commands, Data Model, Heartbeat, Human Gates Before Live Execution, License And Secret Policy, Omni Fleet Control Plane, Ops Scopes And Config (+5 more)
+
+### Community 298 - "Community 298"
+Cohesion: 0.22
+Nodes (9): invoke_fleet(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero(), test_inventory_validation_covers_srv1_srv2_srv3(), test_offline_validation_harness_passes_all_contract_scenarios(), test_program_registry_projects_inventory_modules() (+1 more)
+
+### Community 299 - "Community 299"
+Cohesion: 0.15
+Nodes (12): Conclusion, Initial Data Model, Local Evidence, Node Responsibilities, Official Research, PgBouncer, Phase 12 — Research, PostgreSQL dump/restore (+4 more)
+
+### Community 300 - "Community 300"
+Cohesion: 0.17
+Nodes (11): Added DB/CLI-Anything Contract, Automated Commands, Host Evidence, Live Read-Only Results, Live Repo + DB Rollout, Master/Slave Scenario Matrix, Multi-Agent Review Inputs, Offline Contract Scenarios (+3 more)
+
+### Community 301 - "Community 301"
+Cohesion: 0.17
+Nodes (11): Canonical Refs, Deferred Ideas, Domain, Edge auth, Jenkins hotfix, Locked Decisions, Phase 13 Context - M005 No-Cost Release Gates, Rollback sem snapshot OCI (+3 more)
+
+### Community 302 - "Community 302"
+Cohesion: 0.20
+Nodes (9): Branch decision, Host snapshot, Live evidence, Network snapshot, Phase 13 Gate Review — 2026-06-14, Release command after blockers close, Storage snapshot, Verdict (+1 more)
+
+### Community 303 - "Community 303"
+Cohesion: 0.20
+Nodes (9): Current Artifacts, fleet-control-plane, Live M004 State, Ops And Config Rule, Safe Commands, Secret Rule, Slash Command Rule, SRV-1 PgBouncer Enforcement (+1 more)
+
+### Community 304 - "Community 304"
+Cohesion: 0.22
+Nodes (8): Backups, Bootstrap Actions, Live Cluster, Phase 13 Live Bootstrap — 2026-06-14, Remaining Follow-ups, Result, Security Controls, Validation
+
+### Community 305 - "Community 305"
+Cohesion: 0.22
+Nodes (8): Edge protection, Grafana, Observability, OCI snapshots, Pendências restantes, Phase 13 Observability + Watchdog — 2026-06-14, Resultado, Watchdog
+
+### Community 306 - "Community 306"
+Cohesion: 0.22
+Nodes (8): Arquivos versionados, Comandos de validação, Estado live, K3s HA + Portainer + Observability — ATIUS, Operação M005, Pendências, Runbooks, Secrets locais — não commitar
+
+### Community 307 - "Community 307"
+Cohesion: 0.25
+Nodes (7): Acceptance, Architecture, Goal, Hard Gates, Phase 12 — Master Plan, Plans, Scope
+
+### Community 308 - "Community 308"
+Cohesion: 0.71
+Nodes (6): atius-k3s-watchdog.sh script, check_http(), check_http_basic(), ensure_local_service(), ensure_remote_k3s(), log()
+
+### Community 309 - "Community 309"
+Cohesion: 0.33
+Nodes (5): 12-01 Summary — Fleet Control Plane Foundation, Delivered, Remaining Gates, Result, Verification
+
+### Community 310 - "Community 310"
+Cohesion: 0.50
+Nodes (4): cli(), main(), fork-sync — gestão unificada de forks (sync, deploy, versionamento)., Entry point console_scripts.
+
+### Community 311 - "Community 311"
+Cohesion: 0.50
+Nodes (3): verify-m004-fleet-control-plane.sh script, OMNI_SRV_ADMIN, PYTHONPATH
+
 ## Knowledge Gaps
-- **2157 isolated node(s):** `monitor.sh script`, `scan.sh script`, `model-history.sh script`, `Path`, `Any` (+2152 more)
+- **2343 isolated node(s):** `monitor.sh script`, `scan.sh script`, `model-history.sh script`, `Any`, `install.sh script` (+2338 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **51 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
+- **Why does `_ssh_candidates()` connect `Community 8` to `Community 37`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Why does `Communities (291 total, 51 thin omitted)` connect `Community 223` to `Community 284`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `run_sync()` connect `Community 15` to `Community 0`, `Community 119`, `Community 287`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Why does `_ssh_candidates()` connect `Community 8` to `Community 37`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
-- **Are the 3 inferred relationships involving `run_sync()` (e.g. with `run_sync_all()` and `load_project()`) actually correct?**
-  _`run_sync()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `monitor.sh script`, `scan.sh script`, `model-history.sh script` to the rest of the system?**
-  _2352 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2547 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06155632984901278 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07142857142857142 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.11901306240928883 - nodes in this community are weakly interconnected._
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
+  _Cohesion score 0.07419712070874862 - nodes in this community are weakly interconnected._
