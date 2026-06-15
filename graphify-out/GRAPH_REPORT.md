@@ -1,7 +1,7 @@
 # Graph Report - omni-srv-admin  (2026-06-15)
 
 ## Corpus Check
-- 277 files · ~741,897 words
+- 277 files · ~742,206 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -10,7 +10,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `a2d931fa`
+- Built from commit: `95d29dc7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -306,7 +306,7 @@
 - [[_COMMUNITY_Community 290|Community 290]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (290 total, 50 thin omitted)` - 239 edges
+1. `Communities (291 total, 51 thin omitted)` - 239 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
@@ -320,14 +320,14 @@
 ## Surprising Connections (you probably didn't know these)
 - `deploy_list()` --calls--> `list_projects()`  [INFERRED]
   cli/omni/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
+- `sync_cmd()` --calls--> `project_exists()`  [INFERRED]
+  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
 - `sync_cmd()` --calls--> `run_sync()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
 - `detect_cmd()` --calls--> `run_detect()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
 - `deploy_cmd()` --calls--> `run_deploy()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
-- `release_generate()` --calls--> `generate_release_notes()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/release_notes.py
 
 ## Import Cycles
 - None detected.
@@ -335,8 +335,8 @@
 ## Communities (291 total, 51 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.08
-Nodes (26): cli(), containers(), discover(), handle_error(), main(), manuals(), manuals_update(), _print_dict() (+18 more)
+Cohesion: 0.06
+Nodes (40): cli(), containers(), discover(), handle_error(), main(), manuals(), manuals_generate(), manuals_list() (+32 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.12
@@ -539,8 +539,8 @@ Cohesion: 0.21
 Nodes (17): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+9 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.13
-Nodes (23): ensure_manuals_dir(), generate_manual(), get_manual_path(), list_manuals(), manual_exists(), manuals — geração e versionamento de manuais de atualização por projeto.  Cada p, Atualiza seção específica do manual (append)., Adiciona entrada ao histórico do manual após sync. (+15 more)
+Cohesion: 0.19
+Nodes (17): ensure_manuals_dir(), generate_manual(), get_manual_path(), list_manuals(), manual_exists(), manuals — geração e versionamento de manuais de atualização por projeto.  Cada p, Atualiza seção específica do manual (append)., Adiciona entrada ao histórico do manual após sync. (+9 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.11
@@ -619,8 +619,8 @@ Cohesion: 0.13
 Nodes (14): 15/02/2026, 16/02/2026, Arquivos Criados/Modificados, Correções DIVAP (16/02/2026), Descobertas Técnicas, Fórmulas Confirmadas (engenharia reversa), Implementation Plan, Limitações Conhecidas (+6 more)
 
 ### Community 71 - "Community 71"
-Cohesion: 0.22
-Nodes (10): _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks)., Return False for configs explicitly paused/disabled., Lista todos os projetos com sync.yaml., Detecta se há .gitmodules ao lado do sync.yaml (submódulo opcional)., projects_list() (+2 more)
+Cohesion: 0.18
+Nodes (12): _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks)., Return False for configs explicitly paused/disabled., Lista todos os projetos com sync.yaml., Detecta se há .gitmodules ao lado do sync.yaml (submódulo opcional)., doctor_cmd() (+4 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.14
@@ -811,8 +811,8 @@ Cohesion: 0.20
 Nodes (9): Configuration, Frameworks, Infrastructure, Key Dependencies, Key Dependencies, Languages, Platform Requirements, Runtime (+1 more)
 
 ### Community 119 - "Community 119"
-Cohesion: 0.10
-Nodes (27): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., deploy_cmd(), detect_cmd(), doctor_cmd(), _fork_repo_slug(), output() (+19 more)
+Cohesion: 0.15
+Nodes (17): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., deploy_cmd(), detect_cmd(), _fork_repo_slug(), projects_show(), Mostra detalhes de um projeto (sync.yaml + deploy.yaml se existir). (+9 more)
 
 ### Community 120 - "Community 120"
 Cohesion: 0.20
@@ -1228,7 +1228,7 @@ Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
 
 ### Community 223 - "Community 223"
 Cohesion: 0.01
-Nodes (239): Communities (290 total, 50 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+231 more)
+Nodes (239): Communities (291 total, 51 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+231 more)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.50
@@ -1294,9 +1294,9 @@ Nodes (3): srv1-fix-network.sh script, fail(), log()
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (290 total, 50 thin omitted)` connect `Community 223` to `Community 284`?**
+- **Why does `Communities (291 total, 51 thin omitted)` connect `Community 223` to `Community 284`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `run_sync()` connect `Community 15` to `Community 119`, `Community 287`?**
+- **Why does `run_sync()` connect `Community 15` to `Community 0`, `Community 119`, `Community 287`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Why does `_ssh_candidates()` connect `Community 8` to `Community 37`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
@@ -1305,6 +1305,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **What connects `monitor.sh script`, `scan.sh script`, `model-history.sh script` to the rest of the system?**
   _2352 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.07671957671957672 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06155632984901278 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.11901306240928883 - nodes in this community are weakly interconnected._
