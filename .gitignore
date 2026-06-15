@@ -145,3 +145,12 @@ __pycache__/**
 *.bak
 *.bak.*
 *.orig
+
+# Graphify: keep published map artifacts, ignore volatile build/cache state
+.planning/graphs/.last-build-*.json
+.planning/graphs/.rebuild.lock
+graphify-out/.rebuild.lock
+graphify-out/cache/
+graphify-out/cache/**
+graphify-out/cache/stat-index.json
+graphify-out/manifest.json
