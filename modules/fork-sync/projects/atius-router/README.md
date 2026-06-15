@@ -6,6 +6,9 @@ Fork-sync configuration for the Atius Router fork (`giovannimnz/atius-ai-router`
 
 This directory stores the `sync.yaml` used by fork-sync to synchronize the Atius Router fork with upstream `QuantumNous/new-api`.
 
+Current production worktree on this host: `/home/ubuntu/GitHub/containers/router-ai-atius`.
+The older `/home/ubuntu/docker/Atius/router-ai-atius` symlink points at `/home/ubuntu/GitHub/containers/Atius/router-ai-atius` and should be treated as legacy unless the inventory is intentionally changed.
+
 The `sync.yaml` defines:
 - **protected_paths**: files customized in the fork that must not be overwritten during upstream merges
 - **merge_strategy**: `theirs` (prefer upstream on conflict, then restore protected files)

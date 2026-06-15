@@ -1,8 +1,8 @@
 project: atius-router
 image: ghcr.io/giovannimnz/router-ai-atius
-docker_compose_path: /home/ubuntu/docker/Atius/router-ai-atius
-container_name: new-api
-health_endpoint: https://router.atius.com.br/v1/models
+docker_compose_path: /home/ubuntu/GitHub/containers/router-ai-atius
+container_name: router-ai-atius
+health_endpoint: https://router.atius.com.br/health
 health_token: ""  # Set via env or secret manager
 platforms:
   - linux/arm64

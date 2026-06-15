@@ -3,15 +3,17 @@ upstream: https://github.com/QuantumNous/new-api
 upstream_branch: main
 origin_branch: main
 fork_repo: router-ai-atius  # slug real no GitHub (display name "Atius Router" diverge)
-fork: /home/ubuntu/docker/Atius/router-ai-atius
+fork: /home/ubuntu/GitHub/containers/router-ai-atius
 auto_push: true
 
 # Container migration note:
-# /home/ubuntu/GitHub/containers/Atius/router-ai-atius currently contains an
-# invalid copied .git directory. Keep the valid Git worktree above until the
-# container mirror is repaired or recloned.
-container_mirror: /home/ubuntu/GitHub/containers/Atius/router-ai-atius
-container_mirror_status: invalid_git_copy
+# The live Podman containers bind to /home/ubuntu/GitHub/containers/router-ai-atius.
+# The older /home/ubuntu/docker/Atius/router-ai-atius symlink points at
+# /home/ubuntu/GitHub/containers/Atius/router-ai-atius and is no longer the
+# runtime source of truth for this host.
+container_mirror: /home/ubuntu/GitHub/containers/router-ai-atius
+container_mirror_status: repaired_git_worktree
+legacy_container_mirror: /home/ubuntu/GitHub/containers/Atius/router-ai-atius
 
 protected_paths:
   # Feature: middleware and custom container build chain
