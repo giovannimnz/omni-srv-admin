@@ -379,5 +379,6 @@ PYTHONPATH=cli python3 -m omni srv1-ops resources audit
 
 `resources status` mostra modo runtime, override ativo, repo/live units,
 services/timers, jobs presos relevantes (`ats-pm2`, `horistic-pm2`,
-`default.target`), refs PM2 legadas para `/home/ubuntu/ecosystem.atius.js`,
+`default.target`), refs PM2 legadas para `/home/ubuntu/ecosystem.atius.js`
+(see `pm2-canonical.md` for the canonical replacement path),
 properties de slices systemd e valores diretos de cgroups.
