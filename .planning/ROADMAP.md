@@ -1,7 +1,7 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M006 — SRV-1 Resource Governance + PM2 Hardening (M004/M005 live)
-**Milestone Goal:** criar a base operacional multi-host antes do K3s: inventário, instalação server/node, PostgreSQL central via PgBouncer, versões, licenças, auditoria e integração futura com Podman/K3s
+**Active Milestone:** M007 — M005 Follow-ups (v1.1)
+**Milestone Goal:** Fechar os 4 follow-ups abertos de M005: OCI snapshots, Cloudflare Access, observability stack, RWX storage.
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
 ---
@@ -402,3 +402,58 @@
 - [x] **MH-7:** Vault Obsidian com notas canônicas em `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/`
 - [x] **MH-8:** Working tree limpo (`git status --porcelain` só `.backups/`)
 - [x] **MH-9:** `git log --oneline | head -8` mostra 8 commits claros de rebrand + submodule + cleanup
+
+
+## M007: M005 Follow-ups — IN PLANNING (v1.1)
+
+**Goal:** Fechar os 4 follow-ups abertos de M005: OCI snapshot workflow formal, Cloudflare Access policy para os admin edges, observability stack live (Prometheus + Grafana + Loki), e decisão + implementação de RWX storage para K3s.
+
+**Status:** Planning (v1.1, started 2026-06-15)
+**Branch:** TBD
+**Phase dir:** `.planning/phases/{15,16,17}-*/`
+
+### Phase 15: M005 OCI Snapshots
+
+**Goal:** Workflow versionado de snapshots OCI para SRV-1/2/3 com rollback formal, IDs rastreáveis e restore drill validado.
+
+**Requirements:** OCI-01, OCI-02, OCI-03
+
+**Success Criteria:**
+- `omni srv oci snapshot preflight` cria snapshot antes de qualquer op riscada (gate explícito)
+- `omni srv oci snapshot routine` roda semanal via systemd timer; output é o snapshot ID
+- Snapshot ID registrado em `inventory/hosts/<srv>.yaml` e em `DbOmniFleet/TbConfigItems` (chave `srv.atius-srv-1.oci.snapshot_id`)
+- `omni srv oci restore drill <snapshot_id>` valida o caminho: criar instância a partir do snapshot, validar K3s rejoins, destruir instância, validar cleanup
+- Runbook publicado em `docs/operations/oci-snapshots.md`
+
+### Phase 16: M005 Cloudflare Access
+
+**Goal:** Substituir Apache Basic Auth nos admin edges (`portainer.atius.com.br`, `docker.atius.com.br`) por Cloudflare Access, com service token pra automação.
+
+**Requirements:** CFL-01, CFL-02, CFL-03
+
+**Success Criteria:**
+- Cloudflare Access policy configurada para `portainer.atius.com.br` e `docker.atius.com.br` (Allow rule com email allowlist de Giovanni)
+- Service token emitido e gravado em `.hermes/secrets/cloudflare-service-token.txt` (mode 600)
+- `omni-cli` (cron jobs, automation) usa o service token via `CLOUDFLARE_SERVICE_TOKEN` env var
+- Apache Basic Auth retained as fallback if Access is unavailable, with documented cutover in `docs/operations/edge-auth.md`
+- Validação: `curl -I https://portainer.atius.com.br/` retorna 302 → Cloudflare Access login page (sem 401 Basic Auth challenge)
+
+### Phase 17: M005 Observability + RWX
+
+**Goal:** Stack Prometheus + Grafana + Loki scraping K3s control plane + worker nodes + PM2 daemons + Jenkins + GDrive health, com alert routing pra canal preferido de Giovanni.
+
+**Requirements:** OBS-01, OBS-02, OBS-03, RWX-01, RWX-02
+
+**Success Criteria:**
+- Prometheus scraping K3s control plane + workers (kube-state-metrics, node-exporter)
+- Loki scraping PM2 daemons (via Promtail sidecar ou systemd journal) + jenkins controller + GDrive mount
+- Grafana com 4 dashboards: K3s HA, Portainer, PM2 daemons, Jenkins, GDrive health
+- AlertManager com rotas para Telegram/Hermes webhook pra: pod CrashLoopBackOff, etcd quorum loss, PM2 app offline >5min, GDrive quota >80%, disk >85%
+- RWX storage decision documentada (NFS em SRV-1 vs Longhorn distributed) + implementação
+- `omni srv observability status` reporta estado de cada exporter
+
+## Notes
+
+- Phase numbers 15-17 (continua contagem do v1.0)
+- M005 → M006 → M007 formam a sequência "live → harden → close follow-ups" no cluster K3s
+- Backlog (M001-M003 done, M004-M006 live, M007 planning) leaves M001's Phase 3-7 (FreeIPA, Samba, WireGuard, Keycloak) ainda pendente

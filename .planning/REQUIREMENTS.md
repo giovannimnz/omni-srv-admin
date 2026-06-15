@@ -159,6 +159,10 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
 | M005-JENKINS-PODMAN | Phase 13 / M005 / 14-05 | ✅ Jenkins docker-deps removed, validated on `https://jenkins.atius.com.br/` |
 | M005-JENKINS-AGENT | Phase 14 / M006 / 14-06 | Planned (Jenkins agent Deployment in K3s HA cluster) |
+| OBS-01, OBS-02, OBS-03 | Phase 17 / M007 | Planned (Prometheus + Grafana + Loki stack) |
+| CFL-01, CFL-02, CFL-03 | Phase 16 / M007 | Planned (Cloudflare Access policy + service token) |
+| OCI-01, OCI-02, OCI-03 | Phase 15 / M007 | Planned (OCI snapshot workflow + restore drill) |
+| RWX-01, RWX-02 | Phase 17 / M007 | Planned (RWX storage decision + ops) |
 | RGP-01, RGP-02, RGP-05 | Phase 14 / M006 / 14-01 | ✅ Versioned/status complete |
 | RGP-03, RGP-04, RGP-06, RGP-07 | Phase 14 / M006 | Planned (14-02 / 14-03 / 14-04) |
 | RGP-08, RGP-09, RGP-10 | Phase 14 / M006 / 14-05 | ✅ Jenkins docker-deps removed, validated on `https://jenkins.atius.com.br/` |

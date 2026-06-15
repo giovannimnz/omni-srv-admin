@@ -47,7 +47,8 @@ clara a ordem dos milestones e onde cada plano completo vive.
 |---|---:|---|---|---|---|
 | M004 | 12 | Omni Fleet Control Plane | `codex/omni-fleet-control-plane-m004` | `.planning/phases/12-omni-fleet-control-plane/` | Live implemented; repos, central DB, PgBouncer node path and DB-backed ops/config/slash registry validated |
 | M005 | 13 | K3s HA Cluster + Portainer | `codex/k3s-portainer-oci-plan` | `.planning/phases/13-k3s-ha-portainer-oci/` | Live: K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
-| M006 | 14 | SRV-1 Resource Governance + PM2 Hardening | `codex/phase14-resource-governor-14-01` | `.planning/phases/14-resource-governor-pm2-boot-hardening/` | In progress; 14-01 complete |
+| M006 | 14 | SRV-1 Resource Governance + PM2 Hardening | `codex/phase14-resource-governor-14-01` | `.planning/phases/14-resource-governor-pm2-boot-hardening/` | ✅ Shipped in v1.0 (2026-06-15) |
+| M007 | 15-17 | M005 Follow-ups: OCI snapshots, Cloudflare Access, observability, RWX | TBD | `.planning/phases/{15,16,17}-*/` | Planning (v1.1) |
 
 ## Separation Rule
 

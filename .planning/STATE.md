@@ -1,10 +1,10 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.0
-milestone_name: milestone
-status: Awaiting next milestone
-last_updated: "2026-06-15T12:19:55.022Z"
-last_activity: 2026-06-15 — Milestone v1.0 completed and archived
+milestone: v1.1
+milestone_name: M005 Follow-ups
+status: planning
+last_updated: "2026-06-15T12:25:00Z"
+last_activity: 2026-06-15 — M007 (v1.1) planning started: M005 follow-ups
 progress:
   total_phases: 14
   completed_phases: 1
@@ -23,7 +23,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix + M006 resource-governor/PM2 
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M005 K3s HA Cluster + Portainer is live (SRV-1/SRV-2/SRV-3 `Ready` control-plane+etcd over WireGuard `wg0`, Portainer CE deployed, `docker.atius.com.br` + `portainer.atius.com.br` return Portainer API status, edge Basic Auth active). M006 Resource Governor + PM2 Boot Hardening is in progress: 14-01 versioned governor/inviolable artifacts, install dry-run and status coverage. Next: 14-02 PM2 boot canonicalization, 14-03 boot/login-linger + cgroup validation, 14-04 rollback/runbook.
+**Current focus:** M007 (v1.1) planning — M005 follow-ups: OCI snapshot workflow, Cloudflare Access policy, observability stack (Prometheus + Grafana + Loki), RWX storage decision. M004/M005/M006 closed (v1.0 shipped 2026-06-15).
 
 ## Milestones
 
@@ -34,7 +34,8 @@ See also: .planning/MILESTONES.md
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
 | M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented; repos, central DB and DB-backed ops/config/slash registry validated |
 | M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
-| M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14, branch `codex/phase14-resource-governor-14-01`) | In progress; 14-01 complete |
+| M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14, branch `codex/phase14-resource-governor-14-01`) | ✅ Closed (v1.0 shipped 2026-06-15) |
+| M007 | M005 Follow-ups: OCI snapshots, Cloudflare Access, observability, RWX (Phases 15-17) | Planning |
 
 ## Active Branch Results
 
