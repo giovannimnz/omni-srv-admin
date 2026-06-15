@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-15)
 
 ## Corpus Check
-- 309 files · ~726,246 words
+- 309 files · ~731,441 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4651 nodes · 5243 edges · 443 communities (392 shown, 51 thin omitted)
+- 4663 nodes · 5255 edges · 442 communities (391 shown, 51 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `090ee573`
+- Built from commit: `2b896ac6`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -447,7 +447,6 @@
 - [[_COMMUNITY_Community 431|Community 431]]
 - [[_COMMUNITY_Community 432|Community 432]]
 - [[_COMMUNITY_Community 433|Community 433]]
-- [[_COMMUNITY_Community 434|Community 434]]
 - [[_COMMUNITY_Community 435|Community 435]]
 - [[_COMMUNITY_Community 436|Community 436]]
 - [[_COMMUNITY_Community 437|Community 437]]
@@ -458,7 +457,7 @@
 - [[_COMMUNITY_Community 442|Community 442]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (438 total, 52 thin omitted)` - 385 edges
+1. `Communities (443 total, 51 thin omitted)` - 391 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
@@ -484,7 +483,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (443 total, 51 thin omitted)
+## Communities (442 total, 51 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -519,8 +518,8 @@ Cohesion: 0.05
 Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.10
-Nodes (36): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+28 more)
+Cohesion: 0.06
+Nodes (52): CompletedProcess, Path, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts() (+44 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.05
@@ -1380,7 +1379,7 @@ Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
 
 ### Community 223 - "Community 223"
 Cohesion: 0.01
-Nodes (385): Communities (438 total, 52 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+377 more)
+Nodes (391): Communities (443 total, 51 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+383 more)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.50
@@ -2010,17 +2009,13 @@ Nodes (4): vscode-profile/.github/vscode-settings/settings.json, ast_hash, mtime
 Cohesion: 0.12
 Nodes (15): Goal, Motivation, Next, Out of Scope, Performance, Phase 14 Plan 06: Jenkins Agent on K3s (M005 extension), Risks, Success Criteria (+7 more)
 
-### Community 434 - "Community 434"
-Cohesion: 0.18
-Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
-
 ### Community 435 - "Community 435"
 Cohesion: 0.12
 Nodes (15): Accomplishments, Backups, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory + CLI, Issues Encountered, Live (systemd + podman) (+7 more)
 
 ### Community 436 - "Community 436"
-Cohesion: 0.15
-Nodes (12): 1. Cold Start Smoke Test (resource-governor services up from scratch), 2. Timer-triggered Inviolable Watchdog, 3. Resource-Governor Status Drift Report, 4. Direct Cgroup Patcher Reads runtime override, 5. Slices (omni-builds/interactive/transfers) Match Profile, 6. Jenkins Live on https://jenkins.atius.com.br/ (14-05), 7. Jenkins systemd Unit Has No Docker-Orphans (14-05), 8. Apps Tracked in omni-srv-admin Registry (14-05+inventory) (+4 more)
+Cohesion: 0.11
+Nodes (18): 10. PM2 Apps Online + Critical Ports Listening (14-02/14-03), 11. Cgroup Profile Consistent (14-03), 12. Post-Boot Checklist + Rollback in Docs (14-04), 13. Obsidian Result Note (14-04), 14. App Registry Tracked (14-05+inventory), 1. Cold Start Smoke Test (resource-governor services up from scratch), 2. Timer-triggered Inviolable Watchdog, 3. Resource-Governor Status Drift Report (+10 more)
 
 ### Community 437 - "Community 437"
 Cohesion: 0.13
@@ -2047,19 +2042,17 @@ Cohesion: 0.52
 Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
 
 ## Knowledge Gaps
-- **2968 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+2963 more)
+- **2980 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+2975 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **51 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (438 total, 52 thin omitted)` connect `Community 223` to `Community 284`?**
+- **Why does `Communities (443 total, 51 thin omitted)` connect `Community 223` to `Community 284`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `_ssh_candidates()` connect `Community 8` to `Community 434`?**
-  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3172 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3184 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.05012531328320802 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
@@ -2068,3 +2061,5 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.07419712070874862 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._

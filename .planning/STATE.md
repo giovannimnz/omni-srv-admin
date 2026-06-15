@@ -1,3 +1,18 @@
+---
+gsd_state_version: 1.0
+milestone: v1.0
+milestone_name: milestone
+status: Awaiting next milestone
+last_updated: "2026-06-15T12:19:55.022Z"
+last_activity: 2026-06-15 — Milestone v1.0 completed and archived
+progress:
+  total_phases: 14
+  completed_phases: 1
+  total_plans: 27
+  completed_plans: 12
+  percent: 7
+---
+
 # State: Omni Srv Admin (omni-srv-admin)
 
 **Last updated:** 2026-06-15 after Phase 14 / 14-01 execution and main alignment with origin/main
@@ -75,10 +90,12 @@ See also: .planning/MILESTONES.md
 ## M001 Completion
 
 ### Completed Phases
+
 - Phase 1: Preparação do Host ✅ (2026-04-19)
 - Phase 2: Migração Apache2 ✅ (2026-04-19)
 
 ### Backlog (Phases 3-7)
+
 - Phase 3: FreeIPA Server Container — planejamento pendente
 - Phase 4: Samba Domain Member — depende Phase 3
 - Phase 5: Migração WireGuard + CoreDNS — depende Phase 3
@@ -115,3 +132,14 @@ See also: .planning/MILESTONES.md
 - Push policy: fork push livre após audit
 - GDrive quota: 5TB total, ~144GB usado, ~4.7TB livre
 - 2026-06-15: main local aligned with origin/main via merge. 5 docs/m005-* branches ready for archival. M006 stays in-progress on phase14 branch.
+
+## Current Position
+
+Phase: Milestone v1.0 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-15 — Milestone v1.0 completed and archived
+
+## Operator Next Steps
+
+- Start the next milestone with /gsd-new-milestone
