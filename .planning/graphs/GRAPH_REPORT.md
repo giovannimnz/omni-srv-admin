@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-15)
 
 ## Corpus Check
-- 275 files · ~734,848 words
+- 277 files · ~741,897 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 3531 nodes · 3980 edges · 290 communities (238 shown, 52 thin omitted)
+- 3560 nodes · 4030 edges · 291 communities (240 shown, 51 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 43 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `4c054c2a`
+- Built from commit: `a2d931fa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -303,9 +303,10 @@
 - [[_COMMUNITY_Community 287|Community 287]]
 - [[_COMMUNITY_Community 288|Community 288]]
 - [[_COMMUNITY_Community 289|Community 289]]
+- [[_COMMUNITY_Community 290|Community 290]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (290 total, 52 thin omitted)` - 237 edges
+1. `Communities (290 total, 50 thin omitted)` - 239 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
@@ -319,23 +320,23 @@
 ## Surprising Connections (you probably didn't know these)
 - `deploy_list()` --calls--> `list_projects()`  [INFERRED]
   cli/omni/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
-- `sync_cmd()` --calls--> `project_exists()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
 - `sync_cmd()` --calls--> `run_sync()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
 - `detect_cmd()` --calls--> `run_detect()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
 - `deploy_cmd()` --calls--> `run_deploy()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
+- `release_generate()` --calls--> `generate_release_notes()`  [INFERRED]
+  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/release_notes.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (290 total, 52 thin omitted)
+## Communities (291 total, 51 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.07
-Nodes (36): containers(), discover(), handle_error(), manuals(), manuals_generate(), manuals_list(), manuals_record(), manuals_update() (+28 more)
+Cohesion: 0.08
+Nodes (26): cli(), containers(), discover(), handle_error(), main(), manuals(), manuals_update(), _print_dict() (+18 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.12
@@ -366,8 +367,8 @@ Cohesion: 0.05
 Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.06
-Nodes (52): CompletedProcess, Path, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts() (+44 more)
+Cohesion: 0.10
+Nodes (36): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+28 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.05
@@ -442,8 +443,8 @@ Cohesion: 0.07
 Nodes (26): 1️⃣ Period Choice Logic (CRITICAL), 2️⃣ Signal Fetching (CRITICAL), 3️⃣ Trade Execution (IMPORTANT), 4️⃣ Database Integration (IMPORTANT), 📞 Bloqueadores Conhecidos, 📋 Checklist Geral da Fase, Config Pytest (`pytest.ini`), 🎯 Definição de "Done" (+18 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.09
-Nodes (22): backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy(), deploy_list() (+14 more)
+Cohesion: 0.08
+Nodes (25): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+17 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.08
@@ -482,8 +483,8 @@ Cohesion: 0.09
 Nodes (21): Active Context: Starboy Postgres, Bloqueadores Conhecidos, Comandos PM2 de Referência, Código Modificado (Phase 2.1), Decisões Ativas, Documentação Criada, Fase Imediata: VALIDAÇÃO TRADINGVIEW, Fase Secundária: TESTES E VALIDAÇÃO (+13 more)
 
 ### Community 37 - "Community 37"
-Cohesion: 0.50
-Nodes (4): cli(), main(), fork-sync — gestão unificada de forks (sync, deploy, versionamento)., Entry point console_scripts.
+Cohesion: 0.18
+Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
 
 ### Community 38 - "Community 38"
 Cohesion: 0.09
@@ -534,12 +535,12 @@ Cohesion: 0.11
 Nodes (17): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Key Audit Findings, Known Stubs (+9 more)
 
 ### Community 50 - "Community 50"
-Cohesion: 0.18
-Nodes (19): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+11 more)
+Cohesion: 0.21
+Nodes (17): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+9 more)
 
 ### Community 51 - "Community 51"
-Cohesion: 0.19
-Nodes (17): ensure_manuals_dir(), generate_manual(), get_manual_path(), list_manuals(), manual_exists(), manuals — geração e versionamento de manuais de atualização por projeto.  Cada p, Atualiza seção específica do manual (append)., Adiciona entrada ao histórico do manual após sync. (+9 more)
+Cohesion: 0.13
+Nodes (23): ensure_manuals_dir(), generate_manual(), get_manual_path(), list_manuals(), manual_exists(), manuals — geração e versionamento de manuais de atualização por projeto.  Cada p, Atualiza seção específica do manual (append)., Adiciona entrada ao histórico do manual após sync. (+15 more)
 
 ### Community 52 - "Community 52"
 Cohesion: 0.11
@@ -618,8 +619,8 @@ Cohesion: 0.13
 Nodes (14): 15/02/2026, 16/02/2026, Arquivos Criados/Modificados, Correções DIVAP (16/02/2026), Descobertas Técnicas, Fórmulas Confirmadas (engenharia reversa), Implementation Plan, Limitações Conhecidas (+6 more)
 
 ### Community 71 - "Community 71"
-Cohesion: 0.18
-Nodes (12): _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks)., Return False for configs explicitly paused/disabled., Lista todos os projetos com sync.yaml., Detecta se há .gitmodules ao lado do sync.yaml (submódulo opcional)., doctor_cmd() (+4 more)
+Cohesion: 0.22
+Nodes (10): _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks)., Return False for configs explicitly paused/disabled., Lista todos os projetos com sync.yaml., Detecta se há .gitmodules ao lado do sync.yaml (submódulo opcional)., projects_list() (+2 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.14
@@ -810,8 +811,8 @@ Cohesion: 0.20
 Nodes (9): Configuration, Frameworks, Infrastructure, Key Dependencies, Key Dependencies, Languages, Platform Requirements, Runtime (+1 more)
 
 ### Community 119 - "Community 119"
-Cohesion: 0.15
-Nodes (17): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., deploy_cmd(), detect_cmd(), _fork_repo_slug(), projects_show(), Mostra detalhes de um projeto (sync.yaml + deploy.yaml se existir). (+9 more)
+Cohesion: 0.10
+Nodes (27): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., deploy_cmd(), detect_cmd(), doctor_cmd(), _fork_repo_slug(), output() (+19 more)
 
 ### Community 120 - "Community 120"
 Cohesion: 0.20
@@ -1227,7 +1228,7 @@ Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
 
 ### Community 223 - "Community 223"
 Cohesion: 0.01
-Nodes (237): Communities (290 total, 52 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+229 more)
+Nodes (239): Communities (290 total, 50 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+231 more)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.50
@@ -1262,8 +1263,8 @@ Cohesion: 0.50
 Nodes (4): Angular, Dicas Específicas de Frameworks, React, Vue
 
 ### Community 232 - "Community 232"
-Cohesion: 0.83
-Nodes (3): load_config(), main(), run()
+Cohesion: 0.38
+Nodes (13): Path, load_config(), main(), print_direct_cgroups(), print_pm2_boot_refs(), print_resource_units(), print_slice_properties(), print_stuck_jobs() (+5 more)
 
 ### Community 233 - "Community 233"
 Cohesion: 0.67
@@ -1271,31 +1272,39 @@ Nodes (3): Applicable ASVS Categories, Known Threat Patterns for FreeIPA, Securi
 
 ### Community 284 - "Community 284"
 Cohesion: 0.18
-Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-14), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
+Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-15), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 287 - "Community 287"
 Cohesion: 0.33
 Nodes (6): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply(), Dry-run de todos os projetos ativos, com automerge seguro opcional., sync_all_cmd()
 
+### Community 288 - "Community 288"
+Cohesion: 0.15
+Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
+
+### Community 289 - "Community 289"
+Cohesion: 0.83
+Nodes (3): srv1-fix-network.sh script, fail(), log()
+
 ## Knowledge Gaps
-- **2145 isolated node(s):** `monitor.sh script`, `scan.sh script`, `model-history.sh script`, `Path`, `Any` (+2140 more)
+- **2157 isolated node(s):** `monitor.sh script`, `scan.sh script`, `model-history.sh script`, `Path`, `Any` (+2152 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **52 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **51 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (290 total, 52 thin omitted)` connect `Community 223` to `Community 284`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
-- **Why does `run_sync()` connect `Community 15` to `Community 0`, `Community 119`, `Community 287`?**
+- **Why does `Communities (290 total, 50 thin omitted)` connect `Community 223` to `Community 284`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
+- **Why does `run_sync()` connect `Community 15` to `Community 119`, `Community 287`?**
+  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `_ssh_candidates()` connect `Community 8` to `Community 37`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Are the 3 inferred relationships involving `run_sync()` (e.g. with `run_sync_all()` and `load_project()`) actually correct?**
   _`run_sync()` has 3 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `monitor.sh script`, `scan.sh script`, `model-history.sh script` to the rest of the system?**
-  _2341 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _2352 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.06827880512091039 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07671957671957672 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.11901306240928883 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._

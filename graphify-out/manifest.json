@@ -1,7 +1,7 @@
 {
   ".planning/config.json": {
-    "mtime": 1781476050.7821422,
-    "ast_hash": "a56036f94fdd4a7b920df048eec99359",
+    "mtime": 1781519921.128949,
+    "ast_hash": "09b5f2a7f766bb5988d965c728a3286d",
     "semantic_hash": ""
   },
   "antivirus/monitor.sh": {
@@ -55,13 +55,13 @@
     "semantic_hash": ""
   },
   "cli/omni/remote_ops.py": {
-    "mtime": 1781352150.6122055,
+    "mtime": 1781519921.1469488,
     "ast_hash": "1e9a51700beda9a560572308ee0a472c",
     "semantic_hash": ""
   },
   "cli/omni/srv1_ops.py": {
-    "mtime": 1781337885.9511578,
-    "ast_hash": "71aeb59f7714d688049155eb8110d2f2",
+    "mtime": 1781519921.1478446,
+    "ast_hash": "27baece3a464a918a27f9231988c2834",
     "semantic_hash": ""
   },
   "cli/omni/xrdp_abnt2.py": {
@@ -75,28 +75,28 @@
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/install.sh": {
-    "mtime": 1781373904.1585658,
+    "mtime": 1781519921.1499488,
     "ast_hash": "cee6628f0fe4f74811d0a9e3605e24ff",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/repair.sh": {
-    "mtime": 1781373904.1605656,
+    "mtime": 1781519921.1499488,
     "ast_hash": "ad0ca14c9a6a867ada923337dc413515",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/scripts/dark-themectl.sh": {
-    "mtime": 1781379185.866911,
+    "mtime": 1781519921.1509488,
     "ast_hash": "c30801df291f85bb233ba46b1b04c2ca",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/uninstall.sh": {
-    "mtime": 1781373904.1625657,
+    "mtime": 1781519921.1509488,
     "ast_hash": "4a230360ba723d9b63ecff588287dcc1",
     "semantic_hash": ""
   },
   "modules/fleet-autoclean/scripts/fleet-autoclean.sh": {
-    "mtime": 1781350461.6432056,
-    "ast_hash": "8411a3cb1dcf34e0024de5db9827e27a",
+    "mtime": 1781519921.207175,
+    "ast_hash": "779d8c9455b7de0058c2ffabe5af7943",
     "semantic_hash": ""
   },
   "modules/fleet-backup/scripts/install-fleet-backup.sh": {
@@ -380,7 +380,7 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/inviolable-watchdog.sh": {
-    "mtime": 1781339088.4515543,
+    "mtime": 1781519921.2079487,
     "ast_hash": "fcb2f7798225da494b0a53636bcc0f81",
     "semantic_hash": ""
   },
@@ -400,13 +400,13 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-cgroup-init.sh": {
-    "mtime": 1781339223.2171793,
-    "ast_hash": "346fdc03a693ef5876fc4d33294d33d0",
+    "mtime": 1781519921.2079487,
+    "ast_hash": "3360a0313e9695cdf33cc790318a3474",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-patcher.py": {
-    "mtime": 1781338559.872088,
-    "ast_hash": "065ec8927dbe04c15a08d1f37c1f6cd9",
+    "mtime": 1781519921.2079487,
+    "ast_hash": "3e99309cc15e7288f88f4cd6f8ea64b0",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-snapshot.py": {
@@ -415,12 +415,12 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-status.py": {
-    "mtime": 1781337911.2420788,
-    "ast_hash": "fdb34522b6acb06ae6492b91b2fd3129",
+    "mtime": 1781519921.2079487,
+    "ast_hash": "f3c20cfddcaf8980438d5787fb852456",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-watchdog.py": {
-    "mtime": 1781338474.9613411,
+    "mtime": 1781519921.2079487,
     "ast_hash": "94349fcb5f18a56ea740386b520aca36",
     "semantic_hash": ""
   },
@@ -430,7 +430,7 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/sync-vault.sh": {
-    "mtime": 1781383280.4847565,
+    "mtime": 1781519921.2079487,
     "ast_hash": "240f65c69828ef860fc8db69636a2157",
     "semantic_hash": ""
   },
@@ -475,8 +475,8 @@
     "semantic_hash": ""
   },
   ".planning/MILESTONES.md": {
-    "mtime": 1781389085.708464,
-    "ast_hash": "05562f64179338f7f1badd8d391d1751",
+    "mtime": 1781519921.127949,
+    "ast_hash": "d8385e61459f8e3c28b4ef83bfa8832d",
     "semantic_hash": ""
   },
   ".planning/PROJECT.md": {
@@ -485,18 +485,18 @@
     "semantic_hash": ""
   },
   ".planning/REQUIREMENTS.md": {
-    "mtime": 1781389200.4501228,
-    "ast_hash": "7003258989a46ee854ab29070000aa8a",
+    "mtime": 1781519921.127949,
+    "ast_hash": "48ae7d44ae3ed610200ea8789e83b6dc",
     "semantic_hash": ""
   },
   ".planning/ROADMAP.md": {
-    "mtime": 1781389085.710464,
-    "ast_hash": "17217b32fb1efca66c9478a53ba23b2d",
+    "mtime": 1781519921.127949,
+    "ast_hash": "7c8b3503fdb9e151d9de65b9c9420bb1",
     "semantic_hash": ""
   },
   ".planning/STATE.md": {
-    "mtime": 1781389085.710464,
-    "ast_hash": "46d281200b8d93f19f429af4385934c8",
+    "mtime": 1781519921.128949,
+    "ast_hash": "93bac2138d2528f2c0a42af88a17c0dc",
     "semantic_hash": ""
   },
   ".planning/codebase/ARCHITECTURE.md": {
@@ -700,48 +700,48 @@
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-PLAN.md": {
-    "mtime": 1781339970.4110656,
-    "ast_hash": "fbfb5c47b04f1cfc7fc6ebb63f79e523",
+    "mtime": 1781519921.144949,
+    "ast_hash": "8abd59a536be0e300ef1b88d01630ca8",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-02-PLAN.md": {
-    "mtime": 1781339970.4140656,
-    "ast_hash": "53c210f0b94546668c0576ea6578f610",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "59f81236cecc87c22004f972bacb37b3",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-03-PLAN.md": {
-    "mtime": 1781339970.4150655,
-    "ast_hash": "1c9419c66ae2c80d9782ede8bdcc537a",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "d69fc57fa53786c5068d2db998c2d02a",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-04-PLAN.md": {
-    "mtime": 1781339970.4150655,
-    "ast_hash": "c170210a5fb32997ed6c30c1d66ddbbc",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "36baa6560e76951198163db3e13af5b5",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-CONTEXT.md": {
-    "mtime": 1781339970.4100657,
-    "ast_hash": "f44adf668fe4656f1cfcc4d36040ab16",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "bcf647dc244f02fd142c5b9b1e1a3f8e",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-PLAN-CHECK.md": {
-    "mtime": 1781340010.0169523,
+    "mtime": 1781519921.1469488,
     "ast_hash": "5ed6abe2e829c9ebebef991015d4f55c",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-PLAN.md": {
-    "mtime": 1781339970.4110656,
-    "ast_hash": "badc1f07142e83013ec3620bc039f3bf",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "dff9cd844e2d70940788cc9de6948318",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-RESEARCH.md": {
-    "mtime": 1781339970.4110656,
-    "ast_hash": "dbdc5289d2129473382b853cb00be1f5",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "b1da5186f17c082c2b65f899d207ee43",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-VALIDATION.md": {
-    "mtime": 1781339970.4150655,
-    "ast_hash": "5781caaaba21f6c3f888aa6f5c55b261",
+    "mtime": 1781519921.1469488,
+    "ast_hash": "f17d96be71bb8e4c8ad1b8c5c3f2d829",
     "semantic_hash": ""
   },
   ".planning/research/ARCHITECTURE.md": {
@@ -785,7 +785,7 @@
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/README.md": {
-    "mtime": 1781379135.9210584,
+    "mtime": 1781519921.1479487,
     "ast_hash": "43c15af4446182d5538c44fc490010f4",
     "semantic_hash": ""
   },
@@ -870,7 +870,7 @@
     "semantic_hash": ""
   },
   "docs/operations/fleet-autoclean.md": {
-    "mtime": 1781352182.82311,
+    "mtime": 1781519921.1509488,
     "ast_hash": "ddf1374dc1b2b3b2e25d180826fb3a4d",
     "semantic_hash": ""
   },
@@ -880,13 +880,13 @@
     "semantic_hash": ""
   },
   "docs/operations/resource-governor.md": {
-    "mtime": 1781339158.652359,
-    "ast_hash": "e628692bf6c8006e821c81b8164fb6dd",
+    "mtime": 1781519921.1509488,
+    "ast_hash": "2b930049c068e091a4b384763f5fd991",
     "semantic_hash": ""
   },
   "docs/operations/srv1-ops.md": {
-    "mtime": 1781350677.8295662,
-    "ast_hash": "04d301d43d5737284c5748161f25712a",
+    "mtime": 1781519921.1509488,
+    "ast_hash": "7dcbc57f4050093227224c171b765e6b",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-1.yaml": {
@@ -895,12 +895,12 @@
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-2.yaml": {
-    "mtime": 1781352182.8251102,
+    "mtime": 1781519921.2059486,
     "ast_hash": "d460c7cdc4003cd9960cdbb4e0db90fb",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-3.yaml": {
-    "mtime": 1781350475.6551642,
+    "mtime": 1781519921.2059486,
     "ast_hash": "3f12f267005ed87d93b5a549cf433e7a",
     "semantic_hash": ""
   },
@@ -930,8 +930,8 @@
     "semantic_hash": ""
   },
   "modules/fleet-autoclean/README.md": {
-    "mtime": 1781350461.6432056,
-    "ast_hash": "501c2d3d14affeef1f095f32c99c8665",
+    "mtime": 1781519921.2069488,
+    "ast_hash": "f04a6f302a097bdb72b56ceff6d71229",
     "semantic_hash": ""
   },
   "modules/fleet-backup/README.md": {
@@ -1100,18 +1100,18 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/README.md": {
-    "mtime": 1781315786.2931619,
-    "ast_hash": "8da3ad8772907fba5ec22e2b292232b5",
+    "mtime": 1781519921.2073255,
+    "ast_hash": "3d61d16222ace167238d06eec4e08c2b",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/deploy.yaml": {
-    "mtime": 1780642991.9393396,
-    "ast_hash": "733dbf121f4afa9d022c2a408c7a66bf",
+    "mtime": 1781519921.2073255,
+    "ast_hash": "2341beac7da9b0e6674f696fe7712916",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/sync.yaml": {
-    "mtime": 1781328020.4038477,
-    "ast_hash": "0ddff9f098dae52b79266c9b8761bdd8",
+    "mtime": 1781519921.2073255,
+    "ast_hash": "c63064614645487137bf9d4f19ee7662",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/bruno/sync.yaml": {
@@ -1495,43 +1495,53 @@
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/config_files/omni-network-error.svg": {
-    "mtime": 1781379081.7572184,
+    "mtime": 1781519921.1499488,
     "ast_hash": "96f98dc5dec762ecd435376781f09bd2",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/config_files/omni-network-ok.svg": {
-    "mtime": 1781379081.7562184,
+    "mtime": 1781519921.1499488,
     "ast_hash": "7c1dbd14ae82f7800e9e3b20c50a8bf7",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/config_files/omni-network-wired.svg": {
-    "mtime": 1781379081.7572184,
+    "mtime": 1781519921.1499488,
     "ast_hash": "aa22c8a3207f59ef215d253eccea27df",
     "semantic_hash": ""
   },
   ".planning/graphs/.last-build-snapshot.json": {
-    "mtime": 1781487641.4687126,
-    "ast_hash": "41a8c76ee2836c466d01683341ba3e21",
+    "mtime": 1781519928.3649266,
+    "ast_hash": "1805dbecac9cfb40c4398545fc2d3624",
     "semantic_hash": ""
   },
   ".planning/graphs/.last-build-status.json": {
-    "mtime": 1781507644.2264452,
-    "ast_hash": "ad0dea3061bbf2e6b6a4a2c291ddd4b6",
+    "mtime": 1781519930.7429192,
+    "ast_hash": "f131a6db65097c29738c7ea02bd6d4d2",
     "semantic_hash": ""
   },
   ".planning/graphs/graph.json": {
-    "mtime": 1781487641.4608996,
-    "ast_hash": "41a8c76ee2836c466d01683341ba3e21",
+    "mtime": 1781519928.3569267,
+    "ast_hash": "1805dbecac9cfb40c4398545fc2d3624",
     "semantic_hash": ""
   },
   ".planning/graphs/GRAPH_REPORT.md": {
-    "mtime": 1781487641.466828,
-    "ast_hash": "c81cd713a693411c9561b67d9bbd1be1",
+    "mtime": 1781519928.362412,
+    "ast_hash": "8471fea6d6c3dbaae3c2eced3ea490e2",
     "semantic_hash": ""
   },
   ".planning/graphs/graph.html": {
-    "mtime": 1781487641.4642854,
-    "ast_hash": "4f5255b376cffe896cc3153e05a1bbeb",
+    "mtime": 1781519928.3599267,
+    "ast_hash": "a5eaa86bcda7068c22dbfccfff8551b6",
+    "semantic_hash": ""
+  },
+  "modules/srv1-network-watchdog/srv1-fix-network.sh": {
+    "mtime": 1781519921.2078052,
+    "ast_hash": "74f9e08ea9cab13f82caae491387853f",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md": {
+    "mtime": 1781519921.145481,
+    "ast_hash": "9ef271e796b2b2fb81cfc59a92ef7de8",
     "semantic_hash": ""
   }
 }
