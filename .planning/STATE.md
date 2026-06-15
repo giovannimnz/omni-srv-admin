@@ -55,6 +55,7 @@ See also: .planning/MILESTONES.md
 | Portainer | Portainer CE `2.39.3` deployed via Helm, ClusterIP + local port-forward | ✅ |
 | Edge | `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status | ✅ |
 | Backups | Critical local backups + etcd post-bootstrap snapshot | ✅ |
+| Gate review | `13-GATE-REVIEW-2026-06-14.md` + `13-FALLBACK-PTP-2026-06-14.md` + `13-OCI-ROLLBACK-PATH-2026-06-14.md` + `13-RESTORE-DRILL-2026-06-14.md` | ✅ (docs/m005-gate-review-20260614) |
 | Follow-up | Observability, Cloudflare Access, formal OCI snapshot IDs | Open |
 
 ## M006 Progress Summary
