@@ -227,13 +227,15 @@
 
 **Goal:** Criar a base operacional multi-host antes de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer, heartbeat/status, registry de programas, version/update plans, licenças sem secrets, auditoria e contrato futuro com Podman/K3s.
 
-**Status:** CONTRACT IMPLEMENTED ON BRANCH (2026-06-13)
+**Status:** LIVE IMPLEMENTED / VALIDATED ON BRANCH (2026-06-13)
 
 **Canonical branch:** `codex/omni-fleet-control-plane-m004`
 
 **Phase:** 12
 
 **Full artifacts:** `.planning/phases/12-omni-fleet-control-plane/` on the canonical branch.
+
+**Branch result:** `codex/omni-fleet-control-plane-m004` has the full Phase 12 plan and validated live foundation: repos on SRV-1/SRV-2/SRV-3, central `DbOmniFleet` on SRV-1, nodes through PgBouncer, DB-backed ops/config/slash registry, local agent executor and fleet monitoring.
 
 ---
 
@@ -243,7 +245,7 @@
 
 **Status:** PREFLIGHT PASSED ON BRANCH; LIVE INSTALL GATED (2026-06-13)
 
-**Depends on:** M004 Fleet Control Plane, SRV-1 atualizado para Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI e firewall OCI aprovados.
+**Depends on:** M004 Fleet Control Plane healthy on SRV-1/SRV-2/SRV-3, SRV-1/SRV-2/SRV-3 em Ubuntu 24.04, preflight de rede/disco aprovado, snapshots/backup OCI, fechamento de ingress publico em cada conta OCI, firewall host em `wg0`, Cloudflare Tunnel token fora do git/log/vault e PTP fallback validado antes de production-ready.
 
 **Canonical branch:** `codex/k3s-portainer-oci-plan`
 
@@ -254,7 +256,38 @@
 **Branch result:** `codex/k3s-portainer-oci-plan` has preflight report
 `13-PREFLIGHT-2026-06-13.md`, safe templates under
 `modules/k3s-ha-portainer-oci/`, and live install remains blocked until OCI
-snapshots/firewall and Cloudflare Tunnel token are confirmed.
+snapshots/firewall, Cloudflare Tunnel token and PTP fallback gates are confirmed.
+
+---
+
+## M006: SRV-1 Resource Governance + PM2 Hardening
+
+**Goal:** Fechar as pendências pós-incidente do `resource-governor`, `inviolable-watchdog` e PM2 no `ATIUS-SRV-1`, transformando a correção live de 2026-06-13 em estado versionado, boot-safe e verificável sem derrubar ATS/Horistic/XRDP.
+
+**Status:** IN PROGRESS (14-01 complete, 2026-06-15)
+
+**Depends on:** Correção live documentada em `/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md`.
+
+**Phase:** 14
+
+**Full artifacts:** `.planning/phases/14-resource-governor-pm2-boot-hardening/`
+
+**Progress:** 1/4 execution plans complete (`14-01`).
+
+### Phase 14: Resource Governor + PM2 Boot Hardening
+
+**Goal:** Remover jobs systemd presos, consolidar startup PM2, validar boot/login-linger do governor e deixar rollback/runbook claro para operar o SRV-1 sem risco aos apps de trading e à sessão RDP.
+
+**Requirements:** RGP-01, RGP-02, RGP-03, RGP-04, RGP-05, RGP-06, RGP-07
+
+**Success Criteria:**
+- `systemctl --user list-jobs` não mantém `ats-pm2.service`, `horistic-pm2.service` ou `default.target` presos.
+- `resource-governor-cgroup-init.service`, `resource-governor-patcher.service`, `resource-governor-watchdog.service/timer` e `inviolable-watchdog.timer` sobem sem depender de `default.target`.
+- Cgroups diretos e slices systemd refletem o mesmo perfil base/conservador de CPU, I/O, memória, swap e weights.
+- Existe um caminho PM2 canônico e `pm2-ubuntu.service` não aponta para `/home/ubuntu/ecosystem.atius.js` inexistente.
+- `inviolable-watchdog` não relança apps por units quebrados, não tenta `nginx` ausente e não prende novos filhos XRDP/SSHD no cgroup do watchdog.
+- Cleanup de XRDP/PM2 é gateado para não derrubar RDP nem processos de trading sem aprovação explícita.
+- Runbook e rollback versionados apontam para o backup `/home/ubuntu/.backups/omni-srv-admin-resource-governor-20260613_050527`.
 
 ---
 

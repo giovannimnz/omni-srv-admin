@@ -11,56 +11,85 @@
     "nyquist_validation": true,
     "auto_advance": false
   },
-  "currentMilestone": "M005",
-  "currentPhase": "13",
+  "currentMilestone": "M006",
+  "currentPhase": "14",
   "milestones": [
     {
       "id": "M001",
       "name": "Domain Foundation",
       "status": "done",
       "completed": "2026-04-19",
-      "phases": ["01", "02"]
+      "phases": [
+        "01",
+        "02"
+      ]
     },
     {
       "id": "M002",
       "name": "Fork Sync Integration",
       "status": "done",
       "completed": "2026-06-05",
-      "phases": ["08"],
-      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv → omni-srv-admin"
+      "phases": [
+        "08"
+      ],
+      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv \u2192 omni-srv-admin"
     },
     {
       "id": "M003",
       "name": "Omni CLI Expansion",
       "status": "done",
       "completed": "2026-06-05",
-      "phases": ["09", "10", "11"],
+      "phases": [
+        "09",
+        "10",
+        "11"
+      ],
       "goal": "omni CLI unificada com subcomandos admin, deploy, backup",
       "depends_on": "M002"
     },
     {
       "id": "M004",
       "name": "Omni Fleet Control Plane",
-      "status": "contract-implemented",
+      "status": "live-implemented-validated",
       "phase": "12",
-      "phases": ["12"],
+      "phases": [
+        "12"
+      ],
       "branch": "codex/omni-fleet-control-plane-m004",
       "artifact_scope": "canonical_full_plan_on_branch",
-      "goal": "base operacional multi-host com install server/node, inventario, PostgreSQL central via PgBouncer, registry, versoes, licencas, auditoria e contrato futuro com Podman/K3s",
+      "goal": "base operacional multi-host com install server/node, inventario, PostgreSQL central via PgBouncer, ops scopes, configs/parametros no DB, slash registry, registry, versoes, licencas, auditoria, agente local, monitoramento e contrato futuro com Podman/K3s",
       "depends_on": "M003"
     },
     {
       "id": "M005",
       "name": "K3s HA Cluster + Portainer",
-      "status": "preflight-passed-live-gated",
+      "status": "execution-checkpoint-blocked-before-live-mutation",
       "phase": "13",
-      "phases": ["13"],
+      "phases": [
+        "13"
+      ],
       "branch": "codex/k3s-portainer-oci-plan",
       "artifact_scope": "canonical_full_plan_on_branch",
       "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br",
       "depends_on": "M004"
+    },
+    {
+      "id": "M006",
+      "name": "SRV-1 Resource Governance + PM2 Hardening",
+      "status": "in-progress",
+      "phase": "14",
+      "phases": [
+        "14"
+      ],
+      "artifact_scope": "local_full_plan",
+      "goal": "fechar pendencias pos-incidente do resource-governor, inviolable-watchdog e PM2 no ATIUS-SRV-1 sem derrubar ATS/Horistic/XRDP",
+      "depends_on": "live fix documented in /home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md"
     }
   ],
   "_created": "2026-05-06",
-  "_note": "Merged from domain-infrastructure .planning. domain-infrastructure is now a module of omni-srv-admin."
+  "_note": "Merged from domain-infrastructure .planning. domain-infrastructure is now a module of omni-srv-admin.",
+  "graphify": {
+    "enabled": true,
+    "auto_update": true
+  }
 }

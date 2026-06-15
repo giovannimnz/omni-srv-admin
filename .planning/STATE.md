@@ -1,14 +1,14 @@
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-13 after M004 implementation and M005 preflight
+**Last updated:** 2026-06-15 after Phase 14 / 14-01 execution
 
 ## Project Reference
 
-See: .planning/ROADMAP.md (M004/M005 branch matrix)
+See: .planning/ROADMAP.md (M004/M005 branch matrix + M006 resource-governor/PM2 hardening)
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M004 Fleet Control Plane contract is implemented on its branch; M005 K3s HA Cluster + Portainer preflight passed on its branch and live install is gated by OCI snapshots/firewall plus Cloudflare Tunnel token.
+**Current focus:** M006 Resource Governor + PM2 Boot Hardening is in progress. Plan 14-01 versioned the governor/inviolable artifacts, install dry-run and status coverage. Next up: 14-02 PM2 boot canonicalization and 14-03 boot/login-linger + cgroup validation, both gated before live PM2/XRDP mutation.
 
 ## Milestones
 
@@ -17,21 +17,27 @@ See also: .planning/MILESTONES.md
 | M001 | Domain Foundation (Phases 1-2) | ✅ Done |
 | M002 | Fork Sync Integration (Phase 8) | ✅ Done |
 | M003 | Omni CLI Expansion (Phases 9-11) | ✅ Done |
-| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Contract implemented |
-| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Preflight passed; live gates open |
+| M004 | Omni Fleet Control Plane (Phase 12, branch `codex/omni-fleet-control-plane-m004`) | Live implemented / validated |
+| M005 | K3s HA Cluster + Portainer (Phase 13, branch `codex/k3s-portainer-oci-plan`) | Execution checkpoint; blocked before live mutation |
+| M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14) | In progress; 14-01 complete |
 
 ## Active Branch Results
 
 | Milestone | Branch | Result |
 |---|---|---|
-| M004 | `codex/omni-fleet-control-plane-m004` | Fleet Control Plane contract, CLI dry-run commands, schema/config docs, vault notes |
-| M005 | `codex/k3s-portainer-oci-plan` | K3s/Portainer preflight, safe log cleanup, non-secret templates, vault notes |
+| M004 | `codex/omni-fleet-control-plane-m004` | Fleet Control Plane live foundation, central DB/PgBouncer node path, DB-backed ops/config/slash registry, local agent executor, fleet monitoring |
+| M005 | `codex/k3s-portainer-oci-plan` | K3s/Portainer execution checkpoint, preflight, network port map, safe log cleanup, non-secret templates, vault notes |
+| M006 | `codex/phase14-resource-governor-14-01` | 14-01 committed: governor/inviolable versioning, install/status coverage, PM2 stale-ref detection |
 
 ## Live Gates
 
 - M005 still requires OCI snapshots/backups for all 3 nodes.
-- M005 still requires OCI NSG/Security List confirmation for private K3s ports.
+- M005 still requires OCI public-ingress closure in each OCI account plus host firewall rules for private K3s ports over `wg0`.
 - M005 still requires Cloudflare Tunnel token supplied outside git/log/vault.
+- M005 still requires PTP fallback mesh design/validation before production-ready.
+- M006 live execution must not stop PM2 daemons, trading processes, XRDP, or stale user jobs without an explicit gate and current process snapshot.
+- M006 14-01 found current live stuck jobs: `default.target`, `ats-pm2.service`, `horistic-pm2.service`; these remain gated for 14-02/14-03.
+- M006 14-01 found `pm2-ubuntu.service` still references `/home/ubuntu/ecosystem.atius.js`; this remains gated for 14-02.
 
 ## M001 Completion
 

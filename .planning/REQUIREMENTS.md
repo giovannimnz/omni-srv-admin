@@ -119,6 +119,16 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 - [ ] **CFL-01**: Cloudflare Tunnel remoto publica `portainer.atius.com.br` via replicas `cloudflared` no cluster, token em Kubernetes Secret e fora do git.
 - [ ] **SEC-01**: OCI NSG/Security List e firewall local bloqueiam acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer.
 
+### SRV-1 Resource Governance + PM2 Hardening
+
+- [x] **RGP-01**: Units user do resource governor e inviolable watchdog devem iniciar sem depender de `default.target` quando este estiver bloqueado por jobs antigos.
+- [x] **RGP-02**: Limites de CPU, I/O, memória, swap e weights devem ser aplicados de forma consistente entre slices systemd e cgroups diretos, usando `resource-governor.env` e runtime override quando existir.
+- [ ] **RGP-03**: PM2 deve ter um caminho canônico de boot para ATS/Horistic, sem `pm2-ubuntu.service` apontando para arquivo inexistente e sem duplicar daemons de forma não intencional.
+- [ ] **RGP-04**: Jobs `ats-pm2.service`, `horistic-pm2.service` e `default.target` presos devem ser drenados ou substituídos por units corretos sem matar apps de trading ou APIs ativas.
+- [x] **RGP-05**: `inviolable-watchdog` deve relançar apps somente por ecosystems reais, ignorar serviços ausentes como `nginx` e evitar prender novos processos XRDP/SSHD no cgroup do watchdog.
+- [ ] **RGP-06**: Cleanup de XRDP/PM2 deve exigir gate operacional explícito e declarar se a ação derruba RDP, apenas pisca desktop ou não afeta a sessão.
+- [ ] **RGP-07**: Runbook, rollback e verificação pós-boot devem estar documentados, incluindo backup, comandos de validação e critérios de abort.
+
 ## Out of Scope
 
 | Feature | Reason |
@@ -143,17 +153,19 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| FCP-01 → FCP-10 | Phase 12 / M004 | Planned |
-| K3S-01 → K3S-05 | Phase 13 / M005 | Planned |
-| PRT-01 → PRT-02 | Phase 13 / M005 | Planned |
-| CFL-01, SEC-01 | Phase 13 / M005 | Planned |
+| FCP-01 → FCP-10 | Phase 12 / M004 | Live implemented / validated on branch |
+| K3S-01 → K3S-05 | Phase 13 / M005 | Execution checkpoint; live mutation gated |
+| PRT-01 → PRT-02 | Phase 13 / M005 | Execution checkpoint; live mutation gated |
+| CFL-01, SEC-01 | Phase 13 / M005 | Execution checkpoint; live mutation gated |
+| RGP-01, RGP-02, RGP-05 | Phase 14 / M006 / 14-01 | Versioned/status complete |
+| RGP-03, RGP-04, RGP-06, RGP-07 | Phase 14 / M006 | Planned |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 19 total
-- Mapped to phases: 58
+- v3 requirements: 26 total
+- Mapped to phases: 65
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after M004/M005 branch matrix update*
+*Last updated: 2026-06-15 after Phase 14 / 14-01 execution*
