@@ -41,10 +41,12 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 
 ### Middleware and containers
 - `integration/middleware/` — FastAPI/Go middleware assets and build files
-- `Dockerfile.fast` — local container customization
+- `runtime/model-detailed/` — live FastAPI middleware overrides used by `model-detailed-hotfix`
+- `Dockerfile.fastapi` — local container customization
 
 ### Infrastructure
 - `docker-compose.yml` — Docker Compose with `model-detailed` Python service
+- `podman-compose.yml` — current host Podman stack definition for `atius-ai-router`
 
 ### i18n — Portuguese Translation
 - `i18n/locales/pt.yaml` — Brazilian Portuguese backend translations (278 keys)

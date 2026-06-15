@@ -18,9 +18,11 @@ legacy_container_mirror: /home/ubuntu/GitHub/containers/Atius/router-ai-atius
 protected_paths:
   # Feature: middleware and custom container build chain
   - integration/middleware/
-  - Dockerfile.fast
+  - runtime/model-detailed/
+  - Dockerfile.fastapi
   # Feature: Docker Compose with middleware service
   - docker-compose.yml
+  - podman-compose.yml
   # Feature: i18n Brazilian Portuguese
   - i18n/locales/pt.yaml
   - i18n/i18n.go
