@@ -1,0 +1,14 @@
+[Unit]
+Description=SRV-1 network sanity check (fix Tailscale DNS hijack)
+Documentation=man:srv1-fix-network.sh
+After=network-online.target tailscaled.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/sudo /bin/bash /home/ubuntu/scripts/srv1-fix-network.sh
+User=ubuntu
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target
