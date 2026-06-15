@@ -29,6 +29,9 @@ omni srv1-ops run sync-vault
 omni srv1-ops run cleanup-local --dry-run
 omni srv1-ops run backup-gdrive
 omni srv1-ops run offload-dotbackups
+omni srv storage-audit all
+omni srv autoclean all
+omni srv autoclean all --apply
 ```
 
 ## Logs
@@ -73,6 +76,8 @@ Referência versionada:
 ```text
 modules/srv1-ops/systemd/*.service
 modules/srv1-ops/systemd/*.timer
+modules/fleet-autoclean/systemd/*.service
+modules/fleet-autoclean/systemd/*.timer
 ```
 
 Instalação live fica em:
@@ -100,5 +105,6 @@ modules/srv1-ops/configs/backup-map.yaml
 - `cleanup-local` deve ter `--dry-run` antes de execução real.
 - `omni srv1-ops resources install --dry-run` deve preceder instalação live.
 - `resources install` não para PM2, XRDP ou SSHD; ações de restart/stop continuam gateadas.
+- `omni srv autoclean` roda dry-run por padrão; execução real exige `--apply`.
 - `offload-dotbackups` usa copy → verify → delete.
 - Não aplicar delete-after-verify em diretórios vivos (`~/GitHub`, `~/.hermes`, `~/.config`).

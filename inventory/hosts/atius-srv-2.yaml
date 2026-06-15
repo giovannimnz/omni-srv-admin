@@ -10,7 +10,7 @@ access:
   vpn_ip: 10.1.1.2
 platform:
   provider: oracle-oci
-  os: ubuntu-22.04
+  os: ubuntu-24.04
   arch: arm64
 status: active
 modules: []
@@ -22,7 +22,10 @@ backup:
 cleanup:
   last_run: 2026-06-13
   disk_before: 93%
-  disk_after: 87%
-  action: k3s-preflight-log-cleanup
+  disk_after: 70%
+  action: post-upgrade-autoclean-and-verified-gdrive-offload
+  pending:
+    - review Docker volumes before any volume prune
+    - router is router-ai-zentrius under /home/ubuntu/docker/Atius/router-ai-zentrius, not router-ai-atius
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

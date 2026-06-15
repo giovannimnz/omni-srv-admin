@@ -1,0 +1,81 @@
+# lxpanel status panel. Managed by omni-srv-admin/dark-theme-ubuntu.
+
+Global {
+  edge=bottom
+  align=right
+  margin=0
+  widthtype=pixel
+  width=300
+  height=38
+  transparent=0
+  tintcolor=#101214
+  alpha=0
+  setdocktype=1
+  setpartialstrut=0
+  autohide=0
+  heightwhenhidden=0
+  usefontcolor=1
+  fontcolor=#f8fafc
+  background=1
+  backgroundfile=~/.config/lxpanel/LXDE/panel-background.xpm
+}
+Plugin {
+  type=space
+  Config {
+    Size=6
+  }
+}
+Plugin {
+  type=cpu
+  Config {
+  }
+}
+Plugin {
+  type=space
+  Config {
+    Size=4
+  }
+}
+Plugin {
+  type=xkb
+  Config {
+    Model=pc105
+    LayoutsList=br
+    VariantsList=abnt2
+    ToggleOpt=grp:shift_caps_toggle
+    KeepSysLayouts=1
+    DisplayType=0
+    FlagSize=3
+  }
+}
+Plugin {
+  type=tray
+  Config {
+  }
+}
+Plugin {
+  type=volume
+  Config {
+  }
+}
+Plugin {
+  type=dclock
+  Config {
+    ClockFmt=%R
+    TooltipFmt=%A %x
+    BoldFont=0
+    IconOnly=0
+    CenterText=0
+  }
+}
+Plugin {
+  type=launchbar
+  Config {
+    Button {
+      id=lxde-screenlock.desktop
+    }
+    Button {
+      id=lxde-logout.desktop
+    }
+  }
+}

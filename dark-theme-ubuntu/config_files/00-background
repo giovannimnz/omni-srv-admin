@@ -1,0 +1,28 @@
+# lxpanel full-width background panel. Managed by omni-srv-admin/dark-theme-ubuntu.
+
+Global {
+  edge=bottom
+  align=left
+  margin=0
+  widthtype=percent
+  width=100
+  height=38
+  transparent=0
+  tintcolor=#101214
+  alpha=0
+  setdocktype=1
+  setpartialstrut=1
+  autohide=0
+  heightwhenhidden=0
+  usefontcolor=1
+  fontcolor=#f8fafc
+  background=1
+  backgroundfile=~/.config/lxpanel/LXDE/panel-background.xpm
+}
+Plugin {
+  type=space
+  expand=1
+  Config {
+    Size=2
+  }
+}

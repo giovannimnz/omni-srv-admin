@@ -1,0 +1,10 @@
+[Unit]
+Description=Omni fleet storage audit timer
+
+[Timer]
+OnCalendar=*-*-* 08:20:00
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

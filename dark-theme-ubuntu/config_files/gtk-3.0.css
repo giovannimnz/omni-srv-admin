@@ -1,0 +1,17 @@
+* {
+  text-shadow: none;
+  -gtk-icon-shadow: none;
+}
+
+tooltip,
+tooltip.background {
+  color: #f8fafc;
+  background-color: #111318;
+  border-color: #30363d;
+}
+
+#lxpanel,
+.panel {
+  color: #f8fafc;
+  background-color: #05070a;
+}
