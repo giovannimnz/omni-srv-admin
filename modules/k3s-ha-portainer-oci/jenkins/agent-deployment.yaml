@@ -1,0 +1,106 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: jenkins
+  labels:
+    name: jenkins
+    managed-by: omni-srv-admin
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jenkins-agent
+  namespace: jenkins
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: jenkins-agent
+  namespace: jenkins
+  annotations:
+    managed-by: omni-srv-admin
+type: Opaque
+stringData:
+  jenkins-jnlp-url: "http://10.1.1.1:8085"
+  jenkins-secret: "REPLACE_ME_AT_APPLY_TIME"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: jenkins-quota
+  namespace: jenkins
+spec:
+  hard:
+    requests.cpu: "4"
+    requests.memory: "8Gi"
+    limits.cpu: "8"
+    limits.memory: "16Gi"
+    pods: "20"
+---
+# JNLP agent running jenkins/inbound-agent (Debian-based, official)
+# Uses containerd on K3s node; Podman-in-container sidecar pattern can be
+# added later per pod template in Jenkins controller.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jenkins-agent
+  namespace: jenkins
+  labels:
+    app: jenkins-agent
+    managed-by: omni-srv-admin
+    phase: 14-06
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: jenkins-agent
+  template:
+    metadata:
+      labels:
+        app: jenkins-agent
+    spec:
+      serviceAccountName: jenkins-agent
+      # On SRV-3 (ARM64) the image must support arm64. jenkins/inbound-agent
+      # is multi-arch; if pull fails, fall back to jenkins/jnlp-agent:arm64.
+      containers:
+        - name: jnlp
+          image: jenkins/inbound-agent:latest
+          imagePullPolicy: IfNotPresent
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              set -eu
+              echo "[agent] booting in cluster pod $$"
+              echo "[agent] JENKINS_AGENT_NAME=$${JENKINS_AGENT_NAME:-k3s-agent-$$(hostname)}"
+              echo "[agent] jnlp url=$${JENKINS_JNLP_URL}"
+              echo "[agent] waiting for jenkins controller on wg0..."
+              for i in $$(seq 1 30); do
+                if curl -sS --max-time 2 -o /dev/null -w "%{http_code}" "$${JENKINS_JNLP_URL}/login" 2>/dev/null | grep -qE "200|403"; then
+                  echo "[agent] controller reachable"
+                  break
+                fi
+                echo "[agent] attempt $$i/30..."
+                sleep 5
+              done
+              echo "[agent] Kubernetes plugin in Jenkins controller is required for live JNLP registration. Once installed + node template created, the controller will dynamically provision JNLP agents via pod templates and skip this static deployment."
+              sleep infinity
+          env:
+            - name: JENKINS_AGENT_NAME
+              value: "k3s-agent-static"
+            - name: JENKINS_JNLP_URL
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-agent
+                  key: jenkins-jnlp-url
+            - name: JENKINS_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: jenkins-agent
+                  key: jenkins-secret
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "4Gi"

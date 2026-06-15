@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-15)
 
 ## Corpus Check
-- 302 files · ~700,867 words
+- 305 files · ~720,588 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4549 nodes · 5148 edges · 436 communities (384 shown, 52 thin omitted)
+- 4600 nodes · 5196 edges · 438 communities (386 shown, 52 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `f1c98177`
+- Built from commit: `230facfc`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -449,9 +449,11 @@
 - [[_COMMUNITY_Community 433|Community 433]]
 - [[_COMMUNITY_Community 434|Community 434]]
 - [[_COMMUNITY_Community 435|Community 435]]
+- [[_COMMUNITY_Community 436|Community 436]]
+- [[_COMMUNITY_Community 437|Community 437]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (434 total, 52 thin omitted)` - 381 edges
+1. `Communities (443 total, 55 thin omitted)` - 387 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
@@ -477,7 +479,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (436 total, 52 thin omitted)
+## Communities (438 total, 52 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -512,8 +514,8 @@ Cohesion: 0.05
 Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.10
-Nodes (36): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+28 more)
+Cohesion: 0.06
+Nodes (52): CompletedProcess, Path, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts() (+44 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.05
@@ -708,8 +710,8 @@ Cohesion: 0.12
 Nodes (16): Codex channel integration, Documentation (fork-specific, PT-BR primary), Fork Sync — Atius Router, Frontend i18n, i18n — Portuguese Translation, Infrastructure, Merge Flow, Middleware and containers (+8 more)
 
 ### Community 57 - "Community 57"
-Cohesion: 0.17
-Nodes (16): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+8 more)
+Cohesion: 0.15
+Nodes (18): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+10 more)
 
 ### Community 58 - "Community 58"
 Cohesion: 0.19
@@ -764,8 +766,8 @@ Cohesion: 0.13
 Nodes (14): 15/02/2026, 16/02/2026, Arquivos Criados/Modificados, Correções DIVAP (16/02/2026), Descobertas Técnicas, Fórmulas Confirmadas (engenharia reversa), Implementation Plan, Limitações Conhecidas (+6 more)
 
 ### Community 71 - "Community 71"
-Cohesion: 0.15
-Nodes (14): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply(), _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks). (+6 more)
+Cohesion: 0.18
+Nodes (14): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., _detect_submodules(), list_projects(), _project_enabled() (+6 more)
 
 ### Community 72 - "Community 72"
 Cohesion: 0.14
@@ -1373,7 +1375,7 @@ Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
 
 ### Community 223 - "Community 223"
 Cohesion: 0.01
-Nodes (381): Communities (434 total, 52 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+373 more)
+Nodes (387): Communities (443 total, 55 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+379 more)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.50
@@ -1420,8 +1422,8 @@ Cohesion: 0.18
 Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-15), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 287 - "Community 287"
-Cohesion: 0.18
-Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
+Cohesion: 0.12
+Nodes (15): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory, Issues Encountered, Live (K8s manifests), Next Phase Readiness (+7 more)
 
 ### Community 288 - "Community 288"
 Cohesion: 0.15
@@ -2004,23 +2006,29 @@ Cohesion: 0.12
 Nodes (15): Goal, Motivation, Next, Out of Scope, Performance, Phase 14 Plan 06: Jenkins Agent on K3s (M005 extension), Risks, Success Criteria (+7 more)
 
 ### Community 434 - "Community 434"
-Cohesion: 0.52
-Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
+Cohesion: 0.50
+Nodes (4): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply()
+
+### Community 435 - "Community 435"
+Cohesion: 0.12
+Nodes (15): Accomplishments, Backups, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory + CLI, Issues Encountered, Live (systemd + podman) (+7 more)
+
+### Community 436 - "Community 436"
+Cohesion: 0.15
+Nodes (12): 1. Cold Start Smoke Test (resource-governor services up from scratch), 2. Timer-triggered Inviolable Watchdog, 3. Resource-Governor Status Drift Report, 4. Direct Cgroup Patcher Reads runtime override, 5. Slices (omni-builds/interactive/transfers) Match Profile, 6. Jenkins Live on https://jenkins.atius.com.br/ (14-05), 7. Jenkins systemd Unit Has No Docker-Orphans (14-05), 8. Apps Tracked in omni-srv-admin Registry (14-05+inventory) (+4 more)
 
 ## Knowledge Gaps
-- **2884 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+2879 more)
+- **2927 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+2922 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **52 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (434 total, 52 thin omitted)` connect `Community 223` to `Community 284`?**
+- **Why does `Communities (443 total, 55 thin omitted)` connect `Community 223` to `Community 284`?**
   _High betweenness centrality (0.014) - this node is a cross-community bridge._
-- **Why does `_ssh_candidates()` connect `Community 8` to `Community 287`?**
-  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3088 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3131 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
@@ -2029,3 +2037,5 @@ _Questions this graph is uniquely positioned to answer:_
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.07419712070874862 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
