@@ -37,11 +37,11 @@ See also: .planning/MILESTONES.md
 | M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
 | M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14, branch `codex/phase14-resource-governor-14-01`) | ✅ Closed (v1.0 shipped 2026-06-15) |
 | M007 | M005 Follow-ups: OCI snapshots, Cloudflare Access, observability, RWX (Phases 15-17) | Planning |
-| M007-ext | Ubuntu Pro ESM Apps — Google account link, fleet attach, sources DEB822, regression watchdog (Phase 18) | D18-06-A/B/C done; G18-1 (apt upgrade) awaiting operator |
-| M008 | Fleet Standardization — hostnames + chromium + dark theme (Phase 19) | ✅ Closed 2026-06-17 (commit on main) |
-| M008-b | Podman Networking Standardization (Phase 20) | ✅ Closed 2026-06-17 (commit `c0543a9de` on main) |
-| M009 | MT5 KVM Fleet Onboarding (Phase 21) | closed 2026-06-17 (commit on main) |
-| M010 | Horistic rename + rust/zellij (Phase 22) | IN PROGRESS — rename host + VPN/docs/vault; rust/cargo-binstall/zellij + node-exporter |
+| M007-ext | Ubuntu Pro ESM Apps — Phase 18 (Phase 18) | 18-01..18-05 closed; 18-06..18-09 pending G18-1 gate |
+| M008 | Fleet Standardization — hostnames + chromium + dark theme (Phase 19) | ✅ DONE 2026-06-17 (commit on main) |
+| M008-b | Podman Networking Standardization (Phase 20) | ✅ DONE 2026-06-17 (commit on main) |
+| M009 | MT5 KVM Fleet Onboarding (Phase 21) | ✅ DONE 2026-06-17 (commit on main) |
+| M010 | Horistic rename + rust/zellij (Phase 22) | ✅ DONE 2026-06-17 (commit on main) |
 
 ## Active Branch Results
 
@@ -168,10 +168,9 @@ Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audi
   - D18-06-B = (1) pro refresh suave + fallback detach → EXECUTED (caminho detach+reattach funcionou; D18-06-B sub-decisão "auto-habilita esm-* no attach" — confirmado em pro 37.2)
   - D18-06-C = paralelo via subagent nos 3 SRVs → EXECUTED (3 subagentes parallel, 134-253s cada)
 
-## Session Continuity (resumed 2026-06-17)
+## Session Continuity (resumed + closed 2026-06-17)
 
-- **Resume trigger:** gsd-resume-work skill
-- **Last action before resume:** Materialized podman-fleet-standardize as skill + omni-srv-admin module
+- **Last session:** 2026-06-17 — Phase 21 + 22 merged; M009/M010 closed.
   - Skill: `~/.hermes/skills/devops/podman-fleet-standardize/` (12 files)
   - Module: `~/GitHub/omni-srv-admin/modules/fleet/podman-network/` (12 files, commit `c0543a9de`)
   - CLI: `omni podman-network {drift,apply,smoke,standard}` registered in cli/omni/cli.py
@@ -193,7 +192,7 @@ Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audi
 
 ## Phase 21 — MT5 KVM Fleet Onboarding
 
-Status: IN PROGRESS (2026-06-17)
+Status: ✅ DONE (2026-06-17)
 
 | Item | Resultado |
 |---|---|
@@ -207,9 +206,9 @@ Status: IN PROGRESS (2026-06-17)
 | Pendência | Graphify final pós-mudanças + commit/push |
 
 
-## Phase 22 - Horistic rename + rust/zellij
+## Phase 22 — Horistic rename + rust/zellij
 
-Status: IN PROGRESS (2026-06-17)
+Status: ✅ DONE (2026-06-17)
 
 | Item | Resultado |
 |---|---|

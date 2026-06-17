@@ -1,6 +1,6 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M007 — M005 Follow-ups (v1.1)
+**Active Milestone:** M007-ext / M008 / M009 / M010 — DONE; M007 M005 Follow-ups (v1.1) pending
 **Milestone Goal:** Fechar os 4 follow-ups abertos de M005: OCI snapshots, Cloudflare Access, observability stack, RWX storage.
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 
@@ -391,14 +391,22 @@
 
 ### Phase 18: Ubuntu Pro ESM Apps - Google account link, fleet attach validation, regression watchdog
 
-**Goal:** [To be planned]
-**Requirements**: TBD
-**Depends on:** Phase 17
-**Plans:** 0 plans
+**Goal:** Ubuntu Pro ESM Apps — Google account link, fleet attach validation, regression watchdog.
+**Requirements**: ESM-01, ESM-02, ESM-03, ESM-04, ESM-05
+**Plans:** 9 plans
+**Status:** IN PROGRESS (18-01..18-05 closed; 18-06..18-09 pending operator gate G18-1)
 
 Plans:
 
-- [ ] TBD (run /gsd-plan-phase 18 to break down)
+- [x] 18-01 — XRDP display pool :1..14
+- [x] 18-02 — Camofox display reassign :97→:5
+- [x] 18-03 — VNC/noVNC port alignment
+- [x] 18-04 — Desktop file hotfix (xrdp-launch wrapper)
+- [x] 18-05 — Cron cleanup (atius-phase7 + horistic systemctl)
+- [ ] 18-06 — Ubuntu Pro token + attach (gate G18-1 pending)
+- [ ] 18-07 — ESM Apps install validation
+- [ ] 18-08 — Sources DEB822 migration
+- [ ] 18-09 — Regression watchdog
 
 ### Phase 21: Onboarding ATIUS-MT5-KVM-1/2 como hosts gerenciados
 
@@ -408,13 +416,15 @@ Plans:
 
 **Depends on:** Phase 20
 **Plans:** 1 plan
-**Status:** IN PROGRESS (started 2026-06-17)
+**Status:** ✅ DONE (2026-06-17)
+
+**Results:** Inventário, DB, VPN/CoreDNS, docs, vault e monitoramento completos para `atius-mt5-kvm-1` e `atius-mt5-kvm-2`.
 
 Plans:
 
 - [x] `21-PLAN.md` — plano separado e histórico operacional
-- [x] `21-04` — hostnames lowercase + zsh/Oh My Zsh + Rust + zellij aplicados e validados por subagentes paralelos
-- [ ] `21-02/03/05/06` — inventário+DB+VPN/docs+monitoramento+vault final
+- [x] hostnames lowercase + zsh/Oh My Zsh + Rust + zellij aplicados e validados por subagentes paralelos
+- [x] inventário + DB upsert + VPN/CoreDNS/docs + monitoramento
 
 ### Phase 22: Onboarding Horistic (rename + rust/zellij)
 
@@ -423,31 +433,19 @@ Plans:
 **Requirements:** HORSTC-01..HORSTC-11
 **Depends on:** Phase 21
 **Plans:** 1 plan
-**Status:** IN PROGRESS (started 2026-06-17)
+**Status:** ✅ DONE (2026-06-17)
+
+**Results:** `horistic-srv-1` renomeado para `horistic-srv`, toolchain fleet padrão (rustup 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3), node-exporter :9100, inventário/DB/DNS/vault/docs atualizados.
 
 Plans:
 
 - [x] 22-PLAN.md - plano separado com HORSTC-01..11
-- [x] host renomeado + toolchain instalada (rustup 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3, node-exporter)
-- [x] inventario omni + DB upsert + VPN/CoreDNS + vault sed + gbrain sync + network map v1.4.0
+- [x] host renomeado + toolchain instalada + node-exporter
+- [x] inventário omni + DB upsert + VPN/CoreDNS + vault sed + gbrain sync + network map v1.4.0
 
 ---
 
 ## Phase 8: Rebrand fork-sync submodule
-
-## Phase 9: Mission Guardian — Servidor 100% Auto-Guardado
-
-**Goal:** Mission Guardian daemon 24/7 que amostra 22 métricas a cada 60s em SQLite, auto-tune de cgroups, forecasting de disk fill, incident response playbooks, e agente DevOps/Redes "HoristicOps" treinando on-call.
-
-**Requirements:** MGR-01, MGR-02, MGR-03, MGR-04, MGR-05, MGR-06, MGR-07, MGR-08
-
-**Status:** PLANNED (2026-06-11)
-
-**Context:** Mission 4h srv1-monitor-mission identificou 8 gaps em monitoramento (gaps em tcp/fd/network, sem correlação temporal, sem agente de plantão, sem auto-balanceamento preditivo, disk fill sem forecasting, cleanup rc=124, logrotate quebrado). Tripla proteção commitada em `eaad0cc` (inviolable v2, 68 patterns, hysteresis, generic bucket). Esta phase evolui de reativo → proativo.
-
-**Research:** inline (researcher subagent 503; manual probes via execute_code)
-**Plans:** 5 (01=daemon core, 02=disk forecast + correlation, 03=auto-tune weights, 04=cleanup+logrotate, 05=HoristicOps agent)
-**Wave:** 1 = {01, 02, 03}, 2 = {04 ∥ 05}
 
 **Status:** ✅ COMPLETE (2026-06-05)
 
