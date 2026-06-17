@@ -74,7 +74,8 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 - **10.1.1.1** (este servidor): Atius apps (PM2: API, web, webhooks, bots, DIVAP), ~25 containers Docker, PostgreSQL 17, MongoDB, Apache2 com 60+ vhosts
 - **10.1.1.2**: WireGuard VPN + CoreDNS + Samba existente (será migrado para 10.1.1.1)
-- **10.1.1.3**: Apache2 para Horistic
+- **10.1.1.3**: atius-srv-3 (DNS canonico; `10.1.1.7` ainda e alias K3s/etcd)
+- **10.1.1.4**: Apache2 para Horistic
 - **Rede WireGuard**: 10.1.1.0/24
 - **Domínio**: atius.com.br no Cloudflare
 

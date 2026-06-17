@@ -6,8 +6,8 @@ status: complete
 hosts:
   - atius-srv-1 (10.1.1.1)
   - atius-srv-2 (10.1.1.2)
-  - atius-srv-3 (10.1.1.7)
-  - horistic-srv-1 (10.1.1.3 / 163.176.232.119)
+  - atius-srv-3 (10.1.1.3; 10.1.1.7 K3s/etcd alias)
+  - horistic-srv-1 (10.1.1.4 / 163.176.232.119)
 ---
 
 # Phase 19 — Plan 19-01 SUMMARY
@@ -26,8 +26,8 @@ Execução completa em **4 hosts paralelos via delegate_task** (138-278s cada su
 |------|-------|--------|
 | 10.1.1.1 | `ATIUS-SRV-1` | `atius-srv-1` ✅ |
 | 10.1.1.2 | `ATIUS-SRV-2` | `atius-srv-2` ✅ |
-| 10.1.1.7 | `ATIUS-SRV-3` | `atius-srv-3` ✅ |
-| 10.1.1.3 | `horistic-srv-1` | `horistic-srv-1` (já era) ✅ |
+| 10.1.1.3 | `ATIUS-SRV-3` | `atius-srv-3` ✅ |
+| 10.1.1.4 | `horistic-srv-1` | `horistic-srv-1` (já era) ✅ |
 
 ### Chromium 149.0.7827.114 (PPA xtradeb/apps)
 
