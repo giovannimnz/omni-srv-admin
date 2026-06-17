@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: M005 Follow-ups + M007-ext (Ubuntu Pro ESM Apps) + M008 (Fleet Standardization)
 status: planning
-last_updated: "2026-06-17T20:12:00-03:00"
-last_activity: 2026-06-17 — Phase 21 MT5 KVM onboarding started; graphify fresh; KVM-1/KVM-2 lowercase zsh/rust/zellij validated; inventory/DB/docs in progress
+last_updated: "2026-06-17T20:20:00-03:00"
+last_activity: 2026-06-17 — Phase 22 started: horistic-srv-1 renamed to horistic-srv (host, inventory, DB, VPN, vault, gbrain); rust/cargo-binstall/zellij + node-exporter installed
 progress:
   total_phases: 20
   completed_phases: 8
@@ -40,7 +40,8 @@ See also: .planning/MILESTONES.md
 | M007-ext | Ubuntu Pro ESM Apps — Google account link, fleet attach, sources DEB822, regression watchdog (Phase 18) | D18-06-A/B/C done; G18-1 (apt upgrade) awaiting operator |
 | M008 | Fleet Standardization — hostnames + chromium + dark theme (Phase 19) | ✅ Closed 2026-06-17 (commit on main) |
 | M008-b | Podman Networking Standardization (Phase 20) | ✅ Closed 2026-06-17 (commit `c0543a9de` on main) |
-| M009 | MT5 KVM Fleet Onboarding (Phase 21) | IN PROGRESS — KVMs sem K3s, inventário/DB/monitoramento/docs |
+| M009 | MT5 KVM Fleet Onboarding (Phase 21) | closed 2026-06-17 (commit on main) |
+| M010 | Horistic rename + rust/zellij (Phase 22) | IN PROGRESS — rename host + VPN/docs/vault; rust/cargo-binstall/zellij + node-exporter |
 
 ## Active Branch Results
 
@@ -204,3 +205,22 @@ Status: IN PROGRESS (2026-06-17)
 | VPN/docs | CoreDNS `custom_hosts` lowercase + compat uppercase; `peer_aliases.json` lowercase; `wg-quick strip wg0` OK |
 | Docs | network map repo+vault, mt5-arm docs e session log vault atualizados |
 | Pendência | Graphify final pós-mudanças + commit/push |
+
+
+## Phase 22 - Horistic rename + rust/zellij
+
+Status: IN PROGRESS (2026-06-17)
+
+| Item | Resultado |
+|---|---|
+| Host | horistic-srv-1 -> horistic-srv (aarch64, Ubuntu 24.04) sem reboot |
+| WireGuard | chave/PSK/IP preservados; /etc/wireguard/wg0.conf nao tocado |
+| Tailscale | rename aplicado |
+| Toolchain | rustup 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3 |
+| Monitoramento | prometheus-node-exporter ativo em :9100 |
+| Inventario omni | inventory/hosts/horistic-srv-1.yaml -> horistic-srv.yaml |
+| DB | horistic-srv em TbHosts/TbNodes/TbNodeTelemetry; horistic-srv-1 removido |
+| VPN/CoreDNS | alias lowercase canonical; SRV-1/2/3/Horistic /etc/hosts atualizado |
+| Network map | v1.4.0 (repo + vault mirror) |
+| gbrain | sincronizado (sem embed, MiniMax 1 RPM) |
+| Pendencia | vhost Apache remote.horistic-srv-1.atius.com.br.conf e pasta GDrive ainda com nome antigo (operacional) |

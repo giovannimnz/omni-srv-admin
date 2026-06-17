@@ -416,6 +416,21 @@ Plans:
 - [x] `21-04` — hostnames lowercase + zsh/Oh My Zsh + Rust + zellij aplicados e validados por subagentes paralelos
 - [ ] `21-02/03/05/06` — inventário+DB+VPN/docs+monitoramento+vault final
 
+### Phase 22: Onboarding Horistic (rename + rust/zellij)
+
+**Goal:** Renomear horistic-srv-1 -> horistic-srv em toda a infra, instalar rust+oh-my-zsh+zsh+zellij no padrao fleet, manter proxy reverso Apache2 para *.horistic.com e APIs proxied para SRV-1:3050/8050.
+
+**Requirements:** HORSTC-01..HORSTC-11
+**Depends on:** Phase 21
+**Plans:** 1 plan
+**Status:** IN PROGRESS (started 2026-06-17)
+
+Plans:
+
+- [x] 22-PLAN.md - plano separado com HORSTC-01..11
+- [x] host renomeado + toolchain instalada (rustup 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3, node-exporter)
+- [x] inventario omni + DB upsert + VPN/CoreDNS + vault sed + gbrain sync + network map v1.4.0
+
 ---
 
 ## Phase 8: Rebrand fork-sync submodule

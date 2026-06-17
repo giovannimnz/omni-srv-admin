@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.3.0 — 2026-06-17
+> Versão: 1.4.0 — 2026-06-17
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -24,7 +24,7 @@ Os hosts móveis/complementares são documentados para completeness.
 | atius-srv-1    | production         | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-1.yaml` |
 | atius-srv-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
 | atius-srv-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
-| horistic-srv-1 | proxy reverso      | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv-1.yaml` |
+| horistic-srv    | proxy reverso      | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv.yaml`    |
 | GIOVANNI-W11-PC | workstation Windows | Windows 11    | planned | `inventory/hosts/giovanni-w11-pc.yaml` |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
 | GIOVANNI-S23   | mobile node        | Termux (Android) | planned | `inventory/hosts/giovanni-s23-termux.yaml` |
@@ -91,7 +91,7 @@ Camadas:
 | atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.1.1.1 | 100.76.56.62   | 10.0.0.38   |
 | atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.1.1.2 | 100.93.43.113  | DHCP        |
 | atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.3 | 100.72.102.57  | DHCP        |
-| horistic-srv-1 | horistic-srv-1  | 163.176.232.119  | 10.1.1.4 | 100.102.126.61 | DHCP        |
+| horistic-srv    | horistic-srv     | 163.176.232.119  | 10.1.1.4 | 100.102.126.61 | DHCP        |
 | GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.1.1.5 | -              | LAN local   |
 | GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.6 | -               | mobile/4G   |
 | atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.1.1.16 | - | 10.0.0.61 |
@@ -109,11 +109,11 @@ upstream `10.1.1.2`; Horistic usa `/etc/resolv.conf` estático com
 `10.1.1.2` primeiro e resolvers públicos apenas como fallback.
 
 WireGuard/DNS validation 2026-06-17:
-- Chaves WireGuard rotacionadas para `atius-srv-3`, `horistic-srv-1`,
+- Chaves WireGuard rotacionadas para `atius-srv-3`, `horistic-srv`,
   `GIOVANNI-W11-PC` e `GIOVANNI-S23`; chaves privadas ficam somente nos
   hosts/configs restritos, não em docs.
 - CoreDNS resolve `atius-srv-3 -> 10.1.1.3`,
-  `horistic-srv-1 -> 10.1.1.4`, `GIOVANNI-W11-PC -> 10.1.1.5`,
+  `horistic-srv -> 10.1.1.4`, `GIOVANNI-W11-PC -> 10.1.1.5`,
   `GIOVANNI-S23 -> 10.1.1.6`, `atius-mt5-kvm-1 -> 10.1.1.16` e
   `atius-mt5-kvm-2 -> 10.1.1.17`.
 - `wg-quick strip wg0` OK em SRV-2, SRV-3 e Horistic.
@@ -122,7 +122,7 @@ WireGuard/DNS validation 2026-06-17:
 
 Cloudflare:
 - `*.atius.com.br` → origem 10.1.1.1 (Apache2 SRV-1, port 9080/9444)
-- `*.horistic.com` → origem 10.1.1.4 (Apache2 horistic-srv-1, proxy pra 10.1.1.1:3050/8050)
+- `*.horistic.com` → origem 10.1.1.4 (Apache2 horistic-srv, proxy pra 10.1.1.1:3050/8050)
 - `portainer.atius.com.br`, `docker.atius.com.br` → K3s Portainer (Phase 13)
 - `jenkins.atius.com.br` → 10.1.1.1:8085 (SRV-1 podman)
 - `cloudbeaver.atius.com.br` → 10.1.1.1:8978 (SRV-1 podman)
@@ -452,12 +452,13 @@ Upgrade gated em janela separada.
 
 ## 9. Changelog
 
+- **1.4.0 (2026-06-17)** — renomeado `horistic-srv-1` → `horistic-srv` (host + inventory + VPN/CoreDNS + docs); `horistic-srv-1` permanece como alias uppercase em CoreDNS para retrocompat; vhost Apache `remote.horistic-srv-1.atius.com.br.conf` preservado.
 - **1.3.0 (2026-06-17)** — adicionados `atius-mt5-kvm-1` e `atius-mt5-kvm-2` como hosts gerenciados sem K3s: IPs 10.1.1.16/17, portas 9001/9002, node-exporter 9100, zsh/Oh My Zsh/Rust/zellij validados e inventory `inventory/hosts/atius-mt5-kvm-*.yaml`.
 
 - **1.2.1 (2026-06-17)** — rotação de chaves WireGuard para SRV-3,
   Horistic, W11 e S23; SRV-2 ajustado para usar CoreDNS local via
   `systemd-resolved`; Horistic ajustado para resolver primeiro via
-  `10.1.1.2`; `/etc/hosts` canônico aplicado em SRV-1/SRV-2/SRV-3/Horistic.
+  `10.1.1.2`; `/etc/hosts` canônico aplicado em SRV-1/SRV-2/SRV-3/Horistic. Em 2026-06-17 o host `horistic-srv-1` foi renomeado para `horistic-srv` (WireGuard key e IP não mudam; vhost Apache `remote.horistic-srv-1.atius.com.br.conf` mantido por compatibilidade).
   Revalidado: K3s 3/3 Ready, ping `.3/.4`, Horistic ping `.2/.1/.3`,
   CoreDNS `.3/.4/.5/.6`, e `wg-quick strip wg0` em SRV-2/SRV-3/Horistic.
   W11/S23 aguardam importação local dos configs novos para handshake.
