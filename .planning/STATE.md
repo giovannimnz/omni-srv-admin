@@ -4,7 +4,7 @@ milestone: v1.1
 milestone_name: M005 Follow-ups + M007-ext (Ubuntu Pro ESM Apps) + M008 (Fleet Standardization)
 status: planning
 last_updated: "2026-06-17T01:10:00Z"
-last_activity: 2026-06-17 — Phase 19 fleet std: hostnames lowercase + chromium 149.0.7827.114 from PPA xtradeb + Desktop shortcut + dark theme canônico aplicado (sem restart LXDE)
+last_activity: 2026-06-17 — Phase 19 hotfix: atalhos LXDE corrigidos via xrdp-launch, Chromium snap/transitional removido, Obsidian SRV-2 restaurado, hostnames/aliases SRV/HORISTIC lowercase
 progress:
   total_phases: 20
   completed_phases: 8
@@ -148,9 +148,12 @@ See also: .planning/MILESTONES.md
 
 ## Current Position
 
-Phase: 20 (Podman Networking Standardization — M008-b)
-Plan: 20-01 — DONE
-Status: Phase 20 fully executed. Podman fleet networking standardized across SRV-1/2/3: `containers.conf` + `99-netavark.conf` + `srv<N>-podman` (dns=true) + `systemd-resolved` installed (fix mailcow Exited 45h on SRV-2) + `podman-compose` 1.6.0 + `~/.profile` PATH fix. Materialized as skill (`~/.hermes/skills/devops/podman-fleet-standardize/`) + omni-srv-admin module (`modules/fleet/podman-network/`) + CLI (`omni podman-network {drift,apply,smoke,standard}`). Commit `c0543a9de` on main (16 files, 1741 insertions). `omni podman-network drift` returns 6/6 PASS on all 3 SRVs.
+Phase: 19 (Fleet Standardization — M008) — 19-02 desktop shortcuts hotfix DONE
+Plan: 19-01 (hostnames+PPA+chromium+theme) + 19-02 (atalhos LXDE/XRDP via `xrdp-launch`) + 19-05 (cron cleanup) — DONE
+Status: Atalho fix final aplicado. Root cause final: `.desktop` inválido com `Exec=env "DISPLAY=:1" "XAUTHORITY=*** ...` e aspas sem fechamento. Fix definitivo: wrapper `~/.local/bin/xrdp-launch` + `Exec=<home>/.local/bin/xrdp-launch <app>`, sem `env` inline, sem glob e validado por `desktop-file-validate`. PCManFM já foi recarregado nos 3 ATIUS; não há pendência de logout/login para atalhos. G18-1 (apt upgrade ESM) e G18-2 (RDP validation) ainda gates.
+Last activity: 2026-06-17 — 19-04 tentativa anterior documentada como superseded: aspas duplas em `env` não eram suficientes porque os arquivos gravados ficaram com `***` literal e quote aberto.
+Cron desativados (19-05): `@reboot sudo systemctl start horistic` + `*/5 * * * * /home/ubuntu/.hermes/cron/atius-phase7-monitor.sh` comentados. Backup: `~/.backups/crontab-pre-hermes-disable-2026-06-17.txt`. Entrada AionUi 23:55:32Z removida do daily note 2026-06-16.md.
+Last activity: 2026-06-17 — 19-06 hotfix real dos atalhos: root cause final era `.desktop` inválido (`Exec=env "DISPLAY=:1" "XAUTHORITY=*** ...` com aspas sem fechamento). Substituído por wrapper `~/.local/bin/xrdp-launch`; atalhos Chromium/Firefox/Obsidian/Hermes/Sublime reescritos ou removidos quando sem binário; Obsidian real copiado para SRV-2; `chromium-browser` transitional purgado do SRV-3/HORISTIC; `google-chrome.desktop` quebrado removido do SRV-1; handler vazio `claude-code-url-handler.desktop` removido; PCManFM recarregado nos 3 ATIUS sem reiniciar XRDP.
 Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audit `omni podman-network drift` 6/6 PASS. Phase 19 closed (SUMMARY created). Phase 20 created (PLAN + SUMMARY), commits on main. M008 + M008-b both closed procedurally.
 
 ## Operator Next Steps

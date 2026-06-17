@@ -1,16 +1,16 @@
-# Graph Report - omni-srv-admin  (2026-06-15)
+# Graph Report - omni-srv-admin  (2026-06-17)
 
 ## Corpus Check
-- 314 files · ~739,717 words
+- 346 files · ~804,479 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 4761 nodes · 5348 edges · 448 communities (396 shown, 52 thin omitted)
+- 5172 nodes · 5749 edges · 485 communities (429 shown, 56 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `44d56d72`
+- Built from commit: `82b46014`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -461,9 +461,46 @@
 - [[_COMMUNITY_Community 445|Community 445]]
 - [[_COMMUNITY_Community 446|Community 446]]
 - [[_COMMUNITY_Community 447|Community 447]]
+- [[_COMMUNITY_Community 448|Community 448]]
+- [[_COMMUNITY_Community 449|Community 449]]
+- [[_COMMUNITY_Community 450|Community 450]]
+- [[_COMMUNITY_Community 451|Community 451]]
+- [[_COMMUNITY_Community 452|Community 452]]
+- [[_COMMUNITY_Community 453|Community 453]]
+- [[_COMMUNITY_Community 454|Community 454]]
+- [[_COMMUNITY_Community 455|Community 455]]
+- [[_COMMUNITY_Community 456|Community 456]]
+- [[_COMMUNITY_Community 457|Community 457]]
+- [[_COMMUNITY_Community 458|Community 458]]
+- [[_COMMUNITY_Community 459|Community 459]]
+- [[_COMMUNITY_Community 460|Community 460]]
+- [[_COMMUNITY_Community 461|Community 461]]
+- [[_COMMUNITY_Community 462|Community 462]]
+- [[_COMMUNITY_Community 463|Community 463]]
+- [[_COMMUNITY_Community 464|Community 464]]
+- [[_COMMUNITY_Community 465|Community 465]]
+- [[_COMMUNITY_Community 466|Community 466]]
+- [[_COMMUNITY_Community 467|Community 467]]
+- [[_COMMUNITY_Community 468|Community 468]]
+- [[_COMMUNITY_Community 469|Community 469]]
+- [[_COMMUNITY_Community 470|Community 470]]
+- [[_COMMUNITY_Community 471|Community 471]]
+- [[_COMMUNITY_Community 472|Community 472]]
+- [[_COMMUNITY_Community 473|Community 473]]
+- [[_COMMUNITY_Community 474|Community 474]]
+- [[_COMMUNITY_Community 475|Community 475]]
+- [[_COMMUNITY_Community 476|Community 476]]
+- [[_COMMUNITY_Community 477|Community 477]]
+- [[_COMMUNITY_Community 478|Community 478]]
+- [[_COMMUNITY_Community 479|Community 479]]
+- [[_COMMUNITY_Community 480|Community 480]]
+- [[_COMMUNITY_Community 481|Community 481]]
+- [[_COMMUNITY_Community 482|Community 482]]
+- [[_COMMUNITY_Community 483|Community 483]]
+- [[_COMMUNITY_Community 484|Community 484]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (442 total, 51 thin omitted)` - 390 edges
+1. `Communities (485 total, 56 thin omitted)` - 428 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `output()` - 23 edges
@@ -489,7 +526,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (448 total, 52 thin omitted)
+## Communities (485 total, 56 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -524,8 +561,8 @@ Cohesion: 0.05
 Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
 
 ### Community 8 - "Community 8"
-Cohesion: 0.10
-Nodes (36): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+28 more)
+Cohesion: 0.06
+Nodes (52): CompletedProcess, Path, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts() (+44 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.05
@@ -645,7 +682,7 @@ Nodes (13): Goal, Motivation, Next, Performance, Phase 14 Plan 05: Jenkins + ser
 
 ### Community 38 - "Community 38"
 Cohesion: 0.07
-Nodes (28): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — IN PLANNING (v1.1) (+20 more)
+Nodes (29): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — IN PLANNING (v1.1) (+21 more)
 
 ### Community 39 - "Community 39"
 Cohesion: 0.09
@@ -881,7 +918,7 @@ Nodes (12): admin_health(), admin_processes(), admin_status(), Health checks bá
 
 ### Community 97 - "Community 97"
 Cohesion: 0.12
-Nodes (15): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Current Position, Live Gates, M001 Completion, M002 Result Summary (+7 more)
+Nodes (16): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Current Position, Live Gates, M001 Completion, M002 Result Summary (+8 more)
 
 ### Community 98 - "Community 98"
 Cohesion: 0.18
@@ -1280,12 +1317,12 @@ Cohesion: 0.33
 Nodes (5): Core Directives & Hierarchy, General Interaction & Philosophy, Intelligent Tool Usage, Minimalist & Standard Code Generation, Surgical Code Modification
 
 ### Community 197 - "Community 197"
-Cohesion: 0.33
-Nodes (5): ATIUS Fleet — Especificações das Máquinas, Conversões, Especificações comuns, I/O Limiting, Máquinas
+Cohesion: 0.29
+Nodes (6): ATIUS Fleet — Fleet Specs (Specs das Máquinas), Conversões, Especificações comuns (válido, OS desatualizado), I/O Limiting, Máquinas (dados de disco ainda válidos), Ver também
 
 ### Community 198 - "Community 198"
-Cohesion: 0.33
-Nodes (5): Atius-Spec-Servers — Especificações dos Servidores ATIUS, Especificações Comuns, Exemplo Prático, Limite de 50% por Processo, Servidores
+Cohesion: 0.29
+Nodes (6): Atius-Spec-Servers — Especificações dos Servidores ATIUS, Especificações Comuns (válido, OS desatualizado), Exemplo Prático, Limite de 50% por Processo (ainda válido), Servidores (dados de disco ainda válidos), Ver também
 
 ### Community 199 - "Community 199"
 Cohesion: 0.33
@@ -1348,8 +1385,8 @@ Cohesion: 0.40
 Nodes (5): Dicas Específicas por Linguagem/Framework, Java, .NET, Node.js, Python
 
 ### Community 214 - "Community 214"
-Cohesion: 0.29
-Nodes (6): Correct Order, Dependency, Milestone Branch Matrix, Separation Rule, v1.0 v1.0 (Shipped: 2026-06-15), v1.0 v1.0 (Shipped: 2026-06-15)
+Cohesion: 0.18
+Nodes (10): Correct Order, Dependency, M008-b — Podman Networking Standardization (Phase 20), M008 — Fleet Standardization (Phases 18-19), Milestone Branch Matrix, Operator next steps (unchanged), Separation Rule, v1.0 v1.0 (Shipped: 2026-06-15) (+2 more)
 
 ### Community 215 - "Community 215"
 Cohesion: 0.50
@@ -1384,8 +1421,8 @@ Cohesion: 0.50
 Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
 
 ### Community 223 - "Community 223"
-Cohesion: 0.01
-Nodes (390): Communities (442 total, 51 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+382 more)
+Cohesion: 0.00
+Nodes (428): Communities (485 total, 56 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+420 more)
 
 ### Community 224 - "Community 224"
 Cohesion: 0.50
@@ -1429,7 +1466,7 @@ Nodes (3): Applicable ASVS Categories, Known Threat Patterns for FreeIPA, Securi
 
 ### Community 284 - "Community 284"
 Cohesion: 0.18
-Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-15), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
+Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-17), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 287 - "Community 287"
 Cohesion: 0.12
@@ -2049,7 +2086,7 @@ Nodes (8): Canonical Path, Components, PM2 Canonical Boot Path, Recovery, Refere
 
 ### Community 442 - "Community 442"
 Cohesion: 0.18
-Nodes (16): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+8 more)
+Nodes (11): 5.10 xorgxrdp ainda carregado em algum lugar, 5.1 Senha (mais provável), 5.2 Sessão stale no sockdir, 5.3 Xvnc 5901 só escuta em localhost, 5.4 Tema LXDE, 5.5 `startwm.sh` (lê `/etc/xrdp/startwm.sh`), 5.6 TLS vs RDP Security Negotiation, 5.7 Display :1 conflito com lightdm :1 (+3 more)
 
 ### Community 443 - "Community 443"
 Cohesion: 0.13
@@ -2064,28 +2101,160 @@ Cohesion: 0.15
 Nodes (12): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 16: M005 Cloudflare Access, Risks, Success Criteria, Task 1: enable Cloudflare Access on account (+4 more)
 
 ### Community 446 - "Community 446"
+Cohesion: 0.20
+Nodes (9): 10. TL;DR pro user, 1. TL;DR (1 parágrafo), 2026-06-16 — RDP/xrdp/Xvnc/xorgxrdp: SESSÃO DE FIX COMPLETA (ainda NÃO funcional), 3. Estado dos 3 SRVs (2026-06-16 18:18 BRT), 4. Bateria autônoma (ssh + xfreerdp) — resultados, 6. Próximos passos sugeridos (gated), 7. Backups e estado reversível, 8. Doc canônica viva (+1 more)
+
+### Community 447 - "Community 447"
+Cohesion: 0.09
+Nodes (21): 1. Identidade dos Hosts, 2. Topologia de Rede, 3. Mapa de IPs (canônico), 4. Convenção de Displays / VNC / noVNC, 5. Inventário de Portas (canônico, estado 2026-06-16), 6. Portas Reservadas (ranges por categoria), 7.1 Adicionar slot camofox (ex: slot 2 no display :16), 7.2 Remover slot camofox (cleanup) (+13 more)
+
+### Community 448 - "Community 448"
+Cohesion: 0.25
+Nodes (7): Apply ACL (runbook), Architecture decision, Disable DNS injection on each host, Disable MagicDNS, Source-of-truth, Tailscale Operations, Validate
+
+### Community 449 - "Community 449"
+Cohesion: 0.29
+Nodes (6): ACL source-of-truth, Changes applied, Incident separado (não bloqueante), Key decision ratificado, Tailscale ACL Closure — 2026-06-16, Validation
+
+### Community 450 - "Community 450"
+Cohesion: 0.29
+Nodes (7): 2. Sequência de tentativas (ordem cronológica), Tentativa 1: identificar a causa raiz, Tentativa 2: assumir que era colisão 5910, Tentativa 3: assumir DRI3/GL é o problema, Tentativa 4: assumir ABI mismatch do xorgxrdp, Tentativa 5: assumir que sesman.ini é o que manda, Tentativa 6: report do usuário
+
+### Community 451 - "Community 451"
+Cohesion: 0.29
+Nodes (6): Configuração aplicada, gbrain Embeddings — Atius Router config (validated 2026-06-16), Notas, Pendência (operador), Runbook, Validação
+
+### Community 452 - "Community 452"
+Cohesion: 0.29
+Nodes (7): A.1 Vault (todas as docs que mencionam RDP, xorgxrdp, x11vnc, Xvnc, display, ports VNC, abnt2, ou DRI3), A.3 Backups (snapshot pré-fix, em `/home/ubuntu/.backups/port-pool-2026-06-16/`), A.4 Skills Hermes (referenciadas durante a sessão), A.5 Prints/imagens, ANEXO A — Lista completa de docs RDP/X11/Xvnc/xorgxrdp, Operação / Log da sessão, Specs / canônicas
+
+### Community 453 - "Community 453"
+Cohesion: 0.29
+Nodes (7): A.2 Repo omni-srv-admin, Doc canônica (criada hoje), Docs antigas convertidas em stub+redirector, Docs gerais, Fase 14 (resource governor / PM2 — menciona xrdp no watchdog cgroup), Módulo xrdp-abnt2, Tema dark LXDE
+
+### Community 454 - "Community 454"
+Cohesion: 0.33
+Nodes (6): 11.1 Decisão nova de display range, 11.2 Mudança live aplicada nos 3 SRVs, 11.3 Sessões stale removidas, 11.4 Validação pós-mudança, 11.5 Próximo teste humano, 11. Retomada Codex — 2026-06-16 18:35–18:50 BRT
+
+### Community 455 - "Community 455"
 Cohesion: 0.50
 Nodes (4): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply()
 
+### Community 456 - "Community 456"
+Cohesion: 0.67
+Nodes (3): 12.1 Log da tentativa real em :31, 12.2 Mudança aplicada no SRV-1, 12. Retomada Codex — ajuste explícito SRV-1 para display :1
+
+### Community 457 - "Community 457"
+Cohesion: 0.40
+Nodes (5): 13.1 Causa raiz, 13.2 Config final aplicada no SRV-1, 13.3 Validação, 13.4 Estado atual, 13. Retomada Codex — fix validado SRV-1 display :1
+
+### Community 459 - "Community 459"
+Cohesion: 0.40
+Nodes (5): 14.1 Achados, 14.2 Mudanças aplicadas, 14.3 Validação, 14.4 Regra final, 14. Retomada Codex — SRV-2/SRV-3 + regra de resolução
+
+### Community 460 - "Community 460"
+Cohesion: 0.47
+Nodes (8): fleet-rust-zellij.sh script, cmd_audit(), cmd_status(), cmd_update(), cmd_update_one_host(), log(), ssh_run(), with_lock()
+
+### Community 461 - "Community 461"
+Cohesion: 0.25
+Nodes (7): Inventário fonte, Padrão de update, PATH pós-install, Próxima evolução (TODO), rust-zellij-fleet, Script, Segurança
+
+### Community 462 - "Community 462"
+Cohesion: 0.33
+Nodes (5): Final operator validation, Final rule, Live config basis, Notes, XRDP Fleet Closure — 2026-06-16
+
+### Community 463 - "Community 463"
+Cohesion: 0.67
+Nodes (3): 15.1 Critério de fechamento atingido, 15.2 Escopo remanescente da Phase 18, 15. Encerramento — ajuste XRDP concluído
+
+### Community 464 - "Community 464"
+Cohesion: 0.11
+Nodes (17): Apt-key no Noble, Atalhos, Chromium, chromium-snap → chromium-deb (transitional), Cross-refs, Dark theme, Dark theme canônico, Goal (+9 more)
+
+### Community 465 - "Community 465"
+Cohesion: 0.13
+Nodes (14): 1. DHCP conflict after restart, 2. `extra_hosts` doesn't survive `podman exec --network host`, 3. `extra_hosts` syntax for compose-v1 vs compose-v2, 4. Adding a new service after the IP table is set, IP estático + extra_hosts fallback (for multi-container stacks), Origin, Pitfalls, Procedure (validated for plane-app) (+6 more)
+
+### Community 466 - "Community 466"
+Cohesion: 0.14
+Nodes (13): 18-06 — Ubuntu Pro Fleet Audit (2026-06-16), ATIUS-SRV-1 (10.1.1.1, Noble, arm64), ATIUS-SRV-2 (10.1.1.2, Noble, arm64), ATIUS-SRV-3 (10.1.1.7, Noble, arm64), Cross-refs, D18-06-A: ✅ (a) Dashboard transfer, D18-06-B: ✅ (1) pro refresh + re-enable, fallback (2), D18-06-C: ✅ paralelo via subagent (+5 more)
+
+### Community 467 - "Community 467"
+Cohesion: 0.14
+Nodes (13): 18-06 — Account + sources + token, 18-07 — apt upgrade esm-apps+infra (GATED), 18-08 — Validar pós-upgrade (GATED G18-2), 18-09 — Documentação + watchdog (pode rodar em paralelo), Contexto, Cross-refs, Estado atual (2026-06-16 — baseline 18-06-AUDIT), Gaps vs target (+5 more)
+
+### Community 468 - "Community 468"
+Cohesion: 0.18
+Nodes (13): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+5 more)
+
+### Community 469 - "Community 469"
+Cohesion: 0.17
+Nodes (11): `~/.config/containers/containers.conf`, `~/.config/containers/containers.conf.d/99-netavark.conf`, Custom multi-container networks (e.g. `atius`), Drift detection, Files per server (N ∈ {1, 2, 3}), Known bugs (workarounds documented), Network `srv<N>-podman` (default, auto-created), `podman-compose` location (+3 more)
+
+### Community 470 - "Community 470"
+Cohesion: 0.18
+Nodes (10): 18-06 — Ubuntu Pro Fleet attach gmail + Landscape re-enable, Account transition, Codex CLI, Comandos finais (runbook canônico para Phase 18-06), Cross-refs, Landscape SaaS — re-registro, Lição aprendida: pro 37.2 auto-habilita esm-* no attach, Lição aprendida: pro 37.2 não suporta `--token-stdin` (+2 more)
+
+### Community 471 - "Community 471"
+Cohesion: 0.22
+Nodes (8): Apply (correction), Cross-refs, Files, Fleet — podman-network, Multi-container stacks (custom networks like `atius`), Origin, Quick start (drift check), What this module is
+
+### Community 472 - "Community 472"
+Cohesion: 0.25
+Nodes (7): Aardvark-dns rootless bug (podman 4.9.3 + netavark 1.4.0 + aardvark 1.4.0), Fix: install systemd-resolved (or alternative), Root cause, The bug, Validation, Why the bug bit us on SRV-2, Why this isn't going to be fixed upstream soon
+
+### Community 473 - "Community 473"
+Cohesion: 0.11
+Nodes (18): 18-07 — apt upgrade esm-apps+esm-infra (GATED), 18-07-EXECUTION (started 2026-06-17 22:35 BRT), Backups, Cross-refs, Decisões aplicadas, Erros não-regressivos (fora do escopo G18-1), Execution results (2026-06-17 22:35-22:44 BRT), G18-2 gate: Microsoft RDP login validate (+10 more)
+
+### Community 474 - "Community 474"
+Cohesion: 0.29
+Nodes (6): Migrating systemd-managed services, Network migration: srv<N>-podman (CNI) → srv<N>-podman-v2 (netavark), Procedure (validated 2026-06-16 on SRV-1), Rollback (if migration breaks something), Why "srv<N>-podman-v2" and not just "srv<N>-podman", Why this is non-trivial
+
+### Community 475 - "Community 475"
+Cohesion: 0.60
+Nodes (3): drift-detect.sh script, check(), parse()
+
+### Community 480 - "Community 480"
+Cohesion: 0.08
+Nodes (24): B20-01: `~/.local/bin/podman` wrapper injeta `--cpus 2` em subcomandos inválidos, B20-02: Aardvark-dns 1.4.0 self-lookup NXDOMAIN, B20-03: `/run/systemd/resolve/` ausente impede container startup, B20-04: Network default não pode ser removida, Backups, Bugs descobertos + workarounds (documentados), CLI (`omni podman-network`), Commits (+16 more)
+
+### Community 481 - "Community 481"
+Cohesion: 0.11
+Nodes (17): Atalhos (Desktop + menu Internet), Backups, Chromium 149.0.7827.114 (PPA xtradeb/apps), Commits, Cross-refs, D19-01: PPA xtradeb no Noble, D19-02: GPG key correta do PPA xtradeb, D19-03: chromium-snap → chromium-deb (transitional) (+9 more)
+
+### Community 482 - "Community 482"
+Cohesion: 0.14
+Nodes (13): Backups, Commits, Cross-refs, Issues remanescentes (não-bloqueantes), Materialização, Mudanças aplicadas (resumo), Origem, Phase 20 — Plan 20-01 SUMMARY (+5 more)
+
+### Community 483 - "Community 483"
+Cohesion: 0.14
+Nodes (13): 18-07 — apt upgrade esm-apps+esm-infra SUMMARY, 18-07-EXECUTION (started 2026-06-17 22:35 BRT), Backups, Decisões aplicadas, Erros não-regressivos (fora do escopo G18-1), Execution results (2026-06-17 22:35-22:44 BRT), G18-2 gate: Microsoft RDP login validate, G18-3 gate: Landscape SaaS UI confirmation (+5 more)
+
+### Community 484 - "Community 484"
+Cohesion: 0.29
+Nodes (6): Backups, Correção Aplicada, Estado Final, Phase 19 — Desktop Shortcuts Hotfix, Root Cause, Validação
+
 ## Knowledge Gaps
-- **3058 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3053 more)
+- **3358 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3353 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **52 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (442 total, 51 thin omitted)` connect `Community 223` to `Community 284`?**
-  _High betweenness centrality (0.013) - this node is a cross-community bridge._
-- **Why does `_ssh_candidates()` connect `Community 8` to `Community 442`?**
+- **Why does `Communities (485 total, 56 thin omitted)` connect `Community 223` to `Community 284`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `Graph Report - omni-srv-admin  (2026-06-17)` connect `Community 284` to `Community 223`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
+- **Why does `modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh` connect `Community 358` to `Community 119`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3262 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3569 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.11901306240928883 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
-- **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.07419712070874862 - nodes in this community are weakly interconnected._

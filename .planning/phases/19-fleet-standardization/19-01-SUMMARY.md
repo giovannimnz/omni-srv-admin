@@ -16,6 +16,10 @@ hosts:
 
 Execução completa em **4 hosts paralelos via delegate_task** (138-278s cada subagente). Todo o trabalho planejado em `19-PLAN.md` foi entregue:
 
+> Correção posterior: o primeiro patch de atalhos deixou `.desktop` inválido
+> em alguns hosts. O estado final correto está em
+> `19-02-DESKTOP-SHORTCUTS-HOTFIX-2026-06-17.md`.
+
 ### Hostnames (lowercase enforced)
 
 | Host | Antes | Depois |
@@ -103,7 +107,8 @@ Nenhum commit novo no omni-srv-admin para 19-01 (todo o trabalho foi em `/home/u
 
 ## Pendente (fora do escopo 19-01)
 
-- **Manual LXDE restart** pelo user (logout/login) — tema visualmente ativo
+- ~~Manual LXDE restart pelo user para atalhos~~ — resolvido no hotfix 19-02 por recarga controlada do PCManFM nos 3 ATIUS.
+- Tema visual ainda pode exigir logout/login se painel/GTK antigo estiver cacheado.
 - **G18-1 apt upgrade esm-apps+infra** (gate explícito, espera autorização do user)
 - **18-09 docs** (canonical ubuntu-pro-fleet.md + watchdog cron)
 - **Inventory update** em `inventory/hosts/*.yaml` (hostname lowercase já refletido em SRV-1/2/3 yaml files)

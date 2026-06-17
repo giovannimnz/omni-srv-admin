@@ -11,6 +11,7 @@
 ---
 
 ## Phase 1: Preparação do Host ✅ DONE
+
 **Goal:** Host pronto para FreeIPA — hostname FQDN, NTP, portas livres
 
 **Requirements:** PREP-01, PREP-02, PREP-03, PREP-04, PREP-05
@@ -18,11 +19,13 @@
 **Completed:** 2026-04-19
 
 **Results:**
+
 - FQDN configurado, Chrony NTP sincronizado
 - Portas 80/443 liberadas (Apache2 migrado)
 - Portas alternativas definidas: Apache2 9080/9444
 
 **Success Criteria (all passed):**
+
 1. `hostname -f` retorna FQDN ✓
 2. `chronyc tracking` mostra NTP sincronizado ✓
 3. `ss -tlnp | grep -E ':(80|443)'` não mostra Apache2 ✓
@@ -32,6 +35,7 @@
 ---
 
 ## Phase 2: Migração Apache2 para Portas Alternativas ✅ DONE
+
 **Goal:** Apache2 funcionando em portas alternativas com todos os 60+ vhosts acessíveis
 
 **Requirements:** APCH-01, APCH-02, APCH-03, APCH-04
@@ -39,12 +43,14 @@
 **Completed:** 2026-04-19 (plano) | **Cloudflare API Access: 2026-05-07**
 
 **Results:**
+
 - Apache2 migrado para portas 9080/9444 (planejado)
 - Cloudflare Origin Rules criadas: port 443 → origin 9444 (66 hostnames) — planejado
 - **Cloudflare API Access resolvido:** Global API Key válido com Super Administrator (cfk_Br...b03f)
 - **Nota:** Audit 2026-05-06 identificou que Apache2 ainda está em 80/443 — possivelmente revertido. Verificar estado real antes de prosseguir.
 
 **Success Criteria (all passed):**
+
 1. Apache2 Listen configurado para portas alternativas ✓
 2. 60+ vhosts funcionais nas novas portas ✓ (planejado)
 3. Cloudflare Origin Rules aplicadas ✓ (planejado)
@@ -54,6 +60,7 @@
 ---
 
 ## Phase 3: FreeIPA Server Container
+
 **Goal:** FreeIPA rodando em container Docker AlmaLinux 9, acessível e operacional
 
 **Requirements:** FIPA-01, FIPA-02, FIPA-03, FIPA-04, FIPA-05, FIPA-06
@@ -61,11 +68,13 @@
 **Depends on:** Phase 1 (portas 80/443 livres), Phase 2 (Apache2 migrado)
 
 **Plans:** 3 plans
+
 - [ ] 03-01-PLAN.md — Infrastructure setup: directories, passwords, docker-compose.yml
 - [ ] 03-02-PLAN.md — Container launch and unattended FreeIPA installation
 - [ ] 03-03-PLAN.md — Backup script, verification smoke tests, first backup
 
 **Success Criteria:**
+
 1. Container FreeIPA rodando (`docker ps` mostra container healthy)
 2. `ipa user-find --all` funciona (CLI acessível)
 3. Web UI acessível em `https://10.1.1.1/ipa/ui` ou FQDN
@@ -78,6 +87,7 @@
 ---
 
 ## Phase 4: Samba Domain Member
+
 **Goal:** Samba nativo no host autenticando via FreeIPA/Kerberos, shares acessíveis
 
 **Requirements:** SAM-01, SAM-02, SAM-03, SAM-04, SAM-05
@@ -85,6 +95,7 @@
 **Depends on:** Phase 3 (FreeIPA operacional)
 
 **Success Criteria:**
+
 1. `ipa-adtrust-install` executado sem erros no container
 2. `ipa-client-samba` configurado no host
 3. `kinit` com usuário FreeIPA funciona no host Samba
@@ -96,6 +107,7 @@
 ---
 
 ## Phase 5: Migração WireGuard + CoreDNS
+
 **Goal:** Servidor 10.1.1.1 como servidor VPN principal, peers conectados, CoreDNS funcionando
 
 **Requirements:** MIG-01, MIG-02, MIG-03, MIG-04
@@ -103,6 +115,7 @@
 **Depends on:** Phase 3 (FreeIPA DNS operacional)
 
 **Success Criteria:**
+
 1. WireGuard ativo em 10.1.1.1 (`wg show` mostra interface)
 2. Pelo menos 2 peers conectados e pingando via VPN
 3. CoreDNS resolvendo queries internas
@@ -114,6 +127,7 @@
 ---
 
 ## Phase 6: Keycloak SSO
+
 **Goal:** Keycloak nativo rodando, federado no FreeIPA, login OIDC funcional
 
 **Requirements:** KEY-01, KEY-02, KEY-03, KEY-04, KEY-05
@@ -121,6 +135,7 @@
 **Depends on:** Phase 3 (FreeIPA LDAP estável)
 
 **Success Criteria:**
+
 1. Keycloak rodando via systemd (`systemctl status keycloak`)
 2. Admin console acessível em `auth.atius.com.br:PORT`
 3. User federation com FreeIPA funcionando (usuários FreeIPA aparecem no Keycloak)
@@ -132,6 +147,7 @@
 ---
 
 ## Phase 7: Coexistência e Client Enrollment
+
 **Goal:** Tudo integrado, máquinas clientes ingressam no domínio, SSOs coexistem
 
 **Requirements:** COEX-01, COEX-02, COEX-03, COEX-04, CLNT-01, CLNT-02, CLNT-03
@@ -139,6 +155,7 @@
 **Depends on:** Phase 3 (FreeIPA), Phase 5 (WireGuard), Phase 6 (Keycloak)
 
 **Success Criteria:**
+
 1. Apache2 SSO existente ainda funciona (apps Atius acessíveis)
 2. Keycloak SSO funciona em paralelo (sem conflito)
 3. CoreDNS encaminha para FreeIPA DNS (queries internas resolvidas)
@@ -185,6 +202,7 @@
 **Requirements:** OMNI-01
 
 **Results:**
+
 - `omni admin status` — visão geral: uptime, CPU, memória, disco
 - `omni admin health` — health checks básicos (ping DNS, portas, serviços)
 - `omni admin services` — lista serviços (systemd) com status
@@ -201,6 +219,7 @@
 **Requirements:** OMNI-02
 
 **Results:**
+
 - `omni deploy list` — lista projetos com deploy configurado
 - `omni deploy <project>` — executa deploy (wrapping fork-sync deploy)
 - `omni deploy <project> --dry-run` — simula sem executar
@@ -215,6 +234,7 @@
 **Requirements:** OMNI-03
 
 **Results:**
+
 - `omni backup list` — lista backups disponíveis
 - `omni backup create <path>` — cria backup (tar + timestamp)
 - `omni backup restore <path>` — restaura backup
@@ -250,9 +270,11 @@
 **Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
 
 **Plans:** 1
+
 - [x] 12-01-PLAN.md — Fleet Control Plane Foundation (implemented live for repo distribution, DB schema and PgBouncer node path)
 
 **Implementation Results:**
+
 - `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
 - `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
 - `DbOmniFleet` is documented and migrated as the canonical PostgreSQL database for `omni-srv-admin` runtime state, ops scopes, config items, parameters and slash-command registry.
@@ -268,6 +290,7 @@
 - Fleet monitoring reads central `TbNodeTelemetry` through PgBouncer and falls back to local cache on DB/PgBouncer outage.
 
 **Success Criteria:**
+
 1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
 2. Requirements `FCP-01..FCP-15` definidos e rastreados para Phase 12
 3. Desenho server/node e inventory source-of-truth travado
@@ -303,6 +326,7 @@
 **Follow-ups:** OCI snapshot IDs, Cloudflare Access policy, observability stack, RWX storage strategy.
 
 **Branch results:**
+
 - `codex/k3s-portainer-oci-plan` — preflight, safe templates, network port map
 - `docs/m005-k3s-live-bootstrap` — live bootstrap record
 - `docs/m005-observability-watchdog` — observability + edge watchdog
@@ -337,6 +361,7 @@
 **Requirements:** RGP-01, RGP-02, RGP-03, RGP-04, RGP-05, RGP-06, RGP-07
 
 **Success Criteria:**
+
 - `systemctl --user list-jobs` não mantém `ats-pm2.service`, `horistic-pm2.service` ou `default.target` presos.
 - `resource-governor-cgroup-init.service`, `resource-governor-patcher.service`, `resource-governor-watchdog.service/timer` e `inviolable-watchdog.timer` sobem sem depender de `default.target`.
 - Cgroups diretos e slices systemd refletem o mesmo perfil base/conservador de CPU, I/O, memória, swap e weights.
@@ -360,14 +385,27 @@
 **Depends on:** M001 (preparação de host + infra concluída)
 
 **Links:**
+
 - Context: `.planning/phases/08-rebrand-fork-sync-submodule/08-CONTEXT.md`
 - Plan: `.planning/phases/08-rebrand-fork-sync-submodule/08-PLAN.md`
+
+### Phase 18: Ubuntu Pro ESM Apps - Google account link, fleet attach validation, regression watchdog
+
+**Goal:** [To be planned]
+**Requirements**: TBD
+**Depends on:** Phase 17
+**Plans:** 0 plans
+
+Plans:
+
+- [ ] TBD (run /gsd-plan-phase 18 to break down)
 
 ---
 
 ## Phase 8: Rebrand fork-sync submodule
 
 ## Phase 9: Mission Guardian — Servidor 100% Auto-Guardado
+
 **Goal:** Mission Guardian daemon 24/7 que amostra 22 métricas a cada 60s em SQLite, auto-tune de cgroups, forecasting de disk fill, incident response playbooks, e agente DevOps/Redes "HoristicOps" treinando on-call.
 
 **Requirements:** MGR-01, MGR-02, MGR-03, MGR-04, MGR-05, MGR-06, MGR-07, MGR-08
@@ -385,6 +423,7 @@
 **Goal:** Repo local rebranded + fork-sync como submodule vivo + fork-sync standalone arquivado.
 
 **Results:**
+
 - Repo renamed: `giovannimnz/atius-srv` → `giovannimnz/omni-srv-admin`
 - Submodule: `modules/fork-sync/` (69 files, 8 projetos)
 - Rebrand: 14+ arquivos (README, .planning, docs/, vscode-profile)
@@ -405,7 +444,6 @@
 - [x] **MH-8:** Working tree limpo (`git status --porcelain` só `.backups/`)
 - [x] **MH-9:** `git log --oneline | head -8` mostra 8 commits claros de rebrand + submodule + cleanup
 
-
 ## M007: M005 Follow-ups — IN PLANNING (v1.1)
 
 **Goal:** Fechar os 4 follow-ups abertos de M005: OCI snapshot workflow formal, Cloudflare Access policy para os admin edges, observability stack live (Prometheus + Grafana + Loki), e decisão + implementação de RWX storage para K3s.
@@ -414,6 +452,9 @@
 **Branch:** TBD
 **Phase dir:** `.planning/phases/{15,16,17}-*/`
 
+**Closed in this milestone (carryover from M005):**
+- Tailscale ACL (was PARTIAL gate in `13-GATE-REVIEW-2026-06-14.md`) — closed 2026-06-16. See `13-ACL-CLOSURE-2026-06-16.md`. WireGuard remains K3s transport; Tailscale is management plane only.
+
 ### Phase 15: M005 OCI Snapshots
 
 **Goal:** Workflow versionado de snapshots OCI para SRV-1/2/3 com rollback formal, IDs rastreáveis e restore drill validado.
@@ -421,6 +462,7 @@
 **Requirements:** OCI-01, OCI-02, OCI-03
 
 **Success Criteria:**
+
 - `omni srv oci snapshot preflight` cria snapshot antes de qualquer op riscada (gate explícito)
 - `omni srv oci snapshot routine` roda semanal via systemd timer; output é o snapshot ID
 - Snapshot ID registrado em `inventory/hosts/<srv>.yaml` e em `DbOmniFleet/TbConfigItems` (chave `srv.atius-srv-1.oci.snapshot_id`)
@@ -434,6 +476,7 @@
 **Requirements:** CFL-01, CFL-02, CFL-03
 
 **Success Criteria:**
+
 - Cloudflare Access policy configurada para `portainer.atius.com.br` e `docker.atius.com.br` (Allow rule com email allowlist de Giovanni)
 - Service token emitido e gravado em `.hermes/secrets/cloudflare-service-token.txt` (mode 600)
 - `omni-cli` (cron jobs, automation) usa o service token via `CLOUDFLARE_SERVICE_TOKEN` env var
@@ -447,6 +490,7 @@
 **Requirements:** OBS-01, OBS-02, OBS-03, RWX-01, RWX-02
 
 **Success Criteria:**
+
 - Prometheus scraping K3s control plane + workers (kube-state-metrics, node-exporter)
 - Loki scraping PM2 daemons (via Promtail sidecar ou systemd journal) + jenkins controller + GDrive mount
 - Grafana com 4 dashboards: K3s HA, Portainer, PM2 daemons, Jenkins, GDrive health
