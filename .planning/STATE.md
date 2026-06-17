@@ -1,21 +1,22 @@
 ---
 gsd_state_version: 1.0
 milestone: v1.1
-milestone_name: M005 Follow-ups
+milestone_name: M005 Follow-ups + M007-ext (Ubuntu Pro ESM Apps) + M008 (Fleet Standardization)
 status: planning
-last_updated: "2026-06-15T12:25:00Z"
-last_activity: 2026-06-15 — M007 (v1.1) planning started: M005 follow-ups
+last_updated: "2026-06-17T01:10:00Z"
+last_activity: 2026-06-17 — Phase 19 fleet std: hostnames lowercase + chromium 149.0.7827.114 from PPA xtradeb + Desktop shortcut + dark theme canônico aplicado (sem restart LXDE)
 progress:
-  total_phases: 14
-  completed_phases: 1
-  total_plans: 27
-  completed_plans: 12
-  percent: 7
+  total_phases: 19
+  completed_phases: 6
+  total_plans: 35
+  completed_plans: 23
+  percent: 14
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-15 after Phase 14 / 14-01 execution and main alignment with origin/main
+**Last updated:** 2026-06-16 after Phase 18 added (Ubuntu Pro ESM Apps)
+**Last activity (prior):** 2026-06-15 — Phase 14 / 14-01 execution and main alignment with origin/main
 
 ## Project Reference
 
@@ -36,6 +37,7 @@ See also: .planning/MILESTONES.md
 | M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
 | M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14, branch `codex/phase14-resource-governor-14-01`) | ✅ Closed (v1.0 shipped 2026-06-15) |
 | M007 | M005 Follow-ups: OCI snapshots, Cloudflare Access, observability, RWX (Phases 15-17) | Planning |
+| M007-ext | Ubuntu Pro ESM Apps — Google account link, fleet attach, sources DEB822, regression watchdog (Phase 18) | Planning — 18-PLAN + 18-06-AUDIT done; 18-06 detach+reattach awaiting user clarifications |
 
 ## Active Branch Results
 
@@ -44,6 +46,7 @@ See also: .planning/MILESTONES.md
 | M004 | `codex/omni-fleet-control-plane-m004` | Live repo rollout, central `omni_fleet` DB, DB-backed ops/config/slash registry, CLI dry-run commands, schema/config docs, pytest/offline/live validation, PgBouncer private endpoint guard |
 | M005 | `docs/m005-k3s-live-bootstrap` | Live K3s HA cluster, Portainer CE, Apache/Cloudflare endpoint validation, post-bootstrap docs |
 | M006 | `codex/phase14-resource-governor-14-01` | 14-01 committed: governor/inviolable versioning, install/status coverage, PM2 stale-ref detection |
+| M007-ext | TBD (Phase 18) | `18-PLAN.md` + `18-06-AUDIT-2026-06-16.md` written; 18-01..18-05 (RDP scope) closed; 18-06 detach+reattach blocked on D18-06-A/B/C clarifications + gate |
 
 ## Live Gates
 
@@ -52,9 +55,10 @@ See also: .planning/MILESTONES.md
 - Host firewall guard: ✅ `atius-k3s-firewall.service` active on SRV-1/SRV-2/SRV-3.
 - Critical local backups: ✅ created under `~/.backups/k3s-preflight/`.
 - Etcd post-bootstrap snapshot: ✅ saved on SRV-1.
-- OCI snapshot IDs: follow-up for formal cloud rollback record.
-- Cloudflare Access policy: follow-up before broad Portainer sharing.
-- Observability stack: follow-up from M005 observability plan.
+| OCI snapshot IDs | follow-up for formal cloud rollback record |
+| Cloudflare Access policy | follow-up before broad Portainer sharing |
+| Observability stack | follow-up from M005 observability plan |
+| **Tailscale ACL** | ✅ **closed 2026-06-16** — see `13-ACL-CLOSURE-2026-06-16.md` and vault `60-LOGS/2026-06-16/` |
 - M006 live execution must not stop PM2 daemons, trading processes, XRDP, or stale user jobs without an explicit gate and current process snapshot.
 - M006 14-01 found current live stuck jobs: `default.target`, `ats-pm2.service`, `horistic-pm2.service`; these remain gated for 14-02/14-03.
 - M006 14-01 found `pm2-ubuntu.service` still references `/home/ubuntu/ecosystem.atius.js`; this remains gated for 14-02.
@@ -133,14 +137,48 @@ See also: .planning/MILESTONES.md
 - Push policy: fork push livre após audit
 - GDrive quota: 5TB total, ~144GB usado, ~4.7TB livre
 - 2026-06-15: main local aligned with origin/main via merge. 5 docs/m005-* branches ready for archival. M006 stays in-progress on phase14 branch.
+- 2026-06-16 (cont): Phase 18 scoped up. (a) RDP login SRV-1 broken — root cause: x11vnc (camofox in :97) holding 5910, collides with xrdp-sesman display :10. (b) SRV-2 incident parallel — x11vnc 0.0.0.0:5900 exposed WAN, pid 1678706, bots hammering since 2025-10. (c) Doc canônico unificado criado: `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` (+ mirror `30-RECURSOS/operations/` no vault, indexed in gbrain pages=877 chunks=2670). (d) Decisão: pool de displays `:5..9` = headless helpers; VNC=5900+N, noVNC=6080+N. Camofox migra `:97→:5` (VNC 5905, noVNC 6085). (e) ESM Apps re-scoped: token em `~/secrets/ubuntu-pro-token.txt` em cada SRV; target .sources (DEB822) + account giovannimunizds@gmail.com. Phase 18 re-numerada 18-01..18-09. Gate explícito: restart xrdp-sesman + smoke test RDP + apt upgrade ainda pendentes.
+- 2026-06-16 (Codex resume): `ATIUS-FLEET-NETWORK-PORT-MAP.md` bumped to v1.1.0: reserva baixa `:1..14`, pool headless `:15..30`, xrdp `:31..60`, overflow `:61+`. Live `/etc/xrdp/sesman.ini` changed on SRV-1/2/3 from `X11DisplayOffset=1` to `31` with backups, `xrdp`/`xrdp-sesman` restarted, stale `:1/:2/:10` XRDP sessions removed, and `xfreerdp` probes reached `sesman` on all 3 with expected `AUTHFAIL` for fake user. Human Microsoft RDP retry still pending.
+- 2026-06-16 (Codex follow-up): human login on SRV-1 with offset 31 accepted password and created `Xvnc :31`, but `/var/log/xrdp.log` showed `VNC error 1 after security negotiation` / `Error connecting to user session`. Per operator request, SRV-1 only was forced back to `X11DisplayOffset=1`; stale `X1/X31` sockets and session `:31` were removed; backup is `/etc/xrdp/sesman.ini.codex-bak-20260616-190844-force-display1`.
+- 2026-06-16 (Codex fix): SRV-1 XRDP root cause isolated to the `xrdp/libvnc.so -> Xvnc` handoff on display `:1`: the session authenticated, but VNC negotiation needed explicit `SecurityTypes None`, `Protocol3.3`, and XRDP socket `/run/xrdp/sockdir/xrdp_display_1`. Final live config: `X11DisplayOffset=1`, `lib=libvnc.so`, `port=-1`, `code=0`, `delay_ms=6000`, `Xvnc -SecurityTypes None -Protocol3.3 -rfbunixpath /run/xrdp/sockdir/xrdp_display_1 -rfbunixmode 432`. Local `xfreerdp` smoke with temp user reached `VNC connection complete, connected ok` on display `:1`; temp user/session/sockets removed. Port map bumped to v1.1.1 with SRV-1 override `XRDP primary :1`; `:31..60` is expansion/overflow for SRV-1.
+- 2026-06-16 (Codex fleet fix): Operator confirmed SRV-1 Microsoft RDP works on `:1`. SRV-2/SRV-3 still had `X11DisplayOffset=31`; SRV-2 real login hit `:31` then `startwm.sh` exited in 0s, and SRV-3 real login/reconnect hit `:31` then `VNC error 1`. Applied SRV-1 working XRDP/Xvnc profile to SRV-2/SRV-3: `X11DisplayOffset=1`, `code=0`, `delay_ms=6000`, `SecurityTypes None`, `Protocol3.3`, `xrdp_display_1`, custom LXDE `startwm.sh` with no 1366 watcher. Disabled SRV-2 `xvfb.service` because it pinned `Xvfb :1`. Removed SRV-1 `xrdp-display-1366x768.sh --watch`; live SRV-1 session returned to `1920x1080` from the RDP client. Smoke `xfreerdp` OK on SRV-2 and SRV-3: display `:1`, geometry `1280x720`, `VNC connection complete, connected ok`. Port map bumped to v1.1.2. Final rule: `:1..14` XRDP humano with resolution controlled by RDP client; `:15..30` headless/Camofox/noVNC may use fixed resolution; `:31..60` legacy/overflow only.
+- 2026-06-16 (Codex closure): Operator confirmed Microsoft RDP success on SRV-2 and SRV-3 as well, closing the XRDP adjustment across the fleet. Status is now operator-confirmed on SRV-1/SRV-2/SRV-3, port map bumped to v1.1.3, and the remaining open scope of Phase 18 returns to Ubuntu Pro / `esm-apps`, Google account link, fleet attach validation, and regression watchdog.
 
 ## Current Position
 
-Phase: Milestone v1.0 complete
-Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-06-15 — Milestone v1.0 completed and archived
+Phase: 19 (Fleet Standardization — M008)
+Plan: 19-01 (hostnames+PPA+chromium+theme) — DONE
+Status: Phase 19 fully executed across 4 hosts (atius-srv-1/2/3 + horistic-srv-1) — hostnames lowercase, chromium 149.0.7827.114 from PPA xtradeb, desktop shortcut criado, dark theme canônico em disco (theme ativo no próximo login). Pendente: restart manual do LXDE pelo user (eu NÃO derrubei sessão RDP ativa) e G18-1 (apt upgrade ESM).
+Last activity: 2026-06-17 — Phase 19 fleet std: 4 hosts parallel via delegate_task (138-278s cada). 19-01 hostname+PPA+chromium+desktop (3 subagentes succeeded) + 19-02 dark theme apply sem restart-session (4 subagentes succeeded).
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- [ ] Authorize G18-1 (apt upgrade esm-apps+infra nos 3 SRVs) — eu rodo serial 5min cooldown.
+- [ ] Validate G18-2 (Microsoft RDP login pós-upgrade nos 3 SRVs) — você valida nos 3.
+- [ ] Confirmar no Landscape SaaS UI que SRV-1, SRV-2, SRV-3 estão todos online (e não só SRV-2/3 como antes).
+- Decisões já tomadas + executadas:
+  - D18-06-A = (a) Dashboard transfer gmail → EXECUTED
+  - D18-06-B = (1) pro refresh suave + fallback detach → EXECUTED (caminho detach+reattach funcionou; D18-06-B sub-decisão "auto-habilita esm-* no attach" — confirmado em pro 37.2)
+  - D18-06-C = paralelo via subagent nos 3 SRVs → EXECUTED (3 subagentes parallel, 134-253s cada)
+
+## Session Continuity (resumed 2026-06-17)
+
+- **Resume trigger:** gsd-resume-work skill
+- **Last action before resume:** Materialized podman-fleet-standardize as skill + omni-srv-admin module
+  - Skill: `~/.hermes/skills/devops/podman-fleet-standardize/` (12 files)
+  - Module: `~/GitHub/omni-srv-admin/modules/fleet/podman-network/` (12 files, commit `c0543a9de`)
+  - CLI: `omni podman-network {drift,apply,smoke,standard}` registered in cli/omni/cli.py
+  - Doc: `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` v1.2.0
+  - **Drift check result: 6/6 PASS** on all 3 SRVs
+
+- **Discovered gaps:**
+  1. Phase 19 PLAN marked `status: complete` but no SUMMARY.md exists (procedural gap)
+  2. Podman networking standardization was done as a one-off, not yet reflected in .planning/
+  3. Phase 20 candidate: "M008-b podman networking standardization" (formalize the work done in 2026-06-16)
+
+- **Operator next steps (unchanged from STATE pre-resume):**
+  - [ ] Authorize G18-1 (apt upgrade esm-apps+infra nos 3 SRVs)
+  - [ ] Validate G18-2 (Microsoft RDP login pós-upgrade nos 3 SRVs)
+  - [ ] Confirmar Landscape SaaS UI com SRV-1/2/3 online
+
+- **Next decision:** user chooses between (a) close phase 19 procedurally + create phase 20, (b) advance to G18-1, (c) something else.
