@@ -238,6 +238,10 @@ def _db_env(path: Path = FLEET_DB_ENV) -> dict[str, str]:
     missing = [key for key in required if not loaded.get(key)]
     if missing:
         raise click.ClickException(f"fleet DB env incompleto: {','.join(missing)}")
+    if loaded.get("PGHOST") == "10.1.1.1" and loaded.get("PGPORT") == "6432":
+        # PgBouncer is the declared fleet endpoint, but on SRV-1 it is bound
+        # to loopback. Local omni commands should still read DbOmniFleet.
+        loaded = {**loaded, "OMNI_FLEET_DB_DECLARED_HOST": loaded["PGHOST"], "PGHOST": "127.0.0.1"}
     return {**os.environ, **loaded}
 
 

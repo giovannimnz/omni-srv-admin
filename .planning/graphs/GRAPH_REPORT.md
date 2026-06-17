@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-17)
 
 ## Corpus Check
-- 346 files · ~804,479 words
+- 353 files · ~813,744 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5172 nodes · 5749 edges · 485 communities (429 shown, 56 thin omitted)
+- 5248 nodes · 5934 edges · 493 communities (433 shown, 60 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `82b46014`
+- Built from commit: `126c4a61`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -498,13 +498,21 @@
 - [[_COMMUNITY_Community 482|Community 482]]
 - [[_COMMUNITY_Community 483|Community 483]]
 - [[_COMMUNITY_Community 484|Community 484]]
+- [[_COMMUNITY_Community 485|Community 485]]
+- [[_COMMUNITY_Community 486|Community 486]]
+- [[_COMMUNITY_Community 487|Community 487]]
+- [[_COMMUNITY_Community 488|Community 488]]
+- [[_COMMUNITY_Community 489|Community 489]]
+- [[_COMMUNITY_Community 490|Community 490]]
+- [[_COMMUNITY_Community 491|Community 491]]
+- [[_COMMUNITY_Community 492|Community 492]]
 
 ## God Nodes (most connected - your core abstractions)
 1. `Communities (485 total, 56 thin omitted)` - 428 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
-4. `output()` - 23 edges
-5. `ScenarioResult` - 22 edges
+4. `ScenarioResult` - 23 edges
+5. `output()` - 23 edges
 6. `run_sync()` - 22 edges
 7. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 20 edges
 8. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 18 edges
@@ -526,7 +534,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (485 total, 56 thin omitted)
+## Communities (493 total, 60 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.05
@@ -637,8 +645,8 @@ Cohesion: 0.07
 Nodes (26): 1️⃣ Period Choice Logic (CRITICAL), 2️⃣ Signal Fetching (CRITICAL), 3️⃣ Trade Execution (IMPORTANT), 4️⃣ Database Integration (IMPORTANT), 📞 Bloqueadores Conhecidos, 📋 Checklist Geral da Fase, Config Pytest (`pytest.ini`), 🎯 Definição de "Done" (+18 more)
 
 ### Community 27 - "Community 27"
-Cohesion: 0.08
-Nodes (25): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+17 more)
+Cohesion: 0.09
+Nodes (21): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+13 more)
 
 ### Community 28 - "Community 28"
 Cohesion: 0.08
@@ -837,8 +845,8 @@ Cohesion: 0.34
 Nodes (13): backup_podman_image(), backup_volume(), is_volume_done(), load_state(), log(), main(), mark_volume_done(), mark_volume_failed() (+5 more)
 
 ### Community 77 - "Community 77"
-Cohesion: 0.10
-Nodes (43): Any, Path, audit(), _emit(), fleet(), heartbeat(), _heartbeat_payload(), _host_id() (+35 more)
+Cohesion: 0.07
+Nodes (80): Any, Path, agent(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event(), audit() (+72 more)
 
 ### Community 78 - "Community 78"
 Cohesion: 0.15
@@ -1481,16 +1489,16 @@ Cohesion: 0.83
 Nodes (3): srv1-fix-network.sh script, fail(), log()
 
 ### Community 290 - "Community 290"
-Cohesion: 0.14
-Nodes (38): Any, Path, invoke_fleet(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero(), test_inventory_validation_covers_srv1_srv2_srv3() (+30 more)
+Cohesion: 0.26
+Nodes (30): Any, Path, _blocked(), _fail(), _live_fleet_db_query(), _live_host_identity(), _live_mesh_ping(), _live_node_direct_postgres_blocked() (+22 more)
 
 ### Community 291 - "Community 291"
 Cohesion: 0.08
 Nodes (25): 1. Congelar tráfego de borda e watchdog, 2026-06-15 M005 Decision, 2. Parar K3s em todos os servers, 3. Fazer backup defensivo do DB atual dos peers, 4. Restaurar o snapshot etcd em SRV-1, 5. Reidratar os PVCs `local-path` em SRV-1 antes do primeiro start pós-restore, 6. Subir SRV-1 sozinho, 7. Rejuntar SRV-2 e SRV-3 (+17 more)
 
 ### Community 292 - "Community 292"
-Cohesion: 0.11
-Nodes (18): Canonical References, D-01: M004 define a base operacional, D-02: Branch de trabalho do milestone, D-03: Repo canônico, D-04: Modos de instalação, D-05: Inventário é fonte de verdade para identidade, D-06: PostgreSQL central migrável, D-07: PgBouncer obrigatório para clientes (+10 more)
+Cohesion: 0.10
+Nodes (20): Canonical References, D-01: M004 define a base operacional, D-02: Branch de trabalho do milestone, D-03: Repo canônico, D-04: Modos de instalação, D-05: Inventário é fonte de verdade para identidade, D-06: PostgreSQL central migrável, D-07: PgBouncer obrigatório para clientes (+12 more)
 
 ### Community 293 - "Community 293"
 Cohesion: 0.11
@@ -1501,16 +1509,16 @@ Cohesion: 0.11
 Nodes (17): Bottom line, Current direct-IP paths observed, Immediate failures, Operational consequence, Path A: WireGuard API path in use today, Path B: OCI private-IP path exists at L3, but not as a working K3s fallback, Path C: Public-IP path is not available for K3s API, Phase 13 PTP / Direct-IP Fallback Review (+9 more)
 
 ### Community 295 - "Community 295"
-Cohesion: 0.13
-Nodes (14): 12-01: Fleet Control Plane Foundation, Human Checkpoints, Objective, Read First, Success Criteria, Task 1 — Freeze milestone order, Task 2 — Define contracts and docs, Task 3 — Design PostgreSQL and PgBouncer (+6 more)
+Cohesion: 0.12
+Nodes (15): 12-01: Fleet Control Plane Foundation, Human Checkpoints, Objective, Read First, Success Criteria, Task 1 — Freeze milestone order, Task 2 — Define contracts and docs, Task 3 — Design PostgreSQL and PgBouncer (+7 more)
 
 ### Community 296 - "Community 296"
 Cohesion: 0.13
 Nodes (14): 13-01: M005 No-Cost Release Gates, Human Checkpoints, Objective, Read First, Secret Handling Rules, Success Criteria, Task 1 - Update release gates and docs, Task 2 - Promote GDrive disaster recovery gate (+6 more)
 
 ### Community 297 - "Community 297"
-Cohesion: 0.14
-Nodes (13): Audit, CLI-Anything Slash Commands, Data Model, Heartbeat, Human Gates Before Live Execution, License And Secret Policy, Omni Fleet Control Plane, Ops Scopes And Config (+5 more)
+Cohesion: 0.12
+Nodes (16): Agent Service, Audit, CLI-Anything Slash Commands, Cross-Server Monitoring, Data Model, Direct IP Fallback, Heartbeat, Human Gates Before Live Execution (+8 more)
 
 ### Community 298 - "Community 298"
 Cohesion: 0.50
@@ -1521,8 +1529,8 @@ Cohesion: 0.15
 Nodes (12): Conclusion, Initial Data Model, Local Evidence, Node Responsibilities, Official Research, PgBouncer, Phase 12 — Research, PostgreSQL dump/restore (+4 more)
 
 ### Community 300 - "Community 300"
-Cohesion: 0.17
-Nodes (11): Added DB/CLI-Anything Contract, Automated Commands, Host Evidence, Live Read-Only Results, Live Repo + DB Rollout, Master/Slave Scenario Matrix, Multi-Agent Review Inputs, Offline Contract Scenarios (+3 more)
+Cohesion: 0.14
+Nodes (13): Added DB/CLI-Anything Contract, Agent Executor + Monitoring Scenarios, Automated Commands, DB/Table CamelCase Rename, Host Evidence, Live Read-Only Results, Live Repo + DB Rollout, Master/Slave Scenario Matrix (+5 more)
 
 ### Community 301 - "Community 301"
 Cohesion: 0.17
@@ -1533,8 +1541,8 @@ Cohesion: 0.20
 Nodes (9): Branch decision, Host snapshot, Live evidence, Network snapshot, Phase 13 Gate Review — 2026-06-14, Release command after blockers close, Storage snapshot, Verdict (+1 more)
 
 ### Community 303 - "Community 303"
-Cohesion: 0.20
-Nodes (9): Current Artifacts, fleet-control-plane, Live M004 State, Ops And Config Rule, Safe Commands, Secret Rule, Slash Command Rule, SRV-1 PgBouncer Enforcement (+1 more)
+Cohesion: 0.18
+Nodes (10): Agent Executor Model, Current Artifacts, fleet-control-plane, Live M004 State, Ops And Config Rule, Safe Commands, Secret Rule, Slash Command Rule (+2 more)
 
 ### Community 304 - "Community 304"
 Cohesion: 0.22
@@ -2236,22 +2244,38 @@ Nodes (13): 18-07 — apt upgrade esm-apps+esm-infra SUMMARY, 18-07-EXECUTION (s
 Cohesion: 0.29
 Nodes (6): Backups, Correção Aplicada, Estado Final, Phase 19 — Desktop Shortcuts Hotfix, Root Cause, Validação
 
+### Community 485 - "Community 485"
+Cohesion: 0.17
+Nodes (13): invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero() (+5 more)
+
+### Community 486 - "Community 486"
+Cohesion: 0.17
+Nodes (11): Background, Files in this module, fleet-network-watchdog, Hosts with systemd-resolved (SRV-1, SRV-3), Hosts without systemd-resolved (SRV-2), Idempotency, Install per host, Run manually (+3 more)
+
+### Community 487 - "Community 487"
+Cohesion: 0.83
+Nodes (3): fail(), log(), fleet-network-watchdog.sh script
+
+### Community 488 - "Community 488"
+Cohesion: 0.83
+Nodes (3): fail(), log(), srv1-fix-network.sh script
+
 ## Knowledge Gaps
-- **3358 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3353 more)
+- **3377 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3372 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **56 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `Communities (485 total, 56 thin omitted)` connect `Community 223` to `Community 284`?**
-  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
+- **Why does `discover_heal()` connect `Community 0` to `Community 57`?**
+  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **Why does `Graph Report - omni-srv-admin  (2026-06-17)` connect `Community 284` to `Community 223`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh` connect `Community 358` to `Community 119`?**
-  _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3569 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3595 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
   _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**

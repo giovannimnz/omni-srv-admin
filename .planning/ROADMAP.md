@@ -400,6 +400,22 @@ Plans:
 
 - [ ] TBD (run /gsd-plan-phase 18 to break down)
 
+### Phase 21: Onboarding ATIUS-MT5-KVM-1/2 como hosts gerenciados
+
+**Goal:** Gerenciar `atius-mt5-kvm-1` e `atius-mt5-kvm-2` pelo omni-srv-admin com inventário, DB, monitoramento, VPN/CoreDNS/docs, shell runtime e histórico completo. Sem K3s por enquanto.
+
+**Requirements:** MT5KVM-01, MT5KVM-02, MT5KVM-03, MT5KVM-04, MT5KVM-05, MT5KVM-06, MT5KVM-07, MT5KVM-08, MT5KVM-09, MT5KVM-10
+
+**Depends on:** Phase 20
+**Plans:** 1 plan
+**Status:** IN PROGRESS (started 2026-06-17)
+
+Plans:
+
+- [x] `21-PLAN.md` — plano separado e histórico operacional
+- [x] `21-04` — hostnames lowercase + zsh/Oh My Zsh + Rust + zellij aplicados e validados por subagentes paralelos
+- [ ] `21-02/03/05/06` — inventário+DB+VPN/docs+monitoramento+vault final
+
 ---
 
 ## Phase 8: Rebrand fork-sync submodule
@@ -453,6 +469,7 @@ Plans:
 **Phase dir:** `.planning/phases/{15,16,17}-*/`
 
 **Closed in this milestone (carryover from M005):**
+
 - Tailscale ACL (was PARTIAL gate in `13-GATE-REVIEW-2026-06-14.md`) — closed 2026-06-16. See `13-ACL-CLOSURE-2026-06-16.md`. WireGuard remains K3s transport; Tailscale is management plane only.
 
 ### Phase 15: M005 OCI Snapshots
