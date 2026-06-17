@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.1.3 — 2026-06-16
+> Versão: 1.1.4 — 2026-06-17
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -21,10 +21,10 @@ Os hosts móveis/complementares são documentados para completeness.
 
 | Host           | Função             | OS            | Status  | Inventory |
 |----------------|--------------------|---------------|---------|-----------|
-| ATIUS-SRV-1    | production         | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-1.yaml` |
-| ATIUS-SRV-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
-| ATIUS-SRV-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
-| HORISTIC-SRV-1 | proxy reverso      | Ubuntu 24.04  | active  | (sem inventory file — só apache vhost) |
+| atius-srv-1    | production         | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-1.yaml` |
+| atius-srv-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
+| atius-srv-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
+| horistic-srv-1 | proxy reverso      | Ubuntu 24.04  | active  | (sem inventory file — só apache vhost) |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
 | GIOVANNI-S23   | mobile node        | Termux (Android) | planned | `inventory/hosts/giovanni-s23-termux.yaml` |
 | GIOVANNI-S23-PROOT | mobile ubuntu | Ubuntu (proot) | planned | `inventory/hosts/giovanni-s23-proot.yaml` |
@@ -85,10 +85,10 @@ Camadas:
 
 | Host           | Hostname        | IP Público       | IP VPN  | Tailscale       | OCI (DHCP)  |
 |----------------|-----------------|------------------|---------|------------------|-------------|
-| ATIUS-SRV-1    | ATIUS-SRV-1     | 137.131.190.161  | 10.1.1.1 | 100.76.56.62   | 10.0.0.38   |
-| ATIUS-SRV-2    | ATIUS-SRV-2     | 129.148.47.32    | 10.1.1.2 | 100.93.43.113  | DHCP        |
-| ATIUS-SRV-3    | ATIUS-SRV-3     | 136.248.126.12   | 10.1.1.7 | 100.72.102.57  | DHCP        |
-| HORISTIC-SRV-1 | HORISTIC-SRV-1  | 163.176.232.119  | 10.1.1.3 | (TBD)          | DHCP        |
+| atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.1.1.1 | 100.76.56.62   | 10.0.0.38   |
+| atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.1.1.2 | 100.93.43.113  | DHCP        |
+| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.7 | 100.72.102.57  | DHCP        |
+| horistic-srv-1 | horistic-srv-1  | 163.176.232.119  | 10.1.1.3 | (TBD)          | DHCP        |
 | GIOVANNI-PC    | GIOVANNI-PC     | 177.134.153.216  | 10.1.1.4 | -               | LAN local   |
 | GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.5 | -               | mobile/4G   |
 
@@ -97,7 +97,7 @@ para 127.0.0.53 (stub) + 10.1.1.2 (SRV-2 BIND interno) + 1.1.1.1 (fallback).
 
 Cloudflare:
 - `*.atius.com.br` → origem 10.1.1.1 (Apache2 SRV-1, port 9080/9444)
-- `*.horistic.com` → origem 10.1.1.3 (Apache2 HORISTIC-SRV-1, proxy pra 10.1.1.1:3050/8050)
+- `*.horistic.com` → origem 10.1.1.3 (Apache2 horistic-srv-1, proxy pra 10.1.1.1:3050/8050)
 - `portainer.atius.com.br`, `docker.atius.com.br` → K3s Portainer (Phase 13)
 - `jenkins.atius.com.br` → 10.1.1.1:8085 (SRV-1 podman)
 - `cloudbeaver.atius.com.br` → 10.1.1.1:8978 (SRV-1 podman)

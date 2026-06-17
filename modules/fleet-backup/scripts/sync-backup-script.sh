@@ -19,7 +19,7 @@ if [ ! -f "$MASTER_SCRIPT" ]; then
 fi
 
 # Alvos: SRV-2 e SRV-3 via alias VPN
-SRV_HOSTS=("ATIUS-SRV-2-VPN:2" "ATIUS-SRV-3-VPN:3")
+SRV_HOSTS=("atius-srv-2-vpn:2" "atius-srv-3-vpn:3")
 
 for entry in "${SRV_HOSTS[@]}"; do
   IFS=':' read -r srv srv_num <<< "$entry"
@@ -31,4 +31,4 @@ for entry in "${SRV_HOSTS[@]}"; do
 done
 
 echo "Sync completo. Teste:"
-echo "  ssh ATIUS-SRV-2-VPN 'bash ~/backup-srv2-to-gdrive.sh 2>&1 | head -5'"
+echo "  ssh atius-srv-2-vpn 'bash ~/backup-srv2-to-gdrive.sh 2>&1 | head -5'"

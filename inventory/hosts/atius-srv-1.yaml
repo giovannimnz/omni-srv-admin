@@ -124,6 +124,62 @@ apps:
     last_audited: "2026-06-15"
     notes:
       - "OAuth giovannimunizds@gmail.com; mount ~/GDrive/ RW; 5TB quota"
+  - id: rust-toolchain
+    runtime: local-rustup
+    install_type: rustup-managed
+    install_path: /home/ubuntu/.cargo/bin
+    rustup_home: /home/ubuntu/.rustup
+    cargo_home: /home/ubuntu/.cargo
+    current_version: "1.96.0"
+    desired_version: "1.96.0"
+    toolchain: stable
+    profile: minimal
+    arch: aarch64-unknown-linux-gnu
+    source: "https://sh.rustup.rs"
+    update_command: "rustup update stable"
+    version_command: "rustc --version"
+    managed_by: "omni-srv-admin"
+    update_policy: "sim-fleet-update"
+    last_audited: "2026-06-16"
+    installed_on: "2026-06-16"
+    bashrc_path_line: '. "$HOME/.cargo/env"'
+    notes:
+      - "Instalado em 2026-06-16 via rustup non-interactive (-y --default-toolchain stable --profile minimal --no-modify-path)"
+      - "cargo-binstall 1.20.0 instalado em ~/.cargo/bin/cargo-binstall (binário pré-compilado do release v1.20.0; o install.sh raw/main retorna 404)"
+      - "Update fleet: ~/GitHub/omni-srv-admin/modules/rust-zellij-fleet/scripts/update-fleet.sh"
+  - id: cargo-binstall
+    runtime: local-binary
+    install_type: manual-release-binary
+    install_path: /home/ubuntu/.cargo/bin/cargo-binstall
+    current_version: "1.20.0"
+    desired_version: "1.20.0"
+    source: "https://github.com/cargo-bins/cargo-binstall/releases"
+    version_command: "cargo-binstall -V"
+    managed_by: "omni-srv-admin"
+    update_policy: "manual"
+    last_audited: "2026-06-16"
+    installed_on: "2026-06-16"
+    notes:
+      - "Subcomando cargo-binstall permite `cargo binstall <crate>` para instalar Rust crates pré-compiladas"
+      - "Download via tarball do release (não do install.sh que retornou 404 em 2026-06-16)"
+  - id: zellij
+    runtime: local-rustup-binary
+    install_type: cargo-binstall
+    install_path: /home/ubuntu/.cargo/bin/zellij
+    current_version: "0.44.3"
+    desired_version: "0.44.3"
+    source: "https://github.com/zellij-org/zellij"
+    binary_target: aarch64-unknown-linux-musl
+    update_command: "cargo binstall zellij --no-confirm"
+    version_command: "zellij --version"
+    managed_by: "omni-srv-admin"
+    update_policy: "sim-fleet-update"
+    last_audited: "2026-06-16"
+    installed_on: "2026-06-16"
+    notes:
+      - "Terminal multiplexer; instalado em 2026-06-16 via cargo binstall (binário pré-compilado, 2-3s por host)"
+      - "Sem fallback `cargo install` necessário — binário direto do GitHub release funcionou de primeira nos 3 servers"
+      - "Update fleet: ~/GitHub/omni-srv-admin/modules/rust-zellij-fleet/scripts/update-fleet.sh"
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15

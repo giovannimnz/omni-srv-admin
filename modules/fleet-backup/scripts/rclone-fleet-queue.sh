@@ -31,9 +31,9 @@ STATUS_FILE="/home/ubuntu/.logs/rclone-fleet-queue.json"
 COOLDOWN_SECONDS=300   # 5min entre servers (Google Drive quota)
 MAX_JOB_RUNTIME=1800   # 30min max por job (kill se passar — rate limit recovery)
 SRV_HOSTS=(
-  "1:ATIUS-SRV-1:137.131.190.161"
-  "2:ATIUS-SRV-2:129.148.47.32"
-  "3:ATIUS-SRV-3:136.248.126.12"
+  "1:atius-srv-1:137.131.190.161"
+  "2:atius-srv-2:129.148.47.32"
+  "3:atius-srv-3:136.248.126.12"
 )
 SSH_KEY="/home/ubuntu/.ssh/id_ed25519"
 

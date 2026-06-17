@@ -1,8 +1,18 @@
-# ATIUS Fleet — Especificações das Máquinas
+# ATIUS Fleet — Fleet Specs (Specs das Máquinas)
 
-Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
+> **DOCUMENTO SUBSTITUÍDO EM 2026-06-16.**
+>
+> **Leia o novo documento canônico:**
+> [[ATIUS-FLEET-NETWORK-PORT-MAP]] (em `30-RECURSOS/operations/`)
+>
+> Este arquivo é mantido apenas como histórico (já que tem specs de
+> I/O write max e tabelas de disco que foram validadas em 2026-05-04).
+> Está desatualizado quanto a OS (diz 22.04, real é 24.04) e não
+> cobre o pool de displays :5..9, nem o estado pós-Phase 18.
 
-## Especificações comuns
+---
+
+## Especificações comuns (válido, OS desatualizado)
 
 | Parâmetro | Valor |
 |---|---|
@@ -14,10 +24,10 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 | Disco nominal | 200 GB |
 | Disco real (formatado) | **186.26 GiB** |
 | Tipo de disco | Oracle Block Volume (rotational=1, HDD-backed) |
-| OS | Ubuntu 22.04.5 LTS |
-| Kernel | 6.8.0-1050-oracle |
+| OS | ~~Ubuntu 22.04.5 LTS~~ **Ubuntu 24.04.4 LTS** (atualizado 2026-06) |
+| Kernel | ~~6.8.0-1050-oracle~~ **6.17.x-oracle** (atualizado 2026-06) |
 
-## Máquinas
+## Máquinas (dados de disco ainda válidos)
 
 | Máquina | IP Público | IP VPN | Disco usado | RAM disp. | Write max | 85% safe |
 |---|---|---|---|---|---|---|
@@ -44,4 +54,8 @@ Ou com rate limiter absoluto via `pv`:
 tar cf - <dir> | pv -q -L 80M -W > output.tar
 ```
 
-Documentação completa no Obsidian: `30-RECURSOS/atius/atius-fleet-specs.md`
+## Ver também
+
+- [[ATIUS-FLEET-NETWORK-PORT-MAP]] — doc canônico (rede, IPs, portas, displays)
+- `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` no repo omni-srv-admin
+- `inventory/hosts/atius-srv-{1,2,3}.yaml` — fonte de verdade por host

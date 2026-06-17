@@ -27,5 +27,54 @@ cleanup:
   pending:
     - review Docker volumes before any volume prune
     - router is router-ai-zentrius under /home/ubuntu/docker/Atius/router-ai-zentrius, not router-ai-atius
+apps:
+  - id: rust-toolchain
+    runtime: local-rustup
+    install_type: rustup-managed
+    install_path: /home/ubuntu/.cargo/bin
+    rustup_home: /home/ubuntu/.rustup
+    cargo_home: /home/ubuntu/.cargo
+    current_version: "1.96.0"
+    desired_version: "1.96.0"
+    toolchain: stable
+    profile: minimal
+    arch: aarch64-unknown-linux-gnu
+    source: "https://sh.rustup.rs"
+    update_command: "rustup update stable"
+    version_command: "rustc --version"
+    managed_by: "omni-srv-admin"
+    update_policy: "sim-fleet-update"
+    last_audited: "2026-06-16"
+    installed_on: "2026-06-16"
+    bashrc_path_line: '. "$HOME/.cargo/env"'
+    notes:
+      - "Instalado em 2026-06-16 via rustup non-interactive (SSH 10.1.1.2)"
+      - "Update fleet: ~/GitHub/omni-srv-admin/modules/rust-zellij-fleet/scripts/update-fleet.sh"
+  - id: cargo-binstall
+    runtime: local-binary
+    install_type: manual-release-binary
+    install_path: /home/ubuntu/.cargo/bin/cargo-binstall
+    current_version: "1.20.0"
+    desired_version: "1.20.0"
+    source: "https://github.com/cargo-bins/cargo-binstall/releases"
+    version_command: "cargo-binstall -V"
+    managed_by: "omni-srv-admin"
+    update_policy: "manual"
+    last_audited: "2026-06-16"
+    installed_on: "2026-06-16"
+  - id: zellij
+    runtime: local-rustup-binary
+    install_type: cargo-binstall
+    install_path: /home/ubuntu/.cargo/bin/zellij
+    current_version: "0.44.3"
+    desired_version: "0.44.3"
+    source: "https://github.com/zellij-org/zellij"
+    binary_target: aarch64-unknown-linux-musl
+    update_command: "cargo binstall zellij --no-confirm"
+    version_command: "zellij --version"
+    managed_by: "omni-srv-admin"
+    update_policy: "sim-fleet-update"
+    last_audited: "2026-06-16"
+    installed_on: "2026-06-16"
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

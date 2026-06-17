@@ -1,0 +1,150 @@
+PHASE 19 — Dark Theme Apply — ATIUS-SRV-3 (10.1.1.7)
+Date: 2026-06-17 UTC
+Operator: hermes (omni-srv-admin)
+Mode: COPY-ONLY (no --restart-session, no dark-themectl)
+Target user: ubuntu (home=/home/ubuntu)
+RDP session: ACTIVE throughout (xrdp-sesman + lightdm + openbox + lxpanel + pcmanfm alive)
+
+================================================================
+STEP 1 — Validate RDP active
+================================================================
+$ who
+ubuntu   pts/0        2026-06-16 22:51 (177.134.154.191)
+ubuntu   pts/2        2026-06-15 06:04 (tmux(184080).%0)
+$ pgrep -au ubuntu | grep -E 'lxpanel|openbox|xrdp|pcmanfm'
+2125480 Xvnc :1 ... (xrdp)
+2125485 /usr/sbin/xrdp-chansrv
+2125508 openbox --config-file /home/ubuntu/.config/openbox/lxde-rc.xml
+2125513 lxpanel --profile LXDE
+2125514 pcmanfm --desktop --profile LXDE
+=> RDP ACTIVE. Skipping --restart-session.
+
+================================================================
+STEP 2 — Backup directory created
+================================================================
+$ mkdir -p /home/ubuntu/.backups/dark-theme-apply-2026-06-17
+$ mkdir -p $BACKUP/{lxsession/LXDE,lxpanel/LXDE/panels,openbox,config/gtk-3.0}
+
+Pre-existing files backed up:
+  .gtkrc-2.0                                        -> $BACKUP/.gtkrc-2.0.bak
+  .zshrc                                            -> $BACKUP/.zshrc.bak
+  .config/lxsession/LXDE/desktop.conf               -> $BACKUP/lxsession/LXDE/desktop.conf
+  .config/lxpanel/LXDE/panels/panel                 -> $BACKUP/lxpanel/LXDE/panels/panel
+  .config/openbox/lxde-rc.xml                       -> $BACKUP/openbox/lxde-rc.xml
+
+New (non-existent) targets recorded as .missing sentinels:
+  .config/gtk-3.0/settings.ini                      -> $BACKUP/config/gtk-3.0/settings.ini.missing
+  .config/gtk-3.0/gtk.css                           -> $BACKUP/config/gtk-3.0/gtk.css.missing
+  .config/lxpanel/LXDE/panels/00-background         -> $BACKUP/lxpanel/LXDE/panels/00-background.missing
+  .config/lxpanel/LXDE/panels/status-right          -> $BACKUP/lxpanel/LXDE/panels/status-right.missing
+  .config/lxpanel/LXDE/panel-background.xpm         -> $BACKUP/lxpanel/LXDE/panel-background.xpm.missing
+
+MD5-BEFORE.txt captures pre-existing file checksums.
+
+================================================================
+STEP 3 — Copy canonical config files (mapping from
+          dark-themectl.sh: lines 237-240, 350, 1161)
+================================================================
+SRC = /home/ubuntu/GitHub/omni-srv-admin/dark-theme-ubuntu/config_files/
+DST = ubuntu@10.1.1.7:/home/ubuntu/
+
+Mapping (verified against dark-themectl.sh install paths):
+  src/gtkrc-2.0           -> ~/.gtkrc-2.0
+  src/.zshrc              -> ~/.zshrc
+  src/gtk-3.0.css         -> ~/.config/gtk-3.0/gtk.css
+  src/gtk-3.0-settings.ini-> ~/.config/gtk-3.0/settings.ini
+  src/desktop.conf        -> ~/.config/lxsession/LXDE/desktop.conf
+  src/lxde-rc.xml         -> ~/.config/openbox/lxde-rc.xml
+  src/panel-background.xpm-> ~/.config/lxpanel/LXDE/panel-background.xpm
+  src/00-background       -> ~/.config/lxpanel/LXDE/panels/00-background
+  src/panel               -> ~/.config/lxpanel/LXDE/panels/panel
+  src/status-right        -> ~/.config/lxpanel/LXDE/panels/status-right
+
+Method: stage to /tmp/dark-theme-apply-2026-06-17/, then
+        rsync -av --no-perms --chmod=u=rwX,g=rX,o=r
+        into each canonical subdir.
+
+Note: src/omni-network-*.svg are NOT installed by dark-themectl.sh
+      at this stage; they are referenced by the omni-network-tray.py
+      generated at runtime. They were left in the module dir only.
+
+================================================================
+STEP 4 — NO restart-session
+================================================================
+No lxpanel --profile LXDE restart, no openbox --reconfigure, no
+session reload was issued. RDP session and LXDE processes
+preserved exactly as found.
+
+================================================================
+STEP 5 — MD5 validation (source vs deployed)
+================================================================
+ALL 10/10 FILES MATCH (byte-for-byte):
+
+  src/gtkrc-2.0                  f7891825ad3a8d4f984c327184b94736 == remote
+  src/.zshrc                     6f2cf91aba79ec8f724962d40cc2f79a == remote
+  src/gtk-3.0.css                29df2661ab2f96a38d5965df596403f2 == remote (as gtk.css)
+  src/gtk-3.0-settings.ini       18743cba01ebffd3df3f8c1c49c5e137 == remote (as settings.ini)
+  src/desktop.conf               7ffabad4e23857728cb3758c5da85715 == remote
+  src/lxde-rc.xml                adcd300f31c44da2afe8f28bbb8400d9 == remote
+  src/panel-background.xpm       ed45c03848220d39fb80d702a49cffb9 == remote
+  src/00-background              e5c23c4d230722250e35d74c9bfb51c1 == remote
+  src/panel                      d07cba7e99b92ac6341708728899d65b == remote
+  src/status-right               90b1dc23fde236b90caa12e20a527a27 == remote
+
+Pre-existing -> After md5 delta:
+  .gtkrc-2.0     4a73c354... -> f7891825... (changed, dark theme values)
+  .zshrc         1de20def... -> 6f2cf91a... (changed, dark theme values)
+  desktop.conf   e6c14b39... -> 7ffabad4... (changed: Raleigh -> Greybird-dark + full ColorScheme)
+  panel          <new>       -> d07cba7e... (canonical panel layout)
+  lxde-rc.xml    <old kept>  -> <replaced> (re-copied with same md5; bytes equal)
+
+================================================================
+STEP 6 — Final directory listing (ls -la)
+================================================================
+/home/ubuntu/.gtkrc-2.0                          644 ubuntu ubuntu  1541 Jun 17 01:01
+/home/ubuntu/.zshrc                              644 ubuntu ubuntu  4529 Jun 17 01:01
+
+/home/ubuntu/.config/gtk-3.0/
+-rw-rw-r-- bookmarks (pre-existing, untouched)
+-rw-r--r-- settings.ini                            644 ubuntu ubuntu   329 Jun 17 01:03
+-rw-r--r-- gtk.css                                 644 ubuntu ubuntu   227 Jun 17 01:03
+
+/home/ubuntu/.config/lxsession/LXDE/
+-rw-rw-r-- autostart (pre-existing, untouched)
+-rw-r--r-- desktop.conf                            644 ubuntu ubuntu  1122 Jun 17 01:03
+
+/home/ubuntu/.config/openbox/
+-rw-r--r-- lxde-rc.xml                             644 ubuntu ubuntu 22409 Jun 17 01:03
+
+/home/ubuntu/.config/lxpanel/LXDE/
+-rw-r--r-- panel-background.xpm                    644 ubuntu ubuntu    87 Jun 17 01:03
+/home/ubuntu/.config/lxpanel/LXDE/panels/
+-rw-r--r-- 00-background                           644 ubuntu ubuntu   468 Jun 17 01:03
+-rw-r--r-- panel                                   644 ubuntu ubuntu  1689 Jun 17 01:03
+-rw-r--r-- status-right                            644 ubuntu ubuntu  1058 Jun 17 01:03
+
+================================================================
+STEP 7 — Exit codes
+================================================================
+  ssh probe (RDP validation)                 : 0
+  mkdir -p backup                            : 0
+  cp -p pre-existing backups                 : 0
+  rsync /home/ubuntu/ -> (initial misroute)  : 0  (corrected)
+  rm misplaced files                        : 0
+  rsync gtk-3.0/                            : 0
+  rsync lxsession/LXDE/                     : 0
+  rsync openbox/                            : 0
+  rsync lxpanel/LXDE/                       : 0
+  chmod 644 normalize                       : 0
+  md5sum validation                         : 0
+  RDP/lightdm/openbox/lxpanel alive check   : OK
+
+================================================================
+STATUS: SUCCESS
+================================================================
+- 10/10 canonical config files deployed byte-identical to SRV-1 source.
+- RDP session and LXDE processes UNTOUCHED.
+- Backup at /home/ubuntu/.backups/dark-theme-apply-2026-06-17/ preserved.
+- No restart-session was issued; theme will become visible on next
+  openbox/lxpanel reload (manual lxpanelctl restart, logout/login, or
+  Phase 20 follow-up).

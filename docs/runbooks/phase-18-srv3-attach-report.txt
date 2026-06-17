@@ -1,0 +1,117 @@
+PHASE 18 — SRV-3 (ATIUS-SRV-3 / 10.1.1.7) Pro detach + reattach
+Operated: 2026-06-17 00:13:22 UTC
+Operator: Hermes subagent (Linux VM, 10.0.0.0/16 mgmt via SSH)
+Remote pro client: 37.2ubuntu~24.04 (Ubuntu 24.04 noble)
+
+PRE-FLIGHT
+- Token file present: /home/ubuntu/secrets/ubuntu-pro-token.txt, mode 660 (note: 660, not 600),
+  size 30 bytes, sha256 bd5ee0cc50950db5de548cec91d026a8d014db2bc1a3d191e9472bdb5b12641a
+  (MATCHES expected hash in task brief).
+- Pre-state: pro was already attached to a DIFFERENT account ("munizgiovanni@hotmail.com"
+  free personal sub, contract id cAXjb3pG50fBZTE05MHBl78XOuMqbtLzN5YPUxYNK7RM).
+  esm-apps and esm-infra were already enabled under that account.
+- Action required: detach + reattach with new token for giovannimunizds@gmail.com.
+
+DEVIATION FROM COMMAND-LITERAL
+- Task brief specified `sudo pro attach --token-stdin < ~/secrets/ubuntu-pro-token.txt`.
+- This pro version (37.2) does NOT support `--token-stdin`. The `pro attach --help` output
+  lists only these inputs: positional `token`, or `--attach-config FILE`. Refused to leak the
+  token onto argv (no shell history / no process listing exposure) and used `--attach-config`
+  with a 600-mode YAML file containing the token, achieving the same intent. Flagged for
+  follow-up: the brief's command form is invalid for pro 37.2.
+
+EXECUTION
+Step 1: sudo pro detach --assume-yes
+  rc=0, 12s
+  Detached the previous "munizgiovanni@hotmail.com" subscription. Disabled
+  esm-apps, esm-infra, landscape; ran `landscape-config --disable`; reported
+  "/etc/landscape/client.conf contains your landscape-client configuration. To re-enable
+  Landscape with the same configuration, run: sudo pro enable landscape --assume-yes".
+  Final line: "This machine is now detached."
+
+Step 2: sudo pro attach --attach-config /tmp/pro-attach-config-XXXX.yaml  (token inside file)
+  rc=0, 18s
+  Attach-config (mode 600, auto-cleaned):
+    token: <redacted>
+    enable_services:
+      - esm-apps
+      - esm-infra
+  Output (key lines):
+    "Enabling Ubuntu Pro: ESM Apps"
+    "Ubuntu Pro: ESM Apps enabled"
+    "Enabling Ubuntu Pro: ESM Infra"
+    "Ubuntu Pro: ESM Infra enabled"
+    "This machine is now attached to 'Ubuntu Pro - free personal subscription'"
+    "Account: giovannimunizds@gmail.com"
+    "Subscription: Ubuntu Pro - free personal subscription"
+
+Step 3: sudo pro enable esm-apps --assume-yes   (idempotent re-run)
+  rc=1 (NON-FATAL — service already enabled by attach)
+  Output: "Ubuntu Pro: ESM Apps is already enabled - nothing to do. See: sudo pro status.
+           Could not enable Ubuntu Pro: ESM Apps."
+  NOTE: pro returns non-zero on "already enabled" when invoked as a plain `enable` even with
+  --assume-yes. This is expected behaviour and does not indicate a failure — verified via
+  the status JSON below showing esm-apps=enabled.
+
+Step 4: sudo pro enable esm-infra --assume-yes  (idempotent re-run)
+  rc=1 (NON-FATAL — service already enabled by attach)
+  Output: "Ubuntu Pro: ESM Infra is already enabled - nothing to do. See: sudo pro status.
+           Could not enable Ubuntu Pro: ESM Infra."
+  Same caveat as Step 3.
+
+Step 5: pro status --format json (parsed)
+  rc=0
+  Parsed:
+    attached: True
+    account.name: giovannimunizds@gmail.com
+    esm-apps: enabled
+    esm-infra: enabled
+  (Other services: anbox-cloud=disabled, fips-updates=disabled, landscape=disabled,
+   realtime-kernel=disabled, usg=disabled — all as before.)
+
+Step 6: ls /etc/apt/sources.list.d/ubuntu-esm-*.{list,sources}
+  rc=2  (brace expansion hit one missing file but the two .sources files were found)
+  Files present:
+    /etc/apt/sources.list.d/ubuntu-esm-apps.sources
+    /etc/apt/sources.list.d/ubuntu-esm-infra.sources
+  (No .list files — Ubuntu Pro 24.04 uses the new deb822 .sources format.)
+
+  ubuntu-esm-apps.sources contents:
+    # Written by ubuntu-pro-client
+    Types: deb
+    URIs: https://esm.ubuntu.com/apps/ubuntu
+    Suites: noble-apps-security noble-apps-updates
+    Components: main
+    Signed-By: /usr/share/keyrings/ubuntu-pro-esm-apps.gpg
+
+  ubuntu-esm-infra.sources contents (verified separately):
+    Same shape, URIs=https://esm.ubuntu.com/infra/ubuntu,
+    Suites=noble-infra-security noble-infra-updates,
+    Signed-By=/usr/share/keyrings/ubuntu-pro-esm-infra.gpg
+
+POST-OPERATION SANITY
+- /usr/share/keyrings/ubuntu-pro-esm-apps.gpg and ubuntu-pro-esm-infra.gpg both present.
+- Account switched successfully from munizgiovanni@hotmail.com -> giovannimimunizds@gmail.com
+  (giovannimunizds@gmail.com per pro output).
+- esm-apps and esm-infra both reported enabled in the status JSON.
+- landscape was disabled by the detach and was NOT re-enabled (attach-config did not list
+  it; per task brief, only esm-apps and esm-infra were requested). If landscape is wanted,
+  run: sudo pro enable landscape --assume-yes
+
+EXIT CODES SUMMARY
+  RC_DETACH=0     RC_ATTACH=0
+  RC_ESMAPPS=1    (idempotent "already enabled", expected)
+  RC_ESMINFRA=1   (idempotent "already enabled", expected)
+  RC_STATUS=0
+  RC_LS=2         (one glob had no match, but both target files exist)
+
+FINAL STATE
+  ATTACHED: YES
+  ACCOUNT:  giovannimunizds@gmail.com
+  ESM-APPS: enabled
+  ESM-INFRA: enabled
+  APT SOURCES: ubuntu-esm-apps.sources, ubuntu-esm-infra.sources (deb822)
+
+REMOTE LOG: /tmp/pro-phase18-r3-20260617T001322Z.log  (on ATIUS-SRV-3)
+LOCAL COPY: /tmp/srv3-pro-attach.log
+THIS REPORT: docs/runbooks/phase-18-srv3-attach-report.txt
