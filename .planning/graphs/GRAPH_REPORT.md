@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-17)
 
 ## Corpus Check
-- 353 files · ~813,744 words
+- 354 files · ~821,081 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5248 nodes · 5934 edges · 493 communities (433 shown, 60 thin omitted)
+- 5269 nodes · 5951 edges · 494 communities (434 shown, 60 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `126c4a61`
+- Built from commit: `1c0ad73f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -300,6 +300,8 @@
 - [[_COMMUNITY_Community 282|Community 282]]
 - [[_COMMUNITY_Community 283|Community 283]]
 - [[_COMMUNITY_Community 284|Community 284]]
+- [[_COMMUNITY_Community 285|Community 285]]
+- [[_COMMUNITY_Community 286|Community 286]]
 - [[_COMMUNITY_Community 287|Community 287]]
 - [[_COMMUNITY_Community 288|Community 288]]
 - [[_COMMUNITY_Community 289|Community 289]]
@@ -505,10 +507,9 @@
 - [[_COMMUNITY_Community 489|Community 489]]
 - [[_COMMUNITY_Community 490|Community 490]]
 - [[_COMMUNITY_Community 491|Community 491]]
-- [[_COMMUNITY_Community 492|Community 492]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (485 total, 56 thin omitted)` - 428 edges
+1. `Communities (493 total, 60 thin omitted)` - 432 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `ScenarioResult` - 23 edges
@@ -534,1751 +535,1755 @@
 ## Import Cycles
 - None detected.
 
-## Communities (493 total, 60 thin omitted)
+## Communities (494 total, 60 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.05
-Nodes (61): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover() (+53 more)
+Cohesion: 0.00
+Nodes (432): Communities (493 total, 60 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+424 more)
 
 ### Community 1 - "Community 1"
-Cohesion: 0.12
-Nodes (52): dark-themectl.sh script, add_launcher_if_exists(), apply_all(), apply_autostart(), apply_gtk(), apply_openbox(), apply_pcmanfm_desktop(), apply_system_dark() (+44 more)
-
-### Community 2 - "Community 2"
-Cohesion: 0.04
-Nodes (47): Alternatives Considered, Anti-Patterns to Avoid, Apache2 Batch Port Migration, Applicable ASVS Categories, Architecture Patterns, Assumptions Log, Certbot Fix and Alternate Port Config, Chrony Setup (Oracle Cloud) (+39 more)
-
-### Community 3 - "Community 3"
-Cohesion: 0.07
-Nodes (42): Any, Path, _copy_resource_units(), _docker_build_warning(), _install_resource_units(), _is_risky_command(), list_ops(), _load_key_value_file() (+34 more)
-
-### Community 4 - "Community 4"
-Cohesion: 0.05
-Nodes (41): 1️⃣ Primeiro Acesso (Após Reset de Memória), 2️⃣ Entendimento Detalhado, 3️⃣ Rastreamento de Progresso, 4️⃣ Planejamento de Próximas Fases, 🎓 Aprendizados Documentados, Arquivos de Tarefa, 🚀 Comece Aqui!, Como Atualizar (+33 more)
-
-### Community 5 - "Community 5"
-Cohesion: 0.05
-Nodes (39): Apache Configuration Clutter, Apache mpm_prefork with Reverse Proxy, Cloudflare SSL Cert Permissions, Cockpit Exposed Without SSO, Cockpit Not Enabled in Apache sites-enabled, Codebase Concerns, CUPS and Printing Services Running, Dependencies at Risk (+31 more)
-
-### Community 6 - "Community 6"
-Cohesion: 0.05
-Nodes (39): 1. Telegram API Limits, 1. Telethon → PostgreSQL, 2. PostgreSQL → Backtesting, 2. PostgreSQL Constraints, 3. Exchange Rate Limits, 3. Order Execution → Exchange APIs, 4. Memory Constraints, 4. Real-Time Data → Frontend (+31 more)
-
-### Community 7 - "Community 7"
-Cohesion: 0.05
-Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
-
-### Community 8 - "Community 8"
-Cohesion: 0.06
-Nodes (52): CompletedProcess, Path, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts() (+44 more)
-
-### Community 9 - "Community 9"
-Cohesion: 0.05
-Nodes (36): 1. Separação de Camadas, 1. Type-Safe Period Comparison, 2. Batch-Based Telegram Pagination, 2. Signal Processing Pipeline, 3. Backtesting Engine Architecture, 3. Period Predefinition, 4. Fallback para Database, 4. Trading Execution Pattern (+28 more)
-
-### Community 10 - "Community 10"
-Cohesion: 0.06
-Nodes (34): 1. Corrigir Certbot (bloqueador), 2. Fornecer Cloudflare API Token (bloqueador Phase 2), 3. Apache2 — desativar 80/443 ou documentar reason, 4. Identificar containers anônimos, 5. Documentar serviços não-no-projeto, 6. Atualizar backup iptables, 7. Atualizar STATE.md do projeto, ALTO (degrada segurança/operação) (+26 more)
-
-### Community 11 - "Community 11"
-Cohesion: 0.11
-Nodes (29): inviolable-watchdog.sh script, atius_pm2_stack_ok(), atius_router_containers_ok(), atius_router_docs_ok(), atius_web_healthcheck_ok(), atius_web_ok(), guarded_relaunch(), hermes_telegram_ok() (+21 more)
-
-### Community 12 - "Community 12"
-Cohesion: 0.13
-Nodes (31): Path, apply_profile_limits(), bandwidth_to_cgroup(), cgroup_device(), classify(), cpu_quota_to_cgroup(), ensure_omni_cgroups_exist(), ensure_slices_active() (+23 more)
-
-### Community 13 - "Community 13"
-Cohesion: 0.06
-Nodes (31): Automated Verify Presence, Context Compliance Issues Found:, Coverage Summary, Deferred Ideas Check, Dimension 10: CLAUDE.md Compliance, Dimension 11: Research Resolution, Dimension 1: Requirement Coverage, Dimension 2: Task Completeness (+23 more)
-
-### Community 14 - "Community 14"
-Cohesion: 0.06
-Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
-
-### Community 15 - "Community 15"
-Cohesion: 0.16
-Nodes (31): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+23 more)
-
-### Community 16 - "Community 16"
-Cohesion: 0.06
-Nodes (31): ✅ Ação 1: Preparar Estrutura de Testes (1 hora), ✅ Ação 2: Criar Conftest Base (30 min), ✅ Ação 3: Escrever Primeiro Teste (30 min), ✅ Ação 4: Executar e Validar (15 min), 📊 Checklist para Hoje (26/01), 🚀 COMECE AGORA!, Código Principal, Documentação (+23 more)
-
-### Community 17 - "Community 17"
-Cohesion: 0.06
-Nodes (31): Alta Prioridade (Critical Path), Baixa Prioridade (Nice to Have), Code Quality, Core Features Implementadas, Correções Recentes (10/02/2026), Correções Recentes (16/02/2026), Críticos, Dependências Externas em Risco (+23 more)
-
-### Community 18 - "Community 18"
-Cohesion: 0.06
-Nodes (30): 1. Fragmentação de Dados, 1. Trading Multi-Broker, 2. Motor de Backtesting, 2. Validação de Estratégias, 3. Pipeline de Sinais, 3. Risco de Operação Manual, 4. Dashboard de Monitoramento, 4. Perda de Auditoria (+22 more)
-
-### Community 19 - "Community 19"
-Cohesion: 0.06
-Nodes (30): 1. Linux Client Login Flow (Machine Authentication), 2. SSSD → Keycloak SSO Flow (Web Authentication), 3. Samba File Access Flow (Kerberos SSO), 4. Existing App Auth Coexistence Flow, Anti-Pattern 1: Running Samba as a Standalone Server with FreeIPA, Anti-Pattern 2: Direct LDAP Connection from Keycloak to FreeIPA, Anti-Pattern 3: FreeIPA Behind a Reverse Proxy, Anti-Pattern 4: Skipping Time Synchronization (+22 more)
-
-### Community 20 - "Community 20"
-Cohesion: 0.07
-Nodes (29): Audit pesado diário, Cenário atual do host — live probes, CLI, Docker build, Docker run, Docker vs Podman vs compiladores, Fase 1 — já implementado no repo, Fase 1 — já implementado no repo (+21 more)
-
-### Community 21 - "Community 21"
-Cohesion: 0.07
-Nodes (28): Antes, 📋 Checklist de Completude, 🔧 Correção #1: Busca Telegram - Iteração Contínua, 🔧 Correção #2: Remoção `maximum_entry_pct` (Backend Python), 🔧 Correção #3: Remoção `maximum_entry_pct` (Frontend), 🔧 Correção #4: Remoção `maximum_entry_pct` (Backend API), Curto Prazo, Depois (+20 more)
-
-### Community 22 - "Community 22"
-Cohesion: 0.07
-Nodes (28): Arquivo Principal, ✅ Checklist de Transição, Comandos Úteis, 🎬 Começar Agora!, ✅ Completado, Código Preparado, Dia 1-2: Coverage e Ajustes, Dia 1-2: Setup Infraestrutura (+20 more)
-
-### Community 23 - "Community 23"
-Cohesion: 0.07
-Nodes (27): Branch Strategy, Clone omni-srv-admin (submodule NÃO clona por padrão), Definition of Done, Entrar no submodule, Execution Order, Inline Plan Guard Validation, Phase 8 — Plan: Rebrand + fork-sync submodule, Pitfalls (+19 more)
-
-### Community 24 - "Community 24"
-Cohesion: 0.10
-Nodes (27): _build_fallback_body(), _classify_heading(), fetch_upstream_compare(), fetch_upstream_release(), generate_release_notes(), _gh_api(), list_local_releases(), _parse_upstream_body() (+19 more)
-
-### Community 25 - "Community 25"
-Cohesion: 0.16
-Nodes (26): Path, _backup_current(), _check_files_exist(), _copy_if_exists(), diff_cmd(), _ensure_root(), install_cmd(), _install_file() (+18 more)
-
-### Community 26 - "Community 26"
-Cohesion: 0.07
-Nodes (26): 1️⃣ Period Choice Logic (CRITICAL), 2️⃣ Signal Fetching (CRITICAL), 3️⃣ Trade Execution (IMPORTANT), 4️⃣ Database Integration (IMPORTANT), 📞 Bloqueadores Conhecidos, 📋 Checklist Geral da Fase, Config Pytest (`pytest.ini`), 🎯 Definição de "Done" (+18 more)
-
-### Community 27 - "Community 27"
-Cohesion: 0.09
-Nodes (21): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+13 more)
-
-### Community 28 - "Community 28"
-Cohesion: 0.08
-Nodes (25): Apache2 Configuration, Apache2 Migration, Canonical References, Cloudflare, Critical Constraint, Deferred Ideas, DNS, Docker Conflicts (to avoid) (+17 more)
-
-### Community 29 - "Community 29"
-Cohesion: 0.08
-Nodes (25): Backup Strategy, CA Configuration, Canonical References, Claude's Discretion, Constraints, Container Base Image, Container Networking, Deferred Ideas (+17 more)
-
-### Community 30 - "Community 30"
-Cohesion: 0.09
-Nodes (22): Command Pattern, Completion Checklist (Every Task), Core Agent Principles, Design Principles (Auto-Applied), Emergency Protocols, Engineering Excellence Standards, Escalation Criteria (Auto-Applied), Escalation Protocol (+14 more)
-
-### Community 31 - "Community 31"
-Cohesion: 0.09
-Nodes (21): Antes, 🔧 Correção 1: Tipo de `offset_date` em divap_backtest.py, 🔧 Correção 2: SQL Table Name em index.js, ✨ Correções Anteriores (já aplicadas), Correções Aplicadas - Phase 1, Depois, 📝 Documentação Gerada, ✅ get_signals_from_telegram() - Iteração Contínua (+13 more)
-
-### Community 32 - "Community 32"
-Cohesion: 0.09
-Nodes (22): Alta Disponibilidade, App Migration para Keycloak, Client Enrollment, Cloudflare + Security, Coexistência e Integração, FreeIPA Server, K3s HA Cluster, Keycloak SSO (+14 more)
-
-### Community 33 - "Community 33"
-Cohesion: 0.09
-Nodes (22): 26 de janeiro de 2026, Acoplamentos, Análise Inicial, Continuação Esperada, Critérios de Sucesso, Decisões Arquiteturais, Dependências, Fase 1: Setup Pytest Infrastructure (+14 more)
-
-### Community 34 - "Community 34"
-Cohesion: 0.09
-Nodes (21): 1.1 Syntax Check, 1.2 Stage Logic Review, 1.3 Path and Dependency Checks (Stage 1), 1.4 Stage 2 Dependency Check, 1.5 Dry-Run Simulation (read-only), 1. `setup.sh` Dry-Run Validation, 2.1 File Existence and Format, 2.2 Required INPUT Rules (IPv4) (+13 more)
-
-### Community 35 - "Community 35"
-Cohesion: 0.09
-Nodes (21): 10. Smoke Checks Pré-Deploy, 11. Cache-Bust de Assets, 12. Histórico de Versões do Manual, 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand) (+13 more)
-
-### Community 36 - "Community 36"
-Cohesion: 0.09
-Nodes (21): Active Context: Starboy Postgres, Bloqueadores Conhecidos, Comandos PM2 de Referência, Código Modificado (Phase 2.1), Decisões Ativas, Documentação Criada, Fase Imediata: VALIDAÇÃO TRADINGVIEW, Fase Secundária: TESTES E VALIDAÇÃO (+13 more)
-
-### Community 37 - "Community 37"
-Cohesion: 0.14
-Nodes (13): Goal, Motivation, Next, Performance, Phase 14 Plan 05: Jenkins + servicos orfaos: remover deps Docker e validar em dominio publico, Risks, Success Criteria (all met), Task 1: Backup do estado live (+5 more)
-
-### Community 38 - "Community 38"
-Cohesion: 0.07
-Nodes (29): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — IN PLANNING (v1.1) (+21 more)
-
-### Community 39 - "Community 39"
-Cohesion: 0.09
-Nodes (21): Critical Pitfalls, Domain Pitfalls: FreeIPA + Keycloak + Samba on Ubuntu, Minor Pitfalls, Moderate Pitfalls, Phase-Specific Warnings, Pitfall 10: Migration from Existing Samba — POSIX UID/GID Mapping Breaks File Permissions, Pitfall 11: SELinux Denials on Ubuntu, Pitfall 12: CoreDNS vs FreeIPA DNS Coexistence (+13 more)
-
-### Community 40 - "Community 40"
-Cohesion: 0.10
-Nodes (20): API Layer (Fastify), API Request Flow:, Architecture, Backend Domain Layer, Bot Execution Flow:, Cross-Cutting Concerns, Data Flow, Data Layer (+12 more)
-
-### Community 41 - "Community 41"
-Cohesion: 0.14
-Nodes (20): all_metrics(), disk_rw_pct(), disk_spc_pct(), _diskstats_total_sectors(), mem_pct(), proc_cpu_pct_from_jiffies(), proc_pct(), metrics.py — cálculo unificado de uso de recursos para omni-srv-admin.  Mesma ló (+12 more)
-
-### Community 42 - "Community 42"
-Cohesion: 0.10
-Nodes (19): Accomplishments, Decisions Made, Dependency graph, Deviation 1: sites-enabled direct files, Deviation 2: certbot reconfigure uses live validation, Deviations from Plan, Issues Encountered, Key Findings (+11 more)
-
-### Community 43 - "Community 43"
-Cohesion: 0.10
-Nodes (19): D-01: Rebrand textual — escopo abrangente, D-02: Repo GitHub renomeado, D-03: fork-sync vira submodule em `modules/fork-sync/`, D-04: Descontinuação do repo `giovannimnz/fork-sync`, D-05: `domain-infrastructure/` permanece como diretório mergeado (não submodule), D-06: Push policy — o que pode ser executado automaticamente, D-07: Vault Obsidian — onde registrar, G-01: Ordem de execução (rebrand antes ou depois do submodule?) (+11 more)
-
-### Community 44 - "Community 44"
-Cohesion: 0.10
-Nodes (19): 1. Start with Understanding, 2. Analyze Before Planning, 3. Develop Comprehensive Strategy, 4. Present Clear Plans, Best Practices, Communication, Core Principles, Information Gathering (+11 more)
-
-### Community 45 - "Community 45"
-Cohesion: 0.26
-Nodes (17): Path, _cfg(), _clone(), _commit_file(), _git(), _init_repo(), repo_pair(), test_diagnose_container_mirrors_detects_invalid_git_copy() (+9 more)
-
-### Community 46 - "Community 46"
-Cohesion: 0.11
-Nodes (18): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Metrics (+10 more)
-
-### Community 47 - "Community 47"
-Cohesion: 0.11
-Nodes (18): 10. Manuais de Atualização, 11. Serviço PM2 (Long-lived + Cron), 12. Logs e Rotação Automática, 13. Release Notes em PT-BR, 14. Política de Secrets e Dados Sensíveis, 15. Estrutura do Repositório, 16. Modo REPL (Interativo), 17. Saída JSON (Integração com Agentes) (+10 more)
-
-### Community 48 - "Community 48"
-Cohesion: 0.11
-Nodes (18): Alternatives Considered, Apache2 Migration (80/443 → 8080/8443), Core Identity — FreeIPA (4.11+ via Docker container), DNS — CoreDNS → FreeIPA forwarding, File Sharing — Samba (4.x), FreeIPA Client on Ubuntu — Known Issues, FreeIPA Installer Assumptions, FreeIPA Server on Ubuntu — THE Critical Issue (+10 more)
-
-### Community 49 - "Community 49"
-Cohesion: 0.11
-Nodes (17): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Key Audit Findings, Known Stubs (+9 more)
-
-### Community 50 - "Community 50"
-Cohesion: 0.18
-Nodes (19): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+11 more)
-
-### Community 51 - "Community 51"
-Cohesion: 0.19
-Nodes (17): ensure_manuals_dir(), generate_manual(), get_manual_path(), list_manuals(), manual_exists(), manuals — geração e versionamento de manuais de atualização por projeto.  Cada p, Atualiza seção específica do manual (append)., Adiciona entrada ao histórico do manual após sync. (+9 more)
-
-### Community 52 - "Community 52"
-Cohesion: 0.11
-Nodes (17): 0.x (legado), 1.0.0 (2026-06-04), 1.1.0 (2026-06-04), 1.2.0 (2026-06-04), 1.3.0 (2026-06-14), Adicionado, Adicionado, Adicionado (+9 more)
-
-### Community 53 - "Community 53"
-Cohesion: 0.11
-Nodes (17): 1. Project Understanding Phase, 2. Gap Analysis Phase, 3. Prioritization Phase, 4. Specification Development Phase, 5.5 Work Distribution Optimization, 5. GitHub Issue Creation Phase, 6. Final Review Phase, Acceptance Criteria (+9 more)
-
-### Community 54 - "Community 54"
-Cohesion: 0.24
-Nodes (17): analyze_disk_deep(), analyze_trends(), auto_fix(), auto_fix_crash_loop(), auto_reclaim_disk(), detect_crash_loops(), log(), main() (+9 more)
-
-### Community 55 - "Community 55"
-Cohesion: 0.12
-Nodes (16): Context, Decisões locked, Estimated effort, Findings (probes paralelos), Gaps identificados durante a missão 4h, Method, Out of scope, Phase 09: Mission Guardian — Research (+8 more)
-
-### Community 56 - "Community 56"
-Cohesion: 0.12
-Nodes (16): Codex channel integration, Documentation (fork-specific, PT-BR primary), Fork Sync — Atius Router, Frontend i18n, i18n — Portuguese Translation, Infrastructure, Merge Flow, Middleware and containers (+8 more)
-
-### Community 57 - "Community 57"
-Cohesion: 0.15
-Nodes (18): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+10 more)
-
-### Community 58 - "Community 58"
-Cohesion: 0.19
-Nodes (16): check_disk_usage(), cleanup_old_logs(), compress_old_logs(), get_log_files(), parse_log_name(), logrotate — rotação, compressão e retenção automática de logs.  Problema: sync g, Reporta uso de disco dos logs., Pipeline completo: comprimir antigos + limpar velhos. (+8 more)
-
-### Community 59 - "Community 59"
-Cohesion: 0.12
-Nodes (16): Account, Aliases Úteis (disponíveis após carregar .zshrc), Anti-Bot / Turnstile, API Access, Authentication — Critical Distinction, Cloudflare Configuration — omni-srv-admin, Cloudflare Origin Rules (Phase 02), Credenciais no Ambiente (+8 more)
-
-### Community 60 - "Community 60"
-Cohesion: 0.23
-Nodes (9): offload-dotbackups-to-gdrive.sh script, archive_item(), copy_item(), log(), main(), retry_rclone(), should_archive_item(), verify_archive_item() (+1 more)
-
-### Community 61 - "Community 61"
-Cohesion: 0.12
-Nodes (16): Backend, Contatos e Recursos, Descrição Geral, Escopo Principal, Estrutura do Repositório, Fase: OTIMIZAÇÃO E INTEGRAÇÃO CONTÍNUA, Frontend, Frontend (+8 more)
-
-### Community 62 - "Community 62"
-Cohesion: 0.12
-Nodes (16): 📋 Arquivos Documentados, Bug #1: Type Mismatch em `offset_date` (Pylance), Bug #2: SQL Table Name (Backend API), 📊 Code Quality Metrics, 📞 Contact & Support, 📈 Estatísticas da Sessão, 🎉 FASE 1 CONCLUÍDA - Relatório Executivo, ✨ Features Habilitadas (+8 more)
-
-### Community 63 - "Community 63"
-Cohesion: 0.15
-Nodes (16): clear(), drain(), enqueue(), enqueue_all(), fleet_backup(), fleet-backup — fila serial de backups rclone multi-server.  Wrapper Click em cim, Executa o script bash propagando o exit code., Fila serial de backups rclone (multi-server, 1 por vez, cooldown 5min). (+8 more)
-
-### Community 64 - "Community 64"
-Cohesion: 0.11
-Nodes (17): Active, Ambiente Atual, Constraints, Context, Core Value, Evolution, Key Decisions, M007: M005 Follow-ups (Phase 15-17) (+9 more)
-
-### Community 65 - "Community 65"
-Cohesion: 0.12
-Nodes (16): 📈 Burn-Down, ✅ Completed, 📋 Detalhes, 🚀 In Progress, ⏳ Pending, 🗺️ Roadmap Visual, 🔄 Status Legenda, 📊 Summary (+8 more)
-
-### Community 66 - "Community 66"
-Cohesion: 0.12
-Nodes (15): Arquivos Principais (Obrigatórios), Atualizações de Documentação, Banco de Memória, Comandos de Tarefa, Contexto Adicional, Estrutura de Tarefa Individual, Estrutura do Banco de Memória, Estrutura do Índice de Tarefas (+7 more)
-
-### Community 67 - "Community 67"
-Cohesion: 0.13
-Nodes (14): Additional Verifications (ROADMAP Success Criteria), Anti-Patterns Found, Behavioral Spot-Checks, Data-Flow Trace (Level 4), Git Commits, Goal Achievement, Human Verification Required, Key Link Verification (+6 more)
-
-### Community 68 - "Community 68"
-Cohesion: 0.13
-Nodes (14): B-01: Credentials not set — plan claims autonomous but requires user input, B-02: No wait/sleep between rule application and connectivity testing, B-03: `depends_on: []` is incorrect, Blockers — Status, Info — Verified Observations, Phase 2 Plan 01 — Quality Check (Re-check After Fixes), Verdict: READY, W-01: Rollback script RESTORE uses raw backup file (+6 more)
-
-### Community 69 - "Community 69"
-Cohesion: 0.13
-Nodes (14): 1. Connect to WireGuard VPN, 2. SSH to the server, 3. Verify services are running, 4. Check Docker containers, Clone/pull the project, Common Setup Issues, Getting Started — Atius Home Server, Initial Access (+6 more)
-
-### Community 70 - "Community 70"
-Cohesion: 0.13
-Nodes (14): 15/02/2026, 16/02/2026, Arquivos Criados/Modificados, Correções DIVAP (16/02/2026), Descobertas Técnicas, Fórmulas Confirmadas (engenharia reversa), Implementation Plan, Limitações Conhecidas (+6 more)
-
-### Community 71 - "Community 71"
-Cohesion: 0.18
-Nodes (14): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., _detect_submodules(), list_projects(), _project_enabled() (+6 more)
-
-### Community 72 - "Community 72"
-Cohesion: 0.14
-Nodes (13): Cache de tradução, Comandos, Configuração no `sync.yaml` (futuro), Estrutura de arquivos, Heurística de tag anterior, Integração com `bin/create-release.sh`, Limitações conhecidas, Problema original (+5 more)
-
-### Community 73 - "Community 73"
-Cohesion: 0.14
-Nodes (13): Como funciona a estratégia custom, Compatibilidade, Cronograma coordenado, Detecção de release multi-source, Migração, Modo plugin Python (`strategy_plugin`), Modo script (`strategy_script`), Motivação (+5 more)
-
-### Community 74 - "Community 74"
-Cohesion: 0.14
-Nodes (13): Directory layout, fleet — multi-computer operations, Goal, Host class differences, Implementation phases, Links, Phase 1 — inventory only, Phase 2 — read-only remote probes (+5 more)
-
-### Community 75 - "Community 75"
-Cohesion: 0.41
-Nodes (13): rclone-fleet-queue.sh script, cmd_clear(), cmd_drain(), cmd_enqueue(), cmd_run(), cmd_status(), err(), hdr() (+5 more)
-
-### Community 76 - "Community 76"
-Cohesion: 0.34
-Nodes (13): backup_podman_image(), backup_volume(), is_volume_done(), load_state(), log(), main(), mark_volume_done(), mark_volume_failed() (+5 more)
-
-### Community 77 - "Community 77"
 Cohesion: 0.07
 Nodes (80): Any, Path, agent(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event(), audit() (+72 more)
 
+### Community 2 - "Community 2"
+Cohesion: 0.05
+Nodes (61): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover() (+53 more)
+
+### Community 3 - "Community 3"
+Cohesion: 0.06
+Nodes (52): CompletedProcess, Path, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts() (+44 more)
+
+### Community 4 - "Community 4"
+Cohesion: 0.12
+Nodes (52): dark-themectl.sh script, add_launcher_if_exists(), apply_all(), apply_autostart(), apply_gtk(), apply_openbox(), apply_pcmanfm_desktop(), apply_system_dark() (+44 more)
+
+### Community 5 - "Community 5"
+Cohesion: 0.04
+Nodes (47): Alternatives Considered, Anti-Patterns to Avoid, Apache2 Batch Port Migration, Applicable ASVS Categories, Architecture Patterns, Assumptions Log, Certbot Fix and Alternate Port Config, Chrony Setup (Oracle Cloud) (+39 more)
+
+### Community 6 - "Community 6"
+Cohesion: 0.07
+Nodes (41): Any, Path, _copy_resource_units(), _docker_build_warning(), _install_resource_units(), _is_risky_command(), list_ops(), _load_key_value_file() (+33 more)
+
+### Community 7 - "Community 7"
+Cohesion: 0.05
+Nodes (41): 1️⃣ Primeiro Acesso (Após Reset de Memória), 2️⃣ Entendimento Detalhado, 3️⃣ Rastreamento de Progresso, 4️⃣ Planejamento de Próximas Fases, 🎓 Aprendizados Documentados, Arquivos de Tarefa, 🚀 Comece Aqui!, Como Atualizar (+33 more)
+
+### Community 8 - "Community 8"
+Cohesion: 0.05
+Nodes (39): Apache Configuration Clutter, Apache mpm_prefork with Reverse Proxy, Cloudflare SSL Cert Permissions, Cockpit Exposed Without SSO, Cockpit Not Enabled in Apache sites-enabled, Codebase Concerns, CUPS and Printing Services Running, Dependencies at Risk (+31 more)
+
+### Community 9 - "Community 9"
+Cohesion: 0.05
+Nodes (39): 1. Telegram API Limits, 1. Telethon → PostgreSQL, 2. PostgreSQL → Backtesting, 2. PostgreSQL Constraints, 3. Exchange Rate Limits, 3. Order Execution → Exchange APIs, 4. Memory Constraints, 4. Real-Time Data → Frontend (+31 more)
+
+### Community 10 - "Community 10"
+Cohesion: 0.05
+Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
+
+### Community 11 - "Community 11"
+Cohesion: 0.05
+Nodes (36): 1. Separação de Camadas, 1. Type-Safe Period Comparison, 2. Batch-Based Telegram Pagination, 2. Signal Processing Pipeline, 3. Backtesting Engine Architecture, 3. Period Predefinition, 4. Fallback para Database, 4. Trading Execution Pattern (+28 more)
+
+### Community 12 - "Community 12"
+Cohesion: 0.06
+Nodes (34): 1. Corrigir Certbot (bloqueador), 2. Fornecer Cloudflare API Token (bloqueador Phase 2), 3. Apache2 — desativar 80/443 ou documentar reason, 4. Identificar containers anônimos, 5. Documentar serviços não-no-projeto, 6. Atualizar backup iptables, 7. Atualizar STATE.md do projeto, ALTO (degrada segurança/operação) (+26 more)
+
+### Community 13 - "Community 13"
+Cohesion: 0.11
+Nodes (29): inviolable-watchdog.sh script, atius_pm2_stack_ok(), atius_router_containers_ok(), atius_router_docs_ok(), atius_web_healthcheck_ok(), atius_web_ok(), guarded_relaunch(), hermes_telegram_ok() (+21 more)
+
+### Community 14 - "Community 14"
+Cohesion: 0.13
+Nodes (31): Path, apply_profile_limits(), bandwidth_to_cgroup(), cgroup_device(), classify(), cpu_quota_to_cgroup(), ensure_omni_cgroups_exist(), ensure_slices_active() (+23 more)
+
+### Community 15 - "Community 15"
+Cohesion: 0.06
+Nodes (31): Automated Verify Presence, Context Compliance Issues Found:, Coverage Summary, Deferred Ideas Check, Dimension 10: CLAUDE.md Compliance, Dimension 11: Research Resolution, Dimension 1: Requirement Coverage, Dimension 2: Task Completeness (+23 more)
+
+### Community 16 - "Community 16"
+Cohesion: 0.06
+Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
+
+### Community 17 - "Community 17"
+Cohesion: 0.16
+Nodes (31): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+23 more)
+
+### Community 18 - "Community 18"
+Cohesion: 0.06
+Nodes (31): ✅ Ação 1: Preparar Estrutura de Testes (1 hora), ✅ Ação 2: Criar Conftest Base (30 min), ✅ Ação 3: Escrever Primeiro Teste (30 min), ✅ Ação 4: Executar e Validar (15 min), 📊 Checklist para Hoje (26/01), 🚀 COMECE AGORA!, Código Principal, Documentação (+23 more)
+
+### Community 19 - "Community 19"
+Cohesion: 0.06
+Nodes (31): Alta Prioridade (Critical Path), Baixa Prioridade (Nice to Have), Code Quality, Core Features Implementadas, Correções Recentes (10/02/2026), Correções Recentes (16/02/2026), Críticos, Dependências Externas em Risco (+23 more)
+
+### Community 20 - "Community 20"
+Cohesion: 0.06
+Nodes (30): 1. Fragmentação de Dados, 1. Trading Multi-Broker, 2. Motor de Backtesting, 2. Validação de Estratégias, 3. Pipeline de Sinais, 3. Risco de Operação Manual, 4. Dashboard de Monitoramento, 4. Perda de Auditoria (+22 more)
+
+### Community 21 - "Community 21"
+Cohesion: 0.26
+Nodes (30): Any, Path, _blocked(), _fail(), _live_fleet_db_query(), _live_host_identity(), _live_mesh_ping(), _live_node_direct_postgres_blocked() (+22 more)
+
+### Community 22 - "Community 22"
+Cohesion: 0.06
+Nodes (30): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — IN PLANNING (v1.1) (+22 more)
+
+### Community 23 - "Community 23"
+Cohesion: 0.06
+Nodes (30): 1. Linux Client Login Flow (Machine Authentication), 2. SSSD → Keycloak SSO Flow (Web Authentication), 3. Samba File Access Flow (Kerberos SSO), 4. Existing App Auth Coexistence Flow, Anti-Pattern 1: Running Samba as a Standalone Server with FreeIPA, Anti-Pattern 2: Direct LDAP Connection from Keycloak to FreeIPA, Anti-Pattern 3: FreeIPA Behind a Reverse Proxy, Anti-Pattern 4: Skipping Time Synchronization (+22 more)
+
+### Community 24 - "Community 24"
+Cohesion: 0.07
+Nodes (29): Audit pesado diário, Cenário atual do host — live probes, CLI, Docker build, Docker run, Docker vs Podman vs compiladores, Fase 1 — já implementado no repo, Fase 1 — já implementado no repo (+21 more)
+
+### Community 25 - "Community 25"
+Cohesion: 0.07
+Nodes (28): Antes, 📋 Checklist de Completude, 🔧 Correção #1: Busca Telegram - Iteração Contínua, 🔧 Correção #2: Remoção `maximum_entry_pct` (Backend Python), 🔧 Correção #3: Remoção `maximum_entry_pct` (Frontend), 🔧 Correção #4: Remoção `maximum_entry_pct` (Backend API), Curto Prazo, Depois (+20 more)
+
+### Community 26 - "Community 26"
+Cohesion: 0.07
+Nodes (28): Arquivo Principal, ✅ Checklist de Transição, Comandos Úteis, 🎬 Começar Agora!, ✅ Completado, Código Preparado, Dia 1-2: Coverage e Ajustes, Dia 1-2: Setup Infraestrutura (+20 more)
+
+### Community 27 - "Community 27"
+Cohesion: 0.07
+Nodes (27): Branch Strategy, Clone omni-srv-admin (submodule NÃO clona por padrão), Definition of Done, Entrar no submodule, Execution Order, Inline Plan Guard Validation, Phase 8 — Plan: Rebrand + fork-sync submodule, Pitfalls (+19 more)
+
+### Community 28 - "Community 28"
+Cohesion: 0.10
+Nodes (27): _build_fallback_body(), _classify_heading(), fetch_upstream_compare(), fetch_upstream_release(), generate_release_notes(), _gh_api(), list_local_releases(), _parse_upstream_body() (+19 more)
+
+### Community 29 - "Community 29"
+Cohesion: 0.16
+Nodes (26): Path, _backup_current(), _check_files_exist(), _copy_if_exists(), diff_cmd(), _ensure_root(), install_cmd(), _install_file() (+18 more)
+
+### Community 30 - "Community 30"
+Cohesion: 0.07
+Nodes (26): 1️⃣ Period Choice Logic (CRITICAL), 2️⃣ Signal Fetching (CRITICAL), 3️⃣ Trade Execution (IMPORTANT), 4️⃣ Database Integration (IMPORTANT), 📞 Bloqueadores Conhecidos, 📋 Checklist Geral da Fase, Config Pytest (`pytest.ini`), 🎯 Definição de "Done" (+18 more)
+
+### Community 31 - "Community 31"
+Cohesion: 0.08
+Nodes (25): Apache2 Configuration, Apache2 Migration, Canonical References, Cloudflare, Critical Constraint, Deferred Ideas, DNS, Docker Conflicts (to avoid) (+17 more)
+
+### Community 32 - "Community 32"
+Cohesion: 0.08
+Nodes (25): Backup Strategy, CA Configuration, Canonical References, Claude's Discretion, Constraints, Container Base Image, Container Networking, Deferred Ideas (+17 more)
+
+### Community 33 - "Community 33"
+Cohesion: 0.08
+Nodes (25): 1. Congelar tráfego de borda e watchdog, 2026-06-15 M005 Decision, 2. Parar K3s em todos os servers, 3. Fazer backup defensivo do DB atual dos peers, 4. Restaurar o snapshot etcd em SRV-1, 5. Reidratar os PVCs `local-path` em SRV-1 antes do primeiro start pós-restore, 6. Subir SRV-1 sozinho, 7. Rejuntar SRV-2 e SRV-3 (+17 more)
+
+### Community 34 - "Community 34"
+Cohesion: 0.08
+Nodes (24): B20-01: `~/.local/bin/podman` wrapper injeta `--cpus 2` em subcomandos inválidos, B20-02: Aardvark-dns 1.4.0 self-lookup NXDOMAIN, B20-03: `/run/systemd/resolve/` ausente impede container startup, B20-04: Network default não pode ser removida, Backups, Bugs descobertos + workarounds (documentados), CLI (`omni podman-network`), Commits (+16 more)
+
+### Community 35 - "Community 35"
+Cohesion: 0.08
+Nodes (23): Alta Disponibilidade, App Migration para Keycloak, Client Enrollment, Cloudflare + Security, Coexistência e Integração, FreeIPA Server, K3s HA Cluster, Keycloak SSO (+15 more)
+
+### Community 36 - "Community 36"
+Cohesion: 0.08
+Nodes (23): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, Phase 10: omni deploy ✅ DONE (+15 more)
+
+### Community 37 - "Community 37"
+Cohesion: 0.09
+Nodes (22): Command Pattern, Completion Checklist (Every Task), Core Agent Principles, Design Principles (Auto-Applied), Emergency Protocols, Engineering Excellence Standards, Escalation Criteria (Auto-Applied), Escalation Protocol (+14 more)
+
+### Community 38 - "Community 38"
+Cohesion: 0.09
+Nodes (21): Antes, 🔧 Correção 1: Tipo de `offset_date` em divap_backtest.py, 🔧 Correção 2: SQL Table Name em index.js, ✨ Correções Anteriores (já aplicadas), Correções Aplicadas - Phase 1, Depois, 📝 Documentação Gerada, ✅ get_signals_from_telegram() - Iteração Contínua (+13 more)
+
+### Community 39 - "Community 39"
+Cohesion: 0.09
+Nodes (21): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+13 more)
+
+### Community 40 - "Community 40"
+Cohesion: 0.09
+Nodes (22): 1. Identidade dos Hosts, 2. Topologia de Rede, 3. Mapa de IPs (canônico), 4. Convenção de Displays / VNC / noVNC, 5. Inventário de Portas (canônico, estado 2026-06-16), 6. Portas Reservadas (ranges por categoria), 7.1 Adicionar slot camofox (ex: slot 2 no display :16), 7.2 Remover slot camofox (cleanup) (+14 more)
+
+### Community 41 - "Community 41"
+Cohesion: 0.09
+Nodes (22): Alta Disponibilidade, App Migration para Keycloak, Client Enrollment, Cloudflare + Security, Coexistência e Integração, FreeIPA Server, K3s HA Cluster, Keycloak SSO (+14 more)
+
+### Community 42 - "Community 42"
+Cohesion: 0.09
+Nodes (22): 26 de janeiro de 2026, Acoplamentos, Análise Inicial, Continuação Esperada, Critérios de Sucesso, Decisões Arquiteturais, Dependências, Fase 1: Setup Pytest Infrastructure (+14 more)
+
+### Community 43 - "Community 43"
+Cohesion: 0.09
+Nodes (21): 1.1 Syntax Check, 1.2 Stage Logic Review, 1.3 Path and Dependency Checks (Stage 1), 1.4 Stage 2 Dependency Check, 1.5 Dry-Run Simulation (read-only), 1. `setup.sh` Dry-Run Validation, 2.1 File Existence and Format, 2.2 Required INPUT Rules (IPv4) (+13 more)
+
+### Community 44 - "Community 44"
+Cohesion: 0.09
+Nodes (21): 10. Smoke Checks Pré-Deploy, 11. Cache-Bust de Assets, 12. Histórico de Versões do Manual, 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand) (+13 more)
+
+### Community 45 - "Community 45"
+Cohesion: 0.09
+Nodes (21): Active Context: Starboy Postgres, Bloqueadores Conhecidos, Comandos PM2 de Referência, Código Modificado (Phase 2.1), Decisões Ativas, Documentação Criada, Fase Imediata: VALIDAÇÃO TRADINGVIEW, Fase Secundária: TESTES E VALIDAÇÃO (+13 more)
+
+### Community 46 - "Community 46"
+Cohesion: 0.09
+Nodes (21): Critical Pitfalls, Domain Pitfalls: FreeIPA + Keycloak + Samba on Ubuntu, Minor Pitfalls, Moderate Pitfalls, Phase-Specific Warnings, Pitfall 10: Migration from Existing Samba — POSIX UID/GID Mapping Breaks File Permissions, Pitfall 11: SELinux Denials on Ubuntu, Pitfall 12: CoreDNS vs FreeIPA DNS Coexistence (+13 more)
+
+### Community 47 - "Community 47"
+Cohesion: 0.10
+Nodes (20): Canonical References, D-01: M004 define a base operacional, D-02: Branch de trabalho do milestone, D-03: Repo canônico, D-04: Modos de instalação, D-05: Inventário é fonte de verdade para identidade, D-06: PostgreSQL central migrável, D-07: PgBouncer obrigatório para clientes (+12 more)
+
+### Community 48 - "Community 48"
+Cohesion: 0.10
+Nodes (20): API Layer (Fastify), API Request Flow:, Architecture, Backend Domain Layer, Bot Execution Flow:, Cross-Cutting Concerns, Data Flow, Data Layer (+12 more)
+
+### Community 49 - "Community 49"
+Cohesion: 0.14
+Nodes (20): all_metrics(), disk_rw_pct(), disk_spc_pct(), _diskstats_total_sectors(), mem_pct(), proc_cpu_pct_from_jiffies(), proc_pct(), metrics.py — cálculo unificado de uso de recursos para omni-srv-admin.  Mesma ló (+12 more)
+
+### Community 50 - "Community 50"
+Cohesion: 0.10
+Nodes (19): Accomplishments, Decisions Made, Dependency graph, Deviation 1: sites-enabled direct files, Deviation 2: certbot reconfigure uses live validation, Deviations from Plan, Issues Encountered, Key Findings (+11 more)
+
+### Community 51 - "Community 51"
+Cohesion: 0.10
+Nodes (19): D-01: Rebrand textual — escopo abrangente, D-02: Repo GitHub renomeado, D-03: fork-sync vira submodule em `modules/fork-sync/`, D-04: Descontinuação do repo `giovannimnz/fork-sync`, D-05: `domain-infrastructure/` permanece como diretório mergeado (não submodule), D-06: Push policy — o que pode ser executado automaticamente, D-07: Vault Obsidian — onde registrar, G-01: Ordem de execução (rebrand antes ou depois do submodule?) (+11 more)
+
+### Community 52 - "Community 52"
+Cohesion: 0.10
+Nodes (19): 1. Start with Understanding, 2. Analyze Before Planning, 3. Develop Comprehensive Strategy, 4. Present Clear Plans, Best Practices, Communication, Core Principles, Information Gathering (+11 more)
+
+### Community 53 - "Community 53"
+Cohesion: 0.18
+Nodes (19): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+11 more)
+
+### Community 54 - "Community 54"
+Cohesion: 0.26
+Nodes (17): Path, _cfg(), _clone(), _commit_file(), _git(), _init_repo(), repo_pair(), test_diagnose_container_mirrors_detects_invalid_git_copy() (+9 more)
+
+### Community 55 - "Community 55"
+Cohesion: 0.11
+Nodes (18): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Metrics (+10 more)
+
+### Community 56 - "Community 56"
+Cohesion: 0.11
+Nodes (18): 2026-06-15 M005 Decision, API/CLI collection path, Cluster/application recovery evidence, Evidence that exists now, Exact rollback path available today, Mandatory per-host OCI restore chain, Manual collection path in OCI console, Non-ambiguous gate closure criteria (+10 more)
+
+### Community 57 - "Community 57"
+Cohesion: 0.11
+Nodes (18): 10. PM2 Apps Online + Critical Ports Listening (14-02/14-03), 11. Cgroup Profile Consistent (14-03), 12. Post-Boot Checklist + Rollback in Docs (14-04), 13. Obsidian Result Note (14-04), 14. App Registry Tracked (14-05+inventory), 1. Cold Start Smoke Test (resource-governor services up from scratch), 2. Timer-triggered Inviolable Watchdog, 3. Resource-Governor Status Drift Report (+10 more)
+
+### Community 58 - "Community 58"
+Cohesion: 0.11
+Nodes (18): 18-07 — apt upgrade esm-apps+esm-infra (GATED), 18-07-EXECUTION (started 2026-06-17 22:35 BRT), Backups, Cross-refs, Decisões aplicadas, Erros não-regressivos (fora do escopo G18-1), Execution results (2026-06-17 22:35-22:44 BRT), G18-2 gate: Microsoft RDP login validate (+10 more)
+
+### Community 59 - "Community 59"
+Cohesion: 0.11
+Nodes (18): 10. Manuais de Atualização, 11. Serviço PM2 (Long-lived + Cron), 12. Logs e Rotação Automática, 13. Release Notes em PT-BR, 14. Política de Secrets e Dados Sensíveis, 15. Estrutura do Repositório, 16. Modo REPL (Interativo), 17. Saída JSON (Integração com Agentes) (+10 more)
+
+### Community 60 - "Community 60"
+Cohesion: 0.11
+Nodes (18): Alternatives Considered, Apache2 Migration (80/443 → 8080/8443), Core Identity — FreeIPA (4.11+ via Docker container), DNS — CoreDNS → FreeIPA forwarding, File Sharing — Samba (4.x), FreeIPA Client on Ubuntu — Known Issues, FreeIPA Installer Assumptions, FreeIPA Server on Ubuntu — THE Critical Issue (+10 more)
+
+### Community 61 - "Community 61"
+Cohesion: 0.17
+Nodes (13): invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero() (+5 more)
+
+### Community 62 - "Community 62"
+Cohesion: 0.11
+Nodes (17): Accomplishments, Decisions Made, Dependency graph, Deviations from Plan, Files Created/Modified, Issues Encountered, Key Audit Findings, Known Stubs (+9 more)
+
+### Community 63 - "Community 63"
+Cohesion: 0.11
+Nodes (17): Bottom line, Current direct-IP paths observed, Immediate failures, Operational consequence, Path A: WireGuard API path in use today, Path B: OCI private-IP path exists at L3, but not as a working K3s fallback, Path C: Public-IP path is not available for K3s API, Phase 13 PTP / Direct-IP Fallback Review (+9 more)
+
+### Community 64 - "Community 64"
+Cohesion: 0.11
+Nodes (17): Atalhos (Desktop + menu Internet), Backups, Chromium 149.0.7827.114 (PPA xtradeb/apps), Commits, Cross-refs, D19-01: PPA xtradeb no Noble, D19-02: GPG key correta do PPA xtradeb, D19-03: chromium-snap → chromium-deb (transitional) (+9 more)
+
+### Community 65 - "Community 65"
+Cohesion: 0.11
+Nodes (17): Apt-key no Noble, Atalhos, Chromium, chromium-snap → chromium-deb (transitional), Cross-refs, Dark theme, Dark theme canônico, Goal (+9 more)
+
+### Community 66 - "Community 66"
+Cohesion: 0.19
+Nodes (17): ensure_manuals_dir(), generate_manual(), get_manual_path(), list_manuals(), manual_exists(), manuals — geração e versionamento de manuais de atualização por projeto.  Cada p, Atualiza seção específica do manual (append)., Adiciona entrada ao histórico do manual após sync. (+9 more)
+
+### Community 67 - "Community 67"
+Cohesion: 0.11
+Nodes (17): 0.x (legado), 1.0.0 (2026-06-04), 1.1.0 (2026-06-04), 1.2.0 (2026-06-04), 1.3.0 (2026-06-14), Adicionado, Adicionado, Adicionado (+9 more)
+
+### Community 68 - "Community 68"
+Cohesion: 0.11
+Nodes (17): Active, Ambiente Atual, Constraints, Context, Core Value, Evolution, Key Decisions, M007: M005 Follow-ups (Phase 15-17) (+9 more)
+
+### Community 69 - "Community 69"
+Cohesion: 0.11
+Nodes (17): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Current Position, Live Gates, M001 Completion, M002 Result Summary (+9 more)
+
+### Community 70 - "Community 70"
+Cohesion: 0.11
+Nodes (17): 1. Project Understanding Phase, 2. Gap Analysis Phase, 3. Prioritization Phase, 4. Specification Development Phase, 5.5 Work Distribution Optimization, 5. GitHub Issue Creation Phase, 6. Final Review Phase, Acceptance Criteria (+9 more)
+
+### Community 71 - "Community 71"
+Cohesion: 0.24
+Nodes (17): analyze_disk_deep(), analyze_trends(), auto_fix(), auto_fix_crash_loop(), auto_reclaim_disk(), detect_crash_loops(), log(), main() (+9 more)
+
+### Community 72 - "Community 72"
+Cohesion: 0.12
+Nodes (16): Context, Decisões locked, Estimated effort, Findings (probes paralelos), Gaps identificados durante a missão 4h, Method, Out of scope, Phase 09: Mission Guardian — Research (+8 more)
+
+### Community 73 - "Community 73"
+Cohesion: 0.12
+Nodes (16): Codex channel integration, Documentation (fork-specific, PT-BR primary), Fork Sync — Atius Router, Frontend i18n, i18n — Portuguese Translation, Infrastructure, Merge Flow, Middleware and containers (+8 more)
+
+### Community 74 - "Community 74"
+Cohesion: 0.17
+Nodes (16): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+8 more)
+
+### Community 75 - "Community 75"
+Cohesion: 0.19
+Nodes (16): check_disk_usage(), cleanup_old_logs(), compress_old_logs(), get_log_files(), parse_log_name(), logrotate — rotação, compressão e retenção automática de logs.  Problema: sync g, Reporta uso de disco dos logs., Pipeline completo: comprimir antigos + limpar velhos. (+8 more)
+
+### Community 76 - "Community 76"
+Cohesion: 0.12
+Nodes (16): Account, Aliases Úteis (disponíveis após carregar .zshrc), Anti-Bot / Turnstile, API Access, Authentication — Critical Distinction, Cloudflare Configuration — omni-srv-admin, Cloudflare Origin Rules (Phase 02), Credenciais no Ambiente (+8 more)
+
+### Community 77 - "Community 77"
+Cohesion: 0.12
+Nodes (16): Agent Service, Audit, CLI-Anything Slash Commands, Cross-Server Monitoring, Data Model, Direct IP Fallback, Heartbeat, Human Gates Before Live Execution (+8 more)
+
 ### Community 78 - "Community 78"
-Cohesion: 0.15
-Nodes (12): Code Style, Coding Conventions, Comments, Error Handling, Function Design, Import Organization, Language, Logging (+4 more)
+Cohesion: 0.23
+Nodes (9): offload-dotbackups-to-gdrive.sh script, archive_item(), copy_item(), log(), main(), retry_rclone(), should_archive_item(), verify_archive_item() (+1 more)
 
 ### Community 79 - "Community 79"
-Cohesion: 0.15
-Nodes (12): 10. Pergunta Sobre Atualizacoes, 11. Pedido de Salvamento, 1. Pergunta Inicial, 2. Prioridade Definida, 3. Problema no Remmina/Ubuntu Cliente, 4. Pedido de Ficar Sempre Fixo em ABNT2, 5. Pesquisa de Bug Conhecido, 6. Correcao de Foco: Windows 11 -> Este Ubuntu (+4 more)
+Cohesion: 0.12
+Nodes (16): Backend, Contatos e Recursos, Descrição Geral, Escopo Principal, Estrutura do Repositório, Fase: OTIMIZAÇÃO E INTEGRAÇÃO CONTÍNUA, Frontend, Frontend (+8 more)
 
 ### Community 80 - "Community 80"
-Cohesion: 0.15
-Nodes (12): Adicionar novo serviço PM2, Auto-start no boot, Cron não dispara, Cron PM2 vs crontab tradicional, Estrutura dos arquivos, Logs, Logs de PM2 lotando disco, PM2 e Cron — Serviço fork-sync (+4 more)
+Cohesion: 0.12
+Nodes (16): 📋 Arquivos Documentados, Bug #1: Type Mismatch em `offset_date` (Pylance), Bug #2: SQL Table Name (Backend API), 📊 Code Quality Metrics, 📞 Contact & Support, 📈 Estatísticas da Sessão, 🎉 FASE 1 CONCLUÍDA - Relatório Executivo, ✨ Features Habilitadas (+8 more)
 
 ### Community 81 - "Community 81"
 Cohesion: 0.15
-Nodes (12): Atius AI Router, Atius Trade System (ATS), Branch Conventions, Build Commands, Code Style, Development — Atius Home Server, Horistic, Key Files (+4 more)
+Nodes (16): clear(), drain(), enqueue(), enqueue_all(), fleet_backup(), fleet-backup — fila serial de backups rclone multi-server.  Wrapper Click em cim, Executa o script bash propagando o exit code., Fila serial de backups rclone (multi-server, 1 por vez, cooldown 5min). (+8 more)
 
 ### Community 82 - "Community 82"
-Cohesion: 0.15
-Nodes (12): Breaking Changes (v2.0.0 → v2.1.0), Estratégia Sync, Histórico, horus-spec-driven — Manual de Atualização, "modules/gsd-core/ missing", Paths Protegidos, Rebrand, Referências a `gsd-tools` no body do skill (+4 more)
+Cohesion: 0.12
+Nodes (16): 📈 Burn-Down, ✅ Completed, 📋 Detalhes, 🚀 In Progress, ⏳ Pending, 🗺️ Roadmap Visual, 🔄 Status Legenda, 📊 Summary (+8 more)
 
 ### Community 83 - "Community 83"
-Cohesion: 0.15
-Nodes (12): 2026-02-10, 2026-02-11, Alternativa Descartada, Implementation Plan, Original Request, Problema Raiz, Progress Log, Progress Tracking (+4 more)
+Cohesion: 0.12
+Nodes (15): 12-01: Fleet Control Plane Foundation, Human Checkpoints, Objective, Read First, Success Criteria, Task 1 — Freeze milestone order, Task 2 — Define contracts and docs, Task 3 — Design PostgreSQL and PgBouncer (+7 more)
 
 ### Community 84 - "Community 84"
-Cohesion: 0.17
-Nodes (11): Certbot, Claude's Discretion, Cloudflare, Deferred Ideas, DNS Strategy, FQDN, Hostname, NTP (+3 more)
+Cohesion: 0.12
+Nodes (15): Accomplishments, Backups, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory + CLI, Issues Encountered, Live (systemd + podman) (+7 more)
 
 ### Community 85 - "Community 85"
-Cohesion: 0.17
-Nodes (11): Backup Strategy, CA Configuration, Claude's Discretion, Container Base Image, Container Networking, Deferred Ideas, DNS Integration, Domain Configuration (+3 more)
+Cohesion: 0.12
+Nodes (15): Goal, Motivation, Next, Out of Scope, Performance, Phase 14 Plan 06: Jenkins Agent on K3s (M005 extension), Risks, Success Criteria (+7 more)
 
 ### Community 86 - "Community 86"
-Cohesion: 0.17
-Nodes (11): Anthropic Messages (compatível), Autenticação, Base URL, Chat Completions, Códigos de Erro, Embeddings, Endpoints Principais, Listar Modelos (+3 more)
+Cohesion: 0.12
+Nodes (15): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory, Issues Encountered, Live (K8s manifests), Next Phase Readiness (+7 more)
 
 ### Community 87 - "Community 87"
-Cohesion: 0.17
-Nodes (11): Architecture Overview, Boundaries, Camadas, Diretórios, Estado atual, Fleet, Objetivo, Princípios (+3 more)
+Cohesion: 0.15
+Nodes (14): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply(), _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks). (+6 more)
 
 ### Community 88 - "Community 88"
-Cohesion: 0.17
-Nodes (11): CI/CD Integration, Common Patterns, Coverage, Fixtures and Factories, Key Testing Gaps, Mocking, Test File Organization, Test Framework (+3 more)
+Cohesion: 0.12
+Nodes (15): Arquivos Principais (Obrigatórios), Atualizações de Documentação, Banco de Memória, Comandos de Tarefa, Contexto Adicional, Estrutura de Tarefa Individual, Estrutura do Banco de Memória, Estrutura do Índice de Tarefas (+7 more)
 
 ### Community 89 - "Community 89"
-Cohesion: 0.17
-Nodes (11): Component Diagram, Data Flow, Directory Structure, Docker Containers, Key Abstractions, Network, Planned, Running Services (PM2) (+3 more)
+Cohesion: 0.13
+Nodes (14): Additional Verifications (ROADMAP Success Criteria), Anti-Patterns Found, Behavioral Spot-Checks, Data-Flow Trace (Level 4), Git Commits, Goal Achievement, Human Verification Required, Key Link Verification (+6 more)
 
 ### Community 90 - "Community 90"
-Cohesion: 0.17
-Nodes (11): Cloudflare, Config Files, Database Configuration, Docker Networks, Environment Variables, Hermes Agent, Node.js / Python Runtime, PM2 Configuration (+3 more)
+Cohesion: 0.13
+Nodes (14): B-01: Credentials not set — plan claims autonomous but requires user input, B-02: No wait/sleep between rule application and connectivity testing, B-03: `depends_on: []` is incorrect, Blockers — Status, Info — Verified Observations, Phase 2 Plan 01 — Quality Check (Re-check After Fixes), Verdict: READY, W-01: Rollback script RESTORE uses raw backup file (+6 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.17
-Nodes (11): ATS, CI Integration, Horistic, Playwright E2E, Python (pytest), Running Tests, Test Configuration, Test File Naming (+3 more)
+Cohesion: 0.13
+Nodes (14): 13-01: M005 No-Cost Release Gates, Human Checkpoints, Objective, Read First, Secret Handling Rules, Success Criteria, Task 1 - Update release gates and docs, Task 2 - Promote GDrive disaster recovery gate (+6 more)
 
 ### Community 92 - "Community 92"
-Cohesion: 0.42
-Nodes (11): fix-abnt2.sh script, apply_fix(), create_fix_script(), err(), install_service(), log(), show_menu(), show_status() (+3 more)
+Cohesion: 0.13
+Nodes (14): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Live (no mutation), Next Phase Readiness, Performance (+6 more)
 
 ### Community 93 - "Community 93"
-Cohesion: 0.17
-Nodes (11): Arquitetura, Busca de Dados, Contexto do Projeto, Estilização, Gerenciamento de Estado, Instruções de Desenvolvimento Next.js + Tailwind, Padrões de Desenvolvimento, Performance (+3 more)
+Cohesion: 0.13
+Nodes (14): Backups (preserved), Files created/modified, Gated follow-ups (deferred to explicit user authorization), Live system state at phase close, Live (systemd + podman + K8s), M006 closure, Performance, Phase 14 Summary — Resource Governor + PM2 Boot Hardening (+6 more)
 
 ### Community 94 - "Community 94"
-Cohesion: 0.38
-Nodes (11): Any, Path, build_report(), dir_size(), fixed_sizes(), gib(), load_config(), main() (+3 more)
+Cohesion: 0.13
+Nodes (14): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 17: M005 Observability + RWX, Risks, Success Criteria, Task 1: kube-prometheus-stack via Helm (+6 more)
 
 ### Community 95 - "Community 95"
-Cohesion: 0.36
-Nodes (11): Path, count_lines(), gib_from_bytes(), load_config(), main(), mib_from_kib(), parse_meminfo(), parse_pressure() (+3 more)
+Cohesion: 0.13
+Nodes (14): 1. Connect to WireGuard VPN, 2. SSH to the server, 3. Verify services are running, 4. Check Docker containers, Clone/pull the project, Common Setup Issues, Getting Started — Atius Home Server, Initial Access (+6 more)
 
 ### Community 96 - "Community 96"
-Cohesion: 0.18
-Nodes (12): admin_health(), admin_processes(), admin_status(), Health checks básicos: ping, portas, serviços chave., Lista serviços systemd. Se NAME passado, mostra status + logs., Top-like: processos por uso de CPU ou memória., Executa deploy de um projeto (wrapping fork-sync deploy)., Retorna env com LC_ALL=C para parsing consistente. (+4 more)
+Cohesion: 0.13
+Nodes (14): 1. DHCP conflict after restart, 2. `extra_hosts` doesn't survive `podman exec --network host`, 3. `extra_hosts` syntax for compose-v1 vs compose-v2, 4. Adding a new service after the IP table is set, IP estático + extra_hosts fallback (for multi-container stacks), Origin, Pitfalls, Procedure (validated for plane-app) (+6 more)
 
 ### Community 97 - "Community 97"
-Cohesion: 0.12
-Nodes (16): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Current Position, Live Gates, M001 Completion, M002 Result Summary (+8 more)
+Cohesion: 0.13
+Nodes (14): 15/02/2026, 16/02/2026, Arquivos Criados/Modificados, Correções DIVAP (16/02/2026), Descobertas Técnicas, Fórmulas Confirmadas (engenharia reversa), Implementation Plan, Limitações Conhecidas (+6 more)
 
 ### Community 98 - "Community 98"
-Cohesion: 0.18
-Nodes (10): Assumptions Log, Don't Hand-Roll, Environment Availability, Metadata, Open Questions, Phase 3: FreeIPA Server Container - Research, Phase Requirements, Runtime State Inventory (+2 more)
+Cohesion: 0.14
+Nodes (13): Added DB/CLI-Anything Contract, Agent Executor + Monitoring Scenarios, Automated Commands, DB/Table CamelCase Rename, Host Evidence, Live Read-Only Results, Live Repo + DB Rollout, Master/Slave Scenario Matrix (+5 more)
 
 ### Community 99 - "Community 99"
-Cohesion: 0.18
-Nodes (10): 14-02: PM2 boot canonicalization e stale jobs, acceptance_criteria, objective, preflight_snapshot, read_first, Task 1: choose canonical PM2 startup, Task 2: replace broken path safely, Task 3: drain stale jobs with gate (+2 more)
+Cohesion: 0.14
+Nodes (13): Goal, Motivation, Next, Performance, Phase 14 Plan 05: Jenkins + servicos orfaos: remover deps Docker e validar em dominio publico, Risks, Success Criteria (all met), Task 1: Backup do estado live (+5 more)
 
 ### Community 100 - "Community 100"
-Cohesion: 0.18
-Nodes (10): 14-04: Runbook, rollback e verificacao pos-boot, acceptance_criteria, objective, read_first, Task 1: runbook update, Task 2: rollback procedure, Task 3: post-boot verification, Task 4: Obsidian result note (+2 more)
+Cohesion: 0.14
+Nodes (13): 18-06 — Ubuntu Pro Fleet Audit (2026-06-16), ATIUS-SRV-1 (10.1.1.1, Noble, arm64), ATIUS-SRV-2 (10.1.1.2, Noble, arm64), ATIUS-SRV-3 (10.1.1.7, Noble, arm64), Cross-refs, D18-06-A: ✅ (a) Dashboard transfer, D18-06-B: ✅ (1) pro refresh + re-enable, fallback (2), D18-06-C: ✅ paralelo via subagent (+5 more)
 
 ### Community 101 - "Community 101"
-Cohesion: 0.18
-Nodes (10): 1. Fetch Provided URLs, 2. Deeply Understand the Problem, 3. Codebase Investigation, 4. Internet Research, 5. Develop a Detailed Plan, 6. Making Code Changes, 7. Debugging, Communication Guidelines (+2 more)
+Cohesion: 0.14
+Nodes (13): 18-07 — apt upgrade esm-apps+esm-infra SUMMARY, 18-07-EXECUTION (started 2026-06-17 22:35 BRT), Backups, Decisões aplicadas, Erros não-regressivos (fora do escopo G18-1), Execution results (2026-06-17 22:35-22:44 BRT), G18-2 gate: Microsoft RDP login validate, G18-3 gate: Landscape SaaS UI confirmation (+5 more)
 
 ### Community 102 - "Community 102"
-Cohesion: 0.18
-Nodes (10): AI-Optimized Implementation Standards, Core Requirements, Execution Context, Implementation Plan Generation Mode, Mandatory Template Structure, Output File Specifications, Phase Architecture, Plan Structure Requirements (+2 more)
+Cohesion: 0.14
+Nodes (13): 18-06 — Account + sources + token, 18-07 — apt upgrade esm-apps+infra (GATED), 18-08 — Validar pós-upgrade (GATED G18-2), 18-09 — Documentação + watchdog (pode rodar em paralelo), Contexto, Cross-refs, Estado atual (2026-06-16 — baseline 18-06-AUDIT), Gaps vs target (+5 more)
 
 ### Community 103 - "Community 103"
-Cohesion: 0.18
-Nodes (10): APIs & External Services, Authentication & Identity, CI/CD & Deployment, Data Storage, Docker Container Ecosystem, Environment Configuration, External Integrations, Monitoring & Observability (+2 more)
+Cohesion: 0.14
+Nodes (13): Backups, Commits, Cross-refs, Issues remanescentes (não-bloqueantes), Materialização, Mudanças aplicadas (resumo), Origem, Phase 20 — Plan 20-01 SUMMARY (+5 more)
 
 ### Community 104 - "Community 104"
-Cohesion: 0.18
-Nodes (10): Backup map, Configuration, Environment variables, Fleet config, Host inventory, Inventory paths, Logs, PCManFM/LXDE Places (+2 more)
+Cohesion: 0.14
+Nodes (13): 21-01 — Graphify + plano separado, 21-02 — Inventário + DB, 21-03 — VPN/CoreDNS/docs SRV-2, 21-04 — Hostname + shell/runtime nos KVMs, 21-05 — Monitoramento completo, 21-06 — Docs finais e validação, Critérios de done, Escopo (+5 more)
 
 ### Community 105 - "Community 105"
-Cohesion: 0.18
-Nodes (10): Add a CLI module, Add a host, Add a remote, Coding style, Commit discipline, Development, Run CLI from source, Setup (+2 more)
+Cohesion: 0.14
+Nodes (13): Cache de tradução, Comandos, Configuração no `sync.yaml` (futuro), Estrutura de arquivos, Heurística de tag anterior, Integração com `bin/create-release.sh`, Limitações conhecidas, Problema original (+5 more)
 
 ### Community 106 - "Community 106"
-Cohesion: 0.18
-Nodes (10): Getting Started, Instalar CLI, Onde colocar coisas novas, Primeiros comandos, Regras antes de mexer, Renomear label visual do SMB, Rodar operação SRV-1, Validar teclado XRDP ABNT2 (+2 more)
+Cohesion: 0.14
+Nodes (13): Como funciona a estratégia custom, Compatibilidade, Cronograma coordenado, Detecção de release multi-source, Migração, Modo plugin Python (`strategy_plugin`), Modo script (`strategy_script`), Motivação (+5 more)
 
 ### Community 107 - "Community 107"
-Cohesion: 0.18
-Nodes (10): DESKTOP_SESSION, HOME, XAUTHORITY, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP, XDG_DATA_DIRS, XDG_SESSION_CLASS, XDG_SESSION_DESKTOP (+2 more)
+Cohesion: 0.14
+Nodes (13): Directory layout, fleet — multi-computer operations, Goal, Host class differences, Implementation phases, Links, Phase 1 — inventory only, Phase 2 — read-only remote probes (+5 more)
 
 ### Community 108 - "Community 108"
-Cohesion: 0.18
-Nodes (10): Adicionar comando CLI, Adicionar novo fork (projeto), Adicionar template, Antes do PR, Como contribuir, Contribuindo, Estilo de código, Princípios (+2 more)
+Cohesion: 0.41
+Nodes (13): rclone-fleet-queue.sh script, cmd_clear(), cmd_drain(), cmd_enqueue(), cmd_run(), cmd_status(), err(), hdr() (+5 more)
 
 ### Community 109 - "Community 109"
-Cohesion: 0.18
-Nodes (10): Database schema design, Database schema generation, Parameter Handling, SQL Coding Style, SQL Development, SQL Query Structure, SQL Security Best Practices, Stored Procedure Naming Conventions (+2 more)
+Cohesion: 0.38
+Nodes (13): Path, load_config(), main(), print_direct_cgroups(), print_pm2_boot_refs(), print_resource_units(), print_slice_properties(), print_stuck_jobs() (+5 more)
 
 ### Community 110 - "Community 110"
 Cohesion: 0.18
-Nodes (10): AI-Optimized Implementation Standards, Core Requirements, Create Implementation Plan, Execution Context, Mandatory Template Structure, Output File Specifications, Phase Architecture, Plan Structure Requirements (+2 more)
+Nodes (13): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+5 more)
 
 ### Community 111 - "Community 111"
-Cohesion: 0.18
-Nodes (10): AI-Optimized Implementation Standards, Core Requirements, Execution Context, Mandatory Template Structure, Output File Specifications, Phase Architecture, Plan Structure Requirements, Primary Directive (+2 more)
+Cohesion: 0.34
+Nodes (13): backup_podman_image(), backup_volume(), is_volume_done(), load_state(), log(), main(), mark_volume_done(), mark_volume_failed() (+5 more)
 
 ### Community 112 - "Community 112"
-Cohesion: 0.18
-Nodes (10): 10/02/2026, 11/02/2026, Arquivos Criados/Modificados, Implementation Plan, Original Request, Progress Log, Progress Tracking, Subtasks (+2 more)
+Cohesion: 0.15
+Nodes (12): Conclusion, Initial Data Model, Local Evidence, Node Responsibilities, Official Research, PgBouncer, Phase 12 — Research, PostgreSQL dump/restore (+4 more)
 
 ### Community 113 - "Community 113"
-Cohesion: 0.20
-Nodes (9): - Container entrypoint is systemd; ipa-server-configure-first runs as systemd service, - Failure recovery: docker stop + rm -rf /var/lib/freeipa/data/* + docker compose up -d, Key installation notes from research:, - Monitor with: docker logs -f freeipa-server, Prerequisites from Plan 01, - Setup takes 3-8 minutes depending on hardware (ARM64 may be slower), STRIDE Threat Register, - Success indicator: "The ipa-client-install command was successful" or systemd shows all services active (+1 more)
+Cohesion: 0.15
+Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
 
 ### Community 114 - "Community 114"
-Cohesion: 0.20
-Nodes (9): 14-01: Versionar governor/inviolable e status/install coverage, acceptance_criteria, objective, read_first, Task 1: reconcile repo artifacts against live fix, Task 2: improve install/status guardrails, Task 3: syntax and static verification, tasks (+1 more)
+Cohesion: 0.15
+Nodes (12): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 15: M005 OCI Snapshots, Risks, Success Criteria, Task 1: oci-snapshot CLI command (+4 more)
 
 ### Community 115 - "Community 115"
-Cohesion: 0.20
-Nodes (9): 14-03: Boot/login-linger, cgroups e XRDP-safe cleanup, acceptance_criteria, objective, read_first, Task 1: login-linger and unit graph, Task 2: cgroup consistency probe, Task 3: XRDP leftover treatment, tasks (+1 more)
+Cohesion: 0.15
+Nodes (12): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 16: M005 Cloudflare Access, Risks, Success Criteria, Task 1: enable Cloudflare Access on account (+4 more)
 
 ### Community 116 - "Community 116"
-Cohesion: 0.20
-Nodes (9): Canonical Files, Goal, Incident Source, Live State Captured, Locked Decisions, Open Risks, Out of Scope, Phase 14: Context (+1 more)
+Cohesion: 0.15
+Nodes (12): Code Style, Coding Conventions, Comments, Error Handling, Function Design, Import Organization, Language, Logging (+4 more)
 
 ### Community 117 - "Community 117"
-Cohesion: 0.20
-Nodes (10): 1. Technology Stack, Auth & Security, Backend Framework, Database Drivers, Exchange Integrations, Frontend Stack (Next.js), Languages, Python Dependencies (`pyproject.toml`) (+2 more)
+Cohesion: 0.15
+Nodes (12): 10. Pergunta Sobre Atualizacoes, 11. Pedido de Salvamento, 1. Pergunta Inicial, 2. Prioridade Definida, 3. Problema no Remmina/Ubuntu Cliente, 4. Pedido de Ficar Sempre Fixo em ABNT2, 5. Pesquisa de Bug Conhecido, 6. Correcao de Foco: Windows 11 -> Este Ubuntu (+4 more)
 
 ### Community 118 - "Community 118"
-Cohesion: 0.20
-Nodes (9): Configuration, Frameworks, Infrastructure, Key Dependencies, Key Dependencies, Languages, Platform Requirements, Runtime (+1 more)
+Cohesion: 0.15
+Nodes (12): Adicionar novo serviço PM2, Auto-start no boot, Cron não dispara, Cron PM2 vs crontab tradicional, Estrutura dos arquivos, Logs, Logs de PM2 lotando disco, PM2 e Cron — Serviço fork-sync (+4 more)
 
 ### Community 119 - "Community 119"
 Cohesion: 0.15
 Nodes (12): cli/omni/srv1_ops.py, ast_hash, mtime, semantic_hash, modules/fork-sync/cli/fork_sync/core/automerge.py, ast_hash, mtime, semantic_hash (+4 more)
 
 ### Community 120 - "Community 120"
-Cohesion: 0.20
-Nodes (9): 1. Confirmar Configuracao Base do Ubuntu, 2. Corrigir Mapeamento do XRDP, 3. Criar Keymaps XRDP, 4. Forcar ABNT2 no Inicio da Sessao XRDP, 5. Watchdog ABNT2, 6. Protecao Contra Atualizacoes, 7. Validacao, 8. Aplicacao em Sessao Ativa (+1 more)
+Cohesion: 0.15
+Nodes (12): Atius AI Router, Atius Trade System (ATS), Branch Conventions, Build Commands, Code Style, Development — Atius Home Server, Horistic, Key Files (+4 more)
 
 ### Community 121 - "Community 121"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+Cohesion: 0.15
+Nodes (12): Breaking Changes (v2.0.0 → v2.1.0), Estratégia Sync, Histórico, horus-spec-driven — Manual de Atualização, "modules/gsd-core/ missing", Paths Protegidos, Rebrand, Referências a `gsd-tools` no body do skill (+4 more)
 
 ### Community 122 - "Community 122"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+Cohesion: 0.15
+Nodes (12): 2026-02-10, 2026-02-11, Alternativa Descartada, Implementation Plan, Original Request, Problema Raiz, Progress Log, Progress Tracking (+4 more)
 
 ### Community 123 - "Community 123"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+Cohesion: 0.17
+Nodes (11): Certbot, Claude's Discretion, Cloudflare, Deferred Ideas, DNS Strategy, FQDN, Hostname, NTP (+3 more)
 
 ### Community 124 - "Community 124"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+Cohesion: 0.17
+Nodes (11): Backup Strategy, CA Configuration, Claude's Discretion, Container Base Image, Container Networking, Deferred Ideas, DNS Integration, Domain Configuration (+3 more)
 
 ### Community 125 - "Community 125"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
-
-### Community 126 - "Community 126"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
-
-### Community 127 - "Community 127"
-Cohesion: 0.20
-Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
-
-### Community 128 - "Community 128"
-Cohesion: 0.17
-Nodes (11): Backup GDrive, Comandos, Logs, Objetivo, Post-Boot Verification Checklist, Resource governor, Rollback Procedure, Scripts (+3 more)
-
-### Community 129 - "Community 129"
-Cohesion: 0.20
-Nodes (9): Caso real, Comandos, Inventário, Objetivo, PCManFM/LXDE, Pitfalls, Remote Manager, Segurança (+1 more)
-
-### Community 130 - "Community 130"
-Cohesion: 0.20
-Nodes (9): CLI, GDrive layout, Migration notes, Pitfalls, Regra, Resource governor, Scripts gerenciados, srv1-ops — ATIUS-SRV-1 operational scripts (+1 more)
-
-### Community 131 - "Community 131"
-Cohesion: 0.20
-Nodes (9): 12/02/2026, Arquivos Modificados, Implementation Plan, Original Request, Progress Log, Progress Tracking, Subtasks, [TASK008] - UID Obrigatório, Labels Alvo, Manual Target, Dashboard Balance (+1 more)
-
-### Community 132 - "Community 132"
-Cohesion: 0.20
-Nodes (9): 16/02/2026, Arquivos Relevantes, Implementation Plan, Original Request, Progress Log, Progress Tracking, Subtasks, [TASK010] - Migração Infra/PM2/Postgres para Omni (+1 more)
-
-### Community 133 - "Community 133"
-Cohesion: 0.22
-Nodes (8): - certbot is now working (snap v2.x), - chrony installed and synced, Files to read before editing, - FQDN configured in /etc/hosts, Key interfaces from Plan 01, - Port audit report at /tmp/01-prep-audit-report.txt, STRIDE Threat Register, Trust Boundaries
-
-### Community 134 - "Community 134"
-Cohesion: 0.22
-Nodes (9): Common Pitfalls, Pitfall 1: DNS Resolution Inside Container During Setup, Pitfall 2: Memory Check Blocking Setup, Pitfall 3: NTP Availability During Setup, Pitfall 4: Zone Overlap with Cloudflare Domain, Pitfall 5: Container First-Run Idempotency, Pitfall 6: ARM64 FIPS Crypto Bug (Known Issue), Pitfall 7: Port 53 Conflict Resolution (+1 more)
-
-### Community 135 - "Community 135"
-Cohesion: 0.22
-Nodes (8): Dimension 1: Requirement Coverage, Dimension 2: Dependency Correctness, Dimension 3: Risk Gating, Dimension 4: Context Compliance, Dimension 5: Scope Sanity, Phase 14: Plan Check, Result, VERIFICATION PASSED
-
-### Community 136 - "Community 136"
-Cohesion: 0.22
-Nodes (8): Gaps to Close, Method, Phase 14: Research, Planning Choice, Repo Findings, Requirements Proposed, Risk Classification, Source Note Findings
-
-### Community 137 - "Community 137"
-Cohesion: 0.22
-Nodes (8): Abort Criteria, Layer 1: Static, Layer 2: Read-Only Live, Layer 3: Low-Impact Apply, Layer 4: Gated Live, Phase 14: Validation Architecture, Requirement Test Map, Validation Layers
-
-### Community 138 - "Community 138"
-Cohesion: 0.22
-Nodes (8): Comandos Úteis, Passo 1: Clonar o Repositório, Passo 2: Configurar Variáveis de Ambiente, Passo 3: Subir os Serviços, Passo 4: Verificar a Instalação, Pré-requisitos, Próximos Passos, Visão Geral
-
-### Community 139 - "Community 139"
-Cohesion: 0.56
-Nodes (8): optimize_network.sh script, apply_setting(), backup_sysctl(), check_root(), log_error(), log_info(), log_success(), log_warning()
-
-### Community 140 - "Community 140"
-Cohesion: 0.53
-Nodes (8): cleanup-local.sh script, cleanup_caches(), cleanup_journal(), cleanup_logs(), cleanup_podman(), cleanup_tmp(), log(), PATH
-
-### Community 141 - "Community 141"
-Cohesion: 0.22
-Nodes (8): 1. Objetivo, 2. Source of Truth, 3. Rotina Automática, 4. Versionamento, 5. Validações Pós-Sync, 6. Guardrails, 7. Estado em 2026-06-14, Manual de Atualização — notebooklm-py
-
-### Community 142 - "Community 142"
-Cohesion: 0.22
-Nodes (8): Arquivo alterado, Arquivo de inventário atualizado, Comandos, Migração de mount path, Não faz, Pitfall: duplicação em PCManFM, Remote Manager Operations, Renomear label visual
-
-### Community 143 - "Community 143"
-Cohesion: 0.22
-Nodes (8): Analysis Instructions, Documentation Standards, Error Handling, File Location, Generate Standard OO Component Documentation, Language-Specific Optimizations, Output Format, Required Documentation Structure
-
-### Community 144 - "Community 144"
-Cohesion: 0.25
-Nodes (7): Background, Constraints, Current State (from Phase 1), Phase 2: Migração Apache2 para Portas Alternativas — Context, Requirements, Success Criteria, User Decisions (Locked)
-
-### Community 145 - "Community 145"
-Cohesion: 0.25
-Nodes (7): Alternative: ipa-backup inside container (requires running container, produces FreeIPA-native backup), Backup strategy from research:, Per freeipa-container README: recommended backup is /data volume tar (stop container, tar /data, restart), Prerequisites from Plan 02, Research recommends volume backup as primary — simpler recovery (restore volume + restart), STRIDE Threat Register, Trust Boundaries
-
-### Community 146 - "Community 146"
-Cohesion: 0.25
-Nodes (7): 09-05: HoristicOps agent (DevOps on-call), acceptance_criteria, action, documentation, objective, read_first, verification
-
-### Community 147 - "Community 147"
-Cohesion: 0.25
-Nodes (7): Acceptance gate (final), Architecture, Cross-cutting constraints, Goal, Phase 09: Mission Guardian — Master Plan, Plans in this phase, Waves
-
-### Community 148 - "Community 148"
-Cohesion: 0.29
-Nodes (7): REPL interativo (estilo CLI-Anything).  Comandos disponíveis no REPL (sem o pref, Tenta importar prompt_toolkit; cai de volta para input() se não tiver., Loop principal do REPL., run_repl(), _try_prompt_toolkit(), Modo interativo (REPL) — padrão CLI-Anything., repl_cmd()
-
-### Community 149 - "Community 149"
-Cohesion: 0.25
-Nodes (7): Automation Added, Commands Run, Container Mirrors, Controlled Projects, Fork Sync Audit — 2026-06-13, Result, Should-Be-Controlled Candidates
-
-### Community 150 - "Community 150"
-Cohesion: 0.25
-Nodes (7): Arquivos Neste Pacote, Como Reaplicar, Diagnostico, Objetivo, Ressalvas, Solucao Aplicada, Solucao Teclado XRDP BR ABNT2
-
-### Community 151 - "Community 151"
-Cohesion: 0.25
-Nodes (7): Multi-host rollout plan, Phase 1 — inventory, Phase 2 — read-only probes, Phase 3 — module compatibility matrix, Phase 4 — remote execution, Phase 5 — support mode, Validation
-
-### Community 152 - "Community 152"
-Cohesion: 0.25
-Nodes (7): Componentes, Comportamento, fleet-backup — Backup serial multi-server para GDrive, History, Instalação, Uso, Variáveis
-
-### Community 153 - "Community 153"
-Cohesion: 0.25
-Nodes (7): Campos, Classes de host, Fleet Inventory Model, Host schema v0, Localização, Regras, Remote schema v0
-
-### Community 154 - "Community 154"
-Cohesion: 0.50
-Nodes (6): offload-retired-artifacts-to-gdrive.sh script, backup_path(), backup_volume(), log(), main(), retry_rclone()
-
-### Community 155 - "Community 155"
-Cohesion: 0.32
-Nodes (4): resource-governor-cgroup-init.sh script, get(), load_env(), quote()
-
-### Community 156 - "Community 156"
-Cohesion: 0.25
-Nodes (8): Acessibilidade e Performance, Armadilhas Comuns de Frontend, Otimização de Assets, Otimização de Rede, Performance de Frontend, Performance de JavaScript, Renderização e DOM, Troubleshooting de Frontend
-
-### Community 157 - "Community 157"
-Cohesion: 0.25
-Nodes (8): API e Rede, Armadilhas Comuns de Backend, Cache, Concorrência e Paralelismo, Log e Monitoramento, Otimização de Algoritmos e Estruturas de Dados, Performance de Backend, Troubleshooting de Backend
-
-### Community 158 - "Community 158"
-Cohesion: 0.25
-Nodes (8): Cache e Replicação, Common Database Pitfalls, Database Troubleshooting, Modelagem de Esquema, NoSQL Databases, Otimização de Queries, Performance de Banco de Dados, Transações
-
-### Community 159 - "Community 159"
-Cohesion: 0.25
-Nodes (8): Example 1: Debouncing User Input in JavaScript, Example 2: Efficient SQL Query, Example 3: Caching Expensive Computation in Python, Example 4: Lazy Loading Images in HTML, Example 5: Asynchronous I/O in Node.js, Example 6: Profiling a Python Function, Example 7: Using Redis for Caching in Node.js, Practical Examples
-
-### Community 160 - "Community 160"
-Cohesion: 0.25
-Nodes (7): 2026-06-13 Snapshot, Commands, Fleet Autoclean, Jobs, Pending Manual Decisions, What It Cleans, What It Does Not Delete Automatically
-
-### Community 161 - "Community 161"
-Cohesion: 0.25
-Nodes (7): Context Analysis Criteria, Icons Reference, Local Chatmodes Discovery Process, Output Format, Process, Requirements, Suggest Awesome GitHub Copilot Chatmodes
-
-### Community 162 - "Community 162"
-Cohesion: 0.25
-Nodes (7): Context Analysis Criteria, Icons Reference, Local Prompts Discovery Process, Output Format, Process, Requirements, Suggest Awesome GitHub Copilot Prompts
-
-### Community 163 - "Community 163"
-Cohesion: 0.25
-Nodes (7): Binários e Artefatos, Contribuidores, Correções de Bugs, Destaques, Nos Bastidores, O Que Mudou, v2.1.10-rf2
-
-### Community 164 - "Community 164"
-Cohesion: 0.25
-Nodes (7): Anti-Features, Differentiators, Feature Dependencies, Feature Landscape, MVP Recommendation, Sources, Table Stakes
-
-### Community 165 - "Community 165"
-Cohesion: 0.29
-Nodes (6): - 66 hostnames at /tmp/03-all-hostnames.txt, - Apache2 serving on 9080/9444, - certbot 5.5.0 with webroot authenticator, Key interfaces from Phase 1, STRIDE Threat Register, Trust Boundaries
-
-### Community 166 - "Community 166"
-Cohesion: 0.29
-Nodes (6): Caveats, Files Created/Modified, Key Decisions, Phase 02: Migração Apache2 para Portas Alternativas — Summary, Verification, What was done
-
-### Community 167 - "Community 167"
-Cohesion: 0.29
-Nodes (6): 09-01: Mission Guardian daemon (core), acceptance_criteria, action, objective, read_first, verification
-
-### Community 168 - "Community 168"
-Cohesion: 0.29
-Nodes (6): 09-02: Disk fill forecasting + correlation analyzer, acceptance_criteria, action, objective, read_first, verification
-
-### Community 169 - "Community 169"
-Cohesion: 0.29
-Nodes (6): 09-03: Auto-tune omni-* cpu.weight (predictive), acceptance_criteria, action, objective, read_first, verification
-
-### Community 170 - "Community 170"
-Cohesion: 0.29
-Nodes (6): 09-04: Cleanup timeout fix + logrotate /var/log, acceptance_criteria, action, objective, read_first, verification
-
-### Community 171 - "Community 171"
-Cohesion: 0.29
-Nodes (6): Cross-Cutting Constraints, Final Acceptance Gate, Goal, Phase 14: Resource Governor + PM2 Boot Hardening, Plans, Waves
-
-### Community 172 - "Community 172"
-Cohesion: 0.29
-Nodes (6): Debug Mode Instructions, Debugging Guidelines, Phase 1: Problem Assessment, Phase 2: Investigation, Phase 3: Resolution, Phase 4: Quality Assurance
-
-### Community 173 - "Community 173"
-Cohesion: 0.29
-Nodes (6): Examples [optional], Guidelines, Notes [optional], Output Format, Prompt Engineer, Steps [optional]
-
-### Community 174 - "Community 174"
-Cohesion: 0.29
-Nodes (6): 10. Where to Add New Code, 7. Port Map, 9. Environment Configuration, Env File Locations, Horistic Trading Platform — Codebase Map, Required Environment Variables
-
-### Community 175 - "Community 175"
-Cohesion: 0.29
-Nodes (7): 2. Architecture, API Route Structure (`backend/server/routes/`), Frontend App Routes (`frontend/src/app/`), Frontend → Backend Communication, High-Level Pattern, PM2 Processes (`ecosystem.config.js`), WebSocket Endpoints
-
-### Community 176 - "Community 176"
-Cohesion: 0.29
-Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
-
-### Community 177 - "Community 177"
-Cohesion: 0.50
-Nodes (4): antivirus/monitor.sh, ast_hash, mtime, semantic_hash
-
-### Community 178 - "Community 178"
-Cohesion: 0.29
-Nodes (6): Fleet architecture, Layers, Naming, Principle, Safety gates, Why not one script per computer
-
-### Community 179 - "Community 179"
-Cohesion: 0.29
-Nodes (6): Decisão, Estado SRV-1, Operação não suportada automaticamente, Operação suportada, Porquê, Remote Mapping Labels
-
-### Community 180 - "Community 180"
-Cohesion: 0.29
-Nodes (6): Active external cron references found, Candidates not migrated yet, Disabled stale cron references, Migrated into module, Replaced cron references, Source map — srv1-ops migration
-
-### Community 181 - "Community 181"
-Cohesion: 0.43
-Nodes (6): hermes-desktop-start.sh script, DISPLAY, error(), HERMES_HOME, log(), warn()
-
-### Community 182 - "Community 182"
-Cohesion: 0.29
-Nodes (7): Advanced Topics, Cloud and Serverless, Memory Management, Mobile Performance, Profiling and Benchmarking, Scalability, Security and Performance
-
-### Community 183 - "Community 183"
-Cohesion: 0.29
-Nodes (6): Common Jest Matchers, Effective Mocking, Snapshot Testing, Test Structure, Testing Async Code, Testing React Components
-
-### Community 184 - "Community 184"
-Cohesion: 0.29
-Nodes (6): Confidence Assessment, Executive Summary, Gaps to Address, Implications for Roadmap, Key Findings, Research Summary: Atius Domain Infrastructure
-
-### Community 185 - "Community 185"
-Cohesion: 0.29
-Nodes (6): Assets canônicos, Comandos, Instalação, Lógica, Validação manual, XRDP ABNT2 Guard
-
-### Community 186 - "Community 186"
-Cohesion: 0.33
-Nodes (5): Blockers, Info, Plan 01 Check — Re-Review After Fixes, Verdict, Warnings
-
-### Community 187 - "Community 187"
-Cohesion: 0.33
-Nodes (6): Backup Script, Code Examples, Docker Compose Configuration (verified pattern), Environment File (password management), Password Generation, Post-Setup Verification Commands
-
-### Community 188 - "Community 188"
-Cohesion: 0.33
-Nodes (5): Files Created/Modified, Key Decisions, Phase 08: Rebrand + fork-sync submodule — Summary, Verification, What was done
-
-### Community 189 - "Community 189"
-Cohesion: 0.33
-Nodes (6): 5. Trading Bot Architecture, DIVAP Indicator (Python), Exchange Modules Structure, Exchange-Specific Bot Entry Points, Unified Bot Launcher (`backend/services/unified-bot-launcher.js`), Webhook Signal Receiver
-
-### Community 190 - "Community 190"
-Cohesion: 0.33
-Nodes (6): 6. Key File Locations, Configuration, Core Modules, Entry Points, Scripts & Utilities, Tests
-
-### Community 191 - "Community 191"
-Cohesion: 0.33
-Nodes (5): Arquivos Aplicados, Comandos, Dark Theme Ubuntu para LXDE/XRDP, Observacoes do Ubuntu 24.04, Proposta
-
-### Community 192 - "Community 192"
-Cohesion: 0.33
-Nodes (5): Passo 1: Criar a Rede Docker, Passo 2: Subir o Container, Passo 3: Verificar, Próximos Passos, Visão Geral
-
-### Community 193 - "Community 193"
-Cohesion: 0.33
-Nodes (5): Architecture, Canonical doc, Current modules, Key decisions, Short version
-
-### Community 194 - "Community 194"
-Cohesion: 0.33
-Nodes (6): 14.1. `fork-sync: command not found`, 14.2. `ModuleNotFoundError: No module named 'fork_sync'`, 14.3. Sync cai em `needs_review` mas sem conflito real, 14.4. Deploy Docker falha com `health check timeout`, 14.5. Submodule 404, 19. Troubleshooting
-
-### Community 195 - "Community 195"
-Cohesion: 0.33
-Nodes (5): Code Review Checklist for Performance, Conclusion, Introdução, Melhores Práticas de Otimização de Performance, References and Further Reading
-
-### Community 196 - "Community 196"
-Cohesion: 0.33
-Nodes (5): Core Directives & Hierarchy, General Interaction & Philosophy, Intelligent Tool Usage, Minimalist & Standard Code Generation, Surgical Code Modification
-
-### Community 197 - "Community 197"
-Cohesion: 0.29
-Nodes (6): ATIUS Fleet — Fleet Specs (Specs das Máquinas), Conversões, Especificações comuns (válido, OS desatualizado), I/O Limiting, Máquinas (dados de disco ainda válidos), Ver também
-
-### Community 198 - "Community 198"
-Cohesion: 0.29
-Nodes (6): Atius-Spec-Servers — Especificações dos Servidores ATIUS, Especificações Comuns (válido, OS desatualizado), Exemplo Prático, Limite de 50% por Processo (ainda válido), Servidores (dados de disco ainda válidos), Ver também
-
-### Community 199 - "Community 199"
-Cohesion: 0.33
-Nodes (5): Create Architectural Decision Record, Input Validation, Inputs, Required Documentation Structure, Requirements
-
-### Community 200 - "Community 200"
-Cohesion: 0.33
-Nodes (5): Ações Realizadas, Erros Observados anteriormente, Estado Atual do Sistema, Log de Recuperação - Problema RDP Atius SRV, Próximos Passos (se não funcionar)
-
-### Community 201 - "Community 201"
-Cohesion: 0.40
-Nodes (4): Existing Docker patterns to follow, Pre-conditions verified, STRIDE Threat Register, Trust Boundaries
-
-### Community 202 - "Community 202"
-Cohesion: 0.40
-Nodes (5): Anti-Patterns to Avoid, Architecture Patterns, Pattern: Options File for Non-Interactive Setup, Pattern: Single `/data` Volume (FreeIPA Container Design), Recommended Project Structure
-
-### Community 203 - "Community 203"
-Cohesion: 0.40
-Nodes (5): Container Runtime, Core, Installation, Standard Stack, Supporting (inside container)
-
-### Community 204 - "Community 204"
-Cohesion: 0.40
-Nodes (5): Phase Requirements → Test Map, Sampling Rate, Test Framework, Validation Architecture, Wave 0 Gaps
-
-### Community 205 - "Community 205"
-Cohesion: 0.40
-Nodes (4): Critério de Remoção do Standalone, Governança do Remote Separado `atius-router-docs`, Papéis, Rollback
-
-### Community 206 - "Community 206"
-Cohesion: 0.40
-Nodes (5): 4. Apache2 Integration, Proxy Patterns, Security Headers (all vhosts), SSL Certificates, Virtual Hosts (on `10.1.1.3`)
-
-### Community 207 - "Community 207"
-Cohesion: 0.40
-Nodes (4): Commands, Fleet Autoclean, Jobs, Safety
-
-### Community 208 - "Community 208"
-Cohesion: 0.40
-Nodes (5): 20. Roadmap / Expansão, v1.1, v1.1 (próximo), v1.2 (atual), v2.0 (futuro)
-
-### Community 209 - "Community 209"
-Cohesion: 0.40
-Nodes (5): 4.1. Via installer (recomendado), 4.2. Manual, 4.3. Dependências do sistema, 4.4. Verificar instalação, 4. Instalação
-
-### Community 210 - "Community 210"
-Cohesion: 0.40
-Nodes (5): 7.1. Quando usar submodules no fork-sync, 7.2. Como declarar, 7.3. O que o fork-sync faz diferente, 7.4. Inicializar submódulos após clone, 7. Submodules — O que são e como usar
-
-### Community 211 - "Community 211"
-Cohesion: 0.40
-Nodes (5): 8.1. Quando configurar, 8.2. Estrutura, 8.3. Uso, 8.4. Health check, 8. Deploy Docker — Quando e Como
-
-### Community 212 - "Community 212"
-Cohesion: 0.80
-Nodes (4): qbt-postprocess.sh script, log(), login(), move_to_gdrive()
-
-### Community 213 - "Community 213"
-Cohesion: 0.40
-Nodes (5): Dicas Específicas por Linguagem/Framework, Java, .NET, Node.js, Python
-
-### Community 214 - "Community 214"
-Cohesion: 0.18
-Nodes (10): Correct Order, Dependency, M008-b — Podman Networking Standardization (Phase 20), M008 — Fleet Standardization (Phases 18-19), Milestone Branch Matrix, Operator next steps (unchanged), Separation Rule, v1.0 v1.0 (Shipped: 2026-06-15) (+2 more)
-
-### Community 215 - "Community 215"
-Cohesion: 0.50
-Nodes (3): STRIDE Threat Register, System config files to read before editing, Trust Boundaries
-
-### Community 216 - "Community 216"
-Cohesion: 0.50
-Nodes (3): Files to read before editing, STRIDE Threat Register, Trust Boundaries
-
-### Community 217 - "Community 217"
-Cohesion: 0.50
-Nodes (4): Claude's Discretion, Deferred Ideas (OUT OF SCOPE), Locked Decisions, User Constraints (from CONTEXT.md)
-
-### Community 218 - "Community 218"
-Cohesion: 0.50
-Nodes (4): Primary (HIGH confidence), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
-
-### Community 219 - "Community 219"
-Cohesion: 0.50
-Nodes (3): API Architect mode instructions, The following API aspects will be the consumables for producing a working solution in code:, When you respond with a solution follow these design guidelines:
-
-### Community 220 - "Community 220"
-Cohesion: 0.50
-Nodes (3): Critérios de Aceitação:, Formato Obrigatório da História de Usuário, Pontos a Considerar
-
-### Community 221 - "Community 221"
-Cohesion: 0.50
-Nodes (4): 3. Database, DB Architecture Pattern, Key Tables (from `conexao.js` schema auto-creation), PostgreSQL Configuration
-
-### Community 222 - "Community 222"
-Cohesion: 0.50
-Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
-
-### Community 223 - "Community 223"
-Cohesion: 0.00
-Nodes (428): Communities (485 total, 56 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+420 more)
-
-### Community 224 - "Community 224"
-Cohesion: 0.50
-Nodes (4): 6.1. Via CLI (recomendado), 6.2. Manualmente (mais controle), 6.3. Validar, 6. Adicionar Novo Fork (Projeto)
-
-### Community 225 - "Community 225"
-Cohesion: 0.83
-Nodes (3): mount-gdrive.sh script, start_mount(), stop_mount()
-
-### Community 226 - "Community 226"
-Cohesion: 1.00
-Nodes (3): backup-srv1-to-gdrive.sh script, bkp(), log()
-
-### Community 227 - "Community 227"
-Cohesion: 0.67
-Nodes (3): backup-to-smb.sh script, log(), SOURCES
-
-### Community 228 - "Community 228"
-Cohesion: 1.00
-Nodes (3): sync-vault.sh script, auto_commit_changes(), notify_telegram()
-
-### Community 229 - "Community 229"
-Cohesion: 0.50
-Nodes (3): Configuração e Manutenção, Métodos de Implantação, Visão Geral
-
-### Community 230 - "Community 230"
-Cohesion: 0.50
-Nodes (3): Formatação e Estrutura, Regras de Conteúdo Markdown, Requisitos de Validação
-
-### Community 231 - "Community 231"
-Cohesion: 0.50
-Nodes (4): Angular, Dicas Específicas de Frameworks, React, Vue
-
-### Community 232 - "Community 232"
-Cohesion: 0.38
-Nodes (13): Path, load_config(), main(), print_direct_cgroups(), print_pm2_boot_refs(), print_resource_units(), print_slice_properties(), print_stuck_jobs() (+5 more)
-
-### Community 233 - "Community 233"
-Cohesion: 0.67
-Nodes (3): Applicable ASVS Categories, Known Threat Patterns for FreeIPA, Security Domain
-
-### Community 284 - "Community 284"
-Cohesion: 0.18
-Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-17), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
-
-### Community 287 - "Community 287"
-Cohesion: 0.12
-Nodes (15): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory, Issues Encountered, Live (K8s manifests), Next Phase Readiness (+7 more)
-
-### Community 288 - "Community 288"
-Cohesion: 0.15
-Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
-
-### Community 289 - "Community 289"
-Cohesion: 0.83
-Nodes (3): srv1-fix-network.sh script, fail(), log()
-
-### Community 290 - "Community 290"
-Cohesion: 0.26
-Nodes (30): Any, Path, _blocked(), _fail(), _live_fleet_db_query(), _live_host_identity(), _live_mesh_ping(), _live_node_direct_postgres_blocked() (+22 more)
-
-### Community 291 - "Community 291"
-Cohesion: 0.08
-Nodes (25): 1. Congelar tráfego de borda e watchdog, 2026-06-15 M005 Decision, 2. Parar K3s em todos os servers, 3. Fazer backup defensivo do DB atual dos peers, 4. Restaurar o snapshot etcd em SRV-1, 5. Reidratar os PVCs `local-path` em SRV-1 antes do primeiro start pós-restore, 6. Subir SRV-1 sozinho, 7. Rejuntar SRV-2 e SRV-3 (+17 more)
-
-### Community 292 - "Community 292"
-Cohesion: 0.10
-Nodes (20): Canonical References, D-01: M004 define a base operacional, D-02: Branch de trabalho do milestone, D-03: Repo canônico, D-04: Modos de instalação, D-05: Inventário é fonte de verdade para identidade, D-06: PostgreSQL central migrável, D-07: PgBouncer obrigatório para clientes (+12 more)
-
-### Community 293 - "Community 293"
-Cohesion: 0.11
-Nodes (18): 2026-06-15 M005 Decision, API/CLI collection path, Cluster/application recovery evidence, Evidence that exists now, Exact rollback path available today, Mandatory per-host OCI restore chain, Manual collection path in OCI console, Non-ambiguous gate closure criteria (+10 more)
-
-### Community 294 - "Community 294"
-Cohesion: 0.11
-Nodes (17): Bottom line, Current direct-IP paths observed, Immediate failures, Operational consequence, Path A: WireGuard API path in use today, Path B: OCI private-IP path exists at L3, but not as a working K3s fallback, Path C: Public-IP path is not available for K3s API, Phase 13 PTP / Direct-IP Fallback Review (+9 more)
-
-### Community 295 - "Community 295"
-Cohesion: 0.12
-Nodes (15): 12-01: Fleet Control Plane Foundation, Human Checkpoints, Objective, Read First, Success Criteria, Task 1 — Freeze milestone order, Task 2 — Define contracts and docs, Task 3 — Design PostgreSQL and PgBouncer (+7 more)
-
-### Community 296 - "Community 296"
-Cohesion: 0.13
-Nodes (14): 13-01: M005 No-Cost Release Gates, Human Checkpoints, Objective, Read First, Secret Handling Rules, Success Criteria, Task 1 - Update release gates and docs, Task 2 - Promote GDrive disaster recovery gate (+6 more)
-
-### Community 297 - "Community 297"
-Cohesion: 0.12
-Nodes (16): Agent Service, Audit, CLI-Anything Slash Commands, Cross-Server Monitoring, Data Model, Direct IP Fallback, Heartbeat, Human Gates Before Live Execution (+8 more)
-
-### Community 298 - "Community 298"
-Cohesion: 0.50
-Nodes (4): antivirus/scan.sh, ast_hash, mtime, semantic_hash
-
-### Community 299 - "Community 299"
-Cohesion: 0.15
-Nodes (12): Conclusion, Initial Data Model, Local Evidence, Node Responsibilities, Official Research, PgBouncer, Phase 12 — Research, PostgreSQL dump/restore (+4 more)
-
-### Community 300 - "Community 300"
-Cohesion: 0.14
-Nodes (13): Added DB/CLI-Anything Contract, Agent Executor + Monitoring Scenarios, Automated Commands, DB/Table CamelCase Rename, Host Evidence, Live Read-Only Results, Live Repo + DB Rollout, Master/Slave Scenario Matrix (+5 more)
-
-### Community 301 - "Community 301"
 Cohesion: 0.17
 Nodes (11): Canonical Refs, Deferred Ideas, Domain, Edge auth, Jenkins hotfix, Locked Decisions, Phase 13 Context - M005 No-Cost Release Gates, Rollback sem snapshot OCI (+3 more)
 
-### Community 302 - "Community 302"
-Cohesion: 0.20
-Nodes (9): Branch decision, Host snapshot, Live evidence, Network snapshot, Phase 13 Gate Review — 2026-06-14, Release command after blockers close, Storage snapshot, Verdict (+1 more)
-
-### Community 303 - "Community 303"
-Cohesion: 0.18
-Nodes (10): Agent Executor Model, Current Artifacts, fleet-control-plane, Live M004 State, Ops And Config Rule, Safe Commands, Secret Rule, Slash Command Rule (+2 more)
-
-### Community 304 - "Community 304"
-Cohesion: 0.22
-Nodes (8): Backups, Bootstrap Actions, Live Cluster, Phase 13 Live Bootstrap — 2026-06-14, Remaining Follow-ups, Result, Security Controls, Validation
-
-### Community 305 - "Community 305"
-Cohesion: 0.22
-Nodes (8): Edge protection, Grafana, Observability, OCI snapshots, Pendências restantes, Phase 13 Observability + Watchdog — 2026-06-14, Resultado, Watchdog
-
-### Community 306 - "Community 306"
-Cohesion: 0.22
-Nodes (8): Arquivos versionados, Comandos de validação, Estado live, K3s HA + Portainer + Observability — ATIUS, Operação M005, Pendências, Runbooks, Secrets locais — não commitar
-
-### Community 307 - "Community 307"
-Cohesion: 0.25
-Nodes (7): Acceptance, Architecture, Goal, Hard Gates, Phase 12 — Master Plan, Plans, Scope
-
-### Community 308 - "Community 308"
-Cohesion: 0.71
-Nodes (6): atius-k3s-watchdog.sh script, check_http(), check_http_basic(), ensure_local_service(), ensure_remote_k3s(), log()
-
-### Community 309 - "Community 309"
-Cohesion: 0.33
-Nodes (5): 12-01 Summary — Fleet Control Plane Foundation, Delivered, Remaining Gates, Result, Verification
-
-### Community 310 - "Community 310"
-Cohesion: 0.50
-Nodes (4): cli(), main(), fork-sync — gestão unificada de forks (sync, deploy, versionamento)., Entry point console_scripts.
-
-### Community 311 - "Community 311"
-Cohesion: 0.50
-Nodes (3): verify-m004-fleet-control-plane.sh script, OMNI_SRV_ADMIN, PYTHONPATH
-
-### Community 313 - "Community 313"
-Cohesion: 0.50
-Nodes (4): cli/lib/model-history.sh, ast_hash, mtime, semantic_hash
-
-### Community 314 - "Community 314"
-Cohesion: 0.50
-Nodes (4): cli/model-fs, ast_hash, mtime, semantic_hash
-
-### Community 315 - "Community 315"
-Cohesion: 0.50
-Nodes (4): cli/omni/cli.py, ast_hash, mtime, semantic_hash
-
-### Community 316 - "Community 316"
-Cohesion: 0.50
-Nodes (4): cli/omni/fleet_backup.py, ast_hash, mtime, semantic_hash
-
-### Community 317 - "Community 317"
-Cohesion: 0.50
-Nodes (4): cli/omni/fleet.py, ast_hash, mtime, semantic_hash
-
-### Community 318 - "Community 318"
-Cohesion: 0.50
-Nodes (4): cli/omni/__init__.py, ast_hash, mtime, semantic_hash
-
-### Community 319 - "Community 319"
-Cohesion: 0.50
-Nodes (4): cli/omni/__main__.py, ast_hash, mtime, semantic_hash
-
-### Community 320 - "Community 320"
-Cohesion: 0.50
-Nodes (4): cli/omni/remote_manager.py, ast_hash, mtime, semantic_hash
-
-### Community 321 - "Community 321"
-Cohesion: 0.50
-Nodes (4): cli/omni/remote_ops.py, ast_hash, mtime, semantic_hash
-
-### Community 322 - "Community 322"
-Cohesion: 0.50
-Nodes (4): cli/omni/xrdp_abnt2.py, ast_hash, mtime, semantic_hash
-
-### Community 323 - "Community 323"
-Cohesion: 0.50
-Nodes (4): cli/setup.py, ast_hash, mtime, semantic_hash
-
-### Community 324 - "Community 324"
-Cohesion: 0.50
-Nodes (4): dark-theme-ubuntu/install.sh, ast_hash, mtime, semantic_hash
-
-### Community 325 - "Community 325"
-Cohesion: 0.50
-Nodes (4): dark-theme-ubuntu/repair.sh, ast_hash, mtime, semantic_hash
-
-### Community 326 - "Community 326"
-Cohesion: 0.50
-Nodes (4): dark-theme-ubuntu/scripts/dark-themectl.sh, ast_hash, mtime, semantic_hash
-
-### Community 327 - "Community 327"
-Cohesion: 0.50
-Nodes (4): dark-theme-ubuntu/uninstall.sh, ast_hash, mtime, semantic_hash
-
-### Community 328 - "Community 328"
-Cohesion: 0.50
-Nodes (4): modules/fleet-autoclean/scripts/fleet-autoclean.sh, ast_hash, mtime, semantic_hash
-
-### Community 329 - "Community 329"
-Cohesion: 0.50
-Nodes (4): modules/fleet-backup/scripts/install-fleet-backup.sh, ast_hash, mtime, semantic_hash
-
-### Community 330 - "Community 330"
-Cohesion: 0.50
-Nodes (4): modules/fleet-backup/scripts/map-docker-to-containers.sh, ast_hash, mtime, semantic_hash
-
-### Community 331 - "Community 331"
-Cohesion: 0.50
-Nodes (4): modules/fleet-backup/scripts/rclone-fleet-queue.sh, ast_hash, mtime, semantic_hash
-
-### Community 332 - "Community 332"
-Cohesion: 0.50
-Nodes (4): modules/fleet-backup/scripts/sync-backup-script.sh, ast_hash, mtime, semantic_hash
-
-### Community 333 - "Community 333"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/bin/deploy.sh, ast_hash, mtime, semantic_hash
-
-### Community 334 - "Community 334"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/bin/detect-release.sh, ast_hash, mtime, semantic_hash
-
-### Community 335 - "Community 335"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/bin/sync.sh, ast_hash, mtime, semantic_hash
-
-### Community 336 - "Community 336"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/cli.py, ast_hash, mtime, semantic_hash
-
-### Community 337 - "Community 337"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/config.py, ast_hash, mtime, semantic_hash
-
-### Community 338 - "Community 338"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/container_mirrors.py, ast_hash, mtime, semantic_hash
-
-### Community 339 - "Community 339"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/discovery.py, ast_hash, mtime, semantic_hash
-
-### Community 340 - "Community 340"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/__init__.py, ast_hash, mtime, semantic_hash
-
-### Community 341 - "Community 341"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/logrotate.py, ast_hash, mtime, semantic_hash
-
-### Community 342 - "Community 342"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/manuals.py, ast_hash, mtime, semantic_hash
-
-### Community 343 - "Community 343"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/registry.py, ast_hash, mtime, semantic_hash
-
-### Community 344 - "Community 344"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/release_notes.py, ast_hash, mtime, semantic_hash
-
-### Community 345 - "Community 345"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/repl.py, ast_hash, mtime, semantic_hash
-
-### Community 346 - "Community 346"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/core/sync_runner.py, ast_hash, mtime, semantic_hash
-
-### Community 347 - "Community 347"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/__init__.py, ast_hash, mtime, semantic_hash
-
-### Community 348 - "Community 348"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/fork_sync/__main__.py, ast_hash, mtime, semantic_hash
-
-### Community 349 - "Community 349"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/scripts/pm2-setup.sh, ast_hash, mtime, semantic_hash
-
-### Community 350 - "Community 350"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/scripts/run_doctor.sh, ast_hash, mtime, semantic_hash
-
-### Community 351 - "Community 351"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/scripts/run_logrotate.sh, ast_hash, mtime, semantic_hash
-
-### Community 352 - "Community 352"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/scripts/run_sync_all.sh, ast_hash, mtime, semantic_hash
-
-### Community 353 - "Community 353"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/setup.py, ast_hash, mtime, semantic_hash
-
-### Community 354 - "Community 354"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/cli/tests/test_sync_runner.py, ast_hash, mtime, semantic_hash
-
-### Community 355 - "Community 355"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/ecosystem.daily-sync.cron.json, ast_hash, mtime, semantic_hash
-
-### Community 356 - "Community 356"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/ecosystem.doctor.cron.json, ast_hash, mtime, semantic_hash
-
-### Community 357 - "Community 357"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/ecosystem.logrotate.cron.json, ast_hash, mtime, semantic_hash
-
-### Community 358 - "Community 358"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh, ast_hash, mtime, semantic_hash
-
-### Community 359 - "Community 359"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/post-merge.sh, ast_hash, mtime, semantic_hash
-
-### Community 360 - "Community 360"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/api/meta.json, ast_hash, mtime, semantic_hash
-
-### Community 361 - "Community 361"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/guide/meta.json, ast_hash, mtime, semantic_hash
-
-### Community 362 - "Community 362"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/deployment-methods/meta.json, ast_hash, mtime, semantic_hash
-
-### Community 363 - "Community 363"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/meta.json, ast_hash, mtime, semantic_hash
-
-### Community 364 - "Community 364"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/meta.json, ast_hash, mtime, semantic_hash
-
-### Community 365 - "Community 365"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/atius-router-docs/scripts/fork-sync-docs.sh, ast_hash, mtime, semantic_hash
-
-### Community 366 - "Community 366"
-Cohesion: 0.50
-Nodes (4): modules/fork-sync/projects/horus-spec-driven/ecosystem.daily-sync.cron.json, ast_hash, mtime, semantic_hash
-
-### Community 367 - "Community 367"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/fix-abnt2.sh, ast_hash, mtime, semantic_hash
-
-### Community 368 - "Community 368"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/fix-shared_smb.sh, ast_hash, mtime, semantic_hash
-
-### Community 369 - "Community 369"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-start.sh, ast_hash, mtime, semantic_hash
-
-### Community 370 - "Community 370"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-status.sh, ast_hash, mtime, semantic_hash
-
-### Community 371 - "Community 371"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-stop.sh, ast_hash, mtime, semantic_hash
-
-### Community 372 - "Community 372"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/mount-gdrive.sh, ast_hash, mtime, semantic_hash
-
-### Community 373 - "Community 373"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/optimize_network.sh, ast_hash, mtime, semantic_hash
-
-### Community 374 - "Community 374"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/qbt-postprocess.sh, ast_hash, mtime, semantic_hash
-
-### Community 375 - "Community 375"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/start-aionui.sh, ast_hash, mtime, semantic_hash
-
-### Community 376 - "Community 376"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/legacy-scripts/start-qbittorrent.sh, ast_hash, mtime, semantic_hash
-
-### Community 377 - "Community 377"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/lib/metrics.py, ast_hash, mtime, semantic_hash
-
-### Community 378 - "Community 378"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/atius-web-healthcheck.sh, ast_hash, mtime, semantic_hash
-
-### Community 379 - "Community 379"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/backup-dangling-to-gdrive.py, ast_hash, mtime, semantic_hash
-
-### Community 380 - "Community 380"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh, ast_hash, mtime, semantic_hash
-
-### Community 381 - "Community 381"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/backup-to-smb.sh, ast_hash, mtime, semantic_hash
-
-### Community 382 - "Community 382"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/cleanup-local.sh, ast_hash, mtime, semantic_hash
-
-### Community 383 - "Community 383"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/inviolable-watchdog.sh, ast_hash, mtime, semantic_hash
-
-### Community 384 - "Community 384"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh, ast_hash, mtime, semantic_hash
-
-### Community 385 - "Community 385"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh, ast_hash, mtime, semantic_hash
-
-### Community 386 - "Community 386"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/resource-governor-audit.py, ast_hash, mtime, semantic_hash
-
-### Community 387 - "Community 387"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/resource-governor-cgroup-init.sh, ast_hash, mtime, semantic_hash
-
-### Community 388 - "Community 388"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/resource-governor-patcher.py, ast_hash, mtime, semantic_hash
-
-### Community 389 - "Community 389"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/resource-governor-snapshot.py, ast_hash, mtime, semantic_hash
-
-### Community 390 - "Community 390"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/resource-governor-status.py, ast_hash, mtime, semantic_hash
-
-### Community 391 - "Community 391"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/resource-governor-watchdog.py, ast_hash, mtime, semantic_hash
-
-### Community 392 - "Community 392"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/server-analysis.py, ast_hash, mtime, semantic_hash
-
-### Community 393 - "Community 393"
-Cohesion: 0.50
-Nodes (4): modules/srv1-ops/scripts/sync-vault.sh, ast_hash, mtime, semantic_hash
-
-### Community 394 - "Community 394"
-Cohesion: 0.50
-Nodes (4): modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard, ast_hash, mtime, semantic_hash
-
-### Community 395 - "Community 395"
-Cohesion: 0.50
-Nodes (4): modules/xrdp-abnt2/files/setxkbmap-abnt2.sh, ast_hash, mtime, semantic_hash
-
-### Community 396 - "Community 396"
-Cohesion: 0.50
-Nodes (4): modules/xrdp-abnt2/files/startwm.sh, ast_hash, mtime, semantic_hash
-
-### Community 397 - "Community 397"
-Cohesion: 0.50
-Nodes (4): modules/xrdp-abnt2/scripts/install.sh, ast_hash, mtime, semantic_hash
-
-### Community 398 - "Community 398"
-Cohesion: 0.50
-Nodes (4): modules/xrdp-abnt2/scripts/validate.sh, ast_hash, mtime, semantic_hash
-
-### Community 399 - "Community 399"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/ARCHITECTURE.md, ast_hash, mtime, semantic_hash
-
-### Community 400 - "Community 400"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/CONCERNS.md, ast_hash, mtime, semantic_hash
-
-### Community 401 - "Community 401"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/CONVENTIONS.md, ast_hash, mtime, semantic_hash
-
-### Community 402 - "Community 402"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/HORISTIC.md, ast_hash, mtime, semantic_hash
-
-### Community 403 - "Community 403"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/INTEGRATIONS.md, ast_hash, mtime, semantic_hash
-
-### Community 404 - "Community 404"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/STACK.md, ast_hash, mtime, semantic_hash
-
-### Community 405 - "Community 405"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/STRUCTURE.md, ast_hash, mtime, semantic_hash
-
-### Community 406 - "Community 406"
-Cohesion: 0.50
-Nodes (4): .planning/codebase/TESTING.md, ast_hash, mtime, semantic_hash
-
-### Community 407 - "Community 407"
-Cohesion: 0.50
-Nodes (4): .planning/config.json, ast_hash, mtime, semantic_hash
-
-### Community 408 - "Community 408"
-Cohesion: 0.50
-Nodes (4): .planning/MILESTONES.md, ast_hash, mtime, semantic_hash
-
-### Community 409 - "Community 409"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-01-PLAN.md, ast_hash, mtime, semantic_hash
-
-### Community 410 - "Community 410"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-01-SUMMARY.md, ast_hash, mtime, semantic_hash
-
-### Community 411 - "Community 411"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-02-PLAN.md, ast_hash, mtime, semantic_hash
-
-### Community 412 - "Community 412"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-02-SUMMARY.md, ast_hash, mtime, semantic_hash
-
-### Community 413 - "Community 413"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-03-PLAN.md, ast_hash, mtime, semantic_hash
-
-### Community 414 - "Community 414"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-03-SUMMARY.md, ast_hash, mtime, semantic_hash
-
-### Community 415 - "Community 415"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-CONTEXT.md, ast_hash, mtime, semantic_hash
-
-### Community 416 - "Community 416"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-DISCUSSION-LOG.md, ast_hash, mtime, semantic_hash
-
-### Community 417 - "Community 417"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-PLAN-CHECK.md, ast_hash, mtime, semantic_hash
-
-### Community 418 - "Community 418"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-RESEARCH.md, ast_hash, mtime, semantic_hash
-
-### Community 419 - "Community 419"
-Cohesion: 0.50
-Nodes (4): .planning/phases/01-preparacao-do-host/01-VERIFICATION.md, ast_hash, mtime, semantic_hash
-
-### Community 420 - "Community 420"
-Cohesion: 0.50
-Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-01-PLAN.md, ast_hash, mtime, semantic_hash
-
-### Community 421 - "Community 421"
-Cohesion: 0.50
-Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-CONTEXT.md, ast_hash, mtime, semantic_hash
-
-### Community 422 - "Community 422"
-Cohesion: 0.50
-Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-PLAN-CHECK.md, ast_hash, mtime, semantic_hash
-
-### Community 423 - "Community 423"
-Cohesion: 0.50
-Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-SUMMARY.md, ast_hash, mtime, semantic_hash
-
-### Community 424 - "Community 424"
-Cohesion: 0.50
-Nodes (4): .planning/phases/03-freeipa-server-container/03-01-PLAN.md, ast_hash, mtime, semantic_hash
-
-### Community 425 - "Community 425"
-Cohesion: 0.50
-Nodes (4): .planning/phases/03-freeipa-server-container/03-02-PLAN.md, ast_hash, mtime, semantic_hash
-
-### Community 426 - "Community 426"
-Cohesion: 0.50
-Nodes (4): .planning/PROJECT.md, ast_hash, mtime, semantic_hash
-
-### Community 427 - "Community 427"
-Cohesion: 0.50
-Nodes (4): .planning/REQUIREMENTS.md, ast_hash, mtime, semantic_hash
-
-### Community 428 - "Community 428"
-Cohesion: 0.50
-Nodes (4): .planning/ROADMAP.md, ast_hash, mtime, semantic_hash
-
-### Community 429 - "Community 429"
-Cohesion: 0.50
-Nodes (4): .planning/STATE.md, ast_hash, mtime, semantic_hash
-
-### Community 430 - "Community 430"
-Cohesion: 0.50
-Nodes (4): setup.sh, ast_hash, mtime, semantic_hash
-
-### Community 431 - "Community 431"
-Cohesion: 0.50
-Nodes (4): vscode-profile/.github/mcp-config/linux/mcp.json, ast_hash, mtime, semantic_hash
-
-### Community 432 - "Community 432"
-Cohesion: 0.50
-Nodes (4): vscode-profile/.github/vscode-settings/settings.json, ast_hash, mtime, semantic_hash
-
-### Community 433 - "Community 433"
-Cohesion: 0.12
-Nodes (15): Goal, Motivation, Next, Out of Scope, Performance, Phase 14 Plan 06: Jenkins Agent on K3s (M005 extension), Risks, Success Criteria (+7 more)
-
-### Community 434 - "Community 434"
-Cohesion: 0.08
-Nodes (23): Alta Disponibilidade, App Migration para Keycloak, Client Enrollment, Cloudflare + Security, Coexistência e Integração, FreeIPA Server, K3s HA Cluster, Keycloak SSO (+15 more)
-
-### Community 435 - "Community 435"
-Cohesion: 0.12
-Nodes (15): Accomplishments, Backups, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory + CLI, Issues Encountered, Live (systemd + podman) (+7 more)
-
-### Community 436 - "Community 436"
-Cohesion: 0.11
-Nodes (18): 10. PM2 Apps Online + Critical Ports Listening (14-02/14-03), 11. Cgroup Profile Consistent (14-03), 12. Post-Boot Checklist + Rollback in Docs (14-04), 13. Obsidian Result Note (14-04), 14. App Registry Tracked (14-05+inventory), 1. Cold Start Smoke Test (resource-governor services up from scratch), 2. Timer-triggered Inviolable Watchdog, 3. Resource-Governor Status Drift Report (+10 more)
-
-### Community 437 - "Community 437"
-Cohesion: 0.13
-Nodes (14): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Live (no mutation), Next Phase Readiness, Performance (+6 more)
-
-### Community 438 - "Community 438"
-Cohesion: 0.13
-Nodes (14): Backups (preserved), Files created/modified, Gated follow-ups (deferred to explicit user authorization), Live system state at phase close, Live (systemd + podman + K8s), M006 closure, Performance, Phase 14 Summary — Resource Governor + PM2 Boot Hardening (+6 more)
-
-### Community 439 - "Community 439"
+### Community 126 - "Community 126"
 Cohesion: 0.17
 Nodes (11): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance, Phase 14 Plan 03: Boot/login-linger, cgroups and XRDP-safe cleanup — Summary (+3 more)
 
-### Community 440 - "Community 440"
-Cohesion: 0.08
-Nodes (23): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, Phase 10: omni deploy ✅ DONE (+15 more)
-
-### Community 441 - "Community 441"
-Cohesion: 0.22
-Nodes (8): Canonical Path, Components, PM2 Canonical Boot Path, Recovery, References, What 14-02 still needs (gated work), What was wrong before 14-02, Why we did not auto-restart PM2
-
-### Community 442 - "Community 442"
-Cohesion: 0.18
-Nodes (11): 5.10 xorgxrdp ainda carregado em algum lugar, 5.1 Senha (mais provável), 5.2 Sessão stale no sockdir, 5.3 Xvnc 5901 só escuta em localhost, 5.4 Tema LXDE, 5.5 `startwm.sh` (lê `/etc/xrdp/startwm.sh`), 5.6 TLS vs RDP Security Negotiation, 5.7 Display :1 conflito com lightdm :1 (+3 more)
-
-### Community 443 - "Community 443"
-Cohesion: 0.13
-Nodes (14): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 17: M005 Observability + RWX, Risks, Success Criteria, Task 1: kube-prometheus-stack via Helm (+6 more)
-
-### Community 444 - "Community 444"
-Cohesion: 0.15
-Nodes (12): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 15: M005 OCI Snapshots, Risks, Success Criteria, Task 1: oci-snapshot CLI command (+4 more)
-
-### Community 445 - "Community 445"
-Cohesion: 0.15
-Nodes (12): Goal, Motivation, Next Phase Readiness, Out of Scope, Phase 16: M005 Cloudflare Access, Risks, Success Criteria, Task 1: enable Cloudflare Access on account (+4 more)
-
-### Community 446 - "Community 446"
-Cohesion: 0.20
-Nodes (9): 10. TL;DR pro user, 1. TL;DR (1 parágrafo), 2026-06-16 — RDP/xrdp/Xvnc/xorgxrdp: SESSÃO DE FIX COMPLETA (ainda NÃO funcional), 3. Estado dos 3 SRVs (2026-06-16 18:18 BRT), 4. Bateria autônoma (ssh + xfreerdp) — resultados, 6. Próximos passos sugeridos (gated), 7. Backups e estado reversível, 8. Doc canônica viva (+1 more)
-
-### Community 447 - "Community 447"
-Cohesion: 0.09
-Nodes (21): 1. Identidade dos Hosts, 2. Topologia de Rede, 3. Mapa de IPs (canônico), 4. Convenção de Displays / VNC / noVNC, 5. Inventário de Portas (canônico, estado 2026-06-16), 6. Portas Reservadas (ranges por categoria), 7.1 Adicionar slot camofox (ex: slot 2 no display :16), 7.2 Remover slot camofox (cleanup) (+13 more)
-
-### Community 448 - "Community 448"
-Cohesion: 0.25
-Nodes (7): Apply ACL (runbook), Architecture decision, Disable DNS injection on each host, Disable MagicDNS, Source-of-truth, Tailscale Operations, Validate
-
-### Community 449 - "Community 449"
-Cohesion: 0.29
-Nodes (6): ACL source-of-truth, Changes applied, Incident separado (não bloqueante), Key decision ratificado, Tailscale ACL Closure — 2026-06-16, Validation
-
-### Community 450 - "Community 450"
-Cohesion: 0.29
-Nodes (7): 2. Sequência de tentativas (ordem cronológica), Tentativa 1: identificar a causa raiz, Tentativa 2: assumir que era colisão 5910, Tentativa 3: assumir DRI3/GL é o problema, Tentativa 4: assumir ABI mismatch do xorgxrdp, Tentativa 5: assumir que sesman.ini é o que manda, Tentativa 6: report do usuário
-
-### Community 451 - "Community 451"
-Cohesion: 0.29
-Nodes (6): Configuração aplicada, gbrain Embeddings — Atius Router config (validated 2026-06-16), Notas, Pendência (operador), Runbook, Validação
-
-### Community 452 - "Community 452"
-Cohesion: 0.29
-Nodes (7): A.1 Vault (todas as docs que mencionam RDP, xorgxrdp, x11vnc, Xvnc, display, ports VNC, abnt2, ou DRI3), A.3 Backups (snapshot pré-fix, em `/home/ubuntu/.backups/port-pool-2026-06-16/`), A.4 Skills Hermes (referenciadas durante a sessão), A.5 Prints/imagens, ANEXO A — Lista completa de docs RDP/X11/Xvnc/xorgxrdp, Operação / Log da sessão, Specs / canônicas
-
-### Community 453 - "Community 453"
-Cohesion: 0.29
-Nodes (7): A.2 Repo omni-srv-admin, Doc canônica (criada hoje), Docs antigas convertidas em stub+redirector, Docs gerais, Fase 14 (resource governor / PM2 — menciona xrdp no watchdog cgroup), Módulo xrdp-abnt2, Tema dark LXDE
-
-### Community 454 - "Community 454"
-Cohesion: 0.33
-Nodes (6): 11.1 Decisão nova de display range, 11.2 Mudança live aplicada nos 3 SRVs, 11.3 Sessões stale removidas, 11.4 Validação pós-mudança, 11.5 Próximo teste humano, 11. Retomada Codex — 2026-06-16 18:35–18:50 BRT
-
-### Community 455 - "Community 455"
-Cohesion: 0.50
-Nodes (4): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply()
-
-### Community 456 - "Community 456"
-Cohesion: 0.67
-Nodes (3): 12.1 Log da tentativa real em :31, 12.2 Mudança aplicada no SRV-1, 12. Retomada Codex — ajuste explícito SRV-1 para display :1
-
-### Community 457 - "Community 457"
-Cohesion: 0.40
-Nodes (5): 13.1 Causa raiz, 13.2 Config final aplicada no SRV-1, 13.3 Validação, 13.4 Estado atual, 13. Retomada Codex — fix validado SRV-1 display :1
-
-### Community 459 - "Community 459"
-Cohesion: 0.40
-Nodes (5): 14.1 Achados, 14.2 Mudanças aplicadas, 14.3 Validação, 14.4 Regra final, 14. Retomada Codex — SRV-2/SRV-3 + regra de resolução
-
-### Community 460 - "Community 460"
-Cohesion: 0.47
-Nodes (8): fleet-rust-zellij.sh script, cmd_audit(), cmd_status(), cmd_update(), cmd_update_one_host(), log(), ssh_run(), with_lock()
-
-### Community 461 - "Community 461"
-Cohesion: 0.25
-Nodes (7): Inventário fonte, Padrão de update, PATH pós-install, Próxima evolução (TODO), rust-zellij-fleet, Script, Segurança
-
-### Community 462 - "Community 462"
-Cohesion: 0.33
-Nodes (5): Final operator validation, Final rule, Live config basis, Notes, XRDP Fleet Closure — 2026-06-16
-
-### Community 463 - "Community 463"
-Cohesion: 0.67
-Nodes (3): 15.1 Critério de fechamento atingido, 15.2 Escopo remanescente da Phase 18, 15. Encerramento — ajuste XRDP concluído
-
-### Community 464 - "Community 464"
-Cohesion: 0.11
-Nodes (17): Apt-key no Noble, Atalhos, Chromium, chromium-snap → chromium-deb (transitional), Cross-refs, Dark theme, Dark theme canônico, Goal (+9 more)
-
-### Community 465 - "Community 465"
-Cohesion: 0.13
-Nodes (14): 1. DHCP conflict after restart, 2. `extra_hosts` doesn't survive `podman exec --network host`, 3. `extra_hosts` syntax for compose-v1 vs compose-v2, 4. Adding a new service after the IP table is set, IP estático + extra_hosts fallback (for multi-container stacks), Origin, Pitfalls, Procedure (validated for plane-app) (+6 more)
-
-### Community 466 - "Community 466"
-Cohesion: 0.14
-Nodes (13): 18-06 — Ubuntu Pro Fleet Audit (2026-06-16), ATIUS-SRV-1 (10.1.1.1, Noble, arm64), ATIUS-SRV-2 (10.1.1.2, Noble, arm64), ATIUS-SRV-3 (10.1.1.7, Noble, arm64), Cross-refs, D18-06-A: ✅ (a) Dashboard transfer, D18-06-B: ✅ (1) pro refresh + re-enable, fallback (2), D18-06-C: ✅ paralelo via subagent (+5 more)
-
-### Community 467 - "Community 467"
-Cohesion: 0.14
-Nodes (13): 18-06 — Account + sources + token, 18-07 — apt upgrade esm-apps+infra (GATED), 18-08 — Validar pós-upgrade (GATED G18-2), 18-09 — Documentação + watchdog (pode rodar em paralelo), Contexto, Cross-refs, Estado atual (2026-06-16 — baseline 18-06-AUDIT), Gaps vs target (+5 more)
-
-### Community 468 - "Community 468"
-Cohesion: 0.18
-Nodes (13): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+5 more)
-
-### Community 469 - "Community 469"
+### Community 127 - "Community 127"
 Cohesion: 0.17
-Nodes (11): `~/.config/containers/containers.conf`, `~/.config/containers/containers.conf.d/99-netavark.conf`, Custom multi-container networks (e.g. `atius`), Drift detection, Files per server (N ∈ {1, 2, 3}), Known bugs (workarounds documented), Network `srv<N>-podman` (default, auto-created), `podman-compose` location (+3 more)
+Nodes (11): Anthropic Messages (compatível), Autenticação, Base URL, Chat Completions, Códigos de Erro, Embeddings, Endpoints Principais, Listar Modelos (+3 more)
 
-### Community 470 - "Community 470"
-Cohesion: 0.18
-Nodes (10): 18-06 — Ubuntu Pro Fleet attach gmail + Landscape re-enable, Account transition, Codex CLI, Comandos finais (runbook canônico para Phase 18-06), Cross-refs, Landscape SaaS — re-registro, Lição aprendida: pro 37.2 auto-habilita esm-* no attach, Lição aprendida: pro 37.2 não suporta `--token-stdin` (+2 more)
-
-### Community 471 - "Community 471"
-Cohesion: 0.22
-Nodes (8): Apply (correction), Cross-refs, Files, Fleet — podman-network, Multi-container stacks (custom networks like `atius`), Origin, Quick start (drift check), What this module is
-
-### Community 472 - "Community 472"
-Cohesion: 0.25
-Nodes (7): Aardvark-dns rootless bug (podman 4.9.3 + netavark 1.4.0 + aardvark 1.4.0), Fix: install systemd-resolved (or alternative), Root cause, The bug, Validation, Why the bug bit us on SRV-2, Why this isn't going to be fixed upstream soon
-
-### Community 473 - "Community 473"
-Cohesion: 0.11
-Nodes (18): 18-07 — apt upgrade esm-apps+esm-infra (GATED), 18-07-EXECUTION (started 2026-06-17 22:35 BRT), Backups, Cross-refs, Decisões aplicadas, Erros não-regressivos (fora do escopo G18-1), Execution results (2026-06-17 22:35-22:44 BRT), G18-2 gate: Microsoft RDP login validate (+10 more)
-
-### Community 474 - "Community 474"
-Cohesion: 0.29
-Nodes (6): Migrating systemd-managed services, Network migration: srv<N>-podman (CNI) → srv<N>-podman-v2 (netavark), Procedure (validated 2026-06-16 on SRV-1), Rollback (if migration breaks something), Why "srv<N>-podman-v2" and not just "srv<N>-podman", Why this is non-trivial
-
-### Community 475 - "Community 475"
-Cohesion: 0.60
-Nodes (3): drift-detect.sh script, check(), parse()
-
-### Community 480 - "Community 480"
-Cohesion: 0.08
-Nodes (24): B20-01: `~/.local/bin/podman` wrapper injeta `--cpus 2` em subcomandos inválidos, B20-02: Aardvark-dns 1.4.0 self-lookup NXDOMAIN, B20-03: `/run/systemd/resolve/` ausente impede container startup, B20-04: Network default não pode ser removida, Backups, Bugs descobertos + workarounds (documentados), CLI (`omni podman-network`), Commits (+16 more)
-
-### Community 481 - "Community 481"
-Cohesion: 0.11
-Nodes (17): Atalhos (Desktop + menu Internet), Backups, Chromium 149.0.7827.114 (PPA xtradeb/apps), Commits, Cross-refs, D19-01: PPA xtradeb no Noble, D19-02: GPG key correta do PPA xtradeb, D19-03: chromium-snap → chromium-deb (transitional) (+9 more)
-
-### Community 482 - "Community 482"
-Cohesion: 0.14
-Nodes (13): Backups, Commits, Cross-refs, Issues remanescentes (não-bloqueantes), Materialização, Mudanças aplicadas (resumo), Origem, Phase 20 — Plan 20-01 SUMMARY (+5 more)
-
-### Community 483 - "Community 483"
-Cohesion: 0.14
-Nodes (13): 18-07 — apt upgrade esm-apps+esm-infra SUMMARY, 18-07-EXECUTION (started 2026-06-17 22:35 BRT), Backups, Decisões aplicadas, Erros não-regressivos (fora do escopo G18-1), Execution results (2026-06-17 22:35-22:44 BRT), G18-2 gate: Microsoft RDP login validate, G18-3 gate: Landscape SaaS UI confirmation (+5 more)
-
-### Community 484 - "Community 484"
-Cohesion: 0.29
-Nodes (6): Backups, Correção Aplicada, Estado Final, Phase 19 — Desktop Shortcuts Hotfix, Root Cause, Validação
-
-### Community 485 - "Community 485"
+### Community 128 - "Community 128"
 Cohesion: 0.17
-Nodes (13): invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero() (+5 more)
+Nodes (11): Architecture Overview, Boundaries, Camadas, Diretórios, Estado atual, Fleet, Objetivo, Princípios (+3 more)
 
-### Community 486 - "Community 486"
+### Community 129 - "Community 129"
+Cohesion: 0.17
+Nodes (11): CI/CD Integration, Common Patterns, Coverage, Fixtures and Factories, Key Testing Gaps, Mocking, Test File Organization, Test Framework (+3 more)
+
+### Community 130 - "Community 130"
 Cohesion: 0.17
 Nodes (11): Background, Files in this module, fleet-network-watchdog, Hosts with systemd-resolved (SRV-1, SRV-3), Hosts without systemd-resolved (SRV-2), Idempotency, Install per host, Run manually (+3 more)
 
-### Community 487 - "Community 487"
+### Community 131 - "Community 131"
+Cohesion: 0.17
+Nodes (11): Component Diagram, Data Flow, Directory Structure, Docker Containers, Key Abstractions, Network, Planned, Running Services (PM2) (+3 more)
+
+### Community 132 - "Community 132"
+Cohesion: 0.17
+Nodes (11): Cloudflare, Config Files, Database Configuration, Docker Networks, Environment Variables, Hermes Agent, Node.js / Python Runtime, PM2 Configuration (+3 more)
+
+### Community 133 - "Community 133"
+Cohesion: 0.17
+Nodes (11): ATS, CI Integration, Horistic, Playwright E2E, Python (pytest), Running Tests, Test Configuration, Test File Naming (+3 more)
+
+### Community 134 - "Community 134"
+Cohesion: 0.42
+Nodes (11): fix-abnt2.sh script, apply_fix(), create_fix_script(), err(), install_service(), log(), show_menu(), show_status() (+3 more)
+
+### Community 135 - "Community 135"
+Cohesion: 0.17
+Nodes (11): Arquitetura, Busca de Dados, Contexto do Projeto, Estilização, Gerenciamento de Estado, Instruções de Desenvolvimento Next.js + Tailwind, Padrões de Desenvolvimento, Performance (+3 more)
+
+### Community 136 - "Community 136"
+Cohesion: 0.38
+Nodes (11): Any, Path, build_report(), dir_size(), fixed_sizes(), gib(), load_config(), main() (+3 more)
+
+### Community 137 - "Community 137"
+Cohesion: 0.36
+Nodes (11): Path, count_lines(), gib_from_bytes(), load_config(), main(), mib_from_kib(), parse_meminfo(), parse_pressure() (+3 more)
+
+### Community 138 - "Community 138"
+Cohesion: 0.18
+Nodes (12): admin_health(), admin_processes(), admin_status(), Health checks básicos: ping, portas, serviços chave., Lista serviços systemd. Se NAME passado, mostra status + logs., Top-like: processos por uso de CPU ou memória., Executa deploy de um projeto (wrapping fork-sync deploy)., Retorna env com LC_ALL=C para parsing consistente. (+4 more)
+
+### Community 139 - "Community 139"
+Cohesion: 0.17
+Nodes (11): Backup GDrive, Comandos, Logs, Objetivo, Post-Boot Verification Checklist, Resource governor, Rollback Procedure, Scripts (+3 more)
+
+### Community 140 - "Community 140"
+Cohesion: 0.17
+Nodes (11): `~/.config/containers/containers.conf`, `~/.config/containers/containers.conf.d/99-netavark.conf`, Custom multi-container networks (e.g. `atius`), Drift detection, Files per server (N ∈ {1, 2, 3}), Known bugs (workarounds documented), Network `srv<N>-podman` (default, auto-created), `podman-compose` location (+3 more)
+
+### Community 141 - "Community 141"
+Cohesion: 0.18
+Nodes (10): Assumptions Log, Don't Hand-Roll, Environment Availability, Metadata, Open Questions, Phase 3: FreeIPA Server Container - Research, Phase Requirements, Runtime State Inventory (+2 more)
+
+### Community 142 - "Community 142"
+Cohesion: 0.18
+Nodes (10): 14-02: PM2 boot canonicalization e stale jobs, acceptance_criteria, objective, preflight_snapshot, read_first, Task 1: choose canonical PM2 startup, Task 2: replace broken path safely, Task 3: drain stale jobs with gate (+2 more)
+
+### Community 143 - "Community 143"
+Cohesion: 0.18
+Nodes (10): 14-04: Runbook, rollback e verificacao pos-boot, acceptance_criteria, objective, read_first, Task 1: runbook update, Task 2: rollback procedure, Task 3: post-boot verification, Task 4: Obsidian result note (+2 more)
+
+### Community 144 - "Community 144"
+Cohesion: 0.18
+Nodes (10): 18-06 — Ubuntu Pro Fleet attach gmail + Landscape re-enable, Account transition, Codex CLI, Comandos finais (runbook canônico para Phase 18-06), Cross-refs, Landscape SaaS — re-registro, Lição aprendida: pro 37.2 auto-habilita esm-* no attach, Lição aprendida: pro 37.2 não suporta `--token-stdin` (+2 more)
+
+### Community 145 - "Community 145"
+Cohesion: 0.18
+Nodes (11): 5.10 xorgxrdp ainda carregado em algum lugar, 5.1 Senha (mais provável), 5.2 Sessão stale no sockdir, 5.3 Xvnc 5901 só escuta em localhost, 5.4 Tema LXDE, 5.5 `startwm.sh` (lê `/etc/xrdp/startwm.sh`), 5.6 TLS vs RDP Security Negotiation, 5.7 Display :1 conflito com lightdm :1 (+3 more)
+
+### Community 146 - "Community 146"
+Cohesion: 0.18
+Nodes (10): 1. Fetch Provided URLs, 2. Deeply Understand the Problem, 3. Codebase Investigation, 4. Internet Research, 5. Develop a Detailed Plan, 6. Making Code Changes, 7. Debugging, Communication Guidelines (+2 more)
+
+### Community 147 - "Community 147"
+Cohesion: 0.18
+Nodes (10): AI-Optimized Implementation Standards, Core Requirements, Execution Context, Implementation Plan Generation Mode, Mandatory Template Structure, Output File Specifications, Phase Architecture, Plan Structure Requirements (+2 more)
+
+### Community 148 - "Community 148"
+Cohesion: 0.18
+Nodes (10): APIs & External Services, Authentication & Identity, CI/CD & Deployment, Data Storage, Docker Container Ecosystem, Environment Configuration, External Integrations, Monitoring & Observability (+2 more)
+
+### Community 149 - "Community 149"
+Cohesion: 0.18
+Nodes (10): Backup map, Configuration, Environment variables, Fleet config, Host inventory, Inventory paths, Logs, PCManFM/LXDE Places (+2 more)
+
+### Community 150 - "Community 150"
+Cohesion: 0.18
+Nodes (10): Add a CLI module, Add a host, Add a remote, Coding style, Commit discipline, Development, Run CLI from source, Setup (+2 more)
+
+### Community 151 - "Community 151"
+Cohesion: 0.18
+Nodes (10): Getting Started, Instalar CLI, Onde colocar coisas novas, Primeiros comandos, Regras antes de mexer, Renomear label visual do SMB, Rodar operação SRV-1, Validar teclado XRDP ABNT2 (+2 more)
+
+### Community 152 - "Community 152"
+Cohesion: 0.18
+Nodes (10): DESKTOP_SESSION, HOME, XAUTHORITY, XDG_CONFIG_DIRS, XDG_CURRENT_DESKTOP, XDG_DATA_DIRS, XDG_SESSION_CLASS, XDG_SESSION_DESKTOP (+2 more)
+
+### Community 153 - "Community 153"
+Cohesion: 0.18
+Nodes (10): Agent Executor Model, Current Artifacts, fleet-control-plane, Live M004 State, Ops And Config Rule, Safe Commands, Secret Rule, Slash Command Rule (+2 more)
+
+### Community 154 - "Community 154"
+Cohesion: 0.18
+Nodes (10): Adicionar comando CLI, Adicionar novo fork (projeto), Adicionar template, Antes do PR, Como contribuir, Contribuindo, Estilo de código, Princípios (+2 more)
+
+### Community 155 - "Community 155"
+Cohesion: 0.18
+Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-17), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
+
+### Community 156 - "Community 156"
+Cohesion: 0.18
+Nodes (10): Database schema design, Database schema generation, Parameter Handling, SQL Coding Style, SQL Development, SQL Query Structure, SQL Security Best Practices, Stored Procedure Naming Conventions (+2 more)
+
+### Community 157 - "Community 157"
+Cohesion: 0.18
+Nodes (10): Correct Order, Dependency, M008-b — Podman Networking Standardization (Phase 20), M008 — Fleet Standardization (Phases 18-19), Milestone Branch Matrix, Operator next steps (unchanged), Separation Rule, v1.0 v1.0 (Shipped: 2026-06-15) (+2 more)
+
+### Community 158 - "Community 158"
+Cohesion: 0.18
+Nodes (10): AI-Optimized Implementation Standards, Core Requirements, Create Implementation Plan, Execution Context, Mandatory Template Structure, Output File Specifications, Phase Architecture, Plan Structure Requirements (+2 more)
+
+### Community 159 - "Community 159"
+Cohesion: 0.18
+Nodes (10): AI-Optimized Implementation Standards, Core Requirements, Execution Context, Mandatory Template Structure, Output File Specifications, Phase Architecture, Plan Structure Requirements, Primary Directive (+2 more)
+
+### Community 160 - "Community 160"
+Cohesion: 0.18
+Nodes (10): 10/02/2026, 11/02/2026, Arquivos Criados/Modificados, Implementation Plan, Original Request, Progress Log, Progress Tracking, Subtasks (+2 more)
+
+### Community 161 - "Community 161"
+Cohesion: 0.20
+Nodes (9): - Container entrypoint is systemd; ipa-server-configure-first runs as systemd service, - Failure recovery: docker stop + rm -rf /var/lib/freeipa/data/* + docker compose up -d, Key installation notes from research:, - Monitor with: docker logs -f freeipa-server, Prerequisites from Plan 01, - Setup takes 3-8 minutes depending on hardware (ARM64 may be slower), STRIDE Threat Register, - Success indicator: "The ipa-client-install command was successful" or systemd shows all services active (+1 more)
+
+### Community 162 - "Community 162"
+Cohesion: 0.20
+Nodes (9): Branch decision, Host snapshot, Live evidence, Network snapshot, Phase 13 Gate Review — 2026-06-14, Release command after blockers close, Storage snapshot, Verdict (+1 more)
+
+### Community 163 - "Community 163"
+Cohesion: 0.20
+Nodes (9): 14-01: Versionar governor/inviolable e status/install coverage, acceptance_criteria, objective, read_first, Task 1: reconcile repo artifacts against live fix, Task 2: improve install/status guardrails, Task 3: syntax and static verification, tasks (+1 more)
+
+### Community 164 - "Community 164"
+Cohesion: 0.20
+Nodes (9): 14-03: Boot/login-linger, cgroups e XRDP-safe cleanup, acceptance_criteria, objective, read_first, Task 1: login-linger and unit graph, Task 2: cgroup consistency probe, Task 3: XRDP leftover treatment, tasks (+1 more)
+
+### Community 165 - "Community 165"
+Cohesion: 0.20
+Nodes (9): Canonical Files, Goal, Incident Source, Live State Captured, Locked Decisions, Open Risks, Out of Scope, Phase 14: Context (+1 more)
+
+### Community 166 - "Community 166"
+Cohesion: 0.20
+Nodes (9): 10. TL;DR pro user, 1. TL;DR (1 parágrafo), 2026-06-16 — RDP/xrdp/Xvnc/xorgxrdp: SESSÃO DE FIX COMPLETA (ainda NÃO funcional), 3. Estado dos 3 SRVs (2026-06-16 18:18 BRT), 4. Bateria autônoma (ssh + xfreerdp) — resultados, 6. Próximos passos sugeridos (gated), 7. Backups e estado reversível, 8. Doc canônica viva (+1 more)
+
+### Community 167 - "Community 167"
+Cohesion: 0.20
+Nodes (10): 1. Technology Stack, Auth & Security, Backend Framework, Database Drivers, Exchange Integrations, Frontend Stack (Next.js), Languages, Python Dependencies (`pyproject.toml`) (+2 more)
+
+### Community 168 - "Community 168"
+Cohesion: 0.20
+Nodes (9): Configuration, Frameworks, Infrastructure, Key Dependencies, Key Dependencies, Languages, Platform Requirements, Runtime (+1 more)
+
+### Community 169 - "Community 169"
+Cohesion: 0.20
+Nodes (9): 1. Confirmar Configuracao Base do Ubuntu, 2. Corrigir Mapeamento do XRDP, 3. Criar Keymaps XRDP, 4. Forcar ABNT2 no Inicio da Sessao XRDP, 5. Watchdog ABNT2, 6. Protecao Contra Atualizacoes, 7. Validacao, 8. Aplicacao em Sessao Ativa (+1 more)
+
+### Community 170 - "Community 170"
+Cohesion: 0.47
+Nodes (8): fleet-rust-zellij.sh script, cmd_audit(), cmd_status(), cmd_update(), cmd_update_one_host(), log(), ssh_run(), with_lock()
+
+### Community 171 - "Community 171"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 172 - "Community 172"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 173 - "Community 173"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 174 - "Community 174"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 175 - "Community 175"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 176 - "Community 176"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 177 - "Community 177"
+Cohesion: 0.20
+Nodes (9): 1. Visão Geral, 2. Upstreams, 3. Estratégia de Sync — Passo a Passo, 4. Paths Protegidos (rebrand), 5. Como Adaptar o Fork (Rebrand), 6. Como Reagir a Breaking Changes do Upstream, 7. Troubleshooting Específico, 8. Histórico de Versões do Manual (+1 more)
+
+### Community 178 - "Community 178"
+Cohesion: 0.20
+Nodes (9): Caso real, Comandos, Inventário, Objetivo, PCManFM/LXDE, Pitfalls, Remote Manager, Segurança (+1 more)
+
+### Community 179 - "Community 179"
+Cohesion: 0.20
+Nodes (9): CLI, GDrive layout, Migration notes, Pitfalls, Regra, Resource governor, Scripts gerenciados, srv1-ops — ATIUS-SRV-1 operational scripts (+1 more)
+
+### Community 180 - "Community 180"
+Cohesion: 0.20
+Nodes (9): 12/02/2026, Arquivos Modificados, Implementation Plan, Original Request, Progress Log, Progress Tracking, Subtasks, [TASK008] - UID Obrigatório, Labels Alvo, Manual Target, Dashboard Balance (+1 more)
+
+### Community 181 - "Community 181"
+Cohesion: 0.20
+Nodes (9): 16/02/2026, Arquivos Relevantes, Implementation Plan, Original Request, Progress Log, Progress Tracking, Subtasks, [TASK010] - Migração Infra/PM2/Postgres para Omni (+1 more)
+
+### Community 182 - "Community 182"
+Cohesion: 0.22
+Nodes (8): - certbot is now working (snap v2.x), - chrony installed and synced, Files to read before editing, - FQDN configured in /etc/hosts, Key interfaces from Plan 01, - Port audit report at /tmp/01-prep-audit-report.txt, STRIDE Threat Register, Trust Boundaries
+
+### Community 183 - "Community 183"
+Cohesion: 0.22
+Nodes (9): Common Pitfalls, Pitfall 1: DNS Resolution Inside Container During Setup, Pitfall 2: Memory Check Blocking Setup, Pitfall 3: NTP Availability During Setup, Pitfall 4: Zone Overlap with Cloudflare Domain, Pitfall 5: Container First-Run Idempotency, Pitfall 6: ARM64 FIPS Crypto Bug (Known Issue), Pitfall 7: Port 53 Conflict Resolution (+1 more)
+
+### Community 184 - "Community 184"
+Cohesion: 0.22
+Nodes (8): Backups, Bootstrap Actions, Live Cluster, Phase 13 Live Bootstrap — 2026-06-14, Remaining Follow-ups, Result, Security Controls, Validation
+
+### Community 185 - "Community 185"
+Cohesion: 0.22
+Nodes (8): Edge protection, Grafana, Observability, OCI snapshots, Pendências restantes, Phase 13 Observability + Watchdog — 2026-06-14, Resultado, Watchdog
+
+### Community 186 - "Community 186"
+Cohesion: 0.22
+Nodes (8): Dimension 1: Requirement Coverage, Dimension 2: Dependency Correctness, Dimension 3: Risk Gating, Dimension 4: Context Compliance, Dimension 5: Scope Sanity, Phase 14: Plan Check, Result, VERIFICATION PASSED
+
+### Community 187 - "Community 187"
+Cohesion: 0.22
+Nodes (8): Gaps to Close, Method, Phase 14: Research, Planning Choice, Repo Findings, Requirements Proposed, Risk Classification, Source Note Findings
+
+### Community 188 - "Community 188"
+Cohesion: 0.22
+Nodes (8): Abort Criteria, Layer 1: Static, Layer 2: Read-Only Live, Layer 3: Low-Impact Apply, Layer 4: Gated Live, Phase 14: Validation Architecture, Requirement Test Map, Validation Layers
+
+### Community 189 - "Community 189"
+Cohesion: 0.22
+Nodes (8): Comandos Úteis, Passo 1: Clonar o Repositório, Passo 2: Configurar Variáveis de Ambiente, Passo 3: Subir os Serviços, Passo 4: Verificar a Instalação, Pré-requisitos, Próximos Passos, Visão Geral
+
+### Community 190 - "Community 190"
+Cohesion: 0.56
+Nodes (8): optimize_network.sh script, apply_setting(), backup_sysctl(), check_root(), log_error(), log_info(), log_success(), log_warning()
+
+### Community 191 - "Community 191"
+Cohesion: 0.53
+Nodes (8): cleanup-local.sh script, cleanup_caches(), cleanup_journal(), cleanup_logs(), cleanup_podman(), cleanup_tmp(), log(), PATH
+
+### Community 192 - "Community 192"
+Cohesion: 0.22
+Nodes (8): Arquivos versionados, Comandos de validação, Estado live, K3s HA + Portainer + Observability — ATIUS, Operação M005, Pendências, Runbooks, Secrets locais — não commitar
+
+### Community 193 - "Community 193"
+Cohesion: 0.22
+Nodes (8): 1. Objetivo, 2. Source of Truth, 3. Rotina Automática, 4. Versionamento, 5. Validações Pós-Sync, 6. Guardrails, 7. Estado em 2026-06-14, Manual de Atualização — notebooklm-py
+
+### Community 194 - "Community 194"
+Cohesion: 0.22
+Nodes (8): Canonical Path, Components, PM2 Canonical Boot Path, Recovery, References, What 14-02 still needs (gated work), What was wrong before 14-02, Why we did not auto-restart PM2
+
+### Community 195 - "Community 195"
+Cohesion: 0.22
+Nodes (8): Arquivo alterado, Arquivo de inventário atualizado, Comandos, Migração de mount path, Não faz, Pitfall: duplicação em PCManFM, Remote Manager Operations, Renomear label visual
+
+### Community 196 - "Community 196"
+Cohesion: 0.22
+Nodes (8): Apply (correction), Cross-refs, Files, Fleet — podman-network, Multi-container stacks (custom networks like `atius`), Origin, Quick start (drift check), What this module is
+
+### Community 197 - "Community 197"
+Cohesion: 0.22
+Nodes (8): Analysis Instructions, Documentation Standards, Error Handling, File Location, Generate Standard OO Component Documentation, Language-Specific Optimizations, Output Format, Required Documentation Structure
+
+### Community 198 - "Community 198"
+Cohesion: 0.25
+Nodes (7): Background, Constraints, Current State (from Phase 1), Phase 2: Migração Apache2 para Portas Alternativas — Context, Requirements, Success Criteria, User Decisions (Locked)
+
+### Community 199 - "Community 199"
+Cohesion: 0.25
+Nodes (7): Alternative: ipa-backup inside container (requires running container, produces FreeIPA-native backup), Backup strategy from research:, Per freeipa-container README: recommended backup is /data volume tar (stop container, tar /data, restart), Prerequisites from Plan 02, Research recommends volume backup as primary — simpler recovery (restore volume + restart), STRIDE Threat Register, Trust Boundaries
+
+### Community 200 - "Community 200"
+Cohesion: 0.25
+Nodes (7): 09-05: HoristicOps agent (DevOps on-call), acceptance_criteria, action, documentation, objective, read_first, verification
+
+### Community 201 - "Community 201"
+Cohesion: 0.25
+Nodes (7): Acceptance gate (final), Architecture, Cross-cutting constraints, Goal, Phase 09: Mission Guardian — Master Plan, Plans in this phase, Waves
+
+### Community 202 - "Community 202"
+Cohesion: 0.25
+Nodes (7): Acceptance, Architecture, Goal, Hard Gates, Phase 12 — Master Plan, Plans, Scope
+
+### Community 203 - "Community 203"
+Cohesion: 0.29
+Nodes (7): REPL interativo (estilo CLI-Anything).  Comandos disponíveis no REPL (sem o pref, Tenta importar prompt_toolkit; cai de volta para input() se não tiver., Loop principal do REPL., run_repl(), _try_prompt_toolkit(), Modo interativo (REPL) — padrão CLI-Anything., repl_cmd()
+
+### Community 204 - "Community 204"
+Cohesion: 0.25
+Nodes (7): Automation Added, Commands Run, Container Mirrors, Controlled Projects, Fork Sync Audit — 2026-06-13, Result, Should-Be-Controlled Candidates
+
+### Community 205 - "Community 205"
+Cohesion: 0.25
+Nodes (7): Arquivos Neste Pacote, Como Reaplicar, Diagnostico, Objetivo, Ressalvas, Solucao Aplicada, Solucao Teclado XRDP BR ABNT2
+
+### Community 206 - "Community 206"
+Cohesion: 0.25
+Nodes (7): Multi-host rollout plan, Phase 1 — inventory, Phase 2 — read-only probes, Phase 3 — module compatibility matrix, Phase 4 — remote execution, Phase 5 — support mode, Validation
+
+### Community 207 - "Community 207"
+Cohesion: 0.25
+Nodes (7): Componentes, Comportamento, fleet-backup — Backup serial multi-server para GDrive, History, Instalação, Uso, Variáveis
+
+### Community 208 - "Community 208"
+Cohesion: 0.25
+Nodes (7): Campos, Classes de host, Fleet Inventory Model, Host schema v0, Localização, Regras, Remote schema v0
+
+### Community 209 - "Community 209"
+Cohesion: 0.50
+Nodes (6): offload-retired-artifacts-to-gdrive.sh script, backup_path(), backup_volume(), log(), main(), retry_rclone()
+
+### Community 210 - "Community 210"
+Cohesion: 0.32
+Nodes (4): resource-governor-cgroup-init.sh script, get(), load_env(), quote()
+
+### Community 211 - "Community 211"
+Cohesion: 0.25
+Nodes (8): Acessibilidade e Performance, Armadilhas Comuns de Frontend, Otimização de Assets, Otimização de Rede, Performance de Frontend, Performance de JavaScript, Renderização e DOM, Troubleshooting de Frontend
+
+### Community 212 - "Community 212"
+Cohesion: 0.25
+Nodes (8): API e Rede, Armadilhas Comuns de Backend, Cache, Concorrência e Paralelismo, Log e Monitoramento, Otimização de Algoritmos e Estruturas de Dados, Performance de Backend, Troubleshooting de Backend
+
+### Community 213 - "Community 213"
+Cohesion: 0.25
+Nodes (8): Cache e Replicação, Common Database Pitfalls, Database Troubleshooting, Modelagem de Esquema, NoSQL Databases, Otimização de Queries, Performance de Banco de Dados, Transações
+
+### Community 214 - "Community 214"
+Cohesion: 0.25
+Nodes (8): Example 1: Debouncing User Input in JavaScript, Example 2: Efficient SQL Query, Example 3: Caching Expensive Computation in Python, Example 4: Lazy Loading Images in HTML, Example 5: Asynchronous I/O in Node.js, Example 6: Profiling a Python Function, Example 7: Using Redis for Caching in Node.js, Practical Examples
+
+### Community 215 - "Community 215"
+Cohesion: 0.25
+Nodes (7): 2026-06-13 Snapshot, Commands, Fleet Autoclean, Jobs, Pending Manual Decisions, What It Cleans, What It Does Not Delete Automatically
+
+### Community 216 - "Community 216"
+Cohesion: 0.25
+Nodes (7): Context Analysis Criteria, Icons Reference, Local Chatmodes Discovery Process, Output Format, Process, Requirements, Suggest Awesome GitHub Copilot Chatmodes
+
+### Community 217 - "Community 217"
+Cohesion: 0.25
+Nodes (7): Context Analysis Criteria, Icons Reference, Local Prompts Discovery Process, Output Format, Process, Requirements, Suggest Awesome GitHub Copilot Prompts
+
+### Community 218 - "Community 218"
+Cohesion: 0.25
+Nodes (7): Aardvark-dns rootless bug (podman 4.9.3 + netavark 1.4.0 + aardvark 1.4.0), Fix: install systemd-resolved (or alternative), Root cause, The bug, Validation, Why the bug bit us on SRV-2, Why this isn't going to be fixed upstream soon
+
+### Community 219 - "Community 219"
+Cohesion: 0.25
+Nodes (7): Binários e Artefatos, Contribuidores, Correções de Bugs, Destaques, Nos Bastidores, O Que Mudou, v2.1.10-rf2
+
+### Community 220 - "Community 220"
+Cohesion: 0.25
+Nodes (7): Anti-Features, Differentiators, Feature Dependencies, Feature Landscape, MVP Recommendation, Sources, Table Stakes
+
+### Community 221 - "Community 221"
+Cohesion: 0.25
+Nodes (7): Inventário fonte, Padrão de update, PATH pós-install, Próxima evolução (TODO), rust-zellij-fleet, Script, Segurança
+
+### Community 222 - "Community 222"
+Cohesion: 0.25
+Nodes (7): Apply ACL (runbook), Architecture decision, Disable DNS injection on each host, Disable MagicDNS, Source-of-truth, Tailscale Operations, Validate
+
+### Community 223 - "Community 223"
+Cohesion: 0.29
+Nodes (6): - 66 hostnames at /tmp/03-all-hostnames.txt, - Apache2 serving on 9080/9444, - certbot 5.5.0 with webroot authenticator, Key interfaces from Phase 1, STRIDE Threat Register, Trust Boundaries
+
+### Community 224 - "Community 224"
+Cohesion: 0.29
+Nodes (6): Caveats, Files Created/Modified, Key Decisions, Phase 02: Migração Apache2 para Portas Alternativas — Summary, Verification, What was done
+
+### Community 225 - "Community 225"
+Cohesion: 0.29
+Nodes (6): 09-01: Mission Guardian daemon (core), acceptance_criteria, action, objective, read_first, verification
+
+### Community 226 - "Community 226"
+Cohesion: 0.29
+Nodes (6): 09-02: Disk fill forecasting + correlation analyzer, acceptance_criteria, action, objective, read_first, verification
+
+### Community 227 - "Community 227"
+Cohesion: 0.29
+Nodes (6): 09-03: Auto-tune omni-* cpu.weight (predictive), acceptance_criteria, action, objective, read_first, verification
+
+### Community 228 - "Community 228"
+Cohesion: 0.29
+Nodes (6): 09-04: Cleanup timeout fix + logrotate /var/log, acceptance_criteria, action, objective, read_first, verification
+
+### Community 229 - "Community 229"
+Cohesion: 0.29
+Nodes (6): ACL source-of-truth, Changes applied, Incident separado (não bloqueante), Key decision ratificado, Tailscale ACL Closure — 2026-06-16, Validation
+
+### Community 230 - "Community 230"
+Cohesion: 0.29
+Nodes (6): Cross-Cutting Constraints, Final Acceptance Gate, Goal, Phase 14: Resource Governor + PM2 Boot Hardening, Plans, Waves
+
+### Community 231 - "Community 231"
+Cohesion: 0.29
+Nodes (7): 2. Sequência de tentativas (ordem cronológica), Tentativa 1: identificar a causa raiz, Tentativa 2: assumir que era colisão 5910, Tentativa 3: assumir DRI3/GL é o problema, Tentativa 4: assumir ABI mismatch do xorgxrdp, Tentativa 5: assumir que sesman.ini é o que manda, Tentativa 6: report do usuário
+
+### Community 232 - "Community 232"
+Cohesion: 0.29
+Nodes (7): A.1 Vault (todas as docs que mencionam RDP, xorgxrdp, x11vnc, Xvnc, display, ports VNC, abnt2, ou DRI3), A.3 Backups (snapshot pré-fix, em `/home/ubuntu/.backups/port-pool-2026-06-16/`), A.4 Skills Hermes (referenciadas durante a sessão), A.5 Prints/imagens, ANEXO A — Lista completa de docs RDP/X11/Xvnc/xorgxrdp, Operação / Log da sessão, Specs / canônicas
+
+### Community 233 - "Community 233"
+Cohesion: 0.29
+Nodes (7): A.2 Repo omni-srv-admin, Doc canônica (criada hoje), Docs antigas convertidas em stub+redirector, Docs gerais, Fase 14 (resource governor / PM2 — menciona xrdp no watchdog cgroup), Módulo xrdp-abnt2, Tema dark LXDE
+
+### Community 234 - "Community 234"
+Cohesion: 0.29
+Nodes (6): Backups, Correção Aplicada, Estado Final, Phase 19 — Desktop Shortcuts Hotfix, Root Cause, Validação
+
+### Community 235 - "Community 235"
+Cohesion: 0.29
+Nodes (6): Debug Mode Instructions, Debugging Guidelines, Phase 1: Problem Assessment, Phase 2: Investigation, Phase 3: Resolution, Phase 4: Quality Assurance
+
+### Community 236 - "Community 236"
+Cohesion: 0.29
+Nodes (6): Examples [optional], Guidelines, Notes [optional], Output Format, Prompt Engineer, Steps [optional]
+
+### Community 237 - "Community 237"
+Cohesion: 0.29
+Nodes (6): 10. Where to Add New Code, 7. Port Map, 9. Environment Configuration, Env File Locations, Horistic Trading Platform — Codebase Map, Required Environment Variables
+
+### Community 238 - "Community 238"
+Cohesion: 0.29
+Nodes (7): 2. Architecture, API Route Structure (`backend/server/routes/`), Frontend App Routes (`frontend/src/app/`), Frontend → Backend Communication, High-Level Pattern, PM2 Processes (`ecosystem.config.js`), WebSocket Endpoints
+
+### Community 239 - "Community 239"
+Cohesion: 0.29
+Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
+
+### Community 240 - "Community 240"
+Cohesion: 0.52
+Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
+
+### Community 241 - "Community 241"
+Cohesion: 0.29
+Nodes (6): Fleet architecture, Layers, Naming, Principle, Safety gates, Why not one script per computer
+
+### Community 242 - "Community 242"
+Cohesion: 0.29
+Nodes (6): Decisão, Estado SRV-1, Operação não suportada automaticamente, Operação suportada, Porquê, Remote Mapping Labels
+
+### Community 243 - "Community 243"
+Cohesion: 0.29
+Nodes (6): Active external cron references found, Candidates not migrated yet, Disabled stale cron references, Migrated into module, Replaced cron references, Source map — srv1-ops migration
+
+### Community 244 - "Community 244"
+Cohesion: 0.71
+Nodes (6): atius-k3s-watchdog.sh script, check_http(), check_http_basic(), ensure_local_service(), ensure_remote_k3s(), log()
+
+### Community 245 - "Community 245"
+Cohesion: 0.43
+Nodes (6): hermes-desktop-start.sh script, DISPLAY, error(), HERMES_HOME, log(), warn()
+
+### Community 246 - "Community 246"
+Cohesion: 0.29
+Nodes (7): Advanced Topics, Cloud and Serverless, Memory Management, Mobile Performance, Profiling and Benchmarking, Scalability, Security and Performance
+
+### Community 247 - "Community 247"
+Cohesion: 0.29
+Nodes (6): ATIUS Fleet — Fleet Specs (Specs das Máquinas), Conversões, Especificações comuns (válido, OS desatualizado), I/O Limiting, Máquinas (dados de disco ainda válidos), Ver também
+
+### Community 248 - "Community 248"
+Cohesion: 0.29
+Nodes (6): Atius-Spec-Servers — Especificações dos Servidores ATIUS, Especificações Comuns (válido, OS desatualizado), Exemplo Prático, Limite de 50% por Processo (ainda válido), Servidores (dados de disco ainda válidos), Ver também
+
+### Community 249 - "Community 249"
+Cohesion: 0.29
+Nodes (6): Common Jest Matchers, Effective Mocking, Snapshot Testing, Test Structure, Testing Async Code, Testing React Components
+
+### Community 250 - "Community 250"
+Cohesion: 0.29
+Nodes (6): Migrating systemd-managed services, Network migration: srv<N>-podman (CNI) → srv<N>-podman-v2 (netavark), Procedure (validated 2026-06-16 on SRV-1), Rollback (if migration breaks something), Why "srv<N>-podman-v2" and not just "srv<N>-podman", Why this is non-trivial
+
+### Community 251 - "Community 251"
+Cohesion: 0.29
+Nodes (6): Confidence Assessment, Executive Summary, Gaps to Address, Implications for Roadmap, Key Findings, Research Summary: Atius Domain Infrastructure
+
+### Community 252 - "Community 252"
+Cohesion: 0.29
+Nodes (6): Configuração aplicada, gbrain Embeddings — Atius Router config (validated 2026-06-16), Notas, Pendência (operador), Runbook, Validação
+
+### Community 253 - "Community 253"
+Cohesion: 0.29
+Nodes (6): Assets canônicos, Comandos, Instalação, Lógica, Validação manual, XRDP ABNT2 Guard
+
+### Community 254 - "Community 254"
+Cohesion: 0.33
+Nodes (5): Blockers, Info, Plan 01 Check — Re-Review After Fixes, Verdict, Warnings
+
+### Community 255 - "Community 255"
+Cohesion: 0.33
+Nodes (6): Backup Script, Code Examples, Docker Compose Configuration (verified pattern), Environment File (password management), Password Generation, Post-Setup Verification Commands
+
+### Community 256 - "Community 256"
+Cohesion: 0.33
+Nodes (5): Files Created/Modified, Key Decisions, Phase 08: Rebrand + fork-sync submodule — Summary, Verification, What was done
+
+### Community 257 - "Community 257"
+Cohesion: 0.33
+Nodes (5): 12-01 Summary — Fleet Control Plane Foundation, Delivered, Remaining Gates, Result, Verification
+
+### Community 258 - "Community 258"
+Cohesion: 0.33
+Nodes (6): 11.1 Decisão nova de display range, 11.2 Mudança live aplicada nos 3 SRVs, 11.3 Sessões stale removidas, 11.4 Validação pós-mudança, 11.5 Próximo teste humano, 11. Retomada Codex — 2026-06-16 18:35–18:50 BRT
+
+### Community 259 - "Community 259"
+Cohesion: 0.33
+Nodes (5): Final operator validation, Final rule, Live config basis, Notes, XRDP Fleet Closure — 2026-06-16
+
+### Community 260 - "Community 260"
+Cohesion: 0.33
+Nodes (6): 5. Trading Bot Architecture, DIVAP Indicator (Python), Exchange Modules Structure, Exchange-Specific Bot Entry Points, Unified Bot Launcher (`backend/services/unified-bot-launcher.js`), Webhook Signal Receiver
+
+### Community 261 - "Community 261"
+Cohesion: 0.33
+Nodes (6): 6. Key File Locations, Configuration, Core Modules, Entry Points, Scripts & Utilities, Tests
+
+### Community 262 - "Community 262"
+Cohesion: 0.33
+Nodes (5): Arquivos Aplicados, Comandos, Dark Theme Ubuntu para LXDE/XRDP, Observacoes do Ubuntu 24.04, Proposta
+
+### Community 263 - "Community 263"
+Cohesion: 0.33
+Nodes (5): Passo 1: Criar a Rede Docker, Passo 2: Subir o Container, Passo 3: Verificar, Próximos Passos, Visão Geral
+
+### Community 264 - "Community 264"
+Cohesion: 0.33
+Nodes (5): Architecture, Canonical doc, Current modules, Key decisions, Short version
+
+### Community 265 - "Community 265"
+Cohesion: 0.33
+Nodes (6): 14.1. `fork-sync: command not found`, 14.2. `ModuleNotFoundError: No module named 'fork_sync'`, 14.3. Sync cai em `needs_review` mas sem conflito real, 14.4. Deploy Docker falha com `health check timeout`, 14.5. Submodule 404, 19. Troubleshooting
+
+### Community 266 - "Community 266"
+Cohesion: 0.33
+Nodes (5): Code Review Checklist for Performance, Conclusion, Introdução, Melhores Práticas de Otimização de Performance, References and Further Reading
+
+### Community 267 - "Community 267"
+Cohesion: 0.33
+Nodes (5): Core Directives & Hierarchy, General Interaction & Philosophy, Intelligent Tool Usage, Minimalist & Standard Code Generation, Surgical Code Modification
+
+### Community 268 - "Community 268"
+Cohesion: 0.33
+Nodes (5): Create Architectural Decision Record, Input Validation, Inputs, Required Documentation Structure, Requirements
+
+### Community 269 - "Community 269"
+Cohesion: 0.33
+Nodes (5): Ações Realizadas, Erros Observados anteriormente, Estado Atual do Sistema, Log de Recuperação - Problema RDP Atius SRV, Próximos Passos (se não funcionar)
+
+### Community 270 - "Community 270"
+Cohesion: 0.40
+Nodes (4): Existing Docker patterns to follow, Pre-conditions verified, STRIDE Threat Register, Trust Boundaries
+
+### Community 271 - "Community 271"
+Cohesion: 0.40
+Nodes (5): Anti-Patterns to Avoid, Architecture Patterns, Pattern: Options File for Non-Interactive Setup, Pattern: Single `/data` Volume (FreeIPA Container Design), Recommended Project Structure
+
+### Community 272 - "Community 272"
+Cohesion: 0.40
+Nodes (5): Container Runtime, Core, Installation, Standard Stack, Supporting (inside container)
+
+### Community 273 - "Community 273"
+Cohesion: 0.40
+Nodes (5): Phase Requirements → Test Map, Sampling Rate, Test Framework, Validation Architecture, Wave 0 Gaps
+
+### Community 274 - "Community 274"
+Cohesion: 0.40
+Nodes (5): 13.1 Causa raiz, 13.2 Config final aplicada no SRV-1, 13.3 Validação, 13.4 Estado atual, 13. Retomada Codex — fix validado SRV-1 display :1
+
+### Community 275 - "Community 275"
+Cohesion: 0.40
+Nodes (5): 14.1 Achados, 14.2 Mudanças aplicadas, 14.3 Validação, 14.4 Regra final, 14. Retomada Codex — SRV-2/SRV-3 + regra de resolução
+
+### Community 276 - "Community 276"
+Cohesion: 0.40
+Nodes (4): Critério de Remoção do Standalone, Governança do Remote Separado `atius-router-docs`, Papéis, Rollback
+
+### Community 277 - "Community 277"
+Cohesion: 0.40
+Nodes (5): 4. Apache2 Integration, Proxy Patterns, Security Headers (all vhosts), SSL Certificates, Virtual Hosts (on `10.1.1.4`)
+
+### Community 278 - "Community 278"
+Cohesion: 0.40
+Nodes (4): Commands, Fleet Autoclean, Jobs, Safety
+
+### Community 279 - "Community 279"
+Cohesion: 0.40
+Nodes (5): 20. Roadmap / Expansão, v1.1, v1.1 (próximo), v1.2 (atual), v2.0 (futuro)
+
+### Community 280 - "Community 280"
+Cohesion: 0.40
+Nodes (5): 4.1. Via installer (recomendado), 4.2. Manual, 4.3. Dependências do sistema, 4.4. Verificar instalação, 4. Instalação
+
+### Community 281 - "Community 281"
+Cohesion: 0.40
+Nodes (5): 7.1. Quando usar submodules no fork-sync, 7.2. Como declarar, 7.3. O que o fork-sync faz diferente, 7.4. Inicializar submódulos após clone, 7. Submodules — O que são e como usar
+
+### Community 282 - "Community 282"
+Cohesion: 0.40
+Nodes (5): 8.1. Quando configurar, 8.2. Estrutura, 8.3. Uso, 8.4. Health check, 8. Deploy Docker — Quando e Como
+
+### Community 283 - "Community 283"
+Cohesion: 0.60
+Nodes (3): drift-detect.sh script, check(), parse()
+
+### Community 284 - "Community 284"
+Cohesion: 0.80
+Nodes (4): qbt-postprocess.sh script, log(), login(), move_to_gdrive()
+
+### Community 285 - "Community 285"
+Cohesion: 0.40
+Nodes (5): Dicas Específicas por Linguagem/Framework, Java, .NET, Node.js, Python
+
+### Community 286 - "Community 286"
+Cohesion: 0.50
+Nodes (3): STRIDE Threat Register, System config files to read before editing, Trust Boundaries
+
+### Community 287 - "Community 287"
+Cohesion: 0.50
+Nodes (3): Files to read before editing, STRIDE Threat Register, Trust Boundaries
+
+### Community 288 - "Community 288"
+Cohesion: 0.50
+Nodes (4): Claude's Discretion, Deferred Ideas (OUT OF SCOPE), Locked Decisions, User Constraints (from CONTEXT.md)
+
+### Community 289 - "Community 289"
+Cohesion: 0.50
+Nodes (4): Primary (HIGH confidence), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
+
+### Community 290 - "Community 290"
+Cohesion: 0.50
+Nodes (3): API Architect mode instructions, The following API aspects will be the consumables for producing a working solution in code:, When you respond with a solution follow these design guidelines:
+
+### Community 291 - "Community 291"
+Cohesion: 0.50
+Nodes (3): Critérios de Aceitação:, Formato Obrigatório da História de Usuário, Pontos a Considerar
+
+### Community 292 - "Community 292"
+Cohesion: 0.50
+Nodes (4): 3. Database, DB Architecture Pattern, Key Tables (from `conexao.js` schema auto-creation), PostgreSQL Configuration
+
+### Community 293 - "Community 293"
+Cohesion: 0.50
+Nodes (3): File mapping, Source map — XRDP ABNT2 migration, Validation
+
+### Community 294 - "Community 294"
 Cohesion: 0.83
 Nodes (3): fail(), log(), fleet-network-watchdog.sh script
 
-### Community 488 - "Community 488"
+### Community 295 - "Community 295"
 Cohesion: 0.83
 Nodes (3): fail(), log(), srv1-fix-network.sh script
 
+### Community 296 - "Community 296"
+Cohesion: 0.50
+Nodes (4): cli(), main(), fork-sync — gestão unificada de forks (sync, deploy, versionamento)., Entry point console_scripts.
+
+### Community 297 - "Community 297"
+Cohesion: 0.50
+Nodes (4): 6.1. Via CLI (recomendado), 6.2. Manualmente (mais controle), 6.3. Validar, 6. Adicionar Novo Fork (Projeto)
+
+### Community 298 - "Community 298"
+Cohesion: 0.50
+Nodes (4): antivirus/monitor.sh, ast_hash, mtime, semantic_hash
+
+### Community 299 - "Community 299"
+Cohesion: 0.50
+Nodes (4): antivirus/scan.sh, ast_hash, mtime, semantic_hash
+
+### Community 300 - "Community 300"
+Cohesion: 0.50
+Nodes (4): cli/lib/model-history.sh, ast_hash, mtime, semantic_hash
+
+### Community 301 - "Community 301"
+Cohesion: 0.50
+Nodes (4): cli/model-fs, ast_hash, mtime, semantic_hash
+
+### Community 302 - "Community 302"
+Cohesion: 0.50
+Nodes (4): cli/omni/cli.py, ast_hash, mtime, semantic_hash
+
+### Community 303 - "Community 303"
+Cohesion: 0.50
+Nodes (4): cli/omni/fleet_backup.py, ast_hash, mtime, semantic_hash
+
+### Community 304 - "Community 304"
+Cohesion: 0.50
+Nodes (4): cli/omni/fleet.py, ast_hash, mtime, semantic_hash
+
+### Community 305 - "Community 305"
+Cohesion: 0.50
+Nodes (4): cli/omni/__init__.py, ast_hash, mtime, semantic_hash
+
+### Community 306 - "Community 306"
+Cohesion: 0.50
+Nodes (4): cli/omni/__main__.py, ast_hash, mtime, semantic_hash
+
+### Community 307 - "Community 307"
+Cohesion: 0.50
+Nodes (4): cli/omni/remote_manager.py, ast_hash, mtime, semantic_hash
+
+### Community 308 - "Community 308"
+Cohesion: 0.50
+Nodes (4): cli/omni/remote_ops.py, ast_hash, mtime, semantic_hash
+
+### Community 309 - "Community 309"
+Cohesion: 0.50
+Nodes (4): cli/omni/xrdp_abnt2.py, ast_hash, mtime, semantic_hash
+
+### Community 310 - "Community 310"
+Cohesion: 0.50
+Nodes (4): cli/setup.py, ast_hash, mtime, semantic_hash
+
+### Community 311 - "Community 311"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/install.sh, ast_hash, mtime, semantic_hash
+
+### Community 312 - "Community 312"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/repair.sh, ast_hash, mtime, semantic_hash
+
+### Community 313 - "Community 313"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/scripts/dark-themectl.sh, ast_hash, mtime, semantic_hash
+
+### Community 314 - "Community 314"
+Cohesion: 0.50
+Nodes (4): dark-theme-ubuntu/uninstall.sh, ast_hash, mtime, semantic_hash
+
+### Community 315 - "Community 315"
+Cohesion: 0.50
+Nodes (4): modules/fleet-autoclean/scripts/fleet-autoclean.sh, ast_hash, mtime, semantic_hash
+
+### Community 316 - "Community 316"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/install-fleet-backup.sh, ast_hash, mtime, semantic_hash
+
+### Community 317 - "Community 317"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/map-docker-to-containers.sh, ast_hash, mtime, semantic_hash
+
+### Community 318 - "Community 318"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/rclone-fleet-queue.sh, ast_hash, mtime, semantic_hash
+
+### Community 319 - "Community 319"
+Cohesion: 0.50
+Nodes (4): modules/fleet-backup/scripts/sync-backup-script.sh, ast_hash, mtime, semantic_hash
+
+### Community 320 - "Community 320"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/bin/deploy.sh, ast_hash, mtime, semantic_hash
+
+### Community 321 - "Community 321"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/bin/detect-release.sh, ast_hash, mtime, semantic_hash
+
+### Community 322 - "Community 322"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/bin/sync.sh, ast_hash, mtime, semantic_hash
+
+### Community 323 - "Community 323"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/cli.py, ast_hash, mtime, semantic_hash
+
+### Community 324 - "Community 324"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/config.py, ast_hash, mtime, semantic_hash
+
+### Community 325 - "Community 325"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/container_mirrors.py, ast_hash, mtime, semantic_hash
+
+### Community 326 - "Community 326"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/discovery.py, ast_hash, mtime, semantic_hash
+
+### Community 327 - "Community 327"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/__init__.py, ast_hash, mtime, semantic_hash
+
+### Community 328 - "Community 328"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/logrotate.py, ast_hash, mtime, semantic_hash
+
+### Community 329 - "Community 329"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/manuals.py, ast_hash, mtime, semantic_hash
+
+### Community 330 - "Community 330"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/registry.py, ast_hash, mtime, semantic_hash
+
+### Community 331 - "Community 331"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/release_notes.py, ast_hash, mtime, semantic_hash
+
+### Community 332 - "Community 332"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/repl.py, ast_hash, mtime, semantic_hash
+
+### Community 333 - "Community 333"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/core/sync_runner.py, ast_hash, mtime, semantic_hash
+
+### Community 334 - "Community 334"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/__init__.py, ast_hash, mtime, semantic_hash
+
+### Community 335 - "Community 335"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/fork_sync/__main__.py, ast_hash, mtime, semantic_hash
+
+### Community 336 - "Community 336"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/pm2-setup.sh, ast_hash, mtime, semantic_hash
+
+### Community 337 - "Community 337"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/run_doctor.sh, ast_hash, mtime, semantic_hash
+
+### Community 338 - "Community 338"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/run_logrotate.sh, ast_hash, mtime, semantic_hash
+
+### Community 339 - "Community 339"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/scripts/run_sync_all.sh, ast_hash, mtime, semantic_hash
+
+### Community 340 - "Community 340"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/setup.py, ast_hash, mtime, semantic_hash
+
+### Community 341 - "Community 341"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/cli/tests/test_sync_runner.py, ast_hash, mtime, semantic_hash
+
+### Community 342 - "Community 342"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/ecosystem.daily-sync.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 343 - "Community 343"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/ecosystem.doctor.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 344 - "Community 344"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/ecosystem.logrotate.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 345 - "Community 345"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh, ast_hash, mtime, semantic_hash
+
+### Community 346 - "Community 346"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/post-merge.sh, ast_hash, mtime, semantic_hash
+
+### Community 347 - "Community 347"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/api/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 348 - "Community 348"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/guide/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 349 - "Community 349"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/deployment-methods/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 350 - "Community 350"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 351 - "Community 351"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/meta.json, ast_hash, mtime, semantic_hash
+
+### Community 352 - "Community 352"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/atius-router-docs/scripts/fork-sync-docs.sh, ast_hash, mtime, semantic_hash
+
+### Community 353 - "Community 353"
+Cohesion: 0.50
+Nodes (4): modules/fork-sync/projects/horus-spec-driven/ecosystem.daily-sync.cron.json, ast_hash, mtime, semantic_hash
+
+### Community 354 - "Community 354"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/fix-abnt2.sh, ast_hash, mtime, semantic_hash
+
+### Community 355 - "Community 355"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/fix-shared_smb.sh, ast_hash, mtime, semantic_hash
+
+### Community 356 - "Community 356"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-start.sh, ast_hash, mtime, semantic_hash
+
+### Community 357 - "Community 357"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-status.sh, ast_hash, mtime, semantic_hash
+
+### Community 358 - "Community 358"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/hermes-desktop-stop.sh, ast_hash, mtime, semantic_hash
+
+### Community 359 - "Community 359"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/mount-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 360 - "Community 360"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/optimize_network.sh, ast_hash, mtime, semantic_hash
+
+### Community 361 - "Community 361"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/qbt-postprocess.sh, ast_hash, mtime, semantic_hash
+
+### Community 362 - "Community 362"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/start-aionui.sh, ast_hash, mtime, semantic_hash
+
+### Community 363 - "Community 363"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/legacy-scripts/start-qbittorrent.sh, ast_hash, mtime, semantic_hash
+
+### Community 364 - "Community 364"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/lib/metrics.py, ast_hash, mtime, semantic_hash
+
+### Community 365 - "Community 365"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/atius-web-healthcheck.sh, ast_hash, mtime, semantic_hash
+
+### Community 366 - "Community 366"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/backup-dangling-to-gdrive.py, ast_hash, mtime, semantic_hash
+
+### Community 367 - "Community 367"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 368 - "Community 368"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/backup-to-smb.sh, ast_hash, mtime, semantic_hash
+
+### Community 369 - "Community 369"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/cleanup-local.sh, ast_hash, mtime, semantic_hash
+
+### Community 370 - "Community 370"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/inviolable-watchdog.sh, ast_hash, mtime, semantic_hash
+
+### Community 371 - "Community 371"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 372 - "Community 372"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh, ast_hash, mtime, semantic_hash
+
+### Community 373 - "Community 373"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-audit.py, ast_hash, mtime, semantic_hash
+
+### Community 374 - "Community 374"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-cgroup-init.sh, ast_hash, mtime, semantic_hash
+
+### Community 375 - "Community 375"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-patcher.py, ast_hash, mtime, semantic_hash
+
+### Community 376 - "Community 376"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-snapshot.py, ast_hash, mtime, semantic_hash
+
+### Community 377 - "Community 377"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-status.py, ast_hash, mtime, semantic_hash
+
+### Community 378 - "Community 378"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/resource-governor-watchdog.py, ast_hash, mtime, semantic_hash
+
+### Community 379 - "Community 379"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/server-analysis.py, ast_hash, mtime, semantic_hash
+
+### Community 380 - "Community 380"
+Cohesion: 0.50
+Nodes (4): modules/srv1-ops/scripts/sync-vault.sh, ast_hash, mtime, semantic_hash
+
+### Community 381 - "Community 381"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard, ast_hash, mtime, semantic_hash
+
+### Community 382 - "Community 382"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/files/setxkbmap-abnt2.sh, ast_hash, mtime, semantic_hash
+
+### Community 383 - "Community 383"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/files/startwm.sh, ast_hash, mtime, semantic_hash
+
+### Community 384 - "Community 384"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/scripts/install.sh, ast_hash, mtime, semantic_hash
+
+### Community 385 - "Community 385"
+Cohesion: 0.50
+Nodes (4): modules/xrdp-abnt2/scripts/validate.sh, ast_hash, mtime, semantic_hash
+
+### Community 386 - "Community 386"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/ARCHITECTURE.md, ast_hash, mtime, semantic_hash
+
+### Community 387 - "Community 387"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/CONCERNS.md, ast_hash, mtime, semantic_hash
+
+### Community 388 - "Community 388"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/CONVENTIONS.md, ast_hash, mtime, semantic_hash
+
+### Community 389 - "Community 389"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/HORISTIC.md, ast_hash, mtime, semantic_hash
+
+### Community 390 - "Community 390"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/INTEGRATIONS.md, ast_hash, mtime, semantic_hash
+
+### Community 391 - "Community 391"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/STACK.md, ast_hash, mtime, semantic_hash
+
+### Community 392 - "Community 392"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/STRUCTURE.md, ast_hash, mtime, semantic_hash
+
+### Community 393 - "Community 393"
+Cohesion: 0.50
+Nodes (4): .planning/codebase/TESTING.md, ast_hash, mtime, semantic_hash
+
+### Community 394 - "Community 394"
+Cohesion: 0.50
+Nodes (4): .planning/config.json, ast_hash, mtime, semantic_hash
+
+### Community 395 - "Community 395"
+Cohesion: 0.50
+Nodes (4): .planning/MILESTONES.md, ast_hash, mtime, semantic_hash
+
+### Community 396 - "Community 396"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-01-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 397 - "Community 397"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-01-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 398 - "Community 398"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-02-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 399 - "Community 399"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-02-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 400 - "Community 400"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-03-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 401 - "Community 401"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-03-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 402 - "Community 402"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-CONTEXT.md, ast_hash, mtime, semantic_hash
+
+### Community 403 - "Community 403"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-DISCUSSION-LOG.md, ast_hash, mtime, semantic_hash
+
+### Community 404 - "Community 404"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-PLAN-CHECK.md, ast_hash, mtime, semantic_hash
+
+### Community 405 - "Community 405"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-RESEARCH.md, ast_hash, mtime, semantic_hash
+
+### Community 406 - "Community 406"
+Cohesion: 0.50
+Nodes (4): .planning/phases/01-preparacao-do-host/01-VERIFICATION.md, ast_hash, mtime, semantic_hash
+
+### Community 407 - "Community 407"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-01-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 408 - "Community 408"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-CONTEXT.md, ast_hash, mtime, semantic_hash
+
+### Community 409 - "Community 409"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-PLAN-CHECK.md, ast_hash, mtime, semantic_hash
+
+### Community 410 - "Community 410"
+Cohesion: 0.50
+Nodes (4): .planning/phases/02-migracao-apache2-para-portas-alternativas/02-SUMMARY.md, ast_hash, mtime, semantic_hash
+
+### Community 411 - "Community 411"
+Cohesion: 0.50
+Nodes (4): .planning/phases/03-freeipa-server-container/03-01-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 412 - "Community 412"
+Cohesion: 0.50
+Nodes (4): .planning/phases/03-freeipa-server-container/03-02-PLAN.md, ast_hash, mtime, semantic_hash
+
+### Community 413 - "Community 413"
+Cohesion: 0.50
+Nodes (4): .planning/PROJECT.md, ast_hash, mtime, semantic_hash
+
+### Community 414 - "Community 414"
+Cohesion: 0.50
+Nodes (4): .planning/REQUIREMENTS.md, ast_hash, mtime, semantic_hash
+
+### Community 415 - "Community 415"
+Cohesion: 0.50
+Nodes (4): .planning/ROADMAP.md, ast_hash, mtime, semantic_hash
+
+### Community 416 - "Community 416"
+Cohesion: 0.50
+Nodes (4): .planning/STATE.md, ast_hash, mtime, semantic_hash
+
+### Community 417 - "Community 417"
+Cohesion: 0.50
+Nodes (4): setup.sh, ast_hash, mtime, semantic_hash
+
+### Community 418 - "Community 418"
+Cohesion: 0.50
+Nodes (4): vscode-profile/.github/mcp-config/linux/mcp.json, ast_hash, mtime, semantic_hash
+
+### Community 419 - "Community 419"
+Cohesion: 0.50
+Nodes (4): vscode-profile/.github/vscode-settings/settings.json, ast_hash, mtime, semantic_hash
+
+### Community 420 - "Community 420"
+Cohesion: 0.83
+Nodes (3): srv1-fix-network.sh script, fail(), log()
+
+### Community 421 - "Community 421"
+Cohesion: 0.83
+Nodes (3): mount-gdrive.sh script, start_mount(), stop_mount()
+
+### Community 422 - "Community 422"
+Cohesion: 1.00
+Nodes (3): backup-srv1-to-gdrive.sh script, bkp(), log()
+
+### Community 423 - "Community 423"
+Cohesion: 0.67
+Nodes (3): backup-to-smb.sh script, log(), SOURCES
+
+### Community 424 - "Community 424"
+Cohesion: 1.00
+Nodes (3): sync-vault.sh script, auto_commit_changes(), notify_telegram()
+
+### Community 425 - "Community 425"
+Cohesion: 0.50
+Nodes (3): verify-m004-fleet-control-plane.sh script, OMNI_SRV_ADMIN, PYTHONPATH
+
+### Community 426 - "Community 426"
+Cohesion: 0.50
+Nodes (3): Configuração e Manutenção, Métodos de Implantação, Visão Geral
+
+### Community 427 - "Community 427"
+Cohesion: 0.50
+Nodes (3): Formatação e Estrutura, Regras de Conteúdo Markdown, Requisitos de Validação
+
+### Community 428 - "Community 428"
+Cohesion: 0.50
+Nodes (4): Angular, Dicas Específicas de Frameworks, React, Vue
+
+### Community 429 - "Community 429"
+Cohesion: 0.67
+Nodes (3): Applicable ASVS Categories, Known Threat Patterns for FreeIPA, Security Domain
+
+### Community 430 - "Community 430"
+Cohesion: 0.67
+Nodes (3): 12.1 Log da tentativa real em :31, 12.2 Mudança aplicada no SRV-1, 12. Retomada Codex — ajuste explícito SRV-1 para display :1
+
+### Community 431 - "Community 431"
+Cohesion: 0.67
+Nodes (3): 15.1 Critério de fechamento atingido, 15.2 Escopo remanescente da Phase 18, 15. Encerramento — ajuste XRDP concluído
+
 ## Knowledge Gaps
-- **3377 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3372 more)
+- **3395 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3390 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (485 total, 56 thin omitted)` connect `Community 223` to `Community 284`?**
-  _High betweenness centrality (0.010) - this node is a cross-community bridge._
-- **Why does `discover_heal()` connect `Community 0` to `Community 57`?**
+- **Why does `Communities (493 total, 60 thin omitted)` connect `Community 0` to `Community 155`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `discover_heal()` connect `Community 2` to `Community 74`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `Graph Report - omni-srv-admin  (2026-06-17)` connect `Community 284` to `Community 223`?**
+- **Why does `modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh` connect `Community 345` to `Community 119`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3595 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3614 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.004629629629629629 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.11901306240928883 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07191358024691358 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.041666666666666664 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
