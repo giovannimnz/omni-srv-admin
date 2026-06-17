@@ -3,7 +3,7 @@
 **Analysis Date:** 2026-04-19
 **Repository:** `/home/ubuntu/GitHub/Atius-Capital/horistic`
 **Domain:** `horistic.com` (multi-subdomain)
-**Server:** `10.1.1.1` (shared with other projects), proxied to `10.1.1.3` via Apache2
+**Server:** `10.1.1.1` (shared with other projects), proxied to `10.1.1.4` via Apache2
 
 ---
 
@@ -108,7 +108,7 @@
 
 ```
 ┌─────────────────────────────────────────────────────────────────────┐
-│                        Apache2 (10.1.1.3)                           │
+│                        Apache2 (10.1.1.4)                           │
 │  trade.horistic.com → :8050 (API) + :3050 (Frontend)                │
 │  backtest.horistic.com → :8050 (API) + :3050 (Frontend)             │
 │  webhook.horistic.com → :8099 (Webhook service)                     │
@@ -276,7 +276,7 @@ This means the frontend serves as the single entry point, proxying API calls int
 
 ## 4. Apache2 Integration
 
-### Virtual Hosts (on `10.1.1.3`)
+### Virtual Hosts (on `10.1.1.4`)
 
 | Subdomain | Config File | Backend Target | Notes |
 |-----------|------------|----------------|-------|

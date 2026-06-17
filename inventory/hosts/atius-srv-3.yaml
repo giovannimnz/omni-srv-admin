@@ -4,9 +4,10 @@ aliases:
 role: sandbox
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.7
+  ssh: ubuntu@10.1.1.3
   public_ip: 136.248.126.12
-  vpn_ip: 10.1.1.7
+  vpn_ip: 10.1.1.3
+  legacy_vpn_ip: 10.1.1.7
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -25,7 +26,7 @@ cleanup:
   action: post-upgrade-storage-audit
   pending:
     - inviolable-watchdog.timer active but service fails with status 203/EXEC because /home/ubuntu/scripts/inviolable-watchdog.sh is absent
-    - VPN SSH 10.1.1.7 timed out during audit; public SSH works
+    - 10.1.1.7 is retained as K3s/etcd compatibility alias after 2026-06-17 readdress to 10.1.1.3
 apps:
   - id: rust-toolchain
     runtime: local-rustup
@@ -77,3 +78,8 @@ apps:
     installed_on: "2026-06-16"
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  last_readdressed: 2026-06-17
+  readdress_note: "WireGuard routes 10.1.1.3 and 10.1.1.7 to this host; DNS canon is 10.1.1.3, K3s node-ip remains 10.1.1.7 until etcd member URL migration."
+  wireguard_key_rotated: 2026-06-17
+  dns_validation: "getent hosts atius-srv-3 returns 10.1.1.3; CoreDNS returns 10.1.1.3; wg-quick strip wg0 OK."
+  k3s_note: "K3s remains Ready with INTERNAL-IP 10.1.1.7; full etcd member URL migration to 10.1.1.3 requires a separate maintenance window."
