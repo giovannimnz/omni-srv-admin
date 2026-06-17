@@ -79,3 +79,40 @@ M006 depends on the live fix note and runs in parallel with M004/M005:
 
 - Read: `/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md`
 - Backup pointer: `/home/ubuntu/.backups/omni-srv-admin-resource-governor-20260613_050527`
+
+
+## v1.1 v1.1 (In progress)
+
+**Status:** M005 follow-ups + M007-ext + M008 + M008-b
+
+### M008 — Fleet Standardization (Phases 18-19)
+
+| Phase | Name | Status |
+|------|------|--------|
+| 18 | Ubuntu Pro ESM Apps + Google account link | D18-06-A/B/C done; G18-1 (apt upgrade) awaiting operator |
+| 19 | Fleet Standardization (hostnames + chromium + dark theme) | ✅ DONE 2026-06-17 |
+
+**Branch:** TBD (work committed to main as `c0543a9de` + `5077660c7`)
+
+### M008-b — Podman Networking Standardization (Phase 20)
+
+| Phase | Name | Status |
+|------|------|--------|
+| 20 | Podman Networking Standardization (containers.conf + netavark + aardvark) | ✅ DONE 2026-06-17 |
+
+**Origin:** cutover plane-app v1.2.1 → v1.3.1 on SRV-1 (2026-06-16) surfaced 3 latent bugs (aardvark self-lookup NXDOMAIN, systemd-resolved missing on SRV-2 causing mailcow Exited 45h, containers.conf drift across fleet). Work consolidated into fleet-wide standard + skill + module + CLI.
+
+**Artifacts:**
+- `modules/fleet/podman-network/` (12 files, canonical)
+- `~/.hermes/skills/devops/podman-fleet-standardize/` (12 files, vendored)
+- `omni podman-network {drift,apply,smoke,standard}` (4 CLI subcommands)
+- Commit `c0543a9de` on `origin/main` (16 files, 1741 insertions)
+- `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` v1.2.0 (cross-ref)
+
+**Validation:** `omni podman-network drift` returns 6/6 PASS on all 3 SRVs.
+
+### Operator next steps (unchanged)
+
+- [ ] Authorize G18-1 (apt upgrade esm-apps+infra nos 3 SRVs)
+- [ ] Validate G18-2 (Microsoft RDP login pós-upgrade nos 3 SRVs)
+- [ ] Confirmar Landscape SaaS UI com SRV-1/2/3 online

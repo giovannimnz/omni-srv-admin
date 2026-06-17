@@ -6,11 +6,11 @@ status: planning
 last_updated: "2026-06-17T01:10:00Z"
 last_activity: 2026-06-17 — Phase 19 fleet std: hostnames lowercase + chromium 149.0.7827.114 from PPA xtradeb + Desktop shortcut + dark theme canônico aplicado (sem restart LXDE)
 progress:
-  total_phases: 19
-  completed_phases: 6
-  total_plans: 35
-  completed_plans: 23
-  percent: 14
+  total_phases: 20
+  completed_phases: 8
+  total_plans: 36
+  completed_plans: 25
+  percent: 19
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
@@ -37,7 +37,9 @@ See also: .planning/MILESTONES.md
 | M005 | K3s HA Cluster + Portainer (Phase 13) | K3s HA + Portainer + observability live; edge Basic Auth active; OCI snapshot IDs/RWX strategy pending |
 | M006 | SRV-1 Resource Governance + PM2 Hardening (Phase 14, branch `codex/phase14-resource-governor-14-01`) | ✅ Closed (v1.0 shipped 2026-06-15) |
 | M007 | M005 Follow-ups: OCI snapshots, Cloudflare Access, observability, RWX (Phases 15-17) | Planning |
-| M007-ext | Ubuntu Pro ESM Apps — Google account link, fleet attach, sources DEB822, regression watchdog (Phase 18) | Planning — 18-PLAN + 18-06-AUDIT done; 18-06 detach+reattach awaiting user clarifications |
+| M007-ext | Ubuntu Pro ESM Apps — Google account link, fleet attach, sources DEB822, regression watchdog (Phase 18) | D18-06-A/B/C done; G18-1 (apt upgrade) awaiting operator |
+| M008 | Fleet Standardization — hostnames + chromium + dark theme (Phase 19) | ✅ Closed 2026-06-17 (commit on main) |
+| M008-b | Podman Networking Standardization (Phase 20) | ✅ Closed 2026-06-17 (commit `c0543a9de` on main) |
 
 ## Active Branch Results
 
@@ -146,10 +148,10 @@ See also: .planning/MILESTONES.md
 
 ## Current Position
 
-Phase: 19 (Fleet Standardization — M008)
-Plan: 19-01 (hostnames+PPA+chromium+theme) — DONE
-Status: Phase 19 fully executed across 4 hosts (atius-srv-1/2/3 + horistic-srv-1) — hostnames lowercase, chromium 149.0.7827.114 from PPA xtradeb, desktop shortcut criado, dark theme canônico em disco (theme ativo no próximo login). Pendente: restart manual do LXDE pelo user (eu NÃO derrubei sessão RDP ativa) e G18-1 (apt upgrade ESM).
-Last activity: 2026-06-17 — Phase 19 fleet std: 4 hosts parallel via delegate_task (138-278s cada). 19-01 hostname+PPA+chromium+desktop (3 subagentes succeeded) + 19-02 dark theme apply sem restart-session (4 subagentes succeeded).
+Phase: 20 (Podman Networking Standardization — M008-b)
+Plan: 20-01 — DONE
+Status: Phase 20 fully executed. Podman fleet networking standardized across SRV-1/2/3: `containers.conf` + `99-netavark.conf` + `srv<N>-podman` (dns=true) + `systemd-resolved` installed (fix mailcow Exited 45h on SRV-2) + `podman-compose` 1.6.0 + `~/.profile` PATH fix. Materialized as skill (`~/.hermes/skills/devops/podman-fleet-standardize/`) + omni-srv-admin module (`modules/fleet/podman-network/`) + CLI (`omni podman-network {drift,apply,smoke,standard}`). Commit `c0543a9de` on main (16 files, 1741 insertions). `omni podman-network drift` returns 6/6 PASS on all 3 SRVs.
+Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audit `omni podman-network drift` 6/6 PASS. Phase 19 closed (SUMMARY created). Phase 20 created (PLAN + SUMMARY), commits on main. M008 + M008-b both closed procedurally.
 
 ## Operator Next Steps
 
