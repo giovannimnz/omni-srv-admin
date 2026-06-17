@@ -3,8 +3,8 @@ gsd_state_version: 1.0
 milestone: v1.1
 milestone_name: M005 Follow-ups + M007-ext (Ubuntu Pro ESM Apps) + M008 (Fleet Standardization)
 status: planning
-last_updated: "2026-06-17T01:10:00Z"
-last_activity: 2026-06-17 — Phase 19 hotfix: atalhos LXDE corrigidos via xrdp-launch, Chromium snap/transitional removido, Obsidian SRV-2 restaurado, hostnames/aliases SRV/HORISTIC lowercase
+last_updated: "2026-06-17T20:12:00-03:00"
+last_activity: 2026-06-17 — Phase 21 MT5 KVM onboarding started; graphify fresh; KVM-1/KVM-2 lowercase zsh/rust/zellij validated; inventory/DB/docs in progress
 progress:
   total_phases: 20
   completed_phases: 8
@@ -40,6 +40,7 @@ See also: .planning/MILESTONES.md
 | M007-ext | Ubuntu Pro ESM Apps — Google account link, fleet attach, sources DEB822, regression watchdog (Phase 18) | D18-06-A/B/C done; G18-1 (apt upgrade) awaiting operator |
 | M008 | Fleet Standardization — hostnames + chromium + dark theme (Phase 19) | ✅ Closed 2026-06-17 (commit on main) |
 | M008-b | Podman Networking Standardization (Phase 20) | ✅ Closed 2026-06-17 (commit `c0543a9de` on main) |
+| M009 | MT5 KVM Fleet Onboarding (Phase 21) | IN PROGRESS — KVMs sem K3s, inventário/DB/monitoramento/docs |
 
 ## Active Branch Results
 
@@ -72,7 +73,7 @@ See also: .planning/MILESTONES.md
 | Branch | `docs/m005-k3s-live-bootstrap` | ✅ |
 | Phase | `.planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md` | ✅ |
 | K3s | 3 nodes `Ready`: SRV-1/SRV-2/SRV-3, all `control-plane,etcd` | ✅ |
-| Network | Node IPs on WireGuard: `10.1.1.1`, `10.1.1.2`, `10.1.1.7`; flannel `wg0` | ✅ |
+| Network | Node IPs on WireGuard: `10.1.1.1`, `10.1.1.2`, `10.1.1.3`; flannel `wg0`; SRV-3 keeps `10.1.1.7` as etcd compatibility alias | ✅ |
 | Smoke | DaemonSet one pod per node + DNS resolution to `kubernetes.default` | ✅ |
 | Portainer | Portainer CE `2.39.3` deployed via Helm, ClusterIP + local port-forward | ✅ |
 | Edge | `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status | ✅ |
@@ -187,3 +188,19 @@ Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audi
   - [ ] Confirmar Landscape SaaS UI com SRV-1/2/3 online
 
 - **Next decision:** user chooses between (a) close phase 19 procedurally + create phase 20, (b) advance to G18-1, (c) something else.
+
+
+## Phase 21 — MT5 KVM Fleet Onboarding
+
+Status: IN PROGRESS (2026-06-17)
+
+| Item | Resultado |
+|---|---|
+| Graphify | fresh; Codex + Hermes runtimes retornam `commit_stale=false` |
+| KVM-1 | `atius-mt5-kvm-1`; zsh default; rustc 1.96.0; cargo-binstall 1.20.0; zellij 0.44.3; port 9001 preservado |
+| KVM-2 | `atius-mt5-kvm-2`; zsh default; rustc 1.96.0; cargo-binstall 1.20.0; zellij 0.44.3; port 9002 preservado |
+| K3s | explicitamente fora do escopo por enquanto |
+| Inventário/DB | `inventory/hosts/atius-mt5-kvm-{1,2}.yaml` OK; `TbHosts/TbNodes/TbPrograms/TbNodeTelemetry` OK; `omni fleet monitor hosts --json` source=database |
+| VPN/docs | CoreDNS `custom_hosts` lowercase + compat uppercase; `peer_aliases.json` lowercase; `wg-quick strip wg0` OK |
+| Docs | network map repo+vault, mt5-arm docs e session log vault atualizados |
+| Pendência | Graphify final pós-mudanças + commit/push |

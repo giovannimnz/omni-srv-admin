@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.1.4 — 2026-06-17
+> Versão: 1.3.0 — 2026-06-17
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -24,10 +24,13 @@ Os hosts móveis/complementares são documentados para completeness.
 | atius-srv-1    | production         | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-1.yaml` |
 | atius-srv-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
 | atius-srv-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
-| horistic-srv-1 | proxy reverso      | Ubuntu 24.04  | active  | (sem inventory file — só apache vhost) |
+| horistic-srv-1 | proxy reverso      | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv-1.yaml` |
+| GIOVANNI-W11-PC | workstation Windows | Windows 11    | planned | `inventory/hosts/giovanni-w11-pc.yaml` |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
 | GIOVANNI-S23   | mobile node        | Termux (Android) | planned | `inventory/hosts/giovanni-s23-termux.yaml` |
 | GIOVANNI-S23-PROOT | mobile ubuntu | Ubuntu (proot) | planned | `inventory/hosts/giovanni-s23-proot.yaml` |
+| atius-mt5-kvm-1 | MT5 execution primary | Ubuntu 24.04 x86_64 | active | `inventory/hosts/atius-mt5-kvm-1.yaml` |
+| atius-mt5-kvm-2 | MT5 execution backup | Ubuntu 24.04 x86_64 | active | `inventory/hosts/atius-mt5-kvm-2.yaml` |
 
 Specs comuns (Oracle OCI Ampere A1.Flex):
 - Arquitetura: ARM64 / aarch64
@@ -58,14 +61,14 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
    SRV-1           SRV-2           SRV-3
    137.131.190.161  129.148.47.32   136.248.126.12
        │               │               │
-       └──────── WireGuard (hub SRV-1, port 51820) ────────┐
+       └──────── WireGuard (hub SRV-2, port 51820) ────────┐
                        │                                    │
             10.1.1.0/24 (VPN overlay)                       │
                        │                                    │
        ┌───────────────┼───────────────┐                    │
        │               │               │                    │
    SRV-1         SRV-2          SRV-3                Tailscale (mesh backup)
-   10.1.1.1      10.1.1.2       10.1.1.7             100.76/100.93/100.72
+   10.1.1.1      10.1.1.2       10.1.1.3             100.76/100.93/100.72
        │               │               │
        └─── K3s HA cluster (WireGuard-transport) ───────────┘
             flannel.1 10.42.0.0/16
@@ -74,7 +77,7 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
 
 Camadas:
 1. **Oracle VCN** (10.0.0.0/24 ou DHCP): rede privada de cada OCI
-2. **WireGuard** (10.1.1.0/24): VPN overlay, hub em SRV-1
+2. **WireGuard** (10.1.1.0/24): VPN overlay, hub em SRV-2
 3. **Tailscale** (100.64.0.0/10): mesh backup / acesso de fora
 4. **K3s flannel** (10.42.0.0/16): CNI dos pods no cluster
 5. **Cloudflare**: proxy reverso público, escudo anti-DDoS, Origin SSL
@@ -87,17 +90,39 @@ Camadas:
 |----------------|-----------------|------------------|---------|------------------|-------------|
 | atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.1.1.1 | 100.76.56.62   | 10.0.0.38   |
 | atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.1.1.2 | 100.93.43.113  | DHCP        |
-| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.7 | 100.72.102.57  | DHCP        |
-| horistic-srv-1 | horistic-srv-1  | 163.176.232.119  | 10.1.1.3 | (TBD)          | DHCP        |
-| GIOVANNI-PC    | GIOVANNI-PC     | 177.134.153.216  | 10.1.1.4 | -               | LAN local   |
-| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.5 | -               | mobile/4G   |
+| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.3 | 100.72.102.57  | DHCP        |
+| horistic-srv-1 | horistic-srv-1  | 163.176.232.119  | 10.1.1.4 | 100.102.126.61 | DHCP        |
+| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.1.1.5 | -              | LAN local   |
+| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.6 | -               | mobile/4G   |
+| atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.1.1.16 | - | 10.0.0.61 |
+| atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.1.1.17 | - | 10.0.0.188 |
 
-DNS: `/etc/hosts` espelha a tabela acima. `systemd-resolved` aponta
-para 127.0.0.53 (stub) + 10.1.1.2 (SRV-2 BIND interno) + 1.1.1.1 (fallback).
+Nota K3s/etcd: `atius-srv-3` tambem mantem `10.1.1.7/32` como alias de
+compatibilidade do membro etcd (`node-ip`/peer URL ainda em `10.1.1.7`).
+O DNS canonico e o novo endereco administrativo sao `10.1.1.3`.
+
+DNS: `/etc/hosts` espelha a tabela acima nos quatro servidores
+SRV-1/SRV-2/SRV-3/Horistic. O CoreDNS interno roda no SRV-2 e escuta em
+`10.1.1.2:53` e `127.0.0.1:53`. O SRV-2 usa `systemd-resolved` com
+`127.0.0.1`, `10.1.1.2` e `1.1.1.1`; SRV-1/SRV-3 usam o stub local com
+upstream `10.1.1.2`; Horistic usa `/etc/resolv.conf` estático com
+`10.1.1.2` primeiro e resolvers públicos apenas como fallback.
+
+WireGuard/DNS validation 2026-06-17:
+- Chaves WireGuard rotacionadas para `atius-srv-3`, `horistic-srv-1`,
+  `GIOVANNI-W11-PC` e `GIOVANNI-S23`; chaves privadas ficam somente nos
+  hosts/configs restritos, não em docs.
+- CoreDNS resolve `atius-srv-3 -> 10.1.1.3`,
+  `horistic-srv-1 -> 10.1.1.4`, `GIOVANNI-W11-PC -> 10.1.1.5`,
+  `GIOVANNI-S23 -> 10.1.1.6`, `atius-mt5-kvm-1 -> 10.1.1.16` e
+  `atius-mt5-kvm-2 -> 10.1.1.17`.
+- `wg-quick strip wg0` OK em SRV-2, SRV-3 e Horistic.
+- W11 e S23 têm peers novos no hub e configs gerados; handshake fica
+  zerado até os configs novos serem importados nos dispositivos.
 
 Cloudflare:
 - `*.atius.com.br` → origem 10.1.1.1 (Apache2 SRV-1, port 9080/9444)
-- `*.horistic.com` → origem 10.1.1.3 (Apache2 horistic-srv-1, proxy pra 10.1.1.1:3050/8050)
+- `*.horistic.com` → origem 10.1.1.4 (Apache2 horistic-srv-1, proxy pra 10.1.1.1:3050/8050)
 - `portainer.atius.com.br`, `docker.atius.com.br` → K3s Portainer (Phase 13)
 - `jenkins.atius.com.br` → 10.1.1.1:8085 (SRV-1 podman)
 - `cloudbeaver.atius.com.br` → 10.1.1.1:8978 (SRV-1 podman)
@@ -255,7 +280,7 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 25809  | electron (AionUi)          | 0.0.0.0      | ubuntu   |                                    |
 | 3000   | next-server                | *            | ubuntu   | PM2                                |
 
-### SRV-3 (10.1.1.7) — sandbox
+### SRV-3 (10.1.1.3; 10.1.1.7 K3s alias) — sandbox
 
 | Porta  | Serviço                    | Bind         | PID/User | Notas                              |
 |--------|----------------------------|--------------|----------|-----------------------------------|
@@ -267,14 +292,29 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 3350   | xrdp-sesman                | 127.0.0.1    | root     |                                    |
 | 5901   | Xvnc XRDP display :1       | 127.0.0.1/session | user | efêmero durante sessão XRDP; smoke OK 2026-06-16 |
 | 631    | cups                       | 127.0.0.1    | root     | pending ESM upgrade (8 cups pkgs)  |
-| 2379   | etcd                       | 10.1.1.7     | root     | K3s                                |
-| 2380   | etcd peer                  | 10.1.1.7     | root     | K3s                                |
+| 2379   | etcd                       | 10.1.1.7     | root     | K3s compatibility alias            |
+| 2380   | etcd peer                  | 10.1.1.7     | root     | K3s compatibility alias            |
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
 | 6444   | K3s                        | 127.0.0.1    | root     | K3s                                |
 | 8310   | python script              | 0.0.0.0      | ubuntu   | undocumented                       |
 | 9100   | node-exporter              | *            | root     |                                    |
 | 10010  | ?                          | 127.0.0.1    | ?        | K3s related?                       |
 | 10250  | kubelet                    | *            | root     | K3s                                |
+
+
+### MT5 KVM execution VMs (sem K3s)
+
+| Porta | Serviço | Bind | PID/User | Notas |
+|---|---|---|---|---|
+| 22 | sshd | 0.0.0.0 / [::] | root | key `/home/ubuntu/.ssh/id_oracle` |
+| 9001 | SlaveEA signal receiver | 0.0.0.0 | ubuntu/python3 | `atius-mt5-kvm-1` |
+| 9002 | SlaveEA signal receiver | 0.0.0.0 | ubuntu/python3 | `atius-mt5-kvm-2` |
+| 9100 | prometheus-node-exporter | * | prometheus | monitoramento omni/prometheus |
+
+Notas:
+- `atius-mt5-kvm-1` e `atius-mt5-kvm-2` **não** entram no K3s neste momento.
+- Runtime validado 2026-06-17: zsh default, Oh My Zsh, rustc/cargo 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3.
+- Prompt esperado: `ubuntu@atius-mt5-kvm-N:~/path ➜`.
 
 ---
 
@@ -286,7 +326,7 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | **XRDP humano** | **:1..14**     | **local via 3389** | **xrdp + Xvnc + libvnc; resolução pelo cliente RDP** |
 | **Pool headless** | **:15..30**  | **127.0.0.1** | **camofox/headless; resolução fixa por app/serviço** |
 | xrdp legacy/overflow | :31..60   | mixed         | não usar como alvo primário |
-| WireGuard       | 51820          | 0.0.0.0       | SRV-1 hub                |
+| WireGuard       | 51820          | 0.0.0.0       | SRV-2 hub                |
 | SSH             | 22             | 0.0.0.0       | todos                    |
 | RDP             | 3389, 3350     | 3389 WAN      | xrdp                     |
 | Cloudflare Origin | 9080, 9444   | 127.0.0.1     | Apache2 (Plane 2 mig)   |
@@ -412,6 +452,15 @@ Upgrade gated em janela separada.
 
 ## 9. Changelog
 
+- **1.3.0 (2026-06-17)** — adicionados `atius-mt5-kvm-1` e `atius-mt5-kvm-2` como hosts gerenciados sem K3s: IPs 10.1.1.16/17, portas 9001/9002, node-exporter 9100, zsh/Oh My Zsh/Rust/zellij validados e inventory `inventory/hosts/atius-mt5-kvm-*.yaml`.
+
+- **1.2.1 (2026-06-17)** — rotação de chaves WireGuard para SRV-3,
+  Horistic, W11 e S23; SRV-2 ajustado para usar CoreDNS local via
+  `systemd-resolved`; Horistic ajustado para resolver primeiro via
+  `10.1.1.2`; `/etc/hosts` canônico aplicado em SRV-1/SRV-2/SRV-3/Horistic.
+  Revalidado: K3s 3/3 Ready, ping `.3/.4`, Horistic ping `.2/.1/.3`,
+  CoreDNS `.3/.4/.5/.6`, e `wg-quick strip wg0` em SRV-2/SRV-3/Horistic.
+  W11/S23 aguardam importação local dos configs novos para handshake.
 - **1.2.0 (2026-06-16)** — adicionado cross-ref ao módulo novo
   `modules/fleet/podman-network/` e à skill
   `devops/podman-fleet-standardize/`. Padronização do networking podman

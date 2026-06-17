@@ -1,0 +1,112 @@
+id: atius-mt5-kvm-2
+aliases:
+  - mt5-kvm-2
+  - kvm-2
+role: mt5-execution-backup
+owner: giovanni
+access:
+  ssh: ubuntu@10.1.1.17
+  public_ip: 147.15.83.218
+  vpn_ip: 10.1.1.17
+platform:
+  provider: oracle-oci-kvm
+  os: ubuntu-24.04
+  arch: amd64
+  kernel: 6.17.0-1016-oracle
+status: active
+modules:
+  - fleet
+  - rust-zellij-fleet
+constraints:
+  - no-k3s-member-currently
+  - mt5-execution-vm
+  - preserve-slave-ea-listener-9002
+network:
+  vpn_hub: atius-srv-2
+  wireguard_interface: wg0
+  wireguard_ip: 10.1.1.17
+  wireguard_peer_name: ATIUS-MT5-KVM-2
+  dns_name: atius-mt5-kvm-2
+  public_ip: 147.15.83.218
+  exposed_ports:
+    - 9002
+monitoring:
+  node_exporter: http://10.1.1.17:9100/metrics
+  service_ports:
+    - 9002
+  no_k3s: true
+apps:
+  - id: mt5-slave-ea-signal-receiver
+    runtime: python-system
+    install_type: manual-python-script
+    current_version: "unknown"
+    desired_version: "inventory-managed"
+    managed_by: "mt5-arm"
+    update_policy: "plan-first"
+    last_audited: "2026-06-17"
+  - id: prometheus-node-exporter
+    runtime: systemd
+    unit: prometheus-node-exporter.service
+    install_type: apt-package
+    current_version: "apt-managed"
+    desired_version: "apt-managed"
+    source: "https://github.com/prometheus/node_exporter"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-17"
+  - id: rust-toolchain
+    runtime: local-rustup
+    install_type: rustup-managed
+    install_path: /home/ubuntu/.cargo/bin
+    rustup_home: /home/ubuntu/.rustup
+    cargo_home: /home/ubuntu/.cargo
+    current_version: "1.96.0"
+    desired_version: "1.96.0"
+    toolchain: stable
+    profile: minimal
+    arch: x86_64-unknown-linux-gnu
+    source: "https://sh.rustup.rs"
+    update_command: "rustup update stable"
+    version_command: "rustc --version"
+    managed_by: "omni-srv-admin"
+    update_policy: "sim-fleet-update"
+    last_audited: "2026-06-17"
+    installed_on: "2026-06-17"
+  - id: cargo-binstall
+    runtime: local-binary
+    install_type: manual-release-binary
+    install_path: /home/ubuntu/.cargo/bin/cargo-binstall
+    current_version: "1.20.0"
+    desired_version: "1.20.0"
+    source: "https://github.com/cargo-bins/cargo-binstall/releases"
+    version_command: "cargo-binstall -V"
+    managed_by: "omni-srv-admin"
+    update_policy: "manual"
+    last_audited: "2026-06-17"
+    installed_on: "2026-06-17"
+  - id: zellij
+    runtime: local-rustup-binary
+    install_type: cargo-binstall
+    install_path: /home/ubuntu/.cargo/bin/zellij
+    current_version: "0.44.3"
+    desired_version: "0.44.3"
+    source: "https://github.com/zellij-org/zellij"
+    binary_target: x86_64-unknown-linux-musl
+    update_command: "cargo binstall zellij --no-confirm"
+    version_command: "zellij --version"
+    managed_by: "omni-srv-admin"
+    update_policy: "sim-fleet-update"
+    last_audited: "2026-06-17"
+    installed_on: "2026-06-17"
+logs:
+  local_dir: /home/ubuntu/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/ATIUS-MT5-KVM-2/Backup
+notes:
+  vault_project: 20-PROJETOS/mt5-arm
+  mt5_arm_repo: /home/ubuntu/GitHub/mt5-arm
+  hostname_lowercase_validated: "2026-06-17"
+  zsh_ohmyzsh_rust_zellij_validated: "2026-06-17"
+  ssh_key: /home/ubuntu/.ssh/id_oracle
+  validation_summary: "hostname lowercase, /usr/bin/zsh default, rustc 1.96.0, cargo 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3, node-exporter active, port 9002 preserved."
