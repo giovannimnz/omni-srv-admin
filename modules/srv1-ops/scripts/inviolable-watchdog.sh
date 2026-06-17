@@ -194,7 +194,7 @@ atius_router_containers_ok() {
   grep -Fxq "router-ai-atius" <<<"$names" &&
     grep -Fxq "postgres" <<<"$names" &&
     grep -Fxq "redis" <<<"$names" &&
-    grep -Fxq "model-detailed" <<<"$names"
+    grep -Eqx "(model-detailed|model-detailed-hotfix)" <<<"$names"
 }
 
 atius_pm2_stack_ok() {

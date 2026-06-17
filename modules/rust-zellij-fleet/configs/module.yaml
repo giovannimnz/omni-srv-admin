@@ -1,0 +1,22 @@
+id: rust-zellij-fleet
+name: Rust + Zellij Fleet Management
+version: 1.0.0
+status: active
+owner: giovanni
+created: 2026-06-16
+last_updated: 2026-06-16
+managed_hosts:
+  - atius-srv-1
+  - atius-srv-2
+  - atius-srv-3
+managed_apps:
+  - rust-toolchain
+  - cargo-binstall
+  - zellij
+update_policy: sim-fleet-update
+update_tool: modules/rust-zellij-fleet/scripts/fleet-rust-zellij.sh
+notes:
+  - "Inventário fonte: inventory/hosts/atius-srv-{1,2,3}.yaml (app id rust-toolchain, cargo-binstall, zellij)"
+  - "Update simultâneo nos 3 hosts via SSH paralelo; lock anti-concorrência via flock"
+  - "Update do zellij usa cargo binstall (binário pré-compilado); sem compilação local"
+  - "Versões pinadas em inventory; update só roda após bump de desired_version"
