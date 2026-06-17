@@ -1,0 +1,16 @@
+; Add to ~/.profile (idempotent — checks for existing block first)
+;
+; Podman fleet standard — non-interactive PATH fix
+; Without this, podman-compose (installed via `pip install --user`) is at
+; ~/.local/bin/podman-compose, which is only on PATH for interactive shells
+; (.bashrc returns early on non-interactive shells). For systemd --user
+; services and `ssh host command` invocations, PATH must include
+; ~/.local/bin.
+;
+; Reference: ~/.hermes/skills/devops/podman-fleet-standardize/SKILL.md
+
+# Ensure ~/.local/bin is on PATH for non-interactive shells
+case "$-" in
+    *i*) ;;
+    *) export PATH="$HOME/.local/bin:$PATH";;
+esac

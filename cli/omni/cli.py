@@ -25,6 +25,7 @@ from omni.fleet import fleet
 from omni.fleet_backup import fleet_backup
 from omni.remote_manager import remote_manager
 from omni.remote_ops import srv
+from omni.podman_network import podman_network
 
 
 @click.group()
@@ -38,6 +39,7 @@ cli.add_command(fleet)
 cli.add_command(fleet_backup)
 cli.add_command(remote_manager)
 cli.add_command(srv)
+cli.add_command(podman_network)
 
 
 # ═══════════════════════════════════════════════════════════════

@@ -1,0 +1,11 @@
+; Podman fleet standard — containers.conf
+; Per-server customization: substitute <N> with 1, 2, or 3
+;
+; Lives in: ~/.config/containers/containers.conf
+; Owner:    omni-srv-admin/modules/fleet/podman-network
+; Reference: ~/.hermes/skills/devops/podman-fleet-standardize/SKILL.md
+; Last validated: 2026-06-16
+
+[network]
+default_network = "srv<N>-podman"
+default_subnet = "10.10.<N>.0/24"
