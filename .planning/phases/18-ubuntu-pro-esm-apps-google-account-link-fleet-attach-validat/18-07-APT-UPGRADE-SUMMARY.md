@@ -1,69 +1,13 @@
----
+# 18-07 — apt upgrade esm-apps+esm-infra SUMMARY
+
 phase: 18
 plan: 18-07
-type: gate-prerequisite
-date: 2026-06-16
-status: COMPLETE (gate G18-1 + G18-2 closed 2026-06-17)
----
-
-# 18-07 — apt upgrade esm-apps+esm-infra (GATED)
-
-**Gate G18-1: user must explicitly authorize "pode dar apt upgrade"
-before this plan runs. Live mutation across 3 SRVs.**
-
-## Pré-flight (read-only, pode rodar sem gate)
-
-| Step | Command | Notes |
-|------|---------|-------|
-| 1 | `pro security-status` | Lista CVEs cobertos por esm-apps/infra upgrade |
-| 2 | `apt list --upgradable` | Filtrar pacotes com origem esm-apps/infra |
-| 3 | `dpkg --get-selections > ~/.backups/phase-18-attach-2026-06-16/<srv>-dpkg-selections.txt` | Backup estado de pacotes |
-| 4 | `sudo pro collect-logs` | Coleta logs pro-client para diagnóstico pós |
-| 5 | OCI snapshot pré-upgrade (SRV-1/2/3) | Ver `omni srv oci snapshot preflight` (Phase 15) |
-| 6 | Validar que `~/secrets/ubuntu-pro-token.txt` existe nos 3 SRVs | Necessário pra re-attach se upgrade quebrar |
-
-## Sequência (quando autorizado)
-
-```
-# SRV-1
-ssh 10.1.1.1 'sudo apt update && sudo apt upgrade -y'
-# validar pós: xfreerdp smoke + pro status + esm list
-# (5min cooldown)
-# SRV-2
-ssh 10.1.1.2 'sudo apt update && sudo apt upgrade -y'
-# validar pós
-# (5min cooldown)
-# SRV-3
-ssh 10.1.1.7 'sudo apt update && sudo apt upgrade -y'
-# validar pós
-```
-
-## Validação pós-upgrade
-
-- [ ] `pro status --format json` mostra esm-apps+infra ainda enabled
-- [ ] `apt list --upgradable` mostra 0 pacotes com origem esm
-- [ ] `pro security-status` mostra 0 CVEs esm-pending
-- [ ] Microsoft RDP login OK nos 3 SRVs (gate G18-2)
-- [ ] SSH login OK nos 3 SRVs
-- [ ] `journalctl -p err --since "5 minutes ago"` limpo
-
-## Rollback
-
-Por pacote: `sudo apt install package=version` (pegar versão do
-backup dpkg-selections).
-
-Global: restore OCI snapshot pré-upgrade (gate 13-oci-rollback já
-fechado).
-
-## Cross-refs
-
-- `18-PLAN.md` §18-07
-- `18-06-AUDIT-2026-06-16.md` (estado pré-upgrade)
-- `13-CONTEXT.md` L134-163 (gate ESM original)
-- Phase 15 OCI snapshot workflow (gate review)
-
-
----
+type: execution-report
+date: 2026-06-17
+milestone: M007-ext
+operator: giovanni
+agent: Filippo (Hermes, MiniMax-M3)
+status: COMPLETE
 
 ## 18-07-EXECUTION (started 2026-06-17 22:35 BRT)
 
