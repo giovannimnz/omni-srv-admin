@@ -137,10 +137,7 @@ See also: .planning/MILESTONES.md
 - **Rotação:** 14 snapshots
 
 ## Notes
-
-- YOLO mode ativado
-- Push policy: fork push livre após audit
-- GDrive quota: 5TB total, ~144GB usado, ~4.7TB livre
+- 2026-06-18: Phase 15 (M005 OCI Snapshots) closed procedurally. CLI `omni srv oci {status, snapshot preflight, snapshot routine, restore drill}` shipped; inventory dos 4 hosts `oracle-oci` tem bloco `oci:` com `pending-...` (offline); `docs/operations/oci-snapshots.md` é o runbook. 12/12 testes verdes. Live OCI (drill real em SRV-1) bloqueado: `oci` CLI e `~/.oci/config` não estão instalados no host. Próxima janela: provisionar API key + rodar preflight/routine em cada host + drill real.
 - 2026-06-15: main local aligned with origin/main via merge. 5 docs/m005-* branches ready for archival. M006 stays in-progress on phase14 branch.
 - 2026-06-16 (cont): Phase 18 scoped up. (a) RDP login SRV-1 broken — root cause: x11vnc (camofox in :97) holding 5910, collides with xrdp-sesman display :10. (b) SRV-2 incident parallel — x11vnc 0.0.0.0:5900 exposed WAN, pid 1678706, bots hammering since 2025-10. (c) Doc canônico unificado criado: `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` (+ mirror `30-RECURSOS/operations/` no vault, indexed in gbrain pages=877 chunks=2670). (d) Decisão: pool de displays `:5..9` = headless helpers; VNC=5900+N, noVNC=6080+N. Camofox migra `:97→:5` (VNC 5905, noVNC 6085). (e) ESM Apps re-scoped: token em `~/secrets/ubuntu-pro-token.txt` em cada SRV; target .sources (DEB822) + account giovannimunizds@gmail.com. Phase 18 re-numerada 18-01..18-09. Gate explícito: restart xrdp-sesman + smoke test RDP + apt upgrade ainda pendentes.
 - 2026-06-16 (Codex resume): `ATIUS-FLEET-NETWORK-PORT-MAP.md` bumped to v1.1.0: reserva baixa `:1..14`, pool headless `:15..30`, xrdp `:31..60`, overflow `:61+`. Live `/etc/xrdp/sesman.ini` changed on SRV-1/2/3 from `X11DisplayOffset=1` to `31` with backups, `xrdp`/`xrdp-sesman` restarted, stale `:1/:2/:10` XRDP sessions removed, and `xfreerdp` probes reached `sesman` on all 3 with expected `AUTHFAIL` for fake user. Human Microsoft RDP retry still pending.

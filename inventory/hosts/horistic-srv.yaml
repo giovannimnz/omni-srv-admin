@@ -38,3 +38,7 @@ notes:
   wireguard_key_preserved: true
   public_ip_preserved: true
   apache_vhost_preserved: remote.horistic-srv-1.atius.com.br.conf
+oci:
+  last_snapshot_id: "pending-6f7baf00-cf7d-4297-a3eb-9b49fa463c0a"
+  last_snapshot_at: "2026-06-18T01:38:21Z"
+  routine_schedule: "weekly Sun 04:00 BRT"

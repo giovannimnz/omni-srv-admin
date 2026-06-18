@@ -195,3 +195,7 @@ resource_governor:
     - transfers
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+oci:
+  last_snapshot_id: "pending-250f32ed-819e-4ccf-9b70-a08aa298a94c"
+  last_snapshot_at: "2026-06-18T01:38:21Z"
+  routine_schedule: "weekly Sun 04:00 BRT"

@@ -83,3 +83,7 @@ notes:
   wireguard_key_rotated: 2026-06-17
   dns_validation: "getent hosts atius-srv-3 returns 10.1.1.3; CoreDNS returns 10.1.1.3; wg-quick strip wg0 OK."
   k3s_note: "K3s remains Ready with INTERNAL-IP 10.1.1.7; full etcd member URL migration to 10.1.1.3 requires a separate maintenance window."
+oci:
+  last_snapshot_id: "pending-5c217b32-1cf7-4aa9-b9db-c2130e9d2d49"
+  last_snapshot_at: "2026-06-18T01:38:21Z"
+  routine_schedule: "weekly Sun 04:00 BRT"

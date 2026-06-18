@@ -78,3 +78,7 @@ apps:
     installed_on: "2026-06-16"
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+oci:
+  last_snapshot_id: "pending-ef73658b-77ae-4ccf-a46b-0d939692c21e"
+  last_snapshot_at: "2026-06-18T01:38:21Z"
+  routine_schedule: "weekly Sun 04:00 BRT"

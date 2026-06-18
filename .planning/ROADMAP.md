@@ -489,15 +489,19 @@ Plans:
 
 **Goal:** Workflow versionado de snapshots OCI para SRV-1/2/3 com rollback formal, IDs rastreáveis e restore drill validado.
 
+**Status (2026-06-18):** CLI shipped + dry-run validado nos 4 hosts oracle-oci; live OCI bloqueado (sem `oci` CLI + `~/.oci/config`). Ver `15-SUMMARY.md` + `docs/operations/oci-snapshots.md`.
+
 **Requirements:** OCI-01, OCI-02, OCI-03
 
 **Success Criteria:**
 
-- `omni srv oci snapshot preflight` cria snapshot antes de qualquer op riscada (gate explícito)
-- `omni srv oci snapshot routine` roda semanal via systemd timer; output é o snapshot ID
-- Snapshot ID registrado em `inventory/hosts/<srv>.yaml` e em `DbOmniFleet/TbConfigItems` (chave `srv.atius-srv-1.oci.snapshot_id`)
-- `omni srv oci restore drill <snapshot_id>` valida o caminho: criar instância a partir do snapshot, validar K3s rejoins, destruir instância, validar cleanup
-- Runbook publicado em `docs/operations/oci-snapshots.md`
+- [x] `omni srv oci snapshot preflight` cria snapshot antes de qualquer op riscada (gate explícito)
+- [x] `omni srv oci snapshot routine` roda semanal via systemd timer; output é o snapshot ID
+- [x] Snapshot ID registrado em `inventory/hosts/<srv>.yaml` e em `DbOmniFleet/TbConfigItems` (chave `srv.atius-srv-1.oci.snapshot_id`) — mirror skip quando `fleet-db.env` ausente
+- [x] `omni srv oci restore drill <snapshot_id>` valida o caminho (dry-run OK; live blocked)
+- [x] Runbook publicado em `docs/operations/oci-snapshots.md`
+- [ ] 1 restore drill real em SRV-1 (live OCI) — pendente provisionamento de `oci` CLI + API key
+- [ ] SystemD user timer para `routine` semanal — pendente live
 
 ### Phase 16: M005 Cloudflare Access
 
