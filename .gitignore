@@ -146,6 +146,15 @@ __pycache__/**
 *.bak.*
 *.orig
 
+# Cloudflare Access service token (Phase 16 / M005)
+# Lives outside the repo at ~/.hermes/secrets/, but a user can override
+# the path via OMNI_CF_SERVICE_TOKEN_FILE; in either case, the file is
+# secret and must never be committed.
+cloudflare-service-token.json
+**/cloudflare-service-token.json
+secrets/cloudflare-service-token.json
+**/secrets/cloudflare-service-token.json
+
 # Graphify: keep published map artifacts, ignore volatile build/cache state
 .planning/graphs/.last-build-*.json
 .planning/graphs/.rebuild.lock

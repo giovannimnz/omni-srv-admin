@@ -60,7 +60,7 @@ See also: .planning/MILESTONES.md
 - Critical local backups: ✅ created under `~/.backups/k3s-preflight/`.
 - Etcd post-bootstrap snapshot: ✅ saved on SRV-1.
 | OCI snapshot IDs | follow-up for formal cloud rollback record |
-| Cloudflare Access policy | follow-up before broad Portainer sharing |
+| Cloudflare Access policy | ⚠️ code shipped 2026-06-17 (`cli/omni/edge.py` + runbook + validation script) — live cutover **blocked** on Cloudflare dashboard "Enable Access" click; see `.planning/phases/16-m005-cloudflare-access/16-SUMMARY.md` |
 | Observability stack | follow-up from M005 observability plan |
 | **Tailscale ACL** | ✅ **closed 2026-06-16** — see `13-ACL-CLOSURE-2026-06-16.md` and vault `60-LOGS/2026-06-16/` |
 - M006 live execution must not stop PM2 daemons, trading processes, XRDP, or stale user jobs without an explicit gate and current process snapshot.
@@ -102,6 +102,7 @@ See also: .planning/MILESTONES.md
 
 - Phase 1: Preparação do Host ✅ (2026-04-19)
 - Phase 2: Migração Apache2 ✅ (2026-04-19)
+- Phase 16: M005 Cloudflare Access — code shipped 2026-06-17 (`cli/omni/edge.py` + `docs/operations/edge-auth.md` + `scripts/validate-edge-auth.py`, 16/16 tests passing, live pre-cutover state confirmed); live cutover ⛔ blocked on Cloudflare dashboard "Enable Access" click — see `.planning/phases/16-m005-cloudflare-access/16-SUMMARY.md`
 
 ### Backlog (Phases 3-7)
 

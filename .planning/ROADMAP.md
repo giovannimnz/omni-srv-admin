@@ -503,15 +503,31 @@ Plans:
 
 **Goal:** Substituir Apache Basic Auth nos admin edges (`portainer.atius.com.br`, `docker.atius.com.br`) por Cloudflare Access, com service token pra automação.
 
+**Status (2026-06-17):** code shipped; live cutover blocked on dashboard.
+
 **Requirements:** CFL-01, CFL-02, CFL-03
 
 **Success Criteria:**
 
 - Cloudflare Access policy configurada para `portainer.atius.com.br` e `docker.atius.com.br` (Allow rule com email allowlist de Giovanni)
-- Service token emitido e gravado em `.hermes/secrets/cloudflare-service-token.txt` (mode 600)
-- `omni-cli` (cron jobs, automation) usa o service token via `CLOUDFLARE_SERVICE_TOKEN` env var
+- Service token emitido e gravado em `~/.hermes/secrets/cloudflare-service-token.json` (mode 0600)
+- `omni-cli` (cron jobs, automation) usa o service token via `cf_service_auth_headers()` (env `OMNI_CF_SERVICE_TOKEN_FILE` permite override do path)
 - Apache Basic Auth retained as fallback if Access is unavailable, with documented cutover in `docs/operations/edge-auth.md`
 - Validação: `curl -I https://portainer.atius.com.br/` retorna 302 → Cloudflare Access login page (sem 401 Basic Auth challenge)
+
+**Shipped artifacts:**
+
+- `cli/omni/edge.py` — CF Access + Basic Auth client, Click sub-group `omni edge {status,auth,check}`
+- `cli/omni/tests/test_edge.py` — 16/16 tests passing (token round-trip, mode 0600, rotation backup, auth resolution, secret redaction, malformed input, `edge_check` GET+UA contract)
+- `scripts/validate-edge-auth.py` — 3-state matrix (`--expect pre-cutover` / `access-live` / `basic-only`); live pre-cutover state confirmed (anon GET → 401 + `WWW-Authenticate: Basic realm="ATIUS Admin"`)
+- `docs/operations/edge-auth.md` — cutover (8 steps) + rollback + annual rotation + validation matrix
+- `.gitignore` — patterns blocking `cloudflare-service-token.json` from being committed
+
+**Blocker:** Cloudflare Access is not enabled on the account
+(`access.api.error.not_enabled` from `/accounts/<id>/access/apps`,
+verified live 2026-06-18). The "Enable Access" button in the
+Cloudflare dashboard cannot be triggered from the API. Operator
+action required — see `16-SUMMARY.md` §"Blocker".
 
 ### Phase 17: M005 Observability + RWX
 

@@ -25,7 +25,9 @@ from omni.fleet import fleet
 from omni.fleet_backup import fleet_backup
 from omni.remote_manager import remote_manager
 from omni.remote_ops import srv
+from omni.oci import oci as oci_group
 from omni.podman_network import podman_network
+from omni.edge import edge as edge_group
 
 
 @click.group()
@@ -40,6 +42,11 @@ cli.add_command(fleet_backup)
 cli.add_command(remote_manager)
 cli.add_command(srv)
 cli.add_command(podman_network)
+cli.add_command(edge_group)
+
+# OCI snapshot/restore workflow (Phase 15 — M005 OCI Snapshots / M007 follow-up).
+# Exposed as a sub-group of `srv` so the canonical entrypoint is `omni srv oci ...`.
+srv.add_command(oci_group, "oci")
 
 
 # ═══════════════════════════════════════════════════════════════
