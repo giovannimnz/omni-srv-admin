@@ -1,16 +1,16 @@
-# Graph Report - omni-srv-admin  (2026-06-17)
+# Graph Report - omni-srv-admin  (2026-06-18)
 
 ## Corpus Check
-- 374 files · ~853,515 words
+- 385 files · ~870,676 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5589 nodes · 6380 edges · 512 communities (452 shown, 60 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 47 edges (avg confidence: 0.8)
+- 5750 nodes · 6553 edges · 520 communities (460 shown, 60 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 48 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b86234ec`
+- Built from commit: `744ee71f`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -525,18 +525,26 @@
 - [[_COMMUNITY_Community 509|Community 509]]
 - [[_COMMUNITY_Community 510|Community 510]]
 - [[_COMMUNITY_Community 511|Community 511]]
+- [[_COMMUNITY_Community 512|Community 512]]
+- [[_COMMUNITY_Community 513|Community 513]]
+- [[_COMMUNITY_Community 514|Community 514]]
+- [[_COMMUNITY_Community 515|Community 515]]
+- [[_COMMUNITY_Community 516|Community 516]]
+- [[_COMMUNITY_Community 517|Community 517]]
+- [[_COMMUNITY_Community 518|Community 518]]
+- [[_COMMUNITY_Community 519|Community 519]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (504 total, 58 thin omitted)` - 445 edges
+1. `Communities (512 total, 60 thin omitted)` - 451 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `ScenarioResult` - 23 edges
 5. `output()` - 23 edges
 6. `run_sync()` - 22 edges
 7. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 19 edges
-8. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 18 edges
-9. `Phase 3: FreeIPA Server Container - Research` - 18 edges
-10. `Phase 1: Preparação do Host - Research` - 17 edges
+8. `13-01: K3s HA bootstrap + Portainer exposure` - 19 edges
+9. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 18 edges
+10. `Phase 3: FreeIPA Server Container - Research` - 18 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `deploy_list()` --calls--> `list_projects()`  [INFERRED]
@@ -553,19 +561,19 @@
 ## Import Cycles
 - None detected.
 
-## Communities (512 total, 60 thin omitted)
+## Communities (520 total, 60 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.00
-Nodes (445): Communities (504 total, 58 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+437 more)
+Nodes (451): Communities (512 total, 60 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+443 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.07
 Nodes (80): Any, Path, agent(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event(), audit() (+72 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.05
-Nodes (55): project_exists(), containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover(), discover_check(), discover_heal() (+47 more)
+Cohesion: 0.04
+Nodes (65): project_exists(), containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover(), discover_check(), discover_heal() (+57 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
@@ -609,7 +617,7 @@ Nodes (34): 1. Corrigir Certbot (bloqueador), 2. Fornecer Cloudflare API Token (
 
 ### Community 13 - "Community 13"
 Cohesion: 0.11
-Nodes (29): inviolable-watchdog.sh script, atius_pm2_stack_ok(), atius_router_containers_ok(), atius_router_docs_ok(), atius_web_healthcheck_ok(), atius_web_ok(), guarded_relaunch(), hermes_telegram_ok() (+21 more)
+Nodes (30): inviolable-watchdog.sh script, atius_pm2_stack_ok(), atius_router_containers_ok(), atius_router_docs_ok(), atius_web_healthcheck_ok(), atius_web_ok(), guarded_relaunch(), hermes_telegram_ok() (+22 more)
 
 ### Community 14 - "Community 14"
 Cohesion: 0.13
@@ -624,8 +632,8 @@ Cohesion: 0.06
 Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.16
-Nodes (31): _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote(), _expand_protected_paths() (+23 more)
+Cohesion: 0.15
+Nodes (33): load_project(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., _ahead_behind(), _as_bool(), _branch(), _changed_since(), _configured_enabled(), _dirty_files() (+25 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.06
@@ -856,8 +864,8 @@ Cohesion: 0.17
 Nodes (16): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+8 more)
 
 ### Community 75 - "Community 75"
-Cohesion: 0.19
-Nodes (16): check_disk_usage(), cleanup_old_logs(), compress_old_logs(), get_log_files(), parse_log_name(), logrotate — rotação, compressão e retenção automática de logs.  Problema: sync g, Reporta uso de disco dos logs., Pipeline completo: comprimir antigos + limpar velhos. (+8 more)
+Cohesion: 0.22
+Nodes (14): check_disk_usage(), cleanup_old_logs(), compress_old_logs(), get_log_files(), parse_log_name(), logrotate — rotação, compressão e retenção automática de logs.  Problema: sync g, Reporta uso de disco dos logs., Pipeline completo: comprimir antigos + limpar velhos. (+6 more)
 
 ### Community 76 - "Community 76"
 Cohesion: 0.12
@@ -920,8 +928,8 @@ Cohesion: 0.13
 Nodes (14): B-01: Credentials not set — plan claims autonomous but requires user input, B-02: No wait/sleep between rule application and connectivity testing, B-03: `depends_on: []` is incorrect, Blockers — Status, Info — Verified Observations, Phase 2 Plan 01 — Quality Check (Re-check After Fixes), Verdict: READY, W-01: Rollback script RESTORE uses raw backup file (+6 more)
 
 ### Community 91 - "Community 91"
-Cohesion: 0.13
-Nodes (14): 13-01: M005 No-Cost Release Gates, Human Checkpoints, Objective, Read First, Secret Handling Rules, Success Criteria, Task 1 - Update release gates and docs, Task 2 - Promote GDrive disaster recovery gate (+6 more)
+Cohesion: 0.10
+Nodes (19): 13-01: K3s HA bootstrap + Portainer exposure, Checkpoint A — Stop before live K3s mutation, Human Checkpoints, Objective, Read First, Rollback, Task 0 — Confirm branch and workspace, Task 10 — Etcd snapshots and backup export (+11 more)
 
 ### Community 92 - "Community 92"
 Cohesion: 0.13
@@ -1056,8 +1064,8 @@ Cohesion: 0.17
 Nodes (11): Backup Strategy, CA Configuration, Claude's Discretion, Container Base Image, Container Networking, Deferred Ideas, DNS Integration, Domain Configuration (+3 more)
 
 ### Community 125 - "Community 125"
-Cohesion: 0.17
-Nodes (11): Canonical Refs, Deferred Ideas, Domain, Edge auth, Jenkins hotfix, Locked Decisions, Phase 13 Context - M005 No-Cost Release Gates, Rollback sem snapshot OCI (+3 more)
+Cohesion: 0.10
+Nodes (19): Canonical References, D-01: Branch de trabalho criada no inicio, D-02: Topologia inicial com 3 server nodes, D-03: Todos os nos no Ubuntu 24.04 antes da montagem real, D-04: Canal K3s estavel, nunca `latest`, D-05: Inter-node somente pela WireGuard `wg0` / `10.1.1.0/24`, D-06: Desabilitar Traefik e ServiceLB no v1, D-07: Portainer novo em `portainer.atius.com.br` (+11 more)
 
 ### Community 126 - "Community 126"
 Cohesion: 0.17
@@ -1324,8 +1332,8 @@ Cohesion: 0.53
 Nodes (8): cleanup-local.sh script, cleanup_caches(), cleanup_journal(), cleanup_logs(), cleanup_podman(), cleanup_tmp(), log(), PATH
 
 ### Community 192 - "Community 192"
-Cohesion: 0.22
-Nodes (8): Arquivos versionados, Comandos de validação, Estado live, K3s HA + Portainer + Observability — ATIUS, Operação M005, Pendências, Runbooks, Secrets locais — não commitar
+Cohesion: 0.33
+Nodes (5): Contents, k3s-ha-portainer-oci, Non-secret Install Shape, Portainer Exposure Shape, Still Required Before Install
 
 ### Community 193 - "Community 193"
 Cohesion: 0.22
@@ -1396,8 +1404,8 @@ Cohesion: 0.50
 Nodes (6): offload-retired-artifacts-to-gdrive.sh script, backup_path(), backup_volume(), log(), main(), retry_rclone()
 
 ### Community 210 - "Community 210"
-Cohesion: 0.32
-Nodes (4): resource-governor-cgroup-init.sh script, get(), load_env(), quote()
+Cohesion: 0.31
+Nodes (5): resource-governor-cgroup-init.sh script, get(), load_env(), quote(), write_cg()
 
 ### Community 211 - "Community 211"
 Cohesion: 0.25
@@ -1516,8 +1524,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 240 - "Community 240"
-Cohesion: 0.11
-Nodes (37): Any, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso() (+29 more)
+Cohesion: 0.07
+Nodes (54): Any, Path, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db() (+46 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.29
@@ -2296,8 +2304,8 @@ Cohesion: 0.29
 Nodes (6): Accomplishments, Host, Pending (operational — not blocking), Phase 22 — SUMMARY, Status: ✅ COMPLETE, Validation
 
 ### Community 494 - "Community 494"
-Cohesion: 0.12
-Nodes (22): Path, basic_auth_header(), basic_auth_header_from_env(), cf_service_auth_headers(), edge(), edge_auth(), edge_check(), edge_url() (+14 more)
+Cohesion: 0.09
+Nodes (31): Any, Path, basic_auth_header(), basic_auth_header_from_env(), cf_service_auth_headers(), cf_service_token_exists(), describe_auth(), edge() (+23 more)
 
 ### Community 495 - "Community 495"
 Cohesion: 0.10
@@ -2340,12 +2348,12 @@ Cohesion: 0.18
 Nodes (10): 1. NFS em SRV-1, 2. Longhorn distributed, 3. local-path (atual), Critério de decisão, Decision, Decisão final, Impacto, K3s Storage Decision — M005 Observability + RWX (+2 more)
 
 ### Community 505 - "Community 505"
-Cohesion: 0.24
-Nodes (10): load_project(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., _fork_repo_slug(), Resolve o slug do repo do fork.      Ordem:     1) cfg.fork_repo (se existir), Gera release notes em PT-BR pra um projeto., Atualiza uma release existente no GitHub com notas em PT-BR geradas.      Use pa, Atalho: gera release notes com defaults e mostra (sem salvar)., release_generate() (+2 more)
+Cohesion: 0.07
+Nodes (28): Architecture Decision, Cloudflare Tunnel on Kubernetes, Executive Summary, Firewall/OCI readiness, Fleet, Host readiness, Installation Plan Outline, K3s HA embedded etcd (+20 more)
 
 ### Community 506 - "Community 506"
-Cohesion: 0.22
-Nodes (9): Any, cf_service_token_exists(), describe_auth(), edge_status(), load_cf_service_token(), Diagnostic snapshot of the current auth configuration.      Used by ``omni edge, Mostra o estado atual de autenticação dos admin edges., Return ``True`` if the service token file is present and readable. (+1 more)
+Cohesion: 0.13
+Nodes (14): 1. Numero e papel dos nos, 2. Upgrade Ubuntu 24.04, 3. Exposicao do Portainer, 4. Traefik/ServiceLB, 5. Storage do Portainer, 6. Rede interna, 7. Fallback PTP alem do WireGuard, 8. Contas OCI separadas (+6 more)
 
 ### Community 507 - "Community 507"
 Cohesion: 0.25
@@ -2355,25 +2363,57 @@ Nodes (7): Blockers para marcar DONE, Estado final honesto, O que foi entregue, 
 Cohesion: 0.52
 Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
 
+### Community 512 - "Community 512"
+Cohesion: 0.14
+Nodes (13): Host Identity, K3s Readiness Implications, Phase 13 Network, VPN, Port and Podman Map, PTP Fallback Guardrails, Reserved/Occupied Network Ranges, Result, SRV-1 Host Ports, SRV-1 Podman (+5 more)
+
+### Community 513 - "Community 513"
+Cohesion: 0.15
+Nodes (12): 13-02: PTP fallback mesh for K3s nodes, Acceptance, Candidate Designs, Critical Constraint, Objective, Task 0 — No live mutation, Task 1 — Map current underlay and ports, Task 2 — Choose PTP transport and addressing (+4 more)
+
+### Community 514 - "Community 514"
+Cohesion: 0.17
+Nodes (11): 13-03: Prometheus/Grafana observability + Omni Fleet control loop, Acceptance, Control Model, Objective, Scope, Task 0 — Production gate, Task 1 — Install kube-prometheus-stack, Task 2 — Validate private monitoring (+3 more)
+
+### Community 515 - "Community 515"
+Cohesion: 0.18
+Nodes (10): Blockers, Current Port State, Latest Read-only Revalidation, Live Host Snapshot, Live Update — 2026-06-14, Next Execution Steps, Phase 13 Execution Checkpoint — 2026-06-13, Post-Checkpoint Addition (+2 more)
+
+### Community 516 - "Community 516"
+Cohesion: 0.22
+Nodes (8): Acceptance, Architecture, Goal, Hard Gates, Phase 13 — Master Plan, Plans, Preflight Status, Scope
+
+### Community 517 - "Community 517"
+Cohesion: 0.25
+Nodes (7): Convergence Result, HIGH Concerns Found And Resolved, Phase 13 Plan Review Convergence, Remaining Blockers, Runtime Note, Slash Command Selection, Validation
+
+### Community 518 - "Community 518"
+Cohesion: 0.25
+Nodes (7): Host Results, Phase 13 Preflight — 2026-06-13, Prepared Artifacts, Remaining Live Gates, Result, Reviewed Failed Units, Safe Changes Applied
+
+### Community 519 - "Community 519"
+Cohesion: 0.40
+Nodes (4): Checks, Phase 13 Plan Check, Required Human Gates, Verdict
+
 ## Knowledge Gaps
-- **3492 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3487 more)
+- **3608 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3603 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **60 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (504 total, 58 thin omitted)` connect `Community 0` to `Community 155`?**
-  _High betweenness centrality (0.008) - this node is a cross-community bridge._
-- **Why does `generate_release_notes()` connect `Community 28` to `Community 505`?**
+- **Why does `Communities (512 total, 60 thin omitted)` connect `Community 0` to `Community 155`?**
+  _High betweenness centrality (0.007) - this node is a cross-community bridge._
+- **Why does `generate_release_notes()` connect `Community 28` to `Community 2`?**
   _High betweenness centrality (0.002) - this node is a cross-community bridge._
 - **Why does `manuals_show()` connect `Community 66` to `Community 2`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3780 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3896 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.0044943820224719105 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.004434589800443459 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.07191358024691358 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.05012531328320802 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.04432383536861149 - nodes in this community are weakly interconnected._
