@@ -1,0 +1,23 @@
+server: "https://10.1.1.1:6443"
+token: "<K3S_CLUSTER_TOKEN>"
+node-name: "atius-srv-2"
+node-ip: "10.1.1.2"
+advertise-address: "10.1.1.2"
+cluster-cidr: "10.42.0.0/16"
+service-cidr: "10.43.0.0/16"
+cluster-dns: "10.43.0.10"
+cluster-domain: "cluster.local"
+flannel-backend: "vxlan"
+flannel-iface: "wg0"
+write-kubeconfig-mode: "0600"
+tls-san:
+  - "10.1.1.1"
+  - "10.1.1.2"
+  - "10.1.1.7"
+  - "atius-srv-1"
+  - "atius-srv-2"
+  - "atius-srv-3"
+disable:
+  - traefik
+  - servicelb
+secrets-encryption: true

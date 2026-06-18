@@ -1,184 +1,201 @@
 ---
 phase: 13
-slug: k3s-ha-portainer-oci
-date: 2026-06-15
-status: context-updated-for-no-cost-release-gates
-branch: docs/m005-gate-review-20260614
-mode: gsd-discuss-phase-text
+name: k3s-ha-portainer-oci
+created: 2026-06-13
+method: self-discuss + official-doc research
+generator: gsd-discuss-phase adapted to Codex
+status: locked
 ---
 
-# Phase 13 Context - M005 No-Cost Release Gates
+# Phase 13 — K3s HA + Portainer on OCI ARM64
 
-## Domain
+## Objective
 
-M005 entrega o cluster K3s HA com Portainer, observability, watchdog e edge
-admin em `ATIUS-SRV-1`, `ATIUS-SRV-2` e `ATIUS-SRV-3`.
-
-O cluster live baseline ja passou. Esta rodada decide como fechar os gates
-restantes sem custo recorrente novo e sem introduzir dependencias pagas.
+Planejar a criacao de um cluster K3s de alta disponibilidade nos servidores
+`ATIUS-SRV-1`, `ATIUS-SRV-2` e `ATIUS-SRV-3`, com os tres nos atuando como
+`server` + `worker`, embedded etcd, exposicao administrativa via
+`portainer.atius.com.br`, e sem expor Kubernetes API, etcd, Flannel ou Portainer
+diretamente para a internet.
 
 ## Locked Decisions
 
-### Rollback sem snapshot OCI
+### D-01: Branch de trabalho criada no inicio
 
-Decisao: remover `OCI snapshot IDs` como gate obrigatorio do M005.
+**Decisao:** A branch desta phase e `codex/k3s-portainer-oci-plan`.
 
-Novo gate:
+**Status:** executado antes da escrita dos artefatos GSD.
 
-- `GDrive backup bundle + checksum + restore drill validado`.
+### D-02: Topologia inicial com 3 server nodes
 
-Racional:
+**Decisao:** Usar 3 nos K3s `server` com embedded etcd. Todos tambem aceitam
+workloads, sem workers dedicados na primeira montagem.
 
-- snapshots OCI geram custo de storage;
-- a conta ja possui 5TB no GDrive;
-- o milestone aceita restore operacional mais lento, desde que o caminho seja
-  documentado, verificavel e testado por checksum/runbook.
+**Nos:**
+- `atius-srv-1` / `ATIUS-SRV-1` — `10.1.1.1`, public `137.131.190.161`
+- `atius-srv-2` / `ATIUS-SRV-2` — `10.1.1.2`, public `129.148.47.32`
+- `atius-srv-3` / `ATIUS-SRV-3` — `10.1.1.7`, public `136.248.126.12`
 
-Limite aceito:
+**Rationale:** 3 servidores e o minimo correto para quorum etcd com tolerancia
+a perda de 1 no. O PDF anexado recomenda exatamente esse desenho.
 
-- GDrive substitui snapshot OCI como rollback/offsite backup;
-- GDrive nao substitui snapshot instantaneo da VM;
-- restore de host destruido passa a ser rebuild + download + restore, nao
-  rollback de volume OCI.
+### D-03: Todos os nos no Ubuntu 24.04 antes da montagem real
 
-### Storage M005
+**Decisao:** Nao instalar K3s enquanto algum dos 3 nos estiver fora do Ubuntu
+24.04 LTS. Em 2026-06-13, o checkpoint de execucao confirmou `ATIUS-SRV-1`,
+`ATIUS-SRV-2` e `ATIUS-SRV-3` em Ubuntu 24.04.4 LTS.
 
-Decisao: aceitar `local-path` + backup GDrive + restore drill para M005.
+**Rationale:** O usuario informou que a montagem real aconteceria ja em 24.04.
+Como os tres servidores ja foram atualizados, a instalacao pode exigir uma base
+homogenea e reduzir variaveis de debug.
 
-Escopo aceito:
+### D-04: Canal K3s estavel, nunca `latest`
 
-- Portainer, Grafana, Prometheus e Alertmanager continuam em PVC `local-path`
-  no SRV-1 neste milestone;
-- backup offsite deve ir para GDrive com `SHA256SUMS`;
-- restore drill deve validar checksums e descrever a reidratacao de etcd/PVCs.
+**Decisao:** Instalar via `INSTALL_K3S_CHANNEL=stable` ou minor fixado apos
+preflight. Nao usar `latest`.
 
-Fora do M005:
+**Rationale:** Em 2026-06, Kubernetes/K3s tem multiplas minors ativas. `latest`
+pode pular para uma minor nova demais; `stable` reduz surpresa operacional.
 
-- Longhorn/RWX/replicacao real de storage;
-- GDrive montado como storage live/PVC;
-- Prometheus HA real.
+### D-05: Inter-node somente pela WireGuard `wg0` / `10.1.1.0/24`
 
-### Tailscale PTP fallback
+**Decisao:** K3s deve anunciar e usar `10.1.1.x` como `node-ip` e
+`advertise-address`, e o Flannel deve ser fixado em `flannel-iface: wg0`.
+O checkpoint de 2026-06-13 confirmou `wg0` nos tres hosts:
+`10.1.1.1/32`, `10.1.1.2/24`, `10.1.1.7/32`.
 
-Decisao: criar Tailscale como segunda camada PTP operacional entre os 3 SRVs.
+**Rationale:** API, etcd, kubelet e Flannel nao devem usar IP publico. Os IPs
+OCI VCN `10.0.0.x` existem, mas nao sao a rede canonica deste K3s v1. OCI
+NSG/Security List deve impedir exposicao publica; a permissao inter-node do
+K3s acontece pela VPN/host firewall em `wg0`.
 
-Escopo M005:
+### D-06: Desabilitar Traefik e ServiceLB no v1
 
-- instalar/validar Tailscale em SRV-1/SRV-2/SRV-3;
-- aplicar ACL restrita para os 3 nodes e o usuario/admin;
-- validar SSH/Fleet/PgBouncer/admin debugging pelo caminho Tailscale;
-- documentar Tailscale como fallback de gestao quando WireGuard cair.
+**Decisao:** Instalar K3s com `--disable=traefik --disable=servicelb`.
 
-Pre-flight evidence:
+**Rationale:** O servidor atual ja tem Apache/Portainer/servicos em portas
+sensiveis. O Traefik padrao do K3s com ServiceLB pode tentar ocupar 80/443 nos
+hosts. O v1 deve ser zero-conflito com Apache, Docker e Podman existentes.
 
-- SRV-1: `100.76.56.62`, online;
-- SRV-2: `100.93.43.113`, online;
-- SRV-3: `100.72.102.57`, online;
-- bidirectional `tailscale ping` passed across all three hosts on 2026-06-15.
+### D-07: Portainer novo em `portainer.atius.com.br`
 
-Limite aceito:
+**Decisao:** O Portainer CE do cluster sera instalado no namespace obrigatorio
+`portainer`, via Helm chart LTS, e exposto por Cloudflare Tunnel em
+`https://portainer.atius.com.br`.
 
-- nao trocar K3s/flannel/etcd automaticamente para Tailscale neste milestone;
-- WireGuard continua dependencia do cluster K3s em M005;
-- Tailscale fecha o gate como fallback operacional, nao como HA completo do
-  transporte do cluster.
+**Nao fazer:** reaproveitar `docker.atius.com.br` ou abrir NodePort/LoadBalancer
+publico. O Portainer antigo em `docker.atius.com.br` ja foi parado/desabilitado
+em trabalho operacional anterior; M005 nao deve depender dele nem ressuscita-lo.
 
-### Edge auth
+### D-08: Cloudflare Tunnel em vez de OCI Load Balancer
 
-Decisao: usar Cloudflare Access se estiver disponivel sem custo na conta.
+**Decisao:** Expor Portainer via Cloudflare Tunnel remoto, com 2 ou 3 replicas
+`cloudflared` no cluster, token em Kubernetes Secret criado manualmente e nunca
+commitado.
 
-Escopo M005:
+**Rationale:** Evita Load Balancer pago, evita portas publicas, e alinha com o
+PDF anexado. Replicas do tunnel dao alta disponibilidade de conector; nao sao
+load-balancer interno.
 
-- configurar Access para `portainer.atius.com.br`, `docker.atius.com.br`,
-  `grafana.atius.com.br` e `jenkins.atius.com.br`;
-- manter Apache Basic Auth como fallback ate Access estar validado;
-- nunca registrar tokens/API keys em git, `.planning`, logs ou vault.
+### D-09: Storage do Portainer v1 e node-local
 
-Implementacao preferida:
+**Decisao:** Usar a StorageClass local default do K3s no v1 e fixar o pod
+Portainer em `atius-srv-1` por `nodeSelector`.
 
-- usar API/CLI Cloudflare com credenciais carregadas do `.zshrc`, sem imprimir
-  valores sensiveis;
-- usar navegador apenas se a API nao tiver acesso suficiente.
+**Rationale:** Portainer exige persistencia; a StorageClass local-path do K3s e
+node-local. Sem Longhorn/OCI CSI ainda, mover o pod para outro no criaria banco
+vazio. Cluster HA nao depende do Portainer estar sempre disponivel.
 
-Secret handling locked:
+### D-10: Backup/snapshot antes de qualquer mutacao real
 
-- `set +x` before loading credentials;
-- no `env`, `printenv`, `set`, `echo $TOKEN` or verbose curl output containing
-  credentials;
-- prefer protected temporary header/config files under `/dev/shm` over putting
-  long-lived API keys directly in process arguments;
-- run value-based secret leak checks before committing any doc updates.
+**Decisao:** Antes de instalar K3s ou alterar OCI firewall/NSG, criar snapshot
+OCI ou backup equivalente dos 3 servidores e backup local de `/etc`,
+`/var/lib/rancher`, configs Docker/Podman/Apache e GDrive map. Backups rclone
+devem ser seriais, nunca paralelos.
 
-### Jenkins hotfix
+**Rationale:** Ha precedente de rate limit no GDrive com backups paralelos, e
+SRV-1/SRV-3 estao com disco pressionado.
 
-Decisao: corrigir Jenkins para Podman socket/CLI, nao `/var/run/docker.sock`.
+### D-11: Tokens nunca em argumentos de processo
 
-Estado atual:
+**Decisao:** Substituicoes de `K3S_CLUSTER_TOKEN` e criacao do Secret do
+Cloudflare Tunnel devem usar arquivo com permissao `0600` ou stdin. Nao usar
+`sed`/`kubectl --from-literal` com token expandido em `argv`.
 
-- `https://jenkins.atius.com.br/` retorna 503;
-- Apache proxy aponta para `127.0.0.1:8085`;
-- `container-jenkins.service` falha porque `/var/run/docker.sock` nao existe.
+**Rationale:** Tokens em argumentos de processo podem aparecer em `ps`, logs de
+auditoria ou historico de shell.
 
-Escopo M005:
+### D-12: Fallback PTP full-mesh alem do WireGuard
 
-- recuperar UI Jenkins primeiro;
-- trocar dependencia de Docker socket por Podman socket/CLI ou remover socket
-  temporariamente se a UI for o primeiro passo necessario;
-- validar `http://127.0.0.1:8085/login` e o dominio publico protegido por
-  Cloudflare Access/Basic Auth.
+**Decisao:** Adicionar um subplano `13-02` para desenhar uma malha PTP de
+fallback entre as tres pontas: SRV-1 <-> SRV-2, SRV-1 <-> SRV-3 e
+SRV-2 <-> SRV-3.
 
-Futuro:
+**Regra critica:** O K3s v1 continua anunciando `10.1.1.x` em `wg0`. Um fallback
+transparente precisa preservar a alcançabilidade desses IPs canonicos via
+roteamento/failover, ou entao deve ser tratado apenas como caminho emergencial
+de administracao/DR. Nao mudar `node-ip`, `advertise-address` ou peers etcd em
+producao sem plano separado de migracao e rollback.
 
-- Jenkins agents no K3s ficam como arquitetura posterior ao hotfix.
+**Rationale:** O WireGuard `wg0` e a rede canonica do v1, mas o cluster HA perde
+valor se uma falha da malha VPN derruba a comunicacao entre control-plane/etcd.
+Uma malha PTP secundaria reduz o risco, desde que nao introduza split-brain,
+rotas assimetricas ou exposicao publica de portas Kubernetes.
 
-### Ubuntu Pro / ESM Apps
+### D-13: Os 3 servidores estao em contas OCI diferentes
 
-Decisao: adicionar gate para habilitar e validar Ubuntu Pro ESM Apps nos 3 SRVs.
+**Decisao:** Planejar M005 assumindo que SRV-1, SRV-2 e SRV-3 pertencem a contas
+OCI diferentes. Nao assumir VCN compartilhada, NSG compartilhado, Security
+List unica ou permissao cross-account automatica.
 
-Escopo M005:
+**Implicacao:** Cada conta precisa de seu proprio snapshot/backup, auditoria de
+ingresso publico e regras de firewall OCI. A comunicacao K3s inter-node deve
+acontecer por overlay criptografado (`wg0` agora, PTP/fallback depois), nao por
+dependencia em rede privada OCI comum.
 
-- verificar `pro status` em SRV-1/SRV-2/SRV-3;
-- se anexado mas `esm-apps` estiver disabled, executar `sudo pro enable esm-apps`;
-- se nao estiver anexado, usar token Ubuntu Pro fora de git/log/vault;
-- validar `esm-apps` e `esm-infra` como `enabled` ou registrar excecao explicita.
+**Rationale:** NSG/VCN e Security Lists sao limites administrativos da conta/
+tenancy. Como os 3 servidores estao em contas diferentes, o plano tem que tratar
+OCI como underlay publico/independente e usar overlays para trafego privado.
 
-Pre-flight evidence:
+### D-14: Observability com Prometheus/Grafana e execucao pelo Omni Fleet
 
-- SRV-1: attached, `esm-apps` enabled, `esm-infra` enabled;
-- SRV-2: attached, `esm-apps` enabled, `esm-infra` enabled;
-- SRV-3: `attached=false`; no Ubuntu Pro token was found in `.zshrc`,
-  `.bashrc`, `.profile` or shallow `~/.config` scan by variable name.
+**Decisao:** Adicionar `13-03-PLAN.md` para instalar `kube-prometheus-stack`
+depois do bootstrap K3s/Portainer. Grafana pode ser publicado por Cloudflare
+Tunnel + Access. Prometheus e Alertmanager permanecem internos.
 
-Safe attach rule:
+**Regra critica:** Prometheus e Alertmanager nao executam comandos nos hosts.
+Eles detectam e notificam. O Omni Fleet executa qualquer ajuste real usando
+`DbOmniFleet`, `TbUpdatePlans`, `TbFleetCommands`, politicas allowlist,
+auditoria e rollback.
 
-- SRV-3 attach must use `pro attach --token-stdin` or equivalent non-logged
-  stdin/secret-file flow;
-- if no token/attach path is available, the gate stays blocked.
+**Rationale:** O usuario quer monitoramento e controle de carga/processos. A
+separacao reduz risco: observability gera sinal; o Fleet aplica politica com
+contexto operacional e trilha de auditoria.
 
-Fonte oficial:
+## Canonical References
 
-- Ubuntu Pro attach: `https://documentation.ubuntu.com/pro/attach-tutorial/`
-- ESM Apps/Infra enable: `https://documentation.ubuntu.com/pro-client/en/latest/howtoguides/enable_esm_infra/`
-- ESM overview: `https://ubuntu.com/security/esm`
-
-## Canonical Refs
-
-- `.planning/ROADMAP.md`
-- `.planning/MILESTONES.md`
-- `.planning/STATE.md`
-- `.planning/phases/13-k3s-ha-portainer-oci/13-GATE-REVIEW-2026-06-14.md`
-- `.planning/phases/13-k3s-ha-portainer-oci/13-RESTORE-DRILL-2026-06-14.md`
-- `.planning/phases/13-k3s-ha-portainer-oci/13-FALLBACK-PTP-2026-06-14.md`
-- `.planning/phases/13-k3s-ha-portainer-oci/13-OCI-ROLLBACK-PATH-2026-06-14.md`
-- `.planning/phases/13-k3s-ha-portainer-oci/13-OBSERVABILITY-WATCHDOG-2026-06-14.md`
-- `modules/k3s-ha-portainer-oci/README.md`
-- `modules/k3s-ha-portainer-oci/scripts/backup-local-path-pvcs.sh`
-- `modules/fleet-backup/README.md`
-- `modules/srv1-ops/README.md`
+- `planejamento_cluster_k3s_portainer_oci.pdf` — blueprint fornecido pelo usuario.
+- `inventory/hosts/atius-srv-1.yaml` — IPs e papel do SRV-1.
+- `inventory/hosts/atius-srv-2.yaml` — IPs e papel do SRV-2.
+- `inventory/hosts/atius-srv-3.yaml` — IPs e papel do SRV-3.
+- `docs/operations/atius-fleet-specs.md` — recursos, disco e I/O dos 3 servidores.
+- `docs/operations/Atius-Spec-Servers.md` — regra operacional de 50% por recurso.
+- `docs/CLOUDFLARE.md` — padrao atual do dominio `atius.com.br` no Cloudflare.
+- `61-Incidents/2026-06-12-podman-cutover-srv1-portainer-cuts.md` no vault —
+  estado atual do Portainer antigo.
+- `60-LOGS/2026-06-13-containers-portainer-mailcow-gitlab-fixes.md` no vault —
+  Portainer antigo parado e vhost `portainer.atius.com.br` apontando para `127.0.0.1:9005`.
+- `60-LOGS/2026-06-12-ubuntu2404-express-prep.md` no vault — preparo do upgrade
+  SRV-1 para 24.04.
+- `60-LOGS/2026-06-13-m005-oci-separate-accounts.md` no vault — registro da
+  premissa de contas OCI separadas.
+- `13-03-PLAN.md` — observability e control loop Prometheus/Grafana -> Omni Fleet.
 
 ## Deferred Ideas
 
-- Jenkins agents on K3s.
-- Longhorn or other replicated RWX/HA storage.
-- K3s transport redesign away from mandatory WireGuard.
-- OCI private API VIP/LB.
+- Longhorn ou OCI CSI para storage distribuido.
+- Traefik/Ingress oficial para apps publicas.
+- GitOps com Argo CD/Flux.
+- Fallback PTP full-mesh SRV-1/SRV-2/SRV-3 conforme `13-02-PLAN.md`.
+- Regras Prometheus/Alertmanager detalhadas e endpoint webhook do Omni Fleet.
+- Migrar apps existentes para K3s.
+- Limpar ou reaproveitar explicitamente o legado `docker.atius.com.br`.

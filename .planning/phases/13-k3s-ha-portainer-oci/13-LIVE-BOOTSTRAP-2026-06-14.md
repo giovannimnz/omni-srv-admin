@@ -33,8 +33,6 @@ Portainer Community Edition is deployed in the cluster and reachable through the
 - Installed Helm `v3.21.1` on SRV-1.
 - Installed Portainer chart `portainer/portainer`, image `portainer/portainer-ce:lts`.
 - Installed persistent Portainer port-forward service: `k3s-portainer-portforward.service`.
-- Initialized Portainer admin account. Password is stored on SRV-1 at `/home/ubuntu/.secrets/portainer-admin-password` with mode `0600` (not committed, not logged).
-- Registered local Kubernetes environment in Portainer as endpoint `atius-k3s` (`Type=5`, URL `https://kubernetes.default.svc`).
 - Updated Apache `portainer.atius.com.br` proxy from `http://127.0.0.1:9005` to `https://127.0.0.1:9443`.
 - Created Cloudflare proxied CNAME `portainer.atius.com.br -> docker.atius.com.br`.
 
@@ -65,8 +63,6 @@ Apache edge:
 | DNS smoke | every smoke pod resolved `kubernetes.default.svc.cluster.local -> 10.43.0.1` |
 | Portainer rollout | `deployment/portainer` successfully rolled out |
 | Portainer local API | `https://127.0.0.1:9443/api/system/status` returned Version `2.39.3` |
-| Portainer admin login | `POST /api/auth` returned JWT; token was not logged |
-| Portainer endpoint | `GET /api/endpoints` returned `ENDPOINT_COUNT=1`, endpoint `atius-k3s`, `Type=5`, `Status=1` |
 | Docker public endpoint | `https://docker.atius.com.br/api/system/status` returned Version `2.39.3` |
 | Portainer public endpoint | `https://portainer.atius.com.br/api/system/status` returned Version `2.39.3` |
 | SRV services | `k3s` active on SRV-1/SRV-2/SRV-3 |
@@ -87,9 +83,8 @@ GDrive backup note: SRV-1 full GDrive backup was already running during executio
 
 ## Remaining Follow-ups
 
-- [x] Add external uptime/health watchdog for K3s API, Portainer and Grafana.
-- [x] Add Prometheus/Grafana observability from `13-03-PLAN.md`.
-- [x] Protect public admin edges with Apache Basic Auth fallback.
-- [ ] Enable Cloudflare Access in dashboard, then replace/augment Basic Auth.
+- [ ] Add external uptime/health watchdog for K3s API and Portainer.
+- [ ] Decide if Portainer should remain pinned to SRV-1 via nodeSelector or move to a replicated HA layout with RWX storage.
 - [ ] Add formal OCI snapshot IDs when available in each OCI account.
-- [ ] Decide if Portainer/Grafana should remain pinned to SRV-1 via nodeSelector or move to replicated HA layout with RWX storage.
+- [ ] Add Cloudflare Access policy before sharing Portainer broadly.
+- [ ] Add Prometheus/Grafana observability from `13-03-PLAN.md`.

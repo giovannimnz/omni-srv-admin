@@ -122,6 +122,14 @@ process_check() {
   [[ "$count" -ge "$min" ]]
 }
 
+sshd_banner_ok() {
+  timeout 3 bash -lc '
+    exec 3<>/dev/tcp/127.0.0.1/22 || exit 1
+    IFS= read -r -t 2 banner <&3 || exit 1
+    [[ $banner == SSH-* ]]
+  ' >/dev/null 2>&1
+}
+
 service_or_binary_exists() {
   local service="$1"
   local binary="$2"
@@ -161,7 +169,7 @@ start_system_transient() {
 
 pm2_app_online() {
   local app="$1"
-  "$PM2_BIN" jlist 2>/dev/null | jq -e --arg name "$app" \
+  timeout 8s "$PM2_BIN" jlist 2>/dev/null | jq -e --arg name "$app" \
     '.[] | select(.name == $name and .pm2_env.status == "online")' >/dev/null 2>&1
 }
 
@@ -257,7 +265,7 @@ start_router_containers() {
 
 # Remote access and network services. These keep threshold=1 but still have a
 # cooldown so a hard failure cannot trigger a timer-cycle storm.
-if process_check "sshd: /usr/sbin" 1; then
+if sshd_banner_ok; then
   mark_ok "sshd"
 else
   guarded_relaunch "sshd" 1 "$CRITICAL_COOLDOWN_SEC" start_sshd

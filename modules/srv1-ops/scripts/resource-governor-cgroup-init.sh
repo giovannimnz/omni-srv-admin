@@ -31,6 +31,16 @@ load_env "$RUNTIME_OVERRIDE"
 # --- helpers ---
 quote() { echo "$@" | sed "s/^['\"]//;s/['\"]$//"; }
 
+write_cg() {
+    local path="$1"
+    shift
+    if [[ $EUID -eq 0 ]]; then
+        printf '%s\n' "$*" > "$path"
+    else
+        printf '%s\n' "$*" | sudo -n tee "$path" >/dev/null
+    fi
+}
+
 get() {
     local key="$1" default="$2"
     local val="${CFG[$key]:-$default}"
@@ -85,7 +95,7 @@ if [[ -d "$OMNI_SLICE" ]]; then
     current_sub=$(cat "$OMNI_SLICE/cgroup.subtree_control" 2>/dev/null || echo "")
     for ctl in cpu io memory pids; do
         if ! echo "$current_sub" | grep -q "$ctl"; then
-            echo "+$ctl" > "$OMNI_SLICE/cgroup.subtree_control" 2>/dev/null || true
+            write_cg "$OMNI_SLICE/cgroup.subtree_control" "+$ctl" 2>/dev/null || true
         fi
     done
 fi
@@ -113,17 +123,17 @@ for profile in builds interactive transfers; do
     for ctl in cpu io memory pids; do
         cur=$(cat "$cg_path/cgroup.subtree_control" 2>/dev/null || echo "")
         if ! echo "$cur" | grep -q "$ctl"; then
-            echo "+$ctl" > "$cg_path/cgroup.subtree_control" 2>/dev/null || true
+            write_cg "$cg_path/cgroup.subtree_control" "+$ctl" 2>/dev/null || true
         fi
     done
 
     # --- cpu.max ---
     cpu_quota=$(get "RG_PROFILE_${key}_CPU_QUOTA" "100%")
     cg_cpu=$(cpu_quota_to_cg "$cpu_quota")
-    echo "$cg_cpu" > "$cg_path/cpu.max" 2>/dev/null || true
+    write_cg "$cg_path/cpu.max" "$cg_cpu" 2>/dev/null || true
 
     cpu_weight=$(get "RG_PROFILE_${key}_CPU_WEIGHT" "")
-    [[ -n "$cpu_weight" ]] && echo "$cpu_weight" > "$cg_path/cpu.weight" 2>/dev/null || true
+    [[ -n "$cpu_weight" ]] && write_cg "$cg_path/cpu.weight" "$cpu_weight" 2>/dev/null || true
 
     # --- io.max ---
     root_dev=$(get "RG_ROOT_DEVICE" "/dev/sda")
@@ -136,22 +146,22 @@ for profile in builds interactive transfers; do
     if [[ -n "$io_read" || -n "$io_write" ]]; then
         rbps=$(io_bw_to_cg "${io_read:-0}")
         wbps=$(io_bw_to_cg "${io_write:-0}")
-        echo "${dev_major}:${dev_minor} rbps=${rbps} wbps=${wbps}" > "$cg_path/io.max" 2>/dev/null || true
+        write_cg "$cg_path/io.max" "${dev_major}:${dev_minor} rbps=${rbps} wbps=${wbps}" 2>/dev/null || true
     fi
 
     io_weight=$(get "RG_PROFILE_${key}_IO_WEIGHT" "")
-    [[ -n "$io_weight" ]] && echo "$io_weight" > "$cg_path/io.weight" 2>/dev/null || true
+    [[ -n "$io_weight" ]] && write_cg "$cg_path/io.weight" "$io_weight" 2>/dev/null || true
 
     # --- memory ---
     memory_high=$(get "RG_PROFILE_${key}_MEMORY_HIGH" "")
-    [[ -n "$memory_high" ]] && echo "$(mem_to_cg "$memory_high")" > "$cg_path/memory.high" 2>/dev/null || true
+    [[ -n "$memory_high" ]] && write_cg "$cg_path/memory.high" "$(mem_to_cg "$memory_high")" 2>/dev/null || true
 
     memory_max=$(get "RG_PROFILE_${key}_MEMORY_MAX" "")
-    [[ -n "$memory_max" ]] && echo "$(mem_to_cg "$memory_max")" > "$cg_path/memory.max" 2>/dev/null || true
+    [[ -n "$memory_max" ]] && write_cg "$cg_path/memory.max" "$(mem_to_cg "$memory_max")" 2>/dev/null || true
 
     memory_swap_max=$(get "RG_PROFILE_${key}_MEMORY_SWAP_MAX" "")
     if [[ -n "$memory_swap_max" && -f "$cg_path/memory.swap.max" ]]; then
-        echo "$(mem_to_cg "$memory_swap_max")" > "$cg_path/memory.swap.max" 2>/dev/null || true
+        write_cg "$cg_path/memory.swap.max" "$(mem_to_cg "$memory_swap_max")" 2>/dev/null || true
     fi
 done
 

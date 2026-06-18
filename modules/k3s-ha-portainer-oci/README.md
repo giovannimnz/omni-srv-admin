@@ -1,77 +1,71 @@
-# K3s HA + Portainer + Observability — ATIUS
+# k3s-ha-portainer-oci
 
-## Estado live
+Execution package for M005 / Phase 13.
 
-- K3s `v1.35.5+k3s1` em SRV-1/SRV-2/SRV-3.
-- 3 nodes `Ready`, todos `control-plane,etcd`.
-- Portainer CE em `portainer` namespace.
-- kube-prometheus-stack em `monitoring` namespace.
-- Grafana público: `https://grafana.atius.com.br`.
-- Portainer público: `https://portainer.atius.com.br` e `https://docker.atius.com.br`.
-- Edge protegido por Apache Basic Auth enquanto Cloudflare Access e validado sem custo na conta.
+This module keeps the K3s HA + Portainer setup reproducible without committing
+tokens or live kubeconfig files. The current branch is ready up to preflight and
+template generation. Live installation remains gated by OCI snapshots,
+OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
+SRV-1, SRV-2 and SRV-3 are in separate OCI accounts, so all OCI gates are
+validated per account; there is no shared NSG/VCN assumption.
+The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
+The templates also pin K3s critical server values consistently across all
+three servers: `cluster-cidr=10.42.0.0/16`, `service-cidr=10.43.0.0/16`,
+`cluster-dns=10.43.0.10`, `cluster-domain=cluster.local`,
+`flannel-backend=vxlan`, `disable=traefik,servicelb` and
+`secrets-encryption=true`.
+PTP fallback mesh design lives in
+`.planning/phases/13-k3s-ha-portainer-oci/13-02-PLAN.md` and is required before
+production-ready, but it is not active in these templates.
 
-## Arquivos versionados
+## Contents
 
-| Arquivo | Origem live |
+| Path | Purpose |
 |---|---|
-| `k8s/kube-prometheus-stack-values.yaml` | Helm values da observability stack |
-| `scripts/atius-k3s-watchdog.sh` | `/home/ubuntu/scripts/atius-k3s-watchdog.sh` |
-| `scripts/collect-network-map.sh` | coleta snapshot read-only de rede, portas, Podman e K3s dos 3 SRVs |
-| `scripts/backup-local-path-pvcs.sh` | gera bundle crash-consistent de etcd + PVCs `local-path` no SRV-1 |
-| `scripts/promote-network-map-to-fleet-db.sh` | promove o snapshot operacional M005 para `DbOmniFleet/TbConfigItems` via PgBouncer |
-| `systemd/atius-k3s-watchdog.service` | user service SRV-1 |
-| `systemd/atius-k3s-watchdog.timer` | user timer SRV-1 |
-| `systemd/k3s-portainer-portforward.service` | system service SRV-1 |
-| `systemd/k3s-grafana-portforward.service` | system service SRV-1 |
+| `k3s/config-srv1.example.yaml` | First K3s server config template |
+| `k3s/config-srv2.example.yaml` | Join config template for SRV-2 |
+| `k3s/config-srv3.example.yaml` | Join config template for SRV-3 |
+| `k8s/portainer-values.yaml` | Helm values for Portainer CE LTS |
+| `k8s/kube-prometheus-stack-values.yaml` | Helm values for Prometheus/Grafana observability |
+| `k8s/cloudflared-deployment.yaml` | Cloudflare Tunnel deployment without token |
+| `logrotate/docker-json-containers` | Docker JSON log rotation installed during preflight on SRV-2/SRV-3 |
 
-## Secrets locais — não commitar
+## Still Required Before Install
 
-| Secret | Path SRV-1 |
-|---|---|
-| Portainer admin | `/home/ubuntu/.secrets/portainer-admin-password` |
-| Grafana admin | `/home/ubuntu/.secrets/grafana-admin-password` |
-| Edge Basic Auth | `/home/ubuntu/.secrets/edge-admin-password` |
-| Apache htpasswd | `/etc/apache2/auth/atius-edge.htpasswd` |
+- OCI snapshots or equivalent backups for all three instances/block volumes in
+  their respective OCI accounts.
+- OCI NSG/Security List rules per account keeping K3s ports closed publicly.
+- Cloudflare remotely-managed tunnel `atius-k3s-portainer`.
+- Tunnel token supplied only in the shell as `CLOUDFLARE_TUNNEL_TOKEN`.
+- Human approval to write `/etc/rancher/k3s/config.yaml` and install K3s.
+- PTP fallback full-mesh design before declaring production-ready.
 
-## Comandos de validação
+## Portainer Exposure Shape
+
+Portainer CE LTS is configured as `ClusterIP`, pinned to `atius-srv-1` via
+`nodeSelector`, with `enterpriseEdition.enabled=false` and
+`trusted_origins=portainer.atius.com.br`. Public access must come through
+Cloudflare Tunnel and Access, not NodePort or LoadBalancer.
+
+Prometheus/Grafana are planned through `kube-prometheus-stack` in namespace
+`monitoring`. Grafana uses a Kubernetes Secret for admin credentials and may be
+published only through Cloudflare Access. Prometheus and Alertmanager remain
+internal. Alertmanager should signal Omni Fleet; it must not execute host
+commands directly.
+
+## Non-secret Install Shape
 
 ```bash
-sudo k3s kubectl get nodes -o wide
-sudo k3s kubectl get pods -A -o wide
-sudo env KUBECONFIG=/etc/rancher/k3s/k3s.yaml helm list -A
-curl -skI https://portainer.atius.com.br/
-curl -skI https://grafana.atius.com.br/
-XDG_RUNTIME_DIR=/run/user/$(id -u) systemctl --user status atius-k3s-watchdog.timer
+sudo install -d -m 700 /etc/rancher/k3s
+sudo sh -c 'umask 077; openssl rand -hex 32 > /etc/rancher/k3s/cluster-token'
+sudo install -m 600 modules/k3s-ha-portainer-oci/k3s/config-srv1.example.yaml /etc/rancher/k3s/config.yaml
+sudo python3 - <<'PY'
+from pathlib import Path
+cfg = Path("/etc/rancher/k3s/config.yaml")
+token = Path("/etc/rancher/k3s/cluster-token").read_text().strip()
+cfg.write_text(cfg.read_text().replace("<K3S_CLUSTER_TOKEN>", token))
+PY
+curl -sfL https://get.k3s.io | INSTALL_K3S_CHANNEL=stable sh -
 ```
 
-## Operação M005
-
-```bash
-modules/k3s-ha-portainer-oci/scripts/collect-network-map.sh > .planning/phases/13-k3s-ha-portainer-oci/13-NETWORK-MAP-YYYY-MM-DD.md
-modules/k3s-ha-portainer-oci/scripts/backup-local-path-pvcs.sh
-modules/k3s-ha-portainer-oci/scripts/promote-network-map-to-fleet-db.sh
-```
-
-Último bundle executado:
-
-- `/home/ubuntu/.backups/k3s-local-path/20260614-150944`
-- Inclui `pv-pvc.yaml`, `workloads.yaml`, `helm-list.txt`, snapshot etcd `m005-pvc-backup-20260614-150944`, arquivos `.tgz` dos PVCs `local-path` e `SHA256SUMS`.
-- Observação: o PVC do Prometheus pode registrar warning de WAL mutando durante leitura; o bundle continua válido como backup crash-consistent.
-- Snapshot operacional promovido ao DB: `TbConfigItems.key = m005.cluster_operational_snapshot` em `scope_id=srv1-ops`, `host_id=atius-srv-1`.
-
-## Runbooks
-
-- Network map: `.planning/phases/13-k3s-ha-portainer-oci/13-NETWORK-MAP-2026-06-14.md`
-- Restore drill: `.planning/phases/13-k3s-ha-portainer-oci/13-RESTORE-DRILL-2026-06-14.md`
-- OCI rollback path superseded for M005 by GDrive DR decision: `.planning/phases/13-k3s-ha-portainer-oci/13-OCI-ROLLBACK-PATH-2026-06-14.md`
-- PTP/direct-IP fallback review: `.planning/phases/13-k3s-ha-portainer-oci/13-FALLBACK-PTP-2026-06-14.md`
-- No-cost release plan: `.planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md`
-
-## Pendências
-
-- Cloudflare Access: selecionado se free/available; manter Basic Auth ate validacao.
-- GDrive DR: substitui snapshots OCI no M005 para evitar custo; exige bundle, checksum e restore drill validado.
-- HA storage Portainer/Grafana/Prometheus/Alertmanager: `local-path` + GDrive backup/restore aceito para M005; Longhorn/RWX fica diferido.
-- Fallback de transporte: Tailscale sera fallback operacional de gestao; K3s/flannel/etcd continuam dependentes de WireGuard no M005.
-- Jenkins: corrigir `container-jenkins.service` para Podman socket/CLI; estado atual retorna Apache 503 porque `/var/run/docker.sock` nao existe.
-- Ubuntu Pro/ESM Apps: validar `pro status` e habilitar `esm-apps` nos 3 SRVs sem registrar token.
+Do not copy the token into git, vault notes or command logs.
