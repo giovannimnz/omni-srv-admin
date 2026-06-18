@@ -1,0 +1,91 @@
+# AlertManager custom values for OMNI-SRV-ADMIN observability stack.
+# Chart: prometheus-community/kube-prometheus-stack (alertmanager sub-chart).
+# Deployed 2026-06-17 as part of Phase 17 (M005 Observability + RWX).
+#
+# This file is rendered by `omni k3s monitoring install-alertmanager`
+# which does the following:
+#   1. reads ~/.hermes/secrets/alert-webhook.json (mode 0600) for the
+#      Hermes webhook URL
+#   2. substitutes `${ALERT_WEBHOOK_URL}` in the inline config below
+#   3. feeds the result as `alertmanager.alertmanagerSpec.alertmanagerConfigSelector`
+#      secret to the chart.
+#
+# IMPORTANT:
+#   - AlertManager v0.27+ rejects `withslashes` route keys; we use
+#     dotted names.
+#   - The receiver name is `omni-hermes` because Giovanni asked
+#     alerts to flow to Hermes (in-house option), not Telegram —
+#     Telegram requires a BotFather token that does not exist on
+#     the host. Switch receiver to `telegram` when the bot is
+#     provisioned.
+#   - The webhook URL is required at install time. If the file is
+#     missing, install-alertmanager aborts with a clear error
+#     and points the operator at the runbook.
+
+alertmanager:
+  alertmanagerSpec:
+    # We provision a single replica on atius-srv-1 to keep PVC usage
+    # local-path-bounded. The chart already adds the alertmanager-* alerts
+    # out of the box; we override the route + receivers here.
+    replicas: 1
+    retention: 120h
+    nodeSelector:
+      kubernetes.io/hostname: atius-srv-1
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: local-path
+          accessModes:
+            - ReadWriteOnce
+          resources:
+            requests:
+              storage: 2Gi
+
+    # The chart's alertmanagerConfig is the supported way to ship a
+    # custom `alertmanager.yaml` Secret. We name the resource
+    # `omni-alertmanager` and the chart's selector picks it up.
+    alertmanagerConfigSelector: {}
+    alertmanagerConfigNamespaceSelector: {}
+
+    # The actual alertmanager.yaml content. We render it inline here
+    # (not as a separate ConfigMap) so the install script can
+    # template the webhook URL atomically.
+    alertmanagerConfig:
+      name: omni-alertmanager
+      namespace: monitoring
+      global:
+        resolveTimeout: 5m
+      route:
+        receiver: omni-hermes
+        group_by: ['alertname', 'cluster', 'severity']
+        group_wait: 30s
+        group_interval: 5m
+        repeat_interval: 4h
+        routes:
+          - matchers:
+              - severity="critical"
+            receiver: omni-hermes
+            group_wait: 10s
+            repeat_interval: 1h
+          - matchers:
+              - alertname="Watchdog"
+            receiver: null
+      receivers:
+        - name: omni-hermes
+          webhook_configs:
+            - url: ${ALERT_WEBHOOK_URL}
+              send_resolved: true
+              max_alerts: 0
+              http_config:
+                follow_redirects: true
+      inhibit_rules:
+        - source_matchers:
+            - alertname="KubeNodeNotReady"
+          target_matchers:
+            - alertname="KubePodCrashLooping"
+          equal: ['namespace', 'node']
+        - source_matchers:
+            - severity="critical"
+          target_matchers:
+            - severity="warning"
+          equal: ['alertname', 'cluster']

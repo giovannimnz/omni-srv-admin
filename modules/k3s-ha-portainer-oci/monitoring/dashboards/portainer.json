@@ -1,0 +1,51 @@
+{
+  "title": "Portainer — Containers Overview",
+  "uid": "omni-portainer",
+  "tags": ["omni", "portainer", "m005"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-1h", "to": "now" },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Containers Running",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "omni_portainer_containers{state=\"running\"}" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Containers Exited",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "omni_portainer_containers{state=\"exited\"}" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Containers Created",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "omni_portainer_containers{state=\"created\"}" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total Containers",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "sum(omni_portainer_containers)" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Container count by state",
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 4 },
+      "targets": [
+        { "expr": "omni_portainer_containers", "legendFormat": "{{state}}" }
+      ]
+    }
+  ]
+}

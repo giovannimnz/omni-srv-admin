@@ -1,0 +1,204 @@
+# PrometheusRule bundle for the OMNI-SRV-ADMIN observability stack.
+# Applied as part of Phase 17 (M005 Observability + RWX).
+#
+# kube-prometheus-stack charts `kube-prometheus-stack` already ship
+# a curated set of recording + alert rules. The bundle here covers
+# the *fleet-specific* signals that the upstream rules do not know
+# about: PM2 app offline, GDrive quota, Jenkins agent connectivity,
+# resource-governor / inviolable watchdog regression.
+#
+# Threshold choices follow the Phase 17 PLAN.md:
+#   - PM2 app offline > 5min (not 1min — false positives erode trust)
+#   - Disk > 85% (not 70% — keep noise low)
+#   - GDrive quota > 80% (warn at 80, critical at 95)
+#   - KubeEtcdNoLeader (1min — etcd loses quorum fast)
+#   - KubePodCrashLooping (5min — k8s default)
+#   - Resource-governor slice budget overflow (sustained 5min)
+#
+# All rules are cluster-scoped and groupBy-aware so AlertManager
+# can group by `cluster` and dedupe on the `omni-monitoring` label.
+
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: omni-monitoring-rules
+  namespace: monitoring
+  labels:
+    app.kubernetes.io/name: omni-monitoring
+    app.kubernetes.io/part-of: omni-srv-admin
+    release: omni-monitoring
+spec:
+  groups:
+    # ─── K3s control-plane health ────────────────────────────────────
+    - name: k3s.control-plane
+      interval: 30s
+      rules:
+        - alert: KubeEtcdNoLeader
+          expr: max by (cluster) (etcd_server_has_leader) == 0
+          for: 1m
+          labels:
+            severity: critical
+            category: k3s
+          annotations:
+            summary: "etcd cluster {{ $labels.cluster }} has no leader"
+            description: "etcd quorum lost on cluster {{ $labels.cluster }}. Investigate K3s control plane immediately."
+
+        - alert: KubeNodeNotReady
+          expr: kube_node_status_condition{condition="Ready",status="true"} == 0
+          for: 5m
+          labels:
+            severity: warning
+            category: k3s
+          annotations:
+            summary: "Node {{ $labels.node }} not Ready for >5m"
+            description: "Node {{ $labels.node }} on cluster {{ $labels.cluster }} has been NotReady for 5+ minutes."
+
+        - alert: KubePodCrashLooping
+          expr: rate(kube_pod_container_status_restarts_total[10m]) * 60 * 5 > 0
+          for: 5m
+          labels:
+            severity: warning
+            category: k3s
+          annotations:
+            summary: "Pod {{ $labels.namespace }}/{{ $labels.pod }} crash-looping"
+            description: "Pod {{ $labels.namespace }}/{{ $labels.pod }} ({{ $labels.container }}) restarted 5+ times in the last 10min."
+
+    # ─── Node-level signals ─────────────────────────────────────────
+    - name: node.resources
+      interval: 30s
+      rules:
+        - alert: NodeDiskSpaceLow
+          expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+          for: 5m
+          labels:
+            severity: warning
+            category: node
+          annotations:
+            summary: "Disk on {{ $labels.instance }} >85% full"
+            description: "Root filesystem on {{ $labels.instance }} is over 85% used."
+
+        - alert: NodeMemoryPressure
+          expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 90
+          for: 5m
+          labels:
+            severity: warning
+            category: node
+          annotations:
+            summary: "Memory on {{ $labels.instance }} >90%"
+            description: "Memory pressure on {{ $labels.instance }} is above 90% for 5+ minutes."
+
+        - alert: NodeCPUStuck
+          expr: 100 - (avg by (instance) (rate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 90
+          for: 10m
+          labels:
+            severity: warning
+            category: node
+          annotations:
+            summary: "CPU on {{ $labels.instance }} >90% for 10m"
+            description: "CPU on {{ $labels.instance }} has been above 90% for 10+ minutes. Check for runaway processes."
+
+    # ─── PM2 fleet signals (custom scrape, not upstream) ─────────────
+    - name: pm2.fleet
+      interval: 60s
+      rules:
+        - alert: PM2AppOffline
+          expr: omni_pm2_app_status{status="online"} == 0
+          for: 5m
+          labels:
+            severity: warning
+            category: pm2
+          annotations:
+            summary: "PM2 app {{ $labels.app }} on {{ $labels.instance }} offline >5m"
+            description: "App {{ $labels.app }} (namespace {{ $labels.namespace }}) on {{ $labels.instance }} has been offline for 5+ minutes. Check `pm2 ls` on that host."
+
+        - alert: PM2AppErrored
+          expr: omni_pm2_app_status{status="errored"} == 1
+          for: 2m
+          labels:
+            severity: critical
+            category: pm2
+          annotations:
+            summary: "PM2 app {{ $labels.app }} errored"
+            description: "App {{ $labels.app }} (namespace {{ $labels.namespace }}) on {{ $labels.instance }} is in errored state."
+
+    # ─── GDrive health ──────────────────────────────────────────────
+    - name: gdrive.health
+      interval: 5m
+      rules:
+        - alert: GDriveQuotaWarning
+          expr: omni_gdrive_used_pct > 80 and omni_gdrive_used_pct < 95
+          for: 10m
+          labels:
+            severity: warning
+            category: gdrive
+          annotations:
+            summary: "GDrive quota >80% on {{ $labels.instance }}"
+            description: "GDrive usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}%. Plan cleanup or quota increase."
+
+        - alert: GDriveQuotaCritical
+          expr: omni_gdrive_used_pct >= 95
+          for: 5m
+          labels:
+            severity: critical
+            category: gdrive
+          annotations:
+            summary: "GDrive quota >95% on {{ $labels.instance }}"
+            description: "GDrive usage on {{ $labels.instance }} is {{ $value | printf \"%.1f\" }}%. Backups will start failing. Free space or rotate snapshots now."
+
+        - alert: GDriveMountDown
+          expr: omni_gdrive_mount_ok == 0
+          for: 2m
+          labels:
+            severity: critical
+            category: gdrive
+          annotations:
+            summary: "GDrive mount down on {{ $labels.instance }}"
+            description: "rclone-gdrive-mount.service on {{ $labels.instance }} reports mount_ok=0. See recovery in `docs/operations/rclone-gdrive-mount.md`."
+
+    # ─── Jenkins signals ────────────────────────────────────────────
+    - name: jenkins.health
+      interval: 60s
+      rules:
+        - alert: JenkinsControllerDown
+          expr: omni_jenkins_up == 0
+          for: 2m
+          labels:
+            severity: critical
+            category: jenkins
+          annotations:
+            summary: "Jenkins controller down on {{ $labels.instance }}"
+            description: "Jenkins controller on {{ $labels.instance }} has not responded for 2+ minutes. CI/CD pipeline is impacted."
+
+        - alert: JenkinsAgentOffline
+          expr: omni_jenkins_agent_online == 0
+          for: 10m
+          labels:
+            severity: warning
+            category: jenkins
+          annotations:
+            summary: "Jenkins agent {{ $labels.agent }} offline"
+            description: "Jenkins agent {{ $labels.agent }} on {{ $labels.instance }} has been offline for 10+ minutes."
+
+    # ─── Resource governor regression ───────────────────────────────
+    - name: resource-governor
+      interval: 30s
+      rules:
+        - alert: InviolableWatchdogMissed
+          expr: omni_resource_governor_watchdog_last_seen_seconds > 600
+          for: 5m
+          labels:
+            severity: critical
+            category: resource-governor
+          annotations:
+            summary: "Inviolable watchdog stopped on {{ $labels.instance }}"
+            description: "The inviolable watchdog has not reported in 10+ minutes on {{ $labels.instance }}. Run `systemctl --user status inviolable-watchdog.timer`."
+
+        - alert: CgroupSliceBudgetOverflow
+          expr: omni_cgroup_cpu_throttled_ratio > 0.5
+          for: 10m
+          labels:
+            severity: warning
+            category: resource-governor
+          annotations:
+            summary: "cgroup {{ $labels.cgroup }} throttling >50% on {{ $labels.instance }}"
+            description: "CPU throttling ratio on cgroup {{ $labels.cgroup }} is over 50% sustained for 10m. Check resource-governor profile."

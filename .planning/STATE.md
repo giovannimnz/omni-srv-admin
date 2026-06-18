@@ -61,7 +61,7 @@ See also: .planning/MILESTONES.md
 - Etcd post-bootstrap snapshot: ✅ saved on SRV-1.
 | OCI snapshot IDs | follow-up for formal cloud rollback record |
 | Cloudflare Access policy | ⚠️ code shipped 2026-06-17 (`cli/omni/edge.py` + runbook + validation script) — live cutover **blocked** on Cloudflare dashboard "Enable Access" click; see `.planning/phases/16-m005-cloudflare-access/16-SUMMARY.md` |
-| Observability stack | follow-up from M005 observability plan |
+| Observability stack | ⚠️ code/artifacts shipped 2026-06-18 (`cli/omni/observability.py`, dashboards, rules, scripts, RWX decision doc); live closeout still blocked on production gate + missing `~/.hermes/secrets/alert-webhook.json` + Grafana dashboard provisioning; see `.planning/phases/17-m005-observability-rwx/17-SUMMARY.md` |
 | **Tailscale ACL** | ✅ **closed 2026-06-16** — see `13-ACL-CLOSURE-2026-06-16.md` and vault `60-LOGS/2026-06-16/` |
 - M006 live execution must not stop PM2 daemons, trading processes, XRDP, or stale user jobs without an explicit gate and current process snapshot.
 - M006 14-01 found current live stuck jobs: `default.target`, `ats-pm2.service`, `horistic-pm2.service`; these remain gated for 14-02/14-03.
@@ -103,6 +103,7 @@ See also: .planning/MILESTONES.md
 - Phase 1: Preparação do Host ✅ (2026-04-19)
 - Phase 2: Migração Apache2 ✅ (2026-04-19)
 - Phase 16: M005 Cloudflare Access — code shipped 2026-06-17 (`cli/omni/edge.py` + `docs/operations/edge-auth.md` + `scripts/validate-edge-auth.py`, 16/16 tests passing, live pre-cutover state confirmed); live cutover ⛔ blocked on Cloudflare dashboard "Enable Access" click — see `.planning/phases/16-m005-cloudflare-access/16-SUMMARY.md`
+- Phase 17: M005 Observability + RWX — code/artifacts shipped 2026-06-18 (`cli/omni/observability.py`, monitoring dashboards/rules/scripts, `docs/operations/k3s-storage.md`, 43/43 tests passing); live closeout ⛔ blocked on production gate + missing alert webhook + dashboard provisioning — see `.planning/phases/17-m005-observability-rwx/17-SUMMARY.md`
 
 ### Backlog (Phases 3-7)
 

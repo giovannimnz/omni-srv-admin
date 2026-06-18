@@ -1,0 +1,84 @@
+{
+  "title": "PM2 — Fleet daemons",
+  "uid": "omni-pm2-fleet",
+  "tags": ["omni", "pm2", "fleet"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "30s",
+  "time": { "from": "now-3h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "namespace",
+        "label": "Namespace",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(omni_pm2_app_status, namespace)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true
+      },
+      {
+        "name": "instance",
+        "label": "Host",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "prometheus" },
+        "query": "label_values(omni_pm2_app_status{namespace=~\"$namespace\"}, instance)",
+        "refresh": 1,
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "stat",
+      "title": "Apps online",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 0 },
+      "targets": [
+        { "expr": "sum(omni_pm2_app_status{status=\"online\",namespace=~\"$namespace\",instance=~\"$instance\"})" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Apps errored",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 0 },
+      "targets": [
+        { "expr": "sum(omni_pm2_app_status{status=\"errored\",namespace=~\"$namespace\",instance=~\"$instance\"})" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Apps stopped",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 0 },
+      "targets": [
+        { "expr": "sum(omni_pm2_app_status{status=\"stopped\",namespace=~\"$namespace\",instance=~\"$instance\"})" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Total restart count (1h)",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 0 },
+      "targets": [
+        { "expr": "sum(increase(omni_pm2_app_restart_total{namespace=~\"$namespace\",instance=~\"$instance\"}[1h]))" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Memory per app",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 4 },
+      "targets": [
+        { "expr": "omni_pm2_app_memory_rss{namespace=~\"$namespace\",instance=~\"$instance\"}", "legendFormat": "{{namespace}}/{{app}} on {{instance}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "bytes" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Restart count per app",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 4 },
+      "targets": [
+        { "expr": "increase(omni_pm2_app_restart_total{namespace=~\"$namespace\",instance=~\"$instance\"}[1h])", "legendFormat": "{{namespace}}/{{app}} on {{instance}}" }
+      ]
+    }
+  ]
+}

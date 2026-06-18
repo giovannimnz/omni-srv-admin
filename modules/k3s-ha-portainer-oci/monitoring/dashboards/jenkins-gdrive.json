@@ -1,0 +1,117 @@
+{
+  "title": "Jenkins + GDrive Health",
+  "uid": "omni-jenkins-gdrive",
+  "tags": ["omni", "jenkins", "gdrive", "fleet"],
+  "schemaVersion": 39,
+  "version": 1,
+  "refresh": "1m",
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "row",
+      "title": "Jenkins",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 0 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Controller up",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 1 },
+      "targets": [
+        { "expr": "omni_jenkins_up" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Queue length",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 1 },
+      "targets": [
+        { "expr": "omni_jenkins_queue_length" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Agents online",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 1 },
+      "targets": [
+        { "expr": "sum(omni_jenkins_agent_online)" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Executors busy",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 1 },
+      "targets": [
+        { "expr": "sum(omni_jenkins_executors_busy)" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Job duration (avg, p95)",
+      "gridPos": { "h": 8, "w": 12, "x": 0, "y": 5 },
+      "targets": [
+        { "expr": "omni_jenkins_job_duration_avg", "legendFormat": "avg {{job}}" },
+        { "expr": "omni_jenkins_job_duration_p95", "legendFormat": "p95 {{job}}" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    },
+    {
+      "type": "timeseries",
+      "title": "Job result count",
+      "gridPos": { "h": 8, "w": 12, "x": 12, "y": 5 },
+      "targets": [
+        { "expr": "increase(omni_jenkins_job_result_total[1h])", "legendFormat": "{{result}} {{job}}" }
+      ]
+    },
+    {
+      "type": "row",
+      "title": "GDrive",
+      "gridPos": { "h": 1, "w": 24, "x": 0, "y": 13 },
+      "collapsed": false
+    },
+    {
+      "type": "stat",
+      "title": "Quota used",
+      "gridPos": { "h": 4, "w": 6, "x": 0, "y": 14 },
+      "targets": [
+        { "expr": "omni_gdrive_used_pct" }
+      ],
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percent",
+          "thresholds": { "mode": "absolute", "steps": [
+            { "color": "green", "value": null },
+            { "color": "yellow", "value": 80 },
+            { "color": "red", "value": 95 }
+          ] }
+        }
+      }
+    },
+    {
+      "type": "stat",
+      "title": "Mount OK",
+      "gridPos": { "h": 4, "w": 6, "x": 6, "y": 14 },
+      "targets": [
+        { "expr": "omni_gdrive_mount_ok" }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Free (TB)",
+      "gridPos": { "h": 4, "w": 6, "x": 12, "y": 14 },
+      "targets": [
+        { "expr": "omni_gdrive_free_bytes / 1024 / 1024 / 1024 / 1024" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "none", "decimals": 2 } }
+    },
+    {
+      "type": "stat",
+      "title": "Last backup age",
+      "gridPos": { "h": 4, "w": 6, "x": 18, "y": 14 },
+      "targets": [
+        { "expr": "time() - omni_gdrive_last_backup_timestamp" }
+      ],
+      "fieldConfig": { "defaults": { "unit": "s" } }
+    }
+  ]
+}

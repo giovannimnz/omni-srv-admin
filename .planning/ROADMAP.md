@@ -537,6 +537,8 @@ action required — see `16-SUMMARY.md` §"Blocker".
 
 **Goal:** Stack Prometheus + Grafana + Loki scraping K3s control plane + worker nodes + PM2 daemons + Jenkins + GDrive health, com alert routing pra canal preferido de Giovanni.
 
+**Status (2026-06-18):** code/artifacts shipped; live closeout blocked.
+
 **Requirements:** OBS-01, OBS-02, OBS-03, RWX-01, RWX-02
 
 **Success Criteria:**
@@ -547,6 +549,20 @@ action required — see `16-SUMMARY.md` §"Blocker".
 - AlertManager com rotas para Telegram/Hermes webhook pra: pod CrashLoopBackOff, etcd quorum loss, PM2 app offline >5min, GDrive quota >80%, disk >85%
 - RWX storage decision documentada (NFS em SRV-1 vs Longhorn distributed) + implementação
 - `omni srv observability status` reporta estado de cada exporter
+
+**Shipped artifacts:**
+
+- `cli/omni/observability.py` + `cli/omni/tests/test_observability.py`
+- monitoring bundle: dashboards, Loki values, AlertManager values, Prometheus rules, install/uninstall scripts
+- `docs/operations/k3s-storage.md` — decisão RWX: manter `local-path` por agora
+- `omni srv observability status` validado ao vivo (`k3s` green, `loki` green, `alertmanager` green, `prometheus-rules` green, dashboards yellow)
+
+**Blockers:**
+
+- Gate explícito para rollout live final em produção
+- `~/.hermes/secrets/alert-webhook.json` ausente
+- dashboards ainda não provisionados como ConfigMaps no Grafana
+- teste real de alert routing ainda não executado
 
 ## Notes
 

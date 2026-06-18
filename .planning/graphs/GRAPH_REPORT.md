@@ -1,16 +1,16 @@
 # Graph Report - omni-srv-admin  (2026-06-17)
 
 ## Corpus Check
-- 355 files · ~823,323 words
+- 363 files · ~837,611 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 5288 nodes · 5969 edges · 493 communities (436 shown, 57 thin omitted)
+- 5471 nodes · 6212 edges · 504 communities (446 shown, 58 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 44 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b4712865`
+- Built from commit: `b86234ec`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -505,16 +505,27 @@
 - [[_COMMUNITY_Community 487|Community 487]]
 - [[_COMMUNITY_Community 488|Community 488]]
 - [[_COMMUNITY_Community 489|Community 489]]
+- [[_COMMUNITY_Community 490|Community 490]]
 - [[_COMMUNITY_Community 491|Community 491]]
+- [[_COMMUNITY_Community 494|Community 494]]
+- [[_COMMUNITY_Community 495|Community 495]]
+- [[_COMMUNITY_Community 496|Community 496]]
+- [[_COMMUNITY_Community 497|Community 497]]
+- [[_COMMUNITY_Community 498|Community 498]]
+- [[_COMMUNITY_Community 499|Community 499]]
+- [[_COMMUNITY_Community 500|Community 500]]
+- [[_COMMUNITY_Community 501|Community 501]]
+- [[_COMMUNITY_Community 502|Community 502]]
+- [[_COMMUNITY_Community 503|Community 503]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (494 total, 60 thin omitted)` - 433 edges
+1. `Communities (493 total, 57 thin omitted)` - 435 edges
 2. `Fork Sync — Gestão Unificada de Forks` - 25 edges
 3. `ok()` - 24 edges
 4. `ScenarioResult` - 23 edges
 5. `output()` - 23 edges
 6. `run_sync()` - 22 edges
-7. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 20 edges
+7. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 19 edges
 8. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 18 edges
 9. `Phase 3: FreeIPA Server Container - Research` - 18 edges
 10. `Phase 1: Preparação do Host - Research` - 17 edges
@@ -526,19 +537,19 @@
   modules/fleet-control-plane/tests/test_m004_contract.py → modules/fleet-control-plane/tools/validate_m004.py
 - `projects_list()` --calls--> `list_projects()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
-- `projects_show()` --calls--> `load_project()`  [INFERRED]
-  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
 - `sync_cmd()` --calls--> `run_sync()`  [INFERRED]
   modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/sync_runner.py
+- `sync_all_cmd()` --calls--> `run_sync_all()`  [INFERRED]
+  modules/fork-sync/cli/fork_sync/cli.py → modules/fork-sync/cli/fork_sync/core/automerge.py
 
 ## Import Cycles
 - None detected.
 
-## Communities (493 total, 57 thin omitted)
+## Communities (504 total, 58 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.00
-Nodes (433): Communities (494 total, 60 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+425 more)
+Nodes (435): Communities (493 total, 57 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+427 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.07
@@ -546,7 +557,7 @@ Nodes (80): Any, Path, agent(), agent_heartbeat(), agent_loop(), agent_once(), _
 
 ### Community 2 - "Community 2"
 Cohesion: 0.05
-Nodes (55): project_exists(), containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover(), discover_check(), discover_heal() (+47 more)
+Nodes (61): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover() (+53 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.06
@@ -626,7 +637,7 @@ Nodes (30): Any, Path, _blocked(), _fail(), _live_fleet_db_query(), _live_host_i
 
 ### Community 22 - "Community 22"
 Cohesion: 0.06
-Nodes (31): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — IN PLANNING (v1.1) (+23 more)
+Nodes (30): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — IN PLANNING (v1.1) (+22 more)
 
 ### Community 23 - "Community 23"
 Cohesion: 0.06
@@ -833,8 +844,8 @@ Cohesion: 0.12
 Nodes (16): Codex channel integration, Documentation (fork-specific, PT-BR primary), Fork Sync — Atius Router, Frontend i18n, i18n — Portuguese Translation, Infrastructure, Merge Flow, Middleware and containers (+8 more)
 
 ### Community 74 - "Community 74"
-Cohesion: 0.17
-Nodes (16): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+8 more)
+Cohesion: 0.15
+Nodes (18): auto_heal(), check_upstream_exists(), diagnose_project(), find_fork_locally(), find_upstream_candidates(), _gh_api(), _gh_search_repos(), discovery — auto-localiza forks/upstreams sumidos via gh search.  Problema: fork (+10 more)
 
 ### Community 75 - "Community 75"
 Cohesion: 0.19
@@ -886,7 +897,7 @@ Nodes (15): Accomplishments, Decisions Made, Deviations from Plan, Files Created
 
 ### Community 87 - "Community 87"
 Cohesion: 0.18
-Nodes (12): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply(), _detect_submodules(), list_projects(), _project_enabled(), registry — listagem e carregamento de projetos (forks). (+4 more)
+Nodes (14): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., _detect_submodules(), list_projects(), _project_enabled() (+6 more)
 
 ### Community 88 - "Community 88"
 Cohesion: 0.12
@@ -1497,8 +1508,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 240 - "Community 240"
-Cohesion: 0.52
-Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
+Cohesion: 0.12
+Nodes (36): Any, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso() (+28 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.29
@@ -2269,28 +2280,68 @@ Cohesion: 0.12
 Nodes (15): 22-01 — Plano separado (este doc), 22-02 — Subagente no host `horistic-srv`, 22-03 — Rename no host (post-install), 22-04 — DB e omni-srv-admin, 22-05 — VPN/docs, 22-06 — Vault Obsidian, 22-07 — gbrain, 22-08 — Validação final e commit (+7 more)
 
 ### Community 489 - "Community 489"
-Cohesion: 0.24
-Nodes (10): load_project(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., _fork_repo_slug(), Resolve o slug do repo do fork.      Ordem:     1) cfg.fork_repo (se existir), Gera release notes em PT-BR pra um projeto., Atualiza uma release existente no GitHub com notas em PT-BR geradas.      Use pa, Atalho: gera release notes com defaults e mostra (sem salvar)., release_generate() (+2 more)
+Cohesion: 0.29
+Nodes (6): Accomplishments, Hosts, Out of Scope (intentional), Phase 21 — SUMMARY, Status: ✅ COMPLETE, Validation
+
+### Community 490 - "Community 490"
+Cohesion: 0.29
+Nodes (6): Accomplishments, Host, Pending (operational — not blocking), Phase 22 — SUMMARY, Status: ✅ COMPLETE, Validation
+
+### Community 494 - "Community 494"
+Cohesion: 0.09
+Nodes (31): Any, Path, basic_auth_header(), basic_auth_header_from_env(), cf_service_auth_headers(), cf_service_token_exists(), describe_auth(), edge() (+23 more)
+
+### Community 495 - "Community 495"
+Cohesion: 0.10
+Nodes (5): isolated_token_file(), Tests for the Cloudflare-Access-aware edge client (Phase 16 / M005).  Run with:, ``omni edge check`` should GET with a browser UA, not HEAD with the bare urllib, Point the module at a temp file and clean up env vars., test_edge_check_uses_get_with_real_ua()
+
+### Community 496 - "Community 496"
+Cohesion: 0.19
+Nodes (17): Path, Tests for cli/omni/oci.py — dry-run, state machine, and parser safety.  These te, Point oci_mod at a temp inventory dir + temp state/log dirs., test_load_oci_host_basic(), test_load_oci_host_missing_field(), test_load_oci_host_rejects_non_oci(), test_preflight_plan_only(), test_restore_drill_accepts_explicit_real_id() (+9 more)
+
+### Community 497 - "Community 497"
+Cohesion: 0.13
+Nodes (14): Arquivos relacionados, Comandos, Contexto, Custos, Estado do inventário (2026-06-18), OCI Snapshots — workflow versionado para hosts gerenciados, `omni srv oci restore drill`, `omni srv oci snapshot preflight` (+6 more)
+
+### Community 498 - "Community 498"
+Cohesion: 0.14
+Nodes (13): Bug pré-existente corrigido, Decisões de arquitetura, Desvios do plano original, Drill: rejeição explícita de `--no-dry-run` com `pending-`, Estado do repo após a fase, Next phase readiness, Pendência de prune, Phase 15: M005 OCI Snapshots — Summary (+5 more)
+
+### Community 499 - "Community 499"
+Cohesion: 0.17
+Nodes (11): Blocker, Deviations from the PLAN, Files in this phase, Open follow-up after dashboard enablement, Outcome, Phase 16 — M005 Cloudflare Access, Success Criteria — final state, Validation evidence (run on 2026-06-18) (+3 more)
+
+### Community 500 - "Community 500"
+Cohesion: 0.18
+Nodes (10): Constraints / Risks, Current State (2026-06-17), Cutover procedure (Cloudflare Access ON, Basic Auth OFF), Edge Auth — Cloudflare Access + Apache Basic Auth (Phase 16 / M005), Files in this cutover, References, Rollback procedure (Access OFF, Basic Auth back ON), Service token rotation (annual) (+2 more)
+
+### Community 501 - "Community 501"
+Cohesion: 0.36
+Nodes (7): get_or_head(), looks_like_basic_challenge(), looks_like_cf_access_redirect(), main(), Issue a GET request, return (status_code, response_headers, body).      HEAD is, True when the response advertises WWW-Authenticate: Basic realm=ATIUS Admin., True when the response redirects to a Cloudflare Access login URL.
+
+### Community 502 - "Community 502"
+Cohesion: 0.50
+Nodes (4): automerge — safe multi-project sync gate., Run dry-run for configured projects and apply only safe candidates., run_sync_all(), _safe_to_apply()
 
 ## Knowledge Gaps
-- **3411 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3406 more)
+- **3465 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+3460 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **57 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **58 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (494 total, 60 thin omitted)` connect `Community 0` to `Community 155`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `discover_heal()` connect `Community 2` to `Community 74`?**
+- **Why does `Communities (493 total, 57 thin omitted)` connect `Community 0` to `Community 155`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `run_sync_all()` connect `Community 502` to `Community 17`, `Community 2`, `Community 87`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
-- **Why does `modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh` connect `Community 345` to `Community 119`?**
+- **Why does `run()` connect `Community 138` to `Community 39`?**
   _High betweenness centrality (0.001) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _3630 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _3720 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.004618937644341801 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.004597701149425287 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.07191358024691358 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.05012531328320802 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.048131080389144903 - nodes in this community are weakly interconnected._
