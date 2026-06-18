@@ -21,4 +21,4 @@ OOMPolicy=stop
 OOMScoreAdjust=-1000
 
 [Install]
-WantedBy=default.target
+WantedBy=timers.target

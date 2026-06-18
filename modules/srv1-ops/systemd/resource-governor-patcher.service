@@ -1,7 +1,8 @@
 [Unit]
 Description=Resource governor patcher — auto-migra processos pesados para slices omni-*
 Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
-After=default.target omni-builds.slice omni-interactive.slice omni-transfers.slice
+After=omni-builds.slice omni-interactive.slice omni-transfers.slice
+Wants=omni-builds.slice omni-interactive.slice omni-transfers.slice
 
 [Service]
 Type=simple
@@ -20,4 +21,4 @@ Nice=15
 IOSchedulingClass=idle
 
 [Install]
-WantedBy=default.target
+WantedBy=timers.target

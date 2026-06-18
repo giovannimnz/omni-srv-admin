@@ -24,6 +24,19 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 ### Active
 
+#### M007: M005 Follow-ups (Phase 15-17)
+- [ ] **OBS-01**: Observability stack live (Prometheus + Grafana + Loki) scraping K3s control plane + worker nodes
+- [ ] **OBS-02**: Dashboards for K3s HA, Portainer, PM2 daemons, Jenkins, GDrive backup health
+- [ ] **OBS-03**: Alert routing to Giovanni's preferred channel (Telegram/Hermes) for: pod CrashLoopBackOff, etcd quorum loss, PM2 app offline, GDrive quota >80%, disk >85%
+- [ ] **CFL-01**: Cloudflare Access policy configured for `portainer.atius.com.br` and `docker.atius.com.br` (replaces Apache Basic Auth)
+- [ ] **CFL-02**: Service token issued for omni-cli automation that needs to bypass Access
+- [ ] **CFL-03**: Apache Basic Auth retained as fallback if Access is unavailable, with documented cutover
+- [ ] **OCI-01**: OCI snapshot script for SRV-1/2/3 — `preflight` creates snapshot before risky ops; `routine` weekly snapshots to ATIUS-SRV-OCI bucket
+- [ ] **OCI-02**: Snapshot ID registered in `inventory/hosts/<srv>.yaml` and `DbOmniFleet` for rollback traceability
+- [ ] **OCI-03**: Restore drill validated from snapshot (start a stopped node and verify K3s rejoins)
+- [ ] **RWX-01**: RWX storage decision for K3s: NFS server on SRV-1 or Longhorn distributed
+- [ ] **RWX-02**: PVC backup ops for any StatefulSet using RWX
+
 #### Módulo: Domain Infrastructure (domain-infrastructure/)
 - [ ] **FIPA-01**: FreeIPA instalado e configurado no servidor 10.1.1.1 (LDAP + Kerberos + CA) — container AlmaLinux 9
 - [ ] **FIPA-02**: Máquinas Linux ingressam no domínio FreeIPA (ipa-client-install)
@@ -61,7 +74,8 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 - **10.1.1.1** (este servidor): Atius apps (PM2: API, web, webhooks, bots, DIVAP), ~25 containers Docker, PostgreSQL 17, MongoDB, Apache2 com 60+ vhosts
 - **10.1.1.2**: WireGuard VPN + CoreDNS + Samba existente (será migrado para 10.1.1.1)
-- **10.1.1.3**: Apache2 para Horistic
+- **10.1.1.3**: atius-srv-3 (DNS canonico; `10.1.1.7` ainda e alias K3s/etcd)
+- **10.1.1.4**: Apache2 para Horistic
 - **Rede WireGuard**: 10.1.1.0/24
 - **Domínio**: atius.com.br no Cloudflare
 

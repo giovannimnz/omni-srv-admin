@@ -1,0 +1,1817 @@
+{
+  ".planning/config.json": {
+    "mtime": 1781526474.5886495,
+    "ast_hash": "a4f4aeefb4c7cf67a590585bec2aa611",
+    "semantic_hash": ""
+  },
+  "antivirus/monitor.sh": {
+    "mtime": 1771895417.5596247,
+    "ast_hash": "156b5040cbc59bdbfce97401a0647530",
+    "semantic_hash": ""
+  },
+  "antivirus/scan.sh": {
+    "mtime": 1771895417.3256254,
+    "ast_hash": "b27d1c1397074ccc8ab19e73ea6ebdbb",
+    "semantic_hash": ""
+  },
+  "cli/lib/model-history.sh": {
+    "mtime": 1780655059.5853193,
+    "ast_hash": "af008c99cd3725912bb9f56569de9331",
+    "semantic_hash": ""
+  },
+  "cli/model-fs": {
+    "mtime": 1780655040.0483775,
+    "ast_hash": "454bb65bebb106051b208b9b6ba912c7",
+    "semantic_hash": ""
+  },
+  "cli/omni/__init__.py": {
+    "mtime": 1780650304.1645374,
+    "ast_hash": "ba7b6917c50fcf02b1859a85e16bb18a",
+    "semantic_hash": ""
+  },
+  "cli/omni/__main__.py": {
+    "mtime": 1780650307.1835287,
+    "ast_hash": "1c433b2a86b72b6f308df890ac7b7b16",
+    "semantic_hash": ""
+  },
+  "cli/omni/cli.py": {
+    "mtime": 1781315761.943234,
+    "ast_hash": "1388846aa357b6689db89b4f94eeb903",
+    "semantic_hash": ""
+  },
+  "cli/omni/fleet.py": {
+    "mtime": 1781523086.2297459,
+    "ast_hash": "6de8e68698138ce45681a0847c0ebd1e",
+    "semantic_hash": ""
+  },
+  "cli/omni/fleet_backup.py": {
+    "mtime": 1781315761.943234,
+    "ast_hash": "2d9e6af8f46a1e4f2437857f9e53f07b",
+    "semantic_hash": ""
+  },
+  "cli/omni/remote_manager.py": {
+    "mtime": 1780722919.3177352,
+    "ast_hash": "6e123a257b036a4105d19941a4b2bf45",
+    "semantic_hash": ""
+  },
+  "cli/omni/remote_ops.py": {
+    "mtime": 1781522277.8729246,
+    "ast_hash": "1e9a51700beda9a560572308ee0a472c",
+    "semantic_hash": ""
+  },
+  "cli/omni/srv1_ops.py": {
+    "mtime": 1781521953.4268758,
+    "ast_hash": "27baece3a464a918a27f9231988c2834",
+    "semantic_hash": ""
+  },
+  "cli/omni/xrdp_abnt2.py": {
+    "mtime": 1780715672.9433773,
+    "ast_hash": "1709898375a6d2e0128c7af6f9fc7d88",
+    "semantic_hash": ""
+  },
+  "cli/setup.py": {
+    "mtime": 1780650347.380412,
+    "ast_hash": "66726a79b455608b8bab1409fa032b0e",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/install.sh": {
+    "mtime": 1781522277.8729246,
+    "ast_hash": "cee6628f0fe4f74811d0a9e3605e24ff",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/repair.sh": {
+    "mtime": 1781522277.8739245,
+    "ast_hash": "ad0ca14c9a6a867ada923337dc413515",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/scripts/dark-themectl.sh": {
+    "mtime": 1781522277.8739245,
+    "ast_hash": "c30801df291f85bb233ba46b1b04c2ca",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/uninstall.sh": {
+    "mtime": 1781522277.8739245,
+    "ast_hash": "4a230360ba723d9b63ecff588287dcc1",
+    "semantic_hash": ""
+  },
+  "modules/fleet-autoclean/scripts/fleet-autoclean.sh": {
+    "mtime": 1781522277.8854103,
+    "ast_hash": "779d8c9455b7de0058c2ffabe5af7943",
+    "semantic_hash": ""
+  },
+  "modules/fleet-backup/scripts/install-fleet-backup.sh": {
+    "mtime": 1781315761.944234,
+    "ast_hash": "8827fdeeb121a3eda2fd6c1b9e01d2d1",
+    "semantic_hash": ""
+  },
+  "modules/fleet-backup/scripts/map-docker-to-containers.sh": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "f760e01554229c9d2978888d28d4f987",
+    "semantic_hash": ""
+  },
+  "modules/fleet-backup/scripts/rclone-fleet-queue.sh": {
+    "mtime": 1781315761.944234,
+    "ast_hash": "e31c0a8ce3a1ad55ee8cbb5d97d1bdc5",
+    "semantic_hash": ""
+  },
+  "modules/fleet-backup/scripts/sync-backup-script.sh": {
+    "mtime": 1781315761.944234,
+    "ast_hash": "f8c97a8a66978846a1d3a4bcec364b5e",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/bin/deploy.sh": {
+    "mtime": 1780882698.8409777,
+    "ast_hash": "7cd8d82893dabcfd6cb88b521b3360c8",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/bin/detect-release.sh": {
+    "mtime": 1780882697.5319817,
+    "ast_hash": "95d777996944b0c3df7ba090c5823b37",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/bin/sync.sh": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "940a4176e659bf4c1c31b5fbb591b2d5",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/__init__.py": {
+    "mtime": 1781521953.4187558,
+    "ast_hash": "7a2b07e5e3c4fc9fa85a60bb22f31e0a",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/__main__.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "b0c223f3c30e64527ac9742eee0c42d2",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/cli.py": {
+    "mtime": 1781337817.2673721,
+    "ast_hash": "398aff7037e1a11efc40e01b197255d2",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/__init__.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "407684d40ac3a2eea072e7238d534748",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/automerge.py": {
+    "mtime": 1781338007.9927776,
+    "ast_hash": "45e48e4aac2359e217d44d2b408f548a",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/config.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "5655a66f14f14184ab7520774669c4a0",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/container_mirrors.py": {
+    "mtime": 1781338007.9927776,
+    "ast_hash": "29c62c792d8558f651b1ab7c0c8cfc36",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/discovery.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "51c4c497e41a54fee3d1ec043d97ecef",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/logrotate.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "801f15fcd08f70f834bc41668cd99ec5",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/manuals.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "dc9b33b6c649794980457cfb0425bb1d",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/registry.py": {
+    "mtime": 1781328020.4018478,
+    "ast_hash": "3d16df3abc116ad2598acc997cb4043d",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/release_notes.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "167eb5780fec205494a78b3232a6316b",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/repl.py": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "ce453fa1fdf0651cc98d4eaa93f0dec7",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/sync_runner.py": {
+    "mtime": 1781521953.418876,
+    "ast_hash": "d62a34e78a013075888d815f3e73df17",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/scripts/pm2-setup.sh": {
+    "mtime": 1780882231.9203668,
+    "ast_hash": "b4d446e8121a2bb6bf3b7f9e432901e6",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/scripts/run_doctor.sh": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "4dbf4c0e0e57343aa31b49faa689f718",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/scripts/run_logrotate.sh": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "4ea22800f782081adfec322966e7ce77",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/scripts/run_sync_all.sh": {
+    "mtime": 1781328020.4038477,
+    "ast_hash": "0f56c7f4a61124326d3d97ef667ac8af",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/setup.py": {
+    "mtime": 1781521953.418876,
+    "ast_hash": "c986a9f650c73d78145e3d3fd35197e5",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/tests/test_sync_runner.py": {
+    "mtime": 1781521953.418876,
+    "ast_hash": "16bbb263f88c31a4757045ed0ee09846",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/ecosystem.daily-sync.cron.json": {
+    "mtime": 1780882145.5686235,
+    "ast_hash": "885501ea8d36260fa1f4b1e25f1d5746",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/ecosystem.doctor.cron.json": {
+    "mtime": 1780882146.82762,
+    "ast_hash": "04e2a46bc1d2dd68552d82aa236f41c7",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/ecosystem.logrotate.cron.json": {
+    "mtime": 1780882148.0986161,
+    "ast_hash": "7d00413dd15a4e35f27936eee2cda540",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/atius-router-docs-rebrand.sh": {
+    "mtime": 1781328020.4038477,
+    "ast_hash": "e6d5ea42b61e427fb3f523427d0ec403",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/post-merge.sh": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "49676617ffc34d5cb4d362e96814221f",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/api/meta.json": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "6265f7d511d544674a1ee7b42a3108cc",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/guide/meta.json": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "f9559a473d093672c0f4e04e6014998b",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/deployment-methods/meta.json": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "7aeeac271502ff1fa3a98aece952f5ba",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/meta.json": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "5233e751eea5088fb9f8f313aca18526",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/meta.json": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "9a64c69b173b5ca731b51561c84aa9d7",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/scripts/fork-sync-docs.sh": {
+    "mtime": 1781328020.4038477,
+    "ast_hash": "26768f45892b609dca98b405123ae179",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/horus-spec-driven/ecosystem.daily-sync.cron.json": {
+    "mtime": 1780649437.3360918,
+    "ast_hash": "ecee30033ae9d36cadd09ac7bd5432f9",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/fix-abnt2.sh": {
+    "mtime": 1778948438.7694333,
+    "ast_hash": "9f5a4778f01bdc192c41107539f181a2",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/fix-shared_smb.sh": {
+    "mtime": 1778934573.1278431,
+    "ast_hash": "b08451bff6f5c156ec815da09d4379a3",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/hermes-desktop-start.sh": {
+    "mtime": 1779870186.503067,
+    "ast_hash": "df209f15ba38e9846b0ce527876d7ac8",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/hermes-desktop-status.sh": {
+    "mtime": 1779868125.5892575,
+    "ast_hash": "594f323ecb7102b3cf943109b5a14546",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/hermes-desktop-stop.sh": {
+    "mtime": 1779868114.130292,
+    "ast_hash": "a66181be92853f8f1dd1fbec054f6676",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/mount-gdrive.sh": {
+    "mtime": 1777000619.656824,
+    "ast_hash": "0a8cbfe3c2c18efef302b35bb7e83672",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/optimize_network.sh": {
+    "mtime": 1778934648.9686162,
+    "ast_hash": "71a07768e02bb120aa56a692bff7aa85",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/qbt-postprocess.sh": {
+    "mtime": 1780720599.6696675,
+    "ast_hash": "0cdc95e7f32d2a1d4bba23484c619605",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/start-aionui.sh": {
+    "mtime": 1778030608.7889557,
+    "ast_hash": "adcb8fd7aa9ee2aaae8a7f74e5549ef9",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/start-qbittorrent.sh": {
+    "mtime": 1777000637.25677,
+    "ast_hash": "c8000b8d79bb1c325d8320d350472512",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/legacy-scripts/vault-sync-monitor.sh": {
+    "mtime": 1780258256.9504218,
+    "ast_hash": "305a62b718ca5594f54ed01710d71d95",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/lib/metrics.py": {
+    "mtime": 1781315786.2931619,
+    "ast_hash": "dc4841a2ac612be21375054faabc2f82",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/atius-web-healthcheck.sh": {
+    "mtime": 1781315786.2931619,
+    "ast_hash": "e332d5c5e031294b2568de2f34eec151",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/backup-dangling-to-gdrive.py": {
+    "mtime": 1780876927.0221105,
+    "ast_hash": "6ae6005377f8c173548335b252998512",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh": {
+    "mtime": 1780975800.6982253,
+    "ast_hash": "006267fe8291415367257a548ad8120f",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/backup-to-smb.sh": {
+    "mtime": 1780612210.5003715,
+    "ast_hash": "a5fa1c1c208eb4cbc8d85dfed03d17a1",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/cleanup-local.sh": {
+    "mtime": 1780816962.3746374,
+    "ast_hash": "0656c7ef4080f0a407a2a4bd7131ebf8",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/inviolable-watchdog.sh": {
+    "mtime": 1781589650.2556107,
+    "ast_hash": "e59996f7a04709263214adfbae3d0e2e",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh": {
+    "mtime": 1780886630.8282926,
+    "ast_hash": "67afa32af4ef690c860b933576dc5be1",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh": {
+    "mtime": 1780886679.9291465,
+    "ast_hash": "ef6786fdef0cec02962165b7794119ea",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/resource-governor-audit.py": {
+    "mtime": 1780815385.5473104,
+    "ast_hash": "ca17a71d0e67c243057d7d60ab3ddfe7",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/resource-governor-cgroup-init.sh": {
+    "mtime": 1781521953.4278758,
+    "ast_hash": "3360a0313e9695cdf33cc790318a3474",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/resource-governor-patcher.py": {
+    "mtime": 1781521953.4278758,
+    "ast_hash": "3e99309cc15e7288f88f4cd6f8ea64b0",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/resource-governor-snapshot.py": {
+    "mtime": 1780815731.3742828,
+    "ast_hash": "547f636bd36270112e1ae35d469c414e",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/resource-governor-status.py": {
+    "mtime": 1781521953.4278758,
+    "ast_hash": "f3c20cfddcaf8980438d5787fb852456",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/resource-governor-watchdog.py": {
+    "mtime": 1781521953.4278758,
+    "ast_hash": "94349fcb5f18a56ea740386b520aca36",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/server-analysis.py": {
+    "mtime": 1780822638.779785,
+    "ast_hash": "eb49c1daa5d1d986351e8ece6004cbc3",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/sync-vault.sh": {
+    "mtime": 1781519921.2079487,
+    "ast_hash": "240f65c69828ef860fc8db69636a2157",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard": {
+    "mtime": 1780714026.6192956,
+    "ast_hash": "9cb8c6b729698eaf8be82b1238c9eeb9",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/files/setxkbmap-abnt2.sh": {
+    "mtime": 1780714026.6272955,
+    "ast_hash": "facc228d2a391eba47044416d9f3f864",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/files/startwm.sh": {
+    "mtime": 1780714017.6763222,
+    "ast_hash": "71899d7c69a6a24b55c8a7f6f5721d78",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/scripts/install.sh": {
+    "mtime": 1780715309.1264644,
+    "ast_hash": "6e7f5137165afa1138e8037a2cd8f380",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/scripts/validate.sh": {
+    "mtime": 1780715309.1264644,
+    "ast_hash": "12ebf505ab5e136bd13148f69384657b",
+    "semantic_hash": ""
+  },
+  "setup.sh": {
+    "mtime": 1780643035.950208,
+    "ast_hash": "c2ef94b9faec273820dc834c03ea64c5",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/mcp-config/linux/mcp.json": {
+    "mtime": 1780643096.876026,
+    "ast_hash": "1862c0b201fd44663501d10870b3d62e",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/vscode-settings/settings.json": {
+    "mtime": 1780722054.8213224,
+    "ast_hash": "61a8b6ee353db4b6f9cad11de2917564",
+    "semantic_hash": ""
+  },
+  ".planning/MILESTONES.md": {
+    "mtime": 1781526310.165219,
+    "ast_hash": "47210af44fd28d31a7196cec06918202",
+    "semantic_hash": ""
+  },
+  ".planning/PROJECT.md": {
+    "mtime": 1781526258.0343738,
+    "ast_hash": "39bae789798f8dcf2120e9f51e251356",
+    "semantic_hash": ""
+  },
+  ".planning/REQUIREMENTS.md": {
+    "mtime": 1781526456.5445986,
+    "ast_hash": "d96c5ed0adbee215ed40a3671768a645",
+    "semantic_hash": ""
+  },
+  ".planning/ROADMAP.md": {
+    "mtime": 1781638336.8199458,
+    "ast_hash": "4e132e42844b57525a8b6b7a57db849a",
+    "semantic_hash": ""
+  },
+  ".planning/STATE.md": {
+    "mtime": 1781653294.4388509,
+    "ast_hash": "d97bb105b37734202818fd7fa6aed927",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/ARCHITECTURE.md": {
+    "mtime": 1780722054.8313224,
+    "ast_hash": "a32665484f33d1029ac65451a01dac56",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/CONCERNS.md": {
+    "mtime": 1780722054.8323224,
+    "ast_hash": "3a4450d9d48a558e8644047940aac51c",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/CONVENTIONS.md": {
+    "mtime": 1780722054.8333223,
+    "ast_hash": "7e347da856fdf4000de0b22df342f9bd",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/HORISTIC.md": {
+    "mtime": 1780722054.8323224,
+    "ast_hash": "97d8d12b8e0609934930a2a2f7c545d6",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/INTEGRATIONS.md": {
+    "mtime": 1780722054.8313224,
+    "ast_hash": "703e9cf6310865562f205c013407dd1e",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/STACK.md": {
+    "mtime": 1780722054.8323224,
+    "ast_hash": "3fa9568489612b8de8a222ce43fea76d",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/STRUCTURE.md": {
+    "mtime": 1780722054.8313224,
+    "ast_hash": "d57e83ca984639cd2240dc25d88ac153",
+    "semantic_hash": ""
+  },
+  ".planning/codebase/TESTING.md": {
+    "mtime": 1778096702.6209822,
+    "ast_hash": "5a27af55cd0df9d310a0210194d77b00",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-01-PLAN.md": {
+    "mtime": 1778096702.6209822,
+    "ast_hash": "e5ce3ccca9f7282086cc2f4a255a0013",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-01-SUMMARY.md": {
+    "mtime": 1778096702.6209822,
+    "ast_hash": "91a8c26c184525d395a2b77b905df6ff",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-02-PLAN.md": {
+    "mtime": 1778096702.6209822,
+    "ast_hash": "cd82d6e2c51e2ff4edc0cc07985c2b27",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-02-SUMMARY.md": {
+    "mtime": 1778096702.6209822,
+    "ast_hash": "a3f06b2d39181310f7ac4240d97c3411",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-03-PLAN.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "904c7e6fa868fcc574aee44d31feedfb",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-03-SUMMARY.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "614f76283122e1ea56cf829f73cd9cb9",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-CONTEXT.md": {
+    "mtime": 1780722054.8293223,
+    "ast_hash": "74c8a50fee111d618ec4f41990b55ef7",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-DISCUSSION-LOG.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "c46765f6f7c34b149c50e047969026a0",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-PLAN-CHECK.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "5c5064846ea120bbbfc7742896781672",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-RESEARCH.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "fc874e16eee0ffdab49ac662e84e6e47",
+    "semantic_hash": ""
+  },
+  ".planning/phases/01-preparacao-do-host/01-VERIFICATION.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "b328f5a116bc01874baca498b8c04490",
+    "semantic_hash": ""
+  },
+  ".planning/phases/02-migracao-apache2-para-portas-alternativas/02-01-PLAN.md": {
+    "mtime": 1778096702.621982,
+    "ast_hash": "ac0e7d0da6513bf1a5610f9b1b265f72",
+    "semantic_hash": ""
+  },
+  ".planning/phases/02-migracao-apache2-para-portas-alternativas/02-CONTEXT.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "6393c3b8b7d522b599bc03e2221bc5f2",
+    "semantic_hash": ""
+  },
+  ".planning/phases/02-migracao-apache2-para-portas-alternativas/02-PLAN-CHECK.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "6d70387cb69fa72d222cfc166206777e",
+    "semantic_hash": ""
+  },
+  ".planning/phases/02-migracao-apache2-para-portas-alternativas/02-SUMMARY.md": {
+    "mtime": 1780731106.4242692,
+    "ast_hash": "7b63667113c7be7465b28fa7eed2f262",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-01-PLAN.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "dea2e12db0b405ee0dc3addfcb4cbf08",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-02-PLAN.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "883d1c0aa81b377ff6cb08baa316a27a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-03-PLAN.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "81adc951c28292d0f8286e516dce47de",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-CONTEXT.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "1c59bdabf0a62bdd86c2036e1fd9045a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-DISCUSSION-LOG.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "a806f1829bfae9ef86539cf0579ec9dc",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-PLAN-CHECK.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "6411ca2222a7830b7a575bd14e8a8382",
+    "semantic_hash": ""
+  },
+  ".planning/phases/03-freeipa-server-container/03-RESEARCH.md": {
+    "mtime": 1778096702.622982,
+    "ast_hash": "efbf5262ed56bb92d9bed47b98549aa3",
+    "semantic_hash": ""
+  },
+  ".planning/phases/08-rebrand-fork-sync-submodule/08-01-PLAN.md": {
+    "mtime": 1780619730.9528918,
+    "ast_hash": "b852cb4fa1f0b99b000727efd2c38739",
+    "semantic_hash": ""
+  },
+  ".planning/phases/08-rebrand-fork-sync-submodule/08-CONTEXT.md": {
+    "mtime": 1780619777.427753,
+    "ast_hash": "df113c358868b9e3cc2a11d3226969b8",
+    "semantic_hash": ""
+  },
+  ".planning/phases/08-rebrand-fork-sync-submodule/08-SUMMARY.md": {
+    "mtime": 1780731117.6962357,
+    "ast_hash": "9cacee0fc48c7f55b59edae2c1903b19",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-01-PLAN.md": {
+    "mtime": 1781315786.2911618,
+    "ast_hash": "f1ae49a168e8fa0fa85d9ef1874cd815",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-02-PLAN.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "9d402376cb4d0da705c9ef0732388803",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-03-PLAN.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "26be788ee2f28b103f3b8eb96935666d",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-04-PLAN.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "e4508a03cfb5d068624fe9921d8da505",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-05-PLAN.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "87d15f6f7509b22b42d0948f23509b98",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-PLAN.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "f30cde6f220ec459fc9b918dd895c42a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/09-mission-guardian/09-RESEARCH.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "f8e5ac64b196c5bacd705f6d979e487e",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-PLAN.md": {
+    "mtime": 1781521953.4398758,
+    "ast_hash": "8abd59a536be0e300ef1b88d01630ca8",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-02-PLAN.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "59f81236cecc87c22004f972bacb37b3",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-03-PLAN.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "d69fc57fa53786c5068d2db998c2d02a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-04-PLAN.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "36baa6560e76951198163db3e13af5b5",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-CONTEXT.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "bcf647dc244f02fd142c5b9b1e1a3f8e",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-PLAN-CHECK.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "5ed6abe2e829c9ebebef991015d4f55c",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-PLAN.md": {
+    "mtime": 1781523390.1970522,
+    "ast_hash": "c23ad0c96f7ec8a0fb510578be4760e0",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-RESEARCH.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "b1da5186f17c082c2b65f899d207ee43",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-VALIDATION.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "f17d96be71bb8e4c8ad1b8c5c3f2d829",
+    "semantic_hash": ""
+  },
+  ".planning/research/ARCHITECTURE.md": {
+    "mtime": 1778096702.6239822,
+    "ast_hash": "3e95e83531f07fda33dd306e7a1a46a2",
+    "semantic_hash": ""
+  },
+  ".planning/research/FEATURES.md": {
+    "mtime": 1778096702.6239822,
+    "ast_hash": "dabda74a67582353761d5b769912365a",
+    "semantic_hash": ""
+  },
+  ".planning/research/PITFALLS.md": {
+    "mtime": 1778096702.6239822,
+    "ast_hash": "d12199bda8621afd68ee955f99b7a09d",
+    "semantic_hash": ""
+  },
+  ".planning/research/STACK.md": {
+    "mtime": 1778096702.6239822,
+    "ast_hash": "5164b56066d0de00cbf78b8be4369f8f",
+    "semantic_hash": ""
+  },
+  ".planning/research/SUMMARY.md": {
+    "mtime": 1778096702.6239822,
+    "ast_hash": "a807f0af139425e4ff111aab8d9bca26",
+    "semantic_hash": ""
+  },
+  "AGENTS.md": {
+    "mtime": 1780643035.9512079,
+    "ast_hash": "66ef75f16ba0e286308d5ebd253612c7",
+    "semantic_hash": ""
+  },
+  "README.md": {
+    "mtime": 1780817271.297726,
+    "ast_hash": "ac96d522cf6f9dbaaccaada864fe6aee",
+    "semantic_hash": ""
+  },
+  "RECOVERY_LOG.md": {
+    "mtime": 1780643035.943208,
+    "ast_hash": "e3e81831ccf50b5f594fd4b27a313921",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/README.md": {
+    "mtime": 1781522277.8729246,
+    "ast_hash": "43c15af4446182d5538c44fc490010f4",
+    "semantic_hash": ""
+  },
+  "docs/ARCHITECTURE.md": {
+    "mtime": 1780723252.981736,
+    "ast_hash": "61c6db8e0fef5a05e024f2fff599a3d1",
+    "semantic_hash": ""
+  },
+  "docs/CLOUDFLARE.md": {
+    "mtime": 1780643326.0613408,
+    "ast_hash": "d124fa79a768d90b7b6e7afbf71f4557",
+    "semantic_hash": ""
+  },
+  "docs/CONFIGURATION.md": {
+    "mtime": 1780723241.4267707,
+    "ast_hash": "169b06727f801e40d3fa114aafc7fbcc",
+    "semantic_hash": ""
+  },
+  "docs/DEVELOPMENT.md": {
+    "mtime": 1780723268.1156907,
+    "ast_hash": "3ce0d0bc48fb468686ed79b86bbf76f9",
+    "semantic_hash": ""
+  },
+  "docs/GETTING-STARTED.md": {
+    "mtime": 1780817272.617722,
+    "ast_hash": "f8ec38a1ac8062ee3bcfe3d95b9e46e9",
+    "semantic_hash": ""
+  },
+  "docs/SERVER-AUDIT-20260506.md": {
+    "mtime": 1780643035.9242082,
+    "ast_hash": "c898b043332ca5b61afdaa33a07e605f",
+    "semantic_hash": ""
+  },
+  "docs/TESTING.md": {
+    "mtime": 1781522282.8585067,
+    "ast_hash": "7318ad7859ffb044d8d3f24305c999dc",
+    "semantic_hash": ""
+  },
+  "docs/architecture/overview.md": {
+    "mtime": 1780723076.7722638,
+    "ast_hash": "4f2ea2566a875a698bf10b46ee3ddb3a",
+    "semantic_hash": ""
+  },
+  "docs/fleet/inventory-model.md": {
+    "mtime": 1781522282.8589103,
+    "ast_hash": "0dc7d51130d74c6a049d4e8420dee71f",
+    "semantic_hash": ""
+  },
+  "docs/legacy-home-docs/home-docs-2026-06-06/ARCHITECTURE.md": {
+    "mtime": 1780722054.8263223,
+    "ast_hash": "4c2503585a55be493c1c404147bf4fa2",
+    "semantic_hash": ""
+  },
+  "docs/legacy-home-docs/home-docs-2026-06-06/CONFIGURATION.md": {
+    "mtime": 1780722054.8263223,
+    "ast_hash": "91c84b3e74b4d5fbe1f875c5be900caf",
+    "semantic_hash": ""
+  },
+  "docs/legacy-home-docs/home-docs-2026-06-06/DEVELOPMENT.md": {
+    "mtime": 1780722054.8273222,
+    "ast_hash": "9d7f73a0b17b6f00fbad611be7b8b151",
+    "semantic_hash": ""
+  },
+  "docs/legacy-home-docs/home-docs-2026-06-06/GETTING-STARTED.md": {
+    "mtime": 1780722054.8273222,
+    "ast_hash": "63dce13f19c4ccbbaf56d528115503a2",
+    "semantic_hash": ""
+  },
+  "docs/legacy-home-docs/home-docs-2026-06-06/TESTING.md": {
+    "mtime": 1780722054.8263223,
+    "ast_hash": "a713073e5d9a459ef58bf805281b8501",
+    "semantic_hash": ""
+  },
+  "docs/operations/Atius-Spec-Servers.md": {
+    "mtime": 1781638524.228551,
+    "ast_hash": "2c5d9c40eb2e308e21c31d913c9ff202",
+    "semantic_hash": ""
+  },
+  "docs/operations/atius-fleet-specs.md": {
+    "mtime": 1781638524.2488475,
+    "ast_hash": "225f096b6abf6f7aa861483078c7b667",
+    "semantic_hash": ""
+  },
+  "docs/operations/fleet-autoclean.md": {
+    "mtime": 1781522277.8739245,
+    "ast_hash": "ddf1374dc1b2b3b2e25d180826fb3a4d",
+    "semantic_hash": ""
+  },
+  "docs/operations/remote-manager.md": {
+    "mtime": 1780723106.7971737,
+    "ast_hash": "004bc067366ba1dbd8195d9b358f48fe",
+    "semantic_hash": ""
+  },
+  "docs/operations/resource-governor.md": {
+    "mtime": 1781524991.8312967,
+    "ast_hash": "b7bdce1b2a1700baaa32f14304a2af21",
+    "semantic_hash": ""
+  },
+  "docs/operations/srv1-ops.md": {
+    "mtime": 1781525358.0431728,
+    "ast_hash": "fd8109f2238e9192a3420a5e759d8c0e",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/atius-srv-1.yaml": {
+    "mtime": 1781652772.8489554,
+    "ast_hash": "2bdc0b1963f1965641180878e63451db",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/atius-srv-2.yaml": {
+    "mtime": 1781652772.8389604,
+    "ast_hash": "3df3d35e2bae9bb531adf22b2b7fb3bd",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/atius-srv-3.yaml": {
+    "mtime": 1781652772.863394,
+    "ast_hash": "0acb3660d08033c51f55361d4ecacd84",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/dell-inspiron-3520.yaml": {
+    "mtime": 1780721480.1180387,
+    "ast_hash": "e8c0359929dcdc348e3eb3ba2b05a9d9",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/giovanni-s23-proot.yaml": {
+    "mtime": 1780721455.3371127,
+    "ast_hash": "a266d0fbc852318c1d661109f8df095e",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/giovanni-s23-termux.yaml": {
+    "mtime": 1780721447.7871351,
+    "ast_hash": "6dd37c675dedac0f4548a9d4a2d0af3f",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/support-template.yaml": {
+    "mtime": 1781522282.8589103,
+    "ast_hash": "b30e2766b6a1d6da61a140ec7d451667",
+    "semantic_hash": ""
+  },
+  "inventory/remotes/srv1-shared-smb.yaml": {
+    "mtime": 1780723283.320645,
+    "ast_hash": "4c8070f4d302b69a8cb81f74a3f5489b",
+    "semantic_hash": ""
+  },
+  "modules/fleet-autoclean/README.md": {
+    "mtime": 1781522277.8849244,
+    "ast_hash": "f04a6f302a097bdb72b56ceff6d71229",
+    "semantic_hash": ""
+  },
+  "modules/fleet-backup/README.md": {
+    "mtime": 1781315761.943234,
+    "ast_hash": "066165a6e08d49f742c351deb3ad1684",
+    "semantic_hash": ""
+  },
+  "modules/fleet-backup/configs/fleet-backup-map.yaml": {
+    "mtime": 1781315761.944234,
+    "ast_hash": "824b9f2272bb9e28acf31f2773803647",
+    "semantic_hash": ""
+  },
+  "modules/fleet/README.md": {
+    "mtime": 1781522282.8599102,
+    "ast_hash": "c712b17a5f8cbbc6ce2bebefc1eb12f5",
+    "semantic_hash": ""
+  },
+  "modules/fleet/configs/config.yaml": {
+    "mtime": 1780723160.8560119,
+    "ast_hash": "51b26f29c9eb4e70582c8d387ae493c2",
+    "semantic_hash": ""
+  },
+  "modules/fleet/docs/architecture.md": {
+    "mtime": 1780723152.484037,
+    "ast_hash": "642c184d217ba3f1e80f521d4dde9381",
+    "semantic_hash": ""
+  },
+  "modules/fleet/docs/rollout-plan.md": {
+    "mtime": 1780721527.9688957,
+    "ast_hash": "ffb75046ffd7809b865e4766f11973e3",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/CONTRIBUTING.md": {
+    "mtime": 1780642991.9363396,
+    "ast_hash": "b9162124921fabcf1b0904d59ce957dd",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/README.md": {
+    "mtime": 1781521953.4178758,
+    "ast_hash": "2ef1138eda09d78b16946f9bf2b3b1c1",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/VERSIONS.md": {
+    "mtime": 1781521953.4187558,
+    "ast_hash": "161d3a4e37e7900100f517f92a28a18e",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/docs/PM2-SERVICE.md": {
+    "mtime": 1780642991.9373395,
+    "ast_hash": "a2d77efb7975527cd787f899aada20a0",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/docs/RELEASE-NOTES.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "0f9249389cb582cbc60973183e1cb2a2",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/docs/SCHEMA-V2-PROPOSTA.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "4128da57719f2941194c97b16ea041e4",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/docs/fork-sync-audit-2026-06-13.md": {
+    "mtime": 1781338007.9937775,
+    "ast_hash": "88b1dc898d512eeeef52c9af2eb1922f",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/aionui.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "0b01477a8bba7da02b2e6056e2037c9a",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/aionui/releases/v2.1.10-rf2.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "c25824d1e97b4b680197dfcdeb3a7c10",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/atius-router-docs.md": {
+    "mtime": 1780818512.9190416,
+    "ast_hash": "fa93efa243eb7925a1bc26fd809356e7",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/atius-router.md": {
+    "mtime": 1781315786.2921617,
+    "ast_hash": "2d614ab2e3f1971675ea40c45698fc3d",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/bruno.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "71bc0a4c1408ba9a2f974c45c4fdf076",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/get-shit-done.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "cd06e51e0f7f54f1acf0572c7d164ce1",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/gsd-2.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "0b45ef1dea33b1775eb68e767d65d564",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/hermes-agent.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "fc5125915e616dcd9cbf8e91af449a28",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/hermes-os.md": {
+    "mtime": 1780642991.9383395,
+    "ast_hash": "01d463ef0883498d111587d6aff8ad2c",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/horus-spec-driven.md": {
+    "mtime": 1781521953.4098759,
+    "ast_hash": "323ef3a4619e6f5160f8e457197c9032",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/notebooklm-py.md": {
+    "mtime": 1781521953.418876,
+    "ast_hash": "590cb293f6613a7b1db29c0303bf2603",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/aionui/sync.yaml": {
+    "mtime": 1781328020.4038477,
+    "ast_hash": "483c50f38b39ae92bd0daee2364a6e52",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/api/index.mdx": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "736b40670d2f6d03151692573be04ccf",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/guide/index.mdx": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "b0a486e7547a6e6847b367fa1078e46a",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/index.mdx": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "da2d90463071676f32fa0bddd0d4566e",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/deployment-methods/docker-compose-installation.mdx": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "946af758e55acdaea03876fa1563b33b",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/deployment-methods/docker-installation.mdx": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "915dde21c2701ccdf21f8723b63d67b9",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/pt-content/docs/pt/installation/index.mdx": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "740161c9a39c0efbf089d3c534337a87",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/remote-governance.md": {
+    "mtime": 1780818520.1420202,
+    "ast_hash": "9e844d2c0038b0e01141592d3503931b",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router-docs/sync.yaml": {
+    "mtime": 1781328020.4038477,
+    "ast_hash": "07743d24265ef23f914e33657b822b83",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router/README.md": {
+    "mtime": 1781522227.9545665,
+    "ast_hash": "3d61d16222ace167238d06eec4e08c2b",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router/deploy.yaml": {
+    "mtime": 1781522227.9545665,
+    "ast_hash": "2341beac7da9b0e6674f696fe7712916",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/atius-router/sync.yaml": {
+    "mtime": 1781522227.9545665,
+    "ast_hash": "c63064614645487137bf9d4f19ee7662",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/bruno/sync.yaml": {
+    "mtime": 1781328020.4038477,
+    "ast_hash": "546d5c3b267b3de12500b19e4c0189d5",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/get-shit-done/sync.yaml": {
+    "mtime": 1781328020.4048476,
+    "ast_hash": "913da4f1bea05e4503d8ca43fc375c8c",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/gsd-2/sync.yaml": {
+    "mtime": 1781328020.4048476,
+    "ast_hash": "a58c8532a341db6e7e00f890537a8383",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/hermes-backend/sync.yaml": {
+    "mtime": 1781328020.4048476,
+    "ast_hash": "e6adea178567ed7a4463788f7b825b78",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/hermes-desktop/sync.yaml": {
+    "mtime": 1781328020.4048476,
+    "ast_hash": "b60ff9cb540ec71c429503ed950e6b7d",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/horus-spec-driven/deploy.yaml": {
+    "mtime": 1780657536.3299286,
+    "ast_hash": "a4dffd6ef3b7e36f209e5435912de23e",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/horus-spec-driven/sync.yaml": {
+    "mtime": 1781328020.4048476,
+    "ast_hash": "be88722555181ca5e51ffbc7df6037be",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/notebooklm-py/sync.yaml": {
+    "mtime": 1781522322.0795305,
+    "ast_hash": "cf5b996425fa9d8673e70ad0fa3b7fd8",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/templates/basic.yaml": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "13033186c93dee303bc9042870683fa6",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/templates/deploy.yaml": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "fc97c70182c12613a548de9da9415a63",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/templates/docker.yaml": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "f6b5409c78129318820bcf40b3817caa",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/templates/submodule.yaml": {
+    "mtime": 1780642991.9393396,
+    "ast_hash": "322bc9f114bcf257d6a69f87ecfb64bb",
+    "semantic_hash": ""
+  },
+  "modules/remote-manager/README.md": {
+    "mtime": 1780722987.7165303,
+    "ast_hash": "f4ec826178596121c66141ca6dbaa836",
+    "semantic_hash": ""
+  },
+  "modules/remote-manager/docs/remote-mapping-labels.md": {
+    "mtime": 1780722996.7275035,
+    "ast_hash": "00664047976c337e0add2d0d392952f5",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/README.md": {
+    "mtime": 1780817273.9237182,
+    "ast_hash": "54fd8c1fc40f5893f34821c9e788230e",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/configs/backup-map.yaml": {
+    "mtime": 1780886725.481011,
+    "ast_hash": "260c879cc68bcd9a1def80e2f26b2f63",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/docs/source-map.md": {
+    "mtime": 1780721098.9991767,
+    "ast_hash": "9fef5257331ad88ae9b7c45222e9682c",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/README.md": {
+    "mtime": 1780715309.1264644,
+    "ast_hash": "cd676c7008ee07b70b7720419a8c48d8",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/docs/original-readme.md": {
+    "mtime": 1780714130.262986,
+    "ast_hash": "cf05b2db154889658ebb458035ba5aee",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/docs/original-runbook.md": {
+    "mtime": 1780714130.3999856,
+    "ast_hash": "07c76d88ef1acc0a76fa454ecaca3790",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/docs/original-transcript.md": {
+    "mtime": 1780714130.5499852,
+    "ast_hash": "a4a8443ae0a003895859223487115167",
+    "semantic_hash": ""
+  },
+  "modules/xrdp-abnt2/docs/source-map.md": {
+    "mtime": 1780715523.0348253,
+    "ast_hash": "a0c666de5d13d0de4b105b12f377fbcc",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\u270d\ufe0fDoc - Writer.chatmode.md": {
+    "mtime": 1772435658.4093075,
+    "ast_hash": "40a5772980d5cc82038cc170056ecdf8",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83c\udfd7\ufe0fPM - Architect.chatmode.md": {
+    "mtime": 1772435658.4093075,
+    "ast_hash": "a698131ace667fc857fff6adb9d2796b",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83c\udfd7\ufe0fPM - Implementation Plan.chatmode.md": {
+    "mtime": 1772435658.4103074,
+    "ast_hash": "0075babaae0913656106055c4742a5cd",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83c\udfd7\ufe0fPM - Plan.chatmode.md": {
+    "mtime": 1772435658.4103074,
+    "ast_hash": "2a877ee83b1079be56cceb5022510269",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83c\udfd7\ufe0fPM - Prompt Engineer.chatmode.md": {
+    "mtime": 1772435658.4103074,
+    "ast_hash": "44450c43824b6ccdbbb6383700e991f5",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83c\udfd7\ufe0fPM - Specification.chatmode.md": {
+    "mtime": 1772435658.4113076,
+    "ast_hash": "d2873deef03f71eab697ff5cabadedd3",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83c\udfd7\ufe0fPM - User Story Creator.chatmode.md": {
+    "mtime": 1772435658.4113076,
+    "ast_hash": "a4ac43e997ad79a3cd3270e75dd9957c",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udc1eDebug - Debugger.chatmode.md": {
+    "mtime": 1772435658.4113076,
+    "ast_hash": "a625ed4b3f5a809f8183fc330de7e43e",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - API Architect.chatmode.md": {
+    "mtime": 1772435658.4113076,
+    "ast_hash": "a157874e87e35c124e9f60f8d882134d",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - Beast.chatmode.md": {
+    "mtime": 1772435658.4123075,
+    "ast_hash": "2614830bbe6819032035afd5f752d68e",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - Postgresql DBA.chatmode.md": {
+    "mtime": 1772435658.4123075,
+    "ast_hash": "ed72fca9ff7e43527e8a05ced938f5be",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - React Frontend Engineer.chatmode.md": {
+    "mtime": 1772435658.4123075,
+    "ast_hash": "2ffc48d5e917190ec689f20b08b748a3",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - Security Reviewer.chatmode.md": {
+    "mtime": 1772435658.4123075,
+    "ast_hash": "1ef80edb2f2f939645d735caabc04a01",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - Software Engineer Agent.chatmode.md": {
+    "mtime": 1772435658.4133074,
+    "ast_hash": "61197e30be159aabcca1c462962cc2e7",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83d\udcbbCode - VoidBeast.chatmode.md": {
+    "mtime": 1772435658.4133074,
+    "ast_hash": "8d194c337fd666c5e03d392c1df08697",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/agents/\ud83e\uddeaTest - Jest Test Engineer.chatmode.md": {
+    "mtime": 1772435658.4133074,
+    "ast_hash": "dd3f3dadfd00c1927b3861cb0430cb37",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/markdown.instructions.md": {
+    "mtime": 1772435658.4153075,
+    "ast_hash": "c91c34d58c8d0503c10fac3e9b90eadd",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/memory-bank.instructions.md": {
+    "mtime": 1772435658.4173074,
+    "ast_hash": "d4a5fb01a239524da193c2f3fbb1c0ef",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/nextjs-tailwind.instructions.md": {
+    "mtime": 1772435658.4183075,
+    "ast_hash": "d9825c6b784f30000adb5eec0a760635",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/performance-optimization.instructions.md": {
+    "mtime": 1772435658.4193075,
+    "ast_hash": "c6a962e8b15f89a0ce5190165a6f46ff",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/rulesProject.instructions.md": {
+    "mtime": 1772443476.364636,
+    "ast_hash": "6db7cf622e5d5d882851cb4222b4cca1",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/sql-sp-generation.instructions.md": {
+    "mtime": 1772435658.4223075,
+    "ast_hash": "4e0e6342dff6d5b2b11adef858ea9b65",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/instructions/taming-copilot.instructions.md": {
+    "mtime": 1772435658.4243073,
+    "ast_hash": "1e7f856be37d5d2dd8f83d55ffcc715a",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/COMECE-AQUI.md": {
+    "mtime": 1772435658.4313073,
+    "ast_hash": "dc5d80dd3614689febcc7d2acaee5fa9",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/CORRECOES-APLICADAS.md": {
+    "mtime": 1772435658.4323075,
+    "ast_hash": "fd4109ec1cdeb7a65ad0163abf76a18d",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/FASE-TESTES-VALIDACAO-PLAN.md": {
+    "mtime": 1772435658.4343073,
+    "ast_hash": "0f6d6a436de03eee34a48aac950c9bb4",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/FASE2-CORRECOES-APLICADAS.md": {
+    "mtime": 1772435658.4363074,
+    "ast_hash": "3061bbe48477f0c1ff629c379d3047fa",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/MAPA-VISUAL.txt": {
+    "mtime": 1772435658.4373074,
+    "ast_hash": "42a1bd02551138e045a735c29c28bab9",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/README.md": {
+    "mtime": 1772435658.4383073,
+    "ast_hash": "4dc997526b12c1bef00d4084ac744deb",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/RELATORIO-FASE1-FINAL.md": {
+    "mtime": 1772435658.4393075,
+    "ast_hash": "eb2b8d96aa7ebcc25382870d18694795",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/TRANSICAO-FASE-OTIMIZACAO-TESTES.md": {
+    "mtime": 1772435658.4413073,
+    "ast_hash": "9f15876bc373244c898b48ea80c3058a",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/activeContext.md": {
+    "mtime": 1780722054.8183224,
+    "ast_hash": "559af23287dc00fce91afd5a3a81ab27",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/productContext.md": {
+    "mtime": 1772435658.4443073,
+    "ast_hash": "0ae922cab0f5c078e86d6fb39b8afd13",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/progress.md": {
+    "mtime": 1780643096.836026,
+    "ast_hash": "f728605d36076ff3110bef85d65e5ca3",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/projectbrief.md": {
+    "mtime": 1772435658.4483073,
+    "ast_hash": "d2ec7a08d61b1d6ed3771d2bb612d095",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/systemPatterns.md": {
+    "mtime": 1772435658.4493074,
+    "ast_hash": "ee54a2c5fd27c4e7f4dea013ca7f3553",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/TASK003-implementar-testes-automatizados.md": {
+    "mtime": 1772435658.4523072,
+    "ast_hash": "8efcb4bb56414fc6184e8d0d8922b310",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/TASK006-verificacao-afiliados-bybit.md": {
+    "mtime": 1772435658.4543073,
+    "ast_hash": "ba409107154f454bad47325b11b3a107",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/TASK007-feedback-execucao-ordens-painel.md": {
+    "mtime": 1772435658.4553072,
+    "ast_hash": "8cf5fff0bb6436d874b2ce997ac0fdf2",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/TASK008-uid-obrigatorio-alvos-dashboard.md": {
+    "mtime": 1772435658.4563074,
+    "ast_hash": "51059abaf8ac9bd646425b2738afd075",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/TASK009-divap-signal-generator-pinescript.md": {
+    "mtime": 1772435658.4573073,
+    "ast_hash": "1fd4a4bf99205d95e5b5b9159efaa856",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/TASK010-migracao-infra-pm2-postgres-atius.md": {
+    "mtime": 1780643096.9190257,
+    "ast_hash": "c85eea9c5f34da4824afdc2d37314d38",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/tasks/_index.md": {
+    "mtime": 1780643096.852026,
+    "ast_hash": "ba7f1b758de33d51e746be3872bc22f9",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/memory-bank/techContext.md": {
+    "mtime": 1772435658.4613073,
+    "ast_hash": "5580e95bfc2690c50a8e36da522244c2",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/Aprimorar Prompt.prompt.md": {
+    "mtime": 1772435658.4633074,
+    "ast_hash": "f520f4b35d95b5fc83743555cec3a9db",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/Explicar C\u00f3digo.prompt.md": {
+    "mtime": 1772435658.4643073,
+    "ast_hash": "edd6867c1431a8de2891c811b090bf1c",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/create-architectural-decision-record.prompt.md": {
+    "mtime": 1772435658.4653072,
+    "ast_hash": "93547c427655197f0675d6f8c4e9dcfb",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/create-implementation-plan.prompt.md": {
+    "mtime": 1772435658.4663074,
+    "ast_hash": "8c9690e3044c68a6a785823b5305e990",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/create-oo-component-documentation.prompt.md": {
+    "mtime": 1772435658.4683073,
+    "ast_hash": "7e263721211c6b12a82975b333a50610",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/gen-specs-as-issues.prompt.md": {
+    "mtime": 1772435658.4693072,
+    "ast_hash": "2cee0d6e4b6079eec5d5581382862322",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/javascript-typescript-jest.prompt.md": {
+    "mtime": 1772435658.4703074,
+    "ast_hash": "4b6ff0c78918050688cfb129dc53e86b",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/suggest-awesome-github-copilot-chatmodes.prompt.md": {
+    "mtime": 1772435658.4713073,
+    "ast_hash": "61a2859327eaace1cdbcedc2327b748f",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/suggest-awesome-github-copilot-prompts.prompt.md": {
+    "mtime": 1772435658.4733074,
+    "ast_hash": "5c91af113f4392f07e0f4a71ac92cc81",
+    "semantic_hash": ""
+  },
+  "vscode-profile/.github/prompts/update-implementation-plan.prompt.md": {
+    "mtime": 1772435658.4743073,
+    "ast_hash": "0846b5e15df47469f8fc4e67731e8240",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/config_files/omni-network-error.svg": {
+    "mtime": 1781522277.8729246,
+    "ast_hash": "96f98dc5dec762ecd435376781f09bd2",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/config_files/omni-network-ok.svg": {
+    "mtime": 1781522277.8729246,
+    "ast_hash": "7c1dbd14ae82f7800e9e3b20c50a8bf7",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/config_files/omni-network-wired.svg": {
+    "mtime": 1781522277.8729246,
+    "ast_hash": "aa22c8a3207f59ef215d253eccea27df",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/.last-build-snapshot.json": {
+    "mtime": 1781519987.7257442,
+    "ast_hash": "a5e18205748031ef18651771b4c68483",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/.last-build-status.json": {
+    "mtime": 1781520455.1693914,
+    "ast_hash": "c07ed580cea83e13b7ba9622965cb528",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/graph.json": {
+    "mtime": 1781651311.9307177,
+    "ast_hash": "9b4fdf29f783008218b8b12dc5af9fe9",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/GRAPH_REPORT.md": {
+    "mtime": 1781651311.815827,
+    "ast_hash": "e801f76133f2dd65e7aa7dbc6a219f55",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/graph.html": {
+    "mtime": 1781651311.8567178,
+    "ast_hash": "987c3ab6ba9711b7294373c47713dde2",
+    "semantic_hash": ""
+  },
+  "modules/srv1-network-watchdog/srv1-fix-network.sh": {
+    "mtime": 1781522227.9592555,
+    "ast_hash": "74f9e08ea9cab13f82caae491387853f",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "9ef271e796b2b2fb81cfc59a92ef7de8",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql": {
+    "mtime": 1781522282.859455,
+    "ast_hash": "a852554f01bf2a6137b2879e9fa4b5d5",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0002_ops_config_slash_commands.sql": {
+    "mtime": 1781522282.859598,
+    "ast_hash": "e94327a6973898023c8c43a64a4e49cc",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/scripts/omni-pg-access-guard.sh": {
+    "mtime": 1781522282.859598,
+    "ast_hash": "969362a25d6c84d38021bfd59288207a",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/tests/test_m004_contract.py": {
+    "mtime": 1781522282.859598,
+    "ast_hash": "a1a7e02bc2fea9cdaa3e202d35680de9",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/tools/validate_m004.py": {
+    "mtime": 1781522282.8599102,
+    "ast_hash": "686dd7a775f7d84c097f3315a64d0e45",
+    "semantic_hash": ""
+  },
+  "modules/k3s-ha-portainer-oci/scripts/atius-k3s-watchdog.sh": {
+    "mtime": 1781522282.8603957,
+    "ast_hash": "7efc65591de866612f1ce0e9b42a7682",
+    "semantic_hash": ""
+  },
+  "scripts/verify-m004-fleet-control-plane.sh": {
+    "mtime": 1781522282.860679,
+    "ast_hash": "1cf5853a7e5ff586b1d733d3c3d78ea7",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-01-PLAN.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "ab2a2fbce1c6a17c8077814389ff5adc",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-01-SUMMARY.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "09df73fd0d49f006659e919a1ec6e6ae",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-CONTEXT.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "a81d8cd9a8c17ddc106fc7a09ec055bd",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-PLAN.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "1ae68df122ec72c46d01fab4ed73f0c4",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-RESEARCH.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "64dadd814436d8c47fd4b29a4da63b7c",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-VALIDATION.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "e5063524f7bb857a02c1524c3939ffa7",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md": {
+    "mtime": 1781522567.111582,
+    "ast_hash": "d5a0f729d56a1fd585e3aaedfa8e464b",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md": {
+    "mtime": 1781522567.1131403,
+    "ast_hash": "ba2e7f701117049692bd451573d2b7ac",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-FALLBACK-PTP-2026-06-14.md": {
+    "mtime": 1781522567.1147234,
+    "ast_hash": "aeab6f71dfdd71b5674f829aba4dc483",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-GATE-REVIEW-2026-06-14.md": {
+    "mtime": 1781638309.690185,
+    "ast_hash": "25f04d014bc217ec799012ce887c3279",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md": {
+    "mtime": 1781522282.8579102,
+    "ast_hash": "8b44c51719f1df66ec382538c4c79394",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-OBSERVABILITY-WATCHDOG-2026-06-14.md": {
+    "mtime": 1781522282.8585067,
+    "ast_hash": "2579e0e281e00a00d650c045866c08a1",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-OCI-ROLLBACK-PATH-2026-06-14.md": {
+    "mtime": 1781522567.1174805,
+    "ast_hash": "915e6742c8d400e2da5dd738c3f76f5f",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-RESTORE-DRILL-2026-06-14.md": {
+    "mtime": 1781522567.118937,
+    "ast_hash": "6a95295c482f6423f733112be1deffe1",
+    "semantic_hash": ""
+  },
+  "docs/fleet/control-plane.md": {
+    "mtime": 1781522282.8585067,
+    "ast_hash": "f7199743362fa78d1c7d1dda2af19bde",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/README.md": {
+    "mtime": 1781522282.8589103,
+    "ast_hash": "ec57182cd84bef44ab0a8fb0295795bc",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/configs/control-plane.example.yaml": {
+    "mtime": 1781522282.859455,
+    "ast_hash": "e52b6b7c9b2b284c78aa554b68bf7c70",
+    "semantic_hash": ""
+  },
+  "modules/k3s-ha-portainer-oci/README.md": {
+    "mtime": 1781522567.120276,
+    "ast_hash": "514d6b19b7e4760110ab56b52854ba96",
+    "semantic_hash": ""
+  },
+  "modules/k3s-ha-portainer-oci/k8s/kube-prometheus-stack-values.yaml": {
+    "mtime": 1781522282.8603957,
+    "ast_hash": "1717fa7694fcb078eaa8e6968d525805",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/manifest.json": {
+    "mtime": 1781651312.003587,
+    "ast_hash": "5c55da3fb6a4a150478c99329c15f7db",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-05-PLAN.md": {
+    "mtime": 1781522937.922798,
+    "ast_hash": "b78b31a5f416f6b2db2fe7d5ac9f372d",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-06-PLAN.md": {
+    "mtime": 1781523375.5867586,
+    "ast_hash": "a511e4a5a7e7792e811ed2e0b55e88fd",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-05-SUMMARY.md": {
+    "mtime": 1781523962.3832345,
+    "ast_hash": "1b529a5caef0372db9a50a0de9b4aae4",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-UAT.md": {
+    "mtime": 1781525956.916692,
+    "ast_hash": "ad7a9b6be18ba7937f69c9a6e8f1538b",
+    "semantic_hash": ""
+  },
+  "modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml": {
+    "mtime": 1781524115.1758883,
+    "ast_hash": "dd14ab99bef58adeb242338ea90a55f7",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-06-SUMMARY.md": {
+    "mtime": 1781524215.4775233,
+    "ast_hash": "c5c8f02c3da8106c97c27a978cad9a70",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-02-SUMMARY.md": {
+    "mtime": 1781525042.1366105,
+    "ast_hash": "05964233f810560158b57b44a3c2b4bb",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-03-SUMMARY.md": {
+    "mtime": 1781525268.841946,
+    "ast_hash": "88b7d0c93617da166685c784196eb34f",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-SUMMARY.md": {
+    "mtime": 1781525401.349792,
+    "ast_hash": "2b4b07710750b538fc63902b63f303a0",
+    "semantic_hash": ""
+  },
+  "docs/operations/pm2-canonical.md": {
+    "mtime": 1781524953.3274133,
+    "ast_hash": "6e008f60f5e2feadd144afd8fb9c20fe",
+    "semantic_hash": ""
+  },
+  ".planning/milestones/v1.0-REQUIREMENTS.md": {
+    "mtime": 1781525995.008952,
+    "ast_hash": "3218f502a024e43f8639844427c5de57",
+    "semantic_hash": ""
+  },
+  ".planning/milestones/v1.0-ROADMAP.md": {
+    "mtime": 1781525995.0061612,
+    "ast_hash": "0ebb97290d2a13ece03d23860ff5fa8a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/15-m005-oci-snapshots/15-PLAN.md": {
+    "mtime": 1781526375.658762,
+    "ast_hash": "da05087eea868291a2e8a841e81055b0",
+    "semantic_hash": ""
+  },
+  ".planning/phases/16-m005-cloudflare-access/16-PLAN.md": {
+    "mtime": 1781526404.266962,
+    "ast_hash": "dd97194d3ae357ca18716c0829fb31b8",
+    "semantic_hash": ""
+  },
+  ".planning/phases/17-m005-observability-rwx/17-PLAN.md": {
+    "mtime": 1781526447.5698094,
+    "ast_hash": "39f6f87617f013fa2e2437a5b52fb0b0",
+    "semantic_hash": ""
+  },
+  ".backups/tailscale-pre-acl-2026-06-16/acl-current.json": {
+    "mtime": 1781638038.1006336,
+    "ast_hash": "de0d27e7cc4b033ab529d3f590a2a721",
+    "semantic_hash": ""
+  },
+  ".backups/tailscale-pre-acl-2026-06-16/devices-current.json": {
+    "mtime": 1781638039.263107,
+    "ast_hash": "abbf45c8efa5abf2625b94a3c92379fd",
+    "semantic_hash": ""
+  },
+  ".backups/tailscale-pre-acl-2026-06-16/dns-current.json": {
+    "mtime": 1781638038.6855752,
+    "ast_hash": "d85319130a9f81ad1fb35ab7c2be0bce",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-ACL-CLOSURE-2026-06-16.md": {
+    "mtime": 1781638322.256861,
+    "ast_hash": "e7f49780e6ca6aaffda23c6e3b4ed13b",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-HANDOFF-RDP.md": {
+    "mtime": 1781653294.4128509,
+    "ast_hash": "f973e02502508aaa8f7c09044f82d67b",
+    "semantic_hash": ""
+  },
+  "docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md": {
+    "mtime": 1781653294.430851,
+    "ast_hash": "673210e90c3fce4f3c4cd1001395a57b",
+    "semantic_hash": ""
+  },
+  "docs/operations/tailscale/GBRAIN-INGEST-PENDING.md": {
+    "mtime": 1781639684.5387142,
+    "ast_hash": "acf14182205e65614bedbb757ce11d55",
+    "semantic_hash": ""
+  },
+  "docs/operations/tailscale/README.md": {
+    "mtime": 1781638350.9510632,
+    "ast_hash": "11c4ca20b302a9e08d51d74352b642f4",
+    "semantic_hash": ""
+  },
+  "modules/rust-zellij-fleet/scripts/fleet-rust-zellij.sh": {
+    "mtime": 1781652914.6270568,
+    "ast_hash": "b8dc8a8e3d8a816613eec4e0b4a505f1",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-XRDP-CLOSURE-2026-06-16.md": {
+    "mtime": 1781653294.444851,
+    "ast_hash": "261db120f7c19cc01302dee62df320d3",
+    "semantic_hash": ""
+  },
+  "modules/rust-zellij-fleet/README.md": {
+    "mtime": 1781652813.9212725,
+    "ast_hash": "e902aceb3c9f294258b92a8c3f6a77fc",
+    "semantic_hash": ""
+  },
+  "modules/rust-zellij-fleet/configs/module.yaml": {
+    "mtime": 1781652821.853249,
+    "ast_hash": "4c34595fa500dfa65619559bf90b71f2",
+    "semantic_hash": ""
+  }
+}

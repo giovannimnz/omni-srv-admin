@@ -1,0 +1,12 @@
+[Unit]
+Description=Run srv1-fix-network.sh periodically to recover from Tailscale DNS hijack
+Documentation=man:srv1-fix-network.sh
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=10min
+Persistent=true
+AccuracySec=30s
+
+[Install]
+WantedBy=timers.target

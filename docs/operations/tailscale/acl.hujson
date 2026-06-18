@@ -1,0 +1,78 @@
+// Tailscale ACL — M005 management fallback (closed 2026-06-16)
+// Source: https://api.tailscale.com/api/v2/tailnet/-/acl (HuJSON format)
+// Intent:
+//   - Only giovannimunizds@gmail.com (admin) and the 3 SRV nodes can use the
+//     Tailscale management plane.
+//   - WireGuard remains the K3s/flannel/etcd transport (10.1.1.x). Tailscale
+//     is secondary management fallback ONLY — never cluster transport.
+//   - MagicDNS is disabled at the tailnet level (DNS split-brain with
+//     fleet-network-watchdog.sh on the hosts; Tailscale health check was
+//     failing because of it).
+//
+// Allowed paths:
+//   giovanni -> SRV-{1,2,3}: 22/tcp (SSH), 6432/tcp (PgBouncer diagnostics),
+//                              8505-8506/tcp (Hermes gateway, opt-in).
+//   SRV -> SRV: 22/tcp (admin SSH between 3 nodes over Tailscale).
+//   SRV -> SRV: 6443/tcp (K3s API; advisory — primary path is WireGuard).
+//
+// Everything else: deny.
+
+{
+	// Static groups
+	"groups": {
+		"group:admins": ["giovannimunizds@gmail.com"],
+	},
+
+	// SRV node IPs (Tailscale 100.x)
+	"hosts": {
+		"atius-srv-1": "100.76.56.62",
+		"atius-srv-2": "100.93.43.113",
+		"atius-srv-3": "100.72.102.57",
+	},
+
+	// Tag owners (none — using groups + IPs only)
+	"tagOwners": {},
+
+	// ACLs
+	"acls": [
+		// Admin (Giovanni) -> SRV management ports
+		{
+			"action": "accept",
+			"src":    ["group:admins"],
+			"dst": [
+				"atius-srv-1:22,6432,8505,8506",
+				"atius-srv-2:22,6432,8505,8506",
+				"atius-srv-3:22,6432,8505,8506",
+			],
+		},
+		// SRV <-> SRV (SSH + K3s API over Tailscale as advisory path)
+		{
+			"action": "accept",
+			"src":    ["atius-srv-1", "atius-srv-2", "atius-srv-3"],
+			"dst": [
+				"atius-srv-1:22,6443,6432,8505,8506",
+				"atius-srv-2:22,6443,6432,8505,8506",
+				"atius-srv-3:22,6443,6432,8505,8506",
+			],
+		},
+	],
+
+	// Tests (CI/preview)
+	"tests": [
+		{
+			"src": "giovannimunizds@gmail.com",
+			"accept": ["atius-srv-1:22", "atius-srv-2:6432"],
+			"deny":   ["atius-srv-1:80", "100.102.126.61:22"],
+		},
+	],
+
+	// SSH rules (Tailscale SSH — disabled, real SSH on host is the path)
+	"ssh": [
+		{
+			"action": "accept",
+			"src":    ["group:admins"],
+			"dst":    ["autogroup:self"],
+			"users":  ["ubuntu"],
+		},
+	],
+}

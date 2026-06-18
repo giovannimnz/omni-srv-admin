@@ -2,6 +2,14 @@ setup.py
 omni/__init__.py
 omni/__main__.py
 omni/cli.py
+omni/edge.py
+omni/fleet.py
+omni/fleet_backup.py
+omni/podman_network.py
+omni/remote_manager.py
+omni/remote_ops.py
+omni/srv1_ops.py
+omni/xrdp_abnt2.py
 omni.egg-info/PKG-INFO
 omni.egg-info/SOURCES.txt
 omni.egg-info/dependency_links.txt

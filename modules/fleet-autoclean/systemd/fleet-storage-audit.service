@@ -1,0 +1,14 @@
+[Unit]
+Description=Omni fleet storage audit (read-only)
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/fleet-autoclean.md
+
+[Service]
+Type=oneshot
+Environment=OMNI_SRV_ADMIN=/home/ubuntu/GitHub/omni-srv-admin
+Environment=OMNI_SRV_PUBLIC_FIRST=1
+ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/fleet-autoclean/scripts/fleet-autoclean.sh audit all
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=6
+StandardOutput=append:/home/ubuntu/.logs/fleet-storage-audit.log
+StandardError=append:/home/ubuntu/.logs/fleet-storage-audit.log

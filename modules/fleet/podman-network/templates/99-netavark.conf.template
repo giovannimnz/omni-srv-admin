@@ -1,0 +1,15 @@
+; Podman fleet standard — netavark backend drop-in
+; Loaded from containers.conf.d/ after containers.conf, overrides network_backend.
+;
+; Lives in: ~/.config/containers/containers.conf.d/99-netavark.conf
+; Owner:    omni-srv-admin/modules/fleet/podman-network
+; Reference: ~/.hermes/skills/devops/podman-fleet-standardize/SKILL.md
+; Last validated: 2026-06-16
+;
+; Why drop-in: separating the network backend from the default network name
+; makes drift detection easier (the two settings are independent concerns).
+; The numeric prefix "99-" ensures this file is loaded last (overriding any
+; earlier backend setting if both files exist).
+
+[network]
+network_backend = "netavark"

@@ -15,7 +15,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="fork-sync",
-    version="1.0.0",
+    version="1.3.0",
     author="Giovanni Muniz",
     author_email="munizgiovanni@hotmail.com",
     description="CLI unificado para gestão de forks: sync, deploy, versionamento, submodules",

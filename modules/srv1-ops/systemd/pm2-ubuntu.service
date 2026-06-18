@@ -1,0 +1,44 @@
+# pm2-ubuntu.service (canonical PM2 system daemon wrapper)
+# Managed by omni-srv-admin Phase 14-02.
+# 2026-06-15: replaced stale /home/ubuntu/ecosystem.atius.js (no longer exists)
+# with /home/ubuntu/GitHub/Atius-Capital/ats/ecosystem.config.js (the actual
+# canonical ecosystem used by ats-pm2.service user unit).
+#
+# IMPORTANT: This unit is the SYSTEM wrapper that boots PM2 as a daemon.
+# The user-level ats-pm2.service, horistic-pm2.service, and atius-web.service
+# oneshot units call `pm2 start <app>` to manage specific apps. They depend
+# on this daemon being up.
+#
+# On SRV-1, the live ats-pm2.service / horistic-pm2.service user units
+# have been inactive because of stuck default.target jobs, while the PM2
+# daemon (started via a different route) keeps the apps online. This
+# canonical unit is the safe boot path going forward.
+
+[Unit]
+Description=PM2 process manager (omni-srv-admin canonical)
+Documentation=https://pm2.keymetrics.io/
+After=network.target
+# Don't start the user oneshots until PM2 daemon is up
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+LimitNOFILE=infinity
+LimitNPROC=infinity
+LimitCORE=infinity
+Environment=PATH=/home/ubuntu/.nvm/versions/node/v24.13.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+Environment=PM2_HOME=/home/ubuntu/.pm2
+# Use the canonical ATS ecosystem. The PM2 daemon will resurrect the
+# remaining apps from PM2_HOME dump on first start.
+ExecStart=/home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2-runtime /home/ubuntu/GitHub/Atius-Capital/ats/ecosystem.config.js
+ExecStop=/home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2 kill
+Restart=on-failure
+RestartSec=10
+TimeoutStartSec=180
+# Inherited from original: keep trading process protected
+OOMScoreAdjust=-500
+OOMPolicy=continue
+
+[Install]
+WantedBy=multi-user.target

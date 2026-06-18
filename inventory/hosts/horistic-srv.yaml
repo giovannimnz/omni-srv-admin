@@ -1,0 +1,44 @@
+id: horistic-srv
+aliases:
+  - horistic
+role: horistic-reverse-proxy
+owner: giovanni
+access:
+  ssh: horistic@10.1.1.4
+  public_ip: 163.176.232.119
+  vpn_ip: 10.1.1.4
+  tailscale_ip: 100.102.126.61
+platform:
+  provider: oracle-oci
+  os: ubuntu-24.04
+  arch: arm64
+status: active
+modules: []
+logs:
+  local_dir: /home/horistic/.logs
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/HORISTIC-SRV-1/Backup
+network:
+  vpn_hub: atius-srv-2
+  wireguard_interface: wg0
+  wireguard_ip: 10.1.1.4
+  dns_server: 10.1.1.2
+  tailscale_fallback: true
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  last_readdressed: 2026-06-17
+  readdress_note: "Moved from 10.1.1.3 to 10.1.1.4 (initial); renamed host from horistic-srv-1 to horistic-srv on 2026-06-17; unique Horistic WireGuard key retained because attached peer4 key conflicts with active GIOVANNI-W11-PC key."
+  wireguard_key_rotated: 2026-06-17
+  dns_validation: "getent hosts horistic-srv returns 10.1.1.4; Horistic pings 10.1.1.2, 10.1.1.1 and 10.1.1.3; wg-quick strip wg0 OK."
+  rename_phase: 22
+  rename_from: horistic-srv-1
+  rename_date: 2026-06-17
+  rename_method: hostnamectl + /etc/hostname + /etc/hosts + tailscale set --hostname
+  wireguard_key_preserved: true
+  public_ip_preserved: true
+  apache_vhost_preserved: remote.horistic-srv-1.atius.com.br.conf
+oci:
+  last_snapshot_id: "pending-6f7baf00-cf7d-4297-a3eb-9b49fa463c0a"
+  last_snapshot_at: "2026-06-18T01:38:21Z"
+  routine_schedule: "weekly Sun 04:00 BRT"

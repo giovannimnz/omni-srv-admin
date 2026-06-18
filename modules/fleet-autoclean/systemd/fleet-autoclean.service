@@ -1,0 +1,14 @@
+[Unit]
+Description=Omni fleet autoclean (safe apply)
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/fleet-autoclean.md
+
+[Service]
+Type=oneshot
+Environment=OMNI_SRV_ADMIN=/home/ubuntu/GitHub/omni-srv-admin
+Environment=OMNI_SRV_PUBLIC_FIRST=1
+ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/fleet-autoclean/scripts/fleet-autoclean.sh apply all
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+StandardOutput=append:/home/ubuntu/.logs/fleet-autoclean.log
+StandardError=append:/home/ubuntu/.logs/fleet-autoclean.log

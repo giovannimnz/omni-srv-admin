@@ -1,0 +1,10 @@
+[Unit]
+Description=Omni fleet autoclean weekly timer
+
+[Timer]
+OnCalendar=Sun *-*-* 04:20:00
+RandomizedDelaySec=60m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

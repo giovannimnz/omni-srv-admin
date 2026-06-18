@@ -1,34 +1,79 @@
-# Tema Dark Ubuntu Suprema (LXDE + Zsh + Fontes Apple + Sublime Text)
+# Dark Theme Ubuntu para LXDE/XRDP
 
-Este repositório é o pacote definitivo de personalização e produtividade para Ubuntu LXDE.
+Tema operacional para o desktop remoto do `ATIUS-SRV-1` em Ubuntu 24.04 + LXDE + XRDP.
 
-## O Que Este Pacote Faz
+## Proposta
 
-### 1. Editor de Texto (Sublime Text)
-*   **Instalação Automática:** Instala a versão oficial do Sublime Text (ARM64).
-*   **Editor Padrão:** Define o Sublime como o editor de texto padrão do sistema.
-*   **Atalhos:** Adiciona o Sublime à pasta "Acessórios" do menu e à barra de lançamento rápido no painel.
+- Desktop remoto escuro, legível e estável em RDP.
+- Openbox `Dark-Onyx` para bordas/janelas.
+- GTK2/GTK3 com `Greybird-dark`, sem CSS legado quebrando parsing.
+- GSettings/portal com `color-scheme=prefer-dark`, para apps em `System` abrirem em dark automaticamente.
+- Env persistente em `.xsessionrc`, `.profile` e `~/.config/environment.d/10-omni-dark.conf`.
+- Fontes SF/New York/Tahoma instaladas em `/usr/local/share/fonts/apple`.
+- Indicador `Omni Network` no tray, com icone dark custom, substituindo `nm-applet` quando NetworkManager marca OCI/WireGuard como `unmanaged`.
+- Mini monitor de CPU no `status-right`, na mesma posicao usada nos SRV-2/SRV-3: antes do idioma do teclado.
+- Painel LXDE dividido em tres arquivos:
+  - `00-background`: fundo full-width da barra inferior e reserva da area de trabalho.
+  - `panel`: menu, launchers, pager e taskbar à esquerda.
+  - `status-right`: ABNT2, tray, volume, relógio, lock/logout à direita.
+- Guard de ABNT2 e guard de geometria do painel no autostart.
+- Backup antes de qualquer alteração em `~/.backups/omni-dark-theme/`.
 
-### 2. Visual e Contraste (LXDE/Openbox)
-*   **Modo Escuro Completo:** Alto contraste, fundos corrigidos e divisores destacados.
-*   **Bordas Coesas:** Janelas ativas e inativas com bordas escuras idênticas.
-*   **Painel Otimizado:** Altura ideal de **38px**.
-
-### 3. Fontes Oficiais
-*   **Apple:** Instalação de SF Pro, SF Compact, SF Mono e New York.
-*   **Outras:** Inclui Tahoma e fontes Microsoft (Core Fonts).
-*   **Sistema:** Define **SF Pro Display** como padrão global.
-
-### 4. Terminal (Zsh)
-*   Configuração completa do Oh My Zsh com plugins de realce de sintaxe e sugestões.
-
-## Como Instalar
+## Comandos
 
 ```bash
-git clone https://github.com/SEU_USUARIO/Dark_theme-Ubuntu.git
-cd Dark_theme-Ubuntu
-chmod +x install.sh
-./install.sh
+cd /home/ubuntu/GitHub/omni-srv-admin/dark-theme-ubuntu
+
+./scripts/dark-themectl.sh status
+./scripts/dark-themectl.sh validate
+./scripts/dark-themectl.sh repair --install-packages --restart-session
+./scripts/dark-themectl.sh apply --install-packages --with-sublime --with-zsh --restart-session
+./scripts/dark-themectl.sh restore-latest --restart-session
 ```
 
-*O instalador possui inteligência para tentar rodar comandos com `sudo` automaticamente caso falte permissão, usando a senha fornecida no início.*
+Wrappers:
+
+```bash
+./install.sh    # apply completo
+./repair.sh     # repair seguro para LXDE/XRDP
+./uninstall.sh  # restore do ultimo backup
+```
+
+## Arquivos Aplicados
+
+```text
+~/.gtkrc-2.0
+~/.config/gtk-3.0/settings.ini
+~/.config/gtk-3.0/gtk.css
+~/.config/environment.d/10-omni-dark.conf
+~/.config/xdg-desktop-portal/lxde-portals.conf
+~/.config/autostart/nm-applet.desktop
+~/.config/lxsession/LXDE/desktop.conf
+~/.config/lxsession/LXDE/autostart
+~/.config/lxpanel/LXDE/panel-background.xpm
+~/.config/lxpanel/LXDE/panels/00-background
+~/.config/lxpanel/LXDE/panels/panel
+~/.config/lxpanel/LXDE/panels/status-right
+~/.config/openbox/lxde-rc.xml
+~/.config/pcmanfm/LXDE/desktop-items-0.conf
+~/.xsessionrc
+~/.local/bin/setxkbmap-abnt2.sh
+~/.local/bin/omni-dark-system-env.sh
+~/.local/bin/omni-network-tray.py
+~/.local/bin/omni-lxde-panel-guard.sh
+~/.local/share/icons/omni-dark-theme/omni-network-ok.svg
+~/.local/share/icons/omni-dark-theme/omni-network-wired.svg
+~/.local/share/icons/omni-dark-theme/omni-network-error.svg
+```
+
+## Observacoes do Ubuntu 24.04
+
+- `volumealsa` nao existe neste host; usar `volume`.
+- Arquivos `panel.bak*` dentro de `~/.config/lxpanel/LXDE/panels/` viram painéis reais e bugam a barra. O controller move esses arquivos para backup.
+- `lxpanelctl restart` pode deixar estado velho; o controller usa `pkill + setsid -f lxpanel`.
+- O painel direito separado evita o clipping do tray no XRDP.
+- O `00-background` existe porque no XRDP/Ubuntu 24.04 o LXPanel pode calcular a largura natural do painel funcional como menor que a tela, deixando um vao preto no meio da barra.
+- O fundo da barra usa `panel-background.xpm` para vencer o fundo claro/cinza do tema GTK2 do LXPanel.
+- Apps modernos que usam `System` devem enxergar dark via GSettings e portal: `org.gnome.desktop.interface color-scheme='prefer-dark'` e portal `org.freedesktop.appearance color-scheme=1`.
+- `nm-applet` nao representa `enp0s6`/`wg0` neste fleet porque as interfaces aparecem como `unmanaged`; o dark theme remove esse applet do autostart LXDE, cria override XDG `Hidden=true` em `~/.config/autostart/nm-applet.desktop` e usa `omni-network-tray.py`.
+- `omni-network-tray.py` detecta a interface Oracle pelo default route, detecta `wg0`, mostra tooltip com OCI/WireGuard, usa `sudo -n wg show` quando disponivel para handshake/transferencia e renderiza os SVGs `omni-network-*.svg` para combinar com a barra escura.

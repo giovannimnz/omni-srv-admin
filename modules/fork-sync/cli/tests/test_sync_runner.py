@@ -1,11 +1,14 @@
 from __future__ import annotations
 
 import subprocess
+import sys
 from pathlib import Path
 
 import pytest
 
 from fork_sync.core import sync_runner
+from fork_sync.core import automerge
+from fork_sync.core import container_mirrors
 
 
 def _git(repo: Path, *args: str) -> str:
@@ -151,6 +154,37 @@ def test_run_sync_dry_run_reports_dirty_and_stale_paths(monkeypatch, repo_pair):
     assert "missing/path.txt" in result["stale_protected_paths"]
 
 
+def test_run_sync_dry_run_reports_version_and_post_sync_plan(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["version_scheme"] = {
+        "suffix": "-rf",
+        "counter_dir": "~/.fork-sync/{project}/versions/{upstream_version}",
+    }
+    cfg["post_sync"] = {
+        "enabled": True,
+        "commands": [
+            {
+                "name": "tests",
+                "command": ["python", "-c", "print('ok')"],
+                "cwd": str(fork),
+            }
+        ],
+    }
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("notebooklm-py", dry_run=True)
+
+    assert result["status"] == "success"
+    assert result["version_plan"]["enabled"] is True
+    assert result["version_plan"]["suffix"] == "-rf"
+    assert result["post_sync_plan"]["enabled"] is True
+    assert result["post_sync_plan"]["commands"][0]["name"] == "tests"
+    assert "post_sync" not in result
+
+
 def test_run_sync_dry_run_includes_protected_globs(monkeypatch, repo_pair):
     upstream, fork = repo_pair
     _commit_file(fork, "docs/pt/index.md", "fork docs\n", "fork docs")
@@ -173,6 +207,52 @@ def test_run_sync_dry_run_includes_protected_globs(monkeypatch, repo_pair):
 
     assert result["status"] == "success"
     assert "docs/pt/index.md" in result["protected_files"]
+
+
+def test_run_sync_runs_post_sync_hooks_after_merge(monkeypatch, repo_pair, tmp_path):
+    upstream, fork = repo_pair
+    marker = tmp_path / "hook-ran.txt"
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["post_sync"] = {
+        "enabled": True,
+        "commands": [
+            {
+                "name": "marker",
+                "command": [
+                    sys.executable,
+                    "-c",
+                    "from pathlib import Path; Path('hook-ran.txt').write_text('ok', encoding='utf-8')",
+                ],
+                "cwd": str(tmp_path),
+            }
+        ],
+    }
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("notebooklm-py")
+
+    assert result["status"] == "success"
+    assert result["post_sync"]["status"] == "success"
+    assert result["post_sync"]["commands"][0]["exit_code"] == 0
+    assert marker.read_text(encoding="utf-8") == "ok"
+
+
+def test_run_sync_reports_push_failure_after_merge(monkeypatch, repo_pair, tmp_path):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+    _git(fork, "remote", "set-url", "origin", str(tmp_path / "missing-origin.git"))
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["auto_push"] = True
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("notebooklm-py")
+
+    assert result["status"] == "error"
+    assert "push falhou" in result["error"]
+    assert result["push_exit_code"] != 0
 
 
 def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair):
@@ -199,3 +279,54 @@ def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair)
     assert result["status"] == "success"
     assert "ahead by 1" in result["message"]
     assert before == after
+
+
+def test_run_sync_all_applies_only_safe_projects(monkeypatch):
+    calls = []
+
+    monkeypatch.setattr(
+        automerge,
+        "list_projects",
+        lambda only_enabled=True: [{"name": "safe"}, {"name": "dirty"}],
+    )
+
+    def fake_run_sync(name, dry_run=False):
+        calls.append((name, dry_run))
+        if name == "safe":
+            return {"status": "success", "can_apply": True, "dirty_files": []}
+        return {"status": "success", "can_apply": False, "dirty_files": ["README.md"]}
+
+    monkeypatch.setattr(automerge, "run_sync", fake_run_sync)
+
+    result = automerge.run_sync_all(apply=True)
+
+    assert result["safe_count"] == 1
+    assert result["applied_count"] == 1
+    assert calls == [("safe", True), ("safe", False), ("dirty", True)]
+
+
+def test_diagnose_container_mirrors_detects_invalid_git_copy(monkeypatch, tmp_path):
+    fork = tmp_path / "fork"
+    mirror = tmp_path / "mirror"
+    _init_repo(fork)
+    mirror.mkdir()
+    (mirror / ".git").mkdir()
+
+    monkeypatch.setattr(
+        container_mirrors,
+        "list_projects",
+        lambda: [
+            {
+                "name": "router",
+                "fork": str(fork),
+                "container_mirror": str(mirror),
+                "container_mirror_status": "invalid_git_copy",
+            }
+        ],
+    )
+
+    result = container_mirrors.diagnose_container_mirrors()
+
+    assert result["invalid_count"] == 1
+    assert result["reports"][0]["fork_git_valid"] is True
+    assert result["reports"][0]["container_mirror_git_valid"] is False

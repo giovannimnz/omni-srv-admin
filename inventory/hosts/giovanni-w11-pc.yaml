@@ -1,0 +1,30 @@
+id: giovanni-w11-pc
+aliases:
+  - giovanni-w11
+  - w11-pc
+role: personal-workstation
+owner: giovanni
+access:
+  ssh: TBD
+  vpn_ip: 10.1.1.5
+platform:
+  provider: local-pc
+  os: windows-11
+  arch: amd64
+status: planned
+modules: []
+constraints:
+  - client-wireguard-config-generated-for-10.1.1.5-import-pending-on-device
+logs:
+  local_dir: TBD
+  retention_days: 15
+backup:
+  gdrive_base: ATIUS-SRV/GIOVANNI-W11-PC/Backup
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  last_readdressed: 2026-06-17
+  wireguard_key_rotated: 2026-06-17
+  dns_name: GIOVANNI-W11-PC
+  dns_validation: "CoreDNS and fleet /etc/hosts resolve GIOVANNI-W11-PC to 10.1.1.5."
+  client_config: "/home/ubuntu/.secure/omni-srv-admin/wireguard-rotation-20260617-142224/client-configs/GIOVANNI-W11-PC-wg0-10.1.1.5.conf"
+  live_handshake: "pending until the new config is imported on Windows."

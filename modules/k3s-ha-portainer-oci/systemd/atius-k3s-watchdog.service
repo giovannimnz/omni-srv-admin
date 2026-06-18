@@ -1,0 +1,11 @@
+[Unit]
+Description=ATIUS K3s/Portainer/Grafana watchdog
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/scripts/atius-k3s-watchdog.sh
+Nice=-10
+OOMScoreAdjust=-900
+OOMPolicy=continue
+StandardOutput=append:/home/ubuntu/.logs/atius-k3s-watchdog.log
+StandardError=append:/home/ubuntu/.logs/atius-k3s-watchdog.log

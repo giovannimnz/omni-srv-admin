@@ -96,7 +96,15 @@ Reinicie o Hermes (cache de skills). Verifique `~/.hermes/skills/hsd/<name>/SKIL
 
 ### Referências a `gsd-tools` no body do skill
 
-Essas referências são normais (mantidas para documentação). O `<horus_sdk_adapter>` no skill body instrui o agente a usar `node ~/.hermes/skills/hsd/horus-sdk-adapter/index.cjs`.
+Essas referências são normais (mantidas para documentação). O `<horus_sdk_adapter>` no skill body instrui o agente a usar o SDK do runtime:
+
+```bash
+# Hermes
+node ~/.hermes/skills/hsd/horus-sdk-hermes/index.cjs <verb> [args] --cwd .
+
+# Codex
+node ~/.codex/skills/horus-sdk-codex/index.cjs <verb> [args] --cwd .
+```
 
 ## Histórico
 

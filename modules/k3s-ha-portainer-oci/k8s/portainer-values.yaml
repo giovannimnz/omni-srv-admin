@@ -1,0 +1,23 @@
+service:
+  type: ClusterIP
+
+enterpriseEdition:
+  enabled: false
+
+tls:
+  force: true
+
+image:
+  repository: portainer/portainer-ce
+  tag: lts
+
+trusted_origins:
+  enabled: true
+  domains: "portainer.atius.com.br"
+
+persistence:
+  enabled: true
+  storageClass: local-path
+
+nodeSelector:
+  kubernetes.io/hostname: atius-srv-1

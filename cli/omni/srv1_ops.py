@@ -64,7 +64,23 @@ RESOURCE_UNIT_NAMES = [
     "resource-governor-audit.service",
     "resource-governor-audit.timer",
     "resource-governor-watchdog.service",
+    "resource-governor-watchdog.timer",
     "resource-governor-cgroup-init.service",
+    "resource-governor-patcher.service",
+    "inviolable-watchdog.service",
+    "inviolable-watchdog.timer",
+]
+
+RESOURCE_ENABLE_TIMERS = [
+    "resource-governor-snapshot.timer",
+    "resource-governor-audit.timer",
+    "resource-governor-watchdog.timer",
+    "inviolable-watchdog.timer",
+]
+
+RESOURCE_ENABLE_SERVICES = [
+    "resource-governor-cgroup-init.service",
+    "resource-governor-watchdog.service",
     "resource-governor-patcher.service",
 ]
 
@@ -221,7 +237,7 @@ def _schedule_post_workload_hygiene(config: dict[str, str], reason: str) -> list
 
 
 def _resource_timers() -> list[str]:
-    return [name for name in RESOURCE_UNIT_NAMES if name.endswith(".timer")]
+    return RESOURCE_ENABLE_TIMERS.copy()
 
 
 def _copy_resource_units(*, dry_run: bool) -> list[str]:
@@ -243,23 +259,26 @@ def _install_resource_units(*, dry_run: bool, run_audit_now: bool) -> list[str]:
     actions = _copy_resource_units(dry_run=dry_run)
     if dry_run:
         actions.append("DRY systemctl --user daemon-reload")
-        for timer in _resource_timers():
+        for timer in RESOURCE_ENABLE_TIMERS:
             actions.append(f"DRY systemctl --user enable --now {timer}")
         actions.append("DRY systemctl --user start resource-governor-snapshot.service")
-        actions.append("DRY systemctl --user enable --now resource-governor-watchdog.service (daemon)")
+        for service in RESOURCE_ENABLE_SERVICES:
+            suffix = " (daemon)" if service.endswith(("watchdog.service", "patcher.service")) else ""
+            actions.append(f"DRY systemctl --user enable --now {service}{suffix}")
         if run_audit_now:
             actions.append("DRY systemctl --user start resource-governor-audit.service")
         return actions
 
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=False, env=env)
-    for timer in _resource_timers():
+    for timer in RESOURCE_ENABLE_TIMERS:
         subprocess.run(["systemctl", "--user", "enable", "--now", timer], check=False, env=env)
         actions.append(f"enable-now {timer}")
     subprocess.run(["systemctl", "--user", "start", "resource-governor-snapshot.service"], check=False, env=env)
     actions.append("start resource-governor-snapshot.service")
-    # Watchdog is a continuous daemon (Type=simple), not timer-based
-    subprocess.run(["systemctl", "--user", "enable", "--now", "resource-governor-watchdog.service"], check=False, env=env)
-    actions.append("enable-now resource-governor-watchdog.service (daemon)")
+    for service in RESOURCE_ENABLE_SERVICES:
+        subprocess.run(["systemctl", "--user", "enable", "--now", service], check=False, env=env)
+        suffix = " (daemon)" if service.endswith(("watchdog.service", "patcher.service")) else ""
+        actions.append(f"enable-now {service}{suffix}")
     if run_audit_now:
         subprocess.run(["systemctl", "--user", "start", "resource-governor-audit.service"], check=False, env=env)
         actions.append("start resource-governor-audit.service")

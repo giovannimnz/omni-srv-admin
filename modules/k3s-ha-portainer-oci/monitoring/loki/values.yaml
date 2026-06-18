@@ -1,0 +1,222 @@
+# Loki + Promtail values for OMNI-SRV-ADMIN observability stack
+# Chart: grafana/loki-stack v2.10.3
+# Deployed 2026-06-17 as part of Phase 17 (M005 Observability + RWX).
+# Hardware: 3x Oracle Ampere A1 (4 vCPU / 24GB) — keep resource footprint small.
+# Storage: local-path (RWO), 30d retention for Loki chunks.
+#
+# IMPORTANT: The loki-stack chart mounts the loki PVC at /data (not /loki).
+# path_prefix + filesystem.chunks/rules directories must align with that mount,
+# otherwise loki fails at boot with "mkdir /loki/tsdb-shipper-cache: read-only
+# file system" — verified 2026-06-17 during Phase 17 first deploy.
+#
+# This values file is rendered by `omni k3s monitoring install-loki` (see
+# modules/k3s-ha-portainer-oci/monitoring/scripts/install-loki.sh). The user-
+# facing install command picks up the kubeconfig, current cluster context, and
+# the matching Grafana/Prometheus release names automatically.
+
+# ─── Loki (single-binary) ───────────────────────────────────────────────
+loki:
+  enabled: true
+  image:
+    repository: grafana/loki
+    tag: 2.9.3
+  persistence:
+    enabled: true
+    size: 20Gi
+    storageClassName: local-path
+    accessModes:
+      - ReadWriteOnce
+  nodeSelector:
+    kubernetes.io/hostname: atius-srv-1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: "1"
+      memory: 1Gi
+  # Single-binary, low-footprint config. 30d retention.
+  # path_prefix MUST be /data (the chart mounts the PVC there).
+  config:
+    auth_enabled: false
+    common:
+      instance_addr: 127.0.0.1
+      path_prefix: /data
+      storage:
+        filesystem:
+          chunks_directory: /data/chunks
+          rules_directory: /data/rules
+      replication_factor: 1
+      ring:
+        kvstore:
+          store: inmemory
+    limits_config:
+      retention_period: 30d
+      ingestion_rate_mb: 8
+      ingestion_burst_size_mb: 16
+      max_entries_limit_per_query: 5000
+    compactor:
+      working_directory: /data/compactor
+      retention_enabled: true
+      compaction_interval: 10m
+      retention_delete_delay: 2h
+      delete_request_store: filesystem
+    schema_config:
+      configs:
+        - from: "2024-01-01"
+          store: tsdb
+          object_store: filesystem
+          schema: v13
+          index:
+            prefix: index_
+            period: 24h
+    server:
+      http_listen_port: 3100
+    analytics:
+      reporting_enabled: false
+
+# ─── Promtail (DaemonSet) ──────────────────────────────────────────────
+promtail:
+  enabled: true
+  image:
+    repository: grafana/promtail
+    tag: 2.9.3
+  # We need access to the systemd journal on each node (hostPath mount).
+  # The chart already mounts /var/log/journal by default; verify with
+  # `kubectl -n monitoring get daemonset loki-promtail -o yaml`.
+  extraArgs:
+    - -config.file=/etc/promtail/promtail.yaml
+  nodeSelector:
+    kubernetes.io/os: linux
+  resources:
+    requests:
+      cpu: 30m
+      memory: 64Mi
+    limits:
+      cpu: 200m
+      memory: 128Mi
+  # Promtail must run on every node, including control-plane.
+  tolerations:
+    - operator: Exists
+  # Promtail config (snippets override the chart's pipeline).
+  # NOTE: a "match" stage MUST contain a SINGLE key under stages.
+  # The previous values.yaml had the regex at the same level as
+  # `expression:`, which Promtail's parser rejects with
+  # "pipeline stage must contain only one key" — verified 2026-06-17.
+  config:
+    logLevel: info
+    logFormat: logfmt
+    serverPort: 3101
+    clients:
+      - url: http://{{ .Release.Name }}:3100/loki/api/v1/push
+        batchwait: 1m
+        batchsize: 1048576
+        timeout: 10s
+    positions:
+      filename: /run/promtail/positions.yaml
+    snippets:
+      pipelineStages:
+        - cri: {}
+      common:
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_node_name
+          target_label: node_name
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_namespace
+          target_label: namespace
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_name
+          target_label: pod
+        - action: replace
+          source_labels:
+            - __meta_kubernetes_pod_container_name
+          target_label: container
+        - action: replace
+          replacement: /var/log/pods/*$1/*.log
+          separator: /
+          source_labels:
+            - __meta_kubernetes_pod_uid
+            - __meta_kubernetes_pod_container_name
+          target_label: __path__
+      scrapeConfigs: |
+        - job_name: kubernetes-pods-name
+          kubernetes_sd_configs:
+            - role: pod
+          pipeline_stages:
+            - cri: {}
+          relabel_configs:
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_node_name
+              target_label: node_name
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_namespace
+              target_label: namespace
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_name
+              target_label: pod
+            - action: replace
+              source_labels:
+                - __meta_kubernetes_pod_container_name
+              target_label: container
+            - action: replace
+              replacement: /var/log/pods/*$1/*.log
+              separator: /
+              source_labels:
+                - __meta_kubernetes_pod_uid
+                - __meta_kubernetes_pod_container_name
+              target_label: __path__
+            - action: keep
+              regex: ^.*$
+              source_labels:
+                - __meta_kubernetes_pod_label_app_kubernetes_io_name
+        - job_name: systemd-journal
+          journal:
+            max_age: 12h
+            labels:
+              job: systemd-journal
+          relabel_configs:
+            - source_labels: ['__journal__systemd_unit']
+              target_label:  'unit'
+            - source_labels: ['__journal__hostname']
+              target_label:  'host'
+          pipeline_stages:
+            - match:
+                selector: '{job="systemd-journal"}'
+                stages:
+                  - regex:
+                      expression: '.*(PM2|jenkins|gdrive|pm2|resource-governor|container-jenkins).*'
+            - match:
+                selector: '{unit=~".+"}'
+                stages:
+                  - labeldrop:
+                    - __journal_priority
+                    - __journal_priority_keyword
+                    - __journal_syslog_identifier
+      extraScrapeConfigs: ""
+      extraServerConfigs: ""
+
+# ─── Optional sidecars (disabled to keep the cluster lean) ──────────────
+fluent-bit:
+  enabled: false
+filebeat:
+  enabled: false
+logstash:
+  enabled: false
+
+# ─── Grafana datasource wiring ─────────────────────────────────────────
+# We do NOT deploy Grafana via loki-stack because kube-prometheus-stack
+# already runs Grafana. Instead, we create a ConfigMap below (post-install)
+# that the Grafana sidecar picks up via label `grafana_datasource=1`.
+grafana:
+  enabled: false
+
+# ─── Metrics sidecar (Promtail exposes /metrics) ───────────────────────
+metrics:
+  serviceMonitor: "omni-monitoring"
+  prometheusRule: "omni-monitoring"

@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import shlex
 import subprocess
 from pathlib import Path
 from typing import Optional
@@ -12,6 +13,7 @@ from fork_sync.core.registry import load_project
 
 
 GIT_TIMEOUT = int(os.environ.get("FORK_SYNC_GIT_TIMEOUT", "120"))
+HOOK_TIMEOUT = int(os.environ.get("FORK_SYNC_HOOK_TIMEOUT", "900"))
 
 
 def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> dict:
@@ -63,6 +65,237 @@ def _git(repo: Path, args: list[str], check: bool = True) -> subprocess.Complete
         raise RuntimeError(
             f"git {' '.join(args)} timed out after {GIT_TIMEOUT}s in {repo}"
         ) from exc
+
+
+def _as_bool(value: object, default: bool = False) -> bool:
+    if value is None:
+        return default
+    if isinstance(value, bool):
+        return value
+    return str(value).strip().lower() in {"1", "true", "yes", "sim", "on"}
+
+
+def _tail(text: str, limit: int = 4000) -> str:
+    if len(text) <= limit:
+        return text
+    return text[-limit:]
+
+
+def _format_path(value: str, *, project: str, repo: Path) -> Path:
+    formatted = value.format(project=project, repo=str(repo), repo_name=repo.name)
+    return Path(formatted).expanduser().resolve()
+
+
+def _normalise_post_sync(cfg: dict, *, project: str, repo: Path) -> dict:
+    """Normaliza hooks pós-sync declarados em sync.yaml.
+
+    Formatos aceitos:
+    post_sync:
+      enabled: true
+      cwd: /repo/default
+      run_on: [merged]
+      commands:
+        - uv run pytest
+        - name: lint
+          command: [uv, run, ruff, check, .]
+          cwd: /repo/override
+    """
+    raw = cfg.get("post_sync")
+    if not raw:
+        return {"enabled": False, "commands": []}
+
+    if isinstance(raw, list):
+        enabled = True
+        fail_fast = True
+        run_on = ["merged"]
+        default_cwd = repo
+        raw_commands = raw
+    elif isinstance(raw, dict):
+        enabled = _as_bool(raw.get("enabled"), default=True)
+        fail_fast = _as_bool(raw.get("fail_fast"), default=True)
+        run_on = [str(item) for item in (raw.get("run_on") or ["merged"])]
+        default_cwd = _format_path(str(raw.get("cwd") or repo), project=project, repo=repo)
+        raw_commands = raw.get("commands") or []
+    else:
+        return {"enabled": False, "commands": [], "error": "post_sync inválido em sync.yaml"}
+
+    commands = []
+    for index, item in enumerate(raw_commands, 1):
+        if isinstance(item, str):
+            command = shlex.split(item)
+            name = item
+            cwd = default_cwd
+        elif isinstance(item, list):
+            command = [str(part) for part in item]
+            name = " ".join(command)
+            cwd = default_cwd
+        elif isinstance(item, dict):
+            raw_command = item.get("command") or item.get("cmd")
+            if isinstance(raw_command, str):
+                command = shlex.split(raw_command)
+            elif isinstance(raw_command, list):
+                command = [str(part) for part in raw_command]
+            else:
+                commands.append(
+                    {
+                        "name": str(item.get("name") or f"hook-{index}"),
+                        "status": "invalid",
+                        "error": "command ausente ou inválido",
+                    }
+                )
+                continue
+            name = str(item.get("name") or " ".join(command))
+            cwd = _format_path(str(item.get("cwd") or default_cwd), project=project, repo=repo)
+        else:
+            commands.append(
+                {
+                    "name": f"hook-{index}",
+                    "status": "invalid",
+                    "error": "entrada de hook inválida",
+                }
+            )
+            continue
+
+        commands.append(
+            {
+                "name": name,
+                "command": command,
+                "cwd": str(cwd),
+                "status": "pending",
+            }
+        )
+
+    return {
+        "enabled": enabled,
+        "fail_fast": fail_fast,
+        "run_on": run_on,
+        "commands": commands,
+    }
+
+
+def _run_post_sync_hooks(cfg: dict, *, project: str, repo: Path, event: str) -> dict:
+    plan = _normalise_post_sync(cfg, project=project, repo=repo)
+    if not plan.get("enabled"):
+        return {"enabled": False, "status": "skipped", "event": event, "commands": []}
+    if event not in plan.get("run_on", []):
+        return {
+            "enabled": True,
+            "status": "skipped",
+            "event": event,
+            "reason": f"event '{event}' not configured",
+            "commands": plan.get("commands", []),
+        }
+
+    results = []
+    overall = "success"
+    env = os.environ.copy()
+    env.update(
+        {
+            "FORK_SYNC_PROJECT": project,
+            "FORK_SYNC_REPO": str(repo),
+            "FORK_SYNC_EVENT": event,
+        }
+    )
+
+    for hook in plan.get("commands", []):
+        if hook.get("status") == "invalid":
+            results.append(hook)
+            overall = "error"
+            if plan.get("fail_fast", True):
+                break
+            continue
+
+        command = hook["command"]
+        cwd = Path(hook["cwd"])
+        if not cwd.exists():
+            result = {
+                **hook,
+                "status": "error",
+                "exit_code": -1,
+                "error": f"cwd não existe: {cwd}",
+            }
+            results.append(result)
+            overall = "error"
+            if plan.get("fail_fast", True):
+                break
+            continue
+
+        try:
+            proc = subprocess.run(
+                command,
+                cwd=str(cwd),
+                text=True,
+                capture_output=True,
+                env=env,
+                timeout=HOOK_TIMEOUT,
+            )
+            status = "success" if proc.returncode == 0 else "error"
+            if status != "success":
+                overall = "error"
+            results.append(
+                {
+                    **hook,
+                    "status": status,
+                    "exit_code": proc.returncode,
+                    "stdout": _tail(proc.stdout),
+                    "stderr": _tail(proc.stderr),
+                }
+            )
+            if status != "success" and plan.get("fail_fast", True):
+                break
+        except subprocess.TimeoutExpired:
+            results.append(
+                {
+                    **hook,
+                    "status": "timeout",
+                    "exit_code": -1,
+                    "error": f"timeout após {HOOK_TIMEOUT}s",
+                }
+            )
+            overall = "error"
+            if plan.get("fail_fast", True):
+                break
+        except OSError as exc:
+            results.append(
+                {
+                    **hook,
+                    "status": "error",
+                    "exit_code": -1,
+                    "error": str(exc),
+                }
+            )
+            overall = "error"
+            if plan.get("fail_fast", True):
+                break
+
+    return {
+        "enabled": True,
+        "status": overall,
+        "event": event,
+        "commands": results,
+    }
+
+
+def _version_plan(cfg: dict, *, project: str, upstream_sha: str) -> dict:
+    scheme = cfg.get("version_scheme") or {}
+    if not scheme:
+        return {"enabled": False}
+
+    suffix = str(scheme.get("suffix", "-rf"))
+    upstream_version = str(cfg.get("upstream_version") or upstream_sha[:12])
+    counter_template = str(scheme.get("counter_dir", "~/.fork-sync/{project}/versions/{upstream_version}"))
+    counter_dir = counter_template.format(project=project, upstream_version=upstream_version)
+    tag_template = str(scheme.get("tag_template", "v{upstream_version}{suffix}{counter}"))
+    return {
+        "enabled": True,
+        "upstream_version": upstream_version,
+        "suffix": suffix,
+        "counter_dir": str(Path(counter_dir).expanduser()),
+        "tag_template": tag_template,
+        "release_notes_command": (
+            f"fork-sync release generate {project} --upstream-version {upstream_version} --save-local"
+        ),
+    }
 
 
 def _ensure_upstream_remote(repo: Path, url: str) -> None:
@@ -259,6 +492,8 @@ def run_sync(
         "unprotected_conflicts": unprotected_conflicts,
         "merge_strategy": merge_strategy,
         "deploy_requested": deploy,
+        "version_plan": _version_plan(cfg, project=name, upstream_sha=remote_sha),
+        "post_sync_plan": _normalise_post_sync(cfg, project=name, repo=repo),
     }
 
     if local_sha == remote_sha:
@@ -309,6 +544,16 @@ def run_sync(
                 "push_exit_code": push_exit_code,
             }
         )
+        if not dry_run:
+            result["post_sync"] = _run_post_sync_hooks(
+                cfg,
+                project=name,
+                repo=repo,
+                event="ahead_only",
+            )
+            if result["post_sync"].get("status") == "error":
+                result["status"] = "error"
+                result["error"] = "branch ahead-only publicada, mas post_sync falhou"
         return result
 
     if dry_run:
@@ -396,10 +641,23 @@ def run_sync(
 
     push_stdout = ""
     push_stderr = ""
+    push_exit_code = None
     if str(cfg.get("auto_push", False)).lower() == "true":
         push = _git(repo, ["push", "origin", branch], check=False)
         push_stdout = push.stdout
         push_stderr = push.stderr
+        push_exit_code = push.returncode
+        if push.returncode != 0:
+            result.update(
+                {
+                    "status": "error",
+                    "error": f"push falhou para origin/{branch}",
+                    "push_stdout": push_stdout,
+                    "push_stderr": push_stderr,
+                    "push_exit_code": push_exit_code,
+                }
+            )
+            return result
 
     result.update(
         {
@@ -410,8 +668,18 @@ def run_sync(
             "commit_sha": _git(repo, ["rev-parse", "HEAD"]).stdout.strip(),
             "push_stdout": push_stdout,
             "push_stderr": push_stderr,
+            "push_exit_code": push_exit_code,
         }
     )
+    result["post_sync"] = _run_post_sync_hooks(
+        cfg,
+        project=name,
+        repo=repo,
+        event="merged",
+    )
+    if result["post_sync"].get("status") == "error":
+        result["status"] = "error"
+        result["error"] = "sync aplicado, mas post_sync falhou"
     if deploy:
         result["deploy_note"] = "Deploy flag ignored by sync runner; use deploy command separately."
     return result

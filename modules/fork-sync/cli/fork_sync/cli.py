@@ -22,6 +22,8 @@ from fork_sync import __version__
 from fork_sync.core.config import REPO_ROOT, PROJECTS_DIR
 from fork_sync.core.registry import list_projects, load_project, project_exists
 from fork_sync.core.sync_runner import run_sync, run_detect, run_deploy
+from fork_sync.core.automerge import run_sync_all
+from fork_sync.core.container_mirrors import diagnose_container_mirrors
 from fork_sync.core.discovery import diagnose_project, auto_heal
 from fork_sync.core.manuals import (generate_manual, manual_exists, get_manual_path,
                                     record_sync, list_manuals, update_manual_section)
@@ -208,6 +210,16 @@ def sync_cmd(name, repo_path, dry_run, with_deploy, use_json):
     output(result, f"Sync '{name}': {result.get('status', 'unknown')}")
 
 
+@cli.command("sync-all")
+@click.option("--apply", is_flag=True, help="Aplica somente projetos cujo dry-run seja seguro.")
+@click.option("--include-paused", is_flag=True, help="Inclui projetos pausados no relatório.")
+@handle_error
+def sync_all_cmd(apply, include_paused):
+    """Dry-run de todos os projetos ativos, com automerge seguro opcional."""
+    result = run_sync_all(apply=apply, include_paused=include_paused)
+    output(result, f"Sync-all: {result['mode']} ({result['project_count']} projeto(s))")
+
+
 @cli.command("detect")
 @click.argument("name")
 @handle_error
@@ -230,6 +242,19 @@ def deploy_cmd(name, repo_path, dry_run):
         raise FileNotFoundError(f"Projeto '{name}' não configurado")
     result = run_deploy(name, repo_path=repo_path, dry_run=dry_run)
     output(result, f"Deploy '{name}': {result.get('status', 'unknown')}")
+
+
+@cli.group("containers")
+def containers():
+    """Diagnostica mirrors de containers migrados."""
+
+
+@containers.command("mirrors")
+@handle_error
+def containers_mirrors():
+    """Lista container_mirror e detecta .git copiado/quebrado."""
+    result = diagnose_container_mirrors()
+    output(result, f"Container mirrors: {result['mirror_count']} encontrado(s)")
 
 
 # ─────────────────────────── logs ───────────────────────────

@@ -74,9 +74,9 @@ Valores iniciais conservadores. Host atual está apertado em CPU, swap e disco.
 
 | Profile | Slice | Uso | CPU | Memória | I/O |
 |---|---|---|---|---|---|
-| `builds` | `omni-builds.slice` | `podman build`, `make`, `cargo`, `bun build`, `next build` | `200%` | `6G / 8G / swap 1G` | `60M read / 30M write` |
-| `interactive` | `omni-interactive.slice` | `code`, `obsidian`, Electron/Codex Desktop quando necessário | `125%` | `4G / 6G / swap 512M` | `40M read / 20M write` |
-| `transfers` | `omni-transfers.slice` | `rclone`, `rsync`, offload, backup | `100%` | `1G / 2G / swap 256M` | `70M read / 35M write` |
+| `builds` | `omni-builds.slice` | `podman build`, `make`, `cargo`, `bun build`, `next build` | `200%` | `6G / 8G / swap 1G` | `80M read / 40M write` |
+| `interactive` | `omni-interactive.slice` | `code`, `obsidian`, Electron/Codex Desktop quando necessário | `125%` | `4G / 6G / swap 512M` | `60M read / 30M write` |
+| `transfers` | `omni-transfers.slice` | `rclone`, `rsync`, offload, backup | `100%` | `1G / 2G / swap 256M` | `407M read / 90M write` |
 
 Fonte de verdade dos defaults:
 
@@ -91,6 +91,7 @@ modules/srv1-ops/configs/resource-governor.env
 ```bash
 omni srv1-ops resources profiles
 omni srv1-ops resources status
+omni srv1-ops resources install --dry-run
 omni srv1-ops resources install
 omni srv1-ops resources logs
 omni srv1-ops resources watchdog
@@ -275,12 +276,14 @@ Problemas observados:
 
 Script que escreve os limites diretamente nos cgroup files:
 
-- Ativa `cpu` + `io` no `subtree_control` do `omni.slice` pai
+- Ativa `cpu io memory pids` no `subtree_control` do `omni.slice` pai
 - Ativa `cpu io memory pids` no `subtree_control` de cada `omni-*.slice`
-- Escreve `cpu.max`, `io.max` com os valores do config + runtime override
+- Escreve `cpu.max`, `cpu.weight`, `io.max`, `io.weight`, `memory.high`,
+  `memory.max` e `memory.swap.max` com os valores do config + runtime override
 
 **`resource-governor-cgroup-init.service`** (oneshot) roda no boot via
-`systemd --user`, ativado por `default.target`.
+`systemd --user`, habilitado em `timers.target` para não depender de
+`default.target` quando este estiver bloqueado por jobs antigos.
 
 **Integração no watchdog:** quando muda o runtime override (conservative ↔ base),
 o watchdog chama `cgroup-init` para aplicar os novos limites nos cgroups.
@@ -304,6 +307,7 @@ o watchdog chama `cgroup-init` para aplicar os novos limites nos cgroups.
 Ativação live recomendada:
 
 ```bash
+omni srv1-ops resources install --dry-run
 omni srv1-ops resources install
 ```
 
@@ -315,6 +319,11 @@ omni srv1-ops resources logs
 systemctl --user list-timers --all | grep resource-governor
 ```
 
+`resources install` copia os units versionados para `~/.config/systemd/user/`,
+executa `daemon-reload`, habilita os timers do governor/inviolable e habilita
+apenas os services críticos do governor (`cgroup-init`, `watchdog`, `patcher`).
+Esse fluxo não para PM2, XRDP ou SSHD.
+
 ### Fase 3 — hardening específico de Docker
 
 Se quiser proteção real para `docker build`, criar estratégia dedicada:
@@ -325,7 +334,9 @@ Se quiser proteção real para `docker build`, criar estratégia dedicada:
 
 ## Watchdog contínuo
 
-O watchdog roda por `resource-governor-watchdog.timer` a cada 2 minutos.
+O watchdog principal roda como `resource-governor-watchdog.service` contínuo.
+O timer versionado permanece habilitável para compatibilidade operacional, mas
+os services críticos ficam ancorados em `timers.target`, não em `default.target`.
 
 Ele faz 4 coisas:
 
@@ -365,3 +376,9 @@ PYTHONPATH=cli python3 -m omni srv1-ops resources status
 PYTHONPATH=cli python3 -m omni srv1-ops resources snapshot
 PYTHONPATH=cli python3 -m omni srv1-ops resources audit
 ```
+
+`resources status` mostra modo runtime, override ativo, repo/live units,
+services/timers, jobs presos relevantes (`ats-pm2`, `horistic-pm2`,
+`default.target`), refs PM2 legadas para `/home/ubuntu/ecosystem.atius.js`
+(see `pm2-canonical.md` for the canonical replacement path),
+properties de slices systemd e valores diretos de cgroups.

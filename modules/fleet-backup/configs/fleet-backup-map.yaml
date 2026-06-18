@@ -2,26 +2,26 @@
 # Lido por rclone-fleet-queue.sh e sync-backup-script.sh
 fleet:
   - srv_num: 1
-    hostname: ATIUS-SRV-1
+    hostname: atius-srv-1
     public_ip: 137.131.190.161
     vpn_ip: 10.1.1.1
-    ssh_alias: ATIUS-SRV-1-VPN
+    ssh_alias: atius-srv-1-vpn
     backup_script: backup-srv1-to-gdrive.sh
     backup_target: giovanni-drive:ATIUS-SRV/SRV-1/Backup/snapshots/
     max_runtime_seconds: 1800
   - srv_num: 2
-    hostname: ATIUS-SRV-2
+    hostname: atius-srv-2
     public_ip: 129.148.47.32
     vpn_ip: 10.1.1.2
-    ssh_alias: ATIUS-SRV-2-VPN
+    ssh_alias: atius-srv-2-vpn
     backup_script: backup-srv2-to-gdrive.sh
     backup_target: giovanni-drive:ATIUS-SRV/SRV-2/Backup/snapshots/
     max_runtime_seconds: 1800
   - srv_num: 3
-    hostname: ATIUS-SRV-3
+    hostname: atius-srv-3
     public_ip: 136.248.126.12
     vpn_ip: 10.1.1.7
-    ssh_alias: ATIUS-SRV-3-VPN
+    ssh_alias: atius-srv-3-vpn
     backup_script: backup-srv3-to-gdrive.sh
     backup_target: giovanni-drive:ATIUS-SRV/SRV-3/Backup/snapshots/
     max_runtime_seconds: 1800

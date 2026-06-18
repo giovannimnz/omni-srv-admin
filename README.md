@@ -46,6 +46,11 @@ omni remote-manager list
 omni remote-manager rename-label srv1-shared-smb Shared --dry-run
 omni xrdp-abnt2 validate
 omni fork-sync projects list
+
+# Podman fleet standard (containers.conf + netavark + aardvark + systemd-resolved)
+./modules/fleet/podman-network/scripts/drift-detect.sh    # show drift across 3 SRVs
+./modules/fleet/podman-network/scripts/apply-standardize.sh 1  # apply standard to SRV-1
+./modules/fleet/podman-network/scripts/smoke-test.sh 1          # validate SRV-1
 ```
 
 ---
@@ -64,6 +69,7 @@ Cada domínio operacional fica isolado:
 
 - `srv1-ops` para automações locais do ATIUS-SRV-1
 - `fleet` para inventário multi-host
+  - `fleet/podman-network` para o padrão de networking podman (containers.conf + netavark + aardvark + systemd-resolved) — **módulo novo 2026-06-16**
 - `remote-manager` para mounts/remotes/labels
 - `xrdp-abnt2` para teclado/desktop remoto
 - `fork-sync` para sincronização de forks
@@ -110,6 +116,7 @@ omni-srv-admin/
 │   └── remotes/                 # mounts/remotes/bookmarks
 ├── modules/                     # módulos operacionais
 │   ├── fleet/                   # arquitetura e rollout multi-host
+│   │   └── podman-network/      # standard podman networking 3-SRV (containers.conf, netavark, aardvark)
 │   ├── fleet-control-plane/     # DB central, PgBouncer, agent executor, telemetry
 │   ├── remote-manager/          # remotes, mounts, PCManFM/LXDE Places
 │   ├── srv1-ops/                # backups, logs, cleanup, sync vault

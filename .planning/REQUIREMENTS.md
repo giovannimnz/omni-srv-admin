@@ -87,8 +87,6 @@
 ## v3 Requirements
 
 Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
-This branch owns the M004/Fleet requirements below; M005/K3s requirements live
-in `codex/k3s-portainer-oci-plan`.
 
 ### Omni Fleet Control Plane
 
@@ -102,11 +100,34 @@ in `codex/k3s-portainer-oci-plan`.
 - [ ] **FCP-08**: Licenças devem ser controladas por metadata e `secret_ref`, sem secrets em git, logs, `.planning` ou vault.
 - [ ] **FCP-09**: Ações relevantes devem gerar auditoria/logs com ator, host, ação, alvo, resultado e timestamp.
 - [ ] **FCP-10**: O design deve expor contrato futuro para Podman/K3s consumir inventário, status, programs, versions e audit events sem implementar a orquestração nesta phase.
-- [ ] **FCP-11**: O PostgreSQL central deve ser o DB canônico do `omni-srv-admin` para runtime state, ops scopes, parâmetros, configs e registry de comandos; arquivos ficam como bootstrap/template/export.
-- [ ] **FCP-12**: Cada servidor deve ter um ops scope explícito (`srv1-ops`, `srv2-ops`, `srv3-ops`) e parâmetros/configs mutáveis devem ser resolvidos do DB via PgBouncer.
-- [ ] **FCP-13**: Slash commands agent-facing devem ser registrados no DB e seguir convenção CLI-Anything/`clianything`, incluindo `/cli-anything*` e o alvo futuro `/omni-srv-admin`.
-- [ ] **FCP-14**: Cada node deve rodar um agent local capaz de reclamar e executar somente update plans aprovados, allowlisted e destinados ao próprio host, gravando resultado e auditoria no DB.
-- [ ] **FCP-15**: Cada servidor deve conseguir monitorar os demais via `DbOmniFleet`/PgBouncer, com telemetria de load, CPU, memória, disco, I/O, service health e fallback local quando o DB estiver indisponível.
+
+### K3s HA Cluster
+
+- [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
+- [ ] **K3S-02**: Embedded etcd funcional com quorum 2/3 e snapshots configurados.
+- [ ] **K3S-03**: K3s usa apenas rede privada `10.1.1.0/24` para API, etcd, kubelet e Flannel.
+- [ ] **K3S-04**: SRV-1 atualizado para Ubuntu 24.04 antes da instalacao real do cluster.
+- [ ] **K3S-05**: Traefik e ServiceLB padrao do K3s desabilitados no v1 para evitar conflito com Apache/portas atuais.
+
+### Portainer on Kubernetes
+
+- [ ] **PRT-01**: Portainer CE LTS instalado no namespace `portainer` via Helm, com persistencia e `nodeSelector` adequado ao storage local.
+- [ ] **PRT-02**: Portainer do cluster acessivel em `https://portainer.atius.com.br` sem remover o Portainer antigo em `docker.atius.com.br`.
+
+### Cloudflare + Security
+
+- [ ] **CFL-01**: Cloudflare Tunnel remoto publica `portainer.atius.com.br` via replicas `cloudflared` no cluster, token em Kubernetes Secret e fora do git.
+- [ ] **SEC-01**: OCI NSG/Security List e firewall local bloqueiam acesso publico a 6443, 2379-2380, 8472, 10250 e Portainer NodePort/LoadBalancer.
+
+### SRV-1 Resource Governance + PM2 Hardening
+
+- [x] **RGP-01**: Units user do resource governor e inviolable watchdog devem iniciar sem depender de `default.target` quando este estiver bloqueado por jobs antigos.
+- [x] **RGP-02**: Limites de CPU, I/O, memória, swap e weights devem ser aplicados de forma consistente entre slices systemd e cgroups diretos, usando `resource-governor.env` e runtime override quando existir.
+- [ ] **RGP-03**: PM2 deve ter um caminho canônico de boot para ATS/Horistic, sem `pm2-ubuntu.service` apontando para arquivo inexistente e sem duplicar daemons de forma não intencional.
+- [ ] **RGP-04**: Jobs `ats-pm2.service`, `horistic-pm2.service` e `default.target` presos devem ser drenados ou substituídos por units corretos sem matar apps de trading ou APIs ativas.
+- [x] **RGP-05**: `inviolable-watchdog` deve relançar apps somente por ecosystems reais, ignorar serviços ausentes como `nginx` e evitar prender novos processos XRDP/SSHD no cgroup do watchdog.
+- [ ] **RGP-06**: Cleanup de XRDP/PM2 deve exigir gate operacional explícito e declarar se a ação derruba RDP, apenas pisca desktop ou não afeta a sessão.
+- [ ] **RGP-07**: Runbook, rollback e verificação pós-boot devem estar documentados, incluindo backup, comandos de validação e critérios de abort.
 
 ## Out of Scope
 
@@ -132,14 +153,26 @@ in `codex/k3s-portainer-oci-plan`.
 | KEY-01 → KEY-05 | Phase 6 | Pending |
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
-| FCP-01 → FCP-15 | Phase 12 | Live implemented; DB-backed ops/config/slash registry and agent executor/monitoring contract added |
+| FCP-01 → FCP-13 | Phase 12 / M004 | Live implemented; DB-backed ops/config/slash registry validated |
+| K3S-01 → K3S-05 | Phase 13 / M005 | ✅ Live (K3s HA 3-nodes `Ready` control-plane+etcd on `wg0`) |
+| PRT-01 → PRT-02 | Phase 13 / M005 | ✅ Live (Portainer CE 2.39.3 deployed; `portainer.atius.com.br` returns API status) |
+| CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
+| M005-JENKINS-PODMAN | Phase 13 / M005 / 14-05 | ✅ Jenkins docker-deps removed, validated on `https://jenkins.atius.com.br/` |
+| M005-JENKINS-AGENT | Phase 14 / M006 / 14-06 | Planned (Jenkins agent Deployment in K3s HA cluster) |
+| OBS-01, OBS-02, OBS-03 | Phase 17 / M007 | Planned (Prometheus + Grafana + Loki stack) |
+| CFL-01, CFL-02, CFL-03 | Phase 16 / M007 | Planned (Cloudflare Access policy + service token) |
+| OCI-01, OCI-02, OCI-03 | Phase 15 / M007 | Planned (OCI snapshot workflow + restore drill) |
+| RWX-01, RWX-02 | Phase 17 / M007 | Planned (RWX storage decision + ops) |
+| RGP-01, RGP-02, RGP-05 | Phase 14 / M006 / 14-01 | ✅ Versioned/status complete |
+| RGP-03, RGP-04, RGP-06, RGP-07 | Phase 14 / M006 | Planned (14-02 / 14-03 / 14-04) |
+| RGP-08, RGP-09, RGP-10 | Phase 14 / M006 / 14-05 | ✅ Jenkins docker-deps removed, validated on `https://jenkins.atius.com.br/` |
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 15 total
-- Mapped to phases: 52
+- v3 requirements: 26 total
+- Mapped to phases: 65
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-13 after M004 DB-backed ops/config/slash-command contract*
+*Last updated: 2026-06-15 after Phase 14 / 14-01 execution and main alignment with origin/main*

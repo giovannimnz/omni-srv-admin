@@ -1,56 +1,58 @@
-style "dark-style" {
-    # Cores Principais
-    bg[NORMAL] = "#222222"
-    bg[PRELIGHT] = "#333333"
-    bg[ACTIVE] = "#111111"
-    bg[SELECTED] = "#444444"
-    bg[INSENSITIVE] = "#222222"
+gtk-theme-name="Greybird-dark"
+gtk-icon-theme-name="nuoveXT2"
+gtk-font-name="SF Pro Display 10"
+gtk-cursor-theme-name="DMZ-White"
+gtk-cursor-theme-size=18
+gtk-toolbar-style=GTK_TOOLBAR_ICONS
+gtk-button-images=1
+gtk-menu-images=1
 
-    fg[NORMAL] = "#ffffff"
+style "omni-dark-style" {
+    bg[NORMAL] = "#111318"
+    bg[PRELIGHT] = "#1f2937"
+    bg[ACTIVE] = "#05070a"
+    bg[SELECTED] = "#2563eb"
+    bg[INSENSITIVE] = "#151922"
+
+    fg[NORMAL] = "#f8fafc"
     fg[PRELIGHT] = "#ffffff"
     fg[ACTIVE] = "#ffffff"
     fg[SELECTED] = "#ffffff"
-    fg[INSENSITIVE] = "#888888"
+    fg[INSENSITIVE] = "#7d8590"
 
-    text[NORMAL] = "#ffffff"
+    text[NORMAL] = "#f8fafc"
     text[PRELIGHT] = "#ffffff"
     text[ACTIVE] = "#ffffff"
     text[SELECTED] = "#ffffff"
-    text[INSENSITIVE] = "#888888"
+    text[INSENSITIVE] = "#7d8590"
 
-    # Fundo de Inputs e Listas (Contraste com o BG)
-    base[NORMAL] = "#181818"
-    base[PRELIGHT] = "#333333"
-    base[ACTIVE] = "#444444"
-    base[SELECTED] = "#444444"
-    base[INSENSITIVE] = "#222222"
+    base[NORMAL] = "#05070a"
+    base[PRELIGHT] = "#111827"
+    base[ACTIVE] = "#111318"
+    base[SELECTED] = "#2563eb"
+    base[INSENSITIVE] = "#111318"
 
-    # Estilo de Linhas e Tabelas
-    GtkTreeView::odd-row-color = "#1c1c1c"
-    GtkTreeView::even-row-color = "#181818"
+    GtkTreeView::odd-row-color = "#0b0f14"
+    GtkTreeView::even-row-color = "#05070a"
     GtkTreeView::allow-rules = 1
     GtkTreeView::indent-expanders = 1
 }
 
-# Estilo para os Separadores (Divisores de janelas)
-style "separator-style" {
-    bg[NORMAL] = "#444444" # Cor de destaque para o divisor
-    bg[ACTIVE] = "#555555"
-    bg[PRELIGHT] = "#555555"
+style "omni-dark-separator" {
+    bg[NORMAL] = "#30363d"
+    bg[ACTIVE] = "#3b434d"
+    bg[PRELIGHT] = "#3b434d"
 }
 
-# Estilo para os Cabeçalhos de Colunas
-style "column-header" {
-    bg[NORMAL] = "#2d2d2d"
-    fg[NORMAL] = "#ffffff"
+style "omni-dark-header" {
+    bg[NORMAL] = "#151922"
+    fg[NORMAL] = "#f8fafc"
 }
 
-gtk-font-name="SF Pro Display 10"
-
-widget "*" style "dark-style"
-class "GtkWidget" style "dark-style"
-class "GtkEntry" style "dark-style"
-class "GtkTreeView" style "dark-style"
-class "GtkSeparator" style "separator-style"
-class "GtkPaned" style "separator-style"
-widget_class "*.<GtkTreeView>.<GtkButton>" style "column-header"
+widget "*" style "omni-dark-style"
+class "GtkWidget" style "omni-dark-style"
+class "GtkEntry" style "omni-dark-style"
+class "GtkTreeView" style "omni-dark-style"
+class "GtkSeparator" style "omni-dark-separator"
+class "GtkPaned" style "omni-dark-separator"
+widget_class "*.<GtkTreeView>.<GtkButton>" style "omni-dark-header"

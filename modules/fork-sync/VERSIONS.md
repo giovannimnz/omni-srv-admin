@@ -1,5 +1,35 @@
 # VERSIONS — fork-sync
 
+## 1.3.0 (2026-06-14)
+
+### Adicionado
+- **Hooks declarativos pós-sync** (`post_sync` em `sync.yaml`)
+  - `run_on` por evento (`merged`, `ahead_only`)
+  - `fail_fast` para interromper a sequência no primeiro erro
+  - comandos como string, lista ou objeto `{name, command, cwd}`
+  - saída estruturada com `stdout`, `stderr`, `exit_code`, timeout e status
+  - erros de binário/cwd ausente viram relatório, não crash do runner
+- **Plano de versionamento no resultado do sync**
+  - `version_plan.enabled`
+  - `upstream_version` derivado do SHA upstream quando não houver versão explícita
+  - `counter_dir`, `suffix`, `tag_template`
+  - comando sugerido de release notes local
+- **Gestão do fork `notebooklm-py`**
+  - `projects/notebooklm-py/sync.yaml` agora declara PM2 daily sync, política de update,
+    `version_scheme` e validações pós-sync do `notebooklm-obsidian-bridge`
+  - manual operacional em `manuals/notebooklm-py.md`
+
+### Mudanças
+- Versão do pacote Python alinhada para `1.3.0` em `setup.py` e `fork_sync.__version__`.
+- README atualizado para 9 projetos e para a governança do `notebooklm-py`.
+- Falha de `git push` depois de merge real agora marca o sync como `error`, em vez de sucesso falso.
+
+### Mantido
+- `sync-all --apply` continua aplicando somente candidatos cujo dry-run é seguro.
+- Nenhum upload NotebookLM, login de browser ou auth interativa é executado pelo fork-sync.
+
+---
+
 ## 1.2.0 (2026-06-04)
 
 ### Adicionado
