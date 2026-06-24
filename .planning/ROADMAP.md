@@ -459,6 +459,21 @@ Plans:
 - [ ] 23-04 — Landscape parity matrix, runbook and operating model
 - [ ] 23-05 — Self-hosted Landscape deployment on Podman/K3s
 
+### Phase 24: ATS/Horistic Production Recovery Guard
+
+**Goal:** Criar protecao operacional versionada para ATS e Horistic em producao: validar boot PM2, namespaces separados, ecosystems, dump/resurrect, Apache remoto do Horistic, containers/servicos/timers e drift de renomeio de pastas/hosts, com protocolo read-only no reboot/login e repair automatico gateado.
+**Requirements:** PRG-01, PRG-02, PRG-03, PRG-04, PRG-05, PRG-06, PRG-07, PRG-08, PRG-09, PRG-10
+**Depends on:** Phase 14, Phase 22
+**Plans:** 4 plans
+**Status:** PLANNING
+
+Plans:
+
+- [ ] 24-01 — PM2 boot, namespace and ecosystem validator
+- [ ] 24-02 — Guarded repair engine for PM2, services and containers
+- [ ] 24-03 — Boot/login protocol, timers and operator runbook
+- [ ] 24-04 — Horistic remote Apache and rename drift detector
+
 ---
 
 ## Phase 8: Rebrand fork-sync submodule

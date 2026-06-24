@@ -115,6 +115,19 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 - [ ] **GOV-10**: A documentacao deve declarar o papel do Landscape na operacao: camada complementar de administracao das maquinas Ubuntu, sem substituir Cockpit break-glass, Omni Fleet governance, Portainer/K3s ou os gates de update/auditoria.
 - [ ] **GOV-11**: Self-hosted Landscape deve ser planejado para deploy controlado em Podman e/ou K3s, com validacao de recursos, portas 80/443, certificados, Ubuntu Pro/licenca, registro de clientes, rollback e fallback documentado para LXD/VM/Juju se a embalagem Podman/K3s nao ficar suportavel.
 
+### ATS/Horistic Production Recovery Guard
+
+- [ ] **PRG-01**: `pm2-ubuntu.service` deve continuar sendo o unico boot owner de PM2 para ATS e Horistic, com `Type=oneshot`, `RemainAfterExit=yes`, `PM2_HOME=/home/ubuntu/.pm2`, `pm2 resurrect` e sem `PIDFile` ou caminho stale.
+- [ ] **PRG-02**: O estado vivo do PM2, `/home/ubuntu/.pm2/dump.pm2` e os ecosystems de ATS/Horistic devem bater em nomes, namespaces, cwd, scripts, portas e contagens esperadas antes de qualquer `pm2 save`.
+- [ ] **PRG-03**: ATS e Horistic devem ficar isolados por namespaces PM2 (`atius` e `horistic`); processos em `default` ou no namespace errado devem virar finding bloqueante e repair dry-run antes de qualquer correcao live.
+- [ ] **PRG-04**: `ecosystem.config.js` de ATS e Horistic deve ser validado por contrato: `autorestart`, `restart_delay`, `max_restarts`, `cwd`, `script`, `env` minimo, portas e redacao de secrets.
+- [ ] **PRG-05**: `omni-srv-admin` deve expor um `production-guard` read-only para status JSON/CLI cobrindo PM2, namespaces, dump, ecosystems, portas, Apache remoto, containers, timers e jobs systemd.
+- [ ] **PRG-06**: O repair automatico deve ser seguro por padrao: snapshot primeiro, dry-run por default, sem `pm2 kill`, sem reiniciar RDP/XRDP, sem derrubar trading, e com apply limitado a scopes aprovados.
+- [ ] **PRG-07**: O protocolo de boot/login deve rodar verificacao no reboot e no inicio de sessao, registrando findings e acionando apenas reparos permitidos por politica, com fallback manual documentado.
+- [ ] **PRG-08**: A protecao deve validar o reverse proxy Horistic remoto (`horistic-srv`) sem assumir que Apache vive no SRV-1: unit padrao enabled/active, portas 80/443, vhosts e endpoints publicos.
+- [ ] **PRG-09**: O guard deve detectar drift de renomeio de pastas/hosts/repos (ex.: `horistic-srv-1` -> `horistic-srv`, cwd/script inexistente, vhost/GDrive antigo, symlink pendente) e propor correcao segura.
+- [ ] **PRG-10**: Findings, repairs e checks devem gerar auditoria sem secrets, com output machine-readable, resumo humano em PT-BR e documentacao operacional versionada.
+
 ### K3s HA Cluster
 
 - [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
@@ -169,6 +182,7 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
 | FCP-01 → FCP-13 | Phase 12 / M004 | Live implemented; DB-backed ops/config/slash registry validated |
 | GOV-01 → GOV-11 | Phase 23 | Planned (Landscape complementary management layer + Cockpit host console + Omni Fleet governance) |
+| PRG-01 → PRG-10 | Phase 24 | Planned (ATS/Horistic production recovery guard) |
 | K3S-01 → K3S-05 | Phase 13 / M005 | ✅ Live (K3s HA 3-nodes `Ready` control-plane+etcd on `wg0`) |
 | PRT-01 → PRT-02 | Phase 13 / M005 | ✅ Live (Portainer CE 2.39.3 deployed; `portainer.atius.com.br` returns API status) |
 | CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
@@ -190,4 +204,4 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-24 after Phase 23 added Landscape complementary deployment scope*
+*Last updated: 2026-06-24 after Phase 24 added ATS/Horistic production recovery guard scope*

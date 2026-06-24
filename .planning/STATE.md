@@ -239,3 +239,20 @@ Status: PLANNING (2026-06-24)
 | Fundacao existente | `managed-apps` agora cobre `programs`, `repositories`, `policies` e `customizations` para Chromium/Firefox/Bitwarden, incluindo Bitwarden force-install e browser defaults Google/homepage; validado localmente por `manifest`, `status`, `verify`, `config-status` e `config-verify` e remotamente por `fleet-config-status`; reutilizar como seed de governanca da Phase 23 |
 | Worktree | Ainda ha mudancas paralelas fora da Phase 23 em `srv1-ops`, `fork-sync` e `dark-theme`; deixadas intocadas |
 | Proximo | Planejar e executar `23-01..23-05` |
+
+## Phase 24 — ATS/Horistic Production Recovery Guard
+
+Status: PLANNING (2026-06-24)
+
+| Item | Estado validado / direcao |
+|---|---|
+| PM2 boot owner | `pm2-ubuntu.service` live esta `enabled`, `active`, `Type=oneshot`, `RemainAfterExit=yes`, sem `PIDFile`, restaurando de `/home/ubuntu/.pm2/dump.pm2` |
+| PM2 live vs dump | PM2 vivo e dump batem: `atius: 12`, `horistic: 5`; nenhum `missing_in_dump`, nenhum `missing_live`, nenhum processo em namespace errado |
+| Namespaces | ATS em namespace `atius`; Horistic em namespace `horistic`; legacy `ats-pm2.service` e `horistic-pm2.service` continuam disabled/inactive |
+| Ecosystems | `ecosystem.config.js` de ATS e Horistic tem `autorestart: true`, `restart_delay`, `max_restarts`, cwd/script canonicos e namespaces corretos para apps base |
+| Portas e dominios | Portas locais 3015, 8015, 3050, 8050, 8099, 8199 abertas; `dashboard/trade/backtest/painel/api/webhook.horistic.com` e `dashboard/api/webhook.atius.com.br` responderam 200 no check de 2026-06-24 |
+| Horistic Apache | `horistic-srv` remoto: `apache2.service` padrao do Ubuntu, `enabled`, `active`, sem drop-ins, ouvindo em 80/443 |
+| Lacuna principal | `atius-unified-bot-launcher` e `horistic-unified-bot-launcher` rodam em modo one-shot com PM2 `waiting restart`; isso e esperado pelo launcher, mas o volume de restarts torna necessario um health contract explicito em vez de aceitar `waiting restart` cegamente |
+| Guard existente | `inviolable-watchdog` ja repara ATS/Horistic PM2 e containers, mas precisa de validator/repair versionado, output JSON, checks de dump/ecosystem/namespace, remote Apache, renomeios e protocolo boot/login |
+| Worktree | Mudancas paralelas em `srv1-ops`, `fork-sync`, `dark-theme` e Graphify outputs permanecem fora de escopo para esta revisao ate serem integradas por plano/commit seletivo |
+| Proximo | Executar Phase 24 depois ou em paralelo controlado com Phase 23, sem restart live automatico de PM2/RDP |
