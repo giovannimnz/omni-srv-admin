@@ -31,6 +31,7 @@ must_haves:
     - "Omni Fleet e o control plane central para inventario, programas, versoes, desired state, update plans, auditoria e agentes locais."
     - "K3s/Portainer continuam responsaveis por administracao do cluster e workloads."
     - "Collectors locais reportam versoes reais e security findings sem executar updates."
+    - "managed-apps Chromium/Firefox/Bitwarden e seed operacional reutilizavel e precisa mapear para perfis de governanca ou compatibility links sem divergencia."
     - "Mutacoes fleet-wide continuam passando por TbUpdatePlans aprovados, omni fleet agent local e command allowlist."
     - "Deploy Landscape em Podman/K3s exige gate de recursos, portas 80/443, certificados, Pro/licenca, registro de clientes, backup/rollback e fallback LXD/VM/Juju."
   artifacts:
@@ -40,6 +41,8 @@ must_haves:
       provides: "Collectors locais read-only de programas, pacotes, servicos e containers."
     - path: "modules/fleet-control-plane/migrations/0004_governance_profiles.sql"
       provides: "Schema de desired state, repository profiles, security findings, drift e update profiles."
+    - path: "modules/fleet-control-plane/tools/import_managed_apps_seed.py"
+      provides: "Adapter dry-run/import para converter managed-apps seed em perfis de governanca."
     - path: "docs/fleet/landscape-parity.md"
       provides: "Matriz Landscape vs Omni/Cockpit/K3s e modelo operacional hibrido."
     - path: "docs/operations/landscape-self-hosted.md"
@@ -57,6 +60,10 @@ must_haves:
       to: "GOV-01..GOV-11"
       via: "offline coverage validation"
       pattern: "GOV-01|GOV-11"
+    - from: "modules/managed-apps/configs/programs.json"
+      to: "modules/fleet-control-plane/tools/import_managed_apps_seed.py"
+      via: "managed-apps seed compatibility"
+      pattern: "chromium|firefox|bitwarden"
 ---
 
 # Phase 23: Omni Fleet Governance com Landscape complementar
@@ -118,7 +125,7 @@ These labels trace the locked context decisions from `23-CONTEXT.md`:
 | 1 | `23-01`, `23-02` | Cockpit edge validation and read-only collectors touch separate files. |
 | 2 | `23-03` | Consumes collector contracts from `23-02` and extends DB governance. |
 | 3 | `23-04` | Documents the hybrid operating model before live Landscape deployment. |
-| 4 | `23-05` | Deploys or stages Landscape after the model, gates and fallback are explicit. |
+| 4 | `23-05` | Deploys Landscape after the model, gates and fallback are explicit. If approval is withheld, the phase blocks instead of succeeding from docs-only readiness. |
 
 ## Plans
 
@@ -135,7 +142,7 @@ These labels trace the locked context decisions from `23-CONTEXT.md`:
 <task type="auto">
   <name>Task 1: Executar plans em ondas</name>
   <files>.planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-01-PLAN.md, .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-02-PLAN.md, .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-03-PLAN.md, .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-04-PLAN.md, .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-05-PLAN.md</files>
-  <action>Execute `23-01` and `23-02` first because they do not share implementation files. Execute `23-03` only after `23-02` creates the collector contract. Execute `23-04` before live Landscape work because it defines the responsibility matrix. Execute `23-05` only after the operator approves the deployment target and resource/certificate/licensing gate. Preserve D-01 through D-08 throughout the phase.</action>
+  <action>Execute `23-01` and `23-02` first because they do not share implementation files. Execute `23-03` only after `23-02` creates the collector contract. Execute `23-04` before live Landscape work because it defines the responsibility matrix. Execute `23-05` only after the operator approves the deployment target and resource/certificate/licensing gate. If the operator does not approve the Landscape deploy, mark the phase blocked rather than complete. Preserve D-01 through D-08 throughout the phase.</action>
   <verify>
     <automated>for f in .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-{01,02,03,04,05}-PLAN.md; do gsd-tools query verify.plan-structure "$f" >/dev/null || exit 1; done</automated>
   </verify>
@@ -162,14 +169,14 @@ These labels trace the locked context decisions from `23-CONTEXT.md`:
 | REQ | GOV-01 | Cockpit protected by Access/auth/SSO/WireGuard; no direct public 9090 | 23-01 | COVERED | Blocking live gate included. |
 | REQ | GOV-02 | Landscape vs Omni/Cockpit parity matrix | 23-04 | COVERED | `docs/fleet/landscape-parity.md`. |
 | REQ | GOV-03 | Agent collects real versions from package managers, PM2, systemd and containers | 23-02 | COVERED | `fleet_collectors.py` and `agent collect-programs`. |
-| REQ | GOV-04 | Program/version state includes current, desired, origin, install type, policy and drift | 23-02, 23-03 | COVERED | Collector output plus schema/view/drift findings. |
+| REQ | GOV-04 | Program/version state includes current, desired, origin, install type, policy and drift | 23-02, 23-03 | COVERED | Collector output plus schema/view/drift findings and managed-apps seed adapter. |
 | REQ | GOV-05 | Desired-state profiles required/forbidden/pinned/held/manual | 23-03 | COVERED | `TbDesiredStateProfiles` and `TbDesiredStateRules`. |
 | REQ | GOV-06 | Update profiles windows, serial/staggered, security-only/all, approval, rollback_ref, audit | 23-03 | COVERED | `TbUpdateProfiles` plus `TbUpdatePlans` constraints. |
 | REQ | GOV-07 | Repository/source profiles without secrets | 23-03 | COVERED | `TbRepositoryProfiles` and `TbRepositorySources` use `secret_ref`. |
 | REQ | GOV-08 | CVE/USN/security reporting by package/origin/host | 23-02, 23-03 | COVERED | Security collector inputs plus `TbSecurityFindings`. |
 | REQ | GOV-09 | Remote execution local via agent, allowlist, TbUpdatePlans; no SSH apply | 23-03 | COVERED | Explicit negative gate and validation. |
 | REQ | GOV-10 | Docs state Landscape role in the operating model | 23-04 | COVERED | Hybrid responsibility matrix. |
-| REQ | GOV-11 | Self-hosted Landscape deployment on Podman/K3s with resource/cert/licensing/client/rollback gates | 23-05 | COVERED | Live deployment gate plus fallback. |
+| REQ | GOV-11 | Self-hosted Landscape deployment on Podman/K3s with resource/cert/licensing/client/rollback gates | 23-05 | COVERED | Approved live deployment plus fallback if Podman/K3s is unstable. |
 | RESEARCH | R-01 | Cockpit is not Landscape/control plane | 23-01, 23-04 | COVERED | Break-glass-only model. |
 | RESEARCH | R-02 | Add collectors and normalized observations | 23-02 | COVERED | Read-only collectors with warnings. |
 | RESEARCH | R-03 | Add governance migration 0004 | 23-03 | COVERED | Desired/repo/security/drift/update profile tables. |
@@ -214,10 +221,12 @@ Run plan-structure validation for each per-plan file, then execute the plans by 
 - `PYTHONPATH=cli pytest modules/fleet-control-plane/tests/test_m023_collectors.py modules/fleet-control-plane/tests/test_m023_governance.py cli/omni/tests/test_cockpit_edge.py -q`
 - `python3 modules/fleet-control-plane/tools/validate_m023.py`
 - `python3 scripts/validate-cockpit-edge.py --expect gated`
+- `python3 scripts/validate-landscape-deployment.py --docs-only`
+- `node "$HOME/.Codex/get-shit-done/bin/gsd-tools.cjs" graphify status`
 </verification>
 
 <success_criteria>
-Phase 23 is complete when GOV-01..GOV-11 are covered by code, schema, validation or docs; Cockpit is not a primary control plane; Landscape self-hosted is deployed or explicitly staged as the complementary Ubuntu machine-management layer; K3s/Portainer remain responsible for cluster workloads; and fleet-wide mutation remains limited to approved `TbUpdatePlans` executed by local agents or documented Landscape workflows with operator approval.
+Phase 23 is complete when GOV-01..GOV-11 are covered by code, schema, validation or docs; Cockpit is not a primary control plane; Landscape self-hosted is deployed and validated as the complementary Ubuntu machine-management layer; K3s/Portainer remain responsible for cluster workloads; Graphify reports `stale=false` and `commit_stale=false`; and fleet-wide mutation remains limited to approved `TbUpdatePlans` executed by local agents or documented Landscape workflows with operator approval. If Landscape deployment approval is withheld, the phase remains blocked rather than complete.
 </success_criteria>
 
 <output>
