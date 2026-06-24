@@ -127,6 +127,7 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 - [ ] **PRG-08**: A protecao deve validar o reverse proxy Horistic remoto (`horistic-srv`) sem assumir que Apache vive no SRV-1: unit padrao enabled/active, portas 80/443, vhosts e endpoints publicos.
 - [ ] **PRG-09**: O guard deve detectar drift de renomeio de pastas/hosts/repos (ex.: `horistic-srv-1` -> `horistic-srv`, cwd/script inexistente, vhost/GDrive antigo, symlink pendente) e propor correcao segura.
 - [ ] **PRG-10**: Findings, repairs e checks devem gerar auditoria sem secrets, com output machine-readable, resumo humano em PT-BR e documentacao operacional versionada.
+- [ ] **PRG-11**: Validacoes de webhook/trading devem ser nao invasivas por padrao: GET/HEAD apenas, nunca POST real para Horistic/ATS/Telegram sem aprovacao explicita, preservando o contrato Horistic scalp conhecido (split Telegram de entrada dupla com 500ms; Circuit Breaker scalp bloqueado apenas no Telegram e ainda encaminhado ao ATS).
 
 ### K3s HA Cluster
 
@@ -182,7 +183,10 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
 | FCP-01 → FCP-13 | Phase 12 / M004 | Live implemented; DB-backed ops/config/slash registry validated |
 | GOV-01 → GOV-11 | Phase 23 | Planned (Landscape complementary management layer + Cockpit host console + Omni Fleet governance) |
-| PRG-01 → PRG-10 | Phase 24 | Planned (ATS/Horistic production recovery guard) |
+| PRG-01 → PRG-05 | Phase 24 | Planned (Production Guard foundation/status/doctor) |
+| PRG-06, PRG-10 | Phase 25 | Planned (guarded repair engine) |
+| PRG-07, PRG-10 | Phase 26 | Planned (boot/login verification protocol) |
+| PRG-08 → PRG-11 | Phase 27 | Planned (Horistic remote Apache + rename drift + webhook-safe validation) |
 | K3S-01 → K3S-05 | Phase 13 / M005 | ✅ Live (K3s HA 3-nodes `Ready` control-plane+etcd on `wg0`) |
 | PRT-01 → PRT-02 | Phase 13 / M005 | ✅ Live (Portainer CE 2.39.3 deployed; `portainer.atius.com.br` returns API status) |
 | CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
@@ -204,4 +208,4 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-24 after Phase 24 added ATS/Horistic production recovery guard scope*
+*Last updated: 2026-06-24 after Phases 24-27 split ATS/Horistic production recovery guard for Spark execution*

@@ -237,10 +237,10 @@ Status: PLANNING (2026-06-24)
 | K3s/Portainer | Continuam responsaveis por administracao do cluster e workloads; Landscape administra maquinas Ubuntu e pacotes, nao substitui Portainer/Kubernetes |
 | Gaps | collectors reais de versao, desired-state profiles, repository profiles, CVE/USN reporting, matriz de responsabilidades Landscape/Omni/Cockpit/K3s |
 | Fundacao existente | `managed-apps` agora cobre `programs`, `repositories`, `policies` e `customizations` para Chromium/Firefox/Bitwarden, incluindo Bitwarden force-install e browser defaults Google/homepage; validado localmente por `manifest`, `status`, `verify`, `config-status` e `config-verify` e remotamente por `fleet-config-status`; reutilizar como seed de governanca da Phase 23 |
-| Worktree | Ainda ha mudancas paralelas fora da Phase 23 em `srv1-ops`, `fork-sync` e `dark-theme`; deixadas intocadas |
+| Worktree | Ainda ha mudancas paralelas fora da Phase 23 em `managed-apps`, `srv1-ops`, `fork-sync`, `dark-theme` e Graphify outputs; deixadas intocadas |
 | Proximo | Planejar e executar `23-01..23-05` |
 
-## Phase 24 — ATS/Horistic Production Recovery Guard
+## Phases 24-27 — ATS/Horistic Production Recovery Guard
 
 Status: PLANNING (2026-06-24)
 
@@ -252,7 +252,13 @@ Status: PLANNING (2026-06-24)
 | Ecosystems | `ecosystem.config.js` de ATS e Horistic tem `autorestart: true`, `restart_delay`, `max_restarts`, cwd/script canonicos e namespaces corretos para apps base |
 | Portas e dominios | Portas locais 3015, 8015, 3050, 8050, 8099, 8199 abertas; `dashboard/trade/backtest/painel/api/webhook.horistic.com` e `dashboard/api/webhook.atius.com.br` responderam 200 no check de 2026-06-24 |
 | Horistic Apache | `horistic-srv` remoto: `apache2.service` padrao do Ubuntu, `enabled`, `active`, sem drop-ins, ouvindo em 80/443 |
+| Incidente PM2 | Em 2026-06-21, `pm2-ubuntu.service` falhava por `Type=forking` + `PIDFile`; a correcao canonica e `Type=oneshot`, `RemainAfterExit=yes`, sem `PIDFile`, com `pm2 save --force` apenas quando live/dump estao coerentes |
+| Incidente Horistic Apache | Em 2026-06-21, sites Horistic quebraram porque o Apache remoto usava unit custom chamando `/usr/sbin/apache2 -k start`; o guard deve verificar unit padrao do pacote, `apache2ctl -S`, portas 80/443 e vhosts no `horistic-srv`, nao no SRV-1 |
+| Incidente Horistic webhook | O webhook scalp deve manter split Telegram de entrada dupla com 500ms e suprimir Circuit Breaker apenas no Telegram, ainda encaminhando ao ATS; validacoes do guard nao podem disparar POST real para Telegram/ATS |
 | Lacuna principal | `atius-unified-bot-launcher` e `horistic-unified-bot-launcher` rodam em modo one-shot com PM2 `waiting restart`; isso e esperado pelo launcher, mas o volume de restarts torna necessario um health contract explicito em vez de aceitar `waiting restart` cegamente |
 | Guard existente | `inviolable-watchdog` ja repara ATS/Horistic PM2 e containers, mas precisa de validator/repair versionado, output JSON, checks de dump/ecosystem/namespace, remote Apache, renomeios e protocolo boot/login |
-| Worktree | Mudancas paralelas em `srv1-ops`, `fork-sync`, `dark-theme` e Graphify outputs permanecem fora de escopo para esta revisao ate serem integradas por plano/commit seletivo |
-| Proximo | Executar Phase 24 depois ou em paralelo controlado com Phase 23, sem restart live automatico de PM2/RDP |
+| Replanejamento Spark | PRG dividido em fases 24-27, cada uma com target de contexto 75k-95k tokens e executor planejado `gpt-5.3-codex-spark` |
+| Fechamento por fase | Cada fase termina com bateria automatizada ordenada por custo/complexidade e execucao obrigatoria de `$gsd-verify-work <fase>` |
+| Sequencia | 24 foundation status/doctor -> 25 repair engine -> 26 boot/login protocol -> 27 Horistic remote Apache + rename drift + webhook-safe validation |
+| Worktree | Mudancas paralelas em `managed-apps`, `srv1-ops`, `fork-sync`, `dark-theme` e Graphify outputs permanecem fora de escopo para esta revisao ate serem integradas por plano/commit seletivo |
+| Proximo | Executar Phase 24 primeiro com Spark; fases 25-27 seguem em cadeia, sem restart live automatico de PM2/RDP |

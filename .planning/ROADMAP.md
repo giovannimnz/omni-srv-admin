@@ -459,20 +459,61 @@ Plans:
 - [ ] 23-04 — Landscape parity matrix, runbook and operating model
 - [ ] 23-05 — Self-hosted Landscape deployment on Podman/K3s
 
-### Phase 24: ATS/Horistic Production Recovery Guard
+### Phase 24: Production Guard Foundation — PM2 Status/Doctor
 
-**Goal:** Criar protecao operacional versionada para ATS e Horistic em producao: validar boot PM2, namespaces separados, ecosystems, dump/resurrect, Apache remoto do Horistic, containers/servicos/timers e drift de renomeio de pastas/hosts, com protocolo read-only no reboot/login e repair automatico gateado.
-**Requirements:** PRG-01, PRG-02, PRG-03, PRG-04, PRG-05, PRG-06, PRG-07, PRG-08, PRG-09, PRG-10
+**Goal:** Criar a fundacao read-only do `production-guard` para ATS/Horistic: validar `pm2-ubuntu.service`, PM2 live vs dump, namespaces, ecosystems, portas locais, endpoints GET, containers, timers e jobs systemd sem mutar producao.
+**Requirements:** PRG-01, PRG-02, PRG-03, PRG-04, PRG-05
 **Depends on:** Phase 14, Phase 22
-**Plans:** 4 plans
+**Context budget target:** 75k-95k tokens
+**Execution model target:** gpt-5.3-codex-spark
+**Plans:** 1 plan
 **Status:** PLANNING
 
 Plans:
 
-- [ ] 24-01 — PM2 boot, namespace and ecosystem validator
-- [ ] 24-02 — Guarded repair engine for PM2, services and containers
-- [ ] 24-03 — Boot/login protocol, timers and operator runbook
-- [ ] 24-04 — Horistic remote Apache and rename drift detector
+- [ ] 24-01 — PM2 boot, namespace, ecosystem, container/timer/job validator
+
+### Phase 25: Production Guard Repair Engine
+
+**Goal:** Adicionar `production-guard repair` seguro e gateado para PM2 apps/stacks, containers e systemd safe-starts, sempre dry-run por default, snapshot-first e sem `pm2 kill` ou restart de RDP/XRDP.
+**Requirements:** PRG-06, PRG-10
+**Depends on:** Phase 24
+**Context budget target:** 75k-95k tokens
+**Execution model target:** gpt-5.3-codex-spark
+**Plans:** 1 plan
+**Status:** PLANNING
+
+Plans:
+
+- [ ] 25-01 — Guarded repair planner and apply checkpoint
+
+### Phase 26: Production Guard Boot/Login Protocol
+
+**Goal:** Versionar o protocolo de verificacao no reboot e no inicio de sessao/login com units/timer read-only, docs operacionais e instalacao live gateada.
+**Requirements:** PRG-07, PRG-10
+**Depends on:** Phase 25
+**Context budget target:** 75k-95k tokens
+**Execution model target:** gpt-5.3-codex-spark
+**Plans:** 1 plan
+**Status:** PLANNING
+
+Plans:
+
+- [ ] 26-01 — Boot/login read-only verification units and runbook
+
+### Phase 27: Production Guard Horistic Remote + Rename Drift
+
+**Goal:** Completar o guard com validacao remota read-only do Apache Horistic em `horistic-srv`, checks de vhosts/proxy targets, endpoints publicos GET/HEAD, detector seguro de drift de renomeio de host/pasta/repo/vhost e contrato de webhook-safe validation sem POST real para trading/Telegram.
+**Requirements:** PRG-08, PRG-09, PRG-10, PRG-11
+**Depends on:** Phase 26
+**Context budget target:** 75k-95k tokens
+**Execution model target:** gpt-5.3-codex-spark
+**Plans:** 1 plan
+**Status:** PLANNING
+
+Plans:
+
+- [ ] 27-01 — Remote Horistic Apache checks, rename drift detector and webhook-safe validation
 
 ---
 
