@@ -29,6 +29,7 @@ from omni.oci import oci as oci_group
 from omni.podman_network import podman_network
 from omni.edge import edge as edge_group
 from omni.observability import observability as observability_group
+from omni.managed_apps import managed_apps
 
 
 @click.group()
@@ -45,6 +46,7 @@ cli.add_command(srv)
 cli.add_command(podman_network)
 cli.add_command(edge_group)
 cli.add_command(observability_group)
+cli.add_command(managed_apps)
 
 # OCI snapshot/restore workflow (Phase 15 — M005 OCI Snapshots / M007 follow-up).
 # Exposed as a sub-group of `srv` so the canonical entrypoint is `omni srv oci ...`.

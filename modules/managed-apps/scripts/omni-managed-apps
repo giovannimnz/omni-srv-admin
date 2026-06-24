@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+source_path="${BASH_SOURCE[0]}"
+if command -v readlink >/dev/null 2>&1; then
+  source_path="$(readlink -f "$source_path")"
+fi
+
+repo="${OMNI_SRV_ADMIN:-$(cd "$(dirname "$source_path")/../../.." && pwd)}"
+export PYTHONPATH="$repo/cli:${PYTHONPATH:-}"
+
+exec python3 -m omni managed-apps "$@"

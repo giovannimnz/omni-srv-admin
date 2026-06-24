@@ -1,7 +1,32 @@
 {
+  ".backups/tailscale-pre-acl-2026-06-16/acl-current.json": {
+    "mtime": 1781714713.0532017,
+    "ast_hash": "de0d27e7cc4b033ab529d3f590a2a721",
+    "semantic_hash": ""
+  },
+  ".backups/tailscale-pre-acl-2026-06-16/devices-current.json": {
+    "mtime": 1781714713.053979,
+    "ast_hash": "abbf45c8efa5abf2625b94a3c92379fd",
+    "semantic_hash": ""
+  },
+  ".backups/tailscale-pre-acl-2026-06-16/dns-current.json": {
+    "mtime": 1781714713.053979,
+    "ast_hash": "d85319130a9f81ad1fb35ab7c2be0bce",
+    "semantic_hash": ""
+  },
   ".planning/config.json": {
-    "mtime": 1781526474.5886495,
+    "mtime": 1781777976.5834692,
     "ast_hash": "a4f4aeefb4c7cf67a590585bec2aa611",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/graph.json": {
+    "mtime": 1782302060.1573849,
+    "ast_hash": "ce0ff03cc952cedc7faf124eb42a76db",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/manifest.json": {
+    "mtime": 1782302060.1687512,
+    "ast_hash": "79480d1c79f69b71064b64263802552f",
     "semantic_hash": ""
   },
   "antivirus/monitor.sh": {
@@ -35,18 +60,23 @@
     "semantic_hash": ""
   },
   "cli/omni/cli.py": {
-    "mtime": 1781315761.943234,
-    "ast_hash": "1388846aa357b6689db89b4f94eeb903",
+    "mtime": 1782297797.1369102,
+    "ast_hash": "4bfdf230a83688f75137f4efcce8cd74",
     "semantic_hash": ""
   },
   "cli/omni/fleet.py": {
-    "mtime": 1781523086.2297459,
-    "ast_hash": "6de8e68698138ce45681a0847c0ebd1e",
+    "mtime": 1781733696.8770027,
+    "ast_hash": "23803bd29f36833aef6cc1fdcdd22601",
     "semantic_hash": ""
   },
   "cli/omni/fleet_backup.py": {
     "mtime": 1781315761.943234,
     "ast_hash": "2d9e6af8f46a1e4f2437857f9e53f07b",
+    "semantic_hash": ""
+  },
+  "cli/omni/podman_network.py": {
+    "mtime": 1781657545.6222787,
+    "ast_hash": "2a99692e302bda6bf8e45d579e9bca58",
     "semantic_hash": ""
   },
   "cli/omni/remote_manager.py": {
@@ -74,6 +104,11 @@
     "ast_hash": "66726a79b455608b8bab1409fa032b0e",
     "semantic_hash": ""
   },
+  "dark-theme-apply-2026-06-17.sh": {
+    "mtime": 1781714713.0542016,
+    "ast_hash": "79fe370bb6736fa704784cfc100f85b6",
+    "semantic_hash": ""
+  },
   "dark-theme-ubuntu/install.sh": {
     "mtime": 1781522277.8729246,
     "ast_hash": "cee6628f0fe4f74811d0a9e3605e24ff",
@@ -85,8 +120,8 @@
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/scripts/dark-themectl.sh": {
-    "mtime": 1781522277.8739245,
-    "ast_hash": "c30801df291f85bb233ba46b1b04c2ca",
+    "mtime": 1782253052.8384976,
+    "ast_hash": "6e06811be443bff8f6460b30ca8799f2",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/uninstall.sh": {
@@ -110,13 +145,88 @@
     "semantic_hash": ""
   },
   "modules/fleet-backup/scripts/rclone-fleet-queue.sh": {
-    "mtime": 1781315761.944234,
-    "ast_hash": "e31c0a8ce3a1ad55ee8cbb5d97d1bdc5",
+    "mtime": 1781714713.0295184,
+    "ast_hash": "d59f1c847c3bb3c34b58b3c1f93e4cbe",
     "semantic_hash": ""
   },
   "modules/fleet-backup/scripts/sync-backup-script.sh": {
-    "mtime": 1781315761.944234,
-    "ast_hash": "f8c97a8a66978846a1d3a4bcec364b5e",
+    "mtime": 1781714713.0302017,
+    "ast_hash": "ee5bd20c8069c045e04aa1420a1b6ceb",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql": {
+    "mtime": 1781714621.3344722,
+    "ast_hash": "6714451b03e6d193f7870529c69db496",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0002_ops_config_slash_commands.sql": {
+    "mtime": 1781714621.3344722,
+    "ast_hash": "4abd91950c07b32ba8229469caa205e1",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0003_agent_executor_monitoring.sql": {
+    "mtime": 1781714664.434345,
+    "ast_hash": "240623a9efd3ab5c4206126e15acd4ec",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/scripts/configure-fleet-direct-peers.sh": {
+    "mtime": 1781714693.0902605,
+    "ast_hash": "ecf868a87fe0fee625148f22c9b19d03",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh": {
+    "mtime": 1781714693.0902605,
+    "ast_hash": "b8ccafc18718268dea8c78fabd1c5983",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/scripts/omni-pg-access-guard.sh": {
+    "mtime": 1781522282.859598,
+    "ast_hash": "969362a25d6c84d38021bfd59288207a",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/scripts/rename-live-db-tables-camelcase.sql": {
+    "mtime": 1781714621.3344722,
+    "ast_hash": "d8ebd7baed922fa356dba19413c3336e",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/tests/test_m004_contract.py": {
+    "mtime": 1781714664.434345,
+    "ast_hash": "16759fef234aedaee15df266e23a9c77",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/tools/validate_m004.py": {
+    "mtime": 1781714664.434345,
+    "ast_hash": "8532fd31e16c34f231f733e11067e98d",
+    "semantic_hash": ""
+  },
+  "modules/fleet-network-watchdog/fleet-network-watchdog.sh": {
+    "mtime": 1781714696.3898146,
+    "ast_hash": "998aa65b8aed3a938a7034a080659774",
+    "semantic_hash": ""
+  },
+  "modules/fleet-network-watchdog/srv1-fix-network.sh": {
+    "mtime": 1781714696.3898146,
+    "ast_hash": "74f9e08ea9cab13f82caae491387853f",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/scripts/apply-standardize.sh": {
+    "mtime": 1781657457.2395399,
+    "ast_hash": "29edcc1f06663be011985bc40d6cd59d",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/scripts/drift-collect.py": {
+    "mtime": 1781658188.9355443,
+    "ast_hash": "1cf5a87748d1aec42b9d3bc5d740abc3",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/scripts/drift-detect.sh": {
+    "mtime": 1781658380.601236,
+    "ast_hash": "27045e71fd62c62ac135ccf262d98674",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/scripts/smoke-test.sh": {
+    "mtime": 1781657457.2418215,
+    "ast_hash": "3d946249e4c9399b3980ea5ad0bcfd26",
     "semantic_hash": ""
   },
   "modules/fork-sync/bin/deploy.sh": {
@@ -294,6 +404,21 @@
     "ast_hash": "ecee30033ae9d36cadd09ac7bd5432f9",
     "semantic_hash": ""
   },
+  "modules/k3s-ha-portainer-oci/scripts/atius-k3s-watchdog.sh": {
+    "mtime": 1781522282.8603957,
+    "ast_hash": "7efc65591de866612f1ce0e9b42a7682",
+    "semantic_hash": ""
+  },
+  "modules/rust-zellij-fleet/scripts/fleet-rust-zellij.sh": {
+    "mtime": 1781714713.0562017,
+    "ast_hash": "b8dc8a8e3d8a816613eec4e0b4a505f1",
+    "semantic_hash": ""
+  },
+  "modules/srv1-network-watchdog/srv1-fix-network.sh": {
+    "mtime": 1781522227.9592555,
+    "ast_hash": "74f9e08ea9cab13f82caae491387853f",
+    "semantic_hash": ""
+  },
   "modules/srv1-ops/legacy-scripts/fix-abnt2.sh": {
     "mtime": 1778948438.7694333,
     "ast_hash": "9f5a4778f01bdc192c41107539f181a2",
@@ -380,8 +505,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/inviolable-watchdog.sh": {
-    "mtime": 1781589650.2556107,
-    "ast_hash": "e59996f7a04709263214adfbae3d0e2e",
+    "mtime": 1781811786.5698612,
+    "ast_hash": "745bfba1095ef1b6a61460c1ec430992",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh": {
@@ -400,8 +525,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-cgroup-init.sh": {
-    "mtime": 1781521953.4278758,
-    "ast_hash": "3360a0313e9695cdf33cc790318a3474",
+    "mtime": 1781772439.3588095,
+    "ast_hash": "401acce830097b5709b646fe85871331",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-patcher.py": {
@@ -410,8 +535,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-snapshot.py": {
-    "mtime": 1780815731.3742828,
-    "ast_hash": "547f636bd36270112e1ae35d469c414e",
+    "mtime": 1781811965.4373329,
+    "ast_hash": "080948c21d37db164ca563be958ddcb6",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/resource-governor-status.py": {
@@ -459,6 +584,11 @@
     "ast_hash": "12ebf505ab5e136bd13148f69384657b",
     "semantic_hash": ""
   },
+  "scripts/verify-m004-fleet-control-plane.sh": {
+    "mtime": 1781522282.860679,
+    "ast_hash": "1cf5853a7e5ff586b1d733d3c3d78ea7",
+    "semantic_hash": ""
+  },
   "setup.sh": {
     "mtime": 1780643035.950208,
     "ast_hash": "c2ef94b9faec273820dc834c03ea64c5",
@@ -475,28 +605,28 @@
     "semantic_hash": ""
   },
   ".planning/MILESTONES.md": {
-    "mtime": 1781526310.165219,
-    "ast_hash": "47210af44fd28d31a7196cec06918202",
+    "mtime": 1781777976.5834692,
+    "ast_hash": "2993bbecad0b5e1cfa02ad108c87bb30",
     "semantic_hash": ""
   },
   ".planning/PROJECT.md": {
-    "mtime": 1781526258.0343738,
-    "ast_hash": "39bae789798f8dcf2120e9f51e251356",
+    "mtime": 1781733751.5163205,
+    "ast_hash": "372b936050a2d2251b9b112c1156147b",
     "semantic_hash": ""
   },
   ".planning/REQUIREMENTS.md": {
-    "mtime": 1781526456.5445986,
-    "ast_hash": "d96c5ed0adbee215ed40a3671768a645",
+    "mtime": 1782301524.188958,
+    "ast_hash": "8dad6f71ba2994114c4ce93caf951241",
     "semantic_hash": ""
   },
   ".planning/ROADMAP.md": {
-    "mtime": 1781638336.8199458,
-    "ast_hash": "4e132e42844b57525a8b6b7a57db849a",
+    "mtime": 1782301542.883903,
+    "ast_hash": "2de39adadb2973dd7ea0a0cb894a9d40",
     "semantic_hash": ""
   },
   ".planning/STATE.md": {
-    "mtime": 1781653294.4388509,
-    "ast_hash": "d97bb105b37734202818fd7fa6aed927",
+    "mtime": 1782301988.6795945,
+    "ast_hash": "70a470f7f363c8cd591c798940891377",
     "semantic_hash": ""
   },
   ".planning/codebase/ARCHITECTURE.md": {
@@ -515,8 +645,8 @@
     "semantic_hash": ""
   },
   ".planning/codebase/HORISTIC.md": {
-    "mtime": 1780722054.8323224,
-    "ast_hash": "97d8d12b8e0609934930a2a2f7c545d6",
+    "mtime": 1781733751.5180771,
+    "ast_hash": "d23e540579d79902268151b1985303e0",
     "semantic_hash": ""
   },
   ".planning/codebase/INTEGRATIONS.md": {
@@ -537,6 +667,26 @@
   ".planning/codebase/TESTING.md": {
     "mtime": 1778096702.6209822,
     "ast_hash": "5a27af55cd0df9d310a0210194d77b00",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/GRAPH_REPORT.md": {
+    "mtime": 1782302060.166867,
+    "ast_hash": "594eb6f6b249d987ad91c60746957423",
+    "semantic_hash": ""
+  },
+  ".planning/graphs/graph.html": {
+    "mtime": 1782302060.163385,
+    "ast_hash": "12f301fcf1037d218b376578c9e5548d",
+    "semantic_hash": ""
+  },
+  ".planning/milestones/v1.0-REQUIREMENTS.md": {
+    "mtime": 1781525995.008952,
+    "ast_hash": "3218f502a024e43f8639844427c5de57",
+    "semantic_hash": ""
+  },
+  ".planning/milestones/v1.0-ROADMAP.md": {
+    "mtime": 1781525995.0061612,
+    "ast_hash": "0ebb97290d2a13ece03d23860ff5fa8a",
     "semantic_hash": ""
   },
   ".planning/phases/01-preparacao-do-host/01-01-PLAN.md": {
@@ -699,9 +849,89 @@
     "ast_hash": "f8e5ac64b196c5bacd705f6d979e487e",
     "semantic_hash": ""
   },
+  ".planning/phases/12-omni-fleet-control-plane/12-01-PLAN.md": {
+    "mtime": 1781714664.432345,
+    "ast_hash": "f75e082eab675d5220769f123466fcd2",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-01-SUMMARY.md": {
+    "mtime": 1781714664.432345,
+    "ast_hash": "e859b6d152d4a0eb28c5589e2c76df16",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-CONTEXT.md": {
+    "mtime": 1781714664.433345,
+    "ast_hash": "0cc82b5338e197a11e83f15d2eebb6de",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-PLAN.md": {
+    "mtime": 1781714664.433345,
+    "ast_hash": "f889b2d2c4b1bacd2e8e98c3defc9ea8",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-RESEARCH.md": {
+    "mtime": 1781714664.433345,
+    "ast_hash": "79b5484dcbe86aa4469efb9d9fa9346b",
+    "semantic_hash": ""
+  },
+  ".planning/phases/12-omni-fleet-control-plane/12-VALIDATION.md": {
+    "mtime": 1781714664.433345,
+    "ast_hash": "62ae218ac0c796150c3009262f2f5a54",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md": {
+    "mtime": 1781777976.648469,
+    "ast_hash": "8e866a121364dabe01a1d61b10a9d261",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-ACL-CLOSURE-2026-06-16.md": {
+    "mtime": 1781714713.0542016,
+    "ast_hash": "e7f49780e6ca6aaffda23c6e3b4ed13b",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md": {
+    "mtime": 1781777976.648469,
+    "ast_hash": "89fe9d67c1008284544f31fedfa0bc3f",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-FALLBACK-PTP-2026-06-14.md": {
+    "mtime": 1781522567.1147234,
+    "ast_hash": "aeab6f71dfdd71b5674f829aba4dc483",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-GATE-REVIEW-2026-06-14.md": {
+    "mtime": 1781714712.9952018,
+    "ast_hash": "25f04d014bc217ec799012ce887c3279",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md": {
+    "mtime": 1781777976.648469,
+    "ast_hash": "62c0d5866eb28b9fb1262045af8a677a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-OBSERVABILITY-WATCHDOG-2026-06-14.md": {
+    "mtime": 1781522282.8585067,
+    "ast_hash": "2579e0e281e00a00d650c045866c08a1",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-OCI-ROLLBACK-PATH-2026-06-14.md": {
+    "mtime": 1781522567.1174805,
+    "ast_hash": "915e6742c8d400e2da5dd738c3f76f5f",
+    "semantic_hash": ""
+  },
+  ".planning/phases/13-k3s-ha-portainer-oci/13-RESTORE-DRILL-2026-06-14.md": {
+    "mtime": 1781522567.118937,
+    "ast_hash": "6a95295c482f6423f733112be1deffe1",
+    "semantic_hash": ""
+  },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-PLAN.md": {
     "mtime": 1781521953.4398758,
     "ast_hash": "8abd59a536be0e300ef1b88d01630ca8",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md": {
+    "mtime": 1781521953.4401705,
+    "ast_hash": "9ef271e796b2b2fb81cfc59a92ef7de8",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-02-PLAN.md": {
@@ -709,14 +939,44 @@
     "ast_hash": "59f81236cecc87c22004f972bacb37b3",
     "semantic_hash": ""
   },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-02-SUMMARY.md": {
+    "mtime": 1781525042.1366105,
+    "ast_hash": "05964233f810560158b57b44a3c2b4bb",
+    "semantic_hash": ""
+  },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-03-PLAN.md": {
     "mtime": 1781521953.4401705,
     "ast_hash": "d69fc57fa53786c5068d2db998c2d02a",
     "semantic_hash": ""
   },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-03-SUMMARY.md": {
+    "mtime": 1781525268.841946,
+    "ast_hash": "88b7d0c93617da166685c784196eb34f",
+    "semantic_hash": ""
+  },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-04-PLAN.md": {
     "mtime": 1781521953.4401705,
     "ast_hash": "36baa6560e76951198163db3e13af5b5",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-05-PLAN.md": {
+    "mtime": 1781522937.922798,
+    "ast_hash": "b78b31a5f416f6b2db2fe7d5ac9f372d",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-05-SUMMARY.md": {
+    "mtime": 1781523962.3832345,
+    "ast_hash": "1b529a5caef0372db9a50a0de9b4aae4",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-06-PLAN.md": {
+    "mtime": 1781523375.5867586,
+    "ast_hash": "a511e4a5a7e7792e811ed2e0b55e88fd",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-06-SUMMARY.md": {
+    "mtime": 1781524215.4775233,
+    "ast_hash": "c5c8f02c3da8106c97c27a978cad9a70",
     "semantic_hash": ""
   },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-CONTEXT.md": {
@@ -739,9 +999,99 @@
     "ast_hash": "b1da5186f17c082c2b65f899d207ee43",
     "semantic_hash": ""
   },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-SUMMARY.md": {
+    "mtime": 1781525401.349792,
+    "ast_hash": "2b4b07710750b538fc63902b63f303a0",
+    "semantic_hash": ""
+  },
+  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-UAT.md": {
+    "mtime": 1781525956.916692,
+    "ast_hash": "ad7a9b6be18ba7937f69c9a6e8f1538b",
+    "semantic_hash": ""
+  },
   ".planning/phases/14-resource-governor-pm2-boot-hardening/14-VALIDATION.md": {
     "mtime": 1781521953.4401705,
     "ast_hash": "f17d96be71bb8e4c8ad1b8c5c3f2d829",
+    "semantic_hash": ""
+  },
+  ".planning/phases/15-m005-oci-snapshots/15-PLAN.md": {
+    "mtime": 1781526375.658762,
+    "ast_hash": "da05087eea868291a2e8a841e81055b0",
+    "semantic_hash": ""
+  },
+  ".planning/phases/16-m005-cloudflare-access/16-PLAN.md": {
+    "mtime": 1781526404.266962,
+    "ast_hash": "dd97194d3ae357ca18716c0829fb31b8",
+    "semantic_hash": ""
+  },
+  ".planning/phases/17-m005-observability-rwx/17-PLAN.md": {
+    "mtime": 1781526447.5698094,
+    "ast_hash": "39f6f87617f013fa2e2437a5b52fb0b0",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-06-AUDIT-2026-06-16.md": {
+    "mtime": 1781655894.8121603,
+    "ast_hash": "ede5ff2509d0e97a014df8bcc1dcce2d",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-06-EXECUTION-2026-06-17.md": {
+    "mtime": 1781655888.16918,
+    "ast_hash": "831c75c7d115f61f84f7c81728b9841a",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-07-APT-UPGRADE-GATED.md": {
+    "mtime": 1781660698.339428,
+    "ast_hash": "32722304c456a90abbbfd5a266fcae74",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-07-APT-UPGRADE-SUMMARY.md": {
+    "mtime": 1781660698.3399563,
+    "ast_hash": "d20e7175bd4b581b009269ee5b445541",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-HANDOFF-RDP.md": {
+    "mtime": 1781653294.4128509,
+    "ast_hash": "f973e02502508aaa8f7c09044f82d67b",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-PLAN.md": {
+    "mtime": 1781654011.3128376,
+    "ast_hash": "2fa1db760a7cb7b2ece094fc3c558ad9",
+    "semantic_hash": ""
+  },
+  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-XRDP-CLOSURE-2026-06-16.md": {
+    "mtime": 1781653294.444851,
+    "ast_hash": "261db120f7c19cc01302dee62df320d3",
+    "semantic_hash": ""
+  },
+  ".planning/phases/19-fleet-standardization/19-01-SUMMARY.md": {
+    "mtime": 1781733751.5263205,
+    "ast_hash": "99bb911516f5d1654abfbb56d87bfc3d",
+    "semantic_hash": ""
+  },
+  ".planning/phases/19-fleet-standardization/19-02-DESKTOP-SHORTCUTS-HOTFIX-2026-06-17.md": {
+    "mtime": 1781714713.0542016,
+    "ast_hash": "fa218053f01454e307eb73f2338d7d76",
+    "semantic_hash": ""
+  },
+  ".planning/phases/19-fleet-standardization/19-PLAN.md": {
+    "mtime": 1781714713.0542016,
+    "ast_hash": "1588266f1701c01e97046a2a421d92ec",
+    "semantic_hash": ""
+  },
+  ".planning/phases/20-podman-networking-standardization/20-01-PLAN.md": {
+    "mtime": 1781659213.6033468,
+    "ast_hash": "ce9a1a1acde0de5372a0d45874363ae4",
+    "semantic_hash": ""
+  },
+  ".planning/phases/20-podman-networking-standardization/20-01-SUMMARY.md": {
+    "mtime": 1781659236.036874,
+    "ast_hash": "19295b4f2ea9bf3ee2e9c0128c353d0c",
+    "semantic_hash": ""
+  },
+  ".planning/phases/21-onboarding-atius-mt5-kvm-1-e-atius-mt5-kvm-2-como-hosts-gere/21-PLAN.md": {
+    "mtime": 1781733696.8770027,
+    "ast_hash": "a95a315f9c55895b9ae5f2d984e80d13",
     "semantic_hash": ""
   },
   ".planning/research/ARCHITECTURE.md": {
@@ -775,13 +1125,18 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1780817271.297726,
-    "ast_hash": "ac96d522cf6f9dbaaccaada864fe6aee",
+    "mtime": 1782300044.778306,
+    "ast_hash": "e7c64401457a7023d9be79771567be56",
     "semantic_hash": ""
   },
   "RECOVERY_LOG.md": {
     "mtime": 1780643035.943208,
     "ast_hash": "e3e81831ccf50b5f594fd4b27a313921",
+    "semantic_hash": ""
+  },
+  "dark-theme-ubuntu/PHASE-19-ATIUS-SRV-3-APPLY-2026-06-17.txt": {
+    "mtime": 1781714713.0552018,
+    "ast_hash": "3c84e93d88b6726f5ca7e52d84b96560",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/README.md": {
@@ -829,6 +1184,11 @@
     "ast_hash": "4f2ea2566a875a698bf10b46ee3ddb3a",
     "semantic_hash": ""
   },
+  "docs/fleet/control-plane.md": {
+    "mtime": 1781714693.0892606,
+    "ast_hash": "d79d2fd64ada95fb1b4a1a25fd4c0006",
+    "semantic_hash": ""
+  },
   "docs/fleet/inventory-model.md": {
     "mtime": 1781522282.8589103,
     "ast_hash": "0dc7d51130d74c6a049d4e8420dee71f",
@@ -859,19 +1219,29 @@
     "ast_hash": "a713073e5d9a459ef58bf805281b8501",
     "semantic_hash": ""
   },
+  "docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md": {
+    "mtime": 1781733751.5277474,
+    "ast_hash": "2606c49c25b871fcab90cbf0de35a3cf",
+    "semantic_hash": ""
+  },
   "docs/operations/Atius-Spec-Servers.md": {
-    "mtime": 1781638524.228551,
+    "mtime": 1781777976.5834692,
     "ast_hash": "2c5d9c40eb2e308e21c31d913c9ff202",
     "semantic_hash": ""
   },
   "docs/operations/atius-fleet-specs.md": {
-    "mtime": 1781638524.2488475,
+    "mtime": 1781777976.5844693,
     "ast_hash": "225f096b6abf6f7aa861483078c7b667",
     "semantic_hash": ""
   },
   "docs/operations/fleet-autoclean.md": {
     "mtime": 1781522277.8739245,
     "ast_hash": "ddf1374dc1b2b3b2e25d180826fb3a4d",
+    "semantic_hash": ""
+  },
+  "docs/operations/pm2-canonical.md": {
+    "mtime": 1782042574.3583848,
+    "ast_hash": "ac318924006400928fa7b0d4a37d04ba",
     "semantic_hash": ""
   },
   "docs/operations/remote-manager.md": {
@@ -885,23 +1255,48 @@
     "semantic_hash": ""
   },
   "docs/operations/srv1-ops.md": {
-    "mtime": 1781525358.0431728,
-    "ast_hash": "fd8109f2238e9192a3420a5e759d8c0e",
+    "mtime": 1781811786.575861,
+    "ast_hash": "eaa21d0a78b2f261e8628c0df7fb8cf5",
+    "semantic_hash": ""
+  },
+  "docs/operations/tailscale/GBRAIN-INGEST-PENDING.md": {
+    "mtime": 1781714713.0552018,
+    "ast_hash": "acf14182205e65614bedbb757ce11d55",
+    "semantic_hash": ""
+  },
+  "docs/operations/tailscale/README.md": {
+    "mtime": 1781714713.055677,
+    "ast_hash": "11c4ca20b302a9e08d51d74352b642f4",
+    "semantic_hash": ""
+  },
+  "docs/runbooks/phase-18-srv3-attach-report.txt": {
+    "mtime": 1781714713.055677,
+    "ast_hash": "e4ed71f1ac064290c55b067340bab7fb",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/atius-mt5-kvm-1.yaml": {
+    "mtime": 1781733696.885479,
+    "ast_hash": "ba33fde4cd19ad6b6f1a5b6c1bf9fed7",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/atius-mt5-kvm-2.yaml": {
+    "mtime": 1781733696.885479,
+    "ast_hash": "5bbf90408b52e407a0e5bdbc1871628f",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-1.yaml": {
-    "mtime": 1781652772.8489554,
-    "ast_hash": "2bdc0b1963f1965641180878e63451db",
+    "mtime": 1781777976.5844693,
+    "ast_hash": "98c425f46d1fccfef1c3c2ef8af20044",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-2.yaml": {
-    "mtime": 1781652772.8389604,
-    "ast_hash": "3df3d35e2bae9bb531adf22b2b7fb3bd",
+    "mtime": 1781777976.5844693,
+    "ast_hash": "8f8343b041e97556e40117eac8f20c1f",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-3.yaml": {
-    "mtime": 1781652772.863394,
-    "ast_hash": "0acb3660d08033c51f55361d4ecacd84",
+    "mtime": 1781777976.5844693,
+    "ast_hash": "67a8d875ba12fc3bd678b1f6fdbc487c",
     "semantic_hash": ""
   },
   "inventory/hosts/dell-inspiron-3520.yaml": {
@@ -915,8 +1310,13 @@
     "semantic_hash": ""
   },
   "inventory/hosts/giovanni-s23-termux.yaml": {
-    "mtime": 1780721447.7871351,
-    "ast_hash": "6dd37c675dedac0f4548a9d4a2d0af3f",
+    "mtime": 1781733751.536632,
+    "ast_hash": "c7ce7cc45eb9883c479aef5d882e1bc7",
+    "semantic_hash": ""
+  },
+  "inventory/hosts/giovanni-w11-pc.yaml": {
+    "mtime": 1781733751.536632,
+    "ast_hash": "f645b408044b59169a111ec8d2758061",
     "semantic_hash": ""
   },
   "inventory/hosts/support-template.yaml": {
@@ -940,8 +1340,23 @@
     "semantic_hash": ""
   },
   "modules/fleet-backup/configs/fleet-backup-map.yaml": {
-    "mtime": 1781315761.944234,
-    "ast_hash": "824b9f2272bb9e28acf31f2773803647",
+    "mtime": 1781714713.0295184,
+    "ast_hash": "7a748860762f2ea5962464857f8dd93b",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/README.md": {
+    "mtime": 1781714693.0902605,
+    "ast_hash": "49a946f13e78d131d4351b5acb5fcdda",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/configs/control-plane.example.yaml": {
+    "mtime": 1781714664.434345,
+    "ast_hash": "dbbe01b31c447be5456e98bae5df2719",
+    "semantic_hash": ""
+  },
+  "modules/fleet-network-watchdog/README.md": {
+    "mtime": 1781714696.3892508,
+    "ast_hash": "c5cb83e9c92264c4e3ca3867e5c88bd0",
     "semantic_hash": ""
   },
   "modules/fleet/README.md": {
@@ -962,6 +1377,31 @@
   "modules/fleet/docs/rollout-plan.md": {
     "mtime": 1780721527.9688957,
     "ast_hash": "ffb75046ffd7809b865e4766f11973e3",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/README.md": {
+    "mtime": 1781657451.9895554,
+    "ast_hash": "22215c5a853d8096cfca602b0e30f46b",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/STANDARD.md": {
+    "mtime": 1781657451.9355557,
+    "ast_hash": "bba8320238ee67257b566d55213f59cb",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/references/aardvark-rootless-bug.md": {
+    "mtime": 1781657457.24854,
+    "ast_hash": "9fb6002239bdaa3d4e29e6ca91aff995",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/references/ip-static-hosts-fallback.md": {
+    "mtime": 1781657457.250041,
+    "ast_hash": "8112ce1c7ed4f7b09a9d468427933e0a",
+    "semantic_hash": ""
+  },
+  "modules/fleet/podman-network/references/network-migration.md": {
+    "mtime": 1781657457.25054,
+    "ast_hash": "0c3361d4c1ce81b55984311cf3d18f6c",
     "semantic_hash": ""
   },
   "modules/fork-sync/CONTRIBUTING.md": {
@@ -1015,8 +1455,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/manuals/atius-router.md": {
-    "mtime": 1781315786.2921617,
-    "ast_hash": "2d614ab2e3f1971675ea40c45698fc3d",
+    "mtime": 1781797040.71219,
+    "ast_hash": "66a943eff5c169017574923b6b86fe0a",
     "semantic_hash": ""
   },
   "modules/fork-sync/manuals/bruno.md": {
@@ -1100,18 +1540,18 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/README.md": {
-    "mtime": 1781522227.9545665,
-    "ast_hash": "3d61d16222ace167238d06eec4e08c2b",
+    "mtime": 1781797040.71119,
+    "ast_hash": "507c26558db85ae1ca2169699c18516c",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/deploy.yaml": {
-    "mtime": 1781522227.9545665,
-    "ast_hash": "2341beac7da9b0e6674f696fe7712916",
+    "mtime": 1781797040.7101898,
+    "ast_hash": "8fde4662b1caa82227f97409ffc31655",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/sync.yaml": {
-    "mtime": 1781522227.9545665,
-    "ast_hash": "c63064614645487137bf9d4f19ee7662",
+    "mtime": 1781797040.70819,
+    "ast_hash": "94af6bb8306ef832f37c0d7884ee7e3c",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/bruno/sync.yaml": {
@@ -1174,6 +1614,21 @@
     "ast_hash": "322bc9f114bcf257d6a69f87ecfb64bb",
     "semantic_hash": ""
   },
+  "modules/k3s-ha-portainer-oci/README.md": {
+    "mtime": 1781777976.6494691,
+    "ast_hash": "efd840fc12be4c30e0e5206c7177015f",
+    "semantic_hash": ""
+  },
+  "modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml": {
+    "mtime": 1781524115.1758883,
+    "ast_hash": "dd14ab99bef58adeb242338ea90a55f7",
+    "semantic_hash": ""
+  },
+  "modules/k3s-ha-portainer-oci/k8s/kube-prometheus-stack-values.yaml": {
+    "mtime": 1781522282.8603957,
+    "ast_hash": "1717fa7694fcb078eaa8e6968d525805",
+    "semantic_hash": ""
+  },
   "modules/remote-manager/README.md": {
     "mtime": 1780722987.7165303,
     "ast_hash": "f4ec826178596121c66141ca6dbaa836",
@@ -1184,9 +1639,19 @@
     "ast_hash": "00664047976c337e0add2d0d392952f5",
     "semantic_hash": ""
   },
+  "modules/rust-zellij-fleet/README.md": {
+    "mtime": 1781714713.055677,
+    "ast_hash": "e902aceb3c9f294258b92a8c3f6a77fc",
+    "semantic_hash": ""
+  },
+  "modules/rust-zellij-fleet/configs/module.yaml": {
+    "mtime": 1781714713.05602,
+    "ast_hash": "4c34595fa500dfa65619559bf90b71f2",
+    "semantic_hash": ""
+  },
   "modules/srv1-ops/README.md": {
-    "mtime": 1780817273.9237182,
-    "ast_hash": "54fd8c1fc40f5893f34821c9e788230e",
+    "mtime": 1781811786.578861,
+    "ast_hash": "61cc8bca66aecbfe541e6a9374ea8197",
     "semantic_hash": ""
   },
   "modules/srv1-ops/configs/backup-map.yaml": {
@@ -1509,309 +1974,304 @@
     "ast_hash": "aa22c8a3207f59ef215d253eccea27df",
     "semantic_hash": ""
   },
-  ".planning/graphs/.last-build-snapshot.json": {
-    "mtime": 1781519987.7257442,
-    "ast_hash": "a5e18205748031ef18651771b4c68483",
+  ".planning/phases/22-onboarding-horistic-instalar-rust-oh-my-zsh-zsh-zellij-no-pa/22-PLAN.md": {
+    "mtime": 1781733751.5277474,
+    "ast_hash": "77215a1d19301ae2cf10ad6e7ec03fea",
     "semantic_hash": ""
   },
-  ".planning/graphs/.last-build-status.json": {
-    "mtime": 1781520455.1693914,
-    "ast_hash": "c07ed580cea83e13b7ba9622965cb528",
+  "inventory/hosts/horistic-srv.yaml": {
+    "mtime": 1781746701.630985,
+    "ast_hash": "c25e77322fe1e87c755f84ac2c5676c5",
     "semantic_hash": ""
   },
-  ".planning/graphs/graph.json": {
-    "mtime": 1781651311.9307177,
-    "ast_hash": "9b4fdf29f783008218b8b12dc5af9fe9",
+  ".planning/phases/21-onboarding-atius-mt5-kvm-1-e-atius-mt5-kvm-2-como-hosts-gere/21-SUMMARY.md": {
+    "mtime": 1781734003.5376935,
+    "ast_hash": "2eea19b3fb8dad7ae4404a7e4003f0e8",
     "semantic_hash": ""
   },
-  ".planning/graphs/GRAPH_REPORT.md": {
-    "mtime": 1781651311.815827,
-    "ast_hash": "e801f76133f2dd65e7aa7dbc6a219f55",
+  ".planning/phases/22-onboarding-horistic-instalar-rust-oh-my-zsh-zsh-zellij-no-pa/22-SUMMARY.md": {
+    "mtime": 1781734003.537757,
+    "ast_hash": "269f859da3ae9753a934c6ec64466baf",
     "semantic_hash": ""
   },
-  ".planning/graphs/graph.html": {
-    "mtime": 1781651311.8567178,
-    "ast_hash": "987c3ab6ba9711b7294373c47713dde2",
+  "cli/omni/edge.py": {
+    "mtime": 1781746617.9227822,
+    "ast_hash": "e457b68ff31b3292502875b39713687c",
     "semantic_hash": ""
   },
-  "modules/srv1-network-watchdog/srv1-fix-network.sh": {
-    "mtime": 1781522227.9592555,
-    "ast_hash": "74f9e08ea9cab13f82caae491387853f",
+  "cli/omni/oci.py": {
+    "mtime": 1781746740.6868222,
+    "ast_hash": "48748ee1f821cb51696a00a7b038697c",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-01-SUMMARY.md": {
-    "mtime": 1781521953.4401705,
-    "ast_hash": "9ef271e796b2b2fb81cfc59a92ef7de8",
+  "cli/omni/tests/test_edge.py": {
+    "mtime": 1781746631.5210454,
+    "ast_hash": "8bdd436f1af4f39e9758601f8f209c95",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql": {
-    "mtime": 1781522282.859455,
-    "ast_hash": "a852554f01bf2a6137b2879e9fa4b5d5",
+  "cli/omni/tests/test_oci.py": {
+    "mtime": 1781746835.13114,
+    "ast_hash": "ab3e6178381ba7b7ecdd0470e5be167d",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/migrations/0002_ops_config_slash_commands.sql": {
-    "mtime": 1781522282.859598,
-    "ast_hash": "e94327a6973898023c8c43a64a4e49cc",
+  "scripts/validate-edge-auth.py": {
+    "mtime": 1781746833.9581306,
+    "ast_hash": "879e079b2e24d08ef449c7943fb66ff5",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/scripts/omni-pg-access-guard.sh": {
-    "mtime": 1781522282.859598,
-    "ast_hash": "969362a25d6c84d38021bfd59288207a",
+  ".planning/phases/15-m005-oci-snapshots/15-SUMMARY.md": {
+    "mtime": 1781746898.86604,
+    "ast_hash": "5288f971337c8544e954886a842f110a",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/tests/test_m004_contract.py": {
-    "mtime": 1781522282.859598,
-    "ast_hash": "a1a7e02bc2fea9cdaa3e202d35680de9",
+  ".planning/phases/16-m005-cloudflare-access/16-SUMMARY.md": {
+    "mtime": 1781746719.7959974,
+    "ast_hash": "0835d73987fba92e957251f66c04d33b",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/tools/validate_m004.py": {
-    "mtime": 1781522282.8599102,
-    "ast_hash": "686dd7a775f7d84c097f3315a64d0e45",
+  "docs/operations/edge-auth.md": {
+    "mtime": 1781746070.345002,
+    "ast_hash": "0bf5efbef0a97003183bf39c6e636795",
     "semantic_hash": ""
   },
-  "modules/k3s-ha-portainer-oci/scripts/atius-k3s-watchdog.sh": {
-    "mtime": 1781522282.8603957,
-    "ast_hash": "7efc65591de866612f1ce0e9b42a7682",
+  "docs/operations/oci-snapshots.md": {
+    "mtime": 1781746835.1249874,
+    "ast_hash": "8d9d621e0b2dcb31e02dfdd778619978",
     "semantic_hash": ""
   },
-  "scripts/verify-m004-fleet-control-plane.sh": {
-    "mtime": 1781522282.860679,
-    "ast_hash": "1cf5853a7e5ff586b1d733d3c3d78ea7",
+  "modules/k3s-ha-portainer-oci/monitoring/alertmanager/values.yaml": {
+    "mtime": 1781747282.488336,
+    "ast_hash": "0f70be43a6b9239ff755fbf94066f6ea",
     "semantic_hash": ""
   },
-  ".planning/phases/12-omni-fleet-control-plane/12-01-PLAN.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "ab2a2fbce1c6a17c8077814389ff5adc",
+  "modules/k3s-ha-portainer-oci/monitoring/loki/values.yaml": {
+    "mtime": 1781746931.9680786,
+    "ast_hash": "c14f886ad459741197485ad2568c8efd",
     "semantic_hash": ""
   },
-  ".planning/phases/12-omni-fleet-control-plane/12-01-SUMMARY.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "09df73fd0d49f006659e919a1ec6e6ae",
+  "modules/k3s-ha-portainer-oci/monitoring/prometheus-rules/omni-rules.yaml": {
+    "mtime": 1781747263.7173915,
+    "ast_hash": "0e4fcf433967309d7f23a23396aa92d0",
     "semantic_hash": ""
   },
-  ".planning/phases/12-omni-fleet-control-plane/12-CONTEXT.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "a81d8cd9a8c17ddc106fc7a09ec055bd",
+  "cli/omni/observability.py": {
+    "mtime": 1781747930.5145693,
+    "ast_hash": "5401ec6200251a01747f3352db27d839",
     "semantic_hash": ""
   },
-  ".planning/phases/12-omni-fleet-control-plane/12-PLAN.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "1ae68df122ec72c46d01fab4ed73f0c4",
+  "cli/omni/tests/test_observability.py": {
+    "mtime": 1781747655.611229,
+    "ast_hash": "ecc358b7eb3f9f94885307c04b8d112e",
     "semantic_hash": ""
   },
-  ".planning/phases/12-omni-fleet-control-plane/12-RESEARCH.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "64dadd814436d8c47fd4b29a4da63b7c",
+  "modules/k3s-ha-portainer-oci/monitoring/dashboards/jenkins-gdrive.json": {
+    "mtime": 1781747330.6671934,
+    "ast_hash": "7bafc9fa56a95c30a1168f144bbfec69",
     "semantic_hash": ""
   },
-  ".planning/phases/12-omni-fleet-control-plane/12-VALIDATION.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "e5063524f7bb857a02c1524c3939ffa7",
+  "modules/k3s-ha-portainer-oci/monitoring/dashboards/k3s-ha.json": {
+    "mtime": 1781747330.6452057,
+    "ast_hash": "472723523deba4d6762cb12d8dc5eb28",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-01-PLAN.md": {
-    "mtime": 1781522567.111582,
-    "ast_hash": "d5a0f729d56a1fd585e3aaedfa8e464b",
+  "modules/k3s-ha-portainer-oci/monitoring/dashboards/pm2-fleet.json": {
+    "mtime": 1781747330.6571934,
+    "ast_hash": "fa36d8912544fd1315b40bbb6d68e8bf",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md": {
-    "mtime": 1781522567.1131403,
-    "ast_hash": "ba2e7f701117049692bd451573d2b7ac",
+  "modules/k3s-ha-portainer-oci/monitoring/dashboards/portainer.json": {
+    "mtime": 1781747330.6281936,
+    "ast_hash": "a4c0a6a4f472818efa3a37baa66397be",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-FALLBACK-PTP-2026-06-14.md": {
-    "mtime": 1781522567.1147234,
-    "ast_hash": "aeab6f71dfdd71b5674f829aba4dc483",
+  "modules/k3s-ha-portainer-oci/monitoring/scripts/install-loki.sh": {
+    "mtime": 1781747395.4270012,
+    "ast_hash": "ba9045d5b354a6ba7962374f037b178a",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-GATE-REVIEW-2026-06-14.md": {
-    "mtime": 1781638309.690185,
-    "ast_hash": "25f04d014bc217ec799012ce887c3279",
+  "modules/k3s-ha-portainer-oci/monitoring/scripts/install-prometheus-stack.sh": {
+    "mtime": 1781747393.2540078,
+    "ast_hash": "8f07c939b8fbf852260647bd9d7ac2dd",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md": {
-    "mtime": 1781522282.8579102,
-    "ast_hash": "8b44c51719f1df66ec382538c4c79394",
+  "modules/k3s-ha-portainer-oci/monitoring/scripts/uninstall-monitoring.sh": {
+    "mtime": 1781747397.2529635,
+    "ast_hash": "5c4fca2c559b5b7b91bb7c2472869b6c",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-OBSERVABILITY-WATCHDOG-2026-06-14.md": {
-    "mtime": 1781522282.8585067,
-    "ast_hash": "2579e0e281e00a00d650c045866c08a1",
+  ".planning/phases/17-m005-observability-rwx/17-SUMMARY.md": {
+    "mtime": 1781748105.4610295,
+    "ast_hash": "ec640ca4bcbe4217a8123d000162c600",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-OCI-ROLLBACK-PATH-2026-06-14.md": {
-    "mtime": 1781522567.1174805,
-    "ast_hash": "915e6742c8d400e2da5dd738c3f76f5f",
+  "docs/operations/k3s-storage.md": {
+    "mtime": 1781748105.460814,
+    "ast_hash": "0d7158923ae5f5afa0caadb83e047a73",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-RESTORE-DRILL-2026-06-14.md": {
-    "mtime": 1781522567.118937,
-    "ast_hash": "6a95295c482f6423f733112be1deffe1",
+  "modules/srv1-ops/scripts/fleet-defense-monitor.py": {
+    "mtime": 1781773016.0980866,
+    "ast_hash": "e842902bf866feee9f6d332d727aa4ee",
     "semantic_hash": ""
   },
-  "docs/fleet/control-plane.md": {
-    "mtime": 1781522282.8585067,
-    "ast_hash": "f7199743362fa78d1c7d1dda2af19bde",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-02-PLAN.md": {
+    "mtime": 1781777939.587578,
+    "ast_hash": "5ee72799803ab092d6ac2fbb61437468",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/README.md": {
-    "mtime": 1781522282.8589103,
-    "ast_hash": "ec57182cd84bef44ab0a8fb0295795bc",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-03-PLAN.md": {
+    "mtime": 1781777939.587578,
+    "ast_hash": "98f7e3a9f06e4ae22b5bc943099d32c0",
     "semantic_hash": ""
   },
-  "modules/fleet-control-plane/configs/control-plane.example.yaml": {
-    "mtime": 1781522282.859455,
-    "ast_hash": "e52b6b7c9b2b284c78aa554b68bf7c70",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-DISCUSSION-LOG.md": {
+    "mtime": 1781777939.587578,
+    "ast_hash": "9d72e15a24ceb3a240c682d96818912c",
     "semantic_hash": ""
   },
-  "modules/k3s-ha-portainer-oci/README.md": {
-    "mtime": 1781522567.120276,
-    "ast_hash": "514d6b19b7e4760110ab56b52854ba96",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-EXECUTION-CHECKPOINT-2026-06-13.md": {
+    "mtime": 1781777939.587578,
+    "ast_hash": "793884da95ed79ee996f61580570463c",
     "semantic_hash": ""
   },
-  "modules/k3s-ha-portainer-oci/k8s/kube-prometheus-stack-values.yaml": {
-    "mtime": 1781522282.8603957,
-    "ast_hash": "1717fa7694fcb078eaa8e6968d525805",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-NETWORK-PORT-MAP-2026-06-13.md": {
+    "mtime": 1781777939.587578,
+    "ast_hash": "4ed71b93e6348bdd477b26121502877c",
     "semantic_hash": ""
   },
-  ".planning/graphs/manifest.json": {
-    "mtime": 1781651312.003587,
-    "ast_hash": "5c55da3fb6a4a150478c99329c15f7db",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-PLAN-CHECK.md": {
+    "mtime": 1781777939.587578,
+    "ast_hash": "01f8e6151d1a24cf82e0e9229c10e9ec",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-05-PLAN.md": {
-    "mtime": 1781522937.922798,
-    "ast_hash": "b78b31a5f416f6b2db2fe7d5ac9f372d",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-PLAN-REVIEW-CONVERGENCE.md": {
+    "mtime": 1781777939.588578,
+    "ast_hash": "30e98d51fa9eb6ef5ee134b62a597adb",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-06-PLAN.md": {
-    "mtime": 1781523375.5867586,
-    "ast_hash": "a511e4a5a7e7792e811ed2e0b55e88fd",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-PLAN.md": {
+    "mtime": 1781777939.588578,
+    "ast_hash": "11022357250e432947ebfb26ec810919",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-05-SUMMARY.md": {
-    "mtime": 1781523962.3832345,
-    "ast_hash": "1b529a5caef0372db9a50a0de9b4aae4",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-PREFLIGHT-2026-06-13.md": {
+    "mtime": 1781777939.588578,
+    "ast_hash": "683b8cb1a9be7fb9a1f46db2b0817d78",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-UAT.md": {
-    "mtime": 1781525956.916692,
-    "ast_hash": "ad7a9b6be18ba7937f69c9a6e8f1538b",
+  ".planning/phases/13-k3s-ha-portainer-oci/13-RESEARCH.md": {
+    "mtime": 1781777976.648469,
+    "ast_hash": "dd45fd53bec45eed946d5fc3c20cfcdd",
     "semantic_hash": ""
   },
-  "modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml": {
-    "mtime": 1781524115.1758883,
-    "ast_hash": "dd14ab99bef58adeb242338ea90a55f7",
+  "modules/k3s-ha-portainer-oci/k3s/config-srv1.example.yaml": {
+    "mtime": 1781777939.5895782,
+    "ast_hash": "a73e6e60e40d0835cc3caaab2358933e",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-06-SUMMARY.md": {
-    "mtime": 1781524215.4775233,
-    "ast_hash": "c5c8f02c3da8106c97c27a978cad9a70",
+  "modules/k3s-ha-portainer-oci/k3s/config-srv2.example.yaml": {
+    "mtime": 1781777939.5895782,
+    "ast_hash": "12393c3b27dd7508f2170d7c05b881e1",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-02-SUMMARY.md": {
-    "mtime": 1781525042.1366105,
-    "ast_hash": "05964233f810560158b57b44a3c2b4bb",
+  "modules/k3s-ha-portainer-oci/k3s/config-srv3.example.yaml": {
+    "mtime": 1781777939.5895782,
+    "ast_hash": "fbdaa1e3e0d184c541fba388e16b20fd",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-03-SUMMARY.md": {
-    "mtime": 1781525268.841946,
-    "ast_hash": "88b7d0c93617da166685c784196eb34f",
+  "modules/k3s-ha-portainer-oci/k8s/cloudflared-deployment.yaml": {
+    "mtime": 1781777939.5895782,
+    "ast_hash": "ca652970ef2dc7a2a1f3e29f478905b0",
     "semantic_hash": ""
   },
-  ".planning/phases/14-resource-governor-pm2-boot-hardening/14-SUMMARY.md": {
-    "mtime": 1781525401.349792,
-    "ast_hash": "2b4b07710750b538fc63902b63f303a0",
+  "modules/k3s-ha-portainer-oci/k8s/portainer-values.yaml": {
+    "mtime": 1781777939.5895782,
+    "ast_hash": "61b11d20482471ef12379262ebc7a17f",
     "semantic_hash": ""
   },
-  "docs/operations/pm2-canonical.md": {
-    "mtime": 1781524953.3274133,
-    "ast_hash": "6e008f60f5e2feadd144afd8fb9c20fe",
+  "modules/srv1-ops/scripts/resource-governor-cap75.py": {
+    "mtime": 1781798608.6805875,
+    "ast_hash": "f75e3afcf296b6a168353bece15178d2",
     "semantic_hash": ""
   },
-  ".planning/milestones/v1.0-REQUIREMENTS.md": {
-    "mtime": 1781525995.008952,
-    "ast_hash": "3218f502a024e43f8639844427c5de57",
+  "modules/fork-sync/projects/atius-router/UPSTREAM-SYNC-GUARDS.md": {
+    "mtime": 1781797040.7061899,
+    "ast_hash": "cfb82cbeb85b0932d877f5471d9dc68e",
     "semantic_hash": ""
   },
-  ".planning/milestones/v1.0-ROADMAP.md": {
-    "mtime": 1781525995.0061612,
-    "ast_hash": "0ebb97290d2a13ece03d23860ff5fa8a",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-CONTEXT.md": {
+    "mtime": 1782301996.1625726,
+    "ast_hash": "99ac60bd3e08f90aa47ca093fbe12959",
     "semantic_hash": ""
   },
-  ".planning/phases/15-m005-oci-snapshots/15-PLAN.md": {
-    "mtime": 1781526375.658762,
-    "ast_hash": "da05087eea868291a2e8a841e81055b0",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-RESEARCH.md": {
+    "mtime": 1782302157.1411006,
+    "ast_hash": "977f2f4c3a717c99436fc075af8c8868",
     "semantic_hash": ""
   },
-  ".planning/phases/16-m005-cloudflare-access/16-PLAN.md": {
-    "mtime": 1781526404.266962,
-    "ast_hash": "dd97194d3ae357ca18716c0829fb31b8",
+  "cli/omni/managed_apps.py": {
+    "mtime": 1782299937.7026207,
+    "ast_hash": "659e8bc8c50e4701fe17c9dd611e62ca",
     "semantic_hash": ""
   },
-  ".planning/phases/17-m005-observability-rwx/17-PLAN.md": {
-    "mtime": 1781526447.5698094,
-    "ast_hash": "39f6f87617f013fa2e2437a5b52fb0b0",
+  "modules/managed-apps/configs/programs.json": {
+    "mtime": 1782300510.7079368,
+    "ast_hash": "d4ae999b6555bd5b3bb868e5dcf36bd4",
     "semantic_hash": ""
   },
-  ".backups/tailscale-pre-acl-2026-06-16/acl-current.json": {
-    "mtime": 1781638038.1006336,
-    "ast_hash": "de0d27e7cc4b033ab529d3f590a2a721",
+  "modules/managed-apps/scripts/omni-managed-apps": {
+    "mtime": 1782297797.1339104,
+    "ast_hash": "cfeca06b2f2b54e8e483db9e75736c64",
     "semantic_hash": ""
   },
-  ".backups/tailscale-pre-acl-2026-06-16/devices-current.json": {
-    "mtime": 1781638039.263107,
-    "ast_hash": "abbf45c8efa5abf2625b94a3c92379fd",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-01-PLAN.md": {
+    "mtime": 1782301795.083162,
+    "ast_hash": "d61ed85f76e547d17c03ec669dd2c856",
     "semantic_hash": ""
   },
-  ".backups/tailscale-pre-acl-2026-06-16/dns-current.json": {
-    "mtime": 1781638038.6855752,
-    "ast_hash": "d85319130a9f81ad1fb35ab7c2be0bce",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-02-PLAN.md": {
+    "mtime": 1782297967.7504091,
+    "ast_hash": "178f7bb0ea9993fa7d48d1a478e73295",
     "semantic_hash": ""
   },
-  ".planning/phases/13-k3s-ha-portainer-oci/13-ACL-CLOSURE-2026-06-16.md": {
-    "mtime": 1781638322.256861,
-    "ast_hash": "e7f49780e6ca6aaffda23c6e3b4ed13b",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-03-PLAN.md": {
+    "mtime": 1782302019.9455028,
+    "ast_hash": "0f944af0d93cfe1605813820646e3b07",
     "semantic_hash": ""
   },
-  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-HANDOFF-RDP.md": {
-    "mtime": 1781653294.4128509,
-    "ast_hash": "f973e02502508aaa8f7c09044f82d67b",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-04-PLAN.md": {
+    "mtime": 1782301801.5401433,
+    "ast_hash": "62fe58e4985180987afd8cf46d8cbcdb",
     "semantic_hash": ""
   },
-  "docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md": {
-    "mtime": 1781653294.430851,
-    "ast_hash": "673210e90c3fce4f3c4cd1001395a57b",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-PLAN.md": {
+    "mtime": 1782301672.4675221,
+    "ast_hash": "9fd5113c68074bda2ebeee5f1049df50",
     "semantic_hash": ""
   },
-  "docs/operations/tailscale/GBRAIN-INGEST-PENDING.md": {
-    "mtime": 1781639684.5387142,
-    "ast_hash": "acf14182205e65614bedbb757ce11d55",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-VALIDATION.md": {
+    "mtime": 1782301823.6590784,
+    "ast_hash": "90087904fb20052d9bc687689015a39c",
     "semantic_hash": ""
   },
-  "docs/operations/tailscale/README.md": {
-    "mtime": 1781638350.9510632,
-    "ast_hash": "11c4ca20b302a9e08d51d74352b642f4",
+  "docs/operations/managed-apps.md": {
+    "mtime": 1782300590.1577034,
+    "ast_hash": "13f8507c850d4ac0c6d7cf35d34ffc65",
     "semantic_hash": ""
   },
-  "modules/rust-zellij-fleet/scripts/fleet-rust-zellij.sh": {
-    "mtime": 1781652914.6270568,
-    "ast_hash": "b8dc8a8e3d8a816613eec4e0b4a505f1",
+  "modules/managed-apps/README.md": {
+    "mtime": 1782300598.3256793,
+    "ast_hash": "7940ae41aee0bab7f8d198a318d8e4b6",
     "semantic_hash": ""
   },
-  ".planning/phases/18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat/18-XRDP-CLOSURE-2026-06-16.md": {
-    "mtime": 1781653294.444851,
-    "ast_hash": "261db120f7c19cc01302dee62df320d3",
+  "modules/managed-apps/policies/chromium/omni-browser-defaults.json": {
+    "mtime": 1782300499.4719698,
+    "ast_hash": "e5b9857380d2914875e19152ed2e2328",
     "semantic_hash": ""
   },
-  "modules/rust-zellij-fleet/README.md": {
-    "mtime": 1781652813.9212725,
-    "ast_hash": "e902aceb3c9f294258b92a8c3f6a77fc",
-    "semantic_hash": ""
-  },
-  "modules/rust-zellij-fleet/configs/module.yaml": {
-    "mtime": 1781652821.853249,
-    "ast_hash": "4c34595fa500dfa65619559bf90b71f2",
+  ".planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-05-PLAN.md": {
+    "mtime": 1782301849.1470037,
+    "ast_hash": "3f0cd9d5bd37a91615aa233c01a63e9a",
     "semantic_hash": ""
   }
 }

@@ -1,0 +1,14 @@
+{
+  "DefaultSearchProviderEnabled": true,
+  "DefaultSearchProviderName": "Google",
+  "DefaultSearchProviderKeyword": "google.com.br",
+  "DefaultSearchProviderSearchURL": "https://www.google.com.br/search?q={searchTerms}",
+  "DefaultSearchProviderSuggestURL": "https://www.google.com.br/complete/search?output=chrome&q={searchTerms}",
+  "HomepageIsNewTabPage": false,
+  "HomepageLocation": "https://google.com.br",
+  "RestoreOnStartup": 4,
+  "RestoreOnStartupURLs": [
+    "https://google.com.br"
+  ],
+  "ShowHomeButton": true
+}

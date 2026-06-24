@@ -46,6 +46,10 @@ omni remote-manager list
 omni remote-manager rename-label srv1-shared-smb Shared --dry-run
 omni xrdp-abnt2 validate
 omni fork-sync projects list
+omni managed-apps status --app chromium,firefox,bitwarden-chromium-extension
+omni managed-apps config-status
+omni managed-apps fleet-status --app chromium,firefox
+omni managed-apps fleet-config-status
 
 # Podman fleet standard (containers.conf + netavark + aardvark + systemd-resolved)
 ./modules/fleet/podman-network/scripts/drift-detect.sh    # show drift across 3 SRVs

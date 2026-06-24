@@ -101,6 +101,20 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 - [ ] **FCP-09**: Ações relevantes devem gerar auditoria/logs com ator, host, ação, alvo, resultado e timestamp.
 - [ ] **FCP-10**: O design deve expor contrato futuro para Podman/K3s consumir inventário, status, programs, versions e audit events sem implementar a orquestração nesta phase.
 
+### Omni Fleet Governance com Landscape complementar
+
+- [ ] **GOV-01**: Cockpit deve ser tratado como console por host e ficar protegido por Cloudflare Access, Apache auth/SSO ou WireGuard; porta 9090 publica direta deve ser removida ou bloqueada.
+- [ ] **GOV-02**: Omni Fleet deve expor uma matriz de paridade Landscape vs Omni/Cockpit, marcando cada capacidade como coberta, delegada ao Landscape, parcial, fora de escopo ou pendente.
+- [ ] **GOV-03**: O node agent deve coletar versoes reais de programas por host a partir de `dpkg/apt`, snap, pip/uv, npm/pnpm, cargo, PM2, systemd e containers quando aplicavel.
+- [ ] **GOV-04**: `TbPrograms`/`TbVersions` devem representar versao atual, versao desejada, origem, tipo de instalacao, policy e drift por host.
+- [ ] **GOV-05**: O control plane deve suportar profiles de desired state para pacotes/programas: required, forbidden, pinned, held e manual.
+- [ ] **GOV-06**: Update profiles devem modelar janelas, rollout serial/staggered, security-only vs all-upgrades, aprovacao explicita, rollback_ref e auditoria.
+- [ ] **GOV-07**: Repository/source profiles devem representar APT `.sources`, PPAs, Ubuntu Pro ESM sources e politica de remediacao sem gravar secrets.
+- [ ] **GOV-08**: CVE/USN/security reporting deve correlacionar pacotes pendentes, origem ESM/security e host afetado em uma visao central.
+- [ ] **GOV-09**: A execucao remota deve continuar local ao host alvo via `omni fleet agent`, command allowlist e `TbUpdatePlans`; nao deve haver SSH apply generico para mutacoes fleet-wide.
+- [ ] **GOV-10**: A documentacao deve declarar o papel do Landscape na operacao: camada complementar de administracao das maquinas Ubuntu, sem substituir Cockpit break-glass, Omni Fleet governance, Portainer/K3s ou os gates de update/auditoria.
+- [ ] **GOV-11**: Self-hosted Landscape deve ser planejado para deploy controlado em Podman e/ou K3s, com validacao de recursos, portas 80/443, certificados, Ubuntu Pro/licenca, registro de clientes, rollback e fallback documentado para LXD/VM/Juju se a embalagem Podman/K3s nao ficar suportavel.
+
 ### K3s HA Cluster
 
 - [ ] **K3S-01**: Cluster K3s HA criado nos 3 servidores `ATIUS-SRV-1`, `ATIUS-SRV-2`, `ATIUS-SRV-3` como `server` + `worker`.
@@ -154,6 +168,7 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 | COEX-01 → COEX-04 | Phase 7 | Pending |
 | CLNT-01 → CLNT-03 | Phase 7 | Pending |
 | FCP-01 → FCP-13 | Phase 12 / M004 | Live implemented; DB-backed ops/config/slash registry validated |
+| GOV-01 → GOV-11 | Phase 23 | Planned (Landscape complementary management layer + Cockpit host console + Omni Fleet governance) |
 | K3S-01 → K3S-05 | Phase 13 / M005 | ✅ Live (K3s HA 3-nodes `Ready` control-plane+etcd on `wg0`) |
 | PRT-01 → PRT-02 | Phase 13 / M005 | ✅ Live (Portainer CE 2.39.3 deployed; `portainer.atius.com.br` returns API status) |
 | CFL-01, SEC-01 | Phase 13 / M005 | ✅ Live (edge Basic Auth); Cloudflare Access follow-up |
@@ -169,10 +184,10 @@ Milestone ownership and branch mapping live in `.planning/MILESTONES.md`.
 
 **Coverage:**
 - v1 requirements: 39 total
-- v3 requirements: 26 total
-- Mapped to phases: 65
+- v3 requirements: 36 total
+- Mapped to phases: 75
 - Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-05-06 after merge*
-*Last updated: 2026-06-15 after Phase 14 / 14-01 execution and main alignment with origin/main*
+*Last updated: 2026-06-24 after Phase 23 added Landscape complementary deployment scope*

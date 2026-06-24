@@ -1,0 +1,173 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-06-24",
+  "description": "Manual managed desktop/browser apps pinned for the Atius/Horistic ARM64 fleet. Snap is explicitly forbidden for these apps.",
+  "target_hosts": [
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "horistic-srv"
+  ],
+  "repositories": {
+    "xtradeb-apps": {
+      "kind": "apt-source",
+      "expected_source_contains": "xtradeb/apps",
+      "packages": [
+        "chromium",
+        "firefox"
+      ],
+      "notes": [
+        "Canonical apt source for native ARM64 Chromium and Firefox on the fleet.",
+        "Ubuntu stock chromium/firefox snap packages are not accepted for these managed browsers."
+      ]
+    }
+  },
+  "policies": {
+    "bitwarden-chromium-forceinstall": {
+      "kind": "json-policy",
+      "path": "/etc/chromium/policies/managed/omni-bitwarden.json",
+      "must_include": {
+        "ExtensionInstallForcelist": [
+          "nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx"
+        ]
+      },
+      "notes": [
+        "Keeps Bitwarden sourced from Chrome Web Store without copying user vault/profile data."
+      ]
+    },
+    "chromium-google-browser-defaults": {
+      "kind": "json-policy",
+      "path": "/etc/chromium/policies/managed/omni-browser-defaults.json",
+      "source": "modules/managed-apps/policies/chromium/omni-browser-defaults.json",
+      "must_include": {
+        "DefaultSearchProviderEnabled": true,
+        "DefaultSearchProviderName": "Google",
+        "DefaultSearchProviderKeyword": "google.com.br",
+        "DefaultSearchProviderSearchURL": "https://www.google.com.br/search?q={searchTerms}",
+        "DefaultSearchProviderSuggestURL": "https://www.google.com.br/complete/search?output=chrome&q={searchTerms}",
+        "HomepageIsNewTabPage": false,
+        "HomepageLocation": "https://google.com.br",
+        "RestoreOnStartup": 4,
+        "RestoreOnStartupURLs": [
+          "https://google.com.br"
+        ],
+        "ShowHomeButton": true
+      },
+      "notes": [
+        "Keeps Chromium default search provider as Google and startup/homepage at https://google.com.br across all managed hosts."
+      ]
+    },
+    "chromium-extension-env-dir-only": {
+      "kind": "file-contains",
+      "path": "/etc/chromium.d/extensions",
+      "required_contains": [
+        "--enable-remote-extensions",
+        "-type d"
+      ],
+      "forbidden_contains": [
+        "ls -dm /usr/share/chromium/extensions/*"
+      ],
+      "notes": [
+        "Prevents external-install JSON files in /usr/share/chromium/extensions from being treated as unpacked extension directories."
+      ]
+    }
+  },
+  "customizations": {
+    "chromium-normal-window-wrapper": {
+      "kind": "file-contains",
+      "path": "~/.local/bin/chromium-normal-window",
+      "required_contains": [
+        "--hide-crash-restore-bubble",
+        "--disable-gpu",
+        "--disable-gpu-rasterization",
+        "--disable-features=Vulkan,VulkanFromANGLE,SidePanel",
+        "remove,fullscreen,maximized_vert,maximized_horz"
+      ],
+      "notes": [
+        "Keeps Chromium from forcing fullscreen/maximized state and avoids the Bitwarden SidePanel crash."
+      ]
+    },
+    "pcmanfm-quick-exec": {
+      "kind": "file-contains",
+      "path": "~/.config/libfm/libfm.conf",
+      "required_contains": [
+        "quick_exec=1"
+      ],
+      "notes": [
+        "Prevents PCManFM from showing the executable text warning for desktop launchers."
+      ]
+    },
+    "firefox-normal-launcher": {
+      "kind": "file-contains",
+      "path": "~/.local/share/applications/firefox.desktop",
+      "required_contains": [
+        ".local/bin/xrdp-launch /usr/bin/firefox"
+      ],
+      "notes": [
+        "Keeps Firefox from using old maximize wrappers."
+      ]
+    }
+  },
+  "programs": {
+    "chromium": {
+      "kind": "apt-package-set",
+      "packages": [
+        "chromium",
+        "chromium-common",
+        "chromium-sandbox"
+      ],
+      "primary_package": "chromium",
+      "desired_version": "149.0.7827.155-1xtradeb1.2404.1",
+      "desired_source_contains": "xtradeb/apps",
+      "forbidden_package_managers": [
+        "snap"
+      ],
+      "post_fix_app": "chromium",
+      "required_wrapper": "~/.local/bin/chromium-normal-window",
+      "required_wrapper_flags": [
+        "--hide-crash-restore-bubble",
+        "--disable-gpu",
+        "--disable-gpu-rasterization",
+        "--disable-features=Vulkan,VulkanFromANGLE,SidePanel"
+      ],
+      "notes": [
+        "Bitwarden 2026.5.1 crashes the extension popup on Chromium xtradeb 149 unless SidePanel is disabled.",
+        "Keep Chromium from xtradeb/apps; do not install Ubuntu snap chromium."
+      ]
+    },
+    "firefox": {
+      "kind": "apt-package-set",
+      "packages": [
+        "firefox"
+      ],
+      "primary_package": "firefox",
+      "desired_version": "1:152.0.1+build1-1xtradeb1.2404.1",
+      "desired_source_contains": "xtradeb/apps",
+      "forbidden_package_managers": [
+        "snap"
+      ],
+      "post_fix_app": "firefox",
+      "notes": [
+        "Firefox launcher must use normal xrdp-launch and must not force fullscreen/maximize."
+      ]
+    },
+    "bitwarden-chromium-extension": {
+      "kind": "chromium-extension",
+      "browser": "chromium",
+      "extension_id": "nngceckbapebfimnlniiiahkandclblb",
+      "desired_version": "2026.5.1",
+      "profile_root": "~/.config/chromium",
+      "profile_dir": "Default",
+      "requires_program": "chromium",
+      "policy_file": "/etc/chromium/policies/managed/omni-bitwarden.json",
+      "policy_forcelist_entry": "nngceckbapebfimnlniiiahkandclblb;https://clients2.google.com/service/update2/crx",
+      "required_wrapper": "~/.local/bin/chromium-normal-window",
+      "required_wrapper_flags": [
+        "--disable-features=Vulkan,VulkanFromANGLE,SidePanel"
+      ],
+      "notes": [
+        "The extension stays installed from Chrome Web Store; the fleet-managed fix is the Chromium wrapper compatibility flag."
+      ]
+    }
+  }
+}

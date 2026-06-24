@@ -222,3 +222,20 @@ Status: ✅ DONE (2026-06-17)
 | Network map | v1.4.0 (repo + vault mirror) |
 | gbrain | sincronizado (sem embed, MiniMax 1 RPM) |
 | Pendencia | vhost Apache remote.horistic-srv-1.atius.com.br.conf e pasta GDrive ainda com nome antigo (operacional) |
+
+
+## Phase 23 — Omni Fleet Governance com Landscape complementar
+
+Status: PLANNING (2026-06-24)
+
+| Item | Direcao |
+|---|---|
+| Decisao atual | Implementar Landscape self-hosted como camada complementar de administracao das maquinas Ubuntu, porque o consumo estimado cabe na infra e aumenta controle operacional |
+| Cockpit | Console web por host, protegido por Access/SSO/VPN; nao e control plane central |
+| Omni Fleet | Control plane central para inventario, programas, versoes, desired state, update plans, auditoria e agentes locais |
+| Landscape | Deploy planejado em Podman e/ou K3s com gate de recursos, portas 80/443, certificado, Pro/licenca, registro dos clientes e rollback; fallback documentado para LXD/VM/Juju se Podman/K3s nao ficar suportavel |
+| K3s/Portainer | Continuam responsaveis por administracao do cluster e workloads; Landscape administra maquinas Ubuntu e pacotes, nao substitui Portainer/Kubernetes |
+| Gaps | collectors reais de versao, desired-state profiles, repository profiles, CVE/USN reporting, matriz de responsabilidades Landscape/Omni/Cockpit/K3s |
+| Fundacao existente | `managed-apps` agora cobre `programs`, `repositories`, `policies` e `customizations` para Chromium/Firefox/Bitwarden, incluindo Bitwarden force-install e browser defaults Google/homepage; validado localmente por `manifest`, `status`, `verify`, `config-status` e `config-verify` e remotamente por `fleet-config-status`; reutilizar como seed de governanca da Phase 23 |
+| Worktree | Ainda ha mudancas paralelas fora da Phase 23 em `srv1-ops`, `fork-sync` e `dark-theme`; deixadas intocadas |
+| Proximo | Planejar e executar `23-01..23-05` |

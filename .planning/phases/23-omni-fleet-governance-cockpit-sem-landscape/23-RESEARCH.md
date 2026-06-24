@@ -1,4 +1,4 @@
-# Phase 23: Omni Fleet Governance Cockpit sem Landscape - Research
+# Phase 23: Omni Fleet Governance com Landscape complementar - Research
 
 **Researched:** 2026-06-24  
 **Domain:** Ubuntu fleet governance, Cockpit hardening, Landscape parity, Omni Fleet control plane  
@@ -8,22 +8,27 @@
 ## User Constraints (from CONTEXT.md)
 
 ### Locked Decisions
-Nao instalar/habilitar Landscape como dependencia operacional primaria agora.
-O alvo e usar:
+Implementar Landscape self-hosted como camada complementar de administracao das
+maquinas Ubuntu. O alvo e usar:
 
 - Cockpit como console web por host, apenas para operacao interativa e break-glass.
+- Landscape como painel complementar para administracao de maquinas Ubuntu,
+  pacotes, updates, security/compliance pratico e visibilidade de frota.
 - Omni Fleet Control Plane como sistema central de inventario, programas,
-  desired state, update plans, auditoria, agentes locais e monitoramento.
+  desired state, update plans, auditoria, agentes locais e integracao com o
+  estado reportado pelo Landscape.
+- Portainer/K3s como camada de administracao do cluster e workloads.
 - Prometheus/Grafana/Loki/Portainer/K3s/fork-sync como camadas ja
   implementadas ou planejadas para observability, containers e versionamento.
 
 ### the agent's Discretion
-Pesquisar a paridade pratica Landscape vs Cockpit + Omni, recomendar lacunas concretas de schema/collector/CLI/docs, e manter execucao remota restrita ao `omni fleet agent` local.
+Pesquisar a paridade pratica Landscape + Cockpit + Omni, recomendar lacunas concretas de deploy/schema/collector/CLI/docs, e manter execucao remota sensivel restrita a gates auditaveis.
 
 ### Deferred Ideas (OUT OF SCOPE)
-- Reimplementar Landscape SaaS inteiro.
+- Reimplementar internals do Landscape ou criar clone de Landscape.
 - Assumir suporte Canonical, SLA, compliance formal ou multi-tenant SaaS.
 - Usar Cockpit como control plane central.
+- Usar Landscape como orquestrador primario de workloads Kubernetes.
 - Executar mutacoes live sem approval, snapshot/preflight quando aplicavel e
   auditoria.
 </user_constraints>
@@ -32,9 +37,16 @@ Pesquisar a paridade pratica Landscape vs Cockpit + Omni, recomendar lacunas con
 
 Cockpit deve ser tratado como console interativo por host, nao como substituto central do Landscape. Ele cobre login administrativo, shell, systemd/services e updates por host via PackageKit, mas nao entrega sozinho inventory central, desired state, compliance de profiles, rollout serial/staggered, CVE/USN correlation ou auditoria fleet-wide. [CITED: https://cockpit-project.org/guide/latest/system-softwareupdates.html] [CITED: https://cockpit-project.org/guide/latest/cockpit.conf.5.html]
 
-Omni Fleet ja tem a base correta para substituir a dependencia operacional primaria de Landscape nesta frota: `DbOmniFleet`, `TbPrograms`, `TbVersions`, `TbUpdatePlans`, `TbAuditEvents`, `TbNodeTelemetry`, `TbFleetCommands`, PgBouncer privado e execucao por agent local allowlisted. [VERIFIED: docs/fleet/control-plane.md] [VERIFIED: modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql] [VERIFIED: modules/fleet-control-plane/migrations/0003_agent_executor_monitoring.sql] [VERIFIED: cli/omni/fleet.py]
+Omni Fleet ja tem a base correta para continuar sendo o contrato proprio de governanca e auditoria: `DbOmniFleet`, `TbPrograms`, `TbVersions`, `TbUpdatePlans`, `TbAuditEvents`, `TbNodeTelemetry`, `TbFleetCommands`, PgBouncer privado e execucao por agent local allowlisted. [VERIFIED: docs/fleet/control-plane.md] [VERIFIED: modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql] [VERIFIED: modules/fleet-control-plane/migrations/0003_agent_executor_monitoring.sql] [VERIFIED: cli/omni/fleet.py]
 
-**Primary recommendation:** implementar Phase 23 como extensao incremental do Omni Fleet: harden Cockpit exposure, adicionar collectors reais, criar migration `0004_governance_profiles.sql`, expor comandos `omni fleet governance/*`, e documentar matriz "Landscape omitido agora; Landscape opcional se precisar SaaS/UI/compliance/suporte Canonical". [VERIFIED: .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-CONTEXT.md]
+**Primary recommendation:** implementar Phase 23 como modelo hibrido: harden Cockpit exposure, adicionar collectors reais, criar migration `0004_governance_profiles.sql`, expor comandos `omni fleet governance/*`, deployar Landscape self-hosted como camada complementar de maquinas Ubuntu e documentar a matriz "Landscape administra maquinas; Omni governa automacao/auditoria propria; K3s/Portainer administra cluster; Cockpit fica break-glass". [VERIFIED: .planning/phases/23-omni-fleet-governance-cockpit-sem-landscape/23-CONTEXT.md]
+
+## Landscape Self-hosted Findings
+
+- Landscape self-hosted e uma edicao standalone instalada e operada pelo usuario, on-premises ou em cloud publica. A documentacao oficial lista tres opcoes de instalacao self-hosted: Quickstart, Juju e Manual; a pagina de instalacao tambem lista LXD para cenarios de container de teste/dev. [CITED: https://documentation.ubuntu.com/landscape/explanation/landscape/self-hosted-landscape/] [CITED: https://documentation.ubuntu.com/landscape/how-to-guides/landscape-installation-and-set-up/] [CITED: https://documentation.ubuntu.com/landscape/how-to-guides/landscape-installation-and-set-up/install-in-a-lxd-container/]
+- Quickstart para Landscape Server 24.04/26.04 pede Ubuntu 22.04 ou 24.04, 2 vCPU, 8 GB RAM, 20 GB de disco e acesso TCP 80/443; isso cabe como baseline de pequeno porte para a nossa infra, mas precisa de gate de recursos antes do deploy live. [CITED: https://documentation.ubuntu.com/landscape/how-to-guides/landscape-installation-and-set-up/quickstart-installation/]
+- O servidor Landscape precisa de acesso externo a fontes como USN, Ubuntu archives, `landscape.canonical.com`, PPAs, Ubuntu Pro/ESM e Snapcraft dependendo dos recursos usados; isso deve virar checklist de firewall/egress antes do deploy. [CITED: https://documentation.ubuntu.com/landscape/explanation/landscape/self-hosted-landscape/]
+- Nao foi encontrado, na documentacao oficial consultada em 2026-06-24, um caminho primario "Podman/K3s puro" equivalente ao quickstart/manual/Juju/LXD. Portanto, Podman/K3s deve ser tratado como empacotamento da nossa infra com validacao propria, e o plano precisa manter fallback suportado para LXD/VM/Juju se a embalagem nao ficar estavel. [INFERRED from cited official installation docs]
 
 ## Project Constraints (from AGENTS.md)
 
@@ -57,7 +69,8 @@ Omni Fleet ja tem a base correta para substituir a dependencia operacional prima
 | GOV-07 | Repository/source profiles para APT `.sources`, PPAs, Ubuntu Pro ESM, sem secrets. | 23-03 deve adicionar source profiles e redaction. [VERIFIED: .planning/REQUIREMENTS.md] |
 | GOV-08 | CVE/USN/security reporting central por pacote/origem/host. | 23-02/23-03 devem coletar `pro security-status`, `pro cves` e APT security origin. [CITED: https://documentation.ubuntu.com/pro-client/en/v32/references/commands/] |
 | GOV-09 | Execucao remota continua via agent local, allowlist e `TbUpdatePlans`; sem SSH apply generico. | 23-03 deve preservar `queue-update` + `agent once/loop`. [VERIFIED: docs/fleet/control-plane.md] |
-| GOV-10 | Docs declaram quando Landscape ainda e necessario. | 23-04 deve declarar tradeoffs de SaaS, UI, compliance e suporte Canonical. [CITED: https://documentation.ubuntu.com/landscape/] |
+| GOV-10 | Docs declaram o papel do Landscape na operacao hibrida. | 23-04 deve declarar Landscape para maquinas Ubuntu, Omni para governanca/auditoria, Cockpit para break-glass e K3s/Portainer para cluster/workloads. [CITED: https://documentation.ubuntu.com/landscape/] |
+| GOV-11 | Self-hosted Landscape planejado para Podman/K3s com validacao de recursos, portas, certificados, Pro/licenca, registro de clientes, rollback e fallback. | 23-05 deve produzir plano/deploy manifests/runbook e nao declarar Podman/K3s como oficialmente suportado sem validacao nossa. [CITED: https://documentation.ubuntu.com/landscape/explanation/landscape/self-hosted-landscape/] |
 </phase_requirements>
 
 ## Architectural Responsibility Map
@@ -101,6 +114,7 @@ Omni Fleet ja tem a base correta para substituir a dependencia operacional prima
 - PgBouncer is the required node/client database endpoint at `10.1.1.1:6432`; direct PostgreSQL from nodes is blocked by design. [VERIFIED: docs/fleet/control-plane.md]
 - `omni fleet queue-update` writes executable plans; target hosts execute locally via `omni fleet agent once/loop`. [VERIFIED: cli/omni/fleet.py]
 - Existing Phase 16 edge-auth code and docs provide Cloudflare Access + Basic Auth fallback machinery, but live Access remains blocked until dashboard enablement. [VERIFIED: .planning/phases/16-m005-cloudflare-access/16-SUMMARY.md]
+- `managed-apps` ja entrega um padrao local/fleet para `programs`, `repositories`, `policies` e `customizations` em Chromium/Firefox/Bitwarden, com manifesto versionado, verificacao local e probe remoto por host; isso inclui `chromium-google-browser-defaults` para busca Google e homepage/startup `https://google.com.br` nos quatro hosts. [VERIFIED: cli/omni/managed_apps.py] [VERIFIED: modules/managed-apps/configs/programs.json] [VERIFIED: modules/managed-apps/policies/chromium/omni-browser-defaults.json] [VERIFIED: docs/operations/managed-apps.md]
 
 ## Concrete Missing Work
 
@@ -115,6 +129,7 @@ Omni Fleet ja tem a base correta para substituir a dependencia operacional prima
 - Add migration `0004_governance_profiles.sql` with `TbDesiredStateProfiles`, `TbDesiredStateRules`, `TbRepositoryProfiles`, `TbRepositorySources`, `TbProgramObservations`, `TbDriftFindings`, `TbSecurityFindings`, `TbUpdateProfiles`. [VERIFIED: current migrations lack these tables via rg 2026-06-24]
 - Extend or view `TbPrograms`/`TbVersions` to represent `desired_version`, `source`, `install_type`, `policy`, `drift_status`, and `profile_id` per host/program. [VERIFIED: modules/fleet-control-plane/migrations/0001_fleet_control_plane.sql]
 - Keep raw secrets out: repository profiles may store source URLs, suites/components, enabled state and `secret_ref`, but not Ubuntu Pro tokens, Cloudflare secrets or DB passwords. [VERIFIED: modules/fleet-control-plane/README.md]
+- Reuse `managed-apps` semantics for browser governance instead of duplicating them: `repositories`/`policies`/`customizations` already define the right operator-facing vocabulary for drift checks, including managed Chromium defaults, but Phase 23 must generalize that model into central DB-backed fleet governance beyond browsers. [VERIFIED: cli/omni/managed_apps.py] [VERIFIED: modules/managed-apps/README.md]
 
 ### CLI
 
@@ -124,8 +139,8 @@ Omni Fleet ja tem a base correta para substituir a dependencia operacional prima
 
 ### Docs
 
-- Update `docs/fleet/control-plane.md` with a "Governance without Landscape" section and the new profile/report command contracts. [VERIFIED: docs/fleet/control-plane.md]
-- Add `docs/fleet/landscape-parity.md` with the parity matrix and final decision: "Landscape omitted as operational dependency for this fleet; optional for Canonical SaaS/support/compliance UI." [VERIFIED: 23-CONTEXT.md]
+- Update `docs/fleet/control-plane.md` with a "Governance with Landscape" section and the new profile/report command contracts. [VERIFIED: docs/fleet/control-plane.md]
+- Add `docs/fleet/landscape-parity.md` with the responsibility matrix and final decision: Landscape is complementary Ubuntu machine management; Omni Fleet remains governance/audit/automation; Cockpit remains break-glass; K3s/Portainer remain cluster/workload administration. [VERIFIED: 23-CONTEXT.md]
 - Update `modules/fleet-control-plane/README.md` safe commands and validation list. [VERIFIED: modules/fleet-control-plane/README.md]
 
 ## Security Gates for Cockpit Exposure
@@ -209,9 +224,9 @@ These paths match current module boundaries for schema, validation, tests, docs 
 
 ### Pitfall 4: Security report overclaims compliance
 **What goes wrong:** Omni report is described as formal Canonical compliance/SLA. [VERIFIED: 23-CONTEXT.md]  
-**How to avoid:** document it as practical fleet governance; Landscape remains optional for official support/compliance workflows. [CITED: https://documentation.ubuntu.com/landscape/]
+**How to avoid:** document Omni reporting as practical fleet governance and Landscape as complementary machine management; do not imply Canonical support/SLA or formal compliance unless those workflows are explicitly contracted and configured. [CITED: https://documentation.ubuntu.com/landscape/]
 
-## Recommended 23-01..23-04 Plan Outline
+## Recommended 23-01..23-05 Plan Outline
 
 ### 23-01 - Cockpit edge hardening and access model
 - Audit live Cockpit listener/vhost/DNS state; block direct public `:9090`; decide Access vs Apache auth/SSO vs WireGuard-only based on Phase 16 blocker. [VERIFIED: GOV-01] [VERIFIED: .planning/phases/16-m005-cloudflare-access/16-SUMMARY.md]
@@ -225,9 +240,13 @@ These paths match current module boundaries for schema, validation, tests, docs 
 - Add migration 0004 for desired-state, repository, security, drift and update profiles. [VERIFIED: current migrations]
 - Add CLI `governance drift`, `profiles`, `security report`; preserve `queue-update` as the only execution path. [VERIFIED: GOV-05..GOV-09]
 
-### 23-04 - Landscape parity matrix, runbook and deprecation decision
-- Create `docs/fleet/landscape-parity.md`, update control-plane README/docs, and state: "Landscape omitted now; optional for SaaS/UI/compliance/suporte Canonical." [VERIFIED: GOV-02] [VERIFIED: GOV-10]
-- Add validation script/report that maps GOV-01..GOV-10 to implemented commands/docs/tests. [VERIFIED: .planning/REQUIREMENTS.md]
+### 23-04 - Landscape responsibility matrix and operating model
+- Create `docs/fleet/landscape-parity.md`, update control-plane README/docs, and state the hybrid model: Landscape for Ubuntu machines, Omni Fleet for governanca/auditoria/automacao propria, Cockpit for break-glass, K3s/Portainer for cluster/workloads. [VERIFIED: GOV-02] [VERIFIED: GOV-10]
+- Add validation script/report that maps GOV-01..GOV-11 to implemented commands/docs/tests. [VERIFIED: .planning/REQUIREMENTS.md]
+
+### 23-05 - Self-hosted Landscape deployment on Podman/K3s
+- Prepare `docs/operations/landscape-self-hosted.md`, Podman/K3s packaging contracts and `scripts/validate-landscape-deployment.py` with resource, 80/443, certificate, Ubuntu Pro/licence, client-registration and rollback gates. [VERIFIED: GOV-11]
+- Keep live install/client registration behind G23-5 approval and document fallback to LXD/VM/Juju if Podman/K3s packaging is not stable. [VERIFIED: 23-CONTEXT.md]
 
 ## Environment Availability
 
@@ -262,7 +281,7 @@ These paths match current module boundaries for schema, validation, tests, docs 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|--------------|
 | GOV-01 | Cockpit direct public access blocked/gated | smoke/unit | `python3 scripts/validate-edge-auth.py --expect pre-cutover` plus new Cockpit probe | partial |
-| GOV-02/GOV-10 | parity matrix and decision docs | docs test | `python3 modules/fleet-control-plane/tools/validate_m023.py` | no |
+| GOV-02/GOV-10/GOV-11 | responsibility matrix, Landscape deployment docs and decision docs | docs test | `python3 modules/fleet-control-plane/tools/validate_m023.py` | no |
 | GOV-03/GOV-04 | collectors populate observations | unit | `PYTHONPATH=cli pytest modules/fleet-control-plane/tests/test_m023_governance.py -q` | no |
 | GOV-05/GOV-06/GOV-07/GOV-08/GOV-09 | profiles/security/update gates | unit/schema | `PYTHONPATH=cli pytest modules/fleet-control-plane/tests/test_m023_governance.py -q` | no |
 
@@ -295,17 +314,15 @@ These paths match current module boundaries for schema, validation, tests, docs 
 | A1 | Native package-manager CLIs are preferable to parsing raw status files. | Don't Hand-Roll | Collector implementation may need parser fallback if command output is insufficient. |
 | A2 | Collector commands can remain read-only with subprocess timeouts and no extra packages. | Common Pitfalls / Standard Stack | If output formats are too divergent, planner may need a parser helper module, still without external install. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Cloudflare Access for Cockpit**
    - What we know: Phase 16 is blocked on account-level Access dashboard enablement. [VERIFIED: .planning/phases/16-m005-cloudflare-access/16-SUMMARY.md]
-   - What's unclear: whether Giovanni wants Cockpit behind Access now or WireGuard/Apache auth until Access is enabled. [ASSUMED]
-   - Recommendation: plan 23-01 with fallback path; do not block GOV-01 on Access if Apache auth/SSO or WireGuard closes public 9090. [VERIFIED: GOV-01]
+   - RESOLVED: 23-01 implements a fallback path and does not block GOV-01 on Cloudflare Access. Acceptable execution outcomes are Cloudflare Access, Apache auth/SSO, WireGuard-only, or fully blocked direct Cockpit exposure, as long as anonymous public `:9090` is closed. [VERIFIED: GOV-01]
 
 2. **Formal compliance requirement**
    - What we know: context excludes formal compliance/SLA and Landscape SaaS reimplementation. [VERIFIED: 23-CONTEXT.md]
-   - What's unclear: whether future customer/audit needs will require Canonical Landscape reports. [ASSUMED]
-   - Recommendation: document Landscape as optional trigger, not Phase 23 dependency. [VERIFIED: GOV-10]
+   - UPDATED: formal Canonical compliance/SLA reporting is still out of scope for Phase 23, but Landscape self-hosted is now in scope as a complementary machine-management layer. 23-04 documents this operating model and 23-05 handles deployment gates. [VERIFIED: GOV-10] [VERIFIED: GOV-11]
 
 ## Sources
 

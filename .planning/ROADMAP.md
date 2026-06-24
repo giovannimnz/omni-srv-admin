@@ -443,6 +443,22 @@ Plans:
 - [x] host renomeado + toolchain instalada + node-exporter
 - [x] inventário omni + DB upsert + VPN/CoreDNS + vault sed + gbrain sync + network map v1.4.0
 
+### Phase 23: Omni Fleet Governance com Landscape complementar
+
+**Goal:** Implementar Landscape self-hosted como camada complementar de administracao das maquinas Ubuntu, mantendo Cockpit como console web por host, Omni Fleet como control plane central de inventario/programas/versoes/update plans/auditoria, Portainer/K3s como administracao do cluster e observability existente como camada de alertas.
+**Requirements**: GOV-01, GOV-02, GOV-03, GOV-04, GOV-05, GOV-06, GOV-07, GOV-08, GOV-09, GOV-10, GOV-11
+**Depends on:** Phase 22
+**Plans:** 5 plans
+**Status:** PLANNING
+
+Plans:
+
+- [ ] 23-01 — Cockpit edge hardening and access model
+- [ ] 23-02 — Fleet package/program/version collectors
+- [ ] 23-03 — Desired-state profiles and approved update execution
+- [ ] 23-04 — Landscape parity matrix, runbook and operating model
+- [ ] 23-05 — Self-hosted Landscape deployment on Podman/K3s
+
 ---
 
 ## Phase 8: Rebrand fork-sync submodule
