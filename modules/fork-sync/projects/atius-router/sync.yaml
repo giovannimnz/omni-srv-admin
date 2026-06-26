@@ -16,11 +16,11 @@ container_mirror_status: repaired_git_worktree
 legacy_container_mirror: /home/ubuntu/GitHub/containers/Atius/router-ai-atius
 
 protected_paths:
-  # Feature: middleware and custom container build chain
+  # Feature: retired middleware artifacts must not become canonical runtime again
   - integration/middleware/
   - runtime/model-detailed/
   - Dockerfile.fastapi
-  # Feature: Docker Compose with middleware service
+  # Feature: Docker/Podman config; /v1 runtime is Go-only in production
   - docker-compose.yml
   - podman-compose.yml
   # Feature: i18n Brazilian Portuguese
@@ -32,10 +32,30 @@ protected_paths:
   - controller/codex_*.go
   - service/codex_*.go
   - relay/channel/codex/
+  - relay/channel/minimax/
+  - relay/channel/deepseek/
+  - relay/common/relay_utils.go
+  - relay/common/relay_utils_test.go
+  - relay/embedding_handler.go
   - service/openaicompat/policy.go
+  - service/embeddinggovernor/
+  - constant/channel.go
+  - common/endpoint_type.go
+  - common/endpoint_type_test.go
+  - dto/embedding.go
   - dto/channel_settings.go
   - router/api-router.go
   - web/default/src/features/channels/
+  - web/default/scripts/sync-i18n.mjs
+  - web/classic/src/constants/channel.constants.js
+  # Feature: Go-native model catalog, base URL normalization and Codex embeddings route
+  - .dockerignore
+  - controller/model.go
+  - controller/model_list_test.go
+  - service/modelcatalog/
+  # Feature: Provider consolidation operational CLI guards
+  - tools/clianything.py
+  - tests/test_clianything.py
   # Feature: Documentation and planning
   - README.md
   - README.en.md

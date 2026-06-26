@@ -23,6 +23,7 @@ fork-sync/
     └── atius-router/
         ├── sync.yaml          # Main config
         ├── README.md          # This file
+        ├── UPSTREAM-SYNC-GUARDS.md # Current fork-specific merge guards
         ├── PROTECTED.md       # Detailed protected files documentation
         └── VERSIONS.md        # Release history
 ```
@@ -39,14 +40,13 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 
 ## Protected Files Summary
 
-### Middleware and containers
-- `integration/middleware/` — FastAPI/Go middleware assets and build files
-- `runtime/model-detailed/` — live FastAPI middleware overrides used by `model-detailed-hotfix`
-- `Dockerfile.fastapi` — local container customization
+### Retired Middleware and Containers
+- `integration/middleware/` — historical middleware assets; do not restore as canonical `/v1/` owner
+- `runtime/model-detailed/` — legacy FastAPI middleware source retained only as history/fallback reference; not runtime
+- `Dockerfile.fastapi` — retired local container customization
 
 ### Infrastructure
-- `docker-compose.yml` — Docker Compose with `model-detailed` Python service
-- `podman-compose.yml` — current host Podman stack definition for `atius-ai-router`
+- `docker-compose.yml` / `podman-compose.yml` — protected infra definitions; production `/v1/` is Go-only on port `3000`
 
 ### i18n — Portuguese Translation
 - `i18n/locales/pt.yaml` — Brazilian Portuguese backend translations (278 keys)
@@ -62,6 +62,19 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 - `service/openaicompat/policy.go` — chat-to-responses routing
 - `dto/channel_settings.go`, `router/api-router.go` — API/router deltas
 - `web/default/src/features/channels/` — fork-specific channel UI
+
+### Go-native model catalog, Codex embeddings and provider consolidation
+- `.dockerignore` — keeps runtime `backups/`, `data/`, `logs/`, `runtime/` out of build context
+- `controller/model.go`, `controller/model_list_test.go` — public `/v1/models` contract and regression tests
+- `service/modelcatalog/` — deterministic model catalog projection and ordering
+- `relay/common/relay_utils.go`, `relay/common/relay_utils_test.go` — base URL normalization, including trailing `/v1`
+- `relay/embedding_handler.go`, `service/embeddinggovernor/` — local TEI embeddings governor inside the Go router, with no Python sidecar
+- `relay/channel/codex/`, `service/codex_*.go` — Codex OAuth chat/responses/embeddings, sharing the same OAuth credential
+- `common/endpoint_type.go`, `dto/embedding.go`, `relay/channel/minimax/`, `relay/channel/deepseek/` — single-channel MiniMax/DeepSeek routing across OpenAI/Anthropic/embeddings where supported
+- `constant/channel.go`, frontend channel constants and i18n locale files — canonical label `OpenAI - Codex`
+- `tools/clianything.py`, `tests/test_clianything.py` — legacy `phase19-apply` now consolidates channels and `clone-keyed` blocks split-channel recreation by default
+
+See `UPSTREAM-SYNC-GUARDS.md` before any upstream merge.
 
 ### Documentation (fork-specific, PT-BR primary)
 - `README.md` — Portuguese (BR) README — primary language
@@ -100,7 +113,9 @@ Example: `0.12.14.2` — based on upstream `0.12.14`, fork suffix `.2`
 |---------|-------------------|----------------------|
 | Primary language | English / Chinese | Portuguese (BR) |
 | Default models | Various | MiniMax + DeepSeek focused |
-| Middleware | None | Python FastAPI enrichment layer |
+| Middleware | None | Runtime `/v1/` is full-Go; legacy Python/FastAPI helper is retired history |
+| Codex embeddings | None | `text-embedding-3-*` routed through channel 5 `OpenAI - Codex` |
+| MiniMax/DeepSeek routing | Provider-specific defaults | One active channel per provider, with Go selecting OpenAI/Anthropic/embeddings paths automatically |
 | Documentation | EN/ZH | PT-BR primary, EN copy |
 | Version scheme | Standard semver | `X.Y.Z.N` fork suffix |
-| Docker Compose | Basic | With `model-detailed` Python service |
+| Docker Compose | Basic | Podman/Docker stack with Go router only for canonical `/v1/` |
