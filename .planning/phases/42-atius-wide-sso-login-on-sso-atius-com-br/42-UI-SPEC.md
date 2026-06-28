@@ -1,10 +1,11 @@
 ---
 phase: 42
 slug: atius-wide-sso-login-on-sso-atius-com-br
-status: draft
+status: approved
 shadcn_initialized: true
 preset: shadcn default / radix / neutral / lucide
 created: 2026-06-28
+reviewed_at: 2026-06-28T03:59:17-03:00
 ---
 
 # Phase 42 — UI Design Contract
@@ -201,11 +202,11 @@ Do not add third-party UI registries, animation libraries, or visual assets for 
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved by `gsd-ui-checker` on 2026-06-28T03:59:17-03:00.

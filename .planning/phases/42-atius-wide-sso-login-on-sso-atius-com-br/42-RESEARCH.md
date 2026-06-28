@@ -477,27 +477,23 @@ Expected attributes for production legacy cookie: `Domain=.atius.com.br`, `Path=
 | A3 | Keycloak 26.5.2 Context7 docs are materially applicable to the local Keycloak 26.6.3 OIDC/reverse-proxy behavior. [ASSUMED] | Standard Stack / Patterns | If false, planner must re-check exact 26.6.3 release docs before implementation. |
 | A4 | ATS can map Keycloak user identity to an ATS user via email/username without collisions. [ASSUMED] | Runtime State Inventory | If false, implementation needs an explicit linking table or manual migration. |
 
-## Open Questions
+## Open Questions (RESOLVED)
 
 1. **Where should the SSO facade live?**  
    What we know: ATS already has Next route handlers and cookie/logout code. [VERIFIED: ATS frontend code]  
-   What's unclear: Whether `sso.atius.com.br` should proxy to the existing ATS Next process or a separate minimal service. [ASSUMED]  
-   Recommendation: Plan Wave 0 decision after checking vhost/process blast radius; default to existing ATS Next only if routing stays isolated.
+   Resolution: Plan `sso.atius.com.br` as a facade hosted by the existing ATS Next process first. This is the lowest-change path because it can reuse route handlers, UI components, cookie behavior, and current ATS runtime health. Execution must still inventory the vhost/process blast radius before enabling the edge route; if that inventory shows host-routing isolation is unsafe, the task must stop and document a separate-service follow-up instead of forcing the change. [RESOLVED: planning decision from Phase 42 context + pattern map]
 
 2. **What is the final Keycloak client model?**  
    What we know: Phase 36 used `phase36-smoke` for smoke and no app migration. [VERIFIED: Phase 36 docs]  
-   What's unclear: Client ID, confidential/public type, redirect URIs, web origins, and post-logout URIs for `sso.atius.com.br`. [VERIFIED: no Keycloak admin export read in this research]  
-   Recommendation: Planner must add a no-secrets Keycloak client inventory/export step and a gated admin apply step.
+   Resolution: Plan a dedicated no-secrets Keycloak client checkpoint for `sso.atius.com.br`. Required target fields are client ID, confidential/public type, redirect URI `https://sso.atius.com.br/api/sso/callback`, web origins limited to Atius hosts required by the facade, post-logout redirect URI on `https://sso.atius.com.br`, and a root-only client-secret file path if the client is confidential. Discovery alone is not enough; execution must inventory/export/apply/check these fields without copying secret values. [RESOLVED: checker-driven planning constraint]
 
 3. **How will ATS users link to Keycloak users?**  
    What we know: ATS auth/RBAC uses local user IDs and active flags. [VERIFIED: ATS auth/RBAC code]  
-   What's unclear: Whether FreeIPA/Keycloak usernames/emails uniquely match ATS users. [ASSUMED]  
-   Recommendation: Plan read-only DB and Keycloak user mapping audit before issuing ATS cookies from OIDC callbacks.
+   Resolution: Plan a read-only mapping audit before issuing ATS cookies from OIDC callbacks. The first implementation may map by verified email/username only when it finds one active ATS `"user"` row and no collision; zero or multiple matches must fail closed and produce a non-secret error. Role/permission mapping is explicitly out of scope for this phase, so `is_admin` and `can_access_*` stay in ATS DB. [RESOLVED: D-03/D-04 compatibility rule]
 
 4. **How will Cloudflare state be applied?**  
    What we know: `cloudflared`, `cfcli`, and `wrangler` were not available on this host, and no live Cloudflare mutation was performed. [VERIFIED: command availability audit]  
-   What's unclear: Whether Cloudflare DNS/API access is via dashboard, another tool, or existing inventory. [ASSUMED]  
-   Recommendation: Planner must include a manual/API checkpoint for DNS/proxy/TLS with before/after screenshots or API export.
+   Resolution: Treat Cloudflare/DNS/TLS publication as a blocking manual/API checkpoint in Phase 42. The plan must require before-state capture, exact intended DNS/proxy/TLS fields, approval after local `--resolve` smoke, and after-state evidence. No agent may install a Cloudflare CLI, mutate DNS, or publish the host without a separate package/tool legitimacy review and explicit operator approval. [RESOLVED: available tooling + no-secret/no-live-mutation constraint]
 
 ## Environment Availability
 
