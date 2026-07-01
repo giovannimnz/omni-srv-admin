@@ -1,8 +1,8 @@
 ---
 project: atius-router
-version: 2
+version: 5
 created: 2026-06-04
-last_updated: 2026-06-11
+last_updated: 2026-06-18
 generator: fork-sync manuals generate
 ---
 
@@ -46,10 +46,24 @@ Estes paths são preservados em conflito (nunca sobrescritos pelo upstream):
 - `controller/codex_*.go`
 - `service/codex_*.go`
 - `relay/channel/codex/`
+- `relay/channel/minimax/`
+- `relay/channel/deepseek/`
 - `service/openaicompat/policy.go`
+- `constant/channel.go`
+- `common/endpoint_type.go`
+- `common/endpoint_type_test.go`
+- `dto/embedding.go`
 - `dto/channel_settings.go`
 - `router/api-router.go`
 - `web/default/src/features/channels/`
+- `web/default/scripts/sync-i18n.mjs`
+- `web/classic/src/constants/channel.constants.js`
+- `.dockerignore`
+- `controller/model.go`
+- `controller/model_list_test.go`
+- `service/modelcatalog/`
+- `tools/clianything.py`
+- `tests/test_clianything.py`
 - `README.md`
 - `README.en.md`
 - `docs/`
@@ -63,7 +77,7 @@ Estes paths são preservados em conflito (nunca sobrescritos pelo upstream):
 Documentar aqui as customizações que diferenciam este fork do upstream:
 
 - **Identidade visual:** logos, cores, naming
-- **Funcionalidades extras:** Codex OAuth/device/models + middleware
+- **Funcionalidades extras:** Codex OAuth/device/models, Codex embeddings compartilhando a credencial OAuth do channel 5, catalogo Go-native em `/v1/models`, MiniMax/DeepSeek consolidados em um canal ativo por provider, runtime `/v1/` full-Go e normalizacao de `base_url` com `/v1`
 - **Configurações locais:** endpoints, paths
 - **i18n:** traduções adicionadas
 
@@ -74,6 +88,11 @@ Exemplo:
 - `web/default/public/logo.png` — Logo do Atius, não usar o do new-api upstream
 - `i18n/locales/pt.yaml` — Tradução PT-BR adicionada manualmente
 - `controller/codex_*.go` — Fluxos do canal Codex fora do upstream
+- `controller/model.go` / `service/modelcatalog/` — `/v1/models` Go-owned, sem `pricing_version` publico, com ordenacao deterministica por provider/versao/variante
+- `relay/common/relay_utils.go` — normaliza `base_url` com slash final ou `/v1`, evitando `/v1/v1`
+- `common/endpoint_type.go` / `relay/channel/minimax/` / `relay/channel/deepseek/` — MiniMax type=35 e DeepSeek type=43 roteiam OpenAI/Anthropic/embeddings automaticamente sem canais duplicados
+- `tools/clianything.py` — `phase19-apply` aplica consolidacao e `clone-keyed` bloqueia recriacao de split channels por padrao
+- `.dockerignore` — Protege o build contra runtime data/logs/backups no worktree de producao
 
 Se adicionar rebrand:
 1. Adicionar path em `protected_paths` no `sync.yaml`
@@ -109,7 +128,14 @@ Se adicionar rebrand:
 
 ## 7. Troubleshooting Específico
 
-_Documentar aqui problemas recorrentes deste fork._
+- Antes de sync real, ler `projects/atius-router/UPSTREAM-SYNC-GUARDS.md`.
+- Se `/v1/models` voltar a depender de `model-detailed`, abortar o merge e restaurar `controller/model.go` + `service/modelcatalog/`.
+- Se `pricing_version` aparecer no payload publico de `/v1/models`, abortar o merge e restaurar o contrato Go.
+- Se `text-embedding-3-*` sair do channel 5 `OpenAI - Codex` para um canal OpenAI separado ativo, abortar o merge; a regra do fork e compartilhar a credencial OAuth do Codex.
+- Se MiniMax ou DeepSeek voltarem a depender de canais ativos separados por protocolo (`*-OpenAI-Compatible`, `*-Anthropic-Compatible`, `*-Embeddings`), abortar o merge e restaurar a consolidacao Go-native.
+- `429 insufficient_quota` em Codex embeddings depois de selecionar o channel 5 e quota/licenca upstream, nao necessariamente falha local de roteamento.
+- Se `/v1/` voltar a apontar para `model-detailed`, `127.0.0.1:3300`, `127.0.0.1:3399` ou pod port `3001`, abortar o sync/deploy e restaurar o runtime full-Go.
+- Se um provider `base_url=https://.../v1` gerar `/v1/v1/...`, restaurar `relay/common/relay_utils.go` e os testes de normalizacao.
 
 ## 8. Histórico de Versões do Manual
 
@@ -117,6 +143,9 @@ _Documentar aqui problemas recorrentes deste fork._
 |--------|------|---------|
 | 1 | 2026-06-04 | Geração inicial via `fork-sync manuals generate` |
 | 2 | 2026-06-11 | Paths protegidos realinhados com o fork atual e sync runner com preflight/checkpoint |
+| 3 | 2026-06-18 | Guardas de sync para `/v1/models` Go-native, Codex embeddings no channel 5 e `.dockerignore` de runtime |
+| 4 | 2026-06-18 | Guardas para consolidacao MiniMax/DeepSeek em canal unico, label `OpenAI - Codex` e CLIAnything anti-split |
+| 5 | 2026-06-18 | Runtime `/v1/` full-Go definitivo, model-detailed retired e normalizacao de `base_url` com `/v1` |
 
 ---
 

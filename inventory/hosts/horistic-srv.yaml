@@ -14,6 +14,37 @@ platform:
   arch: arm64
 status: active
 modules: []
+apps:
+  - id: pm2-ubuntu
+    runtime: systemd
+    unit: pm2-ubuntu.service
+    install_type: npm-global-plus-systemd
+    install_path: /usr/local/bin/pm2
+    current_version: "7.0.1"
+    desired_state: active-enabled
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-25"
+    installed_on: "2026-06-25"
+    notes:
+      - "Phase 29 runtime repair: installed PM2 globally and created oneshot systemd unit with PM2_HOME=/home/horistic/.pm2."
+  - id: k3s-agent
+    runtime: systemd
+    unit: k3s-agent.service
+    install_type: k3s-install-script
+    install_path: /usr/local/bin/k3s
+    current_version: "v1.35.5+k3s1"
+    desired_state: active-enabled
+    cluster_role: worker
+    cluster_endpoint: "https://10.1.1.1:6443"
+    node_name: horistic-srv
+    node_ip: 10.1.1.4
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-25"
+    installed_on: "2026-06-25"
+    notes:
+      - "Phase 29 runtime repair: joined existing K3s cluster as worker agent, not etcd/control-plane, to avoid making the HA etcd set even-numbered."
 logs:
   local_dir: /home/horistic/.logs
   retention_days: 15

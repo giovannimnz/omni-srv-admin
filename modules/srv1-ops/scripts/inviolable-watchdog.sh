@@ -173,6 +173,12 @@ pm2_app_online() {
     '.[] | select(.name == $name and .pm2_env.status == "online")' >/dev/null 2>&1
 }
 
+pm2_app_online_or_waiting() {
+  local app="$1"
+  timeout 8s "$PM2_BIN" jlist 2>/dev/null | jq -e --arg name "$app" \
+    '.[] | select(.name == $name and (.pm2_env.status == "online" or .pm2_env.status == "waiting restart"))' >/dev/null 2>&1
+}
+
 pm2_start_ecosystem() {
   local ecosystem="$1"
   timeout 60s "$PM2_BIN" start "$ecosystem" --update-env
@@ -207,12 +213,24 @@ atius_router_containers_ok() {
 
 atius_pm2_stack_ok() {
   pm2_app_online "atius-api" &&
+    pm2_app_online "atius-web" &&
     pm2_app_online "atius-webhook-signals" &&
-    pm2_app_online "atius-divap-indicator"
+    pm2_app_online "atius-divap-indicator" &&
+    pm2_app_online "atius-strategy-builder" &&
+    pm2_app_online_or_waiting "atius-unified-bot-launcher" &&
+    nc -z 127.0.0.1 8015 >/dev/null 2>&1 &&
+    nc -z 127.0.0.1 8199 >/dev/null 2>&1
 }
 
-horistic_api_ok() {
-  pm2_app_online "horistic-api"
+horistic_pm2_stack_ok() {
+  pm2_app_online "horistic-api" &&
+    pm2_app_online "horistic-web" &&
+    pm2_app_online "horistic-webhook-signals" &&
+    pm2_app_online "horistic-divap-indicator" &&
+    pm2_app_online_or_waiting "horistic-unified-bot-launcher" &&
+    nc -z 127.0.0.1 8050 >/dev/null 2>&1 &&
+    nc -z 127.0.0.1 3050 >/dev/null 2>&1 &&
+    nc -z 127.0.0.1 8099 >/dev/null 2>&1
 }
 
 hermes_telegram_ok() {
@@ -242,8 +260,8 @@ start_wg0() {
   systemctl_system_start "wg-quick@wg0"
 }
 
-start_horistic_api() {
-  pm2_start_ecosystem_only "$HORISTIC_ECOSYSTEM" "horistic-api"
+start_horistic_stack() {
+  pm2_start_ecosystem "$HORISTIC_ECOSYSTEM"
 }
 
 start_atius_web() {
@@ -317,14 +335,14 @@ else
   guarded_relaunch "atius-router-docs" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" systemctl_user_start "atius-router-docs.service"
 fi
 
-if horistic_api_ok; then
-  mark_ok "horistic-api" "pm2-online"
+if horistic_pm2_stack_ok; then
+  mark_ok "horistic-pm2" "pm2-apps-online-ports-3050-8050-8099"
 else
-  guarded_relaunch "horistic-api" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" start_horistic_api
+  guarded_relaunch "horistic-pm2" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" start_horistic_stack
 fi
 
 if atius_pm2_stack_ok; then
-  mark_ok "ats-pm2" "pm2-apps-online"
+  mark_ok "ats-pm2" "pm2-apps-online-ports-8015-8199"
 else
   guarded_relaunch "ats-pm2" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" start_atius_stack
 fi

@@ -1,0 +1,14 @@
+[Unit]
+Description=Periodic read-only production guard verification timer
+Requires=production-guard.service
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=2h
+AccuracySec=5min
+Persistent=true
+RandomizedDelaySec=10min
+
+[Install]
+WantedBy=timers.target
+

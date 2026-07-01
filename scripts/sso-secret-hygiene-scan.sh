@@ -10,13 +10,17 @@ targets=(
   "${PHASE_DIR}"
   "${OMNI_ROOT}/scripts/sso-edge-smoke.sh"
   "${OMNI_ROOT}/scripts/sso-secret-hygiene-scan.sh"
+  "${OMNI_ROOT}/scripts/keycloak-sso-client-check.sh"
   "${ATS_ROOT}/tests/backend/auth/test_sso_redirect_allowlist.test.js"
   "${ATS_ROOT}/tests/backend/auth/test_sso_oidc_bridge.test.js"
   "${ATS_ROOT}/tests/backend/auth/test_sso_auth_endpoints.runtime.test.js"
   "${ATS_ROOT}/tests/frontend/e2e/test_sso_global_logout.spec.ts"
   "${ATS_ROOT}/frontend/src/lib/sso"
   "${ATS_ROOT}/frontend/src/app/api/sso"
+  "${ATS_ROOT}/frontend/src/middleware.ts"
+  "${OMNI_ROOT}/modules/mt5-remote-auth"
   "${OMNI_ROOT}/docs/domain/atius-wide-sso.md"
+  "/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-28-phase42-atius-wide-sso.md"
 )
 
 python3 - "${targets[@]}" <<'PY'

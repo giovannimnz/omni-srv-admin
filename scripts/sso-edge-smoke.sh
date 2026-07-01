@@ -6,6 +6,8 @@ OMNI_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 
 DRY_RUN=false
 LOCAL_MODE=false
+ASSERT_STATUS=false
+ASSERT_HEADERS=false
 APP_HOSTS=(
   "trade.atius.com.br"
   "painel.atius.com.br"
@@ -22,6 +24,8 @@ Usage: bash scripts/sso-edge-smoke.sh [--dry-run] [--local] [--assert-app-hosts 
 Modes:
   --dry-run            Print planned checks and rollback prerequisites only.
   --local              Run local Apache/curl/json/header assertions.
+  --assert-status      Assert HTTP status and redirect targets.
+  --assert-headers     Assert explicit Apache forwarded-header contracts.
   --assert-app-hosts   Override the default six ATS app hosts.
 EOF
 }
@@ -46,6 +50,12 @@ parse_args() {
       --local)
         LOCAL_MODE=true
         ;;
+      --assert-status)
+        ASSERT_STATUS=true
+        ;;
+      --assert-headers)
+        ASSERT_HEADERS=true
+        ;;
       --assert-app-hosts)
         [[ $# -ge 2 ]] || {
           echo "--assert-app-hosts requires a comma-separated value" >&2
@@ -68,7 +78,7 @@ parse_args() {
   done
 }
 
-assert_vhost_forwarded_header() {
+assert_vhost_forwarded_contract() {
   local host="$1"
   local vhost_file="/etc/apache2/sites-available/${host}.conf"
   [[ -f "${vhost_file}" ]] || {
@@ -76,8 +86,41 @@ assert_vhost_forwarded_header() {
     return 1
   }
 
-  if ! rg -n "RequestHeader set X-Forwarded-Host \"${host}\"" "${vhost_file}" >/dev/null 2>&1; then
-    echo "Missing explicit forwarded-host contract in ${vhost_file}" >&2
+  rg -n "RequestHeader set X-Forwarded-Host \"${host}\"" "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-Host contract in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-Proto "https"' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-Proto contract in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-Port "443"' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-Port contract in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-For %\{REMOTE_ADDR\}s' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-For contract in ${vhost_file}" >&2; return 1; }
+}
+
+assert_sso_vhost_contract() {
+  local vhost_file="/etc/apache2/sites-available/sso.atius.com.br.conf"
+
+  [[ -f "${vhost_file}" ]] || {
+    echo "Missing Apache vhost: ${vhost_file}" >&2
+    return 1
+  }
+
+  rg -n 'ProxyPreserveHost On' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing ProxyPreserveHost in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-Host "sso\.atius\.com\.br"' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-Host contract in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-Proto "https"' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-Proto contract in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-Port "443"' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-Port contract in ${vhost_file}" >&2; return 1; }
+  rg -n 'RequestHeader set X-Forwarded-For %\{REMOTE_ADDR\}s' "${vhost_file}" >/dev/null 2>&1 ||
+    { echo "Missing explicit X-Forwarded-For contract in ${vhost_file}" >&2; return 1; }
+}
+
+assert_sso_vhost_enabled() {
+  local vhost_real
+  vhost_real="$(readlink -f /etc/apache2/sites-available/sso.atius.com.br.conf)"
+  if ! find /etc/apache2/sites-enabled -maxdepth 1 -type l -print0 2>/dev/null | xargs -0 -r readlink -f | grep -Fx "${vhost_real}" >/dev/null 2>&1; then
+    echo "sso.atius.com.br vhost exists but is not enabled in /etc/apache2/sites-enabled; local HTTP smoke would still hit the current live config until an explicit enable+reload gate is approved." >&2
     return 1
   fi
 }
@@ -200,7 +243,9 @@ run_app_host_smoke() {
     fi
 
     assert_redirect_target "${host}" "${headers_file}"
-    assert_vhost_forwarded_header "${host}"
+    if [[ "${ASSERT_HEADERS}" == "true" || "${ASSERT_STATUS}" == "false" ]]; then
+      assert_vhost_forwarded_contract "${host}"
+    fi
   done
 }
 
@@ -232,21 +277,40 @@ main() {
     exit 1
   }
 
+  if [[ "${ASSERT_STATUS}" == "false" && "${ASSERT_HEADERS}" == "false" ]]; then
+    ASSERT_STATUS=true
+    ASSERT_HEADERS=true
+  fi
+
   require_cmd apache2ctl
+  require_cmd find
   require_cmd rg
   require_cmd python3
 
   log "Running apache2ctl configtest"
   apache2ctl configtest >/dev/null
 
-  log "Running local sso.atius.com.br login smoke"
-  run_login_smoke
+  if [[ "${ASSERT_HEADERS}" == "true" ]]; then
+    log "Checking static Apache forwarded-header contracts"
+    assert_sso_vhost_contract
+    for host in "${APP_HOSTS[@]}"; do
+      assert_vhost_forwarded_contract "${host}"
+    done
+  fi
 
-  log "Running Keycloak discovery smoke"
-  run_keycloak_discovery_smoke
+  if [[ "${ASSERT_STATUS}" == "true" ]]; then
+    log "Checking whether sso.atius.com.br is enabled before live HTTP smoke"
+    assert_sso_vhost_enabled
 
-  log "Running ATS app-host redirect/header assertions"
-  run_app_host_smoke
+    log "Running local sso.atius.com.br login smoke"
+    run_login_smoke
+
+    log "Running Keycloak discovery smoke"
+    run_keycloak_discovery_smoke
+
+    log "Running ATS app-host redirect/header assertions"
+    run_app_host_smoke
+  fi
 
   log "Edge smoke passed."
 }

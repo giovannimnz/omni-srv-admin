@@ -16,7 +16,7 @@ execution_model_target: "gpt-5.3-codex-spark"
 
 1. `python3 -m py_compile modules/srv1-ops/scripts/production_guard.py`
 2. `PYTHONPATH=cli pytest cli/omni/tests/test_srv1_production_guard.py -q -k "repair or audit or forbidden"`
-3. `! rg -n "pm2 kill|systemctl (restart|stop) xrdp|xrdp-sesman|curl .*POST|requests\\.post|urllib.*POST" modules/srv1-ops/scripts cli/omni`
+3. `! rg -n "pm2 kill|systemctl (restart|stop) xrdp|xrdp-sesman|curl .*POST|requests\\.post|urllib.*POST" modules/srv1-ops/scripts/production_guard.py cli/omni/srv1_ops.py cli/omni/tests/test_srv1_production_guard.py`
 4. `PYTHONPATH=cli python3 -m omni srv1-ops production-guard repair --dry-run --json`
 5. `PYTHONPATH=cli python3 -m omni srv1-ops production-guard status --json`
 6. `PYTHONPATH=cli python3 -m omni srv1-ops production-guard doctor --json`

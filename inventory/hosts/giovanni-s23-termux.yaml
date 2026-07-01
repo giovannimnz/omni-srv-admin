@@ -12,13 +12,12 @@ platform:
   device: samsung-galaxy-s23
   os: termux
   arch: arm64
-status: planned
+status: active
 modules: []
 constraints:
   - no-systemd
   - termux-paths
   - cronie-runsv-for-scheduled-jobs
-  - client-wireguard-config-generated-for-10.1.1.6-import-pending-on-device
 logs:
   local_dir: /data/data/com.termux/files/home/.logs
   retention_days: 15
@@ -31,4 +30,5 @@ notes:
   dns_name: GIOVANNI-S23
   dns_validation: "CoreDNS and fleet /etc/hosts resolve GIOVANNI-S23 to 10.1.1.6."
   client_config: "/home/ubuntu/.secure/omni-srv-admin/wireguard-rotation-20260617-142224/client-configs/GIOVANNI-S23-wg0-10.1.1.6.conf"
-  live_handshake: "pending until the new config is imported on the phone; SSH 10.1.1.6:8022 returned no route after server-side key rotation."
+  live_handshake: "2026-06-26: SRV1 reached ubuntu@10.1.1.6:8022; Termux reported HOME=/data/data/com.termux/files/home and vault clean/aligned."
+  codex_gbrain_obsidian: "2026-06-26: Codex and Hermes configured with GBrain and Obsidian MCP bridges over restricted SSH to SRV1."

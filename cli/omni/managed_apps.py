@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import os
 import shlex
+import hashlib
 import subprocess
 import sys
 from pathlib import Path
@@ -143,6 +144,34 @@ def _policy_status(program: dict[str, Any]) -> dict[str, Any] | None:
         "expected": expected,
         "present": present,
         "ok": path.exists() and present,
+    }
+
+
+def _sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _json_string_value_status(path_value: str, key: str, expected: str) -> dict[str, Any]:
+    path = Path(os.path.expanduser(path_value))
+    try:
+        payload = json.loads(path.read_text()) if path.exists() else {}
+        read_error = ""
+    except Exception as exc:
+        payload = {}
+        read_error = str(exc)
+    actual = payload.get(key) if isinstance(payload, dict) else None
+    return {
+        "path": str(path),
+        "exists": path.exists(),
+        "key": key,
+        "expected": expected,
+        "actual": actual,
+        "ok": path.exists() and not read_error and actual == expected,
+        "read_error": read_error,
     }
 
 
@@ -326,6 +355,146 @@ def _extension_status(name: str, program: dict[str, Any]) -> dict[str, Any]:
     }
 
 
+def _manual_appimage_status(name: str, program: dict[str, Any]) -> dict[str, Any]:
+    install_dir = Path(os.path.expanduser(str(program.get("install_dir") or "")))
+    stable = Path(os.path.expanduser(str(program.get("stable_appimage") or install_dir / "Obsidian.AppImage")))
+    state_file = Path(os.path.expanduser(str(program.get("state_file") or install_dir / "state" / "current-release.json")))
+    desired = str(program.get("desired_version") or "")
+    desired_sha = str(program.get("desired_sha256") or "")
+    installed_sha = ""
+    sha_error = ""
+    if stable.exists():
+        try:
+            installed_sha = _sha256_file(stable.resolve())
+        except Exception as exc:
+            sha_error = str(exc)
+    state: dict[str, Any] = {}
+    state_error = ""
+    if state_file.exists():
+        try:
+            state = json.loads(state_file.read_text())
+        except Exception as exc:
+            state_error = str(exc)
+    installed_version = str(state.get("version") or "")
+    wrapper = _wrapper_status(program)
+    appearance_defaults = program.get("appearance_defaults")
+    appearance = None
+    if isinstance(appearance_defaults, dict):
+        appearance = _json_string_value_status(
+            str(appearance_defaults.get("path") or ""),
+            str(appearance_defaults.get("key") or "titlebarStyle"),
+            str(appearance_defaults.get("value") or "native"),
+        )
+    snap_bad = _snap_installed(str(program.get("primary_package") or name)) if "snap" in program.get("forbidden_package_managers", []) else False
+    checks = [
+        stable.exists(),
+        os.access(stable, os.X_OK),
+        not desired or installed_version == desired,
+        not desired_sha or installed_sha == desired_sha,
+        not state_error,
+        not sha_error,
+        not snap_bad,
+    ]
+    if wrapper is not None:
+        checks.append(bool(wrapper["ok"]))
+    if appearance is not None:
+        checks.append(bool(appearance["ok"]))
+    return {
+        "app": name,
+        "kind": program.get("kind"),
+        "ok": all(checks),
+        "installed": stable.exists(),
+        "installed_version": installed_version,
+        "desired_version": desired,
+        "version_ok": bool(installed_version) and (not desired or installed_version == desired),
+        "stable_appimage": str(stable),
+        "state_file": str(state_file),
+        "sha256": installed_sha,
+        "desired_sha256": desired_sha,
+        "sha256_ok": bool(installed_sha) and (not desired_sha or installed_sha == desired_sha),
+        "sha_error": sha_error,
+        "state_error": state_error,
+        "source_url": state.get("source_url") or program.get("source_url"),
+        "snap_forbidden": "snap" in program.get("forbidden_package_managers", []),
+        "snap_installed": snap_bad,
+        "wrapper": wrapper,
+        "appearance": appearance,
+    }
+
+
+def _manual_deb_status(name: str, program: dict[str, Any]) -> dict[str, Any]:
+    install_dir = Path(os.path.expanduser(str(program.get("install_dir") or "")))
+    state_file = Path(os.path.expanduser(str(program.get("state_file") or install_dir / "state" / "current-release.json")))
+    deb_file = Path(os.path.expanduser(str(program.get("deb_file") or "")))
+    package = str(program.get("primary_package") or program.get("package") or name)
+    desired = str(program.get("desired_version") or "")
+    desired_arch = str(program.get("desired_architecture") or "arm64")
+    desired_sha = str(program.get("desired_sha256") or "")
+    installed_version, arch = _dpkg_version(package)
+    state: dict[str, Any] = {}
+    state_error = ""
+    if state_file.exists():
+        try:
+            state = json.loads(state_file.read_text())
+        except Exception as exc:
+            state_error = str(exc)
+    deb_sha = ""
+    sha_error = ""
+    state_sha = str(state.get("sha256") or "")
+    state_deb = Path(os.path.expanduser(str(state.get("deb") or ""))) if state.get("deb") else deb_file
+    if state_deb.exists():
+        try:
+            deb_sha = _sha256_file(state_deb)
+        except Exception as exc:
+            sha_error = str(exc)
+    reported_sha = deb_sha or state_sha
+    forbidden_snap_names = program.get("forbidden_snap_names")
+    if not isinstance(forbidden_snap_names, list):
+        forbidden_snap_names = [str(program.get("primary_package") or name)]
+    snap_status = {
+        str(snap_name): _snap_installed(str(snap_name))
+        for snap_name in forbidden_snap_names
+    } if "snap" in program.get("forbidden_package_managers", []) else {}
+    snap_bad = any(snap_status.values())
+    state_ok = bool(state) and state.get("version") == desired and state.get("package") == package
+    checks = [
+        bool(installed_version),
+        not desired or installed_version == desired,
+        not desired_arch or arch == desired_arch,
+        state_file.exists(),
+        state_ok,
+        not desired_sha or reported_sha == desired_sha,
+        not state_error,
+        not sha_error,
+        not snap_bad,
+    ]
+    return {
+        "app": name,
+        "kind": program.get("kind"),
+        "ok": all(checks),
+        "installed": bool(installed_version),
+        "package": package,
+        "installed_version": installed_version,
+        "desired_version": desired,
+        "version_ok": bool(installed_version) and (not desired or installed_version == desired),
+        "arch": arch,
+        "desired_architecture": desired_arch,
+        "architecture_ok": bool(arch) and (not desired_arch or arch == desired_arch),
+        "state_file": str(state_file),
+        "state_ok": state_ok,
+        "deb_file": str(state_deb),
+        "sha256": reported_sha,
+        "desired_sha256": desired_sha,
+        "sha256_ok": bool(reported_sha) and (not desired_sha or reported_sha == desired_sha),
+        "sha_error": sha_error,
+        "state_error": state_error,
+        "source_url": state.get("source_url") or program.get("source_url"),
+        "snap_forbidden": "snap" in program.get("forbidden_package_managers", []),
+        "snap_installed": snap_bad,
+        "snap_status": snap_status,
+    }
+
+
 def _local_status(manifest: dict[str, Any], selected: list[str]) -> list[dict[str, Any]]:
     programs = _programs(manifest)
     rows = []
@@ -335,6 +504,10 @@ def _local_status(manifest: dict[str, Any], selected: list[str]) -> list[dict[st
             rows.append(_extension_status(name, program))
         elif program.get("kind") == "apt-package-set":
             rows.append(_apt_program_status(name, program))
+        elif program.get("kind") == "manual-appimage":
+            rows.append(_manual_appimage_status(name, program))
+        elif program.get("kind") == "manual-deb":
+            rows.append(_manual_deb_status(name, program))
         else:
             rows.append({"app": name, "kind": program.get("kind"), "ok": False, "error": "unsupported kind"})
     return rows
@@ -354,10 +527,23 @@ def _emit_rows(rows: list[dict[str, Any]], json_output: bool) -> None:
         if row.get("installed_version") is not None:
             mark = "ok" if row.get("version_ok") else "drift"
             click.echo(f"  version: {row.get('installed_version') or 'not-installed'} ({mark})")
+        if row.get("package") and not row.get("packages"):
+            arch = row.get("arch") or "unknown-arch"
+            click.echo(f"  package: {row.get('package')} arch={arch}")
         if row.get("source_contains"):
             click.echo(f"  source: {'ok' if row.get('source_ok') else 'drift'} contains={row.get('source_contains')}")
+        if row.get("stable_appimage"):
+            click.echo(f"  appimage: {row.get('stable_appimage')}")
+        if row.get("deb_file"):
+            click.echo(f"  deb: {row.get('deb_file')}")
+        if row.get("sha256") is not None:
+            click.echo(f"  sha256: {'ok' if row.get('sha256_ok') else 'drift'} {row.get('sha256') or 'missing'}")
         if row.get("snap_forbidden"):
             click.echo(f"  snap: {'installed-forbidden' if row.get('snap_installed') else 'absent'}")
+            snap_status = row.get("snap_status")
+            if isinstance(snap_status, dict):
+                for snap_name, installed in snap_status.items():
+                    click.echo(f"    {snap_name}: {'installed-forbidden' if installed else 'absent'}")
         wrapper = row.get("wrapper")
         if isinstance(wrapper, dict):
             click.echo(f"  wrapper: {'ok' if wrapper.get('ok') else 'drift'} {wrapper.get('path')}")
@@ -366,6 +552,9 @@ def _emit_rows(rows: list[dict[str, Any]], json_output: bool) -> None:
         policy = row.get("policy")
         if isinstance(policy, dict):
             click.echo(f"  policy: {'ok' if policy.get('ok') else 'drift'} {policy.get('path')}")
+        appearance = row.get("appearance")
+        if isinstance(appearance, dict):
+            click.echo(f"  appearance: {'ok' if appearance.get('ok') else 'drift'} {appearance.get('key')}={appearance.get('actual')!r}")
 
 
 def _emit_config_rows(rows: list[dict[str, Any]], json_output: bool) -> None:
@@ -403,15 +592,29 @@ def _emit_config_rows(rows: list[dict[str, Any]], json_output: bool) -> None:
 
 
 def _post_fix(selected: list[str]) -> int:
+    manifest = _load_manifest()
+    programs = _programs(manifest)
+    rc = 0
+    script_apps = [app for app in selected if programs.get(app, {}).get("post_fix_script")]
+    for app in script_apps:
+        script = REPO / str(programs[app]["post_fix_script"])
+        if not script.exists():
+            raise click.ClickException(f"post-fix script não encontrado para {app}: {script}")
+        click.echo(f"[managed-apps] post-fix {app}: {script}")
+        completed = subprocess.run([str(script)], text=True)
+        if completed.returncode != 0:
+            rc = completed.returncode
     apps = [app for app in selected if app in {"chromium", "firefox"}]
-    if not apps:
-        click.echo("nenhum app selecionado usa omni-app-fix")
-        return 0
-    if not OMNI_APP_FIX.exists():
-        raise click.ClickException(f"omni-app-fix não encontrado: {OMNI_APP_FIX}")
-    command = [str(OMNI_APP_FIX), "--scope", "local", "--app", ",".join(apps), "--action", "fix"]
-    completed = subprocess.run(command, text=True)
-    return completed.returncode
+    if apps:
+        if not OMNI_APP_FIX.exists():
+            raise click.ClickException(f"omni-app-fix não encontrado: {OMNI_APP_FIX}")
+        command = [str(OMNI_APP_FIX), "--scope", "local", "--app", ",".join(apps), "--action", "fix"]
+        completed = subprocess.run(command, text=True)
+        if completed.returncode != 0:
+            rc = completed.returncode
+    if not script_apps and not apps:
+        click.echo("nenhum app selecionado tem post-fix local")
+    return rc
 
 
 def _upgrade_command(manifest: dict[str, Any], selected: list[str]) -> list[str]:
@@ -426,8 +629,22 @@ def _upgrade_command(manifest: dict[str, Any], selected: list[str]) -> list[str]
     return ["sudo", "apt", "install", "--only-upgrade", *dict.fromkeys(packages)]
 
 
+def _manual_upgrade_scripts(manifest: dict[str, Any], selected: list[str]) -> list[Path]:
+    programs = _programs(manifest)
+    scripts: list[Path] = []
+    for name in selected:
+        program = programs[name]
+        if program.get("kind") not in {"manual-appimage", "manual-deb"}:
+            continue
+        script = program.get("post_fix_script")
+        if script:
+            scripts.append(REPO / str(script))
+    return scripts
+
+
 REMOTE_PROBE = r'''
 import glob
+import hashlib
 import json
 import os
 import subprocess
@@ -491,6 +708,24 @@ def policy_status(program):
     present = expected in [str(item) for item in entries]
     return {"path": str(path), "exists": path.exists(), "expected": expected, "present": present, "ok": path.exists() and present}
 
+def sha256_file(path):
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+def json_string_value_status(path_value, key, expected):
+    path = Path(os.path.expanduser(str(path_value)))
+    try:
+        payload = json.loads(path.read_text()) if path.exists() else {}
+        read_error = ""
+    except Exception as exc:
+        payload = {}
+        read_error = str(exc)
+    actual = payload.get(key) if isinstance(payload, dict) else None
+    return {"path": str(path), "exists": path.exists(), "key": key, "expected": expected, "actual": actual, "ok": path.exists() and not read_error and actual == expected, "read_error": read_error}
+
 def apt_status(name, program):
     packages = [str(item) for item in program.get("packages", [])]
     desired = str(program.get("desired_version") or "")
@@ -530,6 +765,75 @@ def extension_status(name, program):
         ok = ok and bool(policy["ok"])
     return {"app": name, "kind": program.get("kind"), "ok": ok, "installed": bool(installed_version), "installed_version": installed_version, "desired_version": desired, "version_ok": bool(installed_version) and (not desired or installed_version == desired), "wrapper": wrapper, "policy": policy}
 
+def manual_appimage_status(name, program):
+    install_dir = Path(os.path.expanduser(str(program.get("install_dir") or "")))
+    stable = Path(os.path.expanduser(str(program.get("stable_appimage") or install_dir / "Obsidian.AppImage")))
+    state_file = Path(os.path.expanduser(str(program.get("state_file") or install_dir / "state" / "current-release.json")))
+    desired = str(program.get("desired_version") or "")
+    desired_sha = str(program.get("desired_sha256") or "")
+    installed_sha = ""
+    sha_error = ""
+    if stable.exists():
+        try:
+            installed_sha = sha256_file(stable.resolve())
+        except Exception as exc:
+            sha_error = str(exc)
+    state = {}
+    state_error = ""
+    if state_file.exists():
+        try:
+            state = json.loads(state_file.read_text())
+        except Exception as exc:
+            state_error = str(exc)
+    installed_version = str(state.get("version") or "")
+    wrapper = wrapper_status(program)
+    appearance = None
+    appearance_defaults = program.get("appearance_defaults")
+    if isinstance(appearance_defaults, dict):
+        appearance = json_string_value_status(appearance_defaults.get("path") or "", appearance_defaults.get("key") or "titlebarStyle", appearance_defaults.get("value") or "native")
+    snap_bad = snap_installed(str(program.get("primary_package") or name)) if "snap" in program.get("forbidden_package_managers", []) else False
+    checks = [stable.exists(), os.access(stable, os.X_OK), not desired or installed_version == desired, not desired_sha or installed_sha == desired_sha, not state_error, not sha_error, not snap_bad]
+    if wrapper is not None:
+        checks.append(bool(wrapper["ok"]))
+    if appearance is not None:
+        checks.append(bool(appearance["ok"]))
+    return {"app": name, "kind": program.get("kind"), "ok": all(checks), "installed": stable.exists(), "installed_version": installed_version, "desired_version": desired, "version_ok": bool(installed_version) and (not desired or installed_version == desired), "stable_appimage": str(stable), "state_file": str(state_file), "sha256": installed_sha, "desired_sha256": desired_sha, "sha256_ok": bool(installed_sha) and (not desired_sha or installed_sha == desired_sha), "sha_error": sha_error, "state_error": state_error, "source_url": state.get("source_url") or program.get("source_url"), "snap_installed": snap_bad, "wrapper": wrapper, "appearance": appearance}
+
+def manual_deb_status(name, program):
+    install_dir = Path(os.path.expanduser(str(program.get("install_dir") or "")))
+    state_file = Path(os.path.expanduser(str(program.get("state_file") or install_dir / "state" / "current-release.json")))
+    deb_file = Path(os.path.expanduser(str(program.get("deb_file") or "")))
+    package = str(program.get("primary_package") or program.get("package") or name)
+    desired = str(program.get("desired_version") or "")
+    desired_arch = str(program.get("desired_architecture") or "arm64")
+    desired_sha = str(program.get("desired_sha256") or "")
+    installed_version, arch = dpkg_version(package)
+    state = {}
+    state_error = ""
+    if state_file.exists():
+        try:
+            state = json.loads(state_file.read_text())
+        except Exception as exc:
+            state_error = str(exc)
+    deb_sha = ""
+    sha_error = ""
+    state_sha = str(state.get("sha256") or "")
+    state_deb = Path(os.path.expanduser(str(state.get("deb") or ""))) if state.get("deb") else deb_file
+    if state_deb.exists():
+        try:
+            deb_sha = sha256_file(state_deb)
+        except Exception as exc:
+            sha_error = str(exc)
+    reported_sha = deb_sha or state_sha
+    forbidden_snap_names = program.get("forbidden_snap_names")
+    if not isinstance(forbidden_snap_names, list):
+        forbidden_snap_names = [str(program.get("primary_package") or name)]
+    snap_status = {str(snap_name): snap_installed(str(snap_name)) for snap_name in forbidden_snap_names} if "snap" in program.get("forbidden_package_managers", []) else {}
+    snap_bad = any(snap_status.values())
+    state_ok = bool(state) and state.get("version") == desired and state.get("package") == package
+    checks = [bool(installed_version), not desired or installed_version == desired, not desired_arch or arch == desired_arch, state_file.exists(), state_ok, not desired_sha or reported_sha == desired_sha, not state_error, not sha_error, not snap_bad]
+    return {"app": name, "kind": program.get("kind"), "ok": all(checks), "installed": bool(installed_version), "package": package, "installed_version": installed_version, "desired_version": desired, "version_ok": bool(installed_version) and (not desired or installed_version == desired), "arch": arch, "desired_architecture": desired_arch, "architecture_ok": bool(arch) and (not desired_arch or arch == desired_arch), "state_file": str(state_file), "state_ok": state_ok, "deb_file": str(state_deb), "sha256": reported_sha, "desired_sha256": desired_sha, "sha256_ok": bool(reported_sha) and (not desired_sha or reported_sha == desired_sha), "sha_error": sha_error, "state_error": state_error, "source_url": state.get("source_url") or program.get("source_url"), "snap_installed": snap_bad, "snap_status": snap_status}
+
 rows = []
 for name in selected:
     program = programs[name]
@@ -537,6 +841,10 @@ for name in selected:
         rows.append(apt_status(name, program))
     elif program.get("kind") == "chromium-extension":
         rows.append(extension_status(name, program))
+    elif program.get("kind") == "manual-appimage":
+        rows.append(manual_appimage_status(name, program))
+    elif program.get("kind") == "manual-deb":
+        rows.append(manual_deb_status(name, program))
     else:
         rows.append({"app": name, "ok": False, "error": "unsupported kind"})
 print(json.dumps(rows, sort_keys=True))
@@ -725,10 +1033,20 @@ def upgrade(app: str, yes: bool) -> None:
     manifest = _load_manifest()
     selected = _select_apps(manifest, app)
     command = _upgrade_command(manifest, selected)
+    manual_scripts = _manual_upgrade_scripts(manifest, selected)
     if not command:
+        if manual_scripts:
+            for script in manual_scripts:
+                click.echo(str(script))
+            if not yes:
+                click.echo("plan-only: use --yes para executar o instalador manual")
+                return
+            raise SystemExit(_post_fix(selected))
         click.echo("nenhum pacote apt selecionado")
         return
     click.echo(" ".join(shlex.quote(part) for part in command))
+    for script in manual_scripts:
+        click.echo(f"post-upgrade manual: {script}")
     if not yes:
         click.echo("plan-only: use --yes para executar localmente")
         return

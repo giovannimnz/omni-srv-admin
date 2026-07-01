@@ -17,7 +17,7 @@ Centraliza automações operacionais antes espalhadas por `~/scripts`, `~/bin`, 
 
 | Script | Função | Schedule |
 |---|---|---|
-| `scripts/sync-vault.sh` | Sync git do Obsidian vault | crontab a cada 5min |
+| `scripts/sync-vault.sh` | Sync git do Obsidian vault + sync incremental do GBrain | crontab a cada 5min |
 | `scripts/backup-srv1-to-gdrive.sh` | Backup completo SRV-1 → GDrive | `backup-srv1-daily.timer` |
 | `scripts/offload-dotbackups-to-gdrive.sh` | Offload `~/.backups` com verify/delete | `offload-dotbackups-to-gdrive.timer` |
 | `scripts/cleanup-local.sh` | Cleanup semanal + retenção `~/.logs` 15d | `cleanup-local-weekly.timer` |
@@ -26,7 +26,7 @@ Centraliza automações operacionais antes espalhadas por `~/scripts`, `~/bin`, 
 | `scripts/resource-governor-watchdog.py` | Watchdog contínuo com auto-cleanup e runtime override | `resource-governor-watchdog.timer` |
 | `scripts/resource-governor-status.py` | Status atual do resource governor | manual |
 | `scripts/backup-to-smb.sh` | Backup fallback SMB | `backup-smb-daily.timer` |
-| `scripts/atius-web-healthcheck.sh` | Healthcheck legado Atius Web | manual/legacy |
+| `scripts/atius-web-healthcheck.sh` | Healthcheck Atius Web via PM2 app `atius-web`; nao depende do user unit legado `atius-web.service` | timer/manual |
 
 ## CLI
 
@@ -58,6 +58,7 @@ omni srv1-ops run offload-dotbackups
   - snapshot após 15 min
   - audit após 35 min
 - Watchdog contínuo: `resource-governor-watchdog.timer` roda a cada 2 min, aplica override conservador e dispara cleanup/audit quando o host entra em estado crítico.
+- PM2 boot canônico: `pm2-ubuntu.service` restaura `/home/ubuntu/.pm2/dump.pm2` com os namespaces `atius` e `horistic`. Os user units legados `ats-pm2.service` e `horistic-pm2.service` ficam desabilitados para não competir com o restore.
 
 ## GDrive layout
 
@@ -83,7 +84,31 @@ giovanni-drive:ATIUS-SRV/SRV-1/Backup/
 - `~/logs` foi migrado para `~/.logs`.
 - `/home/ubuntu/docs` foi migrado para `docs/legacy-home-docs/home-docs-2026-06-06/` no repo `omni-srv-admin`.
 - Crontab `sync-vault` agora aponta para `modules/srv1-ops/scripts/sync-vault.sh`.
+- O mesmo ciclo de 5min roda `gbrain sync --repo "$VAULT" --no-pull --yes --json` depois do Git sync bem-sucedido; não criar cron separado para GBrain.
 - Systemd timers de backup/cleanup apontam para scripts deste módulo.
+
+## Obsidian + GBrain sync
+
+- Cron live: `*/5 * * * * /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/sync-vault.sh >> /home/ubuntu/.logs/sync-vault.cron.log 2>&1`.
+- Log do Git sync: `/home/ubuntu/.logs/sync-vault.log`.
+- Log do GBrain sync: `/home/ubuntu/.logs/gbrain-vault-sync.log`.
+- O GBrain exige o caminho do Git repo; por isso o comando usa `/home/ubuntu/GitHub/obsidian-vault`, mas o conteúdo canônico de memória fica em `AiSecondBrain/`.
+- O script aborta antes de `git add` se `Ideaverse/` ou `ideaverse/` reaparecerem, para evitar duplicidade.
+- Override seguro: `SYNC_VAULT_GBRAIN_REPO=/path/do/repo-git` troca somente a fonte GBrain.
+- Override seguro: `SYNC_VAULT_GBRAIN_SYNC=0` desativa temporariamente só o GBrain sync sem remover o cron.
+- Timeout padrão: `240s`, ajustável por `SYNC_VAULT_GBRAIN_TIMEOUT_SECONDS`.
+
+## Obsidian REST endpoint
+
+- SRV-1 mantem o Obsidian AppImage aberto via user unit `obsidian-aisecondbrain-rest.service`.
+- O plugin `obsidian-local-rest-api` fica no vault `AiSecondBrain` e escuta somente `10.1.1.1:27124`.
+- SRV-2/SRV-3 acessam `https://10.1.1.1:27124` e `https://10.1.1.1:27124/mcp/` direto pela VPN interna.
+- Nao criar tunnel systemd em SRV-2/SRV-3 para esse endpoint.
+- SRV-1 usa `omni-obsidian-rest-access-guard.service` para permitir `27124/tcp` apenas para `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`.
+- O certificado do plugin deve existir nos clientes em `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`; depois rodar `update-ca-certificates`.
+- SAN obrigatorio do certificado: `127.0.0.1`, `10.1.1.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
+- Nao instalar Obsidian desktop nem sync Git do vault em SRV-2/SRV-3.
+- Nao publicar o API key do plugin em docs ou repo.
 
 ## Pitfalls
 

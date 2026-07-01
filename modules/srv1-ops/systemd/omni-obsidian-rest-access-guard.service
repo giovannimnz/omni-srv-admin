@@ -1,0 +1,12 @@
+[Unit]
+Description=Omni Obsidian REST VPN access guard
+After=network-online.target
+Before=obsidian-aisecondbrain-rest.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/omni-obsidian-rest-access-guard.sh
+RemainAfterExit=yes
+
+[Install]
+WantedBy=multi-user.target

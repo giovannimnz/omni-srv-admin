@@ -165,3 +165,7 @@ graphify-out/cache/stat-index.json
 graphify-out/manifest.json
 .backups/
 .backups
+
+.planning/backups/
+.playwright-cli/
+*.bak-*

@@ -1,0 +1,342 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_NAME="obsidian"
+VERSION="${OBSIDIAN_VERSION:-1.12.7}"
+SHA256="${OBSIDIAN_SHA256:-2a40943a2402cf1f38e71845f294a78d300a78ff21ea4c2103335bca7fbdcbe0}"
+URL="${OBSIDIAN_APPIMAGE_URL:-https://github.com/obsidianmd/obsidian-releases/releases/download/v${VERSION}/Obsidian-${VERSION}-arm64.AppImage}"
+INSTALL_DIR="${OBSIDIAN_INSTALL_DIR:-$HOME/GitHub/Programs/obsidian}"
+RELEASES_DIR="$INSTALL_DIR/releases"
+STATE_DIR="$INSTALL_DIR/state"
+ICONS_DIR="$INSTALL_DIR/icons"
+APPIMAGE="$RELEASES_DIR/Obsidian-${VERSION}-arm64.AppImage"
+STABLE_APPIMAGE="$INSTALL_DIR/Obsidian.AppImage"
+STATE_FILE="$STATE_DIR/current-release.json"
+ICON_FILE="$ICONS_DIR/obsidian.png"
+VAULT_PATH="${OBSIDIAN_VAULT_PATH:-$HOME/GitHub/obsidian-vault/AiSecondBrain}"
+APPEARANCE_JSON="${OBSIDIAN_APPEARANCE_JSON:-$HOME/GitHub/obsidian-vault/AiSecondBrain/.obsidian/appearance.json}"
+BACKUP_ROOT="${OBSIDIAN_BACKUP_ROOT:-/var/backups/omni-managed-apps}"
+MODE="${1:-apply}"
+
+log() { printf '[install-obsidian] %s\n' "$*"; }
+die() { printf '[install-obsidian:error] %s\n' "$*" >&2; exit 1; }
+
+need_arm64() {
+  case "$(uname -m)" in
+    aarch64|arm64) ;;
+    *) die "unsupported architecture: $(uname -m); expected arm64/aarch64" ;;
+  esac
+}
+
+need_tool() {
+  command -v "$1" >/dev/null 2>&1 || die "missing required tool: $1"
+}
+
+backup_metadata() {
+  local ts backup manifest
+  ts="$(date +%Y%m%d-%H%M%S)"
+  backup="$BACKUP_ROOT/obsidian-$ts"
+  if command -v sudo >/dev/null 2>&1 && [ ! -w "$(dirname "$BACKUP_ROOT")" ]; then
+    sudo mkdir -p "$backup"
+    sudo chown "$USER:$USER" "$backup"
+  else
+    mkdir -p "$backup"
+  fi
+  manifest="$backup/manifest.json"
+  jq -n \
+    --arg app "$APP_NAME" \
+    --arg version "$VERSION" \
+    --arg install_dir "$INSTALL_DIR" \
+    --arg stable "$STABLE_APPIMAGE" \
+    --arg appearance "$APPEARANCE_JSON" \
+    --arg titlebar "$(jq -r '.titlebarStyle // ""' "$APPEARANCE_JSON" 2>/dev/null || true)" \
+    --arg desktop "$HOME/Desktop/obsidian.desktop" \
+    --arg user_desktop "$HOME/.local/share/applications/obsidian.desktop" \
+    --arg system_desktop "/usr/share/applications/obsidian.desktop" \
+    --arg vault_status "$(git -C "$VAULT_PATH" status --short 2>/dev/null | wc -l | tr -d ' ')" \
+    '{
+      app: $app,
+      version: $version,
+      install_dir: $install_dir,
+      stable_appimage: $stable,
+      stable_exists: ($stable | test(".")),
+      appearance_json: $appearance,
+      previous_titlebarStyle: $titlebar,
+      desktop_files: [$desktop, $user_desktop, $system_desktop],
+      vault_git_status_line_count: ($vault_status | tonumber)
+    }' >"$manifest"
+  for path in \
+    "$HOME/.config/obsidian" \
+    "$HOME/.local/bin/obsidian" \
+    "$HOME/.local/bin/obsidian-tray" \
+    "$HOME/Desktop/obsidian.desktop" \
+    "$HOME/.local/share/applications/obsidian.desktop" \
+    "/usr/share/applications/obsidian.desktop"
+  do
+    [ -e "$path" ] || continue
+    cp -a "$path" "$backup/" 2>/dev/null || true
+  done
+  log "backup metadata: $manifest"
+}
+
+download_appimage() {
+  mkdir -p "$RELEASES_DIR" "$STATE_DIR" "$ICONS_DIR"
+  if [ -f "$APPIMAGE" ]; then
+    log "appimage already present: $APPIMAGE"
+  else
+    log "downloading official arm64 AppImage: $URL"
+    curl -fL --retry 3 --output "$APPIMAGE.tmp" "$URL"
+    mv "$APPIMAGE.tmp" "$APPIMAGE"
+  fi
+  chmod 755 "$APPIMAGE"
+  if [ -n "$SHA256" ]; then
+    printf '%s  %s\n' "$SHA256" "$APPIMAGE" | sha256sum -c -
+  fi
+  ln -sfn "$APPIMAGE" "$STABLE_APPIMAGE"
+  jq -n \
+    --arg version "$VERSION" \
+    --arg url "$URL" \
+    --arg sha256 "$SHA256" \
+    --arg appimage "$APPIMAGE" \
+    --arg stable "$STABLE_APPIMAGE" \
+    '{version: $version, source_url: $url, sha256: $sha256, appimage: $appimage, stable_appimage: $stable}' \
+    >"$STATE_FILE"
+}
+
+ensure_icon() {
+  [ -f "$ICON_FILE" ] && return 0
+  local tmp
+  tmp="$(mktemp -d)"
+  (
+    cd "$tmp"
+    "$STABLE_APPIMAGE" --appimage-extract >/dev/null 2>&1 || true
+    find squashfs-root -type f \( -iname 'obsidian.png' -o -iname '*obsidian*.png' \) -print -quit \
+      | while read -r icon; do cp "$icon" "$ICON_FILE"; done
+  )
+  rm -rf "$tmp"
+  [ -f "$ICON_FILE" ] || return 0
+  chmod 644 "$ICON_FILE"
+}
+
+set_appearance_defaults() {
+  need_tool jq
+  mkdir -p "$(dirname "$APPEARANCE_JSON")"
+  [ -f "$APPEARANCE_JSON" ] || printf '{}\n' >"$APPEARANCE_JSON"
+  local tmp
+  tmp="$(mktemp)"
+  jq '.titlebarStyle = "native"' "$APPEARANCE_JSON" >"$tmp"
+  mv "$tmp" "$APPEARANCE_JSON"
+  chmod 664 "$APPEARANCE_JSON" 2>/dev/null || true
+}
+
+write_wrappers() {
+  mkdir -p "$HOME/.local/bin"
+  cat >"$HOME/.local/bin/obsidian" <<'WRAPPER'
+#!/usr/bin/env bash
+set -euo pipefail
+
+APPIMAGE="${OBSIDIAN_APPIMAGE:-/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage}"
+if [ ! -x "$APPIMAGE" ]; then
+  printf 'obsidian: AppImage not executable: %s\n' "$APPIMAGE" >&2
+  exit 127
+fi
+
+if [ "${OBSIDIAN_FORCE_EXTRACT_AND_RUN:-0}" = "1" ]; then
+  export APPIMAGE_EXTRACT_AND_RUN=1
+fi
+
+exec "$APPIMAGE" --no-sandbox "$@"
+WRAPPER
+  chmod 755 "$HOME/.local/bin/obsidian"
+
+  cat >"$HOME/.local/bin/obsidian-tray" <<'WRAPPER'
+#!/usr/bin/env bash
+set -euo pipefail
+
+export DISPLAY="${DISPLAY:-:1}"
+export XAUTHORITY="${XAUTHORITY:-$HOME/.Xauthority}"
+STATE_DIR="${XDG_STATE_HOME:-$HOME/.local/state}/obsidian-tray"
+LOG_FILE="$STATE_DIR/obsidian-tray.log"
+OBSIDIAN_WINDOW_CLASS="${OBSIDIAN_WINDOW_CLASS:-obsidian.obsidian}"
+OBSIDIAN_TRAY_WAIT_SECONDS="${OBSIDIAN_TRAY_WAIT_SECONDS:-90}"
+
+log_tray() {
+  mkdir -p "$STATE_DIR"
+  printf '%s %s\n' "$(date -Is)" "$*" >>"$LOG_FILE"
+}
+
+find_obsidian() {
+  local candidate
+  for candidate in \
+    "${OBSIDIAN_BIN:-}" \
+    "/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage" \
+    "$HOME/.local/bin/obsidian" \
+    "$HOME/Applications/Obsidian-1.12.7-arm64.AppImage"
+  do
+    [ -n "$candidate" ] && [ -x "$candidate" ] && printf '%s\n' "$candidate" && return 0
+  done
+  candidate="$(find "$HOME/Applications" -maxdepth 1 -type f -name 'Obsidian-*-arm64.AppImage' -perm -u+x 2>/dev/null | sort -V | tail -n 1 || true)"
+  [ -n "$candidate" ] && printf '%s\n' "$candidate" && return 0
+  return 1
+}
+
+close_kdocker_warnings() {
+  command -v wmctrl >/dev/null 2>&1 || return 0
+  wmctrl -lx 2>/dev/null \
+    | awk 'BEGIN{IGNORECASE=1} /kdocker\.KDocker/ {print $1}' \
+    | while read -r wid; do wmctrl -ic "$wid" 2>/dev/null || true; done || true
+}
+
+obsidian_running() {
+  if command -v wmctrl >/dev/null 2>&1 && wmctrl -lx 2>/dev/null | grep -qi 'obsidian\.obsidian'; then
+    return 0
+  fi
+  obsidian_process_running
+}
+
+obsidian_process_running() {
+  pgrep -u "$USER" -fa '(/home/ubuntu/GitHub/Programs/obsidian/(Obsidian\.AppImage|releases/Obsidian-[^ ]*arm64\.AppImage)|/home/ubuntu/Applications/Obsidian-[^ ]*arm64\.AppImage)' \
+    | grep -Ev '(obsidian-tray|pgrep|grep|zsh -c|bash -c)' >/dev/null 2>&1
+}
+
+first_obsidian_window() {
+  command -v wmctrl >/dev/null 2>&1 || return 1
+  wmctrl -lx 2>/dev/null \
+    | awk -v class="$OBSIDIAN_WINDOW_CLASS" 'BEGIN{IGNORECASE=1} tolower($3) == tolower(class) {print $1; exit}'
+}
+
+wait_for_obsidian_window() {
+  local deadline wid
+  deadline=$(($(date +%s) + OBSIDIAN_TRAY_WAIT_SECONDS))
+  while [ "$(date +%s)" -le "$deadline" ]; do
+    wid="$(first_obsidian_window || true)"
+    if [ -n "$wid" ]; then
+      printf '%s\n' "$wid"
+      return 0
+    fi
+    obsidian_process_running || return 1
+    sleep 1
+  done
+  return 1
+}
+
+focus_obsidian() {
+  command -v wmctrl >/dev/null 2>&1 || return 0
+  wmctrl -x -a obsidian.obsidian 2>/dev/null || true
+}
+
+OBSIDIAN="$(find_obsidian)" || {
+  close_kdocker_warnings
+  printf 'obsidian-tray: no executable Obsidian found\n' >&2
+  exit 127
+}
+
+close_kdocker_warnings
+
+if [ "${1:-}" = "--tray-only" ]; then
+  if obsidian_running; then
+    exit 0
+  fi
+  if command -v kdocker >/dev/null 2>&1; then
+    "$OBSIDIAN" --no-sandbox >/dev/null 2>&1 &
+    obsidian_pid=$!
+    if wid="$(wait_for_obsidian_window)"; then
+      log_tray "docking Obsidian window $wid with KDocker after pid $obsidian_pid"
+      exec kdocker -b -q -w "$wid"
+    fi
+    log_tray "KDocker skipped: no Obsidian window after ${OBSIDIAN_TRAY_WAIT_SECONDS}s for pid $obsidian_pid"
+    exit 0
+  fi
+  exec "$OBSIDIAN" --no-sandbox
+fi
+
+if [ "$#" -eq 0 ] && obsidian_running; then
+  focus_obsidian
+  exit 0
+fi
+
+exec "$OBSIDIAN" --no-sandbox "$@"
+WRAPPER
+  chmod 755 "$HOME/.local/bin/obsidian-tray"
+}
+
+write_desktop_file() {
+  local path="$1" url_token="$2"
+  mkdir -p "$(dirname "$path")"
+  cat >"$path" <<EOF_DESKTOP
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=Obsidian
+GenericName=Knowledge Base
+Comment=Open Obsidian notes
+Exec=$HOME/.local/bin/xrdp-launch $HOME/.local/bin/obsidian-tray $url_token
+Icon=$ICON_FILE
+Terminal=false
+Categories=Utility;TextEditor;
+MimeType=x-scheme-handler/obsidian;text/markdown;text/x-markdown;
+StartupNotify=true
+StartupWMClass=obsidian
+Path=$VAULT_PATH
+EOF_DESKTOP
+  chmod 644 "$path"
+}
+
+write_launchers() {
+  write_desktop_file "$HOME/Desktop/obsidian.desktop" "%U"
+  write_desktop_file "$HOME/.local/share/applications/obsidian.desktop" "%u"
+  local tmp
+  tmp="$(mktemp)"
+  write_desktop_file "$tmp" "%U"
+  if [ -w /usr/share/applications ]; then
+    install -m 644 "$tmp" /usr/share/applications/obsidian.desktop
+  elif command -v sudo >/dev/null 2>&1 && sudo -n true 2>/dev/null; then
+    sudo install -m 644 "$tmp" /usr/share/applications/obsidian.desktop
+  else
+    log "skip system launcher: sudo unavailable"
+  fi
+  rm -f "$tmp"
+  command -v update-desktop-database >/dev/null 2>&1 && update-desktop-database "$HOME/.local/share/applications" 2>/dev/null || true
+}
+
+verify_install() {
+  local failed=0
+  [ -x "$STABLE_APPIMAGE" ] || { printf 'missing executable: %s\n' "$STABLE_APPIMAGE" >&2; failed=1; }
+  [ "$(jq -r '.titlebarStyle // empty' "$APPEARANCE_JSON" 2>/dev/null || true)" = "native" ] || {
+    printf 'appearance default drift: titlebarStyle is not native\n' >&2
+    failed=1
+  }
+  grep -q "$HOME/.local/bin/obsidian-tray" "$HOME/Desktop/obsidian.desktop" 2>/dev/null || failed=1
+  grep -q "Icon=$ICON_FILE" "$HOME/Desktop/obsidian.desktop" 2>/dev/null || failed=1
+  grep -q 'kdocker -b -q -w' "$HOME/.local/bin/obsidian-tray" 2>/dev/null || {
+    printf 'obsidian-tray drift: KDocker must dock by existing window id\n' >&2
+    failed=1
+  }
+  if grep -q 'kdocker -n -q' "$HOME/.local/bin/obsidian-tray" 2>/dev/null; then
+    printf 'obsidian-tray drift: old KDocker command-start timeout path is present\n' >&2
+    failed=1
+  fi
+  return "$failed"
+}
+
+case "$MODE" in
+  apply|"")
+    need_arm64
+    need_tool curl
+    need_tool jq
+    backup_metadata
+    download_appimage
+    ensure_icon
+    set_appearance_defaults
+    write_wrappers
+    write_launchers
+    verify_install
+    log "installed ${APP_NAME} ${VERSION} with titlebarStyle=native"
+    ;;
+  verify)
+    verify_install
+    ;;
+  *)
+    die "usage: $0 [apply|verify]"
+    ;;
+esac

@@ -109,6 +109,61 @@ modules/srv1-ops/configs/backup-map.yaml
 - `offload-dotbackups` usa copy → verify → delete.
 - Não aplicar delete-after-verify em diretórios vivos (`~/GitHub`, `~/.hermes`, `~/.config`).
 
+## Obsidian + GBrain
+
+O cron de 5 minutos do Obsidian vault também atualiza o índice do GBrain. A ordem é:
+
+1. `sync-vault.sh` reconcilia Git do repo local em `/home/ubuntu/GitHub/obsidian-vault`.
+2. Se o Git sync terminou sem erro, roda `/home/ubuntu/.local/bin/gbrain sync --repo "$VAULT" --no-pull --yes --json`.
+3. O resultado do GBrain fica em `/home/ubuntu/.logs/gbrain-vault-sync.log`.
+
+O GBrain exige o caminho do Git repo. A fonte Git segue `/home/ubuntu/GitHub/obsidian-vault`, mas o vault canônico de memória das IAs é `AiSecondBrain/`. O script aborta antes de `git add` se `Ideaverse/` ou `ideaverse/` reaparecerem.
+
+Não criar outro cron para GBrain no SRV-1. Para troubleshooting:
+
+```bash
+crontab -l | grep sync-vault
+tail -80 /home/ubuntu/.logs/sync-vault.log
+tail -80 /home/ubuntu/.logs/gbrain-vault-sync.log
+/home/ubuntu/.local/bin/gbrain sync --repo /home/ubuntu/GitHub/obsidian-vault --dry-run --no-pull --json
+/home/ubuntu/.local/bin/gbrain query "Obsidian GBrain sync" --no-expand
+```
+
+## Obsidian REST endpoint
+
+O Obsidian desktop fica centralizado no SRV-1. SRV-2 e SRV-3 nao devem ter app desktop nem sync Git local do vault; eles consomem o endpoint HTTPS direto pela VPN interna.
+
+Servicos:
+
+- SRV-1 user systemd: `obsidian-aisecondbrain-rest.service`.
+- SRV-1 system systemd: `omni-obsidian-rest-access-guard.service`.
+- SRV-2/SRV-3: nenhum tunnel systemd para Obsidian REST.
+
+Contrato:
+
+- Plugin: `obsidian-local-rest-api` no vault `AiSecondBrain`.
+- Endpoint VPN: `https://10.1.1.1:27124`.
+- MCP endpoint: `https://10.1.1.1:27124/mcp/`.
+- Binding host do plugin: `10.1.1.1`.
+- HTTPS habilitado; HTTP inseguro desabilitado.
+- Certificado confiavel nos clientes: `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`.
+- SAN obrigatorio do certificado: `127.0.0.1`, `10.1.1.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
+- Guard iptables permite `27124/tcp` apenas para `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`.
+
+Validacao:
+
+```bash
+systemctl --user is-active obsidian-aisecondbrain-rest.service
+systemctl is-active omni-obsidian-rest-access-guard.service
+curl -sS https://10.1.1.1:27124/
+ssh ubuntu@10.1.1.2 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.1.1.1:27124/'
+ssh ubuntu@10.1.1.3 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.1.1.1:27124/'
+```
+
+Seguranca:
+
+- Nao registrar o API key do plugin em docs, logs ou manifesto.
+- O endpoint sem token deve responder `authenticated=false`; chamadas de vault sem token devem retornar `401`.
 
 ## Post-Boot Verification Checklist
 
@@ -141,12 +196,24 @@ python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-gov
 # Look for: NO WARN lines about cgroup drift between slice and direct cgroup
 
 # 5. PM2 daemon + critical apps
+systemctl is-active pm2-ubuntu.service
+# Expected: active
 /home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2 ls | head -20
-# Expected: atius-api, atius-web, horistic-api online; rest online or waiting briefly
+# Expected: atius namespace and horistic namespace restored from /home/ubuntu/.pm2/dump.pm2
 nc -z 127.0.0.1 3015 && echo "atius-web OK"
 nc -z 127.0.0.1 8050 && echo "horistic-api OK"
 nc -z 127.0.0.1 8015 && echo "atius-api OK"
 nc -z 127.0.0.1 8199 && echo "atius-webhook-signals OK"
+nc -z 127.0.0.1 3050 && echo "horistic-web OK"
+nc -z 127.0.0.1 8099 && echo "horistic-webhook-signals OK"
+node - <<'NODE'
+const fs=require('fs');
+const apps=JSON.parse(fs.readFileSync('/home/ubuntu/.pm2/dump.pm2','utf8'));
+const counts={};
+for (const a of apps) counts[a.namespace || a.pm2_env?.namespace || 'default']=(counts[a.namespace || a.pm2_env?.namespace || 'default']||0)+1;
+console.log(counts);
+NODE
+# Expected current baseline: { atius: 12, horistic: 5 }
 
 # 6. Patcher health
 cat /home/ubuntu/.local/state/omni/resource-governor-patcher.json | python3 -c "import json,sys; d=json.load(sys.stdin); print(f\"moves={d['moved_total']} healthy_streak={d['healthy_streak']} mode={d.get('runtime_mode', 'unknown')}\)"
@@ -165,7 +232,7 @@ If any check fails:
 | 2. Stuck jobs | See `docs/operations/pm2-canonical.md` Recovery section. Do NOT `pm2 kill` or `systemctl restart pm2-ubuntu.service` without user gate. |
 | 3. Service not active | `systemctl --user daemon-reload && systemctl --user start <unit>` (daemon is safe; only restart specific unit) |
 | 4. Cgroup drift | `omni srv1-ops resources install --dry-run` first, then `--apply` after diff. Read `docs/operations/resource-governor.md` for the full procedure. |
-| 5. PM2 apps offline | **GATE REQUIRED.** Follow `pm2-canonical.md` Recovery. Do NOT auto-restart PM2 daemon. |
+| 5. PM2 apps offline | Follow `pm2-canonical.md` Recovery. `pm2-ubuntu.service` is the only boot owner; do not re-enable `ats-pm2.service` or `horistic-pm2.service`. |
 | 6. Patcher unhealthy | Read `~/.logs/resource-governor/watchdog.log` and `~/.local/state/omni/resource-governor-watchdog.json`. If the patcher is in a recovery loop, `systemctl --user restart resource-governor-patcher.service` is the safe action. |
 | 7. XRDP/SSHD in watchdog cgroup | DO NOT kill those PIDs. Plan a maintenance window: `systemctl --user restart inviolable-watchdog.timer` + manual cgroup move. |
 

@@ -40,6 +40,18 @@
 0 7 * * * /home/ubuntu/.local/bin/omni fork-sync manuals list >> /home/ubuntu/.logs/fork-sync-manuals.log 2>&1
 ```
 
+`sync-vault.sh` tambem roda o sync incremental do GBrain depois do Git sync do repo. O comando GBrain usa o Git repo `/home/ubuntu/GitHub/obsidian-vault`, mas a memoria canonica das IAs fica em `AiSecondBrain/`. Nao criar um cron separado para `/home/ubuntu/.local/bin/gbrain sync`, para evitar overlap e ordem incorreta.
+
+## Obsidian REST endpoint
+
+```text
+modules/srv1-ops/systemd/obsidian-aisecondbrain-rest.service
+modules/srv1-ops/systemd/omni-obsidian-rest-access-guard.service
+modules/srv1-ops/scripts/omni-obsidian-rest-access-guard.sh
+```
+
+`obsidian-aisecondbrain-rest.service` mantem o Obsidian AppImage aberto no SRV-1 para servir o plugin `obsidian-local-rest-api` em `https://10.1.1.1:27124` e `https://10.1.1.1:27124/mcp/`. `omni-obsidian-rest-access-guard.service` aplica a allowlist iptables para `27124/tcp` apenas em `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`. SRV-2/SRV-3 nao devem rodar tunnel local para esse endpoint.
+
 ## Disabled stale cron references
 
 ```cron

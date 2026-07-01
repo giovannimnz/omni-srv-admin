@@ -238,6 +238,7 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 10000  | webmin                     | 0.0.0.0      | root     | admin panel                        |
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 12002  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
+| 27124  | obsidian-local-rest-api    | 10.1.1.1     | ubuntu   | HTTPS REST + MCP, allowlist wg0 SRV-2/SRV-3 |
 | 12004  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 12006  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 18080  | node (router ai?)          | 127.0.0.1    | ubuntu   | investigate                        |
@@ -335,6 +336,7 @@ Notas:
 | K3s kubelet     | 10250          | *             | K3s                      |
 | Prometheus node-exporter | 9100 | *             | K3s                      |
 | PgBouncer       | 6432           | 10.1.1.1      | central DB               |
+| Obsidian REST/MCP | 27124        | 10.1.1.1      | AiSecondBrain via VPN    |
 | Camofox API     | 9377           | 127.0.0.1     | Hermes                   |
 | Camofox VNC     | 5915..5930     | 127.0.0.1     | display :15..30          |
 | Camofox noVNC   | 6095..6110     | 127.0.0.1     | display :15..30          |
@@ -452,6 +454,9 @@ Upgrade gated em janela separada.
 
 ## 9. Changelog
 
+- **1.4.1 (2026-06-29)** — Obsidian Local REST API + MCP centralizado no
+  SRV-1 em `10.1.1.1:27124`, com acesso direto via VPN para SRV-2/SRV-3 e
+  allowlist `OMNI-OBSIDIAN-REST`; padrão antigo por SSH tunnel local removido.
 - **1.4.0 (2026-06-17)** — renomeado `horistic-srv-1` → `horistic-srv` (host + inventory + VPN/CoreDNS + docs); `horistic-srv-1` permanece como alias uppercase em CoreDNS para retrocompat; vhost Apache `remote.horistic-srv-1.atius.com.br.conf` preservado.
 - **1.3.0 (2026-06-17)** — adicionados `atius-mt5-kvm-1` e `atius-mt5-kvm-2` como hosts gerenciados sem K3s: IPs 10.1.1.16/17, portas 9001/9002, node-exporter 9100, zsh/Oh My Zsh/Rust/zellij validados e inventory `inventory/hosts/atius-mt5-kvm-*.yaml`.
 

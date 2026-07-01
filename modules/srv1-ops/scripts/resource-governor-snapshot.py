@@ -57,7 +57,10 @@ def parse_pressure(name: str) -> dict[str, float]:
 
 
 def run(cmd: list[str]) -> str:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        return ''
     return proc.stdout.strip()
 
 

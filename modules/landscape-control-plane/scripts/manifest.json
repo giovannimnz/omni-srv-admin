@@ -1,0 +1,72 @@
+{
+  "schema_version": 1,
+  "namespace": "omni-landscape",
+  "managed_hosts": [
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "horistic-srv"
+  ],
+  "scripts": [
+    {
+      "id": "fleet-status",
+      "title": "omni::fleet-status",
+      "version": "1.0.0",
+      "path": "fleet-status.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Read-only host status snapshot for Landscape fleet operations."
+    },
+    {
+      "id": "version-report",
+      "title": "omni::version-report",
+      "version": "1.0.1",
+      "path": "version-report.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Read-only package/tool version report for Omni governance."
+    },
+    {
+      "id": "pm2-root-cleanup",
+      "title": "omni::pm2-root-cleanup",
+      "version": "1.0.0",
+      "path": "pm2-root-cleanup.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 180,
+      "access_group": "global",
+      "risk": "targeted-cleanup",
+      "description": "Stops only accidental root-owned PM2 daemon with PM2_HOME=/root/.pm2 and moves /root/.pm2 aside."
+    },
+    {
+      "id": "apt-upgrade-plan",
+      "title": "omni::apt-upgrade-plan",
+      "version": "1.0.0",
+      "path": "apt-upgrade-plan.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 900,
+      "access_group": "global",
+      "risk": "plan-only",
+      "description": "APT simulation only: shows upgrade/autoremove plan without mutating packages."
+    },
+    {
+      "id": "reboot-required",
+      "title": "omni::reboot-required",
+      "version": "1.0.0",
+      "path": "reboot-required.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 120,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Reports reboot-required state and related package hints."
+    }
+  ]
+}

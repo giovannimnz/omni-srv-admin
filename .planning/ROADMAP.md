@@ -1,643 +1,480 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** M007-ext / M008 / M009 / M010 — DONE; M007 M005 Follow-ups (v1.1) pending
-**Milestone Goal:** Fechar os 4 follow-ups abertos de M005: OCI snapshots, Cloudflare Access, observability stack, RWX storage.
+**Active Milestone:** v1.3 — Local AI Embeddings and Semantic Retrieval
+**Milestone Goal:** Criar embeddings locais OpenAI-compatible via `https://router.atius.com.br/v1`, com New API como gateway e TEI/GTE no k3s em `horistic-srv` como backend.
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
+**Requirements:** `.planning/REQUIREMENTS.md`
+**Execution order:** TEI backend -> New API channel/alias -> external smoke -> client migration runbook -> documentation/verification
 
 ---
 
-## M001: v1.0 — Domain Foundation ✅ DONE
+## Milestone v1.2 Carry-over
 
----
+The v1.2 phases below remain valid pending work. v1.3 was opened as a separate AI infrastructure track because the embeddings stack is not a continuation of the FreeIPA/Keycloak/Samba/Production Guard sequence.
 
-## Phase 1: Preparação do Host ✅ DONE
+## Phase 28: G18 Ubuntu Pro/ESM Fleet Gates ✅ COMPLETE
 
-**Goal:** Host pronto para FreeIPA — hostname FQDN, NTP, portas livres
+**Goal:** Consolidar estado Ubuntu Pro/ESM dos SRV-1/SRV-2/SRV-3/horistic-srv, preparar upgrade com backup/checkpoint e travar todos os gates antes de qualquer apt upgrade live.
 
-**Requirements:** PREP-01, PREP-02, PREP-03, PREP-04, PREP-05
+**Requirements:** G18-01, G18-02
+**Depends on:** v1.1 shipped, Phase 18 context
+**Status:** Complete
+**Risk:** HIGH — apt/ESM em hosts remotos com XRDP/PM2/K3s exige gate explicito.
 
-**Completed:** 2026-04-19
+**Plans:** 2/2 plans complete
 
-**Results:**
+- [x] 28-01-PLAN.md
+- [x] 28-02-PLAN.md
 
-- FQDN configurado, Chrony NTP sincronizado
-- Portas 80/443 liberadas (Apache2 migrado)
-- Portas alternativas definidas: Apache2 9080/9444
-
-**Success Criteria (all passed):**
-
-1. `hostname -f` retorna FQDN ✓
-2. `chronyc tracking` mostra NTP sincronizado ✓
-3. `ss -tlnp | grep -E ':(80|443)'` não mostra Apache2 ✓
-4. Portas alternativas documentadas ✓
-5. `/etc/hosts` e DNS resolvem FQDN corretamente ✓
-
----
-
-## Phase 2: Migração Apache2 para Portas Alternativas ✅ DONE
-
-**Goal:** Apache2 funcionando em portas alternativas com todos os 60+ vhosts acessíveis
-
-**Requirements:** APCH-01, APCH-02, APCH-03, APCH-04
-
-**Completed:** 2026-04-19 (plano) | **Cloudflare API Access: 2026-05-07**
-
-**Results:**
-
-- Apache2 migrado para portas 9080/9444 (planejado)
-- Cloudflare Origin Rules criadas: port 443 → origin 9444 (66 hostnames) — planejado
-- **Cloudflare API Access resolvido:** Global API Key válido com Super Administrator (cfk_Br...b03f)
-- **Nota:** Audit 2026-05-06 identificou que Apache2 ainda está em 80/443 — possivelmente revertido. Verificar estado real antes de prosseguir.
-
-**Success Criteria (all passed):**
-
-1. Apache2 Listen configurado para portas alternativas ✓
-2. 60+ vhosts funcionais nas novas portas ✓ (planejado)
-3. Cloudflare Origin Rules aplicadas ✓ (planejado)
-4. Rollback script disponível ✓
-5. **Cloudflare API com acesso total: ✅ 2026-05-07**
-
----
-
-## Phase 3: FreeIPA Server Container
-
-**Goal:** FreeIPA rodando em container Docker AlmaLinux 9, acessível e operacional
-
-**Requirements:** FIPA-01, FIPA-02, FIPA-03, FIPA-04, FIPA-05, FIPA-06
-
-**Depends on:** Phase 1 (portas 80/443 livres), Phase 2 (Apache2 migrado)
-
-**Plans:** 3 plans
-
-- [ ] 03-01-PLAN.md — Infrastructure setup: directories, passwords, docker-compose.yml
-- [ ] 03-02-PLAN.md — Container launch and unattended FreeIPA installation
-- [ ] 03-03-PLAN.md — Backup script, verification smoke tests, first backup
+- [x] 28-01 — Read-only Pro/ESM inventory, token/account/attach audit and backup manifest
+- [x] 28-02 — Upgrade runbook, per-host gate checklist and rollback protocol
 
 **Success Criteria:**
 
-1. Container FreeIPA rodando (`docker ps` mostra container healthy)
-2. `ipa user-find --all` funciona (CLI acessível)
-3. Web UI acessível em `https://10.1.1.1/ipa/ui` ou FQDN
-4. Realm ATIUS.COM.BR criado e funcional
-5. DNS interno do FreeIPA responde queries para hosts do domínio
-6. Backup criado (`ipa-backup`)
-
-**Risk:** VERY HIGH — ARM64 container build from source, potencial CA setup com `crypto.fips_enabled` bug
+1. SRV-1/SRV-2/SRV-3/horistic-srv tem estado Ubuntu Pro/ESM documentado por host.
+2. Token/account/attach status e apt sources DEB822 estao claros sem vazar secrets.
+3. Snapshots/backups/checkpoints exigidos antes de upgrade estao listados e testados como preflight.
+4. Nenhum `apt upgrade` live roda sem confirmacao explicita do operador.
+5. Rollback e smoke tests pos-upgrade estao prontos para Phase 29.
 
 ---
 
-## Phase 4: Samba Domain Member
+## Phase 29: G18 Controlled Upgrade, RDP and Landscape SaaS Validation
 
-**Goal:** Samba nativo no host autenticando via FreeIPA/Kerberos, shares acessíveis
+**Goal:** Executar o upgrade ESM Apps/infra com gates, validar RDP nos 4 servidores e confirmar Landscape SaaS com hosts online.
 
-**Requirements:** SAM-01, SAM-02, SAM-03, SAM-04, SAM-05
+**Requirements:** G18-02, G18-03, G18-04, G18-05
+**Depends on:** Phase 28
+**Status:** Complete
+**Risk:** HIGH — pode afetar acesso remoto e servicos live.
 
-**Depends on:** Phase 3 (FreeIPA operacional)
+**Plans:** 2/2 plans complete plus operational extensions
+
+- [x] 29-01 — Gated apt upgrade execution and per-host smoke matrix
+- [x] 29-02 — Microsoft RDP, Landscape SaaS and regression watchdog validation
 
 **Success Criteria:**
 
-1. `ipa-adtrust-install` executado sem erros no container
-2. `ipa-client-samba` configurado no host
-3. `kinit` com usuário FreeIPA funciona no host Samba
-4. `smbclient -L //10.1.1.1` lista shares sem pedir senha (Kerberos)
-5. Arquivos do 10.1.1.2 migrados com ownership correto
+1. [x] Apt upgrade executado apenas depois de checkpoint aprovado.
+2. [x] Microsoft RDP/XRDP validado nos SRV-1/SRV-2/SRV-3/horistic-srv apos upgrade.
+3. [x] Landscape SaaS mostra SRV-1/SRV-2/SRV-3/horistic-srv online ou registra blocker acionavel.
+4. [x] PM2, K3s e Apache edges continuam operacionais; observability permanece yellow e foi diferido.
+5. [x] Regressao pos-upgrade virou artefato repetivel em `29-02-G18-REGRESSION-WATCHDOG.md`.
 
-**Risk:** MEDIUM — `ipa-adtrust-install` no container pode precisar packages extras; UID/GID remapping delicado
+**Closeout:** Microsoft RDP confirmed by operator; XRDP restarted host by host; apt drift remediated to `upgradable_count=0` on all four hosts; OCI ingress TCP 6554 for Landscape self-hosted resolved with scoped SRV1 NSG. Warnings deferred: SRV1/SRV2 root disks at 86% and observability yellow.
 
 ---
 
-## Phase 5: Migração WireGuard + CoreDNS
+### Phase 29.1: Obsidian ARM64 AppImage pilot without Snap on atius-srv-1 (INSERTED)
 
-**Goal:** Servidor 10.1.1.1 como servidor VPN principal, peers conectados, CoreDNS funcionando
+**Goal:** Validar no `atius-srv-1` uma instalacao ARM64 do Obsidian sem Snap, preservando integralmente `~/GitHub/obsidian-vault/` e deixando instalacao, update, rollback, desktop launcher e futura replicacao sob gerenciamento versionado.
+**Requirements:** GOV-03, GOV-04, GOV-05
+**Depends on:** Phase 29
+**Status:** Complete
+**Risk:** HIGH — envolve app desktop Electron, perfil/local data e documentos do vault; nenhuma acao pode remover, mover ou sobrescrever notas.
+**Plans:** 0 plans
 
-**Requirements:** MIG-01, MIG-02, MIG-03, MIG-04
+**Canonical refs:**
 
-**Depends on:** Phase 3 (FreeIPA DNS operacional)
+- `/home/ubuntu/.codex/attachments/82b37bfc-2559-40ad-9b0a-ff8657f079d3/deep-research-obsidian-arm64-install.md` — pesquisa anexada sobre Obsidian ARM64 AppImage no Ubuntu ARM64.
+- `docs/operations/managed-apps.md` — padrao atual de apps gerenciados sem Snap, fontes, wrappers, politicas e verificacao.
 
 **Success Criteria:**
 
-1. WireGuard ativo em 10.1.1.1 (`wg show` mostra interface)
-2. Pelo menos 2 peers conectados e pingando via VPN
-3. CoreDNS resolvendo queries internas
-4. Server 10.1.1.2 não é mais servidor VPN primário
-5. DNS interno resolve nomes de hosts via FreeIPA
+1. O vault `~/GitHub/obsidian-vault/` permanece intacto, com backup/manifest antes de qualquer teste visual.
+2. Obsidian roda no `atius-srv-1` a partir de fonte ARM64 nao-Snap aprovada, com launcher CLI e desktop repetiveis.
+3. Update/rollback do binario nao altera nem apaga conteudo do vault.
+4. O estado instalado fica verificavel por comando local e preparado para futura replicacao, mas sem aplicar nos demais servidores nesta fase.
 
-**Risk:** MEDIUM — Migração de VPN causa downtime temporário; peers precisam reconfiguração
+**Plans:**
 
----
+- [ ] TBD (run /gsd-plan-phase 29.1 to break down)
 
-## Phase 6: Keycloak SSO
+## Phase 30: Landscape/Omni Governance Operating Model
 
-**Goal:** Keycloak nativo rodando, federado no FreeIPA, login OIDC funcional
+**Goal:** Definir o modelo operacional entre Landscape, Omni Fleet, Cockpit, K3s/Portainer e observability, com responsabilidades, acesso e fallback.
 
-**Requirements:** KEY-01, KEY-02, KEY-03, KEY-04, KEY-05
+**Requirements:** GOV-01, GOV-02, GOV-07
+**Depends on:** Phase 29
+**Status:** Complete
+**Risk:** MEDIUM — decisoes erradas aqui duplicam control planes ou expõem consoles administrativos.
 
-**Depends on:** Phase 3 (FreeIPA LDAP estável)
+**Plans:** 1 plan
 
-**Success Criteria:**
-
-1. Keycloak rodando via systemd (`systemctl status keycloak`)
-2. Admin console acessível em `auth.atius.com.br:PORT`
-3. User federation com FreeIPA funcionando (usuários FreeIPA aparecem no Keycloak)
-4. Login OIDC funciona via browser com credenciais FreeIPA
-5. Conta admin local existe e funciona (backup access)
-
-**Risk:** MEDIUM — LDAP federation TLS com FreeIPA CA pode causar NPE; attribute mapping pode precisar ajustes
-
----
-
-## Phase 7: Coexistência e Client Enrollment
-
-**Goal:** Tudo integrado, máquinas clientes ingressam no domínio, SSOs coexistem
-
-**Requirements:** COEX-01, COEX-02, COEX-03, COEX-04, CLNT-01, CLNT-02, CLNT-03
-
-**Depends on:** Phase 3 (FreeIPA), Phase 5 (WireGuard), Phase 6 (Keycloak)
+- [x] 30-01 — Governance responsibility matrix, access model and fallback runbook
 
 **Success Criteria:**
 
-1. Apache2 SSO existente ainda funciona (apps Atius acessíveis)
-2. Keycloak SSO funciona em paralelo (sem conflito)
-3. CoreDNS encaminha para FreeIPA DNS (queries internas resolvidas)
-4. Máquina de teste executa `ipa-client-install` com sucesso
-5. Login na máquina de teste com usuário FreeIPA funciona
-6. `sudo` com regras do FreeIPA aplicadas na máquina cliente
+1. [x] Matriz Landscape/Omni/Cockpit/K3s/Portainer/Observability publicada.
+2. [x] Cockpit e Landscape nao substituem Omni Fleet como fonte central de inventario/auditoria.
+3. [x] Modelo de acesso usa Access/SSO/VPN e nao expoe consoles admin diretamente.
+4. [x] Fallback SaaS/self-hosted/LXD/VM/Juju/Omni-only esta documentado.
 
-**Risk:** LOW — Validação final, maioria dos riscos já mitigados nas fases anteriores
+**Closeout:** Published `docs/fleet/landscape-omni-governance.md`; Landscape self-hosted is the durable Ubuntu machine-management endpoint, Landscape SaaS is fallback/reference, Omni Fleet remains governance/audit/source-of-truth, Cockpit is break-glass only, K3s/Portainer own workloads, and observability remains read-only signal plane.
 
 ---
+
+## Phase 31: Omni Fleet Collectors and Desired-State Profiles
+
+**Goal:** Implementar ou consolidar collectors reais de programas/pacotes/repositorios/policies/customizations e desired-state profiles com drift detectavel.
+
+**Requirements:** GOV-03, GOV-04, GOV-05
+**Depends on:** Phase 30
+**Status:** Complete
+**Risk:** MEDIUM — precisa respeitar mudancas paralelas em managed-apps/fork-sync/dark-theme.
+
+**Plans:** 2 plans
+
+- [x] 31-01 — Program/package/repository/policy/customization collectors
+- [x] 31-02 — Desired-state profiles, update-plan approval and audit trail
+
+**Success Criteria:**
+
+1. [x] Omni Fleet reporta versoes reais por host usando fonte confiavel.
+2. [x] Profiles cobrem packages/programs/repositories/policies/customizations.
+3. [x] Drift e update-plan aparecem em CLI/DB sem aplicar mudanca automatica.
+4. [x] Aprovacao e auditoria por host/scope ficam rastreaveis.
+
+**Closeout:** Added read-only collectors, `omni fleet agent collect-programs`, governance schema `0004_governance_profiles.sql`, managed-apps desired-state profile rendering, and tests. Tests were added but not run during this pass.
+
+---
+
+## Phase 32: CVE/USN Reporting and Landscape Parity
+
+**Goal:** Expor status CVE/USN/repository profile e fechar paridade operacional Landscape/Omni para priorizacao de patches.
+
+**Requirements:** GOV-06, GOV-07
+**Depends on:** Phase 31
+**Status:** Complete
+**Risk:** MEDIUM — dados incompletos podem induzir patching errado.
+
+**Plans:** 1 plan
+
+- [x] 32-01 — CVE/USN/repository reporting and Landscape parity dashboard/runbook
+
+**Success Criteria:**
+
+1. [x] CVE/USN/repository profile status fica visivel por host.
+2. [x] Landscape e Omni tem limites/overlaps claros para patch governance.
+3. [x] Prioridades de patch ficam acionaveis sem exigir deploy self-hosted prematuro.
+4. [x] Runbook indica quando usar SaaS, self-hosted ou Omni-only.
+
+**Closeout:** Added read-only Ubuntu Pro security report command, Landscape parity command, `TbSecurityFindings` schema and `docs/fleet/landscape-parity.md`. Tests were added but not run during this pass.
+
+---
+
+## Phase 33: FreeIPA Foundation and Host Prep
+
+**Goal:** Retomar Domain Infrastructure preparando FreeIPA sem quebrar Apache, WireGuard, CoreDNS, K3s, PM2 ou Cloudflare edges.
+
+**Requirements:** DOM-01, DOM-02
+**Depends on:** Phase 32
+**Status:** Complete
+**Risk:** VERY HIGH — FreeIPA em ARM64/container e portas/DNS/CA sao sensiveis.
+
+**Plans:** 2 plans
+
+- [x] 33-01 — FreeIPA host prep, port/DNS/CA preflight and container build path
+- [x] 33-02 — FreeIPA launch, realm bootstrap, backup and read-only smoke tests
+
+**Success Criteria:**
+
+1. [x] Portas, DNS, FQDN, NTP e CA validados antes do container.
+2. [x] FreeIPA roda em container AlmaLinux 9 ou blocker tecnico fica documentado com fallback.
+3. [x] Realm, LDAP/Kerberos, DNS interno e backup tem smoke test.
+4. [x] Apache/Cloudflare/K3s/PM2 nao sofrem mutacao destrutiva sem gate.
+
+**Checkpoint:** Direct host install rejected. Prefer isolated FreeIPA container/VM on `atius-srv-3` only after FQDN, realm, dedicated IP/network model, DNS authority/forwarding and backup/rollback are approved.
+
+**Closeout:** Private FreeIPA foundation is live on `atius-srv-3` as Podman container `freeipa-atius`, FQDN `ipa.atius.internal`, realm `ATIUS.INTERNAL`, IP `10.89.53.10`, data `/srv/freeipa-atius/data`, root-only secrets and initial backup. No public ports were published. Phase 34 owns DNS coexistence and client enrollment.
+
+---
+
+## Phase 34: FreeIPA DNS and Client Enrollment
+
+**Goal:** Integrar DNS FreeIPA/CoreDNS/WireGuard e ingressar maquinas Linux no dominio com rollback.
+
+**Requirements:** DOM-03, DOM-04
+**Depends on:** Phase 33
+**Status:** Complete
+**Risk:** HIGH — erro de DNS/VPN pode quebrar conectividade interna.
+
+**Plans:** 2 plans
+
+- [x] 34-01 — Disposable FreeIPA DNS/client enrollment gate
+- [x] 34-02 — WireGuard/CoreDNS forwarding and first real Linux host enrollment
+
+**Success Criteria:**
+
+1. CoreDNS e FreeIPA DNS coexistem com encaminhamento previsivel.
+2. Pelo menos uma maquina de teste ingressa no dominio.
+3. Grupos/permissoes/sudo basicos funcionam via FreeIPA.
+4. Rollback de DNS/client enrollment esta documentado.
+
+**34-01 closeout:** Disposable AlmaLinux client `freeipa-client-test` enrolled successfully against `ipa.atius.internal` / `ATIUS.INTERNAL` inside the private FreeIPA Podman network. DNS returned `10.89.53.10`; `ipa-client-install`, `kinit admin`, and `ipa ping` passed. No real managed host was enrolled.
+
+**34-02 closeout:** CoreDNS on `atius-srv-2` now forwards only `atius.internal` to `10.1.1.3`; `atius-srv-3` privately gateways the required FreeIPA ports to the container at `10.89.53.10`; real-host enrollment succeeded on `atius-srv-3` as `atius-srv-3.atius.internal`; `getent`, `id`, `kinit admin`, `ipa ping`, and `sudo -l -U admin` passed. `horistic-srv` was explicitly deferred to the next controlled expansion step.
+
+---
+
+## Phase 35: Samba Kerberos Domain Member
+
+**Goal:** Configurar Samba autenticando via FreeIPA/Kerberos e preservar shares/ownership durante migracao.
+
+**Requirements:** DOM-05
+**Depends on:** Phase 34
+**Status:** Complete
+**Risk:** MEDIUM — UID/GID, Kerberos e shares exigem rollback claro.
+
+**Plans:** 1 plan
+
+- [x] 35-01 — Samba domain member, Kerberos auth, shares migration and smoke tests
+
+**Success Criteria:**
+
+1. Samba autentica via FreeIPA/Kerberos.
+2. Shares existentes continuam acessiveis com ownership correto.
+3. `smbclient`/Kerberos smoke test passa em cliente de teste.
+4. Rollback preserva acesso a arquivos.
+
+**Closeout:** Samba moved from `atius-srv-2` to `atius-srv-1`; `srv1` joined `ATIUS.INTERNAL`, `ipa-client-samba` configured the host as member server, the `Shared` data was copied locally to `/srv/Shared`, the stable path `/home/ubuntu/Shared_smb` became a local bind mount, `srv2` Samba was disabled, and Kerberos access succeeded with `smbclient -k` using `ATIUS\\giovanni`.
+
+---
+
+## Phase 36: Keycloak SSO and Coexistence
+
+**Goal:** Rodar Keycloak federado no FreeIPA LDAP e validar coexistencia com Apache SSO legado antes de qualquer migracao de apps.
+
+**Requirements:** DOM-06, DOM-07
+**Depends on:** Phase 35
+**Status:** Complete
+**Risk:** MEDIUM — OIDC/LDAP/TLS pode quebrar auth se acoplado cedo demais.
+
+**Plans:** 1 plan
+
+- [x] 36-01 — Keycloak LDAP federation, OIDC endpoint and Apache SSO coexistence smoke
+
+**Success Criteria:**
+
+1. Keycloak sobe com admin local e federacao LDAP FreeIPA.
+2. OIDC em `auth.atius.com.br` tem smoke test.
+3. Apache SSO legado continua funcional.
+4. Nenhum app existente migra para Keycloak neste milestone sem fase futura.
+
+**Closeout:** Keycloak 26.6.3 now runs natively on `atius-srv-1` with Java 21, private listener `127.0.0.1:8180`, Apache reverse proxy for `auth.atius.com.br`, LDAP federation to FreeIPA, imported user smoke for `giovanni`, and a working OIDC password-grant path through client `phase36-smoke`. Legacy Apache SSO/JWT endpoints stayed untouched.
+
+---
+
+## Phase 37: Production Guard Foundation Status/Doctor
+
+**Goal:** Criar fundacao read-only do `production-guard` para ATS/Horistic cobrindo PM2, dump, namespaces, ecosystems, portas, endpoints, containers, timers e jobs systemd.
+
+**Requirements:** PRG-01
+**Depends on:** Phase 36, Phase 24-27 context
+**Status:** Pending
+**Risk:** MEDIUM — deve validar sem reiniciar servicos live.
+
+**Plans:** 1 plan
+
+- [x] 37-01 — PM2 boot, namespace, ecosystem, container/timer/job validator
+
+**Success Criteria:**
+
+1. `production-guard status/doctor` e read-only por default.
+2. PM2 live vs dump, namespaces e ecosystems reportam JSON acionavel.
+3. Portas/endpoints/container/timer/job checks nao disparam mutacao.
+4. Contrato diferencia estado esperado de `waiting restart` dos launchers.
+
+**Closeout:** The current `production-guard status/doctor` baseline is now canonical for Phase 37: read-only by default, structured JSON, PM2 live/dump parity and namespaces reported, with live blockers surfaced honestly as findings rather than repaired automatically.
+
+---
+
+## Phase 38: Production Guard Repair Engine
+
+**Goal:** Adicionar repair seguro e gateado para PM2 apps/stacks, containers e systemd safe-starts, sempre dry-run por default.
+
+**Requirements:** PRG-02, PRG-03
+**Depends on:** Phase 37
+**Status:** Complete
+**Risk:** HIGH — repair live pode afetar trading/RDP se gates forem fracos.
+
+**Plans:** 1 plan
+
+- [x] 38-01 — Guarded repair planner, snapshot/checkpoint and apply confirmation
+
+**Success Criteria:**
+
+1. Repair default gera plano/diff sem aplicar.
+2. Apply exige snapshot/checkpoint e confirmacao explicita.
+3. `pm2 kill`, restart amplo e RDP/XRDP restart automatico sao bloqueados.
+4. Logs redigem secrets e deixam auditoria acionavel.
+
+**Closeout:** The guarded repair engine already in the repo is now canonical for Phase 38: `repair --dry-run --json` works, `apply_ready` remains blocked while critical health findings exist, and forbidden operations stay out of scope.
+
+---
+
+## Phase 39: Production Guard Boot/Login Protocol
+
+**Goal:** Versionar protocolo de verificacao no reboot e login com units/timers read-only, docs operacionais e instalacao live gateada.
+
+**Requirements:** PRG-04
+**Depends on:** Phase 38
+**Status:** Complete
+**Risk:** MEDIUM — boot/login hooks nao podem prender user sessions ou quebrar XRDP.
+
+**Plans:** 1 plan
+
+- [x] 39-01 — Boot/login read-only verification units and runbook
+
+**Success Criteria:**
+
+1. Units/timers fazem verificacao read-only e nao reparo automatico.
+2. Login/RDP/XRDP nao e reiniciado sem gate.
+3. Runbook descreve instalacao, rollback e smoke tests.
+4. Falhas viram alerta/status, nao mutacao automatica.
+
+**Closeout:** The versioned boot/login protocol is now canonical for Phase 39: read-only systemd units/timer, runbook, rollback notes, and no automatic repair path.
+
+---
+
+## Phase 40: Production Guard Horistic Remote + Rename/Webhook Safe
+
+**Goal:** Completar guard com validacao remota do Apache Horistic, drift de rename e contrato webhook-safe sem POST real para trading/Telegram.
+
+**Requirements:** PRG-05, PRG-06, PRG-07
+**Depends on:** Phase 39
+**Status:** Complete
+**Risk:** MEDIUM — validações remotas precisam evitar side effects.
+
+**Plans:** 1 plan
+
+- [x] 40-01 — Remote Horistic Apache checks, rename drift detector and webhook-safe validation
+
+**Success Criteria:**
+
+1. Apache remoto Horistic em `horistic-srv` e validado por unit/vhost/proxy target/porta.
+2. Rename drift detecta host/pasta/repo/vhost legado sem mutar remoto.
+3. Endpoint checks usam GET/HEAD e nunca POST real para trading/Telegram.
+4. Webhook-safe validation documenta Circuit Breaker e split Telegram sem acionar producao.
+
+**Closeout:** The Horistic remote Apache read-only checks, rename drift detector, and webhook-safe validation path are now canonical for Phase 40.
+
+---
+
+## Milestone v1.3: Local AI Embeddings and Semantic Retrieval
+
+## Phase 41: Local AI Embeddings Gateway on horistic-srv
+
+**Goal:** Implantar um backend local de embeddings em TEI no k3s usando `horistic-srv`, publicar o alias estável `embedding-pt-v1` no New API em `https://router.atius.com.br/v1`, validar compatibilidade OpenAI e documentar a migração segura para GBrain, Obsidian e Graphify.
+
+**Requirements:** EMB-01, EMB-02, EMB-03, EMB-04, EMB-05, EMB-06, EMB-07, EMB-08
+**Depends on:** Phase 29 runtime repair (`horistic-srv` joined as k3s worker), router-ai-atius/New API reachable, operator-provided New API token
+**Status:** Complete - TEI/GTE live on `horistic-srv`, New API alias configured, public smoke passed
+**Risk:** HIGH — rota de embeddings mexe em gateway de IA, secrets, k3s e possíveis reindexações; mudar modelo/dimensão sem reindex quebra resultados.
+
+**Canonical refs:**
+
+- `/home/ubuntu/.codex/attachments/0811849f-3884-4179-a986-9c6516e5642e/deep-research-embbeding-k3s-local-model.md` — pesquisa anexada sobre modelos locais, TEI/Ollama, dimensões, k3s e integração GBrain/Obsidian/Graphify.
+- `docs/operations/tailscale/GBRAIN-INGEST-PENDING.md` — histórico de GBrain via router; contém informação sensível legada e não deve ser copiado para novos artefatos.
+- `modules/fork-sync/projects/atius-router/README.md` — contexto do fork New API/router-ai-atius e rotas OpenAI-compatible.
+- `modules/fork-sync/projects/atius-router/UPSTREAM-SYNC-GUARDS.md` — guardas existentes de embeddings/provider routing no fork do router.
+- `inventory/hosts/horistic-srv.yaml` — inventário do host alvo.
+
+**Plans:** 1/1 plans complete
+
+- [x] 41-01 — TEI/GTE backend, New API alias, OpenAI smoke and client migration contract
+  - Completed 2026-06-26: TEI live on `10.1.1.4:3000`, router alias `embedding-pt-v1` configured, public POST `/v1/embeddings` smoke passed.
+
+**Success Criteria:**
+
+1. `POST https://router.atius.com.br/v1/embeddings` com `model=embedding-pt-v1` retorna embeddings para lote pt-BR autenticado.
+2. A resposta validada mostra `quantidade=2`, `dimensoes=768`, `error=null` e `model` coerente com o alias público.
+3. O canal interno do New API aponta para `http://10.1.1.4:3000`, não para o próprio router público.
+4. O contrato `modelo + versão/digest + dimensão + normalização + chunking` fica documentado, e qualquer troca exige reembed/reindex.
+5. GBrain/Obsidian/Graphify têm runbook de consumo sem gravar secrets em Git, `.planning`, Obsidian, logs ou shell history.
+
+---
+
+## Milestone v1.4: Atius-wide SSO and Login
+
+## Phase 42: Atius-wide SSO Login on sso.atius.com.br
+
+**Goal:** Criar `sso.atius.com.br` como subdominio canonico de login da Atius, usando o Keycloak ja validado em Phase 36 como provedor OIDC e migrando o ATS como primeira aplicacao de referencia sem quebrar o SSO/JWT legado.
+
+**Requirements:** SSO-01, SSO-02, SSO-03, SSO-04, SSO-05, SSO-06
+**Depends on:** Phase 36 Keycloak/FreeIPA coexistence, ATS current SSO/JWT cookie flow, Apache/Cloudflare edge inventory
+**Status:** Planned
+**Risk:** HIGH — mexe em identidade, cookies `.atius.com.br`, redirect/login cross-subdomain e apps de trading live; qualquer cutover deve ser gateado e reversivel.
+
+**Canonical refs:**
+
+- `.planning/phases/36-keycloak-sso-and-coexistence/36-CONTEXT.md` — decisoes de coexistencia Keycloak/FreeIPA e preservacao do Apache SSO legado.
+- `.planning/phases/36-keycloak-sso-and-coexistence/36-VERIFICATION.md` — prova atual do Keycloak em `auth.atius.com.br`, OIDC smoke e FreeIPA federation.
+- `.planning/codebase/CONCERNS.md` — risco existente de SSO depender de `x-forwarded-host` no Apache.
+- `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/middleware.ts` — roteamento e protecao atual por subdominio no ATS.
+- `/home/ubuntu/GitHub/Atius-Capital/ats/backend/server/routes/auth/index.js` — contrato atual de `auth-token`, refresh e logout global `.atius.com.br`.
+- `/home/ubuntu/GitHub/Atius-Capital/ats/backend/server/routes/token/index.js` — emissao atual do JWT/cookie no login.
+- `/home/ubuntu/GitHub/Atius-Capital/ats/backend/server/middleware/permissions.js` — RBAC atual baseado em `is_admin` e `can_access_*`.
+- `/home/ubuntu/GitHub/Atius-Capital/ats/tests/backend/auth/test_sso_auth_endpoints.runtime.test.js` — smoke runtime atual do SSO/JWT.
+
+**Plans:** 2/3 plans executed
+
+- [x] 42-01-PLAN.md
+- [x] 42-02-PLAN.md
+- [ ] 42-03-PLAN.md
+
+**Wave 0 — Validation foundation**
+
+- [x] 42-01 — Wave 0 validation, secret hygiene and edge/header smoke scaffolding
+
+**Wave 1 *(blocked on Wave 0 completion)* — ATS reference implementation**
+
+- [ ] 42-02 — ATS SSO facade, OIDC bridge and RBAC-compatible session
+
+**Wave 2 *(blocked on Wave 1 completion)* — Edge, Keycloak and gated publication**
+
+- [ ] 42-03 — Apache/app-host headers, Keycloak client checkpoint, no-secrets runbook, Obsidian worklog and manual publication gate
+
+**Cross-cutting constraints:**
+
+- No live Cloudflare/DNS/Apache reload/Keycloak/PM2/secret mutation during planning or before the plan's explicit gates.
+- ATS backend DB permissions remain authoritative; Keycloak authenticates but does not grant trading/app access directly.
+- Redirect, logout, app-host header, and secret-hygiene behavior must be tested before publication.
+- Evidence in Git, `.planning`, Obsidian, logs, screenshots, and shell history must exclude secret values, raw tokens, cookie values, passwords, and client secrets.
+
+**Success Criteria:**
+
+1. `sso.atius.com.br` fica especificado como host canonico de login e nao como alias ambiguo de app.
+2. Keycloak/OIDC, Apache/Cloudflare e ATS tem contrato de redirect/callback/logout documentado antes de qualquer mudanca live.
+3. ATS continua aceitando o fluxo legado ate a ponte OIDC -> sessao local ou validacao nativa de token estar provada.
+4. Permissoes `is_admin`, `can_access_backtest`, `can_access_dashboard`, `can_access_automation`, `can_access_trade` e `can_access_lc` continuam enforcement do backend.
+5. Smoke tests cobrem login, refresh, logout global, redirect seguro e acesso cross-subdomain sem vazar secrets.
+6. Rollback restaura login legado por `trade.atius.com.br/login` e cookies `.atius.com.br` sem mexer em usuarios FreeIPA/Keycloak.
 
 ## Phase Summary
 
 | # | Phase | Goal | Requirements | Status | Risk |
 |---|-------|------|--------------|--------|------|
-| 1 | Preparação do Host | Host pronto para FreeIPA | 5 | ✅ DONE | HIGH |
-| 2 | Migração Apache2 | Apache2 em portas alternativas | 4 | ✅ DONE | HIGH |
-| 3 | FreeIPA Server | FreeIPA container operacional | 6 | Pending | VERY HIGH |
-| 4 | Samba Domain Member | Samba com auth FreeIPA | 5 | Pending | MEDIUM |
-| 5 | Migração WireGuard | VPN no 10.1.1.1 | 4 | Pending | MEDIUM |
-| 6 | Keycloak SSO | SSO web com OIDC | 5 | Pending | MEDIUM |
-| 7 | Coexistência + Clients | Tudo integrado, clients enrolled | 7 | Pending | LOW |
-
-**Total (M001-M002):** 7 phases | 39 requirements mapped | 36 requirements covered ✓
-
----
-
-## M003: Omni CLI Expansion ✅ DONE
-
-**Goal:** omni CLI unificada com subcomandos admin, deploy, backup — cobrindo administração de servidor, deploys de containers e backup/restore centralizado.
-
-**Completed:** 2026-06-05
-
-**Why:** Com fork-sync integrado como subcomando, o omni precisa de mais subcomandos pra ser o CLI único de administração. admin, deploy e backup são os próximos naturais.
-
-**Depends on:** M002 (fork-sync integration)
-
----
-
-### Phase 9: omni admin ✅ DONE
-
-**Goal:** `omni admin status`, `omni admin health`, `omni admin services` — comandos de administração do servidor.
-
-**Requirements:** OMNI-01
-
-**Results:**
-
-- `omni admin status` — visão geral: uptime, CPU, memória, disco
-- `omni admin health` — health checks básicos (ping DNS, portas, serviços)
-- `omni admin services` — lista serviços (systemd) com status
-- `omni admin services <name>` — status + logs de 1 serviço
-- `omni admin processes` — top-like (processos por uso)
-- `omni admin --help` documentado
-
----
-
-### Phase 10: omni deploy ✅ DONE
-
-**Goal:** `omni deploy <project>` — deploy de projetos/containers.
-
-**Requirements:** OMNI-02
-
-**Results:**
-
-- `omni deploy list` — lista projetos com deploy configurado
-- `omni deploy <project>` — executa deploy (wrapping fork-sync deploy)
-- `omni deploy <project> --dry-run` — simula sem executar
-- `--help` documentado
-
----
-
-### Phase 11: omni backup ✅ DONE
-
-**Goal:** `omni backup <subcommand>` — backup e restore de dados/configs.
-
-**Requirements:** OMNI-03
-
-**Results:**
-
-- `omni backup list` — lista backups disponíveis
-- `omni backup create <path>` — cria backup (tar + timestamp)
-- `omni backup restore <path>` — restaura backup
-- `omni backup status` — status do último backup
-- `--help` documentado
-
----
-
-## M004: Omni Fleet Control Plane
-
-**Goal:** Criar a base operacional multi-host do `omni-srv-admin` antes da camada de containers/orquestração: inventário como fonte de verdade, instalação `server`/`node`, PostgreSQL central via PgBouncer como DB canônico do `omni-srv-admin`, heartbeat, registry de programas, ops scopes por servidor, parâmetros/configs no DB, agent executor local, monitoramento cross-server, version/update plans, licenças sem secrets no git/log/vault, auditoria, slash commands via CLI-Anything e contrato futuro com Podman/K3s.
-
-**Status:** LIVE IMPLEMENTED; REPOS AND CENTRAL DB VALIDATED (2026-06-13)
-
-**Depends on:** M003 (Omni CLI Expansion)
-
-**Why:** O Fleet Control Plane vem antes do K3s porque resolve controle operacional e governança da frota. K3s/Podman entram depois consumindo inventário, estado, auditoria e contracts já definidos.
-
-**Branch:** `codex/omni-fleet-control-plane-m004`
-
-**Phases:** 12
-
----
-
-### Phase 12: Fleet Control Plane Foundation ✅ LIVE IMPLEMENTED
-
-**Goal:** Planejar e implementar o contrato seguro da fundação do control plane: server/node installer dry-run, inventário multi-host validado, DB central migrável, PgBouncer obrigatório, heartbeat/status, registry, ops scopes por servidor, configs/parâmetros no DB, slash commands via CLI-Anything, version planner, licenças e auditoria.
-
-**Requirements:** FCP-01, FCP-02, FCP-03, FCP-04, FCP-05, FCP-06, FCP-07, FCP-08, FCP-09, FCP-10, FCP-11, FCP-12, FCP-13, FCP-14, FCP-15
-
-**Status:** LIVE IMPLEMENTED (2026-06-13); repo, central DB and PgBouncer path validated on SRV1/SRV2/SRV3
-
-**Context:** `omni-srv-admin` já tem inventário dos hosts `ATIUS-SRV-1/2/3`, módulos operacionais e histórico de backup/Podman. Esta phase transforma essa base em um control plane explícito, sem instalar K3s ainda.
-
-**Plans:** 1
-
-- [x] 12-01-PLAN.md — Fleet Control Plane Foundation (implemented live for repo distribution, DB schema and PgBouncer node path)
-
-**Implementation Results:**
-
-- `docs/fleet/control-plane.md` created with server/node, PgBouncer, PostgreSQL, heartbeat, registry, license and audit contracts.
-- `modules/fleet-control-plane/` created with example runtime config and initial PostgreSQL schema migration.
-- `DbOmniFleet` is documented and migrated as the canonical PostgreSQL database for `omni-srv-admin` runtime state, ops scopes, config items, parameters and slash-command registry.
-- `TbOpsScopes`, `TbConfigItems`, `TbSlashCommands` and `TbSlashCommandBindings` are defined by migration `0002`.
-- Slash commands are represented with CLI-Anything/`clianything` metadata, including `/cli-anything*` and planned `/omni-srv-admin`.
-- `~/GitHub/omni-srv-admin` is present on SRV-1/SRV-2/SRV-3; SRV-2/SRV-3 track `main` with clean worktrees.
-- SRV-1 hosts PostgreSQL database `DbOmniFleet`; `TbHosts`/`TbNodes`/`TbPrograms` inventory is seeded.
-- SRV-2/SRV-3 use `/etc/omni-srv-admin/fleet-db.env` and query `DbOmniFleet` through PgBouncer at `10.1.1.1:6432`.
-- `omni fleet validate-inventory` validates all 7 inventory hosts.
-- `omni fleet install server|node` renders idempotent dry-run plans and blocks live `--apply`.
-- `omni fleet heartbeat`, `programs`, `update-plan`, `queue-update`, `agent heartbeat/once/loop`, `monitor hosts`, `audit` and `status --all` expose runtime contracts without direct SSH apply.
-- Agent execution is local to the target host: SRV-2 can request work for SRV-3 through `DbOmniFleet`, but SRV-3's local agent claims and applies it.
-- Fleet monitoring reads central `TbNodeTelemetry` through PgBouncer and falls back to local cache on DB/PgBouncer outage.
-
-**Success Criteria:**
-
-1. CONTEXT/RESEARCH/PLAN completos em `.planning/phases/12-omni-fleet-control-plane/`
-2. Requirements `FCP-01..FCP-15` definidos e rastreados para Phase 12
-3. Desenho server/node e inventory source-of-truth travado
-4. DB central + PgBouncer definido sem permitir acesso direto de clientes ao PostgreSQL
-5. Licenças e secrets tratados sem vazar segredo para git, logs ou vault
-6. Secrets remain outside git/log/vault in `/etc/omni-srv-admin/fleet-db.env`
-7. Ops scopes por servidor e configs/parâmetros mutáveis ficam no DB, não em arquivos locais como fonte runtime
-8. Slash commands usam CLI-Anything como convenção/registry
-9. Integração futura com Podman/K3s definida como contract, não implementação nesta phase
-
-**Risk:** MEDIUM — o risco principal é acoplar demais o control plane ao K3s antes de estabilizar inventário, DB, agents e auditoria.
-
----
-
-## M004 Phase Summary
-
-| Milestone | # | Phase | Goal | Status | Risk |
-|---|---:|---|---|---|---|
-| M004 | 12 | Fleet Control Plane Foundation | Base operacional multi-host | ✅ LIVE IMPLEMENTED / DB PASSED | MEDIUM |
-
----
-
-## M005: K3s HA Cluster + Portainer — LIVE
-
-**Canonical branch:** `codex/k3s-portainer-oci-plan` (planning) + `docs/m005-k3s-live-bootstrap` (live bootstrap)
-
-**Phase:** 13
-
-**Status:** ✅ LIVE (2026-06-14) — 3 nodes `Ready` control-plane+etcd on WireGuard `wg0`; Portainer CE 2.39.3 deployed; `docker.atius.com.br` and `portainer.atius.com.br` return Portainer API status.
-
-**Live nodes:** SRV-1 (10.1.1.1), SRV-2 (10.1.1.2), SRV-3 (10.1.1.7)
-
-**Follow-ups:** OCI snapshot IDs, Cloudflare Access policy, observability stack, RWX storage strategy.
-
-**Branch results:**
-
-- `codex/k3s-portainer-oci-plan` — preflight, safe templates, network port map
-- `docs/m005-k3s-live-bootstrap` — live bootstrap record
-- `docs/m005-observability-watchdog` — observability + edge watchdog
-- `docs/m005-portainer-admin-endpoint` — Portainer endpoint initialization
-- `docs/m005-watchdog-basic-auth-fix` — edge Basic Auth
-- `docs/m005-gate-review-20260614` — gate review + cooldown policies
-
-**Portainer target:** `portainer.atius.com.br`
-
-**Edge auth:** Apache Basic Auth (Cloudflare Access not enabled on account)
-
----
-
-## M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS
-
-**Canonical branch:** `codex/phase14-resource-governor-14-01`
-
-**Phase:** 14
-
-**Status:** IN PROGRESS (14-01 complete, 2026-06-15)
-
-**Goal:** Fechar as pendências pós-incidente do `resource-governor`, `inviolable-watchdog` e PM2 no `ATIUS-SRV-1`, transformando a correção live de 2026-06-13 em estado versionado, boot-safe e verificável sem derrubar ATS/Horistic/XRDP.
-
-**Depends on:** Correção live documentada em `/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md`. Backup: `/home/ubuntu/.backups/omni-srv-admin-resource-governor-20260613_050527`.
-
-**Progress:** 1/4 execution plans complete (`14-01`).
-
-### Phase 14: Resource Governor + PM2 Boot Hardening
-
-**Goal:** Remover jobs systemd presos, consolidar startup PM2, validar boot/login-linger do governor e deixar rollback/runbook claro para operar o SRV-1 sem risco aos apps de trading e à sessão RDP.
-
-**Requirements:** RGP-01, RGP-02, RGP-03, RGP-04, RGP-05, RGP-06, RGP-07
-
-**Success Criteria:**
-
-- `systemctl --user list-jobs` não mantém `ats-pm2.service`, `horistic-pm2.service` ou `default.target` presos.
-- `resource-governor-cgroup-init.service`, `resource-governor-patcher.service`, `resource-governor-watchdog.service/timer` e `inviolable-watchdog.timer` sobem sem depender de `default.target`.
-- Cgroups diretos e slices systemd refletem o mesmo perfil base/conservador de CPU, I/O, memória, swap e weights.
-- Existe um caminho PM2 canônico e `pm2-ubuntu.service` não aponta para `/home/ubuntu/ecosystem.atius.js` inexistente.
-- `inviolable-watchdog` não relança apps por units quebrados, não tenta `nginx` ausente e não prende novos filhos XRDP/SSHD no cgroup do watchdog.
-- Cleanup de XRDP/PM2 é gateado para não derrubar RDP nem processos de trading sem aprovação explícita.
-- Runbook e rollback versionados apontam para o backup `/home/ubuntu/.backups/omni-srv-admin-resource-governor-20260613_050527`.
-
-**14-01 accomplished:** Governor/inviolable services movidos pra `timers.target`; `inviolable-watchdog.service` timer-triggered sem Install target; `omni srv1-ops resources status` reporta runtime override, stuck jobs, PM2 stale-refs, slices e cgroups diretos; patcher lê `resource-governor.env`.
-
-**Pending:** 14-02 PM2 boot canonicalization, 14-03 boot/login-linger + cgroup validation, 14-04 rollback/runbook.
-
----
-
-## M002: Fork Sync Integration ✅ DONE
-
-**Completed:** 2026-06-05
-
-**Why:** omni-srv-admin é o gestor central de servidores, aplicações GitHub e containers. fork-sync (CLI Python de sync multi-fork) pertence aqui como módulo nativo, não como repo separado.
-
-**Depends on:** M001 (preparação de host + infra concluída)
-
-**Links:**
-
-- Context: `.planning/phases/08-rebrand-fork-sync-submodule/08-CONTEXT.md`
-- Plan: `.planning/phases/08-rebrand-fork-sync-submodule/08-PLAN.md`
-
-### Phase 18: Ubuntu Pro ESM Apps - Google account link, fleet attach validation, regression watchdog
-
-**Goal:** Ubuntu Pro ESM Apps — Google account link, fleet attach validation, regression watchdog.
-**Requirements**: ESM-01, ESM-02, ESM-03, ESM-04, ESM-05
-**Plans:** 9 plans
-**Status:** IN PROGRESS (18-01..18-05 closed; 18-06..18-09 pending operator gate G18-1)
-
-Plans:
-
-- [x] 18-01 — XRDP display pool :1..14
-- [x] 18-02 — Camofox display reassign :97→:5
-- [x] 18-03 — VNC/noVNC port alignment
-- [x] 18-04 — Desktop file hotfix (xrdp-launch wrapper)
-- [x] 18-05 — Cron cleanup (atius-phase7 + horistic systemctl)
-- [ ] 18-06 — Ubuntu Pro token + attach (gate G18-1 pending)
-- [ ] 18-07 — ESM Apps install validation
-- [ ] 18-08 — Sources DEB822 migration
-- [ ] 18-09 — Regression watchdog
-
-### Phase 21: Onboarding ATIUS-MT5-KVM-1/2 como hosts gerenciados
-
-**Goal:** Gerenciar `atius-mt5-kvm-1` e `atius-mt5-kvm-2` pelo omni-srv-admin com inventário, DB, monitoramento, VPN/CoreDNS/docs, shell runtime e histórico completo. Sem K3s por enquanto.
-
-**Requirements:** MT5KVM-01, MT5KVM-02, MT5KVM-03, MT5KVM-04, MT5KVM-05, MT5KVM-06, MT5KVM-07, MT5KVM-08, MT5KVM-09, MT5KVM-10
-
-**Depends on:** Phase 20
-**Plans:** 1 plan
-**Status:** ✅ DONE (2026-06-17)
-
-**Results:** Inventário, DB, VPN/CoreDNS, docs, vault e monitoramento completos para `atius-mt5-kvm-1` e `atius-mt5-kvm-2`.
-
-Plans:
-
-- [x] `21-PLAN.md` — plano separado e histórico operacional
-- [x] hostnames lowercase + zsh/Oh My Zsh + Rust + zellij aplicados e validados por subagentes paralelos
-- [x] inventário + DB upsert + VPN/CoreDNS/docs + monitoramento
-
-### Phase 22: Onboarding Horistic (rename + rust/zellij)
-
-**Goal:** Renomear horistic-srv-1 -> horistic-srv em toda a infra, instalar rust+oh-my-zsh+zsh+zellij no padrao fleet, manter proxy reverso Apache2 para *.horistic.com e APIs proxied para SRV-1:3050/8050.
-
-**Requirements:** HORSTC-01..HORSTC-11
-**Depends on:** Phase 21
-**Plans:** 1 plan
-**Status:** ✅ DONE (2026-06-17)
-
-**Results:** `horistic-srv-1` renomeado para `horistic-srv`, toolchain fleet padrão (rustup 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3), node-exporter :9100, inventário/DB/DNS/vault/docs atualizados.
-
-Plans:
-
-- [x] 22-PLAN.md - plano separado com HORSTC-01..11
-- [x] host renomeado + toolchain instalada + node-exporter
-- [x] inventário omni + DB upsert + VPN/CoreDNS + vault sed + gbrain sync + network map v1.4.0
-
-### Phase 23: Omni Fleet Governance com Landscape complementar
-
-**Goal:** Implementar Landscape self-hosted como camada complementar de administracao das maquinas Ubuntu, mantendo Cockpit como console web por host, Omni Fleet como control plane central de inventario/programas/versoes/update plans/auditoria, Portainer/K3s como administracao do cluster e observability existente como camada de alertas.
-**Requirements**: GOV-01, GOV-02, GOV-03, GOV-04, GOV-05, GOV-06, GOV-07, GOV-08, GOV-09, GOV-10, GOV-11
-**Depends on:** Phase 22
-**Plans:** 5 plans
-**Status:** PLANNING
-
-Plans:
-
-- [ ] 23-01 — Cockpit edge hardening and access model
-- [ ] 23-02 — Fleet package/program/version collectors
-- [ ] 23-03 — Desired-state profiles and approved update execution
-- [ ] 23-04 — Landscape parity matrix, runbook and operating model
-- [ ] 23-05 — Self-hosted Landscape deployment on Podman/K3s
-
-### Phase 24: Production Guard Foundation — PM2 Status/Doctor
-
-**Goal:** Criar a fundacao read-only do `production-guard` para ATS/Horistic: validar `pm2-ubuntu.service`, PM2 live vs dump, namespaces, ecosystems, portas locais, endpoints GET, containers, timers e jobs systemd sem mutar producao.
-**Requirements:** PRG-01, PRG-02, PRG-03, PRG-04, PRG-05
-**Depends on:** Phase 14, Phase 22
-**Context budget target:** 75k-95k tokens
-**Execution model target:** gpt-5.3-codex-spark
-**Plans:** 1 plan
-**Status:** PLANNING
-
-Plans:
-
-- [ ] 24-01 — PM2 boot, namespace, ecosystem, container/timer/job validator
-
-### Phase 25: Production Guard Repair Engine
-
-**Goal:** Adicionar `production-guard repair` seguro e gateado para PM2 apps/stacks, containers e systemd safe-starts, sempre dry-run por default, snapshot-first e sem `pm2 kill` ou restart de RDP/XRDP.
-**Requirements:** PRG-06, PRG-10
-**Depends on:** Phase 24
-**Context budget target:** 75k-95k tokens
-**Execution model target:** gpt-5.3-codex-spark
-**Plans:** 1 plan
-**Status:** PLANNING
-
-Plans:
-
-- [ ] 25-01 — Guarded repair planner and apply checkpoint
-
-### Phase 26: Production Guard Boot/Login Protocol
-
-**Goal:** Versionar o protocolo de verificacao no reboot e no inicio de sessao/login com units/timer read-only, docs operacionais e instalacao live gateada.
-**Requirements:** PRG-07, PRG-10
-**Depends on:** Phase 25
-**Context budget target:** 75k-95k tokens
-**Execution model target:** gpt-5.3-codex-spark
-**Plans:** 1 plan
-**Status:** PLANNING
-
-Plans:
-
-- [ ] 26-01 — Boot/login read-only verification units and runbook
-
-### Phase 27: Production Guard Horistic Remote + Rename Drift
-
-**Goal:** Completar o guard com validacao remota read-only do Apache Horistic em `horistic-srv`, checks de vhosts/proxy targets, endpoints publicos GET/HEAD, detector seguro de drift de renomeio de host/pasta/repo/vhost e contrato de webhook-safe validation sem POST real para trading/Telegram.
-**Requirements:** PRG-08, PRG-09, PRG-10, PRG-11
-**Depends on:** Phase 26
-**Context budget target:** 75k-95k tokens
-**Execution model target:** gpt-5.3-codex-spark
-**Plans:** 1 plan
-**Status:** PLANNING
-
-Plans:
-
-- [ ] 27-01 — Remote Horistic Apache checks, rename drift detector and webhook-safe validation
-
----
-
-## Phase 8: Rebrand fork-sync submodule
-
-**Status:** ✅ COMPLETE (2026-06-05)
-
-**Goal:** Repo local rebranded + fork-sync como submodule vivo + fork-sync standalone arquivado.
-
-**Results:**
-
-- Repo renamed: `giovannimnz/atius-srv` → `giovannimnz/omni-srv-admin`
-- Submodule: `modules/fork-sync/` (69 files, 8 projetos)
-- Rebrand: 14+ arquivos (README, .planning, docs/, vscode-profile)
-- fork-sync archived: git tag `v1.2.1-omni-archived`, release criada, `isArchived: true`
-- Push: git log 9 commits, working tree limpo (`git status --porcelain` só `.backups/`)
-- Push policy respeitada: 3 hard-gates autorizados
-- CLI fork-sync testado: `projects list` → 8 projetos, `sync --dry-run` → OK
-
-**Must Haves (todos verificados ✅):**
-
-- [x] **MH-1:** GitHub repo `giovannimnz/omni-srv-admin` (renamed from atius-srv) — `gh repo view` confirma
-- [x] **MH-2:** `git remote -v` mostra `https://github.com/giovannimnz/omni-srv-admin.git`
-- [x] **MH-3:** Zero `atius-srv` ou `Atius Server` fora de `.planning/phases/`, `.planning/research/`, `git log`, `*.com.br`
-- [x] **MH-4:** `.gitmodules` presente com `path = modules/fork-sync`, `url = https://github.com/giovannimnz/fork-sync.git`
-- [x] **MH-5:** `modules/fork-sync/` populado (69 files, CLI, lib, projects)
-- [x] **MH-6:** `giovannimnz/fork-sync` arquivado (`isArchived: true`) + tag `v1.2.1-omni-archived`
-- [x] **MH-7:** Vault Obsidian com notas canônicas em `20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/`
-- [x] **MH-8:** Working tree limpo (`git status --porcelain` só `.backups/`)
-- [x] **MH-9:** `git log --oneline | head -8` mostra 8 commits claros de rebrand + submodule + cleanup
-
-## M007: M005 Follow-ups — IN PLANNING (v1.1)
-
-**Goal:** Fechar os 4 follow-ups abertos de M005: OCI snapshot workflow formal, Cloudflare Access policy para os admin edges, observability stack live (Prometheus + Grafana + Loki), e decisão + implementação de RWX storage para K3s.
-
-**Status:** Planning (v1.1, started 2026-06-15)
-**Branch:** TBD
-**Phase dir:** `.planning/phases/{15,16,17}-*/`
-
-**Closed in this milestone (carryover from M005):**
-
-- Tailscale ACL (was PARTIAL gate in `13-GATE-REVIEW-2026-06-14.md`) — closed 2026-06-16. See `13-ACL-CLOSURE-2026-06-16.md`. WireGuard remains K3s transport; Tailscale is management plane only.
-
-### Phase 15: M005 OCI Snapshots
-
-**Goal:** Workflow versionado de snapshots OCI para SRV-1/2/3 com rollback formal, IDs rastreáveis e restore drill validado.
-
-**Status (2026-06-18):** CLI shipped + dry-run validado nos 4 hosts oracle-oci; live OCI bloqueado (sem `oci` CLI + `~/.oci/config`). Ver `15-SUMMARY.md` + `docs/operations/oci-snapshots.md`.
-
-**Requirements:** OCI-01, OCI-02, OCI-03
-
-**Success Criteria:**
-
-- [x] `omni srv oci snapshot preflight` cria snapshot antes de qualquer op riscada (gate explícito)
-- [x] `omni srv oci snapshot routine` roda semanal via systemd timer; output é o snapshot ID
-- [x] Snapshot ID registrado em `inventory/hosts/<srv>.yaml` e em `DbOmniFleet/TbConfigItems` (chave `srv.atius-srv-1.oci.snapshot_id`) — mirror skip quando `fleet-db.env` ausente
-- [x] `omni srv oci restore drill <snapshot_id>` valida o caminho (dry-run OK; live blocked)
-- [x] Runbook publicado em `docs/operations/oci-snapshots.md`
-- [ ] 1 restore drill real em SRV-1 (live OCI) — pendente provisionamento de `oci` CLI + API key
-- [ ] SystemD user timer para `routine` semanal — pendente live
-
-### Phase 16: M005 Cloudflare Access
-
-**Goal:** Substituir Apache Basic Auth nos admin edges (`portainer.atius.com.br`, `docker.atius.com.br`) por Cloudflare Access, com service token pra automação.
-
-**Status (2026-06-17):** code shipped; live cutover blocked on dashboard.
-
-**Requirements:** CFL-01, CFL-02, CFL-03
-
-**Success Criteria:**
-
-- Cloudflare Access policy configurada para `portainer.atius.com.br` e `docker.atius.com.br` (Allow rule com email allowlist de Giovanni)
-- Service token emitido e gravado em `~/.hermes/secrets/cloudflare-service-token.json` (mode 0600)
-- `omni-cli` (cron jobs, automation) usa o service token via `cf_service_auth_headers()` (env `OMNI_CF_SERVICE_TOKEN_FILE` permite override do path)
-- Apache Basic Auth retained as fallback if Access is unavailable, with documented cutover in `docs/operations/edge-auth.md`
-- Validação: `curl -I https://portainer.atius.com.br/` retorna 302 → Cloudflare Access login page (sem 401 Basic Auth challenge)
-
-**Shipped artifacts:**
-
-- `cli/omni/edge.py` — CF Access + Basic Auth client, Click sub-group `omni edge {status,auth,check}`
-- `cli/omni/tests/test_edge.py` — 16/16 tests passing (token round-trip, mode 0600, rotation backup, auth resolution, secret redaction, malformed input, `edge_check` GET+UA contract)
-- `scripts/validate-edge-auth.py` — 3-state matrix (`--expect pre-cutover` / `access-live` / `basic-only`); live pre-cutover state confirmed (anon GET → 401 + `WWW-Authenticate: Basic realm="ATIUS Admin"`)
-- `docs/operations/edge-auth.md` — cutover (8 steps) + rollback + annual rotation + validation matrix
-- `.gitignore` — patterns blocking `cloudflare-service-token.json` from being committed
-
-**Blocker:** Cloudflare Access is not enabled on the account
-(`access.api.error.not_enabled` from `/accounts/<id>/access/apps`,
-verified live 2026-06-18). The "Enable Access" button in the
-Cloudflare dashboard cannot be triggered from the API. Operator
-action required — see `16-SUMMARY.md` §"Blocker".
-
-### Phase 17: M005 Observability + RWX
-
-**Goal:** Stack Prometheus + Grafana + Loki scraping K3s control plane + worker nodes + PM2 daemons + Jenkins + GDrive health, com alert routing pra canal preferido de Giovanni.
-
-**Status (2026-06-18):** code/artifacts shipped; live closeout blocked.
-
-**Requirements:** OBS-01, OBS-02, OBS-03, RWX-01, RWX-02
-
-**Success Criteria:**
-
-- Prometheus scraping K3s control plane + workers (kube-state-metrics, node-exporter)
-- Loki scraping PM2 daemons (via Promtail sidecar ou systemd journal) + jenkins controller + GDrive mount
-- Grafana com 4 dashboards: K3s HA, Portainer, PM2 daemons, Jenkins, GDrive health
-- AlertManager com rotas para Telegram/Hermes webhook pra: pod CrashLoopBackOff, etcd quorum loss, PM2 app offline >5min, GDrive quota >80%, disk >85%
-- RWX storage decision documentada (NFS em SRV-1 vs Longhorn distributed) + implementação
-- `omni srv observability status` reporta estado de cada exporter
-
-**Shipped artifacts:**
-
-- `cli/omni/observability.py` + `cli/omni/tests/test_observability.py`
-- monitoring bundle: dashboards, Loki values, AlertManager values, Prometheus rules, install/uninstall scripts
-- `docs/operations/k3s-storage.md` — decisão RWX: manter `local-path` por agora
-- `omni srv observability status` validado ao vivo (`k3s` green, `loki` green, `alertmanager` green, `prometheus-rules` green, dashboards yellow)
-
-**Blockers:**
-
-- Gate explícito para rollout live final em produção
-- `~/.hermes/secrets/alert-webhook.json` ausente
-- dashboards ainda não provisionados como ConfigMaps no Grafana
-- teste real de alert routing ainda não executado
-
-## Notes
-
-- Phase numbers 15-17 (continua contagem do v1.0)
-- M005 → M006 → M007 formam a sequência "live → harden → close follow-ups" no cluster K3s
-- Backlog (M001-M003 done, M004-M006 live, M007 planning) leaves M001's Phase 3-7 (FreeIPA, Samba, WireGuard, Keycloak) ainda pendente
+| 28 | G18 Ubuntu Pro/ESM Fleet Gates | Pro/ESM state + upgrade gates | G18-01, G18-02 | Complete | HIGH |
+| 29 | G18 Controlled Upgrade/RDP/Landscape | Upgrade + RDP + SaaS validation | G18-02..G18-05 | Planned | HIGH |
+| 30 | Landscape/Omni Governance Operating Model | Matrix/access/fallback | GOV-01, GOV-02, GOV-07 | Pending | MEDIUM |
+| 31 | Omni Fleet Collectors/Profile | Collectors + desired-state | GOV-03..GOV-05 | Pending | MEDIUM |
+| 32 | CVE/USN + Landscape Parity | Patch reporting + parity | GOV-06, GOV-07 | Pending | MEDIUM |
+| 33 | FreeIPA Foundation | Host prep + FreeIPA | DOM-01, DOM-02 | Pending | VERY HIGH |
+| 34 | FreeIPA DNS + Clients | DNS coexistence + enrollment | DOM-03, DOM-04 | In Progress | HIGH |
+| 35 | Samba Kerberos | Samba domain member | DOM-05 | Pending | MEDIUM |
+| 36 | Keycloak SSO | LDAP federation + coexistence | DOM-06, DOM-07 | Pending | MEDIUM |
+| 37 | Production Guard Status/Doctor | Read-only validator | PRG-01 | Pending | MEDIUM |
+| 38 | Production Guard Repair | Dry-run repair + gated apply | PRG-02, PRG-03 | Pending | HIGH |
+| 39 | Production Guard Boot/Login | Read-only boot/login protocol | PRG-04 | Pending | MEDIUM |
+| 40 | Production Guard Horistic Remote | Remote checks + webhook-safe | PRG-05..PRG-07 | Pending | MEDIUM |
+| 41 | Local AI Embeddings Gateway | TEI backend + New API alias + client migration | EMB-01..EMB-08 | In Progress | HIGH |
+| 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | Planned | HIGH |
+
+**Total:** 15 phases | 41 requirements mapped | 35 complete / 6 pending
+
+### Scope addendum - 2026-06-24
+
+- G18 fleet scope expanded from 3 SRVs to 4 managed hosts by adding `horistic-srv`.
+- `horistic-srv` enters Phase 29 inventory, go/no-go, RDP validation, and Landscape SaaS/web validation before any live upgrade decision.
+- Landscape SaaS/web is temporary onboarding. Landscape self-hosted is promoted into the active governance target for Phase 32 via `GOV-08`.

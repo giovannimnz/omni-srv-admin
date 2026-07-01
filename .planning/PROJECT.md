@@ -8,6 +8,20 @@ Repositório central de configuração e provisionamento do servidor Atius (10.1
 
 Servidor Atius sempre provisionado, documentado e operante — com identidade centralizada para login unificado de todas as máquinas Linux e SSO web funcionando em paralelo.
 
+## Current Milestone: v1.3 Local AI Embeddings and Semantic Retrieval
+
+**Goal:** Criar um endpoint de embeddings local e OpenAI-compatible para GBrain, Obsidian e Graphify, usando `https://router.atius.com.br/v1` como entrada publica autenticada, New API como gateway e TEI/GTE no k3s em `horistic-srv` como backend real.
+
+**Target features:**
+- TEI no namespace `ai-search`, sem exposicao publica direta, servindo `Alibaba-NLP/gte-multilingual-base`.
+- New API com alias estavel `embedding-pt-v1`, modelo upstream `text-embeddings-inference` e dimensao congelada em 768.
+- Smoke tests OpenAI-compatible para `/v1/models` e `POST /v1/embeddings` sem vazar chave em shell history, docs ou logs.
+- Contrato de reindexacao para GBrain/Obsidian/Graphify quando modelo, versao, dimensao, normalizacao ou chunking mudarem.
+
+**Execution order:** TEI backend -> New API channel/alias -> external smoke -> client migration runbook -> documentation/verification.
+
+**Carry-over note:** v1.2 phases for FreeIPA/Keycloak/Samba/Production Guard remain in the roadmap as pending work. This milestone was opened separately because embeddings are a new AI infrastructure track on `horistic-srv`, not a continuation of the v1.2 governance/identity sequence.
+
 ## Requirements
 
 ### Validated
@@ -23,6 +37,16 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 - ✓ **CLI-04**: 9 forks gerenciados via `omni fork-sync projects list`
 
 ### Active
+
+#### M011: Local AI Embeddings and Semantic Retrieval (Phase 41)
+- [ ] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com token Bearer e alias `embedding-pt-v1`.
+- [ ] **EMB-02**: New API roteia `embedding-pt-v1` para um canal interno TEI no k3s, sem apontar o canal de volta para `router.atius.com.br`.
+- [ ] **EMB-03**: Backend TEI roda em `horistic-srv`/k3s no namespace `ai-search`, sem ingress publico direto.
+- [ ] **EMB-04**: Modelo inicial fica congelado como `Alibaba-NLP/gte-multilingual-base`, 768 dimensoes, com contrato de versao/digest/normalizacao documentado.
+- [ ] **EMB-05**: Smoke test em lote retorna 2 embeddings, 768 dimensoes e sem erro para textos pt-BR.
+- [ ] **EMB-06**: GBrain recebe plano de migracao seguro para 768 dimensoes, com backup e reindex explicito antes de trocar store existente.
+- [ ] **EMB-07**: Obsidian e Graphify usam o endpoint como camada auxiliar de retrieval/indexacao, sem substituir o grafo estrutural do Graphify.
+- [ ] **EMB-08**: Nenhuma chave de API e nenhum segredo entram em Git, `.planning`, Obsidian ou historico de shell.
 
 #### M007: M005 Follow-ups (Phase 15-17)
 - [ ] **OBS-01**: Observability stack live (Prometheus + Grafana + Loki) scraping K3s control plane + worker nodes
@@ -128,4 +152,10 @@ This document evolves at phase transitions and milestone boundaries.
 4. Update Context with current state
 
 ---
-*Last updated: 2026-05-06 after merge with domain-infrastructure .planning*
+*Last updated: 2026-06-24 after starting milestone v1.2*
+
+## Scope addendum - 2026-06-24
+
+- G18 managed fleet now has 4 hosts for the current cycle: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv`.
+- `horistic-srv` was added after Phase 28 verification; Phase 29 fresh inventory and go/no-go artifacts supersede the older 3-host G18 gate for live upgrade decisions.
+- Landscape SaaS/web is accepted as the temporary onboarding/validation layer. Landscape self-hosted remains an active v1.2 governance target, not a forgotten future-only item.

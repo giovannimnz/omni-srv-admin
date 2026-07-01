@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+backup_dir="/var/backups/omni-managed-apps/brave-$(date +%Y%m%d-%H%M%S)"
+keyring="/usr/share/keyrings/brave-browser-archive-keyring.gpg"
+source_list="/etc/apt/sources.list.d/brave-browser-release.list"
+source_deb822="/etc/apt/sources.list.d/brave-browser-release.sources"
+repo_line="deb [signed-by=${keyring} arch=arm64] https://brave-browser-apt-release.s3.brave.com/ stable main"
+
+as_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+backup_if_exists() {
+  local path="$1"
+  if [ -e "$path" ]; then
+    as_root mkdir -p "$backup_dir"
+    as_root cp -a "$path" "$backup_dir/"
+  fi
+}
+
+if [ "$(dpkg --print-architecture)" != "arm64" ]; then
+  echo "unsupported architecture: $(dpkg --print-architecture); expected arm64" >&2
+  exit 2
+fi
+
+as_root apt-get update
+as_root apt-get install -y curl ca-certificates
+
+as_root mkdir -p /usr/share/keyrings /etc/apt/sources.list.d /usr/local/bin /etc/profile.d
+as_root curl -fsSLo "$keyring" https://brave-browser-apt-release.s3.brave.com/brave-browser-archive-keyring.gpg
+
+backup_if_exists "$source_list"
+backup_if_exists "$source_deb822"
+as_root rm -f "$source_deb822"
+printf '%s\n' "$repo_line" | as_root tee "$source_list" >/dev/null
+
+as_root apt-get update
+as_root apt-get install -y brave-browser
+"$(dirname "$0")/install-chrome-brave-wrappers"
+
+brave-browser --version
+chrome --version
+google-chrome --version
+google-chrome-stable --version
+apt-cache policy brave-browser | sed -n '1,20p'

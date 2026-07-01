@@ -1,0 +1,561 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+profile_root="${BRAVE_PROFILE_ROOT:-$HOME/.config/BraveSoftware/Brave-Browser}"
+port="${BRAVE_SYNC_PORT:-9461}"
+mode="${BRAVE_SYNC_MODE:-apply}"
+browser="${BRAVE_BROWSER:-brave-browser}"
+display="${BRAVE_SYNC_DISPLAY:-}"
+xauthority="${BRAVE_SYNC_XAUTHORITY:-$HOME/.Xauthority}"
+sync_url="${BRAVE_SYNC_URL:-chrome://settings/braveSync/setup}"
+sync_code_file="${BRAVE_SYNC_CODE_FILE:-}"
+sync_code_tmp=""
+extra_args=()
+if [ -n "${BRAVE_SYNC_EXTRA_ARGS:-}" ]; then
+  read -r -a extra_args <<<"${BRAVE_SYNC_EXTRA_ARGS}"
+fi
+
+if [ "${BRAVE_SYNC_CODE_STDIN:-0}" = "1" ]; then
+  sync_code_tmp="$(mktemp)"
+  chmod 600 "$sync_code_tmp"
+  cat >"$sync_code_tmp"
+  sync_code_file="$sync_code_tmp"
+elif [ -n "${BRAVE_SYNC_CODE:-}" ]; then
+  sync_code_tmp="$(mktemp)"
+  chmod 600 "$sync_code_tmp"
+  printf '%s' "$BRAVE_SYNC_CODE" >"$sync_code_tmp"
+  sync_code_file="$sync_code_tmp"
+  unset BRAVE_SYNC_CODE
+fi
+
+if [ "$mode" = "apply" ] && [ -z "$sync_code_file" ]; then
+  echo "BRAVE_SYNC_CODE, BRAVE_SYNC_CODE_FILE or BRAVE_SYNC_CODE_STDIN=1 is required" >&2
+  exit 2
+fi
+
+if pgrep -u "$(id -u)" -fa 'brave-browser|brave-browser-stable|/opt/brave.com/brave/brave' >/tmp/brave-sync-running.$$ 2>/dev/null; then
+  if grep -Eq "$profile_root|Brave-Browser" /tmp/brave-sync-running.$$ 2>/dev/null; then
+    echo "Brave appears to be running for this user/profile; close it before sync setup" >&2
+    rm -f /tmp/brave-sync-running.$$
+    exit 3
+  fi
+fi
+rm -f /tmp/brave-sync-running.$$
+
+mkdir -p "$profile_root"
+python3 - "$profile_root" <<'PY'
+import json
+import sys
+from pathlib import Path
+
+profile_root = Path(sys.argv[1]).expanduser()
+default_dir = profile_root / "Default"
+default_dir.mkdir(parents=True, exist_ok=True)
+
+prefs_path = default_dir / "Preferences"
+try:
+    prefs = json.loads(prefs_path.read_text()) if prefs_path.exists() else {}
+except Exception:
+    prefs = {}
+signin = prefs.setdefault("signin", {})
+signin["allowed"] = True
+signin["allowed_on_next_startup"] = True
+profile = prefs.setdefault("profile", {})
+profile["exit_type"] = "Normal"
+profile["exited_cleanly"] = True
+sync = prefs.setdefault("sync", {})
+sync["keep_everything_synced"] = True
+for key in (
+    "apps",
+    "autofill",
+    "bookmarks",
+    "extensions",
+    "passwords",
+    "payments",
+    "preferences",
+    "reading_list",
+    "saved_tab_groups",
+    "tabs",
+    "themes",
+    "typed_urls",
+):
+    sync[key] = True
+prefs_path.write_text(json.dumps(prefs, ensure_ascii=False, separators=(",", ":")))
+
+local_state_path = profile_root / "Local State"
+try:
+    local_state = json.loads(local_state_path.read_text()) if local_state_path.exists() else {}
+except Exception:
+    local_state = {}
+brave = local_state.setdefault("brave", {})
+brave["dont_ask_for_crash_reporting"] = True
+local_state_path.write_text(json.dumps(local_state, ensure_ascii=False, separators=(",", ":")))
+PY
+if [ -n "${XDG_RUNTIME_DIR:-}" ]; then
+  runtime_dir="$XDG_RUNTIME_DIR"
+elif [ -d "/run/user/$(id -u)" ]; then
+  runtime_dir="/run/user/$(id -u)"
+else
+  runtime_dir="/tmp/runtime-$(id -u)"
+fi
+mkdir -p "$runtime_dir"
+chmod 700 "$runtime_dir"
+export XDG_RUNTIME_DIR="$runtime_dir"
+if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "$XDG_RUNTIME_DIR/bus" ]; then
+  export DBUS_SESSION_BUS_ADDRESS="unix:path=$XDG_RUNTIME_DIR/bus"
+fi
+
+bootstrap_brave_safe_storage() {
+  if [ "${BRAVE_SYNC_BOOTSTRAP_SAFE_STORAGE:-1}" = "0" ]; then
+    return
+  fi
+  if ! command -v secret-tool >/dev/null 2>&1; then
+    return
+  fi
+  if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ]; then
+    return
+  fi
+  if secret-tool lookup application brave >/dev/null 2>&1; then
+    return
+  fi
+  local secret
+  if command -v openssl >/dev/null 2>&1; then
+    secret="$(openssl rand -base64 32)"
+  else
+    secret="$(head -c 32 /dev/urandom | base64)"
+  fi
+  printf '%s' "$secret" | secret-tool store \
+    --label='Brave Safe Storage' \
+    xdg:schema chrome_libsecret_os_crypt_password_v2 \
+    application brave >/dev/null 2>&1 || true
+}
+bootstrap_brave_safe_storage
+
+cdp_script="$(mktemp)"
+tabs_file="$(mktemp)"
+log_file="$(mktemp)"
+pid_file="$(mktemp)"
+kill_debug_port_processes() {
+  if [ -z "${BRAVE_SYNC_PORT:-}" ]; then
+    return
+  fi
+  while read -r pid args; do
+    [ -n "${pid:-}" ] || continue
+    [ "$pid" != "$$" ] || continue
+    case "$args" in
+      *"--remote-debugging-port=$BRAVE_SYNC_PORT"*)
+        kill "$pid" >/dev/null 2>&1 || true
+        ;;
+    esac
+  done < <(ps -u "$(id -u)" -o pid= -o args= 2>/dev/null || true)
+  sleep 0.5
+  while read -r pid args; do
+    [ -n "${pid:-}" ] || continue
+    [ "$pid" != "$$" ] || continue
+    case "$args" in
+      *"--remote-debugging-port=$BRAVE_SYNC_PORT"*)
+        kill -9 "$pid" >/dev/null 2>&1 || true
+        ;;
+    esac
+  done < <(ps -u "$(id -u)" -o pid= -o args= 2>/dev/null || true)
+}
+cleanup() {
+  if [ -s "$pid_file" ]; then
+    kill "$(cat "$pid_file")" >/dev/null 2>&1 || true
+  fi
+  kill_debug_port_processes
+  if [ -n "$sync_code_tmp" ]; then
+    rm -f "$sync_code_tmp"
+  fi
+  rm -f "$cdp_script" "$tabs_file" "$log_file" "$pid_file"
+}
+trap cleanup EXIT
+
+cat >"$cdp_script" <<'NODE'
+const fs = require('fs')
+const http = require('http')
+
+const port = Number(process.env.BRAVE_SYNC_PORT)
+const mode = process.env.BRAVE_SYNC_MODE || 'apply'
+const syncUrl = process.env.BRAVE_SYNC_URL || 'chrome://settings/braveSync/setup'
+const syncCode = process.env.BRAVE_SYNC_CODE_FILE
+  ? fs.readFileSync(process.env.BRAVE_SYNC_CODE_FILE, 'utf8').trim()
+  : (process.env.BRAVE_SYNC_CODE || '')
+const tabsFile = process.env.BRAVE_SYNC_TABS_FILE
+const navWaitMs = Number(process.env.BRAVE_SYNC_NAV_WAIT_MS || (syncUrl.includes('sync-internals') ? 25000 : 7000))
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+function readJson(url) {
+  return new Promise((resolve, reject) => {
+    http.get(url, res => {
+      let data = ''
+      res.on('data', chunk => { data += chunk })
+      res.on('end', () => {
+        try {
+          resolve(JSON.parse(data))
+        } catch (error) {
+          reject(error)
+        }
+      })
+    }).on('error', reject)
+  })
+}
+
+async function getTabs() {
+  if (tabsFile && fs.existsSync(tabsFile)) {
+    const payload = JSON.parse(fs.readFileSync(tabsFile, 'utf8'))
+    return Array.isArray(payload) ? payload : [payload]
+  }
+  return await readJson(`http://127.0.0.1:${port}/json`)
+}
+
+async function main() {
+  const tabs = await getTabs()
+  const chromeSyncUrl = syncUrl.replace(/^brave:\/\//, 'chrome://')
+  const syncTargets = tabs.filter(tab =>
+    tab.type === 'page' &&
+    tab.webSocketDebuggerUrl &&
+    (tab.url === syncUrl || tab.url === chromeSyncUrl)
+  )
+  const target = syncTargets.find(tab => tab.title && tab.title !== tab.url) ||
+    syncTargets[0] ||
+    tabs.find(tab => tab.type === 'page' && tab.webSocketDebuggerUrl && tab.url === 'about:blank') ||
+    tabs.find(tab => tab.type === 'page' && tab.webSocketDebuggerUrl)
+  if (!target) throw new Error('no debuggable page target found')
+  const ws = new WebSocket(target.webSocketDebuggerUrl)
+  let id = 0
+  let dialogsHandled = 0
+  const pending = new Map()
+
+  function send(method, params = {}) {
+    return new Promise((resolve, reject) => {
+      const message = { id: ++id, method, params }
+      pending.set(message.id, { resolve, reject })
+      ws.send(JSON.stringify(message))
+    })
+  }
+
+  async function requestBrowserClose() {
+    try {
+      ws.send(JSON.stringify({ id: ++id, method: 'Browser.close', params: {} }))
+      await sleep(3000)
+    } catch (_) {
+      try { ws.close() } catch (_) {}
+    }
+  }
+
+  ws.onmessage = event => {
+    const message = JSON.parse(event.data)
+    if (message.method === 'Page.javascriptDialogOpening') {
+      dialogsHandled += 1
+      ws.send(JSON.stringify({
+        id: ++id,
+        method: 'Page.handleJavaScriptDialog',
+        params: { accept: true }
+      }))
+      return
+    }
+    if (message.id && pending.has(message.id)) {
+      const item = pending.get(message.id)
+      pending.delete(message.id)
+      if (message.error) item.reject(new Error(JSON.stringify(message.error)))
+      else item.resolve(message.result)
+    }
+  }
+
+  await new Promise((resolve, reject) => {
+    ws.onopen = resolve
+    ws.onerror = reject
+  })
+
+  async function evaluate(expression) {
+    const result = await send('Runtime.evaluate', {
+      expression,
+      returnByValue: true,
+      awaitPromise: true
+    })
+    if (result.exceptionDetails) {
+      const details = result.exceptionDetails
+      const exception = details.exception && (details.exception.description || details.exception.value)
+      throw new Error([details.text, exception].filter(Boolean).join(': ') || 'evaluation failed')
+    }
+    return result.result.value
+  }
+
+  const helper = String.raw`
+function allDeep(root=document) {
+  const out = []
+  function walk(node) {
+    if (!node) return
+    if (node.nodeType === Node.ELEMENT_NODE) {
+      out.push(node)
+      if (node.shadowRoot) walk(node.shadowRoot)
+      for (const child of node.children) walk(child)
+    } else if (node instanceof ShadowRoot || node === document) {
+      for (const child of node.children) walk(child)
+    }
+  }
+  walk(root)
+  return out
+}
+function textOf(el) {
+  if (['STYLE', 'SCRIPT', 'LINK', 'TEMPLATE'].includes(el.tagName)) return ''
+  return (el.innerText || el.textContent || el.value || el.getAttribute('aria-label') || '')
+    .replace(/\s+/g, ' ')
+    .trim()
+}
+function visible(el) {
+  if (!el || el.nodeType !== Node.ELEMENT_NODE) return false
+  const style = getComputedStyle(el)
+  const rect = el.getBoundingClientRect()
+  return style.display !== 'none' && style.visibility !== 'hidden' && Number(style.opacity) !== 0 && rect.width > 0 && rect.height > 0
+}
+function clickText(pattern) {
+  const re = new RegExp(pattern, 'i')
+  const candidates = allDeep().filter(el => re.test(textOf(el)) && !el.disabled)
+  const button = candidates.find(el => ['CR-BUTTON', 'BUTTON', 'A', 'CR-RADIO-BUTTON'].includes(el.tagName) && visible(el)) ||
+    candidates.find(el => ['CR-BUTTON', 'BUTTON', 'A', 'CR-RADIO-BUTTON'].includes(el.tagName)) ||
+    candidates[0]
+  if (!button) return { ok: false, pattern, count: 0 }
+  setTimeout(() => button.click(), 0)
+  return { ok: true, pattern, tag: button.tagName, text: textOf(button), count: candidates.length }
+}
+function setFirstSyncCodeInput(value) {
+  const candidates = allDeep().filter(el =>
+    ['TEXTAREA', 'INPUT', 'CR-TEXTAREA', 'CR-INPUT'].includes(el.tagName) &&
+    !el.disabled &&
+    !['searchInput', 'requestedBridges', 'providedBridges'].includes(el.id) &&
+    visible(el)
+  )
+  const editable = candidates.find(el => /sync|code|código|codigo|word|phrase|chain|cadeia/i.test(textOf(el) + ' ' + (el.id || '') + ' ' + (el.getAttribute('aria-label') || '') + ' ' + (el.getAttribute('placeholder') || ''))) ||
+    candidates.find(el => el.tagName === 'TEXTAREA' || el.tagName === 'INPUT' || el.shadowRoot) ||
+    candidates[0]
+  if (!editable) return { ok: false, count: candidates.length }
+  const inner = editable.shadowRoot ? editable.shadowRoot.querySelector('textarea,input') : editable
+  const target = inner || editable
+  target.focus()
+  target.value = value
+  target.dispatchEvent(new Event('input', { bubbles: true, composed: true }))
+  target.dispatchEvent(new Event('change', { bubbles: true, composed: true }))
+  return { ok: true, tag: editable.tagName, innerTag: target.tagName, count: candidates.length }
+}
+function pageSignals() {
+  const texts = [...new Set(allDeep().map(textOf).filter(text =>
+    /Sync is disabled|safe storage|I have a Sync Code|Start a new Sync Chain|Sync everything|Customize sync|Device List|Leave Sync Chain|Reset and re-join|Enter your Sync Chain code|Confirm Sync Code|Please wait|sync chain|Disable Sync|Clear Data|OS encryption|Passphrase|Transport State|Last Synced|Type Root Node|Instalação do Sync|Código Sync|Cadeia Sync|Tenho um Código|Começar a usar|Sincronização|Sincronizar tudo|Personalizar sincronização/i.test(text)
+  ))]
+  const bodyText = (document.body && (document.body.innerText || document.body.textContent) || '').replace(/\s+/g, ' ').trim()
+  return { href: location.href, texts: texts.slice(0, 120), bodyText: bodyText.slice(0, 5000) }
+}
+`
+
+  await send('Page.enable')
+  await send('Runtime.enable')
+  await send('Page.navigate', { url: syncUrl })
+  await sleep(navWaitMs)
+
+  let signals = await evaluate(`(() => { ${helper}; return pageSignals() })()`)
+  if (mode === 'diagnose') {
+    console.log(JSON.stringify({ phase: 'diagnose', signals }, null, 2))
+    await requestBrowserClose()
+    return
+  }
+
+  if (mode === 'clear') {
+    let clear = await evaluate(`(() => { ${helper}; return clickText('(Disable Sync|Clear Data|Clear data|Stop Sync)') })()`)
+    await sleep(2000)
+    let confirm = await evaluate(`(() => { ${helper}; return clickText('^(OK|Confirm|Disable Sync|Clear Data|Clear data|Stop Sync)$') })()`)
+    await sleep(5000)
+    signals = await evaluate(`(() => { ${helper}; return pageSignals() })()`)
+    console.log(JSON.stringify({ phase: 'clear', clear, confirm, signals }, null, 2))
+    await requestBrowserClose()
+    return
+  }
+
+  if (mode === 'apply-ui') {
+    const reset = await evaluate(`(() => { ${helper}; return clickText('(Redefinir.*entrar novamente|Reset and re-join|Reset.*re-join)') })()`)
+    await sleep(reset.ok ? 1000 : 1000)
+    let resetDialog = { ok: false }
+    if (reset.ok) {
+      try {
+        await send('Page.handleJavaScriptDialog', { accept: true })
+        resetDialog = { ok: true }
+      } catch (error) {
+        resetDialog = { ok: false, error: error.message }
+      }
+    }
+    await sleep(reset.ok ? 5000 : 1000)
+    const resetConfirm = await evaluate(`(() => { ${helper}; return clickText('^(Redefinir.*entrar novamente|Reset and re-join|Confirmar|Confirm|OK)$') })()`)
+    await sleep(resetConfirm.ok ? 5000 : 1000)
+    const haveCode = await evaluate(`(() => { ${helper}; return clickText('(Eu tenho um Código Sync|Tenho um Código Sync|I have a Sync Code|Enter a sync chain code)') })()`)
+    await sleep(haveCode.ok ? 1000 : 1000)
+    let haveCodeDialog = { ok: false }
+    if (haveCode.ok) {
+      try {
+        await send('Page.handleJavaScriptDialog', { accept: true })
+        haveCodeDialog = { ok: true }
+      } catch (error) {
+        haveCodeDialog = { ok: false, error: error.message }
+      }
+    }
+    await sleep(3000)
+    const input = await evaluate(`(() => { ${helper}; return setFirstSyncCodeInput(${JSON.stringify(syncCode)}) })()`)
+    await sleep(1000)
+    const confirm = await evaluate(`(() => { ${helper}; return clickText('(Confirmar Código Sync|Confirm Sync Code|Confirmar|Confirm|Enviar|Submit|OK)') })()`)
+    await sleep(confirm.ok ? 1000 : 1000)
+    let confirmDialog = { ok: false }
+    if (confirm.ok) {
+      try {
+        await send('Page.handleJavaScriptDialog', { accept: true })
+        confirmDialog = { ok: true }
+      } catch (error) {
+        confirmDialog = { ok: false, error: error.message }
+      }
+    }
+    await sleep(20000)
+    const syncEverything = await evaluate(`new Promise(resolve => {
+      if (!chrome.settingsPrivate || !chrome.settingsPrivate.setPref) {
+        resolve({ ok: false, error: 'settingsPrivate unavailable' })
+        return
+      }
+      chrome.settingsPrivate.setPref('sync.keep_everything_synced', true, '', () => {
+        if (!chrome.settingsPrivate.getPref) {
+          resolve({ ok: true })
+          return
+        }
+        chrome.settingsPrivate.getPref('sync.keep_everything_synced', pref => {
+          resolve({ ok: true, value: pref && pref.value })
+        })
+      })
+    })`)
+    await send('Page.navigate', { url: 'chrome://sync-internals' })
+    await sleep(5000)
+    signals = await evaluate(`(() => { ${helper}; return pageSignals() })()`)
+    console.log(JSON.stringify({ phase: 'apply-ui', reset, resetDialog, resetConfirm, haveCode, haveCodeDialog, input, confirm, confirmDialog, dialogsHandled, syncEverything, signals }, null, 2))
+    await requestBrowserClose()
+    return
+  }
+
+  const setResult = await evaluate(`new Promise(resolve => {
+    const callbackId = 'omniSync' + Date.now() + Math.random().toString(16).slice(2)
+    const oldResponse = cr.webUIResponse
+    cr.webUIResponse = function(id, success, response) {
+      if (id === callbackId) {
+        cr.webUIResponse = oldResponse
+        resolve({ ok: !!success, response: response ?? null })
+        return
+      }
+      if (typeof oldResponse === 'function') return oldResponse.apply(this, arguments)
+    }
+    chrome.send('SyncSetupSetSyncCode', [callbackId, ${JSON.stringify(syncCode)}])
+    setTimeout(() => {
+      cr.webUIResponse = oldResponse
+      resolve({ ok: false, error: 'timeout' })
+    }, 60000)
+  })`)
+  await sleep(10000)
+  const syncEverything = await evaluate(`new Promise(resolve => {
+    if (!chrome.settingsPrivate || !chrome.settingsPrivate.setPref) {
+      resolve({ ok: false, error: 'settingsPrivate unavailable' })
+      return
+    }
+    chrome.settingsPrivate.setPref('sync.keep_everything_synced', true, '', () => {
+      if (!chrome.settingsPrivate.getPref) {
+        resolve({ ok: true })
+        return
+      }
+      chrome.settingsPrivate.getPref('sync.keep_everything_synced', pref => {
+        resolve({ ok: true, value: pref && pref.value })
+      })
+    })
+  })`)
+  await send('Page.navigate', { url: 'chrome://sync-internals' })
+  await sleep(5000)
+  signals = await evaluate(`(() => { ${helper}; return pageSignals() })()`)
+  console.log(JSON.stringify({ phase: 'apply', setResult, syncEverything, signals }, null, 2))
+  await requestBrowserClose()
+}
+
+main().catch(error => {
+  console.error(error.stack || error.message)
+  process.exit(1)
+})
+NODE
+
+export BROWSER="$browser"
+export PROFILE_ROOT="$profile_root"
+export BRAVE_SYNC_PORT="$port"
+export BRAVE_SYNC_MODE="$mode"
+export BRAVE_SYNC_URL="$sync_url"
+export BRAVE_SYNC_CODE_FILE="$sync_code_file"
+export BRAVE_SYNC_CDP_SCRIPT="$cdp_script"
+export BRAVE_SYNC_TABS_FILE="$tabs_file"
+export BRAVE_SYNC_LOG_FILE="$log_file"
+export BRAVE_SYNC_PID_FILE="$pid_file"
+
+if [ -n "$display" ]; then
+  export DISPLAY="$display"
+  export XAUTHORITY="$xauthority"
+  "$BROWSER" \
+    --user-data-dir="$PROFILE_ROOT" \
+    --no-first-run \
+    --disable-gpu \
+    --disable-gpu-rasterization \
+    "${extra_args[@]}" \
+    --remote-debugging-address=127.0.0.1 \
+    --remote-debugging-port="$BRAVE_SYNC_PORT" \
+    about:blank >"$BRAVE_SYNC_LOG_FILE" 2>&1 &
+  echo "$!" >"$BRAVE_SYNC_PID_FILE"
+  for _ in $(seq 1 60); do
+    if curl -fsS "http://127.0.0.1:$BRAVE_SYNC_PORT/json/version" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 0.5
+  done
+  encoded_sync_url="$(python3 - "$BRAVE_SYNC_URL" <<'PY'
+import sys
+from urllib.parse import quote
+print(quote(sys.argv[1], safe=""))
+PY
+)"
+  curl -fsS -X PUT "http://127.0.0.1:$BRAVE_SYNC_PORT/json/new?$encoded_sync_url" >/dev/null 2>&1 || true
+  sleep 5
+  curl -fsS "http://127.0.0.1:$BRAVE_SYNC_PORT/json" >"$BRAVE_SYNC_TABS_FILE"
+  node "$BRAVE_SYNC_CDP_SCRIPT"
+  exit $?
+fi
+
+dbus-run-session -- bash -lc '
+  set -euo pipefail
+  eval "$(printf "\n" | gnome-keyring-daemon --unlock --components=secrets 2>/dev/null || true)"
+  export GNOME_KEYRING_CONTROL="${GNOME_KEYRING_CONTROL:-}"
+  export SSH_AUTH_SOCK="${SSH_AUTH_SOCK:-}"
+  xvfb-run -a --server-args="-screen 0 1400x1000x24" "$BROWSER" \
+    --user-data-dir="$PROFILE_ROOT" \
+    --no-first-run \
+    --disable-gpu \
+    --disable-gpu-rasterization \
+    "${extra_args[@]}" \
+    --remote-debugging-address=127.0.0.1 \
+    --remote-debugging-port="$BRAVE_SYNC_PORT" \
+    about:blank >"$BRAVE_SYNC_LOG_FILE" 2>&1 &
+  echo "$!" >"$BRAVE_SYNC_PID_FILE"
+  for _ in $(seq 1 60); do
+    if curl -fsS "http://127.0.0.1:$BRAVE_SYNC_PORT/json/version" >/dev/null 2>&1; then
+      break
+    fi
+    sleep 0.5
+  done
+  encoded_sync_url="$(python3 - "$BRAVE_SYNC_URL" <<'"'"'PY'"'"'
+import sys
+from urllib.parse import quote
+print(quote(sys.argv[1], safe=""))
+PY
+)"
+  curl -fsS -X PUT "http://127.0.0.1:$BRAVE_SYNC_PORT/json/new?$encoded_sync_url" >/dev/null 2>&1 || true
+  sleep 5
+  curl -fsS "http://127.0.0.1:$BRAVE_SYNC_PORT/json" >"$BRAVE_SYNC_TABS_FILE"
+  node "$BRAVE_SYNC_CDP_SCRIPT"
+'

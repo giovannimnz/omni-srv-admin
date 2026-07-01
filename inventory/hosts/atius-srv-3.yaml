@@ -76,6 +76,49 @@ apps:
     update_policy: "sim-fleet-update"
     last_audited: "2026-06-16"
     installed_on: "2026-06-16"
+  - id: pm2-ubuntu
+    runtime: systemd
+    unit: pm2-ubuntu.service
+    install_type: npm-global-plus-systemd
+    install_path: /usr/local/bin/pm2
+    current_version: "7.0.1"
+    desired_state: active-enabled
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-25"
+    installed_on: "2026-06-25"
+    notes:
+      - "Phase 29 runtime repair: installed PM2 globally and created oneshot systemd unit with PM2_HOME=/home/ubuntu/.pm2."
+  - id: mt5-fex-podman
+    runtime: podman
+    install_type: podman-container
+    container_name: mt5-fex
+    image: localhost/mt5-fex:v0.9-mvp
+    source: /home/ubuntu/GitHub/mt5-fex-podman
+    public_url: https://remote.atius.com.br/mt5/1/
+    healthcheck_url: http://10.1.1.3:6081/vnc.html
+    ports:
+      - "10.1.1.3:6081:6081"
+      - "127.0.0.1:8066:8066"
+    network: srv3-podman-v2
+    components:
+      - x11vnc
+      - novnc
+      - websockify
+      - xvfb
+      - fex
+      - wine-10
+    current_version: "v0.9-mvp"
+    desired_version: "v0.9-mvp"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-06-26"
+    installed_on: "2026-06-26"
+    notes:
+      - "Runtime criado por /home/ubuntu/GitHub/mt5-fex-podman/install.sh com podman run direto."
+      - "noVNC interno/VPN em http://10.1.1.3:6081/; URL publica em https://remote.atius.com.br/mt5/1/."
+      - "Apache/Cloudflare ficam no atius-srv-1; VNC puro fica privado no container."
+      - "Autenticacao publica de /mt5/<id> deve passar pelo gate SSO do SRV-1 (modules/mt5-remote-auth), usando auth-token + /v1/auth/me; nao criar novos Basic Auth por rota."
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   last_readdressed: 2026-06-17

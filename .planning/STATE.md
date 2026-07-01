@@ -1,16 +1,20 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.1
-milestone_name: M005 Follow-ups + M007-ext (Ubuntu Pro ESM Apps) + M008 (Fleet Standardization)
-status: planning
-last_updated: "2026-06-17T20:20:00-03:00"
-last_activity: 2026-06-17 — Phase 22 started: horistic-srv-1 renamed to horistic-srv (host, inventory, DB, VPN, vault, gbrain); rust/cargo-binstall/zellij + node-exporter installed
+milestone: v1.3
+milestone_name: Local AI Embeddings and Semantic Retrieval
+current_phase: 3
+status: Awaiting next milestone
+stopped_at: Completed 42-01-PLAN.md
+last_updated: "2026-06-28T08:44:21.534Z"
+last_activity: 2026-06-26
+last_activity_desc: Milestone v1.3 completed and archived
 progress:
-  total_phases: 20
-  completed_phases: 8
-  total_plans: 36
-  completed_plans: 25
-  percent: 19
+  total_phases: 1
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
+  percent: 0
+current_phase_name: Local AI Embeddings Gateway on horistic-srv
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
@@ -24,7 +28,7 @@ See: .planning/ROADMAP.md (M004/M005 branch matrix + M006 resource-governor/PM2 
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** M007 (v1.1) planning — M005 follow-ups: OCI snapshot workflow, Cloudflare Access policy, observability stack (Prometheus + Grafana + Loki), RWX storage decision. M004/M005/M006 closed (v1.0 shipped 2026-06-15).
+**Current focus:** v1.3 — Local AI Embeddings on `horistic-srv` through TEI, New API and `https://router.atius.com.br/v1`.
 
 ## Milestones
 
@@ -42,6 +46,7 @@ See also: .planning/MILESTONES.md
 | M008-b | Podman Networking Standardization (Phase 20) | ✅ DONE 2026-06-17 (commit on main) |
 | M009 | MT5 KVM Fleet Onboarding (Phase 21) | ✅ DONE 2026-06-17 (commit on main) |
 | M010 | Horistic rename + rust/zellij (Phase 22) | ✅ DONE 2026-06-17 (commit on main) |
+| M011 | Local AI Embeddings and Semantic Retrieval (Phase 41) | ✅ DONE 2026-06-26 |
 
 ## Active Branch Results
 
@@ -56,13 +61,15 @@ See also: .planning/MILESTONES.md
 
 - K3s HA live gate: ✅ closed on 2026-06-14.
 - Portainer live gate: ✅ closed on 2026-06-14.
-- Host firewall guard: ✅ `atius-k3s-firewall.service` active on SRV-1/SRV-2/SRV-3.
+- Host firewall guard: ✅ `atius-k3s-firewall.service` active on SRV-1/SRV-2/SRV-3/horistic-srv.
 - Critical local backups: ✅ created under `~/.backups/k3s-preflight/`.
 - Etcd post-bootstrap snapshot: ✅ saved on SRV-1.
+
 | OCI snapshot IDs | follow-up for formal cloud rollback record |
 | Cloudflare Access policy | ⚠️ code shipped 2026-06-17 (`cli/omni/edge.py` + runbook + validation script) — live cutover **blocked** on Cloudflare dashboard "Enable Access" click; see `.planning/phases/16-m005-cloudflare-access/16-SUMMARY.md` |
 | Observability stack | ⚠️ code/artifacts shipped 2026-06-18 (`cli/omni/observability.py`, dashboards, rules, scripts, RWX decision doc); live closeout still blocked on production gate + missing `~/.hermes/secrets/alert-webhook.json` + Grafana dashboard provisioning; see `.planning/phases/17-m005-observability-rwx/17-SUMMARY.md` |
 | **Tailscale ACL** | ✅ **closed 2026-06-16** — see `13-ACL-CLOSURE-2026-06-16.md` and vault `60-LOGS/2026-06-16/` |
+
 - M006 live execution must not stop PM2 daemons, trading processes, XRDP, or stale user jobs without an explicit gate and current process snapshot.
 - M006 14-01 found current live stuck jobs: `default.target`, `ats-pm2.service`, `horistic-pm2.service`; these remain gated for 14-02/14-03.
 - M006 14-01 found `pm2-ubuntu.service` still references `/home/ubuntu/ecosystem.atius.js`; this remains gated for 14-02.
@@ -73,7 +80,7 @@ See also: .planning/MILESTONES.md
 |---|---|---|
 | Branch | `docs/m005-k3s-live-bootstrap` | ✅ |
 | Phase | `.planning/phases/13-k3s-ha-portainer-oci/13-LIVE-BOOTSTRAP-2026-06-14.md` | ✅ |
-| K3s | 3 nodes `Ready`: SRV-1/SRV-2/SRV-3, all `control-plane,etcd` | ✅ |
+| K3s | 3 nodes `Ready`: SRV-1/SRV-2/SRV-3/horistic-srv, all `control-plane,etcd` | ✅ |
 | Network | Node IPs on WireGuard: `10.1.1.1`, `10.1.1.2`, `10.1.1.3`; flannel `wg0`; SRV-3 keeps `10.1.1.7` as etcd compatibility alias | ✅ |
 | Smoke | DaemonSet one pod per node + DNS resolution to `kubernetes.default` | ✅ |
 | Portainer | Portainer CE `2.39.3` deployed via Helm, ClusterIP + local port-forward | ✅ |
@@ -138,6 +145,14 @@ See also: .planning/MILESTONES.md
 - **Rotação:** 14 snapshots
 
 ## Notes
+
+- 2026-06-26: Phase 35 closed. Samba moved from `atius-srv-2` to `atius-srv-1`; `srv1` joined `ATIUS.INTERNAL`, `ipa-client-samba` configured the member server, `smbd` and `winbind` are active on `srv1`, `nmbd` remains intentionally disabled, `/srv/Shared` holds the copied `8.8G` share data, `/home/ubuntu/Shared_smb` is now a local bind mount, and Kerberos access passed with `smbclient -k -U ATIUS\\giovanni`. The old Samba service on `srv2` is disabled.
+- 2026-06-26: Phase 36 closed. Keycloak 26.6.3 runs on `atius-srv-1` with Java 21 and private listener `127.0.0.1:8180`; Apache proxies `auth.atius.com.br` locally for controlled smoke; the realm `atius` has LDAP federation to FreeIPA and imported `giovanni`; OIDC password grant passed through client `phase36-smoke`; the legacy Apache/JWT auth path remained unchanged.
+- 2026-06-26: Phases 37-40 were canonized from the already-shipped Production Guard implementation. `status/doctor` foundation, guarded repair dry-run/apply gate, boot/login read-only protocol, and Horistic remote/rename/webhook-safe checks now have canonical phase artifacts and verification under the new roadmap numbering.
+- 2026-06-26: Phase 41 completed live. TEI `Alibaba-NLP/gte-multilingual-base` is running in k3s namespace `ai-search` on `horistic-srv` with private router-facing URL `http://10.1.1.4:3000`; `router-ai-atius` channel `Local TEI - GTE Embeddings` exposes alias `embedding-pt-v1`; public `POST https://router.atius.com.br/v1/embeddings` smoke returned 2 vectors, 768 dimensions, `error=null`; unauthenticated `/v1/models` remains 401. Temporary smoke tokens were deleted and no token values were written.
+- 2026-06-26: Phase 34 closed with real-host FreeIPA pilot. CoreDNS on `atius-srv-2` now forwards `atius.internal` to `10.1.1.3`; `atius-srv-3` privately gateways FreeIPA to the container at `10.89.53.10`; `atius-srv-3` joined `ATIUS.INTERNAL` as `atius-srv-3.atius.internal`; `kinit admin`, `ipa ping`, `getent`, `id`, and `sudo -l -U admin` passed. `horistic-srv` enrollment remains deferred to the next controlled step.
+- 2026-06-26: Started v1.3 Local AI Embeddings and Semantic Retrieval as a separate milestone. Phase 41 plans TEI/GTE in k3s on `horistic-srv`, New API alias `embedding-pt-v1`, public OpenAI-compatible entrypoint `https://router.atius.com.br/v1`, 768-dimension contract, no router self-loop, and GBrain/Obsidian/Graphify migration runbooks without secrets in docs/logs/history.
+- 2026-06-25: Landscape self-hosted became the operator-facing control plane for Atius fleet administration. The Landscape secrets UI OOPS was patched inside LXD `landscape`; the internal Landscape Vault now stores approved break-glass entries for dedicated HashiCorp Vault root token, unseal key, Omni AppRole role/secret ID, and Vaultwarden admin token. No secret values were written to repo docs. Snapshot: `/root/landscape-vault-breakglass-20260626T001545Z.snap` inside LXD `landscape`.
 - 2026-06-18: Phase 15 (M005 OCI Snapshots) closed procedurally. CLI `omni srv oci {status, snapshot preflight, snapshot routine, restore drill}` shipped; inventory dos 4 hosts `oracle-oci` tem bloco `oci:` com `pending-...` (offline); `docs/operations/oci-snapshots.md` é o runbook. 12/12 testes verdes. Live OCI (drill real em SRV-1) bloqueado: `oci` CLI e `~/.oci/config` não estão instalados no host. Próxima janela: provisionar API key + rodar preflight/routine em cada host + drill real.
 - 2026-06-15: main local aligned with origin/main via merge. 5 docs/m005-* branches ready for archival. M006 stays in-progress on phase14 branch.
 - 2026-06-16 (cont): Phase 18 scoped up. (a) RDP login SRV-1 broken — root cause: x11vnc (camofox in :97) holding 5910, collides with xrdp-sesman display :10. (b) SRV-2 incident parallel — x11vnc 0.0.0.0:5900 exposed WAN, pid 1678706, bots hammering since 2025-10. (c) Doc canônico unificado criado: `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` (+ mirror `30-RECURSOS/operations/` no vault, indexed in gbrain pages=877 chunks=2670). (d) Decisão: pool de displays `:5..9` = headless helpers; VNC=5900+N, noVNC=6080+N. Camofox migra `:97→:5` (VNC 5905, noVNC 6085). (e) ESM Apps re-scoped: token em `~/secrets/ubuntu-pro-token.txt` em cada SRV; target .sources (DEB822) + account giovannimunizds@gmail.com. Phase 18 re-numerada 18-01..18-09. Gate explícito: restart xrdp-sesman + smoke test RDP + apt upgrade ainda pendentes.
@@ -145,36 +160,27 @@ See also: .planning/MILESTONES.md
 - 2026-06-16 (Codex follow-up): human login on SRV-1 with offset 31 accepted password and created `Xvnc :31`, but `/var/log/xrdp.log` showed `VNC error 1 after security negotiation` / `Error connecting to user session`. Per operator request, SRV-1 only was forced back to `X11DisplayOffset=1`; stale `X1/X31` sockets and session `:31` were removed; backup is `/etc/xrdp/sesman.ini.codex-bak-20260616-190844-force-display1`.
 - 2026-06-16 (Codex fix): SRV-1 XRDP root cause isolated to the `xrdp/libvnc.so -> Xvnc` handoff on display `:1`: the session authenticated, but VNC negotiation needed explicit `SecurityTypes None`, `Protocol3.3`, and XRDP socket `/run/xrdp/sockdir/xrdp_display_1`. Final live config: `X11DisplayOffset=1`, `lib=libvnc.so`, `port=-1`, `code=0`, `delay_ms=6000`, `Xvnc -SecurityTypes None -Protocol3.3 -rfbunixpath /run/xrdp/sockdir/xrdp_display_1 -rfbunixmode 432`. Local `xfreerdp` smoke with temp user reached `VNC connection complete, connected ok` on display `:1`; temp user/session/sockets removed. Port map bumped to v1.1.1 with SRV-1 override `XRDP primary :1`; `:31..60` is expansion/overflow for SRV-1.
 - 2026-06-16 (Codex fleet fix): Operator confirmed SRV-1 Microsoft RDP works on `:1`. SRV-2/SRV-3 still had `X11DisplayOffset=31`; SRV-2 real login hit `:31` then `startwm.sh` exited in 0s, and SRV-3 real login/reconnect hit `:31` then `VNC error 1`. Applied SRV-1 working XRDP/Xvnc profile to SRV-2/SRV-3: `X11DisplayOffset=1`, `code=0`, `delay_ms=6000`, `SecurityTypes None`, `Protocol3.3`, `xrdp_display_1`, custom LXDE `startwm.sh` with no 1366 watcher. Disabled SRV-2 `xvfb.service` because it pinned `Xvfb :1`. Removed SRV-1 `xrdp-display-1366x768.sh --watch`; live SRV-1 session returned to `1920x1080` from the RDP client. Smoke `xfreerdp` OK on SRV-2 and SRV-3: display `:1`, geometry `1280x720`, `VNC connection complete, connected ok`. Port map bumped to v1.1.2. Final rule: `:1..14` XRDP humano with resolution controlled by RDP client; `:15..30` headless/Camofox/noVNC may use fixed resolution; `:31..60` legacy/overflow only.
-- 2026-06-16 (Codex closure): Operator confirmed Microsoft RDP success on SRV-2 and SRV-3 as well, closing the XRDP adjustment across the fleet. Status is now operator-confirmed on SRV-1/SRV-2/SRV-3, port map bumped to v1.1.3, and the remaining open scope of Phase 18 returns to Ubuntu Pro / `esm-apps`, Google account link, fleet attach validation, and regression watchdog.
+- 2026-06-16 (Codex closure): Operator confirmed Microsoft RDP success on SRV-2 and SRV-3 as well, closing the XRDP adjustment across the fleet. Status is now operator-confirmed on SRV-1/SRV-2/SRV-3/horistic-srv, port map bumped to v1.1.3, and the remaining open scope of Phase 18 returns to Ubuntu Pro / `esm-apps`, Google account link, fleet attach validation, and regression watchdog.
 
 ## Current Position
 
-Phase: 19 (Fleet Standardization — M008) — 19-02 desktop shortcuts hotfix DONE
-Plan: 19-01 (hostnames+PPA+chromium+theme) + 19-02 (atalhos LXDE/XRDP via `xrdp-launch`) + 19-05 (cron cleanup) — DONE
-Status: Atalho fix final aplicado. Root cause final: `.desktop` inválido com `Exec=env "DISPLAY=:1" "XAUTHORITY=*** ...` e aspas sem fechamento. Fix definitivo: wrapper `~/.local/bin/xrdp-launch` + `Exec=<home>/.local/bin/xrdp-launch <app>`, sem `env` inline, sem glob e validado por `desktop-file-validate`. PCManFM já foi recarregado nos 3 ATIUS; não há pendência de logout/login para atalhos. G18-1 (apt upgrade ESM) e G18-2 (RDP validation) ainda gates.
-Last activity: 2026-06-17 — 19-04 tentativa anterior documentada como superseded: aspas duplas em `env` não eram suficientes porque os arquivos gravados ficaram com `***` literal e quote aberto.
-Cron desativados (19-05): `@reboot sudo systemctl start horistic` + `*/5 * * * * /home/ubuntu/.hermes/cron/atius-phase7-monitor.sh` comentados. Backup: `~/.backups/crontab-pre-hermes-disable-2026-06-17.txt`. Entrada AionUi 23:55:32Z removida do daily note 2026-06-16.md.
-Last activity: 2026-06-17 — 19-06 hotfix real dos atalhos: root cause final era `.desktop` inválido (`Exec=env "DISPLAY=:1" "XAUTHORITY=*** ...` com aspas sem fechamento). Substituído por wrapper `~/.local/bin/xrdp-launch`; atalhos Chromium/Firefox/Obsidian/Hermes/Sublime reescritos ou removidos quando sem binário; Obsidian real copiado para SRV-2; `chromium-browser` transitional purgado do SRV-3/HORISTIC; `google-chrome.desktop` quebrado removido do SRV-1; handler vazio `claude-code-url-handler.desktop` removido; PCManFM recarregado nos 3 ATIUS sem reiniciar XRDP.
-Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audit `omni podman-network drift` 6/6 PASS. Phase 19 closed (SUMMARY created). Phase 20 created (PLAN + SUMMARY), commits on main. M008 + M008-b both closed procedurally.
+Phase: Milestone v1.3 complete
+Plan: —
+Status: Awaiting next milestone
+Last activity: 2026-06-26 — Milestone v1.3 completed and archived
 
 ## Operator Next Steps
 
-- [ ] Authorize G18-1 (apt upgrade esm-apps+infra nos 3 SRVs) — eu rodo serial 5min cooldown.
-- [ ] Validate G18-2 (Microsoft RDP login pós-upgrade nos 3 SRVs) — você valida nos 3.
-- [ ] Confirmar no Landscape SaaS UI que SRV-1, SRV-2, SRV-3 estão todos online (e não só SRV-2/3 como antes).
-- Decisões já tomadas + executadas:
-  - D18-06-A = (a) Dashboard transfer gmail → EXECUTED
-  - D18-06-B = (1) pro refresh suave + fallback detach → EXECUTED (caminho detach+reattach funcionou; D18-06-B sub-decisão "auto-habilita esm-* no attach" — confirmado em pro 37.2)
-  - D18-06-C = paralelo via subagent nos 3 SRVs → EXECUTED (3 subagentes parallel, 134-253s cada)
+- Start the next milestone with /gsd-new-milestone
 
 ## Session Continuity (resumed + closed 2026-06-17)
 
-- **Last session:** 2026-06-17 — Phase 21 + 22 merged; M009/M010 closed.
+- **Last session:** 2026-06-28T08:44:21.517Z
   - Skill: `~/.hermes/skills/devops/podman-fleet-standardize/` (12 files)
   - Module: `~/GitHub/omni-srv-admin/modules/fleet/podman-network/` (12 files, commit `c0543a9de`)
   - CLI: `omni podman-network {drift,apply,smoke,standard}` registered in cli/omni/cli.py
   - Doc: `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` v1.2.0
-  - **Drift check result: 6/6 PASS** on all 3 SRVs
+  - **Drift check result: 6/6 PASS** on all 4 servidores
 
 - **Discovered gaps:**
   1. Phase 19 PLAN marked `status: complete` but no SUMMARY.md exists (procedural gap)
@@ -182,12 +188,11 @@ Last activity: 2026-06-17 — gsd-resume-work triggered session resumption. Audi
   3. Phase 20 candidate: "M008-b podman networking standardization" (formalize the work done in 2026-06-16)
 
 - **Operator next steps (unchanged from STATE pre-resume):**
-  - [ ] Authorize G18-1 (apt upgrade esm-apps+infra nos 3 SRVs)
-  - [ ] Validate G18-2 (Microsoft RDP login pós-upgrade nos 3 SRVs)
+  - [ ] Authorize G18-1 (apt upgrade esm-apps+infra nos 4 servidores)
+  - [ ] Validate G18-2 (Microsoft RDP login pós-upgrade nos 4 servidores)
   - [ ] Confirmar Landscape SaaS UI com SRV-1/2/3 online
 
 - **Next decision:** user chooses between (a) close phase 19 procedurally + create phase 20, (b) advance to G18-1, (c) something else.
-
 
 ## Phase 21 — MT5 KVM Fleet Onboarding
 
@@ -203,7 +208,6 @@ Status: ✅ DONE (2026-06-17)
 | VPN/docs | CoreDNS `custom_hosts` lowercase + compat uppercase; `peer_aliases.json` lowercase; `wg-quick strip wg0` OK |
 | Docs | network map repo+vault, mt5-arm docs e session log vault atualizados |
 | Pendência | Graphify final pós-mudanças + commit/push |
-
 
 ## Phase 22 — Horistic rename + rust/zellij
 
@@ -223,7 +227,6 @@ Status: ✅ DONE (2026-06-17)
 | gbrain | sincronizado (sem embed, MiniMax 1 RPM) |
 | Pendencia | vhost Apache remote.horistic-srv-1.atius.com.br.conf e pasta GDrive ainda com nome antigo (operacional) |
 
-
 ## Phase 23 — Omni Fleet Governance com Landscape complementar
 
 Status: PLANNING (2026-06-24)
@@ -239,6 +242,32 @@ Status: PLANNING (2026-06-24)
 | Fundacao existente | `managed-apps` agora cobre `programs`, `repositories`, `policies` e `customizations` para Chromium/Firefox/Bitwarden, incluindo Bitwarden force-install e browser defaults Google/homepage; validado localmente por `manifest`, `status`, `verify`, `config-status` e `config-verify` e remotamente por `fleet-config-status`; reutilizar como seed de governanca da Phase 23 |
 | Worktree | Ainda ha mudancas paralelas fora da Phase 23 em `managed-apps`, `srv1-ops`, `fork-sync`, `dark-theme` e Graphify outputs; deixadas intocadas |
 | Proximo | Planejar e executar `23-01..23-05` |
+
+## Phase 34 — FreeIPA DNS + client enrollment
+
+Status: IN PROGRESS (2026-06-25)
+
+| Item | Resultado |
+|---|---|
+| 34-01 | Disposable AlmaLinux client gate passed on `atius-srv-3` |
+| DNS | `ipa.atius.internal @10.89.53.10` returned `10.89.53.10` inside `freeipa-client-test` |
+| Enrollment | `ipa-client-install` to `ATIUS.INTERNAL` passed in disposable container |
+| Auth smoke | `kinit admin` plus `ipa ping` passed |
+| Real hosts | `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` not enrolled |
+| Remaining | `34-02` must implement WireGuard/CoreDNS forwarding and first real host enrollment with rollback |
+
+## Secrets vault deployment — 2026-06-25
+
+| Item | Resultado |
+|---|---|
+| Vaultwarden | Live at `https://vault.atius.com.br`, Apache edge on SRV1, container on SRV3 |
+| HashiCorp Vault | Live private at `https://10.1.1.3:8202`, raft storage, TLS, KV v2, AppRole and audit enabled |
+| DNS | Cloudflare `A vault.atius.com.br -> 137.131.190.161`, DNS-only |
+| Backups | Vaultwarden `.tgz` and HashiCorp raft snapshot timers installed |
+| Docs | `docs/security/atius-secrets-vaults.md` and Obsidian infra note created |
+| Seeded KV | Cloudflare API, Landscape SaaS API, FreeIPA bootstrap and Vaultwarden admin token mirrored into `kv/atius/*` |
+| Helper | `/home/ubuntu/.local/bin/atius-vault-env` loads selected profiles from Vault on demand |
+| Landscape secrets UI | OOPS fixed in LXD `landscape` by patching `list-secrets.pt`; durable APT hook installed and reference secrets seeded |
 
 ## Phases 24-27 — ATS/Horistic Production Recovery Guard
 
@@ -262,3 +291,122 @@ Status: PLANNING (2026-06-24)
 | Sequencia | 24 foundation status/doctor -> 25 repair engine -> 26 boot/login protocol -> 27 Horistic remote Apache + rename drift + webhook-safe validation |
 | Worktree | Mudancas paralelas em `managed-apps`, `srv1-ops`, `fork-sync`, `dark-theme` e Graphify outputs permanecem fora de escopo para esta revisao ate serem integradas por plano/commit seletivo |
 | Proximo | Executar Phase 24 primeiro com Spark; fases 25-27 seguem em cadeia, sem restart live automatico de PM2/RDP |
+
+## Performance Metrics
+
+| Phase | Plan | Duration | Notes |
+|-------|------|----------|-------|
+| Phase 28 P02 | 18m | 2 tasks | 4 files |
+| Phase 42 P01 | 24 min | 2 tasks | 6 files |
+
+## Decisions
+
+- [Phase 28]: Phase 28 Plan 02 kept G18 upgrade preparation docs-only: no apt mutation, service restart, Landscape mutation, webhook POST, or PM2/XRDP action.
+- [Phase 28]: Phase 29 G18 mutation now requires one approval record per host with report path, snapshot ID or exception, backup path, package scope, posture, and signed timestamp.
+- [Phase 28]: pending-* OCI snapshot IDs are blockers for live mutation unless the operator signs a no-OCI-restore exception.
+- [Phase 42]: Wave 0 keeps ATS RBAC in the DB: OIDC may identify the user, but permissions.js remains authoritative. — The Phase 42 context locks authorization compatibility until a later phase proves an authorization migration.
+- [Phase 42]: Phase 42 runtime auth smoke now requires explicit SSO/ADMIN env vars and never falls back to embedded credentials. — Wave 0 must fail closed without secrets or implicit live credential usage.
+- [Phase 42]: Phase 42 edge validation remains assertion-driven and dry-run-safe until sso.atius.com.br is published. — The edge contract must be locally verifiable before any DNS, Cloudflare, Apache reload, or Keycloak publication step.
+
+## Scope addendum - 2026-06-24
+
+- Active managed fleet for G18 is now 4 hosts: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv`.
+- `horistic-srv` is already expected to appear in Landscape web/SaaS at least temporarily.
+- Landscape self-hosted remains required in the governance track; SaaS/web is only the temporary control-plane validation layer.
+- Phase 29 Task 1 must be rerun/refreshed before any live apt upgrade approval because the existing checkpoint was generated for the previous 3-host fleet.
+
+## Phase 29 checkpoint refresh - 2026-06-25T01:36:00Z
+
+- `29-01-G18-FRESH-INVENTORY.md` was regenerated read-only for 4 hosts: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv`.
+- `29-01-G18-GO-NOGO.md` was refreshed and the fleet remains `BLOCK` for live apt mutation.
+- Common blockers: Ubuntu Pro token file absent at approved paths and Landscape local registration check returns `no` on all 4 hosts.
+- Additional blockers: disk warnings on `atius-srv-1` and `atius-srv-2`; role confirmation needed for missing `pm2-ubuntu` on `atius-srv-3` and `horistic-srv`, and missing `k3s` on `horistic-srv`.
+- No live mutation, restart, reboot, Landscape mutation, Pro attach/detach, or webhook POST was executed.
+
+## Accumulated Context
+
+## Phase 42 planning - 2026-06-28T04:57:11-0300
+
+- Created Phase 42 for Atius-wide SSO login on `sso.atius.com.br`, promoting `SSO-MIG-01` into `SSO-01`..`SSO-06`.
+- Research, UI, validation, patterns, and 3 executable plans are ready under `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/`.
+- Plan set: `42-01` Wave 0 validation/secret hygiene, `42-02` ATS SSO facade/OIDC bridge/RBAC-compatible session, `42-03` edge/Keycloak/app-host header/manual publication gate.
+- Plan checker passed with no blockers or warnings. Next action: run `$gsd-execute-phase 42`.
+
+### Roadmap Evolution
+
+- Phase 29.1 inserted after Phase 29: Obsidian ARM64 AppImage pilot without Snap on atius-srv-1 (URGENT)
+- Phase 29.1 edited: filled goal requirements risk canonical refs and success criteria
+- Phase 29.1 edited: locked official Obsidian arm64.AppImage source and live-verified v1.12.7 sha256
+- Phase 29.1 planned: created RESEARCH and 1 executable PLAN for Obsidian official arm64.AppImage local pilot
+
+## Landscape API reconciliation - 2026-06-25T02:50Z
+
+- Landscape SaaS API read-only validation passed for all 4 managed hosts: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv`.
+- Evidence artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-02-LANDSCAPE-API-EVIDENCE.md`.
+- Local `landscape-config --is-registered` as non-root is now considered permission-limited because `/etc/landscape/client.conf` is unreadable by the invoking user.
+- Phase 29 fleet remains `BLOCK` for live apt mutation due to remaining non-Landscape blockers.
+
+## Landscape API tooling note - 2026-06-25T02:55Z
+
+- Tried `ppa:landscape/latest-stable` for an `apt`-based `landscape-api` install after operator approval.
+- Result: no `landscape-api` package is available from that PPA on this Noble/ARM64 host; only Landscape server/client/dashboard packages were visible.
+- The PPA was removed immediately to avoid changing future `apt upgrade` candidates, especially `landscape-client`, during Phase 29.
+- Landscape SaaS API validation is currently performed through a local Python stdlib HMAC client using `LANDSCAPE_API_URI`, `LANDSCAPE_API_KEY`, and `LANDSCAPE_API_SECRET` from `~/.zshrc`.
+
+## Cloudflare DNS for Landscape self-hosted - 2026-06-25T03:21:29Z
+
+- Created Cloudflare DNS record `A landscape.atius.com.br -> 137.131.190.161`.
+- Record is DNS-only (`proxied=false`) with TTL 300 to avoid Cloudflare proxy interference with Landscape self-hosted web/API/client flows.
+- Evidence artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-02-CLOUDFLARE-DNS-EVIDENCE.md`.
+- This prepares the active Landscape self-hosted target using `ppa:landscape/self-hosted-26.04`; it does not install or expose Landscape yet.
+
+## Session
+
+**Last session:** 2026-06-25T03:25:13.517Z
+**Stopped at:** Completed 42-01-PLAN.md
+**Resume file:** None
+
+## Phase 29 inventory probe correction - 2026-06-25T03:32:16Z
+
+- Updated `scripts/g18-pro-esm-inventory.py` so unreadable `/etc/landscape/client.conf` is reported as `permission-limited` instead of a false local `no` registration result.
+- Regenerated `29-01-G18-FRESH-INVENTORY.md` for all 4 managed hosts.
+- Rewrote `29-01-G18-GO-NOGO.md`: Landscape SaaS/API remains PASS; local Landscape probe is permission-limited; fleet still BLOCK for non-Landscape blockers.
+- No live server mutation was executed.
+
+## Phase 29 controlled apt mutation - 2026-06-25T04:08Z
+
+- Operator approved apt mutation for all 4 managed hosts and confirmed all are Ubuntu Pro/ESM through Landscape SaaS.
+- Executed controlled host-by-host `apt-get update && apt-get -y upgrade` on `horistic-srv`, `atius-srv-3`, `atius-srv-2`, and `atius-srv-1`.
+- No host reports `reboot-required` after upgrade.
+- Landscape SaaS API post-upgrade validation passed for all 4 hosts.
+- Post-upgrade inventory artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-POST-UPGRADE-INVENTORY.md`.
+- Landscape post-upgrade API artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-POST-UPGRADE-LANDSCAPE-API.md`.
+- Execution artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-03-G18-UPGRADE-EXECUTION.md`.
+- Remaining Phase 29 gates: human RDP validation, decision on deferred service restarts, decision on phased packages left on `atius-srv-2`.
+
+## Phase 29 runtime repair - 2026-06-25T04:44Z
+
+- Resolved missing `pm2-ubuntu` on `atius-srv-3` and `horistic-srv`; both are now active/enabled with PM2 7.0.1.
+- Installed `k3s-agent` on `horistic-srv`; the node joined the existing cluster as Ready worker at `10.1.1.4`.
+- Did not add `horistic-srv` as fourth etcd/control-plane member to avoid even-numbered etcd quorum risk.
+- Updated `scripts/g18-pro-esm-inventory.py` to check `k3s-agent` in addition to `k3s`.
+- Updated host inventory YAML for `atius-srv-3` and `horistic-srv`.
+- Post-repair inventory artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-POST-RUNTIME-REPAIR-INVENTORY.md`.
+- Runtime repair artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-04-RUNTIME-REPAIR.md`.
+
+## Landscape self-hosted hostname routing fix - 2026-06-25T04:48Z
+
+- Fixed `landscape.atius.com.br` on `atius-srv-1`: Apache now has explicit port 80 and 443 vhosts for the hostname.
+- Issued Let's Encrypt certificate for `landscape.atius.com.br`, expiring 2026-09-23.
+- Prevented fallback to default `admin.atius.com.br` vhost.
+- Current endpoint serves a static placeholder for all paths until Landscape self-hosted is installed.
+- Remote Apache backup: `/home/ubuntu/.backups/apache-landscape-vhost-20260625T044645Z`.
+- Evidence artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-05-LANDSCAPE-APACHE-VHOST.md`.
+
+## Landscape self-hosted preflight - 2026-06-25
+
+- `landscape.atius.com.br` is currently a valid TLS placeholder on `atius-srv-1`; Landscape Server is not installed yet.
+- Checked Landscape PPA package availability: `ppa:landscape/self-hosted-26.04` does not publish `landscape-server` or `landscape-server-quickstart` for Noble ARM64, only for AMD64.
+- Current ARM64 viable LTS path is `ppa:landscape/self-hosted-24.04`; `latest-stable` has ARM64 packages but is not preferred for production governance.
+- Recommended path for current fleet: install Landscape 24.04 LTS on `horistic-srv` or provision AMD64 for strict 26.04 LTS.
+- Artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-06-LANDSCAPE-SELFHOSTED-PREFLIGHT.md`.

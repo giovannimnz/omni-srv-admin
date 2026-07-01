@@ -9,10 +9,11 @@
     "plan_check": true,
     "verifier": true,
     "nyquist_validation": true,
-    "auto_advance": false
+    "auto_advance": false,
+    "_auto_chain_active": false
   },
-  "currentMilestone": "M007",
-  "currentPhase": "15-17",
+  "currentMilestone": "M011",
+  "currentPhase": "41",
   "milestones": [
     {
       "id": "M001",
@@ -32,7 +33,7 @@
       "phases": [
         "08"
       ],
-      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv \u2192 omni-srv-admin"
+      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv → omni-srv-admin"
     },
     {
       "id": "M003",
@@ -118,6 +119,23 @@
   "_note": "Merged from domain-infrastructure .planning. domain-infrastructure is now a module of omni-srv-admin.",
   "graphify": {
     "enabled": true,
-    "auto_update": true
+    "auto_update": true,
+    "llm_backend": {
+      "provider": "atius-router-gpt",
+      "config_file": "~/.graphify/providers.json",
+      "model": "gpt-5.4-mini",
+      "streaming_patch": "~/.local/share/graphify-patches/graphify_atius_router_patch.py"
+    },
+    "embedding": {
+      "provider": "atius-router",
+      "config_file": "~/.graphify/embeddings.json",
+      "helper": "~/.local/bin/graphify-embed",
+      "base_url": "https://router.atius.com.br/v1",
+      "model": "embedding-gte-v1",
+      "dimensions": 768,
+      "max_batch_size": 4,
+      "governor_header": "X-Embedding-Workload: batch",
+      "role": "auxiliary_retrieval"
+    }
   }
 }

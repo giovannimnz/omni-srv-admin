@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-06-24",
-  "description": "Manual managed desktop/browser apps pinned for the Atius/Horistic ARM64 fleet. Snap is explicitly forbidden for these apps.",
+  "updated_at": "2026-06-29",
+  "description": "Manual managed desktop/browser/CLI apps pinned for the Atius/Horistic ARM64 fleet. Snap is explicitly forbidden for these apps.",
   "target_hosts": [
     "atius-srv-1",
     "atius-srv-2",
@@ -9,6 +9,17 @@
     "horistic-srv"
   ],
   "repositories": {
+    "brave-browser-official": {
+      "kind": "apt-source",
+      "expected_source_contains": "brave-browser-apt-release.s3.brave.com",
+      "packages": [
+        "brave-browser"
+      ],
+      "notes": [
+        "Official Brave APT repository for native ARM64 Brave Browser.",
+        "Repository line must include arch=arm64 and the Brave archive keyring."
+      ]
+    },
     "xtradeb-apps": {
       "kind": "apt-source",
       "expected_source_contains": "xtradeb/apps",
@@ -73,6 +84,78 @@
     }
   },
   "customizations": {
+    "chrome-command-brave-wrapper": {
+      "kind": "file-contains",
+      "path": "/usr/local/bin/chrome",
+      "required_contains": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Makes the command chrome resolve to Brave Browser on ARM64 hosts without installing Google Chrome or Snap."
+      ]
+    },
+    "chrome-absolute-command-brave-wrapper": {
+      "kind": "file-contains",
+      "path": "/usr/bin/chrome",
+      "required_contains": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Covers tools that call /usr/bin/chrome directly."
+      ]
+    },
+    "google-chrome-command-brave-wrapper": {
+      "kind": "file-contains",
+      "path": "/usr/local/bin/google-chrome",
+      "required_contains": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Makes programs that call google-chrome by PATH launch Brave Browser on ARM64 hosts."
+      ]
+    },
+    "google-chrome-absolute-command-brave-wrapper": {
+      "kind": "file-contains",
+      "path": "/usr/bin/google-chrome",
+      "required_contains": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Covers tools that call /usr/bin/google-chrome directly."
+      ]
+    },
+    "google-chrome-stable-command-brave-wrapper": {
+      "kind": "file-contains",
+      "path": "/usr/local/bin/google-chrome-stable",
+      "required_contains": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Makes programs that call google-chrome-stable by PATH launch Brave Browser on ARM64 hosts."
+      ]
+    },
+    "google-chrome-stable-absolute-command-brave-wrapper": {
+      "kind": "file-contains",
+      "path": "/usr/bin/google-chrome-stable",
+      "required_contains": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Covers tools that call /usr/bin/google-chrome-stable directly."
+      ]
+    },
+    "chrome-shell-alias-brave": {
+      "kind": "file-contains",
+      "path": "/etc/profile.d/chrome-brave-alias.sh",
+      "required_contains": [
+        "alias chrome=brave-browser",
+        "alias google-chrome=brave-browser",
+        "alias google-chrome-stable=brave-browser"
+      ],
+      "notes": [
+        "Interactive shells get chrome/google-chrome/google-chrome-stable as aliases to brave-browser."
+      ]
+    },
     "chromium-normal-window-wrapper": {
       "kind": "file-contains",
       "path": "~/.local/bin/chromium-normal-window",
@@ -106,9 +189,40 @@
       "notes": [
         "Keeps Firefox from using old maximize wrappers."
       ]
+    },
+    "obsidian-native-titlebar-default": {
+      "kind": "file-contains",
+      "path": "~/GitHub/obsidian-vault/AiSecondBrain/.obsidian/appearance.json",
+      "required_contains": [
+        "\"titlebarStyle\"",
+        "\"native\""
+      ],
+      "notes": [
+        "Obsidian installs must default to Settings -> Appearance -> Advanced -> Window frame style -> Native frame to avoid the hidden-frame titlebar artifact in LXDE/XRDP."
+      ]
     }
   },
   "programs": {
+    "brave-browser": {
+      "kind": "apt-package-set",
+      "packages": [
+        "brave-browser"
+      ],
+      "primary_package": "brave-browser",
+      "desired_source_contains": "brave-browser-apt-release.s3.brave.com",
+      "forbidden_package_managers": [
+        "snap"
+      ],
+      "post_fix_script": "modules/managed-apps/scripts/install-brave-browser",
+      "required_wrapper": "/usr/local/bin/chrome",
+      "required_wrapper_flags": [
+        "/usr/bin/brave-browser"
+      ],
+      "notes": [
+        "Brave is the managed non-Snap ARM64 browser used when callers ask for chrome.",
+        "Install/repair through modules/managed-apps/scripts/install-brave-browser or omni managed-apps fix --app brave-browser."
+      ]
+    },
     "chromium": {
       "kind": "apt-package-set",
       "packages": [
@@ -149,6 +263,70 @@
       "post_fix_app": "firefox",
       "notes": [
         "Firefox launcher must use normal xrdp-launch and must not force fullscreen/maximize."
+      ]
+    },
+    "obsidian": {
+      "kind": "manual-appimage",
+      "target_hosts": [
+        "atius-srv-1"
+      ],
+      "install_dir": "/home/ubuntu/GitHub/Programs/obsidian",
+      "stable_appimage": "/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage",
+      "state_file": "/home/ubuntu/GitHub/Programs/obsidian/state/current-release.json",
+      "primary_package": "obsidian",
+      "desired_version": "1.12.7",
+      "desired_sha256": "2a40943a2402cf1f38e71845f294a78d300a78ff21ea4c2103335bca7fbdcbe0",
+      "source_url": "https://github.com/obsidianmd/obsidian-releases/releases/download/v1.12.7/Obsidian-1.12.7-arm64.AppImage",
+      "accepted_asset_suffix": "arm64.AppImage",
+      "forbidden_package_managers": [
+        "snap"
+      ],
+      "post_fix_script": "modules/managed-apps/scripts/install-obsidian-arm64-appimage",
+      "required_wrapper": "~/.local/bin/obsidian",
+      "required_wrapper_flags": [
+        "/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage",
+        "--no-sandbox"
+      ],
+      "appearance_defaults": {
+        "path": "~/GitHub/obsidian-vault/AiSecondBrain/.obsidian/appearance.json",
+        "key": "titlebarStyle",
+        "value": "native"
+      },
+      "notes": [
+        "Official Obsidian ARM64 AppImage only; asset name must end in arm64.AppImage.",
+        "Snap Obsidian is forbidden.",
+        "Installer must set titlebarStyle=native as the default Window frame style so the hidden-frame titlebar artifact does not return in LXDE/XRDP.",
+        "obsidian-tray --tray-only must dock an existing obsidian.obsidian window with kdocker -b -q -w; do not use the old kdocker -n -q command-start path because it can show a 5-second timeout dialog after reboot."
+      ]
+    },
+    "gitkraken": {
+      "kind": "manual-deb",
+      "target_hosts": [
+        "atius-srv-1"
+      ],
+      "install_dir": "/home/ubuntu/GitHub/Programs/gitkraken",
+      "state_file": "/home/ubuntu/GitHub/Programs/gitkraken/state/current-release.json",
+      "deb_file": "/home/ubuntu/GitHub/Programs/gitkraken/releases/gk_3.1.68_linux_arm64.deb",
+      "package": "gk",
+      "primary_package": "gk",
+      "desired_version": "3.1.68",
+      "desired_architecture": "arm64",
+      "desired_sha256": "0c26bc5fc4306fae85df038c0be97e06c01a313bdd70821e95bcf05abfe8a77f",
+      "source_repository": "https://github.com/gitkraken/gk-cli/releases",
+      "source_url": "https://github.com/gitkraken/gk-cli/releases/download/v3.1.68/gk_3.1.68_linux_arm64.deb",
+      "accepted_asset_suffix": "linux_arm64.deb",
+      "forbidden_package_managers": [
+        "snap"
+      ],
+      "forbidden_snap_names": [
+        "gitkraken"
+      ],
+      "post_fix_script": "modules/managed-apps/scripts/install-gitkraken-gk-arm64-deb",
+      "notes": [
+        "GitKraken is managed from the official gitkraken/gk-cli GitHub releases, not Snap and not an APT/PPA repository.",
+        "The Debian package name is gk; status and fleet-status must record the installed dpkg version and the managed state/current-release.json.",
+        "Use only the Linux ARM64 .deb asset ending in linux_arm64.deb.",
+        "Snap gitkraken is forbidden once the managed .deb path is adopted."
       ]
     },
     "bitwarden-chromium-extension": {

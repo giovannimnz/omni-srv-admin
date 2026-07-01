@@ -477,8 +477,11 @@ screen_size() {
 }
 
 fix_once() {
-  pgrep -u "${USER:-ubuntu}" -x lxpanel >/dev/null 2>&1 || setsid -f lxpanel --profile LXDE >/tmp/omni-dark-theme-lxpanel.log 2>&1 || true
   command -v wmctrl >/dev/null 2>&1 || return 0
+  if ! wmctrl -lG 2>/dev/null | awk '$0 ~ / panel$/ { found = 1 } END { exit !found }'; then
+    setsid -f lxpanel --profile LXDE >/tmp/omni-dark-theme-lxpanel.log 2>&1 || true
+    sleep 1
+  fi
   set -- $(screen_size)
   [ "$#" -ge 2 ] || return 0
   width="$1"
@@ -494,7 +497,8 @@ fix_once() {
 
 case "${1:-}" in
   --watch)
-    lock_file="/tmp/omni-lxde-panel-guard-${USER:-ubuntu}.lock"
+    display_id="$(printf '%s' "${DISPLAY:-unknown}" | tr -c '[:alnum:]_.-' '_')"
+    lock_file="/tmp/omni-lxde-panel-guard-${USER:-ubuntu}-${display_id}.lock"
     exec 9>"$lock_file" || exit 0
     flock -n 9 || exit 0
     while :; do

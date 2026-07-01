@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:${PATH:-}"
+
+wrapper_source="${1:-$(dirname "$0")/chrome-brave}"
+backup_dir="/var/backups/omni-managed-apps/chrome-wrappers-$(date +%Y%m%d-%H%M%S)"
+commands=(chrome google-chrome google-chrome-stable)
+dirs=(/usr/local/bin /usr/bin)
+
+as_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  else
+    /usr/bin/sudo "$@"
+  fi
+}
+
+if [ ! -f "$wrapper_source" ]; then
+  echo "wrapper source not found: $wrapper_source" >&2
+  exit 2
+fi
+
+for dir in "${dirs[@]}"; do
+  for command_name in "${commands[@]}"; do
+    path="$dir/$command_name"
+    if [ -e "$path" ] && ! grep -q "/usr/bin/brave-browser" "$path" 2>/dev/null; then
+      as_root mkdir -p "$backup_dir"
+      safe_dir="${dir//\//_}"
+      as_root cp -a "$path" "$backup_dir/${safe_dir}-${command_name}"
+    fi
+    as_root install -D -m 0755 "$wrapper_source" "$path"
+  done
+done
+
+cat <<'ALIASES' | as_root tee /etc/profile.d/chrome-brave-alias.sh >/dev/null
+alias chrome=brave-browser
+alias google-chrome=brave-browser
+alias google-chrome-stable=brave-browser
+ALIASES
+as_root chmod 0644 /etc/profile.d/chrome-brave-alias.sh
+
+for command_name in "${commands[@]}"; do
+  printf '%s path=%s\n' "$command_name" "$(command -v "$command_name")"
+  "$command_name" --version
+  "/usr/bin/$command_name" --version
+done

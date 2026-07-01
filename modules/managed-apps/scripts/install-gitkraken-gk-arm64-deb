@@ -1,0 +1,171 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+APP_NAME="gitkraken"
+PACKAGE_NAME="gk"
+VERSION="${GK_VERSION:-3.1.68}"
+ASSET="gk_${VERSION}_linux_arm64.deb"
+SHA256="${GK_SHA256:-0c26bc5fc4306fae85df038c0be97e06c01a313bdd70821e95bcf05abfe8a77f}"
+SOURCE_REPOSITORY="https://github.com/gitkraken/gk-cli/releases"
+URL="${GK_DEB_URL:-https://github.com/gitkraken/gk-cli/releases/download/v${VERSION}/${ASSET}}"
+INSTALL_DIR="${GK_INSTALL_DIR:-$HOME/GitHub/Programs/gitkraken}"
+RELEASES_DIR="$INSTALL_DIR/releases"
+STATE_DIR="$INSTALL_DIR/state"
+DEB_FILE="$RELEASES_DIR/$ASSET"
+STATE_FILE="$STATE_DIR/current-release.json"
+BACKUP_ROOT="${GK_BACKUP_ROOT:-/var/backups/omni-managed-apps}"
+MODE="${1:-apply}"
+
+log() { printf '[install-gitkraken] %s\n' "$*"; }
+die() { printf '[install-gitkraken:error] %s\n' "$*" >&2; exit 1; }
+
+need_arm64() {
+  case "$(uname -m)" in
+    aarch64|arm64) ;;
+    *) die "unsupported architecture: $(uname -m); expected arm64/aarch64" ;;
+  esac
+}
+
+need_tool() {
+  command -v "$1" >/dev/null 2>&1 || die "missing required tool: $1"
+}
+
+as_root() {
+  if [ "$(id -u)" -eq 0 ]; then
+    "$@"
+  else
+    sudo "$@"
+  fi
+}
+
+installed_version() {
+  dpkg-query -W -f='${Version}' "$PACKAGE_NAME" 2>/dev/null || true
+}
+
+installed_arch() {
+  dpkg-query -W -f='${Architecture}' "$PACKAGE_NAME" 2>/dev/null || true
+}
+
+backup_metadata() {
+  local ts backup manifest
+  ts="$(date +%Y%m%d-%H%M%S)"
+  backup="$BACKUP_ROOT/gitkraken-$ts"
+  as_root mkdir -p "$backup"
+  as_root chown "$USER:$USER" "$backup" 2>/dev/null || true
+  manifest="$backup/manifest.json"
+  jq -n \
+    --arg app "$APP_NAME" \
+    --arg package "$PACKAGE_NAME" \
+    --arg desired_version "$VERSION" \
+    --arg installed_version "$(installed_version)" \
+    --arg installed_arch "$(installed_arch)" \
+    --arg install_dir "$INSTALL_DIR" \
+    --arg state_file "$STATE_FILE" \
+    --arg source_url "$URL" \
+    --arg gk_bin "$(command -v gk 2>/dev/null || true)" \
+    --arg snap_gitkraken "$(snap list gitkraken 2>/dev/null | tail -n +2 | tr '\n' ' ' || true)" \
+    '{
+      app: $app,
+      package: $package,
+      desired_version: $desired_version,
+      installed_version: $installed_version,
+      installed_architecture: $installed_arch,
+      install_dir: $install_dir,
+      state_file: $state_file,
+      source_url: $source_url,
+      gk_binary: $gk_bin,
+      snap_gitkraken: $snap_gitkraken
+    }' >"$manifest"
+  [ -f "$STATE_FILE" ] && cp -a "$STATE_FILE" "$backup/" 2>/dev/null || true
+  log "backup metadata: $manifest"
+}
+
+download_deb() {
+  mkdir -p "$RELEASES_DIR" "$STATE_DIR"
+  if [ -f "$DEB_FILE" ]; then
+    log "deb already present: $DEB_FILE"
+  else
+    log "downloading official arm64 deb: $URL"
+    curl -fL --retry 3 --output "$DEB_FILE.tmp" "$URL"
+    mv "$DEB_FILE.tmp" "$DEB_FILE"
+  fi
+  printf '%s  %s\n' "$SHA256" "$DEB_FILE" | sha256sum -c -
+}
+
+verify_deb_metadata() {
+  local package version arch
+  package="$(dpkg-deb -f "$DEB_FILE" Package)"
+  version="$(dpkg-deb -f "$DEB_FILE" Version)"
+  arch="$(dpkg-deb -f "$DEB_FILE" Architecture)"
+  [ "$package" = "$PACKAGE_NAME" ] || die "unexpected deb package: $package"
+  [ "$version" = "$VERSION" ] || die "unexpected deb version: $version"
+  [ "$arch" = "arm64" ] || die "unexpected deb architecture: $arch"
+}
+
+install_deb() {
+  log "installing $PACKAGE_NAME $VERSION from $DEB_FILE"
+  as_root env DEBIAN_FRONTEND=noninteractive apt-get install -y "$DEB_FILE"
+}
+
+write_state() {
+  jq -n \
+    --arg app "$APP_NAME" \
+    --arg package "$PACKAGE_NAME" \
+    --arg version "$VERSION" \
+    --arg installed_version "$(installed_version)" \
+    --arg architecture "$(installed_arch)" \
+    --arg source_repository "$SOURCE_REPOSITORY" \
+    --arg source_url "$URL" \
+    --arg asset "$ASSET" \
+    --arg sha256 "$SHA256" \
+    --arg deb "$DEB_FILE" \
+    --arg installed_at "$(date -Is)" \
+    '{
+      app: $app,
+      package: $package,
+      version: $version,
+      installed_package_version: $installed_version,
+      architecture: $architecture,
+      source_repository: $source_repository,
+      source_url: $source_url,
+      asset: $asset,
+      sha256: $sha256,
+      deb: $deb,
+      installed_at: $installed_at
+    }' >"$STATE_FILE"
+}
+
+verify_install() {
+  local failed=0 version arch
+  version="$(installed_version)"
+  arch="$(installed_arch)"
+  [ "$version" = "$VERSION" ] || { printf 'version drift: %s != %s\n' "${version:-not-installed}" "$VERSION" >&2; failed=1; }
+  [ "$arch" = "arm64" ] || { printf 'architecture drift: %s != arm64\n' "${arch:-missing}" >&2; failed=1; }
+  [ -x /usr/bin/gk ] || { printf 'missing executable: /usr/bin/gk\n' >&2; failed=1; }
+  [ "$(jq -r '.version // empty' "$STATE_FILE" 2>/dev/null || true)" = "$VERSION" ] || { printf 'state drift: version not recorded\n' >&2; failed=1; }
+  [ "$(jq -r '.package // empty' "$STATE_FILE" 2>/dev/null || true)" = "$PACKAGE_NAME" ] || { printf 'state drift: package not recorded\n' >&2; failed=1; }
+  printf '%s  %s\n' "$SHA256" "$DEB_FILE" | sha256sum -c - >/dev/null || failed=1
+  return "$failed"
+}
+
+case "$MODE" in
+  apply|"")
+    need_arm64
+    need_tool curl
+    need_tool dpkg-deb
+    need_tool jq
+    backup_metadata
+    download_deb
+    verify_deb_metadata
+    install_deb
+    write_state
+    verify_install
+    log "installed ${PACKAGE_NAME} ${VERSION}"
+    ;;
+  verify)
+    verify_install
+    ;;
+  *)
+    die "usage: $0 [apply|verify]"
+    ;;
+esac

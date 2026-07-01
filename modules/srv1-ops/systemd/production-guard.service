@@ -1,0 +1,17 @@
+[Unit]
+Description=Production Guard read-only boot verification
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/production_guard.py status --json
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+StandardOutput=journal
+StandardError=journal
+NoNewPrivileges=true
+PrivateTmp=true
+
+[Install]
+WantedBy=default.target
+

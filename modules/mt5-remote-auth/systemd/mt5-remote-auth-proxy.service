@@ -1,0 +1,22 @@
+[Unit]
+Description=ATIUS MT5 remote SSO auth proxy
+After=network-online.target pm2-ubuntu.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=www-data
+Group=www-data
+Environment=MT5_REMOTE_AUTH_PROXY_CONFIG=/etc/atius/mt5-remote-auth-proxy.json
+ExecStart=/usr/bin/node /opt/atius/mt5-remote-auth-proxy.js
+Restart=always
+RestartSec=3
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=read-only
+ProtectSystem=strict
+ReadOnlyPaths=/var/www/remote-mt5 /etc/atius
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

@@ -32,6 +32,7 @@ SCRIPT_MAP = {
     "cgroup-init": SCRIPTS / "resource-governor-cgroup-init.sh",
     "patcher": SCRIPTS / "resource-governor-patcher.py",
 }
+PRODUCTION_GUARD_SCRIPT = SCRIPTS / "production_guard.py"
 
 RESOURCE_PROFILE_KEYS = {
     "builds": "BUILDS",
@@ -337,6 +338,65 @@ def status() -> None:
     click.echo(f"logs:   {LOG_DIR} ({'ok' if LOG_DIR.exists() else 'missing'})")
     click.echo(f"resource-config: {RESOURCE_CONFIG} ({'ok' if RESOURCE_CONFIG.exists() else 'missing'})")
     subprocess.run(["systemctl", "--user", "list-timers", "--all"], check=False, env=_user_systemd_env())
+
+
+def _run_production_guard(command: str, *, json_output: bool = False, extra_args: list[str] | None = None) -> None:
+    if not PRODUCTION_GUARD_SCRIPT.exists():
+        raise click.ClickException(f"script não encontrado: {PRODUCTION_GUARD_SCRIPT}")
+    args = ["python3", str(PRODUCTION_GUARD_SCRIPT), command]
+    if json_output:
+        args.append("--json")
+    if extra_args:
+        args.extend(extra_args)
+    raise SystemExit(_run(args))
+
+
+@srv1_ops.group("production-guard")
+def production_guard() -> None:
+    """Validador read-only de PM2/elements de boot para ATS e Horistic."""
+
+
+@production_guard.command("status")
+@click.option("--json/--no-json", "json_output", default=False, show_default=True, help="Emite JSON")
+def production_guard_status(json_output: bool) -> None:
+    """Executa `production_guard status --json`."""
+    _run_production_guard("status", json_output=json_output)
+
+
+@production_guard.command("doctor")
+@click.option("--json/--no-json", "json_output", default=False, show_default=True, help="Emite JSON")
+def production_guard_doctor(json_output: bool) -> None:
+    """Executa `production_guard doctor --json`."""
+    _run_production_guard("doctor", json_output=json_output)
+
+
+@production_guard.command("repair")
+@click.option("--json/--no-json", "json_output", default=False, show_default=True, help="Emite JSON")
+@click.option("--dry-run/--apply", "dry_run", default=True, show_default=True, help="Dry-run por default; apply exige checkpoint explícito.")
+@click.option("--scope", help="Escopo exato da ação permitida.")
+@click.option("--target", help="Target exato da ação permitida.")
+@click.option(
+    "--yes-i-understand-production-risk",
+    "risk_ack",
+    is_flag=True,
+    help="Confirma explicitamente o risco de produção para liberar apply.",
+)
+def production_guard_repair(
+    json_output: bool,
+    dry_run: bool,
+    scope: str | None,
+    target: str | None,
+    risk_ack: bool,
+) -> None:
+    """Executa `production_guard repair` com gate explícito para apply."""
+    extra_args: list[str] = ["--dry-run"] if dry_run else ["--apply"]
+    if scope:
+        extra_args.extend(["--scope", scope])
+    if target:
+        extra_args.extend(["--target", target])
+    if risk_ack:
+        extra_args.append("--yes-i-understand-production-risk")
+    _run_production_guard("repair", json_output=json_output, extra_args=extra_args)
 
 
 @srv1_ops.group("resources")

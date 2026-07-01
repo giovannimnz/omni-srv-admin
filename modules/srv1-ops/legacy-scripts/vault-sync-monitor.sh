@@ -2,7 +2,7 @@
 # Monitor de sincronização do vault Obsidian em 3 servidores
 # Intervalo: 5 minutos | Duração: 60 minutos
 
-VAULT_DIR="$HOME/GitHub/obsidian-vault/ideaverse"
+VAULT_DIR="$HOME/GitHub/obsidian-vault/AiSecondBrain"
 LOG_FILE="$HOME/scripts/vault-sync-monitor.log"
 SRV3="10.1.1.7"
 MAX_MINUTES=60

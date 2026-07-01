@@ -1,0 +1,290 @@
+version: "1"
+phase: "24-production-recovery-guard-ats-horistic"
+scope: "read-only"
+pm2:
+  service:
+    name: pm2-ubuntu.service
+    scope: system
+    expected_type: oneshot
+    expected_remain_after_exit: true
+    expected_env:
+      PM2_HOME: /home/ubuntu/.pm2
+    forbidden_env:
+      - PIDFile
+    expected_execstart_contains:
+      - "pm2 resurrect"
+  binary: /home/ubuntu/.nvm/versions/node/v24.13.1/lib/node_modules/pm2/bin/pm2
+  dump_path: /home/ubuntu/.pm2/dump.pm2
+  namespace_counts:
+    atius: 12
+    horistic: 5
+  launchers:
+    allow_waiting_restart:
+      - atius-unified-bot-launcher
+      - horistic-unified-bot-launcher
+    cycle_summary_window_minutes: 15
+    cycle_summary_patterns:
+      - "\\[CYCLE_SUMMARY\\]"
+    cycle_summary_fatal_patterns:
+      - fatal
+      - error
+critical_ports:
+  - 3015
+  - 8015
+  - 3050
+  - 8050
+  - 8099
+  - 8199
+endpoints:
+  - name: atius-public
+    method: GET
+    url: https://trade.atius.com.br
+  - name: atius-api
+    method: GET
+    url: https://api.atius.com.br
+  - name: horistic-public
+    method: HEAD
+    url: https://trade.horistic.com
+  - name: horistic-api
+    method: GET
+    url: https://api.horistic.com
+  - name: horistic-webhook-health
+    method: HEAD
+    url: https://webhook.horistic.com/
+remote_checks:
+  horistic:
+    ssh: horistic@10.1.1.4
+    service: apache2
+    expected_fragment_path: /usr/lib/systemd/system/apache2.service
+    required_listen_ports:
+      - 80
+      - 443
+    expected_sites_enabled:
+      - remote.horistic-srv-1.atius.com.br.conf
+    legacy_sites_allowlist:
+      - remote.horistic-srv-1.atius.com.br.conf
+    allowed_dropin_paths:
+      - (none)
+rename_drift:
+  alias_pairs:
+    - from: horistic-srv-1
+      to: horistic-srv
+      benign_file_refs:
+        - /home/ubuntu/GitHub/omni-srv-admin/inventory/hosts/horistic-srv.yaml
+        - /home/ubuntu/GitHub/omni-srv-admin/docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md
+  backup_paths:
+    - ATIUS-SRV/HORISTIC-SRV-1/Backup
+    - ATIUS-SRV/HORISTIC-SRV-1
+  symlink_expectations:
+    - from: /home/ubuntu/GitHub/Atius-Capital/horistic-srv-1
+      to: /home/ubuntu/GitHub/Atius-Capital/horistic
+ecosystems:
+  atius:
+    path: /home/ubuntu/GitHub/Atius-Capital/ats/ecosystem.config.js
+    namespace: atius
+    expected_total: 12
+    critical_apps:
+      atius-api:
+        namespace: atius
+        cwd: /home/ubuntu/GitHub/Atius-Capital/ats
+        script: backend/server/api.js
+        autorestart: true
+        restart_delay: 10000
+        max_restarts: 10
+        required_env:
+          - NODE_ENV
+          - API_PORT
+          - API_HOST
+        expected_ports:
+          - 8015
+      atius-web:
+        namespace: atius
+        cwd: /home/ubuntu/GitHub/Atius-Capital/ats/frontend
+        script: node_modules/next/dist/bin/next
+        autorestart: true
+        restart_delay: 15000
+        max_restarts: 10
+        required_env:
+          - NODE_ENV
+          - PORT
+          - API_PORT
+        expected_ports:
+          - 3015
+      atius-webhook-signals:
+        namespace: atius
+        cwd: /home/ubuntu/GitHub/Atius-Capital/ats
+        script: backend/indicators/webhook/webhookSignals.js
+        autorestart: true
+        restart_delay: 5000
+        max_restarts: 50
+        required_env:
+          - NODE_ENV
+          - WEBHOOK_PORT
+        expected_ports:
+          - 8199
+      atius-divap-indicator:
+        namespace: atius
+        cwd: /home/ubuntu/GitHub/Atius-Capital/ats/backend/indicators
+        script: divap.py
+        autorestart: true
+        restart_delay: 10000
+        max_restarts: 10
+        required_env:
+          - PYTHONUNBUFFERED
+      atius-strategy-builder:
+        namespace: atius
+        cwd: /home/ubuntu/GitHub/Atius-Capital/ats
+        script: backend/indicators/strategy_builder/server.py
+        autorestart: true
+        restart_delay: 10000
+        max_restarts: 10
+        required_env:
+          - PYTHONUNBUFFERED
+      atius-unified-bot-launcher:
+        namespace: atius
+        cwd: /home/ubuntu/GitHub/Atius-Capital/ats
+        script: backend/services/unified-bot-launcher.js
+        autorestart: true
+        restart_delay: 30000
+        max_restarts: 10
+        required_env:
+          - NODE_ENV
+          - LAUNCHER_POLL_INTERVAL
+          - LAUNCHER_MAX_WORKERS
+    dynamic_patterns:
+      - "^atius-bot-"
+  horistic:
+    path: /home/ubuntu/GitHub/Atius-Capital/horistic/ecosystem.config.js
+    namespace: horistic
+    expected_total: 5
+    critical_apps:
+      horistic-api:
+        namespace: horistic
+        cwd: /home/ubuntu/GitHub/Atius-Capital/horistic
+        script: backend/server/api.js
+        autorestart: true
+        restart_delay: 10000
+        max_restarts: 10
+        required_env:
+          - NODE_ENV
+          - API_PORT
+          - API_HOST
+        expected_ports:
+          - 8050
+      horistic-web:
+        namespace: horistic
+        cwd: /home/ubuntu/GitHub/Atius-Capital/horistic/frontend
+        script: npm
+        autorestart: true
+        restart_delay: 15000
+        max_restarts: 10
+        required_env:
+          - NODE_ENV
+          - PORT
+          - API_PORT
+        expected_ports:
+          - 3050
+      horistic-webhook-signals:
+        namespace: horistic
+        cwd: /home/ubuntu/GitHub/Atius-Capital/horistic
+        script: backend/indicators/webhook/webhookSignals.js
+        autorestart: true
+        restart_delay: 5000
+        max_restarts: 50
+        required_env:
+          - NODE_ENV
+          - WEBHOOK_PORT
+        expected_ports:
+          - 8099
+      horistic-divap-indicator:
+        namespace: horistic
+        cwd: /home/ubuntu/GitHub/Atius-Capital/horistic/backend/indicators
+        script: divap.py
+        autorestart: true
+        restart_delay: 10000
+        max_restarts: 10
+        required_env:
+          - PYTHONUNBUFFERED
+      horistic-unified-bot-launcher:
+        namespace: horistic
+        cwd: /home/ubuntu/GitHub/Atius-Capital/horistic
+        script: backend/services/unified-bot-launcher.js
+        autorestart: true
+        restart_delay: 30000
+        max_restarts: 10
+        required_env:
+          - NODE_ENV
+          - LAUNCHER_POLL_INTERVAL
+          - LAUNCHER_MAX_WORKERS
+containers:
+  required:
+    - name: router-ai-atius
+      critical: true
+    - name: postgres
+      critical: true
+    - name: redis
+      critical: true
+    - name: model-detailed
+      critical: true
+    - name: model-detailed-hotfix
+      critical: false
+systemd:
+  services:
+    - name: sshd
+      scope: system
+      expected_status: active
+      criticality: block
+    - name: apache2
+      scope: system
+      expected_status: active
+      criticality: warn
+    - name: xrdp
+      scope: system
+      expected_status: active
+      criticality: warn
+    - name: xrdp-sesman
+      scope: system
+      expected_status: active
+      criticality: warn
+    - name: resource-governor-watchdog.service
+      scope: user
+      expected_status: active
+      criticality: warn
+    - name: resource-governor-patcher.service
+      scope: user
+      expected_status: active
+      criticality: warn
+  timers:
+    - name: inviolable-watchdog.timer
+      scope: user
+      expected_status: active
+      criticality: warn
+    - name: resource-governor-watchdog.timer
+      scope: user
+      expected_status: active
+      criticality: warn
+    - name: resource-governor-snapshot.timer
+      scope: user
+      expected_status: active
+      criticality: warn
+    - name: resource-governor-audit.timer
+      scope: user
+      expected_status: active
+      criticality: warn
+  jobs:
+    critical_blockers:
+      - default\.target
+      - ats-pm2\.service
+      - horistic-pm2\.service
+    noisy:
+      - backup-.*\.service
+      - .*rclone.*
+      - .*avahi.*
+redaction:
+  sensitive_fields:
+    - token
+    - password
+    - secret
+    - api_key
+    - access_token
+    - webhook_secret

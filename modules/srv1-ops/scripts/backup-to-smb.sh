@@ -54,7 +54,7 @@ log "Disco livre SMB: $(df -h $HOME/Shared_smb/ | tail -1 | awk '{print $4}')"
 # Lista de pares (label:origem) — ajusta aqui
 # NUNCA: /tmp, node_modules, dist, .git (rebuild from origin)
 declare -A SOURCES=(
-    ["vault"]="$HOME/GitHub/obsidian-vault/ideaverse"
+    ["vault"]="$HOME/GitHub/obsidian-vault/AiSecondBrain"
     ["docker-configs"]="$HOME/docker/scripts"
     ["dotfiles-local-bin"]="$HOME/.local/bin"
     ["systemd-user"]="$HOME/.config/systemd/user"

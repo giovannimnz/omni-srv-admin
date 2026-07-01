@@ -159,6 +159,80 @@ Versioned schema lives in `modules/fleet-control-plane/migrations/`.
 Future Podman/K3s work consumes these contracts rather than inventing a separate
 source of truth.
 
+## Landscape / Omni Governance
+
+Landscape self-hosted is now the durable Ubuntu machine-management endpoint for
+the managed fleet, but it does not replace Omni Fleet as the reviewed inventory,
+governance and audit plane.
+
+Canonical operating model:
+
+- `docs/fleet/landscape-omni-governance.md`
+
+Boundary summary:
+
+| Plane | Owns | Does not own |
+|---|---|---|
+| Omni Fleet | Reviewed inventory, desired-state governance, approved update plans, audit, PgBouncer-backed runtime state | Kubernetes workload operations or ad-hoc host console sessions |
+| Landscape self-hosted | Ubuntu machine management, package activity UI, client registration, Ubuntu Pro/ESM visibility and script execution under gate | Fleet identity source of truth, K3s workloads or unrestricted repair automation |
+| Landscape SaaS | Fallback/reference path | Durable endpoint for this milestone |
+| Cockpit | Host-level break-glass console | Central package compliance or fleet automation |
+| K3s/Portainer | Cluster and container workload administration | OS patch governance or fleet identity |
+| Observability | Metrics, logs, alerts and dashboards | Automatic repair execution |
+
+Admin surfaces must stay behind explicit gates: HTTPS proxy/auth, Cloudflare
+Access when enabled, Apache auth/SSO or WireGuard. Direct anonymous admin
+console exposure is not an accepted state.
+
+## Program Collectors And Desired-State Profiles
+
+Phase 31 adds host-local read-only collectors and desired-state profile
+rendering.
+
+Collector command:
+
+```bash
+PYTHONPATH=cli python3 -m omni fleet agent collect-programs --host atius-srv-1 --json
+PYTHONPATH=cli python3 -m omni fleet agent collect-programs --host atius-srv-1 --db --json
+```
+
+The collector records observations from package managers, language package
+managers, PM2, systemd and container engines. Missing tools are warnings, not
+fleet failures. The collector must not run package/service mutation commands.
+
+Desired-state profile command:
+
+```bash
+PYTHONPATH=cli python3 -m omni fleet profiles managed-apps --json
+PYTHONPATH=cli python3 -m omni fleet profiles managed-apps --db --json
+```
+
+The first seed comes from `modules/managed-apps/configs/programs.json`, which
+already models managed browser programs, repositories, policies and
+customizations. Execution remains separate: remediation must create or use
+approved `TbUpdatePlans` and run locally on the target host agent.
+
+## CVE/USN Reporting And Landscape Parity
+
+Phase 32 adds read-only security reporting from Ubuntu Pro Client and documents
+Landscape/Omni parity.
+
+Commands:
+
+```bash
+PYTHONPATH=cli python3 -m omni fleet security report --host atius-srv-1 --json
+PYTHONPATH=cli python3 -m omni fleet security report --host atius-srv-1 --db --json
+PYTHONPATH=cli python3 -m omni fleet landscape-parity --json
+```
+
+Canonical parity doc:
+
+- `docs/fleet/landscape-parity.md`
+
+`pro fix` is not an automatic remediation path. Use `pro fix --dry-run` for
+manual inspection, or create an approved `TbUpdatePlans` entry for any real
+mutation.
+
 ## Ops Scopes And Config
 
 Each server gets an explicit ops scope:

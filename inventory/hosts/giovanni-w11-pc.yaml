@@ -5,7 +5,7 @@ aliases:
 role: personal-workstation
 owner: giovanni
 access:
-  ssh: TBD
+  ssh: muniz@10.1.1.5
   vpn_ip: 10.1.1.5
 platform:
   provider: local-pc
@@ -26,5 +26,7 @@ notes:
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-W11-PC
   dns_validation: "CoreDNS and fleet /etc/hosts resolve GIOVANNI-W11-PC to 10.1.1.5."
+  ssh_user: muniz
+  ssh_validation: "2026-06-25: muniz@10.1.1.5 authenticated and returned hostname GIOVANNI-W11-PC."
   client_config: "/home/ubuntu/.secure/omni-srv-admin/wireguard-rotation-20260617-142224/client-configs/GIOVANNI-W11-PC-wg0-10.1.1.5.conf"
   live_handshake: "pending until the new config is imported on Windows."

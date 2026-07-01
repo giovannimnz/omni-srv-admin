@@ -11,7 +11,7 @@ https://router.atius.com.br/v1
 The stable public embedding alias is:
 
 ```text
-embedding-pt-v1
+embedding-gte-v1
 ```
 
 The backend for this phase is TEI running inside k3s:
@@ -31,7 +31,7 @@ The embedding governor lives inside the Go router process, not in a Python sidec
 - `service/embeddinggovernor/`
 - `relay/embedding_handler.go`
 
-Default governed models are `embedding-pt-v1` and `embedding-pt-v1-batch`. The normal path starts at concurrency `1`, can scale up to `4` only when interactive queue pressure is healthy, and reduces to `1` on TEI errors, slow calls or cooldown. Batch calls should use `X-Embedding-Workload: batch` or the `embedding-pt-v1-batch` alias, and are capped separately at `1` so they do not consume all interactive capacity.
+The only public governed embedding model is `embedding-gte-v1`. The old `embedding-pt-v1` and `*-batch` aliases are not active. The normal path starts at concurrency `1`, can scale up to `4` only when interactive queue pressure is healthy, and reduces to `1` on TEI errors, slow calls or cooldown. Batch calls use `X-Embedding-Workload: batch` or request-size classification on the same `embedding-gte-v1` model, and are capped separately at `1` so they do not consume all interactive capacity.
 
 Observed GBrain/Obsidian tuning data behind this default:
 
@@ -40,6 +40,26 @@ Observed GBrain/Obsidian tuning data behind this default:
 - Provider sub-batch `4` was the first reliable size for pages that previously failed.
 - Concurrency `2` produced useful progress but also load `~5.3` to `>6` on a 4-core host, with TEI around `115-148%` CPU and one heavier attempt reaching `~7.8GiB` RSS before upstream errors/readiness problems.
 - Therefore catch-up/indexing should remain conservative, while interactive bursts may scale only under observed healthy latency and no recent failure.
+
+## Graphify Bridge
+
+Graphify remains graph-first. The local bridge only links Graphify-side auxiliary retrieval/indexing to the same governed embeddings endpoint:
+
+```text
+Config: ~/.graphify/embeddings.json
+Helper: ~/.local/bin/graphify-embed
+Endpoint: https://router.atius.com.br/v1
+Model: embedding-gte-v1
+Dimensions: 768
+Batch cap: 4
+Header: X-Embedding-Workload: batch
+```
+
+Smoke:
+
+```bash
+graphify-embed --text "Graphify retrieval smoke" --pretty
+```
 
 ## New API Channel
 
@@ -50,14 +70,14 @@ Create or update a New API channel for embeddings with these fields:
 | Type | OpenAI-compatible |
 | Base URL | `http://10.1.1.4:3000` |
 | Upstream model | `text-embeddings-inference` |
-| Public alias | `embedding-pt-v1` |
+| Public alias | `embedding-gte-v1` |
 | Backend model | `Alibaba-NLP/gte-multilingual-base` |
 | Dimensions | `768` |
 | Pooling | `cls` |
 
 Hard rule: the channel Base URL must not contain `router.atius.com.br`. That domain is our public `router-ai-atius` entrypoint for clients, but an internal New API channel that points back to `https://router.atius.com.br/v1` creates a router self-loop.
 
-The alias `embedding-pt-v1` may route to more than one replica only when every replica uses the same model, same revision or digest, same quantization, same dimension, same normalization, and same chunking contract.
+The alias `embedding-gte-v1` may route to more than one replica only when every replica uses the same model, same revision or digest, same quantization, same dimension, same normalization, and same chunking contract.
 
 Changing any part of the embedding contract requires reembedding and reindexing dependent stores:
 
@@ -103,11 +123,12 @@ Live resource contract:
 
 | Setting | Value |
 |---|---|
-| CPU request | `1500m` = 1.5 node CPU/vCPU |
-| CPU limit | `3000m` = 3.0 node CPU/vCPU |
-| Memory request | `3Gi` |
+| CPU request | `1000m` = 1.0 node CPU/vCPU |
+| CPU limit | `2000m` = 2.0 node CPU/vCPU |
+| Memory request | `6Gi` |
 | Memory limit | `12Gi` |
 | Tokenization workers | `1` |
+| Autoscaling | Disabled; `replicas: 1` |
 
 `--tokenization-workers 1` is intentionally pinned. During resource tuning, TEI auto-selected 3 tokenization workers when the CPU ceiling was higher and exceeded the earlier 8Gi memory limit while warming up. Keeping one tokenization worker preserves predictable memory behavior with the current 12Gi memory limit.
 
@@ -176,7 +197,7 @@ curl -sS \
     error: .error
   }'
 {
-  "model": "embedding-pt-v1",
+  "model": "embedding-gte-v1",
   "input": [
     "O Obsidian armazena notas em arquivos Markdown.",
     "Busca semântica permite localizar textos com significados semelhantes."
@@ -200,7 +221,7 @@ client = OpenAI(
 )
 
 response = client.embeddings.create(
-    model="embedding-pt-v1",
+    model="embedding-gte-v1",
     input=[
         "Como integrar embeddings locais no k3s?",
         "O New API funciona como gateway centralizado.",

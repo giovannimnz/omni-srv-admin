@@ -195,15 +195,16 @@ limpo antes de virar submodule.
 - Atualizar vault para outras línguas — vault é PT-BR canônico
 - Mover/deixar de usar `domain-infrastructure/` — D-05
 
-## Open Questions (para `gsd-plan-phase` resolver via research)
+## Resolved Questions
 
-- **O-01:** O GitHub `gh repo rename` afeta redirects? (Sim, 90+ dias
-  automáticos, mas vale documentar em DEVELOPMENT.md)
-- **O-02:** `git submodule add` com URL HTTPS + gh credential helper —
-  funciona no shell atual? (Verificar com `git config --get credential.helper`)
-- **O-03:** O egg-info `cli/fork_sync.egg-info/` é regenerado pelo
-  `setup.py`? Se sim, removê-lo do index git no fork-sync antes de virar
-  submodule.
+- **O-01:** `gh repo rename` keeps GitHub redirects for the old repository
+  path for a grace period; the remote should still be updated immediately to the
+  canonical new name.
+- **O-02:** `git submodule add` with HTTPS works in the current shell because
+  the git credential helper is `store`.
+- **O-03:** `modules/fork-sync/cli/setup.py` is the Python packaging entrypoint
+  and the `fork_sync.egg-info/` metadata is generated from that packaging flow,
+  so it is safe to treat `egg-info` as a generated artifact rather than source.
 
 ## Reference
 

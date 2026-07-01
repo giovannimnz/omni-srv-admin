@@ -1,23 +1,21 @@
 id: srv1-shared-smb
 host_id: atius-srv-1
-type: cifs
+type: bind
 status: active
-source: //10.1.1.2/Shared
+source: /srv/Shared
 mount_path: /home/ubuntu/Shared_smb
 display_label: Shared_smb
 places:
   gtk_bookmarks: /home/ubuntu/.config/gtk-3.0/bookmarks
   pcmanfm_visible: true
 fstab:
-  managed: external
+  managed: omni-samba-phase35
   options:
-    - _netdev
-    - x-systemd.automount
-    - x-gvfs-hide
-    - x-gdu.hide
+    - bind
 operations:
   rename_label_command: omni remote-manager rename-label srv1-shared-smb <new-label>
   rename_mount_path: false
 notes:
   - Display label can change without changing the stable mount path.
   - Keep mount_path stable for scripts/backups unless a separate migration is planned.
+  - Phase 35 moved the backing source from `//10.1.1.2/Shared` to local `/srv/Shared` on `atius-srv-1`.

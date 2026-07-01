@@ -1,5 +1,5 @@
 #!/bin/bash
-# v5.1-omni: gitleaks-aware + lock + branch auto + telegram notify + logrotate
+# v5.2-omni: gitleaks-aware + lock + branch auto + telegram notify + logrotate + GBrain sync
 # Managed by: ~/GitHub/omni-srv-admin/modules/srv1-ops/
 # Runs every 5 min on SRV-1, SRV-2, SRV-3 (escalonado 0s/45s/90s)
 #
@@ -9,6 +9,7 @@
 # 3. Auto-detect branch (master vs main baseado no origin)
 # 4. Notificação Telegram se sync falhar 3 ciclos consecutivos
 # 5. Log rotation (gzip quando log > 10MB, manter últimos 5)
+# 6. GBrain sync incremental do vault depois do Git sync bem-sucedido
 #
 # Pitfalls v5.0:
 # - P1: .gitignore deve estar completo (data/, db-data/, .env, *.key, *.pem)
@@ -28,6 +29,13 @@ else
     LOG="$HOME/.logs/sync-vault.log"
 fi
 LOCK="/tmp/sync-vault.lock"
+GBRAIN_BIN="${SYNC_VAULT_GBRAIN_BIN:-$HOME/.local/bin/gbrain}"
+GBRAIN_SYNC_REPO="${SYNC_VAULT_GBRAIN_REPO:-$VAULT}"
+GBRAIN_SYNC_ENABLED="${SYNC_VAULT_GBRAIN_SYNC:-1}"
+GBRAIN_SYNC_LOG="${SYNC_VAULT_GBRAIN_LOG:-$HOME/.logs/gbrain-vault-sync.log}"
+GBRAIN_SYNC_TIMEOUT_SECONDS="${SYNC_VAULT_GBRAIN_TIMEOUT_SECONDS:-240}"
+GBRAIN_FAIL_STATE="${SYNC_VAULT_GBRAIN_FAIL_STATE:-$HOME/.cache/omni/gbrain-vault-sync.failures}"
+GBRAIN_NOTIFY_AFTER="${SYNC_VAULT_GBRAIN_NOTIFY_AFTER:-3}"
 TELEGRAM_BOT_TOKEN="${SYNC_VAULT_TG_BOT:-}"  # set em ~/.bashrc ou .env
 TELEGRAM_CHAT_ID="${SYNC_VAULT_TG_CHAT:-}"  # chat_id do Giovanni pra alertas
 MAX_LOG_SIZE_MB=10
@@ -48,6 +56,96 @@ notify_telegram() {
         -d chat_id="$TELEGRAM_CHAT_ID" \
         -d text="⚠️ sync-vault: $msg" \
         >/dev/null 2>&1
+}
+
+validate_vault_layout() {
+    if [ ! -d "$VAULT/AiSecondBrain" ]; then
+        echo "[$(date '+%H:%M')] FAIL: canonical vault missing: $VAULT/AiSecondBrain" >> "$LOG"
+        notify_telegram "CANONICAL VAULT MISSING: $VAULT/AiSecondBrain on $(hostname)"
+        exit 1
+    fi
+
+    if [ -e "$VAULT/Ideaverse" ] || [ -e "$VAULT/ideaverse" ]; then
+        echo "[$(date '+%H:%M')] FAIL: legacy vault path exists; refusing sync before manual cleanup" >> "$LOG"
+        notify_telegram "LEGACY VAULT PATH EXISTS: Ideaverse/ideaverse on $(hostname)"
+        exit 1
+    fi
+}
+
+record_gbrain_sync_success() {
+    rm -f "$GBRAIN_FAIL_STATE" >/dev/null 2>&1 || true
+}
+
+record_gbrain_sync_failure() {
+    local rc="${1:-1}"
+    local count=0
+    local notify_after="$GBRAIN_NOTIFY_AFTER"
+
+    if [ -f "$GBRAIN_FAIL_STATE" ]; then
+        count=$(cat "$GBRAIN_FAIL_STATE" 2>/dev/null || echo 0)
+    fi
+    case "$count" in
+        ''|*[!0-9]*) count=0 ;;
+    esac
+    case "$notify_after" in
+        ''|*[!0-9]*) notify_after=3 ;;
+    esac
+
+    count=$((count + 1))
+    mkdir -p "$(dirname "$GBRAIN_FAIL_STATE")"
+    printf '%s\n' "$count" > "$GBRAIN_FAIL_STATE"
+
+    if [ "$count" -ge "$notify_after" ]; then
+        notify_telegram "GBRAIN SYNC FAILED ${count}x (rc=$rc) on $(hostname)"
+    fi
+
+    printf '%s\n' "$count"
+}
+
+sync_gbrain_index() {
+    local rc=0
+    local failures=0
+    local timeout_seconds="$GBRAIN_SYNC_TIMEOUT_SECONDS"
+
+    if [ "$GBRAIN_SYNC_ENABLED" = "0" ]; then
+        echo "[$(date '+%H:%M')] GBrain sync skipped: disabled by SYNC_VAULT_GBRAIN_SYNC=0" >> "$LOG"
+        return 0
+    fi
+
+    if [ ! -x "$GBRAIN_BIN" ]; then
+        echo "[$(date '+%H:%M')] GBrain sync skipped: executable not found at $GBRAIN_BIN" >> "$LOG"
+        return 0
+    fi
+
+    case "$timeout_seconds" in
+        ''|*[!0-9]*) timeout_seconds=240 ;;
+    esac
+
+    mkdir -p "$(dirname "$GBRAIN_SYNC_LOG")"
+    echo "[$(date '+%H:%M')] GBrain sync start: $GBRAIN_SYNC_REPO" >> "$LOG"
+
+    (
+        echo "[$(date '+%Y-%m-%d %H:%M:%S%z')] start repo=$GBRAIN_SYNC_REPO timeout=${timeout_seconds}s"
+        if command -v timeout >/dev/null 2>&1; then
+            timeout "$timeout_seconds" "$GBRAIN_BIN" sync --repo "$GBRAIN_SYNC_REPO" --no-pull --yes --json
+        else
+            "$GBRAIN_BIN" sync --repo "$GBRAIN_SYNC_REPO" --no-pull --yes --json
+        fi
+        rc=$?
+        echo "[$(date '+%Y-%m-%d %H:%M:%S%z')] exit=$rc"
+        exit "$rc"
+    ) >> "$GBRAIN_SYNC_LOG" 2>&1
+    rc=$?
+
+    if [ "$rc" -eq 0 ]; then
+        record_gbrain_sync_success
+        echo "[$(date '+%H:%M')] GBrain sync OK" >> "$LOG"
+        return 0
+    fi
+
+    failures=$(record_gbrain_sync_failure "$rc")
+    echo "[$(date '+%H:%M')] WARN: GBrain sync failed rc=$rc consecutive_failures=$failures log=$GBRAIN_SYNC_LOG" >> "$LOG"
+    return "$rc"
 }
 
 auto_commit_changes() {
@@ -126,7 +224,7 @@ if [ "${log_size_mb:-0}" -gt "$MAX_LOG_SIZE_MB" ]; then
     done
     [ -f "$LOG" ] && gzip -k "$LOG" && mv "$LOG.gz" "$LOG.1.gz"
     # Cria log novo vazio
-    > "$LOG"
+    : > "$LOG"
     echo "[$(date '+%H:%M')] Log rotated (was ${log_size_mb}MB)" >> "$LOG"
 fi
 
@@ -135,6 +233,7 @@ cd "$VAULT" || {
     notify_telegram
     exit 1
 }
+validate_vault_layout
 
 # === 2. Auto-detect branch ===
 # Tenta master, depois main, depois HEAD (caso local-only)
@@ -248,6 +347,10 @@ if [ "$local" != "$remote" ]; then
     fi
 else
     echo "[$(date '+%H:%M')] Up-to-date: ${local:0:8}" >> "$LOG"
+fi
+
+if ! sync_gbrain_index; then
+    exit 1
 fi
 
 # === 7. Notify on success if local had uncommitted state ===

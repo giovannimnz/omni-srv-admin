@@ -14,12 +14,18 @@ from typing import Any
 
 import click
 
+from .fleet_collectors import collect_programs
+from .fleet_governance import DEFAULT_MANAGED_APPS_SOURCE, load_managed_apps_profile
+from .fleet_security import collect_security_report
+
 REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
 HOSTS_DIR = REPO / "inventory" / "hosts"
 LEGACY_HOSTS_DIR = REPO / "hosts"
 FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", "/home/ubuntu/.logs/fleet"))
 HEARTBEAT_DIR = FLEET_LOG_DIR / "heartbeats"
 TELEMETRY_DIR = FLEET_LOG_DIR / "telemetry"
+PROGRAMS_DIR = FLEET_LOG_DIR / "programs"
+SECURITY_DIR = FLEET_LOG_DIR / "security"
 AUDIT_EVENTS = FLEET_LOG_DIR / "audit-events.jsonl"
 FLEET_DB_ENV = Path(os.environ.get("OMNI_FLEET_DB_ENV", "/etc/omni-srv-admin/fleet-db.env"))
 FLEET_AGENT_VERSION = "0.2.0"
@@ -494,6 +500,98 @@ INSERT INTO "TbNodeTelemetry" (
     {disk_io.get("write_bytes") if disk_io.get("write_bytes") is not None else "NULL"},
     {_json_literal(payload.get("service_health", {}))}::jsonb,
     {_json_literal(payload)}::jsonb
+);
+"""
+    _psql(query, env=env)
+
+
+def _write_program_observations_db(payload: dict[str, Any], *, env: dict[str, str] | None = None) -> None:
+    statements: list[str] = []
+    for record in payload.get("programs", []):
+        if not isinstance(record, dict):
+            continue
+        host_id = str(record.get("host") or payload.get("host") or "")
+        name = str(record.get("name") or "")
+        install_type = str(record.get("install_type") or "unknown")
+        if not host_id or not name:
+            continue
+        manager = str(record.get("manager") or "unknown")
+        current_version = str(record.get("current_version") or "unknown")
+        source = str(record.get("source") or manager)
+        statements.append(
+            f"""
+WITH program AS (
+    INSERT INTO "TbPrograms" (host_id, name, install_type, current_version, source, managed_by, update_policy, observed_at)
+    VALUES ({_sql_literal(host_id)}, {_sql_literal(name)}, {_sql_literal(install_type)},
+            {_sql_literal(current_version)}, {_sql_literal(source)}, {_sql_literal('collector:' + manager)}, 'plan-first', now())
+    ON CONFLICT (host_id, name, install_type) DO UPDATE SET
+        current_version = EXCLUDED.current_version,
+        source = EXCLUDED.source,
+        managed_by = EXCLUDED.managed_by,
+        observed_at = now()
+    RETURNING id
+)
+INSERT INTO "TbVersions" (program_id, current_version, desired_version, policy, pinned, updated_at)
+SELECT id, {_sql_literal(current_version)}, NULL, 'observed', false, now()
+FROM program;
+"""
+        )
+    if statements:
+        _psql("\n".join(statements), env=env)
+
+
+def _write_profile_db(profile: dict[str, Any], *, env: dict[str, str] | None = None) -> None:
+    profile_id = str(profile["profile_id"])
+    statements = [
+        f"""
+INSERT INTO "TbDesiredStateProfiles" (id, title, scope, owner, status, source, metadata)
+VALUES (
+    {_sql_literal(profile_id)}, {_sql_literal(profile.get("title"))}, {_sql_literal(profile.get("scope"))},
+    {_sql_literal(profile.get("owner"))}, {_sql_literal(profile.get("status"))}, {_sql_literal(profile.get("source"))},
+    {_json_literal(profile.get("metadata", {}))}::jsonb
+)
+ON CONFLICT (id) DO UPDATE SET
+    title = EXCLUDED.title,
+    scope = EXCLUDED.scope,
+    owner = EXCLUDED.owner,
+    status = EXCLUDED.status,
+    source = EXCLUDED.source,
+    metadata = EXCLUDED.metadata,
+    updated_at = now();
+
+DELETE FROM "TbDesiredStateRules"
+WHERE profile_id = {_sql_literal(profile_id)};
+"""
+    ]
+    for rule in profile.get("rules", []):
+        if not isinstance(rule, dict):
+            continue
+        statements.append(
+            f"""
+INSERT INTO "TbDesiredStateRules" (
+    profile_id, target_kind, target_name, rule_mode, desired_version,
+    manager, source, selector, assertions, metadata
+) VALUES (
+    {_sql_literal(profile_id)}, {_sql_literal(rule.get("target_kind"))}, {_sql_literal(rule.get("target_name"))},
+    {_sql_literal(rule.get("rule_mode"))}, {_sql_literal(rule.get("desired_version"))},
+    {_sql_literal(rule.get("manager"))}, {_sql_literal(rule.get("source"))},
+    {_json_literal(rule.get("selector", {}))}::jsonb,
+    {_json_literal(rule.get("assertions", {}))}::jsonb,
+    {_json_literal(rule.get("metadata", {}))}::jsonb
+);
+"""
+        )
+    _psql("\n".join(statements), env=env)
+
+
+def _write_security_report_db(report: dict[str, Any], *, env: dict[str, str] | None = None) -> None:
+    query = f"""
+INSERT INTO "TbSecurityFindings" (
+    host_id, source, finding_type, package_name, cve_id, usn_id,
+    priority, origin, status, fix_available, evidence
+) VALUES (
+    {_sql_literal(report.get("host"))}, 'ubuntu-pro-client', 'summary', NULL, NULL, NULL,
+    NULL, NULL, 'observed', NULL, {_json_literal(_redact(report))}::jsonb
 );
 """
     _psql(query, env=env)
@@ -1043,9 +1141,113 @@ def programs(host_id: str, json_output: bool) -> None:
         "program_count": len(_program_records(host, path)),
         "programs": _program_records(host, path),
         "notes": [
-            "current_version remains unknown until the node agent collector exists",
+            "use `omni fleet agent collect-programs --host <host> --json` for live read-only observations",
             "desired_version is generated through update plans before execution",
         ],
+    }
+    _emit(payload, json_output)
+
+
+@fleet.group("profiles")
+def profiles() -> None:
+    """Desired-state profiles e seeds de governança."""
+
+
+@profiles.command("managed-apps")
+@click.option("--source", type=click.Path(path_type=Path), default=DEFAULT_MANAGED_APPS_SOURCE, show_default=True)
+@click.option("--db", "write_db", is_flag=True, help="Grava profile em DbOmniFleet via PgBouncer.")
+@click.option("--json", "json_output", is_flag=True, help="Emite profile em JSON.")
+def profiles_managed_apps(source: Path, write_db: bool, json_output: bool) -> None:
+    """Renderiza o desired-state profile baseado em modules/managed-apps."""
+    profile = load_managed_apps_profile(source)
+    profile["db_write"] = write_db
+    if write_db:
+        _write_profile_db(profile, env=_db_env())
+    _append_audit_event(
+        {
+            "actor": os.environ.get("USER", "operator"),
+            "host": _default_host_id(),
+            "action": "desired-state.profile.render",
+            "target": profile["profile_id"],
+            "result": "written" if write_db else "rendered",
+            "timestamp": _now(),
+            "metadata": {"rule_count": profile["rule_count"], "db_write": write_db},
+        }
+    )
+    _emit(profile, json_output)
+
+
+@fleet.group("security")
+def security() -> None:
+    """CVE/USN e Ubuntu Pro security reporting read-only."""
+
+
+@security.command("report")
+@click.option("--host", "host_id", default=None, help="Host id; default usa OMNI_HOST_ID/hostname.")
+@click.option("--db", "write_db", is_flag=True, help="Grava snapshot em DbOmniFleet via PgBouncer.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def security_report(host_id: str | None, write_db: bool, json_output: bool) -> None:
+    """Coleta status CVE/USN local sem aplicar correções."""
+    resolved_host = host_id or _default_host_id()
+    report = collect_security_report(resolved_host)
+    _write_json(SECURITY_DIR / f"{resolved_host}.json", report)
+    if write_db:
+        _write_security_report_db(report, env=_db_env())
+    _append_audit_event(
+        {
+            "actor": "omni-fleet-agent",
+            "host": resolved_host,
+            "action": "security.report",
+            "target": "ubuntu-pro-client",
+            "result": "written" if write_db else "collected",
+            "timestamp": report["generated_at"],
+            "metadata": {"db_write": write_db, "warning_count": len(report.get("warnings", []))},
+        }
+    )
+    _emit(report, json_output)
+
+
+@fleet.command("landscape-parity")
+@click.option("--json", "json_output", is_flag=True, help="Emite matriz em JSON.")
+def landscape_parity(json_output: bool) -> None:
+    """Mostra paridade e limites entre Landscape e Omni."""
+    rows = [
+        {
+            "capability": "Ubuntu machine inventory",
+            "landscape": "primary UI/API for registered clients",
+            "omni": "reviewed source of truth and audit projection",
+            "decision": "dual-use; Omni owns identity, Landscape owns Ubuntu-machine operations",
+        },
+        {
+            "capability": "Package visibility",
+            "landscape": "package alerts and package activities",
+            "omni": "read-only collectors and TbPrograms/TbVersions observations",
+            "decision": "both visible; approved mutation remains gated",
+        },
+        {
+            "capability": "CVE/USN prioritization",
+            "landscape": "package/security UI evidence",
+            "omni": "pro security-status/pro cves snapshots and update-plan queue",
+            "decision": "Phase 32 parity report; no automatic fixes",
+        },
+        {
+            "capability": "Desired-state governance",
+            "landscape": "repository/package profiles where useful",
+            "omni": "TbDesiredStateProfiles/TbDesiredStateRules",
+            "decision": "Omni owns fleet policy and audit trail",
+        },
+        {
+            "capability": "Workload administration",
+            "landscape": "not Kubernetes workload controller",
+            "omni": "not the live workload UI",
+            "decision": "K3s/Portainer own workloads",
+        },
+    ]
+    payload = {
+        "doc": "docs/fleet/landscape-parity.md",
+        "generated_at": _now(),
+        "rows": rows,
+        "fix_policy": "no automatic fixes; pro fix only through dry-run/manual gate or approved update plan",
     }
     _emit(payload, json_output)
 
@@ -1229,6 +1431,35 @@ def agent_heartbeat(host_id: str | None, write_db: bool, json_output: bool) -> N
             "result": payload["health"],
             "timestamp": payload["last_contact"],
             "metadata": {"db_write": write_db},
+        }
+    )
+    _emit(payload, json_output)
+
+
+@agent.command("collect-programs")
+@click.option("--host", "host_id", default=None, help="Host id; default usa OMNI_HOST_ID/hostname.")
+@click.option("--db", "write_db", is_flag=True, help="Grava observações em DbOmniFleet via PgBouncer.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def agent_collect_programs(host_id: str | None, write_db: bool, json_output: bool) -> None:
+    """Coleta programas/pacotes/serviços localmente sem mutação."""
+    resolved_host = host_id or _default_host_id()
+    payload = collect_programs(resolved_host)
+    _write_json(PROGRAMS_DIR / f"{resolved_host}.json", payload)
+    if write_db:
+        _write_program_observations_db(payload, env=_db_env())
+    _append_audit_event(
+        {
+            "actor": "omni-fleet-agent",
+            "host": resolved_host,
+            "action": "programs.collect",
+            "target": "local-read-only-collectors",
+            "result": "written" if write_db else "collected",
+            "timestamp": payload["generated_at"],
+            "metadata": {
+                "program_count": payload["program_count"],
+                "warning_count": len(payload.get("warnings", [])),
+                "db_write": write_db,
+            },
         }
     )
     _emit(payload, json_output)
