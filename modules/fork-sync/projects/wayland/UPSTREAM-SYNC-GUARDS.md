@@ -95,8 +95,8 @@ Expected result:
 
 ## Git remote guard
 
-- As of 2026-07-04 there is no published `giovannimnz/wayland` repo visible via
-  GitHub search, and `gh auth status` on `atius-srv-3` reports an invalid token.
+- `origin` is the ATIUS fork: `https://github.com/giovannimnz/wayland.git`.
+- `upstream` remains `https://github.com/FerroxLabs/wayland`.
 - Do not push srv-3 customizations to `FerroxLabs/wayland`.
-- Preferred local layout is `upstream=FerroxLabs/wayland` and `origin` reserved
-  for the eventual Giovanni fork URL.
+- `auto_push` is enabled in the `fork-sync` project because the fork remote now
+  exists and `gh`/Git HTTPS auth was validated on `atius-srv-3`.

@@ -7,7 +7,7 @@ origin_branch: main
 fork_repo: wayland
 fork: /home/ubuntu/GitHub/wayland
 merge_strategy: merge
-auto_push: false
+auto_push: true
 notification_level: all
 ai_decision_threshold: conflicts
 version_scheme:

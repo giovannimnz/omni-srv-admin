@@ -165,7 +165,7 @@ forks:
     state: source-standalone-managed-runtime
     notes:
       - "Runtime ativo continua em apps:, mas o lane source/upstream precisa preservar patch ATIUS contra sync de upstream."
-      - "Repo GitHub giovannimnz/wayland ainda nao estava publicado em 2026-07-04; auto_push fica desativado ate existir fork remoto."
+      - "Fork remoto publicado em https://github.com/giovannimnz/wayland; auto_push do projeto wayland no fork-sync pode publicar merges seguros."
 database:
   target: DbOmniFleet
   endpoint: 10.1.1.1:6432

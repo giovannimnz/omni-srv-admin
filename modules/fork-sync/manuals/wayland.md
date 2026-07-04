@@ -25,7 +25,7 @@ checkout local, com patch/source overlay próprio da ATIUS.
 | Runtime systemd | `wayland.service` |
 | Entry-point do runtime | `/home/ubuntu/GitHub/wayland/dist-server/server.mjs` |
 | Upstream | `https://github.com/FerroxLabs/wayland` |
-| Fork GitHub pretendido | `https://github.com/giovannimnz/wayland` |
+| Fork GitHub | `https://github.com/giovannimnz/wayland` |
 
 ## 3. Estado atual
 
@@ -35,9 +35,9 @@ checkout local, com patch/source overlay próprio da ATIUS.
   diretório inicial.
 - Sem preferência salva, a tela de login entra em `pt-BR`.
 - A detecção ACP do servidor encontra `Wayland Core`, `Gemini CLI` e `Codex`.
-- Em 2026-07-04 o repositório público `giovannimnz/wayland` ainda não existia e
-  o `gh auth status` do host estava inválido, então o lane GitHub do fork segue
-  pendente de publicação.
+- O fork remoto existe em `https://github.com/giovannimnz/wayland`.
+- `origin` do checkout local aponta para esse fork, e `upstream` permanece em
+  `FerroxLabs/wayland`.
 
 ## 4. Rotina de sync
 
@@ -55,9 +55,8 @@ cd /home/ubuntu/GitHub/omni-srv-admin
 PYTHONPATH=modules/fork-sync/cli python3 -m fork_sync sync wayland
 ```
 
-`auto_push` fica `false` por enquanto. O objetivo do projeto é preservar o lane
-local com `protected_paths` e rebuild do runtime após merges; publicação do fork
-GitHub fica como passo separado quando `giovannimnz/wayland` existir.
+`auto_push` fica `true`: merges seguros do `fork-sync` podem publicar no fork
+`giovannimnz/wayland` automaticamente depois do ciclo de `post_sync`.
 
 ## 5. Protected paths
 
