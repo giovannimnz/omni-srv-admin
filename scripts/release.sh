@@ -83,11 +83,11 @@ notes_file="$(mktemp)"
 {
   echo "## ${tag} - $(date -u +%Y-%m-%d)"
   echo
-  echo "### Implementações e correções"
+  echo "### ImplementaÃ§Ãµes e correÃ§Ãµes"
   if git log --format='- %s (%h)' "$range" | grep -q .; then
     git log --format='- %s (%h)' "$range"
   else
-    echo "- Release de manutenção/versionamento."
+    echo "- Release de manutenÃ§Ã£o/versionamento."
   fi
   echo
 } > "$notes_file"
