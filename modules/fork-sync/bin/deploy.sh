@@ -32,6 +32,7 @@ PROJECT_DIR="$ROOT/projects/$PROJECT"
 SYNC_YAML="$PROJECT_DIR/sync.yaml"
 DEPLOY_YAML="$PROJECT_DIR/deploy.yaml"
 OMNI_CLI_DIR="${OMNI_CLI_DIR:-/home/ubuntu/GitHub/omni-srv-admin/cli}"
+OMNI_REPO_ROOT="${OMNI_REPO_ROOT:-$(cd "$ROOT/../.." && pwd)}"
 
 if [[ ! -f "$SYNC_YAML" || ! -f "$DEPLOY_YAML" ]]; then
   echo "missing sync/deploy config for project: $PROJECT" >&2
@@ -120,6 +121,18 @@ echo "repo_path=$REPO_PATH"
 echo "image_version=$IMAGE_VERSION_REF"
 echo "image_latest=$IMAGE_LATEST_REF"
 echo "resource_profile=$CFG_RESOURCE_PROFILE"
+
+PREFLIGHT="${OMNI_RELEASE_PREFLIGHT:-$OMNI_REPO_ROOT/scripts/release-preflight.sh}"
+if [[ -x "$PREFLIGHT" ]]; then
+  preflight_args=("$REPO_PATH" "--tag" "$IMAGE_TAG" "--mode" "fork-deploy" "--deploy-config" "$DEPLOY_YAML")
+  if [[ -n "$CFG_FORK_REPO" ]]; then
+    preflight_args+=("--github-repo" "giovannimnz/$CFG_FORK_REPO")
+  fi
+  "$PREFLIGHT" "${preflight_args[@]}"
+else
+  echo "release preflight unavailable: $PREFLIGHT" >&2
+  exit 3
+fi
 
 run_builds \
   "$BUILD_WRAPPER" build \
