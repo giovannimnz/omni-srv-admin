@@ -20,6 +20,20 @@ modules:
   - fork-sync
   - domain-infrastructure
 apps:
+  - id: omni-srv-admin
+    runtime: git-worktree
+    install_type: source-git-release-managed
+    install_path: /home/ubuntu/GitHub/omni-srv-admin
+    current_version: "inventory-managed"
+    desired_version: "matrix-managed"
+    source: "https://github.com/giovannimnz/omni-srv-admin"
+    managed_by: "omni-srv-admin"
+    update_policy: "release-auto-update"
+    scheduler: omni-fleet-agent.service
+    version_matrix: modules/fleet-control-plane/configs/omni-version-matrix.json
+    notes:
+      - "Auto-update target governed by TbVersion + omni version matrix."
+      - "Agent executor may stash local dirty work before switching back to main/release target."
   - id: jenkins
     runtime: podman
     image: localhost/jenkins:podman-latest
@@ -105,6 +119,7 @@ apps:
       - "Migrated to Podman during cutover; part of cloudbeaver pod (srv1-podman network)"
   - id: router-ai-atius
     runtime: podman
+    canonical_product_id: router-ai-atius
     image: ghcr.io/giovannimnz/router-ai-atius:latest
     install_type: podman-compose
     current_version: "latest"
@@ -180,6 +195,42 @@ apps:
       - "Terminal multiplexer; instalado em 2026-06-16 via cargo binstall (binário pré-compilado, 2-3s por host)"
       - "Sem fallback `cargo install` necessário — binário direto do GitHub release funcionou de primeira nos 3 servers"
       - "Update fleet: ~/GitHub/omni-srv-admin/modules/rust-zellij-fleet/scripts/update-fleet.sh"
+forks:
+  - id: router-ai-atius
+    canonical_product_id: router-ai-atius
+    sync_project: atius-router
+    runtime_app_id: router-ai-atius
+    local_path: /home/ubuntu/GitHub/containers/router-ai-atius
+    upstream: https://github.com/QuantumNous/new-api
+    sync_manifest: modules/fork-sync/projects/atius-router/sync.yaml
+    state: deployed-runtime
+    components:
+      - id: atius-router-docs
+        local_path: /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs
+        upstream: https://github.com/giovannimnz/new-api-docs-v1
+        sync_manifest: modules/fork-sync/projects/atius-router-docs/sync.yaml
+        state: worktree-only
+  - id: notebooklm-py
+    local_path: /home/ubuntu/GitHub/forks/notebooklm-py
+    upstream: https://github.com/teng-lin/notebooklm-py.git
+    sync_manifest: modules/fork-sync/projects/notebooklm-py/sync.yaml
+    state: worktree-only
+  - id: aionui
+    local_path: /home/ubuntu/GitHub/forks/AionUi
+    upstream: https://github.com/iOfficeAI/AionUi
+    sync_manifest: modules/fork-sync/projects/aionui/sync.yaml
+    state: worktree-only-paused
+  - id: horus-spec-driven
+    local_path: /home/ubuntu/GitHub/SDD/horus-spec-driven
+    upstream: https://github.com/open-gsd/gsd-core
+    sync_manifest: modules/fork-sync/projects/horus-spec-driven/sync.yaml
+    state: source-installed-global-runtime
+database:
+  target: DbOmniFleet
+  endpoint: 10.1.1.1:6432
+  transport: PgBouncer
+  configured: true
+  note: "SRV-1 reescreve PGHOST para 127.0.0.1 localmente porque o PgBouncer também está em loopback."
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
@@ -195,6 +246,9 @@ resource_governor:
     - transfers
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
+  desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
+  knowledge_authority: "Obsidian and GBrain authoritative writes stay on atius-srv-1 only."
 oci:
   last_snapshot_id: "pending-250f32ed-819e-4ccf-9b70-a08aa298a94c"
   last_snapshot_at: "2026-06-18T01:38:21Z"

@@ -20,8 +20,33 @@ logs:
   retention_days: 15
 backup:
   gdrive_base: ATIUS-SRV/GIOVANNI-W11-PC/Backup
+apps:
+  - id: omni-srv-admin
+    runtime: git-worktree
+    install_type: source-git-release-managed
+    install_path: C:\Users\muniz\Documents\GitHub\omni-srv-admin
+    current_version: "inventory-managed"
+    desired_version: "matrix-managed"
+    source: "https://github.com/giovannimnz/omni-srv-admin"
+    managed_by: "omni-srv-admin"
+    update_policy: "release-auto-update"
+    scheduler: OmniFleetAgent
+    version_matrix: modules/fleet-control-plane/configs/omni-version-matrix.json
+    notes:
+      - "Scheduled task on Windows should run omni fleet agent cycle with apply mode."
+      - "Auto-update target governed by TbVersion + omni version matrix."
+database:
+  target: DbOmniFleet
+  endpoint: 10.1.1.1:6432
+  transport: PgBouncer
+  configured: true
+  client: python-pg8000
+  env_file: C:\Users\muniz\.config\omni-srv-admin\fleet-db.env
+  validated_at: 2026-07-03
+  note: "O clone local no Windows usa o mesmo DbOmniFleet via PgBouncer com fallback Python pg8000; o rewrite para 127.0.0.1 vale só no atius-srv-1."
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  codex_runtime_standard: "2026-07-04: C:\\Users\\muniz\\.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
   last_readdressed: 2026-06-17
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-W11-PC

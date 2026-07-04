@@ -46,7 +46,7 @@ from typing import Any, Iterator
 
 import click
 
-REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
+REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 MONITORING_DIR = REPO / "modules" / "k3s-ha-portainer-oci" / "monitoring"
 KPS_NAMESPACE = "monitoring"
 KPS_RELEASE = "omni-monitoring"

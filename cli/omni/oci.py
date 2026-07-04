@@ -28,11 +28,13 @@ from typing import Any
 
 import click
 
-REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
+from .db_runtime import default_fleet_db_env, load_env_file, run_sql
+
+REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 HOSTS_DIR = REPO / "inventory" / "hosts"
 LEGACY_HOSTS_DIR = REPO / "hosts"
 FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", "/home/ubuntu/.logs/fleet"))
-FLEET_DB_ENV = Path(os.environ.get("OMNI_FLEET_DB_ENV", "/etc/omni-srv-admin/fleet-db.env"))
+FLEET_DB_ENV = default_fleet_db_env()
 
 OCI_PROVIDERS = {"oracle-oci"}
 OCI_REQUIRED_FIELDS = ("id", "platform", "access")
@@ -241,25 +243,8 @@ def _psql(query: str, *, env: dict[str, str] | None = None, timeout: int = 10) -
     e = env or os.environ.copy()
     config = FLEET_DB_ENV
     if config.exists():
-        for line in config.read_text().splitlines():
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            k, _, v = line.partition("=")
-            e.setdefault(k.strip(), v.strip().strip('"').strip("'"))
-    if not shutil.which("psql"):
-        raise RuntimeError("psql não disponível — DbOmniFleet mirror requer psql no PATH")
-    proc = subprocess.run(
-        ["psql", "-At", "-c", query],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=e,
-        check=False,
-    )
-    if proc.returncode != 0:
-        raise RuntimeError(f"psql falhou: {(proc.stderr or proc.stdout).strip()}")
-    return proc.stdout.strip()
+        e.update(load_env_file(config))
+    return run_sql(query, env=e, timeout=timeout)
 
 
 def _mirror_to_fleet_db(
@@ -292,10 +277,10 @@ def _mirror_to_fleet_db(
     try:
         for key, value in payload["keys"]:
             sql = (
+                f"DELETE FROM \"TbConfigItems\" WHERE host_id = '{host_id}' AND key = '{key}'; "
                 f"INSERT INTO \"TbConfigItems\" (host_id, key, value, value_type, source, description, updated_by) "
                 f"VALUES ('{host_id}', '{key}', '{value}'::jsonb, 'string', 'oci-snapshot', "
-                f"'OCI snapshot ID (Phase 15)', 'omni-srv-admin') "
-                f"ON CONFLICT (host_id, key) DO UPDATE SET value = EXCLUDED.value, updated_at = now();"
+                f"'OCI snapshot ID (Phase 15)', 'omni-srv-admin');"
             )
             _psql(sql)
         payload["status"] = "mirrored"

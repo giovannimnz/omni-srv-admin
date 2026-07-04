@@ -7,7 +7,7 @@ from urllib.parse import quote, unquote
 
 import click
 
-REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
+REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 REMOTES_DIR = REPO / "inventory" / "remotes"
 DEFAULT_BOOKMARKS = Path.home() / ".config" / "gtk-3.0" / "bookmarks"
 

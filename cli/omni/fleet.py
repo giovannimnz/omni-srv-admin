@@ -1,6 +1,8 @@
 """fleet — multi-host inventory and control-plane contracts."""
 from __future__ import annotations
 
+import hashlib
+import ipaddress
 import json
 import os
 import shlex
@@ -14,11 +16,19 @@ from typing import Any
 
 import click
 
+from .db_runtime import default_fleet_db_env, load_env_file, run_sql
 from .fleet_collectors import collect_programs
 from .fleet_governance import DEFAULT_MANAGED_APPS_SOURCE, load_managed_apps_profile
 from .fleet_security import collect_security_report
+from .fleet_versioning import (
+    DEFAULT_OMNI_VERSION_MATRIX,
+    _normalize_version,
+    apply_omni_self_update,
+    collect_omni_version,
+    load_omni_version_matrix,
+)
 
-REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
+REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 HOSTS_DIR = REPO / "inventory" / "hosts"
 LEGACY_HOSTS_DIR = REPO / "hosts"
 FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", "/home/ubuntu/.logs/fleet"))
@@ -26,8 +36,9 @@ HEARTBEAT_DIR = FLEET_LOG_DIR / "heartbeats"
 TELEMETRY_DIR = FLEET_LOG_DIR / "telemetry"
 PROGRAMS_DIR = FLEET_LOG_DIR / "programs"
 SECURITY_DIR = FLEET_LOG_DIR / "security"
+VERSIONS_DIR = FLEET_LOG_DIR / "versions"
 AUDIT_EVENTS = FLEET_LOG_DIR / "audit-events.jsonl"
-FLEET_DB_ENV = Path(os.environ.get("OMNI_FLEET_DB_ENV", "/etc/omni-srv-admin/fleet-db.env"))
+FLEET_DB_ENV = default_fleet_db_env()
 FLEET_AGENT_VERSION = "0.2.0"
 PGBOUNCER_ENDPOINT = ("10.1.1.1", "6432")
 
@@ -68,6 +79,42 @@ LOCAL_COMMANDS: dict[str, dict[str, Any]] = {
         "default_profile": "interactive",
         "requires_approval": True,
         "allowed_host_ids": ["atius-srv-1"],
+    },
+    "omni.self-update.linux": {
+        "description": "Apply approved omni-srv-admin update on Linux host checkout.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "agent",
+            "self-update-runner",
+            "--host",
+            "{host_id}",
+            "--desired-version",
+            "{desired_version}",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3"],
+    },
+    "omni.self-update.windows": {
+        "description": "Apply approved omni-srv-admin update on Windows host checkout.",
+        "argv": [
+            "python",
+            "-m",
+            "omni",
+            "fleet",
+            "agent",
+            "self-update-runner",
+            "--host",
+            "{host_id}",
+            "--desired-version",
+            "{desired_version}",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": ["giovanni-w11-pc"],
     },
 }
 
@@ -172,8 +219,46 @@ def _host_id(data: dict[str, Any], fallback: str) -> str:
     return str(data.get("id") or fallback)
 
 
+def _inventory_host_records(*, syncable_only: bool = False) -> list[tuple[str, Path, dict[str, Any], str]]:
+    hosts_dir = _hosts_dir()
+    if not hosts_dir.exists():
+        return []
+    records: list[tuple[str, Path, dict[str, Any], str]] = []
+    for path in sorted(hosts_dir.glob("*.yaml")):
+        text = path.read_text()
+        data = _simple_yaml(text)
+        if not data:
+            continue
+        if syncable_only and str(data.get("status") or "").lower() == "template":
+            continue
+        records.append((_host_id(data, path.stem), path, data, text))
+    return records
+
+
 def _now() -> str:
     return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _inventory_hash(text: str) -> str:
+    return hashlib.sha256(text.encode("utf-8")).hexdigest()
+
+
+def _repo_relative_path(path: Path) -> str:
+    try:
+        return str(path.relative_to(REPO))
+    except ValueError:
+        return str(path)
+
+
+def _inet_or_none(value: Any) -> str | None:
+    raw = str(value or "").strip()
+    if not raw or raw.upper() == "TBD":
+        return None
+    try:
+        ipaddress.ip_address(raw)
+    except ValueError:
+        return None
+    return raw
 
 
 def _emit(payload: dict[str, Any], json_output: bool) -> None:
@@ -219,16 +304,10 @@ def _append_audit_event(event: dict[str, Any]) -> None:
 
 
 def _load_env_file(path: Path = FLEET_DB_ENV) -> dict[str, str]:
-    if not path.exists():
-        raise click.ClickException(f"fleet DB env não encontrado: {path}")
-    env: dict[str, str] = {}
-    for raw in path.read_text().splitlines():
-        line = raw.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        env[key.strip()] = value.strip().strip('"').strip("'")
-    return env
+    try:
+        return load_env_file(path)
+    except RuntimeError as exc:
+        raise click.ClickException(str(exc)) from exc
 
 
 def _db_env(path: Path = FLEET_DB_ENV) -> dict[str, str]:
@@ -244,7 +323,12 @@ def _db_env(path: Path = FLEET_DB_ENV) -> dict[str, str]:
     missing = [key for key in required if not loaded.get(key)]
     if missing:
         raise click.ClickException(f"fleet DB env incompleto: {','.join(missing)}")
-    if loaded.get("PGHOST") == "10.1.1.1" and loaded.get("PGPORT") == "6432":
+    local_hostname = socket.gethostname().lower()
+    if (
+        loaded.get("PGHOST") == "10.1.1.1"
+        and loaded.get("PGPORT") == "6432"
+        and local_hostname.startswith("atius-srv-1")
+    ):
         # PgBouncer is the declared fleet endpoint, but on SRV-1 it is bound
         # to loopback. Local omni commands should still read DbOmniFleet.
         loaded = {**loaded, "OMNI_FLEET_DB_DECLARED_HOST": loaded["PGHOST"], "PGHOST": "127.0.0.1"}
@@ -258,21 +342,15 @@ def _sql_literal(value: Any) -> str:
 
 
 def _json_literal(value: Any) -> str:
-    return _sql_literal(json.dumps(value, sort_keys=True))
+    return _sql_literal(json.dumps(value, sort_keys=True, default=str))
 
 
 def _psql(query: str, *, env: dict[str, str] | None = None, timeout: int = 20) -> str:
     psql_env = _db_env() if env is None else env
-    completed = subprocess.run(
-        ["psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-c", query],
-        capture_output=True,
-        text=True,
-        timeout=timeout,
-        env=psql_env,
-    )
-    if completed.returncode != 0:
-        raise click.ClickException(_redact_text(completed.stderr.strip() or "psql failed"))
-    return completed.stdout.strip()
+    try:
+        return run_sql(query, env=psql_env, timeout=timeout)
+    except RuntimeError as exc:
+        raise click.ClickException(_redact_text(str(exc))) from exc
 
 
 def _psql_json(query: str, *, env: dict[str, str] | None = None, timeout: int = 20) -> Any:
@@ -365,12 +443,15 @@ def _service_health() -> dict[str, str]:
     ]
     health: dict[str, str] = {}
     for unit in candidates:
-        completed = subprocess.run(
-            ["systemctl", "is-active", unit],
-            capture_output=True,
-            text=True,
-            timeout=3,
-        )
+        try:
+            completed = subprocess.run(
+                ["systemctl", "is-active", unit],
+                capture_output=True,
+                text=True,
+                timeout=3,
+            )
+        except (FileNotFoundError, OSError):
+            return health
         state = completed.stdout.strip() or "unknown"
         if completed.returncode == 0 or state not in {"unknown", "inactive"}:
             health[unit] = state
@@ -398,7 +479,7 @@ def _collect_telemetry(host_id: str) -> dict[str, Any]:
     load_1m = load_5m = load_15m = None
     try:
         load_1m, load_5m, load_15m = os.getloadavg()
-    except OSError:
+    except (AttributeError, OSError):
         pass
     mem = _meminfo()
     mem_total = mem.get("MemTotal")
@@ -538,6 +619,49 @@ FROM program;
         )
     if statements:
         _psql("\n".join(statements), env=env)
+
+
+def _write_omni_version_db(payload: dict[str, Any], *, env: dict[str, str] | None = None) -> None:
+    host_id = str(payload.get("host") or "")
+    component = str(payload.get("component") or "omni-srv-admin")
+    if not host_id:
+        raise click.ClickException("payload de versão sem host")
+    query = f"""
+INSERT INTO "TbVersion" (
+    host_id, component, installed_version, git_branch, git_commit, git_dirty,
+    github_version, github_commit, source, observed_at, metadata
+) VALUES (
+    {_sql_literal(host_id)},
+    {_sql_literal(component)},
+    {_sql_literal(payload.get("installed_version"))},
+    {_sql_literal(payload.get("git_branch"))},
+    {_sql_literal(payload.get("git_commit"))},
+    {'true' if bool(payload.get("git_dirty")) else 'false'},
+    {_sql_literal(payload.get("github_version"))},
+    {_sql_literal(payload.get("github_commit"))},
+    {_sql_literal(payload.get("source") or "omni-fleet-agent")},
+    now(),
+    {_json_literal(payload.get("metadata", {}))}::jsonb
+)
+ON CONFLICT (host_id, component) DO UPDATE SET
+    installed_version = EXCLUDED.installed_version,
+    git_branch = EXCLUDED.git_branch,
+    git_commit = EXCLUDED.git_commit,
+    git_dirty = EXCLUDED.git_dirty,
+    github_version = EXCLUDED.github_version,
+    github_commit = EXCLUDED.github_commit,
+    source = EXCLUDED.source,
+    observed_at = now(),
+    metadata = EXCLUDED.metadata;
+"""
+    _psql(query, env=env)
+
+
+def _omni_command_key_for_host(host: dict[str, Any]) -> str:
+    platform_os = _nested(host, "platform", "os", "").lower()
+    if "windows" in platform_os:
+        return "omni.self-update.windows"
+    return "omni.self-update.linux"
 
 
 def _write_profile_db(profile: dict[str, Any], *, env: dict[str, str] | None = None) -> None:
@@ -1002,6 +1126,615 @@ def _program_records(host: dict[str, Any], path: Path) -> list[dict[str, Any]]:
     return records
 
 
+def _host_apps(host: dict[str, Any]) -> list[dict[str, Any]]:
+    apps = host.get("apps")
+    if not isinstance(apps, list):
+        return []
+    return [item for item in apps if isinstance(item, dict)]
+
+
+def _host_forks(host: dict[str, Any]) -> list[dict[str, Any]]:
+    forks = host.get("forks")
+    if not isinstance(forks, list):
+        return []
+    return [item for item in forks if isinstance(item, dict)]
+
+
+def _host_database_contract(host: dict[str, Any]) -> dict[str, Any]:
+    database = host.get("database")
+    return database if isinstance(database, dict) else {}
+
+
+def _host_inventory_profile(host: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: value
+        for key, value in host.items()
+        if key not in {"apps", "forks", "database", "modules"}
+    }
+
+
+def _host_inventory_payload(path: Path, host: dict[str, Any], raw_text: str) -> dict[str, Any]:
+    access = host.get("access") if isinstance(host.get("access"), dict) else {}
+    platform = host.get("platform") if isinstance(host.get("platform"), dict) else {}
+    return {
+        "id": _host_id(host, path.stem),
+        "role": str(host.get("role") or "unknown"),
+        "owner": str(host.get("owner") or "unknown"),
+        "status": str(host.get("status") or "unknown"),
+        "provider": str(platform.get("provider") or "unknown"),
+        "os": str(platform.get("os") or "unknown"),
+        "arch": str(platform.get("arch") or "unknown"),
+        "ssh_target": str(access.get("ssh") or "") or None,
+        "vpn_ip": _inet_or_none(access.get("vpn_ip")),
+        "public_ip": _inet_or_none(access.get("public_ip")),
+        "inventory_file": _repo_relative_path(path),
+        "inventory_hash": _inventory_hash(raw_text),
+    }
+
+
+def _app_payload(host_id: str, app: dict[str, Any]) -> dict[str, Any] | None:
+    app_id = str(app.get("id") or app.get("name") or "").strip()
+    if not app_id:
+        return None
+    payload = {
+        "host_id": host_id,
+        "app_id": app_id,
+        "canonical_product_id": str(app.get("canonical_product_id") or app_id),
+        "runtime": app.get("runtime"),
+        "install_type": app.get("install_type"),
+        "install_path": app.get("install_path") or app.get("source_repo_path"),
+        "source_url": app.get("source"),
+        "public_url": app.get("public_url"),
+        "healthcheck_url": app.get("healthcheck_url"),
+        "unit": app.get("unit"),
+        "managed_by": str(app.get("managed_by") or "omni-srv-admin"),
+        "update_policy": app.get("update_policy"),
+        "desired_version": app.get("desired_version"),
+        "current_version": app.get("current_version"),
+        "state": app.get("desired_state") or "observed",
+        "metadata": {
+            key: value
+            for key, value in app.items()
+            if key
+            not in {
+                "id",
+                "name",
+                "canonical_product_id",
+                "runtime",
+                "install_type",
+                "install_path",
+                "source_repo_path",
+                "source",
+                "public_url",
+                "healthcheck_url",
+                "unit",
+                "managed_by",
+                "update_policy",
+                "desired_version",
+                "current_version",
+                "desired_state",
+            }
+        },
+    }
+    return payload
+
+
+def _fork_payload(host_id: str, fork: dict[str, Any]) -> dict[str, Any] | None:
+    fork_id = str(fork.get("id") or "").strip()
+    if not fork_id:
+        return None
+    payload = {
+        "host_id": host_id,
+        "fork_id": fork_id,
+        "canonical_product_id": str(fork.get("canonical_product_id") or fork_id),
+        "sync_project": fork.get("sync_project"),
+        "local_path": fork.get("local_path"),
+        "upstream_url": fork.get("upstream"),
+        "sync_manifest": fork.get("sync_manifest"),
+        "runtime_app_id": fork.get("runtime_app_id"),
+        "managed_by": str(fork.get("managed_by") or "omni-srv-admin"),
+        "state": fork.get("state") or "observed",
+        "metadata": {
+            key: value
+            for key, value in fork.items()
+            if key
+            not in {
+                "id",
+                "canonical_product_id",
+                "sync_project",
+                "local_path",
+                "upstream",
+                "sync_manifest",
+                "runtime_app_id",
+                "managed_by",
+                "state",
+            }
+        },
+    }
+    return payload
+
+
+def _upsert_inventory_host(path: Path, host: dict[str, Any], raw_text: str, *, env: dict[str, str]) -> dict[str, Any]:
+    payload = _host_inventory_payload(path, host, raw_text)
+    _psql(
+        f"""
+INSERT INTO "TbHosts" (
+    id, role, owner, status, provider, os, arch, ssh_target, vpn_ip,
+    public_ip, inventory_file, inventory_hash, updated_at
+) VALUES (
+    {_sql_literal(payload["id"])},
+    {_sql_literal(payload["role"])},
+    {_sql_literal(payload["owner"])},
+    {_sql_literal(payload["status"])},
+    {_sql_literal(payload["provider"])},
+    {_sql_literal(payload["os"])},
+    {_sql_literal(payload["arch"])},
+    {_sql_literal(payload["ssh_target"])},
+    {_sql_literal(payload["vpn_ip"])},
+    {_sql_literal(payload["public_ip"])},
+    {_sql_literal(payload["inventory_file"])},
+    {_sql_literal(payload["inventory_hash"])},
+    now()
+)
+ON CONFLICT (id) DO UPDATE SET
+    role = EXCLUDED.role,
+    owner = EXCLUDED.owner,
+    status = EXCLUDED.status,
+    provider = EXCLUDED.provider,
+    os = EXCLUDED.os,
+    arch = EXCLUDED.arch,
+    ssh_target = EXCLUDED.ssh_target,
+    vpn_ip = EXCLUDED.vpn_ip,
+    public_ip = EXCLUDED.public_ip,
+    inventory_file = EXCLUDED.inventory_file,
+    inventory_hash = EXCLUDED.inventory_hash,
+    updated_at = now();
+""",
+        env=env,
+    )
+    return payload
+
+
+def _upsert_customization_policy(
+    *,
+    host_id: str | None,
+    scope_type: str,
+    target_id: str,
+    canonical_product_id: str | None,
+    lane: str,
+    policy_type: str,
+    owner_module: str,
+    entrypoint: str | None,
+    enabled: bool,
+    metadata: dict[str, Any],
+    env: dict[str, str],
+) -> None:
+    conflict = """
+ON CONFLICT (scope_type, target_id, lane, owner_module, policy_type)
+WHERE host_id IS NULL
+DO UPDATE SET
+    canonical_product_id = EXCLUDED.canonical_product_id,
+    entrypoint = EXCLUDED.entrypoint,
+    enabled = EXCLUDED.enabled,
+    metadata = EXCLUDED.metadata,
+    updated_at = now();
+"""
+    if host_id is not None:
+        conflict = """
+ON CONFLICT (host_id, scope_type, target_id, lane, owner_module, policy_type)
+DO UPDATE SET
+    canonical_product_id = EXCLUDED.canonical_product_id,
+    entrypoint = EXCLUDED.entrypoint,
+    enabled = EXCLUDED.enabled,
+    metadata = EXCLUDED.metadata,
+    updated_at = now();
+"""
+    _psql(
+        f"""
+INSERT INTO "TbCustomizationPolicies" (
+    host_id, scope_type, target_id, canonical_product_id, lane, policy_type,
+    owner_module, entrypoint, enabled, metadata, updated_at
+) VALUES (
+    {_sql_literal(host_id)},
+    {_sql_literal(scope_type)},
+    {_sql_literal(target_id)},
+    {_sql_literal(canonical_product_id)},
+    {_sql_literal(lane)},
+    {_sql_literal(policy_type)},
+    {_sql_literal(owner_module)},
+    {_sql_literal(entrypoint)},
+    {'true' if enabled else 'false'},
+    {_json_literal(metadata)}::jsonb,
+    now()
+)
+{conflict}
+""",
+        env=env,
+    )
+
+
+def _sync_registry_host(host_id: str, *, env: dict[str, str]) -> dict[str, Any]:
+    path, host, raw_text = _load_host(host_id)
+    resolved_host = _host_id(host, path.stem)
+    _upsert_inventory_host(path, host, raw_text, env=env)
+    apps = [payload for item in _host_apps(host) if (payload := _app_payload(resolved_host, item))]
+    forks = [payload for item in _host_forks(host) if (payload := _fork_payload(resolved_host, item))]
+    database = _host_database_contract(host)
+    modules = host.get("modules") if isinstance(host.get("modules"), list) else []
+    profile = _host_inventory_profile(host)
+
+    app_ids = [payload["app_id"] for payload in apps]
+    fork_ids = [payload["fork_id"] for payload in forks]
+
+    if app_ids:
+        keep_apps = ", ".join(_sql_literal(item) for item in app_ids)
+        _psql(
+            f'DELETE FROM "TbManagedApps" WHERE host_id = {_sql_literal(resolved_host)} AND app_id NOT IN ({keep_apps});',
+            env=env,
+        )
+    else:
+        _psql(f'DELETE FROM "TbManagedApps" WHERE host_id = {_sql_literal(resolved_host)};', env=env)
+
+    if fork_ids:
+        keep_forks = ", ".join(_sql_literal(item) for item in fork_ids)
+        _psql(
+            f'DELETE FROM "TbManagedForks" WHERE host_id = {_sql_literal(resolved_host)} AND fork_id NOT IN ({keep_forks});',
+            env=env,
+        )
+    else:
+        _psql(f'DELETE FROM "TbManagedForks" WHERE host_id = {_sql_literal(resolved_host)};', env=env)
+
+    _psql(
+        f"""DELETE FROM "TbCustomizationPolicies"
+WHERE host_id = {_sql_literal(resolved_host)}
+  AND metadata->>'source' = 'inventory-sync';""",
+        env=env,
+    )
+
+    for payload in apps:
+        _psql(
+            f"""
+INSERT INTO "TbManagedApps" (
+    host_id, app_id, canonical_product_id, runtime, install_type, install_path,
+    source_url, public_url, healthcheck_url, unit, managed_by, update_policy,
+    desired_version, current_version, state, metadata, observed_at, updated_at
+) VALUES (
+    {_sql_literal(payload["host_id"])},
+    {_sql_literal(payload["app_id"])},
+    {_sql_literal(payload["canonical_product_id"])},
+    {_sql_literal(payload["runtime"])},
+    {_sql_literal(payload["install_type"])},
+    {_sql_literal(payload["install_path"])},
+    {_sql_literal(payload["source_url"])},
+    {_sql_literal(payload["public_url"])},
+    {_sql_literal(payload["healthcheck_url"])},
+    {_sql_literal(payload["unit"])},
+    {_sql_literal(payload["managed_by"])},
+    {_sql_literal(payload["update_policy"])},
+    {_sql_literal(payload["desired_version"])},
+    {_sql_literal(payload["current_version"])},
+    {_sql_literal(payload["state"])},
+    {_json_literal(payload["metadata"])}::jsonb,
+    now(),
+    now()
+)
+ON CONFLICT (host_id, app_id) DO UPDATE SET
+    canonical_product_id = EXCLUDED.canonical_product_id,
+    runtime = EXCLUDED.runtime,
+    install_type = EXCLUDED.install_type,
+    install_path = EXCLUDED.install_path,
+    source_url = EXCLUDED.source_url,
+    public_url = EXCLUDED.public_url,
+    healthcheck_url = EXCLUDED.healthcheck_url,
+    unit = EXCLUDED.unit,
+    managed_by = EXCLUDED.managed_by,
+    update_policy = EXCLUDED.update_policy,
+    desired_version = EXCLUDED.desired_version,
+    current_version = EXCLUDED.current_version,
+    state = EXCLUDED.state,
+    metadata = EXCLUDED.metadata,
+    observed_at = now(),
+    updated_at = now();
+""",
+            env=env,
+        )
+        if payload["metadata"].get("customization_entrypoint"):
+            _upsert_customization_policy(
+                host_id=resolved_host,
+                scope_type="app",
+                target_id=payload["app_id"],
+                canonical_product_id=payload["canonical_product_id"],
+                lane="managed-apps",
+                policy_type="runtime",
+                owner_module="modules/managed-apps",
+                entrypoint=str(payload["metadata"]["customization_entrypoint"]),
+                enabled=True,
+                metadata={"source": "inventory-sync"},
+                env=env,
+            )
+
+    for payload in forks:
+        _psql(
+            f"""
+INSERT INTO "TbManagedForks" (
+    host_id, fork_id, canonical_product_id, sync_project, local_path,
+    upstream_url, sync_manifest, runtime_app_id, managed_by, state, metadata,
+    observed_at, updated_at
+) VALUES (
+    {_sql_literal(payload["host_id"])},
+    {_sql_literal(payload["fork_id"])},
+    {_sql_literal(payload["canonical_product_id"])},
+    {_sql_literal(payload["sync_project"])},
+    {_sql_literal(payload["local_path"])},
+    {_sql_literal(payload["upstream_url"])},
+    {_sql_literal(payload["sync_manifest"])},
+    {_sql_literal(payload["runtime_app_id"])},
+    {_sql_literal(payload["managed_by"])},
+    {_sql_literal(payload["state"])},
+    {_json_literal(payload["metadata"])}::jsonb,
+    now(),
+    now()
+)
+ON CONFLICT (host_id, fork_id) DO UPDATE SET
+    canonical_product_id = EXCLUDED.canonical_product_id,
+    sync_project = EXCLUDED.sync_project,
+    local_path = EXCLUDED.local_path,
+    upstream_url = EXCLUDED.upstream_url,
+    sync_manifest = EXCLUDED.sync_manifest,
+    runtime_app_id = EXCLUDED.runtime_app_id,
+    managed_by = EXCLUDED.managed_by,
+    state = EXCLUDED.state,
+    metadata = EXCLUDED.metadata,
+    observed_at = now(),
+    updated_at = now();
+""",
+            env=env,
+        )
+        _upsert_customization_policy(
+            host_id=resolved_host,
+            scope_type="fork",
+            target_id=payload["fork_id"],
+            canonical_product_id=payload["canonical_product_id"],
+            lane="fork-sync",
+            policy_type="sync",
+            owner_module="modules/fork-sync",
+            entrypoint=payload["sync_manifest"],
+            enabled=True,
+            metadata={"source": "inventory-sync"},
+            env=env,
+        )
+        for component in payload["metadata"].get("components", []) if isinstance(payload["metadata"].get("components"), list) else []:
+            if not isinstance(component, dict) or not component.get("id") or not component.get("sync_manifest"):
+                continue
+            _upsert_customization_policy(
+                host_id=resolved_host,
+                scope_type="component",
+                target_id=str(component["id"]),
+                canonical_product_id=payload["canonical_product_id"],
+                lane="fork-sync",
+                policy_type="sync",
+                owner_module="modules/fork-sync",
+                entrypoint=str(component["sync_manifest"]),
+                enabled=True,
+                metadata={"source": "inventory-sync", "component": component},
+                env=env,
+            )
+
+    config_items = {
+        "inventory.host.profile": profile,
+        "inventory.host.apps": apps,
+        "inventory.host.forks": forks,
+        "inventory.host.database": database,
+        "inventory.host.modules": modules,
+    }
+    config_keys = sorted(config_items.keys())
+    if config_keys:
+        keep_keys = ", ".join(_sql_literal(item) for item in config_keys)
+        _psql(
+            f'DELETE FROM "TbConfigItems" WHERE host_id = {_sql_literal(resolved_host)} AND key IN ({keep_keys});',
+            env=env,
+        )
+    for key, value in config_items.items():
+        _psql(
+            f"""
+INSERT INTO "TbConfigItems" (host_id, key, value, value_type, source, description, updated_by)
+VALUES (
+    {_sql_literal(resolved_host)},
+    {_sql_literal(key)},
+    {_json_literal(value)}::jsonb,
+    'json',
+    'inventory-sync',
+    'Inventory mirror from omni-srv-admin host YAML',
+    'omni-srv-admin'
+);
+""",
+            env=env,
+        )
+
+    return {
+        "host": resolved_host,
+        "host_written": True,
+        "apps_written": len(apps),
+        "forks_written": len(forks),
+        "database_written": bool(database),
+        "config_items_written": len(config_items),
+        "policies_written": len(
+            [item for item in apps if item["metadata"].get("customization_entrypoint")]
+        )
+        + len(forks)
+        + sum(
+            len(item["metadata"].get("components", []))
+            for item in forks
+            if isinstance(item["metadata"].get("components"), list)
+        ),
+    }
+
+
+def _registry_show_host(host_id: str, *, env: dict[str, str]) -> dict[str, Any]:
+    host_lit = _sql_literal(host_id)
+    payload = _psql_json(
+        f"""
+SELECT jsonb_build_object(
+    'host', {host_lit},
+    'apps', COALESCE((
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'app_id', app_id,
+                'canonical_product_id', canonical_product_id,
+                'runtime', runtime,
+                'install_type', install_type,
+                'install_path', install_path,
+                'source_url', source_url,
+                'public_url', public_url,
+                'healthcheck_url', healthcheck_url,
+                'unit', unit,
+                'managed_by', managed_by,
+                'update_policy', update_policy,
+                'desired_version', desired_version,
+                'current_version', current_version,
+                'state', state,
+                'metadata', metadata
+            ) ORDER BY app_id
+        )
+        FROM "TbManagedApps" WHERE host_id = {host_lit}
+    ), '[]'::jsonb),
+    'forks', COALESCE((
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'fork_id', fork_id,
+                'canonical_product_id', canonical_product_id,
+                'sync_project', sync_project,
+                'local_path', local_path,
+                'upstream_url', upstream_url,
+                'sync_manifest', sync_manifest,
+                'runtime_app_id', runtime_app_id,
+                'managed_by', managed_by,
+                'state', state,
+                'metadata', metadata
+            ) ORDER BY fork_id
+        )
+        FROM "TbManagedForks" WHERE host_id = {host_lit}
+    ), '[]'::jsonb),
+    'policies', COALESCE((
+        SELECT jsonb_agg(
+            jsonb_build_object(
+                'scope_type', scope_type,
+                'target_id', target_id,
+                'canonical_product_id', canonical_product_id,
+                'lane', lane,
+                'policy_type', policy_type,
+                'owner_module', owner_module,
+                'entrypoint', entrypoint,
+                'enabled', enabled,
+                'metadata', metadata
+            ) ORDER BY lane, scope_type, target_id
+        )
+        FROM "TbCustomizationPolicies" WHERE host_id = {host_lit}
+    ), '[]'::jsonb),
+    'inventory_mirror', COALESCE((
+        SELECT jsonb_object_agg(key, value)
+        FROM "TbConfigItems"
+        WHERE host_id = {host_lit}
+          AND key IN ('inventory.host.profile', 'inventory.host.apps', 'inventory.host.forks', 'inventory.host.database', 'inventory.host.modules')
+    ), '{{}}'::jsonb)
+);
+""",
+        env=env,
+    )
+    return payload or {"host": host_id, "apps": [], "forks": [], "policies": [], "inventory_mirror": {}}
+
+
+@fleet.group("registry")
+def registry() -> None:
+    """Registry DB for apps/forks/customization policies."""
+
+
+@registry.command("sync")
+@click.option("--host", "host_ids", multiple=True, help="Host do inventário. Repetível.")
+@click.option("--all", "all_hosts", is_flag=True, help="Sincroniza todos os hosts inventariados.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def registry_sync(host_ids: tuple[str, ...], all_hosts: bool, json_output: bool) -> None:
+    """Espelha apps/forks/database do inventário para o DbOmniFleet."""
+    selected = list(host_ids)
+    if not selected:
+        if not all_hosts:
+            raise click.ClickException("use --host <id> ou --all")
+        selected = [host_id for host_id, _, _, _ in _inventory_host_records(syncable_only=True)]
+    env = _db_env()
+    results = [_sync_registry_host(host_id, env=env) for host_id in selected]
+    _emit({"target": "DbOmniFleet", "results": results, "generated_at": _now()}, json_output)
+
+
+@registry.command("show")
+@click.option("--host", "host_id", required=True, help="Host do inventário.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def registry_show(host_id: str, json_output: bool) -> None:
+    """Lê apps/forks/policies registrados no DbOmniFleet para um host."""
+    payload = _registry_show_host(host_id, env=_db_env())
+    _emit(payload, json_output)
+
+
+@registry.command("upsert-policy")
+@click.option("--host", "host_id", default=None, help="Host alvo; omita para policy global.")
+@click.option("--scope-type", required=True, type=click.Choice(["global", "host", "app", "fork", "component"]))
+@click.option("--target-id", required=True, help="ID do app/fork/component.")
+@click.option("--canonical-product-id", default=None, help="Produto canônico.")
+@click.option("--lane", required=True, type=click.Choice(["managed-apps", "fork-sync", "runtime-hook", "source-patch"]))
+@click.option("--policy-type", default="reapply", show_default=True, type=click.Choice(["reapply", "postinstall", "sync", "runtime", "inventory-mirror"]))
+@click.option("--owner-module", required=True, help="Módulo owner (ex: modules/fleet).")
+@click.option("--entrypoint", default=None, help="Script/manifest/entrypoint.")
+@click.option("--enabled/--disabled", default=True, show_default=True)
+@click.option("--metadata-json", default="{}", help="Objeto JSON com metadados.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def registry_upsert_policy(
+    host_id: str | None,
+    scope_type: str,
+    target_id: str,
+    canonical_product_id: str | None,
+    lane: str,
+    policy_type: str,
+    owner_module: str,
+    entrypoint: str | None,
+    enabled: bool,
+    metadata_json: str,
+    json_output: bool,
+) -> None:
+    """Escreve uma customization policy diretamente no DbOmniFleet."""
+    try:
+        metadata = json.loads(metadata_json)
+    except json.JSONDecodeError as exc:
+        raise click.ClickException(f"--metadata-json inválido: {exc}") from exc
+    if not isinstance(metadata, dict):
+        raise click.ClickException("--metadata-json deve ser um objeto JSON")
+    env = _db_env()
+    _upsert_customization_policy(
+        host_id=host_id,
+        scope_type=scope_type,
+        target_id=target_id,
+        canonical_product_id=canonical_product_id,
+        lane=lane,
+        policy_type=policy_type,
+        owner_module=owner_module,
+        entrypoint=entrypoint,
+        enabled=enabled,
+        metadata=metadata,
+        env=env,
+    )
+    _emit(
+        {
+            "target": "DbOmniFleet",
+            "host": host_id,
+            "scope_type": scope_type,
+            "target_id": target_id,
+            "lane": lane,
+            "policy_type": policy_type,
+            "owner_module": owner_module,
+            "enabled": enabled,
+        },
+        json_output,
+    )
+
+
 @fleet.command("list")
 def list_hosts() -> None:
     """Lista hosts cadastrados em inventory/hosts/*.yaml."""
@@ -1146,6 +1879,88 @@ def programs(host_id: str, json_output: bool) -> None:
         ],
     }
     _emit(payload, json_output)
+
+
+def _version_table_rows(host_ids: list[str], *, env: dict[str, str]) -> dict[str, Any]:
+    hosts_json = ",".join(_sql_literal(host_id) for host_id in host_ids)
+    payload = _psql_json(
+        f"""
+SELECT COALESCE(jsonb_object_agg(host_id, row_payload), '{{}}'::jsonb)
+FROM (
+    SELECT
+        host_id,
+        jsonb_build_object(
+            'host', host_id,
+            'component', component,
+            'installed_version', installed_version,
+            'git_branch', git_branch,
+            'git_commit', git_commit,
+            'git_dirty', git_dirty,
+            'github_version', github_version,
+            'github_commit', github_commit,
+            'observed_at', observed_at,
+            'metadata', metadata
+        ) AS row_payload
+    FROM "TbVersion"
+    WHERE component = 'omni-srv-admin'
+      AND host_id IN ({hosts_json})
+) rows;
+""",
+        env=env,
+    )
+    return payload or {}
+
+
+@fleet.command("version-table")
+@click.option("--source", type=click.Path(path_type=Path), default=DEFAULT_OMNI_VERSION_MATRIX, show_default=True)
+@click.option("--db", "use_db", is_flag=True, help="Lê observações de TbVersion no DbOmniFleet.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def version_table(source: Path, use_db: bool, json_output: bool) -> None:
+    """Mostra a tabela de controle de versão do omni-srv-admin por host."""
+    matrix = load_omni_version_matrix(source)
+    target_hosts = [str(item) for item in matrix.get("target_hosts", [])]
+    observed = _version_table_rows(target_hosts, env=_db_env()) if use_db else {}
+    rows: list[dict[str, Any]] = []
+    for host_id in target_hosts:
+        host_cfg = (matrix.get("hosts") or {}).get(host_id, {})
+        live = observed.get(host_id, {}) if isinstance(observed, dict) else {}
+        rows.append(
+            {
+                "host": host_id,
+                "track_branch": host_cfg.get("track_branch") or matrix.get("track_branch") or "main",
+                "desired_version": host_cfg.get("desired_version") or matrix.get("desired_version"),
+                "repo_dir": host_cfg.get("repo_dir"),
+                "scheduler": host_cfg.get("scheduler"),
+                "command_key": host_cfg.get("command_key"),
+                "installed_version": live.get("installed_version"),
+                "git_branch": live.get("git_branch"),
+                "git_commit": live.get("git_commit"),
+                "git_dirty": live.get("git_dirty"),
+                "observed_at": live.get("observed_at"),
+            }
+        )
+    payload = {
+        "component": matrix.get("component") or "omni-srv-admin",
+        "github_repo": matrix.get("github_repo"),
+        "desired_version": matrix.get("desired_version"),
+        "target_hosts": target_hosts,
+        "source": str(source),
+        "db": use_db,
+        "rows": rows,
+        "generated_at": _now(),
+    }
+    if json_output:
+        click.echo(json.dumps(payload, indent=2, sort_keys=True))
+        return
+    click.echo(f"component: {payload['component']}")
+    click.echo(f"github_repo: {payload['github_repo']}")
+    click.echo(f"desired_version: {payload['desired_version']}")
+    click.echo(f"{'HOST':20} {'TARGET':10} {'INSTALLED':10} {'BRANCH':18} {'DIRTY':5} {'SCHEDULER'}")
+    for row in rows:
+        click.echo(
+            f"{str(row['host']):20} {str(row['desired_version'] or '-'):10} {str(row['installed_version'] or '-'):10} "
+            f"{str(row['git_branch'] or '-'):18} {str(row['git_dirty'] or False):5} {str(row['scheduler'] or '-')}"
+        )
 
 
 @fleet.group("profiles")
@@ -1406,6 +2221,153 @@ SELECT jsonb_build_object(
     _emit({"db_write": True, "plan": record, "pgbouncer": f"{PGBOUNCER_ENDPOINT[0]}:{PGBOUNCER_ENDPOINT[1]}"}, json_output)
 
 
+@fleet.command("queue-self-update")
+@click.option("--source", type=click.Path(path_type=Path), default=DEFAULT_OMNI_VERSION_MATRIX, show_default=True)
+@click.option("--version", "desired_version_override", default=None, help="Override do desired_version do manifest.")
+@click.option("--host", "host_ids", multiple=True, help="Host alvo. Repetível. Default: target_hosts do manifest.")
+@click.option("--requested-by", default=None, help="Ator que solicitou o plano.")
+@click.option("--approve", is_flag=True, help="Cria já aprovado para execução automática.")
+@click.option("--priority", default=25, show_default=True, help="Prioridade de fila; menor executa antes.")
+@click.option("--db", "write_db", is_flag=True, help="Insere os planos em DbOmniFleet.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def queue_self_update(
+    source: Path,
+    desired_version_override: str | None,
+    host_ids: tuple[str, ...],
+    requested_by: str | None,
+    approve: bool,
+    priority: int,
+    write_db: bool,
+    json_output: bool,
+) -> None:
+    """Fila rollout do omni-srv-admin conforme a matriz de versão."""
+    matrix = load_omni_version_matrix(source)
+    target_hosts = list(host_ids) or [str(item) for item in matrix.get("target_hosts", [])]
+    desired_version = _normalize_version(desired_version_override or str(matrix.get("desired_version") or ""))
+    if not desired_version:
+        raise click.ClickException("desired_version ausente no manifest e nenhum --version informado")
+    payload = {
+        "component": matrix.get("component") or "omni-srv-admin",
+        "github_repo": matrix.get("github_repo"),
+        "desired_version": desired_version,
+        "target_hosts": target_hosts,
+        "requested_by": requested_by or os.environ.get("USER", "operator"),
+        "requested_from_host": _default_host_id(),
+        "approval_state": "approved" if approve else "pending",
+        "db_write": write_db,
+        "generated_at": _now(),
+        "plans": [],
+    }
+    if not write_db:
+        for host_id in target_hosts:
+            path, host, _ = _load_host(host_id)
+            host_name = _host_id(host, path.stem)
+            host_cfg = (matrix.get("hosts") or {}).get(host_name, {})
+            payload["plans"].append(
+                {
+                    "host": host_name,
+                    "desired_version": desired_version,
+                    "command_key": host_cfg.get("command_key") or _omni_command_key_for_host(host),
+                    "track_branch": host_cfg.get("track_branch") or matrix.get("track_branch") or "main",
+                    "repo_dir": host_cfg.get("repo_dir"),
+                    "scheduler": host_cfg.get("scheduler"),
+                }
+            )
+        _emit(payload, json_output)
+        return
+
+    env = _db_env()
+    plans: list[dict[str, Any]] = []
+    for host_id in target_hosts:
+        path, host, _ = _load_host(host_id)
+        host_name = _host_id(host, path.stem)
+        host_cfg = (matrix.get("hosts") or {}).get(host_name, {})
+        command_key = str(host_cfg.get("command_key") or _omni_command_key_for_host(host))
+        track_branch = str(host_cfg.get("track_branch") or matrix.get("track_branch") or "main")
+        repo_dir = str(host_cfg.get("repo_dir") or "")
+        scheduler = str(host_cfg.get("scheduler") or "")
+        _command_template(command_key, host_id=host_name, env=env)
+        approved_by_sql = _sql_literal(payload["requested_by"]) if approve else "NULL"
+        approved_at_sql = "now()" if approve else "NULL"
+        dry_run_payload = {
+            "host": host_name,
+            "component": "omni-srv-admin",
+            "desired_version": desired_version,
+            "github_repo": matrix.get("github_repo"),
+            "track_branch": track_branch,
+            "repo_dir": repo_dir,
+            "scheduler": scheduler,
+            "target_command": command_key,
+            "command_args": [],
+            "requested_by": payload["requested_by"],
+            "requested_from_host": payload["requested_from_host"],
+        }
+        query = f"""
+WITH program AS (
+    INSERT INTO "TbPrograms" (host_id, name, install_type, current_version, source, managed_by, update_policy, observed_at)
+    VALUES ({_sql_literal(host_name)}, 'omni-srv-admin', 'git-worktree', NULL,
+            {_sql_literal(str(matrix.get("github_repo") or "giovannimnz/omni-srv-admin"))},
+            'omni-srv-admin', 'release-auto-update', now())
+    ON CONFLICT (host_id, name, install_type) DO UPDATE SET
+        source = EXCLUDED.source,
+        managed_by = EXCLUDED.managed_by,
+        update_policy = EXCLUDED.update_policy,
+        observed_at = now()
+    RETURNING id
+),
+version_reset AS (
+    DELETE FROM "TbVersions"
+    WHERE program_id IN (SELECT id FROM program)
+),
+version_row AS (
+    INSERT INTO "TbVersions" (program_id, current_version, desired_version, policy, pinned, updated_at)
+    SELECT program.id, NULL, {_sql_literal(desired_version)}, 'release-auto-update', false, now()
+    FROM program
+),
+plan AS (
+    INSERT INTO "TbUpdatePlans" (
+        host_id, program_id, desired_version, dry_run_output, approval_state,
+        approved_by, approved_at,
+        execution_state, target_command, command_args, execution_profile,
+        requested_by, requested_from_host, priority, idempotency_key
+    )
+    SELECT
+        {_sql_literal(host_name)}, program.id, {_sql_literal(desired_version)},
+        {_json_literal(dry_run_payload)}::jsonb, {_sql_literal('approved' if approve else 'pending')},
+        {approved_by_sql}, {approved_at_sql},
+        {_sql_literal('queued' if approve else 'not-started')}, {_sql_literal(command_key)}, '[]'::jsonb,
+        'interactive', {_sql_literal(payload["requested_by"])}, {_sql_literal(payload["requested_from_host"])}, {int(priority)},
+        encode(digest({_sql_literal(host_name + ':omni-srv-admin:' + desired_version + ':' + command_key)}, 'sha256'), 'hex')
+    FROM program
+    ON CONFLICT (idempotency_key) DO UPDATE SET
+        dry_run_output = EXCLUDED.dry_run_output,
+        approval_state = EXCLUDED.approval_state,
+        approved_by = EXCLUDED.approved_by,
+        approved_at = EXCLUDED.approved_at,
+        execution_state = CASE
+            WHEN "TbUpdatePlans".execution_state IN ('succeeded', 'claimed', 'running') THEN "TbUpdatePlans".execution_state
+            ELSE EXCLUDED.execution_state
+        END,
+        updated_at = now()
+    RETURNING id, host_id, desired_version, approval_state, execution_state, target_command, priority, created_at
+)
+SELECT jsonb_build_object(
+    'id', id,
+    'host', host_id,
+    'desired_version', desired_version,
+    'approval_state', approval_state,
+    'execution_state', execution_state,
+    'target_command', target_command,
+    'priority', priority,
+    'created_at', created_at
+) FROM plan;
+"""
+        plans.append(_psql_json(query, env=env))
+
+    payload["plans"] = plans
+    _emit(payload, json_output)
+
+
 @fleet.group("agent")
 def agent() -> None:
     """Node agent local: heartbeat, telemetria e execução de planos aprovados."""
@@ -1465,6 +2427,138 @@ def agent_collect_programs(host_id: str | None, write_db: bool, json_output: boo
     _emit(payload, json_output)
 
 
+@agent.command("collect-version")
+@click.option("--host", "host_id", default=None, help="Host id; default usa OMNI_HOST_ID/hostname.")
+@click.option("--source", type=click.Path(path_type=Path), default=DEFAULT_OMNI_VERSION_MATRIX, show_default=True)
+@click.option("--db", "write_db", is_flag=True, help="Grava observações em TbVersion via PgBouncer.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def agent_collect_version(host_id: str | None, source: Path, write_db: bool, json_output: bool) -> None:
+    """Coleta estado local do repo omni-srv-admin sem mutação."""
+    resolved_host = host_id or _default_host_id()
+    matrix = load_omni_version_matrix(source)
+    host_cfg = (matrix.get("hosts") or {}).get(resolved_host, {})
+    repo_root = Path(str(host_cfg.get("repo_dir") or REPO))
+    payload = collect_omni_version(
+        resolved_host,
+        repo_root=repo_root,
+        github_repo=str(matrix.get("github_repo") or "giovannimnz/omni-srv-admin"),
+        desired_version=str(host_cfg.get("desired_version") or matrix.get("desired_version") or ""),
+        track_branch=str(host_cfg.get("track_branch") or matrix.get("track_branch") or "main"),
+    )
+    _write_json(VERSIONS_DIR / f"{resolved_host}.json", payload)
+    if write_db:
+        _write_omni_version_db(payload, env=_db_env())
+    _append_audit_event(
+        {
+            "actor": "omni-fleet-agent",
+            "host": resolved_host,
+            "action": "version.collect",
+            "target": "TbVersion",
+            "result": "written" if write_db else "collected",
+            "timestamp": payload["observed_at"],
+            "metadata": {"db_write": write_db, "installed_version": payload.get("installed_version")},
+        }
+    )
+    _emit(payload, json_output)
+
+
+def _run_agent_cycle(
+    host_id: str,
+    *,
+    apply_changes: bool,
+    env: dict[str, str] | None = None,
+    write_db: bool = True,
+) -> dict[str, Any]:
+    telemetry = _collect_telemetry(host_id)
+    _save_heartbeat_cache(telemetry)
+    if write_db and env is not None:
+        _write_heartbeat_db(telemetry, env=env)
+
+    version_payload: dict[str, Any] | None = None
+    try:
+        matrix = load_omni_version_matrix()
+        host_cfg = (matrix.get("hosts") or {}).get(host_id, {})
+        repo_root = Path(str(host_cfg.get("repo_dir") or REPO))
+        version_payload = collect_omni_version(
+            host_id,
+            repo_root=repo_root,
+            github_repo=str(matrix.get("github_repo") or "giovannimnz/omni-srv-admin"),
+            desired_version=str(host_cfg.get("desired_version") or matrix.get("desired_version") or ""),
+            track_branch=str(host_cfg.get("track_branch") or matrix.get("track_branch") or "main"),
+        )
+        _write_json(VERSIONS_DIR / f"{host_id}.json", version_payload)
+        if write_db and env is not None:
+            _write_omni_version_db(version_payload, env=env)
+    except Exception as exc:
+        _append_audit_event(
+            {
+                "actor": "omni-fleet-agent",
+                "host": host_id,
+                "action": "version.collect",
+                "target": "TbVersion",
+                "result": "degraded",
+                "timestamp": _now(),
+                "metadata": {"error": _redact_text(str(exc))},
+            }
+        )
+
+    if env is None:
+        return {"cycle": _now(), "host": host_id, "status": "idle", "telemetry": telemetry, "version": version_payload}
+
+    plan = _claim_next_plan(host_id, env=env)
+    if not plan:
+        return {"cycle": _now(), "host": host_id, "status": "idle", "telemetry": telemetry, "version": version_payload}
+
+    result = _execute_plan(plan, apply_changes=apply_changes, env=env)
+    if apply_changes and plan.get("id"):
+        _finish_plan_db(str(plan["id"]), result, env=env)
+    return {"cycle": _now(), "host": host_id, "status": result.get("status"), "plan": result, "telemetry": telemetry, "version": version_payload}
+
+
+@agent.command("cycle")
+@click.option("--host", "host_id", default=None, help="Host id; default usa OMNI_HOST_ID/hostname.")
+@click.option("--apply", "apply_changes", is_flag=True, help="Executa planos aprovados; sem isto roda dry-run.")
+@click.option("--json", "json_output", is_flag=True, help="Emite resultado em JSON.")
+def agent_cycle(host_id: str | None, apply_changes: bool, json_output: bool) -> None:
+    """Executa um ciclo único: heartbeat + versão + um plano aprovado."""
+    resolved_host = host_id or _default_host_id()
+    env = _db_env()
+    result = _run_agent_cycle(resolved_host, apply_changes=apply_changes, env=env, write_db=True)
+    _emit(result, json_output)
+
+
+@agent.command("self-update-runner")
+@click.option("--host", "host_id", default=None, help="Host id; default usa OMNI_HOST_ID/hostname.")
+@click.option("--source", type=click.Path(path_type=Path), default=DEFAULT_OMNI_VERSION_MATRIX, show_default=True)
+@click.option("--desired-version", required=True, help="Versão/tag desejada.")
+@click.option("--json", "json_output", is_flag=True, help="Emite resultado em JSON.")
+def agent_self_update_runner(host_id: str | None, source: Path, desired_version: str, json_output: bool) -> None:
+    """Runner local allowlisted que aplica update do repo omni-srv-admin."""
+    resolved_host = host_id or _default_host_id()
+    matrix = load_omni_version_matrix(source)
+    host_cfg = (matrix.get("hosts") or {}).get(resolved_host, {})
+    repo_root = Path(str(host_cfg.get("repo_dir") or REPO))
+    result = apply_omni_self_update(
+        resolved_host,
+        repo_root=repo_root,
+        desired_version=desired_version,
+        track_branch=str(host_cfg.get("track_branch") or matrix.get("track_branch") or "main"),
+        github_repo=str(matrix.get("github_repo") or "giovannimnz/omni-srv-admin"),
+    )
+    _append_audit_event(
+        {
+            "actor": "omni-fleet-agent",
+            "host": resolved_host,
+            "action": "self-update.run",
+            "target": "omni-srv-admin",
+            "result": result.get("status"),
+            "timestamp": result.get("finished_at"),
+            "metadata": result,
+        }
+    )
+    _emit(result, json_output)
+
+
 @agent.command("once")
 @click.option("--host", "host_id", default=None, help="Host id; default usa OMNI_HOST_ID/hostname.")
 @click.option("--plan-file", type=click.Path(path_type=Path), default=None, help="Executa plano JSON local para teste.")
@@ -1511,19 +2605,10 @@ def agent_loop(host_id: str | None, interval: int, apply_changes: bool) -> None:
     """Loop persistente para systemd: heartbeat + um plano por ciclo."""
     resolved_host = host_id or _default_host_id()
     while True:
-        payload = _collect_telemetry(resolved_host)
-        _save_heartbeat_cache(payload)
         try:
             env = _db_env()
-            _write_heartbeat_db(payload, env=env)
-            plan = _claim_next_plan(resolved_host, env=env)
-            if plan:
-                result = _execute_plan(plan, apply_changes=apply_changes, env=env)
-                if apply_changes and plan.get("id"):
-                    _finish_plan_db(str(plan["id"]), result, env=env)
-                click.echo(json.dumps({"cycle": _now(), "host": resolved_host, "plan": result}, sort_keys=True))
-            else:
-                click.echo(json.dumps({"cycle": _now(), "host": resolved_host, "status": "idle"}, sort_keys=True))
+            result = _run_agent_cycle(resolved_host, apply_changes=apply_changes, env=env, write_db=True)
+            click.echo(json.dumps(result, sort_keys=True))
         except Exception as exc:
             _append_audit_event(
                 {

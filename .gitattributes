@@ -1,0 +1,9 @@
+modules/xrdp-abnt2/files/* text eol=lf
+modules/xrdp-abnt2/scripts/*.sh text eol=lf
+modules/xrdp-abnt2/README.md text eol=lf
+docs/operations/ubuntu-arm64-xrdp-desktop-standard.md text eol=lf
+cli/omni/xrdp_abnt2.py text eol=lf
+cli/omni/tests/test_xrdp_abnt2.py text eol=lf
+inventory/hosts/atius-srv-2.yaml text eol=lf
+inventory/hosts/atius-srv-3.yaml text eol=lf
+inventory/hosts/horistic-srv.yaml text eol=lf

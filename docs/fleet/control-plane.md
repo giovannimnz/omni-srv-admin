@@ -71,7 +71,7 @@ Server responsibilities:
 | Database | Owns PostgreSQL maintenance and backup/restore |
 | Pooler | Exposes PgBouncer as the only client/node database endpoint |
 | Inventory | Imports reviewed `inventory/hosts` projections |
-| Runtime state | Receives heartbeat/status and program inventory |
+| Runtime state | Receives heartbeat/status, program inventory and omni-srv-admin version inventory |
 | Change control | Generates update plans before execution |
 | Monitoring | Reads fleet telemetry from `TbNodeTelemetry` and falls back to local cache |
 | Audit | Stores audit events for installs, updates, license changes and status mutations |
@@ -144,7 +144,8 @@ Versioned schema lives in `modules/fleet-control-plane/migrations/`.
 | `TbHosts` | Reviewed inventory projection | FCP-02 |
 | `TbNodes` | Runtime install mode, agent version, health and heartbeat | FCP-01, FCP-05 |
 | `TbPrograms` | Installed program registry by host | FCP-06 |
-| `TbVersions` | Desired/current version state and update policy | FCP-07 |
+| `TbVersions` | Desired/current program version state and update policy | FCP-07 |
+| `TbVersion` | Per-computer `omni-srv-admin` installed/Git state and GitHub release target | FCP-16 |
 | `TbUpdatePlans` | Proposed changes, approval state and execution result | FCP-07 |
 | `TbLicenses` | License metadata and `secret_ref` only | FCP-08 |
 | `TbAuditEvents` | Actor, host, action, target, result and timestamp | FCP-09 |

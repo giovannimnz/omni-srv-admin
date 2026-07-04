@@ -1,6 +1,6 @@
 # Dark Theme Ubuntu para LXDE/XRDP
 
-Tema operacional para o desktop remoto do `ATIUS-SRV-1` em Ubuntu 24.04 + LXDE + XRDP.
+Tema operacional para o desktop remoto dos servidores Ubuntu 24.04 ARM64 gerenciados por `omni-srv-admin` com LXDE + XRDP.
 
 ## Proposta
 
@@ -38,6 +38,10 @@ Wrappers:
 ./repair.sh     # repair seguro para LXDE/XRDP
 ./uninstall.sh  # restore do ultimo backup
 ```
+
+Para rollout em fleet, use `repair --install-packages --restart-session` como padrao. Reserve `apply --with-sublime --with-zsh` para hosts que precisam dessas opcoes explicitamente.
+
+Runbook canonico: `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`.
 
 ## Arquivos Aplicados
 

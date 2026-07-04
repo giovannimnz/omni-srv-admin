@@ -9,7 +9,7 @@
 ```text
 ┌────────────────────────────────────────────────────────────┐
 │ CLI: omni                                                  │
-│ fleet | remote-manager | srv1-ops | xrdp-abnt2 | fork-sync │
+│ fleet | remote-manager | srv1-ops | xrdp-abnt2 | dark-theme │
 └───────────────────────┬────────────────────────────────────┘
                         │
 ┌───────────────────────▼────────────────────────────────────┐
@@ -20,6 +20,7 @@
 ┌───────────────────────▼────────────────────────────────────┐
 │ Modules                                                     │
 │ modules/fleet | remote-manager | srv1-ops | xrdp-abnt2      │
+│ dark-theme-ubuntu | managed-apps | fork-sync                │
 └───────────────────────┬────────────────────────────────────┘
                         │
 ┌───────────────────────▼────────────────────────────────────┐
@@ -68,6 +69,28 @@ Não renomeia mount paths por padrão.
 Gerencia automações locais de production.
 
 Não deve ser aplicado em outros hosts sem portabilidade explícita.
+
+### XRDP Desktop Standard
+
+`modules/xrdp-abnt2/` e `dark-theme-ubuntu/` formam o padrão portátil de desktop XRDP para todos os servidores Ubuntu ARM64 da fleet. O runbook canônico é `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`.
+
+### Customization Governance
+
+`omni-srv-admin` governa dois lanes distintos:
+
+- `managed-apps` / runtime instalado:
+  wrappers, post-install hooks, rebuild/reapply, políticas locais e serviços ativos.
+- `fork-sync` / fork seguindo upstream:
+  `protected_paths`, merge strategy, deploy opcional e sincronização periódica.
+
+Quando um mesmo produto existe nas duas formas, registrar ambos no inventário:
+
+- `apps:` para o runtime instalado
+- `forks:` para o worktree/fork local
+
+Runbook canônico:
+
+- `docs/operations/customization-governance.md`
 
 ## Estado atual
 

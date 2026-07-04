@@ -12,8 +12,10 @@ platform:
   provider: oracle-oci
   os: ubuntu-24.04
   arch: arm64
+  desktop: lxde-xrdp
 status: active
-modules: []
+modules:
+  - xrdp-abnt2
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
@@ -28,6 +30,20 @@ cleanup:
     - review Docker volumes before any volume prune
     - router is router-ai-zentrius under /home/ubuntu/docker/Atius/router-ai-zentrius, not router-ai-atius
 apps:
+  - id: omni-srv-admin
+    runtime: git-worktree
+    install_type: source-git-release-managed
+    install_path: /home/ubuntu/GitHub/omni-srv-admin
+    current_version: "inventory-managed"
+    desired_version: "matrix-managed"
+    source: "https://github.com/giovannimnz/omni-srv-admin"
+    managed_by: "omni-srv-admin"
+    update_policy: "release-auto-update"
+    scheduler: omni-fleet-agent.service
+    version_matrix: modules/fleet-control-plane/configs/omni-version-matrix.json
+    notes:
+      - "Auto-update target governed by TbVersion + omni version matrix."
+      - "Agent executor may stash local dirty work before switching back to main/release target."
   - id: rust-toolchain
     runtime: local-rustup
     install_type: rustup-managed
@@ -76,8 +92,22 @@ apps:
     update_policy: "sim-fleet-update"
     last_audited: "2026-06-16"
     installed_on: "2026-06-16"
+forks:
+  - id: aionui
+    local_path: /home/ubuntu/GitHub/forks/AionUi
+    upstream: https://github.com/iOfficeAI/AionUi
+    sync_manifest: modules/fork-sync/projects/aionui/sync.yaml
+    state: worktree-only
+database:
+  target: DbOmniFleet
+  endpoint: 10.1.1.1:6432
+  transport: PgBouncer
+  configured: true
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
+  knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
+  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
 oci:
   last_snapshot_id: "pending-ef73658b-77ae-4ccf-a46b-0d939692c21e"
   last_snapshot_at: "2026-06-18T01:38:21Z"

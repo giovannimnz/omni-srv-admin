@@ -24,6 +24,8 @@ setup(
     python_requires=">=3.10",
     install_requires=[
         "click>=8.0.0",
+        "pg8000>=1.31.2",
+        "PyYAML>=6.0.2",
     ],
     entry_points={
         "console_scripts": [

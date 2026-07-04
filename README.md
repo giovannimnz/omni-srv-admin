@@ -76,7 +76,20 @@ Cada domínio operacional fica isolado:
   - `fleet/podman-network` para o padrão de networking podman (containers.conf + netavark + aardvark + systemd-resolved) — **módulo novo 2026-06-16**
 - `remote-manager` para mounts/remotes/labels
 - `xrdp-abnt2` para teclado/desktop remoto
-- `fork-sync` para sincronização de forks
+- `managed-apps` para programas instalados, wrappers, post-install e runtime customizations
+- `fork-sync` para worktrees/forks sincronizados com upstream
+
+### 2.1. Separação formal: app instalado vs fork
+
+- `apps:` no inventário = runtime instalado naquele host
+- `forks:` no inventário = source tree local que segue upstream
+- Se um produto existe nas duas formas, registrar as duas faces
+
+Runbook:
+
+```text
+docs/operations/customization-governance.md
+```
 
 ### 3. Paths técnicos estáveis, labels humanos flexíveis
 

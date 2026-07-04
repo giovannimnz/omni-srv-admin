@@ -2,9 +2,17 @@ setup.py
 omni/__init__.py
 omni/__main__.py
 omni/cli.py
+omni/db_runtime.py
 omni/edge.py
 omni/fleet.py
 omni/fleet_backup.py
+omni/fleet_collectors.py
+omni/fleet_governance.py
+omni/fleet_security.py
+omni/landscape.py
+omni/managed_apps.py
+omni/observability.py
+omni/oci.py
 omni/podman_network.py
 omni/remote_manager.py
 omni/remote_ops.py

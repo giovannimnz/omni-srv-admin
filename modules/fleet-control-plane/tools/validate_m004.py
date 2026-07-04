@@ -24,11 +24,15 @@ TARGET_HOSTS = ("atius-srv-1", "atius-srv-2", "atius-srv-3")
 SERVER_HOST = "atius-srv-1"
 NODE_HOSTS = ("atius-srv-2", "atius-srv-3")
 FLEET_DATABASE = "DbOmniFleet"
+SYNCABLE_INVENTORY_HOSTS = tuple(
+    host_id for host_id, _, _, _ in fleet_module._inventory_host_records(syncable_only=True)
+)
 FLEET_TABLES = (
     "TbHosts",
     "TbNodes",
     "TbPrograms",
     "TbVersions",
+    "TbVersion",
     "TbUpdatePlans",
     "TbLicenses",
     "TbAuditEvents",
@@ -39,6 +43,9 @@ FLEET_TABLES = (
     "TbFleetCommands",
     "TbNodeTelemetry",
     "TbNodeResourcePolicies",
+    "TbManagedApps",
+    "TbManagedForks",
+    "TbCustomizationPolicies",
 )
 
 
@@ -75,6 +82,17 @@ def _blocked(id_: str, title: str, scope: str, evidence: list[str] | None = None
 
 def _warn(id_: str, title: str, scope: str, evidence: list[str] | None = None) -> ScenarioResult:
     return ScenarioResult(id_, title, "WARN", scope, evidence or [])
+
+
+def _parse_count_evidence(lines: list[str]) -> dict[str, int]:
+    counts: dict[str, int] = {}
+    for line in lines:
+        if "=" not in line:
+            continue
+        key, raw = line.split("=", 1)
+        if raw.isdigit():
+            counts[key] = int(raw)
+    return counts
 
 
 def _run(cmd: list[str], timeout: int = 20) -> tuple[int, str, str]:
@@ -516,23 +534,29 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         "test \"${PGHOST}:${PGPORT}\" = \"10.1.1.1:6432\"; "
         "psql -Atc \"select current_database() || chr(58) || current_user\"; "
         "psql -Atc \"select 'TbHosts=' || count(*) from \\\"TbHosts\\\" union all select 'TbNodes=' || count(*) from \\\"TbNodes\\\" order by 1\"; "
-        "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" union all select 'TbFleetCommands=' || count(*) from \\\"TbFleetCommands\\\" union all select 'TbNodeResourcePolicies=' || count(*) from \\\"TbNodeResourcePolicies\\\" union all select 'TbNodeTelemetry=' || count(*) from \\\"TbNodeTelemetry\\\" order by 1\""
+        "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" union all select 'TbFleetCommands=' || count(*) from \\\"TbFleetCommands\\\" union all select 'TbNodeResourcePolicies=' || count(*) from \\\"TbNodeResourcePolicies\\\" union all select 'TbNodeTelemetry=' || count(*) from \\\"TbNodeTelemetry\\\" union all select 'TbManagedApps=' || count(*) from \\\"TbManagedApps\\\" union all select 'TbManagedForks=' || count(*) from \\\"TbManagedForks\\\" union all select 'TbCustomizationPolicies=' || count(*) from \\\"TbCustomizationPolicies\\\" order by 1\""
     )
     code, stdout, stderr, rendered = _ssh(target, remote, timeout=20)
     evidence = stdout.splitlines() or [stderr]
+    counts = _parse_count_evidence(evidence)
+    has_expected_rows = (
+        counts.get("TbHosts", 0) >= len(SYNCABLE_INVENTORY_HOSTS)
+        and counts.get("TbNodes", 0) >= 3
+        and counts.get("TbOpsScopes", 0) >= 3
+        and counts.get("TbConfigItems", 0) >= len(SYNCABLE_INVENTORY_HOSTS) * 5
+        and counts.get("TbSlashCommands", 0) >= 7
+        and counts.get("TbSlashCommandBindings", 0) >= 18
+        and counts.get("TbFleetCommands", 0) >= 4
+        and counts.get("TbNodeResourcePolicies", 0) >= 3
+        and counts.get("TbManagedApps", 0) >= 1
+        and counts.get("TbManagedForks", 0) >= 1
+        and counts.get("TbCustomizationPolicies", 0) >= 1
+    )
     expected = {
         f"endpoint=10.1.1.1:6432/{FLEET_DATABASE}",
         f"{FLEET_DATABASE}:omni_fleet",
-        "TbHosts=3",
-        "TbNodes=3",
-        "TbOpsScopes=3",
-        "TbConfigItems=1",
-        "TbSlashCommands=6",
-        "TbSlashCommandBindings=18",
-        "TbFleetCommands=4",
-        "TbNodeResourcePolicies=3",
     }
-    result = _ok if code == 0 and expected.issubset(set(evidence)) else _fail
+    result = _ok if code == 0 and expected.issubset(set(evidence)) and has_expected_rows else _fail
     scenario = result(
         f"M004-LIVE-DB-{host_id}",
         f"{host_id} queries central {FLEET_DATABASE} DB through PgBouncer",

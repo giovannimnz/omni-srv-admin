@@ -44,6 +44,19 @@
 configurado declarativamente num arquivo `projects/<nome>/sync.yaml` e pode opcionalmente
 ter um `deploy.yaml` para build/push Docker.
 
+### Boundary with installed programs
+
+`fork-sync` governa o lane de source/upstream:
+
+- `upstream`
+- `protected_paths`
+- merge/deploy strategy
+- versioning / release notes / dry-run safety
+
+Ele **não** é o source of truth do runtime instalado no host. Quando um fork
+também alimenta um app real, o runtime continua descrito no inventário do host
+em `apps:`, e o worktree/fork entra em `forks:`.
+
 ```bash
 fork-sync projects list                          # ver todos os forks configurados
 fork-sync sync aionui --dry-run                  # simula merge com upstream

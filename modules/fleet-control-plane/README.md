@@ -14,6 +14,8 @@ shape and safe CLI surface.
 | `migrations/0001_fleet_control_plane.sql` | Initial PostgreSQL schema contract |
 | `migrations/0002_ops_config_slash_commands.sql` | Ops scopes, DB-backed config/parameters and CLI-Anything slash-command registry |
 | `migrations/0003_agent_executor_monitoring.sql` | Agent executor, command allowlist, telemetry and resource policies |
+| `migrations/0006_omni_version_inventory.sql` | Per-computer `omni-srv-admin` version table (`TbVersion`) with GitHub release fields |
+| `migrations/0007_customization_registry.sql` | Managed apps, forks and customization policy registry |
 | `../../docs/fleet/control-plane.md` | Architecture, runbook and human gates |
 | `../../cli/omni/fleet.py` | Safe CLI commands, local agent executor and fleet monitor |
 | `tools/validate_m004.py` | Offline contract validation and optional live read-only SRV probes |
@@ -36,7 +38,9 @@ PYTHONPATH=cli python3 -m omni fleet monitor hosts --json
 PYTHONPATH=cli python3 -m omni fleet programs --host atius-srv-1 --json
 PYTHONPATH=cli python3 -m omni fleet update-plan --host atius-srv-1 --program fork-sync --desired-version v4.1 --json
 PYTHONPATH=cli python3 -m omni fleet queue-update --host atius-srv-3 --program ubuntu-dark-theme --desired-version 24.04-v1 --command-key ubuntu-dark-theme.apply --json
-```
+PYTHONPATH=cli python3 -m omni fleet registry sync --all --json
+PYTHONPATH=cli python3 -m omni fleet registry show --host atius-srv-1 --json
+``` 
 
 `--apply` is intentionally blocked on `install` and legacy `update-plan`.
 Executable work goes through `queue-update` and the target host's local
@@ -84,6 +88,12 @@ modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-2
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-3
 ```
 
+Windows scheduled-task helper:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File modules/fleet-control-plane/windows/Install-OmniFleetAgentTask.ps1
+```
+
 Configure direct public-IP SSH fallback aliases:
 
 ```bash
@@ -101,6 +111,14 @@ ssh atius-srv-3-direct hostname
 - `DbOmniFleet` is the canonical PostgreSQL database for `omni-srv-admin`
   runtime state, ops scopes, config items, parameters and slash-command
   registry.
+- Migrations through `0007` define the live contract, including `TbVersion` for
+  per-computer `omni-srv-admin` installed/GitHub version tracking.
+- `modules/fleet-control-plane/configs/omni-version-matrix.json` defines the
+  desired release target and scheduler/command lane for SRV-1/SRV-2/SRV-3 and
+  `giovanni-w11-pc`.
+- Migration `0007` extends the canonical DB with `TbManagedApps`,
+  `TbManagedForks` and `TbCustomizationPolicies`, plus inventory mirrors in
+  `TbConfigItems`.
 - Migration `0003` is applied live: `TbFleetCommands=4`,
   `TbNodeResourcePolicies=3`; SRV-1 has live telemetry in `TbNodeTelemetry`.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points to PgBouncer at

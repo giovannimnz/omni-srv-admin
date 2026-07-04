@@ -47,9 +47,12 @@ done
 
 # Keep ABNT2 enforced during the whole XRDP session. This prevents client
 # layout autodetection or GUI tools from leaving the session in another layout.
-if [ -x "$HOME/bin/setxkbmap-abnt2.sh" ]; then
-    "$HOME/bin/setxkbmap-abnt2.sh" --watch &
-fi
+for abnt2_watchdog in "$HOME/.local/bin/setxkbmap-abnt2.sh" "$HOME/bin/setxkbmap-abnt2.sh"; do
+    if [ -x "$abnt2_watchdog" ]; then
+        "$abnt2_watchdog" --watch &
+        break
+    fi
+done
 
 # Start LXDE session
 exec startlxde

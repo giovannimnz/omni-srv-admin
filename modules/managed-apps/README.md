@@ -8,6 +8,14 @@ Canonical manifest:
 modules/managed-apps/configs/programs.json
 ```
 
+Boundary:
+
+- This module owns installed-program governance.
+- Upstream-following source forks belong to `modules/fork-sync/`.
+- If a product has both a runtime and a fork/worktree, keep both in inventory:
+  - `apps:` for the installed runtime
+  - `forks:` for the source/upstream lane
+
 Current managed set:
 
 - `brave-browser`: official Brave APT repository, snap forbidden, `chrome`, `google-chrome` and `google-chrome-stable` wrappers point to Brave in `/usr/local/bin` and `/usr/bin`.

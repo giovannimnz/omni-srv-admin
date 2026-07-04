@@ -226,6 +226,7 @@ def test_migration_schema_has_required_tables_and_secret_refs_only():
         "TbNodes",
         "TbPrograms",
         "TbVersions",
+        "TbVersion",
         "TbUpdatePlans",
         "TbLicenses",
         "TbAuditEvents",
@@ -246,6 +247,10 @@ def test_migration_schema_has_required_tables_and_secret_refs_only():
         "idempotency_key TEXT",
         "observer_host_id TEXT",
         "allowed_host_ids JSONB",
+        "component TEXT NOT NULL DEFAULT 'omni-srv-admin'",
+        "github_version TEXT",
+        "github_commit TEXT",
+        "git_dirty BOOLEAN NOT NULL DEFAULT false",
     ):
         assert column in schema
     for constraint in (
@@ -256,6 +261,8 @@ def test_migration_schema_has_required_tables_and_secret_refs_only():
         "IdxTbUpdatePlansAgentQueue",
         "UqTbConfigItemsScopeHostKeyNullSafe",
         "UqTbSlashCommandBindingsNullSafe",
+        "UqTbVersionHostComponent",
+        "IdxTbVersionGithubVersion",
     ):
         assert constraint in schema
     assert "secret_ref TEXT NOT NULL" in schema

@@ -427,11 +427,15 @@ ensure_abnt2_watchdog() {
 #!/bin/sh
 apply_abnt2() {
     command -v setxkbmap >/dev/null 2>&1 || return 0
+    if [ -z "${XAUTHORITY:-}" ] && [ -n "${HOME:-}" ]; then
+        export XAUTHORITY="${HOME}/.Xauthority"
+    fi
     setxkbmap -model pc105 -layout br -variant abnt2 -option -option lv3:ralt_switch >/dev/null 2>&1 || true
 }
 case "${1:-}" in
     --watch)
-        lock_file="/tmp/setxkbmap-abnt2-${USER:-ubuntu}.lock"
+        display_id=$(printf '%s' "${DISPLAY:-nodisplay}" | tr -c 'A-Za-z0-9_.-' '_')
+        lock_file="/tmp/setxkbmap-abnt2-${USER:-ubuntu}-${display_id}.lock"
         exec 9>"$lock_file" || exit 0
         flock -n 9 || exit 0
         while :; do
@@ -840,15 +844,15 @@ EOF
   rm -f "${background_panel}" "${panel}" "${status_panel}"
 
   local launchers=()
-  add_launcher_if_exists launchers pcmanfm.desktop
-  add_launcher_if_exists launchers chromium.desktop chromium_chromium.desktop google-chrome.desktop firefox.desktop
-  add_launcher_if_exists launchers code.desktop
-  add_launcher_if_exists launchers sublime_text.desktop
-  add_launcher_if_exists launchers codex-desktop.desktop
-  add_launcher_if_exists launchers hermes-os-dev.desktop
-  add_launcher_if_exists launchers lxterminal.desktop
-  add_launcher_if_exists launchers obsidian.desktop
-  add_launcher_if_exists launchers org.gnome.Screenshot.desktop gnome-screenshot.desktop
+  add_launcher_if_exists launchers pcmanfm.desktop || true
+  add_launcher_if_exists launchers chromium.desktop chromium_chromium.desktop google-chrome.desktop firefox.desktop || true
+  add_launcher_if_exists launchers code.desktop || true
+  add_launcher_if_exists launchers sublime_text.desktop || true
+  add_launcher_if_exists launchers codex-desktop.desktop || true
+  add_launcher_if_exists launchers hermes-os-dev.desktop || true
+  add_launcher_if_exists launchers lxterminal.desktop || true
+  add_launcher_if_exists launchers obsidian.desktop || true
+  add_launcher_if_exists launchers org.gnome.Screenshot.desktop gnome-screenshot.desktop || true
 
   cat >"${background_panel}" <<EOF
 # lxpanel full-width background panel. Managed by omni-srv-admin/dark-theme-ubuntu.

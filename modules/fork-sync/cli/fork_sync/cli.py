@@ -20,6 +20,7 @@ import click
 
 from fork_sync import __version__
 from fork_sync.core.config import REPO_ROOT, PROJECTS_DIR
+from fork_sync.core.db_registry import registry_rows_for_project
 from fork_sync.core.registry import list_projects, load_project, project_exists
 from fork_sync.core.sync_runner import run_sync, run_detect, run_deploy
 from fork_sync.core.automerge import run_sync_all
@@ -129,21 +130,28 @@ def projects():
 
 @projects.command("list")
 @click.option("--enabled-only", is_flag=True, help="Mostra só projetos ativos.")
+@click.option("--db-host", "db_hosts", multiple=True, help="Enriquece com placements do DbOmniFleet para os hosts informados.")
 @handle_error
-def projects_list(enabled_only):
+def projects_list(enabled_only, db_hosts):
     """Lista todos os forks configurados."""
     items = list_projects(only_enabled=enabled_only)
+    if db_hosts:
+        for item in items:
+            item["db_registry"] = registry_rows_for_project(item["name"], list(db_hosts))
     output(items, f"{len(items)} projeto(s) configurado(s):")
 
 
 @projects.command("show")
 @click.argument("name")
+@click.option("--db-host", "db_hosts", multiple=True, help="Enriquece com placements do DbOmniFleet para os hosts informados.")
 @handle_error
-def projects_show(name):
+def projects_show(name, db_hosts):
     """Mostra detalhes de um projeto (sync.yaml + deploy.yaml se existir)."""
     if not project_exists(name):
         raise FileNotFoundError(f"Projeto '{name}' não encontrado em {PROJECTS_DIR}")
     cfg = load_project(name)
+    if db_hosts:
+        cfg["db_registry"] = registry_rows_for_project(name, list(db_hosts))
     output(cfg, f"Projeto: {name}")
 
 

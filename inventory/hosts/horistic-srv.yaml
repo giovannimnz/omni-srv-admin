@@ -12,8 +12,10 @@ platform:
   provider: oracle-oci
   os: ubuntu-24.04
   arch: arm64
+  desktop: lxde-xrdp
 status: active
-modules: []
+modules:
+  - xrdp-abnt2
 apps:
   - id: pm2-ubuntu
     runtime: systemd
@@ -58,6 +60,9 @@ network:
   tailscale_fallback: true
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
+  knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
+  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), base config and profiles; no active GSD agent service_tier entries found."
   last_readdressed: 2026-06-17
   readdress_note: "Moved from 10.1.1.3 to 10.1.1.4 (initial); renamed host from horistic-srv-1 to horistic-srv on 2026-06-17; unique Horistic WireGuard key retained because attached peer4 key conflicts with active GIOVANNI-W11-PC key."
   wireguard_key_rotated: 2026-06-17

@@ -20,7 +20,7 @@ from pathlib import Path
 
 import click
 
-REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
+REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 MODULE = REPO / "modules" / "fleet" / "podman-network"
 SCRIPTS = MODULE / "scripts"
 

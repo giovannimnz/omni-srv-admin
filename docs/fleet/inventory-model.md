@@ -28,6 +28,20 @@ status: active
 modules:
   - srv1-ops
   - xrdp-abnt2
+apps:
+  - id: router-ai-atius
+    runtime: podman
+    managed_by: omni-srv-admin
+forks:
+  - id: router-ai-atius
+    canonical_product_id: router-ai-atius
+    sync_project: atius-router
+    local_path: /home/ubuntu/GitHub/containers/router-ai-atius
+    sync_manifest: modules/fork-sync/projects/atius-router/sync.yaml
+database:
+  target: DbOmniFleet
+  endpoint: 10.1.1.1:6432
+  transport: PgBouncer
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
@@ -49,9 +63,48 @@ notes:
 | `platform` | sim | provider/OS/arch/device |
 | `status` | sim | active, planned, template, retired |
 | `modules` | não | módulos aplicáveis |
+| `apps` | não | programas/runtimes instalados e geridos pelo omni |
+| `forks` | não | worktrees/forks locais que seguem upstream |
+| `database` | não | contrato do `DbOmniFleet`/PgBouncer para aquele host |
 | `constraints` | não | restrições do host |
 | `logs` | não | padrão local de logs |
 | `backup` | não | destino e política |
+
+## Regra obrigatória para Ubuntu 24+ com XRDP
+
+Se o host é Ubuntu 24.04+ e terá desktop humano via XRDP, o inventário deve
+declarar explicitamente:
+
+```yaml
+platform:
+  desktop: lxde-xrdp
+modules:
+  - xrdp-abnt2
+```
+
+Isso marca o host como participante do patch persistente controlado por
+`omni-srv-admin` para teclado PT-BR ABNT2, Xvnc/XRDP e smoke peer com
+`xfreerdp`.
+
+## Regra formal de separação
+
+- `apps` = programa instalado / runtime ativo no host.
+- `forks` = worktree local que segue upstream e preserva customizações.
+- Se o mesmo produto existe nas duas formas:
+  - o runtime entra em `apps`
+  - o source/upstream entra em `forks`
+  - cruzar por `runtime_app_id`, `canonical_product_id` e `sync_project`
+
+Exemplos:
+
+- `router-ai-atius` runtime em `apps`
+- `router-ai-atius` metadata de upstream em `forks:`
+- `sync_project: atius-router` quando o id lógico do `fork-sync` diverge do nome canônico do produto
+- componentes auxiliares como `atius-router-docs` podem morar em `components:` do fork canônico
+
+- `wayland` runtime source-standalone em `apps`
+- sem `forks`, porque o caso dele fica no lane de runtime instalado, não em
+  `modules/fork-sync`
 
 ## Remote schema v0
 

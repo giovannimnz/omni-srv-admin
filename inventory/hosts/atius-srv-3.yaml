@@ -12,8 +12,10 @@ platform:
   provider: oracle-oci
   os: ubuntu-24.04
   arch: arm64
+  desktop: lxde-xrdp
 status: active
-modules: []
+modules:
+  - xrdp-abnt2
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
@@ -28,6 +30,39 @@ cleanup:
     - inviolable-watchdog.timer active but service fails with status 203/EXEC because /home/ubuntu/scripts/inviolable-watchdog.sh is absent
     - 10.1.1.7 is retained as K3s/etcd compatibility alias after 2026-06-17 readdress to 10.1.1.3
 apps:
+  - id: omni-srv-admin
+    runtime: git-worktree
+    install_type: source-git-release-managed
+    install_path: /home/ubuntu/GitHub/omni-srv-admin
+    current_version: "inventory-managed"
+    desired_version: "matrix-managed"
+    source: "https://github.com/giovannimnz/omni-srv-admin"
+    managed_by: "omni-srv-admin"
+    update_policy: "release-auto-update"
+    scheduler: omni-fleet-agent.service
+    version_matrix: modules/fleet-control-plane/configs/omni-version-matrix.json
+    notes:
+      - "Auto-update target governed by TbVersion + omni version matrix."
+      - "Agent executor may stash local dirty work before switching back to main/release target."
+  - id: wayland
+    runtime: systemd
+    unit: wayland.service
+    install_type: source-standalone-managed-runtime
+    install_path: /home/ubuntu/GitHub/wayland/dist-server/server.mjs
+    source_repo_path: /home/ubuntu/GitHub/wayland
+    current_version: "0.11.9"
+    desired_version: "0.11.9"
+    source: "https://github.com/FerroxLabs/wayland"
+    public_url: https://wayland.atius.com.br/
+    healthcheck_url: http://127.0.0.1:25808/api/auth/status
+    managed_by: "omni-srv-admin"
+    update_policy: "source-rebuild-postinstall"
+    customization_entrypoint: /home/ubuntu/GitHub/omni-srv-admin/modules/fleet/scripts/wayland-srv3-update.sh
+    last_audited: "2026-07-03"
+    notes:
+      - "WebUI login defaults to pt-BR when no saved language exists."
+      - "Conversar na pasta defaults to /home/ubuntu/GitHub."
+      - "Source patch stays in ~/GitHub/wayland; runtime rebuild/reapply ownership stays in omni-srv-admin."
   - id: rust-toolchain
     runtime: local-rustup
     install_type: rustup-managed
@@ -119,8 +154,16 @@ apps:
       - "noVNC interno/VPN em http://10.1.1.3:6081/; URL publica em https://remote.atius.com.br/mt5/1/."
       - "Apache/Cloudflare ficam no atius-srv-1; VNC puro fica privado no container."
       - "Autenticacao publica de /mt5/<id> deve passar pelo gate SSO do SRV-1 (modules/mt5-remote-auth), usando auth-token + /v1/auth/me; nao criar novos Basic Auth por rota."
+database:
+  target: DbOmniFleet
+  endpoint: 10.1.1.1:6432
+  transport: PgBouncer
+  configured: true
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
+  knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
+  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), base config and profiles; no active GSD agent service_tier entries found."
   last_readdressed: 2026-06-17
   readdress_note: "WireGuard routes 10.1.1.3 and 10.1.1.7 to this host; DNS canon is 10.1.1.3, K3s node-ip remains 10.1.1.7 until etcd member URL migration."
   wireguard_key_rotated: 2026-06-17

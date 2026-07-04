@@ -12,10 +12,10 @@ from typing import Any
 
 import click
 
-from omni.fleet import _host_id, _load_host, _nested
+from omni.fleet import _db_env, _host_id, _load_host, _nested, _psql_json, _sql_literal
 
 
-REPO = Path(os.environ.get("OMNI_SRV_ADMIN", "/home/ubuntu/GitHub/omni-srv-admin"))
+REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 MANIFEST_PATH = REPO / "modules" / "managed-apps" / "configs" / "programs.json"
 SCRIPT_PATH = REPO / "modules" / "managed-apps" / "scripts" / "omni-managed-apps"
 OMNI_APP_FIX = Path.home() / ".local" / "bin" / "omni-app-fix"
@@ -42,13 +42,15 @@ def _programs(manifest: dict[str, Any]) -> dict[str, dict[str, Any]]:
     return {str(key): value for key, value in programs.items() if isinstance(value, dict)}
 
 
-def _select_apps(manifest: dict[str, Any], app: str) -> list[str]:
+def _select_apps(manifest: dict[str, Any], app: str, *, allow_unknown: bool = False) -> list[str]:
     programs = _programs(manifest)
     if app in {"all", "*"}:
         return list(programs)
     selected = [item.strip() for item in app.split(",") if item.strip()]
     unknown = [item for item in selected if item not in programs]
     if unknown:
+        if allow_unknown:
+            return selected
         raise click.ClickException(f"app não gerenciado: {', '.join(unknown)}")
     return selected
 
@@ -557,6 +559,56 @@ def _emit_rows(rows: list[dict[str, Any]], json_output: bool) -> None:
             click.echo(f"  appearance: {'ok' if appearance.get('ok') else 'drift'} {appearance.get('key')}={appearance.get('actual')!r}")
 
 
+def _db_registry_rows(host_id: str, selected: list[str]) -> list[dict[str, Any]]:
+    if not selected:
+        return []
+    selected_sql = ", ".join(_sql_literal(item) for item in selected)
+    payload = _psql_json(
+        f"""
+SELECT COALESCE(jsonb_agg(
+    jsonb_build_object(
+        'app', app_id,
+        'canonical_product_id', canonical_product_id,
+        'runtime', runtime,
+        'install_type', install_type,
+        'current_version', current_version,
+        'desired_version', desired_version,
+        'update_policy', update_policy,
+        'public_url', public_url,
+        'healthcheck_url', healthcheck_url,
+        'managed_by', managed_by,
+        'metadata', metadata
+    ) ORDER BY app_id
+), '[]'::jsonb)
+FROM "TbManagedApps"
+WHERE host_id = '{host_id.replace("'", "''")}'
+  AND app_id IN ({selected_sql});
+""",
+        env=_db_env(),
+    )
+    rows = payload if isinstance(payload, list) else []
+    manifest = _load_manifest()
+    programs = _programs(manifest)
+    normalized: list[dict[str, Any]] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        app_name = str(row.get("app") or "")
+        manifest_app = programs.get(app_name, {})
+        desired = str(manifest_app.get("desired_version") or row.get("desired_version") or "")
+        current = str(row.get("current_version") or "")
+        normalized.append(
+            {
+                **row,
+                "desired_version": desired,
+                "version_ok": bool(current) and (not desired or current == desired),
+                "ok": True if not desired else current == desired,
+                "source": "DbOmniFleet",
+            }
+        )
+    return normalized
+
+
 def _emit_config_rows(rows: list[dict[str, Any]], json_output: bool) -> None:
     if json_output:
         click.echo(json.dumps(rows, indent=2, sort_keys=True))
@@ -1059,17 +1111,25 @@ def upgrade(app: str, yes: bool) -> None:
 @managed_apps.command("fleet-status")
 @click.option("--app", default="all", help="App, lista separada por vírgula, ou all.")
 @click.option("--host", "hosts", multiple=True, help="Host do inventário. Default: target_hosts do manifesto.")
+@click.option("--db", "use_db", is_flag=True, help="Lê snapshot do DbOmniFleet em vez de probe SSH.")
 @click.option("--json", "json_output", is_flag=True, help="Emite JSON.")
-def fleet_status(app: str, hosts: tuple[str, ...], json_output: bool) -> None:
+def fleet_status(app: str, hosts: tuple[str, ...], use_db: bool, json_output: bool) -> None:
     """Executa probe remoto via SSH nos hosts selecionados."""
     manifest = _load_manifest()
-    selected = _select_apps(manifest, app)
+    selected = _select_apps(manifest, app, allow_unknown=use_db)
     host_ids = list(hosts) or [str(item) for item in manifest.get("target_hosts", [])]
     payloads = []
     for host_id in host_ids:
         path, host, _ = _load_host(host_id)
         ssh_target = _nested(host, "access", "ssh")
         item: dict[str, Any] = {"host": _host_id(host, path.stem), "ssh": ssh_target, "ok": False}
+        if use_db:
+            rows = _db_registry_rows(item["host"], selected)
+            item["apps"] = rows
+            item["ok"] = all(row.get("ok") for row in rows) if rows else False
+            item["source"] = "DbOmniFleet"
+            payloads.append(item)
+            continue
         if not ssh_target:
             item["error"] = "ssh target ausente no inventário"
             payloads.append(item)
@@ -1113,6 +1173,15 @@ def fleet_status(app: str, hosts: tuple[str, ...], json_output: bool) -> None:
             continue
         for row in payload.get("apps", []):
             click.echo(f"  {row['app']}: {'ok' if row.get('ok') else 'drift'}")
+
+
+@managed_apps.command("registry-status")
+@click.option("--app", default="all", help="App, lista separada por vírgula, ou all.")
+@click.option("--host", "hosts", multiple=True, help="Host do inventário. Default: target_hosts do manifesto.")
+@click.option("--json", "json_output", is_flag=True, help="Emite JSON.")
+def registry_status(app: str, hosts: tuple[str, ...], json_output: bool) -> None:
+    """Lê apenas o registry de apps do DbOmniFleet."""
+    fleet_status.callback(app=app, hosts=hosts, use_db=True, json_output=json_output)
 
 
 @managed_apps.command("fleet-config-status")

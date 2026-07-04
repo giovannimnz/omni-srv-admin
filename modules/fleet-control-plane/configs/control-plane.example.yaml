@@ -14,6 +14,7 @@ database:
     - ops-scopes
     - config-items
     - runtime-parameters
+    - omni-srv-admin-version-inventory
     - slash-command-registry
   migrations_dir: modules/fleet-control-plane/migrations
   direct_access:

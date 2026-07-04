@@ -8,6 +8,20 @@ Source of truth:
 modules/managed-apps/configs/programs.json
 ```
 
+Boundary:
+
+- `managed-apps` owns installed programs, wrappers, policies, post-install fixups
+  and runtime customizations for packaged/manual apps.
+- `fork-sync` owns source forks that follow upstream and preserve code deltas.
+- If one product has both forms, inventory must record both:
+  - `apps:` for the installed runtime
+  - `forks:` for the source/upstream lane
+
+Cross-reference:
+
+- `docs/operations/customization-governance.md`
+- `docs/operations/wayland-managed-runtime.md`
+
 Local checks:
 
 ```bash
