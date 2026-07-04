@@ -14,7 +14,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="omni",
-    version="0.1.0",
+    version="0.2.0",
     author="Giovanni Muniz",
     author_email="munizgiovanni@hotmail.com",
     description="CLI unificada para administração de servidores e gestão de forks",
