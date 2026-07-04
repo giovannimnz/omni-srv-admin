@@ -15,10 +15,15 @@ that make that runtime operable.
 - The post-install/update contract lives in the source repo scripts
   `scripts/atius-*.sh` plus the patch file
   `patches/atius-webui-workspace-visible.patch`.
+- `scripts/atius-refresh-source-patch.sh` must keep
+  `patches/atius-webui-workspace-visible.patch` aligned with the latest ATIUS
+  delta against `upstream/main`; protecting the patch file alone is not enough.
 - The generated `.atius-overlay/` directory is build output only and must stay
   untracked; source-of-truth is the patch/scripts/docs that recreate it.
 - `Conversar na pasta` must stay visible in the WebUI and default to
   `/home/ubuntu/GitHub`.
+- `Conversar na pasta` must also open the browser directory picker in WebUI
+  mode; it cannot silently depend on the native Electron dialog path.
 - The login screen defaults to `pt-BR` when there is no saved language.
 - Codex must remain detectable in ACP mode on the server runtime, and the GUID
   model picker must keep the selected model label even before
@@ -39,6 +44,7 @@ that make that runtime operable.
 - `scripts/atius-apply-source-patch.sh`
 - `scripts/atius-build-renderer-overlay.sh`
 - `scripts/atius-postinstall-hook.sh`
+- `scripts/atius-refresh-source-patch.sh`
 - `scripts/atius-reapply-renderer-overlay.sh`
 - `scripts/atius-update.sh`
 - `scripts/install-ubuntu.sh`
@@ -50,11 +56,14 @@ that make that runtime operable.
 - `src/process/utils/initStorage.ts`
 - `src/process/utils/shellEnv.ts`
 - `src/process/webserver/routes/apiRoutes.ts`
+- `src/process/webserver/websocket/WebSocketManager.ts`
 - `src/renderer/components/settings/DirectorySelectionModal.tsx`
 - `src/renderer/hooks/file/useDirectorySelection.tsx`
 - `src/renderer/pages/guid/components/GuidActionRow.tsx`
 - `src/renderer/pages/guid/components/GuidModelSelector.tsx`
 - `src/renderer/services/i18n/index.ts`
+- `tests/unit/WebSocketManager.test.ts`
+- `tests/unit/renderer/GuidActionRow.dom.test.tsx`
 - `tests/unit/renderer/guid/firstSafeCuratedModel.test.ts`
 - `docs/README.md`
 - `docs/guides/atius-fork-runtime.md`
@@ -64,6 +73,8 @@ that make that runtime operable.
 Run from `/home/ubuntu/GitHub/wayland` after any upstream merge:
 
 ```bash
+bash scripts/atius-refresh-source-patch.sh --commit-if-changed
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
@@ -75,6 +86,7 @@ journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "Agen
 
 Expected result:
 
+- patch file refreshed/committed when upstream context drifted,
 - `vitest` passes.
 - `typecheck` passes.
 - `wayland.service` is `active`.

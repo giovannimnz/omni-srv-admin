@@ -23,6 +23,7 @@ protected_paths:
   - scripts/atius-apply-source-patch.sh
   - scripts/atius-build-renderer-overlay.sh
   - scripts/atius-postinstall-hook.sh
+  - scripts/atius-refresh-source-patch.sh
   - scripts/atius-reapply-renderer-overlay.sh
   - scripts/atius-update.sh
   - scripts/install-ubuntu.sh
@@ -34,11 +35,14 @@ protected_paths:
   - src/process/utils/initStorage.ts
   - src/process/utils/shellEnv.ts
   - src/process/webserver/routes/apiRoutes.ts
+  - src/process/webserver/websocket/WebSocketManager.ts
   - src/renderer/components/settings/DirectorySelectionModal.tsx
   - src/renderer/hooks/file/useDirectorySelection.tsx
   - src/renderer/pages/guid/components/GuidActionRow.tsx
   - src/renderer/pages/guid/components/GuidModelSelector.tsx
   - src/renderer/services/i18n/index.ts
+  - tests/unit/WebSocketManager.test.ts
+  - tests/unit/renderer/GuidActionRow.dom.test.tsx
   - tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
   - docs/README.md
   - docs/guides/atius-fork-runtime.md
@@ -49,6 +53,12 @@ post_sync:
   run_on:
     - merged
   commands:
+    - name: refresh-source-patch
+      command:
+        - bash
+        - scripts/atius-refresh-source-patch.sh
+        - --commit-if-changed
+      cwd: /home/ubuntu/GitHub/wayland
     - name: rebuild-managed-runtime
       command:
         - bash

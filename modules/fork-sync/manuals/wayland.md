@@ -70,7 +70,10 @@ Os paths protegidos carregam 4 grupos de customização:
    `patches/atius-webui-workspace-visible.patch`,
    `src/renderer/components/settings/DirectorySelectionModal.tsx`,
    `src/renderer/hooks/file/useDirectorySelection.tsx`,
-   `src/renderer/pages/guid/components/GuidActionRow.tsx`.
+   `src/renderer/pages/guid/components/GuidActionRow.tsx`,
+   `src/process/webserver/websocket/WebSocketManager.ts`,
+   `tests/unit/WebSocketManager.test.ts`,
+   `tests/unit/renderer/GuidActionRow.dom.test.tsx`.
 3. Codex ACP e boot/runtime hardening:
    `src/process/agent/acp/AcpDetector.ts`,
    `src/process/utils/shellEnv.ts`,
@@ -84,7 +87,29 @@ Os paths protegidos carregam 4 grupos de customização:
 4. Documentação do fork:
    `docs/README.md`, `docs/guides/atius-fork-runtime.md`, `.gitignore`.
 
-## 6. Rebuild e pós-sync
+## 6. Patch refresh
+
+Além de proteger os arquivos, o lane agora também atualiza a personalização
+reaplicável. O script canônico é:
+
+```bash
+bash scripts/atius-refresh-source-patch.sh
+```
+
+Ele regenera `patches/atius-webui-workspace-visible.patch` a partir do delta
+atual entre `HEAD` e `upstream/main`, limitado aos arquivos do browser picker
+que o auto-patcher sabe reaplicar.
+
+No `fork-sync`, o `post_sync` roda:
+
+```bash
+bash scripts/atius-refresh-source-patch.sh --commit-if-changed
+```
+
+Se o merge com upstream mexer no contexto do patch, o arquivo é atualizado e
+checkpointado em commit local antes do rebuild do runtime.
+
+## 7. Rebuild e pós-sync
 
 Após merge real, o `post_sync` roda:
 
@@ -99,10 +124,12 @@ Esse hook:
 - rebuilda renderer + `dist-server`;
 - reinicia `wayland.service`.
 
-## 7. Validações pós-sync
+## 8. Validações pós-sync
 
 ```bash
 cd /home/ubuntu/GitHub/wayland
+bash scripts/atius-refresh-source-patch.sh --commit-if-changed
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
@@ -112,17 +139,20 @@ curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
 journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 3 agents|Serving renderer|WebUI running"
 ```
 
-## 8. Guardrails
+## 9. Guardrails
 
 - Não commitar `.atius-overlay/`; é artefato gerado.
 - Não apontar `origin` para `FerroxLabs/wayland` quando o objetivo for publicar
   customização ATIUS.
+- Não manter `patches/atius-webui-workspace-visible.patch` stale; regenere com
+  `scripts/atius-refresh-source-patch.sh` sempre que mudar a personalização do
+  browser picker.
 - Não remover `protected_paths` só porque upstream convergiu visualmente; validar
   antes o comportamento em `wayland.atius.com.br`.
 - Não trocar o post-install hook do runtime sem atualizar o inventário do
   `atius-srv-3` e `docs/operations/wayland-managed-runtime.md`.
 
-## 9. Histórico do manual
+## 10. Histórico do manual
 
 | Versão | Data | Mudança |
 |--------|------|---------|
