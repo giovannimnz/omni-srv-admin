@@ -53,6 +53,8 @@ values = {
     "CFG_FORK_REPO": sync.get("fork_repo", ""),
     "CFG_IMAGE": deploy.get("image", ""),
     "CFG_HEALTH_ENDPOINT": deploy.get("health_endpoint", ""),
+    "CFG_HEALTH_ATTEMPTS": deploy.get("health_attempts", 30),
+    "CFG_HEALTH_INTERVAL_SECONDS": deploy.get("health_interval_seconds", 2),
     "CFG_RESOURCE_PROFILE": deploy.get("resource_profile", "builds"),
     "CFG_BUILD_WRAPPER": deploy.get("build_wrapper", ""),
     "CFG_CONTAINER_NAME": deploy.get("container_name", ""),
@@ -142,9 +144,22 @@ fi
 
 if [[ -n "$CFG_HEALTH_ENDPOINT" ]]; then
   if [[ "$DRY_RUN" -eq 1 ]]; then
-    echo "DRY curl -fsS $CFG_HEALTH_ENDPOINT"
+    echo "DRY curl -fsS --retry $CFG_HEALTH_ATTEMPTS $CFG_HEALTH_ENDPOINT"
   else
-    curl -fsS "$CFG_HEALTH_ENDPOINT" >/tmp/fork-sync-deploy-health.json
+    HEALTH_OK=0
+    for attempt in $(seq 1 "$CFG_HEALTH_ATTEMPTS"); do
+      if curl -fsS "$CFG_HEALTH_ENDPOINT" >/tmp/fork-sync-deploy-health.json; then
+        HEALTH_OK=1
+        break
+      fi
+      if [[ "$attempt" -lt "$CFG_HEALTH_ATTEMPTS" ]]; then
+        sleep "$CFG_HEALTH_INTERVAL_SECONDS"
+      fi
+    done
+    if [[ "$HEALTH_OK" -ne 1 ]]; then
+      echo "healthcheck failed after ${CFG_HEALTH_ATTEMPTS} attempts: $CFG_HEALTH_ENDPOINT" >&2
+      exit 22
+    fi
     echo "health_endpoint=$CFG_HEALTH_ENDPOINT"
     echo "health_output=/tmp/fork-sync-deploy-health.json"
   fi
