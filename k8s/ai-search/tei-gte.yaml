@@ -32,9 +32,9 @@ metadata:
     app.kubernetes.io/component: embeddings-backend
     app.kubernetes.io/part-of: local-ai-embeddings
   annotations:
-    embeddings.atius.com.br/public-alias: embedding-pt-v1
+    embeddings.atius.com.br/public-alias: embedding-gte-v1
     embeddings.atius.com.br/model-id: Alibaba-NLP/gte-multilingual-base
-    embeddings.atius.com.br/served-model-name: text-embeddings-inference
+    embeddings.atius.com.br/served-model-name: embedding-gte-v1
     embeddings.atius.com.br/dimensions: "768"
     embeddings.atius.com.br/revision: main
     embeddings.atius.com.br/revision-note: pin-to-huggingface-commit-after-first-live-validation
@@ -87,7 +87,7 @@ spec:
             - --tokenization-workers
             - "1"
             - --served-model-name
-            - text-embeddings-inference
+            - embedding-gte-v1
             - --hostname
             - 10.1.1.4
             - --port
@@ -106,7 +106,7 @@ spec:
             - name: MODEL_ID
               value: Alibaba-NLP/gte-multilingual-base
             - name: SERVED_MODEL_NAME
-              value: text-embeddings-inference
+              value: embedding-gte-v1
             - name: HUGGINGFACE_HUB_CACHE
               value: /data
           ports:

@@ -14,6 +14,7 @@ from fork_sync.core.registry import load_project
 
 GIT_TIMEOUT = int(os.environ.get("FORK_SYNC_GIT_TIMEOUT", "120"))
 HOOK_TIMEOUT = int(os.environ.get("FORK_SYNC_HOOK_TIMEOUT", "900"))
+SCRIPT_TIMEOUT = int(os.environ.get("FORK_SYNC_SCRIPT_TIMEOUT", "600"))
 
 
 def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> dict:
@@ -36,7 +37,7 @@ def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> di
             text=True,
             cwd=str(cwd) if cwd else str(REPO_ROOT),
             env=env,
-            timeout=600,
+            timeout=SCRIPT_TIMEOUT,
         )
         return {
             "status": "success" if proc.returncode == 0 else "error",
@@ -46,7 +47,7 @@ def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> di
             "command": " ".join(cmd),
         }
     except subprocess.TimeoutExpired:
-        return {"status": "timeout", "error": "timeout após 600s", "command": " ".join(cmd)}
+        return {"status": "timeout", "error": f"timeout após {SCRIPT_TIMEOUT}s", "command": " ".join(cmd)}
     except Exception as exc:  # pragma: no cover - defensive path
         return {"status": "error", "error": str(exc), "command": " ".join(cmd)}
 
