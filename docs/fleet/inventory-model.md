@@ -103,8 +103,8 @@ Exemplos:
 - componentes auxiliares como `atius-router-docs` podem morar em `components:` do fork canônico
 
 - `wayland` runtime source-standalone em `apps`
-- sem `forks`, porque o caso dele fica no lane de runtime instalado, não em
-  `modules/fork-sync`
+- `wayland` source/upstream lane em `forks:` quando o checkout local também
+  precisa preservar patch próprio contra updates do upstream
 
 ## Remote schema v0
 

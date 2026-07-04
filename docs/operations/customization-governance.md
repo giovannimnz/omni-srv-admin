@@ -95,10 +95,13 @@ Regra operacional:
 
 ## Regra do Wayland
 
-`wayland.atius.com.br` fica no lane de runtime instalado.
+`wayland.atius.com.br` fica em lane duplo:
 
+- runtime instalado em `apps:`
+- source/upstream em `forks:` com `sync_project=wayland`
 - source: `~/GitHub/wayland`
 - rebuild/reapply owner: `omni-srv-admin`
+- sync manifest: `modules/fork-sync/projects/wayland/sync.yaml`
 - entrypoints canônicos:
 
 ```bash
@@ -108,8 +111,8 @@ bash modules/fleet/scripts/wayland-srv3-update.sh
 bash modules/fleet/scripts/wayland-srv3-update.sh --pull
 ```
 
-O patch de source continua no repo do Wayland, mas o contrato de runtime não
-fica mais “owned” por ele.
+O patch de source continua no repo do Wayland, mas o contrato do runtime e o
+contrato de sync ficam explicitamente descritos no `omni-srv-admin`.
 
 ## Banco do Omni
 

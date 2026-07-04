@@ -1,0 +1,129 @@
+---
+project: wayland
+version: 1
+created: 2026-07-04
+last_updated: 2026-07-04
+owner_module: omni-srv-admin/modules/fork-sync
+---
+
+# Manual de Atualização — wayland
+
+## 1. Objetivo
+
+`wayland` é o checkout source-of-truth do runtime servido em
+`https://wayland.atius.com.br/` no `atius-srv-3`. O runtime é standalone-source:
+o serviço systemd executa `dist-server/server.mjs` construído a partir do
+checkout local, com patch/source overlay próprio da ATIUS.
+
+## 2. Source of Truth
+
+| Item | Path |
+|---|---|
+| Config do projeto | `projects/wayland/sync.yaml` |
+| Guard rail operacional | `projects/wayland/UPSTREAM-SYNC-GUARDS.md` |
+| Fork local | `/home/ubuntu/GitHub/wayland` |
+| Runtime systemd | `wayland.service` |
+| Entry-point do runtime | `/home/ubuntu/GitHub/wayland/dist-server/server.mjs` |
+| Upstream | `https://github.com/FerroxLabs/wayland` |
+| Fork GitHub pretendido | `https://github.com/giovannimnz/wayland` |
+
+## 3. Estado atual
+
+- O runtime ativo roda com `User=wayland`, `PORT=25808` e
+  `WAYLAND_DISABLE_AUTO_UPDATE=1`.
+- `Conversar na pasta` fica visível no WebUI e usa `/home/ubuntu/GitHub` como
+  diretório inicial.
+- Sem preferência salva, a tela de login entra em `pt-BR`.
+- A detecção ACP do servidor encontra `Wayland Core`, `Gemini CLI` e `Codex`.
+- Em 2026-07-04 o repositório público `giovannimnz/wayland` ainda não existia e
+  o `gh auth status` do host estava inválido, então o lane GitHub do fork segue
+  pendente de publicação.
+
+## 4. Rotina de sync
+
+Dry-run:
+
+```bash
+cd /home/ubuntu/GitHub/omni-srv-admin
+PYTHONPATH=modules/fork-sync/cli python3 -m fork_sync --json sync wayland --dry-run
+```
+
+Apply:
+
+```bash
+cd /home/ubuntu/GitHub/omni-srv-admin
+PYTHONPATH=modules/fork-sync/cli python3 -m fork_sync sync wayland
+```
+
+`auto_push` fica `false` por enquanto. O objetivo do projeto é preservar o lane
+local com `protected_paths` e rebuild do runtime após merges; publicação do fork
+GitHub fica como passo separado quando `giovannimnz/wayland` existir.
+
+## 5. Protected paths
+
+Os paths protegidos carregam 4 grupos de customização:
+
+1. Runtime standalone source:
+   `package.json`, `scripts/build-server.mjs`, `scripts/build-mcp-servers.js`,
+   `scripts/install-ubuntu.sh`, `scripts/atius-*.sh`, `atius-overlay.json`.
+2. Patch/source overlay do WebUI:
+   `patches/atius-webui-workspace-visible.patch`,
+   `src/renderer/components/settings/DirectorySelectionModal.tsx`,
+   `src/renderer/hooks/file/useDirectorySelection.tsx`,
+   `src/renderer/pages/guid/components/GuidActionRow.tsx`.
+3. Codex ACP e boot/runtime hardening:
+   `src/process/agent/acp/AcpDetector.ts`,
+   `src/process/utils/shellEnv.ts`,
+   `src/process/webserver/routes/apiRoutes.ts`,
+   `src/process/extensions/resolvers/ChannelPluginResolver.ts`,
+   `src/process/extensions/data/bundle-vendored/agentProfileMerge.ts`,
+   `src/process/utils/initStorage.ts`,
+   `src/renderer/pages/guid/components/GuidModelSelector.tsx`,
+   `src/renderer/services/i18n/index.ts`,
+   `tests/unit/renderer/guid/firstSafeCuratedModel.test.ts`.
+4. Documentação do fork:
+   `docs/README.md`, `docs/guides/atius-fork-runtime.md`, `.gitignore`.
+
+## 6. Rebuild e pós-sync
+
+Após merge real, o `post_sync` roda:
+
+```bash
+bash scripts/atius-postinstall-hook.sh
+```
+
+Esse hook:
+
+- garante ACL/permissões para `User=wayland`;
+- escreve o override `wayland.service.d/atius-overlay.conf`;
+- rebuilda renderer + `dist-server`;
+- reinicia `wayland.service`.
+
+## 7. Validações pós-sync
+
+```bash
+cd /home/ubuntu/GitHub/wayland
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+npm run typecheck
+bash scripts/atius-build-renderer-overlay.sh
+sudo systemctl restart wayland.service
+systemctl is-active wayland.service
+curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
+journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 3 agents|Serving renderer|WebUI running"
+```
+
+## 8. Guardrails
+
+- Não commitar `.atius-overlay/`; é artefato gerado.
+- Não apontar `origin` para `FerroxLabs/wayland` quando o objetivo for publicar
+  customização ATIUS.
+- Não remover `protected_paths` só porque upstream convergiu visualmente; validar
+  antes o comportamento em `wayland.atius.com.br`.
+- Não trocar o post-install hook do runtime sem atualizar o inventário do
+  `atius-srv-3` e `docs/operations/wayland-managed-runtime.md`.
+
+## 9. Histórico do manual
+
+| Versão | Data | Mudança |
+|--------|------|---------|
+| 1 | 2026-07-04 | Criação inicial do lane `wayland` no fork-sync |

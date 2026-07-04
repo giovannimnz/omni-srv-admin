@@ -1,0 +1,56 @@
+project: Wayland
+display_name: "Wayland - Atius srv-3 standalone source runtime"
+enabled: true
+upstream: https://github.com/FerroxLabs/wayland
+upstream_branch: main
+origin_branch: main
+fork_repo: wayland
+fork: /home/ubuntu/GitHub/wayland
+merge_strategy: merge
+auto_push: false
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-atius"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
+
+# Protected paths carry the srv-3 standalone-source runtime behavior.
+protected_paths:
+  - .gitignore
+  - package.json
+  - atius-overlay.json
+  - patches/atius-webui-workspace-visible.patch
+  - scripts/atius-apply-source-patch.sh
+  - scripts/atius-build-renderer-overlay.sh
+  - scripts/atius-postinstall-hook.sh
+  - scripts/atius-reapply-renderer-overlay.sh
+  - scripts/atius-update.sh
+  - scripts/install-ubuntu.sh
+  - scripts/build-server.mjs
+  - scripts/build-mcp-servers.js
+  - src/process/agent/acp/AcpDetector.ts
+  - src/process/extensions/data/bundle-vendored/agentProfileMerge.ts
+  - src/process/extensions/resolvers/ChannelPluginResolver.ts
+  - src/process/utils/initStorage.ts
+  - src/process/utils/shellEnv.ts
+  - src/process/webserver/routes/apiRoutes.ts
+  - src/renderer/components/settings/DirectorySelectionModal.tsx
+  - src/renderer/hooks/file/useDirectorySelection.tsx
+  - src/renderer/pages/guid/components/GuidActionRow.tsx
+  - src/renderer/pages/guid/components/GuidModelSelector.tsx
+  - src/renderer/services/i18n/index.ts
+  - tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+  - docs/README.md
+  - docs/guides/atius-fork-runtime.md
+
+post_sync:
+  enabled: true
+  fail_fast: true
+  run_on:
+    - merged
+  commands:
+    - name: rebuild-managed-runtime
+      command:
+        - bash
+        - scripts/atius-postinstall-hook.sh
+      cwd: /home/ubuntu/GitHub/wayland

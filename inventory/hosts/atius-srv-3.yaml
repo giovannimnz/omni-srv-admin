@@ -154,6 +154,18 @@ apps:
       - "noVNC interno/VPN em http://10.1.1.3:6081/; URL publica em https://remote.atius.com.br/mt5/1/."
       - "Apache/Cloudflare ficam no atius-srv-1; VNC puro fica privado no container."
       - "Autenticacao publica de /mt5/<id> deve passar pelo gate SSO do SRV-1 (modules/mt5-remote-auth), usando auth-token + /v1/auth/me; nao criar novos Basic Auth por rota."
+forks:
+  - id: wayland
+    canonical_product_id: wayland
+    sync_project: wayland
+    runtime_app_id: wayland
+    local_path: /home/ubuntu/GitHub/wayland
+    upstream: https://github.com/FerroxLabs/wayland
+    sync_manifest: modules/fork-sync/projects/wayland/sync.yaml
+    state: source-standalone-managed-runtime
+    notes:
+      - "Runtime ativo continua em apps:, mas o lane source/upstream precisa preservar patch ATIUS contra sync de upstream."
+      - "Repo GitHub giovannimnz/wayland ainda nao estava publicado em 2026-07-04; auto_push fica desativado ate existir fork remoto."
 database:
   target: DbOmniFleet
   endpoint: 10.1.1.1:6432

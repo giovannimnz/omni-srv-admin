@@ -5,6 +5,8 @@
 - runtime de `wayland.atius.com.br` é administrado a partir do `omni-srv-admin`
 - source repo permanece `~/GitHub/wayland`
 - rebuild/reapply pós-update fica em `modules/fleet/scripts/`
+- source/upstream lane fica em `modules/fork-sync/projects/wayland/sync.yaml`
+- inventário do `atius-srv-3` deve refletir `apps:` + `forks:` para o mesmo produto
 
 ## Commands
 
@@ -23,6 +25,7 @@ bash modules/fleet/scripts/wayland-srv3-update.sh --pull
   preferência salva
 - runtime source-standalone em `~/GitHub/wayland/dist-server/server.mjs`
 - `WAYLAND_DISABLE_AUTO_UPDATE=1` sempre ativo neste deployment
+- merge com upstream deve preservar `protected_paths` do projeto `wayland`
 
 ## Validation Baseline
 

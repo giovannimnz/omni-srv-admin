@@ -69,7 +69,7 @@ fork-sync repl                                   # modo interativo
 fork-sync --json projects list | jq .            # output estruturado para agents
 ```
 
-**Projetos atualmente configurados (9):**
+**Projetos atualmente configurados (10):**
 
 | Projeto | Fork | Upstream | Deploy |
 |---|---|---|---|
@@ -82,6 +82,7 @@ fork-sync --json projects list | jq .            # output estruturado para agent
 | `bruno` | `giovannimnz/bruno` | `usebruno/bruno` | — |
 | `get-shit-done` | `giovannimnz/get-shit-done` | `gsd-build/get-shit-done` | — |
 | `notebooklm-py` | `giovannimnz/notebooklm-py` | `teng-lin/notebooklm-py` | — |
+| `wayland` | `giovannimnz/wayland` (pendente de publicação) | `FerroxLabs/wayland` | source runtime |
 
 > Lista sempre atualizada via `fork-sync projects list`.
 
