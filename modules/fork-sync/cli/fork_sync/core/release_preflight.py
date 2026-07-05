@@ -19,6 +19,43 @@ from typing import Any
 FOUR_PART_VERSION = re.compile(r"^v?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?:[-+].*)?$")
 PUSH_LIKE_MODES = {"push", "release", "deploy", "fork-deploy", "tag"}
 MAX_SECRET_SCAN_BYTES = 512 * 1024
+ATIUS_ROUTER_DOCS_LINK_FILES = [
+    "controller/misc.go",
+    "setting/operation_setting/general_setting.go",
+    "web/default/src/hooks/use-top-nav-links.ts",
+    "web/default/src/lib/docs-link.ts",
+    "web/default/src/components/layout/types.ts",
+    "web/default/src/components/layout/components/nav-link-item.tsx",
+    "web/default/src/components/layout/components/top-nav.tsx",
+    "web/default/src/components/layout/components/public-header.tsx",
+    "web/default/src/components/layout/components/public-navigation.tsx",
+    "web/default/src/components/layout/components/mobile-drawer.tsx",
+    "web/default/src/features/home/components/sections/hero.tsx",
+    "web/default/src/components/layout/components/footer.tsx",
+    "web/default/src/features/system-settings/general/quota-settings-section.tsx",
+    "web/classic/src/helpers/docs.js",
+    "web/classic/src/hooks/common/useNavigation.js",
+    "web/classic/src/components/layout/headerbar/index.jsx",
+    "web/classic/src/components/layout/headerbar/Navigation.jsx",
+    "web/classic/src/pages/Home/index.jsx",
+    "web/classic/src/components/layout/Footer.jsx",
+    "web/classic/src/pages/Setting/Operation/SettingsGeneral.jsx",
+    "docs/atius-router-docs/src/lib/i18n.ts",
+    "docs/atius-router-docs/next.config.mjs",
+    "docs/atius-router-docs/middleware.ts",
+    "docs/atius-router-docs/src/app/json/route.ts",
+    "docs/atius-router-docs/src/app/[lang]/layout.tsx",
+    "docs/atius-router-docs/src/app/[lang]/(home)/layout.tsx",
+    "docs/atius-router-docs/src/components/footer.tsx",
+    "docs/atius-router-docs/content/docs/pt/guide/index.mdx",
+    "docs/atius-router-docs/content/docs/pt/guide/meta.json",
+    "docs/atius-router-docs/content/docs/pt/guide/project-introduction.mdx",
+    "docs/atius-router-docs/content/docs/pt/guide/technical-architecture.mdx",
+]
+ATIUS_ROUTER_DOCS_PROTECTED_FILES = [
+    *ATIUS_ROUTER_DOCS_LINK_FILES,
+    "scripts/smoke-docs-links.sh",
+]
 SECRET_VALUE_PATTERNS = [
     re.compile(
         r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----\s+"
@@ -29,6 +66,7 @@ SECRET_VALUE_PATTERNS = [
     re.compile(r"\bghp_[A-Za-z0-9_]{30,}\b"),
     re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
     re.compile(r"\bsk-[A-Za-z0-9_-]{32,}\b"),
+    re.compile(r"\bctx7sk-[A-Za-z0-9_-]{20,}\b"),
 ]
 
 
@@ -227,6 +265,18 @@ def _pull_request_target_risks(text: str) -> tuple[list[str], list[str]]:
     return errors, warnings
 
 
+def _atius_router_docs_link_violations(repo: Path) -> list[Path]:
+    """Detect regressions that send Router Docs buttons back to upstream docs."""
+    violations: list[Path] = []
+    for rel in ATIUS_ROUTER_DOCS_LINK_FILES:
+        path = repo / rel
+        if not path.exists():
+            continue
+        if "docs.newapi.pro" in _read_text(path):
+            violations.append(Path(rel))
+    return violations
+
+
 def _add_issue(issues: list[dict[str, str]], code: str, message: str, path: Path | None = None) -> None:
     item = {"code": code, "message": message}
     if path:
@@ -287,6 +337,17 @@ def run_preflight(
             "tracked-secret-values",
             f"tracked files contain secret-like values: {', '.join(hit['path'] for hit in secret_hits[:8])}",
         )
+
+    docs_link_violations = _atius_router_docs_link_violations(repo_path)
+    if docs_link_violations:
+        _add_issue(
+            issues,
+            "atius-router-docs-external-link",
+            "Atius Router Docs buttons/config must use same-origin /en/docs and /pt/docs, not docs.newapi.pro",
+            docs_link_violations[0],
+        )
+    elif any((repo_path / rel).exists() for rel in ATIUS_ROUTER_DOCS_LINK_FILES):
+        checks.append({"check": "atius-router-docs-links", "status": "internal-only"})
 
     if secret_names is None:
         secret_names, secret_warning = _secret_names(github_repo)

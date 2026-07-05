@@ -19,6 +19,13 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - Do not add or reactivate a Python/container sidecar as the canonical owner for `/v1/`, detailed models, or Codex embeddings.
 - Local TEI embeddings must remain governed inside the Go router through `service/embeddinggovernor/` and `relay/embedding_handler.go`; do not move this path back to Python/model-detailed or a separate sidecar/container. Default governed models are `embedding-pt-v1` and `embedding-pt-v1-batch`.
 - Runtime directories must stay excluded from image build context through `.dockerignore`: `/backups`, `/data`, `/logs`, `/runtime`.
+- Router Docs buttons and config must stay same-origin and localized:
+  English uses `/en/docs`; Portuguese uses `/pt/docs`. Do not restore
+  `https://docs.newapi.pro` in the router app or Apache redirect rules.
+- Legacy API-doc aliases must remain local JSON endpoints:
+  `/docs.json`, `/docs/openapi.json`, `/json` and `/json/` must resolve to
+  the docs app OpenAPI 3.x JSON, not to the Go SPA HTML and not to the retired
+  `model-detailed` sidecar.
 
 ## Protected paths that carry this behavior
 
@@ -42,6 +49,38 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `tests/test_clianything.py`
 - `docs/`
 - `.planning/`
+- `controller/misc.go`
+- `setting/operation_setting/general_setting.go`
+- `web/default/src/lib/docs-link.ts`
+- `web/default/src/hooks/use-top-nav-links.ts`
+- `web/default/src/components/layout/types.ts`
+- `web/default/src/components/layout/components/nav-link-item.tsx`
+- `web/default/src/components/layout/components/top-nav.tsx`
+- `web/default/src/components/layout/components/public-header.tsx`
+- `web/default/src/components/layout/components/public-navigation.tsx`
+- `web/default/src/components/layout/components/mobile-drawer.tsx`
+- `web/default/src/features/home/components/sections/hero.tsx`
+- `web/default/src/components/layout/components/footer.tsx`
+- `web/default/src/features/system-settings/general/quota-settings-section.tsx`
+- `web/classic/src/helpers/docs.js`
+- `web/classic/src/hooks/common/useNavigation.js`
+- `web/classic/src/components/layout/headerbar/index.jsx`
+- `web/classic/src/components/layout/headerbar/Navigation.jsx`
+- `web/classic/src/pages/Home/index.jsx`
+- `web/classic/src/components/layout/Footer.jsx`
+- `web/classic/src/pages/Setting/Operation/SettingsGeneral.jsx`
+- `docs/atius-router-docs/src/lib/i18n.ts`
+- `docs/atius-router-docs/next.config.mjs`
+- `docs/atius-router-docs/middleware.ts`
+- `docs/atius-router-docs/src/app/json/route.ts`
+- `docs/atius-router-docs/src/app/[lang]/layout.tsx`
+- `docs/atius-router-docs/src/app/[lang]/(home)/layout.tsx`
+- `docs/atius-router-docs/src/components/footer.tsx`
+- `docs/atius-router-docs/content/docs/pt/guide/index.mdx`
+- `docs/atius-router-docs/content/docs/pt/guide/meta.json`
+- `docs/atius-router-docs/content/docs/pt/guide/project-introduction.mdx`
+- `docs/atius-router-docs/content/docs/pt/guide/technical-architecture.mdx`
+- `scripts/smoke-docs-links.sh`
 
 ## Required post-sync checks
 
@@ -53,6 +92,7 @@ python3 -m py_compile tools/clianything.py scripts/smoke-provider-consolidation.
 python3 -m unittest discover -s tests -p 'test_clianything*.py'
 bin/clianything status --strict
 bin/clianything providers --all
+scripts/smoke-docs-links.sh
 ```
 
 With an operational token in the environment, also verify:
