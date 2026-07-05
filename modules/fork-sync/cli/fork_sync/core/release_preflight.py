@@ -17,6 +17,19 @@ from typing import Any
 
 
 FOUR_PART_VERSION = re.compile(r"^v?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+(?:[-+].*)?$")
+PUSH_LIKE_MODES = {"push", "release", "deploy", "fork-deploy", "tag"}
+MAX_SECRET_SCAN_BYTES = 512 * 1024
+SECRET_VALUE_PATTERNS = [
+    re.compile(
+        r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----\s+"
+        r"[A-Za-z0-9+/=\r\n]{80,}\s+"
+        r"-----END (?:RSA |DSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----"
+    ),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    re.compile(r"\bghp_[A-Za-z0-9_]{30,}\b"),
+    re.compile(r"\bgithub_pat_[A-Za-z0-9_]{20,}\b"),
+    re.compile(r"\bsk-[A-Za-z0-9_-]{32,}\b"),
+]
 
 
 def _read_text(path: Path) -> str:
@@ -50,17 +63,27 @@ def _load_yaml(path: Path) -> dict[str, Any]:
         return data
 
 
-def _github_slug_from_remote(repo: Path) -> str | None:
-    proc = subprocess.run(
-        ["git", "-C", str(repo), "remote", "get-url", "origin"],
-        text=True,
-        capture_output=True,
-        timeout=10,
-        check=False,
-    )
+def _git_output(repo: Path, args: list[str], *, timeout: int = 10) -> str | None:
+    try:
+        proc = subprocess.run(
+            ["git", "-C", str(repo), *args],
+            text=True,
+            capture_output=True,
+            timeout=timeout,
+            check=False,
+        )
+    except (FileNotFoundError, subprocess.TimeoutExpired):
+        return None
     if proc.returncode != 0:
         return None
-    url = proc.stdout.strip()
+    return proc.stdout
+
+
+def _github_slug_from_remote(repo: Path) -> str | None:
+    stdout = _git_output(repo, ["remote", "get-url", "origin"])
+    if stdout is None:
+        return None
+    url = stdout.strip()
     patterns = [
         r"github\.com[:/](?P<owner>[^/]+)/(?P<repo>[^/.]+)(?:\.git)?$",
         r"github\.com/(?P<owner>[^/]+)/(?P<repo>[^/.]+)(?:\.git)?$",
@@ -70,6 +93,62 @@ def _github_slug_from_remote(repo: Path) -> str | None:
         if match:
             return f"{match.group('owner')}/{match.group('repo')}"
     return None
+
+
+def _git_status(repo: Path) -> list[str] | None:
+    stdout = _git_output(repo, ["status", "--porcelain", "--untracked-files=all"])
+    if stdout is None:
+        return None
+    return [line for line in stdout.splitlines() if line.strip()]
+
+
+def _git_tracked_files(repo: Path) -> list[str]:
+    stdout = _git_output(repo, ["ls-files", "-z"])
+    if stdout is None:
+        return []
+    return [item for item in stdout.split("\0") if item]
+
+
+def _is_sensitive_path(path: str) -> bool:
+    lowered = path.replace("\\", "/").lower()
+    name = Path(lowered).name
+    if any(marker in name for marker in ("example", "sample", "template", "dist")):
+        return False
+    if name in {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "auth.json", "credentials.json"}:
+        return True
+    if name.startswith(".env"):
+        return True
+    if name.startswith("secrets.") or "/secrets/" in lowered:
+        return True
+    if name.endswith((".pem", ".p12", ".pfx")):
+        return True
+    if name.endswith(".key") and not name.endswith(".pub"):
+        return True
+    return False
+
+
+def _tracked_sensitive_paths(repo: Path) -> list[str]:
+    return [path for path in _git_tracked_files(repo) if _is_sensitive_path(path)]
+
+
+def _tracked_secret_hits(repo: Path) -> list[dict[str, str]]:
+    hits: list[dict[str, str]] = []
+    for rel in _git_tracked_files(repo):
+        path = repo / rel
+        try:
+            if path.stat().st_size > MAX_SECRET_SCAN_BYTES:
+                continue
+            raw = path.read_bytes()
+        except OSError:
+            continue
+        if b"\0" in raw:
+            continue
+        text = raw.decode("utf-8", errors="ignore")
+        for pattern in SECRET_VALUE_PATTERNS:
+            if pattern.search(text):
+                hits.append({"path": rel, "pattern": pattern.pattern})
+                break
+    return hits
 
 
 def _secret_names(github_repo: str | None) -> tuple[set[str] | None, str | None]:
@@ -132,6 +211,22 @@ def _uses_raw_npm_version(text: str) -> bool:
     return "npm version" in text and "normalize-electron-version" not in text
 
 
+def _pull_request_target_risks(text: str) -> tuple[list[str], list[str]]:
+    if "pull_request_target" not in text:
+        return [], []
+    errors = []
+    warnings = ["pull_request_target requires explicit security review"]
+    if "secrets." in text:
+        errors.append("pull_request_target workflow references secrets")
+    if "actions/checkout" in text:
+        errors.append("pull_request_target workflow checks out code")
+    if re.search(r"permissions:\s*write-all\b", text):
+        errors.append("pull_request_target workflow grants write-all permissions")
+    if re.search(r"\bcontents:\s*write\b", text):
+        errors.append("pull_request_target workflow grants contents: write")
+    return errors, warnings
+
+
 def _add_issue(issues: list[dict[str, str]], code: str, message: str, path: Path | None = None) -> None:
     item = {"code": code, "message": message}
     if path:
@@ -157,7 +252,42 @@ def run_preflight(
         _add_issue(issues, "repo-missing", f"repo path does not exist: {repo_path}")
         return {"status": "error", "repo": str(repo_path), "mode": mode, "errors": issues, "warnings": warnings, "checks": checks}
 
-    github_repo = github_repo or _github_slug_from_remote(repo_path)
+    origin_github_repo = _github_slug_from_remote(repo_path)
+    github_repo = github_repo or origin_github_repo
+    if origin_github_repo:
+        checks.append({"check": "origin-github-repo", "github_repo": origin_github_repo})
+    if github_repo and origin_github_repo and github_repo.lower() != origin_github_repo.lower():
+        _add_issue(
+            issues,
+            "origin-repo-mismatch",
+            f"origin points to {origin_github_repo}, but preflight target is {github_repo}",
+        )
+
+    if mode in PUSH_LIKE_MODES:
+        dirty = _git_status(repo_path)
+        if dirty:
+            _add_issue(
+                issues,
+                "dirty-working-tree",
+                f"repo has uncommitted changes; first entries: {', '.join(dirty[:5])}",
+            )
+
+    sensitive_paths = _tracked_sensitive_paths(repo_path)
+    if sensitive_paths:
+        _add_issue(
+            issues,
+            "tracked-sensitive-files",
+            f"tracked sensitive-looking files must not be pushed: {', '.join(sensitive_paths[:8])}",
+        )
+
+    secret_hits = _tracked_secret_hits(repo_path)
+    if secret_hits:
+        _add_issue(
+            issues,
+            "tracked-secret-values",
+            f"tracked files contain secret-like values: {', '.join(hit['path'] for hit in secret_hits[:8])}",
+        )
+
     if secret_names is None:
         secret_names, secret_warning = _secret_names(github_repo)
         if secret_warning:
@@ -206,6 +336,12 @@ def run_preflight(
                 f"tag {tag} has four numeric components; workflow uses raw npm version without normalization",
                 rel,
             )
+
+        pr_target_errors, pr_target_warnings = _pull_request_target_risks(text)
+        for message in pr_target_errors:
+            _add_issue(issues, "pull-request-target-risk", message, rel)
+        for message in pr_target_warnings:
+            _add_issue(warnings, "pull-request-target-review", message, rel)
 
     deploy_data = _load_yaml(Path(deploy_config).expanduser()) if deploy_config else {}
     image = str(deploy_data.get("image") or "")

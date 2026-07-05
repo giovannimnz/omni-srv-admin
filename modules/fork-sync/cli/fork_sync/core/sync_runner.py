@@ -282,8 +282,26 @@ def _version_plan(cfg: dict, *, project: str, upstream_sha: str) -> dict:
     if not scheme:
         return {"enabled": False}
 
-    suffix = str(scheme.get("suffix", "-rf"))
     upstream_version = str(cfg.get("upstream_version") or upstream_sha[:12])
+    if isinstance(scheme, str):
+        return {
+            "enabled": True,
+            "upstream_version": upstream_version,
+            "suffix": "",
+            "counter_dir": str(Path(f"~/.fork-sync/{project}/versions/{upstream_version}").expanduser()),
+            "tag_template": scheme,
+            "release_notes_command": (
+                f"fork-sync release generate {project} --upstream-version {upstream_version} --save-local"
+            ),
+        }
+
+    if not isinstance(scheme, dict):
+        return {
+            "enabled": False,
+            "error": f"version_scheme inválido: esperado dict ou string, recebido {type(scheme).__name__}",
+        }
+
+    suffix = str(scheme.get("suffix", "-rf"))
     counter_template = str(scheme.get("counter_dir", "~/.fork-sync/{project}/versions/{upstream_version}"))
     counter_dir = counter_template.format(project=project, upstream_version=upstream_version)
     tag_template = str(scheme.get("tag_template", "v{upstream_version}{suffix}{counter}"))

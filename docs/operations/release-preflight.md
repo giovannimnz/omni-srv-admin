@@ -18,6 +18,9 @@ O preflight retorna `release_preflight=success` ou sai com erro antes do envio.
 
 ## Checks bloqueantes
 
+- Em modos de envio (`push`, `release`, `deploy`, `fork-deploy`, `tag`), o repo
+  esta com working tree suja. Primeiro faca checkpoint/commit intencional.
+- O `origin` do repo nao corresponde ao `--github-repo` esperado.
 - Workflow roda `bun run build` dentro de `web/`, mas `web/package.json` nao tem
   `scripts.build`.
 - Workflow usa `DOCKERHUB_USERNAME`/`DOCKERHUB_TOKEN` sem `if`/guard, e o repo
@@ -25,11 +28,18 @@ O preflight retorna `release_preflight=success` ou sai com erro antes do envio.
 - Tag de quatro partes, como `v0.12.15.1`, chega em `npm version` sem
   normalizacao SemVer.
 - Deploy usa uma imagem fora do GHCR e nao ha secrets DockerHub suficientes.
+- Arquivos sensiveis rastreados por git (`.env`, `*.pem`, `*.key`, `auth.json`,
+  `credentials.json`, `secrets.*`) seriam enviados para GitHub.
+- Conteudo rastreado contem valores com formato de secret/token/chave privada.
+- Workflow `pull_request_target` combina checkout de codigo, secrets ou
+  permissoes de escrita.
 
 ## Warnings aceitos
 
 - DockerHub sem secrets e workflow guardado por `dockerhub_enabled`: o envio deve
   publicar GHCR e pular DockerHub.
+- Workflow `pull_request_target` sem gatilho bloqueante: revisar
+  intencionalmente porque esse evento roda no contexto do repo alvo.
 
 ## Pontos integrados
 

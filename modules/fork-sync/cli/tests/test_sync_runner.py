@@ -185,6 +185,22 @@ def test_run_sync_dry_run_reports_version_and_post_sync_plan(monkeypatch, repo_p
     assert "post_sync" not in result
 
 
+def test_run_sync_dry_run_accepts_legacy_string_version_scheme(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["version_scheme"] = "v{upstream_version}-rf{N}"
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+
+    result = sync_runner.run_sync("atius-router", dry_run=True)
+
+    assert result["status"] == "success"
+    assert result["version_plan"]["enabled"] is True
+    assert result["version_plan"]["tag_template"] == "v{upstream_version}-rf{N}"
+    assert result["version_plan"]["suffix"] == ""
+
+
 def test_run_sync_dry_run_includes_protected_globs(monkeypatch, repo_pair):
     upstream, fork = repo_pair
     _commit_file(fork, "docs/pt/index.md", "fork docs\n", "fork docs")
