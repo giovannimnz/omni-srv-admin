@@ -1,22 +1,20 @@
 project: Atius Router Docs
-upstream: https://github.com/giovannimnz/new-api-docs-v1
+upstream: https://github.com/QuantumNous/new-api-docs-v1
 upstream_branch: main
 origin_branch: main
 origin: https://github.com/giovannimnz/new-api-docs-v1
-fork: /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs
+fork: /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
 auto_push: true
 
-# Container migration note:
-# /home/ubuntu/GitHub/containers/Atius/atius-router-docs currently contains an
-# invalid copied .git directory. Keep the valid Git worktree above until the
-# container mirror is repaired or recloned.
-container_mirror: /home/ubuntu/GitHub/containers/Atius/atius-router-docs
-container_mirror_status: invalid_git_copy
+# Canonical container checkout:
+# The docs fork now lives only under the canonical router-ai-atius fork path.
+# Legacy active copies under /home/ubuntu/GitHub/containers/Atius were
+# quarantined during the 2026-07-05 canonicalization.
+container_mirror: /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
+container_mirror_status: canonical_worktree
 
-# Phase 09: docs agora vive como submodule em router-ai-atius.
-# O script fork-sync-docs.sh opera diretamente no submodule path.
-# O repo de trabalho não é mais um clone standalone, mas sim
-# router-ai-atius/docs/atius-router-docs/.
+# Phase 09+2026-07-05: docs vive como worktree Git próprio dentro do fork
+# canônico router-ai-atius, em docs/atius-router-docs/.
 deploy_type: systemd-user
 service_name: atius-router-docs.service
 service_port: 3003
