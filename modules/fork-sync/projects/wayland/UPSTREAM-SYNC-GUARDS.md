@@ -28,6 +28,19 @@ that make that runtime operable.
 - Codex must remain detectable in ACP mode on the server runtime, and the GUID
   model picker must keep the selected model label even before
   `acp.cachedModels` exists.
+- Codex ACP models must be shown as base models, with reasoning effort selected
+  in a separate adjacent control. Do not reintroduce model rows like
+  `gpt-5.5/xhigh` or labels like `GPT-5.5 (xhigh)`.
+- Hermes Agent must also expose the same separate reasoning effort control,
+  even when its ACP payload does not advertise `reasoning_effort`; Wayland sends
+  the selected effort through session config/extra.
+- Codex permission mode must include `Custom (config.toml)` /
+  `Personalizado(config.toml)`, which leaves the service user's native Codex
+  config in control instead of forcing a Wayland sandbox preset.
+- The GUID agent pill bar must expose hidden/collapsed agents by accessible
+  name, so Hermes/Codex can be selected by keyboard, tests and assistive tools.
+- On mobile widths, composer controls and intent pills must wrap visibly instead
+  of hiding later options behind unmarked horizontal overflow.
 - Standalone build output must include the MCP stdio scripts copied into
   `dist-server/`; otherwise the runtime startup canary fails.
 - Service-shell env loading must skip non-interactive login shells like
@@ -57,14 +70,41 @@ that make that runtime operable.
 - `src/process/utils/shellEnv.ts`
 - `src/process/webserver/routes/apiRoutes.ts`
 - `src/process/webserver/websocket/WebSocketManager.ts`
+- `src/common/adapter/ipcBridge.ts`
+- `src/common/config/storage.ts`
+- `src/common/types/codex/codexModes.ts`
+- `src/common/types/codex/types/eventData.ts`
+- `src/process/task/AcpAgentManager.ts`
+- `src/process/task/WCoreManager.ts`
+- `src/process/task/claudeConfig.ts`
+- `src/process/task/codexConfig.ts`
+- `src/process/task/hermesConfig.ts`
+- `src/renderer/components/agent/AgentModeSelector.tsx`
+- `src/renderer/components/model/modelSelector/EffortSubRow.tsx`
+- `src/renderer/components/model/modelSelector/modelSelectorTypes.ts`
 - `src/renderer/components/settings/DirectorySelectionModal.tsx`
 - `src/renderer/hooks/file/useDirectorySelection.tsx`
+- `src/renderer/pages/guid/GuidPage.tsx`
+- `src/renderer/pages/guid/index.module.css`
+- `src/renderer/pages/guid/components/AgentPillBar.tsx`
 - `src/renderer/pages/guid/components/GuidActionRow.tsx`
 - `src/renderer/pages/guid/components/GuidModelSelector.tsx`
+- `src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css`
+- `src/renderer/pages/guid/hooks/useGuidAgentSelection.ts`
+- `src/renderer/pages/guid/hooks/useGuidSend.ts`
+- `src/renderer/services/i18n/i18n-keys.d.ts`
 - `src/renderer/services/i18n/index.ts`
+- `src/renderer/services/i18n/locales/*/agentMode.json`
+- `src/renderer/services/i18n/locales/*/conversation.json`
+- `src/renderer/utils/model/agentModes.ts`
+- `tests/unit/AgentPillBar.dom.test.tsx`
 - `tests/unit/WebSocketManager.test.ts`
+- `tests/unit/process/task/codexConfigEffort.test.ts`
+- `tests/unit/process/task/codexNativeSandbox.test.ts`
 - `tests/unit/renderer/GuidActionRow.dom.test.tsx`
+- `tests/unit/renderer/guidModelSelector.dom.test.tsx`
 - `tests/unit/renderer/guid/firstSafeCuratedModel.test.ts`
+- `tests/unit/useGuidSend.dom.test.ts`
 - `docs/README.md`
 - `docs/guides/atius-fork-runtime.md`
 
@@ -76,12 +116,13 @@ Run from `/home/ubuntu/GitHub/wayland` after any upstream merge:
 bash scripts/atius-refresh-source-patch.sh --commit-if-changed
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service
 systemctl is-active wayland.service
 curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
-journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 3 agents|Serving renderer|WebUI running"
+journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 4 agents|Serving renderer|WebUI running"
 ```
 
 Expected result:
@@ -91,7 +132,7 @@ Expected result:
 - `typecheck` passes.
 - `wayland.service` is `active`.
 - local HTTP on `127.0.0.1:25808` returns `200`.
-- startup logs still show `found 3 agents: Wayland Core, Gemini CLI, Codex`.
+- startup logs still show `found 4 agents: Wayland Core, Gemini CLI, Codex, Hermes Agent`.
 
 ## Git remote guard
 

@@ -34,7 +34,16 @@ checkout local, com patch/source overlay próprio da ATIUS.
 - `Conversar na pasta` fica visível no WebUI e usa `/home/ubuntu/GitHub` como
   diretório inicial.
 - Sem preferência salva, a tela de login entra em `pt-BR`.
-- A detecção ACP do servidor encontra `Wayland Core`, `Gemini CLI` e `Codex`.
+- A detecção ACP do servidor encontra `Wayland Core`, `Gemini CLI`, `Codex` e
+  `Hermes Agent`.
+- A página GUID separa modelo e esforço de raciocínio para Codex e Hermes. O
+  modelo não carrega mais sufixos como `/xhigh` na lista; o esforço fica no
+  seletor adjacente (`Low`, `Medium`, `High`, `XHigh`).
+- O modo de permissão do Codex inclui `Custom (config.toml)` /
+  `Personalizado(config.toml)`, que deixa o Codex usar o `config.toml` nativo
+  do usuário de serviço em vez de uma predefinição Wayland.
+- No mobile, os controles do composer e os intent pills quebram linha de forma
+  visível; não dependem de scroll horizontal escondido.
 - O fork remoto existe em `https://github.com/giovannimnz/wayland`.
 - `origin` do checkout local aponta para esse fork, e `upstream` permanece em
   `FerroxLabs/wayland`.
@@ -80,10 +89,30 @@ Os paths protegidos carregam 4 grupos de customização:
    `src/process/extensions/resolvers/ChannelPluginResolver.ts`,
    `src/process/extensions/data/bundle-vendored/agentProfileMerge.ts`,
    `src/process/utils/initStorage.ts`,
+   `src/common/types/codex/codexModes.ts`,
+   `src/process/task/AcpAgentManager.ts`,
+   `src/process/task/codexConfig.ts`,
+   `src/process/task/hermesConfig.ts`,
+   `src/renderer/components/agent/AgentModeSelector.tsx`,
+   `src/renderer/pages/guid/GuidPage.tsx`,
    `src/renderer/pages/guid/components/GuidModelSelector.tsx`,
+   `src/renderer/pages/guid/hooks/useGuidAgentSelection.ts`,
+   `src/renderer/pages/guid/hooks/useGuidSend.ts`,
+   `src/renderer/utils/model/agentModes.ts`,
    `src/renderer/services/i18n/index.ts`,
    `tests/unit/renderer/guid/firstSafeCuratedModel.test.ts`.
-4. Documentação do fork:
+4. GUID UI/responsividade:
+   `src/renderer/pages/guid/components/AgentPillBar.tsx`,
+   `src/renderer/pages/guid/index.module.css`,
+   `src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css`,
+   `tests/unit/AgentPillBar.dom.test.tsx`,
+   `tests/unit/renderer/guidModelSelector.dom.test.tsx`,
+   `tests/unit/useGuidSend.dom.test.ts`.
+5. i18n da personalização:
+   `src/renderer/services/i18n/i18n-keys.d.ts`,
+   `src/renderer/services/i18n/locales/*/agentMode.json`,
+   `src/renderer/services/i18n/locales/*/conversation.json`.
+6. Documentação do fork:
    `docs/README.md`, `docs/guides/atius-fork-runtime.md`, `.gitignore`.
 
 ## 6. Patch refresh
@@ -96,8 +125,10 @@ bash scripts/atius-refresh-source-patch.sh
 ```
 
 Ele regenera `patches/atius-webui-workspace-visible.patch` a partir do delta
-atual entre `HEAD` e `upstream/main`, limitado aos arquivos do browser picker
-que o auto-patcher sabe reaplicar.
+atual entre `HEAD` e `upstream/main`, limitado aos arquivos protegidos que o
+auto-patcher sabe reaplicar. Esse patch agora cobre o browser picker, modelo
+separado de esforço, `config.toml` mode, Hermes effort e correções mobile da
+GUID.
 
 No `fork-sync`, o `post_sync` roda:
 
@@ -130,12 +161,13 @@ cd /home/ubuntu/GitHub/wayland
 bash scripts/atius-refresh-source-patch.sh --commit-if-changed
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service
 systemctl is-active wayland.service
 curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
-journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 3 agents|Serving renderer|WebUI running"
+journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 4 agents|Serving renderer|WebUI running"
 ```
 
 ## 9. Guardrails
@@ -156,3 +188,4 @@ journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "Agen
 | Versão | Data | Mudança |
 |--------|------|---------|
 | 1 | 2026-07-04 | Criação inicial do lane `wayland` no fork-sync |
+| 2 | 2026-07-05 | Proteção da GUID com modelo/esforço separados, Hermes effort, Codex `config.toml`, acessibilidade do AgentPillBar e mobile wrap |
