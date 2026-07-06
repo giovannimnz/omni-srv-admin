@@ -50,7 +50,7 @@ modules/srv1-ops/systemd/omni-obsidian-rest-access-guard.service
 modules/srv1-ops/scripts/omni-obsidian-rest-access-guard.sh
 ```
 
-`obsidian-aisecondbrain-rest.service` mantem o Obsidian AppImage aberto no SRV-1 para servir o plugin `obsidian-local-rest-api` em `https://10.1.1.1:27124` e `https://10.1.1.1:27124/mcp/`. `omni-obsidian-rest-access-guard.service` aplica a allowlist iptables para `27124/tcp` apenas em `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`. SRV-2/SRV-3 nao devem rodar tunnel local para esse endpoint.
+`obsidian-aisecondbrain-rest.service` mantem o Obsidian AppImage aberto no SRV-1 para servir o plugin `obsidian-local-rest-api` em `https://10.1.1.1:27124` e `https://10.1.1.1:27124/mcp/`. `AiSecondBrain/.obsidian/community-plugins.json` deve manter `obsidian-local-rest-api` habilitado, porque Codex e Hermes usam esse endpoint REST/MCP. A unit roda no display `:1` com `OBSIDIAN_FORCE_EXTRACT_AND_RUN=1`, para manter a janela na sessao XRDP humana e evitar dependencia de mounts FUSE em restart loop. `omni-obsidian-rest-access-guard.service` aplica a allowlist iptables para `27124/tcp` apenas em `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`. SRV-2/SRV-3 nao devem rodar tunnel local para esse endpoint.
 
 ## Disabled stale cron references
 

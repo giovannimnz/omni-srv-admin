@@ -1,16 +1,16 @@
-# Graph Report - omni-srv-admin  (2026-06-29)
+# Graph Report - omni-srv-admin  (2026-07-06)
 
 ## Corpus Check
-- 613 files · ~1,244,396 words
+- 640 files · ~1,255,028 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 8158 nodes · 9457 edges · 750 communities (643 shown, 107 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 54 edges (avg confidence: 0.8)
+- 8273 nodes · 9804 edges · 767 communities (659 shown, 108 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 78 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `87b035ef`
+- Built from commit: `e109762b`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -608,7 +608,6 @@
 - [[_COMMUNITY_Community 596|Community 596]]
 - [[_COMMUNITY_Community 597|Community 597]]
 - [[_COMMUNITY_Community 598|Community 598]]
-- [[_COMMUNITY_Community 599|Community 599]]
 - [[_COMMUNITY_Community 600|Community 600]]
 - [[_COMMUNITY_Community 601|Community 601]]
 - [[_COMMUNITY_Community 602|Community 602]]
@@ -750,47 +749,62 @@
 - [[_COMMUNITY_Community 740|Community 740]]
 - [[_COMMUNITY_Community 741|Community 741]]
 - [[_COMMUNITY_Community 742|Community 742]]
-- [[_COMMUNITY_Community 743|Community 743]]
 - [[_COMMUNITY_Community 744|Community 744]]
 - [[_COMMUNITY_Community 745|Community 745]]
 - [[_COMMUNITY_Community 746|Community 746]]
 - [[_COMMUNITY_Community 747|Community 747]]
 - [[_COMMUNITY_Community 748|Community 748]]
 - [[_COMMUNITY_Community 749|Community 749]]
+- [[_COMMUNITY_Community 751|Community 751]]
+- [[_COMMUNITY_Community 752|Community 752]]
+- [[_COMMUNITY_Community 753|Community 753]]
+- [[_COMMUNITY_Community 754|Community 754]]
+- [[_COMMUNITY_Community 755|Community 755]]
+- [[_COMMUNITY_Community 756|Community 756]]
+- [[_COMMUNITY_Community 757|Community 757]]
+- [[_COMMUNITY_Community 758|Community 758]]
+- [[_COMMUNITY_Community 759|Community 759]]
+- [[_COMMUNITY_Community 760|Community 760]]
+- [[_COMMUNITY_Community 761|Community 761]]
+- [[_COMMUNITY_Community 762|Community 762]]
+- [[_COMMUNITY_Community 763|Community 763]]
+- [[_COMMUNITY_Community 764|Community 764]]
+- [[_COMMUNITY_Community 765|Community 765]]
+- [[_COMMUNITY_Community 766|Community 766]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (747 total, 110 thin omitted)` - 630 edges
-2. `State: Omni Srv Admin (omni-srv-admin)` - 35 edges
-3. `Phase 23: Omni Fleet Governance com Landscape complementar - Research` - 25 edges
-4. `Fork Sync — Gestão Unificada de Forks` - 25 edges
-5. `ok()` - 24 edges
-6. `Phase 42: Atius-wide SSO Login on sso.atius.com.br - Research` - 24 edges
-7. `ScenarioResult` - 23 edges
-8. `output()` - 23 edges
-9. `run_sync()` - 22 edges
-10. `_build_report()` - 22 edges
+1. `Communities (765 total, 107 thin omitted)` - 648 edges
+2. `run_preflight()` - 35 edges
+3. `State: Omni Srv Admin (omni-srv-admin)` - 35 edges
+4. `Phase 23: Omni Fleet Governance com Landscape complementar - Research` - 25 edges
+5. `Fork Sync — Gestão Unificada de Forks` - 25 edges
+6. `ok()` - 24 edges
+7. `Phase 42: Atius-wide SSO Login on sso.atius.com.br - Research` - 24 edges
+8. `ScenarioResult` - 23 edges
+9. `output()` - 23 edges
+10. `_emit()` - 22 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `deploy_list()` --calls--> `list_projects()`  [INFERRED]
   cli/omni/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
+- `apply_omni_self_update()` --calls--> `_write()`  [INFERRED]
+  cli/omni/fleet_versioning.py → modules/fork-sync/cli/tests/test_release_preflight.py
 - `test_collect_programs_normalizes_read_only_outputs()` --calls--> `collect_programs()`  [EXTRACTED]
   modules/fleet-control-plane/tests/test_m031_collectors.py → cli/omni/fleet_collectors.py
 - `test_security_report_collects_pro_json_without_mutation()` --calls--> `collect_security_report()`  [EXTRACTED]
   modules/fleet-control-plane/tests/test_m032_security.py → cli/omni/fleet_security.py
-- `test_collector_allowlist_has_no_mutating_commands()` --calls--> `read_only_command_allowlist()`  [EXTRACTED]
-  modules/fleet-control-plane/tests/test_m031_collectors.py → cli/omni/fleet_collectors.py
-- `test_offline_validation_harness_passes_all_contract_scenarios()` --calls--> `offline_scenarios()`  [INFERRED]
-  modules/fleet-control-plane/tests/test_m004_contract.py → modules/fleet-control-plane/tools/validate_m004.py
+- `test_collect_omni_version_reads_repo_state()` --calls--> `collect_omni_version()`  [EXTRACTED]
+  modules/fleet-control-plane/tests/test_m033_omni_versioning.py → cli/omni/fleet_versioning.py
 
 ## Import Cycles
 - 1-file cycle: `modules/srv1-ops/scripts/production_guard.py -> modules/srv1-ops/scripts/production_guard.py`
 - 1-file cycle: `cli/omni/fleet.py -> cli/omni/fleet.py`
 
-## Communities (750 total, 107 thin omitted)
+## Communities (767 total, 108 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.00
-Nodes (630): Communities (747 total, 110 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+622 more)
+Nodes (648): Communities (765 total, 107 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+640 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
@@ -830,7 +844,7 @@ Nodes (39): 1. Telegram API Limits, 1. Telethon → PostgreSQL, 2. PostgreSQL �
 
 ### Community 10 - "Community 10"
 Cohesion: 0.05
-Nodes (38): 1. Fleet-first, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1, CLI (+30 more)
+Nodes (39): 1. Fleet-first, 2.1. Separação formal: app instalado vs fork, 2. Módulos pequenos e separados, 3. Paths técnicos estáveis, labels humanos flexíveis, 4. Backup antes de mudança, 5. Documentação é parte da execução, Backup e logs, Backup SRV-1 (+31 more)
 
 ### Community 11 - "Community 11"
 Cohesion: 0.05
@@ -874,7 +888,7 @@ Nodes (30): 1. Fragmentação de Dados, 1. Trading Multi-Broker, 2. Motor de Bac
 
 ### Community 21 - "Community 21"
 Cohesion: 0.12
-Nodes (43): Any, Path, invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values() (+35 more)
+Nodes (44): Any, Path, invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values() (+36 more)
 
 ### Community 22 - "Community 22"
 Cohesion: 0.09
@@ -905,8 +919,8 @@ Cohesion: 0.10
 Nodes (27): _build_fallback_body(), _classify_heading(), fetch_upstream_compare(), fetch_upstream_release(), generate_release_notes(), _gh_api(), list_local_releases(), _parse_upstream_body() (+19 more)
 
 ### Community 29 - "Community 29"
-Cohesion: 0.16
-Nodes (26): Path, _backup_current(), _check_files_exist(), _copy_if_exists(), diff_cmd(), _ensure_root(), install_cmd(), _install_file() (+18 more)
+Cohesion: 0.14
+Nodes (32): Path, _backup_current(), _check_files_exist(), _command_exists(), _copy_if_exists(), diff_cmd(), _ensure_packages(), _ensure_root() (+24 more)
 
 ### Community 30 - "Community 30"
 Cohesion: 0.07
@@ -1005,8 +1019,8 @@ Cohesion: 0.18
 Nodes (19): Path, _bookmark_uri(), list_remotes(), _parse_bookmark_line(), places(), remote-manager — mounts, remote folders, and desktop Places labels., Renomeia só o label visual do remote em GTK/PCManFM Places.      Exemplo:, Status dos remotes cadastrados e paths principais. (+11 more)
 
 ### Community 54 - "Community 54"
-Cohesion: 0.26
-Nodes (17): Path, _cfg(), _clone(), _commit_file(), _git(), _init_repo(), repo_pair(), test_diagnose_container_mirrors_detects_invalid_git_copy() (+9 more)
+Cohesion: 0.25
+Nodes (18): Path, _cfg(), _clone(), _commit_file(), _git(), _init_repo(), repo_pair(), test_diagnose_container_mirrors_detects_invalid_git_copy() (+10 more)
 
 ### Community 55 - "Community 55"
 Cohesion: 0.11
@@ -1301,8 +1315,8 @@ Cohesion: 0.17
 Nodes (11): Anthropic Messages (compatível), Autenticação, Base URL, Chat Completions, Códigos de Erro, Embeddings, Endpoints Principais, Listar Modelos (+3 more)
 
 ### Community 128 - "Community 128"
-Cohesion: 0.17
-Nodes (11): Architecture Overview, Boundaries, Camadas, Diretórios, Estado atual, Fleet, Objetivo, Princípios (+3 more)
+Cohesion: 0.14
+Nodes (13): Architecture Overview, Boundaries, Camadas, Customization Governance, Diretórios, Estado atual, Fleet, Objetivo (+5 more)
 
 ### Community 129 - "Community 129"
 Cohesion: 0.17
@@ -1345,8 +1359,8 @@ Cohesion: 0.21
 Nodes (21): Path, classify_kind(), ensure_cap75_cgroup(), ensure_guard_services(), get_cgroup(), get_cmdline(), get_comm(), get_cpu_jiffies() (+13 more)
 
 ### Community 139 - "Community 139"
-Cohesion: 0.17
-Nodes (11): Backup GDrive, Comandos, Logs, Objetivo, Post-Boot Verification Checklist, Resource governor, Rollback Procedure, Scripts (+3 more)
+Cohesion: 0.14
+Nodes (13): Backup GDrive, Comandos, Logs, Objetivo, Obsidian + GBrain, Obsidian REST endpoint, Post-Boot Verification Checklist, Resource governor (+5 more)
 
 ### Community 140 - "Community 140"
 Cohesion: 0.17
@@ -1410,7 +1424,7 @@ Nodes (10): Adicionar comando CLI, Adicionar novo fork (projeto), Adicionar temp
 
 ### Community 155 - "Community 155"
 Cohesion: 0.18
-Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-06-28), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
+Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-07-06), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 156 - "Community 156"
 Cohesion: 0.18
@@ -1505,8 +1519,8 @@ Cohesion: 0.20
 Nodes (9): Caso real, Comandos, Inventário, Objetivo, PCManFM/LXDE, Pitfalls, Remote Manager, Segurança (+1 more)
 
 ### Community 179 - "Community 179"
-Cohesion: 0.20
-Nodes (9): CLI, GDrive layout, Migration notes, Pitfalls, Regra, Resource governor, Scripts gerenciados, srv1-ops — ATIUS-SRV-1 operational scripts (+1 more)
+Cohesion: 0.17
+Nodes (11): CLI, GDrive layout, Migration notes, Obsidian + GBrain sync, Obsidian REST endpoint, Pitfalls, Regra, Resource governor (+3 more)
 
 ### Community 180 - "Community 180"
 Cohesion: 0.20
@@ -1557,8 +1571,8 @@ Cohesion: 0.53
 Nodes (8): cleanup-local.sh script, cleanup_caches(), cleanup_journal(), cleanup_logs(), cleanup_podman(), cleanup_tmp(), log(), PATH
 
 ### Community 192 - "Community 192"
-Cohesion: 0.33
-Nodes (5): Contents, k3s-ha-portainer-oci, Non-secret Install Shape, Portainer Exposure Shape, Still Required Before Install
+Cohesion: 0.29
+Nodes (6): Contents, k3s-ha-portainer-oci, Non-secret Install Shape, Portainer Exposure Shape, Scheduling Policy, Still Required Before Install
 
 ### Community 193 - "Community 193"
 Cohesion: 0.22
@@ -1601,8 +1615,8 @@ Cohesion: 0.25
 Nodes (7): Acceptance, Architecture, Goal, Hard Gates, Phase 12 — Master Plan, Plans, Scope
 
 ### Community 203 - "Community 203"
-Cohesion: 0.29
-Nodes (7): REPL interativo (estilo CLI-Anything).  Comandos disponíveis no REPL (sem o pref, Tenta importar prompt_toolkit; cai de volta para input() se não tiver., Loop principal do REPL., run_repl(), _try_prompt_toolkit(), Modo interativo (REPL) — padrão CLI-Anything., repl_cmd()
+Cohesion: 0.18
+Nodes (11): REPL interativo (estilo CLI-Anything).  Comandos disponíveis no REPL (sem o pref, Tenta importar prompt_toolkit; cai de volta para input() se não tiver., Loop principal do REPL., run_repl(), _try_prompt_toolkit(), cli(), main(), fork-sync — gestão unificada de forks (sync, deploy, versionamento). (+3 more)
 
 ### Community 204 - "Community 204"
 Cohesion: 0.25
@@ -1621,8 +1635,8 @@ Cohesion: 0.25
 Nodes (7): Componentes, Comportamento, fleet-backup — Backup serial multi-server para GDrive, History, Instalação, Uso, Variáveis
 
 ### Community 208 - "Community 208"
-Cohesion: 0.25
-Nodes (7): Campos, Classes de host, Fleet Inventory Model, Host schema v0, Localização, Regras, Remote schema v0
+Cohesion: 0.20
+Nodes (9): Campos, Classes de host, Fleet Inventory Model, Host schema v0, Localização, Regra formal de separação, Regra obrigatória para Ubuntu 24+ com XRDP, Regras (+1 more)
 
 ### Community 209 - "Community 209"
 Cohesion: 0.50
@@ -1749,8 +1763,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 240 - "Community 240"
-Cohesion: 0.12
-Nodes (36): Any, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso() (+28 more)
+Cohesion: 0.14
+Nodes (32): Any, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso() (+24 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.29
@@ -1761,8 +1775,8 @@ Cohesion: 0.29
 Nodes (6): Decisão, Estado SRV-1, Operação não suportada automaticamente, Operação suportada, Porquê, Remote Mapping Labels
 
 ### Community 243 - "Community 243"
-Cohesion: 0.29
-Nodes (6): Active external cron references found, Candidates not migrated yet, Disabled stale cron references, Migrated into module, Replaced cron references, Source map — srv1-ops migration
+Cohesion: 0.25
+Nodes (7): Active external cron references found, Candidates not migrated yet, Disabled stale cron references, Migrated into module, Obsidian REST endpoint, Replaced cron references, Source map — srv1-ops migration
 
 ### Community 244 - "Community 244"
 Cohesion: 0.71
@@ -1801,8 +1815,8 @@ Cohesion: 0.40
 Nodes (4): Estado atual, gbrain Embeddings - Registro historico superado, Historico removido, Runbook ativo
 
 ### Community 253 - "Community 253"
-Cohesion: 0.29
-Nodes (6): Assets canônicos, Comandos, Instalação, Lógica, Validação manual, XRDP ABNT2 Guard
+Cohesion: 0.22
+Nodes (8): Assets canônicos, Comandos, Fleet contract, Instalação, Lógica, Pacotes garantidos, Validação manual, XRDP ABNT2 Guard
 
 ### Community 254 - "Community 254"
 Cohesion: 0.33
@@ -1973,8 +1987,8 @@ Cohesion: 0.83
 Nodes (3): fail(), log(), srv1-fix-network.sh script
 
 ### Community 296 - "Community 296"
-Cohesion: 0.50
-Nodes (4): cli(), main(), fork-sync — gestão unificada de forks (sync, deploy, versionamento)., Entry point console_scripts.
+Cohesion: 0.19
+Nodes (19): Any, CollectorRunner, Path, Path, agent_self_update_runner(), Runner local allowlisted que aplica update do repo omni-srv-admin., apply_omni_self_update(), collect_omni_version() (+11 more)
 
 ### Community 297 - "Community 297"
 Cohesion: 0.50
@@ -2065,8 +2079,8 @@ Cohesion: 0.50
 Nodes (4): modules/fleet-backup/scripts/rclone-fleet-queue.sh, ast_hash, mtime, semantic_hash
 
 ### Community 319 - "Community 319"
-Cohesion: 0.10
-Nodes (50): Any, CompletedProcess, Path, _apt_policy(), _apt_program_status(), _apt_sources_text(), _config_status(), config_verify() (+42 more)
+Cohesion: 0.09
+Nodes (56): Any, CompletedProcess, Path, _apt_policy(), _apt_program_status(), _apt_sources_text(), _config_status(), config_verify() (+48 more)
 
 ### Community 320 - "Community 320"
 Cohesion: 0.50
@@ -2333,8 +2347,8 @@ Cohesion: 0.50
 Nodes (4): modules/xrdp-abnt2/scripts/validate.sh, ast_hash, mtime, semantic_hash
 
 ### Community 386 - "Community 386"
-Cohesion: 0.52
-Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
+Cohesion: 0.83
+Nodes (3): atius-k3s-firewall.sh script, append_rule(), insert_rule()
 
 ### Community 387 - "Community 387"
 Cohesion: 0.50
@@ -2485,8 +2499,8 @@ Cohesion: 0.67
 Nodes (3): backup-to-smb.sh script, log(), SOURCES
 
 ### Community 424 - "Community 424"
-Cohesion: 1.00
-Nodes (3): sync-vault.sh script, auto_commit_changes(), notify_telegram()
+Cohesion: 0.54
+Nodes (7): sync-vault.sh script, auto_commit_changes(), notify_telegram(), record_gbrain_sync_failure(), record_gbrain_sync_success(), sync_gbrain_index(), validate_vault_layout()
 
 ### Community 425 - "Community 425"
 Cohesion: 0.50
@@ -2516,9 +2530,21 @@ Nodes (3): 12.1 Log da tentativa real em :31, 12.2 Mudança aplicada no SRV-1, 1
 Cohesion: 0.67
 Nodes (3): 15.1 Critério de fechamento atingido, 15.2 Escopo remanescente da Phase 18, 15. Encerramento — ajuste XRDP concluído
 
+### Community 432 - "Community 432"
+Cohesion: 0.40
+Nodes (4): GSD Agents, Project Identity, Regra Maxima: Limite de CPU para Builds e Tarefas Pesadas, Segredos ATIUS e MCP
+
+### Community 453 - "Community 453"
+Cohesion: 0.83
+Nodes (3): run_builds(), run_plain(), deploy.sh script
+
 ### Community 463 - "Community 463"
 Cohesion: 0.12
 Nodes (15): 22-01 — Plano separado (este doc), 22-02 — Subagente no host `horistic-srv`, 22-03 — Rename no host (post-install), 22-04 — DB e omni-srv-admin, 22-05 — VPN/docs, 22-06 — Vault Obsidian, 22-07 — gbrain, 22-08 — Validação final e commit (+7 more)
+
+### Community 465 - "Community 465"
+Cohesion: 0.67
+Nodes (3): 1. Visão Geral, Boundary with installed programs, `notebooklm-py` e bridge Obsidian
 
 ### Community 489 - "Community 489"
 Cohesion: 0.29
@@ -2637,12 +2663,12 @@ Cohesion: 0.50
 Nodes (4): scripts/verify-m004-fleet-control-plane.sh, ast_hash, mtime, semantic_hash
 
 ### Community 524 - "Community 524"
-Cohesion: 0.12
-Nodes (43): Path, agent_collect_programs(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event(), audit(), _collect_telemetry() (+35 more)
+Cohesion: 0.10
+Nodes (46): Path, agent_collect_programs(), agent_collect_version(), agent_cycle(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event() (+38 more)
 
 ### Community 525 - "Community 525"
-Cohesion: 0.12
-Nodes (21): heartbeat(), _host_id(), install_node(), _install_plan(), install_server(), _load_host(), _program_records(), programs() (+13 more)
+Cohesion: 0.10
+Nodes (24): heartbeat(), _heartbeat_payload(), _host_path(), _hosts_dir(), _inventory_host_records(), list_hosts(), monitor_hosts(), _monitor_payload() (+16 more)
 
 ### Community 526 - "Community 526"
 Cohesion: 0.05
@@ -2657,12 +2683,24 @@ Cohesion: 0.25
 Nodes (7): Acceptable Pre-Execution State, Minimum Automated Suite, Non-Negotiable Failures, Phase 23 Validation Architecture, Plan Gates, Requirement Matrix, Validation Goal
 
 ### Community 534 - "Community 534"
-Cohesion: 0.33
-Nodes (5): Brave Browser, Chromium / Bitwarden SidePanel decision, Chromium Google defaults, Managed Apps Operations, Obsidian ARM64 AppImage
+Cohesion: 0.29
+Nodes (6): Brave Browser, Chromium / Bitwarden SidePanel decision, Chromium Google defaults, GitKraken ARM64 Deb, Managed Apps Operations, Obsidian ARM64 AppImage
 
 ### Community 536 - "Community 536"
-Cohesion: 0.10
-Nodes (67): datetime, Any, CompletedProcess, Namespace, Path, RuntimeError, _action_to_dict(), _alias_variants() (+59 more)
+Cohesion: 0.07
+Nodes (82): Any, _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), datetime, Any (+74 more)
+
+### Community 537 - "Community 537"
+Cohesion: 0.12
+Nodes (48): _add_issue(), _atius_router_docs_link_violations(), _dockerhub_guarded(), _dockerhub_refs(), _git_output(), _git_status(), _git_tracked_files(), _github_slug_from_remote() (+40 more)
+
+### Community 538 - "Community 538"
+Cohesion: 0.29
+Nodes (6): Checks bloqueantes, Entrada unica, Exemplo validado, Pontos integrados, Release/deploy preflight, Warnings aceitos
+
+### Community 539 - "Community 539"
+Cohesion: 0.15
+Nodes (12): Backups, Codex Fleet Runtime Standard, `deep-review.config.toml`, Default config, `frontier.config.toml`, `quick.config.toml`, Rollout status - 2026-07-02, Rules (+4 more)
 
 ### Community 541 - "Community 541"
 Cohesion: 0.25
@@ -2793,16 +2831,16 @@ Cohesion: 0.06
 Nodes (35): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — DONE (v1.1) (+27 more)
 
 ### Community 577 - "Community 577"
-Cohesion: 0.06
-Nodes (35): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integration ✅ DONE, M003: Omni CLI Expansion ✅ DONE, M004: Omni Fleet Control Plane, M004 Phase Summary, M005: K3s HA Cluster + Portainer — LIVE, M006: SRV-1 Resource Governance + PM2 Hardening — IN PROGRESS, M007: M005 Follow-ups — DONE (v1.1) (+27 more)
+Cohesion: 0.22
+Nodes (8): Codex service tier audit — 2026-07-04, Correções aplicadas, Escopo verificado, Objetivo, Omni Srv Admin, Regra operacional, Resultado inicial, Verificação final
 
 ### Community 578 - "Community 578"
-Cohesion: 0.17
-Nodes (33): Any, Namespace, blockers_for_host(), clean_scalar(), collect_host(), extract_services_from_pro(), find_key(), has_key_fragment() (+25 more)
+Cohesion: 0.22
+Nodes (8): Dark Desktop, Obsidian Desktop Polish, Required Logging, Rollout Contract, Scope, Ubuntu 24+ Default Contract, Ubuntu ARM64 XRDP Desktop Standard, XRDP Keyboard
 
 ### Community 579 - "Community 579"
 Cohesion: 0.17
-Nodes (33): Any, Namespace, blockers_for_host(), clean_scalar(), collect_host(), extract_services_from_pro(), find_key(), has_key_fragment() (+25 more)
+Nodes (33): blockers_for_host(), clean_scalar(), collect_host(), extract_services_from_pro(), find_key(), has_key_fragment(), load_host_inventory(), main() (+25 more)
 
 ### Community 580 - "Community 580"
 Cohesion: 0.06
@@ -2817,20 +2855,16 @@ Cohesion: 0.08
 Nodes (25): Alta Disponibilidade, App Migration para Keycloak, ATS/Horistic Production Recovery Guard, Client Enrollment, Cloudflare + Security, Coexistência e Integração, FreeIPA Server, K3s HA Cluster (+17 more)
 
 ### Community 583 - "Community 583"
-Cohesion: 0.08
-Nodes (24): Alta Disponibilidade, App Migration para Keycloak, ATS/Horistic Production Recovery Guard, Client Enrollment, Cloudflare + Security, Coexistência e Integração, FreeIPA Server, K3s HA Cluster (+16 more)
-
-### Community 584 - "Community 584"
-Cohesion: 0.09
-Nodes (22): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Current Position, Decisions, Live Gates, M001 Completion (+14 more)
+Cohesion: 0.25
+Nodes (7): Banco do Omni, Customization Governance, Goal, Lane A — Installed Programs / Runtimes, Lane B — Forks Synced From Upstream, Quando um produto existe nos dois lanes, Regra do Wayland
 
 ### Community 585 - "Community 585"
 Cohesion: 0.10
 Nodes (20): Canonical References, Current local Obsidian surfaces, Deferred Ideas, Established Patterns, Existing Code Insights, Implementation Decisions, Install source and layout, Integration Points (+12 more)
 
 ### Community 586 - "Community 586"
-Cohesion: 0.10
-Nodes (20): Active Branch Results, Backlog (Phases 3-7), Backup GDrive, Completed Phases, Current Position, Live Gates, M001 Completion, M002 Result Summary (+12 more)
+Cohesion: 0.29
+Nodes (6): Comandos, Guardrails, Hosts alvo, Omni Srv Admin Auto-Update, Source of Truth, Trigger automático
 
 ### Community 587 - "Community 587"
 Cohesion: 0.10
@@ -2841,24 +2875,24 @@ Cohesion: 0.10
 Nodes (19): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Inventory Results, Issues Encountered, Known Stubs (+11 more)
 
 ### Community 589 - "Community 589"
-Cohesion: 0.10
-Nodes (19): atius-srv-1, atius-srv-2, atius-srv-3, Current Phase 29 Blockers, Decision Points, Fleet Baseline From 28-01, G18 Ubuntu Pro/ESM Upgrade Gates, Gate Semantics (+11 more)
+Cohesion: 0.29
+Nodes (6): Goal, Operational rules, RDP Trust PKI, Verification, Windows side, XRDP side
 
 ### Community 590 - "Community 590"
-Cohesion: 0.11
-Nodes (18): Active, Ambiente Atual, Constraints, Context, Core Value, Current Milestone: v1.2 Fleet Governance, Domain Infrastructure and Production Guard, Evolution, Key Decisions (+10 more)
+Cohesion: 0.33
+Nodes (5): Changelog, Implementações e correções, Implementações e correções, v0.2.0 - 2026-07-04, v0.2.0 - 2026-07-04
 
 ### Community 591 - "Community 591"
 Cohesion: 0.11
 Nodes (17): Accomplishments, Auth Gates, Decisions Made, Deviations from Plan, Files Created/Modified, Gate Results, Issues Encountered, Known Stubs (+9 more)
 
 ### Community 592 - "Community 592"
-Cohesion: 0.11
-Nodes (17): Active, Ambiente Atual, Constraints, Context, Core Value, Evolution, Key Decisions, M007: M005 Follow-ups (Phase 15-17) (+9 more)
+Cohesion: 0.33
+Nodes (5): Commands, Guarantees, Ownership, Validation Baseline, Wayland Managed Runtime
 
 ### Community 593 - "Community 593"
-Cohesion: 0.12
-Nodes (15): Phase 28: G18 Ubuntu Pro/ESM Fleet Gates ✅ COMPLETE, Phase 29: G18 Controlled Upgrade, RDP and Landscape SaaS Validation, Phase 30: Landscape/Omni Governance Operating Model, Phase 31: Omni Fleet Collectors and Desired-State Profiles, Phase 32: CVE/USN Reporting and Landscape Parity, Phase 33: FreeIPA Foundation and Host Prep, Phase 34: FreeIPA DNS and Client Enrollment, Phase 35: Samba Kerberos Domain Member (+7 more)
+Cohesion: 0.83
+Nodes (3): release.sh script, require_cmd(), usage()
 
 ### Community 594 - "Community 594"
 Cohesion: 0.14
@@ -2880,10 +2914,6 @@ Nodes (12): AppImage Runtime Findings, Current Upstream Target, Installer/Fixer 
 Cohesion: 0.11
 Nodes (17): Alias safety, Findings, Gate 1: Static safety checks, Gate 2: k3s/TEI checks, Gate 3: New API checks, Gate 4: Client contract checks, GBrain implications, Graphify implications (+9 more)
 
-### Community 599 - "Community 599"
-Cohesion: 0.15
-Nodes (12): D-01 | Gate | Live upgrade is checkpointed, D-02 | Host order | Per-host staged execution, D-03 | RDP | Remote access first-class, D-04 | Landscape | SaaS online validation, D-05 | Regression | No destructive automated repair, Deferred Ideas, Existing Code Insights, Implementation Decisions (+4 more)
-
 ### Community 600 - "Community 600"
 Cohesion: 0.17
 Nodes (11): Completion Criteria For Phase 29, Current Blockers To Resolve Or Accept, Entry Gate For Phase 29, Handoff Status, Landscape Handoff, No Phase 28 Live Mutation, Package Scope Handoff, Phase 29 Handoff: G18 Controlled Upgrade (+3 more)
@@ -2899,10 +2929,6 @@ Nodes (9): Host results, Important XRDP note, Network/service smoke, Outcome, Ph
 ### Community 603 - "Community 603"
 Cohesion: 0.18
 Nodes (10): Access Model, Current Live Baseline, Decision, Fallback Model, Landscape / Omni Governance Operating Model, Omni Landscape CLI Bridge, Operating Rules, Phase Ownership (+2 more)
-
-### Community 604 - "Community 604"
-Cohesion: 0.20
-Nodes (9): Domain Infrastructure, Future Requirements, G18 — Ubuntu Pro / ESM / Landscape SaaS, Landscape / Omni Governance, Out of Scope, Production Guard, Requirements: Omni Srv Admin — v1.2, Traceability (+1 more)
 
 ### Community 605 - "Community 605"
 Cohesion: 0.22
@@ -2947,10 +2973,6 @@ Nodes (7): Backup, Fix applied, Important implementation detail, Next step, Phas
 ### Community 615 - "Community 615"
 Cohesion: 0.25
 Nodes (7): Backups/evidence, Implementation, Network change, Outcome, Phase 29 evidence - OCI ingress for Landscape TCP 6554, Residual notes, Validation
-
-### Community 616 - "Community 616"
-Cohesion: 0.25
-Nodes (7): Collected Fields, Command, Explicitly Forbidden in Phase 28, G18 Ubuntu Pro/ESM Inventory, Phase 29 Gate Use, Redaction Policy, Scope
 
 ### Community 617 - "Community 617"
 Cohesion: 0.29
@@ -3003,6 +3025,10 @@ Nodes (4): Any, Path, load_managed_apps_profile(), Desired-state profile helpers
 ### Community 629 - "Community 629"
 Cohesion: 0.50
 Nodes (3): DNS record, Operational note, Phase 29: Cloudflare DNS Evidence for Landscape Self-hosted
+
+### Community 648 - "Community 648"
+Cohesion: 0.17
+Nodes (11): 10. Histórico do manual, 1. Objetivo, 2. Source of Truth, 3. Estado atual, 4. Rotina de sync, 5. Protected paths, 6. Patch refresh, 7. Rebuild e pós-sync (+3 more)
 
 ### Community 650 - "Community 650"
 Cohesion: 0.12
@@ -3277,8 +3303,8 @@ Cohesion: 0.14
 Nodes (13): Accomplishments, Auth Gates, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness (+5 more)
 
 ### Community 736 - "Community 736"
-Cohesion: 0.23
-Nodes (21): Any, _claim_next_plan(), _command_template(), _finish_plan_db(), _heartbeat_payload(), _json_literal(), monitor_hosts(), _monitor_payload() (+13 more)
+Cohesion: 0.11
+Nodes (51): Any, _app_payload(), _claim_next_plan(), _command_template(), Entry point: python -m omni.fleet_entry, _finish_plan_db(), _fork_payload(), _host_apps() (+43 more)
 
 ### Community 737 - "Community 737"
 Cohesion: 0.25
@@ -3299,10 +3325,6 @@ Nodes (4): Artifacts This Phase Produces, Source Coverage For This Plan, STRIDE 
 ### Community 741 - "Community 741"
 Cohesion: 0.30
 Nodes (14): sso-edge-smoke.sh script, assert_redirect_target(), assert_sso_vhost_contract(), assert_sso_vhost_enabled(), assert_vhost_forwarded_contract(), log(), main(), parse_args() (+6 more)
-
-### Community 743 - "Community 743"
-Cohesion: 0.21
-Nodes (8): Any, _call(), collect_security_report(), _now(), Read-only Ubuntu Pro security collectors for Omni Fleet., Collect local Pro security status and CVE view without applying fixes., SecurityRunner, test_security_report_collects_pro_json_without_mutation()
 
 ### Community 744 - "Community 744"
 Cohesion: 0.09
@@ -3328,25 +3350,69 @@ Nodes (4): Add the next MT5 route, Install, MT5 remote SSO auth, Runtime contrac
 Cohesion: 0.83
 Nodes (3): install-mt5-remote-auth.sh script, run(), usage()
 
+### Community 751 - "Community 751"
+Cohesion: 0.33
+Nodes (5): Do not overwrite these behaviors, Git remote guard, Protected paths that carry this behavior, Required post-sync checks, Wayland upstream sync guards
+
+### Community 756 - "Community 756"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 34 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 757 - "Community 757"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 35 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 758 - "Community 758"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 36 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 759 - "Community 759"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 37 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 760 - "Community 760"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 38 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 761 - "Community 761"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 39 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 762 - "Community 762"
+Cohesion: 0.25
+Nodes (7): Accepted Risks Log, Evidence, Phase 40 - Security, Security Audit Trail, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 763 - "Community 763"
+Cohesion: 0.52
+Nodes (6): diagnose_container_mirrors(), _git_head(), _git_valid(), container_mirrors — diagnose migrated container worktrees., Return container mirror health for projects that declare container_mirror., Path
+
+### Community 764 - "Community 764"
+Cohesion: 0.29
+Nodes (6): Current Focus, Debug Session: obsidian-appimage-abertura, Eliminated, Evidence, Resolution, Symptoms
+
+### Community 765 - "Community 765"
+Cohesion: 0.31
+Nodes (8): Path, default_fleet_db_env(), load_env_file(), psql_available(), Shared fleet DB runtime helpers., run_sql(), _psql(), Run psql with the fleet DB env; raise on error to keep callers explicit.
+
 ## Knowledge Gaps
-- **5114 isolated node(s):** `Namespace`, `mtime`, `ast_hash`, `semantic_hash`, `mtime` (+5109 more)
+- **5097 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+5092 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **107 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **108 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `datetime` connect `Community 536` to `Community 3`, `Community 136`, `Community 137`, `Community 138`, `Community 524`, `Community 14`, `Community 655`, `Community 28`, `Community 29`, `Community 39`, `Community 574`, `Community 66`, `Community 578`, `Community 579`, `Community 581`, `Community 71`, `Community 75`, `Community 743`, `Community 111`, `Community 240`?**
-  _High betweenness centrality (0.011) - this node is a cross-community bridge._
-- **Why does `Communities (747 total, 110 thin omitted)` connect `Community 0` to `Community 155`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **What connects `Namespace`, `mtime`, `ast_hash` to the rest of the system?**
-  _5447 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Why does `datetime` connect `Community 536` to `Community 3`, `Community 136`, `Community 137`, `Community 138`, `Community 14`, `Community 655`, `Community 28`, `Community 29`, `Community 39`, `Community 296`, `Community 574`, `Community 66`, `Community 579`, `Community 581`, `Community 71`, `Community 75`, `Community 736`, `Community 111`, `Community 240`?**
+  _High betweenness centrality (0.009) - this node is a cross-community bridge._
+- **Why does `Communities (765 total, 107 thin omitted)` connect `Community 0` to `Community 155`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `apply_omni_self_update()` connect `Community 296` to `Community 736`, `Community 537`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Are the 15 inferred relationships involving `run_preflight()` (e.g. with `test_preflight_accepts_ghcr_deploy_image_without_dockerhub_secrets()` and `test_preflight_allows_atius_router_internal_docs_links()`) actually correct?**
+  _`run_preflight()` has 15 INFERRED edges - model-reasoned connections that need verification._
+- **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
+  _5444 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.0031746031746031746 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0030864197530864196 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.04432383536861149 - nodes in this community are weakly interconnected._
-- **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.06253652834599649 - nodes in this community are weakly interconnected._

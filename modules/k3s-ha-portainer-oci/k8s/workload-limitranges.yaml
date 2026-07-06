@@ -1,0 +1,60 @@
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: half-core-defaults
+  namespace: ai-search
+  labels:
+    managed-by: omni-srv-admin
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 500m
+      default:
+        cpu: 500m
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: half-core-defaults
+  namespace: jenkins
+  labels:
+    managed-by: omni-srv-admin
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 500m
+      default:
+        cpu: 500m
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: half-core-defaults
+  namespace: monitoring
+  labels:
+    managed-by: omni-srv-admin
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 500m
+      default:
+        cpu: 500m
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: half-core-defaults
+  namespace: portainer
+  labels:
+    managed-by: omni-srv-admin
+spec:
+  limits:
+    - type: Container
+      defaultRequest:
+        cpu: 500m
+      default:
+        cpu: 500m

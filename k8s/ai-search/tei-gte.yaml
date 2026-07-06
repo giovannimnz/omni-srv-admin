@@ -38,8 +38,8 @@ metadata:
     embeddings.atius.com.br/dimensions: "768"
     embeddings.atius.com.br/revision: main
     embeddings.atius.com.br/revision-note: pin-to-huggingface-commit-after-first-live-validation
-    embeddings.atius.com.br/cpu-request: 1000m
-    embeddings.atius.com.br/cpu-limit: 2000m
+    embeddings.atius.com.br/cpu-request: 500m
+    embeddings.atius.com.br/cpu-limit: 1000m
     embeddings.atius.com.br/memory-request: 6Gi
     embeddings.atius.com.br/memory-limit: 12Gi
     embeddings.atius.com.br/tokenization-workers: "1"
@@ -91,7 +91,7 @@ spec:
             - --hostname
             - 10.1.1.4
             - --port
-            - "3000"
+            - "3115"
             - --dtype
             - float32
             - --pooling
@@ -111,15 +111,15 @@ spec:
               value: /data
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 3115
             - name: metrics
               containerPort: 9000
           resources:
             requests:
-              cpu: 1000m
+              cpu: 500m
               memory: 6Gi
             limits:
-              cpu: 2000m
+              cpu: 1000m
               memory: 12Gi
           volumeMounts:
             - name: model-cache
@@ -165,7 +165,7 @@ metadata:
     app.kubernetes.io/component: embeddings-backend
     app.kubernetes.io/part-of: local-ai-embeddings
   annotations:
-    embeddings.atius.com.br/internal-base-url: http://10.1.1.4:3000
+    embeddings.atius.com.br/internal-base-url: http://10.1.1.4:3115
 spec:
   type: ClusterIP
   selector:

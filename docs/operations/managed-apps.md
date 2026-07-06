@@ -110,8 +110,8 @@ Required source and layout:
 - Asset: `Obsidian-<version>-arm64.AppImage`; no `.deb`, no Snap.
 - Install root: `/home/ubuntu/GitHub/Programs/obsidian`.
 - Stable launcher target: `/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage`.
-- Wrapper: `/home/ubuntu/.local/bin/obsidian` launches the AppImage with `--no-sandbox`.
-- Tray wrapper: `/home/ubuntu/.local/bin/obsidian-tray` must start the AppImage first, wait for a real `obsidian.obsidian` X11 window, then dock with `kdocker -b -q -w <window_id>`.
+- Wrapper: `/home/ubuntu/.local/bin/obsidian` launches the AppImage with `--no-sandbox` and defaults to `APPIMAGE_EXTRACT_AND_RUN=1` to avoid stale AppImage FUSE mount exhaustion on the ARM64 XRDP host. Set `OBSIDIAN_USE_FUSE=1` only for controlled FUSE troubleshooting.
+- Tray wrapper: `/home/ubuntu/.local/bin/obsidian-tray` must start through `/home/ubuntu/.local/bin/obsidian`, wait for a real `obsidian.obsidian` X11 window, then dock with `kdocker -b -q -w <window_id>`.
 - Desktop/menu launchers stay routed through `/home/ubuntu/.local/bin/xrdp-launch`.
 
 Default appearance applied during install:
@@ -131,6 +131,12 @@ Troubleshooting: KDocker timeout after reboot
 - Durable fix: run `omni managed-apps fix --app obsidian` or `modules/managed-apps/scripts/install-obsidian-arm64-appimage`; the generated tray wrapper waits up to `OBSIDIAN_TRAY_WAIT_SECONDS` seconds, defaults to `90`, and attaches KDocker by existing window id with `kdocker -b -q -w`.
 - Failure behavior: if no Obsidian window appears, the wrapper logs to `~/.local/state/obsidian-tray/obsidian-tray.log` and exits without opening a graphical KDocker warning.
 - Verify: `omni managed-apps verify --app obsidian` must fail if `~/.local/bin/obsidian-tray` contains the old `kdocker -n -q` command-start pattern.
+
+Troubleshooting: AppImage FUSE mount exhaustion
+
+- Symptom: Obsidian exits or loops without opening, and `journalctl --user -u obsidian-aisecondbrain-rest.service` shows `fusermount: too many FUSE filesystems mounted` or `Cannot mount AppImage`.
+- Cause: repeated direct AppImage starts can leave many stale `/tmp/.mount_Obsidi*` FUSE mounts on this ARM64/XRDP host.
+- Durable fix: run `omni managed-apps fix --app obsidian` or `modules/managed-apps/scripts/install-obsidian-arm64-appimage`; the generated wrapper runs the AppImage extracted by default and avoids creating new FUSE mounts.
 
 ## GitKraken ARM64 Deb
 

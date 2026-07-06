@@ -153,7 +153,7 @@ Apply this only on hosts where Obsidian is actually installed.
 Required behavior:
 
 - `~/GitHub/obsidian-vault/AiSecondBrain/.obsidian/appearance.json` contains `titlebarStyle=native`.
-- `~/.local/bin/obsidian` launches the stable AppImage with `--no-sandbox`.
+- `~/.local/bin/obsidian` launches the stable AppImage with `--no-sandbox` and defaults to `APPIMAGE_EXTRACT_AND_RUN=1` so repeated starts do not exhaust AppImage FUSE mounts.
 - `~/.local/bin/obsidian-tray` waits for a real `obsidian.obsidian` window and docks it with `kdocker -b -q -w <window_id>`.
 - The old `kdocker -n -q -- Obsidian.AppImage` path must not exist.
 

@@ -203,7 +203,7 @@ Seeded KV paths:
 
 | Path | Purpose |
 |---|---|
-| `kv/atius/cloudflare/api` | Cloudflare account/API variables mirrored from `/home/ubuntu/.zshrc` |
+| `kv/atius/cloudflare/api` | Source of truth for Cloudflare automation variables: `CF_ACCOUNT_ID`, `CF_ACCOUNT_NAME`, `CF_AUTH_EMAIL`, `CF_GLOBAL_API_KEY`, `CF_ZONE_ID_ATIUS`, and `CF_ZONE_ID_ZENTRIUS`; old shell files are migration evidence only |
 | `kv/atius/landscape/saas-api` | Landscape SaaS API variables mirrored from `/home/ubuntu/.zshrc` |
 | `kv/atius/freeipa/bootstrap` | FreeIPA bootstrap material mirrored from `/root/freeipa-atius/bootstrap.env` |
 | `kv/atius/vaultwarden/admin` | Vaultwarden admin recovery token mirrored from `/root/vaultwarden-atius/admin-token.txt` |
@@ -218,7 +218,8 @@ Root-only helpers:
 | `/usr/local/sbin/atius-vault` | `atius-srv-3` | Runs the Vault CLI against the dedicated HashiCorp Vault using root-only init material |
 | `/usr/local/sbin/atius-vault-kv-put-json` | `atius-srv-3` | Stores stdin JSON into a KV path without exposing values in argv |
 | `/usr/local/sbin/atius-vault-export-env` | `atius-srv-3` | Emits shell `export` lines for selected profiles |
-| `/home/ubuntu/.local/bin/atius-vault-env` | local Codex host | SSH wrapper for exporting selected profiles |
+| `/home/ubuntu/.local/bin/atius-vault-env` | Linux Codex hosts | SSH-safe wrapper for exporting selected profiles; wrappers that SSH to `atius-srv-3` use `ssh -n` |
+| `/home/horistic/.local/bin/atius-vault-env` | `horistic-srv` | Uses a restricted SSH key forced to `/home/ubuntu/.local/bin/atius-vault-export-ssh` on `atius-srv-3` |
 
 Load environment variables on demand:
 

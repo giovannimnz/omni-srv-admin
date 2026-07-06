@@ -53,6 +53,27 @@ published only through Cloudflare Access. Prometheus and Alertmanager remain
 internal. Alertmanager should signal Omni Fleet; it must not execute host
 commands directly.
 
+## Scheduling Policy
+
+`horistic-srv` is manual-only for normal workload scheduling. Keep the live node
+label and taint aligned with:
+
+```bash
+sudo k3s kubectl label node horistic-srv atius.com/workload-mode=manual --overwrite
+sudo k3s kubectl taint node horistic-srv atius.com/manual-only=true:NoSchedule --overwrite
+```
+
+Automated agents, normal app workloads and observability DaemonSets must avoid
+`horistic-srv` unless the operator explicitly runs or pins a workload there.
+The Jenkins static agent deployment excludes `horistic-srv` with required node
+affinity, and the Promtail/node-exporter chart values exclude it with required
+node affinity as well.
+
+Workload namespaces use `k8s/workload-limitranges.yaml` so newly admitted
+containers default to a half-core CPU scheduling unit (`500m` request and
+`500m` limit). Workloads that need a deliberate exception, such as local
+embeddings, must declare CPU explicitly in their own manifest.
+
 ## Non-secret Install Shape
 
 ```bash

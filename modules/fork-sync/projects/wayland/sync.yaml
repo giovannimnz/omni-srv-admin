@@ -36,16 +36,45 @@ protected_paths:
   - src/process/utils/shellEnv.ts
   - src/process/webserver/routes/apiRoutes.ts
   - src/process/webserver/websocket/WebSocketManager.ts
+  - src/common/adapter/ipcBridge.ts
+  - src/common/config/storage.ts
+  - src/common/types/codex/codexModes.ts
+  - src/common/types/codex/types/eventData.ts
+  - src/process/task/AcpAgentManager.ts
+  - src/process/task/WCoreManager.ts
+  - src/process/task/claudeConfig.ts
+  - src/process/task/codexConfig.ts
+  - src/process/task/hermesConfig.ts
+  - src/renderer/components/agent/AgentModeSelector.tsx
+  - src/renderer/components/model/modelSelector/EffortSubRow.tsx
+  - src/renderer/components/model/modelSelector/modelSelectorTypes.ts
   - src/renderer/components/settings/DirectorySelectionModal.tsx
   - src/renderer/hooks/file/useDirectorySelection.tsx
+  - src/renderer/pages/guid/GuidPage.tsx
+  - src/renderer/pages/guid/index.module.css
+  - src/renderer/pages/guid/components/AgentPillBar.tsx
   - src/renderer/pages/guid/components/GuidActionRow.tsx
   - src/renderer/pages/guid/components/GuidModelSelector.tsx
+  - src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css
+  - src/renderer/pages/guid/hooks/useGuidAgentSelection.ts
+  - src/renderer/pages/guid/hooks/useGuidSend.ts
+  - src/renderer/services/i18n/i18n-keys.d.ts
   - src/renderer/services/i18n/index.ts
+  - src/renderer/utils/model/agentModes.ts
+  - tests/unit/AgentPillBar.dom.test.tsx
   - tests/unit/WebSocketManager.test.ts
+  - tests/unit/process/task/codexConfigEffort.test.ts
+  - tests/unit/process/task/codexNativeSandbox.test.ts
   - tests/unit/renderer/GuidActionRow.dom.test.tsx
+  - tests/unit/renderer/guidModelSelector.dom.test.tsx
   - tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+  - tests/unit/useGuidSend.dom.test.ts
   - docs/README.md
   - docs/guides/atius-fork-runtime.md
+
+protected_globs:
+  - src/renderer/services/i18n/locales/*/agentMode.json
+  - src/renderer/services/i18n/locales/*/conversation.json
 
 post_sync:
   enabled: true

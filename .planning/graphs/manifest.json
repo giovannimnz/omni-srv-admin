@@ -15,18 +15,18 @@
     "semantic_hash": ""
   },
   ".planning/config.json": {
-    "mtime": 1782634355.633982,
+    "mtime": 1782733106.5880828,
     "ast_hash": "88d3615bf467af719687e5a0705375da",
     "semantic_hash": ""
   },
   ".planning/graphs/graph.json": {
-    "mtime": 1782636155.5077024,
-    "ast_hash": "db7f19e52e5de02dde55378777add517",
+    "mtime": 1783206043.4799273,
+    "ast_hash": "7b1aaf20bb3080bd4c30ce511f03026a",
     "semantic_hash": ""
   },
   ".planning/graphs/manifest.json": {
-    "mtime": 1782629763.2208297,
-    "ast_hash": "4810cd176f6eb7dd453e739d670adc0f",
+    "mtime": 1783144909.5904217,
+    "ast_hash": "f5da1f481ca428d6c0152e9ecda9db0d",
     "semantic_hash": ""
   },
   "antivirus/monitor.sh": {
@@ -50,8 +50,8 @@
     "semantic_hash": ""
   },
   "cli/omni/__init__.py": {
-    "mtime": 1780650304.1645374,
-    "ast_hash": "ba7b6917c50fcf02b1859a85e16bb18a",
+    "mtime": 1783147261.0545578,
+    "ast_hash": "9c5cb401a3b0417f41a6b65786fa426c",
     "semantic_hash": ""
   },
   "cli/omni/__main__.py": {
@@ -65,8 +65,8 @@
     "semantic_hash": ""
   },
   "cli/omni/fleet.py": {
-    "mtime": 1782418730.0507357,
-    "ast_hash": "5d628030494abc22d5228c75f35f3d2b",
+    "mtime": 1783147261.0555577,
+    "ast_hash": "d1917f5301945400081ed7c0e5998619",
     "semantic_hash": ""
   },
   "cli/omni/fleet_backup.py": {
@@ -75,33 +75,33 @@
     "semantic_hash": ""
   },
   "cli/omni/podman_network.py": {
-    "mtime": 1781657545.6222787,
-    "ast_hash": "2a99692e302bda6bf8e45d579e9bca58",
+    "mtime": 1783147261.0595577,
+    "ast_hash": "ba2d3e167d2be3c30e83b39d9f64b94a",
     "semantic_hash": ""
   },
   "cli/omni/remote_manager.py": {
-    "mtime": 1780722919.3177352,
-    "ast_hash": "6e123a257b036a4105d19941a4b2bf45",
+    "mtime": 1783147261.0595577,
+    "ast_hash": "503f8761ff265eee1155dfaca6985b14",
     "semantic_hash": ""
   },
   "cli/omni/remote_ops.py": {
-    "mtime": 1781522277.8729246,
-    "ast_hash": "1e9a51700beda9a560572308ee0a472c",
+    "mtime": 1783147261.0595577,
+    "ast_hash": "28c95a02fb304ac53c9f8c0c1d197d39",
     "semantic_hash": ""
   },
   "cli/omni/srv1_ops.py": {
-    "mtime": 1782322584.3290796,
-    "ast_hash": "094ca93d59d541c4e600b15d71149103",
+    "mtime": 1783147261.0595577,
+    "ast_hash": "e7bbef14bb6ca044ec980350b21c6631",
     "semantic_hash": ""
   },
   "cli/omni/xrdp_abnt2.py": {
-    "mtime": 1780715672.9433773,
-    "ast_hash": "1709898375a6d2e0128c7af6f9fc7d88",
+    "mtime": 1783147261.0645578,
+    "ast_hash": "97b825770861ee8ad4bdc9f42f120ae3",
     "semantic_hash": ""
   },
   "cli/setup.py": {
-    "mtime": 1780650347.380412,
-    "ast_hash": "66726a79b455608b8bab1409fa032b0e",
+    "mtime": 1783147261.0645578,
+    "ast_hash": "34b2b0bcce28f92a4ebb1bd04b0b3893",
     "semantic_hash": ""
   },
   "dark-theme-apply-2026-06-17.sh": {
@@ -120,8 +120,8 @@
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/scripts/dark-themectl.sh": {
-    "mtime": 1782253052.8384976,
-    "ast_hash": "6e06811be443bff8f6460b30ca8799f2",
+    "mtime": 1783147261.0665576,
+    "ast_hash": "fc18c07626971e6a0e2a820f296a7776",
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/uninstall.sh": {
@@ -180,8 +180,8 @@
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/scripts/omni-pg-access-guard.sh": {
-    "mtime": 1781522282.859598,
-    "ast_hash": "969362a25d6c84d38021bfd59288207a",
+    "mtime": 1783147261.0765576,
+    "ast_hash": "30c176f57ac9b9ecfd33e07810eb4d75",
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/scripts/rename-live-db-tables-camelcase.sql": {
@@ -190,13 +190,13 @@
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/tests/test_m004_contract.py": {
-    "mtime": 1781714664.434345,
-    "ast_hash": "16759fef234aedaee15df266e23a9c77",
+    "mtime": 1783147261.0775578,
+    "ast_hash": "cdef5efa440be9f0cbad6cdc7b5811de",
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/tools/validate_m004.py": {
-    "mtime": 1781714664.434345,
-    "ast_hash": "8532fd31e16c34f231f733e11067e98d",
+    "mtime": 1783147261.0775578,
+    "ast_hash": "cc5c8e763558ba3ea297009a59913ea0",
     "semantic_hash": ""
   },
   "modules/fleet-network-watchdog/fleet-network-watchdog.sh": {
@@ -230,8 +230,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/bin/deploy.sh": {
-    "mtime": 1780882698.8409777,
-    "ast_hash": "7cd8d82893dabcfd6cb88b521b3360c8",
+    "mtime": 1783208690.375208,
+    "ast_hash": "b5c3c62b23486e07c0d197f4ad7edcb5",
     "semantic_hash": ""
   },
   "modules/fork-sync/bin/detect-release.sh": {
@@ -255,8 +255,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/cli/fork_sync/cli.py": {
-    "mtime": 1781337817.2673721,
-    "ast_hash": "398aff7037e1a11efc40e01b197255d2",
+    "mtime": 1783147261.0835576,
+    "ast_hash": "47b4e486493612648c3b48c95cca9c87",
     "semantic_hash": ""
   },
   "modules/fork-sync/cli/fork_sync/core/__init__.py": {
@@ -310,8 +310,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/cli/fork_sync/core/sync_runner.py": {
-    "mtime": 1781521953.418876,
-    "ast_hash": "d62a34e78a013075888d815f3e73df17",
+    "mtime": 1783202385.336697,
+    "ast_hash": "76c0e11542538e5e259c1e620c83f32e",
     "semantic_hash": ""
   },
   "modules/fork-sync/cli/scripts/pm2-setup.sh": {
@@ -335,8 +335,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/cli/setup.py": {
-    "mtime": 1781521953.418876,
-    "ast_hash": "c986a9f650c73d78145e3d3fd35197e5",
+    "mtime": 1783147261.0855577,
+    "ast_hash": "ac09f4218b8a00e023144ed869812419",
     "semantic_hash": ""
   },
   "modules/fork-sync/cli/tests/test_sync_runner.py": {
@@ -470,8 +470,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/legacy-scripts/vault-sync-monitor.sh": {
-    "mtime": 1780258256.9504218,
-    "ast_hash": "305a62b718ca5594f54ed01710d71d95",
+    "mtime": 1782730588.7404573,
+    "ast_hash": "48acb235de74a8496717cb730d44625e",
     "semantic_hash": ""
   },
   "modules/srv1-ops/lib/metrics.py": {
@@ -495,8 +495,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/backup-to-smb.sh": {
-    "mtime": 1780612210.5003715,
-    "ast_hash": "a5fa1c1c208eb4cbc8d85dfed03d17a1",
+    "mtime": 1782730588.7394574,
+    "ast_hash": "ff32966c92760b93b5ac076082efaf66",
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/cleanup-local.sh": {
@@ -555,32 +555,32 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/sync-vault.sh": {
-    "mtime": 1781519921.2079487,
-    "ast_hash": "240f65c69828ef860fc8db69636a2157",
+    "mtime": 1782730908.739521,
+    "ast_hash": "08ad65919a04d36fbbc48b3928083dc9",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard": {
-    "mtime": 1780714026.6192956,
-    "ast_hash": "9cb8c6b729698eaf8be82b1238c9eeb9",
+    "mtime": 1783147261.0875578,
+    "ast_hash": "dfa55ed8c90ded0735412636ca6fe89b",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/files/setxkbmap-abnt2.sh": {
-    "mtime": 1780714026.6272955,
-    "ast_hash": "facc228d2a391eba47044416d9f3f864",
+    "mtime": 1783147261.0875578,
+    "ast_hash": "ff2e9c51f7512c90b7f94228da4ccac7",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/files/startwm.sh": {
-    "mtime": 1780714017.6763222,
-    "ast_hash": "71899d7c69a6a24b55c8a7f6f5721d78",
+    "mtime": 1783147261.0875578,
+    "ast_hash": "10c5df12b7b4519d3c1f461cab4acada",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/scripts/install.sh": {
-    "mtime": 1780715309.1264644,
+    "mtime": 1783144909.6424215,
     "ast_hash": "6e7f5137165afa1138e8037a2cd8f380",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/scripts/validate.sh": {
-    "mtime": 1780715309.1264644,
+    "mtime": 1783144909.6424215,
     "ast_hash": "12ebf505ab5e136bd13148f69384657b",
     "semantic_hash": ""
   },
@@ -670,8 +670,8 @@
     "semantic_hash": ""
   },
   ".planning/graphs/GRAPH_REPORT.md": {
-    "mtime": 1782636155.529746,
-    "ast_hash": "fe77db35ef3492c437298c2c0e61487a",
+    "mtime": 1783206043.4927511,
+    "ast_hash": "79ba1741ea57b05df2106ed085aad32c",
     "semantic_hash": ""
   },
   ".planning/graphs/graph.html": {
@@ -1125,8 +1125,8 @@
     "semantic_hash": ""
   },
   "README.md": {
-    "mtime": 1782300044.778306,
-    "ast_hash": "e7c64401457a7023d9be79771567be56",
+    "mtime": 1783147261.0529308,
+    "ast_hash": "c12cb14e448bf7d3cec54541aecafc14",
     "semantic_hash": ""
   },
   "RECOVERY_LOG.md": {
@@ -1140,8 +1140,8 @@
     "semantic_hash": ""
   },
   "dark-theme-ubuntu/README.md": {
-    "mtime": 1781522277.8729246,
-    "ast_hash": "43c15af4446182d5538c44fc490010f4",
+    "mtime": 1783147261.0655577,
+    "ast_hash": "823c339aa4d48933aaf618502715b11d",
     "semantic_hash": ""
   },
   "docs/ARCHITECTURE.md": {
@@ -1180,18 +1180,18 @@
     "semantic_hash": ""
   },
   "docs/architecture/overview.md": {
-    "mtime": 1780723076.7722638,
-    "ast_hash": "4f2ea2566a875a698bf10b46ee3ddb3a",
+    "mtime": 1783147261.0665576,
+    "ast_hash": "9b419737c997179e5a85c6ff613e1363",
     "semantic_hash": ""
   },
   "docs/fleet/control-plane.md": {
-    "mtime": 1782418730.0527356,
-    "ast_hash": "239681f1fc9422fb716a68eeb9693669",
+    "mtime": 1783147261.0685577,
+    "ast_hash": "9b1e3712c0820c7cb67101391c0cf9b1",
     "semantic_hash": ""
   },
   "docs/fleet/inventory-model.md": {
-    "mtime": 1781522282.8589103,
-    "ast_hash": "0dc7d51130d74c6a049d4e8420dee71f",
+    "mtime": 1783149374.2193813,
+    "ast_hash": "d57fb536a1153a4c012910e4257f6a61",
     "semantic_hash": ""
   },
   "docs/legacy-home-docs/home-docs-2026-06-06/ARCHITECTURE.md": {
@@ -1220,8 +1220,8 @@
     "semantic_hash": ""
   },
   "docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md": {
-    "mtime": 1781733751.5277474,
-    "ast_hash": "2606c49c25b871fcab90cbf0de35a3cf",
+    "mtime": 1782734512.0499256,
+    "ast_hash": "b7fb67f72dd8b448aa9d5c8eced66f59",
     "semantic_hash": ""
   },
   "docs/operations/Atius-Spec-Servers.md": {
@@ -1255,8 +1255,8 @@
     "semantic_hash": ""
   },
   "docs/operations/srv1-ops.md": {
-    "mtime": 1781811786.575861,
-    "ast_hash": "eaa21d0a78b2f261e8628c0df7fb8cf5",
+    "mtime": 1782734134.6320586,
+    "ast_hash": "eed07f7c9085ae5e1f88bf9da06fdb66",
     "semantic_hash": ""
   },
   "docs/operations/tailscale/GBRAIN-INGEST-PENDING.md": {
@@ -1285,18 +1285,18 @@
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-1.yaml": {
-    "mtime": 1781777976.5844693,
-    "ast_hash": "98c425f46d1fccfef1c3c2ef8af20044",
+    "mtime": 1783147261.0705578,
+    "ast_hash": "3d068e2ffddb86cc4e7fa5c61036c4e4",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-2.yaml": {
-    "mtime": 1781777976.5844693,
-    "ast_hash": "8f8343b041e97556e40117eac8f20c1f",
+    "mtime": 1783147261.0705578,
+    "ast_hash": "b20bd7b8018280183c8847206cfbda03",
     "semantic_hash": ""
   },
   "inventory/hosts/atius-srv-3.yaml": {
-    "mtime": 1782638513.2247849,
-    "ast_hash": "556532f41a21d011bc3b7f95e93cfe5a",
+    "mtime": 1783205637.2151136,
+    "ast_hash": "f3e26aa7c7e5d4203577d733f7c6029a",
     "semantic_hash": ""
   },
   "inventory/hosts/dell-inspiron-3520.yaml": {
@@ -1315,8 +1315,8 @@
     "semantic_hash": ""
   },
   "inventory/hosts/giovanni-w11-pc.yaml": {
-    "mtime": 1782430627.7377546,
-    "ast_hash": "3dbf24f9a9c440270e6b5d26adf252dd",
+    "mtime": 1783147261.0705578,
+    "ast_hash": "5a1e9998fcdfb2ddc7d0340f43ebcab2",
     "semantic_hash": ""
   },
   "inventory/hosts/support-template.yaml": {
@@ -1345,13 +1345,13 @@
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/README.md": {
-    "mtime": 1781714693.0902605,
-    "ast_hash": "49a946f13e78d131d4351b5acb5fcdda",
+    "mtime": 1783147261.0755577,
+    "ast_hash": "ace827cf82035da242fa90d7dd80b282",
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/configs/control-plane.example.yaml": {
-    "mtime": 1781714664.434345,
-    "ast_hash": "dbbe01b31c447be5456e98bae5df2719",
+    "mtime": 1783147261.0765576,
+    "ast_hash": "d41e12a5c8c9dc5a8c2207335bf8bf6b",
     "semantic_hash": ""
   },
   "modules/fleet-network-watchdog/README.md": {
@@ -1410,8 +1410,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/README.md": {
-    "mtime": 1781521953.4178758,
-    "ast_hash": "2ef1138eda09d78b16946f9bf2b3b1c1",
+    "mtime": 1783149374.2223814,
+    "ast_hash": "2a1b315576d13ce878be4a5befab6326",
     "semantic_hash": ""
   },
   "modules/fork-sync/VERSIONS.md": {
@@ -1545,8 +1545,8 @@
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/deploy.yaml": {
-    "mtime": 1781797040.7101898,
-    "ast_hash": "8fde4662b1caa82227f97409ffc31655",
+    "mtime": 1783203957.1770186,
+    "ast_hash": "f0649ce2693a6ce86b296a0d298a6f55",
     "semantic_hash": ""
   },
   "modules/fork-sync/projects/atius-router/sync.yaml": {
@@ -1650,8 +1650,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/README.md": {
-    "mtime": 1781811786.578861,
-    "ast_hash": "61cc8bca66aecbfe541e6a9374ea8197",
+    "mtime": 1782734134.6350586,
+    "ast_hash": "02c9c764cf7676bc0e2dd6d5bd964ca7",
     "semantic_hash": ""
   },
   "modules/srv1-ops/configs/backup-map.yaml": {
@@ -1660,13 +1660,13 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/docs/source-map.md": {
-    "mtime": 1780721098.9991767,
-    "ast_hash": "9fef5257331ad88ae9b7c45222e9682c",
+    "mtime": 1782734134.6370587,
+    "ast_hash": "d85f3b75b476fd065a256c4fcc91ef2a",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/README.md": {
-    "mtime": 1780715309.1264644,
-    "ast_hash": "cd676c7008ee07b70b7720419a8c48d8",
+    "mtime": 1783147261.0875578,
+    "ast_hash": "d67b9f7394508fa27b40d95d830d7c0a",
     "semantic_hash": ""
   },
   "modules/xrdp-abnt2/docs/original-readme.md": {
@@ -1980,8 +1980,8 @@
     "semantic_hash": ""
   },
   "inventory/hosts/horistic-srv.yaml": {
-    "mtime": 1782362651.182359,
-    "ast_hash": "9f5a879ef264b35ff1b8f37b41c2491c",
+    "mtime": 1783147261.0705578,
+    "ast_hash": "0c39881ad10cd056f6b60149673c689c",
     "semantic_hash": ""
   },
   ".planning/phases/21-onboarding-atius-mt5-kvm-1-e-atius-mt5-kvm-2-como-hosts-gere/21-SUMMARY.md": {
@@ -2000,8 +2000,8 @@
     "semantic_hash": ""
   },
   "cli/omni/oci.py": {
-    "mtime": 1781746740.6868222,
-    "ast_hash": "48748ee1f821cb51696a00a7b038697c",
+    "mtime": 1783147261.0595577,
+    "ast_hash": "bbb27ccf794352e0ed25ffea2c7c87d7",
     "semantic_hash": ""
   },
   "cli/omni/tests/test_edge.py": {
@@ -2055,8 +2055,8 @@
     "semantic_hash": ""
   },
   "cli/omni/observability.py": {
-    "mtime": 1781747930.5145693,
-    "ast_hash": "5401ec6200251a01747f3352db27d839",
+    "mtime": 1783147261.0585577,
+    "ast_hash": "05ac21f36b2439c5eb1058d75315ed1e",
     "semantic_hash": ""
   },
   "cli/omni/tests/test_observability.py": {
@@ -2210,13 +2210,13 @@
     "semantic_hash": ""
   },
   "cli/omni/managed_apps.py": {
-    "mtime": 1782419130.1785665,
-    "ast_hash": "cd35e9bccedf9f8a760f7127fcdd68d3",
+    "mtime": 1783147261.0575578,
+    "ast_hash": "62a0c9f928a72fd6c83fadd68ec96e17",
     "semantic_hash": ""
   },
   "modules/managed-apps/configs/programs.json": {
-    "mtime": 1782722632.5776112,
-    "ast_hash": "e9e80ea0d8732df5fe1161785e0e791f",
+    "mtime": 1782730686.8851702,
+    "ast_hash": "a2f0f9749d3c6c607ac7c94bf25a6973",
     "semantic_hash": ""
   },
   "modules/managed-apps/scripts/omni-managed-apps": {
@@ -2255,13 +2255,13 @@
     "semantic_hash": ""
   },
   "docs/operations/managed-apps.md": {
-    "mtime": 1782722615.9566653,
-    "ast_hash": "7837c63486e9cc1f794a5ff089cdc599",
+    "mtime": 1783147261.0705578,
+    "ast_hash": "f9d93875dc0757f34fd1b2bb1e4961f1",
     "semantic_hash": ""
   },
   "modules/managed-apps/README.md": {
-    "mtime": 1782722624.338638,
-    "ast_hash": "a04fd2a5e420f594d34c82546f843067",
+    "mtime": 1783147261.0875578,
+    "ast_hash": "509e9235d7f54624a2197753e49e3587",
     "semantic_hash": ""
   },
   "modules/managed-apps/policies/chromium/omni-browser-defaults.json": {
@@ -2400,8 +2400,8 @@
     "semantic_hash": ""
   },
   "modules/srv1-ops/scripts/production_guard.py": {
-    "mtime": 1782332069.4642496,
-    "ast_hash": "a6cd00f77b129953291a7456509531cd",
+    "mtime": 1782948876.11268,
+    "ast_hash": "fa44989ea2d9dafa1fdd07fcd2774639",
     "semantic_hash": ""
   },
   ".planning/phases/24-production-recovery-guard-ats-horistic/24-01-SUMMARY.md": {
@@ -2475,23 +2475,23 @@
     "semantic_hash": ""
   },
   "cli/omni/fleet_collectors.py": {
-    "mtime": 1782418595.5921288,
+    "mtime": 1783144909.5954218,
     "ast_hash": "010132bcfa3e3de33d0fac8d11027723",
     "semantic_hash": ""
   },
   "cli/omni/fleet_governance.py": {
-    "mtime": 1782418595.5921288,
+    "mtime": 1783144909.5954218,
     "ast_hash": "3c50349b8cb72f0bfb8facbda1ed7900",
     "semantic_hash": ""
   },
   "cli/omni/fleet_security.py": {
-    "mtime": 1782418730.0497358,
+    "mtime": 1783144909.5964217,
     "ast_hash": "f60c28102ceb1f837b297c1f49f07b4b",
     "semantic_hash": ""
   },
   "cli/omni/tests/test_managed_apps.py": {
-    "mtime": 1782722602.9997075,
-    "ast_hash": "0425b537a01733fa6f600aa2e7f00503",
+    "mtime": 1782730686.92117,
+    "ast_hash": "40209d634b90a5dcc82a51df1c453ad7",
     "semantic_hash": ""
   },
   "modules/fleet-control-plane/migrations/0004_governance_profiles.sql": {
@@ -2515,8 +2515,8 @@
     "semantic_hash": ""
   },
   "modules/managed-apps/scripts/install-obsidian-arm64-appimage": {
-    "mtime": 1782722594.4007354,
-    "ast_hash": "30b5c3a68840686c0b6c80dd5dccdd67",
+    "mtime": 1782730635.5933201,
+    "ast_hash": "580d958d9d3918d2759faa4bdffd9498",
     "semantic_hash": ""
   },
   "scripts/freeipa-preflight.py": {
@@ -2995,23 +2995,23 @@
     "semantic_hash": ""
   },
   "docs/operations/gbrain-embedding-migration.md": {
-    "mtime": 1782512734.2028594,
-    "ast_hash": "33664b2ddb3ddd36c7b66f3eda5b1515",
+    "mtime": 1783199629.166733,
+    "ast_hash": "e4c4071847be9914af35927e6cfbc849",
     "semantic_hash": ""
   },
   "docs/operations/local-ai-embeddings.md": {
-    "mtime": 1782512712.6449225,
-    "ast_hash": "2f3da7451b7f41d5c6d6a03cb95e34a7",
+    "mtime": 1783199670.3296132,
+    "ast_hash": "d74279418a61d69a3c69e6d1a2958e21",
     "semantic_hash": ""
   },
   "docs/security/atius-secrets-vaults.md": {
-    "mtime": 1782466942.9489765,
-    "ast_hash": "9dca5db046ed75e43910698c004377e9",
+    "mtime": 1783199737.5274172,
+    "ast_hash": "367f25f03d85e6c9951acb68479fb01e",
     "semantic_hash": ""
   },
   "k8s/ai-search/tei-gte.yaml": {
-    "mtime": 1782466038.3776364,
-    "ast_hash": "95af77d18fbbd5fe92c0288109442f60",
+    "mtime": 1783209116.6889668,
+    "ast_hash": "e78145765bb1fbf8f75aa98df909dfb3",
     "semantic_hash": ""
   },
   ".playwright-cli/page-2026-06-26T02-15-51-990Z.png": {
@@ -3390,13 +3390,188 @@
     "semantic_hash": ""
   },
   "docs/domain/atius-wide-sso.md": {
-    "mtime": 1782700329.9691224,
-    "ast_hash": "520ba0d1b93bf3e1d2dc5274bb5b2ca2",
+    "mtime": 1782733203.8907976,
+    "ast_hash": "217cb9fd09e17dc7cd25b1b8cf329fc9",
     "semantic_hash": ""
   },
   "modules/mt5-remote-auth/README.md": {
     "mtime": 1782639467.9819834,
     "ast_hash": "27f8cd8ce6eb22abb8259fb85645a8a2",
+    "semantic_hash": ""
+  },
+  "modules/managed-apps/scripts/install-gitkraken-gk-arm64-deb": {
+    "mtime": 1782726380.8807185,
+    "ast_hash": "679e0831e5340ae8f2d4ba35db1f01f6",
+    "semantic_hash": ""
+  },
+  "modules/srv1-ops/scripts/omni-obsidian-rest-access-guard.sh": {
+    "mtime": 1782734134.6290588,
+    "ast_hash": "c788b72e04f624a7d2244fc5aca4d6d5",
+    "semantic_hash": ""
+  },
+  "cli/omni/db_runtime.py": {
+    "mtime": 1783147261.0545578,
+    "ast_hash": "2c21f8cd3dba57d63c2c905c527b870f",
+    "semantic_hash": ""
+  },
+  "cli/omni/tests/test_xrdp_abnt2.py": {
+    "mtime": 1783147261.0615578,
+    "ast_hash": "28a922dcfdc56333852cdff203e2abf0",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0007_customization_registry.sql": {
+    "mtime": 1783147261.0765576,
+    "ast_hash": "4c8be317981819312f4bc845491a42ff",
+    "semantic_hash": ""
+  },
+  "modules/fleet/scripts/wayland-srv3-postinstall-hook.sh": {
+    "mtime": 1783147261.078226,
+    "ast_hash": "1797ddcf34ab2bc7a62894e7534757ae",
+    "semantic_hash": ""
+  },
+  "modules/fleet/scripts/wayland-srv3-update.sh": {
+    "mtime": 1783147261.0783234,
+    "ast_hash": "f7372aecfaa6e377f8ddce673f332e2f",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/db_registry.py": {
+    "mtime": 1783147261.0835576,
+    "ast_hash": "4de279e0f1ff6a18f023a961a3eb81b7",
+    "semantic_hash": ""
+  },
+  "docs/operations/customization-governance.md": {
+    "mtime": 1783149374.2193813,
+    "ast_hash": "190a6f8767507351b1c0ae028adc8702",
+    "semantic_hash": ""
+  },
+  "docs/operations/ubuntu-arm64-xrdp-desktop-standard.md": {
+    "mtime": 1783147261.0705578,
+    "ast_hash": "004b985daf4ddff775f8a757a49ada10",
+    "semantic_hash": ""
+  },
+  "docs/operations/wayland-managed-runtime.md": {
+    "mtime": 1783149374.2203813,
+    "ast_hash": "f9093ebd2d7049da3b99dd963a853fe1",
+    "semantic_hash": ""
+  },
+  "cli/omni/fleet_entry.py": {
+    "mtime": 1783147261.0555577,
+    "ast_hash": "2265bea5fda8942bffc0b313fbb0d8fb",
+    "semantic_hash": ""
+  },
+  "cli/omni/fleet_versioning.py": {
+    "mtime": 1783147261.0555577,
+    "ast_hash": "3cbe66bbffc9f2afa40c56f8e3e7795d",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/configs/omni-version-matrix.json": {
+    "mtime": 1783147261.0765576,
+    "ast_hash": "8577e6a74f1b14d18b20935d9e935625",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/migrations/0006_omni_version_inventory.sql": {
+    "mtime": 1783147261.0765576,
+    "ast_hash": "07daaa006b78c2d7587c7bc5d0072541",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/tests/test_m007_customization_registry.py": {
+    "mtime": 1783147261.0775578,
+    "ast_hash": "179422a5c5a45e586981ac13df9fd748",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/tests/test_m033_omni_versioning.py": {
+    "mtime": 1783147261.0775578,
+    "ast_hash": "78c51ea449177a2c740f1c7472e29508",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/windows/Install-OmniFleetAgentTask.ps1": {
+    "mtime": 1783147261.0775578,
+    "ast_hash": "f7e94a3fb58b03df7034652916a1f1e2",
+    "semantic_hash": ""
+  },
+  "modules/fleet-control-plane/windows/Invoke-OmniFleetAgent.ps1": {
+    "mtime": 1783147261.078226,
+    "ast_hash": "b413898a103c5f62684d8e633d235d30",
+    "semantic_hash": ""
+  },
+  "scripts/release.sh": {
+    "mtime": 1783208690.374208,
+    "ast_hash": "63e998156d9217d9da99104406775e88",
+    "semantic_hash": ""
+  },
+  ".github/workflows/release.yml": {
+    "mtime": 1783147261.0529308,
+    "ast_hash": "ce1d5b11c64ad08980fc800c4b1ddfd5",
+    "semantic_hash": ""
+  },
+  "CHANGELOG.md": {
+    "mtime": 1783147261.0529308,
+    "ast_hash": "47e910730cb915e94f88e41039a57e9d",
+    "semantic_hash": ""
+  },
+  "docs/operations/codex-runtime-standard.md": {
+    "mtime": 1783147261.0685577,
+    "ast_hash": "309f005808151e72389096189e47fda0",
+    "semantic_hash": ""
+  },
+  "docs/operations/codex-service-tier-audit-2026-07-04.md": {
+    "mtime": 1783147261.0685577,
+    "ast_hash": "4435c8f356ab095d54edaf8e8ff33e8e",
+    "semantic_hash": ""
+  },
+  "docs/operations/omni-srv-admin-auto-update.md": {
+    "mtime": 1783147261.0705578,
+    "ast_hash": "3d936ac072472293250f3f4b4b57c79e",
+    "semantic_hash": ""
+  },
+  "docs/operations/rdp-trust-pki.md": {
+    "mtime": 1783147261.0705578,
+    "ast_hash": "26a920f4cb9ee8d7eac56fc58cf3430e",
+    "semantic_hash": ""
+  },
+  "docs/operations/release-versioning-standard.md": {
+    "mtime": 1783208889.7506275,
+    "ast_hash": "a5298d2727435312d425e4421d21bc07",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/manuals/wayland.md": {
+    "mtime": 1783205637.2181137,
+    "ast_hash": "e03b6cf2548d77cf9a8673ac6a972538",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/wayland/UPSTREAM-SYNC-GUARDS.md": {
+    "mtime": 1783205637.2191136,
+    "ast_hash": "c42463ba89d1887b1faccffd04b318cd",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/projects/wayland/sync.yaml": {
+    "mtime": 1783205637.2191136,
+    "ast_hash": "14b00f09292742a380bcc45c1e1b17d6",
+    "semantic_hash": ""
+  },
+  "backups/tei-gte-served-name/tei-gte-live-before-20260704-181502.yaml": {
+    "mtime": 1783199703.2325172,
+    "ast_hash": "c550eacb622d2bb511ebf686effcd399",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/fork_sync/core/release_preflight.py": {
+    "mtime": 1783208690.371208,
+    "ast_hash": "aae68a2893bd00a574bdd8096d08e71a",
+    "semantic_hash": ""
+  },
+  "modules/fork-sync/cli/tests/test_release_preflight.py": {
+    "mtime": 1783208731.3690886,
+    "ast_hash": "28ea43d62fd785f97cb6a8898e8c4378",
+    "semantic_hash": ""
+  },
+  "scripts/release-preflight.sh": {
+    "mtime": 1783208690.374208,
+    "ast_hash": "b7fa4791b47c55681e836e77acf4985b",
+    "semantic_hash": ""
+  },
+  "docs/operations/release-preflight.md": {
+    "mtime": 1783208889.7496276,
+    "ast_hash": "8761d2d77b887370eb1d4fdb89a838fb",
     "semantic_hash": ""
   }
 }

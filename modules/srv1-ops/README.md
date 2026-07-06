@@ -101,7 +101,9 @@ giovanni-drive:ATIUS-SRV/SRV-1/Backup/
 ## Obsidian REST endpoint
 
 - SRV-1 mantem o Obsidian AppImage aberto via user unit `obsidian-aisecondbrain-rest.service`.
+- A unit deve rodar no display humano `:1` com `OBSIDIAN_FORCE_EXTRACT_AND_RUN=1`; nao usar display headless para nao prender o Electron singleton fora da sessao XRDP e nao esgotar mounts FUSE.
 - O plugin `obsidian-local-rest-api` fica no vault `AiSecondBrain` e escuta somente `10.1.1.1:27124`.
+- `AiSecondBrain/.obsidian/community-plugins.json` deve manter `obsidian-local-rest-api` habilitado, porque Codex e Hermes usam esse endpoint REST/MCP.
 - SRV-2/SRV-3 acessam `https://10.1.1.1:27124` e `https://10.1.1.1:27124/mcp/` direto pela VPN interna.
 - Nao criar tunnel systemd em SRV-2/SRV-3 para esse endpoint.
 - SRV-1 usa `omni-obsidian-rest-access-guard.service` para permitir `27124/tcp` apenas para `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`.

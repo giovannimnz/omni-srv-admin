@@ -141,7 +141,10 @@ if [ ! -x "$APPIMAGE" ]; then
   exit 127
 fi
 
-if [ "${OBSIDIAN_FORCE_EXTRACT_AND_RUN:-0}" = "1" ]; then
+# Default to extracted execution on this ARM64/XRDP host. Repeated direct FUSE
+# AppImage starts can leave stale /tmp/.mount_Obsidi* mounts and eventually
+# make Obsidian fail with "too many FUSE filesystems mounted".
+if [ "${OBSIDIAN_USE_FUSE:-0}" != "1" ] || [ "${OBSIDIAN_FORCE_EXTRACT_AND_RUN:-0}" = "1" ]; then
   export APPIMAGE_EXTRACT_AND_RUN=1
 fi
 
@@ -169,8 +172,8 @@ find_obsidian() {
   local candidate
   for candidate in \
     "${OBSIDIAN_BIN:-}" \
-    "/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage" \
     "$HOME/.local/bin/obsidian" \
+    "/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage" \
     "$HOME/Applications/Obsidian-1.12.7-arm64.AppImage"
   do
     [ -n "$candidate" ] && [ -x "$candidate" ] && printf '%s\n' "$candidate" && return 0
@@ -188,10 +191,7 @@ close_kdocker_warnings() {
 }
 
 obsidian_running() {
-  if command -v wmctrl >/dev/null 2>&1 && wmctrl -lx 2>/dev/null | grep -qi 'obsidian\.obsidian'; then
-    return 0
-  fi
-  obsidian_process_running
+  command -v wmctrl >/dev/null 2>&1 && wmctrl -lx 2>/dev/null | grep -qi 'obsidian\.obsidian'
 }
 
 obsidian_process_running() {
@@ -310,6 +310,10 @@ verify_install() {
   grep -q "Icon=$ICON_FILE" "$HOME/Desktop/obsidian.desktop" 2>/dev/null || failed=1
   grep -q 'kdocker -b -q -w' "$HOME/.local/bin/obsidian-tray" 2>/dev/null || {
     printf 'obsidian-tray drift: KDocker must dock by existing window id\n' >&2
+    failed=1
+  }
+  grep -q 'APPIMAGE_EXTRACT_AND_RUN=1' "$HOME/.local/bin/obsidian" 2>/dev/null || {
+    printf 'obsidian wrapper drift: APPIMAGE_EXTRACT_AND_RUN fallback is not enabled by default\n' >&2
     failed=1
   }
   if grep -q 'kdocker -n -q' "$HOME/.local/bin/obsidian-tray" 2>/dev/null; then

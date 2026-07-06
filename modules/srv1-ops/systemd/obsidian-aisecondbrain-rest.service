@@ -1,7 +1,8 @@
 [Unit]
 Description=Obsidian AiSecondBrain REST API
 Documentation=file:/home/ubuntu/GitHub/obsidian-vault/AiSecondBrain/60-LOGS/
-After=graphical-session.target
+After=graphical-session.target network-online.target
+Wants=network-online.target
 ConditionPathExists=/home/ubuntu/GitHub/obsidian-vault/AiSecondBrain/.obsidian/plugins/obsidian-local-rest-api/data.json
 ConditionPathExists=/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage
 
@@ -11,6 +12,7 @@ WorkingDirectory=/home/ubuntu/GitHub/obsidian-vault/AiSecondBrain
 Environment=DISPLAY=:1
 Environment=XAUTHORITY=/home/ubuntu/.Xauthority
 Environment=DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/1001/bus
+Environment=OBSIDIAN_FORCE_EXTRACT_AND_RUN=1
 ExecStart=/home/ubuntu/.local/bin/obsidian --disable-gpu --disable-gpu-rasterization --disable-features=Vulkan,VulkanFromANGLE
 Restart=on-failure
 RestartSec=10

@@ -17,6 +17,10 @@
 # ─── Loki (single-binary) ───────────────────────────────────────────────
 loki:
   enabled: true
+  # kube-prometheus-stack already makes Prometheus the default Grafana
+  # datasource. Keep Loki available but not default, otherwise Grafana fails
+  # provisioning with two defaults in the same org.
+  isDefault: false
   image:
     repository: grafana/loki
     tag: 2.9.3
@@ -88,6 +92,15 @@ promtail:
     - -config.file=/etc/promtail/promtail.yaml
   nodeSelector:
     kubernetes.io/os: linux
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - horistic-srv
   resources:
     requests:
       cpu: 30m

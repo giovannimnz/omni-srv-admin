@@ -17,7 +17,7 @@ embedding-gte-v1
 The backend for this phase is TEI running inside k3s:
 
 ```text
-http://10.1.1.4:3000
+http://10.1.1.4:3115
 ```
 
 The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name is `embedding-gte-v1`, matching the governed public alias directly. The frozen vector dimension for this alias is `768`, with `cls` pooling.
@@ -68,7 +68,7 @@ Create or update a New API channel for embeddings with these fields:
 | Field | Value |
 |---|---|
 | Type | OpenAI-compatible |
-| Base URL | `http://10.1.1.4:3000` |
+| Base URL | `http://10.1.1.4:3115` |
 | Upstream model | `embedding-gte-v1` |
 | Public alias | `embedding-gte-v1` |
 | Backend model | `Alibaba-NLP/gte-multilingual-base` |
@@ -112,7 +112,7 @@ ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest
 The k3s Service remains ClusterIP-only for internal bookkeeping, but the router-facing upstream uses the private worker IP and TEI port:
 
 ```text
-http://10.1.1.4:3000
+http://10.1.1.4:3115
 ```
 
 The TEI pod runs on `horistic-srv` with `hostNetwork: true` and binds to the private node IP `10.1.1.4`. This is the router-facing internal URL because `router-ai-atius` runs in Podman on SRV-1 and does not reliably reach k3s PodIP/ClusterIP routes.
@@ -123,14 +123,14 @@ Live resource contract:
 
 | Setting | Value |
 |---|---|
-| CPU request | `1000m` = 1.0 node CPU/vCPU |
-| CPU limit | `2000m` = 2.0 node CPU/vCPU |
+| CPU request | `500m` = 0.5 node CPU/vCPU |
+| CPU limit | `1000m` = 1.0 node CPU/vCPU |
 | Memory request | `6Gi` |
 | Memory limit | `12Gi` |
 | Tokenization workers | `1` |
 | Autoscaling | Disabled; `replicas: 1` |
 
-`--tokenization-workers 1` is intentionally pinned. During resource tuning, TEI auto-selected 3 tokenization workers when the CPU ceiling was higher and exceeded the earlier 8Gi memory limit while warming up. Keeping one tokenization worker preserves predictable memory behavior with the current 12Gi memory limit.
+`--tokenization-workers 1` is intentionally pinned. During resource tuning, TEI auto-selected 3 tokenization workers when the CPU ceiling was higher and exceeded the earlier 8Gi memory limit while warming up. Keeping one tokenization worker preserves predictable memory behavior with the current 12Gi memory limit and the half-core scheduling unit.
 
 After the first live validation, pin the Hugging Face model revision to a concrete commit SHA instead of `main`, then re-run the smoke tests and update the manifest annotation.
 

@@ -60,6 +60,15 @@ spec:
         app: jenkins-agent
     spec:
       serviceAccountName: jenkins-agent
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: kubernetes.io/hostname
+                    operator: NotIn
+                    values:
+                      - horistic-srv
       # On SRV-3 (ARM64) the image must support arm64. jenkins/inbound-agent
       # is multi-arch; if pull fails, fall back to jenkins/jnlp-agent:arm64.
       containers:
@@ -99,8 +108,8 @@ spec:
                   key: jenkins-secret
           resources:
             requests:
-              cpu: "200m"
+              cpu: "500m"
               memory: "512Mi"
             limits:
-              cpu: "2"
+              cpu: "500m"
               memory: "4Gi"

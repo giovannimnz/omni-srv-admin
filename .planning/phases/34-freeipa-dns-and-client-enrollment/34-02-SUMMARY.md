@@ -39,7 +39,8 @@ now reachable to the fleet through the WireGuard/CoreDNS path:
   through a dedicated local gateway service
 - the first real enrolled Linux host is `atius-srv-3`
 
-`horistic-srv` was intentionally left for the next controlled expansion step.
+`horistic-srv` remains intentionally deferred and is not part of the automatic
+FreeIPA enrollment flow. Enroll it only after an explicit operator request.
 
 ## Evidence
 
@@ -68,10 +69,11 @@ now reachable to the fleet through the WireGuard/CoreDNS path:
 
 - FreeIPA DNS for `atius-srv-3.atius.internal` now holds both `10.1.1.3` and
   the legacy compatibility alias `10.1.1.7`.
-- Reverse PTR entries for `10.1.1.3` and `10.1.1.7` still reflect older fleet
-  naming and were not changed in this phase.
-- `horistic-srv` was not enrolled yet; the operator explicitly requested
-  `srv3` first and `horistic-srv` second.
+- Reverse PTR entries for `10.1.1.3` and `10.1.1.7` were corrected on
+  2026-07-06 through the CoreDNS reverse zone on `atius-srv-2`; both now return
+  `atius-srv-3.atius.internal.`.
+- `horistic-srv` was not enrolled and must stay out of the FreeIPA enrollment
+  flow unless the operator explicitly starts a manual enrollment later.
 
 ## Scope Control
 

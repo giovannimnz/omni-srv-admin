@@ -88,6 +88,15 @@ nodeExporter:
 
 prometheus-node-exporter:
   releaseLabel: true
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - horistic-srv
   resources:
     requests:
       cpu: 50m

@@ -35,6 +35,8 @@ def test_obsidian_installer_applies_native_titlebar_default() -> None:
     assert "obsidianmd/obsidian-releases" in text
     assert "arm64.AppImage" in text
     assert ".titlebarStyle = \"native\"" in text
+    assert "APPIMAGE_EXTRACT_AND_RUN=1" in text
+    assert "OBSIDIAN_USE_FUSE" in text
     assert "Window frame style" not in text
     assert "--no-sandbox" in text
     assert "snap install" not in text
@@ -47,6 +49,8 @@ def test_obsidian_tray_docks_existing_window_id_not_command_start_timeout() -> N
     assert "first_obsidian_window" in text
     assert 'kdocker -b -q -w "$wid"' in text
     assert "KDocker skipped: no Obsidian window" in text
+    assert "obsidian_running() {\n  command -v wmctrl" in text
+    assert text.index('"$HOME/.local/bin/obsidian"') < text.index('"/home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage"')
     assert "kdocker -n -q --" not in text
 
 

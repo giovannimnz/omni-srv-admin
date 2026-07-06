@@ -2,7 +2,7 @@
 
 **Phase:** 34 - FreeIPA DNS and Client Enrollment
 **Status:** 34-01 disposable client gate passed and 34-02 completed with private WireGuard/CoreDNS publishing plus first real host enrollment on `atius-srv-3`.
-**Updated:** 2026-06-26T07:35:00-03:00
+**Updated:** 2026-07-06T05:20:00-03:00
 
 ## Current FreeIPA Baseline
 
@@ -31,11 +31,14 @@ The first production-ready private integration path is now live:
 | Real host enrollment on `atius-srv-3` | PASS |
 | `kinit admin` and `ipa ping` on enrolled host | PASS |
 | `getent passwd admin`, `id admin`, `sudo -l -U admin` on enrolled host | PASS |
-| `horistic-srv` enrollment | DEFERRED by operator after `srv3` pilot |
+| `horistic-srv` enrollment | DEFERRED by operator; manual-only future gate |
+| Reverse PTR for `10.1.1.3` and `10.1.1.7` | PASS, both return `atius-srv-3.atius.internal.` through CoreDNS on `atius-srv-2` |
 
 Live private publish model:
 
 - CoreDNS on `atius-srv-2` forwards only `atius.internal` to `10.1.1.3`
+- CoreDNS on `atius-srv-2` serves the fleet reverse PTR override for
+  `10.1.1.3` and `10.1.1.7`
 - `atius-srv-3` privately forwards FreeIPA ports from `10.1.1.3` to container IP `10.89.53.10`
 - no public DNS, Apache, or Cloudflare exposure was added
 
@@ -124,4 +127,7 @@ If DNS resolver changes are made on the client, restore the pre-enrollment resol
 
 Next controlled expansion:
 
-- enroll `horistic-srv` after the `srv3` pilot, reusing the same DNS and rollback model.
+- Do not enroll `horistic-srv` automatically. Keep it outside FreeIPA until the
+  operator explicitly requests a manual enrollment run.
+- If a future manual `horistic-srv` enrollment is requested, reuse the same DNS,
+  rollback, SSH/RDP safety, and sudo smoke model from the `atius-srv-3` pilot.

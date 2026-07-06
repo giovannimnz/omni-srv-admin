@@ -96,6 +96,7 @@ Current Obsidian note:
 - The installer sets `~/GitHub/obsidian-vault/AiSecondBrain/.obsidian/appearance.json` with `titlebarStyle=native`.
 - `titlebarStyle=native` is the module default for Obsidian installs. It maps to Obsidian's `Window frame style -> Native frame` and avoids the hidden-frame titlebar artifact in LXDE/XRDP.
 - Obsidian requires a full app restart after changing the window frame style.
+- The `obsidian` wrapper defaults to `APPIMAGE_EXTRACT_AND_RUN=1` to avoid AppImage FUSE mount exhaustion on ARM64/XRDP.
 - The `obsidian-tray --tray-only` autostart wrapper must not use `kdocker -n -q -- Obsidian.AppImage`; it must wait for an `obsidian.obsidian` window and attach KDocker by window id with `kdocker -b -q -w <window_id>`.
 - If Obsidian does not create a window during boot, the wrapper logs to `~/.local/state/obsidian-tray/obsidian-tray.log` and exits without showing a KDocker dialog.
 

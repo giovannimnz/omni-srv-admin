@@ -138,10 +138,12 @@ Servicos:
 - SRV-1 user systemd: `obsidian-aisecondbrain-rest.service`.
 - SRV-1 system systemd: `omni-obsidian-rest-access-guard.service`.
 - SRV-2/SRV-3: nenhum tunnel systemd para Obsidian REST.
+- A unit user deve abrir o AppImage no display `:1` e usar `OBSIDIAN_FORCE_EXTRACT_AND_RUN=1`; display headless prende o singleton fora da sessao XRDP e restart loop pode esgotar FUSE.
 
 Contrato:
 
 - Plugin: `obsidian-local-rest-api` no vault `AiSecondBrain`.
+- `AiSecondBrain/.obsidian/community-plugins.json` deve manter `obsidian-local-rest-api` habilitado; Codex e Hermes dependem desse REST/MCP local.
 - Endpoint VPN: `https://10.1.1.1:27124`.
 - MCP endpoint: `https://10.1.1.1:27124/mcp/`.
 - Binding host do plugin: `10.1.1.1`.
