@@ -94,6 +94,7 @@ Os paths protegidos carregam 4 grupos de customização:
    `src/process/task/codexConfig.ts`,
    `src/process/task/hermesConfig.ts`,
    `src/renderer/components/agent/AgentModeSelector.tsx`,
+   `src/renderer/components/agent/MarqueePillLabel.tsx`,
    `src/renderer/pages/guid/GuidPage.tsx`,
    `src/renderer/pages/guid/components/GuidModelSelector.tsx`,
    `src/renderer/pages/guid/hooks/useGuidAgentSelection.ts`,
