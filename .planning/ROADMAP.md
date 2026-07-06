@@ -1,16 +1,18 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** v1.3 — Local AI Embeddings and Semantic Retrieval
-**Milestone Goal:** Criar embeddings locais OpenAI-compatible via `https://router.atius.com.br/v1`, com New API como gateway e TEI/GTE no k3s em `horistic-srv` como backend.
+**Active Milestone:** v1.4 — Atius-wide SSO and Login
+**Milestone Goal:** Publicar `sso.atius.com.br` como host canonico de login ATIUS, usando Keycloak como provedor OIDC controlado e preservando o `auth-token` e o RBAC legado do ATS ate a publicacao completa.
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 **Requirements:** `.planning/REQUIREMENTS.md`
-**Execution order:** TEI backend -> New API channel/alias -> external smoke -> client migration runbook -> documentation/verification
+**Execution order:** Wave 0 validation -> ATS SSO facade -> edge/header publication gate -> rollback/runbook closeout
 
 ---
 
 ## Milestone v1.2 Carry-over
 
-The v1.2 phases below remain valid pending work. v1.3 was opened as a separate AI infrastructure track because the embeddings stack is not a continuation of the FreeIPA/Keycloak/Samba/Production Guard sequence.
+The v1.2 phases below remain valid as canonized history. v1.3 shipped, Phase 43
+also shipped out of sequence for runtime reasons, and the active operator focus
+is now finishing Phase 42 before resuming Phase 44.
 
 ## Phase 28: G18 Ubuntu Pro/ESM Fleet Gates ✅ COMPLETE
 
@@ -271,7 +273,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 **Requirements:** PRG-01
 **Depends on:** Phase 36, Phase 24-27 context
-**Status:** Pending
+**Status:** Complete
 **Risk:** MEDIUM — deve validar sem reiniciar servicos live.
 
 **Plans:** 1 plan
@@ -369,7 +371,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 **Requirements:** EMB-01, EMB-02, EMB-03, EMB-04, EMB-05, EMB-06, EMB-07, EMB-08
 **Depends on:** Phase 29 runtime repair (`horistic-srv` joined as k3s worker), router-ai-atius/New API reachable, operator-provided New API token
-**Status:** Complete - TEI/GTE live on `horistic-srv`, New API alias configured, public smoke passed
+**Status:** Complete - TEI/GTE live on `horistic-srv` in `ebeddings-local`, alias `embedding-gte-v1` validated, public smoke passed
 **Risk:** HIGH — rota de embeddings mexe em gateway de IA, secrets, k3s e possíveis reindexações; mudar modelo/dimensão sem reindex quebra resultados.
 
 **Canonical refs:**
@@ -383,7 +385,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 **Plans:** 1/1 plans complete
 
 - [x] 41-01 — TEI/GTE backend, New API alias, OpenAI smoke and client migration contract
-  - Completed 2026-07-04: TEI live on `10.1.1.4:3115`, router alias `embedding-gte-v1` configured, public POST `/v1/embeddings` smoke passed.
+  - Completed 2026-07-04 and reconciled 2026-07-06: TEI live on `10.1.1.4:3115`, runtime namespace `ebeddings-local`, router alias `embedding-gte-v1`, public POST `/v1/embeddings` smoke passed.
 
 **Success Criteria:**
 
@@ -403,7 +405,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 **Requirements:** SSO-01, SSO-02, SSO-03, SSO-04, SSO-05, SSO-06
 **Depends on:** Phase 36 Keycloak/FreeIPA coexistence, ATS current SSO/JWT cookie flow, Apache/Cloudflare edge inventory
-**Status:** Planned
+**Status:** In Progress
 **Risk:** HIGH — mexe em identidade, cookies `.atius.com.br`, redirect/login cross-subdomain e apps de trading live; qualquer cutover deve ser gateado e reversivel.
 
 **Canonical refs:**
@@ -429,7 +431,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 **Wave 1 *(blocked on Wave 0 completion)* — ATS reference implementation**
 
-- [ ] 42-02 — ATS SSO facade, OIDC bridge and RBAC-compatible session
+- [x] 42-02 — ATS SSO facade, OIDC bridge and RBAC-compatible session
 
 **Wave 2 *(blocked on Wave 1 completion)* — Edge, Keycloak and gated publication**
 
@@ -451,6 +453,8 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 5. Smoke tests cobrem login, refresh, logout global, redirect seguro e acesso cross-subdomain sem vazar secrets.
 6. Rollback restaura login legado por `trade.atius.com.br/login` e cookies `.atius.com.br` sem mexer em usuarios FreeIPA/Keycloak.
 
+**Current open gate:** `42-03` still needs the edge/publication checkpoint for Apache headers, Keycloak client publication, `sso.atius.com.br` gate, and the final no-secrets rollout/runbook closeout.
+
 ---
 
 ## Milestone v1.5: Codex Runtime and MCP Bootstrap Reliability
@@ -461,7 +465,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 **Requirements:** CDX-01, CDX-02, CDX-03, CDX-04, CDX-05, CDX-06
 **Depends on:** `docs/operations/codex-runtime-standard.md`, `C:\Users\muniz\.codex\config.toml`, `C:\Users\muniz\.codex\mcp-patch.toml`, endpoint `https://10.1.1.1:27124/mcp/`, repo local `oracle-oci-mcp`
-**Status:** Planned
+**Status:** Complete
 **Risk:** HIGH - uma configuracao ruim aqui degrada a abertura do Codex inteiro, remove ferramentas do operador e pode induzir copia indevida de secrets para o Windows local.
 
 **Canonical refs:**
@@ -472,10 +476,10 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 - `C:\Users\muniz\.codex\mcp-patch.toml` - historico local da adicao em lote de MCPs sem key.
 - `C:\Users\muniz\.codex\config.toml.bak-20260702T042936-0300-context-profiles` - backup conhecido anterior a mudancas recentes de runtime.
 
-**Plans:** 0/2 plans complete
+**Plans:** 2/2 plans complete
 
-- [ ] 43-01 - Lean base MCP baseline plus opt-in profile split
-- [ ] 43-02 - Prerequisite-aware hardening, explicit timeouts and cold-start smoke
+- [x] 43-01 - Lean base MCP baseline plus opt-in profile split
+- [x] 43-02 - Prerequisite-aware hardening, explicit timeouts and cold-start smoke
 
 **Success Criteria:**
 
@@ -484,6 +488,8 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 3. MCPs pesados baseados em `npx` e `uv` saem do bootstrap padrao ou recebem `startup_timeout_sec` explicito e command paths estaveis quando permanecerem justificados.
 4. O runtime local ganha perfis nomeados para browser, OCI, Cloudflare, knowledge e lab-tools com instrucoes exatas de uso via `codex -p <profile>`.
 5. Existe smoke repetivel para classificar falha como `disabled`, `missing-env`, `unreachable`, `slow-start` ou `ok`, sem imprimir secrets.
+
+**Closeout:** The Windows Codex baseline is now lean by default, heavy MCPs moved to opt-in profiles, bootstrap smoke exists, `cloudflare-api` is no longer forced into daily startup, and the Cloudflare/Vault wrapper path was hardened without persisting secrets into repo artifacts.
 
 ---
 
@@ -495,7 +501,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 **Requirements:** PKI-01, PKI-02, PKI-03, PKI-04, PKI-05, PKI-06, PKI-07, PKI-08
 **Depends on:** Phase 31 Omni Fleet desired-state/update-plan foundation, Phase 41 TEI service context, `docs/operations/rdp-trust-pki.md`, `docs/security/atius-secrets-vaults.md`
-**Status:** Planned
+**Status:** In Progress
 **Risk:** HIGH - mexe em CA interna, trust store, chaves privadas, HTTPS interno e validacao cross-host; erro aqui pode criar falsa confianca ou quebrar clientes TLS.
 
 **Canonical refs:**
@@ -508,15 +514,15 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 - `docs/security/atius-secrets-vaults.md` - regra de segredo/chave privada fora de Git, `.planning`, Obsidian, GBrain e logs.
 - `inventory/hosts/atius-srv-1.yaml`, `inventory/hosts/atius-srv-2.yaml`, `inventory/hosts/atius-srv-3.yaml`, `inventory/hosts/horistic-srv.yaml` - origem de host IDs, SSH, IPs e aliases.
 
-**Plans:** 0/3 plans complete
+**Plans:** 1/3 plans complete
 
-- [ ] 44-01 - Fleet PKI CLI/resource surface, dry-run safety, templates and tests
+- [x] 44-01 - Fleet PKI CLI/resource surface, dry-run safety, templates and tests
 - [ ] 44-02 - Remote CA/CSR/leaf bootstrap, trust install, backups and rollback metadata
 - [ ] 44-03 - 4x4 HTTPS validation matrix, service adapter plan and durable knowledge closeout
 
 **Wave 1 - Resource surface**
 
-- [ ] 44-01 - Fleet PKI CLI/resource surface, dry-run safety, templates and tests
+- [x] 44-01 - Fleet PKI CLI/resource surface, dry-run safety, templates and tests
 
 **Wave 2 *(blocked on Wave 1 completion)* - Controlled live bootstrap**
 
@@ -545,29 +551,32 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 7. Runbook documenta rotacao, rollback e regra para nao reutilizar a PKI RDP/XRDP como CA de servicos.
 8. TEI/Router permanece em HTTP ate uma fase/gate especifico de reverse proxy/TLS aprovar `https://10.1.1.4:3115`.
 
+**Current open gate:** `44-02` and `44-03` remain blocked on explicit live CA/trust mutation approval and the full 4x4 verification rollout.
+
 ## Phase Summary
 
 | # | Phase | Goal | Requirements | Status | Risk |
 |---|-------|------|--------------|--------|------|
 | 28 | G18 Ubuntu Pro/ESM Fleet Gates | Pro/ESM state + upgrade gates | G18-01, G18-02 | Complete | HIGH |
-| 29 | G18 Controlled Upgrade/RDP/Landscape | Upgrade + RDP + SaaS validation | G18-02..G18-05 | Planned | HIGH |
-| 30 | Landscape/Omni Governance Operating Model | Matrix/access/fallback | GOV-01, GOV-02, GOV-07 | Pending | MEDIUM |
-| 31 | Omni Fleet Collectors/Profile | Collectors + desired-state | GOV-03..GOV-05 | Pending | MEDIUM |
-| 32 | CVE/USN + Landscape Parity | Patch reporting + parity | GOV-06, GOV-07 | Pending | MEDIUM |
-| 33 | FreeIPA Foundation | Host prep + FreeIPA | DOM-01, DOM-02 | Pending | VERY HIGH |
-| 34 | FreeIPA DNS + Clients | DNS coexistence + enrollment | DOM-03, DOM-04 | In Progress | HIGH |
-| 35 | Samba Kerberos | Samba domain member | DOM-05 | Pending | MEDIUM |
-| 36 | Keycloak SSO | LDAP federation + coexistence | DOM-06, DOM-07 | Pending | MEDIUM |
-| 37 | Production Guard Status/Doctor | Read-only validator | PRG-01 | Pending | MEDIUM |
-| 38 | Production Guard Repair | Dry-run repair + gated apply | PRG-02, PRG-03 | Pending | HIGH |
-| 39 | Production Guard Boot/Login | Read-only boot/login protocol | PRG-04 | Pending | MEDIUM |
-| 40 | Production Guard Horistic Remote | Remote checks + webhook-safe | PRG-05..PRG-07 | Pending | MEDIUM |
-| 41 | Local AI Embeddings Gateway | TEI backend + New API alias + client migration | EMB-01..EMB-08 | In Progress | HIGH |
-| 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | Planned | HIGH |
-| 43 | Codex MCP Bootstrap Hardening | Lean default startup + opt-in MCP profiles + cold-start smoke | CDX-01..CDX-06 | Planned | HIGH |
-| 44 | Internal Service PKI and Fleet Trust | Per-host service leaf certs + internal CA trust + 4x4 HTTPS validation | PKI-01..PKI-08 | Planned | HIGH |
+| 29 | G18 Controlled Upgrade/RDP/Landscape | Upgrade + RDP + SaaS validation | G18-02..G18-05 | Complete | HIGH |
+| 29.1 | Obsidian ARM64 AppImage pilot | Managed non-Snap Obsidian pilot on `atius-srv-1` | GOV-03..GOV-05 | Complete | HIGH |
+| 30 | Landscape/Omni Governance Operating Model | Matrix/access/fallback | GOV-01, GOV-02, GOV-07 | Complete | MEDIUM |
+| 31 | Omni Fleet Collectors/Profile | Collectors + desired-state | GOV-03..GOV-05 | Complete | MEDIUM |
+| 32 | CVE/USN + Landscape Parity | Patch reporting + parity | GOV-06, GOV-07 | Complete | MEDIUM |
+| 33 | FreeIPA Foundation | Host prep + FreeIPA | DOM-01, DOM-02 | Complete | VERY HIGH |
+| 34 | FreeIPA DNS + Clients | DNS coexistence + enrollment | DOM-03, DOM-04 | Complete | HIGH |
+| 35 | Samba Kerberos | Samba domain member | DOM-05 | Complete | MEDIUM |
+| 36 | Keycloak SSO | LDAP federation + coexistence | DOM-06, DOM-07 | Complete | MEDIUM |
+| 37 | Production Guard Status/Doctor | Read-only validator | PRG-01 | Complete | MEDIUM |
+| 38 | Production Guard Repair | Dry-run repair + gated apply | PRG-02, PRG-03 | Complete | HIGH |
+| 39 | Production Guard Boot/Login | Read-only boot/login protocol | PRG-04 | Complete | MEDIUM |
+| 40 | Production Guard Horistic Remote | Remote checks + webhook-safe | PRG-05..PRG-07 | Complete | MEDIUM |
+| 41 | Local AI Embeddings Gateway | TEI backend + New API alias + client migration | EMB-01..EMB-08 | Complete | HIGH |
+| 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | In Progress | HIGH |
+| 43 | Codex MCP Bootstrap Hardening | Lean default startup + opt-in MCP profiles + cold-start smoke | CDX-01..CDX-06 | Complete | HIGH |
+| 44 | Internal Service PKI and Fleet Trust | Per-host service leaf certs + internal CA trust + 4x4 HTTPS validation | PKI-01..PKI-08 | In Progress | HIGH |
 
-**Total:** 17 phases | 55 requirements mapped | 35 complete / 20 pending
+**Total:** 18 phases | 54 requirements mapped | 16 complete / 2 open
 
 ### Scope addendum - 2026-06-24
 

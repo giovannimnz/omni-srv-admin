@@ -37,7 +37,7 @@ key-decisions:
 patterns-established:
   - "Return target safety is centralized in one Next utility and reused by the page, middleware, login route, callback route, and logout route."
   - "OIDC callback handling is split cleanly: Next validates transient browser state, Fastify exchanges the code and maps the ATS user, and only `auth-token` crosses back to the browser."
-requirements-completed: [SSO-01, SSO-02, SSO-03, SSO-04, SSO-05]
+requirements-advanced: [SSO-01, SSO-02, SSO-03, SSO-04, SSO-05]
 coverage:
   - id: D1
     description: ATS exposes the `sso.atius.com.br` facade with allowlisted `return_to`, PKCE/nonce cookies, and redacted login/callback handling.
@@ -151,6 +151,13 @@ None - no external service configuration required in this plan. The code expects
 
 - O ATS já está pronto para o rollout de edge/publicação do `sso.atius.com.br` na `42-03`, reaproveitando esta facade e o bridge backend.
 - A próxima fase só precisa publicar o host, alinhar headers/vhost e validar o smoke do edge; não precisa redesenhar o fluxo de sessão local.
+
+## Requirement Status
+
+This summary advances the implementation side of Phase 42, but the phase is not
+complete yet. `42-03` still needs to close the publication gate, edge headers,
+final smoke, and rollback/runbook requirements before SSO can be marked
+complete in the roadmap and requirements ledger.
 
 ## Self-Check: PASSED
 
