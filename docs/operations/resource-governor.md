@@ -64,7 +64,7 @@ Hotspots de artefatos detectados:
 - `~/GitHub/Programs/codex-desktop-linux/target` ≈ 3.04 GiB
 - `~/GitHub/Programs/codex-desktop-linux/dist` ≈ 1.05 GiB
 - `~/docker/Atius/router-ai-atius/web/default/node_modules` ≈ 2.23 GiB
-- `~/docker/Atius/atius-router-docs/.next` ≈ 0.77 GiB
+- `/home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/.next` ≈ 0.77 GiB
 - `~/.local/share/containers/storage` ≈ 22 GiB
 - Podman com 3 imagens dangling de ~3.1–3.2 GiB cada
 

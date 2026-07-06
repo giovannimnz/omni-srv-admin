@@ -20,7 +20,7 @@ Target dimensions:
 embedding_dimensions: 768
 ```
 
-The public alias `embedding-gte-v1` resolves through our `router-ai-atius` / New API gateway to the private TEI upstream `http://10.1.1.4:3000`, which serves `Alibaba-NLP/gte-multilingual-base` through upstream model name `text-embeddings-inference`.
+The public alias `embedding-gte-v1` resolves through our `router-ai-atius` / New API gateway to the private TEI upstream `http://10.1.1.4:3000`, which serves `Alibaba-NLP/gte-multilingual-base` directly as `embedding-gte-v1`.
 
 ## Non-Negotiable Rule
 

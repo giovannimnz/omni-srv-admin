@@ -61,10 +61,46 @@ protected_paths:
   - README.en.md
   - docs/
   - .planning/
+  # Feature: same-origin localized Docs routes (/en/docs and /pt/docs)
+  - controller/misc.go
+  - setting/operation_setting/general_setting.go
+  - web/default/src/lib/docs-link.ts
+  - web/default/src/hooks/use-top-nav-links.ts
+  - web/default/src/components/layout/types.ts
+  - web/default/src/components/layout/components/nav-link-item.tsx
+  - web/default/src/components/layout/components/top-nav.tsx
+  - web/default/src/components/layout/components/public-header.tsx
+  - web/default/src/components/layout/components/public-navigation.tsx
+  - web/default/src/components/layout/components/mobile-drawer.tsx
+  - web/default/src/features/home/components/sections/hero.tsx
+  - web/default/src/components/layout/components/footer.tsx
+  - web/default/src/features/system-settings/general/quota-settings-section.tsx
+  - web/classic/src/helpers/docs.js
+  - web/classic/src/hooks/common/useNavigation.js
+  - web/classic/src/components/layout/headerbar/index.jsx
+  - web/classic/src/components/layout/headerbar/Navigation.jsx
+  - web/classic/src/pages/Home/index.jsx
+  - web/classic/src/components/layout/Footer.jsx
+  - web/classic/src/pages/Setting/Operation/SettingsGeneral.jsx
+  - docs/atius-router-docs/src/lib/i18n.ts
+  - docs/atius-router-docs/next.config.mjs
+  - docs/atius-router-docs/middleware.ts
+  - docs/atius-router-docs/src/app/json/route.ts
+  - docs/atius-router-docs/src/app/[lang]/layout.tsx
+  - docs/atius-router-docs/src/app/[lang]/(home)/layout.tsx
+  - docs/atius-router-docs/src/components/footer.tsx
+  - docs/atius-router-docs/content/docs/pt/guide/index.mdx
+  - docs/atius-router-docs/content/docs/pt/guide/meta.json
+  - docs/atius-router-docs/content/docs/pt/guide/project-introduction.mdx
+  - docs/atius-router-docs/content/docs/pt/guide/technical-architecture.mdx
+  - scripts/smoke-docs-links.sh
   # Feature: versioning and branding
   - VERSION
   - web/default/public/logo.png
   - web/default/public/favicon.ico
+
+post_sync:
+  - scripts/smoke-docs-links.sh
 
 merge_strategy: theirs
 version_scheme: "v{upstream_version}-rf{N}"

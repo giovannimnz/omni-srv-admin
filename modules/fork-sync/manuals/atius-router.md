@@ -1,8 +1,8 @@
 ---
 project: atius-router
-version: 5
+version: 6
 created: 2026-06-04
-last_updated: 2026-06-18
+last_updated: 2026-07-05
 generator: fork-sync manuals generate
 ---
 
@@ -68,6 +68,38 @@ Estes paths são preservados em conflito (nunca sobrescritos pelo upstream):
 - `README.en.md`
 - `docs/`
 - `.planning/`
+- `controller/misc.go`
+- `setting/operation_setting/general_setting.go`
+- `web/default/src/lib/docs-link.ts`
+- `web/default/src/hooks/use-top-nav-links.ts`
+- `web/default/src/components/layout/types.ts`
+- `web/default/src/components/layout/components/nav-link-item.tsx`
+- `web/default/src/components/layout/components/top-nav.tsx`
+- `web/default/src/components/layout/components/public-header.tsx`
+- `web/default/src/components/layout/components/public-navigation.tsx`
+- `web/default/src/components/layout/components/mobile-drawer.tsx`
+- `web/default/src/features/home/components/sections/hero.tsx`
+- `web/default/src/components/layout/components/footer.tsx`
+- `web/default/src/features/system-settings/general/quota-settings-section.tsx`
+- `web/classic/src/helpers/docs.js`
+- `web/classic/src/hooks/common/useNavigation.js`
+- `web/classic/src/components/layout/headerbar/index.jsx`
+- `web/classic/src/components/layout/headerbar/Navigation.jsx`
+- `web/classic/src/pages/Home/index.jsx`
+- `web/classic/src/components/layout/Footer.jsx`
+- `web/classic/src/pages/Setting/Operation/SettingsGeneral.jsx`
+- `docs/atius-router-docs/src/lib/i18n.ts`
+- `docs/atius-router-docs/next.config.mjs`
+- `docs/atius-router-docs/middleware.ts`
+- `docs/atius-router-docs/src/app/json/route.ts`
+- `docs/atius-router-docs/src/app/[lang]/layout.tsx`
+- `docs/atius-router-docs/src/app/[lang]/(home)/layout.tsx`
+- `docs/atius-router-docs/src/components/footer.tsx`
+- `docs/atius-router-docs/content/docs/pt/guide/index.mdx`
+- `docs/atius-router-docs/content/docs/pt/guide/meta.json`
+- `docs/atius-router-docs/content/docs/pt/guide/project-introduction.mdx`
+- `docs/atius-router-docs/content/docs/pt/guide/technical-architecture.mdx`
+- `scripts/smoke-docs-links.sh`
 - `VERSION`
 - `web/default/public/logo.png`
 - `web/default/public/favicon.ico`
@@ -91,6 +123,17 @@ Exemplo:
 - `controller/model.go` / `service/modelcatalog/` — `/v1/models` Go-owned, sem `pricing_version` publico, com ordenacao deterministica por provider/versao/variante
 - `relay/common/relay_utils.go` — normaliza `base_url` com slash final ou `/v1`, evitando `/v1/v1`
 - `common/endpoint_type.go` / `relay/channel/minimax/` / `relay/channel/deepseek/` — MiniMax type=35 e DeepSeek type=43 roteiam OpenAI/Anthropic/embeddings automaticamente sem canais duplicados
+- `web/default/src/lib/docs-link.ts` / `web/classic/src/helpers/docs.js` —
+  botões `Docs` sempre same-origin e localizados: `/en/docs` em ingles e
+  `/pt/docs` em portugues. Nao restaurar `https://docs.newapi.pro`.
+- `controller/misc.go` — sanitiza `data.docs_link` em `/api/status`; valores
+  vazios, `/docs` ou `https://docs.newapi.pro` voltam para `/en/docs`.
+- `docs/atius-router-docs/src/app/json/route.ts` / `middleware.ts` — mantem
+  `/docs.json`, `/docs/openapi.json`, `/json` e `/json/` como OpenAPI JSON
+  local do docs app, sem depender do sidecar `model-detailed`.
+- `docs/atius-router-docs/content/docs/pt/guide/*` — garante que os cards PT
+  do guia nao gerem 404 em `/pt/docs/guide/project-introduction` e
+  `/pt/docs/guide/technical-architecture`.
 - `tools/clianything.py` — `phase19-apply` aplica consolidacao e `clone-keyed` bloqueia recriacao de split channels por padrao
 - `.dockerignore` — Protege o build contra runtime data/logs/backups no worktree de producao
 
@@ -136,6 +179,10 @@ Se adicionar rebrand:
 - `429 insufficient_quota` em Codex embeddings depois de selecionar o channel 5 e quota/licenca upstream, nao necessariamente falha local de roteamento.
 - Se `/v1/` voltar a apontar para `model-detailed`, `127.0.0.1:3300`, `127.0.0.1:3399` ou pod port `3001`, abortar o sync/deploy e restaurar o runtime full-Go.
 - Se um provider `base_url=https://.../v1` gerar `/v1/v1/...`, restaurar `relay/common/relay_utils.go` e os testes de normalizacao.
+- Se qualquer botão `Docs`, `/api/status.data.docs_link`, `/docs.json`,
+  `/docs/openapi.json`, `/json` ou `/json/` voltar a apontar para
+  `docs.newapi.pro` ou HTML do Go SPA, abortar o sync/deploy e restaurar os
+  paths protegidos de Docs.
 
 ## 8. Histórico de Versões do Manual
 
@@ -146,6 +193,7 @@ Se adicionar rebrand:
 | 3 | 2026-06-18 | Guardas de sync para `/v1/models` Go-native, Codex embeddings no channel 5 e `.dockerignore` de runtime |
 | 4 | 2026-06-18 | Guardas para consolidacao MiniMax/DeepSeek em canal unico, label `OpenAI - Codex` e CLIAnything anti-split |
 | 5 | 2026-06-18 | Runtime `/v1/` full-Go definitivo, model-detailed retired e normalizacao de `base_url` com `/v1` |
+| 6 | 2026-07-05 | Docs same-origin `/en/docs`/`/pt/docs`, sanitizer de `/api/status.docs_link`, OpenAPI JSON local e páginas PT protegidas |
 
 ---
 

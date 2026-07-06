@@ -3,17 +3,17 @@
 #
 # Chamado pelo cron diário (0 8 * * *). Pode também ser rodado
 # manualmente:
-#   $0 /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs [--rebuild] [--deploy]
+#   $0 /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs [--rebuild] [--deploy]
 #
 # O que faz:
 #   1. Detecta novo release do upstream QuantumNous/new-api-docs-v1
-#   2. Clone (ou git pull) o repo do fork
+#   2. Atualiza o worktree Git do fork
 #   3. Aplica merge upstream (com protected_paths preservados)
 #   4. Roda post-merge.sh (rebrand Atius + Dockerfile + logo swap)
 #   5. Copia docs PT-BR (content/docs/pt/) para o repo
-#   6. Build da imagem Docker (via Podman)
-#   7. Restart do container router-ai-atius-docs
-#   8. Verifica /en/docs/ retorna 200
+#   6. Build local do Next.js
+#   7. Restart do atius-router-docs.service
+#   8. Verifica /en/ local retorna 200
 #
 # Outputs:
 #   - Log: /home/ubuntu/fork-sync/logs/sync-atius-router-docs-YYYYMMDD.log
@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
   shift
 done
 
-REPO_PATH="${REPO_PATH:-/home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs}"
+REPO_PATH="${REPO_PATH:-/home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs}"
 SOURCE_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/../../.." && pwd)"
 PROJECT="atius-router-docs"
 SYNC_YAML="$SOURCE_DIR/projects/$PROJECT/sync.yaml"
@@ -70,15 +70,9 @@ log "INFO" "Origin: $ORIGIN_BRANCH"
 
 # === 2. Clone or update the repo ===
 if [ ! -d "$REPO_PATH/.git" ]; then
-  log "INFO" "Cloning fork from giovannimnz/atius-ai-router-docs..."
-  # (in our case the fork doesn't exist yet on GitHub; we use the
-  # Atius Router docs as the local working repo, or create a fresh
-  # local clone from upstream)
-  if [ -d /home/ubuntu/docker/Atius/router-ai-atius/integration/docs ]; then
-    log "INFO" "Using local integration/docs/ as starting point"
-    # ... (this path is for first-time setup; production would clone
-    # from a private Atius fork on GitHub)
-  fi
+  log "ERROR" "Canonical docs worktree missing: $REPO_PATH"
+  log "ERROR" "Clone https://github.com/giovannimnz/new-api-docs-v1 there before syncing."
+  exit 1
 fi
 
 # === 3. Detect new release ===
@@ -148,20 +142,16 @@ fi
 
 # === 8. Deploy (restart container) ===
 if [ "$DEPLOY" = true ] || [ "$NEW_VERSION" != "$LAST_SYNC" ]; then
-  log "INFO" "Restarting router-ai-atius-docs container..."
-  podman rm -f router-ai-atius-docs 2>&1 | tee -a "$LOG_FILE" || true
-  # Find a way to start the container (via podman-compose or manual)
-  if [ -f /home/ubuntu/docker/Atius/router-ai-atius/podman-compose.yml ]; then
-    cd /home/ubuntu/docker/Atius/router-ai-atius
-    ~/.local/bin/podman-compose up -d router-ai-atius-docs 2>&1 | tee -a "$LOG_FILE" | tail -3
-  fi
+  log "INFO" "Restarting atius-router-docs.service..."
+  systemctl --user daemon-reload 2>&1 | tee -a "$LOG_FILE" || true
+  systemctl --user restart atius-router-docs.service 2>&1 | tee -a "$LOG_FILE"
   # Wait for healthy
   for i in $(seq 1 30); do
-    if curl -sf https://router.atius.com.br/en/ >/dev/null 2>&1; then
-      log "INFO" "Container is healthy (got 200 from /en/)"
+    if curl -sf http://127.0.0.1:3003/en/ >/dev/null 2>&1; then
+      log "INFO" "Docs service is healthy (got 200 from local /en/)"
       break
     fi
-    log "INFO" "Waiting for container... ($i/30)"
+    log "INFO" "Waiting for docs service... ($i/30)"
     sleep 2
   done
 fi

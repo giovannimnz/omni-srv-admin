@@ -207,6 +207,9 @@ Seeded KV paths:
 | `kv/atius/landscape/saas-api` | Landscape SaaS API variables mirrored from `/home/ubuntu/.zshrc` |
 | `kv/atius/freeipa/bootstrap` | FreeIPA bootstrap material mirrored from `/root/freeipa-atius/bootstrap.env` |
 | `kv/atius/vaultwarden/admin` | Vaultwarden admin recovery token mirrored from `/root/vaultwarden-atius/admin-token.txt` |
+| `kv/atius/srv1/shell-exports/home-ubuntu-env` | SRV-1 `/home/ubuntu/.env` exports imported on 2026-07-04; values live under `values` |
+| `kv/atius/srv1/shell-exports/home-ubuntu-zshrc` | SRV-1 `/home/ubuntu/.zshrc` exports imported on 2026-07-04; values live under `values` |
+| `kv/atius/srv1/shell-exports/home-ubuntu-merged` | Merged SRV-1 shell exports, `.env` then `.zshrc` precedence, imported on 2026-07-04 |
 
 Root-only helpers:
 
@@ -229,6 +232,12 @@ Available profiles:
 - `landscape`
 - `freeipa`
 - `vaultwarden`
+
+The SRV-1 shell export snapshots are intentionally not added as always-on
+profiles yet. Read them directly from Vault or add a narrower profile per
+consumer. Do not source the merged snapshot blindly because it includes runtime
+environment entries such as `PATH`, `DISPLAY`, and `XAUTHORITY` in addition to
+API credentials.
 
 Do not add this command unconditionally to shell startup until the consumers have been migrated away from direct `.zshrc` exports.
 

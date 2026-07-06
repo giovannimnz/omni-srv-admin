@@ -73,6 +73,8 @@ if [[ -n "$(git status --porcelain)" ]]; then
   exit 1
 fi
 
+"$repo_root/scripts/release-preflight.sh" "$repo_root" --tag "$tag" --mode omni-release
+
 last_tag="$(git describe --tags --abbrev=0 2>/dev/null || true)"
 range="HEAD"
 if [[ -n "$last_tag" ]]; then

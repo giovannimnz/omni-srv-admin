@@ -80,6 +80,7 @@ that make that runtime operable.
 - `src/process/task/codexConfig.ts`
 - `src/process/task/hermesConfig.ts`
 - `src/renderer/components/agent/AgentModeSelector.tsx`
+- `src/renderer/components/agent/MarqueePillLabel.tsx`
 - `src/renderer/components/model/modelSelector/EffortSubRow.tsx`
 - `src/renderer/components/model/modelSelector/modelSelectorTypes.ts`
 - `src/renderer/components/settings/DirectorySelectionModal.tsx`

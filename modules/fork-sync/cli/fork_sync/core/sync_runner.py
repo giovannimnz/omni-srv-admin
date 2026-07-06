@@ -14,6 +14,7 @@ from fork_sync.core.registry import load_project
 
 GIT_TIMEOUT = int(os.environ.get("FORK_SYNC_GIT_TIMEOUT", "120"))
 HOOK_TIMEOUT = int(os.environ.get("FORK_SYNC_HOOK_TIMEOUT", "900"))
+SCRIPT_TIMEOUT = int(os.environ.get("FORK_SYNC_SCRIPT_TIMEOUT", "600"))
 
 
 def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> dict:
@@ -36,7 +37,7 @@ def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> di
             text=True,
             cwd=str(cwd) if cwd else str(REPO_ROOT),
             env=env,
-            timeout=600,
+            timeout=SCRIPT_TIMEOUT,
         )
         return {
             "status": "success" if proc.returncode == 0 else "error",
@@ -46,7 +47,7 @@ def _run_script(script: Path, args: list[str], cwd: Optional[Path] = None) -> di
             "command": " ".join(cmd),
         }
     except subprocess.TimeoutExpired:
-        return {"status": "timeout", "error": "timeout após 600s", "command": " ".join(cmd)}
+        return {"status": "timeout", "error": f"timeout após {SCRIPT_TIMEOUT}s", "command": " ".join(cmd)}
     except Exception as exc:  # pragma: no cover - defensive path
         return {"status": "error", "error": str(exc), "command": " ".join(cmd)}
 
@@ -281,8 +282,26 @@ def _version_plan(cfg: dict, *, project: str, upstream_sha: str) -> dict:
     if not scheme:
         return {"enabled": False}
 
-    suffix = str(scheme.get("suffix", "-rf"))
     upstream_version = str(cfg.get("upstream_version") or upstream_sha[:12])
+    if isinstance(scheme, str):
+        return {
+            "enabled": True,
+            "upstream_version": upstream_version,
+            "suffix": "",
+            "counter_dir": str(Path(f"~/.fork-sync/{project}/versions/{upstream_version}").expanduser()),
+            "tag_template": scheme,
+            "release_notes_command": (
+                f"fork-sync release generate {project} --upstream-version {upstream_version} --save-local"
+            ),
+        }
+
+    if not isinstance(scheme, dict):
+        return {
+            "enabled": False,
+            "error": f"version_scheme inválido: esperado dict ou string, recebido {type(scheme).__name__}",
+        }
+
+    suffix = str(scheme.get("suffix", "-rf"))
     counter_template = str(scheme.get("counter_dir", "~/.fork-sync/{project}/versions/{upstream_version}"))
     counter_dir = counter_template.format(project=project, upstream_version=upstream_version)
     tag_template = str(scheme.get("tag_template", "v{upstream_version}{suffix}{counter}"))

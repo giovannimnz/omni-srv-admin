@@ -20,7 +20,7 @@ The backend for this phase is TEI running inside k3s:
 http://10.1.1.4:3000
 ```
 
-The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name for the New API channel is `text-embeddings-inference`. The frozen vector dimension for this alias is `768`, with `cls` pooling.
+The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name is `embedding-gte-v1`, matching the governed public alias directly. The frozen vector dimension for this alias is `768`, with `cls` pooling.
 
 TEI stays internal. Do not create an Ingress, Apache vhost, Cloudflare record, public NodePort, or any other direct public route to TEI. Our `router-ai-atius` / New API owns authentication, logging, quotas, token accounting, model aliases, and routing.
 
@@ -69,7 +69,7 @@ Create or update a New API channel for embeddings with these fields:
 |---|---|
 | Type | OpenAI-compatible |
 | Base URL | `http://10.1.1.4:3000` |
-| Upstream model | `text-embeddings-inference` |
+| Upstream model | `embedding-gte-v1` |
 | Public alias | `embedding-gte-v1` |
 | Backend model | `Alibaba-NLP/gte-multilingual-base` |
 | Dimensions | `768` |
@@ -146,7 +146,7 @@ Healthy result:
 
 ```json
 {
-  "model": "text-embeddings-inference",
+  "model": "embedding-gte-v1",
   "quantidade": 2,
   "dimensoes": 768,
   "error": null

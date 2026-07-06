@@ -2,12 +2,16 @@ project: atius-router
 image: ghcr.io/giovannimnz/router-ai-atius
 docker_compose_path: /home/ubuntu/GitHub/containers/router-ai-atius
 container_name: router-ai-atius
-health_endpoint: https://router.atius.com.br/health
+health_endpoint: https://router.atius.com.br/api/status
+health_attempts: 30
+health_interval_seconds: 2
 health_token: ""  # Set via env or secret manager
 runtime_model: full-go
 retired_middleware_container_name: model-detailed-hotfix
 retired_middleware_runtime_file: /home/ubuntu/GitHub/containers/router-ai-atius/runtime/model-detailed/model_detailed_fastapi.py
 api_proxy_port: 3000
+resource_profile: builds
+build_wrapper: scripts/podman-admin.sh
 retired_middleware_ports:
   - 3001
   - 3300

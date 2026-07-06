@@ -1,8 +1,8 @@
 ---
 project: atius-router-docs
-version: 2
+version: 3
 created: 2026-06-04
-last_updated: 2026-06-07
+last_updated: 2026-07-05
 generator: fork-sync manuals generate
 ---
 
@@ -22,23 +22,25 @@ generator: fork-sync manuals generate
 ### Phase 09 — Mudanças Estruturais
 
 A partir da Phase 09 (docs-convergence-main-repo), o source canônico da docs
-mudou de `/home/ubuntu/docker/Atius/atius-router-docs` (standalone checkout)
-para o submodule `docs/atius-router-docs/` dentro de `router-ai-atius`.
+mudou do standalone legado para o worktree Git próprio em
+`/home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs`.
+Em 2026-07-05, as cópias antigas sob `/home/ubuntu/GitHub/containers/Atius`
+foram movidas para backup/quarentena.
 
-Ver ADR em `router-ai-atius/21.03-Decisoes-Arquitetura/2026-06-07-docs-convergence-submodule.md`.
+Ver ADR histórico em `router-ai-atius/21.03-Decisoes-Arquitetura/2026-06-07-docs-convergence-submodule.md`; o estado operacional atual é worktree canônico.
 
 ## 2. Upstreams
 
 | # | Nome | URL | Role |
 |---|------|-----|------|
-| 1 | `Atius Router Docs` | https://github.com/giovannimnz/new-api-docs-v1 | primary (submodule) |
+| 1 | `Atius Router Docs` | https://github.com/giovannimnz/new-api-docs-v1 | fork/origin worktree |
 
 ## 3. Estratégia de Sync — Passo a Passo
 
 1. **Estratégia:** `theirs`
 2. Conflitos são resolvidos a favor do upstream (rebrand fica em `protected_paths`)
-3. O sync opera dentro do submodule `router-ai-atius/docs/atius-router-docs/`
-4. Após sync/bump, o submodule reference deve ser commitado em `router-ai-atius`
+3. O sync opera dentro do worktree `router-ai-atius/docs/atius-router-docs/`
+4. O diretório é ignorado localmente pelo parent router para não sujar o fork
 
 ## 4. Paths Protegidos (rebrand)
 
@@ -105,7 +107,7 @@ Se adicionar rebrand:
    ```
 6. **Build + Deploy manual:**
    ```bash
-   cd /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs
+   cd /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
    bun install && bun run build
    systemctl --user restart atius-router-docs.service
    ```
@@ -117,17 +119,20 @@ Se adicionar rebrand:
 
 ## 7. Runtime e Deploy
 
-### Bootstrap do submodule
+### Bootstrap do worktree canônico
 
 ```bash
-cd /home/ubuntu/docker/Atius/router-ai-atius
-git submodule update --init --recursive
+mkdir -p /home/ubuntu/GitHub/containers/router-ai-atius/docs
+git clone https://github.com/giovannimnz/new-api-docs-v1 \
+  /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
+cd /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
+git remote add upstream https://github.com/QuantumNous/new-api-docs-v1
 ```
 
 ### Build
 
 ```bash
-cd /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs
+cd /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
 bun install
 bun run build
 ```
@@ -148,15 +153,16 @@ curl -I http://127.0.0.1:3003/pt/
 
 ### Rollback
 
-Se o cutover falhar, o checkout standalone legado ainda existe até cutover final:
+Se o cutover falhar, restaure o último backup/quarentena registrado em
+`/home/ubuntu/backups/atius-router-docs-canonicalize-*`:
 
 ```bash
-# Parar service com submodule
+# Parar service
 systemctl --user stop atius-router-docs.service
 
-# Restaurar service para path legado
-sed -i 's|WorkingDirectory=/home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs|WorkingDirectory=/home/ubuntu/docker/Atius/atius-router-docs|' \
-  ~/.config/systemd/user/atius-router-docs.service
+# Restaurar uma cópia validada para o path canônico e subir novamente
+rsync -a /home/ubuntu/backups/atius-router-docs-canonicalize-YYYYMMDDTHHMMSS/canonical-existing-atius-router-docs/ \
+  /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/
 systemctl --user daemon-reload
 systemctl --user start atius-router-docs.service
 
@@ -167,13 +173,13 @@ curl -I http://127.0.0.1:3003/pt/
 ## 8. Troubleshooting Específico
 
 ### Service não sobe
-- Verificar se submodule foi inicializado: `git submodule update --init --recursive` na raiz do router-ai-atius
-- Verificar se `node_modules` existe: `ls docs/atius-router-docs/node_modules`
+- Verificar se o worktree canônico existe: `ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/package.json`
+- Verificar se `node_modules` existe: `ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/node_modules/.bin/next`
 - Logs: `journalctl --user -u atius-router-docs.service -n 50 --no-pager`
 
 ### Logo SVG não carrega
 - Verificar `/var/www/atius/atius-logo.svg` (Apache serve assets locais)
-- Verificar `public/assets/atius-logo.svg` dentro do submodule
+- Verificar `public/assets/atius-logo.svg` dentro do worktree canônico
 - Dar cache-bust: `curl -I https://router.atius.com.br/assets/atius-logo.svg?v=YYYYMMDD-N`
 
 ### Build falha
@@ -183,12 +189,12 @@ curl -I http://127.0.0.1:3003/pt/
 
 ## 9. Remote Separado — Decisão de Governança
 
-**Decisão (Phase 09):** O remote `giovannimnz/new-api-docs-v1` continua como remote
-do submodule. O checkout standalone `/home/ubuntu/docker/Atius/atius-router-docs`
-será mantido como mirror transitório até o fim do milestone v2.15, depois removido.
+**Decisão (Phase 09 + 2026-07-05):** O remote `giovannimnz/new-api-docs-v1`
+continua como fork/origin, com `QuantumNous/new-api-docs-v1` como upstream.
+O checkout ativo é somente o worktree canônico dentro do fork `router-ai-atius`.
 
-**Critério de remoção do standalone:**
-1. Sync via fork-sync funcionando no submodule por ≥2 ciclos consecutivos
+**Critério de manutenção:**
+1. Sync via fork-sync funcionando no worktree por >=2 ciclos consecutivos
 2. Build + deploy via systemd validado em produção
 3. Nenhuma referência funcional ao path legado em scripts ou automações
 
@@ -197,14 +203,14 @@ será mantido como mirror transitório até o fim do milestone v2.15, depois rem
 Antes de qualquer build/deploy, verificar:
 
 ```bash
-# 1. Submodule inicializado
-ls /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs/package.json
+# 1. Worktree inicializado
+ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/package.json
 
 # 2. Node modules instalados
-ls /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs/node_modules/.package-lock.json
+ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/node_modules/.bin/next
 
 # 3. Build anterior válido (opcional, fallback)
-ls /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs/.next/BUILD_ID
+ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/.next/BUILD_ID
 ```
 
 ## 11. Cache-Bust de Assets
@@ -234,6 +240,7 @@ curl -I https://router.atius.com.br/assets/atius-logo.svg
 |--------|------|---------|
 | 1 | 2026-06-04 | Geração inicial via `fork-sync manuals generate` |
 | 2 | 2026-06-07 | Phase 09: docs migrados para submodule, swap container → systemd, adicionada governança do remote separado |
+| 3 | 2026-07-05 | Path canônico movido para `/home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs`; cópias legadas em `containers/Atius` quarentenadas |
 
 ---
 

@@ -40,7 +40,7 @@ two projects declared in fork-sync:
 | Project | Canonical worktree | Container mirror | Result |
 |---|---|---|---|
 | `atius-router` | `/home/ubuntu/docker/Atius/router-ai-atius` | `/home/ubuntu/GitHub/containers/Atius/router-ai-atius` | mirror `.git` invalid |
-| `atius-router-docs` | `/home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs` | `/home/ubuntu/GitHub/containers/Atius/atius-router-docs` | mirror `.git` invalid |
+| `atius-router-docs` | `/home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs` | n/a | canonical worktree since 2026-07-05; legacy `containers/Atius` copies quarantined |
 
 Decision: keep `~/docker` as canonical for these two until the mirrors are
 recloned or repaired. Do not point fork-sync to the broken mirrors.
