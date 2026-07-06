@@ -1,6 +1,6 @@
 # Wayland upstream sync guards
 
-Updated: 2026-07-04
+Updated: 2026-07-06
 
 This fork tracks `FerroxLabs/wayland` but serves a production runtime on
 `atius-srv-3` at `https://wayland.atius.com.br/`. Upstream sync must preserve
@@ -41,6 +41,12 @@ that make that runtime operable.
   name, so Hermes/Codex can be selected by keyboard, tests and assistive tools.
 - On mobile widths, composer controls and intent pills must wrap visibly instead
   of hiding later options behind unmarked horizontal overflow.
+- The left sidebar must not expose a bottom horizontal scrollbar at desktop,
+  narrowed desktop, or mobile drawer widths; long recents and footer controls
+  must truncate or compact within the sidebar.
+- The desktop left sidebar divider must remain a real resize handle that
+  persists `wayland:sidebar-width` while preserving the rail snap below the
+  collapse threshold.
 - Standalone build output must include the MCP stdio scripts copied into
   `dist-server/`; otherwise the runtime startup canary fails.
 - Service-shell env loading must skip non-interactive login shells like
@@ -70,6 +76,13 @@ that make that runtime operable.
 - `src/process/utils/shellEnv.ts`
 - `src/process/webserver/routes/apiRoutes.ts`
 - `src/process/webserver/websocket/WebSocketManager.ts`
+- `src/renderer/components/layout/Layout.tsx`
+- `src/renderer/components/layout/Sider/Sider.module.css`
+- `src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css`
+- `src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css`
+- `src/renderer/components/layout/Sider/SiderFooter.tsx`
+- `src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css`
+- `src/renderer/components/layout/Sider/index.tsx`
 - `src/common/adapter/ipcBridge.ts`
 - `src/common/config/storage.ts`
 - `src/common/types/codex/codexModes.ts`
@@ -97,6 +110,7 @@ that make that runtime operable.
 - `src/renderer/services/i18n/index.ts`
 - `src/renderer/services/i18n/locales/*/agentMode.json`
 - `src/renderer/services/i18n/locales/*/conversation.json`
+- `src/renderer/styles/layout.css`
 - `src/renderer/utils/model/agentModes.ts`
 - `tests/unit/AgentPillBar.dom.test.tsx`
 - `tests/unit/WebSocketManager.test.ts`

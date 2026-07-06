@@ -36,6 +36,13 @@ protected_paths:
   - src/process/utils/shellEnv.ts
   - src/process/webserver/routes/apiRoutes.ts
   - src/process/webserver/websocket/WebSocketManager.ts
+  - src/renderer/components/layout/Layout.tsx
+  - src/renderer/components/layout/Sider/Sider.module.css
+  - src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css
+  - src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css
+  - src/renderer/components/layout/Sider/SiderFooter.tsx
+  - src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css
+  - src/renderer/components/layout/Sider/index.tsx
   - src/common/adapter/ipcBridge.ts
   - src/common/config/storage.ts
   - src/common/types/codex/codexModes.ts
@@ -61,6 +68,7 @@ protected_paths:
   - src/renderer/pages/guid/hooks/useGuidSend.ts
   - src/renderer/services/i18n/i18n-keys.d.ts
   - src/renderer/services/i18n/index.ts
+  - src/renderer/styles/layout.css
   - src/renderer/utils/model/agentModes.ts
   - tests/unit/AgentPillBar.dom.test.tsx
   - tests/unit/WebSocketManager.test.ts

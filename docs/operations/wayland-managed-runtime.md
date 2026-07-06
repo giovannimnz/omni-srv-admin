@@ -26,6 +26,8 @@ bash modules/fleet/scripts/wayland-srv3-update.sh --pull
 - runtime source-standalone em `~/GitHub/wayland/dist-server/server.mjs`
 - `WAYLAND_DISABLE_AUTO_UPDATE=1` sempre ativo neste deployment
 - merge com upstream deve preservar `protected_paths` do projeto `wayland`
+- menu lateral esquerdo sem scrollbar horizontal em desktop/mobile drawer
+- divisor do menu lateral esquerdo redimensiona e persiste `wayland:sidebar-width`
 
 ## Validation Baseline
 

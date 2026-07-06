@@ -103,9 +103,17 @@ Os paths protegidos carregam 4 grupos de customização:
    `src/renderer/services/i18n/index.ts`,
    `tests/unit/renderer/guid/firstSafeCuratedModel.test.ts`.
 4. GUID UI/responsividade:
+   `src/renderer/components/layout/Layout.tsx`,
+   `src/renderer/components/layout/Sider/Sider.module.css`,
+   `src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css`,
+   `src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css`,
+   `src/renderer/components/layout/Sider/SiderFooter.tsx`,
+   `src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css`,
+   `src/renderer/components/layout/Sider/index.tsx`,
    `src/renderer/pages/guid/components/AgentPillBar.tsx`,
    `src/renderer/pages/guid/index.module.css`,
    `src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css`,
+   `src/renderer/styles/layout.css`,
    `tests/unit/AgentPillBar.dom.test.tsx`,
    `tests/unit/renderer/guidModelSelector.dom.test.tsx`,
    `tests/unit/useGuidSend.dom.test.ts`.
@@ -129,7 +137,7 @@ Ele regenera `patches/atius-webui-workspace-visible.patch` a partir do delta
 atual entre `HEAD` e `upstream/main`, limitado aos arquivos protegidos que o
 auto-patcher sabe reaplicar. Esse patch agora cobre o browser picker, modelo
 separado de esforço, `config.toml` mode, Hermes effort e correções mobile da
-GUID.
+GUID, incluindo sidebar sem overflow horizontal e resize persistido.
 
 No `fork-sync`, o `post_sync` roda:
 
