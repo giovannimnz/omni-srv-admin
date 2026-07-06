@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.5.0 — 2026-07-05
+> Versão: 1.6.0 — 2026-07-06
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -61,14 +61,14 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
    SRV-1           SRV-2           SRV-3
    137.131.190.161  129.148.47.32   136.248.126.12
        │               │               │
-       └──────── WireGuard (hub SRV-2, port 51820) ────────┐
+       └──────── WireGuard wg100 (hub SRV-1, port 51821) ───┐
                        │                                    │
-            10.1.1.0/24 (VPN overlay)                       │
+            10.100.100.0/24 (VPN control plane)             │
                        │                                    │
        ┌───────────────┼───────────────┐                    │
        │               │               │                    │
    SRV-1         SRV-2          SRV-3                Tailscale (mesh backup)
-   10.1.1.1      10.1.1.2       10.1.1.3             100.76/100.93/100.72
+   10.100.100.1  10.100.100.2   10.100.100.3         100.76/100.93/100.72
        │               │               │
        └─── K3s HA cluster (WireGuard-transport) ───────────┘
             flannel.1 10.42.0.0/16
@@ -77,38 +77,52 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
 
 Camadas:
 1. **Oracle VCN** (10.0.0.0/24 ou DHCP): rede privada de cada OCI
-2. **WireGuard** (10.1.1.0/24): VPN overlay, hub em SRV-2
-3. **Tailscale** (100.64.0.0/10): mesh backup / acesso de fora
-4. **K3s flannel** (10.42.0.0/16): CNI dos pods no cluster
-5. **Cloudflare**: proxy reverso público, escudo anti-DDoS, Origin SSL
+2. **WireGuard wg100** (10.100.100.0/24): plano ativo, hub em SRV-1
+3. **WireGuard wg0 legacy** (10.1.1.0/24): rollback/compatibilidade enquanto
+   referências antigas são fechadas
+4. **Tailscale** (100.64.0.0/10): mesh backup / acesso de fora
+5. **K3s flannel** (10.42.0.0/16): CNI dos pods no cluster
+6. **Cloudflare**: proxy reverso público, escudo anti-DDoS, Origin SSL
 
 ---
 
 ## 3. Mapa de IPs (canônico)
 
-| Host           | Hostname        | IP Público       | IP VPN  | Tailscale       | OCI (DHCP)  |
-|----------------|-----------------|------------------|---------|------------------|-------------|
-| atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.1.1.1 | 100.76.56.62   | 10.0.0.38   |
-| atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.1.1.2 | 100.93.43.113  | DHCP        |
-| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.3 | 100.72.102.57  | DHCP        |
-| horistic-srv    | horistic-srv     | 163.176.232.119  | 10.1.1.4 | 100.102.126.61 | DHCP        |
-| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.1.1.5 | -              | LAN local   |
-| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.6 | -               | mobile/4G   |
-| atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.1.1.16 | - | 10.0.0.61 |
-| atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.1.1.17 | - | 10.0.0.188 |
+| Host           | Hostname        | IP Público       | WG legacy | WG100 | Tailscale       | OCI (DHCP)  |
+|----------------|-----------------|------------------|-----------|-------|------------------|-------------|
+| atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.1.1.1 | 10.100.100.1 | 100.76.56.62   | 10.0.0.38   |
+| atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.1.1.2 | 10.100.100.2 | 100.93.43.113  | DHCP        |
+| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.3 | 10.100.100.3 | 100.72.102.57  | DHCP        |
+| horistic-srv   | horistic-srv    | 163.176.232.119  | 10.1.1.4 | 10.100.100.4 | 100.102.126.61 | DHCP        |
+| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.1.1.5 | 10.100.100.5 | -              | LAN local   |
+| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.6 | 10.100.100.6 | -               | mobile/4G   |
+| atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.1.1.16 | 10.100.100.16 | - | 10.0.0.61 |
+| atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.1.1.17 | 10.100.100.17 | - | 10.0.0.188 |
 
-Nota K3s/etcd: `atius-srv-3` tambem mantem `10.1.1.7/32` como alias de
-compatibilidade do membro etcd (`node-ip`/peer URL ainda em `10.1.1.7`).
-O DNS canonico e o novo endereco administrativo sao `10.1.1.3`.
+Nota K3s/etcd: o plano atual de InternalIP usa `wg100` em
+`10.100.100.1`-`10.100.100.4`. `atius-srv-3` ainda pode manter
+`10.1.1.7/32` como alias de compatibilidade de etcd/rollback; validar quorum,
+`node-ip` e peer URLs antes de remover esse alias. O endereco administrativo
+legado de SRV-3 e `10.1.1.3`; o alvo `wg100` e `10.100.100.3`.
+
+Nota DRG/WireGuard 2026-07-06: o `oci-admin` no W11-PC e o dono do plano de
+OCI DRG/readdress. O plano ativo de WireGuard e `wg100` em
+`10.100.100.0/24`, com hub no SRV-1 (`137.131.190.161:51821`) e
+`10.1.1.0/24` mantido como rollback/compatibilidade ate fechamento por `rg`.
+O plano OCI anterior (`atius1=10.1.0.0/16`) foi rejeitado porque colide com o
+range legado ainda vivo `10.1.1.0/24`. O replanejamento DRG deve usar CIDRs nao
+sobrepostos: `atius1=10.51.0.0/16`, `atius2=10.52.0.0/16`,
+`atius3=10.53.0.0/16`, `horistic=10.71.0.0/16`; ver
+`docs/operations/drg-wireguard-readdress-plan.md`.
 
 DNS: `/etc/hosts` espelha a tabela acima nos quatro servidores
-SRV-1/SRV-2/SRV-3/Horistic. O CoreDNS interno roda no SRV-2 e escuta em
-`10.1.1.2:53` e `127.0.0.1:53`. O SRV-2 usa `systemd-resolved` com
-`127.0.0.1`, `10.1.1.2` e `1.1.1.1`; SRV-1/SRV-3 usam o stub local com
-upstream `10.1.1.2`; Horistic usa `/etc/resolv.conf` estático com
-`10.1.1.2` primeiro e resolvers públicos apenas como fallback.
+SRV-1/SRV-2/SRV-3/Horistic. O caminho novo de DNS para `wg100` fica no SRV-1
+(`10.100.100.1`) junto do endpoint `vpn.atius.com.br`; o CoreDNS antigo do
+SRV-2 (`10.1.1.2`) fica como compatibilidade/rollback enquanto referências
+legadas são fechadas. Durante a transição, validar forward e PTR nas duas
+faixas antes de remover qualquer rota antiga.
 
-WireGuard/DNS validation 2026-06-17:
+WireGuard/DNS validation 2026-06-17 (historico `wg0`):
 - Chaves WireGuard rotacionadas para `atius-srv-3`, `horistic-srv`,
   `GIOVANNI-W11-PC` e `GIOVANNI-S23`; chaves privadas ficam somente nos
   hosts/configs restritos, não em docs.
@@ -117,8 +131,9 @@ WireGuard/DNS validation 2026-06-17:
   `GIOVANNI-S23 -> 10.1.1.6`, `atius-mt5-kvm-1 -> 10.1.1.16` e
   `atius-mt5-kvm-2 -> 10.1.1.17`.
 - `wg-quick strip wg0` OK em SRV-2, SRV-3 e Horistic.
-- W11 e S23 têm peers novos no hub e configs gerados; handshake fica
-  zerado até os configs novos serem importados nos dispositivos.
+- W11 e S23 tinham peers novos no hub e configs gerados; esse estado foi
+  superseded no replanejamento `wg100` de 2026-07-06, em que W11
+  `10.100.100.5` e S23 `10.100.100.6` ja tiveram handshake validado no SRV-1.
 
 Cloudflare:
 - `*.atius.com.br` → origem pública SRV-1/Apache2; validação 2026-07-05
