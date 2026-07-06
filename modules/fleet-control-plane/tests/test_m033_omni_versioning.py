@@ -23,6 +23,8 @@ def fake_git_runner(argv: list[str], cwd: Path | None, timeout: int):
         if argv[-1] == "HEAD":
             return 0, "abc123\n", ""
         return 0, "def456\n", ""
+    if argv[:2] == ["git", "rev-list"]:
+        return 0, "def456\n", ""
     if argv[:3] == ["git", "status", "--porcelain"]:
         return 0, "", ""
     if argv[:3] == ["git", "describe", "--tags"]:

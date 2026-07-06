@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-07-04",
+  "updated_at": "2026-07-06",
   "component": "omni-srv-admin",
   "github_repo": "giovannimnz/omni-srv-admin",
   "track_branch": "main",
-  "desired_version": "0.2.0",
+  "desired_version": "0.2.3",
   "target_hosts": [
     "atius-srv-1",
     "atius-srv-2",
@@ -16,7 +16,7 @@
       "platform": "linux",
       "repo_dir": "/home/ubuntu/GitHub/omni-srv-admin",
       "track_branch": "main",
-      "desired_version": "0.2.0",
+      "desired_version": "0.2.3",
       "command_key": "omni.self-update.linux",
       "scheduler": "omni-fleet-agent.service"
     },
@@ -24,7 +24,7 @@
       "platform": "linux",
       "repo_dir": "/home/ubuntu/GitHub/omni-srv-admin",
       "track_branch": "main",
-      "desired_version": "0.2.0",
+      "desired_version": "0.2.3",
       "command_key": "omni.self-update.linux",
       "scheduler": "omni-fleet-agent.service"
     },
@@ -32,7 +32,7 @@
       "platform": "linux",
       "repo_dir": "/home/ubuntu/GitHub/omni-srv-admin",
       "track_branch": "main",
-      "desired_version": "0.2.0",
+      "desired_version": "0.2.3",
       "command_key": "omni.self-update.linux",
       "scheduler": "omni-fleet-agent.service"
     },
@@ -40,7 +40,7 @@
       "platform": "windows",
       "repo_dir": "C:\\Users\\muniz\\Documents\\GitHub\\omni-srv-admin",
       "track_branch": "main",
-      "desired_version": "0.2.0",
+      "desired_version": "0.2.3",
       "command_key": "omni.self-update.windows",
       "scheduler": "OmniFleetAgent"
     }

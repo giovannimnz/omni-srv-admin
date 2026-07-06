@@ -133,7 +133,13 @@ def test_program_registry_projects_inventory_modules():
     payload = json.loads(result.output)
     programs = {item["program"] for item in payload["programs"]}
     assert {"srv1-ops", "fork-sync"}.issubset(programs)
-    assert {item["update_policy"] for item in payload["programs"]} == {"plan-first"}
+    module_policies = {
+        item["program"]: item["update_policy"]
+        for item in payload["programs"]
+        if item["kind"] == "omni-module"
+    }
+    assert module_policies["srv1-ops"] == "plan-first"
+    assert module_policies["fork-sync"] == "plan-first"
 
 
 def test_audit_command_filters_action_and_redacts_sensitive_values(monkeypatch, tmp_path):
@@ -270,6 +276,13 @@ def test_migration_schema_has_required_tables_and_secret_refs_only():
     assert "'/omni-srv-admin', 'cli-anything'" in schema
     assert "'omni.noop'" in schema
     assert "'ubuntu-dark-theme.apply'" in schema
+    assert "'omni.trust-pki.preflight'" in schema
+    assert "'omni.trust-pki.ensure-key-csr'" in schema
+    assert "'omni.trust-pki.issue-host'" in schema
+    assert "'omni.trust-pki.install-ca'" in schema
+    assert "'omni.trust-pki.install-leaf'" in schema
+    assert "'omni.trust-pki.reconcile'" in schema
+    assert "'omni.trust-pki.verify'" in schema
     assert '"disabled-until-cli-anything-harness"' in schema
     assert '"config_source":"database"' in schema
     for forbidden in ("license_key", "raw_secret", "password text", "token text", "serial text"):

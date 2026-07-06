@@ -17,10 +17,10 @@ embedding-gte-v1
 The backend for this phase is TEI running inside k3s:
 
 ```text
-http://10.1.1.4:3000
+http://10.1.1.4:3115
 ```
 
-The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name is `embedding-gte-v1`, matching the governed public alias directly. The frozen vector dimension for this alias is `768`, with `cls` pooling.
+The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name for the New API channel is `embedding-gte-v1`. The frozen vector dimension for this alias is `768`, with `cls` pooling.
 
 TEI stays internal. Do not create an Ingress, Apache vhost, Cloudflare record, public NodePort, or any other direct public route to TEI. Our `router-ai-atius` / New API owns authentication, logging, quotas, token accounting, model aliases, and routing.
 
@@ -68,7 +68,7 @@ Create or update a New API channel for embeddings with these fields:
 | Field | Value |
 |---|---|
 | Type | OpenAI-compatible |
-| Base URL | `http://10.1.1.4:3000` |
+| Base URL | `http://10.1.1.4:3115` |
 | Upstream model | `embedding-gte-v1` |
 | Public alias | `embedding-gte-v1` |
 | Backend model | `Alibaba-NLP/gte-multilingual-base` |
@@ -112,7 +112,7 @@ ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest
 The k3s Service remains ClusterIP-only for internal bookkeeping, but the router-facing upstream uses the private worker IP and TEI port:
 
 ```text
-http://10.1.1.4:3000
+http://10.1.1.4:3115
 ```
 
 The TEI pod runs on `horistic-srv` with `hostNetwork: true` and binds to the private node IP `10.1.1.4`. This is the router-facing internal URL because `router-ai-atius` runs in Podman on SRV-1 and does not reliably reach k3s PodIP/ClusterIP routes.

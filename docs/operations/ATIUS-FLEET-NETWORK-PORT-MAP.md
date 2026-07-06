@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.4.0 — 2026-06-17
+> Versão: 1.5.0 — 2026-07-05
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -16,7 +16,7 @@
 
 ## 1. Identidade dos Hosts
 
-Todos os 3 servidores ATIUS são Oracle OCI Ampere A1 (ARM64).
+Os servidores principais ATIUS/Horistic são Oracle OCI Ampere A1 (ARM64).
 Os hosts móveis/complementares são documentados para completeness.
 
 | Host           | Função             | OS            | Status  | Inventory |
@@ -24,8 +24,8 @@ Os hosts móveis/complementares são documentados para completeness.
 | atius-srv-1    | production         | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-1.yaml` |
 | atius-srv-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
 | atius-srv-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
-| horistic-srv    | proxy reverso      | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv.yaml`    |
-| GIOVANNI-W11-PC | workstation Windows | Windows 11    | planned | `inventory/hosts/giovanni-w11-pc.yaml` |
+| horistic-srv    | proxy reverso / K3s worker / AI Search | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv.yaml`    |
+| GIOVANNI-W11-PC | workstation Windows | Windows 11    | active via VPN | `inventory/hosts/giovanni-w11-pc.yaml` |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
 | GIOVANNI-S23   | mobile node        | Termux (Android) | planned | `inventory/hosts/giovanni-s23-termux.yaml` |
 | GIOVANNI-S23-PROOT | mobile ubuntu | Ubuntu (proot) | planned | `inventory/hosts/giovanni-s23-proot.yaml` |
@@ -121,12 +121,24 @@ WireGuard/DNS validation 2026-06-17:
   zerado até os configs novos serem importados nos dispositivos.
 
 Cloudflare:
-- `*.atius.com.br` → origem 10.1.1.1 (Apache2 SRV-1, port 9080/9444)
+- `*.atius.com.br` → origem pública SRV-1/Apache2; validação 2026-07-05
+  ainda encontrou listeners em 80/443, portanto não assumir migração
+  concluída para 9080/9444 sem novo `ss` + vhost audit.
 - `*.horistic.com` → origem 10.1.1.4 (Apache2 horistic-srv, proxy pra 10.1.1.1:3050/8050)
 - `portainer.atius.com.br`, `docker.atius.com.br` → K3s Portainer (Phase 13)
 - `jenkins.atius.com.br` → 10.1.1.1:8085 (SRV-1 podman)
 - `cloudbeaver.atius.com.br` → 10.1.1.1:8978 (SRV-1 podman)
-- `router.atius.com.br` → 10.1.1.1:3300 (SRV-1 podman new-api)
+- `router.atius.com.br` → SRV-1 Podman `0.0.0.0:3000`; root e
+  `/api/status` retornaram `200` em 2026-07-05.
+- `router.atius.com.br/docs/` → Apache target `127.0.0.1:3003`; drift
+  validado 2026-07-05: porta `3003` sem listener e rota pública retorna `503`.
+- `wayland.atius.com.br` → runtime Wayland no SRV-3 `0.0.0.0:25808`;
+  `/api/auth/status` local e público retornaram `200` em 2026-07-05.
+- `mcp.atius.com.br/gbrain` → edge público para GBrain HTTP MCP no SRV-1,
+  backend local-only `127.0.0.1:3131`; `/health` retornou `200`.
+- `landscape.atius.com.br` → público retorna `302`; listener `6554` não foi
+  observado em `ss` no SRV-1/SRV-3 em 2026-07-05 e requer reconciliação do
+  runbook de Landscape antes de documentar porta ativa.
 
 ---
 
@@ -194,7 +206,11 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 
 ---
 
-## 5. Inventário de Portas (canônico, estado 2026-06-16)
+## 5. Inventário de Portas (canônico, estado 2026-07-05)
+
+Base inicial criada em 2026-06-16; linhas com nota `validated 2026-07-05`
+foram conferidas via SSH/`ss`/`curl`. Portas sem processo atual são mantidas
+somente quando representam alvo de edge ou drift operacional documentado.
 
 ### SRV-1 (10.1.1.1) — production
 
@@ -204,7 +220,8 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 80     | apache2                    | 0.0.0.0      | root     | legacy (migração 9080 pendente)   |
 | 111    | rpcbind                    | 0.0.0.0      | root     | nfs-utils                          |
 | 443    | apache2                    | 0.0.0.0      | root     | legacy (migração 9444 pendente)   |
-| 3003   | next-server                | 127.0.0.1    | ubuntu   | PM2 namespace=atius                |
+| 3000   | router-ai-atius            | 0.0.0.0      | podman   | validated 2026-07-05; `router.atius.com.br` root/API `200` |
+| 3003   | router docs edge target    | -            | -        | drift 2026-07-05: no listener; public `/docs/` `503` |
 | 3005   | next-server                | 127.0.0.1    | ubuntu   | PM2 namespace=horistic             |
 | 3015   | atius-web                  | 0.0.0.0      | ubuntu   | PM2 namespace=atius (legacy)      |
 | 3050   | horistic-web               | 0.0.0.0      | ubuntu   | PM2 namespace=horistic             |
@@ -223,7 +240,7 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 631    | cups                       | 127.0.0.1    | root     | printer (pending ESM upgrade)      |
 | 2379   | etcd                       | 10.1.1.1     | root     | K3s control plane                 |
 | 2380   | etcd peer                  | 10.1.1.1     | root     | K3s                                |
-| 6432   | pgbouncer                  | 10.1.1.1     | postgres | central DB                         |
+| 6432   | pgbouncer                  | 10.1.1.1 / 127.0.0.1 | postgres | central DB                         |
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
 | 7070   | anydesk                    | 0.0.0.0      | anydesk  | remote desktop                     |
 | 8015   | atius-api                  | 0.0.0.0      | ubuntu   | PM2 namespace=atius                |
@@ -232,12 +249,15 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 8100   | hermes-adapter             | 127.0.0.1    | ubuntu   | node                               |
 | 8199   | atius-webhook-signals      | 0.0.0.0      | ubuntu   | PM2                                |
 | 8310   | python script              | 0.0.0.0      | ubuntu   | undocumented (investigar)          |
-| 8745   | postgresql direto          | 127.0.0.1    | postgres | use pgbouncer 6432                 |
+| 8745   | postgresql direto          | 0.0.0.0      | postgres | validated 2026-07-05; clients devem usar pgbouncer 6432 |
+| 8978   | cloudbeaver                | 0.0.0.0      | podman   | validated 2026-07-05               |
+| 9090   | cockpit                    | *            | root     | break-glass; validar gate antes de expor |
 | 9100   | node-exporter              | *            | root     | K3s/Prom                           |
 | 9377   | camofox API                | *            | ubuntu   | Hermes browser tool                |
 | 10000  | webmin                     | 0.0.0.0      | root     | admin panel                        |
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 12002  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
+| 3131   | gbrain HTTP MCP            | 127.0.0.1    | ubuntu   | local-only backend; public URL `https://mcp.atius.com.br/gbrain` |
 | 27124  | obsidian-local-rest-api    | 10.1.1.1     | ubuntu   | HTTPS REST + MCP, allowlist wg0 SRV-2/SRV-3 |
 | 12004  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 12006  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
@@ -265,7 +285,7 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 5432   | postgresql                 | 127.0.0.1    | postgres | NEW-API DB                         |
 | 5900   | x11vnc legacy              | -            | -        | removido/killed 2026-06-16; manter fechado |
 | 5901   | Xvnc XRDP display :1       | 127.0.0.1/session | user | efêmero durante sessão XRDP; smoke OK 2026-06-16 |
-| 6080   | websockify legacy          | -            | -        | dead mapping removido              |
+| 6080   | websockify/noVNC           | 0.0.0.0      | root     | validated 2026-07-05; revisar exposure/gate |
 | 631    | cups                       | 127.0.0.1    | root     |                                    |
 | 2379   | etcd                       | 10.1.1.2     | root     | K3s                                |
 | 2380   | etcd peer                  | 10.1.1.2     | root     | K3s                                |
@@ -289,10 +309,15 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 25     | postfix                    | 0.0.0.0      | root     |                                    |
 | 53     | systemd-resolved           | 127.0.0.54   | systemd- |                                    |
 | 111    | rpcbind                    | [::]         | root     |                                    |
+| 80     | apache2                    | *            | root     | validated 2026-07-05               |
+| 443    | apache2                    | *            | root     | validated 2026-07-05               |
 | 3389   | xrdp                       | *            | xrdp     |                                    |
 | 3350   | xrdp-sesman                | 127.0.0.1    | root     |                                    |
 | 5901   | Xvnc XRDP display :1       | 127.0.0.1/session | user | efêmero durante sessão XRDP; smoke OK 2026-06-16 |
 | 631    | cups                       | 127.0.0.1    | root     | pending ESM upgrade (8 cups pkgs)  |
+| 8088   | FreeIPA/private gateway    | 10.1.1.3     | podman   | private service gateway            |
+| 8202   | HashiCorp Vault HTTPS      | 10.1.1.3     | podman   | private WireGuard only             |
+| 8203   | HashiCorp Vault cluster    | 10.1.1.3     | podman   | private WireGuard only             |
 | 2379   | etcd                       | 10.1.1.7     | root     | K3s compatibility alias            |
 | 2380   | etcd peer                  | 10.1.1.7     | root     | K3s compatibility alias            |
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
@@ -301,7 +326,35 @@ desde 2025-10. Processo e units legacy foram removidos; manter 5900 fechado.
 | 9100   | node-exporter              | *            | root     |                                    |
 | 10010  | ?                          | 127.0.0.1    | ?        | K3s related?                       |
 | 10250  | kubelet                    | *            | root     | K3s                                |
+| 25808  | Wayland runtime            | 0.0.0.0      | wayland  | validated 2026-07-05; local/public auth status `200` |
 
+
+### horistic-srv (10.1.1.4) — reverse proxy / k3s worker
+
+| Porta  | Serviço                    | Bind         | PID/User | Notas                              |
+|--------|----------------------------|--------------|----------|-----------------------------------|
+| 22     | sshd                       | 0.0.0.0 / [::] | root   | SSH via VPN/public alias          |
+| 80     | apache2                    | *            | root     | Horistic public reverse proxy      |
+| 443    | apache2                    | *            | root     | Horistic public reverse proxy      |
+| 111    | rpcbind                    | 0.0.0.0 / [::] | root   | system service                     |
+| 631    | cups                       | 127.0.0.1 / [::1] | root | local printer service              |
+| 3350   | xrdp-sesman                | [::1]        | root     | RDP control                        |
+| 3389   | xrdp                       | *            | xrdp     | RDP                                |
+| 6080   | websockify/noVNC           | 0.0.0.0      | root     | remote desktop bridge              |
+| 6444   | K3s agent local endpoint   | 127.0.0.1 / [::1] | root | k3s worker                         |
+| 8746   | local service              | 127.0.0.1    | -        | investigate                        |
+| 9100   | node-exporter              | *            | root     | Prometheus                         |
+| 10010  | K3s related                | 127.0.0.1    | root     | local agent service                |
+| 10248  | kubelet healthz            | 127.0.0.1    | root     | K3s                                |
+| 10249  | kube-proxy metrics         | 127.0.0.1    | root     | K3s                                |
+| 10250  | kubelet                    | *            | root     | K3s                                |
+| 10256  | kube-proxy healthz         | 127.0.0.1    | root     | K3s                                |
+| 22061  | local service              | 127.0.0.1    | -        | investigate                        |
+| 3115   | TEI GTE embeddings         | 10.1.1.4     | k3s/containerd | `ai-search/tei-gte`, internal router upstream |
+
+Validated 2026-07-04: `10.1.1.4:3000` is released, `10.1.1.4:3115`
+returns TEI health `200`, and public `embedding-gte-v1` through
+`https://router.atius.com.br/v1/embeddings` returns 768-dimensional vectors.
 
 ### MT5 KVM execution VMs (sem K3s)
 
@@ -335,8 +388,13 @@ Notas:
 | K3s etcd        | 2379, 2380     | 10.1.1.0/24   | K3s                      |
 | K3s kubelet     | 10250          | *             | K3s                      |
 | Prometheus node-exporter | 9100 | *             | K3s                      |
+| Local TEI embeddings | 3115       | 10.1.1.4      | K3s `ai-search/tei-gte`  |
 | PgBouncer       | 6432           | 10.1.1.1      | central DB               |
 | Obsidian REST/MCP | 27124        | 10.1.1.1      | AiSecondBrain via VPN    |
+| GBrain HTTP MCP | 3131           | 127.0.0.1     | SRV-1 local backend; public edge `mcp.atius.com.br/gbrain` |
+| Router Web/API  | 3000           | 0.0.0.0       | SRV-1 Podman `router-ai-atius` |
+| Router docs target | 3003        | 127.0.0.1     | target esperado; drift atual sem listener |
+| Wayland runtime | 25808          | 0.0.0.0       | SRV-3 `wayland.service` |
 | Camofox API     | 9377           | 127.0.0.1     | Hermes                   |
 | Camofox VNC     | 5915..5930     | 127.0.0.1     | display :15..30          |
 | Camofox noVNC   | 6095..6110     | 127.0.0.1     | display :15..30          |
@@ -438,6 +496,10 @@ Upgrade gated em janela separada.
 - Repo: `.planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md` (Ubuntu Pro gate)
 - Repo: `.planning/phases/13-k3s-ha-portainer-oci/13-GATE-REVIEW-2026-06-14.md`
 - Repo: `.planning/phases/14-resource-governor-pm2-boot-hardening/14-03-*.md` (xrdp watchdog)
+- Repo: `docs/operations/local-ai-embeddings.md` (TEI/GTE `10.1.1.4:3115` + router alias)
+- Repo: `docs/operations/gbrain-embedding-migration.md` (GBrain/Obsidian/Graphify embedding contract)
+- Repo: `docs/operations/codex-mcp-startup-standard.md` (Codex MCP startup profiles and smoke checks)
+- Repo: `docs/operations/wayland-managed-runtime.md` (Wayland SRV-3 managed runtime)
 - Repo: **`modules/fleet/podman-network/`** (standard podman networking 3-SRV — **novo 2026-06-16**)
 - Vault: `99-Referencias/atius-home-server-overview.md` (legado, redirecionar)
 - Vault: `17-DevTools-Workflow/17.08-Obsidian-Local-REST-API-MCP-Setup.md` (RDP :10)
@@ -452,8 +514,31 @@ Upgrade gated em janela separada.
 
 ---
 
-## 9. Changelog
+## 9. Operational Drift / Reconciliation Queue
 
+Validado em 2026-07-05:
+
+- `router.atius.com.br` Web/API esta saudavel em `3000`, mas
+  `router.atius.com.br/docs/` retorna `503` porque `127.0.0.1:3003` nao esta
+  ouvindo. Corrigir servico docs ou atualizar vhost para a rota real.
+- `gbrain-http-mcp.service` esta ativo em `127.0.0.1:3131`; evitar
+  `systemctl status` completo em logs compartilhados, porque o banner de boot
+  pode conter token administrativo. Preferir `systemctl show` + `/health`.
+- K3s tem 4 nos `Ready`; `atius-srv-3` ainda aparece com `INTERNAL-IP
+  10.1.1.7` por compatibilidade de etcd.
+- Pods de `monitoring`/`portainer` apareceram parcialmente degradados no
+  inventario remoto; abrir validacao separada antes de declarar stack de
+  observabilidade/Portainer saudavel.
+- `landscape.atius.com.br` retorna `302`, mas a porta `6554` citada em docs
+  auxiliares nao foi observada como listener live no SRV-1/SRV-3.
+
+## 10. Changelog
+
+- **1.5.0 (2026-07-05)** — consolidado delta live de MCP/edge/router:
+  GBrain HTTP MCP `127.0.0.1:3131` com edge `mcp.atius.com.br/gbrain`,
+  Wayland SRV-3 `0.0.0.0:25808`, router Web/API em `3000`, drift de docs em
+  `3003`, Obsidian REST/MCP `10.1.1.1:27124`, K3s 4 nos Ready e fila de
+  reconciliacao para Landscape/Portainer/monitoring.
 - **1.4.1 (2026-06-29)** — Obsidian Local REST API + MCP centralizado no
   SRV-1 em `10.1.1.1:27124`, com acesso direto via VPN para SRV-2/SRV-3 e
   allowlist `OMNI-OBSIDIAN-REST`; padrão antigo por SSH tunnel local removido.

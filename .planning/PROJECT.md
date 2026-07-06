@@ -14,7 +14,7 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 
 **Target features:**
 - TEI no namespace `ai-search`, sem exposicao publica direta, servindo `Alibaba-NLP/gte-multilingual-base`.
-- New API com alias estavel `embedding-pt-v1`, modelo upstream `text-embeddings-inference` e dimensao congelada em 768.
+- New API com alias estavel `embedding-gte-v1`, modelo upstream `embedding-gte-v1` e dimensao congelada em 768.
 - Smoke tests OpenAI-compatible para `/v1/models` e `POST /v1/embeddings` sem vazar chave em shell history, docs ou logs.
 - Contrato de reindexacao para GBrain/Obsidian/Graphify quando modelo, versao, dimensao, normalizacao ou chunking mudarem.
 
@@ -39,8 +39,8 @@ Servidor Atius sempre provisionado, documentado e operante — com identidade ce
 ### Active
 
 #### M011: Local AI Embeddings and Semantic Retrieval (Phase 41)
-- [ ] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com token Bearer e alias `embedding-pt-v1`.
-- [ ] **EMB-02**: New API roteia `embedding-pt-v1` para um canal interno TEI no k3s, sem apontar o canal de volta para `router.atius.com.br`.
+- [ ] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com token Bearer e alias `embedding-gte-v1`.
+- [ ] **EMB-02**: New API roteia `embedding-gte-v1` para um canal interno TEI no k3s, sem apontar o canal de volta para `router.atius.com.br`.
 - [ ] **EMB-03**: Backend TEI roda em `horistic-srv`/k3s no namespace `ai-search`, sem ingress publico direto.
 - [ ] **EMB-04**: Modelo inicial fica congelado como `Alibaba-NLP/gte-multilingual-base`, 768 dimensoes, com contrato de versao/digest/normalizacao documentado.
 - [ ] **EMB-05**: Smoke test em lote retorna 2 embeddings, 768 dimensoes e sem erro para textos pt-BR.

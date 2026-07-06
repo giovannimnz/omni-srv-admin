@@ -16,6 +16,7 @@ shape and safe CLI surface.
 | `migrations/0003_agent_executor_monitoring.sql` | Agent executor, command allowlist, telemetry and resource policies |
 | `migrations/0006_omni_version_inventory.sql` | Per-computer `omni-srv-admin` version table (`TbVersion`) with GitHub release fields |
 | `migrations/0007_customization_registry.sql` | Managed apps, forks and customization policy registry |
+| `migrations/0008_internal_service_pki_commands.sql` | `omni.trust-pki.*` allowlist commands for internal service PKI onboarding |
 | `../../docs/fleet/control-plane.md` | Architecture, runbook and human gates |
 | `../../cli/omni/fleet.py` | Safe CLI commands, local agent executor and fleet monitor |
 | `tools/validate_m004.py` | Offline contract validation and optional live read-only SRV probes |
@@ -40,6 +41,10 @@ PYTHONPATH=cli python3 -m omni fleet update-plan --host atius-srv-1 --program fo
 PYTHONPATH=cli python3 -m omni fleet queue-update --host atius-srv-3 --program ubuntu-dark-theme --desired-version 24.04-v1 --command-key ubuntu-dark-theme.apply --json
 PYTHONPATH=cli python3 -m omni fleet registry sync --all --json
 PYTHONPATH=cli python3 -m omni fleet registry show --host atius-srv-1 --json
+PYTHONPATH=cli python3 -m omni fleet trust-pki plan --json
+PYTHONPATH=cli python3 -m omni fleet trust-pki onboard-host --host horistic-srv --json
+PYTHONPATH=cli python3 -m omni fleet trust-pki reconcile-host --host horistic-srv --json
+PYTHONPATH=cli python3 -m omni fleet trust-pki rotate-host --host horistic-srv --reason ip-change --json
 ``` 
 
 `--apply` is intentionally blocked on `install` and legacy `update-plan`.
@@ -79,6 +84,11 @@ Initial allowlist table: `TbFleetCommands`.
 - `omni.resource.snapshot`: SRV-1 only.
 - `ubuntu-dark-theme.apply`: registered but disabled until the Ubuntu 24.04
   dark-theme harness is finalized.
+- `omni.trust-pki.*`: internal service PKI onboarding stages rendered by
+  `omni fleet trust-pki`; local command templates use argv arrays and remain
+  gated by `TbUpdatePlans` approval plus command-level `--execute` for
+  mutating stages. `reconcile-host` and `rotate-host` cover IP/SAN drift for
+  already registered servers.
 
 Install local user agent after migration `0003` is applied:
 

@@ -17,6 +17,12 @@ PYTHONPATH=cli python3 -m omni landscape --help
 
 ## Authentication
 
+Load credentials from the machine automation vault:
+
+```bash
+source <(atius-vault-env landscape)
+```
+
 Preferred self-hosted variables:
 
 ```bash
@@ -33,7 +39,9 @@ export LANDSCAPE_API_KEY="..."
 export LANDSCAPE_API_SECRET="..."
 ```
 
-Do not commit credentials. Use shell exports, HashiCorp Vault helpers or root-only files.
+Do not commit credentials. Do not use chat, GBrain, Obsidian, `.zshrc`, or
+`.env` as the value source. They may point to the `landscape` Vault profile,
+but automation must load the values through `atius-vault-env landscape`.
 
 Current local self-hosted env file:
 

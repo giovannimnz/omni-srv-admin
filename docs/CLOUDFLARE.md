@@ -2,7 +2,10 @@
 
 ## Overview
 
-Cloudflare é usado como CDN, proxy reverso e DNS manager para os domínios `atius.com.br` e `zentrius.com.br`. Toda a infraestrutura web passa pelo Cloudflare antes de chegar ao servidor de origem (Apache2).
+Cloudflare é usado como CDN, proxy reverso e DNS manager para os domínios
+`atius.com.br`, `horistic.com` e `zentrius.com.br`. Toda a infraestrutura web
+passa pelo Cloudflare antes de chegar ao servidor de origem (Apache2 ou edge
+equivalente).
 
 ---
 
@@ -93,12 +96,19 @@ cf-user-tokens    # Lista tokens da conta
 
 ## DNS Records — atius.com.br
 
-60 DNS records gerenciados via Cloudflare. Principais:
+Nao hardcode contagens de DNS; validar via API antes de auditorias ou release.
+Snapshot operacional principal:
 
 | Hostname | Type | Content | Proxy |
 |----------|------|---------|-------|
 | `aion.atius.com.br` | A | `137.131.190.161` | proxied |
 | `router.atius.com.br` | A | `137.131.190.161` | proxied |
+| `wayland.atius.com.br` | A/CNAME | edge SRV-1 -> SRV-3 `25808` | proxied |
+| `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> GBrain `127.0.0.1:3131` | proxied |
+| `landscape.atius.com.br` | A/CNAME | edge SRV-1/SRV-3, validar vhost | proxied |
+| `portainer.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
+| `docker.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
+| `cloudbeaver.atius.com.br` | A | `137.131.190.161` -> `8978` | proxied |
 | `api.atius.com.br` | A | `137.131.190.161` | proxied |
 | `app.atius.com.br` | A | `137.131.190.161` | proxied |
 | `dashboard.atius.com.br` | A | `137.131.190.161` | proxied |
@@ -132,6 +142,19 @@ Cloudflare faz terminação SSL. O servidor de origem usa certificados de_origin
 Phase 02 planejou que Apache2 seria migrado para portas 9080/9444 e Cloudflare Origin Rules roteariam porta 443 → origin port 9444 para todos os 66 hostnames.
 
 **Nota:** Audit de 2026-05-06 identificou que Apache2 ainda está nas portas originais 80/443. A migração de portas pode ter sido revertida ou nunca ter sido concluída. Verificar estado real antes de prosseguir.
+
+Validação 2026-07-05:
+
+- `router.atius.com.br/` e `/api/status` retornam `200` via SRV-1 Podman
+  `0.0.0.0:3000`.
+- `router.atius.com.br/docs/` retorna `503`; vhost aponta para
+  `127.0.0.1:3003`, mas nao ha listener em `3003`.
+- `wayland.atius.com.br/api/auth/status` retorna `200`; runtime live no
+  SRV-3 com `PORT=25808`.
+- `mcp.atius.com.br/gbrain/health` retorna `200`; backend GBrain escuta
+  local-only em `127.0.0.1:3131`.
+- `landscape.atius.com.br/` retorna `302`; reconciliar vhost/porta live antes
+  de declarar porta `6554` como ativa.
 
 ---
 
@@ -175,6 +198,8 @@ Cloudflare usa **Turnstile CAPTCHA** que bloqueia TODAS tentativas de automaçã
 - **Zone Token (cfut_):** Não tem acesso a endpoints account-level → erro 9109
 - **Dashboard manual:** Requer login em https://dash.cloudflare.com/profile/api-tokens
 - **Global API Key:** Diferente do token criado na aba API Tokens — é o "Global API Key" em profile
+- **Docs do router:** `/docs/` esta degradado ate o target `3003` voltar a
+  ouvir ou o vhost apontar para a rota atual.
 
 ---
 
@@ -187,4 +212,5 @@ Cloudflare usa **Turnstile CAPTCHA** que bloqueia TODAS tentativas de automaçã
 
 ---
 
-*Última validação: 2026-05-07 — Global API Key válido, Super Administrator*
+*Última validação: 2026-07-05 — edge principal validado; API key nao foi
+reexposta nem registrada em logs/docs.*

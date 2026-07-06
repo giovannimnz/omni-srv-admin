@@ -9,6 +9,7 @@ import shlex
 import shutil
 import socket
 import subprocess
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,8 +40,27 @@ SECURITY_DIR = FLEET_LOG_DIR / "security"
 VERSIONS_DIR = FLEET_LOG_DIR / "versions"
 AUDIT_EVENTS = FLEET_LOG_DIR / "audit-events.jsonl"
 FLEET_DB_ENV = default_fleet_db_env()
-FLEET_AGENT_VERSION = "0.2.0"
+FLEET_AGENT_VERSION = "0.2.3"
 PGBOUNCER_ENDPOINT = ("10.1.1.1", "6432")
+PKI_CA_HOST_ID = "atius-srv-1"
+PKI_PROGRAM = "internal-service-pki"
+PKI_DESIRED_VERSION = "service-ca-v1"
+PKI_CA_BASE = "/var/lib/omni-srv-admin/pki"
+PKI_TLS_BASE = "/etc/omni-srv-admin/tls"
+PKI_CA_FILES = (
+    "/usr/local/share/ca-certificates/atius-vpn-service-root-ca.crt",
+    "/usr/local/share/ca-certificates/atius-vpn-service-issuing-ca.crt",
+)
+PKI_COMMAND_STAGES = (
+    "preflight",
+    "init-ca",
+    "ensure-key-csr",
+    "issue-host",
+    "install-ca",
+    "install-leaf",
+    "reconcile",
+    "verify",
+)
 
 REQUIRED_HOST_FIELDS = (
     "id",
@@ -61,7 +81,7 @@ SENSITIVE_KEYS = {"secret_ref", "token", "password", "serial", "license_key"}
 LOCAL_COMMANDS: dict[str, dict[str, Any]] = {
     "omni.noop": {
         "description": "Safe no-op used for agent executor validation.",
-        "argv": ["python3", "-c", "print('omni.noop ok')"],
+        "argv": [sys.executable, "-c", "print('omni.noop ok')"],
         "default_profile": "interactive",
         "requires_approval": True,
         "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3"],
@@ -115,6 +135,150 @@ LOCAL_COMMANDS: dict[str, dict[str, Any]] = {
         "default_profile": "interactive",
         "requires_approval": True,
         "allowed_host_ids": ["giovanni-w11-pc"],
+    },
+    "omni.trust-pki.preflight": {
+        "description": "Read-only local preflight for internal service PKI onboarding.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "preflight",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": False,
+        "allowed_host_ids": [],
+    },
+    "omni.trust-pki.init-ca": {
+        "description": "Initialize the internal service PKI CA on the CA host.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "init-ca",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": [PKI_CA_HOST_ID],
+    },
+    "omni.trust-pki.ensure-key-csr": {
+        "description": "Ensure local host private key and CSR for internal service PKI.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "ensure-key-csr",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": [],
+    },
+    "omni.trust-pki.issue-host": {
+        "description": "Sign one host CSR from the internal service PKI CA host.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "issue-host",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": [PKI_CA_HOST_ID],
+    },
+    "omni.trust-pki.install-ca": {
+        "description": "Install the internal service PKI CA chain into the local trust store.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "install-ca",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": [],
+    },
+    "omni.trust-pki.install-leaf": {
+        "description": "Install the signed internal service PKI leaf and chain locally.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "install-leaf",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": [],
+    },
+    "omni.trust-pki.verify": {
+        "description": "Verify local internal service PKI material and trust.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "verify",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": False,
+        "allowed_host_ids": [],
+    },
+    "omni.trust-pki.reconcile": {
+        "description": "Compare local internal service PKI leaf SANs with desired inventory SANs.",
+        "argv": [
+            "python3",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "reconcile",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": False,
+        "allowed_host_ids": [],
     },
 }
 
@@ -259,6 +423,425 @@ def _inet_or_none(value: Any) -> str | None:
     except ValueError:
         return None
     return raw
+
+
+def _unique_sorted(values: list[str]) -> list[str]:
+    return sorted({item for item in values if item})
+
+
+def _host_aliases(host: dict[str, Any]) -> list[str]:
+    aliases = host.get("aliases")
+    if not isinstance(aliases, list):
+        return []
+    return [str(item).strip() for item in aliases if str(item).strip()]
+
+
+def _pki_service_tls_config(host: dict[str, Any]) -> dict[str, Any]:
+    pki = host.get("pki")
+    if not isinstance(pki, dict):
+        return {}
+    service_tls = pki.get("service_tls")
+    return service_tls if isinstance(service_tls, dict) else {}
+
+
+def _pki_access(host: dict[str, Any]) -> dict[str, Any]:
+    access = host.get("access")
+    return access if isinstance(access, dict) else {}
+
+
+def _pki_sans(host_id: str, host: dict[str, Any]) -> dict[str, list[str]]:
+    access = _pki_access(host)
+    config = _pki_service_tls_config(host)
+    aliases = _host_aliases(host)
+    dns_names = [host_id, f"{host_id}.atius.internal"]
+    for alias in aliases:
+        dns_names.extend([alias, f"{alias}.atius.internal"])
+    ip_names: list[str] = []
+    for key in ("vpn_ip", "legacy_vpn_ip", "public_ip", "tailscale_ip"):
+        value = _inet_or_none(access.get(key))
+        if value:
+            ip_names.append(value)
+    explicit_sans = config.get("sans")
+    if isinstance(explicit_sans, list):
+        for item in explicit_sans:
+            raw = str(item).strip()
+            if _inet_or_none(raw):
+                ip_names.append(raw)
+            elif raw:
+                dns_names.append(raw)
+    elif isinstance(explicit_sans, dict):
+        for item in explicit_sans.get("dns", []) if isinstance(explicit_sans.get("dns"), list) else []:
+            raw = str(item).strip()
+            if raw:
+                dns_names.append(raw)
+        for item in explicit_sans.get("ip", []) if isinstance(explicit_sans.get("ip"), list) else []:
+            raw = _inet_or_none(item)
+            if raw:
+                ip_names.append(raw)
+    return {"dns": _unique_sorted(dns_names), "ip": _unique_sorted(ip_names)}
+
+
+def _normal_sans(value: Any) -> dict[str, list[str]]:
+    if not isinstance(value, dict):
+        return {"dns": [], "ip": []}
+    dns = [str(item).strip() for item in value.get("dns", []) if str(item).strip()] if isinstance(value.get("dns"), list) else []
+    ip_values: list[str] = []
+    for item in value.get("ip", []) if isinstance(value.get("ip"), list) else []:
+        parsed = _inet_or_none(item)
+        if parsed:
+            ip_values.append(parsed)
+    return {"dns": _unique_sorted(dns), "ip": _unique_sorted(ip_values)}
+
+
+def _parse_san_json(raw: str) -> dict[str, list[str]]:
+    if not raw.strip():
+        return {"dns": [], "ip": []}
+    try:
+        return _normal_sans(json.loads(raw))
+    except json.JSONDecodeError as exc:
+        raise click.ClickException(f"SAN JSON inválido: {exc}") from exc
+
+
+def _parse_openssl_san_text(text: str) -> dict[str, list[str]]:
+    dns: list[str] = []
+    ip_values: list[str] = []
+    for raw in text.replace("\n", ",").split(","):
+        item = raw.strip()
+        if item.startswith("DNS:"):
+            dns.append(item.split(":", 1)[1].strip())
+        elif item.startswith("IP Address:"):
+            parsed = _inet_or_none(item.split(":", 1)[1].strip())
+            if parsed:
+                ip_values.append(parsed)
+    return {"dns": _unique_sorted(dns), "ip": _unique_sorted(ip_values)}
+
+
+def _cert_sans_from_file(cert_file: Path) -> dict[str, list[str]]:
+    if not cert_file.exists():
+        raise click.ClickException(f"certificado não encontrado: {cert_file}")
+    try:
+        completed = subprocess.run(
+            ["openssl", "x509", "-in", str(cert_file), "-noout", "-ext", "subjectAltName"],
+            capture_output=True,
+            text=True,
+            timeout=10,
+        )
+    except FileNotFoundError as exc:
+        raise click.ClickException("openssl não encontrado para ler SANs do certificado") from exc
+    if completed.returncode != 0:
+        raise click.ClickException(_redact_text(completed.stderr.strip() or "falha ao ler certificado"))
+    return _parse_openssl_san_text(completed.stdout)
+
+
+def _pki_san_drift(desired: dict[str, Any], observed: dict[str, Any] | None) -> dict[str, Any]:
+    desired_sans = _normal_sans(desired)
+    observed_sans = _normal_sans(observed or {})
+    missing_dns = sorted(set(desired_sans["dns"]) - set(observed_sans["dns"]))
+    extra_dns = sorted(set(observed_sans["dns"]) - set(desired_sans["dns"]))
+    missing_ip = sorted(set(desired_sans["ip"]) - set(observed_sans["ip"]))
+    extra_ip = sorted(set(observed_sans["ip"]) - set(desired_sans["ip"]))
+    needs_rotation = bool(missing_dns or extra_dns or missing_ip or extra_ip)
+    return {
+        "status": "drift" if needs_rotation else "in-sync",
+        "needs_rotation": needs_rotation,
+        "desired": desired_sans,
+        "observed": observed_sans,
+        "missing": {"dns": missing_dns, "ip": missing_ip},
+        "extra": {"dns": extra_dns, "ip": extra_ip},
+    }
+
+
+def _pki_host_paths(host_id: str) -> dict[str, str]:
+    host_base = f"{PKI_TLS_BASE}/{host_id}"
+    return {
+        "host_tls_dir": host_base,
+        "private_key": f"{host_base}/server.key.pem",
+        "csr": f"{host_base}/server.csr.pem",
+        "leaf_cert": f"{host_base}/server.crt.pem",
+        "leaf_chain": f"{host_base}/chain.crt.pem",
+        "ca_chain": f"{PKI_TLS_BASE}/ca-chain.crt.pem",
+        "peer_dir": f"{PKI_TLS_BASE}/peers",
+        "ca_base": PKI_CA_BASE,
+        "ca_files": list(PKI_CA_FILES),
+    }
+
+
+def _pki_host_identity(host_id: str, host: dict[str, Any], *, source: str) -> dict[str, Any]:
+    access = _pki_access(host)
+    ssh_target = str(access.get("ssh") or "").strip()
+    if not ssh_target:
+        vpn_ip = _inet_or_none(access.get("vpn_ip"))
+        if vpn_ip:
+            ssh_target = f"ubuntu@{vpn_ip}"
+    if not ssh_target:
+        raise click.ClickException(f"host {host_id} sem access.ssh/vpn_ip para PKI")
+    return {
+        "host": host_id,
+        "source": source,
+        "ssh": ssh_target,
+        "role": str(host.get("role") or ""),
+        "status": str(host.get("status") or ""),
+        "aliases": _host_aliases(host),
+        "sans": _pki_sans(host_id, host),
+        "paths": _pki_host_paths(host_id),
+        "ca_host": PKI_CA_HOST_ID,
+        "service_tls_enabled": bool(_pki_service_tls_config(host).get("enabled", False)),
+    }
+
+
+def _load_db_host(host_id: str, *, env: dict[str, str]) -> dict[str, Any]:
+    host_lit = _sql_literal(host_id)
+    record = _psql_json(
+        f"""
+SELECT jsonb_build_object(
+    'id', h.id,
+    'role', h.role,
+    'owner', h.owner,
+    'status', h.status,
+    'aliases', COALESCE(profile.value->'aliases', '[]'::jsonb),
+    'access', jsonb_build_object(
+        'ssh', h.ssh_target,
+        'vpn_ip', h.vpn_ip::text,
+        'public_ip', h.public_ip::text,
+        'legacy_vpn_ip', profile.value #>> '{{access,legacy_vpn_ip}}',
+        'tailscale_ip', profile.value #>> '{{access,tailscale_ip}}'
+    ),
+    'platform', jsonb_build_object(
+        'provider', h.provider,
+        'os', h.os,
+        'arch', h.arch
+    ),
+    'pki', COALESCE(profile.value->'pki', '{{}}'::jsonb)
+)
+FROM "TbHosts" h
+LEFT JOIN "TbConfigItems" profile
+  ON profile.host_id = h.id AND profile.key = 'inventory.host.profile'
+WHERE h.id = {host_lit};
+""",
+        env=env,
+    )
+    if not record:
+        raise click.ClickException(f"host não encontrado no DbOmniFleet: {host_id}")
+    return record
+
+
+def _load_pki_host(host_id: str, *, source: str, env: dict[str, str] | None = None) -> tuple[str, dict[str, Any]]:
+    if source == "db":
+        return "db", _load_db_host(host_id, env=env or _db_env())
+    try:
+        path, host, _ = _load_host(host_id)
+        return "inventory", host
+    except click.ClickException:
+        if source == "inventory":
+            raise
+    return "db", _load_db_host(host_id, env=env or _db_env())
+
+
+def _pki_inventory_host_ids() -> list[str]:
+    host_ids: list[str] = []
+    for host_id, _, data, _ in _inventory_host_records(syncable_only=True):
+        if str(data.get("status") or "").lower() != "active":
+            continue
+        if host_id.startswith("atius-srv-") or host_id.endswith("-srv"):
+            host_ids.append(host_id)
+    return host_ids
+
+
+def _pki_agent_args(action: str, identity: dict[str, Any], *, execute: bool) -> list[str]:
+    args: list[str] = []
+    if action == "issue-host":
+        args.extend(["--target-host", str(identity["host"])])
+    if action in {"ensure-key-csr", "issue-host", "reconcile"}:
+        args.extend(["--san-json", json.dumps(identity["sans"], sort_keys=True)])
+    if execute and action in {"init-ca", "ensure-key-csr", "issue-host", "install-ca", "install-leaf"}:
+        args.append("--execute")
+    return args
+
+
+def _pki_command_plan(identity: dict[str, Any], *, execute: bool) -> list[dict[str, Any]]:
+    host_id = str(identity["host"])
+    return [
+        {
+            "stage": "preflight",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.preflight",
+            "command_args": _pki_agent_args("preflight", identity, execute=execute),
+            "priority": 40,
+        },
+        {
+            "stage": "ensure-key-csr",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.ensure-key-csr",
+            "command_args": _pki_agent_args("ensure-key-csr", identity, execute=execute),
+            "priority": 41,
+        },
+        {
+            "stage": "issue-host",
+            "target_host": PKI_CA_HOST_ID,
+            "command_key": "omni.trust-pki.issue-host",
+            "command_args": _pki_agent_args("issue-host", identity, execute=execute),
+            "priority": 42,
+        },
+        {
+            "stage": "install-ca",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.install-ca",
+            "command_args": _pki_agent_args("install-ca", identity, execute=execute),
+            "priority": 43,
+        },
+        {
+            "stage": "install-leaf",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.install-leaf",
+            "command_args": _pki_agent_args("install-leaf", identity, execute=execute),
+            "priority": 44,
+        },
+        {
+            "stage": "verify",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.verify",
+            "command_args": _pki_agent_args("verify", identity, execute=execute),
+            "priority": 45,
+        },
+    ]
+
+
+def _pki_rotation_plan(identity: dict[str, Any], *, execute: bool, include_ca: bool = False) -> list[dict[str, Any]]:
+    host_id = str(identity["host"])
+    commands = [
+        {
+            "stage": "preflight",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.preflight",
+            "command_args": _pki_agent_args("preflight", identity, execute=execute),
+            "priority": 50,
+        },
+        {
+            "stage": "ensure-key-csr",
+            "target_host": host_id,
+            "command_key": "omni.trust-pki.ensure-key-csr",
+            "command_args": _pki_agent_args("ensure-key-csr", identity, execute=execute),
+            "priority": 51,
+        },
+        {
+            "stage": "issue-host",
+            "target_host": PKI_CA_HOST_ID,
+            "command_key": "omni.trust-pki.issue-host",
+            "command_args": _pki_agent_args("issue-host", identity, execute=execute),
+            "priority": 52,
+        },
+    ]
+    if include_ca:
+        commands.append(
+            {
+                "stage": "install-ca",
+                "target_host": host_id,
+                "command_key": "omni.trust-pki.install-ca",
+                "command_args": _pki_agent_args("install-ca", identity, execute=execute),
+                "priority": 53,
+            }
+        )
+    commands.extend(
+        [
+            {
+                "stage": "install-leaf",
+                "target_host": host_id,
+                "command_key": "omni.trust-pki.install-leaf",
+                "command_args": _pki_agent_args("install-leaf", identity, execute=execute),
+                "priority": 54,
+            },
+            {
+                "stage": "verify",
+                "target_host": host_id,
+                "command_key": "omni.trust-pki.verify",
+                "command_args": _pki_agent_args("verify", identity, execute=execute),
+                "priority": 55,
+            },
+        ]
+    )
+    return commands
+
+
+def _pki_render_host(host_id: str, *, source: str, env: dict[str, str] | None = None, execute: bool = False) -> dict[str, Any]:
+    loaded_source, host = _load_pki_host(host_id, source=source, env=env)
+    resolved_host = _host_id(host, host_id)
+    identity = _pki_host_identity(resolved_host, host, source=loaded_source)
+    identity["commands"] = _pki_command_plan(identity, execute=execute)
+    return identity
+
+
+def _queue_update_record(
+    *,
+    host_id: str,
+    program: str,
+    desired_version: str,
+    command_key: str,
+    command_args: list[str],
+    requested_by: str,
+    requested_from_host: str,
+    approve: bool,
+    priority: int,
+    dry_run_payload: dict[str, Any],
+    env: dict[str, str],
+) -> dict[str, Any]:
+    approval_state = "approved" if approve else "pending"
+    execution_state = "queued" if approve else "not-started"
+    _command_template(command_key, host_id=host_id, env=env)
+    approved_by_sql = _sql_literal(requested_by) if approve else "NULL"
+    approved_at_sql = "now()" if approve else "NULL"
+    idempotency = f"{host_id}:{program}:{desired_version}:{command_key}:{json.dumps(command_args, sort_keys=True)}"
+    query = f"""
+WITH program AS (
+    INSERT INTO "TbPrograms" (host_id, name, install_type, current_version, source, managed_by, update_policy, observed_at)
+    VALUES ({_sql_literal(host_id)}, {_sql_literal(program)}, 'omni-module', NULL, 'trust-pki', 'omni-srv-admin', 'plan-first', now())
+    ON CONFLICT (host_id, name, install_type) DO UPDATE SET
+        source = EXCLUDED.source,
+        managed_by = EXCLUDED.managed_by,
+        update_policy = EXCLUDED.update_policy,
+        observed_at = now()
+    RETURNING id
+),
+plan AS (
+    INSERT INTO "TbUpdatePlans" (
+        host_id, program_id, desired_version, dry_run_output, approval_state,
+        approved_by, approved_at,
+        execution_state, target_command, command_args, execution_profile,
+        requested_by, requested_from_host, priority, idempotency_key
+    )
+    SELECT
+        {_sql_literal(host_id)}, program.id, {_sql_literal(desired_version)},
+        {_json_literal(dry_run_payload)}::jsonb, {_sql_literal(approval_state)},
+        {approved_by_sql}, {approved_at_sql},
+        {_sql_literal(execution_state)}, {_sql_literal(command_key)}, {_json_literal(command_args)}::jsonb,
+        'interactive', {_sql_literal(requested_by)}, {_sql_literal(requested_from_host)}, {int(priority)},
+        encode(digest({_sql_literal(idempotency)}, 'sha256'), 'hex')
+    FROM program
+    ON CONFLICT (idempotency_key) DO UPDATE SET
+        dry_run_output = EXCLUDED.dry_run_output,
+        approval_state = EXCLUDED.approval_state,
+        approved_by = EXCLUDED.approved_by,
+        approved_at = EXCLUDED.approved_at,
+        execution_state = CASE
+            WHEN "TbUpdatePlans".execution_state IN ('succeeded', 'claimed', 'running') THEN "TbUpdatePlans".execution_state
+            ELSE EXCLUDED.execution_state
+        END,
+        updated_at = now()
+    RETURNING id, host_id, desired_version, approval_state, execution_state, target_command, command_args, priority, created_at
+)
+SELECT jsonb_build_object(
+    'id', id,
+    'host', host_id,
+    'desired_version', desired_version,
+    'approval_state', approval_state,
+    'execution_state', execution_state,
+    'target_command', target_command,
+    'command_args', command_args,
+    'priority', priority,
+    'created_at', created_at
+) FROM plan;
+"""
+    record = _psql_json(query, env=env)
+    return record or {}
 
 
 def _emit(payload: dict[str, Any], json_output: bool) -> None:
@@ -1817,6 +2400,587 @@ def validate_inventory(json_output: bool) -> None:
         click.echo(f"{result['host']:24} {result['status']}{suffix}")
     if not payload["valid"]:
         raise click.ClickException("inventário inválido")
+
+
+@fleet.group("trust-pki")
+def trust_pki() -> None:
+    """PKI interna de serviços para hosts cadastrados no Omni Fleet."""
+
+
+@trust_pki.command("plan")
+@click.option("--host", "host_ids", multiple=True, help="Host alvo. Repetível; default: todos ativos no inventário.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_plan(host_ids: tuple[str, ...], source: str, json_output: bool) -> None:
+    """Renderiza o rollout PKI sem enfileirar ou mutar hosts."""
+    targets = list(host_ids) or _pki_inventory_host_ids()
+    rendered = [_pki_render_host(host_id, source=source, execute=False) for host_id in targets]
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "mode": "plan",
+        "dry_run": True,
+        "ca_host": PKI_CA_HOST_ID,
+        "host_count": len(rendered),
+        "hosts": rendered,
+        "generated_at": _now(),
+        "notes": [
+            "trust stores receive the internal service CA chain, never peer leafs as root CAs",
+            "host private keys stay on the owning host",
+            "run onboard-host --db to queue this through DbOmniFleet/TbUpdatePlans",
+        ],
+    }
+    _emit(payload, json_output)
+
+
+@trust_pki.command("render-host")
+@click.option("--host", "host_id", required=True, help="Host alvo cadastrado no inventário/DB.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_render_host(host_id: str, source: str, json_output: bool) -> None:
+    """Mostra SANs, caminhos e comandos PKI para um host."""
+    _emit(_pki_render_host(host_id, source=source, execute=False), json_output)
+
+
+@trust_pki.command("preflight")
+@click.option("--host", "host_ids", multiple=True, help="Host alvo. Repetível; default: todos ativos no inventário.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_preflight(host_ids: tuple[str, ...], source: str, json_output: bool) -> None:
+    """Preflight local do plano PKI; não acessa nem muta hosts remotos."""
+    targets = list(host_ids) or _pki_inventory_host_ids()
+    hosts = []
+    for host_id in targets:
+        rendered = _pki_render_host(host_id, source=source, execute=False)
+        host_checks = {
+            "host": rendered["host"],
+            "source": rendered["source"],
+            "ssh": rendered["ssh"],
+            "has_vpn_or_public_ip": bool(rendered["sans"]["ip"]),
+            "has_dns_san": bool(rendered["sans"]["dns"]),
+            "status": "ok" if rendered["sans"]["ip"] and rendered["sans"]["dns"] else "invalid",
+        }
+        hosts.append(host_checks)
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "mode": "preflight",
+        "dry_run": True,
+        "valid": all(item["status"] == "ok" for item in hosts),
+        "hosts": hosts,
+        "generated_at": _now(),
+    }
+    _emit(payload, json_output)
+    if not payload["valid"]:
+        raise click.ClickException("preflight PKI inválido")
+
+
+def _trust_pki_queue_payload(
+    *,
+    command: dict[str, Any],
+    identity: dict[str, Any],
+    requested_by: str,
+    approve: bool,
+    env: dict[str, str],
+    reason: str | None = None,
+    drift: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    return _queue_update_record(
+        host_id=str(command["target_host"]),
+        program=PKI_PROGRAM,
+        desired_version=PKI_DESIRED_VERSION,
+        command_key=str(command["command_key"]),
+        command_args=[str(item) for item in command.get("command_args", [])],
+        requested_by=requested_by,
+        requested_from_host=_default_host_id(),
+        approve=approve,
+        priority=int(command.get("priority") or 50),
+        dry_run_payload={
+            "resource": "omni.fleet.trust-pki",
+            "source_host": identity["host"],
+            "target_host": command["target_host"],
+            "stage": command["stage"],
+            "command_key": command["command_key"],
+            "command_args": command.get("command_args", []),
+            "reason": reason,
+            "drift": drift,
+            "paths": identity["paths"],
+            "sans": identity["sans"],
+            "generated_at": _now(),
+        },
+        env=env,
+    )
+
+
+@trust_pki.command("onboard-host")
+@click.option("--host", "host_id", required=True, help="Host novo/existente cadastrado no inventário/DB.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--db", "write_db", is_flag=True, help="Insere a sequência em DbOmniFleet/TbUpdatePlans.")
+@click.option("--execute", is_flag=True, help="Inclui --execute nos estágios mutáveis enfileirados.")
+@click.option("--approve", is_flag=True, help="Cria planos já aprovados; exige --execute e --db.")
+@click.option("--requested-by", default=None, help="Ator que solicitou o onboarding.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_onboard_host(
+    host_id: str,
+    source: str,
+    write_db: bool,
+    execute: bool,
+    approve: bool,
+    requested_by: str | None,
+    json_output: bool,
+) -> None:
+    """Renderiza ou enfileira o onboarding PKI completo para um host."""
+    if approve and (not execute or not write_db):
+        raise click.ClickException("--approve exige --execute e --db")
+    env = _db_env() if write_db or source == "db" else None
+    identity = _pki_render_host(host_id, source=source, env=env, execute=execute)
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "mode": "onboard-host",
+        "host": identity["host"],
+        "source": identity["source"],
+        "db_write": write_db,
+        "execute": execute,
+        "approval_state": "approved" if approve else "pending",
+        "commands": identity["commands"],
+        "plans": [],
+        "generated_at": _now(),
+    }
+    if write_db:
+        actor = requested_by or os.environ.get("USER", "operator")
+        payload["plans"] = [
+            _trust_pki_queue_payload(command=command, identity=identity, requested_by=actor, approve=approve, env=env or _db_env())
+            for command in identity["commands"]
+        ]
+    _emit(payload, json_output)
+
+
+@trust_pki.command("init-ca")
+@click.option("--db", "write_db", is_flag=True, help="Insere plano em DbOmniFleet/TbUpdatePlans.")
+@click.option("--execute", is_flag=True, help="Inclui --execute no plano mutável.")
+@click.option("--approve", is_flag=True, help="Cria plano já aprovado; exige --execute e --db.")
+@click.option("--requested-by", default=None, help="Ator que solicitou o plano.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_init_ca(write_db: bool, execute: bool, approve: bool, requested_by: str | None, json_output: bool) -> None:
+    """Renderiza ou enfileira a inicialização da CA no host CA."""
+    if approve and (not execute or not write_db):
+        raise click.ClickException("--approve exige --execute e --db")
+    identity = _pki_render_host(PKI_CA_HOST_ID, source="auto", execute=execute)
+    command = {
+        "stage": "init-ca",
+        "target_host": PKI_CA_HOST_ID,
+        "command_key": "omni.trust-pki.init-ca",
+        "command_args": _pki_agent_args("init-ca", identity, execute=execute),
+        "priority": 30,
+    }
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "mode": "init-ca",
+        "db_write": write_db,
+        "execute": execute,
+        "command": command,
+        "paths": identity["paths"],
+        "plans": [],
+        "generated_at": _now(),
+    }
+    if write_db:
+        payload["plans"] = [
+            _trust_pki_queue_payload(
+                command=command,
+                identity=identity,
+                requested_by=requested_by or os.environ.get("USER", "operator"),
+                approve=approve,
+                env=_db_env(),
+            )
+        ]
+    _emit(payload, json_output)
+
+
+@trust_pki.command("issue-host")
+@click.option("--host", "host_id", required=True, help="Host alvo cujo CSR será assinado pelo host CA.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--db", "write_db", is_flag=True, help="Insere plano em DbOmniFleet/TbUpdatePlans.")
+@click.option("--execute", is_flag=True, help="Inclui --execute no plano mutável.")
+@click.option("--approve", is_flag=True, help="Cria plano já aprovado; exige --execute e --db.")
+@click.option("--requested-by", default=None, help="Ator que solicitou o plano.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_issue_host(
+    host_id: str,
+    source: str,
+    write_db: bool,
+    execute: bool,
+    approve: bool,
+    requested_by: str | None,
+    json_output: bool,
+) -> None:
+    """Renderiza ou enfileira assinatura do leaf de um host no CA host."""
+    if approve and (not execute or not write_db):
+        raise click.ClickException("--approve exige --execute e --db")
+    env = _db_env() if write_db or source == "db" else None
+    identity = _pki_render_host(host_id, source=source, env=env, execute=execute)
+    command = next(command for command in identity["commands"] if command["stage"] == "issue-host")
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "mode": "issue-host",
+        "host": identity["host"],
+        "db_write": write_db,
+        "execute": execute,
+        "command": command,
+        "plans": [],
+        "generated_at": _now(),
+    }
+    if write_db:
+        payload["plans"] = [
+            _trust_pki_queue_payload(
+                command=command,
+                identity=identity,
+                requested_by=requested_by or os.environ.get("USER", "operator"),
+                approve=approve,
+                env=env or _db_env(),
+            )
+        ]
+    _emit(payload, json_output)
+
+
+@trust_pki.command("install-trust")
+@click.option("--host", "host_id", required=True, help="Host alvo ou 'all'.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--db", "write_db", is_flag=True, help="Insere planos em DbOmniFleet/TbUpdatePlans.")
+@click.option("--execute", is_flag=True, help="Inclui --execute nos planos mutáveis.")
+@click.option("--approve", is_flag=True, help="Cria planos já aprovados; exige --execute e --db.")
+@click.option("--requested-by", default=None, help="Ator que solicitou o plano.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_install_trust(
+    host_id: str,
+    source: str,
+    write_db: bool,
+    execute: bool,
+    approve: bool,
+    requested_by: str | None,
+    json_output: bool,
+) -> None:
+    """Renderiza ou enfileira instalação de CA chain e leaf local."""
+    if approve and (not execute or not write_db):
+        raise click.ClickException("--approve exige --execute e --db")
+    targets = _pki_inventory_host_ids() if host_id == "all" else [host_id]
+    env = _db_env() if write_db or source == "db" else None
+    rendered = []
+    plans = []
+    actor = requested_by or os.environ.get("USER", "operator")
+    for target in targets:
+        identity = _pki_render_host(target, source=source, env=env, execute=execute)
+        commands = [command for command in identity["commands"] if command["stage"] in {"install-ca", "install-leaf"}]
+        rendered.append({"host": identity["host"], "commands": commands})
+        if write_db:
+            plans.extend(
+                _trust_pki_queue_payload(command=command, identity=identity, requested_by=actor, approve=approve, env=env or _db_env())
+                for command in commands
+            )
+    _emit(
+        {
+            "resource": "omni.fleet.trust-pki",
+            "mode": "install-trust",
+            "db_write": write_db,
+            "execute": execute,
+            "hosts": rendered,
+            "plans": plans,
+            "generated_at": _now(),
+        },
+        json_output,
+    )
+
+
+@trust_pki.command("verify")
+@click.option("--host", "host_id", required=True, help="Host alvo ou 'all'.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_verify(host_id: str, source: str, json_output: bool) -> None:
+    """Renderiza comandos e checks esperados para validação PKI."""
+    targets = _pki_inventory_host_ids() if host_id == "all" else [host_id]
+    hosts = []
+    for target in targets:
+        identity = _pki_render_host(target, source=source, execute=False)
+        verify_command = next(command for command in identity["commands"] if command["stage"] == "verify")
+        hosts.append(
+            {
+                "host": identity["host"],
+                "command": verify_command,
+                "checks": [
+                    "openssl verify uses system trust store",
+                    "leaf has CA:FALSE",
+                    "leaf has serverAuth and clientAuth",
+                    "SAN covers VPN IP and DNS aliases",
+                    "certificate validity is at least 30 days",
+                ],
+            }
+        )
+    _emit(
+        {
+            "resource": "omni.fleet.trust-pki",
+            "mode": "verify",
+            "dry_run": True,
+            "hosts": hosts,
+            "generated_at": _now(),
+        },
+        json_output,
+    )
+
+
+def _observed_sans_from_inputs(observed_san_json: str | None, cert_file: Path | None) -> dict[str, list[str]] | None:
+    if observed_san_json:
+        return _parse_san_json(observed_san_json)
+    if cert_file is not None:
+        return _cert_sans_from_file(cert_file)
+    return None
+
+
+@trust_pki.command("reconcile-host")
+@click.option("--host", "host_id", required=True, help="Host alvo cadastrado no inventário/DB.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--observed-san-json", default=None, help="SANs observados no certificado atual para comparação offline.")
+@click.option("--cert-file", type=click.Path(path_type=Path), default=None, help="Certificado local a comparar com o inventário.")
+@click.option("--db", "write_db", is_flag=True, help="Enfileira reconcile read-only no agente local do host.")
+@click.option("--approve", is_flag=True, help="Cria o plano read-only já aprovado; exige --db.")
+@click.option("--requested-by", default=None, help="Ator que solicitou o reconcile.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_reconcile_host(
+    host_id: str,
+    source: str,
+    observed_san_json: str | None,
+    cert_file: Path | None,
+    write_db: bool,
+    approve: bool,
+    requested_by: str | None,
+    json_output: bool,
+) -> None:
+    """Detecta drift de SAN/IP entre inventário/DB e certificado atual."""
+    if approve and not write_db:
+        raise click.ClickException("--approve exige --db")
+    env = _db_env() if write_db or source == "db" else None
+    identity = _pki_render_host(host_id, source=source, env=env, execute=False)
+    observed = _observed_sans_from_inputs(observed_san_json, cert_file)
+    if observed is None:
+        drift: dict[str, Any] = {
+            "status": "unknown",
+            "needs_rotation": None,
+            "desired": _normal_sans(identity["sans"]),
+            "observed": None,
+            "missing": {"dns": [], "ip": []},
+            "extra": {"dns": [], "ip": []},
+            "note": "provide --observed-san-json, --cert-file, or queue --db for remote agent inspection",
+        }
+    else:
+        drift = _pki_san_drift(identity["sans"], observed)
+    command = {
+        "stage": "reconcile",
+        "target_host": identity["host"],
+        "command_key": "omni.trust-pki.reconcile",
+        "command_args": _pki_agent_args("reconcile", identity, execute=False),
+        "priority": 46,
+    }
+    plans = []
+    if write_db:
+        plans.append(
+            _trust_pki_queue_payload(
+                command=command,
+                identity=identity,
+                requested_by=requested_by or os.environ.get("USER", "operator"),
+                approve=approve,
+                env=env or _db_env(),
+                reason="reconcile",
+                drift=drift,
+            )
+        )
+    _emit(
+        {
+            "resource": "omni.fleet.trust-pki",
+            "mode": "reconcile-host",
+            "host": identity["host"],
+            "source": identity["source"],
+            "db_write": write_db,
+            "drift": drift,
+            "command": command,
+            "plans": plans,
+            "generated_at": _now(),
+        },
+        json_output,
+    )
+
+
+@trust_pki.command("rotate-host")
+@click.option("--host", "host_id", required=True, help="Host alvo cadastrado no inventário/DB.")
+@click.option("--source", type=click.Choice(["auto", "inventory", "db"]), default="auto", show_default=True)
+@click.option("--reason", default="ip-change", show_default=True, help="Motivo auditável da rotação.")
+@click.option("--observed-san-json", default=None, help="SANs observados no certificado atual para comparação offline.")
+@click.option("--cert-file", type=click.Path(path_type=Path), default=None, help="Certificado local a comparar com o inventário.")
+@click.option("--include-ca", is_flag=True, help="Inclui reinstalação da CA chain no plano.")
+@click.option("--force", is_flag=True, help="Permite enfileirar mesmo sem drift observado.")
+@click.option("--db", "write_db", is_flag=True, help="Insere a sequência em DbOmniFleet/TbUpdatePlans.")
+@click.option("--execute", is_flag=True, help="Inclui --execute nos estágios mutáveis enfileirados.")
+@click.option("--approve", is_flag=True, help="Cria planos já aprovados; exige --execute e --db.")
+@click.option("--requested-by", default=None, help="Ator que solicitou a rotação.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_rotate_host(
+    host_id: str,
+    source: str,
+    reason: str,
+    observed_san_json: str | None,
+    cert_file: Path | None,
+    include_ca: bool,
+    force: bool,
+    write_db: bool,
+    execute: bool,
+    approve: bool,
+    requested_by: str | None,
+    json_output: bool,
+) -> None:
+    """Reemite o leaf de um host quando o inventário/DB muda SAN/IP."""
+    if approve and (not execute or not write_db):
+        raise click.ClickException("--approve exige --execute e --db")
+    env = _db_env() if write_db or source == "db" else None
+    identity = _pki_render_host(host_id, source=source, env=env, execute=execute)
+    observed = _observed_sans_from_inputs(observed_san_json, cert_file)
+    if observed is None:
+        drift: dict[str, Any] = {
+            "status": "unknown",
+            "needs_rotation": None,
+            "desired": _normal_sans(identity["sans"]),
+            "observed": None,
+            "missing": {"dns": [], "ip": []},
+            "extra": {"dns": [], "ip": []},
+            "note": "no observed certificate SANs provided; use --force to queue rotation anyway",
+        }
+    else:
+        drift = _pki_san_drift(identity["sans"], observed)
+    if write_db and not force and drift.get("needs_rotation") is not True:
+        raise click.ClickException("rotação em DB exige drift detectado ou --force")
+    commands = _pki_rotation_plan(identity, execute=execute, include_ca=include_ca)
+    plans = []
+    if write_db:
+        actor = requested_by or os.environ.get("USER", "operator")
+        plans = [
+            _trust_pki_queue_payload(
+                command=command,
+                identity=identity,
+                requested_by=actor,
+                approve=approve,
+                env=env or _db_env(),
+                reason=reason,
+                drift=drift,
+            )
+            for command in commands
+        ]
+    _emit(
+        {
+            "resource": "omni.fleet.trust-pki",
+            "mode": "rotate-host",
+            "host": identity["host"],
+            "source": identity["source"],
+            "reason": reason,
+            "db_write": write_db,
+            "execute": execute,
+            "force": force,
+            "drift": drift,
+            "commands": commands,
+            "plans": plans,
+            "generated_at": _now(),
+        },
+        json_output,
+    )
+
+
+@trust_pki.command("rollback-plan")
+@click.option("--host", "host_id", required=True, help="Host alvo ou 'all'.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_rollback_plan(host_id: str, json_output: bool) -> None:
+    """Mostra o rollback esperado sem remover nada."""
+    targets = _pki_inventory_host_ids() if host_id == "all" else [host_id]
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "mode": "rollback-plan",
+        "dry_run": True,
+        "hosts": [
+            {
+                "host": target,
+                "backup_glob": "/root/.backups/omni-fleet-pki-*",
+                "restore_paths": _pki_host_paths(target),
+                "steps": [
+                    "stop service-specific TLS adapters before restoring cert material",
+                    "restore prior /etc/omni-srv-admin/tls snapshot",
+                    "restore prior /usr/local/share/ca-certificates ATIUS PKI files",
+                    "run update-ca-certificates",
+                    "run trust-pki verify",
+                ],
+            }
+            for target in targets
+        ],
+        "generated_at": _now(),
+    }
+    _emit(payload, json_output)
+
+
+@trust_pki.command("agent-runner", hidden=True)
+@click.argument("action", type=click.Choice(PKI_COMMAND_STAGES))
+@click.option("--host", "host_id", required=True, help="Host local que executa o estágio.")
+@click.option("--target-host", default=None, help="Host alvo quando o estágio roda no CA host.")
+@click.option("--san-json", default="{}", help="SANs renderizados pelo orquestrador.")
+@click.option("--execute", is_flag=True, help="Autoriza estágio mutável local.")
+@click.option("--json", "json_output", is_flag=True, help="Emite payload em JSON.")
+def trust_pki_agent_runner(
+    action: str,
+    host_id: str,
+    target_host: str | None,
+    san_json: str,
+    execute: bool,
+    json_output: bool,
+) -> None:
+    """Runner local allowlisted para o agente; não imprime material secreto."""
+    try:
+        sans = json.loads(san_json)
+    except json.JSONDecodeError as exc:
+        raise click.ClickException(f"--san-json inválido: {exc}") from exc
+    mutating = {"init-ca", "ensure-key-csr", "issue-host", "install-ca", "install-leaf"}
+    payload = {
+        "resource": "omni.fleet.trust-pki",
+        "runner": "agent-runner",
+        "action": action,
+        "host": host_id,
+        "target_host": target_host or host_id,
+        "execute": execute,
+        "dry_run": not execute,
+        "paths": _pki_host_paths(target_host or host_id),
+        "sans": sans,
+        "checks": {
+            "openssl": bool(shutil.which("openssl")),
+            "update_ca_certificates": bool(shutil.which("update-ca-certificates")),
+        },
+        "generated_at": _now(),
+    }
+    if action in mutating and not execute:
+        payload["status"] = "planned"
+        payload["note"] = "mutating stage rendered only; pass --execute through queued command_args to apply"
+    elif action in mutating:
+        payload["status"] = "blocked"
+        payload["note"] = "live key/cert mutation is intentionally blocked until Phase 44-02 scripts are installed"
+    elif action == "reconcile":
+        leaf_path = Path(str(payload["paths"]["leaf_cert"]))
+        if not leaf_path.exists():
+            payload["status"] = "missing-cert"
+            payload["drift"] = {
+                "status": "missing-cert",
+                "needs_rotation": True,
+                "desired": _normal_sans(sans),
+                "observed": None,
+                "missing": _normal_sans(sans),
+                "extra": {"dns": [], "ip": []},
+            }
+        else:
+            observed = _cert_sans_from_file(leaf_path)
+            payload["drift"] = _pki_san_drift(sans, observed)
+            payload["status"] = payload["drift"]["status"]
+    else:
+        payload["status"] = "ok" if all(payload["checks"].values()) else "degraded"
+    _emit(payload, json_output)
+    if payload["status"] == "blocked":
+        raise click.ClickException(payload["note"])
 
 
 @fleet.group("install")

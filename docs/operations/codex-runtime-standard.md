@@ -109,6 +109,7 @@ Do not use this profile to chase 1M context. In the current Codex local catalog,
 - Do not re-add `[notice.model_migrations]` mapping `gpt-5.4` to `gpt-5.5` on these machines.
 - Keep `service_tier = "normal"` as the fleet default. Fast/priority is not the canonical baseline.
 - Lower `model_auto_compact_token_limit` as reasoning effort rises. Do not push `xhigh` to `900000`.
+- Keep heavy MCPs out of the default startup path. Use `docs/operations/codex-mcp-startup-standard.md` for the current MCP split, smoke checks, Cloudflare vault launcher, and rollback.
 
 ## Validation
 

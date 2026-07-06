@@ -365,7 +365,7 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 
 ## Phase 41: Local AI Embeddings Gateway on horistic-srv
 
-**Goal:** Implantar um backend local de embeddings em TEI no k3s usando `horistic-srv`, publicar o alias estável `embedding-pt-v1` no New API em `https://router.atius.com.br/v1`, validar compatibilidade OpenAI e documentar a migração segura para GBrain, Obsidian e Graphify.
+**Goal:** Implantar um backend local de embeddings em TEI no k3s usando `horistic-srv`, publicar o alias estável `embedding-gte-v1` no New API em `https://router.atius.com.br/v1`, validar compatibilidade OpenAI e documentar a migração segura para GBrain, Obsidian e Graphify.
 
 **Requirements:** EMB-01, EMB-02, EMB-03, EMB-04, EMB-05, EMB-06, EMB-07, EMB-08
 **Depends on:** Phase 29 runtime repair (`horistic-srv` joined as k3s worker), router-ai-atius/New API reachable, operator-provided New API token
@@ -383,13 +383,13 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 **Plans:** 1/1 plans complete
 
 - [x] 41-01 — TEI/GTE backend, New API alias, OpenAI smoke and client migration contract
-  - Completed 2026-06-26: TEI live on `10.1.1.4:3000`, router alias `embedding-pt-v1` configured, public POST `/v1/embeddings` smoke passed.
+  - Completed 2026-07-04: TEI live on `10.1.1.4:3115`, router alias `embedding-gte-v1` configured, public POST `/v1/embeddings` smoke passed.
 
 **Success Criteria:**
 
-1. `POST https://router.atius.com.br/v1/embeddings` com `model=embedding-pt-v1` retorna embeddings para lote pt-BR autenticado.
+1. `POST https://router.atius.com.br/v1/embeddings` com `model=embedding-gte-v1` retorna embeddings para lote pt-BR autenticado.
 2. A resposta validada mostra `quantidade=2`, `dimensoes=768`, `error=null` e `model` coerente com o alias público.
-3. O canal interno do New API aponta para `http://10.1.1.4:3000`, não para o próprio router público.
+3. O canal interno do New API aponta para `http://10.1.1.4:3115`, não para o próprio router público.
 4. O contrato `modelo + versão/digest + dimensão + normalização + chunking` fica documentado, e qualquer troca exige reembed/reindex.
 5. GBrain/Obsidian/Graphify têm runbook de consumo sem gravar secrets em Git, `.planning`, Obsidian, logs ou shell history.
 
@@ -451,6 +451,100 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 5. Smoke tests cobrem login, refresh, logout global, redirect seguro e acesso cross-subdomain sem vazar secrets.
 6. Rollback restaura login legado por `trade.atius.com.br/login` e cookies `.atius.com.br` sem mexer em usuarios FreeIPA/Keycloak.
 
+---
+
+## Milestone v1.5: Codex Runtime and MCP Bootstrap Reliability
+
+## Phase 43: Codex MCP Bootstrap Hardening on GIOVANNI-W11-PC
+
+**Goal:** Endurecer o bootstrap local do Codex em `GIOVANNI-W11-PC`, separando MCPs always-on de MCPs pesados ou opcionais, eliminando timeouts e warnings evitaveis no start e criando um fluxo opt-in claro para browser, OCI, Cloudflare e knowledge MCPs.
+
+**Requirements:** CDX-01, CDX-02, CDX-03, CDX-04, CDX-05, CDX-06
+**Depends on:** `docs/operations/codex-runtime-standard.md`, `C:\Users\muniz\.codex\config.toml`, `C:\Users\muniz\.codex\mcp-patch.toml`, endpoint `https://10.1.1.1:27124/mcp/`, repo local `oracle-oci-mcp`
+**Status:** Planned
+**Risk:** HIGH - uma configuracao ruim aqui degrada a abertura do Codex inteiro, remove ferramentas do operador e pode induzir copia indevida de secrets para o Windows local.
+
+**Canonical refs:**
+
+- `docs/operations/codex-runtime-standard.md` - baseline atual de runtime Codex e perfis.
+- `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` - prova operacional do endpoint Obsidian REST/MCP na porta 27124.
+- `C:\Users\muniz\.codex\config.toml` - configuracao atual com 18 MCPs e bootstrap base ruidoso.
+- `C:\Users\muniz\.codex\mcp-patch.toml` - historico local da adicao em lote de MCPs sem key.
+- `C:\Users\muniz\.codex\config.toml.bak-20260702T042936-0300-context-profiles` - backup conhecido anterior a mudancas recentes de runtime.
+
+**Plans:** 0/2 plans complete
+
+- [ ] 43-01 - Lean base MCP baseline plus opt-in profile split
+- [ ] 43-02 - Prerequisite-aware hardening, explicit timeouts and cold-start smoke
+
+**Success Criteria:**
+
+1. O start default do Codex deixa de tentar subir MCPs opcionais que exigem token, VPN ativa, browser local ou stacks OCI quando o operador nao pediu essas superficies.
+2. `cloudflare-api` sem `CF_GLOBAL_API_KEY` e `obsidian_rest` fora de alcance deixam de aparecer como ruido inevitavel no baseline diario; passam a ser tratados por perfil opt-in ou preflight explicito.
+3. MCPs pesados baseados em `npx` e `uv` saem do bootstrap padrao ou recebem `startup_timeout_sec` explicito e command paths estaveis quando permanecerem justificados.
+4. O runtime local ganha perfis nomeados para browser, OCI, Cloudflare, knowledge e lab-tools com instrucoes exatas de uso via `codex -p <profile>`.
+5. Existe smoke repetivel para classificar falha como `disabled`, `missing-env`, `unreachable`, `slow-start` ou `ok`, sem imprimir secrets.
+
+---
+
+## Milestone v1.6: Internal Service PKI and Fleet HTTPS
+
+## Phase 44: Internal Service PKI and Fleet Trust
+
+**Goal:** Criar um recurso do `omni-srv-admin` para PKI interna de servicos na VPN ATIUS: cada servidor gerenciado recebe leaf TLS proprio, todos confiam na CA interna, a instalacao e auditavel via Omni Fleet, e a validacao 4x4 prova HTTPS entre todos os hosts antes de qualquer migracao de servico.
+
+**Requirements:** PKI-01, PKI-02, PKI-03, PKI-04, PKI-05, PKI-06, PKI-07, PKI-08
+**Depends on:** Phase 31 Omni Fleet desired-state/update-plan foundation, Phase 41 TEI service context, `docs/operations/rdp-trust-pki.md`, `docs/security/atius-secrets-vaults.md`
+**Status:** Planned
+**Risk:** HIGH - mexe em CA interna, trust store, chaves privadas, HTTPS interno e validacao cross-host; erro aqui pode criar falsa confianca ou quebrar clientes TLS.
+
+**Canonical refs:**
+
+- `.planning/phases/44-internal-service-pki-and-fleet-trust/44-CONTEXT.md` - decisoes de CA, key locality, escopo e hosts.
+- `.planning/phases/44-internal-service-pki-and-fleet-trust/44-RESEARCH.md` - pesquisa em repo, Obsidian, GBrain e preflight remoto read-only.
+- `.planning/phases/44-internal-service-pki-and-fleet-trust/44-VALIDATION.md` - contrato de validacao antes/durante/depois do rollout.
+- `.planning/spikes/001-fleet-service-pki-trust-matrix/README.md` - spike de viabilidade e correcao leaf-vs-CA.
+- `docs/operations/rdp-trust-pki.md` - precedente de PKI separado para XRDP/RDP, nao reutilizado como CA de servicos.
+- `docs/security/atius-secrets-vaults.md` - regra de segredo/chave privada fora de Git, `.planning`, Obsidian, GBrain e logs.
+- `inventory/hosts/atius-srv-1.yaml`, `inventory/hosts/atius-srv-2.yaml`, `inventory/hosts/atius-srv-3.yaml`, `inventory/hosts/horistic-srv.yaml` - origem de host IDs, SSH, IPs e aliases.
+
+**Plans:** 0/3 plans complete
+
+- [ ] 44-01 - Fleet PKI CLI/resource surface, dry-run safety, templates and tests
+- [ ] 44-02 - Remote CA/CSR/leaf bootstrap, trust install, backups and rollback metadata
+- [ ] 44-03 - 4x4 HTTPS validation matrix, service adapter plan and durable knowledge closeout
+
+**Wave 1 - Resource surface**
+
+- [ ] 44-01 - Fleet PKI CLI/resource surface, dry-run safety, templates and tests
+
+**Wave 2 *(blocked on Wave 1 completion)* - Controlled live bootstrap**
+
+- [ ] 44-02 - Remote CA/CSR/leaf bootstrap, trust install, backups and rollback metadata
+
+**Wave 3 *(blocked on Wave 2 completion)* - Matrix validation and closeout**
+
+- [ ] 44-03 - 4x4 HTTPS validation matrix, service adapter plan and durable knowledge closeout
+
+**Cross-cutting constraints:**
+
+- Cada servidor tem leaf proprio, mas o trust store recebe a CA interna, nao leafs de peers como roots.
+- Private keys nunca entram em Git, `.planning`, Obsidian, GBrain, stdout/stderr, logs ou shell history.
+- Toda mutacao live exige backup timestampado, dry-run, `--execute` explicito ou update plan aprovado.
+- SSH direto so vale para bootstrap/controlado; o recurso permanente deve passar por `omni fleet trust-pki` e comandos local-agent allowlisted.
+- HTTPS de servicos reais, como TEI em `10.1.1.4:3115`, exige gate de servico separado; a fase prova PKI/trust, nao troca portas/proxies automaticamente.
+
+**Success Criteria:**
+
+1. `omni fleet trust-pki plan/preflight/render-host` gera plano deterministico para os 4 hosts a partir do inventario.
+2. `atius-srv-1` possui CA interna root/issuing root-only, com serial/index/CRL state e backup validado.
+3. Cada host possui key/CSR/leaf/chain proprios em `/etc/omni-srv-admin/tls/<host-id>/`, com SAN de VPN IP, public IP e aliases declarados.
+4. A CA chain esta instalada e validada em todos os hosts via `update-ca-certificates` e `openssl verify -CApath /etc/ssl/certs`.
+5. A matriz 4x4 passa: 4 checks locais + 12 checks HTTPS remotos, validando IP/DNS SAN e TLS verify code `0`.
+6. Obsidian e GBrain recebem nota operacional com fingerprints, paths, backups, comandos e resultado, sem material secreto.
+7. Runbook documenta rotacao, rollback e regra para nao reutilizar a PKI RDP/XRDP como CA de servicos.
+8. TEI/Router permanece em HTTP ate uma fase/gate especifico de reverse proxy/TLS aprovar `https://10.1.1.4:3115`.
+
 ## Phase Summary
 
 | # | Phase | Goal | Requirements | Status | Risk |
@@ -470,8 +564,10 @@ The v1.2 phases below remain valid pending work. v1.3 was opened as a separate A
 | 40 | Production Guard Horistic Remote | Remote checks + webhook-safe | PRG-05..PRG-07 | Pending | MEDIUM |
 | 41 | Local AI Embeddings Gateway | TEI backend + New API alias + client migration | EMB-01..EMB-08 | In Progress | HIGH |
 | 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | Planned | HIGH |
+| 43 | Codex MCP Bootstrap Hardening | Lean default startup + opt-in MCP profiles + cold-start smoke | CDX-01..CDX-06 | Planned | HIGH |
+| 44 | Internal Service PKI and Fleet Trust | Per-host service leaf certs + internal CA trust + 4x4 HTTPS validation | PKI-01..PKI-08 | Planned | HIGH |
 
-**Total:** 15 phases | 41 requirements mapped | 35 complete / 6 pending
+**Total:** 17 phases | 55 requirements mapped | 35 complete / 20 pending
 
 ### Scope addendum - 2026-06-24
 

@@ -91,7 +91,7 @@ spec:
             - --hostname
             - 10.1.1.4
             - --port
-            - "3000"
+            - "3115"
             - --dtype
             - float32
             - --pooling
@@ -111,7 +111,7 @@ spec:
               value: /data
           ports:
             - name: http
-              containerPort: 3000
+              containerPort: 3115
             - name: metrics
               containerPort: 9000
           resources:
@@ -165,7 +165,7 @@ metadata:
     app.kubernetes.io/component: embeddings-backend
     app.kubernetes.io/part-of: local-ai-embeddings
   annotations:
-    embeddings.atius.com.br/internal-base-url: http://10.1.1.4:3000
+    embeddings.atius.com.br/internal-base-url: http://10.1.1.4:3115
 spec:
   type: ClusterIP
   selector:

@@ -14,19 +14,19 @@
 
 **Phases completed:** 1 phase, 1 plan
 
-**Goal:** Local embeddings via `https://router.atius.com.br/v1`, New API gateway, TEI backend on k3s in `horistic-srv`, and a stable `embedding-pt-v1` contract for GBrain, Obsidian and Graphify.
+**Goal:** Local embeddings via `https://router.atius.com.br/v1`, New API gateway, TEI backend on k3s in `horistic-srv`, and a stable `embedding-gte-v1` contract for GBrain, Obsidian and Graphify.
 
 **Key planned deliverables:**
 
-- TEI service in namespace `ai-search`, internal only, serving `Alibaba-NLP/gte-multilingual-base` on private `horistic-srv` URL `http://10.1.1.4:3000`.
-- New API channel/alias mapping `embedding-pt-v1` -> `text-embeddings-inference`.
+- TEI service in namespace `ai-search`, internal only, serving `Alibaba-NLP/gte-multilingual-base` on private `horistic-srv` URL `http://10.1.1.4:3115`.
+- New API channel/alias mapping `embedding-gte-v1` -> `embedding-gte-v1`.
 - External smoke tests for OpenAI-compatible `/v1/models` and `POST /v1/embeddings` passed.
 - Migration runbook for GBrain/Obsidian/Graphify with 768-dimensional contract and reindex rules.
 
 **Guardrails:**
 
 - No New API key can be written into shell history, Git, `.planning`, Obsidian or logs.
-- New API channel base URL must point to `http://10.1.1.4:3000`, never back to `https://router.atius.com.br/v1`.
+- New API channel base URL must point to `http://10.1.1.4:3115`, never back to `https://router.atius.com.br/v1`.
 - Any future alias backend change requires same model/digest/quantization/dimension/normalization or a full reembed/reindex.
 
 ---

@@ -47,6 +47,20 @@ apps:
     installed_on: "2026-06-25"
     notes:
       - "Phase 29 runtime repair: joined existing K3s cluster as worker agent, not etcd/control-plane, to avoid making the HA etcd set even-numbered."
+  - id: tei-gte
+    runtime: k3s
+    namespace: ai-search
+    service: tei-gte
+    model: Alibaba-NLP/gte-multilingual-base
+    listen: 10.1.1.4:3115
+    public_alias: embedding-gte-v1
+    router_upstream: http://10.1.1.4:3115
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-07-05"
+    notes:
+      - "Pod tei-gte runs on horistic-srv; k3s service exposes 80/9000 internally and host listener 10.1.1.4:3115 was validated live."
+      - "Public OpenAI-compatible embeddings flow through https://router.atius.com.br/v1 with alias embedding-gte-v1."
 logs:
   local_dir: /home/horistic/.logs
   retention_days: 15

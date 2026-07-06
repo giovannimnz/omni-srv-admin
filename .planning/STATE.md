@@ -149,9 +149,9 @@ See also: .planning/MILESTONES.md
 - 2026-06-26: Phase 35 closed. Samba moved from `atius-srv-2` to `atius-srv-1`; `srv1` joined `ATIUS.INTERNAL`, `ipa-client-samba` configured the member server, `smbd` and `winbind` are active on `srv1`, `nmbd` remains intentionally disabled, `/srv/Shared` holds the copied `8.8G` share data, `/home/ubuntu/Shared_smb` is now a local bind mount, and Kerberos access passed with `smbclient -k -U ATIUS\\giovanni`. The old Samba service on `srv2` is disabled.
 - 2026-06-26: Phase 36 closed. Keycloak 26.6.3 runs on `atius-srv-1` with Java 21 and private listener `127.0.0.1:8180`; Apache proxies `auth.atius.com.br` locally for controlled smoke; the realm `atius` has LDAP federation to FreeIPA and imported `giovanni`; OIDC password grant passed through client `phase36-smoke`; the legacy Apache/JWT auth path remained unchanged.
 - 2026-06-26: Phases 37-40 were canonized from the already-shipped Production Guard implementation. `status/doctor` foundation, guarded repair dry-run/apply gate, boot/login read-only protocol, and Horistic remote/rename/webhook-safe checks now have canonical phase artifacts and verification under the new roadmap numbering.
-- 2026-06-26: Phase 41 completed live. TEI `Alibaba-NLP/gte-multilingual-base` is running in k3s namespace `ai-search` on `horistic-srv` with private router-facing URL `http://10.1.1.4:3000`; `router-ai-atius` channel `Local TEI - GTE Embeddings` exposes alias `embedding-pt-v1`; public `POST https://router.atius.com.br/v1/embeddings` smoke returned 2 vectors, 768 dimensions, `error=null`; unauthenticated `/v1/models` remains 401. Temporary smoke tokens were deleted and no token values were written.
+- 2026-07-04: Phase 41 live port migration completed. TEI `Alibaba-NLP/gte-multilingual-base` is running in k3s namespace `ai-search` on `horistic-srv` with private router-facing URL `http://10.1.1.4:3115`; `router-ai-atius` channel `TEI - GTE Embeddings` exposes alias `embedding-gte-v1`; public `POST https://router.atius.com.br/v1/embeddings` smoke returned 2 vectors, 768 dimensions, `error=null`; unauthenticated `/v1/models` remains 401. Tokens were loaded only in an ephemeral shell and no token values were written.
 - 2026-06-26: Phase 34 closed with real-host FreeIPA pilot. CoreDNS on `atius-srv-2` now forwards `atius.internal` to `10.1.1.3`; `atius-srv-3` privately gateways FreeIPA to the container at `10.89.53.10`; `atius-srv-3` joined `ATIUS.INTERNAL` as `atius-srv-3.atius.internal`; `kinit admin`, `ipa ping`, `getent`, `id`, and `sudo -l -U admin` passed. `horistic-srv` enrollment remains deferred to the next controlled step.
-- 2026-06-26: Started v1.3 Local AI Embeddings and Semantic Retrieval as a separate milestone. Phase 41 plans TEI/GTE in k3s on `horistic-srv`, New API alias `embedding-pt-v1`, public OpenAI-compatible entrypoint `https://router.atius.com.br/v1`, 768-dimension contract, no router self-loop, and GBrain/Obsidian/Graphify migration runbooks without secrets in docs/logs/history.
+- 2026-06-26: Started v1.3 Local AI Embeddings and Semantic Retrieval as a separate milestone. Phase 41 plans TEI/GTE in k3s on `horistic-srv`, New API alias `embedding-gte-v1`, public OpenAI-compatible entrypoint `https://router.atius.com.br/v1`, 768-dimension contract, no router self-loop, and GBrain/Obsidian/Graphify migration runbooks without secrets in docs/logs/history.
 - 2026-06-25: Landscape self-hosted became the operator-facing control plane for Atius fleet administration. The Landscape secrets UI OOPS was patched inside LXD `landscape`; the internal Landscape Vault now stores approved break-glass entries for dedicated HashiCorp Vault root token, unseal key, Omni AppRole role/secret ID, and Vaultwarden admin token. No secret values were written to repo docs. Snapshot: `/root/landscape-vault-breakglass-20260626T001545Z.snap` inside LXD `landscape`.
 - 2026-06-18: Phase 15 (M005 OCI Snapshots) closed procedurally. CLI `omni srv oci {status, snapshot preflight, snapshot routine, restore drill}` shipped; inventory dos 4 hosts `oracle-oci` tem bloco `oci:` com `pending-...` (offline); `docs/operations/oci-snapshots.md` é o runbook. 12/12 testes verdes. Live OCI (drill real em SRV-1) bloqueado: `oci` CLI e `~/.oci/config` não estão instalados no host. Próxima janela: provisionar API key + rodar preflight/routine em cada host + drill real.
 - 2026-06-15: main local aligned with origin/main via merge. 5 docs/m005-* branches ready for archival. M006 stays in-progress on phase14 branch.
@@ -325,6 +325,25 @@ Status: PLANNING (2026-06-24)
 
 ## Accumulated Context
 
+## Phase 44 planning - 2026-07-05
+
+- Created Phase 44 for `Internal Service PKI and Fleet Trust`.
+- Scope: `omni-srv-admin` managed internal service PKI for `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv`.
+- Planning decision: each server gets its own leaf certificate/key, but trust stores receive the internal CA chain, not peer leaf certificates as trusted roots.
+- Live read-only SSH preflight passed on all four hosts: SSH, `sudo -n`, OpenSSL 3.0.13, `update-ca-certificates`, NTP synchronized, and `/etc/omni-srv-admin/tls` absent.
+- Artifacts: `.planning/spikes/001-fleet-service-pki-trust-matrix/README.md`, `.planning/phases/44-internal-service-pki-and-fleet-trust/44-CONTEXT.md`, `44-RESEARCH.md`, `44-VALIDATION.md`, and `44-01..03-PLAN.md`.
+- No CA, private key, trust-store mutation, service restart, port change, or router channel change was executed in this planning step.
+
+## Phase 44-01 execution - 2026-07-05
+
+- Implemented the `omni fleet trust-pki` CLI resource surface.
+- Added `onboard-host` for the new-server flow: resolve host from inventory/DbOmniFleet, render SANs/paths, and optionally queue the PKI sequence in `TbUpdatePlans`.
+- Added `reconcile-host` and `rotate-host` for IP/SAN drift detection and leaf rotation when a registered server changes address.
+- Added allowlisted `omni.trust-pki.*` command templates locally and in migration `0008_internal_service_pki_commands.sql`.
+- Added `modules/fleet-pki` docs/templates and `docs/operations/internal-service-pki.md`.
+- Validation passed: 24 focused pytest checks, `trust-pki preflight`, `trust-pki plan`, `trust-pki onboard-host`, `validate-inventory`, `py_compile`, and `git diff --check`.
+- Live mutating runner remains blocked until Phase 44-02 installs remote CA/key/cert scripts.
+
 ## Phase 42 planning - 2026-06-28T04:57:11-0300
 
 - Created Phase 42 for Atius-wide SSO login on `sso.atius.com.br`, promoting `SSO-MIG-01` into `SSO-01`..`SSO-06`.
@@ -359,6 +378,23 @@ Status: PLANNING (2026-06-24)
 - Record is DNS-only (`proxied=false`) with TTL 300 to avoid Cloudflare proxy interference with Landscape self-hosted web/API/client flows.
 - Evidence artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-02-CLOUDFLARE-DNS-EVIDENCE.md`.
 - This prepares the active Landscape self-hosted target using `ppa:landscape/self-hosted-26.04`; it does not install or expose Landscape yet.
+
+## Landscape Cloudflare proxy repair - 2026-07-04T21:50Z
+
+- Symptom: Brave blocked `https://landscape.atius.com.br/` with `net::ERR_CERT_AUTHORITY_INVALID` under HSTS.
+- Root cause: the Cloudflare record was still DNS-only and the Apache site was no longer enabled, so SNI for `landscape.atius.com.br` fell through to the default `admin.atius.com.br` vhost and exposed a Cloudflare Origin CA certificate directly to browsers.
+- Fix: backed up `/etc/apache2/sites-available/landscape.atius.com.br.conf` to `/home/ubuntu/.backups/apache-landscape-enable-20260704T214537Z`, re-enabled the Apache site with `a2ensite`, passed `apache2ctl configtest`, reloaded Apache, then patched Cloudflare DNS record `7eedc66a6420a7beb1f5cb9abb84a94c` to `proxied=true`, `ttl=1`.
+- Cloudflare before/after API evidence: `/home/ubuntu/.backups/cloudflare-landscape-proxy-20260704T214747Z`.
+- Validation: DNS now returns Cloudflare IPs; `curl -I https://landscape.atius.com.br/` returns `302` with `Server: cloudflare`; `/new_dashboard/overview` returns `200 text/html`; `/assets/atius-dark.css` returns `200 text/css`; `http://landscape.atius.com.br/ping` returns `200`; edge certificate is issued by Google Trust Services for Cloudflare.
+- Residual: `137.131.190.161:6554` still accepts raw TCP, but `landscape.atius.com.br:6554` does not work while the hostname is orange-cloud proxied. If Landscape raw TCP clients ever require hostname-based 6554, use a separate DNS-only hostname, direct origin IP, or Cloudflare Spectrum before relying on that path.
+- Evidence artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-12-LANDSCAPE-CLOUDFLARE-PROXY-20260704.md`.
+
+## Landscape classic UI default - 2026-07-04T22:39Z
+
+- Requirement: default Landscape login flow must land on the classic UI because the Vault/secrets administrator is there, not in the modern `/new_dashboard/` UI.
+- Fix: backed up `/etc/apache2/sites-available/landscape.atius.com.br.conf` to `/home/ubuntu/.backups/apache-landscape-classic-default-20260704T223757Z` and `/home/ubuntu/.backups/apache-landscape-classic-query-20260704T223905Z`; changed the HTTPS root redirect from `/new_dashboard/` to `/account/standalone/secrets`; added `RewriteCond %{QUERY_STRING} ^$` so Landscape login callbacks like `/?next_url=/account/standalone/secrets` are proxied to the classic login page instead of being redirected again.
+- Validation: `https://landscape.atius.com.br/` returns `302` to `/account/standalone/secrets`; following redirects ends at `/?next_url=%2Faccount%2Fstandalone%2Fsecrets` with `200 text/html;charset=utf-8`; `/new_dashboard/overview` remains available at `200`; `/ping` remains `200`.
+- Evidence artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-13-LANDSCAPE-CLASSIC-DEFAULT-20260704.md`.
 
 ## Session
 

@@ -125,11 +125,22 @@ apps:
     current_version: "latest"
     desired_version: "latest"
     source: "https://github.com/giovannimnz/router-ai-atius"
+    public_url: https://router.atius.com.br/
+    healthcheck_url: http://127.0.0.1:3000/api/status
+    listen:
+      web_api: 0.0.0.0:3000
+      docs_target: 127.0.0.1:3003
+    docs_status:
+      last_audited: "2026-07-05"
+      public_url: https://router.atius.com.br/docs/
+      status: degraded
+      finding: "Apache points docs to 127.0.0.1:3003, but no listener was present; public route returned 503."
     managed_by: "omni-srv-admin"
     update_policy: "plan-first"
-    last_audited: "2026-06-15"
+    last_audited: "2026-07-05"
     notes:
       - "Atius AI Router on SRV-1; published via Cloudflare + Apache"
+      - "2026-07-05: root and /api/status returned 200 through public router.atius.com.br and local 127.0.0.1:3000."
   - id: rclone-gdrive-mount
     runtime: systemd-user
     unit: rclone-gdrive-mount.service
@@ -206,10 +217,11 @@ forks:
     state: deployed-runtime
     components:
       - id: atius-router-docs
-        local_path: /home/ubuntu/docker/Atius/router-ai-atius/docs/atius-router-docs
+        local_path: /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
         upstream: https://github.com/giovannimnz/new-api-docs-v1
         sync_manifest: modules/fork-sync/projects/atius-router-docs/sync.yaml
-        state: worktree-only
+        state: degraded-edge-target
+        note: "2026-07-05: path is canonical under /home/ubuntu/GitHub/containers/router-ai-atius; edge /docs is 503 until local docs service/target is restored."
   - id: notebooklm-py
     local_path: /home/ubuntu/GitHub/forks/notebooklm-py
     upstream: https://github.com/teng-lin/notebooklm-py.git

@@ -17,6 +17,7 @@ CLI_DIR = REPO / "cli"
 if str(CLI_DIR) not in sys.path:
     sys.path.insert(0, str(CLI_DIR))
 os.environ.setdefault("OMNI_SRV_ADMIN", str(REPO))
+PYTHON = sys.executable
 
 from omni import fleet as fleet_module  # noqa: E402
 
@@ -166,11 +167,11 @@ def _scenario_roles() -> ScenarioResult:
 
 def _scenario_cli_contracts() -> ScenarioResult:
     commands = [
-        ["python3", "-m", "omni", "fleet", "validate-inventory", "--json"],
-        ["python3", "-m", "omni", "fleet", "install", "server", "--host", SERVER_HOST, "--json"],
-        ["python3", "-m", "omni", "fleet", "install", "node", "--host", "atius-srv-2", "--json"],
+        [PYTHON, "-m", "omni", "fleet", "validate-inventory", "--json"],
+        [PYTHON, "-m", "omni", "fleet", "install", "server", "--host", SERVER_HOST, "--json"],
+        [PYTHON, "-m", "omni", "fleet", "install", "node", "--host", "atius-srv-2", "--json"],
         [
-            "python3",
+            PYTHON,
             "-m",
             "omni",
             "fleet",
@@ -194,7 +195,7 @@ def _scenario_cli_contracts() -> ScenarioResult:
         payload = json.loads(stdout)
         evidence.append(f"{' '.join(cmd[:5])}: keys={','.join(sorted(payload.keys())[:6])}")
     blocked_cmd = [
-        "python3",
+        PYTHON,
         "-m",
         "omni",
         "fleet",
@@ -282,7 +283,7 @@ def _scenario_heartbeat_programs_audit() -> ScenarioResult:
     program_names = {record["program"] for record in programs}
     if "fork-sync" not in program_names or "srv1-ops" not in program_names:
         return _fail("M004-OFF-05", "program registry projects inventory modules", "offline", sorted(program_names))
-    code, stdout, stderr = _run(["python3", "-m", "omni", "fleet", "audit", "--json"])
+    code, stdout, stderr = _run([PYTHON, "-m", "omni", "fleet", "audit", "--json"])
     if code != 0:
         return _fail("M004-OFF-05", "audit command exposes event schema", "offline", [stderr])
     audit = json.loads(stdout)

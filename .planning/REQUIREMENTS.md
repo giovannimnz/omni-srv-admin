@@ -48,12 +48,12 @@
 
 ### Local AI Embeddings / Semantic Retrieval
 
-- [x] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com autenticação Bearer e `model=embedding-pt-v1`.
-- [x] **EMB-02**: New API possui canal interno para embeddings que aponta para o TEI em `http://10.1.1.4:3000`, nunca para `https://router.atius.com.br/v1`, evitando loop.
+- [x] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com autenticação Bearer e `model=embedding-gte-v1`.
+- [x] **EMB-02**: New API possui canal interno para embeddings que aponta para o TEI em `http://10.1.1.4:3115`, nunca para `https://router.atius.com.br/v1`, evitando loop.
 - [x] **EMB-03**: Backend TEI roda no k3s em `horistic-srv` sob namespace `ai-search`, com Service ClusterIP, `hostNetwork` restrito ao IP privado do worker e sem ingress público direto.
-- [x] **EMB-04**: Alias `embedding-pt-v1` fica ligado a `Alibaba-NLP/gte-multilingual-base`, 768 dimensões, com contrato de modelo + versão/digest + normalização + chunking documentado.
+- [x] **EMB-04**: Alias `embedding-gte-v1` fica ligado a `Alibaba-NLP/gte-multilingual-base`, 768 dimensões, com contrato de modelo + versão/digest + normalização + chunking documentado.
 - [x] **EMB-05**: Smoke test externo em lote com dois textos pt-BR retorna `quantidade=2`, `dimensoes=768`, `error=null` e usage coerente.
-- [x] **EMB-06**: GBrain tem runbook de migração para `openai:embedding-pt-v1` e 768 dimensões, com backup e reindex/retrieval-upgrade explícitos antes de alterar store existente.
+- [x] **EMB-06**: GBrain tem runbook de migração para `openai:embedding-gte-v1` e 768 dimensões, com backup e reindex/retrieval-upgrade explícitos antes de alterar store existente.
 - [x] **EMB-07**: Obsidian e Graphify têm contrato de consumo documentado: Obsidian via indexador externo sobre Markdown; Graphify apenas como retrieval auxiliar, sem substituir análise estrutural/grafo.
 - [x] **EMB-08**: Chaves/tokens de New API ficam fora de Git, `.planning`, Obsidian, logs e shell history; testes usam token temporário limpo ou prompt/Vault/Secret.
 
@@ -67,6 +67,30 @@
 - [x] **SSO-04**: `sso.atius.com.br` suporta redirect seguro de volta para `trade.atius.com.br`, `painel.atius.com.br`, `dashboard.atius.com.br`, `backtest.atius.com.br`, `strategy.atius.com.br` e futuros apps Atius sem open redirect.
 - [x] **SSO-05**: Logout global limpa sessao Keycloak e cookies legados `.atius.com.br`, com smoke test cross-subdomain e rollback documentado.
 - [x] **SSO-06**: Tokens, client secrets, session secrets e credenciais de smoke ficam fora de Git, `.planning`, Obsidian, logs e shell history.
+
+## v1.5 Requirements
+
+### Codex Runtime / MCP Bootstrap Reliability
+
+- [ ] **CDX-01**: Operador consegue iniciar o Codex em `GIOVANNI-W11-PC` sem timeouts ou warnings genericos para MCPs que sao opcionais no fluxo diario.
+- [ ] **CDX-02**: A base `C:\Users\muniz\.codex\config.toml` separa MCPs always-on de MCPs pesados ou task-specific por meio de perfis nomeados e rollback simples.
+- [ ] **CDX-03**: MCPs com pre-requisito externo - Cloudflare token, VPN/Obsidian REST, browsers locais ou stacks OCI - tem politica explicita de env/reachability/disable default em vez de falhar no boot padrao.
+- [ ] **CDX-04**: MCPs stdio pesados que permanecerem habilitados usam `startup_timeout_sec` explicito, command paths estaveis e preferencialmente sem `@latest` no bootstrap diario.
+- [ ] **CDX-05**: Operador tem smoke e doctor repetiveis para classificar falha como `missing-env`, `unreachable`, `slow-start`, `disabled` ou `ok`, sem imprimir secrets.
+- [ ] **CDX-06**: Documentacao do runtime Codex registra baseline lean, perfis opt-in, comandos `codex -p <profile>`, backups e rollback de `config.toml` antes de qualquer ajuste.
+
+## v1.6 Requirements
+
+### Internal Service PKI / Fleet HTTPS
+
+- [ ] **PKI-01**: Operador consegue renderizar, por inventario, o plano de PKI interna para `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e `horistic-srv`, incluindo SANs, caminhos, dry-run e comandos sem material secreto.
+- [ ] **PKI-02**: `omni-srv-admin` possui comando/versioned resource `omni fleet trust-pki` com preflight, init CA, issue-host, install-trust, verify, rollback-plan, onboard-host, reconcile-host e rotate-host, todos dry-run por default e mutacao apenas com gate explicito.
+- [ ] **PKI-03**: A CA interna de servicos fica root-only fora de Git, `.planning`, Obsidian, GBrain, logs e shell history, com backup/serial/index/CRL state e regra de rotacao documentada.
+- [ ] **PKI-04**: Cada servidor gerenciado, inclusive servidor novo cadastrado no inventario/DbOmniFleet, possui key/CSR/leaf/chain proprios, com private key local root-only e leaf contendo `serverAuth`, `clientAuth`, `CA:FALSE` e SANs de VPN IP, public IP e aliases declarados.
+- [ ] **PKI-05**: Todos os servidores instalam e validam a CA chain via trust store do sistema (`update-ca-certificates`), sem instalar leafs de peers como root CAs.
+- [ ] **PKI-06**: A validacao passa uma matriz 4x4: 4 verificacoes locais e 12 verificacoes HTTPS remotas entre os hosts, com hostname/IP SAN validation e TLS verify code `0`.
+- [ ] **PKI-07**: A funcionalidade produz audit JSON/redacted logs, docs operacionais, Obsidian e GBrain com fingerprints, paths, backups e resultados, sem vazar chaves, tokens ou passphrases.
+- [ ] **PKI-08**: O plano deixa explicito que HTTPS real de servicos, como TEI em `https://10.1.1.4:3115`, exige proxy/listener TLS e gate de servico separado antes de alterar channels ou portas em producao.
 
 ## Future Requirements
 
@@ -130,6 +154,20 @@
 | SSO-04 | Phase 42 | Complete |
 | SSO-05 | Phase 42 | Complete |
 | SSO-06 | Phase 42 | Complete |
+| CDX-01 | Phase 43 | Planned |
+| CDX-02 | Phase 43 | Planned |
+| CDX-03 | Phase 43 | Planned |
+| CDX-04 | Phase 43 | Planned |
+| CDX-05 | Phase 43 | Planned |
+| CDX-06 | Phase 43 | Planned |
+| PKI-01 | Phase 44 | Planned |
+| PKI-02 | Phase 44 | Planned |
+| PKI-03 | Phase 44 | Planned |
+| PKI-04 | Phase 44 | Planned |
+| PKI-05 | Phase 44 | Planned |
+| PKI-06 | Phase 44 | Planned |
+| PKI-07 | Phase 44 | Planned |
+| PKI-08 | Phase 44 | Planned |
 
 **Coverage:**
 
@@ -142,7 +180,13 @@
 - v1.4 requirements: 6 total
 - v1.4 mapped to phases: 6
 - v1.4 unmapped: 0
+- v1.5 requirements: 6 total
+- v1.5 mapped to phases: 6
+- v1.5 unmapped: 0
+- v1.6 requirements: 8 total
+- v1.6 mapped to phases: 8
+- v1.6 unmapped: 0
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-06-28 after promoting Atius-wide SSO migration into Phase 42*
+*Last updated: 2026-07-05 after adding Phase 44 Internal Service PKI and Fleet Trust*

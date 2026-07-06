@@ -13,6 +13,12 @@
 
 Landscape is the operational control plane for the fleet. Use it to administer hosts, run controlled scripts, view package/security state, and manage selected secrets records. The dedicated private HashiCorp Vault is the primary machine/automation secrets engine. Vaultwarden remains for human credentials only.
 
+Operational registry:
+
+- [Atius Automation Secret Registry](atius-automation-secret-registry.md) is the canonical map of machine/automation profiles, KV paths, exported variable names, and non-exported break-glass exceptions.
+- Before using any API, MCP, CLI smoke, router validation, Cloudflare operation, GitHub automation, Landscape call, or fleet script that needs a credential, load the matching profile through `atius-vault-env`.
+- Do not use GBrain, Obsidian, `.zshrc`, `.env`, shell history, chat, or copied notes as the credential value source. They can point to the correct Vault profile only.
+
 Update 2026-06-25: the Landscape UI OOPS was patched locally in the `landscape` LXD container. The broken template expression `context/url` was replaced with `view/account_url` for the "Create secret" link.
 
 Patch details:
@@ -38,8 +44,9 @@ Landscape UI default and dark theme update:
 
 Current behavior:
 
-- `https://landscape.atius.com.br/` returns `302` to `/new_dashboard/`.
-- `https://landscape.atius.com.br/new_dashboard/` is the default operator UI.
+- `https://landscape.atius.com.br/` returns `302` to `/account/standalone/secrets`.
+- The classic UI is the default operator landing path because the Vault/secrets administrator lives there.
+- `https://landscape.atius.com.br/new_dashboard/` remains available by direct URL, but is no longer the default operator UI.
 - Classic routes and API routes remain available for features not yet migrated.
 - Dark mode is forced for the modern dashboard and best-effort for classic Hokan pages.
 - Visual smoke was captured with Playwright on 2026-06-26 and confirmed the new login shell is dark with the white Landscape logo.
@@ -102,6 +109,9 @@ Bridge credential material on `atius-srv-3` host:
 Notes:
 
 - Landscape `view/edit` for `atius-hashicorp-vault` reads and writes the dedicated HashiCorp Vault path directly.
+- Update 2026-07-05: Landscape `Secrets` also exposes the HashiCorp-backed automation profile records listed in [Atius Automation Secret Registry](atius-automation-secret-registry.md), including Cloudflare, browser-login access keys, Landscape SaaS API, router, Tailscale, GitHub, AI/tools, FreeIPA, Vaultwarden runtime/admin, GSD web login, Atius MCP, and AppRole records.
+- Browser-login access keys live at `kv/atius/browser-login/access-keys` and appear in Landscape as `atius-browser-login-access-keys`. Vault stores material and metadata; native passkeys still require an OS/browser/hardware authenticator or a purpose-built CDP/Playwright virtual-authenticator loader.
+- The full `kv/atius/hashicorp-vault/admin-breakglass` path is not exposed as a dedicated generic Landscape record because it contains list-shaped recovery/unseal fields. The generic editor stores submitted form values as strings.
 - The Landscape internal Vault is kept as a mirrored administrative copy for this record, but it is no longer the primary backend for `atius-hashicorp-vault`.
 - `Vaultwarden` is not part of this machine-secret bridge and remains dedicated to human credential storage.
 
@@ -203,13 +213,24 @@ Seeded KV paths:
 
 | Path | Purpose |
 |---|---|
-| `kv/atius/cloudflare/api` | Cloudflare account/API variables mirrored from `/home/ubuntu/.zshrc` |
-| `kv/atius/landscape/saas-api` | Landscape SaaS API variables mirrored from `/home/ubuntu/.zshrc` |
+| `kv/atius/cloudflare/api` | Source of truth for Cloudflare automation variables: `CF_ACCOUNT_ID`, `CF_ACCOUNT_NAME`, `CF_AUTH_EMAIL`, `CF_GLOBAL_API_KEY`, `CF_ZONE_ID_ATIUS`, and `CF_ZONE_ID_ZENTRIUS`; old shell files are migration evidence only |
+| `kv/atius/landscape/saas-api` | Landscape SaaS API variables plus `OMNI_LANDSCAPE_*` aliases |
+| `kv/atius/router-ai-atius/api` | Router/New API automation key and client aliases |
+| `kv/atius/tailscale/api` | Tailscale API and auth tokens |
+| `kv/atius/github/automation` | GitHub automation tokens imported from SRV-1 shell files |
+| `kv/atius/ai/api-keys` | Active AI provider keys and MiniMax defaults |
+| `kv/atius/tools/api-keys` | Tool API keys such as Brave and Context7 |
 | `kv/atius/freeipa/bootstrap` | FreeIPA bootstrap material mirrored from `/root/freeipa-atius/bootstrap.env` |
 | `kv/atius/vaultwarden/admin` | Vaultwarden admin recovery token mirrored from `/root/vaultwarden-atius/admin-token.txt` |
 | `kv/atius/srv1/shell-exports/home-ubuntu-env` | SRV-1 `/home/ubuntu/.env` exports imported on 2026-07-04; values live under `values` |
 | `kv/atius/srv1/shell-exports/home-ubuntu-zshrc` | SRV-1 `/home/ubuntu/.zshrc` exports imported on 2026-07-04; values live under `values` |
 | `kv/atius/srv1/shell-exports/home-ubuntu-merged` | Merged SRV-1 shell exports, `.env` then `.zshrc` precedence, imported on 2026-07-04 |
+| `kv/atius/vaultwarden/runtime` | Vaultwarden runtime env mirrored from `/root/vaultwarden-atius/vaultwarden.env` |
+| `kv/atius/atius-mcp/api` | Source of truth for `ATIUS_MCP_TOKEN` used by `https://mcp.atius.com.br/gbrain` and `https://mcp.atius.com.br/obsidian`; runtime env files are hydration caches only |
+| `kv/atius/gsd/web-login` | GSD web login password |
+| `kv/atius/hashicorp-vault/approle/omni-automation` | Omni automation AppRole |
+| `kv/atius/hashicorp-vault/approle/landscape-secrets-bridge` | Landscape bridge AppRole |
+| `kv/atius/hashicorp-vault/admin-breakglass` | Vault root/unseal/recovery material; break-glass only |
 
 Root-only helpers:
 
@@ -218,7 +239,8 @@ Root-only helpers:
 | `/usr/local/sbin/atius-vault` | `atius-srv-3` | Runs the Vault CLI against the dedicated HashiCorp Vault using root-only init material |
 | `/usr/local/sbin/atius-vault-kv-put-json` | `atius-srv-3` | Stores stdin JSON into a KV path without exposing values in argv |
 | `/usr/local/sbin/atius-vault-export-env` | `atius-srv-3` | Emits shell `export` lines for selected profiles |
-| `/home/ubuntu/.local/bin/atius-vault-env` | local Codex host | SSH wrapper for exporting selected profiles |
+| `/home/ubuntu/.local/bin/atius-vault-env` | Linux Codex hosts | SSH-safe wrapper for exporting selected profiles; wrappers that SSH to `atius-srv-3` use `ssh -n` |
+| `/home/horistic/.local/bin/atius-vault-env` | `horistic-srv` | Uses a restricted SSH key forced to `/home/ubuntu/.local/bin/atius-vault-export-ssh` on `atius-srv-3` |
 
 Load environment variables on demand:
 
@@ -226,12 +248,40 @@ Load environment variables on demand:
 source <(atius-vault-env cloudflare landscape)
 ```
 
+Windows Codex helper added on 2026-07-05:
+
+```powershell
+atius-vault-env cloudflare
+codex-cloud-ops
+```
+
+`atius-vault-env` calls the authoritative wrapper on `atius-srv-1` and emits
+shell exports. `codex-cloud-ops` loads the Cloudflare profile into the child
+Codex process and injects the Cloudflare MCP via `-c` without persisting the
+secret in the Windows user environment.
+
+Cloudflare direct REST access uses the Vault `cloudflare` profile and the
+Cloudflare global-key header pair `X-Auth-Email` + `X-Auth-Key`. Do not pass
+Cloudflare keys in argv, commit them, paste them into chat, or record them in
+Obsidian/GBrain/logs. Validation should report only HTTP status, `success`, and
+zone names/ids that are not secret.
+
 Available profiles:
 
 - `cloudflare`
 - `landscape`
+- `router-ai-atius`
+- `tailscale`
+- `github`
+- `ai`
+- `tools`
 - `freeipa`
 - `vaultwarden`
+- `vaultwarden-runtime`
+- `gsd-web-login`
+- `atius-mcp`
+- `vault-omni-approle`
+- `vault-landscape-bridge`
 
 The SRV-1 shell export snapshots are intentionally not added as always-on
 profiles yet. Read them directly from Vault or add a narrower profile per

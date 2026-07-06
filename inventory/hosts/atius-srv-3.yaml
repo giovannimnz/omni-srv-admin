@@ -55,14 +55,17 @@ apps:
     source: "https://github.com/FerroxLabs/wayland"
     public_url: https://wayland.atius.com.br/
     healthcheck_url: http://127.0.0.1:25808/api/auth/status
+    public_healthcheck_url: https://wayland.atius.com.br/api/auth/status
+    listen: 0.0.0.0:25808
     managed_by: "omni-srv-admin"
     update_policy: "source-rebuild-postinstall"
     customization_entrypoint: /home/ubuntu/GitHub/omni-srv-admin/modules/fleet/scripts/wayland-srv3-update.sh
-    last_audited: "2026-07-03"
+    last_audited: "2026-07-05"
     notes:
       - "WebUI login defaults to pt-BR when no saved language exists."
       - "Conversar na pasta defaults to /home/ubuntu/GitHub."
       - "Source patch stays in ~/GitHub/wayland; runtime rebuild/reapply ownership stays in omni-srv-admin."
+      - "2026-07-05: wayland.service active as User=wayland with PORT=25808; local and public /api/auth/status returned 200."
   - id: rust-toolchain
     runtime: local-rustup
     install_type: rustup-managed

@@ -39,8 +39,9 @@ No console should be treated as a replacement for the others. The operating mode
 
 | Surface | Public URL / path | Required gate | Current posture |
 |---|---|---|---|
-| Landscape self-hosted | `https://landscape.atius.com.br/` | HTTPS via SRV1 Apache proxy; clients use HTTPS message-system and HTTP ping | Live and durable endpoint for the four hosts |
-| Landscape client ping | `http://landscape.atius.com.br/ping` | HTTP only, proxied to Landscape quickstart `/ping`; do not redirect to HTTPS | Live, required by Landscape client |
+| Landscape self-hosted | `https://landscape.atius.com.br/` | Cloudflare proxied HTTPS edge -> SRV1 Apache proxy -> SRV3 Landscape LXD | Live; root lands on classic `/account/standalone/secrets` so Vault/secrets administration is the default |
+| Landscape modern dashboard | `https://landscape.atius.com.br/new_dashboard/overview` | Same edge path; direct URL only | Live, but not the default landing path |
+| Landscape client ping | `http://landscape.atius.com.br/ping` | Cloudflare proxied HTTP edge -> SRV1 Apache `/ping` exception -> Landscape quickstart `/ping`; do not redirect this path to HTTPS | Live, required by Landscape client |
 | Landscape SaaS | `https://landscape.canonical.com/` | Canonical login | Fallback/reference only after migration |
 | Portainer | `https://portainer.atius.com.br/` | Apache Basic Auth now; Cloudflare Access once account-level Access is enabled | Live, pre-Access state |
 | Docker/Portainer edge alias | `https://docker.atius.com.br/` | Same admin edge gate as Portainer | Live, pre-Access state |
@@ -89,7 +90,7 @@ Versioned script registry:
 |---|---|---|---|
 | Landscape self-hosted UI down | SSH/VPN + Omni Fleet read-only status | Landscape SaaS re-registration from client backups | Client SaaS rollback backups exist under `/var/backups/landscape-client-saas-*` on each host |
 | Landscape self-hosted LXD container broken | LXD backup/snapshot and Vault bootstrap paths | Rebuild quickstart in LXD on SRV3 or another host | Do not lose `/root/landscape-vault-init.json` or registration key material |
-| SRV1 public proxy down | Direct VPN to SRV3/LXD for admin repair | Move DNS/OCI ingress directly to SRV3 | DNS currently points public Landscape to SRV1 |
+| SRV1 public proxy down | Direct VPN to SRV3/LXD for admin repair | Move Cloudflare DNS/OCI ingress directly to SRV3 | DNS currently points public Landscape to SRV1 behind Cloudflare proxy |
 | Cloudflare Access unavailable | Apache Basic Auth or WireGuard-only | Service disabled/blocked public-side | No direct anonymous admin console exposure |
 | PgBouncer/DbOmniFleet unavailable | Local Omni heartbeat/cache and Landscape status | Host-local SSH checks | Nodes must not bypass PgBouncer to direct PostgreSQL |
 | Portainer unavailable | `kubectl`/Helm on admin host | K3s restore/runbook | Landscape is not the fallback for workloads |
@@ -101,8 +102,9 @@ Versioned script registry:
 |---|---|
 | Managed servers | `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` |
 | Landscape self-hosted | LXD container `landscape` on `atius-srv-3` |
-| Landscape public edge | SRV1 Apache reverse proxy to SRV3 |
-| Landscape TCP 6554 | SRV1 socket proxy to SRV3, OCI NSG scoped to SRV1 |
+| Landscape public edge | Cloudflare proxied DNS -> SRV1 Apache reverse proxy -> SRV3 |
+| Landscape default UI | Classic `/account/standalone/secrets`; modern dashboard remains direct-link only |
+| Landscape TCP 6554 | SRV1 socket proxy to SRV3, OCI NSG scoped to SRV1; direct origin `137.131.190.161:6554` remains open, but `landscape.atius.com.br:6554` is not available while the hostname is Cloudflare proxied |
 | Landscape clients | Four hosts registered to self-hosted account `standalone`; `accepted=4`, `pending=0` |
 | Landscape secrets | Local HashiCorp Vault on `127.0.0.1:8200`, `landscape-secrets-service` token present |
 | K3s | Four nodes Ready from Phase 29 closeout |
@@ -116,6 +118,8 @@ Read-only checks:
 
 ```bash
 sudo landscape-config --is-registered
+curl -sSI https://landscape.atius.com.br/ | grep -i 'server: cloudflare\|location:.*account/standalone/secrets'
+curl -sSI 'https://landscape.atius.com.br/?next_url=%2Faccount%2Fstandalone%2Fsecrets' | head -1
 curl -sS -o /dev/null -w '%{http_code}\n' http://landscape.atius.com.br/ping
 curl -sS -o /dev/null -w '%{http_code}\n' https://landscape.atius.com.br/message-system
 PYTHONPATH=cli python3 -m omni fleet monitor hosts --json
