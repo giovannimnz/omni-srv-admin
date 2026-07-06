@@ -2,160 +2,126 @@
 
 ## What This Is
 
-Repositório central de configuração e provisionamento do servidor Atius (10.1.1.1 Oracle Cloud). Contém scripts de instalação padrão, configurações de rede (iptables, WireGuard), antiviral, tema desktop, e o módulo de Infraestrutura de Domínio Linux (FreeIPA + Keycloak + Samba) para autenticação centralizada e SSO web.
+Central repository for ATIUS server operations, fleet governance, identity
+infrastructure, internal AI services, and the operator runbooks that keep those
+systems reproducible.
+
+The repo is no longer just "server setup". It is the planning and control-plane
+surface for:
+
+- fleet inventory, CLI, and governance;
+- FreeIPA / Keycloak / Samba domain work;
+- internal AI routing and embeddings;
+- Codex runtime hardening;
+- internal service PKI and trust rollout.
 
 ## Core Value
 
-Servidor Atius sempre provisionado, documentado e operante — com identidade centralizada para login unificado de todas as máquinas Linux e SSO web funcionando em paralelo.
+Servidor Atius sempre provisionado, documentado e operante, com governanca e
+identidade centralizadas, sem quebrar producao durante evolucoes de login,
+runtime ou rede interna.
 
-## Current Milestone: v1.3 Local AI Embeddings and Semantic Retrieval
+## Current Delivery Track
 
-**Goal:** Criar um endpoint de embeddings local e OpenAI-compatible para GBrain, Obsidian e Graphify, usando `https://router.atius.com.br/v1` como entrada publica autenticada, New API como gateway e TEI/GTE no k3s em `horistic-srv` como backend real.
+**Current milestone:** v1.4 - Atius-wide SSO and Login
+**Current phase:** 42
+**Current objective:** fechar `42-03` para publicar `sso.atius.com.br` com
+gate de edge, rollback e smoke real, preservando o `auth-token` e o RBAC ATS.
 
-**Target features:**
-- TEI no namespace `ai-search`, sem exposicao publica direta, servindo `Alibaba-NLP/gte-multilingual-base`.
-- New API com alias estavel `embedding-gte-v1`, modelo upstream `embedding-gte-v1` e dimensao congelada em 768.
-- Smoke tests OpenAI-compatible para `/v1/models` e `POST /v1/embeddings` sem vazar chave em shell history, docs ou logs.
-- Contrato de reindexacao para GBrain/Obsidian/Graphify quando modelo, versao, dimensao, normalizacao ou chunking mudarem.
+**Open carry-over after v1.4:**
 
-**Execution order:** TEI backend -> New API channel/alias -> external smoke -> client migration runbook -> documentation/verification.
+- v1.6 / Phase 44 - Internal Service PKI and Fleet Trust (`44-02`, `44-03`)
 
-**Carry-over note:** v1.2 phases for FreeIPA/Keycloak/Samba/Production Guard remain in the roadmap as pending work. This milestone was opened separately because embeddings are a new AI infrastructure track on `horistic-srv`, not a continuation of the v1.2 governance/identity sequence.
+**Recently shipped out of sequence:**
 
-## Requirements
+- v1.3 / Phase 41 - embeddings locais com `embedding-gte-v1`
+- v1.5 / Phase 43 - Codex MCP bootstrap hardening no `GIOVANNI-W11-PC`
 
-### Validated
+## Active Requirements
 
-- ✓ **SRV-01**: Script `setup.sh` executa provisionamento base do servidor — tooling, usuários, permissões
-- ✓ **SRV-02**: Regras iptables salvas e restauráveis em `/etc/iptables/`
-- ✓ **SRV-04**: ~25 containers Docker rodando (Portainer, Plane, n8n, Open WebUI, Paperclip, Jenkins)
-- ✓ **SRV-05**: PostgreSQL 17 (porta 8745) e MongoDB (porta 27017) operacionais
-- ✓ **SRV-06**: PM2 gerenciando API, frontend, webhooks e bots de trading
-- ✓ **CLI-01**: `omni` CLI instalado via pip editable (`cli/`)
-- ✓ **CLI-02**: `fork-sync` integrado como subcomando `omni fork-sync`
-- ✓ **CLI-03**: `fork-sync` lib-only (sem entry point próprio)
-- ✓ **CLI-04**: 9 forks gerenciados via `omni fork-sync projects list`
+### v1.4 - Atius-wide SSO / Login
 
-### Active
+- [ ] **SSO-01**: `sso.atius.com.br` publicado como host canonico de login com contrato de DNS/Apache/Cloudflare/TLS e rollback.
+- [ ] **SSO-02**: Keycloak em `auth.atius.com.br` usado como provedor OIDC controlado sem quebrar o SSO/JWT legado.
+- [ ] **SSO-03**: ATS usa o novo fluxo SSO preservando `auth-token` e RBAC local.
+- [ ] **SSO-04**: Redirect seguro de volta para `trade`, `painel`, `dashboard`, `backtest`, `strategy` e futuros apps ATIUS.
+- [ ] **SSO-05**: Logout global limpa sessao Keycloak e cookies legados `.atius.com.br`.
+- [ ] **SSO-06**: Nenhum token, secret ou credencial de smoke entra em Git, `.planning`, Obsidian, GBrain, logs ou shell history.
 
-#### M011: Local AI Embeddings and Semantic Retrieval (Phase 41)
-- [ ] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com token Bearer e alias `embedding-gte-v1`.
-- [ ] **EMB-02**: New API roteia `embedding-gte-v1` para um canal interno TEI no k3s, sem apontar o canal de volta para `router.atius.com.br`.
-- [ ] **EMB-03**: Backend TEI roda em `horistic-srv`/k3s no namespace `ai-search`, sem ingress publico direto.
-- [ ] **EMB-04**: Modelo inicial fica congelado como `Alibaba-NLP/gte-multilingual-base`, 768 dimensoes, com contrato de versao/digest/normalizacao documentado.
-- [ ] **EMB-05**: Smoke test em lote retorna 2 embeddings, 768 dimensoes e sem erro para textos pt-BR.
-- [ ] **EMB-06**: GBrain recebe plano de migracao seguro para 768 dimensoes, com backup e reindex explicito antes de trocar store existente.
-- [ ] **EMB-07**: Obsidian e Graphify usam o endpoint como camada auxiliar de retrieval/indexacao, sem substituir o grafo estrutural do Graphify.
-- [ ] **EMB-08**: Nenhuma chave de API e nenhum segredo entram em Git, `.planning`, Obsidian ou historico de shell.
+### v1.6 - Internal Service PKI / Fleet HTTPS
 
-#### M007: M005 Follow-ups (Phase 15-17)
-- [ ] **OBS-01**: Observability stack live (Prometheus + Grafana + Loki) scraping K3s control plane + worker nodes
-- [ ] **OBS-02**: Dashboards for K3s HA, Portainer, PM2 daemons, Jenkins, GDrive backup health
-- [ ] **OBS-03**: Alert routing to Giovanni's preferred channel (Telegram/Hermes) for: pod CrashLoopBackOff, etcd quorum loss, PM2 app offline, GDrive quota >80%, disk >85%
-- [ ] **CFL-01**: Cloudflare Access policy configured for `portainer.atius.com.br` and `docker.atius.com.br` (replaces Apache Basic Auth)
-- [ ] **CFL-02**: Service token issued for omni-cli automation that needs to bypass Access
-- [ ] **CFL-03**: Apache Basic Auth retained as fallback if Access is unavailable, with documented cutover
-- [ ] **OCI-01**: OCI snapshot script for SRV-1/2/3 — `preflight` creates snapshot before risky ops; `routine` weekly snapshots to ATIUS-SRV-OCI bucket
-- [ ] **OCI-02**: Snapshot ID registered in `inventory/hosts/<srv>.yaml` and `DbOmniFleet` for rollback traceability
-- [ ] **OCI-03**: Restore drill validated from snapshot (start a stopped node and verify K3s rejoins)
-- [ ] **RWX-01**: RWX storage decision for K3s: NFS server on SRV-1 or Longhorn distributed
-- [ ] **RWX-02**: PVC backup ops for any StatefulSet using RWX
+- [ ] **PKI-01**: Plano de PKI interna renderizado por inventario para os 4 hosts.
+- [ ] **PKI-02**: `omni fleet trust-pki` existe com preflight, init, issue, install, verify e rollback-plan.
+- [ ] **PKI-03**: CA interna root-only fora de Git, `.planning`, Obsidian, GBrain e logs.
+- [ ] **PKI-04**: Cada host possui key/CSR/leaf/chain proprios com SANs corretos.
+- [ ] **PKI-05**: Todos os hosts instalam a CA chain via trust store do sistema.
+- [ ] **PKI-06**: Matriz 4x4 valida HTTPS entre todos os hosts com verify code `0`.
+- [ ] **PKI-07**: A auditoria gera JSON/logs/docs redacted sem chaves ou passphrases.
+- [ ] **PKI-08**: O plano deixa explicito que migracao real de TEI/servicos para HTTPS exige gate separado.
 
-#### Módulo: Domain Infrastructure (domain-infrastructure/)
-- [ ] **FIPA-01**: FreeIPA instalado e configurado no servidor 10.1.1.1 (LDAP + Kerberos + CA) — container AlmaLinux 9
-- [ ] **FIPA-02**: Máquinas Linux ingressam no domínio FreeIPA (ipa-client-install)
-- [ ] **FIPA-03**: Usuários centrais gerenciados no FreeIPA com grupos e permissões
-- [ ] **FIPA-04**: DNS interno do FreeIPA integrado com rede WireGuard (10.1.1.0/24)
-- [ ] **KKEY-01**: Keycloak instalado no OS em 10.1.1.1, federado no LDAP do FreeIPA
-- [ ] **KEY-02**: Login SSO funcional via OIDC em `auth.atius.com.br`
-- [ ] **SAM-01**: Samba configurado com autenticação via FreeIPA/Kerberos
-- [ ] **SAM-02**: Compartilhamentos de arquivos acessíveis por máquinas no domínio
-- [ ] **MIG-01**: WireGuard migrado de 10.1.1.2 para 10.1.1.1
-- [ ] **MIG-02**: Samba migrado de 10.1.1.2 para 10.1.1.1
-- [ ] **COEX-01**: SSO existente no Apache2 (~/GitHub/Atius-Capital/ats) NÃO é afetado durante implementação
-- [ ] **COEX-02**: Ambos SSO (Apache2 e Keycloak) coexistem sem conflito
+## Recently Validated
 
-#### Módulo: Omni CLI Unificado
-- [ ] **OMNI-01**: `omni admin` — comandos de administração do servidor (status, health, services)
-- [ ] **OMNI-02**: `omni deploy` — deploy de projetos/containers (wrapping fork-sync deploy)
-- [ ] **OMNI-03**: `omni backup` — backup e restore de dados/configs
-- [ ] **OMNI-04**: Documentação e --help completos para todos subcomandos
+### v1.3 - Local AI Embeddings / Semantic Retrieval
 
-#### Módulo: Server Setup (base)
-- [ ] **SET-01**: `setup.sh` documentado e idempotente
-- [ ] **SET-02**: Procedimento de rollback para cada alteração de configuração de rede
+- [x] **EMB-01** through **EMB-08**: entregues em Phase 41.
+- TEI roda em `horistic-srv`, namespace `ebeddings-local`, endpoint privado
+  `http://10.1.1.4:3115`.
+- Alias publico atual: `embedding-gte-v1`.
 
-### Out of Scope
+### v1.5 - Codex Runtime / MCP Bootstrap Reliability
 
-- Horistic (~/GitHub/Atius-Capital/horistic) — projeto separado com domínio próprio
-- Migração de apps existentes para Keycloak — foco na infra primeiro
-- Integração com Windows/Mac — ambiente 100% Linux
-- FreeIPA nativo no Ubuntu — bug #1875114 impede; container é a solução
+- [x] **CDX-01** through **CDX-06**: entregues em Phase 43.
+- Baseline daily do Codex ficou lean, com MCPs pesados migrados para perfis
+  opt-in e smoke repetivel de bootstrap.
 
 ## Context
 
-### Ambiente Atual
+### Fleet and Internal Network
 
-- **10.1.1.1** (este servidor): Atius apps (PM2: API, web, webhooks, bots, DIVAP), ~25 containers Docker, PostgreSQL 17, MongoDB, Apache2 com 60+ vhosts
-- **10.1.1.2**: WireGuard VPN + CoreDNS + Samba existente (será migrado para 10.1.1.1)
-- **10.1.1.3**: atius-srv-3 (DNS canonico; `10.1.1.7` ainda e alias K3s/etcd)
-- **10.1.1.4**: Apache2 para Horistic
-- **Rede WireGuard**: 10.1.1.0/24
-- **Domínio**: atius.com.br no Cloudflare
+- `atius-srv-1`: control plane, router-facing operations, CA candidate for
+  service PKI.
+- `atius-srv-2`: governance / support services.
+- `atius-srv-3`: Vault / FreeIPA / Keycloak-related private services.
+- `horistic-srv`: k3s worker, TEI, internal AI workloads.
+- WireGuard legacy/rollback still exists on `10.1.1.0/24`.
+- `wg100` is the active internal service path on `10.100.100.0/24`.
 
-### Stack Existente
+### Identity and Auth
 
-- Ubuntu 22.04 (Oracle Cloud Infrastructure, ARM64)
-- Node.js 24 + Python 3.11 via NVM/uv
-- Fastify (API port 8015) + Next.js (frontend port 3015)
-- PM2 + Jest + Playwright
-- Apache2 como reverse proxy com JWT SSO custom
-- Docker + containerd
+- FreeIPA, Keycloak, and Samba foundation phases are already canonized as
+  complete.
+- The ATS legacy auth contract remains authoritative until Phase 42 fully
+  closes.
+- Backend DB permissions remain authoritative even when Keycloak authenticates
+  the user.
 
 ## Constraints
 
-- **[Compatibilidade]**: SSO existente no Apache2 (~/GitHub/Atius-Capital/ats) NÃO pode ser afetado — coexistência obrigatória
-- **[Portas]**: Apache2 movido para portas alternativas (9080/9444) para liberar 80/443 ao FreeIPA
-- **[FreeIPA]**: Rodará em container Docker AlmaLinux 9 (não existe freeipa-server no Ubuntu)
-- **[Hostname]**: FreeIPA requer FQDN — hostname deve ser `omni-srv-admin-1.atius.com.br`
-- **[Rede]**: Todas as máquinas acessíveis via WireGuard 10.1.1.0/24
-- **[DNS]**: CoreDNS existente precisa coexistir com DNS do FreeIPA (BIND interno)
+- Existing production auth and trading flows must remain reversible.
+- No secret material in Git, `.planning`, Obsidian, GBrain, logs, screenshots,
+  or shell history.
+- Live edge publication, CA generation, or trust-store mutation requires an
+  explicit gate.
+- Planning artifacts must stay aligned with roadmap, requirements, summaries,
+  and state.
 
 ## Key Decisions
 
 | Decision | Rationale | Outcome |
-|----------|-----------|---------|
-| FreeIPA no Docker (AlmaLinux 9) | `freeipa-server` não existe no Ubuntu 22.04 (bug #1875114) | — Pending |
-| Keycloak nativo no OS (Java 21) | Instalação direta via apt, gerenciado por systemd | — Pending |
-| FreeIPA como servidor de identidade | Login de máquina + Kerberos para Samba integrados | — Pending |
-| Keycloak para SSO web federado no FreeIPA LDAP | SSO separado do Apache2, coexistência até migração completa | — Pending |
-| Samba com auth via FreeIPA/Kerberos | Integração nativa com identidade centralizada | — Pending |
-| Apache2 movido para 9080/9444 | FreeIPA precisa 80/443; 8080 já ocupado por Docker | ✓ Good |
-| Horistic excluído do escopo | Domínio próprio, projeto independente | ✓ Good |
-| domain-infrastructure como módulo do omni-srv-admin | Unificação do repositório servidor | — Pending |
+|---|---|---|
+| Keycloak remains identity-only during SSO migration | Preserve ATS RBAC and current `auth-token` contract | Active |
+| Internal service PKI uses CA trust, not peer leaf-as-root | Prevent trust-boundary and revocation problems | Active |
+| TEI stays private behind router alias | Avoid self-loop and uncontrolled public exposure | Active |
+| Codex runtime baseline stays lean | Reduce noisy MCP bootstrap and optional dependency failure | Shipped in Phase 43 |
 
 ## Evolution
 
-This document evolves at phase transitions and milestone boundaries.
+Update this file whenever:
 
-**After each phase transition** (via `/gsd-transition`):
-1. Requirements invalidated? → Move to Out of Scope with reason
-2. Requirements validated? → Move to Validated with phase reference
-3. New requirements emerged? → Add to Active
-4. Decisions to log? → Add to Key Decisions
-5. "What This Is" still accurate? → Update if drifted
-
-**After each milestone** (via `/gsd-complete-milestone`):
-1. Full review of all sections
-2. Core Value check — still the right priority?
-3. Audit Out of Scope — reasons still valid?
-4. Update Context with current state
+1. the active milestone changes;
+2. a phase closes and its requirements become validated;
+3. a shipped milestone changes the next operator priority;
+4. a cross-session reconciliation changes what the repo claims is complete.
 
 ---
-*Last updated: 2026-06-24 after starting milestone v1.2*
-
-## Scope addendum - 2026-06-24
-
-- G18 managed fleet now has 4 hosts for the current cycle: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv`.
-- `horistic-srv` was added after Phase 28 verification; Phase 29 fresh inventory and go/no-go artifacts supersede the older 3-host G18 gate for live upgrade decisions.
-- Landscape SaaS/web is accepted as the temporary onboarding/validation layer. Landscape self-hosted remains an active v1.2 governance target, not a forgotten future-only item.
+*Last updated: 2026-07-06 during roadmap/requirements/state reconciliation*

@@ -1,7 +1,7 @@
-# Requirements: Omni Srv Admin — v1.2
+# Requirements: Omni Srv Admin — v1.2 to v1.6
 
 **Defined:** 2026-06-24
-**Milestone:** v1.2 — Fleet Governance, Domain Infrastructure and Production Guard
+**Milestone:** multi-milestone reconciliation through v1.6
 **Core Value:** Servidor Atius sempre provisionado, documentado e operante, com governanca centralizada e identidade/SSO evoluindo sem quebrar producao.
 
 ## v1.2 Requirements
@@ -50,7 +50,7 @@
 
 - [x] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com autenticação Bearer e `model=embedding-gte-v1`.
 - [x] **EMB-02**: New API possui canal interno para embeddings que aponta para o TEI em `http://10.1.1.4:3115`, nunca para `https://router.atius.com.br/v1`, evitando loop.
-- [x] **EMB-03**: Backend TEI roda no k3s em `horistic-srv` sob namespace `ai-search`, com Service ClusterIP, `hostNetwork` restrito ao IP privado do worker e sem ingress público direto.
+- [x] **EMB-03**: Backend TEI roda no k3s em `horistic-srv` sob namespace `ebeddings-local`, com Service ClusterIP, `hostNetwork` privado e sem ingress público direto.
 - [x] **EMB-04**: Alias `embedding-gte-v1` fica ligado a `Alibaba-NLP/gte-multilingual-base`, 768 dimensões, com contrato de modelo + versão/digest + normalização + chunking documentado.
 - [x] **EMB-05**: Smoke test externo em lote com dois textos pt-BR retorna `quantidade=2`, `dimensoes=768`, `error=null` e usage coerente.
 - [x] **EMB-06**: GBrain tem runbook de migração para `openai:embedding-gte-v1` e 768 dimensões, com backup e reindex/retrieval-upgrade explícitos antes de alterar store existente.
@@ -61,23 +61,23 @@
 
 ### Atius-wide SSO / Login
 
-- [x] **SSO-01**: Operador tem `sso.atius.com.br` definido como subdominio canonico de login da Atius, com contrato de DNS/Apache/Cloudflare/TLS e rollback antes de qualquer publicacao live.
-- [x] **SSO-02**: Keycloak existente em `auth.atius.com.br` vira provedor OIDC controlado para login Atius-wide sem quebrar o SSO/JWT legado durante a migracao.
-- [x] **SSO-03**: ATS usa o novo fluxo SSO como primeira aplicacao de referencia, preservando `auth-token`, RBAC (`is_admin`, `can_access_*`) e rotas protegidas ate a compatibilidade ser provada.
-- [x] **SSO-04**: `sso.atius.com.br` suporta redirect seguro de volta para `trade.atius.com.br`, `painel.atius.com.br`, `dashboard.atius.com.br`, `backtest.atius.com.br`, `strategy.atius.com.br` e futuros apps Atius sem open redirect.
-- [x] **SSO-05**: Logout global limpa sessao Keycloak e cookies legados `.atius.com.br`, com smoke test cross-subdomain e rollback documentado.
-- [x] **SSO-06**: Tokens, client secrets, session secrets e credenciais de smoke ficam fora de Git, `.planning`, Obsidian, logs e shell history.
+- [ ] **SSO-01**: Operador tem `sso.atius.com.br` definido como subdominio canonico de login da Atius, com contrato de DNS/Apache/Cloudflare/TLS e rollback antes de qualquer publicacao live.
+- [ ] **SSO-02**: Keycloak existente em `auth.atius.com.br` vira provedor OIDC controlado para login Atius-wide sem quebrar o SSO/JWT legado durante a migracao.
+- [ ] **SSO-03**: ATS usa o novo fluxo SSO como primeira aplicacao de referencia, preservando `auth-token`, RBAC (`is_admin`, `can_access_*`) e rotas protegidas ate a compatibilidade ser provada.
+- [ ] **SSO-04**: `sso.atius.com.br` suporta redirect seguro de volta para `trade.atius.com.br`, `painel.atius.com.br`, `dashboard.atius.com.br`, `backtest.atius.com.br`, `strategy.atius.com.br` e futuros apps Atius sem open redirect.
+- [ ] **SSO-05**: Logout global limpa sessao Keycloak e cookies legados `.atius.com.br`, com smoke test cross-subdomain e rollback documentado.
+- [ ] **SSO-06**: Tokens, client secrets, session secrets e credenciais de smoke ficam fora de Git, `.planning`, Obsidian, logs e shell history.
 
 ## v1.5 Requirements
 
 ### Codex Runtime / MCP Bootstrap Reliability
 
-- [ ] **CDX-01**: Operador consegue iniciar o Codex em `GIOVANNI-W11-PC` sem timeouts ou warnings genericos para MCPs que sao opcionais no fluxo diario.
-- [ ] **CDX-02**: A base `C:\Users\muniz\.codex\config.toml` separa MCPs always-on de MCPs pesados ou task-specific por meio de perfis nomeados e rollback simples.
-- [ ] **CDX-03**: MCPs com pre-requisito externo - Cloudflare token, VPN/Obsidian REST, browsers locais ou stacks OCI - tem politica explicita de env/reachability/disable default em vez de falhar no boot padrao.
-- [ ] **CDX-04**: MCPs stdio pesados que permanecerem habilitados usam `startup_timeout_sec` explicito, command paths estaveis e preferencialmente sem `@latest` no bootstrap diario.
-- [ ] **CDX-05**: Operador tem smoke e doctor repetiveis para classificar falha como `missing-env`, `unreachable`, `slow-start`, `disabled` ou `ok`, sem imprimir secrets.
-- [ ] **CDX-06**: Documentacao do runtime Codex registra baseline lean, perfis opt-in, comandos `codex -p <profile>`, backups e rollback de `config.toml` antes de qualquer ajuste.
+- [x] **CDX-01**: Operador consegue iniciar o Codex em `GIOVANNI-W11-PC` sem timeouts ou warnings genericos para MCPs que sao opcionais no fluxo diario.
+- [x] **CDX-02**: A base `C:\Users\muniz\.codex\config.toml` separa MCPs always-on de MCPs pesados ou task-specific por meio de perfis nomeados e rollback simples.
+- [x] **CDX-03**: MCPs com pre-requisito externo - Cloudflare token, VPN/Obsidian REST, browsers locais ou stacks OCI - tem politica explicita de env/reachability/disable default em vez de falhar no boot padrao.
+- [x] **CDX-04**: MCPs stdio pesados que permanecerem habilitados usam `startup_timeout_sec` explicito, command paths estaveis e preferencialmente sem `@latest` no bootstrap diario.
+- [x] **CDX-05**: Operador tem smoke e doctor repetiveis para classificar falha como `missing-env`, `unreachable`, `slow-start`, `disabled` ou `ok`, sem imprimir secrets.
+- [x] **CDX-06**: Documentacao do runtime Codex registra baseline lean, perfis opt-in, comandos `codex -p <profile>`, backups e rollback de `config.toml` antes de qualquer ajuste.
 
 ## v1.6 Requirements
 
@@ -124,8 +124,6 @@
 | GOV-05 | Phase 31 | Complete |
 | GOV-06 | Phase 32 | Complete |
 | GOV-07 | Phase 30 | Complete |
-| GOV-08 | Phase 32 | Pending |
-| GOV-08 | Landscape self-hosted is an active governance target for v1.2; Landscape SaaS/web is allowed as temporary onboarding and validation, not the durable endpoint. |
 | DOM-01 | Phase 33 | Complete |
 | DOM-02 | Phase 33 | Complete |
 | DOM-03 | Phase 34 | Complete |
@@ -148,26 +146,26 @@
 | EMB-06 | Phase 41 | Complete |
 | EMB-07 | Phase 41 | Complete |
 | EMB-08 | Phase 41 | Complete |
-| SSO-01 | Phase 42 | Complete |
-| SSO-02 | Phase 42 | Complete |
-| SSO-03 | Phase 42 | Complete |
-| SSO-04 | Phase 42 | Complete |
-| SSO-05 | Phase 42 | Complete |
-| SSO-06 | Phase 42 | Complete |
-| CDX-01 | Phase 43 | Planned |
-| CDX-02 | Phase 43 | Planned |
-| CDX-03 | Phase 43 | Planned |
-| CDX-04 | Phase 43 | Planned |
-| CDX-05 | Phase 43 | Planned |
-| CDX-06 | Phase 43 | Planned |
-| PKI-01 | Phase 44 | Planned |
-| PKI-02 | Phase 44 | Planned |
-| PKI-03 | Phase 44 | Planned |
-| PKI-04 | Phase 44 | Planned |
-| PKI-05 | Phase 44 | Planned |
-| PKI-06 | Phase 44 | Planned |
-| PKI-07 | Phase 44 | Planned |
-| PKI-08 | Phase 44 | Planned |
+| SSO-01 | Phase 42 | In Progress |
+| SSO-02 | Phase 42 | In Progress |
+| SSO-03 | Phase 42 | In Progress |
+| SSO-04 | Phase 42 | In Progress |
+| SSO-05 | Phase 42 | In Progress |
+| SSO-06 | Phase 42 | In Progress |
+| CDX-01 | Phase 43 | Complete |
+| CDX-02 | Phase 43 | Complete |
+| CDX-03 | Phase 43 | Complete |
+| CDX-04 | Phase 43 | Complete |
+| CDX-05 | Phase 43 | Complete |
+| CDX-06 | Phase 43 | Complete |
+| PKI-01 | Phase 44 | In Progress |
+| PKI-02 | Phase 44 | In Progress |
+| PKI-03 | Phase 44 | In Progress |
+| PKI-04 | Phase 44 | In Progress |
+| PKI-05 | Phase 44 | In Progress |
+| PKI-06 | Phase 44 | In Progress |
+| PKI-07 | Phase 44 | In Progress |
+| PKI-08 | Phase 44 | In Progress |
 
 **Coverage:**
 
@@ -189,4 +187,4 @@
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-07-05 after adding Phase 44 Internal Service PKI and Fleet Trust*
+*Last updated: 2026-07-06 after reconciling Phase 42/43/44 status and traceability*
