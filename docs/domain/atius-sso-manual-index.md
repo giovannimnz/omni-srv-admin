@@ -11,6 +11,7 @@ os sistemas Atius sem depender de contexto oral ou de uma fase específica.
 
 - `docs/domain/atius-sso-learnings.md`
 - `docs/domain/atius-wide-sso.md`
+- `docs/domain/atius-sso-operations-manual.md`
 
 ### 2. Como montar/publicar o host SSO
 
@@ -25,6 +26,7 @@ Foco:
 
 ### 3. Como incluir um app novo
 
+- `docs/domain/atius-sso-operations-manual.md`
 - `docs/domain/atius-sso-application-playbook.md`
 
 Foco:
@@ -36,6 +38,7 @@ Foco:
 
 ### 4. Como remover um app do SSO
 
+- `docs/domain/atius-sso-operations-manual.md`
 - `docs/domain/atius-sso-application-playbook.md`
 
 Foco:
@@ -89,6 +92,8 @@ Use quando um app deixa de participar do fluxo central de SSO.
 
 ## Artefatos de apoio
 
+- manual operacional por tarefa:
+  - `docs/domain/atius-sso-operations-manual.md`
 - learnings da fundação Keycloak:
   - `.planning/phases/36-keycloak-sso-and-coexistence/36-01-SUMMARY.md`
 - learnings da fachada Ats-wide:
