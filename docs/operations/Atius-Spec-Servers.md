@@ -5,14 +5,13 @@
 > **Leia o novo documento canônico:**
 > [[ATIUS-FLEET-NETWORK-PORT-MAP]] (em `30-RECURSOS/operations/`)
 >
-> Este arquivo é mantido apenas como histórico. Está desatualizado
-> quanto a OS (diz 22.04, real é 24.04). As regras de 50% por
-> processo permanecem válidas e foram incorporadas no doc canônico.
+> Este arquivo é mantido apenas como histórico. Está desatualizado e não representa
+> a regra operacional atual de CPU.
 
 ---
 
-> **Regra de Ouro:** Nenhum processo, container, programa ou serviço
-> pode consumir mais de **50%** de qualquer recurso da máquina.
+> **Regra de Ouro (2026-07-06):** Por padrão, build/processo de build no SRV Linux
+> não pode ultrapassar **20% do CPU total do host**. Use este arquivo apenas como registro histórico.
 
 ## Especificações Comuns (válido, OS desatualizado)
 
@@ -30,36 +29,29 @@ Todas as 3 máquinas são Oracle OCI Ampere A1 (ARM64).
 | Escrita máxima | 108 MB/s (SRV-1) a 124 MB/s (SRV-2) |
 | SO | ~~Ubuntu 22.04.5 LTS~~ **Ubuntu 24.04.4 LTS** (atualizado 2026-06) |
 
-## Limite de 50% por Processo (ainda válido)
+## Regra Antiga Revogada
 
-| Recurso | 100% | 50% máximo | Docker | Systemd |
-|---|---|---|---|---|
-| CPU | 4 vCPUs | **2 vCPUs** | `--cpus=2` | `CPUQuota=200%` |
-| RAM | 23,42 GiB | **11,71 GiB** | `--memory=11.7g` | `MemoryMax=11991M` |
-| Swap | 10,00 GiB | **5,00 GiB** | `--memory-swap=16.7g` | — |
-| Write (SRV-1) | 108 MB/s | **54 MB/s** | — | `IOWriteBandwidthMax=/dev/sda 54M` |
-| Write (SRV-2) | 124 MB/s | **62 MB/s** | — | `IOWriteBandwidthMax=/dev/sda 62M` |
-| Read | ~120 MB/s | **~60 MB/s** | — | `IOReadBandwidthMax=/dev/sda 60M` |
-| Armazenamento | 186,26 GiB | **93,13 GiB** | `--storage-opt size=93G` | — |
+O antigo limite generico de 50% por processo nao e mais a politica padrao.
+Para builds, rebuilds, compiles, container builds, bundlers, broad indexers e
+testes pesados, a regra ativa e **20% do CPU total do host** via
+`resource-governor`.
 
 ## Servidores (dados de disco ainda válidos)
 
-| Máquina | IP Público | IP VPN | Disco usado | RAM disp. | Write max | 50% write |
-|---|---|---|---|---|---|---|
-| **SRV-1** | 137.131.190.161 | 10.1.1.1 | **95%** (12G livre) | ~8,5 GiB | 108 MB/s | **54 MB/s** |
-| **SRV-2** | 129.148.47.32 | 10.1.1.2 | **71%** (58G livre) | ~17 GiB | 124 MB/s | **62 MB/s** |
-| **SRV-3** | 136.248.126.12 | 10.1.1.7 | **97%** (7,8G livre) | ~17 GiB | ~108 MB/s | **~54 MB/s** |
+| Máquina | IP Público | IP VPN | Disco usado | RAM disp. | Write max |
+|---|---|---|---|---|---|
+| **SRV-1** | 137.131.190.161 | 10.1.1.1 | **95%** (12G livre) | ~8,5 GiB | 108 MB/s |
+| **SRV-2** | 129.148.47.32 | 10.1.1.2 | **71%** (58G livre) | ~17 GiB | 124 MB/s |
+| **SRV-3** | 136.248.126.12 | 10.1.1.7 | **97%** (7,8G livre) | ~17 GiB | ~108 MB/s |
 
-## Exemplo Prático
+## Exemplo Prático (legado)
 
 ```bash
-# Container com 50% máximo
-docker run --cpus=2 --memory=11.7g --memory-swap=16.7g ...
-
-# Systemd scope com 50%
-systemd-run --user --scope -p CPUQuota=200% -p MemoryMax=11991M \
-  -p IOWriteBandwidthMax='/dev/sda 54M' <comando>
+# Build moderno: usar o profile builds, limitado a 20% do CPU total do host.
+omni srv1-ops resources run builds -- <comando-de-build>
 ```
+
+Observação: para builds modernos, a regra ativa é 20% de CPU do host via `resource-governor` (ver doc canônico).
 
 ## Ver também
 

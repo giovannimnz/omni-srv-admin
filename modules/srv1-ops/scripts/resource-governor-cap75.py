@@ -26,10 +26,11 @@ BREACH_STREAK = 2
 ACTION_COOLDOWN_SEC = 60
 SUMMARY_EVERY_SEC = 30
 DURATION_SEC = 8 * 60 * 60
+CPU_CORE_COUNT = max(os.cpu_count() or 1, 1)
 CAP75_CPU_PCT = 75.0
 CAP75_MEM_MIB = 12 * 1024
 CAP75_WRITE_MBPS = 79.5
-BUILD_CPU_PCT = 200.0
+BUILD_CPU_PCT = 20.0 * CPU_CORE_COUNT
 BUILD_MEM_MIB = 12 * 1024
 BUILD_WRITE_MBPS = 79.5
 
@@ -293,7 +294,7 @@ def main() -> int:
     load_external_inviolables()
     ensure_cap75_cgroup()
     service_state = ensure_guard_services()
-    log('start duration=8h policy=build/docker<=200%cpu,<=12GiB; others<=75%cpu,<=12GiB,<=79.5MB/s services=' + json.dumps(service_state, ensure_ascii=False))
+    log('start duration=8h policy=build/docker<=20% total host cpu,<=12GiB; others<=75%cpu,<=12GiB,<=79.5MB/s services=' + json.dumps(service_state, ensure_ascii=False))
 
     cpu_prev: dict[int, tuple[int, float]] = {}
     io_prev: dict[int, tuple[int, float]] = {}

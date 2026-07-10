@@ -123,7 +123,7 @@ done
 PostgreSQL direct access must not be restored as a broad `ACCEPT` rule.
 SRV-2/SRV-3/Windows database clients must use PgBouncer on
 `10.11.1.11:6432`. Direct
-PostgreSQL on VPN port `8745` is blocked by the `OMNI-PG-ACCESS` chain.
+PostgreSQL on `10.11.1.11:8745` is blocked by the `OMNI-PG-ACCESS` chain.
 
 All should report `FOUND`. Missing entries indicate a port that would not be
 opened after `setup.sh` runs.

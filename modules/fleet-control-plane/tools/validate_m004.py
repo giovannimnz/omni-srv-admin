@@ -489,7 +489,7 @@ def _live_pgbouncer_server() -> ScenarioResult:
     )
     if code != 0:
         scenario.status = "FAIL"
-    elif any("10.11.1.11:6432" in line or "10.100.100.1:6432" in line for line in evidence):
+    elif any("10.11.1.11:6432" in line for line in evidence):
         scenario.status = "PASS"
     scenario.commands = [rendered]
     return scenario
@@ -532,7 +532,7 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         ". /etc/omni-srv-admin/fleet-db.env; "
         "export PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGSSLMODE; "
         "echo endpoint=${PGHOST}:${PGPORT}/${PGDATABASE}; "
-        "(test \"${PGHOST}:${PGPORT}\" = \"10.11.1.11:6432\" || test \"${PGHOST}:${PGPORT}\" = \"10.100.100.1:6432\"); "
+        "test \"${PGHOST}:${PGPORT}\" = \"10.11.1.11:6432\"; "
         "psql -Atc \"select current_database() || chr(58) || current_user\"; "
         "psql -Atc \"select 'TbHosts=' || count(*) from \\\"TbHosts\\\" union all select 'TbNodes=' || count(*) from \\\"TbNodes\\\" order by 1\"; "
         "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" union all select 'TbFleetCommands=' || count(*) from \\\"TbFleetCommands\\\" union all select 'TbNodeResourcePolicies=' || count(*) from \\\"TbNodeResourcePolicies\\\" union all select 'TbNodeTelemetry=' || count(*) from \\\"TbNodeTelemetry\\\" union all select 'TbManagedApps=' || count(*) from \\\"TbManagedApps\\\" union all select 'TbManagedForks=' || count(*) from \\\"TbManagedForks\\\" union all select 'TbCustomizationPolicies=' || count(*) from \\\"TbCustomizationPolicies\\\" order by 1\""
@@ -553,15 +553,11 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         and counts.get("TbManagedForks", 0) >= 1
         and counts.get("TbCustomizationPolicies", 0) >= 1
     )
-    expected_db_user = f"{FLEET_DATABASE}:omni_fleet"
-    endpoint_ok = any(
-        line in {
-            f"endpoint=10.11.1.11:6432/{FLEET_DATABASE}",
-            f"endpoint=10.100.100.1:6432/{FLEET_DATABASE}",
-        }
-        for line in evidence
-    )
-    result = _ok if code == 0 and endpoint_ok and expected_db_user in set(evidence) and has_expected_rows else _fail
+    expected = {
+        f"endpoint=10.11.1.11:6432/{FLEET_DATABASE}",
+        f"{FLEET_DATABASE}:omni_fleet",
+    }
+    result = _ok if code == 0 and expected.issubset(set(evidence)) and has_expected_rows else _fail
     scenario = result(
         f"M004-LIVE-DB-{host_id}",
         f"{host_id} queries central {FLEET_DATABASE} DB through PgBouncer",

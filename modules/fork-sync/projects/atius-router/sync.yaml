@@ -34,6 +34,7 @@ protected_paths:
   - relay/channel/codex/
   - relay/channel/minimax/
   - relay/channel/deepseek/
+  - relay/helper/valid_request.go
   - relay/common/relay_utils.go
   - relay/common/relay_utils_test.go
   - relay/embedding_handler.go
@@ -44,8 +45,12 @@ protected_paths:
   - common/endpoint_type_test.go
   - dto/embedding.go
   - dto/channel_settings.go
+  - setting/console_setting/
   - router/api-router.go
   - web/default/src/features/channels/
+  - web/default/src/features/pricing/components/model-details-api.tsx
+  - web/default/src/features/system-settings/content/default-api-info.ts
+  - web/default/src/features/system-settings/content/index.tsx
   - web/default/scripts/sync-i18n.mjs
   - web/classic/src/constants/channel.constants.js
   # Feature: Go-native model catalog, base URL normalization and Codex embeddings route
@@ -96,6 +101,8 @@ protected_paths:
   - scripts/smoke-docs-links.sh
   # Feature: versioning and branding
   - VERSION
+  - .github/workflows/sync.yml
+  - .github/codex/
   - web/default/public/logo.png
   - web/default/public/favicon.ico
 

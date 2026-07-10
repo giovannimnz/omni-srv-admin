@@ -30,7 +30,7 @@ key-decisions:
 patterns-established:
   - "Redirect allowlist contract: exact production hosts plus bounded path prefixes, with encoded bypass rejection."
   - "Logout contract: dual auth-token cleanup variants plus Keycloak RP logout handoff."
-requirements-completed: [SSO-01, SSO-02, SSO-03, SSO-04, SSO-05, SSO-06]
+requirements-advanced: [SSO-01, SSO-02, SSO-03, SSO-04, SSO-05, SSO-06]
 coverage:
   - id: D1
     description: "Wave 0 ATS auth contracts cover redirect allowlist, OIDC identity bridging, RBAC preservation, and fail-closed runtime auth smoke."
@@ -133,6 +133,12 @@ None.
 
 - Plan 42-02 can now implement the ATS SSO facade against an explicit contract for redirect validation, OIDC mapping, legacy cookie issuance, and logout behavior.
 - Plan 42-03 can reuse `scripts/sso-edge-smoke.sh` and `scripts/sso-secret-hygiene-scan.sh` as the pre-publication gate for Apache/header rollout.
+
+## Requirement Status
+
+This summary advances Phase 42 requirements, but does not close them by itself.
+The phase remains open until `42-03` publishes the edge contract and the
+rollout/rollback gates are complete.
 
 ## Self-Check: PASSED
 

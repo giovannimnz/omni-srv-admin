@@ -3,7 +3,7 @@ set -euo pipefail
 
 CHAIN=OMNI-OBSIDIAN-REST
 PORT=27124
-SERVER_IP=10.100.100.1
+SERVER_IP=10.11.1.11
 
 iptables -N "$CHAIN" 2>/dev/null || true
 iptables -F "$CHAIN"

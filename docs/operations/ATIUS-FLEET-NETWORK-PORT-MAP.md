@@ -40,7 +40,9 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
 - Disco: 200 GB nominal = 186.26 GiB real (block volume)
 - Write max: 108 MB/s (SRV-1) a 124 MB/s (SRV-2)
 - Kernel: 6.8.0-1050-oracle (Jammy 22.04) ou 6.17.x-oracle (Noble 24.04)
-- 50% por processo: CPU=2 vCPU, RAM=11.71 GiB, write=54 MB/s
+- builds/process-build: 20% do CPU total por padrão
+- RAM=11.71 GiB é teto de uso comum de processo
+- write não é build-default (varia por profile)
 
 ---
 
@@ -278,7 +280,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 12002  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 3131   | gbrain HTTP MCP            | 127.0.0.1    | ubuntu   | local-only backend; public URL `https://mcp.atius.com.br/gbrain` |
-| 27124  | obsidian-local-rest-api    | 10.11.1.11 / 10.100.100.1 | ubuntu   | HTTPS REST + MCP; OCI-private preferred, `wg100` reserve via local proxy |
+| 27124  | obsidian-local-rest-api    | 10.11.1.11   | ubuntu   | HTTPS REST + MCP via DRG primary path; wg100 peers secondary |
 | 12004  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 12006  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 18080  | node (router ai?)          | 127.0.0.1    | ubuntu   | investigate                        |
@@ -370,7 +372,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 10256  | kube-proxy healthz         | 127.0.0.1    | root     | K3s                                |
 | 22061  | local service              | 127.0.0.1    | -        | investigate                        |
-| 3115   | TEI GTE embeddings         | 10.21.1.21 / 0.0.0.0 | k3s/containerd | `ai-search/tei-gte`, OCI-private preferred |
+| 3115   | TEI GTE embeddings         | 10.21.1.21 / 0.0.0.0 | k3s/containerd | `ebeddings-local/tei-gte`, OCI-private preferred |
 
 Validated 2026-07-08: the OCI-primary listener is reachable on `10.21.1.21:3115`
 returns TEI health `200`, and public `embedding-gte-v1` through
@@ -408,7 +410,7 @@ Notas:
 | K3s etcd        | 2379, 2380     | 10.11/10.12/10.13/10.21 preferred, `wg100` reserve | K3s |
 | K3s kubelet     | 10250          | *             | K3s                      |
 | Prometheus node-exporter | 9100 | *             | K3s                      |
-| Local TEI embeddings | 3115       | 10.21.1.21  | K3s `ai-search/tei-gte`  |
+| Local TEI embeddings | 3115       | 10.21.1.21  | K3s `ebeddings-local/tei-gte` |
 | PgBouncer       | 6432           | 10.11.1.11  | central DB               |
 | Obsidian REST/MCP | 27124        | 10.11.1.11  | AiSecondBrain via OCI/DRG |
 | GBrain HTTP MCP | 3131           | 127.0.0.1     | SRV-1 local backend; public edge `mcp.atius.com.br/gbrain` |
@@ -561,10 +563,10 @@ Validado em 2026-07-05:
 - **1.5.0 (2026-07-05)** — consolidado delta live de MCP/edge/router:
   GBrain HTTP MCP `127.0.0.1:3131` com edge `mcp.atius.com.br/gbrain`,
   Wayland SRV-3 `0.0.0.0:25808`, router Web/API em `3000`, drift de docs em
-  `3003`, Obsidian REST/MCP `10.100.100.1:27124`, K3s 4 nos Ready e fila de
-  reconciliacao para Landscape/Portainer/monitoring.
+  `3003`, Obsidian REST/MCP `10.11.1.11:27124` como caminho primario via DRG,
+  K3s 4 nos Ready e fila de reconciliacao para Landscape/Portainer/monitoring.
 - **1.4.1 (2026-06-29)** — Obsidian Local REST API + MCP centralizado no
-  SRV-1 em `10.100.100.1:27124`, com acesso direto via VPN para SRV-2/SRV-3 e
+  SRV-1 em `10.11.1.11:27124`, com acesso direto via VPN para SRV-2/SRV-3 e
   allowlist `OMNI-OBSIDIAN-REST`; padrão antigo por SSH tunnel local removido.
 - **1.4.0 (2026-06-17)** — renomeado `horistic-srv-1` → `horistic-srv` (host + inventory + VPN/CoreDNS + docs); `horistic-srv-1` permanece como alias uppercase em CoreDNS para retrocompat; vhost Apache `remote.horistic-srv-1.atius.com.br.conf` preservado.
 - **1.3.0 (2026-06-17)** — adicionados `atius-mt5-kvm-1` e `atius-mt5-kvm-2` como hosts gerenciados sem K3s: IPs 10.1.1.16/17, portas 9001/9002, node-exporter 9100, zsh/Oh My Zsh/Rust/zellij validados e inventory `inventory/hosts/atius-mt5-kvm-*.yaml`.

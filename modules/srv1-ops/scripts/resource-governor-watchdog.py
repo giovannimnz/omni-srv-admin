@@ -46,15 +46,16 @@ CGROUP_SLICE = '/sys/fs/cgroup/user.slice/user-1001.slice'
 DISK_DEV = '8:0'  # /dev/sda major:minor
 
 # Global limits for user slice (85% of machine), NOT per-process.
-# Per-process/per-service 50% caps belong in profiles/wrappers/containers.
+# Build caps belong in profiles/wrappers and are now 20% of total host CPU.
 CGROUP_LIMITS = {
     'cpu': '340000 100000',           # 3.4 vCPUs out of 4 (85%)
     'io': '8:0 rbps=426770432 wbps=94371840',  # ~407MB/s read, 90MB/s write (85%)
 }
 
 CONSERVATIVE_OVERRIDE = {
-    # 50% limits por processo (documentado em Atius-Spec-Servers.md)
-    'RG_PROFILE_BUILDS_CPU_QUOTA': '200%',
+    # Build default: no more than 20% of total host CPU.
+    'RG_PROFILE_BUILDS_CPU_TOTAL_PCT': '20',
+    'RG_PROFILE_BUILDS_CPU_QUOTA': '20%',
     'RG_PROFILE_BUILDS_MEMORY_HIGH': '8G',
     'RG_PROFILE_BUILDS_MEMORY_MAX': '11G',
     'RG_PROFILE_BUILDS_MEMORY_SWAP_MAX': '5G',

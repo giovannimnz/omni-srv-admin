@@ -119,10 +119,22 @@ Observed 2026-07-05:
   standard client path is the public edge, not the old SSH or wg0-only route.
   `POST initialize` is the canonical smoke; `/gbrain/health` may be absent on
   some edge revisions and should not be treated as the primary gate.
+- `obsidian`: `10.11.1.11:27124` is the DRG primary private path; public Codex MCP uses `https://mcp.atius.com.br/obsidian`.
 - `browser-mcp`: Chrome executable and `npx` present.
 - `oci-mcp`: `uv`, `oracle-oci-mcp`, and OCI config present.
 - `lab-mcp`: `npx` present.
 - `cloud-ops-mcp`: process env is `missing-env`, but `CF_GLOBAL_API_KEY` is available via `atius-vault-env cloudflare`; use `codex-cloud-ops`.
+
+HTTP contract standard (validated 2026-07-10):
+
+- Raw `GET`/`HEAD` to `https://mcp.atius.com.br/gbrain` and `https://mcp.atius.com.br/obsidian` should return `405` with `Allow: POST, DELETE`.
+- Canonical MCP smoke is not raw `GET`; use authenticated `POST initialize` with:
+  - `Authorization: Bearer $ATIUS_MCP_TOKEN`
+  - `Content-Type: application/json`
+  - `Accept: application/json, text/event-stream`
+- Expected live results:
+  - `gbrain`: `initialize => 200`, `tools/list => 200`
+  - `obsidian`: `initialize => 200`, `notifications/initialized => 202`, `tools/list => 200`
 
 ## Rollback
 

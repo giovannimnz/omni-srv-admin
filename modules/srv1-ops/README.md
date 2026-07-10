@@ -49,10 +49,12 @@ omni srv1-ops run offload-dotbackups
 ## Resource governor
 
 - Perfis: `builds`, `interactive`, `transfers`
+- Regra global de build: `builds` não pode passar de 20% do CPU total do host.
 - Fonte de verdade: `configs/resource-governor.env`
 - Runbook: `docs/operations/resource-governor.md`
 - Logs: `~/.logs/resource-governor/`
 - Runtime override live: `~/.config/omni/resource-governor.runtime.env`
+- Wrapper padrão: `scripts/install-build-cpu-guard.sh` cria symlinks em `~/.local/bin` para comandos de build (`npm`, `pnpm`, `cargo`, `make`, `go`, `podman`, `docker`, etc.) entrarem automaticamente no profile `builds`.
 - Gatilho pós-build: `omni srv1-ops resources run builds -- ...` agenda automaticamente:
   - `cleanup-local.sh` em `CLEANUP_MODE=build-hygiene` após 5 min
   - snapshot após 15 min
@@ -107,6 +109,7 @@ giovanni-drive:ATIUS-SRV/SRV-1/Backup/
 - SRV-1 usa a cadeia `OMNI-OBSIDIAN-REST` para permitir `27124/tcp` para `lo`, peers `wg100` (`10.100.100.2` e `10.100.100.3`) e faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
 - O certificado do plugin deve existir nos clientes em `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`; depois rodar `update-ca-certificates`.
 - SAN obrigatorio do certificado: `127.0.0.1`, `10.11.1.11`, `10.100.100.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
+- `10.11.1.11` e o endpoint primario via DRG para o MCP do Obsidian; `wg100`/`10.100.100.0/24` fica como caminho secundario e nao deve ser publicado como endpoint canonico.
 - Nao instalar Obsidian desktop nem sync Git do vault em SRV-2/SRV-3.
 - Nao publicar o API key do plugin em docs ou repo.
 

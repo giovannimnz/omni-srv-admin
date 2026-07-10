@@ -271,6 +271,21 @@ def test_run_sync_reports_push_failure_after_merge(monkeypatch, repo_pair, tmp_p
     assert result["push_exit_code"] != 0
 
 
+def test_run_sync_honors_auto_push_env_override(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+
+    cfg = _cfg(upstream, fork, [])
+    cfg["auto_push"] = True
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+    monkeypatch.setenv("FORK_SYNC_AUTO_PUSH", "false")
+
+    result = sync_runner.run_sync("env-override")
+
+    assert result["status"] == "success"
+    assert result["push_exit_code"] is None
+
+
 def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair):
     upstream, fork = repo_pair
     _commit_file(fork, "README.md", "fork readme\n", "fork-only change")

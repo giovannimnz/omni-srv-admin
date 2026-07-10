@@ -31,6 +31,13 @@ alertmanager:
     retention: 120h
     nodeSelector:
       kubernetes.io/hostname: atius-srv-1
+    resources:
+      requests:
+        cpu: 450m
+        memory: 256Mi
+      limits:
+        cpu: 450m
+        memory: 512Mi
     storage:
       volumeClaimTemplate:
         spec:

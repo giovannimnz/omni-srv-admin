@@ -1,34 +1,34 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.3
-milestone_name: Local AI Embeddings and Semantic Retrieval
-current_phase: 3
-status: Awaiting next milestone
-stopped_at: Completed 42-01-PLAN.md
-last_updated: "2026-06-28T08:44:21.534Z"
-last_activity: 2026-06-26
-last_activity_desc: Milestone v1.3 completed and archived
+milestone: v1.4
+milestone_name: Atius-wide SSO and Login
+current_phase: 42
+status: Phase 42 in progress; Phase 44 queued behind explicit live gate
+stopped_at: Reconciled roadmap, requirements, milestones, project, and summaries across phases 37, 41, 42, 43, and 44
+last_updated: "2026-07-10T04:45:02.745Z"
+last_activity: 2026-07-10
+last_activity_desc: SSO manuals, learnings routing, and global atius-sso skill refreshed from Phase 42
 progress:
   total_phases: 1
   completed_phases: 0
-  total_plans: 2
-  completed_plans: 1
-  percent: 0
-current_phase_name: Local AI Embeddings Gateway on horistic-srv
+  total_plans: 3
+  completed_plans: 2
+  percent: 67
+current_phase_name: Atius-wide SSO Login on sso.atius.com.br
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-06-16 after Phase 18 added (Ubuntu Pro ESM Apps)
-**Last activity (prior):** 2026-06-15 — Phase 14 / 14-01 execution and main alignment with origin/main
+**Last updated:** 2026-07-10 after SSO manual/skill consolidation
+**Last activity (prior):** 2026-07-10 — Phase 42 learnings and canonical SSO manuals/skill refreshed
 
 ## Project Reference
 
-See: .planning/ROADMAP.md (M004/M005 branch matrix + M006 resource-governor/PM2 hardening)
+See: `.planning/ROADMAP.md`
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** v1.3 — Local AI Embeddings on `horistic-srv` through TEI, New API and `https://router.atius.com.br/v1`.
+**Current focus:** v1.4 — fechar `42-03` para publicar `sso.atius.com.br` com gate de edge, rollback e smoke real, preservando o ATS legado. Phase 44 permanece aberta para a próxima janela com gate explícito de mutação live.
 
 ## Milestones
 
@@ -46,7 +46,10 @@ See also: .planning/MILESTONES.md
 | M008-b | Podman Networking Standardization (Phase 20) | ✅ DONE 2026-06-17 (commit on main) |
 | M009 | MT5 KVM Fleet Onboarding (Phase 21) | ✅ DONE 2026-06-17 (commit on main) |
 | M010 | Horistic rename + rust/zellij (Phase 22) | ✅ DONE 2026-06-17 (commit on main) |
-| M011 | Local AI Embeddings and Semantic Retrieval (Phase 41) | ✅ DONE 2026-06-26 |
+| M011 | Local AI Embeddings and Semantic Retrieval (Phase 41) | ✅ DONE 2026-07-04 |
+| M012 | Atius-wide SSO and Login (Phase 42) | 🚧 IN PROGRESS — 42-01 and 42-02 complete; 42-03 open |
+| M013 | Codex Runtime and MCP Bootstrap Reliability (Phase 43) | ✅ DONE 2026-07-05 |
+| M014 | Internal Service PKI and Fleet Trust (Phase 44) | 🚧 IN PROGRESS — 44-01 complete; 44-02 and 44-03 open |
 
 ## Active Branch Results
 
@@ -146,10 +149,14 @@ See also: .planning/MILESTONES.md
 
 ## Notes
 
+- 2026-07-06: Reconciled the planning surface so `ROADMAP.md`, `REQUIREMENTS.md`, `PROJECT.md`, `MILESTONES.md`, and phase summaries agree on the current state: Phase 37 is complete, Phase 41 is complete with `embedding-gte-v1` on namespace `ebeddings-local`, Phase 42 is in progress with `42-01` and `42-02` complete, Phase 43 is complete, and Phase 44 is in progress with `44-01` complete.
+- 2026-07-05: Phase 43 effectively closed on `GIOVANNI-W11-PC`. The Codex bootstrap now defaults to a lean MCP baseline, heavy MCPs moved to opt-in profiles, and cold-start smoke is documented and repeatable without printing secrets.
+- 2026-07-05: Phase 44 `44-01` closed. `omni fleet trust-pki` exists as a versioned dry-run resource surface with inventory SAN rendering, onboarding/reconcile/rotate flows, allowlisted command shapes, and focused tests. Live CA/trust rollout remains gated in `44-02`.
 - 2026-06-26: Phase 35 closed. Samba moved from `atius-srv-2` to `atius-srv-1`; `srv1` joined `ATIUS.INTERNAL`, `ipa-client-samba` configured the member server, `smbd` and `winbind` are active on `srv1`, `nmbd` remains intentionally disabled, `/srv/Shared` holds the copied `8.8G` share data, `/home/ubuntu/Shared_smb` is now a local bind mount, and Kerberos access passed with `smbclient -k -U ATIUS\\giovanni`. The old Samba service on `srv2` is disabled.
+- 2026-07-06: TEI namespace moved from `ai-search` to `ebeddings-local`. The old namespace was deleted after `ebeddings-local/tei-gte` reached `1/1 Running`, health returned `200` on both `10.100.100.4:3115` and `10.1.1.4:3115`, and a direct embedding smoke returned one 768-dimensional vector with `error=null`. The manifest now pins TEI CPU request/limit at `500m`, binds TEI to `0.0.0.0` for Kubelet health on the K3s node InternalIP, and carries an explicit toleration for `horistic-srv` manual-only taint.
 - 2026-06-26: Phase 36 closed. Keycloak 26.6.3 runs on `atius-srv-1` with Java 21 and private listener `127.0.0.1:8180`; Apache proxies `auth.atius.com.br` locally for controlled smoke; the realm `atius` has LDAP federation to FreeIPA and imported `giovanni`; OIDC password grant passed through client `phase36-smoke`; the legacy Apache/JWT auth path remained unchanged.
 - 2026-06-26: Phases 37-40 were canonized from the already-shipped Production Guard implementation. `status/doctor` foundation, guarded repair dry-run/apply gate, boot/login read-only protocol, and Horistic remote/rename/webhook-safe checks now have canonical phase artifacts and verification under the new roadmap numbering.
-- 2026-07-04: Phase 41 live port migration completed. TEI `Alibaba-NLP/gte-multilingual-base` is running in k3s namespace `ai-search` on `horistic-srv` with private router-facing URL `http://10.1.1.4:3115`; `router-ai-atius` channel `TEI - GTE Embeddings` exposes alias `embedding-gte-v1`; public `POST https://router.atius.com.br/v1/embeddings` smoke returned 2 vectors, 768 dimensions, `error=null`; unauthenticated `/v1/models` remains 401. Tokens were loaded only in an ephemeral shell and no token values were written.
+- 2026-07-04: Phase 41 live port migration completed. TEI `Alibaba-NLP/gte-multilingual-base` is running in k3s on `horistic-srv` with private router-facing URL `http://10.1.1.4:3115`; `router-ai-atius` channel `TEI - GTE Embeddings` exposes alias `embedding-gte-v1`; public `POST https://router.atius.com.br/v1/embeddings` smoke returned 2 vectors, 768 dimensions, `error=null`; unauthenticated `/v1/models` remains 401. Tokens were loaded only in an ephemeral shell and no token values were written.
 - 2026-06-26: Phase 34 closed with real-host FreeIPA pilot. CoreDNS on `atius-srv-2` now forwards `atius.internal` to `10.1.1.3`; `atius-srv-3` privately gateways FreeIPA to the container at `10.89.53.10`; `atius-srv-3` joined `ATIUS.INTERNAL` as `atius-srv-3.atius.internal`; `kinit admin`, `ipa ping`, `getent`, `id`, and `sudo -l -U admin` passed. `horistic-srv` enrollment remains deferred to the next controlled step.
 - 2026-06-26: Started v1.3 Local AI Embeddings and Semantic Retrieval as a separate milestone. Phase 41 plans TEI/GTE in k3s on `horistic-srv`, New API alias `embedding-gte-v1`, public OpenAI-compatible entrypoint `https://router.atius.com.br/v1`, 768-dimension contract, no router self-loop, and GBrain/Obsidian/Graphify migration runbooks without secrets in docs/logs/history.
 - 2026-06-25: Landscape self-hosted became the operator-facing control plane for Atius fleet administration. The Landscape secrets UI OOPS was patched inside LXD `landscape`; the internal Landscape Vault now stores approved break-glass entries for dedicated HashiCorp Vault root token, unseal key, Omni AppRole role/secret ID, and Vaultwarden admin token. No secret values were written to repo docs. Snapshot: `/root/landscape-vault-breakglass-20260626T001545Z.snap` inside LXD `landscape`.
@@ -164,14 +171,16 @@ See also: .planning/MILESTONES.md
 
 ## Current Position
 
-Phase: Milestone v1.3 complete
-Plan: —
-Status: Awaiting next milestone
-Last activity: 2026-06-26 — Milestone v1.3 completed and archived
+Phase: Milestone v1.4 active
+Plan: `42-03`
+Status: In progress; edge/publication gate still open
+Last activity: 2026-07-10
 
 ## Operator Next Steps
 
-- Start the next milestone with /gsd-new-milestone
+- Close `42-03` and promote v1.4 to shipped.
+- Resume `44-02` only after explicit live CA/trust mutation approval.
+- Keep v1.3 and v1.5 as shipped references, not active operator focus.
 
 ## Session Continuity (resumed + closed 2026-06-17)
 

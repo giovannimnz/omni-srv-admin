@@ -212,6 +212,15 @@ def cpu_quota_to_cgroup(value: str) -> str:
     return f'{int(float(quota) * period / 100)} {period}'
 
 
+def profile_cpu_quota_to_cgroup(config: dict[str, str], prefix: str) -> str:
+    total_pct = config.get(prefix + 'CPU_TOTAL_PCT', '').strip()
+    if total_pct:
+        cpus = os.cpu_count() or 1
+        period = 100000
+        return f'{int(float(total_pct) * cpus * period / 100)} {period}'
+    return cpu_quota_to_cgroup(config.get(prefix + 'CPU_QUOTA', '100%'))
+
+
 def memory_to_cgroup(value: str) -> str:
     size = value.strip()
     if not size or size == 'max':
@@ -282,7 +291,7 @@ def profile_limits_from_config(config: dict[str, str]) -> dict[str, dict[str, ob
         rbps = bandwidth_to_cgroup(config.get(prefix + 'IO_READ_BW', 'max'))
         wbps = bandwidth_to_cgroup(config.get(prefix + 'IO_WRITE_BW', 'max'))
         limits[name] = {
-            'cpu': cpu_quota_to_cgroup(config.get(prefix + 'CPU_QUOTA', '100%')),
+            'cpu': profile_cpu_quota_to_cgroup(config, prefix),
             'io': f'{device} rbps={rbps} wbps={wbps} riops=max wiops=max',
             'mem_high': memory_to_cgroup(config.get(prefix + 'MEMORY_HIGH', 'max')),
             'mem': memory_to_cgroup(config.get(prefix + 'MEMORY_MAX', 'max')),

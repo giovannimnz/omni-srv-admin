@@ -7,6 +7,33 @@ grafana:
   enabled: true
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: America/Sao_Paulo
+  resources:
+    requests:
+      cpu: 300m
+      memory: 256Mi
+    limits:
+      cpu: 300m
+      memory: 512Mi
+  initChownData:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 32Mi
+      limits:
+        cpu: 50m
+        memory: 64Mi
+  sidecar:
+    resources:
+      requests:
+        cpu: 75m
+        memory: 64Mi
+      limits:
+        cpu: 75m
+        memory: 128Mi
+    dashboards:
+      enabled: true
+    datasources:
+      enabled: true
   service:
     type: ClusterIP
   ingress:
@@ -32,6 +59,13 @@ alertmanager:
     retention: 120h
     nodeSelector:
       kubernetes.io/hostname: atius-srv-1
+    resources:
+      requests:
+        cpu: 450m
+        memory: 256Mi
+      limits:
+        cpu: 450m
+        memory: 512Mi
     storage:
       volumeClaimTemplate:
         spec:
@@ -58,10 +92,10 @@ prometheus:
       kubernetes.io/hostname: atius-srv-1
     resources:
       requests:
-        cpu: 300m
+        cpu: 450m
         memory: 768Mi
       limits:
-        cpu: "1"
+        cpu: 450m
         memory: 2Gi
     storageSpec:
       volumeClaimTemplate:
@@ -75,6 +109,13 @@ prometheus:
 
 kube-state-metrics:
   releaseLabel: true
+  resources:
+    requests:
+      cpu: 500m
+      memory: 128Mi
+    limits:
+      cpu: 500m
+      memory: 256Mi
 
 nodeExporter:
   enabled: true
@@ -88,10 +129,29 @@ nodeExporter:
 
 prometheus-node-exporter:
   releaseLabel: true
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - horistic-srv
   resources:
     requests:
-      cpu: 50m
+      cpu: 500m
       memory: 64Mi
     limits:
-      cpu: 200m
+      cpu: 500m
       memory: 256Mi
+
+prometheusOperator:
+  prometheusConfigReloader:
+    resources:
+      requests:
+        cpu: 50m
+        memory: 64Mi
+      limits:
+        cpu: 50m
+        memory: 128Mi

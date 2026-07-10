@@ -30,10 +30,10 @@ loki:
     kubernetes.io/hostname: atius-srv-1
   resources:
     requests:
-      cpu: 100m
+      cpu: 500m
       memory: 256Mi
     limits:
-      cpu: "1"
+      cpu: 500m
       memory: 1Gi
   # Single-binary, low-footprint config. 30d retention.
   # path_prefix MUST be /data (the chart mounts the PVC there).
@@ -88,12 +88,21 @@ promtail:
     - -config.file=/etc/promtail/promtail.yaml
   nodeSelector:
     kubernetes.io/os: linux
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+          - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: NotIn
+                values:
+                  - horistic-srv
   resources:
     requests:
-      cpu: 30m
+      cpu: 500m
       memory: 64Mi
     limits:
-      cpu: 200m
+      cpu: 500m
       memory: 128Mi
   # Promtail must run on every node, including control-plane.
   tolerations:

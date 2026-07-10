@@ -3,7 +3,7 @@ Description=Omni build workloads slice
 Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
 
 [Slice]
-CPUQuota=200%
+CPUQuota=20%
 CPUWeight=100
 MemoryHigh=6G
 MemoryMax=8G

@@ -136,6 +136,9 @@ ssh atius-srv-3-direct hostname
   `TbNodeResourcePolicies=3`; SRV-1 has live telemetry in `TbNodeTelemetry`.
 - SRV-1/SRV-2/SRV-3 and `giovanni-w11-pc`: fleet DB env files should point to
   PgBouncer at `10.11.1.11:6432`, with `10.100.100.1:6432` as reserve fallback only.
+- SRV-1/SRV-2/SRV-3/Horistic: `/etc/omni-srv-admin/fleet-db.env` points to
+  PgBouncer at `10.11.1.11:6432`; `giovanni-w11-pc` stays on
+  `10.100.100.1:6432` until direct DRG reachability is validated.
 - PgBouncer auth material remains outside git/log/vault.
 
 ## Ops And Config Rule
@@ -156,9 +159,8 @@ Agent-facing slash commands should be represented in PostgreSQL
 ## SRV-1 PgBouncer Enforcement
 
 Live SRV-1 uses PostgreSQL on `127.0.0.1:8745` and PgBouncer on
-`127.0.0.1:6432` plus the fleet VPN endpoint. The target endpoint is
-`10.11.1.11:6432`. Nodes must use PgBouncer. `10.100.100.1:6432` is reserve only, and direct PostgreSQL on VPN port `8745` is
-blocked from nodes by
+`127.0.0.1:6432` plus `10.11.1.11:6432`. Nodes must use PgBouncer. Direct
+PostgreSQL on `10.11.1.11:8745` is blocked from nodes by
 `omni-pg-access-guard`.
 
 ## Secret Rule

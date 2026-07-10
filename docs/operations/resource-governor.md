@@ -74,7 +74,7 @@ Valores iniciais conservadores. Host atual está apertado em CPU, swap e disco.
 
 | Profile | Slice | Uso | CPU | Memória | I/O |
 |---|---|---|---|---|---|
-| `builds` | `omni-builds.slice` | `podman build`, `make`, `cargo`, `bun build`, `next build` | `200%` | `6G / 8G / swap 1G` | `80M read / 40M write` |
+| `builds` | `omni-builds.slice` | `podman build`, `make`, `cargo`, `bun build`, `next build` | `20% do CPU total do host` | `6G / 8G / swap 1G` | `80M read / 40M write` |
 | `interactive` | `omni-interactive.slice` | `code`, `obsidian`, Electron/Codex Desktop quando necessário | `125%` | `4G / 6G / swap 512M` | `60M read / 30M write` |
 | `transfers` | `omni-transfers.slice` | `rclone`, `rsync`, offload, backup | `100%` | `1G / 2G / swap 256M` | `407M read / 90M write` |
 
@@ -163,6 +163,30 @@ O que fazer:
 ## Gatilho pós-workload
 
 O wrapper `omni srv1-ops resources run ...` já pensa em garbage collection.
+
+Regra global 2026-07-06: todo build deve entrar no profile `builds` e ficar
+limitado a 20% do CPU total do host. Em host com 4 vCPU, isso vira
+`CPUQuota=80%` no cgroup (`cpu.max=80000 100000`). Em host com 8 vCPU, vira
+`CPUQuota=160%`. O campo `RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20` é a fonte de
+verdade; `RG_PROFILE_BUILDS_CPU_QUOTA=20%` fica como fallback conservador para
+instalações antigas.
+
+Essa regra tambem deve estar presente em `~/.codex/AGENTS.md` e no
+`AGENTS.md` do repo em `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e
+`horistic-srv`, para impedir agentes de IA de rodarem build cru fora do
+profile `builds`.
+
+Para tornar isso padrão em shells humanos e automações que chamam comandos
+direto, instalar os wrappers:
+
+```bash
+modules/srv1-ops/scripts/install-build-cpu-guard.sh
+```
+
+Os wrappers cobrem `npm`, `pnpm`, `yarn`, `bun`, `npx`, `cargo`, `rustc`,
+`gcc`, `g++`, `clang`, `make`, `ninja`, `cmake --build`, `go`, `node-gyp`,
+`podman build`, `docker build`, `next`, `vite`, `webpack`, `turbo`, `nx`,
+`tsc`, `tsup`, `rollup` e `esbuild`.
 
 Regra atual:
 
@@ -267,7 +291,7 @@ via `-p` ao `systemd-run --scope`.
 
 Problemas observados:
 
-- `cpu.max` fica `max 100000` (unlimited) mesmo com `CPUQuota=200%`
+- `cpu.max` fica `max 100000` (unlimited) mesmo com `CPUQuota=<quota efetiva>`
 - `io.max` fica vazio mesmo com `IOReadBandwidthMax=60M`
 - `MemoryMax`, `MemoryHigh`, `TasksMax` funcionam normalmente
 - Só as propriedades do `memory` e `pids` controllers são aplicadas

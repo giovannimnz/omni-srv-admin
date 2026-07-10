@@ -28,7 +28,17 @@ production-ready, but it is not active in these templates.
 | `k8s/portainer-values.yaml` | Helm values for Portainer CE LTS |
 | `k8s/kube-prometheus-stack-values.yaml` | Helm values for Prometheus/Grafana observability |
 | `k8s/cloudflared-deployment.yaml` | Cloudflare Tunnel deployment without token |
+| `k8s/cpu-20-defaults.yaml` | Namespace `LimitRange` defaulting managed containers to `500m` CPU |
+| `k8s/pod-500m-strict.yaml` | Workload namespace `LimitRange` enforcing pod CPU max `500m` |
 | `logrotate/docker-json-containers` | Docker JSON log rotation installed during preflight on SRV-2/SRV-3 |
+
+## Resource Unit
+
+Managed k3s workloads use `1 pod = 500m CPU = 0.5 host CPU/vCPU`.
+Two replicas/pods at this standard equal `1000m`, or one full CPU core. Because
+Kubernetes accounts CPU per container, one-container pods must set
+`requests.cpu=500m` and `limits.cpu=500m`; multi-container pods must split that
+same pod budget explicitly.
 
 ## Still Required Before Install
 

@@ -82,6 +82,13 @@ def _tail(text: str, limit: int = 4000) -> str:
     return text[-limit:]
 
 
+def _auto_push_enabled(cfg: dict) -> bool:
+    override = os.environ.get("FORK_SYNC_AUTO_PUSH")
+    if override is not None:
+        return _as_bool(override, default=False)
+    return _as_bool(cfg.get("auto_push"), default=False)
+
+
 def _format_path(value: str, *, project: str, repo: Path) -> Path:
     formatted = value.format(project=project, repo=str(repo), repo_name=repo.name)
     return Path(formatted).expanduser().resolve()
@@ -537,7 +544,7 @@ def run_sync(
                 }
             )
             return result
-        if not dry_run and str(cfg.get("auto_push", False)).lower() == "true":
+        if not dry_run and _auto_push_enabled(cfg):
             push = _git(repo, ["push", "origin", branch], check=False)
             push_stdout = push.stdout
             push_stderr = push.stderr
@@ -661,7 +668,7 @@ def run_sync(
     push_stdout = ""
     push_stderr = ""
     push_exit_code = None
-    if str(cfg.get("auto_push", False)).lower() == "true":
+    if _auto_push_enabled(cfg):
         push = _git(repo, ["push", "origin", branch], check=False)
         push_stdout = push.stdout
         push_stderr = push.stderr

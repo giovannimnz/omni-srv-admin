@@ -2,15 +2,34 @@
 apiVersion: v1
 kind: Namespace
 metadata:
-  name: ai-search
+  name: ebeddings-local
   labels:
     app.kubernetes.io/part-of: local-ai-embeddings
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-20-defaults
+  namespace: ebeddings-local
+  labels:
+    managed-by: omni-srv-admin
+    atius.com/cpu-unit: pod-500m
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+      defaultRequest:
+        cpu: 500m
+    - type: Pod
+      max:
+        cpu: 500m
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
   name: tei-gte-cache
-  namespace: ai-search
+  namespace: ebeddings-local
   labels:
     app.kubernetes.io/name: tei-gte
     app.kubernetes.io/component: embeddings-backend
@@ -26,7 +45,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: tei-gte
-  namespace: ai-search
+  namespace: ebeddings-local
   labels:
     app.kubernetes.io/name: tei-gte
     app.kubernetes.io/component: embeddings-backend
@@ -38,8 +57,8 @@ metadata:
     embeddings.atius.com.br/dimensions: "768"
     embeddings.atius.com.br/revision: main
     embeddings.atius.com.br/revision-note: pin-to-huggingface-commit-after-first-live-validation
-    embeddings.atius.com.br/cpu-request: 1000m
-    embeddings.atius.com.br/cpu-limit: 2000m
+    embeddings.atius.com.br/cpu-request: 500m
+    embeddings.atius.com.br/cpu-limit: 500m
     embeddings.atius.com.br/memory-request: 6Gi
     embeddings.atius.com.br/memory-limit: 12Gi
     embeddings.atius.com.br/tokenization-workers: "1"
@@ -61,6 +80,11 @@ spec:
     spec:
       nodeSelector:
         kubernetes.io/hostname: horistic-srv
+      tolerations:
+        - key: atius.com/manual-only
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
       hostNetwork: true
       dnsPolicy: None
       dnsConfig:
@@ -68,7 +92,7 @@ spec:
           - 1.1.1.1
           - 8.8.8.8
         searches:
-          - ai-search.svc.cluster.local
+          - ebeddings-local.svc.cluster.local
           - svc.cluster.local
           - cluster.local
         options:
@@ -89,7 +113,7 @@ spec:
             - --served-model-name
             - embedding-gte-v1
             - --hostname
-            - 10.1.1.4
+            - 0.0.0.0
             - --port
             - "3115"
             - --dtype
@@ -116,10 +140,10 @@ spec:
               containerPort: 9000
           resources:
             requests:
-              cpu: 1000m
+              cpu: 500m
               memory: 6Gi
             limits:
-              cpu: 2000m
+              cpu: 500m
               memory: 12Gi
           volumeMounts:
             - name: model-cache
@@ -159,13 +183,13 @@ apiVersion: v1
 kind: Service
 metadata:
   name: tei-gte
-  namespace: ai-search
+  namespace: ebeddings-local
   labels:
     app.kubernetes.io/name: tei-gte
     app.kubernetes.io/component: embeddings-backend
     app.kubernetes.io/part-of: local-ai-embeddings
   annotations:
-    embeddings.atius.com.br/internal-base-url: http://10.1.1.4:3115
+    embeddings.atius.com.br/internal-base-url: http://10.100.100.4:3115
 spec:
   type: ClusterIP
   selector:

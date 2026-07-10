@@ -204,6 +204,13 @@ function Invoke-KnowledgeSmoke {
     }
   }
 
+  $reachable = Test-NetConnection -ComputerName "10.11.1.11" -Port 27124 -InformationLevel Quiet
+  if ($reachable) {
+    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "ok" "10.11.1.11:27124 reachable"))
+  } else {
+    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "unreachable" "10.11.1.11:27124 not reachable" "Check DRG/VPN reachability before enabling Obsidian MCP."))
+  }
+
   $token = Get-EnvValue "ATIUS_MCP_TOKEN"
   if ($token) {
     $results.Add((New-SmokeResult "knowledge-mcp" "ATIUS_MCP_TOKEN" "ok" "present in environment"))

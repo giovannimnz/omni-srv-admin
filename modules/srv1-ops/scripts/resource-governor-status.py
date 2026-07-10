@@ -73,6 +73,14 @@ def load_config() -> dict[str, str]:
     return data
 
 
+def effective_cpu_quota(config: dict[str, str], prefix: str) -> str:
+    total_pct = config.get(prefix + 'CPU_TOTAL_PCT', '').strip()
+    if total_pct:
+        cpus = os.cpu_count() or 1
+        return f'{float(total_pct) * cpus:g}% ({total_pct}% total host CPU, cpus={cpus})'
+    return config.get(prefix + 'CPU_QUOTA', '?')
+
+
 def run(cmd: list[str], env: dict[str, str] | None = None) -> str:
     proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
     return proc.stdout.strip() or proc.stderr.strip()
@@ -224,7 +232,7 @@ def main() -> int:
     print('profiles:')
     for profile in ('BUILDS', 'INTERACTIVE', 'TRANSFERS'):
         prefix = f'RG_PROFILE_{profile}_'
-        print(f"- {profile.lower()}: slice={config.get(prefix + 'SLICE', '?')} cpu={config.get(prefix + 'CPU_QUOTA', '?')} mem_high={config.get(prefix + 'MEMORY_HIGH', '?')} mem_max={config.get(prefix + 'MEMORY_MAX', '?')} swap_max={config.get(prefix + 'MEMORY_SWAP_MAX', '?')} io_read={config.get(prefix + 'IO_READ_BW', '?')} io_write={config.get(prefix + 'IO_WRITE_BW', '?')}")
+        print(f"- {profile.lower()}: slice={config.get(prefix + 'SLICE', '?')} cpu={effective_cpu_quota(config, prefix)} mem_high={config.get(prefix + 'MEMORY_HIGH', '?')} mem_max={config.get(prefix + 'MEMORY_MAX', '?')} swap_max={config.get(prefix + 'MEMORY_SWAP_MAX', '?')} io_read={config.get(prefix + 'IO_READ_BW', '?')} io_write={config.get(prefix + 'IO_WRITE_BW', '?')}")
 
     print('')
     print('repo_units:')
