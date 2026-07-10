@@ -15,7 +15,7 @@ PYTHONPATH=/home/ubuntu/GitHub/omni-srv-admin/cli \
   python3 -m omni srv autoclean all --apply
 ```
 
-Use `OMNI_SRV_PUBLIC_FIRST=1` quando a VPN `10.1.1.0/24` estiver fora e os
+Use `OMNI_SRV_PUBLIC_FIRST=1` quando a VPN `10.100.100.0/24` estiver fora e os
 IPs publicos estiverem respondendo.
 
 ## Safety

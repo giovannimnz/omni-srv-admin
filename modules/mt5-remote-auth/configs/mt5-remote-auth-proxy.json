@@ -9,7 +9,7 @@
   "routes": {
     "1": {
       "basePath": "/mt5/1",
-      "upstream": "http://10.1.1.3:6081",
+      "upstream": "http://10.100.100.3:6081",
       "requiredPermission": "can_access_trade",
       "staticRoot": "/var/www/remote-mt5"
     }

@@ -101,12 +101,12 @@ giovanni-drive:ATIUS-SRV/SRV-1/Backup/
 ## Obsidian REST endpoint
 
 - SRV-1 mantem o Obsidian AppImage aberto via user unit `obsidian-aisecondbrain-rest.service`.
-- O plugin `obsidian-local-rest-api` fica no vault `AiSecondBrain` e escuta somente `10.1.1.1:27124`.
-- SRV-2/SRV-3 acessam `https://10.1.1.1:27124` e `https://10.1.1.1:27124/mcp/` direto pela VPN interna.
+- O plugin `obsidian-local-rest-api` fica no vault `AiSecondBrain` e escuta primariamente `10.11.1.11:27124`.
+- SRV-2/SRV-3 acessam `https://10.11.1.11:27124` e `https://10.11.1.11:27124/mcp/` pela malha OCI/DRG; `wg100` fica como reserve path.
 - Nao criar tunnel systemd em SRV-2/SRV-3 para esse endpoint.
-- SRV-1 usa `omni-obsidian-rest-access-guard.service` para permitir `27124/tcp` apenas para `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`.
+- SRV-1 usa a cadeia `OMNI-OBSIDIAN-REST` para permitir `27124/tcp` para `lo`, peers `wg100` (`10.100.100.2` e `10.100.100.3`) e faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
 - O certificado do plugin deve existir nos clientes em `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`; depois rodar `update-ca-certificates`.
-- SAN obrigatorio do certificado: `127.0.0.1`, `10.1.1.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
+- SAN obrigatorio do certificado: `127.0.0.1`, `10.11.1.11`, `10.100.100.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
 - Nao instalar Obsidian desktop nem sync Git do vault em SRV-2/SRV-3.
 - Nao publicar o API key do plugin em docs ou repo.
 

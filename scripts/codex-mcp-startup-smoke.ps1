@@ -40,6 +40,18 @@ function Test-EnvPresent {
   return $false
 }
 
+function Get-EnvValue {
+  param([string] $Name)
+
+  foreach ($scope in @("Process", "User", "Machine")) {
+    $value = [Environment]::GetEnvironmentVariable($Name, $scope)
+    if ($value) {
+      return $value
+    }
+  }
+  return $null
+}
+
 function Get-VaultExportNames {
   param([string] $VaultProfile)
 
@@ -59,6 +71,64 @@ function Get-VaultExportNames {
     }
   }
   return $names
+}
+
+function Invoke-CurlRequest {
+  param(
+    [ValidateSet("GET", "POST")]
+    [string] $Method,
+    [string] $Uri,
+    [hashtable] $Headers = @{},
+    [string] $Body = ""
+  )
+
+  $headerFile = New-TemporaryFile
+  $bodyFile = New-TemporaryFile
+  $requestBodyFile = $null
+
+  try {
+    $curlArgs = @("-sS", "-D", $headerFile.FullName, "-o", $bodyFile.FullName, "-X", $Method, $Uri)
+
+    foreach ($key in $Headers.Keys) {
+      $curlArgs += @("-H", "${key}: $($Headers[$key])")
+    }
+
+    if ($Body) {
+      $requestBodyFile = New-TemporaryFile
+      Set-Content -LiteralPath $requestBodyFile.FullName -Value $Body -NoNewline
+      $curlArgs += @("-H", "Content-Type: application/json", "--data-binary", "@$($requestBodyFile.FullName)")
+    }
+
+    & curl.exe @curlArgs | Out-Null
+    if ($LASTEXITCODE -ne 0) {
+      throw "curl exited with code $LASTEXITCODE"
+    }
+
+    $headerLines = Get-Content -LiteralPath $headerFile.FullName
+    $statusLine = ($headerLines | Where-Object { $_ -match '^HTTP/' } | Select-Object -Last 1)
+    if (-not $statusLine) {
+      throw "missing HTTP status line"
+    }
+
+    $statusCode = [int](($statusLine -split '\s+')[1])
+    $parsedHeaders = @{}
+    foreach ($line in $headerLines) {
+      if ($line -match '^(?<name>[^:]+):\s*(?<value>.*)$') {
+        $parsedHeaders[$matches.name] = $matches.value.Trim()
+      }
+    }
+
+    [pscustomobject]@{
+      StatusCode = $statusCode
+      Headers = $parsedHeaders
+      Body = (Get-Content -LiteralPath $bodyFile.FullName -Raw)
+    }
+  } finally {
+    Remove-Item -LiteralPath $headerFile.FullName, $bodyFile.FullName -Force -ErrorAction SilentlyContinue
+    if ($requestBodyFile) {
+      Remove-Item -LiteralPath $requestBodyFile.FullName -Force -ErrorAction SilentlyContinue
+    }
+  }
 }
 
 function Test-ProfileFile {
@@ -118,13 +188,86 @@ function Invoke-BaselineSmoke {
 
 function Invoke-KnowledgeSmoke {
   $results = [System.Collections.Generic.List[object]]::new()
-  $results.Add((Test-ProfileFile "knowledge-mcp"))
+  $profileResult = Test-ProfileFile "knowledge-mcp"
+  $results.Add($profileResult)
 
-  $reachable = Test-NetConnection -ComputerName "10.1.1.1" -Port 27124 -InformationLevel Quiet
-  if ($reachable) {
-    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "ok" "10.1.1.1:27124 reachable"))
+  if ($profileResult.status -eq "ok") {
+    $profileText = Get-Content -LiteralPath $profileResult.detail -Raw
+    $hasNewNames = $profileText -match '\[mcp_servers\.gbrain_http\]' -and $profileText -match '\[mcp_servers\.obsidian_http\]'
+    $hasRetiredNames = $profileText -match '\[mcp_servers\.obsidian_rest\]' -or $profileText -match '\[mcp_servers\.http_gbrain\]' -or $profileText -match '\[mcp_servers\.http_obsidian\]'
+    $hasHardcodedBearer = $profileText -match 'Authorization\s*=\s*"Bearer\s+'
+
+    if ($hasNewNames -and -not $hasRetiredNames -and -not $hasHardcodedBearer) {
+      $results.Add((New-SmokeResult "knowledge-mcp" "profile-contract" "ok" "profile uses gbrain_http/obsidian_http without hardcoded bearer"))
+    } else {
+      $results.Add((New-SmokeResult "knowledge-mcp" "profile-contract" "slow-start" "profile drift: expected gbrain_http + obsidian_http via ATIUS_MCP_TOKEN, no hardcoded bearer" "Rewrite C:\\Users\\muniz\\.codex\\knowledge-mcp.config.toml to the current ATIUS MCP standard."))
+    }
+  }
+
+  $token = Get-EnvValue "ATIUS_MCP_TOKEN"
+  if ($token) {
+    $results.Add((New-SmokeResult "knowledge-mcp" "ATIUS_MCP_TOKEN" "ok" "present in environment"))
   } else {
-    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "unreachable" "10.1.1.1:27124 not reachable" "Check WireGuard/VPN before enabling Obsidian MCP."))
+    $vaultNames = Get-VaultExportNames "atius-mcp"
+    if ($vaultNames -contains "ATIUS_MCP_TOKEN") {
+      $results.Add((New-SmokeResult "knowledge-mcp" "ATIUS_MCP_TOKEN" "missing-env" "not loaded in process; available via atius-vault-env" "Restart Codex Desktop or load atius-vault-env atius-mcp before running MCP smokes."))
+    } else {
+      $results.Add((New-SmokeResult "knowledge-mcp" "ATIUS_MCP_TOKEN" "missing-env" "not loaded and not exported by vault wrapper"))
+    }
+    return $results
+  }
+
+  $headers = @{
+    "Authorization" = "Bearer $token"
+    "Accept" = "application/json, text/event-stream"
+  }
+
+  $initializeBody = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"codex-mcp-startup-smoke","version":"1.0"}}}'
+
+  try {
+    $gbrainHealth = Invoke-CurlRequest -Method GET -Uri "https://mcp.atius.com.br/gbrain/health"
+    if ($gbrainHealth.StatusCode -eq 404) {
+      $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-health" "ok" "status=404; public edge reachable; /health not exposed on current edge"))
+    } else {
+      $healthStatus = if ($gbrainHealth.StatusCode -ge 200 -and $gbrainHealth.StatusCode -lt 300) { "ok" } else { "slow-start" }
+      $healthNext = if ($healthStatus -eq "ok") { "" } else { "Expected 2xx or the known 404-not-exposed behavior from the public GBrain health endpoint." }
+      $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-health" $healthStatus "status=$([int]$gbrainHealth.StatusCode); public edge reachable" $healthNext))
+    }
+  } catch {
+    $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-health" "unreachable" $_.Exception.Message "Check public DNS/edge routing to mcp.atius.com.br."))
+  }
+
+  try {
+    $gbrainInit = Invoke-CurlRequest -Method POST -Uri "https://mcp.atius.com.br/gbrain" -Headers $headers -Body $initializeBody
+    $gbrainStatus = if ($gbrainInit.StatusCode -ge 200 -and $gbrainInit.StatusCode -lt 300) { "ok" } else { "slow-start" }
+    $gbrainNext = if ($gbrainStatus -eq "ok") { "" } else { "Expected 2xx from MCP initialize on /gbrain." }
+    $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-initialize" $gbrainStatus "status=$([int]$gbrainInit.StatusCode); MCP initialize probe returned" $gbrainNext))
+  } catch {
+    $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-initialize" "unreachable" $_.Exception.Message "Check ATIUS_MCP_TOKEN or the GBrain MCP edge."))
+  }
+
+  try {
+    $obsidianInit = Invoke-CurlRequest -Method POST -Uri "https://mcp.atius.com.br/obsidian" -Headers $headers -Body $initializeBody
+    $sessionId = $obsidianInit.Headers["Mcp-Session-Id"]
+    if ($sessionId) {
+      $notifyHeaders = @{
+        "Authorization" = "Bearer $token"
+        "Accept" = "application/json, text/event-stream"
+        "Mcp-Session-Id" = $sessionId
+      }
+      $notifyBody = '{"jsonrpc":"2.0","method":"notifications/initialized","params":{}}'
+      Invoke-CurlRequest -Method POST -Uri "https://mcp.atius.com.br/obsidian" -Headers $notifyHeaders -Body $notifyBody | Out-Null
+    }
+    $detail = if ($sessionId) {
+      "status=$([int]$obsidianInit.StatusCode); MCP initialize succeeded; session header present"
+    } else {
+      "status=$([int]$obsidianInit.StatusCode); MCP initialize succeeded; session header missing"
+    }
+    $obsidianStatus = if ($obsidianInit.StatusCode -ge 200 -and $obsidianInit.StatusCode -lt 300 -and $sessionId) { "ok" } else { "slow-start" }
+    $obsidianNext = if ($obsidianStatus -eq "ok") { "" } else { "Expected 2xx plus Mcp-Session-Id from MCP initialize on /obsidian." }
+    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-initialize" $obsidianStatus $detail $obsidianNext))
+  } catch {
+    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-initialize" "unreachable" $_.Exception.Message "Check ATIUS_MCP_TOKEN, Obsidian plugin state, or MCP session negotiation."))
   }
 
   return $results

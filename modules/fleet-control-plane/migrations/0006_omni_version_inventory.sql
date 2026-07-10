@@ -28,7 +28,7 @@ CREATE INDEX IF NOT EXISTS "IdxTbVersionObservedAt"
 
 INSERT INTO "TbVersion" (host_id, component, source, metadata)
 SELECT "TbHosts".id, 'omni-srv-admin', 'migration',
-       '{"github_repo":"giovannimnz/omni-srv-admin","expected_transport":"vpn","db_endpoint":"10.1.1.1:6432"}'::jsonb
+       '{"github_repo":"giovannimnz/omni-srv-admin","expected_transport":"vpn","db_endpoint":"10.11.1.11:6432","reserve_db_endpoint":"10.100.100.1:6432"}'::jsonb
 FROM "TbHosts"
 ON CONFLICT (host_id, component) DO UPDATE SET
     metadata = "TbVersion".metadata || EXCLUDED.metadata,

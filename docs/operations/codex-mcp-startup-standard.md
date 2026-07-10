@@ -2,6 +2,10 @@
 
 Status: active on `GIOVANNI-W11-PC` since 2026-07-05.
 
+Detailed MCP protocol, topology, validation, and production behavior for the
+shared GBrain/Obsidian knowledge endpoints live in
+[Codex GBrain + Obsidian MCP Contract](./codex-gbrain-obsidian-mcp.md).
+
 ## Goal
 
 Keep normal Codex startup lean. MCPs that depend on external services, browsers,
@@ -107,9 +111,14 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-sm
 
 Observed 2026-07-05:
 
-- `knowledge-mcp`: `10.1.1.1:27124` reachable.
-- `gbrain`: SRV-1 HTTP MCP reachable on local backend `127.0.0.1:3131`
-  and public health `https://mcp.atius.com.br/gbrain/health`.
+- `knowledge-mcp`: validate `ATIUS_MCP_TOKEN`, public GBrain health
+  `https://mcp.atius.com.br/gbrain/health` when exposed, MCP `initialize` on
+  `https://mcp.atius.com.br/gbrain`, and session-aware MCP `initialize` on
+  `https://mcp.atius.com.br/obsidian`.
+- `gbrain`: SRV-1 HTTP MCP remains on local backend `127.0.0.1:3131`; the
+  standard client path is the public edge, not the old SSH or wg0-only route.
+  `POST initialize` is the canonical smoke; `/gbrain/health` may be absent on
+  some edge revisions and should not be treated as the primary gate.
 - `browser-mcp`: Chrome executable and `npx` present.
 - `oci-mcp`: `uv`, `oracle-oci-mcp`, and OCI config present.
 - `lab-mcp`: `npx` present.
@@ -132,7 +141,7 @@ Copy-Item -LiteralPath C:\Users\muniz\.codex\backups\cloudflare-plugin.mcp.phase
 Restore the remote Vault exporter:
 
 ```powershell
-ssh -T -i C:\Users\muniz\.ssh\private.pem ubuntu@10.1.1.1 "ssh -T atius-srv-3-vpn 'sudo cp /root/atius-vault-export-env.phase43-20260705-073221.bak /usr/local/sbin/atius-vault-export-env && sudo chmod 700 /usr/local/sbin/atius-vault-export-env'"
+ssh -T -i C:\Users\muniz\.ssh\private.pem ubuntu@10.100.100.1 "ssh -T atius-srv-3-vpn 'sudo cp /root/atius-vault-export-env.phase43-20260705-073221.bak /usr/local/sbin/atius-vault-export-env && sudo chmod 700 /usr/local/sbin/atius-vault-export-env'"
 ```
 
 Do not paste secret values into chat, docs, shell history, Obsidian, GBrain, or

@@ -5,9 +5,10 @@ aliases:
 role: development
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.2
+  ssh: ubuntu@10.100.100.2
   public_ip: 129.148.47.32
-  vpn_ip: 10.1.1.2
+  vpn_ip: 10.100.100.2
+  oci_private_ip: 10.12.1.12
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -100,7 +101,7 @@ forks:
     state: worktree-only
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
   configured: true
 notes:
@@ -108,6 +109,10 @@ notes:
   desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
   knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
   codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
+  wg100_readdress: "2026-07-10: `wg100`/10.100.100.2 remains reserve fallback only; the canonical private service path for SRV-2 is `oci_private_ip=10.12.1.12`."
+  dns_validation: "2026-07-10: on srv-2, dig @10.11.1.11 and dig @10.100.100.1 both resolve atius-srv-1/2/3 and horistic-srv to 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21; local resolvectl config still needs DRG promotion."
+  oci_primary_validation: "2026-07-08: attached secondary VNIC 10.12.1.12, added peer OCI CIDR routes, and validated connectivity to 10.11.1.11:{53,6432,27124}, 10.13.1.13:{8088,8202,8203}, and 10.21.1.21:3115."
+  k3s_phase16_blocker: "2026-07-10: live K3s already reports INTERNAL-IP 10.12.1.12 and etcd binds both 10.12.1.12 and 10.100.100.2; remaining blocker is local resolver/env/docs drift that still prefer wg100."
 oci:
   last_snapshot_id: "pending-ef73658b-77ae-4ccf-a46b-0d939692c21e"
   last_snapshot_at: "2026-06-18T01:38:21Z"

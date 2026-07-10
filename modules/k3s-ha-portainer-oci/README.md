@@ -8,7 +8,7 @@ template generation. Live installation remains gated by OCI snapshots,
 OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
 SRV-1, SRV-2 and SRV-3 are in separate OCI accounts, so all OCI gates are
 validated per account; there is no shared NSG/VCN assumption.
-The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
+The K3s node network is now canonically the OCI/DRG private plane (`10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.21.1.21`), with `wg100` / `10.100.100.0/24` retained as reserve dual-bind only.
 The templates also pin K3s critical server values consistently across all
 three servers: `cluster-cidr=10.42.0.0/16`, `service-cidr=10.43.0.0/16`,
 `cluster-dns=10.43.0.10`, `cluster-domain=cluster.local`,

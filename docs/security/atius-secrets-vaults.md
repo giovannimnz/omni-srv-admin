@@ -8,7 +8,7 @@
 | Layer | Product | Endpoint | Exposure | Purpose |
 |---|---|---|---|---|
 | Human password vault | Vaultwarden | `https://vault.atius.com.br` | Public HTTPS through SRV1 Apache | Human usernames/passwords and emergency access only |
-| Machine secrets vault | HashiCorp Vault | `https://10.1.1.3:8202` | WireGuard/private only | Primary backend for app tokens, automation credentials, AppRole and admin break-glass material |
+| Machine secrets vault | HashiCorp Vault | `https://10.13.1.13:8202` | OCI private/DRG primary, `wg100` reserve | Primary backend for app tokens, automation credentials, AppRole and admin break-glass material |
 | Landscape secrets UI | Landscape self-hosted + bridge to dedicated HashiCorp Vault | Public HTTPS via SRV1 -> SRV3 | Operator-visible control plane | View/edit administrative records backed by the dedicated HashiCorp Vault |
 
 Landscape is the operational control plane for the fleet. Use it to administer hosts, run controlled scripts, view package/security state, and manage selected secrets records. The dedicated private HashiCorp Vault is the primary machine/automation secrets engine. Vaultwarden remains for human credentials only.
@@ -135,7 +135,7 @@ Host:
 - Container: `vaultwarden-atius`
 - Service: `container-vaultwarden-atius.service`
 - Public URL: `https://vault.atius.com.br`
-- Private upstream: `http://10.1.1.3:8088`
+- Private upstream: `http://10.100.100.3:8088`
 - Data directory: `/srv/vaultwarden-atius/data`
 - Backup directory: `/srv/vaultwarden-atius/backups`
 - Secret env: `/root/vaultwarden-atius/vaultwarden.env`
@@ -182,8 +182,8 @@ Host:
 - Runtime host: `atius-srv-3`
 - Container: `hashicorp-vault-atius`
 - Service: `container-hashicorp-vault-atius.service`
-- Private URL: `https://10.1.1.3:8202`
-- Cluster port: `10.1.1.3:8203`
+- Private URL: `https://10.13.1.13:8202`
+- Cluster port: `10.100.100.3:8203`
 - Storage: integrated raft
 - Config directory: `/srv/hashicorp-vault-atius/config`
 - Data directory: `/srv/hashicorp-vault-atius/data`
@@ -195,8 +195,8 @@ Host:
 
 Security baseline:
 
-- Bound only to WireGuard IP `10.1.1.3`
-- TLS enabled with local certificate for `secrets.atius.internal`, `vault-internal.atius.internal`, `10.1.1.3`, and `127.0.0.1`
+- Bound only to WireGuard IP `10.100.100.3`
+- TLS enabled with local certificate for `secrets.atius.internal`, `vault-internal.atius.internal`, `10.100.100.3`, and `127.0.0.1`
 - Initialized and unsealed
 - KV v2 enabled at `kv/`
 - AppRole enabled

@@ -104,7 +104,7 @@ Snapshot operacional principal:
 | `aion.atius.com.br` | A | `137.131.190.161` | proxied |
 | `router.atius.com.br` | A | `137.131.190.161` | proxied |
 | `wayland.atius.com.br` | A/CNAME | edge SRV-1 -> SRV-3 `25808` | proxied |
-| `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> GBrain `127.0.0.1:3131` | proxied |
+| `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> multiplexed MCP edge: GBrain `127.0.0.1:3131` via `/gbrain`, Obsidian `10.11.1.11:27124` via `/obsidian` | proxied |
 | `landscape.atius.com.br` | A/CNAME | edge SRV-1/SRV-3, validar vhost | proxied |
 | `portainer.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
 | `docker.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
@@ -151,8 +151,12 @@ Validação 2026-07-05:
   `127.0.0.1:3003`, mas nao ha listener em `3003`.
 - `wayland.atius.com.br/api/auth/status` retorna `200`; runtime live no
   SRV-3 com `PORT=25808`.
-- `mcp.atius.com.br/gbrain/health` retorna `200`; backend GBrain escuta
-  local-only em `127.0.0.1:3131`.
+- `mcp.atius.com.br/gbrain` aceita MCP `initialize` com `200`; backend GBrain
+  escuta local-only em `127.0.0.1:3131`.
+- `mcp.atius.com.br/gbrain/health` pode nao estar exposto no edge atual; nao
+  usar esse path como gate principal quando `initialize` ja estiver verde.
+- `mcp.atius.com.br/obsidian` e MCP `initialize` passam quando o bearer
+  `ATIUS_MCP_TOKEN` e a sessao MCP estao corretos.
 - `landscape.atius.com.br/` retorna `302`; reconciliar vhost/porta live antes
   de declarar porta `6554` como ativa.
 

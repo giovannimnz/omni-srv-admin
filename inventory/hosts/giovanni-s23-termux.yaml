@@ -5,8 +5,8 @@ aliases:
 role: mobile-node
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.6:8022
-  vpn_ip: 10.1.1.6
+  ssh: ubuntu@10.100.100.6:8022
+  vpn_ip: 10.100.100.6
 platform:
   provider: android-termux
   device: samsung-galaxy-s23
@@ -25,10 +25,11 @@ backup:
   gdrive_base: ATIUS-SRV/GIOVANNI-S23/Backup
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
-  last_readdressed: 2026-06-17
+  last_readdressed: 2026-07-06
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-S23
-  dns_validation: "CoreDNS and fleet /etc/hosts resolve GIOVANNI-S23 to 10.1.1.6."
-  client_config: "/home/ubuntu/.secure/omni-srv-admin/wireguard-rotation-20260617-142224/client-configs/GIOVANNI-S23-wg0-10.1.1.6.conf"
-  live_handshake: "2026-06-26: SRV1 reached ubuntu@10.1.1.6:8022; Termux reported HOME=/data/data/com.termux/files/home and vault clean/aligned."
+  dns_validation: "2026-07-08: canonical wg100 DNS server for mobile peers is 10.100.100.1; direct device-side resolver validation on the S23 is still pending."
+  client_config: "10.100.100.6/32 active as of 2026-07-06; old 10.1.1.6:8022 no longer reachable in live probes."
+  live_handshake: "2026-07-06: TCP 8022 open on 10.100.100.6 from srv2 and Windows."
   codex_gbrain_obsidian: "2026-06-26: Codex and Hermes configured with GBrain and Obsidian MCP bridges over restricted SSH to SRV1."
+  retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.6 references are historical evidence only."

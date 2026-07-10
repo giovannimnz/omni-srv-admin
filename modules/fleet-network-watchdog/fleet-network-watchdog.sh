@@ -12,10 +12,11 @@
 # (MagicDNS sem resolvers). Resultado: SERVFAIL em todas as queries.
 #
 # Sistema-alvo:
-#   - Hosts com systemd-resolved (SRV-1, SRV-3): rewrite resolv.conf com
-#     127.0.0.53 (stub local) + peer WireGuard + Cloudflare fallback.
+#   - Hosts com systemd-resolved: rewrite resolv.conf com
+#     127.0.0.53 (stub local) + DNS canônico OCI/DRG (`10.11.1.11`)
+#     + Cloudflare fallback.
 #     Ativa DNSStubListener=yes (Ubuntu default = no).
-#   - Hosts sem systemd-resolved (SRV-2): só desabilita Tailscale accept-dns
+#   - Hosts sem systemd-resolved: só desabilita Tailscale accept-dns
 #     + corrige xrdp key permission. NÃO mexe no sistema de DNS local.
 #
 # Estratégia:
@@ -23,7 +24,7 @@
 #   2. tailscale set --operator=$USER (não pede mais sudo)
 #   3. Se systemd-resolved presente:
 #      a) Garantir DNSStubListener=yes
-#      b) Reescrever /etc/resolv.conf com stub + peer + Cloudflare
+#      b) Reescrever /etc/resolv.conf com stub + DNS canônico + Cloudflare
 #      c) Restart systemd-resolved
 #   4. Corrigir xrdp key.pem (640 root:xrdp)
 #   5. Verificar DNS funcionando
@@ -73,25 +74,15 @@ HAS_XRDP=0
   [[ -f /etc/systemd/resolved.conf ]] && HAS_RESOLVED=1
 [[ -f /etc/xrdp/key.pem ]] && HAS_XRDP=1
 
-# Detectar IP do peer WireGuard (pegar o primeiro IP da sub-rede 10.1.1.0/24 que não seja o nosso)
-WIREGUARD_PEERS=($(ip -4 addr show 2>/dev/null | awk '/inet 10\.1\.1\./{print $2}' | cut -d/ -f1))
-WIREGUARD_PEER_IP=""
-for ip in "${WIREGUARD_PEERS[@]}"; do
-  if [[ -n "$ip" ]] && [[ "$ip" != "${WIREGUARD_PEERS[0]:-}" ]] || [[ "${#WIREGUARD_PEERS[@]}" -eq 1 ]]; then
-    # Se só temos nosso próprio IP, usar Cloudflare como upstream
-    :
-  fi
-done
-# Heurística simples: se temos wg0, primeiro IP do wg0 é o nosso, demais são peers
-# Para SRV-1 (10.1.1.1), SRV-2 (10.1.1.2), SRV-3 (10.1.1.7), o peer "natural" é o IP adjacente
-case "${WIREGUARD_PEERS[0]:-}" in
-  10.1.1.1) WIREGUARD_PEER_IP="10.1.1.2" ;;  # SRV-1 -> SRV-2
-  10.1.1.2) WIREGUARD_PEER_IP="10.1.1.1" ;;  # SRV-2 -> SRV-1
-  10.1.1.7) WIREGUARD_PEER_IP="10.1.1.2" ;;  # SRV-3 -> SRV-2
-  *) WIREGUARD_PEER_IP="" ;;
-esac
+# DNS canônico do plano OCI/DRG: SRV-1 / 10.11.1.11.
+CANONICAL_WIREGUARD_DNS_IP="${OMNI_CANONICAL_WIREGUARD_DNS_IP:-10.11.1.11}"
+HAS_WG100=0
+if ip -4 addr show 2>/dev/null | grep -q "inet 10\\.100\\.100\\."; then
+  HAS_WG100=1
+fi
 
-log "Detectado: tailscale=$HAS_TS systemd-resolved=$HAS_RESOLVED xrdp=$HAS_XRDP wg-peer=$WIREGUARD_PEER_IP"
+WIREGUARD_DNS_IP="$CANONICAL_WIREGUARD_DNS_IP"
+log "Detectado: tailscale=$HAS_TS systemd-resolved=$HAS_RESOLVED xrdp=$HAS_XRDP wg100=$HAS_WG100 dns-upstream=$WIREGUARD_DNS_IP"
 
 # 2. Tailscale: desabilitar accept-dns e setar operator
 if [[ $HAS_TS -eq 1 ]]; then
@@ -134,30 +125,37 @@ fi
 # 3. /etc/resolv.conf — só se systemd-resolved presente
 if [[ $HAS_RESOLVED -eq 1 ]]; then
   # 3a. Garantir DNSStubListener=yes
+  STUB_CHANGED=0
   STUB_LINE=$(grep -E "^#?\s*DNSStubListener=" /etc/systemd/resolved.conf 2>/dev/null | head -1 || true)
   if [[ -z "$STUB_LINE" ]] || [[ "$STUB_LINE" == *"no"* ]] || [[ "$STUB_LINE" == *"#DNSStubListener="* ]]; then
     log "Habilitando DNSStubListener=yes"
     $SUDO sed -i '/^#\?\s*DNSStubListener=/d' /etc/systemd/resolved.conf
     echo "DNSStubListener=yes" | $SUDO tee -a /etc/systemd/resolved.conf > /dev/null
+    STUB_CHANGED=1
   fi
 
-  # 3b. /etc/resolv.conf → stub + peer + Cloudflare (só se mudou)
+  # 3b. /etc/resolv.conf → stub + DNS canônico + Cloudflare (só se mudou)
   EXPECTED_MARKER="Managed by fleet-network-watchdog.sh"
-  if grep -qF "$EXPECTED_MARKER" /etc/resolv.conf 2>/dev/null; then
-    log "/etc/resolv.conf já está gerenciado (skip rewrite)"
+  DNS_LINE=""
+  RESOLV_CHANGED=0
+  if [[ -n "$WIREGUARD_DNS_IP" ]]; then
+    DNS_LINE="nameserver $WIREGUARD_DNS_IP"
+  fi
+  if grep -qF "$EXPECTED_MARKER" /etc/resolv.conf 2>/dev/null &&
+     grep -q "^nameserver 127\.0\.0\.53$" /etc/resolv.conf 2>/dev/null &&
+     grep -q "^nameserver 1\.1\.1\.1$" /etc/resolv.conf 2>/dev/null &&
+     { [[ -z "$DNS_LINE" ]] || grep -q "^$DNS_LINE$" /etc/resolv.conf 2>/dev/null; }; then
+    log "/etc/resolv.conf já está gerenciado com DNS canônico (skip rewrite)"
   else
+    RESOLV_CHANGED=1
     log "Reescrevendo /etc/resolv.conf"
-    PEER_LINE=""
-    if [[ -n "$WIREGUARD_PEER_IP" ]]; then
-      PEER_LINE="nameserver $WIREGUARD_PEER_IP"
-    fi
     $SUDO tee /etc/resolv.conf > /dev/null <<EOF
 # $EXPECTED_MARKER (Filippo 2026-06-15)
-# 127.0.0.53 = systemd-resolved stub (queries forwarded to peer/Cloudflare)
-# $PEER_LINE
+# 127.0.0.53 = systemd-resolved stub (queries forwarded to DNS interno/Cloudflare)
+# ${DNS_LINE:-# sem upstream WireGuard explícito}
 # 1.1.1.1 = Cloudflare direct fallback
 nameserver 127.0.0.53
-$PEER_LINE
+$DNS_LINE
 nameserver 1.1.1.1
 options edns0 trust-ad
 EOF
@@ -165,7 +163,7 @@ EOF
 
   # 3c. Restart (só se DNSStub mudou nesta execução)
   NEED_RESTART=0
-  if [[ $RESTART -eq 1 ]] && ! grep -q "^DNSStubListener=yes" /etc/systemd/resolved.conf 2>/dev/null; then
+  if [[ $RESTART -eq 1 ]] && [[ $((STUB_CHANGED + RESOLV_CHANGED)) -gt 0 ]]; then
     NEED_RESTART=1
   fi
   # Restart também se /etc/resolv.conf mudou (aconteceu tee acima)

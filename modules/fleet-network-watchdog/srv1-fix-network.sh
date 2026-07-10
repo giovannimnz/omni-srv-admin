@@ -12,7 +12,7 @@
 # Estratégia:
 # 1. tailscale set --accept-dns=false (desabilita escrita no resolv.conf)
 # 2. tailscale set --operator=$USER (não pede mais sudo)
-# 3. Reescrever /etc/resolv.conf com 127.0.0.53 (systemd-resolved stub) + 10.1.1.2 (peer) + 1.1.1.1 (fallback externo)
+# 3. Reescrever /etc/resolv.conf com 127.0.0.53 (systemd-resolved stub) + 10.11.1.11 (DNS canônico OCI/DRG) + 1.1.1.1 (fallback externo)
 # 4. Garantir DNSStubListener=yes em /etc/systemd/resolved.conf (Ubuntu default = no)
 # 5. Restart systemd-resolved
 # 6. Verificar dig/getent funcionando
@@ -50,11 +50,11 @@ fi
 log "Reescrevendo /etc/resolv.conf"
 $SUDO tee /etc/resolv.conf > /dev/null <<'EOF'
 # Managed by srv1-fix-network.sh (Filippo 2026-06-15)
-# 127.0.0.53 = systemd-resolved stub (queries forwarded to 10.1.1.2 / Cloudflare)
-# 10.1.1.2 = peer WireGuard (SRV-2) — its systemd-resolved also forwards upstream
+# 127.0.0.53 = systemd-resolved stub (queries forwarded to 10.11.1.11 / Cloudflare)
+# 10.11.1.11 = DNS interno canônico no SRV-1 para o plano OCI/DRG
 # 1.1.1.1 = Cloudflare direct fallback
 nameserver 127.0.0.53
-nameserver 10.1.1.2
+nameserver 10.11.1.11
 nameserver 1.1.1.1
 options edns0 trust-ad
 search vcn01281103.oraclevcn.com

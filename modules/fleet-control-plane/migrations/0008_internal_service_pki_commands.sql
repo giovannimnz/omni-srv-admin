@@ -93,6 +93,50 @@ VALUES
         300,
         '[]'::jsonb,
         '{"kind":"internal-service-pki","stage":"reconcile"}'::jsonb
+    ),
+    (
+        'omni.trust-pki.windows.preflight',
+        'Read-only Windows preflight for internal service PKI trust client onboarding.',
+        'python -m omni fleet trust-pki agent-runner preflight --host {host_id} --json',
+        'interactive',
+        false,
+        true,
+        120,
+        '["giovanni-w11-pc"]'::jsonb,
+        '{"kind":"internal-service-pki","stage":"preflight","platform":"windows","mode":"trust-client"}'::jsonb
+    ),
+    (
+        'omni.trust-pki.windows.install-ca',
+        'Install the internal service PKI CA chain into the Windows CurrentUser trust store.',
+        'python -m omni fleet trust-pki agent-runner install-ca --host {host_id} --json',
+        'interactive',
+        true,
+        true,
+        900,
+        '["giovanni-w11-pc"]'::jsonb,
+        '{"kind":"internal-service-pki","stage":"install-ca","platform":"windows","mode":"trust-client"}'::jsonb
+    ),
+    (
+        'omni.trust-pki.windows.verify',
+        'Verify Windows internal service PKI trust-client material.',
+        'python -m omni fleet trust-pki agent-runner verify --host {host_id} --json',
+        'interactive',
+        false,
+        true,
+        300,
+        '["giovanni-w11-pc"]'::jsonb,
+        '{"kind":"internal-service-pki","stage":"verify","platform":"windows","mode":"trust-client"}'::jsonb
+    ),
+    (
+        'omni.trust-pki.windows.reconcile',
+        'Compare Windows internal service PKI trust-client material with desired inventory.',
+        'python -m omni fleet trust-pki agent-runner reconcile --host {host_id} --json',
+        'interactive',
+        false,
+        true,
+        300,
+        '["giovanni-w11-pc"]'::jsonb,
+        '{"kind":"internal-service-pki","stage":"reconcile","platform":"windows","mode":"trust-client"}'::jsonb
     )
 ON CONFLICT (command_key) DO UPDATE SET
     description = EXCLUDED.description,

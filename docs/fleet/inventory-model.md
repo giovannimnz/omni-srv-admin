@@ -17,9 +17,9 @@ aliases:
 role: production
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.1
+  ssh: ubuntu@10.100.100.1
   public_ip: 137.131.190.161
-  vpn_ip: 10.1.1.1
+  vpn_ip: 10.100.100.1
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -40,7 +40,7 @@ forks:
     sync_manifest: modules/fork-sync/projects/atius-router/sync.yaml
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
 logs:
   local_dir: /home/ubuntu/.logs

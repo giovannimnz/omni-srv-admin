@@ -5,16 +5,16 @@ aliases:
 role: personal-workstation
 owner: giovanni
 access:
-  ssh: muniz@10.1.1.5
-  vpn_ip: 10.1.1.5
+  ssh: muniz@10.100.100.5
+  vpn_ip: 10.100.100.5
 platform:
   provider: local-pc
   os: windows-11
   arch: amd64
-status: planned
+status: active
 modules: []
 constraints:
-  - client-wireguard-config-generated-for-10.1.1.5-import-pending-on-device
+  - client-wireguard-config-imported-for-10.100.100.5
 logs:
   local_dir: TBD
   retention_days: 15
@@ -35,23 +35,46 @@ apps:
     notes:
       - "Scheduled task on Windows should run omni fleet agent cycle with apply mode."
       - "Auto-update target governed by TbVersion + omni version matrix."
+  - id: internal-service-pki
+    runtime: windows-current-user-cert-store
+    install_type: trust-client
+    desired_state: ca-trust-installed
+    managed_by: "omni-srv-admin"
+    update_policy: "release-auto-update"
+    scheduler: OmniFleetAgent
+    notes:
+      - "Receives the ATIUS internal service CA chain through approved TbUpdatePlans consumed by OmniFleetAgent."
+      - "Peer leaf certificates may be stored for audit/pinning evidence, but are not trusted as root CAs."
+pki:
+  service_tls:
+    enabled: true
+    mode: trust-client
+    auto_update: true
+    trust_store: Cert:\CurrentUser\Root
+    local_store: C:\Users\muniz\.local\share\omni-service-pki
+    peer_cert_policy: store-public-leafs-only
+    notes:
+      - "Windows is a PKI trust client: install CA chain and verify HTTPS peers; do not mint a Linux-style service leaf unless a local HTTPS service is introduced."
+      - "Automatic execution path is TbUpdatePlans -> OmniFleetAgent scheduled task -> omni.trust-pki.windows.* commands."
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.100.100.1:6432
   transport: PgBouncer
   configured: true
   client: python-pg8000
   env_file: C:\Users\muniz\.config\omni-srv-admin\fleet-db.env
   validated_at: 2026-07-03
-  note: "O clone local no Windows usa o mesmo DbOmniFleet via PgBouncer com fallback Python pg8000; o rewrite para 127.0.0.1 vale só no atius-srv-1."
+  readdressed_at: 2026-07-06
+  note: "O clone local no Windows segue em reserve path `10.100.100.1:6432` até a reachability direta ao DRG `10.11.1.11:6432` ser validada no próprio host; para Linux peers, o canônico já é OCI/DRG."
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   codex_runtime_standard: "2026-07-04: C:\\Users\\muniz\\.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
-  last_readdressed: 2026-06-17
+  last_readdressed: 2026-07-06
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-W11-PC
-  dns_validation: "CoreDNS and fleet /etc/hosts resolve GIOVANNI-W11-PC to 10.1.1.5."
+  dns_validation: "2026-07-08: Windows WireGuard adapter peer5 uses DNS server 10.100.100.1; nslookup against 10.100.100.1 resolved atius-srv-1 -> 10.100.100.1, atius-srv-2 -> 10.100.100.2 and horistic-srv -> 10.100.100.4."
   ssh_user: muniz
   ssh_validation: "2026-06-25: muniz@10.1.1.5 authenticated and returned hostname GIOVANNI-W11-PC."
-  client_config: "/home/ubuntu/.secure/omni-srv-admin/wireguard-rotation-20260617-142224/client-configs/GIOVANNI-W11-PC-wg0-10.1.1.5.conf"
-  live_handshake: "pending until the new config is imported on Windows."
+  client_config: "local WireGuard peer5 profile, observed as 10.100.100.5/32 on 2026-07-06"
+  live_handshake: "2026-07-06: local Windows peer5 reports IPv4 10.100.100.5/32."
+  retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.5 references are historical evidence only."

@@ -41,12 +41,15 @@ VERSIONS_DIR = FLEET_LOG_DIR / "versions"
 AUDIT_EVENTS = FLEET_LOG_DIR / "audit-events.jsonl"
 FLEET_DB_ENV = default_fleet_db_env()
 FLEET_AGENT_VERSION = "0.2.3"
-PGBOUNCER_ENDPOINT = ("10.1.1.1", "6432")
+PGBOUNCER_ENDPOINT = ("10.11.1.11", "6432")
+PGBOUNCER_LEGACY_ENDPOINTS = (("10.100.100.1", "6432"),)
 PKI_CA_HOST_ID = "atius-srv-1"
 PKI_PROGRAM = "internal-service-pki"
 PKI_DESIRED_VERSION = "service-ca-v1"
 PKI_CA_BASE = "/var/lib/omni-srv-admin/pki"
 PKI_TLS_BASE = "/etc/omni-srv-admin/tls"
+PKI_WINDOWS_TLS_BASE = "C:/ProgramData/omni-srv-admin/tls"
+PKI_WINDOWS_TRUST_STORE = "Cert:/CurrentUser/Root"
 PKI_CA_FILES = (
     "/usr/local/share/ca-certificates/atius-vpn-service-root-ca.crt",
     "/usr/local/share/ca-certificates/atius-vpn-service-issuing-ca.crt",
@@ -280,6 +283,78 @@ LOCAL_COMMANDS: dict[str, dict[str, Any]] = {
         "requires_approval": False,
         "allowed_host_ids": [],
     },
+    "omni.trust-pki.windows.preflight": {
+        "description": "Read-only Windows preflight for internal service PKI trust client onboarding.",
+        "argv": [
+            "python",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "preflight",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": False,
+        "allowed_host_ids": ["giovanni-w11-pc"],
+    },
+    "omni.trust-pki.windows.install-ca": {
+        "description": "Install the internal service PKI CA chain into the Windows CurrentUser trust store.",
+        "argv": [
+            "python",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "install-ca",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": True,
+        "allowed_host_ids": ["giovanni-w11-pc"],
+    },
+    "omni.trust-pki.windows.verify": {
+        "description": "Verify Windows internal service PKI trust-client material.",
+        "argv": [
+            "python",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "verify",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": False,
+        "allowed_host_ids": ["giovanni-w11-pc"],
+    },
+    "omni.trust-pki.windows.reconcile": {
+        "description": "Compare Windows internal service PKI trust-client material with desired inventory.",
+        "argv": [
+            "python",
+            "-m",
+            "omni",
+            "fleet",
+            "trust-pki",
+            "agent-runner",
+            "reconcile",
+            "--host",
+            "{host_id}",
+            "--json",
+        ],
+        "default_profile": "interactive",
+        "requires_approval": False,
+        "allowed_host_ids": ["giovanni-w11-pc"],
+    },
 }
 
 
@@ -444,9 +519,54 @@ def _pki_service_tls_config(host: dict[str, Any]) -> dict[str, Any]:
     return service_tls if isinstance(service_tls, dict) else {}
 
 
+def _pki_platform_os(host: dict[str, Any]) -> str:
+    return str(_nested(host, "platform", "os", "")).lower()
+
+
+def _pki_is_windows_platform(host: dict[str, Any]) -> bool:
+    return "windows" in _pki_platform_os(host)
+
+
+def _pki_service_tls_mode(host: dict[str, Any]) -> str:
+    config = _pki_service_tls_config(host)
+    raw = str(config.get("mode") or "").strip().lower()
+    aliases = {
+        "client": "trust-client",
+        "trust-only": "trust-client",
+        "ca-only": "trust-client",
+        "server": "leaf",
+    }
+    if raw:
+        return aliases.get(raw, raw)
+    if _pki_is_windows_platform(host):
+        return "trust-client"
+    return "leaf"
+
+
 def _pki_access(host: dict[str, Any]) -> dict[str, Any]:
     access = host.get("access")
     return access if isinstance(access, dict) else {}
+
+
+def _pki_ip_list(value: Any) -> list[str]:
+    if isinstance(value, list):
+        items = value
+    elif isinstance(value, tuple):
+        items = list(value)
+    elif value is None:
+        items = []
+    else:
+        items = [value]
+    parsed: list[str] = []
+    for item in items:
+        ip_value = _inet_or_none(item)
+        if ip_value:
+            parsed.append(ip_value)
+    return parsed
+
+
+def _primary_private_ip(access: dict[str, Any]) -> str | None:
+    return _inet_or_none(access.get("oci_private_ip")) or _inet_or_none(access.get("vpn_ip"))
 
 
 def _pki_sans(host_id: str, host: dict[str, Any]) -> dict[str, list[str]]:
@@ -457,10 +577,10 @@ def _pki_sans(host_id: str, host: dict[str, Any]) -> dict[str, list[str]]:
     for alias in aliases:
         dns_names.extend([alias, f"{alias}.atius.internal"])
     ip_names: list[str] = []
-    for key in ("vpn_ip", "legacy_vpn_ip", "public_ip", "tailscale_ip"):
-        value = _inet_or_none(access.get(key))
-        if value:
-            ip_names.append(value)
+    for key in ("oci_private_ip", "vpn_ip", "legacy_vpn_ip", "public_ip", "tailscale_ip"):
+        ip_names.extend(_pki_ip_list(access.get(key)))
+    for key in ("vpn_ips", "legacy_vpn_ips"):
+        ip_names.extend(_pki_ip_list(access.get(key)))
     explicit_sans = config.get("sans")
     if isinstance(explicit_sans, list):
         for item in explicit_sans:
@@ -551,7 +671,27 @@ def _pki_san_drift(desired: dict[str, Any], observed: dict[str, Any] | None) -> 
     }
 
 
-def _pki_host_paths(host_id: str) -> dict[str, str]:
+def _pki_host_paths(host_id: str, host: dict[str, Any] | None = None) -> dict[str, Any]:
+    config = _pki_service_tls_config(host or {})
+    if host and _pki_is_windows_platform(host):
+        base = str(config.get("local_store") or PKI_WINDOWS_TLS_BASE).replace("\\", "/").rstrip("/")
+        host_base = f"{base}/{host_id}"
+        ca_dir = f"{base}/ca"
+        return {
+            "host_tls_dir": host_base,
+            "private_key": f"{host_base}/client.key.pem",
+            "csr": f"{host_base}/client.csr.pem",
+            "leaf_cert": f"{host_base}/client.crt.pem",
+            "leaf_chain": f"{host_base}/chain.crt.pem",
+            "ca_chain": f"{ca_dir}/ca-chain.crt.pem",
+            "peer_dir": f"{base}/peers",
+            "ca_base": ca_dir,
+            "ca_files": [
+                f"{ca_dir}/atius-vpn-service-root-ca.crt",
+                f"{ca_dir}/atius-vpn-service-issuing-ca.crt",
+            ],
+            "trust_store": str(config.get("trust_store") or PKI_WINDOWS_TRUST_STORE),
+        }
     host_base = f"{PKI_TLS_BASE}/{host_id}"
     return {
         "host_tls_dir": host_base,
@@ -563,6 +703,7 @@ def _pki_host_paths(host_id: str) -> dict[str, str]:
         "peer_dir": f"{PKI_TLS_BASE}/peers",
         "ca_base": PKI_CA_BASE,
         "ca_files": list(PKI_CA_FILES),
+        "trust_store": "/etc/ssl/certs",
     }
 
 
@@ -570,22 +711,29 @@ def _pki_host_identity(host_id: str, host: dict[str, Any], *, source: str) -> di
     access = _pki_access(host)
     ssh_target = str(access.get("ssh") or "").strip()
     if not ssh_target:
-        vpn_ip = _inet_or_none(access.get("vpn_ip"))
+        vpn_ip = _primary_private_ip(access)
         if vpn_ip:
             ssh_target = f"ubuntu@{vpn_ip}"
     if not ssh_target:
         raise click.ClickException(f"host {host_id} sem access.ssh/vpn_ip para PKI")
+    config = _pki_service_tls_config(host)
+    mode = _pki_service_tls_mode(host)
+    paths = _pki_host_paths(host_id, host)
     return {
         "host": host_id,
         "source": source,
         "ssh": ssh_target,
         "role": str(host.get("role") or ""),
         "status": str(host.get("status") or ""),
+        "platform_os": _pki_platform_os(host),
         "aliases": _host_aliases(host),
         "sans": _pki_sans(host_id, host),
-        "paths": _pki_host_paths(host_id),
+        "paths": paths,
         "ca_host": PKI_CA_HOST_ID,
-        "service_tls_enabled": bool(_pki_service_tls_config(host).get("enabled", False)),
+        "service_tls_enabled": bool(config.get("enabled", mode != "disabled")),
+        "service_tls_mode": mode,
+        "trust_store": str(config.get("trust_store") or paths.get("trust_store") or ""),
+        "auto_update": bool(config.get("auto_update", False)),
     }
 
 
@@ -602,8 +750,11 @@ SELECT jsonb_build_object(
     'access', jsonb_build_object(
         'ssh', h.ssh_target,
         'vpn_ip', h.vpn_ip::text,
+        'vpn_ips', COALESCE(profile.value #> '{{access,vpn_ips}}', '[]'::jsonb),
+        'oci_private_ip', profile.value #>> '{{access,oci_private_ip}}',
         'public_ip', h.public_ip::text,
         'legacy_vpn_ip', profile.value #>> '{{access,legacy_vpn_ip}}',
+        'legacy_vpn_ips', COALESCE(profile.value #> '{{access,legacy_vpn_ips}}', '[]'::jsonb),
         'tailscale_ip', profile.value #>> '{{access,tailscale_ip}}'
     ),
     'platform', jsonb_build_object(
@@ -642,9 +793,24 @@ def _pki_inventory_host_ids() -> list[str]:
     for host_id, _, data, _ in _inventory_host_records(syncable_only=True):
         if str(data.get("status") or "").lower() != "active":
             continue
-        if host_id.startswith("atius-srv-") or host_id.endswith("-srv"):
+        config = _pki_service_tls_config(data)
+        if config.get("enabled") is True or host_id.startswith("atius-srv-") or host_id.endswith("-srv"):
             host_ids.append(host_id)
     return host_ids
+
+
+def _pki_inventory_host_data(host_id: str) -> dict[str, Any]:
+    try:
+        _, host, _ = _load_host(host_id)
+        return host
+    except click.ClickException:
+        return {}
+
+
+def _pki_command_key(action: str, identity: dict[str, Any]) -> str:
+    if "windows" in str(identity.get("platform_os") or "") and action in {"preflight", "install-ca", "verify", "reconcile"}:
+        return f"omni.trust-pki.windows.{action}"
+    return f"omni.trust-pki.{action}"
 
 
 def _pki_agent_args(action: str, identity: dict[str, Any], *, execute: bool) -> list[str]:
@@ -658,105 +824,63 @@ def _pki_agent_args(action: str, identity: dict[str, Any], *, execute: bool) -> 
     return args
 
 
+def _pki_plan_command(
+    action: str,
+    identity: dict[str, Any],
+    *,
+    priority: int,
+    execute: bool,
+    target_host: str | None = None,
+) -> dict[str, Any]:
+    host_id = str(identity["host"])
+    return {
+        "stage": action,
+        "target_host": target_host or host_id,
+        "command_key": _pki_command_key(action, identity),
+        "command_args": _pki_agent_args(action, identity, execute=execute),
+        "priority": priority,
+    }
+
+
 def _pki_command_plan(identity: dict[str, Any], *, execute: bool) -> list[dict[str, Any]]:
     host_id = str(identity["host"])
+    if identity.get("service_tls_mode") == "trust-client":
+        return [
+            _pki_plan_command("preflight", identity, priority=40, execute=execute),
+            _pki_plan_command("install-ca", identity, priority=43, execute=execute),
+            _pki_plan_command("verify", identity, priority=45, execute=execute),
+        ]
     return [
-        {
-            "stage": "preflight",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.preflight",
-            "command_args": _pki_agent_args("preflight", identity, execute=execute),
-            "priority": 40,
-        },
-        {
-            "stage": "ensure-key-csr",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.ensure-key-csr",
-            "command_args": _pki_agent_args("ensure-key-csr", identity, execute=execute),
-            "priority": 41,
-        },
-        {
-            "stage": "issue-host",
-            "target_host": PKI_CA_HOST_ID,
-            "command_key": "omni.trust-pki.issue-host",
-            "command_args": _pki_agent_args("issue-host", identity, execute=execute),
-            "priority": 42,
-        },
-        {
-            "stage": "install-ca",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.install-ca",
-            "command_args": _pki_agent_args("install-ca", identity, execute=execute),
-            "priority": 43,
-        },
-        {
-            "stage": "install-leaf",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.install-leaf",
-            "command_args": _pki_agent_args("install-leaf", identity, execute=execute),
-            "priority": 44,
-        },
-        {
-            "stage": "verify",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.verify",
-            "command_args": _pki_agent_args("verify", identity, execute=execute),
-            "priority": 45,
-        },
+        _pki_plan_command("preflight", identity, priority=40, execute=execute),
+        _pki_plan_command("ensure-key-csr", identity, priority=41, execute=execute),
+        _pki_plan_command("issue-host", identity, priority=42, execute=execute, target_host=PKI_CA_HOST_ID),
+        _pki_plan_command("install-ca", identity, priority=43, execute=execute),
+        _pki_plan_command("install-leaf", identity, priority=44, execute=execute),
+        _pki_plan_command("verify", identity, priority=45, execute=execute),
     ]
 
 
 def _pki_rotation_plan(identity: dict[str, Any], *, execute: bool, include_ca: bool = False) -> list[dict[str, Any]]:
     host_id = str(identity["host"])
+    if identity.get("service_tls_mode") == "trust-client":
+        return [
+            _pki_plan_command("preflight", identity, priority=50, execute=execute),
+            _pki_plan_command("install-ca", identity, priority=53, execute=execute),
+            _pki_plan_command("verify", identity, priority=55, execute=execute),
+        ]
     commands = [
-        {
-            "stage": "preflight",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.preflight",
-            "command_args": _pki_agent_args("preflight", identity, execute=execute),
-            "priority": 50,
-        },
-        {
-            "stage": "ensure-key-csr",
-            "target_host": host_id,
-            "command_key": "omni.trust-pki.ensure-key-csr",
-            "command_args": _pki_agent_args("ensure-key-csr", identity, execute=execute),
-            "priority": 51,
-        },
-        {
-            "stage": "issue-host",
-            "target_host": PKI_CA_HOST_ID,
-            "command_key": "omni.trust-pki.issue-host",
-            "command_args": _pki_agent_args("issue-host", identity, execute=execute),
-            "priority": 52,
-        },
+        _pki_plan_command("preflight", identity, priority=50, execute=execute),
+        _pki_plan_command("ensure-key-csr", identity, priority=51, execute=execute),
+        _pki_plan_command("issue-host", identity, priority=52, execute=execute, target_host=PKI_CA_HOST_ID),
     ]
     if include_ca:
         commands.append(
-            {
-                "stage": "install-ca",
-                "target_host": host_id,
-                "command_key": "omni.trust-pki.install-ca",
-                "command_args": _pki_agent_args("install-ca", identity, execute=execute),
-                "priority": 53,
-            }
+            _pki_plan_command("install-ca", identity, priority=53, execute=execute)
         )
     commands.extend(
         [
-            {
-                "stage": "install-leaf",
-                "target_host": host_id,
-                "command_key": "omni.trust-pki.install-leaf",
-                "command_args": _pki_agent_args("install-leaf", identity, execute=execute),
-                "priority": 54,
-            },
-            {
-                "stage": "verify",
-                "target_host": host_id,
-                "command_key": "omni.trust-pki.verify",
-                "command_args": _pki_agent_args("verify", identity, execute=execute),
-                "priority": 55,
-            },
+            _pki_plan_command("install-leaf", identity, priority=54, execute=execute),
+            _pki_plan_command("verify", identity, priority=55, execute=execute),
         ]
     )
     return commands
@@ -897,10 +1021,13 @@ def _db_env(path: Path = FLEET_DB_ENV) -> dict[str, str]:
     loaded = _load_env_file(path)
     host = loaded.get("PGHOST", "")
     port = loaded.get("PGPORT", "")
-    if (host, port) != PGBOUNCER_ENDPOINT:
+    allowed_pgbouncer_endpoints = (PGBOUNCER_ENDPOINT, *PGBOUNCER_LEGACY_ENDPOINTS)
+    if (host, port) not in allowed_pgbouncer_endpoints:
+        legacy = ", ".join(f"{item[0]}:{item[1]}" for item in PGBOUNCER_LEGACY_ENDPOINTS)
         raise click.ClickException(
             f"DB endpoint inválido para fleet: {host}:{port}; esperado PgBouncer "
             f"{PGBOUNCER_ENDPOINT[0]}:{PGBOUNCER_ENDPOINT[1]}"
+            + (f" (legado permitido durante cutover: {legacy})" if legacy else "")
         )
     required = ("PGHOST", "PGPORT", "PGDATABASE", "PGUSER")
     missing = [key for key in required if not loaded.get(key)]
@@ -908,8 +1035,7 @@ def _db_env(path: Path = FLEET_DB_ENV) -> dict[str, str]:
         raise click.ClickException(f"fleet DB env incompleto: {','.join(missing)}")
     local_hostname = socket.gethostname().lower()
     if (
-        loaded.get("PGHOST") == "10.1.1.1"
-        and loaded.get("PGPORT") == "6432"
+        (loaded.get("PGHOST"), loaded.get("PGPORT")) in allowed_pgbouncer_endpoints
         and local_hostname.startswith("atius-srv-1")
     ):
         # PgBouncer is the declared fleet endpoint, but on SRV-1 it is bound
@@ -1748,7 +1874,7 @@ def _host_inventory_payload(path: Path, host: dict[str, Any], raw_text: str) -> 
         "os": str(platform.get("os") or "unknown"),
         "arch": str(platform.get("arch") or "unknown"),
         "ssh_target": str(access.get("ssh") or "") or None,
-        "vpn_ip": _inet_or_none(access.get("vpn_ip")),
+        "vpn_ip": _primary_private_ip(access),
         "public_ip": _inet_or_none(access.get("public_ip")),
         "inventory_file": _repo_relative_path(path),
         "inventory_hash": _inventory_hash(raw_text),
@@ -2699,17 +2825,25 @@ def trust_pki_verify(host_id: str, source: str, json_output: bool) -> None:
     for target in targets:
         identity = _pki_render_host(target, source=source, execute=False)
         verify_command = next(command for command in identity["commands"] if command["stage"] == "verify")
+        if identity.get("service_tls_mode") == "trust-client":
+            checks = [
+                "Windows CurrentUser trust store contains the internal service CA chain",
+                "peer public leaf bundle is stored only for audit or pinning evidence",
+                "HTTPS verification trusts the CA chain, not peer leafs as root CAs",
+            ]
+        else:
+            checks = [
+                "openssl verify uses system trust store",
+                "leaf has CA:FALSE",
+                "leaf has serverAuth and clientAuth",
+                "SAN covers VPN IP and DNS aliases",
+                "certificate validity is at least 30 days",
+            ]
         hosts.append(
             {
                 "host": identity["host"],
                 "command": verify_command,
-                "checks": [
-                    "openssl verify uses system trust store",
-                    "leaf has CA:FALSE",
-                    "leaf has serverAuth and clientAuth",
-                    "SAN covers VPN IP and DNS aliases",
-                    "certificate validity is at least 30 days",
-                ],
+                "checks": checks,
             }
         )
     _emit(
@@ -2893,28 +3027,170 @@ def trust_pki_rotate_host(
 def trust_pki_rollback_plan(host_id: str, json_output: bool) -> None:
     """Mostra o rollback esperado sem remover nada."""
     targets = _pki_inventory_host_ids() if host_id == "all" else [host_id]
+    hosts = []
+    for target in targets:
+        identity = _pki_render_host(target, source="auto", execute=False)
+        if identity.get("service_tls_mode") == "trust-client":
+            steps = [
+                "remove ATIUS internal service CA chain from Windows CurrentUser Root only after rollback approval",
+                "preserve peer public leaf bundle for audit unless explicitly purged",
+                "run trust-pki verify",
+            ]
+            backup_glob = f"{identity['paths']['host_tls_dir']}/backups/*"
+        else:
+            steps = [
+                "stop service-specific TLS adapters before restoring cert material",
+                "restore prior /etc/omni-srv-admin/tls snapshot",
+                "restore prior /usr/local/share/ca-certificates ATIUS PKI files",
+                "run update-ca-certificates",
+                "run trust-pki verify",
+            ]
+            backup_glob = "/root/.backups/omni-fleet-pki-*"
+        hosts.append(
+            {
+                "host": target,
+                "backup_glob": backup_glob,
+                "restore_paths": identity["paths"],
+                "steps": steps,
+            }
+        )
     payload = {
         "resource": "omni.fleet.trust-pki",
         "mode": "rollback-plan",
         "dry_run": True,
-        "hosts": [
-            {
-                "host": target,
-                "backup_glob": "/root/.backups/omni-fleet-pki-*",
-                "restore_paths": _pki_host_paths(target),
-                "steps": [
-                    "stop service-specific TLS adapters before restoring cert material",
-                    "restore prior /etc/omni-srv-admin/tls snapshot",
-                    "restore prior /usr/local/share/ca-certificates ATIUS PKI files",
-                    "run update-ca-certificates",
-                    "run trust-pki verify",
-                ],
-            }
-            for target in targets
-        ],
+        "hosts": hosts,
         "generated_at": _now(),
     }
     _emit(payload, json_output)
+
+
+def _pki_runner_checks(host: dict[str, Any]) -> dict[str, bool]:
+    if _pki_is_windows_platform(host):
+        return {
+            "python": bool(shutil.which("python") or sys.executable),
+            "powershell": bool(shutil.which("powershell") or shutil.which("pwsh")),
+            "certutil": bool(shutil.which("certutil")),
+        }
+    return {
+        "openssl": bool(shutil.which("openssl")),
+        "update_ca_certificates": bool(shutil.which("update-ca-certificates")),
+    }
+
+
+def _pki_script(name: str) -> Path:
+    return REPO / "modules" / "fleet-pki" / "scripts" / name
+
+
+def _pki_script_env() -> dict[str, str]:
+    return {
+        **os.environ,
+        "OMNI_SRV_ADMIN": str(REPO),
+        "OMNI_PKI_OPENSSL_CNF": str(REPO / "modules" / "fleet-pki" / "templates" / "openssl-ca.cnf"),
+    }
+
+
+def _pki_run_script(argv: list[str], *, timeout: int = 900) -> dict[str, Any]:
+    if os.name == "posix" and hasattr(os, "geteuid") and os.geteuid() != 0:
+        argv = ["sudo", *argv]
+    completed = subprocess.run(
+        argv,
+        cwd=REPO,
+        capture_output=True,
+        text=True,
+        timeout=timeout,
+        env=_pki_script_env(),
+    )
+    payload: dict[str, Any] = {
+        "status": "ok" if completed.returncode == 0 else "failed",
+        "returncode": completed.returncode,
+        "stdout": _redact_text(completed.stdout[-4000:]),
+        "stderr": _redact_text(completed.stderr[-4000:]),
+    }
+    for line in reversed(completed.stdout.splitlines()):
+        line = line.strip()
+        if not line.startswith("{"):
+            continue
+        try:
+            parsed = json.loads(line)
+        except json.JSONDecodeError:
+            continue
+        if isinstance(parsed, dict):
+            payload.update(parsed)
+            payload.setdefault("status", "ok" if completed.returncode == 0 else "failed")
+        break
+    if completed.returncode != 0:
+        raise click.ClickException(_redact_text(completed.stderr.strip() or completed.stdout.strip() or "PKI script failed"))
+    return payload
+
+
+def _pki_linux_runner_execute(action: str, payload: dict[str, Any], sans: dict[str, Any]) -> dict[str, Any]:
+    host_id = str(payload["target_host"])
+    paths = payload["paths"]
+    host_script = str(_pki_script("omni-fleet-pki-host.sh"))
+    bootstrap_script = str(_pki_script("omni-fleet-pki-bootstrap.sh"))
+    san_arg = json.dumps(_normal_sans(sans), sort_keys=True)
+    if action == "preflight":
+        return _pki_run_script([host_script, "preflight"], timeout=120)
+    if action == "init-ca":
+        return _pki_run_script([bootstrap_script, "init-ca"], timeout=900)
+    if action == "ensure-key-csr":
+        return _pki_run_script([host_script, "ensure-key-csr", "--host-id", host_id, "--san-json", san_arg], timeout=900)
+    if action == "issue-host":
+        csr = str(Path(PKI_CA_BASE) / "intake" / f"{host_id}.csr.pem")
+        return _pki_run_script([bootstrap_script, "sign-host", "--host-id", host_id, "--csr", csr, "--san-json", san_arg], timeout=900)
+    if action == "install-ca":
+        root_ca = str(Path(PKI_CA_BASE) / "certs" / "root-ca.crt.pem")
+        issuing_ca = str(Path(PKI_CA_BASE) / "certs" / "issuing-ca.crt.pem")
+        return _pki_run_script([host_script, "install-ca", "--root-ca", root_ca, "--issuing-ca", issuing_ca], timeout=900)
+    if action == "install-leaf":
+        cert = str(Path(PKI_CA_BASE) / "certs" / "hosts" / f"{host_id}.crt.pem")
+        chain = str(Path(PKI_CA_BASE) / "certs" / "hosts" / f"{host_id}.chain.crt.pem")
+        return _pki_run_script([host_script, "install-leaf", "--host-id", host_id, "--cert", cert, "--chain", chain], timeout=900)
+    if action == "verify":
+        return _pki_run_script([host_script, "verify", "--host-id", host_id], timeout=300)
+    raise click.ClickException(f"ação PKI não suportada pelo runner Linux: {action}")
+
+
+def _pki_windows_import_ca(payload: dict[str, Any]) -> dict[str, Any]:
+    paths = payload["paths"]
+    ca_files = [Path(str(item)) for item in paths.get("ca_files", [])]
+    missing = [str(path) for path in ca_files if not path.exists()]
+    if missing:
+        raise click.ClickException(f"CA files ausentes para install-ca: {', '.join(missing)}")
+    certutil = shutil.which("certutil")
+    if not certutil:
+        raise click.ClickException("certutil não encontrado para importar CA no Windows")
+    imported = []
+    for ca_file in ca_files:
+        store = "CA" if "issuing" in ca_file.name.lower() else "Root"
+        completed = subprocess.run(
+            [certutil, "-user", "-addstore", store, str(ca_file)],
+            capture_output=True,
+            text=True,
+            timeout=120,
+        )
+        if completed.returncode != 0:
+            raise click.ClickException(_redact_text(completed.stderr.strip() or completed.stdout.strip()))
+        imported.append({"file": str(ca_file), "store": f"Cert:\\CurrentUser\\{store}"})
+    return {"status": "ok", "action": "install-ca", "imported_ca_files": imported}
+
+
+def _pki_windows_verify_ca(payload: dict[str, Any]) -> dict[str, bool]:
+    checks: dict[str, bool] = {}
+    ca_files = [Path(str(item)) for item in payload["paths"].get("ca_files", [])]
+    checks["ca_files_present"] = bool(ca_files) and all(path.exists() for path in ca_files)
+    checks["trust_store_configured"] = bool(payload["paths"].get("trust_store"))
+    certutil = shutil.which("certutil")
+    if certutil and checks["ca_files_present"]:
+        for ca_file in ca_files:
+            thumb = subprocess.run(
+                [certutil, "-hashfile", str(ca_file), "SHA256"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+            checks[f"hash_readable:{ca_file.name}"] = thumb.returncode == 0
+    return checks
 
 
 @trust_pki.command("agent-runner", hidden=True)
@@ -2938,28 +3214,36 @@ def trust_pki_agent_runner(
     except json.JSONDecodeError as exc:
         raise click.ClickException(f"--san-json inválido: {exc}") from exc
     mutating = {"init-ca", "ensure-key-csr", "issue-host", "install-ca", "install-leaf"}
+    path_host_id = target_host or host_id
+    path_host = _pki_inventory_host_data(path_host_id)
     payload = {
         "resource": "omni.fleet.trust-pki",
         "runner": "agent-runner",
         "action": action,
         "host": host_id,
-        "target_host": target_host or host_id,
+        "target_host": path_host_id,
         "execute": execute,
         "dry_run": not execute,
-        "paths": _pki_host_paths(target_host or host_id),
+        "platform_os": _pki_platform_os(path_host) if path_host else "",
+        "service_tls_mode": _pki_service_tls_mode(path_host) if path_host else "leaf",
+        "paths": _pki_host_paths(path_host_id, path_host),
         "sans": sans,
-        "checks": {
-            "openssl": bool(shutil.which("openssl")),
-            "update_ca_certificates": bool(shutil.which("update-ca-certificates")),
-        },
+        "checks": _pki_runner_checks(path_host),
         "generated_at": _now(),
     }
     if action in mutating and not execute:
         payload["status"] = "planned"
         payload["note"] = "mutating stage rendered only; pass --execute through queued command_args to apply"
     elif action in mutating:
-        payload["status"] = "blocked"
-        payload["note"] = "live key/cert mutation is intentionally blocked until Phase 44-02 scripts are installed"
+        if payload.get("service_tls_mode") == "trust-client":
+            if action != "install-ca":
+                raise click.ClickException(f"ação Windows trust-client mutável não suportada: {action}")
+            payload.update(_pki_windows_import_ca(payload))
+        elif os.name == "posix":
+            payload.update(_pki_linux_runner_execute(action, payload, sans))
+        else:
+            payload["status"] = "blocked"
+            payload["note"] = "live Linux key/cert mutation must run on the target Linux host"
     elif action == "reconcile":
         leaf_path = Path(str(payload["paths"]["leaf_cert"]))
         if not leaf_path.exists():
@@ -2977,6 +3261,10 @@ def trust_pki_agent_runner(
             payload["drift"] = _pki_san_drift(sans, observed)
             payload["status"] = payload["drift"]["status"]
     else:
+        if action == "verify" and payload.get("service_tls_mode") == "trust-client":
+            payload["checks"].update(_pki_windows_verify_ca(payload))
+        elif os.name == "posix" and action in {"preflight", "verify"}:
+            payload.update(_pki_linux_runner_execute(action, payload, sans))
         payload["status"] = "ok" if all(payload["checks"].values()) else "degraded"
     _emit(payload, json_output)
     if payload["status"] == "blocked":

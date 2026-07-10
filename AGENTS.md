@@ -11,12 +11,12 @@ For more information about GSD agents, run `/gsd-help`.
 - **Repo name:** omni-srv-admin (formerly atius-srv)
 - **Display name:** Omni Srv Admin
 - **Domain:** atius.com.br (DNS preserved — production domain)
-- **Host:** 10.1.1.1 (Oracle Cloud ARM64, Ubuntu 22.04)
+- **Host:** 10.11.1.11 primary private/DRG service path, `10.100.100.1` reserve fallback (Oracle Cloud ARM64, Ubuntu 22.04)
 
 ## Segredos ATIUS e MCP
 
 - Fonte autoritativa de segredos: HashiCorp Vault, nao `.env`, `.zshrc`, historico de shell, chat, Obsidian, GBrain ou arquivos do repo.
-- Vault endpoint: `https://10.1.1.3:8202` em `atius-srv-3`.
+- Vault endpoint: `https://10.13.1.13:8202` em `atius-srv-3`.
 - Helper Windows: `C:\Users\muniz\.local\bin\atius-vault-env.cmd`.
 - Helper Linux onde instalado: `~/.local/bin/atius-vault-env <profile>`.
 - Backend no host Vault `atius-srv-3`: `sudo /usr/local/sbin/atius-vault-export-env <profile>`.

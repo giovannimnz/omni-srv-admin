@@ -27,11 +27,14 @@ database:
 
 pgbouncer:
   required_for_clients: true
-  listen_host: 10.1.1.1
+  listen_host: 10.11.1.11
   listen_port: 6432
   pool_mode: transaction
   allowed_client_networks:
-    - 10.1.1.0/24
+    - 10.12.0.0/16
+    - 10.13.0.0/16
+    - 10.21.0.0/16
+    - 10.100.100.0/24
   auth_ref: secret://omni-fleet/pgbouncer/auth
 
 inventory:

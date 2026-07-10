@@ -91,6 +91,7 @@ def _yaml_scalar(path: Path, key: str) -> str:
 def _ssh_candidates(path: Path, ssh_target: str) -> list[str]:
     """Retorna alvos SSH em ordem: inventario, VPN, publico ou publico primeiro via env."""
     user = ssh_target.split("@", 1)[0] if "@" in ssh_target else "ubuntu"
+    oci_private_ip = _yaml_scalar(path, "oci_private_ip")
     vpn_ip = _yaml_scalar(path, "vpn_ip")
     public_ip = _yaml_scalar(path, "public_ip")
     prefer_public = os.environ.get("OMNI_SRV_PUBLIC_FIRST", "0") == "1"
@@ -103,6 +104,8 @@ def _ssh_candidates(path: Path, ssh_target: str) -> list[str]:
 
     if prefer_public and public_ip:
         add(f"{user}@{public_ip}")
+    if oci_private_ip:
+        add(f"{user}@{oci_private_ip}")
     add(ssh_target)
     if vpn_ip:
         add(f"{user}@{vpn_ip}")

@@ -71,7 +71,7 @@ Do not use these blocks for new OCI VCN/subnet/route planning:
 | `10.65.172.0/24` | SRV-3 LXD bridge |
 | `10.89.53.0/24` | FreeIPA Podman network |
 | `10.100.0.0/16` | Reserved for WireGuard target space |
-| `10.1.0.0/16` | Contains the still-live legacy WireGuard `10.1.1.0/24` |
+| `10.1.0.0/16` | Historical collision zone because it used to contain the retired WireGuard `10.1.1.0/24` |
 | `100.64.0.0/10` | Tailscale CGNAT space |
 
 ## DRG Planning Constraint
@@ -98,10 +98,9 @@ Reservations from the same plan:
 - S23 future reservation: `10.23.0.0/16`, host `10.23.1.23`.
 
 This plan is rejected for the current migration because `10.1.0.0/16` contains
-the live legacy WireGuard range `10.1.1.0/24`. That legacy range is still used
-as rollback/compatibility and appears in broad repo scans. Reusing the same
-space for a DRG-routed VCN would create ambiguous routing and make rollback
-harder.
+the old WireGuard range `10.1.1.0/24`. Even aposentada, essa faixa segue sendo
+um risco de ambiguidade em docs/artefatos históricos; não reutilizar esse espaço
+para VCN roteada por DRG.
 
 Replanned DRG address plane:
 
@@ -126,8 +125,8 @@ Reservations after the replan:
 
 | Purpose | CIDR | Notes |
 |---|---:|---|
-| Fleet WireGuard control plane | `10.100.100.0/24` | Live target range from `oci-admin` Phase 9 |
-| Legacy rollback/compatibility | `10.1.1.0/24` | Keep until `active_blocker=0` and compatibility aliases are closed |
+| Fleet WireGuard reserve plane | `10.100.100.0/24` | Reserve/fallback only after DRG promotion |
+| Retired historical range | `10.1.1.0/24` | Retired on 2026-07-08; keep only as historical evidence while old notes are cleaned up |
 
 Live and pending host assignments:
 
@@ -141,12 +140,13 @@ Live and pending host assignments:
 | `GIOVANNI-S23` | `10.100.100.6` | live handshake to SRV-1 |
 | `peer11`-`peer17` | `10.100.100.11`-`10.100.100.17` | generated, pending device import |
 
-`10.100.100.0/24` is already live for K3s node InternalIPs on the four Linux
-hosts. SRV-1 is the active hub for the new `wg100` path, `vpn.atius.com.br`
-now points at the SRV-1 endpoint on UDP `51821`, and W11/S23 handshakes have
-been validated directly against SRV-1. The remaining `oci-admin` WireGuard work
-is to activate and validate `peer11` through `peer17`, then keep both old and
-new ranges online until service references are closed.
+The OCI/DRG private plane is now the canonical service path:
+- `atius-srv-1` -> `10.11.1.11`
+- `atius-srv-2` -> `10.12.1.12`
+- `atius-srv-3` -> `10.13.1.13`
+- `horistic-srv` -> `10.21.1.21`
+
+`wg100` remains available as reserve/fallback, mainly for W11/S23 and break-glass.
 
 ## Migration Waves
 
@@ -175,12 +175,12 @@ new ranges online until service references are closed.
 
 ### Wave 2 - Finish WireGuard Target Path
 
-- Continue using `10.100.100.0/24` as the WireGuard target.
-- Keep `10.1.1.0/24` live during compatibility and rollback.
+- Keep `10.100.100.0/24` as reserve path only.
+- Do not reintroduce `10.1.1.0/24` as live compatibility or rollback path.
 - Treat SRV-1 hub, `vpn.atius.com.br` on SRV-1, W11 `10.100.100.5` and S23
   `10.100.100.6` as already live.
 - Import and validate `peer11` through `peer17` on their target devices.
-- Update firewall guards to allow both old and new WireGuard ranges.
+- Update firewall guards to allow OCI private peers as primary and `wg100` as reserve.
 - Add CoreDNS records and PTRs for the new addresses with low TTL.
 - Validate host-to-host ping and TCP probes over both old and new ranges.
 
@@ -190,25 +190,25 @@ Move service dependencies one class at a time:
 
 - Fleet inventory and `/etc/hosts`
 - CoreDNS `custom_hosts` and reverse zones
-- PgBouncer endpoint currently documented as `10.1.1.1:6432`
-- Vault endpoint currently documented as `10.1.1.3:8202`
-- FreeIPA/CoreDNS forwarding currently using `10.1.1.3`
+- PgBouncer endpoint fixed on `10.11.1.11:6432`, with `10.100.100.1:6432` reserve.
+- Vault endpoint fixed on `10.13.1.13:8202`, with `10.100.100.3` reserve.
+- FreeIPA/CoreDNS forwarding must reference `10.13.1.13`
 - Samba, Keycloak LDAP, Landscape, Obsidian/GBrain MCP, Jenkins JNLP
-- Router/TEI references currently using `10.1.1.4:3115`
+- Router/TEI references must use `10.21.1.21:3115`, with `10.100.100.4` reserve.
 - Apache/vhost upstreams and monitoring scrape targets
 
-Move clients to `10.100.100.x` service targets first. Do not move a service
+Move clients to the OCI private targets first. Use `10.100.100.x` only as reserve path. Do not move a service
 dependency directly to the future DRG underlay until the DRG preview has passed
-and WireGuard rollback remains available. Each move needs a same-day rollback
-alias while old `10.1.1.x` stays available.
+and same-day validation evidence. Do not keep `10.1.1.x` aliases as active
+service addresses after the retirement decision.
 
 ### Wave 4 - K3s Maintenance Window
 
-K3s already uses `wg100` / `10.100.100.0/24` live and should not be moved to a
-different WireGuard range for this DRG work. Treat K3s as a protected consumer
-of the `10.100.100.0/24` target:
+K3s now reports OCI private INTERNAL-IP live on the four Linux hosts. Treat
+OCI/DRG as the canonical cluster plane and keep `wg100` only as reserve dual-bind
+while the last control-plane assumptions are removed:
 
-- Keep K3s node IPs on `10.100.100.1` through `10.100.100.4`.
+- Keep K3s node IPs on `10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.21.1.21`.
 - Verify `/readyz`, etcd quorum and node InternalIPs after any hub/DNS/firewall
   change.
 - Do not retire old `10.1.1.x` service aliases until all K3s-adjacent service
@@ -225,28 +225,26 @@ of the `10.100.100.0/24` target:
 
 ### Wave 6 - Old Range Retirement
 
-Only retire old ranges after at least one stable observation window:
+Retirement closeout requirements for the old range:
 
-- Confirm repo/vault reference scan is zero or every remaining reference has a
-  documented legacy exception.
+- Confirm repo/vault/GBrain reference scan is zero or every remaining reference
+  is clearly historical.
 - Remove stale `10.1.1.x` CoreDNS/PTR records.
 - Remove old `AllowedIPs` and firewall accepts.
-- Remove `10.1.1.7` SRV-3 compatibility alias after K3s/etcd no longer needs
-  it.
 - Update inventory, network map, GBrain/Obsidian notes, and runbooks.
 
 ## No-Go Conditions
 
 - Any DRG-attached VCN still overlaps as `10.0.0.0/24`.
-- Any new DRG VCN/subnet uses `10.1.0.0/16` while `10.1.1.0/24` remains live.
+- Any new DRG VCN/subnet reuses `10.1.0.0/16` without a fresh explicit review
+  of historical collision risk.
 - No fresh etcd snapshot before K3s node-IP changes.
 - K3s `/readyz` or etcd quorum is degraded.
 - CoreDNS cannot answer both forward and reverse records for old and new ranges.
 - `peer11`-`peer17` client configs are not imported but old client routes are
   removed.
-- `10.1.1.0/24` reference scan has `active_blocker=unknown` or
-  `active_blocker>0`; the 2026-07-06 `git grep` scan still found 201 tracked
-  files with `10.1.1.` references.
+- Historical `10.1.1.x` references still appear as if they were active source
+  of truth.
 - Public edge starts reaching private services directly without Access/VPN gate.
 
 ## Immediate Repo Follow-Ups

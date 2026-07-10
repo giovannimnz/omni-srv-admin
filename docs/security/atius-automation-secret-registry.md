@@ -13,7 +13,7 @@ Do not rely on `.zshrc`, `.env`, shell history, chat, copied notes, GBrain summa
 
 | Item | Value |
 |---|---|
-| Vault endpoint | `https://10.1.1.3:8202` |
+| Vault endpoint | `https://10.13.1.13:8202` |
 | Vault host | `atius-srv-3` |
 | Access path from Windows Codex | `C:\Users\muniz\.local\bin\atius-vault-env.cmd` |
 | Access path from SRV-1 shell | `/home/ubuntu/.local/bin/atius-vault-env` |

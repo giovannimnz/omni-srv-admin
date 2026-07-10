@@ -9,7 +9,7 @@ This module moves `https://remote.atius.com.br/mt5/<id>/` from Apache Basic Auth
 - Session verifier: `http://127.0.0.1:8015/v1/auth/me`
 - SSO login: `https://sso.atius.com.br/login?return_to=<remote-url>`
 - Local proxy: `http://127.0.0.1:8095`
-- First route: `/mt5/1 -> http://10.1.1.3:6081`
+- First route: `/mt5/1 -> http://10.100.100.3:6081`
 - Required ATS permission: `can_access_trade`; `is_admin` also passes.
 
 The proxy serves the existing noVNC static files from `/var/www/remote-mt5` after SSO validation and proxies `websockify`/fallback traffic to the configured upstream. It never forwards `Cookie` or `Authorization` to the MT5/noVNC container.
@@ -37,7 +37,7 @@ Add a route to `/etc/atius/mt5-remote-auth-proxy.json`:
 ```json
 "2": {
   "basePath": "/mt5/2",
-  "upstream": "http://10.1.1.4:6081",
+  "upstream": "http://10.100.100.3:6081",
   "requiredPermission": "can_access_trade",
   "staticRoot": "/var/www/remote-mt5"
 }

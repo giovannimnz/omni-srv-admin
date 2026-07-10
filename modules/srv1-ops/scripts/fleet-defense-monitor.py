@@ -20,8 +20,8 @@ POLL_SECONDS = int(os.environ.get('FLEET_DEFENSE_POLL_SECONDS', '30'))
 SSH_TIMEOUT = int(os.environ.get('FLEET_DEFENSE_SSH_TIMEOUT', '5'))
 HOSTS = {
     'srv1': None,
-    'srv2': 'ubuntu@10.1.1.2',
-    'srv3': 'ubuntu@10.1.1.3',
+    'srv2': 'ubuntu@10.100.100.2',
+    'srv3': 'ubuntu@10.100.100.3',
 }
 LOCAL_INVIOLABLE = Path('/home/ubuntu/scripts/inviolable-watchdog.sh')
 REMOTE_INVIOLABLE = '/home/ubuntu/scripts/inviolable-watchdog.sh'

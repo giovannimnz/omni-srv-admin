@@ -5,9 +5,10 @@ aliases:
 role: production
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.1
+  ssh: ubuntu@10.100.100.1
   public_ip: 137.131.190.161
-  vpn_ip: 10.1.1.1
+  vpn_ip: 10.100.100.1
+  oci_private_ip: 10.11.1.11
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -239,10 +240,10 @@ forks:
     state: source-installed-global-runtime
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
   configured: true
-  note: "SRV-1 reescreve PGHOST para 127.0.0.1 localmente porque o PgBouncer também está em loopback."
+  note: "Phase 16: SRV-1 expõe PgBouncer em 10.11.1.11:6432 para a malha OCI-primary e mantém 10.100.100.1:6432 como reserve path; localmente pode reescrever PGHOST para 127.0.0.1."
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
@@ -259,6 +260,10 @@ resource_governor:
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
+  wg100_readdress: "2026-07-10: `wg100`/10.100.100.1 remains reserve fallback only; the canonical private service path for SRV-1 is `oci_private_ip=10.11.1.11`."
+  dns_validation: "2026-07-10: srv-1 serves DNS on both 10.11.1.11:53 and reserve 10.100.100.1:53; both return the OCI-primary targets 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21."
+  oci_primary_validation: "2026-07-08: attached secondary VNIC 10.11.1.11, opened peer OCI CIDR access for PgBouncer and Obsidian REST/MCP, and exposed 10.11.1.11:{53,6432,27124} successfully to srv-2/srv-3/horistic."
+  k3s_phase16_blocker: "2026-07-10: kube-apiserver and etcd already dual-bind on 10.11.1.11 and 10.100.100.1; the remaining blocker is repo/runtime drift that still treats wg100 as primary in some service/env/docs paths."
   desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
   knowledge_authority: "Obsidian and GBrain authoritative writes stay on atius-srv-1 only."
 oci:

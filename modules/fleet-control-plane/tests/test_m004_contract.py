@@ -205,9 +205,12 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
     assert "ops-scopes" in config["database"]["canonical_for"]
     assert "slash-command-registry" in config["database"]["canonical_for"]
     assert config["pgbouncer"]["required_for_clients"] is True
-    assert config["pgbouncer"]["listen_host"] == "10.1.1.1"
+    assert config["pgbouncer"]["listen_host"] == "10.11.1.11"
     assert config["pgbouncer"]["listen_port"] == 6432
-    assert "10.1.1.0/24" in config["pgbouncer"]["allowed_client_networks"]
+    assert "10.12.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
+    assert "10.13.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
+    assert "10.21.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
+    assert "10.100.100.0/24" in config["pgbouncer"]["allowed_client_networks"]
     assert "fleet-nodes" in config["database"]["direct_access"]["denied_for"]
     assert "cli-clients" in config["database"]["direct_access"]["denied_for"]
     assert "control-plane-migrations" in config["database"]["direct_access"]["allowed_for"]
@@ -283,6 +286,10 @@ def test_migration_schema_has_required_tables_and_secret_refs_only():
     assert "'omni.trust-pki.install-leaf'" in schema
     assert "'omni.trust-pki.reconcile'" in schema
     assert "'omni.trust-pki.verify'" in schema
+    assert "'omni.trust-pki.windows.preflight'" in schema
+    assert "'omni.trust-pki.windows.install-ca'" in schema
+    assert "'omni.trust-pki.windows.reconcile'" in schema
+    assert "'omni.trust-pki.windows.verify'" in schema
     assert '"disabled-until-cli-anything-harness"' in schema
     assert '"config_source":"database"' in schema
     for forbidden in ("license_key", "raw_secret", "password text", "token text", "serial text"):
@@ -305,7 +312,7 @@ def test_db_env_rejects_direct_postgres_endpoint(tmp_path):
     try:
         fleet_module._db_env(env_file)
     except Exception as exc:
-        assert "esperado PgBouncer 10.1.1.1:6432" in str(exc)
+        assert "esperado PgBouncer 10.11.1.11:6432" in str(exc)
     else:
         raise AssertionError("direct PostgreSQL endpoint should be rejected")
 

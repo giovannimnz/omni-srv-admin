@@ -244,7 +244,7 @@ def _scenario_schema_and_pgbouncer() -> ScenarioResult:
         return _fail("M004-OFF-04", "PostgreSQL schema contains all FCP tables", "offline", missing_tables)
     if pgbouncer.get("required_for_clients") is not True:
         return _fail("M004-OFF-04", "PgBouncer is mandatory for clients", "offline", evidence)
-    if pgbouncer.get("listen_host") != "10.1.1.1" or pgbouncer.get("listen_port") != 6432:
+    if pgbouncer.get("listen_host") != "10.11.1.11" or pgbouncer.get("listen_port") != 6432:
         return _fail("M004-OFF-04", "PgBouncer listens on private fleet endpoint", "offline", evidence)
     if "fleet-nodes" not in denied or "cli-clients" not in denied:
         return _fail("M004-OFF-04", "direct PostgreSQL access denied for nodes/clients", "offline", evidence)
@@ -335,7 +335,7 @@ def _scenario_agent_executor_monitoring() -> ScenarioResult:
     direct_env.write_text(
         "\n".join(
             [
-                "PGHOST=10.1.1.1",
+                "PGHOST=10.11.1.11",
                 "PGPORT=8745",
                 "PGDATABASE=DbOmniFleet",
                 "PGUSER=omni_fleet",
@@ -489,7 +489,7 @@ def _live_pgbouncer_server() -> ScenarioResult:
     )
     if code != 0:
         scenario.status = "FAIL"
-    elif any("10.1.1.1:6432" in line for line in evidence):
+    elif any("10.11.1.11:6432" in line or "10.100.100.1:6432" in line for line in evidence):
         scenario.status = "PASS"
     scenario.commands = [rendered]
     return scenario
@@ -499,7 +499,7 @@ def _live_node_pgbouncer_path(node_id: str) -> ScenarioResult:
     _, node = _load_host(node_id)
     _, server = _load_host(SERVER_HOST)
     ssh_target = _nested(node, "access", "ssh")
-    server_ip = _nested(server, "access", "vpn_ip")
+    server_ip = _nested(server, "access", "oci_private_ip") or _nested(server, "access", "vpn_ip")
     remote = (
         "set +e; "
         f"if command -v nc >/dev/null 2>&1; then nc -vz -w2 {server_ip} 6432; "
@@ -532,7 +532,7 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         ". /etc/omni-srv-admin/fleet-db.env; "
         "export PGHOST PGPORT PGDATABASE PGUSER PGPASSWORD PGSSLMODE; "
         "echo endpoint=${PGHOST}:${PGPORT}/${PGDATABASE}; "
-        "test \"${PGHOST}:${PGPORT}\" = \"10.1.1.1:6432\"; "
+        "(test \"${PGHOST}:${PGPORT}\" = \"10.11.1.11:6432\" || test \"${PGHOST}:${PGPORT}\" = \"10.100.100.1:6432\"); "
         "psql -Atc \"select current_database() || chr(58) || current_user\"; "
         "psql -Atc \"select 'TbHosts=' || count(*) from \\\"TbHosts\\\" union all select 'TbNodes=' || count(*) from \\\"TbNodes\\\" order by 1\"; "
         "psql -Atc \"select 'TbOpsScopes=' || count(*) from \\\"TbOpsScopes\\\" union all select 'TbConfigItems=' || count(*) from \\\"TbConfigItems\\\" union all select 'TbSlashCommands=' || count(*) from \\\"TbSlashCommands\\\" union all select 'TbSlashCommandBindings=' || count(*) from \\\"TbSlashCommandBindings\\\" union all select 'TbFleetCommands=' || count(*) from \\\"TbFleetCommands\\\" union all select 'TbNodeResourcePolicies=' || count(*) from \\\"TbNodeResourcePolicies\\\" union all select 'TbNodeTelemetry=' || count(*) from \\\"TbNodeTelemetry\\\" union all select 'TbManagedApps=' || count(*) from \\\"TbManagedApps\\\" union all select 'TbManagedForks=' || count(*) from \\\"TbManagedForks\\\" union all select 'TbCustomizationPolicies=' || count(*) from \\\"TbCustomizationPolicies\\\" order by 1\""
@@ -553,11 +553,15 @@ def _live_fleet_db_query(host_id: str) -> ScenarioResult:
         and counts.get("TbManagedForks", 0) >= 1
         and counts.get("TbCustomizationPolicies", 0) >= 1
     )
-    expected = {
-        f"endpoint=10.1.1.1:6432/{FLEET_DATABASE}",
-        f"{FLEET_DATABASE}:omni_fleet",
-    }
-    result = _ok if code == 0 and expected.issubset(set(evidence)) and has_expected_rows else _fail
+    expected_db_user = f"{FLEET_DATABASE}:omni_fleet"
+    endpoint_ok = any(
+        line in {
+            f"endpoint=10.11.1.11:6432/{FLEET_DATABASE}",
+            f"endpoint=10.100.100.1:6432/{FLEET_DATABASE}",
+        }
+        for line in evidence
+    )
+    result = _ok if code == 0 and endpoint_ok and expected_db_user in set(evidence) and has_expected_rows else _fail
     scenario = result(
         f"M004-LIVE-DB-{host_id}",
         f"{host_id} queries central {FLEET_DATABASE} DB through PgBouncer",
@@ -572,7 +576,7 @@ def _live_node_direct_postgres_blocked(node_id: str) -> ScenarioResult:
     _, node = _load_host(node_id)
     _, server = _load_host(SERVER_HOST)
     ssh_target = _nested(node, "access", "ssh")
-    server_ip = _nested(server, "access", "vpn_ip")
+    server_ip = _nested(server, "access", "oci_private_ip") or _nested(server, "access", "vpn_ip")
     remote = (
         "set +e; "
         f"if command -v nc >/dev/null 2>&1; then nc -vz -w2 {server_ip} 8745; "

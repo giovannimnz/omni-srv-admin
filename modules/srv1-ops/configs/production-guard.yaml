@@ -53,7 +53,7 @@ endpoints:
     url: https://webhook.horistic.com/
 remote_checks:
   horistic:
-    ssh: horistic@10.1.1.4
+    ssh: horistic@10.100.100.4
     service: apache2
     expected_fragment_path: /usr/lib/systemd/system/apache2.service
     required_listen_ports:

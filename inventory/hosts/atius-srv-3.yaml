@@ -4,10 +4,10 @@ aliases:
 role: sandbox
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.3
+  ssh: ubuntu@10.100.100.3
   public_ip: 136.248.126.12
-  vpn_ip: 10.1.1.3
-  legacy_vpn_ip: 10.1.1.7
+  vpn_ip: 10.100.100.3
+  oci_private_ip: 10.13.1.13
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -28,7 +28,7 @@ cleanup:
   action: post-upgrade-storage-audit
   pending:
     - inviolable-watchdog.timer active but service fails with status 203/EXEC because /home/ubuntu/scripts/inviolable-watchdog.sh is absent
-    - 10.1.1.7 is retained as K3s/etcd compatibility alias after 2026-06-17 readdress to 10.1.1.3
+    - Historical note only: old wg0-era aliases were retired after the wg100 cutover.
 apps:
   - id: omni-srv-admin
     runtime: git-worktree
@@ -134,9 +134,9 @@ apps:
     image: localhost/mt5-fex:v0.9-mvp
     source: /home/ubuntu/GitHub/mt5-fex-podman
     public_url: https://remote.atius.com.br/mt5/1/
-    healthcheck_url: http://10.1.1.3:6081/vnc.html
+    healthcheck_url: http://10.100.100.3:6081/vnc.html
     ports:
-      - "10.1.1.3:6081:6081"
+      - "10.100.100.3:6081:6081"
       - "127.0.0.1:8066:8066"
     network: srv3-podman-v2
     components:
@@ -154,7 +154,7 @@ apps:
     installed_on: "2026-06-26"
     notes:
       - "Runtime criado por /home/ubuntu/GitHub/mt5-fex-podman/install.sh com podman run direto."
-      - "noVNC interno/VPN em http://10.1.1.3:6081/; URL publica em https://remote.atius.com.br/mt5/1/."
+      - "noVNC interno/VPN em http://10.100.100.3:6081/; URL publica em https://remote.atius.com.br/mt5/1/."
       - "Apache/Cloudflare ficam no atius-srv-1; VNC puro fica privado no container."
       - "Autenticacao publica de /mt5/<id> deve passar pelo gate SSO do SRV-1 (modules/mt5-remote-auth), usando auth-token + /v1/auth/me; nao criar novos Basic Auth por rota."
 forks:
@@ -171,7 +171,7 @@ forks:
       - "Fork remoto publicado em https://github.com/giovannimnz/wayland; auto_push do projeto wayland no fork-sync pode publicar merges seguros."
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
   configured: true
 notes:
@@ -179,11 +179,13 @@ notes:
   desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
   knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
   codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), base config and profiles; no active GSD agent service_tier entries found."
+  wg100_readdress: "2026-07-10: `wg100`/10.100.100.3 remains reserve fallback only; the canonical private service path for SRV-3 is `oci_private_ip=10.13.1.13`."
   last_readdressed: 2026-06-17
-  readdress_note: "WireGuard routes 10.1.1.3 and 10.1.1.7 to this host; DNS canon is 10.1.1.3, K3s node-ip remains 10.1.1.7 until etcd member URL migration."
+  readdress_note: "SRV-3 now serves Vault/Vaultwarden and K3s on OCI-private 10.13.1.13, with 10.100.100.3 retained only as reserve fallback."
   wireguard_key_rotated: 2026-06-17
-  dns_validation: "getent hosts atius-srv-3 returns 10.1.1.3; CoreDNS returns 10.1.1.3; wg-quick strip wg0 OK."
-  k3s_note: "K3s remains Ready with INTERNAL-IP 10.1.1.7; full etcd member URL migration to 10.1.1.3 requires a separate maintenance window."
+  dns_validation: "2026-07-10: dig @10.11.1.11 and dig @10.100.100.1 both return atius-srv-1/2/3 and horistic-srv as 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21, and /etc/hosts matches the same OCI-private map."
+  oci_primary_validation: "2026-07-08: attached secondary VNIC 10.13.1.13, added peer OCI CIDR routes, and exposed Vaultwarden/Vault on 10.13.1.13:{8088,8202,8203} via local OCI-primary proxy sockets."
+  k3s_note: "2026-07-10: K3s is Ready with live INTERNAL-IP 10.13.1.13 and etcd listeners on both 10.13.1.13 and 10.100.100.3; remaining canonicalization work is repo/env cleanup, not cluster IP migration."
 oci:
   last_snapshot_id: "pending-5c217b32-1cf7-4aa9-b9db-c2130e9d2d49"
   last_snapshot_at: "2026-06-18T01:38:21Z"

@@ -15,7 +15,7 @@ cat >"$tmp_json" <<'JSON'
 {
   "strategy": "vpn-first-public-ssh-fallback",
   "database": {
-    "primary": "10.1.1.1:6432",
+    "primary": "10.11.1.11:6432",
     "public_fallback_enabled": false,
     "reason": "Do not expose PgBouncer/PostgreSQL on public IP; direct fallback is SSH/probe only."
   },
@@ -23,19 +23,22 @@ cat >"$tmp_json" <<'JSON'
     "atius-srv-1": {
       "ssh_user": "ubuntu",
       "ssh_port": 22,
-      "vpn_ip": "10.1.1.1",
+      "vpn_ip": "10.100.100.1",
+      "oci_private_ip": "10.11.1.11",
       "public_ip": "137.131.190.161"
     },
     "atius-srv-2": {
       "ssh_user": "ubuntu",
       "ssh_port": 22,
-      "vpn_ip": "10.1.1.2",
+      "vpn_ip": "10.100.100.2",
+      "oci_private_ip": "10.12.1.12",
       "public_ip": "129.148.47.32"
     },
     "atius-srv-3": {
       "ssh_user": "ubuntu",
       "ssh_port": 22,
-      "vpn_ip": "10.1.1.7",
+      "vpn_ip": "10.100.100.3",
+      "oci_private_ip": "10.13.1.13",
       "public_ip": "136.248.126.12"
     }
   }
@@ -80,7 +83,7 @@ cat >>"$SSH_CONFIG" <<'EOF'
 
 # BEGIN OMNI FLEET PEERS
 Host atius-srv-1-vpn
-  HostName 10.1.1.1
+  HostName 10.11.1.11
   User ubuntu
   Port 22
   StrictHostKeyChecking accept-new
@@ -98,7 +101,7 @@ Host atius-srv-1-direct
   ServerAliveCountMax 2
 
 Host atius-srv-2-vpn
-  HostName 10.1.1.2
+  HostName 10.12.1.12
   User ubuntu
   Port 22
   StrictHostKeyChecking accept-new
@@ -116,7 +119,7 @@ Host atius-srv-2-direct
   ServerAliveCountMax 2
 
 Host atius-srv-3-vpn
-  HostName 10.1.1.7
+  HostName 10.13.1.13
   User ubuntu
   Port 22
   StrictHostKeyChecking accept-new

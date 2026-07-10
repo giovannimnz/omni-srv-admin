@@ -92,10 +92,14 @@ key_file=/etc/xrdp/atius-rdp/server.key.pem
 Each leaf certificate must include SAN entries for the addresses actually used
  by the operator:
 
-- `atius-srv-1`: `137.131.190.161`, `10.1.1.1`, `atius-srv-1`, `srv1`, `atius`, `atius-srv-1.atius.internal`
-- `atius-srv-2`: `129.148.47.32`, `10.1.1.2`, `atius-srv-2`, `srv2`, `zentrius`
-- `atius-srv-3`: `136.248.126.12`, `10.1.1.3`, `10.1.1.7`, `atius-srv-3`, `srv3`, `atius-srv-3.atius.internal`
-- `horistic-srv`: `163.176.232.119`, `10.1.1.4`, `100.102.126.61`, `horistic-srv`, `horistic-srv-1`, `horistic`
+- `atius-srv-1`: `137.131.190.161`, `10.100.100.1`, legacy `10.1.1.1`, `atius-srv-1`, `srv1`, `atius`, `atius-srv-1.atius.internal`
+- `atius-srv-2`: `129.148.47.32`, `10.100.100.2`, legacy `10.1.1.2`, `atius-srv-2`, `srv2`, `zentrius`
+- `atius-srv-3`: `136.248.126.12`, `10.100.100.3`, legacy `10.1.1.3`, legacy `10.1.1.7`, `atius-srv-3`, `srv3`, `atius-srv-3.atius.internal`
+- `horistic-srv`: `163.176.232.119`, `10.100.100.4`, legacy `10.1.1.4`, `100.102.126.61`, `horistic-srv`, `horistic-srv-1`, `horistic`
+
+2026-07-06 note: `10.100.100.0/24` is the primary WireGuard operator plane.
+Keep `10.1.1.x` SANs only until all RDP entrypoints and shortcuts stop using
+the old `wg0` addresses.
 
 ## Verification
 

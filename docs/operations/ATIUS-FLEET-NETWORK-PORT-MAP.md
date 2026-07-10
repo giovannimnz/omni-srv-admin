@@ -77,50 +77,55 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
 
 Camadas:
 1. **Oracle VCN** (10.0.0.0/24 ou DHCP): rede privada de cada OCI
-2. **WireGuard wg100** (10.100.100.0/24): plano ativo, hub em SRV-1
-3. **WireGuard wg0 legacy** (10.1.1.0/24): rollback/compatibilidade enquanto
-   referências antigas são fechadas
-4. **Tailscale** (100.64.0.0/10): mesh backup / acesso de fora
-5. **K3s flannel** (10.42.0.0/16): CNI dos pods no cluster
-6. **Cloudflare**: proxy reverso público, escudo anti-DDoS, Origin SSL
+2. **OCI private / DRG** (`10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.21.1.21`): plano canônico de serviços entre hosts
+3. **WireGuard wg100** (10.100.100.0/24): reserve/fallback, com uso principal para W11/S23 e break-glass
+4. **WireGuard wg0 retired** (`10.1.1.0/24`): faixa histórica aposentada; não
+   usar como rede operacional, source of truth ou fallback vivo
+5. **Tailscale** (100.64.0.0/10): mesh backup / acesso de fora
+6. **K3s flannel** (10.42.0.0/16): CNI dos pods no cluster
+7. **Cloudflare**: proxy reverso público, escudo anti-DDoS, Origin SSL
 
 ---
 
 ## 3. Mapa de IPs (canônico)
 
-| Host           | Hostname        | IP Público       | WG legacy | WG100 | Tailscale       | OCI (DHCP)  |
-|----------------|-----------------|------------------|-----------|-------|------------------|-------------|
-| atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.1.1.1 | 10.100.100.1 | 100.76.56.62   | 10.0.0.38   |
-| atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.1.1.2 | 10.100.100.2 | 100.93.43.113  | DHCP        |
-| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.1.1.3 | 10.100.100.3 | 100.72.102.57  | DHCP        |
-| horistic-srv   | horistic-srv    | 163.176.232.119  | 10.1.1.4 | 10.100.100.4 | 100.102.126.61 | DHCP        |
-| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.1.1.5 | 10.100.100.5 | -              | LAN local   |
-| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.1.1.6 | 10.100.100.6 | -               | mobile/4G   |
-| atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.1.1.16 | 10.100.100.16 | - | 10.0.0.61 |
-| atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.1.1.17 | 10.100.100.17 | - | 10.0.0.188 |
+| Host           | Hostname        | IP Público       | WireGuard reserve | Tailscale       | OCI primary |
+|----------------|-----------------|------------------|-------------------|------------------|-------------|
+| atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.100.100.1      | 100.76.56.62     | 10.11.1.11  |
+| atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.100.100.2      | 100.93.43.113    | 10.12.1.12  |
+| atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.100.100.3      | 100.72.102.57    | 10.13.1.13  |
+| horistic-srv   | horistic-srv    | 163.176.232.119  | 10.100.100.4      | 100.102.126.61   | 10.21.1.21  |
+| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.5 | -              | LAN local   |
+| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.100.100.6 | -               | mobile/4G   |
+| atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.100.100.16 | - | 10.0.0.61 |
+| atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.100.100.17 | - | 10.0.0.188 |
 
 Nota K3s/etcd: o plano atual de InternalIP usa `wg100` em
-`10.100.100.1`-`10.100.100.4`. `atius-srv-3` ainda pode manter
-`10.1.1.7/32` como alias de compatibilidade de etcd/rollback; validar quorum,
-`node-ip` e peer URLs antes de remover esse alias. O endereco administrativo
-legado de SRV-3 e `10.1.1.3`; o alvo `wg100` e `10.100.100.3`.
+`10.100.100.1`-`10.100.100.4`. A faixa `10.1.1.0/24` foi aposentada e não deve
+ser tratada como alias vivo de etcd, DNS ou reachability administrativa.
 
 Nota DRG/WireGuard 2026-07-06: o `oci-admin` no W11-PC e o dono do plano de
 OCI DRG/readdress. O plano ativo de WireGuard e `wg100` em
-`10.100.100.0/24`, com hub no SRV-1 (`137.131.190.161:51821`) e
-`10.1.1.0/24` mantido como rollback/compatibilidade ate fechamento por `rg`.
-O plano OCI anterior (`atius1=10.1.0.0/16`) foi rejeitado porque colide com o
-range legado ainda vivo `10.1.1.0/24`. O replanejamento DRG deve usar CIDRs nao
+`10.100.100.0/24`, com hub no SRV-1 (`137.131.190.161:51821`). O plano OCI
+anterior (`atius1=10.1.0.0/16`) segue rejeitado porque colidia com a antiga
+faixa WireGuard `10.1.1.0/24`, hoje aposentada. O replanejamento DRG deve usar CIDRs nao
 sobrepostos: `atius1=10.51.0.0/16`, `atius2=10.52.0.0/16`,
 `atius3=10.53.0.0/16`, `horistic=10.71.0.0/16`; ver
 `docs/operations/drg-wireguard-readdress-plan.md`.
 
-DNS: `/etc/hosts` espelha a tabela acima nos quatro servidores
-SRV-1/SRV-2/SRV-3/Horistic. O caminho novo de DNS para `wg100` fica no SRV-1
-(`10.100.100.1`) junto do endpoint `vpn.atius.com.br`; o CoreDNS antigo do
-SRV-2 (`10.1.1.2`) fica como compatibilidade/rollback enquanto referências
-legadas são fechadas. Durante a transição, validar forward e PTR nas duas
-faixas antes de remover qualquer rota antiga.
+DNS: a autoridade continua no SRV-1 em `10.11.1.11:53`, com `10.100.100.1:53`
+como reserve listener, e desde a Phase 16 as respostas canônicas para os
+servidores apontam para a malha OCI privada.
+Validação 2026-07-08:
+- `dig @10.11.1.11` e `dig @10.100.100.1` a partir de `srv-2`, `srv-3` e `horistic-srv` retornaram
+  `atius-srv-1/2/3/horistic-srv -> 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21`.
+- `/etc/hosts` em `srv-1`, `srv-2`, `srv-3` e `horistic-srv` agora usa os IPs
+  OCI privados para os hostnames canônicos e deixa `10.100.100.x` só em aliases
+  explícitos `*-wg100` / `*-vpn`.
+- `dig @10.1.1.2` no `srv-1` expirou timeout; `10.1.1.2:53` deve ser tratado
+  apenas como referência legada, não como endpoint DNS ativo.
+Resoluções `10.1.1.x` remanescentes fora desse mapa devem ser tratadas como
+drift ou rollback explícito, não como verdade canônica.
 
 WireGuard/DNS validation 2026-06-17 (historico `wg0`):
 - Chaves WireGuard rotacionadas para `atius-srv-3`, `horistic-srv`,
@@ -227,7 +232,7 @@ Base inicial criada em 2026-06-16; linhas com nota `validated 2026-07-05`
 foram conferidas via SSH/`ss`/`curl`. Portas sem processo atual são mantidas
 somente quando representam alvo de edge ou drift operacional documentado.
 
-### SRV-1 (10.1.1.1) — production
+### SRV-1 (10.11.1.11 OCI primary; 10.100.100.1 reserve) — production
 
 | Porta  | Serviço                    | Bind         | PID/User | Notas                              |
 |--------|----------------------------|--------------|----------|-----------------------------------|
@@ -253,9 +258,9 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 6085   | websockify noVNC camofox   | 127.0.0.1    | ubuntu   | atual em :5; alvo novo :15/6095   |
 | 6095   | noVNC camofox slot 1 target | 127.0.0.1   | ubuntu   | reservado para display :15         |
 | 631    | cups                       | 127.0.0.1    | root     | printer (pending ESM upgrade)      |
-| 2379   | etcd                       | 10.1.1.1     | root     | K3s control plane                 |
-| 2380   | etcd peer                  | 10.1.1.1     | root     | K3s                                |
-| 6432   | pgbouncer                  | 10.1.1.1 / 127.0.0.1 | postgres | central DB                         |
+| 2379   | etcd                       | 10.11.1.11 / 10.100.100.1 | root     | K3s control plane; OCI-private preferred |
+| 2380   | etcd peer                  | 10.11.1.11 / 10.100.100.1 | root     | K3s; OCI-private preferred |
+| 6432   | pgbouncer                  | 10.11.1.11 / 10.100.100.1 / 127.0.0.1 | postgres | central DB; OCI-private preferred, `wg100` kept as reserve |
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
 | 7070   | anydesk                    | 0.0.0.0      | anydesk  | remote desktop                     |
 | 8015   | atius-api                  | 0.0.0.0      | ubuntu   | PM2 namespace=atius                |
@@ -273,7 +278,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 12002  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 3131   | gbrain HTTP MCP            | 127.0.0.1    | ubuntu   | local-only backend; public URL `https://mcp.atius.com.br/gbrain` |
-| 27124  | obsidian-local-rest-api    | 10.1.1.1     | ubuntu   | HTTPS REST + MCP, allowlist wg0 SRV-2/SRV-3 |
+| 27124  | obsidian-local-rest-api    | 10.11.1.11 / 10.100.100.1 | ubuntu   | HTTPS REST + MCP; OCI-private preferred, `wg100` reserve via local proxy |
 | 12004  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 12006  | nxnode                     | 127.0.0.1    | ubuntu   | NoMachine                          |
 | 18080  | node (router ai?)          | 127.0.0.1    | ubuntu   | investigate                        |
@@ -282,13 +287,13 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 24342  | ?                          | 127.0.0.1    | ?        | undocumented                       |
 | 25809  | electron (AionUi)          | 0.0.0.0      | ubuntu   | tray app                           |
 
-### SRV-2 (10.1.1.2) — development
+### SRV-2 (10.12.1.12 OCI primary; 10.100.100.2 reserve) — development
 
 | Porta  | Serviço                    | Bind         | PID/User | Notas                              |
 |--------|----------------------------|--------------|----------|-----------------------------------|
 | 22     | sshd                       | [::]         | root     | WAN                                |
 | 25     | postfix                    | 0.0.0.0      | root     | SMTP out                           |
-| 53     | named (BIND)               | 127.0.0.1    | bind     | DNS interno                        |
+| 53     | systemd-resolved stubs     | 127.0.0.53 / 127.0.0.54 | systemd-resolved | DNS local; canonical upstream interno deve ser o SRV-1/10.11.1.11 |
 | 80     | apache2                    | *            | root     | legacy                             |
 | 111    | rpcbind                    | [::]         | root     |                                    |
 | 139    | samba                      | 0.0.0.0      | root     | SMB                                |
@@ -302,8 +307,8 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 5901   | Xvnc XRDP display :1       | 127.0.0.1/session | user | efêmero durante sessão XRDP; smoke OK 2026-06-16 |
 | 6080   | websockify/noVNC           | 0.0.0.0      | root     | validated 2026-07-05; revisar exposure/gate |
 | 631    | cups                       | 127.0.0.1    | root     |                                    |
-| 2379   | etcd                       | 10.1.1.2     | root     | K3s                                |
-| 2380   | etcd peer                  | 10.1.1.2     | root     | K3s                                |
+| 2379   | etcd                       | 10.12.1.12 / 10.100.100.2 | root     | K3s; OCI-private preferred |
+| 2380   | etcd peer                  | 10.12.1.12 / 10.100.100.2 | root     | K3s; OCI-private preferred |
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
 | 6444   | K3s                        | 127.0.0.1    | root     | K3s                                |
 | 8000   | python (3 procs)           | 127.0.0.1    | ubuntu   | router-ai-zentrius                 |
@@ -316,7 +321,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 25809  | electron (AionUi)          | 0.0.0.0      | ubuntu   |                                    |
 | 3000   | next-server                | *            | ubuntu   | PM2                                |
 
-### SRV-3 (10.1.1.3; 10.1.1.7 K3s alias) — sandbox
+### SRV-3 (10.13.1.13 OCI primary; 10.100.100.3 reserve) — sandbox
 
 | Porta  | Serviço                    | Bind         | PID/User | Notas                              |
 |--------|----------------------------|--------------|----------|-----------------------------------|
@@ -330,11 +335,11 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 3350   | xrdp-sesman                | 127.0.0.1    | root     |                                    |
 | 5901   | Xvnc XRDP display :1       | 127.0.0.1/session | user | efêmero durante sessão XRDP; smoke OK 2026-06-16 |
 | 631    | cups                       | 127.0.0.1    | root     | pending ESM upgrade (8 cups pkgs)  |
-| 8088   | FreeIPA/private gateway    | 10.1.1.3     | podman   | private service gateway            |
-| 8202   | HashiCorp Vault HTTPS      | 10.1.1.3     | podman   | private WireGuard only             |
-| 8203   | HashiCorp Vault cluster    | 10.1.1.3     | podman   | private WireGuard only             |
-| 2379   | etcd                       | 10.1.1.7     | root     | K3s compatibility alias            |
-| 2380   | etcd peer                  | 10.1.1.7     | root     | K3s compatibility alias            |
+| 8088   | Vaultwarden/private gateway | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
+| 8202   | HashiCorp Vault HTTPS      | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
+| 8203   | HashiCorp Vault cluster    | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
+| 2379   | etcd                       | 10.13.1.13 / 10.100.100.3 | root     | K3s; OCI-private preferred |
+| 2380   | etcd peer                  | 10.13.1.13 / 10.100.100.3 | root     | K3s; OCI-private preferred |
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
 | 6444   | K3s                        | 127.0.0.1    | root     | K3s                                |
 | 8310   | python script              | 0.0.0.0      | ubuntu   | undocumented                       |
@@ -344,7 +349,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 25808  | Wayland runtime            | 0.0.0.0      | wayland  | validated 2026-07-05; local/public auth status `200` |
 
 
-### horistic-srv (10.1.1.4) — reverse proxy / k3s worker
+### horistic-srv (10.21.1.21 OCI primary; 10.100.100.4 reserve) — reverse proxy / k3s worker
 
 | Porta  | Serviço                    | Bind         | PID/User | Notas                              |
 |--------|----------------------------|--------------|----------|-----------------------------------|
@@ -365,9 +370,9 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 10256  | kube-proxy healthz         | 127.0.0.1    | root     | K3s                                |
 | 22061  | local service              | 127.0.0.1    | -        | investigate                        |
-| 3115   | TEI GTE embeddings         | 10.1.1.4     | k3s/containerd | `ai-search/tei-gte`, internal router upstream |
+| 3115   | TEI GTE embeddings         | 10.21.1.21 / 0.0.0.0 | k3s/containerd | `ai-search/tei-gte`, OCI-private preferred |
 
-Validated 2026-07-04: `10.1.1.4:3000` is released, `10.1.1.4:3115`
+Validated 2026-07-08: the OCI-primary listener is reachable on `10.21.1.21:3115`
 returns TEI health `200`, and public `embedding-gte-v1` through
 `https://router.atius.com.br/v1/embeddings` returns 768-dimensional vectors.
 
@@ -400,12 +405,12 @@ Notas:
 | RDP             | 3389, 3350     | 3389 WAN      | xrdp                     |
 | Cloudflare Origin | 9080, 9444   | 127.0.0.1     | Apache2 (Plane 2 mig)   |
 | K3s API         | 6443, 6444     | mixed         | K3s                      |
-| K3s etcd        | 2379, 2380     | 10.1.1.0/24   | K3s                      |
+| K3s etcd        | 2379, 2380     | 10.11/10.12/10.13/10.21 preferred, `wg100` reserve | K3s |
 | K3s kubelet     | 10250          | *             | K3s                      |
 | Prometheus node-exporter | 9100 | *             | K3s                      |
-| Local TEI embeddings | 3115       | 10.1.1.4      | K3s `ai-search/tei-gte`  |
-| PgBouncer       | 6432           | 10.1.1.1      | central DB               |
-| Obsidian REST/MCP | 27124        | 10.1.1.1      | AiSecondBrain via VPN    |
+| Local TEI embeddings | 3115       | 10.21.1.21  | K3s `ai-search/tei-gte`  |
+| PgBouncer       | 6432           | 10.11.1.11  | central DB               |
+| Obsidian REST/MCP | 27124        | 10.11.1.11  | AiSecondBrain via OCI/DRG |
 | GBrain HTTP MCP | 3131           | 127.0.0.1     | SRV-1 local backend; public edge `mcp.atius.com.br/gbrain` |
 | Router Web/API  | 3000           | 0.0.0.0       | SRV-1 Podman `router-ai-atius` |
 | Router docs target | 3003        | 127.0.0.1     | target esperado; drift atual sem listener |
@@ -511,7 +516,7 @@ Upgrade gated em janela separada.
 - Repo: `.planning/phases/13-k3s-ha-portainer-oci/13-CONTEXT.md` (Ubuntu Pro gate)
 - Repo: `.planning/phases/13-k3s-ha-portainer-oci/13-GATE-REVIEW-2026-06-14.md`
 - Repo: `.planning/phases/14-resource-governor-pm2-boot-hardening/14-03-*.md` (xrdp watchdog)
-- Repo: `docs/operations/local-ai-embeddings.md` (TEI/GTE `10.1.1.4:3115` + router alias)
+- Repo: `docs/operations/local-ai-embeddings.md` (TEI/GTE `10.100.100.4:3115` + router alias)
 - Repo: `docs/operations/gbrain-embedding-migration.md` (GBrain/Obsidian/Graphify embedding contract)
 - Repo: `docs/operations/codex-mcp-startup-standard.md` (Codex MCP startup profiles and smoke checks)
 - Repo: `docs/operations/wayland-managed-runtime.md` (Wayland SRV-3 managed runtime)
@@ -549,13 +554,17 @@ Validado em 2026-07-05:
 
 ## 10. Changelog
 
+- **1.5.1 (2026-07-08)** — DNS interno canônico consolidado no SRV-1
+  (`10.100.100.1:53`); `nslookup`/`dig` no W11, SRV-1 e Horistic devolveram a
+  malha `10.100.100.x`, e `10.1.1.2:53` expirou timeout, ficando classificado
+  como referência legada apenas.
 - **1.5.0 (2026-07-05)** — consolidado delta live de MCP/edge/router:
   GBrain HTTP MCP `127.0.0.1:3131` com edge `mcp.atius.com.br/gbrain`,
   Wayland SRV-3 `0.0.0.0:25808`, router Web/API em `3000`, drift de docs em
-  `3003`, Obsidian REST/MCP `10.1.1.1:27124`, K3s 4 nos Ready e fila de
+  `3003`, Obsidian REST/MCP `10.100.100.1:27124`, K3s 4 nos Ready e fila de
   reconciliacao para Landscape/Portainer/monitoring.
 - **1.4.1 (2026-06-29)** — Obsidian Local REST API + MCP centralizado no
-  SRV-1 em `10.1.1.1:27124`, com acesso direto via VPN para SRV-2/SRV-3 e
+  SRV-1 em `10.100.100.1:27124`, com acesso direto via VPN para SRV-2/SRV-3 e
   allowlist `OMNI-OBSIDIAN-REST`; padrão antigo por SSH tunnel local removido.
 - **1.4.0 (2026-06-17)** — renomeado `horistic-srv-1` → `horistic-srv` (host + inventory + VPN/CoreDNS + docs); `horistic-srv-1` permanece como alias uppercase em CoreDNS para retrocompat; vhost Apache `remote.horistic-srv-1.atius.com.br.conf` preservado.
 - **1.3.0 (2026-06-17)** — adicionados `atius-mt5-kvm-1` e `atius-mt5-kvm-2` como hosts gerenciados sem K3s: IPs 10.1.1.16/17, portas 9001/9002, node-exporter 9100, zsh/Oh My Zsh/Rust/zellij validados e inventory `inventory/hosts/atius-mt5-kvm-*.yaml`.

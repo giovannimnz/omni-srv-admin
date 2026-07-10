@@ -117,16 +117,16 @@ PgBouncer ownership:
 |---|---|
 | `pgbouncer.ini` | control-plane server module |
 | `userlist.txt` or auth backend | secret storage, never git |
-| `listen_host` | private server VPN IP, default candidate `10.1.1.1`; never public internet |
+| `listen_host` | private server VPN IP, default candidate `10.100.100.1`; never public internet |
 | `listen_port` | control-plane runtime config, default `6432` |
-| allowed clients | private fleet network, default candidate `10.1.1.0/24` |
+| allowed clients | OCI private peers `10.12.0.0/16`, `10.13.0.0/16`, `10.21.0.0/16`, with `wg100` reserve `10.100.100.0/24` |
 | pool mode | deployment config, default candidate `transaction` |
 
 SRV-1 live enforcement:
 
-- PgBouncer listens on `127.0.0.1:6432` and `10.1.1.1:6432`.
+- PgBouncer target endpoint is `10.11.1.11:6432`; `10.100.100.1:6432` remains reserve fallback only.
 - PostgreSQL direct port `8745` remains local for server-side maintenance.
-- SRV-2/SRV-3 must connect to `10.1.1.1:6432`; direct `10.1.1.1:8745` is blocked.
+- SRV-2/SRV-3 must connect through PgBouncer at `10.11.1.11:6432`; `10.100.100.1:6432` remains reserve fallback only. Windows stays on the reserve path until direct DRG reachability is validated there.
 - Live M004 database is `DbOmniFleet` on SRV-1.
 - `DbOmniFleet` is also the canonical `omni-srv-admin` database for ops/config
   state; do not create parallel local config stores for the same facts.
@@ -294,7 +294,7 @@ PYTHONPATH=cli python3 -m omni fleet agent heartbeat --host atius-srv-1 --json
 
 `agent heartbeat --db` writes through PgBouncer to `TbNodes` and
 `TbNodeTelemetry`. The command refuses DB env files that do not point to
-`10.1.1.1:6432/DbOmniFleet`; it must not fall back to direct PostgreSQL.
+`10.11.1.11:6432/DbOmniFleet`; `10.100.100.1:6432` is reserve fallback only, and it must not fall back to direct PostgreSQL.
 
 ## Cross-Server Monitoring
 
@@ -426,7 +426,7 @@ The script writes:
 ```json
 {
   "database": {
-    "primary": "10.1.1.1:6432",
+    "primary": "10.11.1.11:6432",
     "public_fallback_enabled": false
   }
 }
