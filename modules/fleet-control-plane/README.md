@@ -75,7 +75,7 @@ SRV-2 CLI
 There is no direct SSH apply path in this model.
 
 Direct fallback is SSH/probe only. PgBouncer remains private on
-`10.1.1.1:6432`; do not expose `DbOmniFleet` on public IP.
+`10.11.1.11:6432`; do not expose `DbOmniFleet` on public IP.
 
 Initial allowlist table: `TbFleetCommands`.
 
@@ -132,7 +132,7 @@ ssh atius-srv-3-direct hostname
 - Migration `0003` is applied live: `TbFleetCommands=4`,
   `TbNodeResourcePolicies=3`; SRV-1 has live telemetry in `TbNodeTelemetry`.
 - SRV-1/SRV-2/SRV-3: `/etc/omni-srv-admin/fleet-db.env` points to PgBouncer at
-  `10.1.1.1:6432`.
+  `10.11.1.11:6432`.
 - PgBouncer auth material remains outside git/log/vault.
 
 ## Ops And Config Rule
@@ -153,7 +153,7 @@ Agent-facing slash commands should be represented in PostgreSQL
 ## SRV-1 PgBouncer Enforcement
 
 Live SRV-1 uses PostgreSQL on `127.0.0.1:8745` and PgBouncer on
-`127.0.0.1:6432` plus `10.1.1.1:6432`. Nodes must use PgBouncer. Direct
+`127.0.0.1:6432` plus `10.11.1.11:6432`. Nodes must use PgBouncer. Direct
 PostgreSQL on `10.1.1.1:8745` is blocked from nodes by
 `omni-pg-access-guard`.
 

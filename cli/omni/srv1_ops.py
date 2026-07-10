@@ -143,13 +143,25 @@ def _resource_config() -> dict[str, str]:
     return data
 
 
+def _host_cpu_count() -> int:
+    return os.cpu_count() or 1
+
+
+def _profile_cpu_quota(config: dict[str, str], prefix: str) -> str:
+    total_pct = config.get(prefix + "CPU_TOTAL_PCT", "")
+    if total_pct:
+        quota = float(total_pct) * _host_cpu_count()
+        return f"{quota:g}%"
+    return config.get(prefix + "CPU_QUOTA", "")
+
+
 def _resource_profile(config: dict[str, str], profile: str) -> dict[str, Any]:
     key = RESOURCE_PROFILE_KEYS[profile]
     prefix = f"RG_PROFILE_{key}_"
     root_device = config.get("RG_ROOT_DEVICE", "/dev/sda")
     props: list[tuple[str, str]] = []
     scalar_map = {
-        "CPUQuota": config.get(prefix + "CPU_QUOTA", ""),
+        "CPUQuota": _profile_cpu_quota(config, prefix),
         "CPUWeight": config.get(prefix + "CPU_WEIGHT", ""),
         "MemoryHigh": config.get(prefix + "MEMORY_HIGH", ""),
         "MemoryMax": config.get(prefix + "MEMORY_MAX", ""),

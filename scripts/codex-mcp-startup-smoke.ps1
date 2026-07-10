@@ -120,11 +120,11 @@ function Invoke-KnowledgeSmoke {
   $results = [System.Collections.Generic.List[object]]::new()
   $results.Add((Test-ProfileFile "knowledge-mcp"))
 
-  $reachable = Test-NetConnection -ComputerName "10.1.1.1" -Port 27124 -InformationLevel Quiet
+  $reachable = Test-NetConnection -ComputerName "10.11.1.11" -Port 27124 -InformationLevel Quiet
   if ($reachable) {
-    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "ok" "10.1.1.1:27124 reachable"))
+    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "ok" "10.11.1.11:27124 reachable"))
   } else {
-    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "unreachable" "10.1.1.1:27124 not reachable" "Check WireGuard/VPN before enabling Obsidian MCP."))
+    $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-rest-reachability" "unreachable" "10.11.1.11:27124 not reachable" "Check WireGuard/VPN before enabling Obsidian MCP."))
   }
 
   return $results

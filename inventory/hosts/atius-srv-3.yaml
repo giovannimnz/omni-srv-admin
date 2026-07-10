@@ -171,7 +171,7 @@ forks:
       - "Fork remoto publicado em https://github.com/giovannimnz/wayland; auto_push do projeto wayland no fork-sync pode publicar merges seguros."
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
   configured: true
 notes:

@@ -31,9 +31,9 @@ metadata:
   namespace: jenkins
 spec:
   hard:
-    requests.cpu: "4"
+    requests.cpu: "10"
     requests.memory: "8Gi"
-    limits.cpu: "8"
+    limits.cpu: "10"
     limits.memory: "16Gi"
     pods: "20"
 ---
@@ -51,6 +51,11 @@ metadata:
     phase: 14-06
 spec:
   replicas: 2
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 1
   selector:
     matchLabels:
       app: jenkins-agent
@@ -99,8 +104,8 @@ spec:
                   key: jenkins-secret
           resources:
             requests:
-              cpu: "200m"
+              cpu: "500m"
               memory: "512Mi"
             limits:
-              cpu: "2"
+              cpu: "500m"
               memory: "4Gi"

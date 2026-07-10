@@ -11,6 +11,7 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - Public `/v1/models` must not expose `pricing_source`, `pricing_estimated` or `pricing_version`.
 - Model ordering must keep text before embeddings, MiniMax before DeepSeek before OpenAI/Codex, higher numeric versions first, `-highspeed` above standard, and `pro` above `flash`.
 - Codex embeddings use channel 5 `OpenAI - Codex` and the same OAuth credential used by Codex chat/responses.
+- Codex text models must keep `Responses` as the default endpoint reference in user-facing snippets/catalog surfaces when `openai-response` is available.
 - Do not activate a separate OpenAI-key embeddings channel as the default route for `text-embedding-3-*`.
 - MiniMax must remain a single active provider channel: `MiniMax`, type `35`, base `https://api.minimax.io`, covering OpenAI-compatible chat, Anthropic-compatible messages and `embo-01` embeddings.
 - DeepSeek must remain a single active provider channel: `DeepSeek`, type `43`, base `https://api.deepseek.com`, covering OpenAI-compatible chat and Anthropic-compatible messages.
@@ -42,9 +43,16 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `constant/channel.go`
 - `dto/embedding.go`
 - `relay/channel/codex/`
+- `relay/helper/valid_request.go`
 - `relay/channel/minimax/`
 - `relay/channel/deepseek/`
 - `service/codex_*.go`
+- `setting/console_setting/`
+- `web/default/src/features/pricing/components/model-details-api.tsx`
+- `web/default/src/features/system-settings/content/default-api-info.ts`
+- `web/default/src/features/system-settings/content/index.tsx`
+- `.github/workflows/sync.yml`
+- `.github/codex/`
 - `tools/clianything.py`
 - `tests/test_clianything.py`
 - `docs/`

@@ -124,9 +124,9 @@ PgBouncer ownership:
 
 SRV-1 live enforcement:
 
-- PgBouncer listens on `127.0.0.1:6432` and `10.1.1.1:6432`.
+- PgBouncer listens on `127.0.0.1:6432` and `10.11.1.11:6432`.
 - PostgreSQL direct port `8745` remains local for server-side maintenance.
-- SRV-2/SRV-3 must connect to `10.1.1.1:6432`; direct `10.1.1.1:8745` is blocked.
+- Fleet peers must connect to `10.11.1.11:6432`; the live allowlist accepts `wg100` peers plus OCI private ranges `10.12.0.0/16`, `10.13.0.0/16`, and `10.21.0.0/16`. Direct PostgreSQL on `10.11.1.11:8745` stays blocked.
 - Live M004 database is `DbOmniFleet` on SRV-1.
 - `DbOmniFleet` is also the canonical `omni-srv-admin` database for ops/config
   state; do not create parallel local config stores for the same facts.
@@ -294,7 +294,7 @@ PYTHONPATH=cli python3 -m omni fleet agent heartbeat --host atius-srv-1 --json
 
 `agent heartbeat --db` writes through PgBouncer to `TbNodes` and
 `TbNodeTelemetry`. The command refuses DB env files that do not point to
-`10.1.1.1:6432/DbOmniFleet`; it must not fall back to direct PostgreSQL.
+`10.11.1.11:6432/DbOmniFleet`; it must not fall back to direct PostgreSQL.
 
 ## Cross-Server Monitoring
 
@@ -426,7 +426,7 @@ The script writes:
 ```json
 {
   "database": {
-    "primary": "10.1.1.1:6432",
+    "primary": "10.11.1.11:6432",
     "public_fallback_enabled": false
   }
 }

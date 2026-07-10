@@ -107,13 +107,24 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-sm
 
 Observed 2026-07-05:
 
-- `knowledge-mcp`: `10.1.1.1:27124` reachable.
+- `knowledge-mcp`: `10.11.1.11:27124` reachable on the DRG primary VPN path.
 - `gbrain`: SRV-1 HTTP MCP reachable on local backend `127.0.0.1:3131`
   and public health `https://mcp.atius.com.br/gbrain/health`.
 - `browser-mcp`: Chrome executable and `npx` present.
 - `oci-mcp`: `uv`, `oracle-oci-mcp`, and OCI config present.
 - `lab-mcp`: `npx` present.
 - `cloud-ops-mcp`: process env is `missing-env`, but `CF_GLOBAL_API_KEY` is available via `atius-vault-env cloudflare`; use `codex-cloud-ops`.
+
+HTTP contract standard (validated 2026-07-10):
+
+- Raw `GET`/`HEAD` to `https://mcp.atius.com.br/gbrain` and `https://mcp.atius.com.br/obsidian` should return `405` with `Allow: POST, DELETE`.
+- Canonical MCP smoke is not raw `GET`; use authenticated `POST initialize` with:
+  - `Authorization: Bearer $ATIUS_MCP_TOKEN`
+  - `Content-Type: application/json`
+  - `Accept: application/json, text/event-stream`
+- Expected live results:
+  - `gbrain`: `initialize => 200`, `tools/list => 200`
+  - `obsidian`: `initialize => 200`, `notifications/initialized => 202`, `tools/list => 200`
 
 ## Rollback
 

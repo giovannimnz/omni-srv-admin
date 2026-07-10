@@ -119,7 +119,7 @@ contrato de sync ficam explicitamente descritos no `omni-srv-admin`.
 DB canônico:
 
 - `DbOmniFleet`
-- endpoint declarado: `10.1.1.1:6432`
+- endpoint declarado: `10.11.1.11:6432`
 - transporte: `PgBouncer`
 
 Linux servers:

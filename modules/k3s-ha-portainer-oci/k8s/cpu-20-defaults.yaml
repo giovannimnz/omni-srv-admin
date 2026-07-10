@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: cpu-20-defaults
+  labels:
+    managed-by: omni-srv-admin
+    atius.com/cpu-unit: pod-500m
+spec:
+  limits:
+    - type: Container
+      default:
+        cpu: 500m
+      defaultRequest:
+        cpu: 500m

@@ -121,7 +121,7 @@ done
 ```
 
 PostgreSQL direct access must not be restored as a broad `ACCEPT` rule.
-SRV-2/SRV-3 database clients must use PgBouncer on `10.1.1.1:6432`; direct
+SRV-2/SRV-3 database clients must use PgBouncer on `10.11.1.11:6432`; direct
 PostgreSQL on `10.1.1.1:8745` is blocked by the `OMNI-PG-ACCESS` chain.
 
 All should report `FOUND`. Missing entries indicate a port that would not be

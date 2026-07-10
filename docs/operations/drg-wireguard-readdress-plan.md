@@ -190,11 +190,11 @@ Move service dependencies one class at a time:
 
 - Fleet inventory and `/etc/hosts`
 - CoreDNS `custom_hosts` and reverse zones
-- PgBouncer endpoint currently documented as `10.1.1.1:6432`
+- PgBouncer endpoint currently documented as `10.11.1.11:6432`
 - Vault endpoint currently documented as `10.1.1.3:8202`
 - FreeIPA/CoreDNS forwarding currently using `10.1.1.3`
 - Samba, Keycloak LDAP, Landscape, Obsidian/GBrain MCP, Jenkins JNLP
-- Router/TEI references currently using `10.1.1.4:3115`
+- Router/TEI references currently using `10.100.100.4:3115`
 - Apache/vhost upstreams and monitoring scrape targets
 
 Move clients to `10.100.100.x` service targets first. Do not move a service

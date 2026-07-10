@@ -305,7 +305,7 @@ def test_db_env_rejects_direct_postgres_endpoint(tmp_path):
     try:
         fleet_module._db_env(env_file)
     except Exception as exc:
-        assert "esperado PgBouncer 10.1.1.1:6432" in str(exc)
+        assert "esperado PgBouncer 10.11.1.11:6432" in str(exc)
     else:
         raise AssertionError("direct PostgreSQL endpoint should be rejected")
 

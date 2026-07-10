@@ -5,9 +5,9 @@ milestone_name: Atius-wide SSO and Login
 current_phase: 42
 status: Phase 42 in progress; Phase 44 queued behind explicit live gate
 stopped_at: Reconciled roadmap, requirements, milestones, project, and summaries across phases 37, 41, 42, 43, and 44
-last_updated: "2026-07-06T15:30:00.000Z"
-last_activity: 2026-07-06
-last_activity_desc: Phase 42/43/44 planning artifacts reconciled; v1.4 promoted as active milestone
+last_updated: "2026-07-10T04:45:02.745Z"
+last_activity: 2026-07-10
+last_activity_desc: SSO manuals, learnings routing, and global atius-sso skill refreshed from Phase 42
 progress:
   total_phases: 1
   completed_phases: 0
@@ -19,8 +19,8 @@ current_phase_name: Atius-wide SSO Login on sso.atius.com.br
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-07-06 after v1.4/v1.5/v1.6 artifact reconciliation
-**Last activity (prior):** 2026-07-05 — Phase 43 and 44 partial closeout artifacts landed
+**Last updated:** 2026-07-10 after SSO manual/skill consolidation
+**Last activity (prior):** 2026-07-10 — Phase 42 learnings and canonical SSO manuals/skill refreshed
 
 ## Project Reference
 
@@ -174,7 +174,7 @@ See also: .planning/MILESTONES.md
 Phase: Milestone v1.4 active
 Plan: `42-03`
 Status: In progress; edge/publication gate still open
-Last activity: 2026-07-06 — planning artifacts reconciled after Phase 41/42/43/44 drift review
+Last activity: 2026-07-10
 
 ## Operator Next Steps
 

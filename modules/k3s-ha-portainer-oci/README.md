@@ -7,8 +7,10 @@ tokens or live kubeconfig files. The current branch is ready up to preflight and
 template generation. Live installation remains gated by OCI snapshots,
 OCI/host firewall confirmation and the out-of-band Cloudflare Tunnel token.
 SRV-1, SRV-2 and SRV-3 are in separate OCI accounts, so all OCI gates are
-validated per account; there is no shared NSG/VCN assumption.
-The K3s node network is explicitly WireGuard `wg0` / `10.1.1.0/24`.
+validated per account; there is no shared NSG/VCN assumption. Live K3s node
+traffic now uses the dedicated WireGuard `wg100` / `10.100.100.0/24` overlay;
+`wg0` / `10.1.1.0/24` remains the management/services overlay and legacy
+compatibility path.
 The templates also pin K3s critical server values consistently across all
 three servers: `cluster-cidr=10.42.0.0/16`, `service-cidr=10.43.0.0/16`,
 `cluster-dns=10.43.0.10`, `cluster-domain=cluster.local`,
@@ -28,7 +30,17 @@ production-ready, but it is not active in these templates.
 | `k8s/portainer-values.yaml` | Helm values for Portainer CE LTS |
 | `k8s/kube-prometheus-stack-values.yaml` | Helm values for Prometheus/Grafana observability |
 | `k8s/cloudflared-deployment.yaml` | Cloudflare Tunnel deployment without token |
+| `k8s/cpu-20-defaults.yaml` | Namespace `LimitRange` defaulting managed containers to `500m` CPU |
+| `k8s/pod-500m-strict.yaml` | Workload namespace `LimitRange` enforcing pod CPU max `500m` |
 | `logrotate/docker-json-containers` | Docker JSON log rotation installed during preflight on SRV-2/SRV-3 |
+
+## Resource Unit
+
+Managed k3s workloads use `1 pod = 500m CPU = 0.5 host CPU/vCPU`.
+Two replicas/pods at this standard equal `1000m`, or one full CPU core. Because
+Kubernetes accounts CPU per container, one-container pods must set
+`requests.cpu=500m` and `limits.cpu=500m`; multi-container pods must split that
+same pod budget explicitly.
 
 ## Still Required Before Install
 

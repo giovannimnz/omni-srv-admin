@@ -15,7 +15,7 @@ cat >"$tmp_json" <<'JSON'
 {
   "strategy": "vpn-first-public-ssh-fallback",
   "database": {
-    "primary": "10.1.1.1:6432",
+    "primary": "10.11.1.11:6432",
     "public_fallback_enabled": false,
     "reason": "Do not expose PgBouncer/PostgreSQL on public IP; direct fallback is SSH/probe only."
   },

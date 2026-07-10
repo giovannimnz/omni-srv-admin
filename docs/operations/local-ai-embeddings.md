@@ -17,7 +17,7 @@ embedding-gte-v1
 The backend for this phase is TEI running inside k3s:
 
 ```text
-http://10.1.1.4:3115
+http://10.100.100.4:3115
 ```
 
 The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name for the New API channel is `embedding-gte-v1`. The frozen vector dimension for this alias is `768`, with `cls` pooling.
@@ -68,7 +68,7 @@ Create or update a New API channel for embeddings with these fields:
 | Field | Value |
 |---|---|
 | Type | OpenAI-compatible |
-| Base URL | `http://10.1.1.4:3115` |
+| Base URL | `http://10.100.100.4:3115` |
 | Upstream model | `embedding-gte-v1` |
 | Public alias | `embedding-gte-v1` |
 | Backend model | `Alibaba-NLP/gte-multilingual-base` |
@@ -90,15 +90,15 @@ model + revision/digest + quantization + dimension + normalization + chunking
 Versioned manifest:
 
 ```bash
-kubectl apply -f k8s/ai-search/tei-gte.yaml
+kubectl apply -f k8s/ebeddings-local/tei-gte.yaml
 ```
 
 Read-only checks after apply:
 
 ```bash
-kubectl -n ai-search rollout status deployment/tei-gte
-kubectl -n ai-search get deploy,svc,pvc tei-gte
-kubectl -n ai-search get ingress
+kubectl -n ebeddings-local rollout status deployment/tei-gte
+kubectl -n ebeddings-local get deploy,svc,pvc tei-gte
+kubectl -n ebeddings-local get ingress
 ```
 
 The expected service is `ClusterIP`. No TEI Ingress should exist.
@@ -112,10 +112,12 @@ ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest
 The k3s Service remains ClusterIP-only for internal bookkeeping, but the router-facing upstream uses the private worker IP and TEI port:
 
 ```text
-http://10.1.1.4:3115
+http://10.100.100.4:3115
 ```
 
-The TEI pod runs on `horistic-srv` with `hostNetwork: true` and binds to the private node IP `10.1.1.4`. This is the router-facing internal URL because `router-ai-atius` runs in Podman on SRV-1 and does not reliably reach k3s PodIP/ClusterIP routes.
+The TEI pod runs on `horistic-srv` with `hostNetwork: true` and binds to `0.0.0.0` so Kubernetes probes work on the node InternalIP while the router-facing internal URL stays `http://10.100.100.4:3115`. `router-ai-atius` runs in Podman on SRV-1 and does not reliably reach k3s PodIP/ClusterIP routes.
+
+`horistic-srv` is tainted as manual-only. This TEI workload has the only explicit `atius.com/manual-only=true:NoSchedule` toleration in its manifest; generic agents must not schedule there.
 
 The TEI pod uses pod-level DNS (`dnsPolicy: None`, `1.1.1.1`, `8.8.8.8`, `ndots:1`) because CoreDNS external-resolution failures blocked Hugging Face model bootstrap. This is scoped to the TEI pod; no public Ingress is created.
 
@@ -123,12 +125,25 @@ Live resource contract:
 
 | Setting | Value |
 |---|---|
-| CPU request | `1000m` = 1.0 node CPU/vCPU |
-| CPU limit | `2000m` = 2.0 node CPU/vCPU |
+| CPU request | `500m` = 0.5 node CPU/vCPU |
+| CPU limit | `500m` = 0.5 node CPU/vCPU |
 | Memory request | `6Gi` |
 | Memory limit | `12Gi` |
 | Tokenization workers | `1` |
 | Autoscaling | Disabled; `replicas: 1` |
+
+Namespace default:
+
+| Setting | Value |
+|---|---|
+| Default CPU request | `500m` |
+| Default CPU limit | `500m` |
+| Pod CPU max | `500m` |
+
+ATIUS k3s resource-management unit: `1 pod = 500m = 0.5 host CPU/vCPU`.
+Two replicas/pods at this standard equal `1000m`, i.e. one full CPU core.
+Kubernetes accounts CPU per container, so multi-container pods must explicitly
+split the total pod budget and stay at or below `500m`.
 
 `--tokenization-workers 1` is intentionally pinned. During resource tuning, TEI auto-selected 3 tokenization workers when the CPU ceiling was higher and exceeded the earlier 8Gi memory limit while warming up. Keeping one tokenization worker preserves predictable memory behavior with the current 12Gi memory limit.
 

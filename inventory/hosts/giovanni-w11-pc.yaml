@@ -37,7 +37,7 @@ apps:
       - "Auto-update target governed by TbVersion + omni version matrix."
 database:
   target: DbOmniFleet
-  endpoint: 10.1.1.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
   configured: true
   client: python-pg8000

@@ -142,22 +142,23 @@ Servicos:
 Contrato:
 
 - Plugin: `obsidian-local-rest-api` no vault `AiSecondBrain`.
-- Endpoint VPN: `https://10.1.1.1:27124`.
-- MCP endpoint: `https://10.1.1.1:27124/mcp/`.
-- Binding host do plugin: `10.1.1.1`.
+- Endpoint VPN: `https://10.11.1.11:27124`.
+- MCP endpoint: `https://10.11.1.11:27124/mcp/`.
+- `10.11.1.11` e o caminho primario via DRG; `10.100.100.0/24` fica apenas como rede WireGuard secundaria.
+- Binding host do plugin: `10.11.1.11`.
 - HTTPS habilitado; HTTP inseguro desabilitado.
 - Certificado confiavel nos clientes: `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`.
-- SAN obrigatorio do certificado: `127.0.0.1`, `10.1.1.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
-- Guard iptables permite `27124/tcp` apenas para `lo`, `10.1.1.2` e `10.1.1.3` via `wg0`.
+- SAN obrigatorio do certificado: `127.0.0.1`, `10.11.1.11`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
+- Guard iptables permite `27124/tcp` para `lo`, peers `wg100` (`10.100.100.2` e `10.100.100.3`) e para as faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
 
 Validacao:
 
 ```bash
 systemctl --user is-active obsidian-aisecondbrain-rest.service
 systemctl is-active omni-obsidian-rest-access-guard.service
-curl -sS https://10.1.1.1:27124/
-ssh ubuntu@10.1.1.2 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.1.1.1:27124/'
-ssh ubuntu@10.1.1.3 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.1.1.1:27124/'
+curl -sS https://10.11.1.11:27124/
+ssh ubuntu@10.1.1.2 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.11.1.11:27124/'
+ssh ubuntu@10.1.1.3 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.11.1.11:27124/'
 ```
 
 Seguranca:

@@ -1,10 +1,50 @@
 # Atius-wide SSO em `sso.atius.com.br`
 
+## Leitura recomendada
+
+- Roteador geral de manuais:
+  - `docs/domain/atius-sso-manual-index.md`
+- Learnings consolidados:
+  - `docs/domain/atius-sso-learnings.md`
+- Publicação/edge/Keycloak/rollback do host SSO:
+  - `docs/domain/atius-wide-sso.md`
+- Inclusão/remoção/validação de apps no SSO:
+  - `docs/domain/atius-sso-application-playbook.md`
+
+## Quando usar este manual
+
+Use este documento quando o trabalho for de plataforma/host:
+
+- montar `sso.atius.com.br`
+- publicar ou revalidar o edge SSO
+- confirmar headers Apache/Cloudflare/TLS
+- inventariar o client Keycloak
+- revisar rollback antes de mutação live
+
 ## Objetivo
 
 Publicar `https://sso.atius.com.br` como host canonico de login/logout do ATS sem vazar segredo, sem abrir redirect arbitrario e sem perder rollback de Apache/DNS/Cloudflare/Keycloak.
 
 O fluxo primario do SSO usa as credenciais do banco ATS: a tela `sso.atius.com.br/login` chama `/v1/token/generate`, recebe o cookie `auth-token` em `.atius.com.br` e redireciona para o `return_to` permitido. Keycloak/OIDC fica disponivel apenas para rotas auxiliares e rollback controlado, nao como caminho visual padrao para `remote.atius.com.br/mt5/*`.
+
+## Como funciona entre sistemas
+
+```text
+app protegido
+  -> sso.atius.com.br/login
+  -> ATS facade valida return_to
+  -> login ATS e/ou bridge OIDC
+  -> auth-token em .atius.com.br
+  -> app de destino consulta /v1/auth/me
+  -> app libera proxy ou pagina protegida
+```
+
+Separação de papéis:
+
+- `sso.atius.com.br`: UX canônica de login/logout e normalização de `return_to`
+- `auth.atius.com.br`: issuer OIDC/Keycloak
+- `api.atius.com.br`: validação de sessão e auth ATS reaproveitável
+- app de destino: gate local, proxy local e autorização de domínio quando houver
 
 ## Escopo desta fase
 
