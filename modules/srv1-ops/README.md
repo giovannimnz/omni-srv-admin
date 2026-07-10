@@ -106,7 +106,7 @@ giovanni-drive:ATIUS-SRV/SRV-1/Backup/
 - O plugin `obsidian-local-rest-api` fica no vault `AiSecondBrain` e escuta primariamente `10.11.1.11:27124`.
 - SRV-2/SRV-3 acessam `https://10.11.1.11:27124` e `https://10.11.1.11:27124/mcp/` pela malha OCI/DRG; `wg100` fica como reserve path.
 - Nao criar tunnel systemd em SRV-2/SRV-3 para esse endpoint.
-- SRV-1 usa a cadeia `OMNI-OBSIDIAN-REST` para permitir `27124/tcp` para `lo`, peers `wg100` (`10.100.100.2` e `10.100.100.3`) e faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
+- SRV-1 usa a cadeia `OMNI-OBSIDIAN-REST` para permitir `27124/tcp` para `lo`, peers `wg100` dos servidores (`10.100.100.2` e `10.100.100.3`), edge clients aprovados (`10.100.100.5` e `10.100.100.6`) e faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
 - O certificado do plugin deve existir nos clientes em `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`; depois rodar `update-ca-certificates`.
 - SAN obrigatorio do certificado: `127.0.0.1`, `10.11.1.11`, `10.100.100.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
 - `10.11.1.11` e o endpoint primario via DRG para o MCP do Obsidian; `wg100`/`10.100.100.0/24` fica como caminho secundario e nao deve ser publicado como endpoint canonico.
