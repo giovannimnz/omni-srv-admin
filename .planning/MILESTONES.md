@@ -1,6 +1,6 @@
 # Milestone Branch Matrix
 
-**Last updated:** 2026-07-06
+**Last updated:** 2026-07-10
 
 This file is the shared milestone index for `main`, planning branches, and
 cross-session resumes. It should answer three questions quickly:
@@ -13,7 +13,8 @@ cross-session resumes. It should answer three questions quickly:
 
 | Milestone | Phase span | Theme | Canonical artifacts | Status |
 |---|---|---|---|---|
-| v1.4 | 42 | Atius-wide SSO and Login | `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/` | In progress: 2/3 plans complete |
+| v1.7 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Planned: 0/4 tasks complete |
+| v1.4 | 42 | Atius-wide SSO and Login | `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/` | Paused for DNS gate: 2/3 plans complete |
 | v1.5 | 43 | Codex Runtime and MCP Bootstrap Reliability | `.planning/phases/43-codex-mcp-bootstrap-hardening/` | Shipped: 2/2 plans complete |
 | v1.6 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | In progress: 1/3 plans complete |
 
@@ -27,7 +28,7 @@ cross-session resumes. It should answer three questions quickly:
 **Delivered:**
 
 - TEI backend on `horistic-srv` using `Alibaba-NLP/gte-multilingual-base`.
-- Private router-facing endpoint `http://10.1.1.4:3115`.
+- Private router-facing endpoint `http://10.21.1.21:3115`, with `10.100.100.4:3115` reserve-only.
 - Public alias `embedding-gte-v1` via `https://router.atius.com.br/v1`.
 - k3s runtime moved to namespace `ebeddings-local`.
 - GBrain/Obsidian/Graphify migration contract documented.
@@ -81,6 +82,7 @@ cross-session resumes. It should answer three questions quickly:
 | M012 | 42 | Atius-wide SSO Login | `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/` | In progress |
 | M013 | 43 | Codex MCP Bootstrap Hardening | `.planning/phases/43-codex-mcp-bootstrap-hardening/` | Shipped |
 | M014 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | In progress |
+| M015 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Planned |
 
 ## Separation Rules
 
@@ -96,6 +98,6 @@ cross-session resumes. It should answer three questions quickly:
 
 ## Current Operator Queue
 
-1. Close Phase 42 with `42-03` and promote v1.4 to shipped.
-2. Resume Phase 44 from `44-02` after explicit live mutation approval.
-3. Keep v1.3 and v1.5 as reference milestones, not active focus.
+1. Execute Phase 45 to make DRG/OCI DNS and service routing canonical.
+2. Close Phase 42 with `42-03` and promote v1.4 to shipped.
+3. Resume Phase 44 from `44-02` after explicit live CA/trust mutation approval.

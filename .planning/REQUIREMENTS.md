@@ -1,7 +1,7 @@
-# Requirements: Omni Srv Admin — v1.2 to v1.6
+# Requirements: Omni Srv Admin — v1.2 to v1.7
 
 **Defined:** 2026-06-24
-**Milestone:** multi-milestone reconciliation through v1.6
+**Milestone:** multi-milestone reconciliation through v1.7
 **Core Value:** Servidor Atius sempre provisionado, documentado e operante, com governanca centralizada e identidade/SSO evoluindo sem quebrar producao.
 
 ## v1.2 Requirements
@@ -49,7 +49,7 @@
 ### Local AI Embeddings / Semantic Retrieval
 
 - [x] **EMB-01**: Operador consegue chamar `https://router.atius.com.br/v1/embeddings` com autenticação Bearer e `model=embedding-gte-v1`.
-- [x] **EMB-02**: New API possui canal interno para embeddings que aponta para o TEI em `http://10.1.1.4:3115`, nunca para `https://router.atius.com.br/v1`, evitando loop.
+- [x] **EMB-02**: New API possui canal interno para embeddings que aponta para o TEI em `http://10.21.1.21:3115`, nunca para `https://router.atius.com.br/v1`, evitando loop.
 - [x] **EMB-03**: Backend TEI roda no k3s em `horistic-srv` sob namespace `ebeddings-local`, com Service ClusterIP, `hostNetwork` privado e sem ingress público direto.
 - [x] **EMB-04**: Alias `embedding-gte-v1` fica ligado a `Alibaba-NLP/gte-multilingual-base`, 768 dimensões, com contrato de modelo + versão/digest + normalização + chunking documentado.
 - [x] **EMB-05**: Smoke test externo em lote com dois textos pt-BR retorna `quantidade=2`, `dimensoes=768`, `error=null` e usage coerente.
@@ -90,7 +90,20 @@
 - [ ] **PKI-05**: Todos os servidores instalam e validam a CA chain via trust store do sistema (`update-ca-certificates`), sem instalar leafs de peers como root CAs.
 - [ ] **PKI-06**: A validacao passa uma matriz 4x4: 4 verificacoes locais e 12 verificacoes HTTPS remotas entre os hosts, com hostname/IP SAN validation e TLS verify code `0`.
 - [ ] **PKI-07**: A funcionalidade produz audit JSON/redacted logs, docs operacionais, Obsidian e GBrain com fingerprints, paths, backups e resultados, sem vazar chaves, tokens ou passphrases.
-- [ ] **PKI-08**: O plano deixa explicito que HTTPS real de servicos, como TEI em `https://10.1.1.4:3115`, exige proxy/listener TLS e gate de servico separado antes de alterar channels ou portas em producao.
+- [ ] **PKI-08**: O plano deixa explicito que HTTPS real de servicos, como TEI em `https://10.21.1.21:3115`, exige proxy/listener TLS e gate de servico separado antes de alterar channels ou portas em producao.
+
+## v1.7 Requirements
+
+### Internal DNS / DRG Canonicalization
+
+- [ ] **DNS-01**: Inventario, docs, scripts e validadores usam `oci_private_ip` como campo de roteamento canonico para `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e `horistic-srv`.
+- [ ] **DNS-02**: `wg100` / `10.100.100.0/24` aparece apenas como fallback/reserva documentada, com excecao explicita para `GIOVANNI-W11-PC` ate prova de reachability DRG.
+- [ ] **DNS-03**: `10.1.1.0/24` nao aparece como caminho ativo em configuracao, scripts, validadores ou runbooks; referencias remanescentes ficam marcadas como historicas ou entram em lista de cleanup.
+- [ ] **DNS-04**: O resolvedor interno canonico e `10.11.1.11:53`, servindo short names e `*.atius.internal` para IPs privados OCI/DRG.
+- [ ] **DNS-05**: Linux hosts e clientes Windows usam resolvers que preferem DRG/OCI e nao reintroduzem `10.1.1.2` ou `10.100.100.1` como primario por watchdog/script.
+- [ ] **DNS-06**: Cloudflare gerencia apenas DNS publico de `atius.com.br`; nomes de maquinas e IPs privados vivem no DNS interno e em inventario versionado.
+- [ ] **DNS-07**: Servicos internos criticos usam endpoints OCI/DRG por padrao: PgBouncer `10.11.1.11:6432`, Obsidian `10.11.1.11:27124`, Vault `10.13.1.13:8202`, TEI `10.21.1.21:3115`.
+- [ ] **DNS-08**: Validacao final cobre `dig/getent/nslookup`, reachability de servicos, diff repo-wide contra `10.1.1.x`, e registro em Obsidian/GBrain sem segredos.
 
 ## Future Requirements
 
@@ -166,6 +179,14 @@
 | PKI-06 | Phase 44 | In Progress |
 | PKI-07 | Phase 44 | In Progress |
 | PKI-08 | Phase 44 | In Progress |
+| DNS-01 | Phase 45 | Planned |
+| DNS-02 | Phase 45 | Planned |
+| DNS-03 | Phase 45 | Planned |
+| DNS-04 | Phase 45 | Planned |
+| DNS-05 | Phase 45 | Planned |
+| DNS-06 | Phase 45 | Planned |
+| DNS-07 | Phase 45 | Planned |
+| DNS-08 | Phase 45 | Planned |
 
 **Coverage:**
 
@@ -184,7 +205,10 @@
 - v1.6 requirements: 8 total
 - v1.6 mapped to phases: 8
 - v1.6 unmapped: 0
+- v1.7 requirements: 8 total
+- v1.7 mapped to phases: 8
+- v1.7 unmapped: 0
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-07-06 after reconciling Phase 42/43/44 status and traceability*
+*Last updated: 2026-07-10 after adding Phase 45 internal DNS / DRG canonicalization*

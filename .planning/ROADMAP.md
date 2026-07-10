@@ -1,10 +1,10 @@
 # Roadmap: Omni Srv Admin (omni-srv-admin)
 
-**Active Milestone:** v1.4 — Atius-wide SSO and Login
-**Milestone Goal:** Publicar `sso.atius.com.br` como host canonico de login ATIUS, usando Keycloak como provedor OIDC controlado e preservando o `auth-token` e o RBAC legado do ATS ate a publicacao completa.
+**Active Milestone:** v1.7 — Internal DNS and DRG Canonicalization
+**Milestone Goal:** Tornar DNS interno, nomes de maquinas e endpoints de servicos DRG/OCI-first, mantendo `wg100` apenas como fallback e removendo `10.1.1.0/24` de qualquer caminho ativo.
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 **Requirements:** `.planning/REQUIREMENTS.md`
-**Execution order:** Wave 0 validation -> ATS SSO facade -> edge/header publication gate -> rollback/runbook closeout
+**Execution order:** Source-of-truth cleanup -> live resolver cutover -> Cloudflare/internal DNS boundary -> drift automation and durable closeout
 
 ---
 
@@ -12,7 +12,8 @@
 
 The v1.2 phases below remain valid as canonized history. v1.3 shipped, Phase 43
 also shipped out of sequence for runtime reasons, and the active operator focus
-is now finishing Phase 42 before resuming Phase 44.
+is now Phase 45 because DNS/DRG canonicalization gates safe continuation of
+Phase 42 and Phase 44.
 
 ## Phase 28: G18 Ubuntu Pro/ESM Fleet Gates ✅ COMPLETE
 
@@ -215,7 +216,7 @@ is now finishing Phase 42 before resuming Phase 44.
 
 **34-01 closeout:** Disposable AlmaLinux client `freeipa-client-test` enrolled successfully against `ipa.atius.internal` / `ATIUS.INTERNAL` inside the private FreeIPA Podman network. DNS returned `10.89.53.10`; `ipa-client-install`, `kinit admin`, and `ipa ping` passed. No real managed host was enrolled.
 
-**34-02 closeout:** CoreDNS on `atius-srv-2` now forwards only `atius.internal` to `10.1.1.3`; `atius-srv-3` privately gateways the required FreeIPA ports to the container at `10.89.53.10`; real-host enrollment succeeded on `atius-srv-3` as `atius-srv-3.atius.internal`; `getent`, `id`, `kinit admin`, `ipa ping`, and `sudo -l -U admin` passed. `horistic-srv` was explicitly deferred to the next controlled expansion step.
+**34-02 closeout:** CoreDNS forwarding for `atius.internal` must now target the SRV-3 OCI/DRG private IP `10.13.1.13`; `atius-srv-3` privately gateways the required FreeIPA ports to the container at `10.89.53.10`; real-host enrollment succeeded on `atius-srv-3` as `atius-srv-3.atius.internal`; `getent`, `id`, `kinit admin`, `ipa ping`, and `sudo -l -U admin` passed. `horistic-srv` was explicitly deferred to the next controlled expansion step.
 
 ---
 
@@ -385,13 +386,13 @@ is now finishing Phase 42 before resuming Phase 44.
 **Plans:** 1/1 plans complete
 
 - [x] 41-01 — TEI/GTE backend, New API alias, OpenAI smoke and client migration contract
-  - Completed 2026-07-04 and reconciled 2026-07-06: TEI live on `10.1.1.4:3115`, runtime namespace `ebeddings-local`, router alias `embedding-gte-v1`, public POST `/v1/embeddings` smoke passed.
+  - Completed 2026-07-04 and reconciled 2026-07-10: TEI canonical private endpoint is `10.21.1.21:3115`, runtime namespace `ebeddings-local`, router alias `embedding-gte-v1`, public POST `/v1/embeddings` smoke passed.
 
 **Success Criteria:**
 
 1. `POST https://router.atius.com.br/v1/embeddings` com `model=embedding-gte-v1` retorna embeddings para lote pt-BR autenticado.
 2. A resposta validada mostra `quantidade=2`, `dimensoes=768`, `error=null` e `model` coerente com o alias público.
-3. O canal interno do New API aponta para `http://10.1.1.4:3115`, não para o próprio router público.
+3. O canal interno do New API aponta para `http://10.21.1.21:3115`, não para o próprio router público.
 4. O contrato `modelo + versão/digest + dimensão + normalização + chunking` fica documentado, e qualquer troca exige reembed/reindex.
 5. GBrain/Obsidian/Graphify têm runbook de consumo sem gravar secrets em Git, `.planning`, Obsidian, logs ou shell history.
 
@@ -464,7 +465,7 @@ is now finishing Phase 42 before resuming Phase 44.
 **Goal:** Endurecer o bootstrap local do Codex em `GIOVANNI-W11-PC`, separando MCPs always-on de MCPs pesados ou opcionais, eliminando timeouts e warnings evitaveis no start e criando um fluxo opt-in claro para browser, OCI, Cloudflare e knowledge MCPs.
 
 **Requirements:** CDX-01, CDX-02, CDX-03, CDX-04, CDX-05, CDX-06
-**Depends on:** `docs/operations/codex-runtime-standard.md`, `C:\Users\muniz\.codex\config.toml`, `C:\Users\muniz\.codex\mcp-patch.toml`, endpoint `https://10.1.1.1:27124/mcp/`, repo local `oracle-oci-mcp`
+**Depends on:** `docs/operations/codex-runtime-standard.md`, `C:\Users\muniz\.codex\config.toml`, `C:\Users\muniz\.codex\mcp-patch.toml`, endpoint `https://mcp.atius.com.br/obsidian` with private backend `10.11.1.11:27124`, repo local `oracle-oci-mcp`
 **Status:** Complete
 **Risk:** HIGH - uma configuracao ruim aqui degrada a abertura do Codex inteiro, remove ferramentas do operador e pode induzir copia indevida de secrets para o Windows local.
 
@@ -538,7 +539,7 @@ is now finishing Phase 42 before resuming Phase 44.
 - Private keys nunca entram em Git, `.planning`, Obsidian, GBrain, stdout/stderr, logs ou shell history.
 - Toda mutacao live exige backup timestampado, dry-run, `--execute` explicito ou update plan aprovado.
 - SSH direto so vale para bootstrap/controlado; o recurso permanente deve passar por `omni fleet trust-pki` e comandos local-agent allowlisted.
-- HTTPS de servicos reais, como TEI em `10.1.1.4:3115`, exige gate de servico separado; a fase prova PKI/trust, nao troca portas/proxies automaticamente.
+- HTTPS de servicos reais, como TEI em `10.21.1.21:3115`, exige gate de servico separado; a fase prova PKI/trust, nao troca portas/proxies automaticamente.
 
 **Success Criteria:**
 
@@ -549,9 +550,73 @@ is now finishing Phase 42 before resuming Phase 44.
 5. A matriz 4x4 passa: 4 checks locais + 12 checks HTTPS remotos, validando IP/DNS SAN e TLS verify code `0`.
 6. Obsidian e GBrain recebem nota operacional com fingerprints, paths, backups, comandos e resultado, sem material secreto.
 7. Runbook documenta rotacao, rollback e regra para nao reutilizar a PKI RDP/XRDP como CA de servicos.
-8. TEI/Router permanece em HTTP ate uma fase/gate especifico de reverse proxy/TLS aprovar `https://10.1.1.4:3115`.
+8. TEI/Router permanece em HTTP ate uma fase/gate especifico de reverse proxy/TLS aprovar `https://10.21.1.21:3115`.
 
 **Current open gate:** `44-02` and `44-03` remain blocked on explicit live CA/trust mutation approval and the full 4x4 verification rollout.
+
+---
+
+## Milestone v1.7: Internal DNS and DRG Canonicalization
+
+## Phase 45: Internal DNS and DRG Canonicalization
+
+**Goal:** Fazer `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e clientes internos resolverem nomes curtos e `*.atius.internal` para os IPs privados OCI/DRG, usando `10.11.1.11:53` como DNS interno canonico e mantendo WireGuard `wg100` apenas como fallback documentado.
+
+**Requirements:** DNS-01, DNS-02, DNS-03, DNS-04, DNS-05, DNS-06, DNS-07, DNS-08
+**Depends on:** Phase 41 TEI context, Phase 43 MCP bootstrap, Phase 44 PKI surface, `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md`, `docs/operations/ATIUS-INTERNAL-DNS-CANONICALIZATION-PLAN.md`
+**Status:** Planned
+**Risk:** HIGH - DNS/resolver drift pode quebrar acesso a DB, Vault, Obsidian, TEI, SSO e automacoes Codex; live resolver mutation precisa de rollback por host.
+
+**Canonical refs:**
+
+- `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md` - contrato publico Cloudflare vs DNS interno.
+- `docs/operations/ATIUS-INTERNAL-DNS-CANONICALIZATION-PLAN.md` - ondas de execucao e validacao.
+- `docs/operations/ATIUS-DRG-DNS-SESSION-LEARNINGS.md` - decisoes e aprendizados da migracao.
+- `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` - mapa operacional de portas e endpoints.
+- `inventory/hosts/*.yaml` - fonte versionada de `oci_private_ip` e excecoes.
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-PLAN.md` - plano executavel.
+
+**Plans:** 0/4 tasks complete
+
+- [ ] 45-01 - Repo/source-of-truth cleanup and `10.1.1.x` classification
+- [ ] 45-02 - Live Linux/Windows resolver cutover with rollback
+- [ ] 45-03 - Internal DNS authority and Cloudflare boundary hardening
+- [ ] 45-04 - Drift automation, validation matrix and Obsidian/GBrain closeout
+
+**Wave 1 - Source of truth**
+
+- [ ] 45-01 - Align inventory, docs, scripts and validators to `oci_private_ip` primary and `wg100` reserve.
+
+**Wave 2 - Resolver cutover**
+
+- [ ] 45-02 - Fix live resolver drift on SRV-1/SRV-2/SRV-3/Horistic and validate Windows exception.
+
+**Wave 3 - DNS authority and public boundary**
+
+- [ ] 45-03 - Ensure `10.11.1.11:53` serves short names and `*.atius.internal`; keep Cloudflare public-only.
+
+**Wave 4 - Automation and closeout**
+
+- [ ] 45-04 - Add drift checks, run validation matrix, update Obsidian/GBrain, and leave both checkouts clean.
+
+**Cross-cutting constraints:**
+
+- `10.1.1.0/24` is retired. Do not reintroduce it as live compatibility, rollback, resolver, validation, or service path.
+- `10.100.100.0/24` is reserve fallback only. `GIOVANNI-W11-PC` may stay on reserve until direct DRG reachability is proven.
+- Public `atius.com.br` DNS stays Cloudflare-managed; internal hostnames and private IP identity stay in internal DNS/inventory.
+- No secret values may enter Git, `.planning`, Obsidian, GBrain, logs or shell history.
+- Live resolver changes require per-host before/after evidence and a rollback path.
+
+**Success Criteria:**
+
+1. `rg -n "10\.1\.1\."` returns only historical/retired references or tracked cleanup notes, not active config or validation.
+2. `dig +short @10.11.1.11 atius-srv-1 atius-srv-2 atius-srv-3 horistic-srv` maps to `10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.21.1.21`.
+3. Linux `getent hosts` on SRV-1/SRV-2/SRV-3/Horistic resolves short names to OCI/DRG IPs.
+4. PgBouncer, Obsidian, Vault and TEI validations prefer `10.11.1.11:6432`, `10.11.1.11:27124`, `10.13.1.13:8202`, `10.21.1.21:3115`.
+5. Cloudflare docs list public `atius.com.br` records only; internal host identity is not delegated to Cloudflare.
+6. Watchdog scripts and resolver configs cannot reapply `10.1.1.2` or make `10.100.100.1` primary.
+7. `GIOVANNI-W11-PC` has explicit status: direct DRG validated or reserve exception retained with next action.
+8. Repo, Obsidian and GBrain all contain the final canonical DNS model and validation evidence.
 
 ## Phase Summary
 
@@ -575,8 +640,9 @@ is now finishing Phase 42 before resuming Phase 44.
 | 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | In Progress | HIGH |
 | 43 | Codex MCP Bootstrap Hardening | Lean default startup + opt-in MCP profiles + cold-start smoke | CDX-01..CDX-06 | Complete | HIGH |
 | 44 | Internal Service PKI and Fleet Trust | Per-host service leaf certs + internal CA trust + 4x4 HTTPS validation | PKI-01..PKI-08 | In Progress | HIGH |
+| 45 | Internal DNS and DRG Canonicalization | DRG/OCI DNS, resolver and service endpoint canonicalization | DNS-01..DNS-08 | Planned | HIGH |
 
-**Total:** 18 phases | 54 requirements mapped | 16 complete / 2 open
+**Total:** 19 phases | 62 requirements mapped | 16 complete / 3 open
 
 ### Scope addendum - 2026-06-24
 

@@ -169,3 +169,6 @@ graphify-out/manifest.json
 .planning/backups/
 .playwright-cli/
 *.bak-*
+
+# Local Codex desktop workspace metadata
+.ijfw/
