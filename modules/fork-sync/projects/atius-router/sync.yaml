@@ -27,7 +27,16 @@ protected_paths:
   - i18n/locales/pt.yaml
   - i18n/i18n.go
   - web/default/src/i18n/locales/*.json
+  - web/default/src/i18n/locales/pt.json
   - web/default/src/i18n/config.ts
+  - web/default/src/i18n/languages.ts
+  - web/default/scripts/sync-i18n.mjs
+  - web/classic/src/i18n/i18n.js
+  - web/classic/src/i18n/language.js
+  - web/classic/src/i18n/locales/pt.json
+  - web/classic/src/components/layout/headerbar/LanguageSelector.jsx
+  - web/classic/src/components/settings/personal/cards/PreferencesSettings.jsx
+  - scripts/smoke-pt-br-i18n.sh
   # Feature: Codex channel, OAuth/device/model sync and routing overrides
   - controller/codex_*.go
   - controller/channel.go
@@ -58,7 +67,6 @@ protected_paths:
   - web/default/src/features/pricing/components/model-details-api.tsx
   - web/default/src/features/system-settings/content/default-api-info.ts
   - web/default/src/features/system-settings/content/index.tsx
-  - web/default/scripts/sync-i18n.mjs
   - web/classic/src/constants/channel.constants.js
   # Feature: Go-native model catalog, base URL normalization and Codex embeddings route
   - .dockerignore
@@ -114,6 +122,7 @@ protected_paths:
   - web/default/public/favicon.ico
 
 post_sync:
+  - scripts/smoke-pt-br-i18n.sh
   - scripts/smoke-docs-links.sh
 
 merge_strategy: theirs

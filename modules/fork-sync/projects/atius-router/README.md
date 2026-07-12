@@ -55,6 +55,9 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 ### Frontend i18n
 - `web/default/src/i18n/locales/*.json` — locale updates required by fork-specific channel UX
 - `web/default/src/i18n/config.ts` — added `pt` to `supportedLngs` and `resources`
+- `web/default/src/i18n/languages.ts` — exposes `Português` and normalizes `pt-BR`/`pt_BR` to `pt`
+- `web/classic/src/i18n/` and both classic selectors — keep PT-BR available if the classic theme is enabled
+- `scripts/smoke-pt-br-i18n.sh` — blocks sync when locale files, registrations, keys or placeholders regress
 
 ### Codex channel integration
 - `controller/codex_*.go`, `service/codex_*.go` — OAuth/device/model flows

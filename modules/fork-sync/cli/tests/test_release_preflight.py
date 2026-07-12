@@ -7,6 +7,7 @@ from pathlib import Path
 from fork_sync.core.release_preflight import (
     ATIUS_ROUTER_DOCS_LINK_FILES,
     ATIUS_ROUTER_DOCS_PROTECTED_FILES,
+    ATIUS_ROUTER_PT_BR_REQUIRED_FILES,
     _load_yaml,
     run_preflight,
 )
@@ -283,6 +284,83 @@ def test_atius_router_sync_yaml_protects_docs_link_surfaces() -> None:
 
     assert set(ATIUS_ROUTER_DOCS_PROTECTED_FILES).issubset(protected)
     assert "scripts/smoke-docs-links.sh" in post_sync
+
+
+def test_preflight_blocks_missing_atius_router_pt_br(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+
+    result = run_preflight(
+        repo,
+        github_repo="giovannimnz/router-ai-atius",
+        secret_names=set(),
+    )
+
+    assert result["status"] == "error"
+    assert "atius-router-pt-br-regression" in {
+        item["code"] for item in result["errors"]
+    }
+
+
+def test_preflight_accepts_complete_atius_router_pt_br(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    for rel in ATIUS_ROUTER_PT_BR_REQUIRED_FILES:
+        _write(repo / rel, "present\n")
+
+    _write(
+        repo / "i18n" / "i18n.go",
+        'const LangPt = "pt"\nvar files = []string{"locales/pt.yaml"}\n'
+        'func normalizeLang(lang string) string { if strings.HasPrefix(lang, "pt") { return LangPt }; return lang }\n',
+    )
+    _write(
+        repo / "web" / "default" / "src" / "i18n" / "config.ts",
+        "import pt from './locales/pt.json'\nconst config = { supportedLngs: ['pt'] }\n",
+    )
+    _write(
+        repo / "web" / "default" / "src" / "i18n" / "languages.ts",
+        "const options = [{ code: 'pt', label: 'Português' }]\n"
+        "const value = normalized.startsWith('pt')\n",
+    )
+    _write(
+        repo / "web" / "classic" / "src" / "i18n" / "i18n.js",
+        "import ptTranslation from './locales/pt.json';\nconst resources = { pt: ptTranslation };\n",
+    )
+    _write(
+        repo / "web" / "classic" / "src" / "i18n" / "language.js",
+        "const supported = ['pt'];\nconst normalized = lower.startsWith('pt');\n",
+    )
+    _write(
+        repo / "web" / "classic" / "src" / "components" / "layout" / "headerbar" / "LanguageSelector.jsx",
+        "onLanguageChange('pt'); Português\n",
+    )
+    _write(
+        repo / "web" / "classic" / "src" / "components" / "settings" / "personal" / "cards" / "PreferencesSettings.jsx",
+        "{ value: 'pt', label: 'Português' }\n",
+    )
+    locale = json.dumps({"translation": {"Hello {{name}}": "Olá {{name}}"}})
+    _write(repo / "web" / "default" / "src" / "i18n" / "locales" / "en.json", locale)
+    _write(repo / "web" / "default" / "src" / "i18n" / "locales" / "pt.json", locale)
+    _write(repo / "web" / "classic" / "src" / "i18n" / "locales" / "en.json", locale)
+    _write(repo / "web" / "classic" / "src" / "i18n" / "locales" / "pt.json", locale)
+
+    result = run_preflight(
+        repo,
+        github_repo="giovannimnz/router-ai-atius",
+        secret_names=set(),
+    )
+
+    assert result["status"] == "success"
+    assert {"check": "atius-router-pt-br", "status": "complete"} in result["checks"]
+
+
+def test_atius_router_sync_yaml_protects_pt_br_surfaces() -> None:
+    fork_sync_root = Path(__file__).resolve().parents[2]
+    sync = _load_yaml(fork_sync_root / "projects" / "atius-router" / "sync.yaml")
+    protected = set(sync.get("protected_paths") or [])
+    post_sync = sync.get("post_sync") or []
+
+    assert set(ATIUS_ROUTER_PT_BR_REQUIRED_FILES).issubset(protected)
+    assert "scripts/smoke-pt-br-i18n.sh" in post_sync
 
 
 def test_preflight_flags_pull_request_target_risks(tmp_path: Path) -> None:
