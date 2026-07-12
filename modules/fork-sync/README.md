@@ -69,20 +69,22 @@ fork-sync repl                                   # modo interativo
 fork-sync --json projects list | jq .            # output estruturado para agents
 ```
 
-**Projetos atualmente configurados (10):**
+**Projetos atualmente configurados (12):**
 
 | Projeto | Fork | Upstream | Deploy |
 |---|---|---|---|
 | `aionui` | `giovannimnz/AionUi` | `iOfficeAI/AionUi` | — |
 | `atius-router` | `giovannimnz/router-ai-atius` | `QuantumNous/new-api` | Docker |
 | `atius-router-docs` | `giovannimnz/...` | docs own | — |
-| `hermes-agent` | `giovannimnz/hermes-agent` | `NousResearch/hermes-agent` | — |
-| `hermes-os` | `giovannimnz/hermes-os` | `fathah/hermes-desktop` | — |
 | `gsd-2` | `giovannimnz/gsd-2` | `gsd-build/gsd-2` | — |
 | `bruno` | `giovannimnz/bruno` | `usebruno/bruno` | — |
 | `get-shit-done` | `giovannimnz/get-shit-done` | `gsd-build/get-shit-done` | — |
+| `hermes-backend` | módulo em `giovannimnz/hermes-os` | `NousResearch/hermes-agent` | pausado |
+| `hermes-desktop` | módulo em `giovannimnz/hermes-os` | `fathah/hermes-desktop` | pausado |
+| `horus-spec-driven` | ATIUS local | projeto próprio | — |
 | `notebooklm-py` | `giovannimnz/notebooklm-py` | `teng-lin/notebooklm-py` | — |
-| `wayland` | `giovannimnz/wayland` (pendente de publicação) | `FerroxLabs/wayland` | source runtime |
+| `codex-acp` | `giovannimnz/codex-acp` | `zed-industries/codex-acp` | source runtime |
+| `wayland` | `giovannimnz/wayland` | `FerroxLabs/wayland` | source runtime |
 
 > Lista sempre atualizada via `fork-sync projects list`.
 

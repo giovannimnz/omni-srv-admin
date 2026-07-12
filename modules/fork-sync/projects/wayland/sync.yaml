@@ -24,12 +24,19 @@ protected_paths:
   - scripts/atius-build-renderer-overlay.sh
   - scripts/atius-postinstall-hook.sh
   - scripts/atius-refresh-source-patch.sh
+  - scripts/atius-sync-ubuntu-runtime.mjs
+  - scripts/atius-wayland-https-proxy.js
   - scripts/atius-reapply-renderer-overlay.sh
   - scripts/atius-update.sh
   - scripts/install-ubuntu.sh
   - scripts/build-server.mjs
   - scripts/build-mcp-servers.js
   - src/process/agent/acp/AcpDetector.ts
+  - src/process/agent/acp/acpConnectors.ts
+  - src/process/agent/AgentRegistry.ts
+  - src/process/agent/remote/RemoteAgentCore.ts
+  - src/process/bridge/remoteAgentBridge.ts
+  - src/process/acp/compat/typeBridge.ts
   - src/process/extensions/data/bundle-vendored/agentProfileMerge.ts
   - src/process/extensions/resolvers/ChannelPluginResolver.ts
   - src/process/utils/initStorage.ts
@@ -51,6 +58,7 @@ protected_paths:
   - src/process/task/WCoreManager.ts
   - src/process/task/claudeConfig.ts
   - src/process/task/codexConfig.ts
+  - src/process/task/codexStaticModelInfo.ts
   - src/process/task/hermesConfig.ts
   - src/renderer/components/agent/AgentModeSelector.tsx
   - src/renderer/components/agent/MarqueePillLabel.tsx
@@ -66,6 +74,8 @@ protected_paths:
   - src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css
   - src/renderer/pages/guid/hooks/useGuidAgentSelection.ts
   - src/renderer/pages/guid/hooks/useGuidSend.ts
+  - src/renderer/pages/settings/AgentSettings/RemoteAgentManagement.tsx
+  - src/common/types/acpTypes.ts
   - src/renderer/services/i18n/i18n-keys.d.ts
   - src/renderer/services/i18n/index.ts
   - src/renderer/styles/layout.css
@@ -76,6 +86,9 @@ protected_paths:
   - tests/unit/process/task/codexNativeSandbox.test.ts
   - tests/unit/renderer/GuidActionRow.dom.test.tsx
   - tests/unit/renderer/guidModelSelector.dom.test.tsx
+  - tests/unit/RemoteAgentCore.test.ts
+  - tests/unit/RemoteAgentManagement.dom.test.tsx
+  - tests/unit/remoteAgentBridge.test.ts
   - tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
   - tests/unit/useGuidSend.dom.test.ts
   - docs/README.md
@@ -84,6 +97,7 @@ protected_paths:
 protected_globs:
   - src/renderer/services/i18n/locales/*/agentMode.json
   - src/renderer/services/i18n/locales/*/conversation.json
+  - src/renderer/services/i18n/locales/*/settings.json
 
 post_sync:
   enabled: true

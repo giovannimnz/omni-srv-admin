@@ -7,6 +7,10 @@ This fork tracks `FerroxLabs/wayland` but serves a production runtime on
 the srv-3 standalone-source deployment model and the Codex/WebUI customizations
 that make that runtime operable.
 
+The public reverse proxy on `atius-srv-1` uses the OCI/DRG backend
+`10.13.1.13:25725`. The `10.100.100.0/24` network is reserve fallback only and
+must not be selected as the primary path while OCI/DRG is available.
+
 ## Do not overwrite these behaviors
 
 - `wayland.service` on `atius-srv-3` runs the source checkout directly through
@@ -137,7 +141,7 @@ bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service
 systemctl is-active wayland.service
 curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
-journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 4 agents|Serving renderer|WebUI running"
+journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 2 agents|Serving renderer|WebUI running"
 ```
 
 Expected result:

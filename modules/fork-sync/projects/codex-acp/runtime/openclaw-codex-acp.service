@@ -1,0 +1,25 @@
+[Unit]
+Description=ATIUS Codex ACP Remote Agent Gateway
+Documentation=https://docs.openclaw.ai/tools/acp-agents
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu
+Environment=HOME=/home/ubuntu
+Environment=CODEX_HOME=/home/ubuntu/.codex
+Environment=HERMES_HOME=/home/ubuntu/.hermes
+Environment=PATH=/home/ubuntu/.nvm/versions/node/v24.13.1/bin:/home/ubuntu/.local/bin:/home/ubuntu/.cargo/bin:/usr/local/bin:/usr/bin:/bin
+EnvironmentFile=/home/ubuntu/.config/openclaw/gateway.env
+ExecStart=/home/ubuntu/.nvm/versions/node/v24.13.1/bin/openclaw gateway run --port 18789
+Restart=on-failure
+RestartSec=5
+TimeoutStartSec=180
+TimeoutStopSec=30
+KillMode=mixed
+CPUQuota=80%
+LimitNOFILE=65536
+
+[Install]
+WantedBy=default.target

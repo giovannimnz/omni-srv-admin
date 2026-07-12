@@ -1,0 +1,25 @@
+project: codex-acp
+display_name: "Codex ACP - ATIUS remote agent adapter"
+enabled: true
+upstream: https://github.com/zed-industries/codex-acp
+upstream_branch: main
+origin_branch: main
+fork_repo: codex-acp
+fork: /home/ubuntu/GitHub/codex-acp
+merge_strategy: merge
+auto_push: true
+notification_level: all
+ai_decision_threshold: conflicts
+version_scheme:
+  suffix: "-atius"
+  counter_dir: "~/.fork-sync/{project}/versions/{upstream_version}"
+
+protected_paths:
+  - Cargo.toml
+  - Cargo.lock
+  - scripts/codex-acp-atius-wrapper.sh
+  - src/agent_profile.rs
+  - src/codex_agent.rs
+  - src/lib.rs
+  - src/main.rs
+  - src/thread.rs

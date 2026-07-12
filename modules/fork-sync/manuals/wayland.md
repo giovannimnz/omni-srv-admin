@@ -15,6 +15,11 @@ owner_module: omni-srv-admin/modules/fork-sync
 o serviço systemd executa `dist-server/server.mjs` construído a partir do
 checkout local, com patch/source overlay próprio da ATIUS.
 
+O caminho de produção é Cloudflare -> Apache no OCI/DRG `10.11.1.11`
+(`atius-srv-1`) -> backend Wayland no OCI/DRG `10.13.1.13:25725`
+(`atius-srv-3`). A rede `10.100.100.0/24` é fallback de reserva e nunca deve
+ser escolhida enquanto o caminho OCI/DRG estiver disponível.
+
 ## 2. Source of Truth
 
 | Item | Path |
@@ -29,16 +34,20 @@ checkout local, com patch/source overlay próprio da ATIUS.
 
 ## 3. Estado atual
 
-- O runtime ativo roda com `User=wayland`, `PORT=25808` e
+- O runtime ativo roda com `User=ubuntu`, `PORT=25725`,
+  `CODEX_HOME=/home/ubuntu/.codex`, `HERMES_HOME=/home/ubuntu/.hermes` e
   `WAYLAND_DISABLE_AUTO_UPDATE=1`.
 - `Conversar na pasta` fica visível no WebUI e usa `/home/ubuntu/GitHub` como
   diretório inicial.
 - Sem preferência salva, a tela de login entra em `pt-BR`.
-- A detecção ACP do servidor encontra `Wayland Core`, `Gemini CLI`, `Codex` e
-  `Hermes Agent`.
-- A página GUID separa modelo e esforço de raciocínio para Codex e Hermes. O
-  modelo não carrega mais sufixos como `/xhigh` na lista; o esforço fica no
-  seletor adjacente (`Low`, `Medium`, `High`, `XHigh`).
+- A detecção do servidor oferece apenas os CLIs canônicos `Codex` e
+  `Hermes Agent`; Gemini CLI permanece desativado.
+- A página GUID reúne modelo, esforço, velocidade, reset e Power avançado em
+  um único menu compacto. Comandos GSD continuam comandos `/` ou `$` e não são
+  promovidos a agentes runtime.
+- O agente remoto Codex usa `wss://codex-acp.atius.com.br/gateway`, token do
+  Vault e device pairing OpenClaw; o transporte chega ao fork `codex-acp` no
+  usuário `ubuntu`.
 - O modo de permissão do Codex inclui `Custom (config.toml)` /
   `Personalizado(config.toml)`, que deixa o Codex usar o `config.toml` nativo
   do usuário de serviço em vez de uma predefinição Wayland.
@@ -175,8 +184,8 @@ npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service
 systemctl is-active wayland.service
-curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
-journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 4 agents|Serving renderer|WebUI running"
+curl -fsS -o /dev/null -w "http=%{http_code}\n" http://10.13.1.13:25725/
+journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 2 agents|Serving renderer|WebUI running"
 ```
 
 ## 9. Guardrails
