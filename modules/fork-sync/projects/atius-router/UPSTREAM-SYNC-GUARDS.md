@@ -1,6 +1,6 @@
 # Atius Router upstream sync guards
 
-Updated: 2026-06-26
+Updated: 2026-07-12
 
 This file is the operational warning for upstream sync maintainers. The Atius Router fork has production-only behavior that must survive merges from `QuantumNous/new-api`.
 
@@ -12,6 +12,10 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - Model ordering must keep text before embeddings, MiniMax before DeepSeek before OpenAI/Codex, higher numeric versions first, `-highspeed` above standard, and `pro` above `flash`.
 - Codex embeddings use channel 5 `OpenAI - Codex` and the same OAuth credential used by Codex chat/responses.
 - Codex text models must keep `Responses` as the default endpoint reference in user-facing snippets/catalog surfaces when `openai-response` is available.
+- Channel type `57` is the canonical `OpenAI - Codex` channel. Its admin UI must not expose generic `Base URL`, `API Key`, reveal/copy or multi-key controls.
+- Type `57` must keep the Router-owned OAuth lifecycle routes for sanitized metadata, refresh, explicit probe and PKCE regeneration under `/api/channel/:id/codex/*`.
+- Internal Router API-key failures and Codex upstream OAuth failures are distinct contracts. Preserve `codex_upstream_auth_failed`, `codex_upstream_token_invalidated` and `codex_upstream_refresh_token_invalidated` across Responses and Chat Completions paths.
+- A future local expiration timestamp is not proof of validity after an upstream auth failure. Preserve non-secret credential health in `channel.setting.codex_credential_health` and never expose token material in metadata or diagnostics.
 - Do not activate a separate OpenAI-key embeddings channel as the default route for `text-embedding-3-*`.
 - MiniMax must remain a single active provider channel: `MiniMax`, type `35`, base `https://api.minimax.io`, covering OpenAI-compatible chat, Anthropic-compatible messages and `embo-01` embeddings.
 - DeepSeek must remain a single active provider channel: `DeepSeek`, type `43`, base `https://api.deepseek.com`, covering OpenAI-compatible chat and Anthropic-compatible messages.
@@ -33,6 +37,8 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `.dockerignore`
 - `controller/model.go`
 - `controller/model_list_test.go`
+- `controller/channel.go`
+- `controller/codex_*.go`
 - `service/modelcatalog/`
 - `relay/common/relay_utils.go`
 - `relay/common/relay_utils_test.go`
@@ -43,10 +49,18 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `constant/channel.go`
 - `dto/embedding.go`
 - `relay/channel/codex/`
+- `relay/codex_auth_error.go`
+- `relay/responses_handler.go`
+- `relay/compatible_handler.go`
+- `relay/chat_completions_via_responses.go`
 - `relay/helper/valid_request.go`
 - `relay/channel/minimax/`
 - `relay/channel/deepseek/`
 - `service/codex_*.go`
+- `router/channel-router.go`
+- `types/error.go`
+- `dto/channel_settings.go`
+- `web/default/src/features/channels/`
 - `setting/console_setting/`
 - `web/default/src/features/pricing/components/model-details-api.tsx`
 - `web/default/src/features/system-settings/content/default-api-info.ts`
