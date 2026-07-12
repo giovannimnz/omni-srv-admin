@@ -30,7 +30,12 @@ protected_paths:
   - web/default/src/i18n/config.ts
   # Feature: Codex channel, OAuth/device/model sync and routing overrides
   - controller/codex_*.go
+  - controller/channel.go
   - service/codex_*.go
+  - relay/codex_auth_error.go
+  - relay/responses_handler.go
+  - relay/compatible_handler.go
+  - relay/chat_completions_via_responses.go
   - relay/channel/codex/
   - relay/channel/minimax/
   - relay/channel/deepseek/
@@ -47,6 +52,8 @@ protected_paths:
   - dto/channel_settings.go
   - setting/console_setting/
   - router/api-router.go
+  - router/channel-router.go
+  - types/error.go
   - web/default/src/features/channels/
   - web/default/src/features/pricing/components/model-details-api.tsx
   - web/default/src/features/system-settings/content/default-api-info.ts
