@@ -219,14 +219,14 @@ WAC-03 should be considered complete only when all of the following are true:
 |----------|-------|
 | Framework | Mixed proof harness: focused Router deterministic tests under CPU cap, native Codex smoke, ACP protocol transcripts, and Chromium headless smoke. [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md] [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md] |
 | Config file | `.planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md` [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md] |
-| Quick run command | `TBD in execution: focused Router Phase 32 deterministic test command under the CPU wrapper is still blocked by nested CGO/cache handling evidence.` [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md] |
+| Quick run command | `./scripts/podman-admin.sh verify-profile && ./scripts/podman-admin.sh profile-run -- /usr/local/go/bin/go test ./common ./controller ./service/modelcatalog ./relay/common ./relay/channel/codex ./service ./relay -count=1` from `/home/ubuntu/GitHub/containers/router-ai-atius` on `atius-srv-1`. Live `verify-profile` proved `cpu.max=80000 100000` and `profile-run -- /usr/local/go/bin/go version` passed on 2026-07-12. |
 | Full suite command | `TBD in execution: Phase 48 completion requires the full local + remote + Wayland lifecycle matrix, not a single suite command.` [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md] |
 
 ### Phase Requirements -> Test Map
 
 | Req ID | Behavior | Test Type | Automated Command | File Exists? |
 |--------|----------|-----------|-------------------|-------------|
-| WAC-01 | Router Phase 32 audit and deterministic shell/test evidence | focused deterministic + manual evidence | `TBD - execution must reuse the CPU-capped Router shell path` [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md] | ✅ |
+| WAC-01 | Router Phase 32 audit and deterministic shell/test evidence | focused deterministic + manual evidence | `./scripts/podman-admin.sh verify-profile && ./scripts/podman-admin.sh profile-run -- /usr/local/go/bin/go test ./common ./controller ./service/modelcatalog ./relay/common ./relay/channel/codex ./service ./relay -count=1` | ✅ |
 | WAC-02 | Distinguish upstream auth failures from Router internal auth | live auth classification | `TBD - sanitized metadata/refresh/regenerate/probe sequence` [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md] | ✅ |
 | WAC-03 | Native renewable Codex OAuth | live prompt smoke | `TBD - native Codex prompt proof after login and after restart boundary` [VERIFIED: user-provided verified facts] | ✅ |
 | WAC-04 | Model/effort parity in Codex CLI and Wayland | live smoke | `TBD - reuse shipped UI/runtime after OAuth recovery` [VERIFIED: user-provided verified facts] | ✅ |
@@ -243,7 +243,7 @@ WAC-03 should be considered complete only when all of the following are true:
 
 ### Wave 0 Gaps
 
-- [ ] Router deterministic command path under the CPU wrapper is still unresolved because the checkpoint only proves the CGO/cache failure mode, not the final fixed invocation. [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md]
+- [x] Router deterministic command path resolved live on `atius-srv-1`: run `verify-profile` first, then invoke the focused Go suite directly through `profile-run`; do not nest it inside another resource-governor wrapper. The profile reported `cpu.max=80000 100000` on the 4-vCPU host.
 - [ ] Native renewable OAuth proof artifact must be produced after human login recovery. [VERIFIED: user-provided verified facts]
 - [ ] The single sanitized lifecycle evidence bundle format should be chosen before execution starts, per context discretion. [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-CONTEXT.md]
 
@@ -268,12 +268,12 @@ WAC-03 should be considered complete only when all of the following are true:
 | Remote gateway parity achieved by weakening approvals | Elevation of Privilege | Remote lane must preserve local approval semantics exactly. [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md] |
 | False-positive success from cached session state | Repudiation | Require prompt proof and restart-boundary renewable proof. [VERIFIED: user-provided verified facts] |
 
-## Open Questions
+## Resolved Questions
 
-1. **What is the final Router deterministic test invocation under the CPU wrapper?**
-   - What we know: the wrapper exists and the current failure mode is nested CGO/cache artifact loss, not a proven Router code failure. [CITED: .planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md]
-   - What's unclear: the exact repaired invocation/temporary directory strategy is not documented in the allowed inputs.
-   - Recommendation: Treat this as the first executor task inside Slice A, and do not broaden research outside the current phase inputs.
+1. **Final Router deterministic test invocation under the CPU wrapper**
+   - On `atius-srv-1`, from `/home/ubuntu/GitHub/containers/router-ai-atius`, run `./scripts/podman-admin.sh verify-profile` and require `cpu.max=80000 100000` plus `profile limits OK`.
+   - Then run `./scripts/podman-admin.sh profile-run -- /usr/local/go/bin/go test ./common ./controller ./service/modelcatalog ./relay/common ./relay/channel/codex ./service ./relay -count=1`.
+   - Do not wrap `profile-run` inside `omni srv1-ops resources run builds`; the nested wrapper was the stale path associated with CGO/cache loss.
 
 ## Sources
 

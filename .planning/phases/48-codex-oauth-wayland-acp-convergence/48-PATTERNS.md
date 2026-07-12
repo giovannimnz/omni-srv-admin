@@ -460,7 +460,7 @@ was not read directly in this turn. Planner should treat them as explicit gaps.
 
 | Path / Command | Why It Matters | Gap |
 |---|---|---|
-| `./scripts/podman-admin.sh profile-run` | Mentioned in `48-EXECUTION-CHECKPOINT-2026-07-12.md` as the live CPU-capped Router lane | Script body and final fixed invocation were not read this turn |
+| `./scripts/podman-admin.sh profile-run` | Live CPU-capped Router lane | Resolved on 2026-07-12: `verify-profile` proved `cpu.max=80000 100000`; run the focused Go suite directly through `profile-run` without nesting it inside `omni srv1-ops resources run builds` |
 | Native `codex exec` prompt-smoke command | Required for renewable OAuth proof | Exact repo-pinned command is not documented in gathered repo analogs |
 | Wayland source files `codexConfig.ts` / `AcpAgentManager.ts` | Mentioned in runbooks as the launch seam | They live in the external `wayland` fork, not in this repo |
 | `scripts/codex-acp-atius-wrapper.sh` body | Critical runtime wrapper for local/remote ACP | Referred to by guards and OpenClaw config, but wrapper contents were not read this turn |
