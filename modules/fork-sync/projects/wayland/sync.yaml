@@ -91,6 +91,7 @@ protected_paths:
   - tests/unit/remoteAgentBridge.test.ts
   - tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
   - tests/unit/useGuidSend.dom.test.ts
+  - tests/unit/webserver/detectNetworkContext.test.ts
   - docs/README.md
   - docs/guides/atius-fork-runtime.md
 
