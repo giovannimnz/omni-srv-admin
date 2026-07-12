@@ -4,6 +4,8 @@ import json
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from fork_sync.core.release_preflight import (
     ATIUS_ROUTER_DOCS_LINK_FILES,
     ATIUS_ROUTER_DOCS_PROTECTED_FILES,
@@ -337,6 +339,8 @@ def test_preflight_accepts_complete_atius_router_pt_br(tmp_path: Path) -> None:
         repo / "web" / "classic" / "src" / "components" / "settings" / "personal" / "cards" / "PreferencesSettings.jsx",
         "{ value: 'pt', label: 'Português' }\n",
     )
+    _write(repo / "i18n" / "locales" / "en.yaml", 'hello: "Hello {{.Name}}"\n')
+    _write(repo / "i18n" / "locales" / "pt.yaml", 'hello: "Olá {{.Name}}"\n')
     locale = json.dumps({"translation": {"Hello {{name}}": "Olá {{name}}"}})
     _write(repo / "web" / "default" / "src" / "i18n" / "locales" / "en.json", locale)
     _write(repo / "web" / "default" / "src" / "i18n" / "locales" / "pt.json", locale)
@@ -351,6 +355,67 @@ def test_preflight_accepts_complete_atius_router_pt_br(tmp_path: Path) -> None:
 
     assert result["status"] == "success"
     assert {"check": "atius-router-pt-br", "status": "complete"} in result["checks"]
+
+
+@pytest.mark.parametrize(
+    ("pt_yaml", "expected_message"),
+    [
+        ('hello: "Olá {{.Name}}"\n', "PT-BR backend YAML keys differ from base locale"),
+        (
+            'hello: "Olá {{.User}}"\nbye: Tchau\n',
+            "placeholder drift for key: hello",
+        ),
+    ],
+)
+def test_preflight_blocks_backend_pt_br_key_and_placeholder_drift(
+    tmp_path: Path,
+    pt_yaml: str,
+    expected_message: str,
+) -> None:
+    repo = tmp_path / "repo"
+    for rel in ATIUS_ROUTER_PT_BR_REQUIRED_FILES:
+        _write(repo / rel, "present\n")
+    _write(repo / "i18n" / "locales" / "en.yaml", 'hello: "Hello {{.Name}}"\nbye: Bye\n')
+    _write(repo / "i18n" / "locales" / "pt.yaml", pt_yaml)
+    locale = json.dumps({"translation": {"Hello": "Olá"}})
+    for frontend in ("default", "classic"):
+        locale_dir = repo / "web" / frontend / "src" / "i18n" / "locales"
+        _write(locale_dir / "en.json", locale)
+        _write(locale_dir / "pt.json", locale)
+
+    result = run_preflight(
+        repo,
+        github_repo="giovannimnz/router-ai-atius",
+        secret_names=set(),
+    )
+
+    messages = [item["message"] for item in result["errors"]]
+    assert result["status"] == "error"
+    assert expected_message in messages
+
+
+def test_preflight_blocks_empty_pt_br_json_value(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    for rel in ATIUS_ROUTER_PT_BR_REQUIRED_FILES:
+        _write(repo / rel, "present\n")
+    _write(repo / "i18n" / "locales" / "en.yaml", "hello: Hello\n")
+    _write(repo / "i18n" / "locales" / "pt.yaml", "hello: Olá\n")
+    base = json.dumps({"translation": {"Hello": "Hello"}})
+    empty_pt = json.dumps({"translation": {"Hello": "   "}})
+    for frontend in ("default", "classic"):
+        locale_dir = repo / "web" / frontend / "src" / "i18n" / "locales"
+        _write(locale_dir / "en.json", base)
+        _write(locale_dir / "pt.json", empty_pt)
+
+    result = run_preflight(
+        repo,
+        github_repo="giovannimnz/router-ai-atius",
+        secret_names=set(),
+    )
+
+    messages = [item["message"] for item in result["errors"]]
+    assert result["status"] == "error"
+    assert "empty PT-BR value for key: Hello" in messages
 
 
 def test_atius_router_sync_yaml_protects_pt_br_surfaces() -> None:

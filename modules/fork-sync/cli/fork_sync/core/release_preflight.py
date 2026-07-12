@@ -297,8 +297,47 @@ def _translation_map(path: Path) -> dict[str, Any]:
     return translation if isinstance(translation, dict) else {}
 
 
+def _flatten_locale(data: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+    flattened: dict[str, Any] = {}
+    for key, value in data.items():
+        path = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(value, dict):
+            flattened.update(_flatten_locale(value, path))
+        else:
+            flattened[path] = value
+    return flattened
+
+
 def _placeholders(value: Any) -> list[str]:
     return sorted(re.findall(r"\{\{[^}]+\}\}", str(value)))
+
+
+def _locale_pair_violations(
+    base: dict[str, Any],
+    pt: dict[str, Any],
+    *,
+    pt_path: Path,
+    locale_name: str,
+    reject_empty_pt_values: bool = False,
+) -> list[tuple[Path, str]]:
+    violations: list[tuple[Path, str]] = []
+    base_flat = _flatten_locale(base)
+    pt_flat = _flatten_locale(pt)
+    if not base_flat or not pt_flat:
+        return [(pt_path, f"{locale_name} locale is empty or invalid")]
+    if set(base_flat) != set(pt_flat):
+        return [(pt_path, f"PT-BR {locale_name} keys differ from base locale")]
+    for key, base_value in base_flat.items():
+        pt_value = pt_flat[key]
+        if reject_empty_pt_values and (
+            pt_value is None or (isinstance(pt_value, str) and not pt_value.strip())
+        ):
+            violations.append((pt_path, f"empty PT-BR value for key: {key}"))
+            break
+        if _placeholders(base_value) != _placeholders(pt_value):
+            violations.append((pt_path, f"placeholder drift for key: {key}"))
+            break
+    return violations
 
 
 def _atius_router_pt_br_violations(repo: Path) -> list[tuple[Path, str]]:
@@ -338,6 +377,17 @@ def _atius_router_pt_br_violations(repo: Path) -> list[tuple[Path, str]]:
         if missing:
             violations.append((Path(rel), f"missing PT-BR registration: {missing[0]}"))
 
+    backend_base = _load_yaml(repo / "i18n/locales/en.yaml")
+    backend_pt = _load_yaml(repo / "i18n/locales/pt.yaml")
+    violations.extend(
+        _locale_pair_violations(
+            backend_base,
+            backend_pt,
+            pt_path=Path("i18n/locales/pt.yaml"),
+            locale_name="backend YAML",
+        )
+    )
+
     locale_pairs = [
         (
             "web/default/src/i18n/locales/en.json",
@@ -351,15 +401,15 @@ def _atius_router_pt_br_violations(repo: Path) -> list[tuple[Path, str]]:
     for base_rel, pt_rel in locale_pairs:
         base = _translation_map(repo / base_rel)
         pt = _translation_map(repo / pt_rel)
-        if not base or not pt:
-            continue
-        if set(base) != set(pt):
-            violations.append((Path(pt_rel), "PT-BR locale keys differ from base locale"))
-            continue
-        for key, base_value in base.items():
-            if _placeholders(base_value) != _placeholders(pt[key]):
-                violations.append((Path(pt_rel), f"placeholder drift for key: {key}"))
-                break
+        violations.extend(
+            _locale_pair_violations(
+                base,
+                pt,
+                pt_path=Path(pt_rel),
+                locale_name="frontend JSON",
+                reject_empty_pt_values=True,
+            )
+        )
 
     return violations
 

@@ -115,13 +115,16 @@ def _normalise_post_sync(cfg: dict, *, project: str, repo: Path) -> dict:
     if isinstance(raw, list):
         enabled = True
         fail_fast = True
-        run_on = ["merged"]
+        run_on = ["merged", "ahead_only"]
         default_cwd = repo
         raw_commands = raw
     elif isinstance(raw, dict):
         enabled = _as_bool(raw.get("enabled"), default=True)
         fail_fast = _as_bool(raw.get("fail_fast"), default=True)
-        run_on = [str(item) for item in (raw.get("run_on") or ["merged"])]
+        run_on = [
+            str(item)
+            for item in (raw.get("run_on") or ["merged", "ahead_only"])
+        ]
         default_cwd = _format_path(str(raw.get("cwd") or repo), project=project, repo=repo)
         raw_commands = raw.get("commands") or []
     else:
@@ -536,6 +539,7 @@ def run_sync(
         push_stdout = ""
         push_stderr = ""
         push_exit_code = None
+        push_attempted = False
         if not dry_run and dirty_files:
             result.update(
                 {
@@ -544,7 +548,29 @@ def run_sync(
                 }
             )
             return result
+        if not dry_run:
+            result["post_sync"] = _run_post_sync_hooks(
+                cfg,
+                project=name,
+                repo=repo,
+                event="ahead_only",
+            )
+            if result["post_sync"].get("status") == "error":
+                result.update(
+                    {
+                        "status": "error",
+                        "error": "post_sync falhou; push não executado",
+                        "message": f"Local branch is ahead by {ahead}; publication blocked by post_sync",
+                        "can_apply": not dirty_files,
+                        "push_attempted": False,
+                        "push_stdout": push_stdout,
+                        "push_stderr": push_stderr,
+                        "push_exit_code": push_exit_code,
+                    }
+                )
+                return result
         if not dry_run and _auto_push_enabled(cfg):
+            push_attempted = True
             push = _git(repo, ["push", "origin", branch], check=False)
             push_stdout = push.stdout
             push_stderr = push.stderr
@@ -557,6 +583,7 @@ def run_sync(
                         "push_stdout": push_stdout,
                         "push_stderr": push_stderr,
                         "push_exit_code": push_exit_code,
+                        "push_attempted": push_attempted,
                     }
                 )
                 return result
@@ -568,18 +595,9 @@ def run_sync(
                 "push_stdout": push_stdout,
                 "push_stderr": push_stderr,
                 "push_exit_code": push_exit_code,
+                "push_attempted": push_attempted,
             }
         )
-        if not dry_run:
-            result["post_sync"] = _run_post_sync_hooks(
-                cfg,
-                project=name,
-                repo=repo,
-                event="ahead_only",
-            )
-            if result["post_sync"].get("status") == "error":
-                result["status"] = "error"
-                result["error"] = "branch ahead-only publicada, mas post_sync falhou"
         return result
 
     if dry_run:
@@ -668,7 +686,32 @@ def run_sync(
     push_stdout = ""
     push_stderr = ""
     push_exit_code = None
+    push_attempted = False
+    commit_sha = _git(repo, ["rev-parse", "HEAD"]).stdout.strip()
+    result["post_sync"] = _run_post_sync_hooks(
+        cfg,
+        project=name,
+        repo=repo,
+        event="merged",
+    )
+    if result["post_sync"].get("status") == "error":
+        result.update(
+            {
+                "status": "error",
+                "error": "post_sync falhou; push não executado",
+                "message": f"Merged {upstream_ref} into {branch} locally; publication blocked by post_sync",
+                "merge_stdout": merge.stdout,
+                "merge_stderr": merge.stderr,
+                "commit_sha": commit_sha,
+                "push_attempted": False,
+                "push_stdout": push_stdout,
+                "push_stderr": push_stderr,
+                "push_exit_code": push_exit_code,
+            }
+        )
+        return result
     if _auto_push_enabled(cfg):
+        push_attempted = True
         push = _git(repo, ["push", "origin", branch], check=False)
         push_stdout = push.stdout
         push_stderr = push.stderr
@@ -681,6 +724,7 @@ def run_sync(
                     "push_stdout": push_stdout,
                     "push_stderr": push_stderr,
                     "push_exit_code": push_exit_code,
+                    "push_attempted": push_attempted,
                 }
             )
             return result
@@ -691,21 +735,13 @@ def run_sync(
             "message": f"Merged {upstream_ref} into {branch}",
             "merge_stdout": merge.stdout,
             "merge_stderr": merge.stderr,
-            "commit_sha": _git(repo, ["rev-parse", "HEAD"]).stdout.strip(),
+            "commit_sha": commit_sha,
             "push_stdout": push_stdout,
             "push_stderr": push_stderr,
             "push_exit_code": push_exit_code,
+            "push_attempted": push_attempted,
         }
     )
-    result["post_sync"] = _run_post_sync_hooks(
-        cfg,
-        project=name,
-        repo=repo,
-        event="merged",
-    )
-    if result["post_sync"].get("status") == "error":
-        result["status"] = "error"
-        result["error"] = "sync aplicado, mas post_sync falhou"
     if deploy:
         result["deploy_note"] = "Deploy flag ignored by sync runner; use deploy command separately."
     return result

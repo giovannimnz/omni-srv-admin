@@ -255,6 +255,69 @@ def test_run_sync_runs_post_sync_hooks_after_merge(monkeypatch, repo_pair, tmp_p
     assert marker.read_text(encoding="utf-8") == "ok"
 
 
+def test_run_sync_runs_post_sync_before_auto_push(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+    cfg = _cfg(upstream, fork, [])
+    cfg["auto_push"] = True
+    events: list[str] = []
+    original_git = sync_runner._git
+
+    def recording_git(repo, args, check=True):
+        if args[0] == "push":
+            events.append("push")
+        return original_git(repo, args, check=check)
+
+    def successful_hook(*args, **kwargs):
+        events.append("hook")
+        return {"enabled": True, "status": "success", "commands": []}
+
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+    monkeypatch.setattr(sync_runner, "_git", recording_git)
+    monkeypatch.setattr(sync_runner, "_run_post_sync_hooks", successful_hook)
+
+    result = sync_runner.run_sync("notebooklm-py")
+
+    assert result["status"] == "success"
+    assert result["push_attempted"] is True
+    assert events == ["hook", "push"]
+
+
+def test_run_sync_does_not_push_when_post_sync_fails(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
+    cfg = _cfg(upstream, fork, [])
+    cfg["auto_push"] = True
+    original_git = sync_runner._git
+    push_calls: list[list[str]] = []
+
+    def recording_git(repo, args, check=True):
+        if args[0] == "push":
+            push_calls.append(args)
+        return original_git(repo, args, check=check)
+
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+    monkeypatch.setattr(sync_runner, "_git", recording_git)
+    monkeypatch.setattr(
+        sync_runner,
+        "_run_post_sync_hooks",
+        lambda *args, **kwargs: {
+            "enabled": True,
+            "status": "error",
+            "commands": [{"name": "tests", "status": "error", "exit_code": 1}],
+        },
+    )
+
+    result = sync_runner.run_sync("notebooklm-py")
+
+    assert result["status"] == "error"
+    assert result["error"] == "post_sync falhou; push não executado"
+    assert result["post_sync"]["status"] == "error"
+    assert result["push_attempted"] is False
+    assert result["push_exit_code"] is None
+    assert push_calls == []
+
+
 def test_run_sync_reports_push_failure_after_merge(monkeypatch, repo_pair, tmp_path):
     upstream, fork = repo_pair
     _commit_file(upstream, "src/app.txt", "upstream app v2\n", "upstream app v2")
@@ -310,6 +373,39 @@ def test_run_sync_handles_ahead_only_without_empty_merge(monkeypatch, repo_pair)
     assert result["status"] == "success"
     assert "ahead by 1" in result["message"]
     assert before == after
+
+
+def test_run_sync_ahead_only_hook_failure_blocks_default_auto_push(monkeypatch, repo_pair):
+    upstream, fork = repo_pair
+    _commit_file(fork, "README.md", "fork readme\n", "fork-only change")
+    cfg = _cfg(upstream, fork, ["README.md"])
+    cfg["auto_push"] = True
+    cfg["post_sync"] = [
+        {
+            "name": "failing gate",
+            "command": [sys.executable, "-c", "raise SystemExit(1)"],
+            "cwd": str(fork),
+        }
+    ]
+    original_git = sync_runner._git
+    push_calls: list[list[str]] = []
+
+    def recording_git(repo, args, check=True):
+        if args[0] == "push":
+            push_calls.append(args)
+        return original_git(repo, args, check=check)
+
+    monkeypatch.setattr(sync_runner, "load_project", lambda name: cfg)
+    monkeypatch.setattr(sync_runner, "_git", recording_git)
+
+    result = sync_runner.run_sync("ahead-only")
+
+    assert result["status"] == "error"
+    assert result["error"] == "post_sync falhou; push não executado"
+    assert result["post_sync"]["event"] == "ahead_only"
+    assert result["post_sync"]["status"] == "error"
+    assert result["push_attempted"] is False
+    assert push_calls == []
 
 
 def test_run_sync_all_applies_only_safe_projects(monkeypatch):
