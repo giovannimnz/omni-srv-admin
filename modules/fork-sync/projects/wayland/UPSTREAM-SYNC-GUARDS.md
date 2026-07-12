@@ -25,7 +25,7 @@ must not be selected as the primary path while OCI/DRG is available.
 - The generated `.atius-overlay/` directory is build output only and must stay
   untracked; source-of-truth is the patch/scripts/docs that recreate it.
 - `Conversar na pasta` must stay visible in the WebUI and default to
-  `/home/ubuntu/GitHub`.
+  `/home/ubuntu/Servers` (`~/Servers` for the `ubuntu` runtime user).
 - `Conversar na pasta` must also open the browser directory picker in WebUI
   mode; it cannot silently depend on the native Electron dialog path.
 - The login screen defaults to `pt-BR` when there is no saved language.
@@ -140,7 +140,7 @@ npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service
 systemctl is-active wayland.service
-curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
+curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25725/
 journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 2 agents|Serving renderer|WebUI running"
 ```
 
@@ -150,7 +150,7 @@ Expected result:
 - `vitest` passes.
 - `typecheck` passes.
 - `wayland.service` is `active`.
-- local HTTP on `127.0.0.1:25808` returns `200`.
+- local HTTP on `127.0.0.1:25725` returns `200`.
 - startup logs still show `found 4 agents: Wayland Core, Gemini CLI, Codex, Hermes Agent`.
 
 ## Git remote guard

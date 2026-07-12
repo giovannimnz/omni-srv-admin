@@ -37,7 +37,7 @@ ser escolhida enquanto o caminho OCI/DRG estiver disponível.
 - O runtime ativo roda com `User=ubuntu`, `PORT=25725`,
   `CODEX_HOME=/home/ubuntu/.codex`, `HERMES_HOME=/home/ubuntu/.hermes` e
   `WAYLAND_DISABLE_AUTO_UPDATE=1`.
-- `Conversar na pasta` fica visível no WebUI e usa `/home/ubuntu/GitHub` como
+- `Conversar na pasta` fica visível no WebUI e usa `/home/ubuntu/Servers` (`~/Servers`) como
   diretório inicial.
 - Sem preferência salva, a tela de login entra em `pt-BR`.
 - A detecção do servidor oferece apenas os CLIs canônicos `Codex` e
