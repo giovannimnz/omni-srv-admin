@@ -23,22 +23,26 @@ Reach a state where:
 
 ## Current State
 
-Already true:
+Validated on 2026-07-10:
 
 - K3s INTERNAL-IP is already on the OCI private plane
 - PgBouncer binds on `10.11.1.11`
 - Obsidian REST binds on `10.11.1.11`
 - Vault binds on `10.13.1.13`
 - TEI is reachable on `10.21.1.21:3115`
-- repo contract is being moved to OCI-primary
+- repo contract prefers OCI-primary
+- all four Linux resolvers prefer `10.11.1.11`
+- W11 uses `10.11.1.11` as primary DNS, `atius.internal` as search suffix, and
+  reaches PgBouncer, Vault and TEI on their OCI/DRG addresses
 
-Still drifting:
+Remaining edge/closeout items:
 
-- `srv-1` consumes DNS through `10.1.1.2`
-- `srv-2` still lists `10.1.1.2` in `resolved.conf`
-- `srv-3` still shows `wg0 -> DNS 10.1.1.2`
-- `horistic-srv` still uses `10.100.100.1` in `resolv.conf`
-- W11 DRG direct reachability to `10.11.1.11` is not yet proven
+- S23 needs the OCI CIDRs in the effective handset `AllowedIPs` before final
+  Termux-side outbound service proof can pass.
+- `10.100.100.0/24` stays available as explicit reserve/edge transport; it is
+  not a canonical service-address plane.
+- Historical documents may retain `10.1.1.x` only when clearly marked as
+  retired evidence.
 
 ## Planning Assumptions
 

@@ -130,8 +130,8 @@ python3 scripts/validate-edge-auth.py --expect pre-cutover
 Server-side Landscape self-hosted checks:
 
 ```bash
-ssh ubuntu@10.1.1.3 'lxc exec landscape -- systemctl is-active vault landscape-secrets-service landscape-appserver landscape-msgserver landscape-pingserver'
-ssh ubuntu@10.1.1.3 'lxc exec landscape -- curl -sS http://127.0.0.1:26155/ | jq -r ".token != null"'
+ssh ubuntu@10.13.1.13 'lxc exec landscape -- systemctl is-active vault landscape-secrets-service landscape-appserver landscape-msgserver landscape-pingserver'
+ssh ubuntu@10.13.1.13 'lxc exec landscape -- curl -sS http://127.0.0.1:26155/ | jq -r ".token != null"'
 ```
 
 ## Phase Ownership

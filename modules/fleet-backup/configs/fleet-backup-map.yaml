@@ -4,7 +4,7 @@ fleet:
   - srv_num: 1
     hostname: atius-srv-1
     public_ip: 137.131.190.161
-    vpn_ip: 10.1.1.1
+    vpn_ip: 10.11.1.11
     ssh_alias: atius-srv-1-vpn
     backup_script: backup-srv1-to-gdrive.sh
     backup_target: giovanni-drive:ATIUS-SRV/SRV-1/Backup/snapshots/
@@ -12,7 +12,7 @@ fleet:
   - srv_num: 2
     hostname: atius-srv-2
     public_ip: 129.148.47.32
-    vpn_ip: 10.1.1.2
+    vpn_ip: 10.12.1.12
     ssh_alias: atius-srv-2-vpn
     backup_script: backup-srv2-to-gdrive.sh
     backup_target: giovanni-drive:ATIUS-SRV/SRV-2/Backup/snapshots/
@@ -20,7 +20,7 @@ fleet:
   - srv_num: 3
     hostname: atius-srv-3
     public_ip: 136.248.126.12
-    vpn_ip: 10.1.1.7
+    vpn_ip: 10.13.1.13
     ssh_alias: atius-srv-3-vpn
     backup_script: backup-srv3-to-gdrive.sh
     backup_target: giovanni-drive:ATIUS-SRV/SRV-3/Backup/snapshots/

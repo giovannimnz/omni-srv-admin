@@ -5,15 +5,18 @@ aliases:
 role: mt5-execution-backup
 owner: giovanni
 access:
-  ssh: ubuntu@10.1.1.17
+  ssh: TBD
   public_ip: 147.15.83.218
-  vpn_ip: 10.1.1.17
+  vpn_ip: 10.100.100.17
+  vpn_state: planned-not-live
+  legacy_ssh: ubuntu@10.1.1.17
+  legacy_vpn_ip: 10.1.1.17
 platform:
   provider: oracle-oci-kvm
   os: ubuntu-24.04
   arch: amd64
   kernel: 6.17.0-1016-oracle
-status: active
+status: blocked-network-readdress
 modules:
   - fleet
   - rust-zellij-fleet
@@ -23,15 +26,17 @@ constraints:
   - preserve-slave-ea-listener-9002
 network:
   vpn_hub: atius-srv-2
-  wireguard_interface: wg0
-  wireguard_ip: 10.1.1.17
+  wireguard_interface: wg100
+  wireguard_ip: 10.100.100.17
+  wireguard_state: planned-not-live
+  legacy_wireguard_ip: 10.1.1.17
   wireguard_peer_name: ATIUS-MT5-KVM-2
   dns_name: atius-mt5-kvm-2
   public_ip: 147.15.83.218
   exposed_ports:
     - 9002
 monitoring:
-  node_exporter: http://10.1.1.17:9100/metrics
+  node_exporter: pending-network-readdress
   service_ports:
     - 9002
   no_k3s: true
@@ -110,3 +115,4 @@ notes:
   zsh_ohmyzsh_rust_zellij_validated: "2026-06-17"
   ssh_key: /home/ubuntu/.ssh/id_oracle
   validation_summary: "hostname lowercase, /usr/bin/zsh default, rustc 1.96.0, cargo 1.96.0, cargo-binstall 1.20.0, zellij 0.44.3, node-exporter active, port 9002 preserved."
+  network_readdress_blocker: "2026-07-10: retired 10.1.1.17 and public SSH were unreachable from the fleet; 10.100.100.17 is reserved as the planned wg100 address but is not live. Keep this host excluded from automatic fleet operations until a controlled console/public-access recovery applies and validates the new profile."

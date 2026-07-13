@@ -64,6 +64,7 @@ ssh atius-srv-1 "nc -zv 100.93.43.113 80"   # should timeout
 
 ## Architecture decision
 
-**WireGuard = K3s transport (10.1.1.x). Tailscale = management plane (100.x).**
-Tailscale is never K3s transport. If WireGuard fails, Tailscale is the recovery
-path (SSH admin) to restore `wg0` before K3s restart/rejoin.
+**OCI/DRG private interfaces = K3s transport. Tailscale = management plane (100.x).**
+Tailscale is never K3s transport. If the DRG path fails, Tailscale is the
+recovery path for SSH administration; `wg100` remains the separate reserve edge
+plane and must not become the cluster identity.

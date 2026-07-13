@@ -86,9 +86,10 @@ Windows (`giovanni-w11-pc`)
 powershell -NoProfile -ExecutionPolicy Bypass -File modules/fleet-control-plane/windows/Install-OmniFleetAgentTask.ps1
 ```
 
-2026-07-06 validation: the task is installed and enabled. After SRV-1's
+2026-07-10 validation: the task is installed and enabled. After SRV-1's
 `omni-pg-access-guard` was updated to allow OCI private peers (`10.12/10.13/10.21`)
-and reserve `wg100`; Windows continues on `10.100.100.1:6432` until direct DRG reachability is validated there. The trust-client
+and reserve `wg100`, Windows was promoted to `10.11.1.11:6432` after direct
+reachability from `10.100.100.8` passed. The trust-client
 `install-ca` plan `22097c7e-cf44-4841-9133-33517578f21f` finished as
 `succeeded`, and `python -m omni fleet agent cycle --host giovanni-w11-pc
 --apply --json` returned `status=idle` with telemetry `healthy`.

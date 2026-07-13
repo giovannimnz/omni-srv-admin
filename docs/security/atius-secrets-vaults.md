@@ -209,6 +209,17 @@ Operational status after deployment:
 initialized=True sealed=False standby=False
 ```
 
+Post-start recovery guard (2026-07-13):
+
+- `container-hashicorp-vault-atius.service` has the drop-in
+  `/etc/systemd/system/container-hashicorp-vault-atius.service.d/20-auto-unseal.conf`.
+- Its `ExecStartPost` runs `/usr/local/sbin/atius-hashicorp-vault-after-start.sh`.
+- The helper waits for the local Vault API, exits without mutation when already
+  unsealed, and otherwise invokes the root-only backup/unseal helper before
+  verifying `sealed=false`. It never writes recovery material to service logs.
+- A controlled restart on 2026-07-13 returned the API to HTTP 200 with
+  `initialized=true` and `sealed=false`.
+
 Seeded KV paths:
 
 | Path | Purpose |
@@ -290,6 +301,16 @@ environment entries such as `PATH`, `DISPLAY`, and `XAUTHORITY` in addition to
 API credentials.
 
 Do not add this command unconditionally to shell startup until the consumers have been migrated away from direct `.zshrc` exports.
+
+## Recovery 2026-07-13
+
+- Recovered a sealed Vault after a container restart by creating a fresh Raft
+  snapshot through the existing root-only helper.
+- Corrected the Landscape bridge from retired `https://10.1.1.3:8202` to
+  `https://10.13.1.13:8202`; the bridge config backup is kept inside the
+  `landscape` LXD container.
+- AppRole smoke read all 16 allowlisted records. A no-op read/write round-trip
+  of `atius-browser-login-access-keys` returned HTTP 200 with data preserved.
 
 ## Landscape Secrets UI Fix Rollback
 

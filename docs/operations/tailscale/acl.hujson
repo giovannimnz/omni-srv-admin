@@ -3,8 +3,8 @@
 // Intent:
 //   - Only giovannimunizds@gmail.com (admin) and the 3 SRV nodes can use the
 //     Tailscale management plane.
-//   - WireGuard remains the K3s/flannel/etcd transport (10.1.1.x). Tailscale
-//     is secondary management fallback ONLY — never cluster transport.
+//   - OCI/DRG private interfaces are the K3s/flannel/etcd transport. wg100 and
+//     Tailscale are secondary fallback/management planes, never cluster transport.
 //   - MagicDNS is disabled at the tailnet level (DNS split-brain with
 //     fleet-network-watchdog.sh on the hosts; Tailscale health check was
 //     failing because of it).

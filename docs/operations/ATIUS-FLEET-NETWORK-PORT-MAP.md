@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.6.0 — 2026-07-06
+> Versão: 1.6.1 — 2026-07-10
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -27,7 +27,7 @@ Os hosts móveis/complementares são documentados para completeness.
 | horistic-srv    | proxy reverso / K3s worker / AI Search | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv.yaml`    |
 | GIOVANNI-W11-PC | workstation Windows | Windows 11    | active via VPN | `inventory/hosts/giovanni-w11-pc.yaml` |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
-| GIOVANNI-S23   | mobile node        | Termux (Android) | planned | `inventory/hosts/giovanni-s23-termux.yaml` |
+| GIOVANNI-S23   | mobile node        | Termux (Android) | active via VPN | `inventory/hosts/giovanni-s23-termux.yaml` |
 | GIOVANNI-S23-PROOT | mobile ubuntu | Ubuntu (proot) | planned | `inventory/hosts/giovanni-s23-proot.yaml` |
 | atius-mt5-kvm-1 | MT5 execution primary | Ubuntu 24.04 x86_64 | active | `inventory/hosts/atius-mt5-kvm-1.yaml` |
 | atius-mt5-kvm-2 | MT5 execution backup | Ubuntu 24.04 x86_64 | active | `inventory/hosts/atius-mt5-kvm-2.yaml` |
@@ -97,8 +97,21 @@ Camadas:
 | atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.100.100.2      | 100.93.43.113    | 10.12.1.12  |
 | atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.100.100.3      | 100.72.102.57    | 10.13.1.13  |
 | horistic-srv   | horistic-srv    | 163.176.232.119  | 10.100.100.4      | 100.102.126.61   | 10.21.1.21  |
-| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.5 | -              | LAN local   |
-| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.100.100.6 | -               | mobile/4G   |
+| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.8 | 10.100.100.5 legacy | LAN BE3 192.168.1.8 |
+| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.100.100.9 | 10.100.100.6 legacy | LAN BE3 192.168.1.9 |
+
+### Home Edge / Residential PPTP
+
+Esta secao e arquitetura/spike do projeto `home-proxy`, nao plano canonico de servicos ATIUS.
+
+| Device | Home LAN reserved IP | MAC | Purpose | Status |
+|--------|----------------------|-----|---------|--------|
+| `GIOVANNI-W11-PC` | `192.168.1.8` | `44:FA:66:01:6F:AB` | PPTP residencial em casa | reserved, spike |
+| `GIOVANNI-S23` | `192.168.1.9` | `8A:DE:15:16:1B:3B` | PPTP residencial em casa | reserved, spike |
+
+PPTP exige TCP `1723` e GRE/protocolo `47`. Nao anunciar `192.168.1.0/24`
+para DRG/wg100 sem uma fase propria de routed-site. A rede canonica de servicos
+continua OCI/DRG; `wg100` continua reserve/fallback.
 | atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.100.100.16 | - | 10.0.0.61 |
 | atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.100.100.17 | - | 10.0.0.188 |
 
@@ -141,6 +154,9 @@ WireGuard/DNS validation 2026-06-17 (historico `wg0`):
 - W11 e S23 tinham peers novos no hub e configs gerados; esse estado foi
   superseded no replanejamento `wg100` de 2026-07-06, em que W11
   `10.100.100.5` e S23 `10.100.100.6` ja tiveram handshake validado no SRV-1.
+- Follow-up 2026-07-10: a renumeracao dos edge clients foi aplicada.
+  W11 agora opera em `10.100.100.8` e S23 em `10.100.100.9`, alinhados com a
+  LAN `192.168.1.8/.9` do BE3. `.5/.6` passam a historico/cleanup.
 
 Cloudflare:
 - `*.atius.com.br` → origem pública SRV-1/Apache2; validação 2026-07-05
@@ -154,7 +170,7 @@ Cloudflare:
   `/api/status` retornaram `200` em 2026-07-05.
 - `router.atius.com.br/docs/` → Apache target `127.0.0.1:3003`; drift
   validado 2026-07-05: porta `3003` sem listener e rota pública retorna `503`.
-- `wayland.atius.com.br` → runtime Wayland no SRV-3 `0.0.0.0:25808`;
+- `wayland.atius.com.br` → runtime Wayland no SRV-3 `0.0.0.0:25725`;
   `/api/auth/status` local e público retornaram `200` em 2026-07-05.
 - `mcp.atius.com.br/gbrain` → edge público para GBrain HTTP MCP no SRV-1,
   backend local-only `127.0.0.1:3131`; `/health` retornou `200`.
@@ -348,7 +364,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 9100   | node-exporter              | *            | root     |                                    |
 | 10010  | ?                          | 127.0.0.1    | ?        | K3s related?                       |
 | 10250  | kubelet                    | *            | root     | K3s                                |
-| 25808  | Wayland runtime            | 0.0.0.0      | wayland  | validated 2026-07-05; local/public auth status `200` |
+| 25725  | Wayland runtime            | 0.0.0.0      | ubuntu   | validated 2026-07-12; local/public auth status `200` |
 
 
 ### horistic-srv (10.21.1.21 OCI primary; 10.100.100.4 reserve) — reverse proxy / k3s worker
@@ -377,6 +393,12 @@ somente quando representam alvo de edge ou drift operacional documentado.
 Validated 2026-07-08: the OCI-primary listener is reachable on `10.21.1.21:3115`
 returns TEI health `200`, and public `embedding-gte-v1` through
 `https://router.atius.com.br/v1/embeddings` returns 768-dimensional vectors.
+
+Validated 2026-07-10: W11 direct health to `10.21.1.21:3115/health` returned
+HTTP `200`; `10.100.100.4:3115/health` also returned HTTP `200` as reserve
+fallback. `router-ai-atius` channel `9` is `TEI - GTE Embeddings` with primary
+upstream `http://10.21.1.21:3115`, and router/Graphify embedding smokes returned
+`embedding-gte-v1` vectors with dimension `768`.
 
 ### MT5 KVM execution VMs (sem K3s)
 
@@ -416,7 +438,7 @@ Notas:
 | GBrain HTTP MCP | 3131           | 127.0.0.1     | SRV-1 local backend; public edge `mcp.atius.com.br/gbrain` |
 | Router Web/API  | 3000           | 0.0.0.0       | SRV-1 Podman `router-ai-atius` |
 | Router docs target | 3003        | 127.0.0.1     | target esperado; drift atual sem listener |
-| Wayland runtime | 25808          | 0.0.0.0       | SRV-3 `wayland.service` |
+| Wayland runtime | 25725          | 0.0.0.0       | SRV-3 `wayland.service` |
 | Camofox API     | 9377           | 127.0.0.1     | Hermes                   |
 | Camofox VNC     | 5915..5930     | 127.0.0.1     | display :15..30          |
 | Camofox noVNC   | 6095..6110     | 127.0.0.1     | display :15..30          |
@@ -556,6 +578,10 @@ Validado em 2026-07-05:
 
 ## 10. Changelog
 
+- **1.5.2 (2026-07-12)** — runtime Wayland reconciliado com o estado live:
+  `User=ubuntu`, `PORT=25725`, Apache SRV-1 para `10.13.1.13:25725`, e
+  healthchecks local/public em `200`; referências operacionais `25808` foram
+  mantidas apenas como histórico de 2026-07-05.
 - **1.5.1 (2026-07-08)** — DNS interno canônico consolidado no SRV-1
   (`10.100.100.1:53`); `nslookup`/`dig` no W11, SRV-1 e Horistic devolveram a
   malha `10.100.100.x`, e `10.1.1.2:53` expirou timeout, ficando classificado

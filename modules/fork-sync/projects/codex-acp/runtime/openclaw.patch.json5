@@ -33,7 +33,7 @@
           openClawToolsMcpBridge: true,
           agents: {
             codex: {
-              command: "/home/ubuntu/GitHub/codex-acp/scripts/codex-acp-atius-wrapper.sh",
+              command: "/home/ubuntu/.local/bin/codex-acp-atius",
               args: [],
             },
           },

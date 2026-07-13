@@ -16,11 +16,16 @@ version_scheme:
 
 # Protected paths carry the srv-3 standalone-source runtime behavior.
 protected_paths:
+  - AGENTS.md
   - .gitignore
+  - THIRD-PARTY-NOTICES.md
   - package.json
   - atius-overlay.json
+  - codex-acp/
   - patches/atius-webui-workspace-visible.patch
   - scripts/atius-apply-source-patch.sh
+  - scripts/atius-build-codex-acp.sh
+  - scripts/atius-verify-codex-acp.sh
   - scripts/atius-build-renderer-overlay.sh
   - scripts/atius-postinstall-hook.sh
   - scripts/atius-refresh-source-patch.sh
@@ -42,6 +47,7 @@ protected_paths:
   - src/process/utils/initStorage.ts
   - src/process/utils/shellEnv.ts
   - src/process/webserver/routes/apiRoutes.ts
+  - src/process/webserver/config/constants.ts
   - src/process/webserver/websocket/WebSocketManager.ts
   - src/renderer/components/layout/Layout.tsx
   - src/renderer/components/layout/Sider/Sider.module.css
@@ -70,6 +76,7 @@ protected_paths:
   - src/renderer/pages/guid/index.module.css
   - src/renderer/pages/guid/components/AgentPillBar.tsx
   - src/renderer/pages/guid/components/GuidActionRow.tsx
+  - src/renderer/pages/guid/components/GuidInputCard.tsx
   - src/renderer/pages/guid/components/GuidModelSelector.tsx
   - src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css
   - src/renderer/pages/guid/hooks/useGuidAgentSelection.ts
@@ -81,10 +88,14 @@ protected_paths:
   - src/renderer/styles/layout.css
   - src/renderer/utils/model/agentModes.ts
   - tests/unit/AgentPillBar.dom.test.tsx
+  - tests/unit/atiusCodexAcpRuntime.test.ts
+  - tests/unit/acpConnectors.test.ts
+  - tests/unit/AcpAgentManagerSkillInjection.test.ts
   - tests/unit/WebSocketManager.test.ts
   - tests/unit/process/task/codexConfigEffort.test.ts
   - tests/unit/process/task/codexNativeSandbox.test.ts
   - tests/unit/renderer/GuidActionRow.dom.test.tsx
+  - tests/unit/renderer/AcpConfigSelector.dom.test.tsx
   - tests/unit/renderer/guidModelSelector.dom.test.tsx
   - tests/unit/RemoteAgentCore.test.ts
   - tests/unit/RemoteAgentManagement.dom.test.tsx
@@ -92,7 +103,10 @@ protected_paths:
   - tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
   - tests/unit/useGuidSend.dom.test.ts
   - tests/unit/webserver/detectNetworkContext.test.ts
+  - tests/unit/webserver/cookieOptions.test.ts
   - docs/README.md
+  - docs/legal/THIRD-PARTY-NOTICES.md
+  - docs/guides/atius-codex-acp.md
   - docs/guides/atius-fork-runtime.md
 
 protected_globs:
@@ -116,4 +130,10 @@ post_sync:
       command:
         - bash
         - scripts/atius-postinstall-hook.sh
+      cwd: /home/ubuntu/GitHub/wayland
+    - name: verify-embedded-codex-acp
+      command:
+        - bash
+        - scripts/atius-verify-codex-acp.sh
+        - --live
       cwd: /home/ubuntu/GitHub/wayland

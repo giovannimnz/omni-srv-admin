@@ -32,7 +32,7 @@ from .fleet_versioning import (
 REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 HOSTS_DIR = REPO / "inventory" / "hosts"
 LEGACY_HOSTS_DIR = REPO / "hosts"
-FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", "/home/ubuntu/.logs/fleet"))
+FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", str(Path.home() / ".logs" / "fleet")))
 HEARTBEAT_DIR = FLEET_LOG_DIR / "heartbeats"
 TELEMETRY_DIR = FLEET_LOG_DIR / "telemetry"
 PROGRAMS_DIR = FLEET_LOG_DIR / "programs"
@@ -3240,13 +3240,22 @@ def trust_pki_agent_runner(
                 raise click.ClickException(f"ação Windows trust-client mutável não suportada: {action}")
             payload.update(_pki_windows_import_ca(payload))
         elif os.name == "posix":
-            payload.update(_pki_linux_runner_execute(action, payload, sans))
+            local_host_id = _default_host_id()
+            if local_host_id != host_id:
+                payload["status"] = "blocked"
+                payload["note"] = "live Linux key/cert mutation must run on the target Linux host"
+            else:
+                payload.update(_pki_linux_runner_execute(action, payload, sans))
         else:
             payload["status"] = "blocked"
             payload["note"] = "live Linux key/cert mutation must run on the target Linux host"
     elif action == "reconcile":
         leaf_path = Path(str(payload["paths"]["leaf_cert"]))
-        if not leaf_path.exists():
+        try:
+            leaf_exists = leaf_path.exists()
+        except OSError:
+            leaf_exists = False
+        if not leaf_exists:
             payload["status"] = "missing-cert"
             payload["drift"] = {
                 "status": "missing-cert",

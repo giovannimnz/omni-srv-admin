@@ -23,9 +23,10 @@
 #   1. tailscale set --accept-dns=false
 #   2. tailscale set --operator=$USER (não pede mais sudo)
 #   3. Se systemd-resolved presente:
-#      a) Garantir DNSStubListener=yes
-#      b) Reescrever /etc/resolv.conf com stub + DNS canônico + Cloudflare
-#      c) Restart systemd-resolved
+#      a) Fixar DNS= com DNS canônico OCI/DRG + fallback externo
+#      b) Garantir DNSStubListener=yes
+#      c) Reescrever /etc/resolv.conf com stub + DNS canônico + Cloudflare
+#      d) Restart systemd-resolved
 #   4. Corrigir xrdp key.pem (640 root:xrdp)
 #   5. Verificar DNS funcionando
 #
@@ -124,7 +125,18 @@ fi
 
 # 3. /etc/resolv.conf — só se systemd-resolved presente
 if [[ $HAS_RESOLVED -eq 1 ]]; then
-  # 3a. Garantir DNSStubListener=yes
+  # 3a. Garantir DNS= canônico do plano OCI/DRG
+  RESOLVED_CHANGED=0
+  DESIRED_DNS_LINE="DNS=$WIREGUARD_DNS_IP 1.1.1.1"
+  CURRENT_DNS_LINE=$(grep -E "^DNS=" /etc/systemd/resolved.conf 2>/dev/null | tail -1 || true)
+  if [[ "$CURRENT_DNS_LINE" != "$DESIRED_DNS_LINE" ]]; then
+    log "Fixando systemd-resolved uplink DNS -> $WIREGUARD_DNS_IP + 1.1.1.1"
+    $SUDO sed -i '/^DNS=/d' /etc/systemd/resolved.conf
+    echo "$DESIRED_DNS_LINE" | $SUDO tee -a /etc/systemd/resolved.conf > /dev/null
+    RESOLVED_CHANGED=1
+  fi
+
+  # 3b. Garantir DNSStubListener=yes
   STUB_CHANGED=0
   STUB_LINE=$(grep -E "^#?\s*DNSStubListener=" /etc/systemd/resolved.conf 2>/dev/null | head -1 || true)
   if [[ -z "$STUB_LINE" ]] || [[ "$STUB_LINE" == *"no"* ]] || [[ "$STUB_LINE" == *"#DNSStubListener="* ]]; then
@@ -134,7 +146,7 @@ if [[ $HAS_RESOLVED -eq 1 ]]; then
     STUB_CHANGED=1
   fi
 
-  # 3b. /etc/resolv.conf → stub + DNS canônico + Cloudflare (só se mudou)
+  # 3c. /etc/resolv.conf → stub + DNS canônico + Cloudflare (só se mudou)
   EXPECTED_MARKER="Managed by fleet-network-watchdog.sh"
   DNS_LINE=""
   RESOLV_CHANGED=0
@@ -161,13 +173,11 @@ options edns0 trust-ad
 EOF
   fi
 
-  # 3c. Restart (só se DNSStub mudou nesta execução)
+  # 3d. Restart se algum ponto do resolved/resolv.conf mudou
   NEED_RESTART=0
-  if [[ $RESTART -eq 1 ]] && [[ $((STUB_CHANGED + RESOLV_CHANGED)) -gt 0 ]]; then
+  if [[ $RESTART -eq 1 ]] && [[ $((RESOLVED_CHANGED + STUB_CHANGED + RESOLV_CHANGED)) -gt 0 ]]; then
     NEED_RESTART=1
   fi
-  # Restart também se /etc/resolv.conf mudou (aconteceu tee acima)
-  # (a variável de controle poderia ser melhor, mas para já, restart se mudou stub)
   if [[ $NEED_RESTART -eq 1 ]]; then
     log "Reiniciando systemd-resolved"
     $SUDO systemctl restart systemd-resolved
@@ -176,10 +186,13 @@ EOF
     log "systemd-resolved já em estado bom (skip restart)"
   fi
 
-  # 3d. Verify
+  # 3e. Verify
   log "Verificando DNS"
   if ! getent hosts google.com >/dev/null 2>&1; then
     fail "DNS ainda quebrado após correções"
+  fi
+  if resolvectl dns 2>/dev/null | grep -q "10\.1\.1\.2"; then
+    fail "systemd-resolved ainda anuncia DNS legado 10.1.1.2"
   fi
   log "✓ DNS funcionando (google.com resolve)"
 

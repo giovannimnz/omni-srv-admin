@@ -1,5 +1,5 @@
 #!/bin/bash
-# backup-to-smb.sh — backup de pastas criticas pro SMB share //10.1.1.2/Shared
+# backup-to-smb.sh - backup de pastas criticas para o mount SMB Shared_smb
 # NAO monta, NAO pesa no / local. Roda via systemd user timer.
 # Mantem ultimos 7 snapshots. Loga em ~/logs/backup-smb.log
 #

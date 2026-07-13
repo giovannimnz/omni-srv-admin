@@ -1,0 +1,17 @@
+id: wayland-github-atius-srv-3
+host_id: atius-srv-3
+client_host_id: atius-srv-3
+type: bind
+status: active
+source: /home/ubuntu/GitHub
+mount_path: /home/ubuntu/Servers/atius-srv-3/GitHub
+display_label: ATIUS-SRV-3 GitHub
+access: read-write
+identity:
+  uid: 1001
+  gid: 1001
+mount:
+  options: [bind]
+  automount_idle_seconds: 600
+notes:
+  - Local bind keeps the same Wayland path hierarchy without network overhead.

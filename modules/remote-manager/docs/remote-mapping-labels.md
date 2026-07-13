@@ -54,7 +54,7 @@ Isso exige migração separada:
 ## Estado SRV-1
 
 ```text
-source: //10.1.1.2/Shared
+source: //10.11.1.11/Shared
 mount_path: /home/ubuntu/Shared_smb
 default_label: Shared_smb
 ```

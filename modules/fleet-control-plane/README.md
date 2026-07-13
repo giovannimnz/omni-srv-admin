@@ -136,9 +136,9 @@ ssh atius-srv-3-direct hostname
   `TbNodeResourcePolicies=3`; SRV-1 has live telemetry in `TbNodeTelemetry`.
 - SRV-1/SRV-2/SRV-3 and `giovanni-w11-pc`: fleet DB env files should point to
   PgBouncer at `10.11.1.11:6432`, with `10.100.100.1:6432` as reserve fallback only.
-- SRV-1/SRV-2/SRV-3/Horistic: `/etc/omni-srv-admin/fleet-db.env` points to
-  PgBouncer at `10.11.1.11:6432`; `giovanni-w11-pc` stays on
-  `10.100.100.1:6432` until direct DRG reachability is validated.
+- SRV-1/SRV-2/SRV-3/Horistic and `giovanni-w11-pc` point their fleet DB env to
+  PgBouncer at `10.11.1.11:6432`. The Windows path was validated from
+  `10.100.100.8` on 2026-07-10; `10.100.100.1:6432` is reserve only.
 - PgBouncer auth material remains outside git/log/vault.
 
 ## Ops And Config Rule

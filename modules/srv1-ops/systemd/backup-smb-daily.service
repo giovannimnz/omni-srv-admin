@@ -1,5 +1,5 @@
 [Unit]
-Description=Backup pastas criticas para SMB //10.1.1.2/Shared (rsync, nao pesa local)
+Description=Backup pastas criticas para o mount SMB Shared_smb (rsync, nao pesa local)
 After=network-online.target
 Wants=network-online.target
 

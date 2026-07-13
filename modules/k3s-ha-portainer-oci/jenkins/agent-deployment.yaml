@@ -21,7 +21,7 @@ metadata:
     managed-by: omni-srv-admin
 type: Opaque
 stringData:
-  jenkins-jnlp-url: "http://10.1.1.1:8085"
+  jenkins-jnlp-url: "http://10.11.1.11:8085"
   jenkins-secret: "REPLACE_ME_AT_APPLY_TIME"
 ---
 apiVersion: v1

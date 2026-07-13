@@ -5,8 +5,12 @@ aliases:
 role: mobile-node
 owner: giovanni
 access:
-  ssh: ubuntu@10.100.100.6:8022
-  vpn_ip: 10.100.100.6
+  ssh: ubuntu@10.100.100.9:8022
+  vpn_ip: 10.100.100.9
+  legacy_ssh: ubuntu@10.100.100.6:8022
+  legacy_vpn_ip: 10.100.100.6
+  home_lan_reserved_ip: 192.168.1.9
+  home_lan_mac: 8A:DE:15:16:1B:3B
 platform:
   provider: android-termux
   device: samsung-galaxy-s23
@@ -28,8 +32,12 @@ notes:
   last_readdressed: 2026-07-06
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-S23
-  dns_validation: "2026-07-08: canonical wg100 DNS server for mobile peers is 10.100.100.1; direct device-side resolver validation on the S23 is still pending."
-  client_config: "10.100.100.6/32 active as of 2026-07-06; old 10.1.1.6:8022 no longer reachable in live probes."
-  live_handshake: "2026-07-06: TCP 8022 open on 10.100.100.6 from srv2 and Windows."
+  dns_validation: "2026-07-10: inside the S23 Termux session, hostname resolution for `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv` returned the OCI-private targets `10.11.1.11`, `10.12.1.12`, `10.13.1.13`, and `10.21.1.21`, while the tunnel DNS path remained `10.100.100.1`."
+  client_config: "2026-07-10: S23 Termux now handshakes on 10.100.100.9/32 after the BE3-aligned renumbering; old 10.100.100.6/32 and 10.1.1.6:8022 are legacy history."
+  live_handshake: "2026-07-10: srv1 saw recent handshake for 10.100.100.9/32, Windows ping to 10.100.100.9 passed, and TCP 8022 is open."
+  legacy_wireguard_note: "Previous S23 edge IP 10.100.100.6/32 is historical evidence from the pre-cutover state."
+  device_side_validation: "2026-07-10: the live handset identity is now `10.100.100.9/32`. Bridge-side validation is green: `atius-srv-1` pinged `10.100.100.9`, W11 pinged `10.100.100.9`, W11 reached `10.100.100.9:8022`, and `wg show wg100` reported a fresh handshake for `10.100.100.9/32`. Cross-repo handset evidence from `oci-admin` shows Termux already resolved the OCI-primary hostnames correctly; the remaining blocker is route scope on the client profile for the OCI-private CIDRs."
+  current_wireguard_state: "Live edge IP is 10.100.100.9/32. The bridge path is validated end-to-end for reachability (handshake, ICMP and TCP 8022). The remaining gate for full handset-side proof is client route scope: the active profile still behaves like `AllowedIPs = 10.100.100.0/24` instead of including the OCI-private CIDRs."
+  home_proxy_pptp: "2026-07-10: BE3 static reservation confirmed for residential PPTP/home-edge use: 192.168.1.9 / 8A:DE:15:16:1B:3B. This is home LAN only, not OCI/DRG identity."
   codex_gbrain_obsidian: "2026-06-26: Codex and Hermes configured with GBrain and Obsidian MCP bridges over restricted SSH to SRV1."
   retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.6 references are historical evidence only."

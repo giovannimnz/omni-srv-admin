@@ -127,7 +127,7 @@ SRV-1 live enforcement:
 - PgBouncer listens on `127.0.0.1:6432` and `10.11.1.11:6432`.
 - PostgreSQL direct port `8745` remains local for server-side maintenance.
 - SRV-2/SRV-3/Horistic fleet peers must connect to `10.11.1.11:6432`; the live allowlist accepts OCI private ranges `10.12.0.0/16`, `10.13.0.0/16`, `10.21.0.0/16` plus reserve `wg100` peers.
-- `10.100.100.1:6432` remains reserve fallback only. Windows stays on the reserve path until direct DRG reachability is validated there.
+- `10.100.100.1:6432` remains reserve fallback only. Windows now uses `10.11.1.11:6432`; direct reachability from `10.100.100.8` was validated on 2026-07-10.
 - Direct PostgreSQL on `10.11.1.11:8745` stays blocked from nodes.
 - Live M004 database is `DbOmniFleet` on SRV-1.
 - `DbOmniFleet` is also the canonical `omni-srv-admin` database for ops/config

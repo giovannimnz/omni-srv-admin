@@ -55,8 +55,8 @@ check_http_basic(){
 }
 
 ensure_local_service k3s
-ensure_remote_k3s 10.1.1.2 SRV-2
-ensure_remote_k3s 10.1.1.7 SRV-3
+ensure_remote_k3s 10.12.1.12 SRV-2
+ensure_remote_k3s 10.13.1.13 SRV-3
 ensure_local_service atius-k3s-firewall.service
 ensure_local_service k3s-portainer-portforward.service
 ensure_local_service k3s-grafana-portforward.service

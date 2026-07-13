@@ -1,6 +1,6 @@
 [CmdletBinding()]
 param(
-  [ValidateSet("baseline", "knowledge-mcp", "browser-mcp", "oci-mcp", "cloud-ops-mcp", "lab-mcp", "all")]
+  [ValidateSet("baseline", "knowledge-mcp", "browser-mcp", "memory-mcp", "docs-mcp", "oci-mcp", "cloud-ops-mcp", "lab-mcp", "all")]
   [string] $Profile = "baseline"
 )
 
@@ -8,6 +8,7 @@ $ErrorActionPreference = "Continue"
 
 $CodexHome = "C:\Users\muniz\.codex"
 $LocalVaultEnv = "C:\Users\muniz\.local\bin\atius-vault-env.ps1"
+$CloudOpsLauncher = "C:\Users\muniz\.local\bin\codex-cloud-ops.ps1"
 
 function New-SmokeResult {
   param(
@@ -150,9 +151,11 @@ function Invoke-BaselineSmoke {
   } else {
     try {
       $parsed = $doctor | ConvertFrom-Json
-      $status = if ($parsed.overallStatus -eq "ok") { "ok" } else { "slow-start" }
+      $configStatus = $parsed.checks."config.load".status
+      $mcpStatus = $parsed.checks."mcp.config".status
+      $status = if ($configStatus -eq "ok" -and $mcpStatus -eq "ok") { "ok" } else { "slow-start" }
       $servers = $parsed.checks."config.load".details."mcp servers"
-      $results.Add((New-SmokeResult "baseline" "codex-doctor" $status "overall=$($parsed.overallStatus); configured_mcp_servers=$servers"))
+      $results.Add((New-SmokeResult "baseline" "codex-doctor" $status "overall=$($parsed.overallStatus); config=$configStatus; mcp=$mcpStatus; configured_mcp_servers=$servers"))
     } catch {
       $results.Add((New-SmokeResult "baseline" "codex-doctor" "slow-start" "doctor returned non-json output"))
     }
@@ -168,10 +171,13 @@ function Invoke-BaselineSmoke {
       "filesystem",
       "sequentialthinking",
       "chrome-devtools",
-      "playwright-desktop",
-      "playwright-mobile",
-      "obsidian_rest",
-      "cloudflare-api",
+       "playwright-desktop",
+       "playwright-mobile",
+       "obsidian_http",
+       "obsidian_rest",
+       "ijfw-memory",
+       "openaiDeveloperDocs",
+       "cloudflare-api",
       "oci-api-",
       "oci-compute-"
     ) | Where-Object { $text -match [regex]::Escape($_) }
@@ -284,7 +290,7 @@ function Invoke-BrowserSmoke {
   $results = [System.Collections.Generic.List[object]]::new()
   $results.Add((Test-ProfileFile "browser-mcp"))
 
-  $chrome = "C:\Users\muniz\AppData\Local\ms-playwright\chromium-1223\chrome-win64\chrome.exe"
+  $chrome = "C:\Users\muniz\AppData\Local\ms-playwright\chromium-1228\chrome-win64\chrome.exe"
   if (Test-Path -LiteralPath $chrome) {
     $results.Add((New-SmokeResult "browser-mcp" "chrome-executable" "ok" $chrome))
   } else {
@@ -336,12 +342,48 @@ function Invoke-CloudOpsSmoke {
   } else {
     $vaultNames = Get-VaultExportNames "cloudflare"
     if ($vaultNames -contains "CF_GLOBAL_API_KEY") {
-      $results.Add((New-SmokeResult "cloud-ops-mcp" "CF_GLOBAL_API_KEY" "missing-env" "not loaded in process; available via atius-vault-env" "Use codex-cloud-ops or load atius-vault-env cloudflare in the launcher process before enabling Cloudflare MCP."))
+      $results.Add((New-SmokeResult "cloud-ops-mcp" "CF_GLOBAL_API_KEY" "ok" "available only through the Vault-backed launcher; intentionally absent from the parent environment"))
     } else {
       $results.Add((New-SmokeResult "cloud-ops-mcp" "CF_GLOBAL_API_KEY" "missing-env" "not loaded and not exported by vault wrapper"))
     }
   }
 
+  if (-not (Test-Path -LiteralPath $CloudOpsLauncher)) {
+    $results.Add((New-SmokeResult "cloud-ops-mcp" "vault-launcher" "unreachable" "missing $CloudOpsLauncher"))
+  } else {
+    $launcherOutput = & $CloudOpsLauncher mcp get cloudflare-api 2>&1
+    $launcherText = $launcherOutput -join "`n"
+    if ($LASTEXITCODE -eq 0 -and $launcherText -match "CF_GLOBAL_API_KEY") {
+      $results.Add((New-SmokeResult "cloud-ops-mcp" "vault-launcher" "ok" "launcher injected cloudflare-api with the Vault-provided environment variable"))
+    } else {
+      $results.Add((New-SmokeResult "cloud-ops-mcp" "vault-launcher" "slow-start" "codex-cloud-ops could not inject cloudflare-api" "Verify the cloudflare Vault profile and plugin manifests."))
+    }
+  }
+
+  return $results
+}
+
+function Invoke-MemorySmoke {
+  $results = [System.Collections.Generic.List[object]]::new()
+  $results.Add((Test-ProfileFile "memory-mcp"))
+
+  $server = "C:\Users\muniz\.ijfw\mcp-server\src\server.js"
+  $status = if (Test-Path -LiteralPath $server) { "ok" } else { "unreachable" }
+  $detail = if ($status -eq "ok") { $server } else { "missing $server" }
+  $results.Add((New-SmokeResult "memory-mcp" "server-path" $status $detail))
+  return $results
+}
+
+function Invoke-DocsSmoke {
+  $results = [System.Collections.Generic.List[object]]::new()
+  $profileResult = Test-ProfileFile "docs-mcp"
+  $results.Add($profileResult)
+
+  if ($profileResult.status -eq "ok") {
+    $profileText = Get-Content -LiteralPath $profileResult.detail -Raw
+    $status = if ($profileText -match '\[mcp_servers\.openaiDeveloperDocs\]') { "ok" } else { "slow-start" }
+    $results.Add((New-SmokeResult "docs-mcp" "profile-contract" $status "openaiDeveloperDocs is opt-in only"))
+  }
   return $results
 }
 
@@ -360,7 +402,7 @@ function Invoke-LabSmoke {
 }
 
 $profiles = if ($Profile -eq "all") {
-  @("baseline", "knowledge-mcp", "browser-mcp", "oci-mcp", "cloud-ops-mcp", "lab-mcp")
+  @("baseline", "knowledge-mcp", "browser-mcp", "memory-mcp", "docs-mcp", "oci-mcp", "cloud-ops-mcp", "lab-mcp")
 } else {
   @($Profile)
 }
@@ -371,6 +413,8 @@ foreach ($target in $profiles) {
     "baseline" { (Invoke-BaselineSmoke) | ForEach-Object { $allResults.Add($_) } }
     "knowledge-mcp" { (Invoke-KnowledgeSmoke) | ForEach-Object { $allResults.Add($_) } }
     "browser-mcp" { (Invoke-BrowserSmoke) | ForEach-Object { $allResults.Add($_) } }
+    "memory-mcp" { (Invoke-MemorySmoke) | ForEach-Object { $allResults.Add($_) } }
+    "docs-mcp" { (Invoke-DocsSmoke) | ForEach-Object { $allResults.Add($_) } }
     "oci-mcp" { (Invoke-OciSmoke) | ForEach-Object { $allResults.Add($_) } }
     "cloud-ops-mcp" { (Invoke-CloudOpsSmoke) | ForEach-Object { $allResults.Add($_) } }
     "lab-mcp" { (Invoke-LabSmoke) | ForEach-Object { $allResults.Add($_) } }

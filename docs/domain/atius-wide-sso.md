@@ -107,7 +107,7 @@ Não usar `setifempty` para esses campos.
 - Verificador de sessao: `http://127.0.0.1:8015/v1/auth/me`
 - Cookie exigido: `auth-token`
 - Permissao inicial: `can_access_trade`; `is_admin` tambem passa
-- Primeira rota: `/mt5/1 -> http://10.1.1.3:6081`
+- Primeira rota: `/mt5/1 -> http://10.13.1.13:6081`
 - Rotas futuras: adicionar novo id em `/etc/atius/mt5-remote-auth-proxy.json`; nao criar novo Basic Auth no Apache
 - O proxy nao repassa `Cookie` nem `Authorization` ao container MT5/noVNC
 - `/login` em `remote.atius.com.br` deve redirecionar para `https://sso.atius.com.br/login?return_to=https://remote.atius.com.br/mt5/1/`

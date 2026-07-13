@@ -39,12 +39,12 @@ apps:
     current_version: "v1.35.5+k3s1"
     desired_state: active-enabled
     cluster_role: worker
-    cluster_endpoint: "https://10.100.100.1:6443"
+    cluster_endpoint: "https://10.11.1.11:6443"
     node_name: horistic-srv
-    node_ip: 10.100.100.4
+    node_ip: 10.21.1.21
     managed_by: "omni-srv-admin"
     update_policy: "plan-first"
-    last_audited: "2026-06-25"
+    last_audited: "2026-07-10"
     installed_on: "2026-06-25"
     notes:
       - "Phase 29 runtime repair: joined existing K3s cluster as worker agent, not etcd/control-plane, to avoid making the HA etcd set even-numbered."
@@ -73,7 +73,7 @@ network:
   vpn_hub: atius-srv-1
   wireguard_interface: wg100
   wireguard_ip: 10.100.100.4
-  dns_server: 10.100.100.1
+  dns_server: 10.11.1.11
   tailscale_fallback: true
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
@@ -84,9 +84,9 @@ notes:
   last_readdressed: 2026-06-17
   readdress_note: "Moved from 10.1.1.3 to 10.1.1.4 (initial); renamed host from horistic-srv-1 to horistic-srv on 2026-06-17; unique Horistic WireGuard key retained because attached peer4 key conflicts with active GIOVANNI-W11-PC key."
   wireguard_key_rotated: 2026-06-17
-  dns_validation: "2026-07-10: /etc/resolv.conf still points to 10.100.100.1 first, but both 10.11.1.11 and 10.100.100.1 resolve the Linux hosts to 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21; resolver promotion to DRG is still pending."
+  dns_validation: "2026-07-10: Horistic now uses `/etc/resolv.conf` with `10.11.1.11` primary and `1.1.1.1` fallback; `getent hosts atius-srv-1 atius-srv-2 atius-srv-3 horistic-srv` and `ping atius-srv-1` return the OCI-primary targets."
   oci_primary_validation: "2026-07-08: attached secondary VNIC 10.21.1.21, added peer OCI CIDR routes, and validated TEI reachability on 10.21.1.21:3115 from srv-1/srv-2/srv-3."
-  k3s_phase16_blocker: "2026-07-10: live K3s reports INTERNAL-IP 10.21.1.21, but local resolver/docs still prefer wg100 in some paths; service plane is OCI-primary and cluster plane already exposes OCI listeners."
+  k3s_phase16_blocker: "2026-07-10: live K3s reports INTERNAL-IP 10.21.1.21 and local resolver now prefers the OCI-primary DNS path; remaining blockers moved to repo/runtime drift cleanup outside the live host resolver."
   rename_phase: 22
   rename_from: horistic-srv-1
   rename_date: 2026-06-17

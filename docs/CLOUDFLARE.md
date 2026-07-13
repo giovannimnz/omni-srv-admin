@@ -103,7 +103,7 @@ Snapshot operacional principal:
 |----------|------|---------|-------|
 | `aion.atius.com.br` | A | `137.131.190.161` | proxied |
 | `router.atius.com.br` | A | `137.131.190.161` | proxied |
-| `wayland.atius.com.br` | A/CNAME | edge SRV-1 -> SRV-3 `25808` | proxied |
+| `wayland.atius.com.br` | A/CNAME | edge SRV-1 -> SRV-3 `25725` | proxied |
 | `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> multiplexed MCP edge: GBrain `127.0.0.1:3131` via `/gbrain`, Obsidian `10.11.1.11:27124` via `/obsidian` | proxied |
 | `landscape.atius.com.br` | A/CNAME | edge SRV-1/SRV-3, validar vhost | proxied |
 | `portainer.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
@@ -143,14 +143,14 @@ Phase 02 planejou que Apache2 seria migrado para portas 9080/9444 e Cloudflare O
 
 **Nota:** Audit de 2026-05-06 identificou que Apache2 ainda está nas portas originais 80/443. A migração de portas pode ter sido revertida ou nunca ter sido concluída. Verificar estado real antes de prosseguir.
 
-Validação 2026-07-05:
+Validação 2026-07-12:
 
 - `router.atius.com.br/` e `/api/status` retornam `200` via SRV-1 Podman
   `0.0.0.0:3000`.
 - `router.atius.com.br/docs/` retorna `503`; vhost aponta para
   `127.0.0.1:3003`, mas nao ha listener em `3003`.
 - `wayland.atius.com.br/api/auth/status` retorna `200`; runtime live no
-  SRV-3 com `PORT=25808`.
+  SRV-3 com `PORT=25725`.
 - `mcp.atius.com.br/gbrain` aceita MCP `initialize` com `200`; backend GBrain
   escuta local-only em `127.0.0.1:3131`.
 - `mcp.atius.com.br/gbrain/health` pode nao estar exposto no edge atual; nao

@@ -19,13 +19,24 @@ must not be selected as the primary path while OCI/DRG is available.
 - The post-install/update contract lives in the source repo scripts
   `scripts/atius-*.sh` plus the patch file
   `patches/atius-webui-workspace-visible.patch`.
+- The production Codex ACP source is the full-history subtree
+  `/home/ubuntu/GitHub/wayland/codex-acp`; runtime must not depend on the retired
+  sibling checkout `/home/ubuntu/GitHub/codex-acp`.
+- Codex ACP is built and tested only through
+  `scripts/atius-build-codex-acp.sh`, which enforces the 20% total CPU ceiling,
+  and installed atomically at `/home/ubuntu/.local/bin/codex-acp`.
+- OpenClaw and Wayland consume the stable wrapper
+  `/home/ubuntu/.local/bin/codex-acp-atius`, never a source-checkout path.
 - `scripts/atius-refresh-source-patch.sh` must keep
   `patches/atius-webui-workspace-visible.patch` aligned with the latest ATIUS
   delta against `upstream/main`; protecting the patch file alone is not enough.
 - The generated `.atius-overlay/` directory is build output only and must stay
   untracked; source-of-truth is the patch/scripts/docs that recreate it.
 - `Conversar na pasta` must stay visible in the WebUI and default to
-  `/home/ubuntu/GitHub`.
+  `/home/ubuntu/Servers` (`~/Servers` for the `ubuntu` runtime user).
+- NFS GitHub mounts under `/home/ubuntu/Servers/<host>/GitHub/...` must keep
+  the default hybrid execution guidance: edit on the mount, validate on the
+  owner host via its SSH alias and translated owner path.
 - `Conversar na pasta` must also open the browser directory picker in WebUI
   mode; it cannot silently depend on the native Electron dialog path.
 - The login screen defaults to `pt-BR` when there is no saved language.
@@ -61,10 +72,15 @@ must not be selected as the primary path while OCI/DRG is available.
 ## Protected paths that carry this behavior
 
 - `.gitignore`
+- `AGENTS.md`
+- `THIRD-PARTY-NOTICES.md`
 - `package.json`
 - `atius-overlay.json`
+- `codex-acp/`
 - `patches/atius-webui-workspace-visible.patch`
 - `scripts/atius-apply-source-patch.sh`
+- `scripts/atius-build-codex-acp.sh`
+- `scripts/atius-verify-codex-acp.sh`
 - `scripts/atius-build-renderer-overlay.sh`
 - `scripts/atius-postinstall-hook.sh`
 - `scripts/atius-refresh-source-patch.sh`
@@ -117,6 +133,9 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/renderer/styles/layout.css`
 - `src/renderer/utils/model/agentModes.ts`
 - `tests/unit/AgentPillBar.dom.test.tsx`
+- `tests/unit/atiusCodexAcpRuntime.test.ts`
+- `tests/unit/acpConnectors.test.ts`
+- `tests/unit/AcpAgentManagerSkillInjection.test.ts`
 - `tests/unit/WebSocketManager.test.ts`
 - `tests/unit/process/task/codexConfigEffort.test.ts`
 - `tests/unit/process/task/codexNativeSandbox.test.ts`
@@ -125,6 +144,8 @@ must not be selected as the primary path while OCI/DRG is available.
 - `tests/unit/renderer/guid/firstSafeCuratedModel.test.ts`
 - `tests/unit/useGuidSend.dom.test.ts`
 - `docs/README.md`
+- `docs/legal/THIRD-PARTY-NOTICES.md`
+- `docs/guides/atius-codex-acp.md`
 - `docs/guides/atius-fork-runtime.md`
 
 ## Required post-sync checks
@@ -133,6 +154,10 @@ Run from `/home/ubuntu/GitHub/wayland` after any upstream merge:
 
 ```bash
 bash scripts/atius-refresh-source-patch.sh --commit-if-changed
+git apply --reverse --check --recount patches/atius-webui-workspace-visible.patch
+bash scripts/atius-build-codex-acp.sh --test --force
+bash scripts/atius-verify-codex-acp.sh --live
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/atiusCodexAcpRuntime.test.ts tests/unit/acpConnectors.test.ts
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
@@ -140,17 +165,19 @@ npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service
 systemctl is-active wayland.service
-curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25808/
+curl -fsS -o /dev/null -w "http=%{http_code}\n" http://127.0.0.1:25725/
 journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "AgentRegistry|found 2 agents|Serving renderer|WebUI running"
 ```
 
 Expected result:
 
 - patch file refreshed/committed when upstream context drifted,
+- embedded adapter has no nested `.git`, Cargo/npm versions match, Rust tests
+  pass, and the installed wrapper resolves the embedded build,
 - `vitest` passes.
 - `typecheck` passes.
 - `wayland.service` is `active`.
-- local HTTP on `127.0.0.1:25808` returns `200`.
+- local HTTP on `127.0.0.1:25725` returns `200`.
 - startup logs still show `found 4 agents: Wayland Core, Gemini CLI, Codex, Hermes Agent`.
 
 ## Git remote guard

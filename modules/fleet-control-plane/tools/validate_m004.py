@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -48,6 +49,25 @@ FLEET_TABLES = (
     "TbManagedForks",
     "TbCustomizationPolicies",
 )
+
+CANONICAL_HOST_IPS = {
+    "atius-srv-1": "10.11.1.11",
+    "atius-srv-2": "10.12.1.12",
+    "atius-srv-3": "10.13.1.13",
+    "horistic-srv": "10.21.1.21",
+}
+ACTIVE_NETWORK_FILES = (
+    "modules/fleet/podman-network/scripts/apply-standardize.sh",
+    "modules/fleet/podman-network/scripts/drift-detect.sh",
+    "modules/fleet/podman-network/scripts/smoke-test.sh",
+    "modules/rust-zellij-fleet/scripts/fleet-rust-zellij.sh",
+    "modules/k3s-ha-portainer-oci/scripts/atius-k3s-watchdog.sh",
+    "modules/k3s-ha-portainer-oci/k3s/config-srv1.example.yaml",
+    "modules/k3s-ha-portainer-oci/k3s/config-srv2.example.yaml",
+    "modules/k3s-ha-portainer-oci/k3s/config-srv3.example.yaml",
+    "modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml",
+)
+RETIRED_NETWORK_RE = re.compile(r"10\.1\.1\.")
 
 
 @dataclass
@@ -389,6 +409,52 @@ def _scenario_agent_executor_monitoring() -> ScenarioResult:
     return _ok("M004-OFF-07", "agent executor, PgBouncer guard and fleet monitoring contract", "offline", evidence)
 
 
+def _scenario_internal_network_canonicality() -> ScenarioResult:
+    failures: list[str] = []
+    evidence: list[str] = []
+
+    for host_id, expected_ip in CANONICAL_HOST_IPS.items():
+        _, host = _load_host(host_id)
+        actual_ip = _nested(host, "access", "oci_private_ip")
+        if actual_ip != expected_ip:
+            failures.append(f"{host_id}: access.oci_private_ip={actual_ip!r}, expected {expected_ip}")
+        evidence.append(f"{host_id}: oci_private_ip={actual_ip}")
+
+    _, w11 = _load_host("giovanni-w11-pc")
+    w11_db = _nested(w11, "database", "endpoint")
+    w11_vpn = _nested(w11, "access", "vpn_ip")
+    if w11_db != "10.11.1.11:6432":
+        failures.append(f"giovanni-w11-pc: database.endpoint={w11_db!r}")
+    if w11_vpn != "10.100.100.8":
+        failures.append(f"giovanni-w11-pc: access.vpn_ip={w11_vpn!r}")
+    evidence.append(f"giovanni-w11-pc: db={w11_db} edge={w11_vpn}")
+
+    _, s23 = _load_host("giovanni-s23-termux")
+    s23_vpn = _nested(s23, "access", "vpn_ip")
+    if s23_vpn != "10.100.100.9":
+        failures.append(f"giovanni-s23-termux: access.vpn_ip={s23_vpn!r}")
+    evidence.append(f"giovanni-s23-termux: edge={s23_vpn}")
+
+    _, horistic = _load_host("horistic-srv")
+    k3s_app = next((app for app in horistic.get("apps", []) if app.get("id") == "k3s-agent"), {})
+    if k3s_app.get("cluster_endpoint") != "https://10.11.1.11:6443":
+        failures.append(f"horistic-srv: k3s.cluster_endpoint={k3s_app.get('cluster_endpoint')!r}")
+    if k3s_app.get("node_ip") != "10.21.1.21":
+        failures.append(f"horistic-srv: k3s.node_ip={k3s_app.get('node_ip')!r}")
+
+    for relative_path in ACTIVE_NETWORK_FILES:
+        path = REPO / relative_path
+        text = path.read_text(encoding="utf-8")
+        for line_number, line in enumerate(text.splitlines(), start=1):
+            if RETIRED_NETWORK_RE.search(line):
+                failures.append(f"{relative_path}:{line_number}: retired 10.1.1.x reference")
+
+    if failures:
+        return _fail("M004-OFF-08", "OCI/DRG primary and edge fallback network contract", "offline", failures)
+    evidence.append(f"active_network_files={len(ACTIVE_NETWORK_FILES)} no_retired_overlay_refs")
+    return _ok("M004-OFF-08", "OCI/DRG primary and edge fallback network contract", "offline", evidence)
+
+
 def offline_scenarios() -> list[ScenarioResult]:
     return [
         _scenario_inventory(),
@@ -398,6 +464,7 @@ def offline_scenarios() -> list[ScenarioResult]:
         _scenario_heartbeat_programs_audit(),
         _scenario_future_integration(),
         _scenario_agent_executor_monitoring(),
+        _scenario_internal_network_canonicality(),
     ]
 
 

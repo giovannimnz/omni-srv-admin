@@ -49,3 +49,18 @@ For more information about GSD agents, run `/gsd-help`.
 - Os dois MCPs usam `Authorization: Bearer $ATIUS_MCP_TOKEN`; carregar `ATIUS_MCP_TOKEN` do profile Vault `atius-mcp` (`kv/atius/atius-mcp/api`).
 - O MCP do Obsidian e sessionful: depois de `initialize`, preservar `Mcp-Session-Id`, enviar `notifications/initialized`, e so entao chamar `tools/list` ou tools.
 - Material de browser-login/access-key fica no Vault path `kv/atius/browser-login/access-keys` e no registro Landscape `atius-browser-login-access-keys`. O Vault armazena e entrega o material; o navegador so reconhece a chave quando o perfil do browser, OS/hardware authenticator, provider/extensao, certificado cliente ou autenticador virtual CDP/Playwright estiver provisionado para o relying party.
+
+<!-- codex-managed: collaboration-browser-runtime:start -->
+## Colaboracao e automacao de browser
+
+- Use multiplos subagentes sempre que houver trabalho paralelo util, com objetivo limitado e ownership de arquivos explicito para cada subagente.
+- Toda automacao de browser deve rodar em modo headless, incluindo `chrome-devtools`, Playwright e ferramentas equivalentes.
+<!-- codex-managed: collaboration-browser-runtime:end -->
+
+<!-- codex-policy:parallel-headless:start -->
+## Paralelismo e automacao de browser
+
+- Use multiplos subagentes sempre que houver trabalho paralelo util. Atribua objetivos delimitados e sem sobreposicao, depois integre e valide os resultados no agente principal.
+- Toda automacao de browser deve executar em modo headless, incluindo chrome-devtools, Playwright, Selenium, Puppeteer ou ferramenta equivalente. Nao abra janelas visiveis do browser.
+
+<!-- codex-policy:parallel-headless:end -->

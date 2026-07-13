@@ -171,7 +171,7 @@ Hosts atuais:
 | `atius-srv-1` | production | active | Oracle OCI / Ubuntu 22.04 / PRD |
 | `atius-srv-2` | development | planned | DEV/Zentrius |
 | `atius-srv-3` | sandbox | planned | ARM sandbox |
-| `giovanni-s23-termux` | mobile-node | planned | Android Termux host |
+| `giovanni-s23-termux` | mobile-node | active via VPN | Android Termux host on `10.100.100.9`; handset-side OCI outbound proof still pending |
 | `giovanni-s23-proot` | mobile-ubuntu | planned | Ubuntu PRoot no S23 |
 | `dell-inspiron-3520` | personal-workstation | planned | desktop pessoal Linux |
 | `support-template` | temporary-support | template | suporte remoto com escopo explícito |

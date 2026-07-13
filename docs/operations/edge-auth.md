@@ -216,7 +216,7 @@ outage) and you need admin access back **right now**.
 | `omni edge check --edge-name portainer --prefer service-token` (no Access) | 403 | 200 | 403 |
 | `omni edge check --edge-name portainer --prefer service-token` (Access live) | n/a | 200 | n/a |
 | `omni edge check --edge-name portainer --prefer basic` (Basic creds set) | 200 | 200 (still allowed) | 200 |
-| Direct origin (10.1.1.1:9444 via VPN) | 200 (Basic Auth) | 200 (Basic Auth) | 200 (Basic Auth) |
+| Direct origin (`10.11.1.11:9444` via OCI/DRG) | 200 (Basic Auth) | 200 (Basic Auth) | 200 (Basic Auth) |
 
 The "Direct origin" line is the manual proof that Basic Auth is the
 underlying authentication and that Cloudflare Access is just an SSO

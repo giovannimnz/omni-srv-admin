@@ -1,26 +1,25 @@
 ---
 gsd_state_version: 1.0
-milestone: v1.7
-milestone_name: Internal DNS and DRG Canonicalization
-current_phase: 45
-status: Phase 45 planned; Phase 42 and Phase 44 paused behind DNS/DRG canonicalization gate
-stopped_at: Local Windows checkout and ATIUS-SRV-1 checkout merged; Phase 45 created for DNS/DRG canonicalization
-last_updated: "2026-07-10T12:00:00-03:00"
-last_activity: 2026-07-10
-last_activity_desc: Merged Windows and ATIUS-SRV-1 worktrees, pushed server checkpoint, and replanned internal DNS / DRG canonicalization
+milestone: v1.8
+milestone_name: Runtime Trust and Codex Delivery Convergence
+current_phase: 48
+current_phase_name: Codex OAuth and Wayland Remote ACP Convergence
+status: executing
+stopped_at: Remaining Phase 48 gates are Router Phase 32 OAuth evidence, deterministic CPU-capped Go verification, and full local/remote ACP lifecycle proof
+last_updated: "2026-07-12T17:15:55.601Z"
+last_activity: 2026-07-12
 progress:
-  total_phases: 1
-  completed_phases: 0
-  total_plans: 4
-  completed_plans: 0
-  percent: 0
-current_phase_name: Internal DNS and DRG Canonicalization
+  total_phases: 5
+  completed_phases: 2
+  total_plans: 6
+  completed_plans: 2
+  percent: 33
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-07-10 after repo merge and DNS/DRG replan
-**Last activity (prior):** 2026-07-10 — Windows and ATIUS-SRV-1 worktrees merged; Phase 45 inserted as operational gate
+**Last updated:** 2026-07-12 after Phase 48 ownership/runtime audit
+**Last activity:** 2026-07-12
 
 ## Project Reference
 
@@ -28,7 +27,7 @@ See: `.planning/ROADMAP.md`
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** v1.7 — fechar Phase 45 para tornar DNS interno e endpoints de servicos DRG/OCI-first. Phase 42 (`42-03`) e Phase 44 (`44-02`/`44-03`) permanecem abertas, mas nao devem avancar enquanto DNS/resolver/service routing ainda puder voltar para `10.1.1.0/24` ou tratar `wg100` como primario.
+**Current focus:** Phase 48 — Codex OAuth and Wayland Remote ACP Convergence
 
 ## Milestones
 
@@ -47,10 +46,11 @@ See also: .planning/MILESTONES.md
 | M009 | MT5 KVM Fleet Onboarding (Phase 21) | ✅ DONE 2026-06-17 (commit on main) |
 | M010 | Horistic rename + rust/zellij (Phase 22) | ✅ DONE 2026-06-17 (commit on main) |
 | M011 | Local AI Embeddings and Semantic Retrieval (Phase 41) | ✅ DONE 2026-07-04 |
-| M012 | Atius-wide SSO and Login (Phase 42) | 🚧 IN PROGRESS — 42-01 and 42-02 complete; 42-03 open |
+| M012 | Atius-wide SSO and Login (Phase 42) | HISTORICAL PARTIAL - 42-01/42-02 retained; continuation moved to Phase 50 |
 | M013 | Codex Runtime and MCP Bootstrap Reliability (Phase 43) | ✅ DONE 2026-07-05 |
-| M014 | Internal Service PKI and Fleet Trust (Phase 44) | 🚧 IN PROGRESS — 44-01 complete; 44-02 and 44-03 open |
-| M015 | Internal DNS and DRG Canonicalization (Phase 45) | 🚧 PLANNED — DRG/OCI DNS and resolver cleanup gate |
+| M014 | Internal Service PKI and Fleet Trust (Phase 44) | HISTORICAL PARTIAL - continuation completed by Phase 47 |
+| M015 | Internal DNS and DRG Canonicalization (Phase 45) | DONE 2026-07-10 - OCI/DRG DNS, resolver, drift and edge closeout verified |
+| M016 | Runtime Trust and Codex Delivery Convergence (Phases 46-50) | CURRENT - Phases 46-47 complete; Phase 48 executing; 49-50 queued |
 
 ## Active Branch Results
 
@@ -116,13 +116,13 @@ See also: .planning/MILESTONES.md
 - Phase 16: M005 Cloudflare Access — code shipped 2026-06-17 (`cli/omni/edge.py` + `docs/operations/edge-auth.md` + `scripts/validate-edge-auth.py`, 16/16 tests passing, live pre-cutover state confirmed); live cutover ⛔ blocked on Cloudflare dashboard "Enable Access" click — see `.planning/phases/16-m005-cloudflare-access/16-SUMMARY.md`
 - Phase 17: M005 Observability + RWX — code/artifacts shipped 2026-06-18 (`cli/omni/observability.py`, monitoring dashboards/rules/scripts, `docs/operations/k3s-storage.md`, 43/43 tests passing); live closeout ⛔ blocked on production gate + missing alert webhook + dashboard provisioning — see `.planning/phases/17-m005-observability-rwx/17-SUMMARY.md`
 
-### Backlog (Phases 3-7)
+### Legacy Domain Backlog (superseded)
 
 - Phase 3: FreeIPA Server Container — planejamento pendente
-- Phase 4: Samba Domain Member — depende Phase 3
-- Phase 5: Migração WireGuard + CoreDNS — depende Phase 3
-- Phase 6: Keycloak SSO — depende Phase 3
-- Phase 7: Coexistência e Client Enrollment — depende Phase 3
+- Legacy stage 4: Samba Domain Member — superseded by Phase 35
+- Legacy stage 5: WireGuard + CoreDNS — superseded by Phases 34 and 45
+- Legacy stage 6: Keycloak SSO — superseded by Phases 36 and 50
+- Legacy stage 7: coexistence/client enrollment — superseded by Phases 34-36
 
 ## M002 Result Summary
 
@@ -172,16 +172,18 @@ See also: .planning/MILESTONES.md
 
 ## Current Position
 
-Phase: Milestone v1.7 active
-Plan: `45-PLAN`
-Status: Planned; DNS/DRG canonicalization gate open
-Last activity: 2026-07-10
+Phase: 48 (Codex OAuth and Wayland Remote ACP Convergence) — EXECUTING
+Plans: `48-01-PLAN`, `48-02-PLAN`
+Status: Executing Phase 48
+Last activity: 2026-07-12 — Phase 48 execution started
 
 ## Operator Next Steps
 
-- Execute Phase 45 in four waves: source-of-truth cleanup, resolver cutover, Cloudflare/internal DNS boundary, drift automation/knowledge closeout.
-- Resume `42-03` only after short names and internal service endpoints prefer DRG/OCI.
-- Resume `44-02` only after explicit live CA/trust mutation approval and after Phase 45 no longer blocks internal service naming.
+- Continue the active Phase 48 task without overlapping its Wayland/codex-acp runtime files; Headroom remains absent.
+- Reconcile Router Phase 32 evidence and finish the CPU-capped Go verification plus native/local/remote ACP lifecycle matrix.
+- Treat the Wayland GUID effort-selector repair as a Phase 48 regression fix, not as Phase 49 Headroom work.
+- Execute Phase 49 only after every Phase 48 validation and stop condition is green.
+- Execute Phase 50 after Phase 49, reusing 42-01/42-02 as historical evidence rather than reopening Phase 42.
 
 ## Session Continuity (resumed + closed 2026-06-17)
 
@@ -456,3 +458,21 @@ Status: PLANNING (2026-06-24)
 - Current ARM64 viable LTS path is `ppa:landscape/self-hosted-24.04`; `latest-stable` has ARM64 packages but is not preferred for production governance.
 - Recommended path for current fleet: install Landscape 24.04 LTS on `horistic-srv` or provision AMD64 for strict 26.04 LTS.
 - Artifact: `.planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-06-LANDSCAPE-SELFHOSTED-PREFLIGHT.md`.
+
+## Landscape and Vaultwarden legacy-upstream incident - 2026-07-11
+
+- Resolved Apache 503 responses on `landscape.atius.com.br` and `vault.atius.com.br`.
+- Root cause: both active vhosts on `atius-srv-1` still targeted retired address `10.1.1.3`.
+- Landscape now uses `10.13.1.13:443/80`; Vaultwarden HTTP and WebSocket use `10.13.1.13:8088`.
+- Backups were created before mutation; Apache config validation and reload passed.
+- Public validation: Landscape HTTP 303 to login with `next_url`; Vaultwarden HTTP 200.
+- Evidence: `.planning/phases/45-internal-dns-drg-canonicalization/45-INCIDENT-LANDSCAPE-VAULT-503-20260711.md`.
+
+## Public site DRG audit - 2026-07-11
+
+- Audited every HTTPS vhost loaded by Apache on SRV-1 and active reverse-proxy configs on the other OCI hosts.
+- Replaced the final active `10.1.1.2` upstreams with canonical SRV-2 address `10.12.1.12`; no enabled reverse-proxy config now references `10.1.1.x`.
+- Recovered `router.zentrius.com.br`, `remote.atius-srv-1.atius.com.br`, `mail.atius.com.br`, `webmail.atius.com.br`, and `plane.atius.com.br` to HTTP 200.
+- Made Mailcow and Plane boot-persistent through enabled user units.
+- Classified 18 residual HTTP 503 names as missing deployments rather than network drift; no replacement service exists on the canonical OCI hosts.
+- Evidence: `.planning/phases/45-internal-dns-drg-canonicalization/45-PUBLIC-SITE-DRG-AUDIT-20260711.md`.

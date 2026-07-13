@@ -23,20 +23,21 @@
 
 set -euo pipefail
 
-REPO="${OMNI_SRV_ADMIN:-/home/ubuntu/GitHub/omni-srv-admin}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+REPO="${OMNI_SRV_ADMIN:-$(cd "$SCRIPT_DIR/../../.." && pwd)}"
 HOSTS_DIR="$REPO/inventory/hosts"
 LOG_DIR="$HOME/.logs/rust-zellij-fleet"
 LOCK_PREFIX="/tmp/rust-zellij-fleet.lock"
 mkdir -p "$LOG_DIR"
 
 HOSTS=(
-  "atius-srv-1:srv1:10.1.1.1"
-  "atius-srv-2:srv2:10.1.1.2"
-  "atius-srv-3:srv3:10.1.1.7"
+  "atius-srv-1:srv1:10.11.1.11"
+  "atius-srv-2:srv2:10.12.1.12"
+  "atius-srv-3:srv3:10.13.1.13"
 )
 
-# Hosts locais (sem SSH). SRV-1 é o orchestrator.
-LOCAL_ID="atius-srv-1"
+# Defina apenas no próprio servidor; vazio força operação remota no WSL/controlador.
+LOCAL_ID="${RUST_ZELLIJ_LOCAL_ID:-}"
 
 # ---------- helpers ----------
 
@@ -83,8 +84,9 @@ cmd_status() {
     IFS=":" read -r host_id alias ip <<<"$entry"
     # Captura cada versão com || true pra não abortar em exit code não-zero de subshell
     if [ "$host_id" = "$LOCAL_ID" ]; then
-      r=$(/home/ubuntu/.cargo/bin/rustc --version 2>/dev/null | awk '{print $2}' || true)
-      c=$(/home/ubuntu/.cargo/bin/cargo --version 2>/dev/null | awk '{print $2}' || true)
+      source "$HOME/.cargo/env" 2>/dev/null || true
+      r=$(rustc --version 2>/dev/null | awk '{print $2}' || true)
+      c=$(cargo --version 2>/dev/null | awk '{print $2}' || true)
       # binstall version: extrai do inventory YAML (cargo-binstall --version exige argumento)
       b=$(yaml_get "$host_id" "current_version" 2>/dev/null | grep -A 0 "" || true)
       # Pega só o current_version do bloco cargo-binstall especificamente
@@ -97,7 +99,7 @@ try:
 except Exception:
     print('N/A')
 ")
-      z=$(/home/ubuntu/.cargo/bin/zellij --version 2>/dev/null | awk '{print $2}' || true)
+      z=$(zellij --version 2>/dev/null | awk '{print $2}' || true)
     else
       r=$(ssh_run "$ip" 'source "$HOME/.cargo/env" 2>/dev/null; rustc --version 2>/dev/null | awk "{print \$2}"' || true)
       c=$(ssh_run "$ip" 'source "$HOME/.cargo/env" 2>/dev/null; cargo --version 2>/dev/null | awk "{print \$2}"' || true)
@@ -170,8 +172,9 @@ cmd_audit() {
     # current_version e desired_version iguais nos dois apps (versões fixadas)
 
     if [ "$host_id" = "$LOCAL_ID" ]; then
-      actual_rust=$(/home/ubuntu/.cargo/bin/rustc --version 2>/dev/null | awk '{print $2}')
-      actual_zellij=$(/home/ubuntu/.cargo/bin/zellij --version 2>/dev/null | awk '{print $2}')
+      source "$HOME/.cargo/env" 2>/dev/null || true
+      actual_rust=$(rustc --version 2>/dev/null | awk '{print $2}')
+      actual_zellij=$(zellij --version 2>/dev/null | awk '{print $2}')
     else
       actual_rust=$(ssh_run "$ip" 'source "$HOME/.cargo/env" 2>/dev/null; rustc --version 2>/dev/null | awk "{print \$2}"')
       actual_zellij=$(ssh_run "$ip" 'source "$HOME/.cargo/env" 2>/dev/null; zellij --version 2>/dev/null | awk "{print \$2}"')

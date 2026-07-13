@@ -64,7 +64,7 @@ Exemplo:
 id: srv1-shared-smb
 host_id: atius-srv-1
 type: cifs
-source: //10.1.1.2/Shared
+source: //10.11.1.11/Shared
 mount_path: /home/ubuntu/Shared_smb
 display_label: Shared_smb
 places:

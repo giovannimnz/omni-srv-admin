@@ -5,8 +5,12 @@ aliases:
 role: personal-workstation
 owner: giovanni
 access:
-  ssh: muniz@10.100.100.5
-  vpn_ip: 10.100.100.5
+  ssh: muniz@10.100.100.8
+  vpn_ip: 10.100.100.8
+  legacy_ssh: muniz@10.100.100.5
+  legacy_vpn_ip: 10.100.100.5
+  home_lan_reserved_ip: 192.168.1.8
+  home_lan_mac: 44:FA:66:01:6F:AB
 platform:
   provider: local-pc
   os: windows-11
@@ -14,7 +18,7 @@ platform:
 status: active
 modules: []
 constraints:
-  - client-wireguard-config-imported-for-10.100.100.5
+  - client-wireguard-config-imported-for-10.100.100.8
 logs:
   local_dir: TBD
   retention_days: 15
@@ -58,23 +62,25 @@ pki:
       - "Automatic execution path is TbUpdatePlans -> OmniFleetAgent scheduled task -> omni.trust-pki.windows.* commands."
 database:
   target: DbOmniFleet
-  endpoint: 10.100.100.1:6432
+  endpoint: 10.11.1.11:6432
   transport: PgBouncer
   configured: true
   client: python-pg8000
   env_file: C:\Users\muniz\.config\omni-srv-admin\fleet-db.env
-  validated_at: 2026-07-03
-  readdressed_at: 2026-07-06
-  note: "O clone local no Windows segue em reserve path `10.100.100.1:6432` até a reachability direta ao DRG `10.11.1.11:6432` ser validada no próprio host; para Linux peers, o canônico já é OCI/DRG."
+  validated_at: 2026-07-10
+  readdressed_at: 2026-07-10
+  note: "O clone local no Windows usa o endpoint OCI/DRG `10.11.1.11:6432`; reachability direta pelo bridge `wg100` foi validada no próprio host. `10.100.100.1:6432` permanece apenas como fallback de emergência documentado."
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   codex_runtime_standard: "2026-07-04: C:\\Users\\muniz\\.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
   last_readdressed: 2026-07-06
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-W11-PC
-  dns_validation: "2026-07-08: Windows WireGuard adapter peer5 uses DNS server 10.100.100.1; nslookup against 10.100.100.1 resolved atius-srv-1 -> 10.100.100.1, atius-srv-2 -> 10.100.100.2 and horistic-srv -> 10.100.100.4."
+  dns_validation: "2026-07-10: Windows WireGuard adapter `GIOVANNI-W11-PC-wg` now uses DNS servers `10.11.1.11` primary and `10.100.100.1` reserve, with global suffix search `atius.internal`; short-name `Resolve-DnsName`/`ping` expand to the OCI-primary FQDNs and the tunnel reaches `10.11.1.11:6432`, `10.13.1.13:8202`, and `10.21.1.21:3115`."
   ssh_user: muniz
   ssh_validation: "2026-06-25: muniz@10.1.1.5 authenticated and returned hostname GIOVANNI-W11-PC."
-  client_config: "local WireGuard peer5 profile, observed as 10.100.100.5/32 on 2026-07-06"
-  live_handshake: "2026-07-06: local Windows peer5 reports IPv4 10.100.100.5/32."
+  client_config: "2026-07-10: local Windows WireGuard adapter `GIOVANNI-W11-PC-wg` is active on `10.100.100.8/32` after the BE3-aligned renumbering; previous `10.100.100.5/32` is now legacy history."
+  live_handshake: "2026-07-10: local Windows client reports IPv4 `10.100.100.8/32`, answers ICMP, reaches OCI-private targets through the tunnel, and SSH on `10.100.100.8:22` succeeds."
+  legacy_wireguard_note: "Previous W11 edge IP 10.100.100.5/32 is historical evidence from the pre-cutover state."
+  home_proxy_pptp: "2026-07-10: BE3 static reservation confirmed for residential PPTP/home-edge use: 192.168.1.8 / 44:FA:66:01:6F:AB. This is home LAN only, not OCI/DRG identity."
   retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.5 references are historical evidence only."
