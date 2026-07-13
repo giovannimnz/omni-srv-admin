@@ -1,0 +1,19 @@
+[Unit]
+Description=Resource governor coalesced post-build cleanup
+Requires=omni-builds.slice
+After=resource-governor-cgroup-init.service
+
+[Service]
+Type=oneshot
+Slice=omni-builds.slice
+Environment=OMNI_BUILD_CPU_GUARD_ACTIVE=1
+Environment=OMNI_RESOURCE_HYGIENE_ACTIVE=1
+Environment=CLEANUP_MODE=build-hygiene
+Environment=TRIGGER_REASON=coalesced-post-build-queue
+ExecStartPre=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-cgroup-init.sh
+ExecStart=/usr/bin/flock --wait=7200 /home/ubuntu/.local/state/omni/resource-governor-builds.lock /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/cleanup-local.sh
+ExecStartPost=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py complete cleanup
+Nice=15
+IOSchedulingClass=idle
+TimeoutStartSec=3h
+KillMode=control-group

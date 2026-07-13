@@ -2,11 +2,20 @@
 Description=Resource governor heavier daily audit
 After=network-online.target
 Wants=network-online.target
+Requires=omni-builds.slice
 
 [Service]
 Type=oneshot
-ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-audit.py
+Slice=omni-builds.slice
+Environment=OMNI_BUILD_CPU_GUARD_ACTIVE=1
+Environment=OMNI_RESOURCE_HYGIENE_ACTIVE=1
+ExecStartPre=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-cgroup-init.sh
+ExecStart=/usr/bin/flock --wait=7200 /home/ubuntu/.local/state/omni/resource-governor-builds.lock /usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-audit.py
+ExecStartPost=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py complete audit
 WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
 Nice=15
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
+MemoryMax=1G
+TimeoutStartSec=3h
+KillMode=control-group

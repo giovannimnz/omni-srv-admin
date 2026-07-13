@@ -97,9 +97,10 @@ Each leaf certificate must include SAN entries for the addresses actually used
 - `atius-srv-3`: `136.248.126.12`, `10.100.100.3`, legacy `10.1.1.3`, legacy `10.1.1.7`, `atius-srv-3`, `srv3`, `atius-srv-3.atius.internal`
 - `horistic-srv`: `163.176.232.119`, `10.100.100.4`, legacy `10.1.1.4`, `100.102.126.61`, `horistic-srv`, `horistic-srv-1`, `horistic`
 
-2026-07-06 note: `10.100.100.0/24` is the primary WireGuard operator plane.
-Keep `10.1.1.x` SANs only until all RDP entrypoints and shortcuts stop using
-the old `wg0` addresses.
+2026-07-10 note: OCI/DRG private networking is the primary server-to-server
+plane where validated. `10.100.100.0/24` / `wg100` is reserve/fallback and
+break-glass for clients such as W11/S23. Keep `10.1.1.x` SANs only until all
+RDP entrypoints and shortcuts stop using the old `wg0` addresses.
 
 ## Verification
 

@@ -129,6 +129,15 @@ nodeExporter:
 
 prometheus-node-exporter:
   releaseLabel: true
+  extraArgs:
+    - --collector.textfile.directory=/run/omni-textfile
+  extraHostVolumeMounts:
+    - name: omni-textfile
+      hostPath: /home/ubuntu/.local/state/omni/textfile-collector
+      type: DirectoryOrCreate
+      mountPath: /run/omni-textfile
+      readOnly: true
+      mountPropagation: None
   affinity:
     nodeAffinity:
       requiredDuringSchedulingIgnoredDuringExecution:

@@ -1,0 +1,17 @@
+[Unit]
+Description=Resource governor coalesced post-build snapshot
+Requires=omni-builds.slice
+
+[Service]
+Type=oneshot
+Slice=omni-builds.slice
+Environment=OMNI_BUILD_CPU_GUARD_ACTIVE=1
+Environment=OMNI_RESOURCE_HYGIENE_ACTIVE=1
+ExecStart=/usr/bin/flock --wait=7200 /home/ubuntu/.local/state/omni/resource-governor-builds.lock /usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-snapshot.py
+ExecStartPost=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py complete snapshot
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+TimeoutStartSec=130min
+KillMode=control-group

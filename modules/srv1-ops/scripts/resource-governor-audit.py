@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 import json
+import fcntl
 import os
 import shutil
 import subprocess
@@ -13,6 +14,9 @@ SCRIPT = Path(__file__).resolve()
 MODULE = SCRIPT.parent.parent
 CONFIG_PATH = MODULE / 'configs' / 'resource-governor.env'
 DEFAULT_LOG_DIR = Path.home() / '.logs' / 'resource-governor'
+DEFAULT_STATE_DIR = Path.home() / '.local' / 'state' / 'omni'
+DEFAULT_LOCK_FILE = DEFAULT_STATE_DIR / 'resource-governor-audit.lock'
+DEFAULT_AUDIT_STATE = DEFAULT_STATE_DIR / 'resource-governor-audit.json'
 ROOTS = [Path('/home/ubuntu/GitHub'), Path('/home/ubuntu/docker')]
 INTERESTING = {'node_modules', '.next', 'target', 'dist', 'build', '.venv', 'venv', 'db-data', 'data', '.turbo', '.cache'}
 EXCLUDE_WALK = {'.git', '__pycache__', '.idea', '.vscode'}
@@ -26,7 +30,11 @@ FIXED_PATHS = [
 
 
 def load_config() -> dict[str, str]:
-    data = {'RG_LOG_DIR': str(DEFAULT_LOG_DIR)}
+    data = {
+        'RG_LOG_DIR': str(DEFAULT_LOG_DIR),
+        'RG_AUDIT_LOCK_FILE': str(DEFAULT_LOCK_FILE),
+        'RG_AUDIT_STATE_FILE': str(DEFAULT_AUDIT_STATE),
+    }
     if CONFIG_PATH.exists():
         for raw in CONFIG_PATH.read_text().splitlines():
             line = raw.strip()
@@ -38,8 +46,51 @@ def load_config() -> dict[str, str]:
 
 
 def run(cmd: list[str]) -> str:
-    proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    try:
+        proc = subprocess.run(cmd, capture_output=True, text=True, check=False)
+    except FileNotFoundError:
+        return f'unavailable: {cmd[0]}'
     return proc.stdout.strip() or proc.stderr.strip()
+
+
+def atomic_write(path: Path, content: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f'.{path.name}.{os.getpid()}.tmp')
+    tmp.write_text(content)
+    os.replace(tmp, path)
+
+
+def acquire_audit_lock(path: Path):
+    path.parent.mkdir(parents=True, exist_ok=True)
+    lock_fh = path.open('a+')
+    try:
+        fcntl.flock(lock_fh, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        lock_fh.close()
+        return None
+    lock_fh.seek(0)
+    lock_fh.truncate()
+    lock_fh.write(f'{os.getpid()}\n')
+    lock_fh.flush()
+    return lock_fh
+
+
+def running_in_build_slice() -> bool:
+    try:
+        cgroups = Path('/proc/self/cgroup').read_text()
+    except OSError:
+        return False
+    return '/omni-builds.slice/' in cgroups or '/omni-builds/' in cgroups
+
+
+def write_audit_state(path: Path, status: str, **extra: object) -> None:
+    payload = {
+        'timestamp': datetime.now().astimezone().isoformat(),
+        'pid': os.getpid(),
+        'status': status,
+        **extra,
+    }
+    atomic_write(path, json.dumps(payload, indent=2, sort_keys=True) + '\n')
 
 
 def dir_size(path: Path) -> int:
@@ -162,24 +213,43 @@ def write_text(path: Path, report: dict[str, Any]) -> None:
     lines.append('')
     lines.append('docker_images:')
     lines.extend(f"- {line}" for line in report['docker_images'])
-    path.write_text('\n'.join(lines) + '\n')
+    atomic_write(path, '\n'.join(lines) + '\n')
 
 
 def main() -> int:
     config = load_config()
+    lock_path = Path(os.path.expanduser(config['RG_AUDIT_LOCK_FILE']))
+    state_path = Path(os.path.expanduser(config['RG_AUDIT_STATE_FILE']))
+    lock_fh = acquire_audit_lock(lock_path)
+    if lock_fh is None:
+        print(f'coalesced: resource governor audit already running; lock={lock_path}')
+        return 0
+    if not running_in_build_slice():
+        write_audit_state(state_path, 'refused-ungoverned')
+        print('ERROR: refusing heavy audit outside omni-builds.slice')
+        lock_fh.close()
+        return 2
     log_dir = Path(os.path.expanduser(config['RG_LOG_DIR']))
     log_dir.mkdir(parents=True, exist_ok=True)
-    report = build_report()
-    stamp = datetime.now().strftime('%Y-%m-%d')
-    audit_json = log_dir / f'audit-{stamp}.json'
-    audit_txt = log_dir / f'audit-{stamp}.txt'
-    latest_txt = log_dir / 'latest-audit.txt'
-    audit_json.write_text(json.dumps(report, indent=2, ensure_ascii=False) + '\n')
-    write_text(audit_txt, report)
-    latest_txt.write_text(audit_txt.read_text())
-    print(f'ok: audit -> {audit_json}')
-    print(f'latest: {latest_txt}')
-    return 0
+    write_audit_state(state_path, 'running')
+    try:
+        report = build_report()
+        stamp = datetime.now().strftime('%Y-%m-%d')
+        audit_json = log_dir / f'audit-{stamp}.json'
+        audit_txt = log_dir / f'audit-{stamp}.txt'
+        latest_txt = log_dir / 'latest-audit.txt'
+        atomic_write(audit_json, json.dumps(report, indent=2, ensure_ascii=False) + '\n')
+        write_text(audit_txt, report)
+        atomic_write(latest_txt, audit_txt.read_text())
+        write_audit_state(state_path, 'success', report=str(audit_json))
+        print(f'ok: audit -> {audit_json}')
+        print(f'latest: {latest_txt}')
+        return 0
+    except Exception as exc:
+        write_audit_state(state_path, 'failed', error=exc.__class__.__name__)
+        raise
+    finally:
+        lock_fh.close()
 
 
 if __name__ == '__main__':

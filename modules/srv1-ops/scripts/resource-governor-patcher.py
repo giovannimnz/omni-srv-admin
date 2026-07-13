@@ -45,9 +45,10 @@ CONFIG_PATH = MODULE / 'configs' / 'resource-governor.env'
 LOG_FILE = Path.home() / '.logs' / 'resource-governor' / 'patcher.log'
 STATE_FILE = Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-patcher.json'
 
-CGROUP_BASE = Path('/sys/fs/cgroup/user.slice/user-1001.slice/user@1001.service/omni.slice')
-CGROUP_BASE_USER = Path('/sys/fs/cgroup/user.slice/user-1001.slice')
-CGROUP_USER = Path('/sys/fs/cgroup/user.slice/user-1001.slice')
+USER_UID = os.getuid()
+CGROUP_BASE = Path(f'/sys/fs/cgroup/user.slice/user-{USER_UID}.slice/user@{USER_UID}.service/omni.slice')
+CGROUP_BASE_USER = Path(f'/sys/fs/cgroup/user.slice/user-{USER_UID}.slice')
+CGROUP_USER = CGROUP_BASE_USER
 
 # Classification patterns: (regex on cmd, slice, reason)
 BUILD_PATTERNS = [
@@ -62,6 +63,9 @@ BUILD_PATTERNS = [
     (r'(^|/)(pip|uv)\s+install', 'builds', 'pip-install'),
     (r'(^|/)go\s+(build|test|run|install)', 'builds', 'go'),
     (r'(^|/)node-gyp(\s|$)', 'builds', 'node-gyp'),
+    (r'(^|/)graphify\s+update(\s|$)', 'builds', 'graphify-index'),
+    (r'(^|/)pytest(\s|$)', 'builds', 'pytest'),
+    (r'(^|/)uv\s+run\s+pytest(\s|$)', 'builds', 'uv-pytest'),
 ]
 
 TRANSFER_PATTERNS = [
@@ -453,7 +457,10 @@ def get_cgroup(pid: int) -> str:
 
 
 def move_to_slice(pid: int, slice_name: str, dry_run: bool) -> bool:
-    target = CGROUP_BASE_USER / f'omni-{slice_name}'
+    if slice_name in {'builds', 'interactive', 'transfers'}:
+        target = CGROUP_BASE / f'omni-{slice_name}.slice' / 'omni-patcher'
+    else:
+        target = CGROUP_BASE_USER / f'omni-{slice_name}'
     if not target.exists():
         return False
     procs_file = target / 'cgroup.procs'
@@ -497,10 +504,18 @@ def ensure_user_cgroup_subtree() -> None:
 
 
 def ensure_omni_cgroups_exist() -> dict[str, Path]:
-    """Create /sys/fs/cgroup/user.slice/user-1001.slice/omni-{builds,interactive,transfers,generic}
-    as plain cgroup dirs (not systemd slices) and chown to ubuntu."""
+    """Return one aggregate cgroup per profile; create only non-systemd buckets."""
+    ensure_slices_active()
     out = {}
-    for name in ('builds', 'interactive', 'transfers', 'generic', 'protected'):
+    for name in ('builds', 'interactive', 'transfers'):
+        parent = CGROUP_BASE / f'omni-{name}.slice'
+        leaf = parent / 'omni-patcher'
+        if parent.exists() and not leaf.exists():
+            subprocess.run(['sudo', 'mkdir', '-p', str(leaf)], capture_output=True, text=True, check=False)
+            subprocess.run(['sudo', 'chown', f'{USER_UID}:{os.getgid()}', str(leaf)], capture_output=True, text=True, check=False)
+        if leaf.exists():
+            out[name] = leaf
+    for name in ('generic', 'protected'):
         path = CGROUP_USER / f'omni-{name}'
         if not path.exists():
             try:
@@ -537,8 +552,9 @@ def ensure_slices_active() -> dict[str, bool]:
     """Start all omni-*.slice units so cgroup dirs exist with controllers."""
     out = {}
     env = os.environ.copy()
-    env.setdefault('XDG_RUNTIME_DIR', '/run/user/1001')
-    env.setdefault('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1001/bus')
+    runtime_dir = f'/run/user/{os.getuid()}'
+    env['XDG_RUNTIME_DIR'] = runtime_dir
+    env['DBUS_SESSION_BUS_ADDRESS'] = f'unix:path={runtime_dir}/bus'
     for name in ('builds', 'interactive', 'transfers'):
         target = CGROUP_BASE / f'omni-{name}.slice'
         if not target.exists():

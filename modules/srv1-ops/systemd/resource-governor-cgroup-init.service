@@ -1,6 +1,6 @@
 [Unit]
 Description=Omni cgroup init — force CPUQuota/IO limits on user slices (systemd 249 workaround)
-Documentation=%h/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+Documentation=file:/home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
 After=omni-builds.slice omni-interactive.slice omni-transfers.slice
 Wants=omni-builds.slice omni-interactive.slice omni-transfers.slice
 

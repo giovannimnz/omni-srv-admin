@@ -202,3 +202,93 @@ spec:
           annotations:
             summary: "cgroup {{ $labels.cgroup }} throttling >50% on {{ $labels.instance }}"
             description: "CPU throttling ratio on cgroup {{ $labels.cgroup }} is over 50% sustained for 10m. Check resource-governor profile."
+
+        - alert: ResourceGovernorLegacyScannerActive
+          expr: omni_resource_governor_legacy_scanner_active > 0
+          for: 2m
+          labels:
+            severity: critical
+            category: resource-governor
+          annotations:
+            summary: "Legacy per-PID CPU scanner active on {{ $labels.instance }}"
+            description: "atius-build-throttle.timer competes with the aggregate omni-builds.slice governor and must remain disabled."
+
+        - alert: ResourceGovernorLegacyHygieneFanout
+          expr: omni_resource_governor_legacy_transient_units > 0
+          for: 5m
+          labels:
+            severity: warning
+            category: resource-governor
+          annotations:
+            summary: "Legacy post-build unit fan-out on {{ $labels.instance }}"
+            description: "Timestamped omni-post-build units were detected. Reinstall the resource governor and inspect the queue status."
+
+        - alert: ResourceGovernorQueueScheduleFailure
+          expr: increase(omni_resource_governor_hygiene_schedule_failures_total[15m]) > 0
+          for: 2m
+          labels:
+            severity: warning
+            category: resource-governor
+          annotations:
+            summary: "Resource governor hygiene scheduling failed on {{ $labels.instance }}"
+            description: "At least one stable post-build timer could not be scheduled in the last 15 minutes."
+
+        - alert: ResourceGovernorMetricsStale
+          expr: time() - omni_resource_governor_metrics_timestamp_seconds > 600
+          for: 5m
+          labels:
+            severity: warning
+            category: resource-governor
+          annotations:
+            summary: "Resource governor metrics stale on {{ $labels.instance }}"
+            description: "The resource-governor textfile has not been refreshed for more than 10 minutes."
+
+        - alert: ResourceGovernorStructuralUnsafe
+          expr: omni_resource_governor_structural_ok == 0
+          for: 1m
+          labels:
+            severity: critical
+            category: resource-governor
+          annotations:
+            summary: "Resource governor admission unsafe on {{ $labels.instance }}"
+            description: "A structural invariant failed (cgroup/quota, legacy scanner/fan-out, or build escape). New builds are blocked fail-closed. Run `omni srv1-ops resources doctor`."
+
+        - alert: ResourceGovernorBuildEscape
+          expr: omni_resource_governor_hot_build_escapes > 0
+          for: 1m
+          labels:
+            severity: critical
+            category: resource-governor
+          annotations:
+            summary: "Build escaped omni-builds.slice on {{ $labels.instance }}"
+            description: "At least one hot build-like process is outside the aggregate build cgroup. Inspect the doctor JSON before moving or stopping anything."
+
+        - alert: ResourceGovernorQueueStuck
+          expr: omni_resource_governor_queue_pending_age_seconds > 7200
+          for: 5m
+          labels:
+            severity: warning
+            category: resource-governor
+          annotations:
+            summary: "Resource governor hygiene queue stuck on {{ $labels.instance }}"
+            description: "A coalesced post-build batch has remained pending beyond the two-hour maximum age."
+
+        - alert: ResourceGovernorDoctorDegraded
+          expr: omni_resource_governor_doctor_ok == 0 and omni_resource_governor_structural_ok == 1
+          for: 5m
+          labels:
+            severity: warning
+            category: resource-governor
+          annotations:
+            summary: "Resource governor pressure/maintenance warning on {{ $labels.instance }}"
+            description: "Structural admission is safe, but queue, audit, CPU PSI, or swap pressure needs attention."
+
+        - alert: ResourceGovernorDoctorMetricsStale
+          expr: time() - omni_resource_governor_doctor_timestamp_seconds > 300
+          for: 2m
+          labels:
+            severity: critical
+            category: resource-governor
+          annotations:
+            summary: "Resource governor doctor stopped on {{ $labels.instance }}"
+            description: "Preventive doctor metrics have not refreshed for more than five minutes. Check resource-governor-doctor.timer/service."

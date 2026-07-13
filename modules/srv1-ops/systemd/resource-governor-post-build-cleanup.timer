@@ -1,0 +1,7 @@
+[Unit]
+Description=Queue one coalesced post-build cleanup
+
+[Timer]
+OnActiveSec=5min
+AccuracySec=5s
+Unit=resource-governor-post-build-cleanup.service

@@ -126,10 +126,10 @@ Tasks:
 1. ensure A records for short names and FQDNs
 2. ensure PTR records for the OCI private addresses
 3. explicitly keep reserve aliases separate if needed:
-   - `atius-srv-1-wg100`
-   - `atius-srv-2-wg100`
-   - `atius-srv-3-wg100`
-   - `horistic-srv-wg100`
+   - `atius-srv-1-wg`
+   - `atius-srv-2-wg`
+   - `atius-srv-3-wg`
+   - `horistic-srv-wg`
 4. remove any accidental canonical answer that points to reserve IP first
 
 Done when:

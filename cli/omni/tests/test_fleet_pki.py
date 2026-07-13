@@ -53,7 +53,7 @@ def test_default_plan_includes_windows_trust_client_for_auto_update():
     assert w11["service_tls_mode"] == "trust-client"
     assert w11["auto_update"] is True
     assert w11["trust_store"] == "Cert:\\CurrentUser\\Root"
-    assert "10.100.100.5" in w11["sans"]["ip"]
+    assert "10.100.100.8" in w11["sans"]["ip"]
     assert [command["stage"] for command in w11["commands"]] == ["preflight", "install-ca", "verify"]
     assert [command["command_key"] for command in w11["commands"]] == [
         "omni.trust-pki.windows.preflight",

@@ -31,6 +31,14 @@ CPU_TOTAL_PCT="20"
 CPU_TOTAL_PCT_FALLBACK="20"
 CPU_QUOTA="20%"
 
+user_systemd_env() {
+  local runtime_dir="/run/user/$(id -u)"
+  env \
+    XDG_RUNTIME_DIR="$runtime_dir" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=${runtime_dir}/bus" \
+    "$@"
+}
+
 load_build_cpu_quota() {
   local cfg="$1"
   local key="$2"
@@ -96,6 +104,23 @@ find_real_command() {
     printf '%s\n' "$candidate"
     return 0
   done
+
+  # Non-interactive desktop/AppImage sessions do not always inherit
+  # ~/.cargo/bin even though rustup installed its cargo/rustc shims there.
+  # Resolve that canonical user toolchain location explicitly so the guard
+  # does not turn a valid Rust installation into a command-not-found error.
+  case "$name" in
+    cargo|rustc)
+      candidate="${HOME}/.cargo/bin/${name}"
+      if [[ -x "$candidate" ]]; then
+        resolved="$(readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate")"
+        if [[ "$resolved" != "$wrapper_path" ]]; then
+          printf '%s\n' "$candidate"
+          return 0
+        fi
+      fi
+      ;;
+  esac
   return 1
 }
 
@@ -162,13 +187,26 @@ if [[ -z "$real_cmd" ]]; then
   exit 127
 fi
 
-if [[ "${OMNI_BUILD_CPU_GUARD_ACTIVE:-0}" == "1" ]] || ! is_build_command "$cmd_name" "$@"; then
+inside_build_cgroup() {
+  local cgroup_file="/proc/$$/cgroup"
+  [[ -r "$cgroup_file" ]] && grep -q 'omni-builds' "$cgroup_file"
+}
+
+if ! is_build_command "$cmd_name" "$@"; then
+  exec "$real_cmd" "$@"
+fi
+
+# The marker is inherited by nested wrappers, but it is not authority by
+# itself.  Only bypass routing when this process is demonstrably contained.
+if [[ "${OMNI_BUILD_CPU_GUARD_ACTIVE:-0}" == "1" ]] && inside_build_cgroup; then
   exec "$real_cmd" "$@"
 fi
 
 export OMNI_BUILD_CPU_GUARD_ACTIVE=1
-if command -v python3 >/dev/null 2>&1 && cd "$repo" 2>/dev/null && python3 -m omni srv1-ops resources run builds -- "$real_cmd" "$@"; then
-  exit 0
+if command -v python3 >/dev/null 2>&1 && [[ -d "${repo}/cli" ]]; then
+  user_systemd_env env PYTHONPATH="${repo}/cli${PYTHONPATH:+:${PYTHONPATH}}" \
+    python3 -m omni srv1-ops resources run builds -- "$real_cmd" "$@"
+  exit $?
 fi
 
 # Fallback: preserve global build cap even sem omni CLI instalado.
@@ -180,8 +218,12 @@ CPU_QUOTA="${CPU_QUOTA%\%}"
 if [[ ! "$CPU_QUOTA" =~ ^[0-9]+(\.[0-9]+)?$ ]]; then
   CPU_QUOTA="$CPU_TOTAL_PCT_FALLBACK"
 fi
-if systemctl --user start omni-builds.slice >/dev/null 2>&1; then
-  exec systemd-run --user --scope \
+if user_systemd_env systemctl --user start omni-builds.slice >/dev/null 2>&1; then
+  exec env \
+    XDG_RUNTIME_DIR="/run/user/$(id -u)" \
+    DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
+    systemd-run --user --scope \
+    --same-dir \
     --slice=omni-builds.slice \
     -p CPUWeight=100 \
     -p CPUQuota="${CPU_QUOTA}%" \
@@ -189,7 +231,11 @@ if systemctl --user start omni-builds.slice >/dev/null 2>&1; then
     "$real_cmd" "$@"
 fi
 
-exec systemd-run --user --scope \
+exec env \
+  XDG_RUNTIME_DIR="/run/user/$(id -u)" \
+  DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus" \
+  systemd-run --user --scope \
+  --same-dir \
   -p CPUQuota="${CPU_QUOTA}%" \
   -p CPUWeight=100 \
   -p MemoryMax=12G \

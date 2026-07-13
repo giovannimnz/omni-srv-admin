@@ -17,6 +17,7 @@ RESOURCE_CONFIG = MODULE / "configs" / "resource-governor.env"
 LIVE_SYSTEMD_DIR = Path.home() / ".config" / "systemd" / "user"
 RESOURCE_RUNTIME_CONFIG = Path.home() / ".config" / "omni" / "resource-governor.runtime.env"
 RESOURCE_WATCHDOG_STATE = Path.home() / ".local" / "state" / "omni" / "resource-governor-watchdog.json"
+RESOURCE_HYGIENE_STATE_DIR = Path.home() / ".local" / "state" / "omni"
 
 SCRIPT_MAP = {
     "sync-vault": SCRIPTS / "sync-vault.sh",
@@ -29,6 +30,9 @@ SCRIPT_MAP = {
     "resource-snapshot": SCRIPTS / "resource-governor-snapshot.py",
     "resource-audit": SCRIPTS / "resource-governor-audit.py",
     "resource-watchdog": SCRIPTS / "resource-governor-watchdog.py",
+    "resource-hygiene": SCRIPTS / "resource-governor-hygiene-queue.py",
+    "resource-doctor": SCRIPTS / "resource-governor-doctor.py",
+    "resource-reconcile-legacy": SCRIPTS / "resource-governor-reconcile-legacy.sh",
     "cgroup-init": SCRIPTS / "resource-governor-cgroup-init.sh",
     "patcher": SCRIPTS / "resource-governor-patcher.py",
 }
@@ -54,9 +58,14 @@ RESOURCE_DEFAULTS = {
     "RG_POST_BUILD_AUDIT_DELAY": "35m",
     "RG_RUNTIME_OVERRIDE_FILE": str(RESOURCE_RUNTIME_CONFIG),
     "RG_WATCHDOG_STATE_FILE": str(RESOURCE_WATCHDOG_STATE),
+    "RG_PROFILE_BUILDS_SERIALIZE": "1",
+    "RG_PROFILE_BUILDS_QUEUE_TIMEOUT_SEC": "7200",
+    "RG_PROFILE_BUILDS_LOCK_FILE": str(RESOURCE_HYGIENE_STATE_DIR / "resource-governor-builds.lock"),
+    "RG_ADMISSION_STRUCTURAL_FAIL_CLOSED": "1",
 }
 
 RESOURCE_UNIT_NAMES = [
+    "gsd-graphify-auto-update.service",
     "omni-builds.slice",
     "omni-interactive.slice",
     "omni-transfers.slice",
@@ -64,6 +73,13 @@ RESOURCE_UNIT_NAMES = [
     "resource-governor-snapshot.timer",
     "resource-governor-audit.service",
     "resource-governor-audit.timer",
+    "resource-governor-doctor.service",
+    "resource-governor-doctor.timer",
+    "resource-governor-post-build-cleanup.service",
+    "resource-governor-post-build-cleanup.timer",
+    "resource-governor-post-build-snapshot.service",
+    "resource-governor-post-build-snapshot.timer",
+    "resource-governor-post-build-audit.timer",
     "resource-governor-watchdog.service",
     "resource-governor-watchdog.timer",
     "resource-governor-cgroup-init.service",
@@ -75,6 +91,7 @@ RESOURCE_UNIT_NAMES = [
 RESOURCE_ENABLE_TIMERS = [
     "resource-governor-snapshot.timer",
     "resource-governor-audit.timer",
+    "resource-governor-doctor.timer",
     "resource-governor-watchdog.timer",
     "inviolable-watchdog.timer",
 ]
@@ -107,18 +124,27 @@ RISKY_EXECUTABLES = {
 }
 
 
-def _run(cmd: list[str], *, env: dict[str, str] | None = None) -> int:
+def _run(
+    cmd: list[str],
+    *,
+    env: dict[str, str] | None = None,
+    cwd: Path | str | None = None,
+) -> int:
     merged_env = os.environ.copy()
     if env:
         merged_env.update(env)
-    proc = subprocess.run(cmd, cwd=str(Path.home()), env=merged_env)
+    proc = subprocess.run(cmd, cwd=str(cwd or Path.home()), env=merged_env)
     return proc.returncode
 
 
 def _user_systemd_env() -> dict[str, str]:
     env = os.environ.copy()
-    env.setdefault("XDG_RUNTIME_DIR", "/run/user/1001")
-    env.setdefault("DBUS_SESSION_BUS_ADDRESS", "unix:path=/run/user/1001/bus")
+    runtime_dir = f"/run/user/{os.getuid()}"
+    # Desktop/XRDP sessions can export their own session bus under /tmp while
+    # omitting XDG_RUNTIME_DIR.  systemctl/systemd-run --user must talk to the
+    # systemd user manager on its canonical runtime bus instead.
+    env["XDG_RUNTIME_DIR"] = runtime_dir
+    env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={runtime_dir}/bus"
     return env
 
 
@@ -206,47 +232,41 @@ def _docker_build_warning(command: tuple[str, ...]) -> str | None:
 
 
 def _schedule_post_workload_hygiene(config: dict[str, str], reason: str) -> list[str]:
-    env = _user_systemd_env()
-    cleanup_delay = config.get("RG_POST_BUILD_CLEANUP_DELAY", "5m")
-    snapshot_delay = config.get("RG_POST_BUILD_SNAPSHOT_DELAY", "15m")
-    audit_delay = config.get("RG_POST_BUILD_AUDIT_DELAY", "35m")
-    cleanup_script = SCRIPT_MAP["cleanup-local"]
-    snapshot_script = SCRIPT_MAP["resource-snapshot"]
-    audit_script = SCRIPT_MAP["resource-audit"]
-    stamp = subprocess.run(["date", "+%Y%m%d%H%M%S"], capture_output=True, text=True, check=False).stdout.strip() or "now"
-    scheduled: list[str] = []
+    del config  # Delays are versioned in the three stable timer units.
+    proc = subprocess.run(
+        ["python3", str(SCRIPT_MAP["resource-hygiene"]), "request", "--reason", reason],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=_user_systemd_env(),
+    )
+    output = (proc.stdout or proc.stderr).strip().splitlines()
+    if proc.returncode != 0:
+        output.append(f"queue failed rc={proc.returncode}")
+    return output or ["queue returned no output"]
 
-    jobs = [
-        (
-            f"omni-post-build-cleanup-{stamp}",
-            cleanup_delay,
-            [
-                "/usr/bin/env",
-                "CLEANUP_MODE=build-hygiene",
-                f"TRIGGER_REASON={reason}",
-                str(cleanup_script),
-            ],
-        ),
-        (
-            f"omni-post-build-snapshot-{stamp}",
-            snapshot_delay,
-            ["/usr/bin/env", "python3", str(snapshot_script)],
-        ),
-        (
-            f"omni-post-build-audit-{stamp}",
-            audit_delay,
-            ["/usr/bin/env", "python3", str(audit_script)],
-        ),
-    ]
 
-    for unit_name, delay, payload in jobs:
-        cmd = ["systemd-run", "--user", f"--unit={unit_name}", f"--on-active={delay}", *payload]
-        proc = subprocess.run(cmd, capture_output=True, text=True, check=False, env=env)
-        if proc.returncode == 0:
-            scheduled.append(f"{unit_name} @ +{delay}")
-        else:
-            scheduled.append(f"{unit_name} failed: {(proc.stderr or proc.stdout).strip()}")
-    return scheduled
+def _purge_legacy_post_build_units(*, dry_run: bool, env: dict[str, str]) -> list[str]:
+    proc = subprocess.run(
+        ["systemctl", "--user", "list-units", "omni-post-build-*", "--all", "--no-legend", "--plain"],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    units = sorted({line.split()[0] for line in proc.stdout.splitlines() if line.split()})
+    if not units:
+        return ["legacy transient post-build units: none"]
+    if dry_run:
+        return [f"DRY stop/reset {len(units)} legacy transient post-build units"]
+    for offset in range(0, len(units), 40):
+        batch = units[offset : offset + 40]
+        subprocess.run(["systemctl", "--user", "stop", *batch], check=False, env=env)
+    failed_services = [unit for unit in units if unit.endswith(".service")]
+    for offset in range(0, len(failed_services), 40):
+        batch = failed_services[offset : offset + 40]
+        subprocess.run(["systemctl", "--user", "reset-failed", *batch], check=False, env=env)
+    return [f"stopped/reset {len(units)} legacy transient post-build units"]
 
 
 def _resource_timers() -> list[str]:
@@ -270,8 +290,10 @@ def _copy_resource_units(*, dry_run: bool) -> list[str]:
 def _install_resource_units(*, dry_run: bool, run_audit_now: bool) -> list[str]:
     env = _user_systemd_env()
     actions = _copy_resource_units(dry_run=dry_run)
+    actions.extend(_purge_legacy_post_build_units(dry_run=dry_run, env=env))
     if dry_run:
         actions.append("DRY systemctl --user daemon-reload")
+        actions.append("DRY systemctl --user reset-failed resource governor services/timers")
         for timer in RESOURCE_ENABLE_TIMERS:
             actions.append(f"DRY systemctl --user enable --now {timer}")
         actions.append("DRY systemctl --user start resource-governor-snapshot.service")
@@ -283,6 +305,12 @@ def _install_resource_units(*, dry_run: bool, run_audit_now: bool) -> list[str]:
         return actions
 
     subprocess.run(["systemctl", "--user", "daemon-reload"], check=False, env=env)
+    subprocess.run(
+        ["systemctl", "--user", "reset-failed", *[name for name in RESOURCE_UNIT_NAMES if name.endswith((".service", ".timer"))]],
+        check=False,
+        env=env,
+    )
+    actions.append("reset-failed resource governor services/timers")
     for timer in RESOURCE_ENABLE_TIMERS:
         subprocess.run(["systemctl", "--user", "enable", "--now", timer], check=False, env=env)
         actions.append(f"enable-now {timer}")
@@ -322,6 +350,13 @@ def run_op(name: str, dry_run: bool) -> None:
     if not path.exists():
         raise click.ClickException(f"script não encontrado: {path}")
     env = {"DRY_RUN": "1"} if dry_run else None
+    if name == "resource-audit":
+        raise SystemExit(
+            _run(
+                ["systemctl", "--user", "start", "resource-governor-audit.service"],
+                env=_user_systemd_env(),
+            )
+        )
     if name.startswith("resource-") and path.suffix == ".py":
         raise SystemExit(_run(["python3", str(path)], env=env))
     raise SystemExit(_run([str(path)], env=env))
@@ -458,6 +493,10 @@ def resource_run(profile: str, dry_run: bool, schedule_hygiene: bool | None, com
     ]
     for name, value in pdata["props"]:
         cmd.extend(["-p", f"{name}={value}"])
+    if profile == "builds" and config.get("RG_PROFILE_BUILDS_SERIALIZE", "1") == "1":
+        lock_path = Path(os.path.expanduser(config["RG_PROFILE_BUILDS_LOCK_FILE"]))
+        queue_timeout = config.get("RG_PROFILE_BUILDS_QUEUE_TIMEOUT_SEC", "7200")
+        cmd.extend(["/usr/bin/flock", f"--wait={queue_timeout}", str(lock_path)])
     cmd.extend(command)
 
     warning = _docker_build_warning(command)
@@ -466,6 +505,8 @@ def resource_run(profile: str, dry_run: bool, schedule_hygiene: bool | None, com
 
     risky = _is_risky_command(profile, command)
     should_schedule = risky if schedule_hygiene is None else schedule_hygiene
+    if os.environ.get("OMNI_RESOURCE_HYGIENE_ACTIVE") == "1":
+        should_schedule = False
 
     click.echo(f"profile: {profile}")
     click.echo(f"slice:   {pdata['slice']}")
@@ -482,7 +523,21 @@ def resource_run(profile: str, dry_run: bool, schedule_hygiene: bool | None, com
     # nos cgroups. Forçamos limites via cgroup-init antes de rodar.
     _run(["bash", str(SCRIPT_MAP["cgroup-init"])], env=_user_systemd_env())
 
-    rc = _run(cmd, env=_user_systemd_env())
+    if profile == "builds" and config.get("RG_ADMISSION_STRUCTURAL_FAIL_CLOSED", "1") == "1":
+        admission_rc = _run(
+            ["python3", str(SCRIPT_MAP["resource-doctor"]), "--admission"],
+            env=_user_systemd_env(),
+        )
+        if admission_rc != 0:
+            raise click.ClickException(
+                "admission gate recusou o build: execute `omni srv1-ops resources doctor` "
+                "e corrija as falhas estruturais antes de continuar"
+            )
+
+    if profile == "builds" and config.get("RG_PROFILE_BUILDS_SERIALIZE", "1") == "1":
+        Path(os.path.expanduser(config["RG_PROFILE_BUILDS_LOCK_FILE"])).parent.mkdir(parents=True, exist_ok=True)
+
+    rc = _run(cmd, env=_user_systemd_env(), cwd=Path.cwd())
     if should_schedule:
         scheduled = _schedule_post_workload_hygiene(config, reason=f"profile={profile}")
         click.echo("post-run hygiene:")
@@ -505,14 +560,37 @@ def resource_snapshot() -> None:
 
 @resources.command("audit")
 def resource_audit() -> None:
-    """Gera audit pesado agora."""
-    raise SystemExit(_run(["python3", str(SCRIPT_MAP["resource-audit"])]))
+    """Gera audit pesado agora, contido na slice e protegido por singleton."""
+    raise SystemExit(_run(["systemctl", "--user", "start", "resource-governor-audit.service"], env=_user_systemd_env()))
+
+
+@resources.command("queue")
+@click.option("--json-output", is_flag=True, help="Exibe o estado da fila em JSON.")
+def resource_queue(json_output: bool) -> None:
+    """Mostra a fila coalescente de hygiene pós-build."""
+    cmd = ["python3", str(SCRIPT_MAP["resource-hygiene"]), "status"]
+    if json_output:
+        cmd.append("--json")
+    raise SystemExit(_run(cmd, env=_user_systemd_env()))
 
 
 @resources.command("watchdog")
 def resource_watchdog() -> None:
     """Roda o watchdog uma vez agora."""
     raise SystemExit(_run(["python3", str(SCRIPT_MAP["resource-watchdog"])]))
+
+
+@resources.command("doctor")
+@click.option("--json-output", is_flag=True, help="Emite o relatório estruturado em JSON.")
+@click.option("--admission", is_flag=True, help="Retorna erro se um novo build não puder ser admitido.")
+def resource_doctor(json_output: bool, admission: bool) -> None:
+    """Valida quota, conflitos legados, escapes, fila, audit e pressão."""
+    cmd = ["python3", str(SCRIPT_MAP["resource-doctor"])]
+    if json_output:
+        cmd.append("--json")
+    if admission:
+        cmd.append("--admission")
+    raise SystemExit(_run(cmd, env=_user_systemd_env()))
 
 
 @resources.command("install")
@@ -524,6 +602,16 @@ def resource_install(dry_run: bool, run_audit_now: bool) -> None:
     click.echo(f"live-systemd-dir: {LIVE_SYSTEMD_DIR}")
     for item in actions:
         click.echo(f"- {item}")
+
+
+@resources.command("reconcile-legacy")
+@click.option("--apply", is_flag=True, help="Aplica após backup; sem esta flag é dry-run.")
+def resource_reconcile_legacy(apply: bool) -> None:
+    """Remove o scanner per-PID e o fan-out timestampado legados."""
+    cmd = [str(SCRIPT_MAP["resource-reconcile-legacy"])]
+    if apply:
+        cmd.append("--apply")
+    raise SystemExit(_run(cmd, env=_user_systemd_env()))
 
 
 @resources.command("logs")

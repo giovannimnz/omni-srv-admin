@@ -1,0 +1,7 @@
+[Unit]
+Description=Queue one coalesced post-build snapshot
+
+[Timer]
+OnActiveSec=15min
+AccuracySec=5s
+Unit=resource-governor-post-build-snapshot.service

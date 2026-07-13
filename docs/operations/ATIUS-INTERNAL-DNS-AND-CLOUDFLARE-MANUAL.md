@@ -65,6 +65,13 @@ For Windows and mobile clients:
 - DRG/OCI direct path is the target
 - `wg100` remains acceptable only while DRG direct reachability is not proven
 
+Home edge exception:
+
+- `casa.atius.com.br` and `dns-casa.atius.com.br` belong to the residential
+  `home-proxy` edge and are not internal machine identity records.
+- Residential PPTP reservations `192.168.1.8`/`192.168.1.9` are local BE3 LAN
+  bindings for W11/S23, not `access.oci_private_ip` or internal DNS targets.
+
 ## Source Of Truth
 
 ### Repo
@@ -122,10 +129,10 @@ Recommended implementation path:
   - `atius-srv-3`
   - `horistic-srv`
 - optional reserve aliases:
-  - `atius-srv-1-wg100`
-  - `atius-srv-2-wg100`
-  - `atius-srv-3-wg100`
-  - `horistic-srv-wg100`
+  - `atius-srv-1-wg`
+  - `atius-srv-2-wg`
+  - `atius-srv-3-wg`
+  - `horistic-srv-wg`
 
 ### Avoid
 

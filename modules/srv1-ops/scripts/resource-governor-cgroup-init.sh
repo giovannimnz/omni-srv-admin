@@ -52,6 +52,14 @@ load_env "$RUNTIME_OVERRIDE"
 
 quote() { echo "$@" | sed "s/^['\"]//;s/['\"]$//"; }
 
+user_systemd_env() {
+    local runtime_dir="/run/user/$(id -u)"
+    env \
+        XDG_RUNTIME_DIR="$runtime_dir" \
+        DBUS_SESSION_BUS_ADDRESS="unix:path=${runtime_dir}/bus" \
+        "$@"
+}
+
 write_cg() {
     local path="$1"
     shift
@@ -91,6 +99,21 @@ profile_cpu_quota_to_cg() {
         return
     fi
     cpu_quota_to_cg "$(get "RG_PROFILE_${key}_CPU_QUOTA" "100%")"
+}
+
+profile_cpu_quota_pct() {
+    local key="$1"
+    local cpu_total_pct
+    cpu_total_pct="$(get "RG_PROFILE_${key}_CPU_TOTAL_PCT" "")"
+    if [[ -n "$cpu_total_pct" ]]; then
+        local cpus
+        cpus="$(nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)"
+        LC_ALL=C awk "BEGIN{printf \"%g\", $cpu_total_pct * $cpus}"
+        return
+    fi
+    local quota
+    quota="$(get "RG_PROFILE_${key}_CPU_QUOTA" "100%")"
+    printf '%s' "${quota%\%}"
 }
 
 io_bw_to_cg() {
@@ -209,16 +232,24 @@ for profile in builds interactive transfers; do
     slice="omni-${profile}.slice"
 
     # systemd-managed path
-    if systemctl --user start "$slice" 2>/dev/null; then
+    if user_systemd_env systemctl --user start "$slice" 2>/dev/null; then
         :
     fi
 
+    # Keep the user manager's runtime property aligned with the direct cgroup
+    # write. Otherwise the static slice CPUQuota=20% is reasserted whenever a
+    # transient scope is created, reducing 20% of a 4-vCPU host to 5% total.
+    quota_pct="$(profile_cpu_quota_pct "$key")"
+    if [[ "$quota_pct" =~ ^[0-9]+([.][0-9]+)?$ ]]; then
+        user_systemd_env systemctl --user set-property --runtime \
+            "$slice" "CPUQuota=${quota_pct}%" >/dev/null 2>&1 || true
+    fi
+
     service_path="${SERVICE_CGROUP_BASE}/${slice}"
-    plain_path="${USER_CGROUP_BASE}/omni-${profile}"
-    ensure_cg_path "$plain_path"
-    for path in "$plain_path" "$service_path"; do
-        write_limits "$path" "$key"
-    done
+    # The systemd slice is the single aggregate profile cgroup.  Older
+    # versions also created USER_CGROUP_BASE/omni-<profile>, which split
+    # accounting/enforcement and competed with the patcher.
+    write_limits "$service_path" "$key"
 done
 
 echo "cgroup-init: $(date -Isec) completou"

@@ -77,6 +77,14 @@ CONSERVATIVE_OVERRIDE = {
 
 RUNNING = True
 
+
+def user_systemd_env() -> dict[str, str]:
+    env = os.environ.copy()
+    runtime_dir = f'/run/user/{os.getuid()}'
+    env['XDG_RUNTIME_DIR'] = runtime_dir
+    env['DBUS_SESSION_BUS_ADDRESS'] = f'unix:path={runtime_dir}/bus'
+    return env
+
 def handle_signal(signum, _frame):
     global RUNNING
     RUNNING = False
@@ -394,18 +402,21 @@ def main() -> int:
             # Cleanup on cooldown
             cooldown = float(config['RG_WATCHDOG_COOLDOWN_MINUTES']) * 60
             if (time.time() - last_cleanup_ts) >= cooldown:
-                env = os.environ.copy()
-                env['CLEANUP_MODE'] = 'build-hygiene'
-                env['TRIGGER_REASON'] = ','.join(reasons)
-                rc, output = run_cmd(['/bin/bash', str(CLEANUP_SCRIPT)], env=env)
-                append_log(log_path, f'cleanup rc={rc} reasons={",".join(reasons)} disk_before={system_data["disk_pct"]}%')
+                rc, output = run_cmd(
+                    ['systemctl', '--user', 'start', '--no-block', 'resource-governor-post-build-cleanup.service'],
+                    env=user_systemd_env(),
+                )
+                append_log(log_path, f'cleanup-service rc={rc} reasons={",".join(reasons)} disk_before={system_data["disk_pct"]}%')
                 last_cleanup_ts = time.time()
 
             # Audit on cooldown (only for multi-critical or disk-critical)
             audit_cooldown = float(config['RG_WATCHDOG_AUDIT_COOLDOWN_MINUTES']) * 60
             if ('disk-critical' in reasons or len(reasons) >= 2) and (time.time() - last_audit_ts) >= audit_cooldown:
-                rc, output = run_cmd(['python3', str(AUDIT_SCRIPT)])
-                append_log(log_path, f'audit rc={rc}')
+                rc, output = run_cmd(
+                    ['systemctl', '--user', 'start', '--no-block', 'resource-governor-audit.service'],
+                    env=user_systemd_env(),
+                )
+                append_log(log_path, f'audit-service rc={rc}')
                 last_audit_ts = time.time()
 
         else:

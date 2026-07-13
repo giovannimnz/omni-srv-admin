@@ -142,5 +142,9 @@ Critérios:
 - Assets canônicos e arquivos live estão em `LF`.
 - `xrdp_keyboard.ini` contém `00010416`, `0000F010`, `0000080A`, `rdp_layout_us=br(abnt2)` e `rdp_layout_latam=br(abnt2)`.
 - `km-00000409`, `km-00010416`, `km-0000080a`, `km-0000f010` têm o mesmo hash do `km-abnt2.ini` canônico.
+- `km-00000416`, usado pelo cliente Windows PT-BR atual, também é gerido e tem o mesmo hash.
+- `[Globals]` em `/etc/xrdp/xrdp.ini` força `keyboard_type=0x04`,
+  `keyboard_subtype=0x00` e `keylayout=0x00000416`, neutralizando clientes que
+  anunciem incorretamente teclado Japanese `0x07`.
 - Hook APT aponta para `/usr/local/sbin/fix-xrdp-abnt2-keyboard`.
 - Helper do usuário existe em `~/.local/bin/setxkbmap-abnt2.sh`.

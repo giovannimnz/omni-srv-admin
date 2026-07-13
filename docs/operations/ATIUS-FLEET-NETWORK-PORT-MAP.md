@@ -97,10 +97,23 @@ Camadas:
 | atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.100.100.2      | 100.93.43.113    | 10.12.1.12  |
 | atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.100.100.3      | 100.72.102.57    | 10.13.1.13  |
 | horistic-srv   | horistic-srv    | 163.176.232.119  | 10.100.100.4      | 100.102.126.61   | 10.21.1.21  |
-| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.5 | -              | LAN local   |
-| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.100.100.6 | -               | mobile/4G   |
+| GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.8 (legacy `10.100.100.5`) | -              | LAN local   |
+| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.100.100.9 (legacy `10.100.100.6`) | -               | mobile/4G   |
 | atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.100.100.16 | - | 10.0.0.61 |
 | atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.100.100.17 | - | 10.0.0.188 |
+
+### Home Edge / Residential PPTP
+
+Esta secao e arquitetura/spike do projeto `home-proxy`, nao plano canonico de servicos ATIUS.
+
+| Device | Home LAN reserved IP | MAC | Purpose | Status |
+|--------|----------------------|-----|---------|--------|
+| `GIOVANNI-W11-PC` | `192.168.1.8` | `44:FA:66:01:6F:AB` | PPTP residencial em casa | reserved, spike |
+| `GIOVANNI-S23` | `192.168.1.9` | `8A:DE:15:16:1B:3B` | PPTP residencial em casa | reserved, spike |
+
+PPTP exige TCP `1723` e GRE/protocolo `47`. Nao anunciar `192.168.1.0/24`
+para DRG/wg100 sem uma fase propria de routed-site. A rede canonica de servicos
+continua OCI/DRG; `wg100` continua reserve/fallback.
 
 Nota K3s/etcd: o plano atual de InternalIP usa `wg100` em
 `10.100.100.1`-`10.100.100.4`. A faixa `10.1.1.0/24` foi aposentada e não deve
@@ -114,6 +127,10 @@ faixa WireGuard `10.1.1.0/24`, hoje aposentada. O replanejamento DRG deve usar C
 sobrepostos: `atius1=10.51.0.0/16`, `atius2=10.52.0.0/16`,
 `atius3=10.53.0.0/16`, `horistic=10.71.0.0/16`; ver
 `docs/operations/drg-wireguard-readdress-plan.md`.
+
+Atualizacao 2026-07-10: o W11 foi cortado para `10.100.100.8` e o S23 para
+`10.100.100.9`, alinhando a VPN com a LAN `192.168.1.8/.9` do BE3. Os antigos
+`10.100.100.5` e `10.100.100.6` ficam apenas como legado/historico de rollback.
 
 DNS: a autoridade continua no SRV-1 em `10.11.1.11:53`, com `10.100.100.1:53`
 como reserve listener, e desde a Phase 16 as respostas canônicas para os
@@ -141,6 +158,8 @@ WireGuard/DNS validation 2026-06-17 (historico `wg0`):
 - W11 e S23 tinham peers novos no hub e configs gerados; esse estado foi
   superseded no replanejamento `wg100` de 2026-07-06, em que W11
   `10.100.100.5` e S23 `10.100.100.6` ja tiveram handshake validado no SRV-1.
+  Em 2026-07-10, o W11 foi efetivamente cortado para `10.100.100.8` e o S23
+  para `10.100.100.9`.
 
 Cloudflare:
 - `*.atius.com.br` → origem pública SRV-1/Apache2; validação 2026-07-05

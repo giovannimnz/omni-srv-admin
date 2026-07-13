@@ -1,0 +1,16 @@
+[Unit]
+Description=Resource governor preventive doctor and metrics
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+After=resource-governor-cgroup-init.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-doctor.py
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+Nice=15
+IOSchedulingClass=idle
+IOSchedulingPriority=7
+CPUQuota=10%
+MemoryMax=128M
+NoNewPrivileges=true
+PrivateTmp=true

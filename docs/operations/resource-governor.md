@@ -18,6 +18,44 @@ modules/srv1-ops/systemd/resource-governor-*.service
 modules/srv1-ops/systemd/resource-governor-*.timer
 ```
 
+## Incidente 2026-07-13: por que 20% virou 100%
+
+O limite canônico estava correto: em 4 vCPU, `omni-builds.slice` tinha
+`cpu.max=80000 100000`, ou 0,8 CPU/20% do host. Dois mecanismos paralelos
+furavam a gestão agregada:
+
+- `atius-build-throttle.timer` movia cada PID para uma folha própria com 0,2
+  CPU, mas deixava o cgroup pai ilimitado; N processos podiam consumir N×0,2 CPU
+- cada build criava três units transient com timestamp, sem dedupe; chegaram a
+  existir 477 units carregados e 29 timers pendentes, com audits recursivos
+
+Correção canônica:
+
+- existe apenas um cgroup agregado por profile, sempre as slices
+  `omni-builds.slice`, `omni-interactive.slice` e `omni-transfers.slice`
+- builds passam por um semáforo `flock` de capacidade 1 e continuam sob a quota
+  coletiva enquanto esperam ou executam
+- hygiene usa três timers estáveis e uma fila persistente/coalescente; novas
+  solicitações incrementam contadores, mas não criam units nem adiam o batch
+- cleanup, snapshot e audit usam o mesmo semáforo e a mesma
+  `omni-builds.slice`; o audit possui ainda um lock non-blocking próprio
+- o patcher migra processos descobertos para as slices systemd, não para
+  cgroups plain paralelos
+- o sweep automático `gsd-graphify-auto-update.service` nasce diretamente na
+  `omni-builds.slice` e adquire o mesmo semaphore; o patcher deixa de ser a
+  primeira linha de defesa para esse broad indexer
+
+Migração segura (dry-run por padrão):
+
+```bash
+omni srv1-ops resources reconcile-legacy
+omni srv1-ops resources reconcile-legacy --apply
+```
+
+O modo `--apply` cria backup em `~/.backups/`, desabilita/remove o scanner
+legado, preserva processos ao migrá-los para a slice agregada e descarrega
+somente units `omni-post-build-*` legados.
+
 ## Por que esta abordagem
 
 Scripts reativos que dão `stop/kill/pause` em processo pesado são ruins para build e compilador.
@@ -91,6 +129,10 @@ modules/srv1-ops/configs/resource-governor.env
 ```bash
 omni srv1-ops resources profiles
 omni srv1-ops resources status
+omni srv1-ops resources queue
+omni srv1-ops resources doctor
+omni srv1-ops resources doctor --admission
+omni srv1-ops resources reconcile-legacy
 omni srv1-ops resources install --dry-run
 omni srv1-ops resources install
 omni srv1-ops resources logs
@@ -188,10 +230,17 @@ Os wrappers cobrem `npm`, `pnpm`, `yarn`, `bun`, `npx`, `cargo`, `rustc`,
 `podman build`, `docker build`, `next`, `vite`, `webpack`, `turbo`, `nx`,
 `tsc`, `tsup`, `rollup` e `esbuild`.
 
+Os wrappers normalizam `XDG_RUNTIME_DIR=/run/user/<uid>` e
+`DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/<uid>/bus` somente ao chamar
+`systemctl/systemd-run --user`. Isso evita que buses de sessão Desktop/XRDP em
+`/tmp` impeçam updates e builds antes de o workload iniciar.
+
 Regra atual:
 
 - `profile=builds` agenda hygiene automaticamente
 - perfis fora de `builds` também agendam se o comando parecer de risco (`docker`, `podman`, `make`, `cargo`, `bun`, `npm`, `pnpm`, `yarn`, `next`, `vite`, `playwright`, `pip`, `uv`, etc.)
+- `RG_PROFILE_BUILDS_SERIALIZE=1` limita a uma execução ativa; concorrentes
+  aguardam no lock por até `RG_PROFILE_BUILDS_QUEUE_TIMEOUT_SEC`
 
 Sequência agendada:
 
@@ -200,6 +249,22 @@ Sequência agendada:
 3. audit de rechecagem após 35 min
 
 Isto cobre não só Docker/Podman, mas também compiladores e instaladores que deixam cache/artifacts em disco.
+
+Os nomes são fixos:
+
+```text
+resource-governor-post-build-cleanup.timer
+resource-governor-post-build-snapshot.timer
+resource-governor-post-build-audit.timer
+```
+
+Se já houver um batch pendente, a nova solicitação é coalescida. O estado e as
+métricas ficam em:
+
+```text
+~/.local/state/omni/resource-governor-hygiene.json
+~/.local/state/omni/textfile-collector/resource-governor.prom
+```
 
 ### O que o `build-hygiene` faz
 
@@ -304,6 +369,9 @@ Script que escreve os limites diretamente nos cgroup files:
 - Ativa `cpu io memory pids` no `subtree_control` de cada `omni-*.slice`
 - Escreve `cpu.max`, `cpu.weight`, `io.max`, `io.weight`, `memory.high`,
   `memory.max` e `memory.swap.max` com os valores do config + runtime override
+- Atualiza `CPUQuota` da slice com `systemctl --user set-property --runtime`
+  antes do workload. Isso impede a unit estática (`20%` de um core) de
+  sobrescrever a quota calculada (`80%` em host de 4 vCPU) ao criar um scope.
 
 **`resource-governor-cgroup-init.service`** (oneshot) roda no boot via
 `systemd --user`, habilitado em `timers.target` para não depender de
@@ -366,8 +434,78 @@ Ele faz 4 coisas:
 
 1. garante snapshot fresco
 2. aplica override conservador em `~/.config/omni/resource-governor.runtime.env`
-3. dispara `cleanup-local.sh` em `CLEANUP_MODE=build-hygiene` quando thresholds críticos são cruzados
-4. dispara audit extra sob pressão persistente
+3. solicita o service singleton de cleanup, contido na slice, quando thresholds críticos são cruzados
+4. solicita o service singleton de audit sob pressão persistente
+
+## Prometheus e alertas
+
+O `prometheus-node-exporter` monta o textfile collector read-only. O bundle
+`omni-rules.yaml` alerta para scanner per-PID legado ativo, units transient
+legadas, falhas da fila, quota divergente, build escapando, batch preso e
+métricas sem refresh.
+
+## Doctor preventivo e admission gate
+
+O doctor roda a cada dois minutos e consolida um veredito reproduzível:
+
+```bash
+omni srv1-ops resources doctor
+omni srv1-ops resources doctor --json-output
+omni srv1-ops resources doctor --admission
+```
+
+Artefatos live:
+
+```text
+~/.local/state/omni/resource-governor-doctor.json
+~/.local/state/omni/textfile-collector/resource-governor-doctor.prom
+resource-governor-doctor.service
+resource-governor-doctor.timer
+```
+
+Os checks `critical` são invariantes estruturais: cgroup agregado presente,
+`cpu.max` igual ao teto calculado por vCPU, scanner/cgroup/fan-out legados
+ausentes e zero build-like quente sem teto equivalente escapando da slice.
+Workloads fora de `omni-builds` com um ancestral `cpu.max` igual ou mais
+restritivo são classificados como externamente contidos, não como escape.
+Antes de qualquer
+`resources run builds`, o CLI reaplica os limites e executa o doctor com
+`--admission`; uma falha estrutural bloqueia o novo build.
+
+Os checks `warning` observam idade da fila, último audit, PSI CPU e swap. Eles
+geram alerta e orientam manutenção, mas não bloqueiam automaticamente: swap
+alta sem `si/so` ou PSI memory pode ser memória fria, e bloquear todos os
+builds nesse cenário criaria indisponibilidade sem reduzir a causa.
+
+O marker `OMNI_BUILD_CPU_GUARD_ACTIVE=1` não autoriza bypass sozinho. O wrapper
+só o aceita quando `/proc/self/cgroup` confirma ancestralidade em
+`omni-builds`; isso impede variável herdada ou exportada manualmente de furar o
+governor.
+
+### Rotina preventiva
+
+- contínua (2 min): doctor, métricas e alerts
+- diária: audit contido/singleton e verificação de queue/stages
+- semanal: `resources reconcile-legacy` em dry-run e revisão de escapes
+- após reboot/update de systemd: `resources doctor --admission`, `status` e
+  inspeção de `cpu.max`
+- antes de mudança destrutiva: backup confirmado; `reconcile-legacy --apply`
+  somente depois do dry-run
+
+Resposta a alerta estrutural:
+
+1. suspender novos builds; não matar processos automaticamente
+2. salvar `resources doctor --json-output`, `status` e `queue --json-output`
+3. rodar `resources reconcile-legacy` sem `--apply`
+4. corrigir a causa, reinstalar units se necessário e repetir o admission gate
+5. liberar builds apenas com `structural_ok=true`
+
+`resource-governor-snapshot.timer` atualiza o textfile a cada cinco minutos,
+mesmo quando não existem builds.
+
+O node-exporter roda como UID `65534`; por isso somente o diretório de métricas
+é `0755` e os `.prom` são `0644`. State JSON, locks e outros artefatos continuam
+privados. `node_textfile_scrape_error` deve permanecer `0`.
 
 Thresholds atuais no config:
 
@@ -397,6 +535,7 @@ Recovery atual para remover override:
 ```bash
 PYTHONPATH=cli python3 -m omni srv1-ops resources profiles
 PYTHONPATH=cli python3 -m omni srv1-ops resources status
+PYTHONPATH=cli python3 -m omni srv1-ops resources queue
 PYTHONPATH=cli python3 -m omni srv1-ops resources snapshot
 PYTHONPATH=cli python3 -m omni srv1-ops resources audit
 ```
@@ -406,3 +545,5 @@ services/timers, jobs presos relevantes (`ats-pm2`, `horistic-pm2`,
 `default.target`), refs PM2 legadas para `/home/ubuntu/ecosystem.atius.js`
 (see `pm2-canonical.md` for the canonical replacement path),
 properties de slices systemd e valores diretos de cgroups.
+Também acusa scanner/cgroup legado, units transient, estado do semáforo, fila e
+processos build-like quentes fora de `omni-builds.slice`.

@@ -408,8 +408,9 @@ service loop.
 
 ## Direct IP Fallback
 
-WireGuard remains the primary network. If the VPN is down, the safe fallback is
-direct public-IP SSH/probe, not public database access.
+OCI/DRG private networking is the primary server-to-server plane where
+validated. `wg100` remains reserve/fallback and direct public-IP SSH/probe is
+break-glass only, not public database access.
 
 ```bash
 modules/fleet-control-plane/scripts/configure-fleet-direct-peers.sh

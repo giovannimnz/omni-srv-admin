@@ -8,6 +8,7 @@ from __future__ import annotations
 import difflib
 import hashlib
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -44,8 +45,10 @@ CANONICAL = {
 }
 
 SYSTEM_TARGETS = {
+    "xrdp_ini": Path("/etc/xrdp/xrdp.ini"),
     "xrdp_keyboard": Path("/etc/xrdp/xrdp_keyboard.ini"),
     "km_00000409": Path("/etc/xrdp/km-00000409.ini"),
+    "km_00000416": Path("/etc/xrdp/km-00000416.ini"),
     "km_00010416": Path("/etc/xrdp/km-00010416.ini"),
     "km_0000080a": Path("/etc/xrdp/km-0000080a.ini"),
     "km_0000f010": Path("/etc/xrdp/km-0000f010.ini"),
@@ -57,6 +60,12 @@ SYSTEM_TARGETS = {
     "share_startwm": Path("/usr/local/share/xrdp-abnt2/startwm.sh"),
 }
 
+REQUIRED_XRDP_OVERRIDES = {
+    "xrdp.override_keyboard_type": "0x04",
+    "xrdp.override_keyboard_subtype": "0x00",
+    "xrdp.override_keylayout": "0x00000416",
+}
+
 REQUIRED_LAYOUT_SNIPPETS = [
     "rdp_layout_br_abnt2_alt=0x0000F010",
     "rdp_layout_latam=0x0000080A",
@@ -65,6 +74,15 @@ REQUIRED_LAYOUT_SNIPPETS = [
     "rdp_layout_br_abnt2_alt=br(abnt2)",
     "rdp_layout_latam=br(abnt2)",
     "rdp_layout_br_abnt2=br(abnt2)",
+]
+
+REQUIRED_KEYMAP_SNIPPETS = [
+    "Key94=92:92",       # backslash
+    "Key97=47:47",       # slash
+    "Key111=65362:0",    # Up
+    "Key113=65361:0",    # Left
+    "Key114=65363:0",    # Right
+    "Key116=65364:0",    # Down
 ]
 
 PREREQUISITE_PACKAGES = [
@@ -147,6 +165,57 @@ def _install_file(src: Path, dst: Path, mode: str, owner: str, group: str, dry_r
 
     try:
         _run(["install", "-o", owner, "-g", group, "-m", mode, str(tmp_path), str(dst)])
+    finally:
+        tmp_path.unlink(missing_ok=True)
+
+
+def _render_xrdp_overrides(text: str) -> str:
+    lines = text.splitlines()
+    globals_start = next(
+        (index for index, line in enumerate(lines) if line.strip().lower() == "[globals]"),
+        None,
+    )
+    if globals_start is None:
+        raise click.ClickException("/etc/xrdp/xrdp.ini sem seção [Globals]")
+    globals_end = next(
+        (
+            index
+            for index in range(globals_start + 1, len(lines))
+            if re.fullmatch(r"\s*\[[^]]+\]\s*", lines[index])
+        ),
+        len(lines),
+    )
+
+    for key, value in REQUIRED_XRDP_OVERRIDES.items():
+        pattern = re.compile(rf"\s*[#;]?\s*{re.escape(key)}\s*=", re.IGNORECASE)
+        matches = [
+            index
+            for index in range(globals_start + 1, globals_end)
+            if pattern.match(lines[index])
+        ]
+        desired = f"{key}={value}"
+        if matches:
+            lines[matches[0]] = desired
+            for index in reversed(matches[1:]):
+                del lines[index]
+                globals_end -= 1
+        else:
+            lines.insert(globals_end, desired)
+            globals_end += 1
+    return "\n".join(lines) + "\n"
+
+
+def _apply_xrdp_overrides(dry_run: bool) -> None:
+    target = SYSTEM_TARGETS["xrdp_ini"]
+    if dry_run:
+        click.echo(f"DRY  patch keyboard overrides in {target}")
+        return
+    rendered = _render_xrdp_overrides(target.read_text(encoding="utf-8"))
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False) as tmp:
+        tmp.write(rendered)
+        tmp_path = Path(tmp.name)
+    try:
+        _run(["install", "-o", "root", "-g", "root", "-m", "644", str(tmp_path), str(target)])
     finally:
         tmp_path.unlink(missing_ok=True)
 
@@ -235,6 +304,7 @@ def _target_specs(username: str) -> list[tuple[Path, Path, str, str, str]]:
         (CANONICAL["watchdog"], _watchdog_target(username), "755", username, user_group),
         (CANONICAL["xrdp_keyboard"], SYSTEM_TARGETS["xrdp_keyboard"], "644", "nobody", "nogroup"),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_00000409"], "644", "nobody", "nogroup"),
+        (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_00000416"], "644", "nobody", "nogroup"),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_00010416"], "644", "nobody", "nogroup"),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_0000080a"], "644", "nobody", "nogroup"),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_0000f010"], "644", "nobody", "nogroup"),
@@ -324,8 +394,25 @@ def _validation(username: str) -> tuple[bool, list[str], list[str]]:
         else:
             ok.append("xrdp_keyboard.ini mapeia Windows RDP -> br(abnt2)")
 
+    xrdp_ini = SYSTEM_TARGETS["xrdp_ini"]
+    if xrdp_ini.exists():
+        text = xrdp_ini.read_text(errors="replace")
+        missing_overrides = [
+            f"{key}={value}"
+            for key, value in REQUIRED_XRDP_OVERRIDES.items()
+            if not re.search(
+                rf"(?mi)^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$",
+                text,
+            )
+        ]
+        if missing_overrides:
+            fail.append("xrdp.ini sem overrides ativos: " + ", ".join(missing_overrides))
+        else:
+            ok.append("xrdp.ini força keyboard type 0x04 e layout ABNT2")
+
     km_paths = [
         SYSTEM_TARGETS["km_00000409"],
+        SYSTEM_TARGETS["km_00000416"],
         SYSTEM_TARGETS["km_00010416"],
         SYSTEM_TARGETS["km_0000080a"],
         SYSTEM_TARGETS["km_0000f010"],
@@ -338,6 +425,15 @@ def _validation(username: str) -> tuple[bool, list[str], list[str]]:
             ok.append("todos os keymaps críticos são ABNT2 idêntico")
         else:
             fail.append("hashes dos keymaps críticos divergem")
+
+    canonical_keymap = CANONICAL["km_abnt2"]
+    if canonical_keymap.exists():
+        text = canonical_keymap.read_text(errors="replace")
+        missing_keycodes = [item for item in REQUIRED_KEYMAP_SNIPPETS if item not in text]
+        if missing_keycodes:
+            fail.append("keymap ABNT2 sem teclas críticas: " + ", ".join(missing_keycodes))
+        else:
+            ok.append("keymap contém barra e setas ABNT2")
 
     hook = SYSTEM_TARGETS["apt_hook"]
     if hook.exists():
@@ -426,6 +522,7 @@ def diff_cmd(username: str) -> None:
         (CANONICAL["startwm"], SYSTEM_TARGETS["share_startwm"]),
         (CANONICAL["xrdp_keyboard"], SYSTEM_TARGETS["xrdp_keyboard"]),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_00000409"]),
+        (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_00000416"]),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_00010416"]),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_0000080a"]),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_0000f010"]),
@@ -485,6 +582,8 @@ def install_cmd(username: str, yes: bool, dry_run: bool, skip_packages: bool) ->
 
     for src, dst, mode, owner, group in _target_specs(username):
         _install_file(src, dst, mode, owner, group, dry_run=dry_run)
+
+    _apply_xrdp_overrides(dry_run=dry_run)
 
     for unit in REQUIRED_SYSTEMD_UNITS:
         _run(["systemctl", "enable", unit], dry_run=dry_run)

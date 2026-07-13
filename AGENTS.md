@@ -49,3 +49,21 @@ For more information about GSD agents, run `/gsd-help`.
 - Os dois MCPs usam `Authorization: Bearer $ATIUS_MCP_TOKEN`; carregar `ATIUS_MCP_TOKEN` do profile Vault `atius-mcp` (`kv/atius/atius-mcp/api`).
 - O MCP do Obsidian e sessionful: depois de `initialize`, preservar `Mcp-Session-Id`, enviar `notifications/initialized`, e so entao chamar `tools/list` ou tools.
 - Material de browser-login/access-key fica no Vault path `kv/atius/browser-login/access-keys` e no registro Landscape `atius-browser-login-access-keys`. O Vault armazena e entrega o material; o navegador so reconhece a chave quando o perfil do browser, OS/hardware authenticator, provider/extensao, certificado cliente ou autenticador virtual CDP/Playwright estiver provisionado para o relying party.
+
+<!-- CODEX-MULTIAGENT-HEADLESS:START -->
+## Codex Multi-Agent and Headless Browser Policy
+
+- Standing explicit authorization: Codex may use multi-agent delegation for work in this project or host without requesting task-by-task confirmation.
+- Writer serialization is mandatory: concurrent agents may research and validate in parallel, but file mutations must be coordinated so only one writer changes any given file or overlapping scope at a time.
+- Chrome DevTools, Playwright, Chrome, Chromium, and browser automation must run headless by default.
+- Do not open visible browser windows or use XRDP/noVNC desktop sessions for browser automation unless the user gives a task-specific override.
+- Browser validation must retain headless evidence appropriate to the task, such as command output, traces, screenshots, snapshots, or test artifacts.
+<!-- CODEX-MULTIAGENT-HEADLESS:END -->
+
+<!-- codex-policy:parallel-headless:start -->
+## Paralelismo e automacao de browser
+
+- Use multiplos subagentes sempre que houver trabalho paralelo util. Atribua objetivos delimitados e sem sobreposicao, depois integre e valide os resultados no agente principal.
+- Toda automacao de browser deve executar em modo headless, incluindo chrome-devtools, Playwright, Selenium, Puppeteer ou ferramenta equivalente. Nao abra janelas visiveis do browser.
+
+<!-- codex-policy:parallel-headless:end -->

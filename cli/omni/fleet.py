@@ -3240,13 +3240,22 @@ def trust_pki_agent_runner(
                 raise click.ClickException(f"ação Windows trust-client mutável não suportada: {action}")
             payload.update(_pki_windows_import_ca(payload))
         elif os.name == "posix":
-            payload.update(_pki_linux_runner_execute(action, payload, sans))
+            local_host_id = _default_host_id()
+            if local_host_id != host_id:
+                payload["status"] = "blocked"
+                payload["note"] = "live Linux key/cert mutation must run on the target Linux host"
+            else:
+                payload.update(_pki_linux_runner_execute(action, payload, sans))
         else:
             payload["status"] = "blocked"
             payload["note"] = "live Linux key/cert mutation must run on the target Linux host"
     elif action == "reconcile":
         leaf_path = Path(str(payload["paths"]["leaf_cert"]))
-        if not leaf_path.exists():
+        try:
+            leaf_exists = leaf_path.exists()
+        except OSError:
+            leaf_exists = False
+        if not leaf_exists:
             payload["status"] = "missing-cert"
             payload["drift"] = {
                 "status": "missing-cert",

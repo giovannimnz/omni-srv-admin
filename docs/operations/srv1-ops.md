@@ -142,21 +142,22 @@ Servicos:
 Contrato:
 
 - Plugin: `obsidian-local-rest-api` no vault `AiSecondBrain`.
-- Endpoint OCI/DRG direto: `https://10.11.1.11:27124`.
-- MCP endpoint OCI/DRG direto: `https://10.11.1.11:27124/mcp/`.
-- Endpoint MCP publico/canonico para Codex: `https://mcp.atius.com.br/obsidian`.
+- Endpoint oficial/canonico para todos os hosts: `https://mcp.atius.com.br/obsidian`.
+- Endpoint backend/raw via OCI/DRG: `https://10.11.1.11:27124`.
+- Endpoint backend/raw MCP via OCI/DRG: `https://10.11.1.11:27124/mcp/`.
 - Binding host atual do plugin: `10.11.1.11`.
 - HTTPS habilitado; HTTP inseguro desabilitado.
 - Certificado confiavel nos clientes: `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`.
 - SAN obrigatorio do certificado: `127.0.0.1`, `10.11.1.11`, `10.100.100.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
-- `10.11.1.11` e o caminho primario via DRG; `10.100.100.0/24` fica apenas como rede WireGuard secundaria.
-- Guard iptables permite `27124/tcp` para `lo`, peers `wg100` dos servidores (`10.100.100.2` e `10.100.100.3`), edge clients aprovados (`10.100.100.5` e `10.100.100.6`) e para as faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
+- `mcp.atius.com.br/obsidian` e o caminho oficial para todos os hosts; `10.11.1.11:27124` fica como backend/raw path de diagnostico e `10.100.100.0/24` fica apenas como rede WireGuard secundaria.
+- Guard iptables permite `27124/tcp` para `lo`, peers `wg100` dos servidores (`10.100.100.2` e `10.100.100.3`), edge clients aprovados (`10.100.100.6` live, `10.100.100.8` live) e IPs temporarios/staged de transicao (`10.100.100.5` rollback legado do W11 e `10.100.100.9` staged do S23), e para as faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
 
 Validacao:
 
 ```bash
 systemctl --user is-active obsidian-aisecondbrain-rest.service
 systemctl is-active omni-obsidian-rest-access-guard.service
+curl -sS -H "Authorization: Bearer $ATIUS_MCP_TOKEN" https://mcp.atius.com.br/obsidian
 curl -sS https://10.11.1.11:27124/
 ssh ubuntu@10.12.1.12 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.11.1.11:27124/'
 ssh ubuntu@10.13.1.13 'test "$(systemctl is-active obsidian-aisecondbrain-rest-tunnel.service 2>/dev/null || true)" != active && curl -sS https://10.11.1.11:27124/'

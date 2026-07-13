@@ -47,6 +47,31 @@ def test_canonical_assets_are_lf_only() -> None:
         assert b"\r" not in raw, f"{name} must be LF-only in repo: {path}"
 
 
+def test_xrdp_overrides_are_idempotent_and_replace_commented_defaults() -> None:
+    original = """[Globals]
+#xrdp.override_keyboard_type=0x04
+#xrdp.override_keyboard_subtype=0x01
+#xrdp.override_keylayout=0x00000409
+
+[Logging]
+LogLevel=INFO
+"""
+
+    rendered = xrdp_abnt2_mod._render_xrdp_overrides(original)
+
+    assert rendered == xrdp_abnt2_mod._render_xrdp_overrides(rendered)
+    for key, value in xrdp_abnt2_mod.REQUIRED_XRDP_OVERRIDES.items():
+        assert f"{key}={value}" in rendered
+    assert "[Logging]\nLogLevel=INFO" in rendered
+
+
+def test_guard_covers_current_br_layout_and_critical_keys() -> None:
+    assert "km_00000416" in xrdp_abnt2_mod.SYSTEM_TARGETS
+    text = xrdp_abnt2_mod.CANONICAL["km_abnt2"].read_text(encoding="utf-8")
+    for snippet in xrdp_abnt2_mod.REQUIRED_KEYMAP_SNIPPETS:
+        assert snippet in text
+
+
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:
     for host in ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv"):
         text = (REPO / "inventory" / "hosts" / f"{host}.yaml").read_text(encoding="utf-8")

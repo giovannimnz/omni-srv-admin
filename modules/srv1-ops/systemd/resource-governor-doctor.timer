@@ -1,0 +1,12 @@
+[Unit]
+Description=Run resource governor preventive doctor every 2 minutes
+
+[Timer]
+OnBootSec=2min
+OnUnitActiveSec=2min
+AccuracySec=20s
+Persistent=true
+Unit=resource-governor-doctor.service
+
+[Install]
+WantedBy=timers.target

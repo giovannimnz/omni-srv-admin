@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 from pathlib import Path
 
@@ -14,7 +15,11 @@ LIVE_SYSTEMD_DIR = Path.home() / '.config' / 'systemd' / 'user'
 DEFAULT_RUNTIME_OVERRIDE = Path.home() / '.config' / 'omni' / 'resource-governor.runtime.env'
 DEFAULT_WATCHDOG_STATE = Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-watchdog.json'
 DEFAULT_WATCHDOG_LOG = Path.home() / '.logs' / 'resource-governor' / 'watchdog.log'
+DEFAULT_HYGIENE_STATE = Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-hygiene.json'
+DEFAULT_HYGIENE_METRICS = Path.home() / '.local' / 'state' / 'omni' / 'textfile-collector' / 'resource-governor.prom'
+DEFAULT_BUILD_LOCK = Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-builds.lock'
 RESOURCE_UNITS = [
+    'gsd-graphify-auto-update.service',
     'omni-builds.slice',
     'omni-interactive.slice',
     'omni-transfers.slice',
@@ -22,6 +27,13 @@ RESOURCE_UNITS = [
     'resource-governor-snapshot.timer',
     'resource-governor-audit.service',
     'resource-governor-audit.timer',
+    'resource-governor-doctor.service',
+    'resource-governor-doctor.timer',
+    'resource-governor-post-build-cleanup.service',
+    'resource-governor-post-build-cleanup.timer',
+    'resource-governor-post-build-snapshot.service',
+    'resource-governor-post-build-snapshot.timer',
+    'resource-governor-post-build-audit.timer',
     'resource-governor-watchdog.service',
     'resource-governor-watchdog.timer',
     'resource-governor-cgroup-init.service',
@@ -210,6 +222,110 @@ def print_direct_cgroups() -> None:
         print('- none')
 
 
+def print_hygiene_health(env: dict[str, str]) -> None:
+    print('')
+    print('hygiene_queue:')
+    if DEFAULT_HYGIENE_STATE.exists():
+        try:
+            state = json.loads(DEFAULT_HYGIENE_STATE.read_text())
+        except (OSError, json.JSONDecodeError) as exc:
+            print(f'- state: corrupt ({exc.__class__.__name__})')
+        else:
+            print(f"- requests_total: {state.get('requests_total', 0)}")
+            print(f"- coalesced_total: {state.get('coalesced_total', 0)}")
+            print(f"- schedule_failures_total: {state.get('schedule_failures_total', 0)}")
+            print(f"- last_request_at: {state.get('last_request_at', 'never')}")
+            print(f"- pending: {state.get('pending', {})}")
+    else:
+        print(f'- state: missing ({DEFAULT_HYGIENE_STATE})')
+    print(f'- metrics: {DEFAULT_HYGIENE_METRICS} ({"ok" if DEFAULT_HYGIENE_METRICS.exists() else "missing"})')
+    stable = []
+    for timer in (
+        'resource-governor-post-build-cleanup.timer',
+        'resource-governor-post-build-snapshot.timer',
+        'resource-governor-post-build-audit.timer',
+    ):
+        stable.append(f'{timer}={systemctl_value("user", timer, "ActiveState", env)}')
+    print(f'- stable_timers: {" ".join(stable)}')
+    transient = run(
+        ['systemctl', '--user', 'list-units', 'omni-post-build-*', '--all', '--no-legend', '--plain'],
+        env=env,
+    )
+    transient_count = len([line for line in transient.splitlines() if line.strip()])
+    print(f'- legacy_transient_units: {transient_count}')
+
+    legacy_enabled = run(['systemctl', 'is-enabled', 'atius-build-throttle.timer']).splitlines()[0:1]
+    legacy_active = run(['systemctl', 'is-active', 'atius-build-throttle.timer']).splitlines()[0:1]
+    legacy_cgroup = Path('/sys/fs/cgroup/atius-build-throttle')
+    print(
+        '- legacy_scanner: '
+        f'enabled={(legacy_enabled or ["unknown"])[0]} '
+        f'active={(legacy_active or ["unknown"])[0]} '
+        f'cgroup={"present" if legacy_cgroup.exists() else "absent"}'
+    )
+
+    if DEFAULT_BUILD_LOCK.exists():
+        lock_probe = subprocess.run(
+            ['flock', '--nonblock', str(DEFAULT_BUILD_LOCK), 'true'],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        print(f'- build_semaphore: {"busy" if lock_probe.returncode else "free"}')
+    else:
+        print('- build_semaphore: not-created')
+
+
+def print_hot_build_escapes() -> None:
+    print('')
+    print('hot_build_escapes:')
+    pattern = re.compile(
+        r'(graphify\s+update|\b(cargo|rustc|gcc|g\+\+|clang|cc1|make|ninja|node-gyp)\b|'
+        r'\b(podman|docker)\s+build|\b(npm|pnpm|yarn|bun)\s+(build|install|test)|'
+        r'\b(go|pytest)\s+(build|test|install|run)?)'
+    )
+    output = run(['ps', '-eo', 'pid=,pcpu=,args=', '--sort=-pcpu'])
+    escapes: list[str] = []
+    canonical = 0
+    for line in output.splitlines():
+        parts = line.strip().split(maxsplit=2)
+        if len(parts) != 3:
+            continue
+        pid_text, cpu_text, args = parts
+        try:
+            pid = int(pid_text)
+            cpu = float(cpu_text)
+        except ValueError:
+            continue
+        if cpu < 3.0 or not pattern.search(args):
+            continue
+        try:
+            cgroup = Path(f'/proc/{pid}/cgroup').read_text().strip()
+        except OSError:
+            continue
+        if 'omni-builds' in cgroup:
+            canonical += 1
+        else:
+            escapes.append(f'pid={pid} cpu={cpu:.1f}% cgroup={cgroup} args={args[:160]}')
+    print(f'- canonical_hot_builds: {canonical}')
+    print(f'- escaped_hot_builds: {len(escapes)}')
+    for item in escapes[:10]:
+        print(f'- ESCAPE {item}')
+
+
+def normalize_latest_perf(data: dict) -> dict:
+    system = data.get('system') or data
+    return {
+        'timestamp': data.get('ts') or data.get('timestamp', '?'),
+        'disk_pct': system.get('disk_pct', system.get('disk_root_pct')),
+        'mem_available_mib': system.get('mem_available_mib'),
+        'swap_pct': system.get('swap_pct', system.get('swap_used_pct')),
+        'mode': data.get('mode', 'snapshot'),
+        'reasons': data.get('reasons') or data.get('alerts') or 'none',
+        'top_cpu': [x.get('pid') or x.get('comm') for x in (data.get('top_cpu') or [])[:5]],
+    }
+
+
 def main() -> int:
     config = load_config()
     log_dir = Path(os.path.expanduser(config['RG_LOG_DIR']))
@@ -219,8 +335,9 @@ def main() -> int:
     watchdog_state = Path(os.path.expanduser(config['RG_WATCHDOG_STATE_FILE']))
     watchdog_log = Path(os.path.expanduser(config['RG_WATCHDOG_LOG_FILE']))
     env = os.environ.copy()
-    env.setdefault('XDG_RUNTIME_DIR', '/run/user/1001')
-    env.setdefault('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1001/bus')
+    runtime_dir = f'/run/user/{os.getuid()}'
+    env['XDG_RUNTIME_DIR'] = runtime_dir
+    env['DBUS_SESSION_BUS_ADDRESS'] = f'unix:path={runtime_dir}/bus'
 
     print(f'config: {CONFIG_PATH}')
     print(f'logs:   {log_dir}')
@@ -257,19 +374,21 @@ def main() -> int:
     print_pm2_boot_refs(env)
     print_slice_properties(env)
     print_direct_cgroups()
+    print_hygiene_health(env)
+    print_hot_build_escapes()
 
     print('')
     if latest_json.exists():
         data = json.loads(latest_json.read_text())
+        perf = normalize_latest_perf(data)
         print('latest_perf:')
-        print(f"- timestamp: {data.get('ts', '?')}")
-        system = data.get('system', {})
-        print(f"- disk_root_pct: {system.get('disk_pct')}")
-        print(f"- mem_available_mib: {system.get('mem_available_mib')}")
-        print(f"- swap_used_pct: {system.get('swap_pct')}")
-        print(f"- mode: {data.get('mode')}")
-        print(f"- reasons: {data.get('reasons') or 'none'}")
-        print(f"- top_cpu: {[x.get('pid') for x in (data.get('top_cpu') or [])[:5]]}")
+        print(f"- timestamp: {perf['timestamp']}")
+        print(f"- disk_root_pct: {perf['disk_pct']}")
+        print(f"- mem_available_mib: {perf['mem_available_mib']}")
+        print(f"- swap_used_pct: {perf['swap_pct']}")
+        print(f"- mode: {perf['mode']}")
+        print(f"- reasons: {perf['reasons']}")
+        print(f"- top_cpu: {perf['top_cpu']}")
     else:
         print('latest_perf: missing')
 
