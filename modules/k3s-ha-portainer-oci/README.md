@@ -52,10 +52,14 @@ same pod budget explicitly.
 
 ## Portainer Exposure Shape
 
-Portainer CE LTS is configured as `ClusterIP`, pinned to `atius-srv-1` via
+Portainer CE LTS is configured as `ClusterIP`, pinned to `atius-srv-2` via
 `nodeSelector`, with `enterpriseEdition.enabled=false` and
 `trusted_origins=portainer.atius.com.br`. Public access must come through
 Cloudflare Tunnel and Access, not NodePort or LoadBalancer.
+
+The srv2 placement preserves one 500m scheduling unit on `atius-srv-1` for
+node-pinned production workloads such as `router-ai-atius` without weakening
+the cluster `system-reserved` CPU margin.
 
 Prometheus/Grafana are planned through `kube-prometheus-stack` in namespace
 `monitoring`. Grafana uses a Kubernetes Secret for admin credentials and may be
