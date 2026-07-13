@@ -1,0 +1,23 @@
+id: wayland-github-horistic-srv
+host_id: horistic-srv
+client_host_id: atius-srv-3
+type: nfs4
+status: active
+network_plane: oci_drg
+source: 10.21.1.21:/home/horistic/GitHub
+mount_path: /home/ubuntu/Servers/horistic-srv/GitHub
+display_label: HORISTIC-SRV GitHub
+access: read-write
+identity:
+  uid: 1001
+  gid: 1001
+export:
+  client: 10.13.1.13
+  options: [rw, sync, no_subtree_check, root_squash, secure, sec=sys]
+mount:
+  version: "4.2"
+  options: [rw, hard, proto=tcp, noatime, nconnect=4, rsize=1048576, wsize=1048576, timeo=600, retrans=2, actimeo=1]
+  automount_idle_seconds: 600
+notes:
+  - Canonical server path uses OCI/DRG; wg100 is reserve only.
+  - Export is restricted to the srv-3 OCI private IP.

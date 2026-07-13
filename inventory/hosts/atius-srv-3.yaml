@@ -54,18 +54,19 @@ apps:
     desired_version: "0.11.9"
     source: "https://github.com/FerroxLabs/wayland"
     public_url: https://wayland.atius.com.br/
-    healthcheck_url: http://127.0.0.1:25808/api/auth/status
+    healthcheck_url: http://127.0.0.1:25725/api/auth/status
     public_healthcheck_url: https://wayland.atius.com.br/api/auth/status
-    listen: 0.0.0.0:25808
+    listen: 0.0.0.0:25725
     managed_by: "omni-srv-admin"
     update_policy: "source-rebuild-postinstall"
     customization_entrypoint: /home/ubuntu/GitHub/omni-srv-admin/modules/fleet/scripts/wayland-srv3-update.sh
-    last_audited: "2026-07-05"
+    last_audited: "2026-07-12"
     notes:
       - "WebUI login defaults to pt-BR when no saved language exists."
       - "Conversar na pasta defaults to /home/ubuntu/GitHub."
       - "Source patch stays in ~/GitHub/wayland; runtime rebuild/reapply ownership stays in omni-srv-admin."
       - "2026-07-05: wayland.service active as User=wayland with PORT=25808; local and public /api/auth/status returned 200."
+      - "2026-07-12: canonical runtime is User=ubuntu with PORT=25725; local/public /api/auth/status returned 200 and SRV-1 Apache proxies to 10.13.1.13:25725."
   - id: rust-toolchain
     runtime: local-rustup
     install_type: rustup-managed
@@ -178,12 +179,12 @@ notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
   knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
-  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), base config and profiles; no active GSD agent service_tier entries found."
+  codex_runtime_standard: "2026-07-12: Codex 0.144.1 is canonical through ~/.local/bin, login zsh and /usr/local/bin; [features].hooks is enabled; explicit service_tier=normal is omitted because the runtime rejects it and uses standard routing by default; Cloudflare plugin/MCP is disabled on this Wayland runtime."
   wg100_readdress: "2026-07-10: `wg100`/10.100.100.3 remains reserve fallback only; the canonical private service path for SRV-3 is `oci_private_ip=10.13.1.13`."
   last_readdressed: 2026-06-17
   readdress_note: "SRV-3 now serves Vault/Vaultwarden and K3s on OCI-private 10.13.1.13, with 10.100.100.3 retained only as reserve fallback."
   wireguard_key_rotated: 2026-06-17
-  dns_validation: "2026-07-10: dig @10.11.1.11 and dig @10.100.100.1 both return atius-srv-1/2/3 and horistic-srv as 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21, and /etc/hosts matches the same OCI-private map."
+  dns_validation: "2026-07-10: srv-3 now resolves through `systemd-resolved` with global DNS `10.11.1.11 1.1.1.1`; the stale `DNS = 10.1.1.2` line was removed from `/etc/wireguard/wg0.conf`, and both `getent hosts ...` and `ping atius-srv-1` return the OCI-primary targets."
   oci_primary_validation: "2026-07-08: attached secondary VNIC 10.13.1.13, added peer OCI CIDR routes, and exposed Vaultwarden/Vault on 10.13.1.13:{8088,8202,8203} via local OCI-primary proxy sockets."
   k3s_note: "2026-07-10: K3s is Ready with live INTERNAL-IP 10.13.1.13 and etcd listeners on both 10.13.1.13 and 10.100.100.3; remaining canonicalization work is repo/env cleanup, not cluster IP migration."
 oci:

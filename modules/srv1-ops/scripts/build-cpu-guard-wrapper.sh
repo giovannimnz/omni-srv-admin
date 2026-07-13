@@ -88,9 +88,35 @@ load_host_cpu_quota() {
   CPU_QUOTA="$(LC_ALL=C awk -v pct="${CPU_TOTAL_PCT}" -v cpus="$cpus" 'BEGIN {printf "%d", pct * cpus}')"
 }
 
+find_nvm_command() {
+  local name="$1"
+  local nvm_versions latest_version candidate
+
+  case "$name" in
+    npm|npx) ;;
+    *) return 1 ;;
+  esac
+
+  nvm_versions="${HOME}/.nvm/versions/node"
+  [[ -d "$nvm_versions" ]] || return 1
+  latest_version="$(find "$nvm_versions" -mindepth 1 -maxdepth 1 -type d \
+    -printf '%f\n' 2>/dev/null | sort -V | tail -n 1)"
+  [[ -n "$latest_version" ]] || return 1
+
+  candidate="${nvm_versions}/${latest_version}/bin/${name}"
+  [[ -x "$candidate" ]] || return 1
+  printf '%s\n' "$candidate"
+}
+
 find_real_command() {
   local name="$1"
-  local dir candidate resolved
+  local dir candidate resolved preferred
+
+  if preferred="$(find_nvm_command "$name")"; then
+    printf '%s\n' "$preferred"
+    return 0
+  fi
+
   IFS=':' read -r -a dirs <<< "${PATH:-}"
   for dir in "${dirs[@]}"; do
     [[ -n "$dir" ]] || continue
@@ -186,6 +212,12 @@ if [[ -z "$real_cmd" ]]; then
   printf 'build-cpu-guard: real command not found for %s\n' "$cmd_name" >&2
   exit 127
 fi
+
+case "$real_cmd" in
+  "${HOME}"/.nvm/versions/node/*/bin/npm|"${HOME}"/.nvm/versions/node/*/bin/npx)
+    export PATH="$(dirname "$real_cmd"):${PATH:-}"
+    ;;
+esac
 
 inside_build_cgroup() {
   local cgroup_file="/proc/$$/cgroup"

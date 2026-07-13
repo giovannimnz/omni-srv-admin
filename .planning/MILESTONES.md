@@ -1,6 +1,6 @@
 # Milestone Branch Matrix
 
-**Last updated:** 2026-07-10
+**Last updated:** 2026-07-12
 
 This file is the shared milestone index for `main`, planning branches, and
 cross-session resumes. It should answer three questions quickly:
@@ -13,10 +13,11 @@ cross-session resumes. It should answer three questions quickly:
 
 | Milestone | Phase span | Theme | Canonical artifacts | Status |
 |---|---|---|---|---|
-| v1.7 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Planned: 0/4 tasks complete |
-| v1.4 | 42 | Atius-wide SSO and Login | `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/` | Paused for DNS gate: 2/3 plans complete |
-| v1.5 | 43 | Codex Runtime and MCP Bootstrap Reliability | `.planning/phases/43-codex-mcp-bootstrap-hardening/` | Shipped: 2/2 plans complete |
-| v1.6 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | In progress: 1/3 plans complete |
+| v1.8 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/phases/{46,47,48,49,50}-*/` | Current: Phases 46-47 complete; Phase 48 executing |
+| v1.7 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
+| v1.6 carry-over | 47 | Internal Service PKI listener/trust closeout | `.planning/phases/47-internal-service-pki-closeout/` | Shipped 2026-07-12 |
+| Codex/Wayland lane | 48-49 | OAuth/ACP convergence then Headroom | `.planning/phases/{48,49}-*/` | Phase 48 executing; Phase 49 blocked until full Phase 48 validation |
+| v1.4 carry-over | 50 | Atius-wide SSO publication closeout | `.planning/phases/50-atius-wide-sso-closeout/` | Queued after Phase 49; continues delivered 42-01/42-02 |
 
 ## Shipped Milestones
 
@@ -79,10 +80,11 @@ cross-session resumes. It should answer three questions quickly:
 | M006 | 14 | SRV-1 Resource Governance + PM2 Hardening | `codex/phase14-resource-governor-14-01` | Shipped |
 | M007 | 15-17 | M005 follow-ups | `main` + `.planning/phases/{15,16,17}-*/` | Shipped procedurally |
 | M011 | 41 | Local AI Embeddings Gateway on `horistic-srv` | `.planning/phases/41-local-ai-embeddings-gateway-horistic-srv/` | Shipped |
-| M012 | 42 | Atius-wide SSO Login | `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/` | In progress |
+| M012 | 42 | Atius-wide SSO Login | `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/` | Historical partial; continues in Phase 50 |
 | M013 | 43 | Codex MCP Bootstrap Hardening | `.planning/phases/43-codex-mcp-bootstrap-hardening/` | Shipped |
-| M014 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | In progress |
-| M015 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Planned |
+| M014 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | Historical partial; continues in Phase 47 |
+| M015 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
+| M016 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/ROADMAP.md` + phase validation files | Current |
 
 ## Separation Rules
 
@@ -98,6 +100,6 @@ cross-session resumes. It should answer three questions quickly:
 
 ## Current Operator Queue
 
-1. Execute Phase 45 to make DRG/OCI DNS and service routing canonical.
-2. Close Phase 42 with `42-03` and promote v1.4 to shipped.
-3. Resume Phase 44 from `44-02` after explicit live CA/trust mutation approval.
+1. Continue Phase 48: close Router evidence plus native/local/remote ACP validation without Headroom.
+2. Execute Phase 49 only after every Phase 48 stop condition is green: isolated Headroom canary, ACP/Wayland promotion and rollback rehearsal.
+3. Execute Phase 50 after Phase 49: close the remaining SSO publication/logout/RBAC gate using completed 42-01/42-02 evidence.

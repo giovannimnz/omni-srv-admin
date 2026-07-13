@@ -172,3 +172,9 @@ graphify-out/manifest.json
 
 # Local Codex desktop workspace metadata
 .ijfw/
+
+# Local Codex integration scratch space
+.codex-tmp/
+.codex-work/
+.tmp-wayland-edit/
+.tmp-wayland-codex-acp.patch

@@ -1,7 +1,7 @@
 # DRG and WireGuard Readdress Plan
 
 **Status:** replan required before OCI writes
-**Updated:** 2026-07-06
+**Updated:** 2026-07-10
 **Primary execution owner:** `oci-admin`
 **Runtime inventory owner:** `omni-srv-admin`
 
@@ -40,8 +40,8 @@ Current client reservations:
 
 | Endpoint | Legacy address | `wg100` target | Status |
 |---|---:|---:|---|
-| `GIOVANNI-W11-PC` | `10.1.1.5` | `10.100.100.8` | live on `.8` as of 2026-07-10; `.5` kept only as temporary rollback allowance |
-| `GIOVANNI-S23` | `10.1.1.6` | `10.100.100.9` | live on `.9` as of 2026-07-10; `.6` kept only as historical/rollback context |
+| `GIOVANNI-W11-PC` | `10.1.1.5` | `10.100.100.8` | live; direct SRV-1 handshake validated on 2026-07-10; previous `10.100.100.5` is historical/cleanup only |
+| `GIOVANNI-S23` | `10.1.1.6` | `10.100.100.9` | live; direct SRV-1 handshake validated on 2026-07-10; previous `10.100.100.6` is historical/cleanup only |
 | `peer11` | - | `10.100.100.11` | config generated; import/handshake pending |
 | `peer12` | - | `10.100.100.12` | config generated; import/handshake pending |
 | `peer13` | - | `10.100.100.13` | config generated; import/handshake pending |
@@ -140,8 +140,8 @@ Live and pending host assignments:
 | `atius-srv-2` | `10.100.100.2` | live |
 | `atius-srv-3` | `10.100.100.3` | live |
 | `horistic-srv` | `10.100.100.4` | live |
-| `GIOVANNI-W11-PC` | `10.100.100.8` | live handshake to SRV-1 after the 2026-07-10 client cutover; `.5` remains legacy rollback only |
-| `GIOVANNI-S23` | `10.100.100.9` | live handshake to SRV-1 after the 2026-07-10 client cutover; `.6` remains legacy/historical |
+| `GIOVANNI-W11-PC` | `10.100.100.8` | live handshake to SRV-1 after the 2026-07-10 cutover; previous `.5` is historical/cleanup only |
+| `GIOVANNI-S23` | `10.100.100.9` | live handshake to SRV-1 after the 2026-07-10 cutover; previous `.6` is historical/cleanup only |
 | `peer11`-`peer17` | `10.100.100.11`-`10.100.100.17` | generated, pending device import |
 
 The OCI/DRG private plane is now the canonical service path:
@@ -182,12 +182,17 @@ The OCI/DRG private plane is now the canonical service path:
 - Keep `10.100.100.0/24` as reserve path only.
 - Do not reintroduce `10.1.1.0/24` as live compatibility or rollback path.
 - Treat SRV-1 hub, `vpn.atius.com.br` on SRV-1, W11 `10.100.100.8` and S23
-  `10.100.100.9` as the current live edge truth. Keep `10.100.100.5` and
-  `10.100.100.6` only as temporary rollback/historical context.
+  `10.100.100.9` as the current live edge truth. Keep `10.100.100.5/.6` only
+  as historical evidence or temporary cleanup scope.
+- Expand the current S23 profile, historically named peer6, so handset-side
+  traffic can reach the OCI-private CIDRs `10.11.0.0/16`, `10.12.0.0/16`,
+  `10.13.0.0/16`, and `10.21.0.0/16`; the live profile still behaves like
+  `AllowedIPs = 10.100.100.0/24`.
 - Import and validate `peer11` through `peer17` on their target devices.
 - Update firewall guards to allow OCI private peers as primary and `wg100` as reserve.
 - Add CoreDNS records and PTRs for the new addresses with low TTL.
-- Validate host-to-host ping and TCP probes over both old and new ranges.
+- Validate host-to-host ping and TCP probes over OCI-primary and `wg100`
+  reserve paths.
 
 ### Wave 3 - Service Endpoint Migration
 
@@ -245,7 +250,8 @@ Retirement closeout requirements for the old range:
   of historical collision risk.
 - No fresh etcd snapshot before K3s node-IP changes.
 - K3s `/readyz` or etcd quorum is degraded.
-- CoreDNS cannot answer both forward and reverse records for old and new ranges.
+- CoreDNS cannot answer forward and reverse records for OCI-primary names and
+  their explicit `wg100` reserve aliases.
 - `peer11`-`peer17` client configs are not imported but old client routes are
   removed.
 - Historical `10.1.1.x` references still appear as if they were active source

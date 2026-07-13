@@ -1,6 +1,6 @@
 project: codex-acp
-display_name: "Codex ACP - ATIUS remote agent adapter"
-enabled: true
+display_name: "Codex ACP - retired standalone lane; embedded in Wayland"
+enabled: false
 upstream: https://github.com/zed-industries/codex-acp
 upstream_branch: main
 origin_branch: main

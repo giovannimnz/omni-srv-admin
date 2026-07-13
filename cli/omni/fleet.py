@@ -32,7 +32,7 @@ from .fleet_versioning import (
 REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 HOSTS_DIR = REPO / "inventory" / "hosts"
 LEGACY_HOSTS_DIR = REPO / "hosts"
-FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", "/home/ubuntu/.logs/fleet"))
+FLEET_LOG_DIR = Path(os.environ.get("OMNI_FLEET_LOG_DIR", str(Path.home() / ".logs" / "fleet")))
 HEARTBEAT_DIR = FLEET_LOG_DIR / "heartbeats"
 TELEMETRY_DIR = FLEET_LOG_DIR / "telemetry"
 PROGRAMS_DIR = FLEET_LOG_DIR / "programs"

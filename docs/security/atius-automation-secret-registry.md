@@ -126,6 +126,15 @@ Landscape bridge config: 16 managed records after adding `atius-browser-login-ac
 Landscape bridge AppRole read smoke: authenticated and read all 16 configured records with errors=0.
 ```
 
+Recovery verification on 2026-07-13, without printing values:
+
+```text
+Vault post-restart health: initialized=true sealed=false standby=false HTTP 200.
+Cloudflare profile: six expected names, including CF_GLOBAL_API_KEY.
+Landscape bridge: canonical vault_addr=https://10.13.1.13:8202; 16 records read successfully.
+Landscape edit contract: no-op read/write of atius-browser-login-access-keys returned HTTP 200 and preserved data.
+```
+
 Backups created before normalization:
 
 ```text

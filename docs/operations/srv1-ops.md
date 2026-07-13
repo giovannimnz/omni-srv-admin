@@ -150,7 +150,7 @@ Contrato:
 - Certificado confiavel nos clientes: `/usr/local/share/ca-certificates/obsidian-local-rest-api.crt`.
 - SAN obrigatorio do certificado: `127.0.0.1`, `10.11.1.11`, `10.100.100.1`, `atius-srv-1`, `atius-srv-1-vpn`, `atius-srv-1.atius.internal`.
 - `mcp.atius.com.br/obsidian` e o caminho oficial para todos os hosts; `10.11.1.11:27124` fica como backend/raw path de diagnostico e `10.100.100.0/24` fica apenas como rede WireGuard secundaria.
-- Guard iptables permite `27124/tcp` para `lo`, peers `wg100` dos servidores (`10.100.100.2` e `10.100.100.3`), edge clients aprovados (`10.100.100.6` live, `10.100.100.8` live) e IPs temporarios/staged de transicao (`10.100.100.5` rollback legado do W11 e `10.100.100.9` staged do S23), e para as faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
+- Guard iptables permite `27124/tcp` para `lo`, peers `wg100` dos servidores (`10.100.100.2` e `10.100.100.3`), edge clients live (`10.100.100.8` e `10.100.100.9`), compat legada temporaria (`10.100.100.5` e `10.100.100.6`) e as faixas OCI privadas `10.12.0.0/16`, `10.13.0.0/16` e `10.21.0.0/16`.
 
 Validacao:
 

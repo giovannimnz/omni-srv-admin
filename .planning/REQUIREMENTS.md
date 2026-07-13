@@ -8,7 +8,7 @@
 
 ### G18 — Ubuntu Pro / ESM / Landscape SaaS
 
-- [ ] **G18-01**: Operador consegue ver o estado Ubuntu Pro/ESM dos SRV-1/SRV-2/SRV-3/horistic-srv, incluindo token/account, attach status, services, apt sources e pendencias por host.
+- [x] **G18-01**: Operador consegue ver o estado Ubuntu Pro/ESM dos SRV-1/SRV-2/SRV-3/horistic-srv, incluindo token/account, attach status, services, apt sources e pendencias por host.
 - [x] **G18-02**: Operador consegue executar um plano de apt upgrade ESM Apps/infra com preflight, snapshot/backup/checkpoint e gate explicito antes de qualquer mutacao live.
 - [x] **G18-03**: Operador consegue validar Microsoft RDP/XRDP nos 4 servidores apos upgrade, com smoke test documentado e rollback seguro para display/session config.
 - [x] **G18-04**: Operador consegue confirmar Landscape SaaS com SRV-1/SRV-2/SRV-3/horistic-srv online e documentar o estado real de registro/telemetria.
@@ -83,27 +83,59 @@
 
 ### Internal Service PKI / Fleet HTTPS
 
-- [ ] **PKI-01**: Operador consegue renderizar, por inventario, o plano de PKI interna para `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e `horistic-srv`, incluindo SANs, caminhos, dry-run e comandos sem material secreto.
-- [ ] **PKI-02**: `omni-srv-admin` possui comando/versioned resource `omni fleet trust-pki` com preflight, init CA, issue-host, install-trust, verify, rollback-plan, onboard-host, reconcile-host e rotate-host, todos dry-run por default e mutacao apenas com gate explicito.
-- [ ] **PKI-03**: A CA interna de servicos fica root-only fora de Git, `.planning`, Obsidian, GBrain, logs e shell history, com backup/serial/index/CRL state e regra de rotacao documentada.
-- [ ] **PKI-04**: Cada servidor gerenciado, inclusive servidor novo cadastrado no inventario/DbOmniFleet, possui key/CSR/leaf/chain proprios, com private key local root-only e leaf contendo `serverAuth`, `clientAuth`, `CA:FALSE` e SANs de VPN IP, public IP e aliases declarados.
-- [ ] **PKI-05**: Todos os servidores instalam e validam a CA chain via trust store do sistema (`update-ca-certificates`), sem instalar leafs de peers como root CAs.
-- [ ] **PKI-06**: A validacao passa uma matriz 4x4: 4 verificacoes locais e 12 verificacoes HTTPS remotas entre os hosts, com hostname/IP SAN validation e TLS verify code `0`.
-- [ ] **PKI-07**: A funcionalidade produz audit JSON/redacted logs, docs operacionais, Obsidian e GBrain com fingerprints, paths, backups e resultados, sem vazar chaves, tokens ou passphrases.
-- [ ] **PKI-08**: O plano deixa explicito que HTTPS real de servicos, como TEI em `https://10.21.1.21:3115`, exige proxy/listener TLS e gate de servico separado antes de alterar channels ou portas em producao.
+- [x] **PKI-01**: Operador consegue renderizar, por inventario, o plano de PKI interna para `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e `horistic-srv`, incluindo SANs, caminhos, dry-run e comandos sem material secreto.
+- [x] **PKI-02**: `omni-srv-admin` possui comando/versioned resource `omni fleet trust-pki` com preflight, init CA, issue-host, install-trust, verify, rollback-plan, onboard-host, reconcile-host e rotate-host, todos dry-run por default e mutacao apenas com gate explicito.
+- [x] **PKI-03**: A CA interna de servicos fica root-only fora de Git, `.planning`, Obsidian, GBrain, logs e shell history, com backup/serial/index/CRL state e regra de rotacao documentada.
+- [x] **PKI-04**: Cada servidor gerenciado, inclusive servidor novo cadastrado no inventario/DbOmniFleet, possui key/CSR/leaf/chain proprios, com private key local root-only e leaf contendo `serverAuth`, `clientAuth`, `CA:FALSE` e SANs de VPN IP, public IP e aliases declarados.
+- [x] **PKI-05**: Todos os servidores instalam e validam a CA chain via trust store do sistema (`update-ca-certificates`), sem instalar leafs de peers como root CAs.
+- [x] **PKI-06**: A validacao passa uma matriz 4x4: 4 verificacoes locais e 12 verificacoes HTTPS remotas entre os hosts, com hostname/IP SAN validation e TLS verify code `0`.
+- [x] **PKI-07**: A funcionalidade produz audit JSON/redacted logs, docs operacionais, Obsidian e GBrain com fingerprints, paths, backups e resultados, sem vazar chaves, tokens ou passphrases.
+- [x] **PKI-08**: O plano deixa explicito que HTTPS real de servicos, como TEI em `https://10.21.1.21:3115`, exige proxy/listener TLS e gate de servico separado antes de alterar channels ou portas em producao.
 
 ## v1.7 Requirements
 
 ### Internal DNS / DRG Canonicalization
 
-- [ ] **DNS-01**: Inventario, docs, scripts e validadores usam `oci_private_ip` como campo de roteamento canonico para `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e `horistic-srv`.
-- [ ] **DNS-02**: `wg100` / `10.100.100.0/24` aparece apenas como fallback/reserva documentada, com excecao explicita para `GIOVANNI-W11-PC` ate prova de reachability DRG.
-- [ ] **DNS-03**: `10.1.1.0/24` nao aparece como caminho ativo em configuracao, scripts, validadores ou runbooks; referencias remanescentes ficam marcadas como historicas ou entram em lista de cleanup.
-- [ ] **DNS-04**: O resolvedor interno canonico e `10.11.1.11:53`, servindo short names e `*.atius.internal` para IPs privados OCI/DRG.
-- [ ] **DNS-05**: Linux hosts e clientes Windows usam resolvers que preferem DRG/OCI e nao reintroduzem `10.1.1.2` ou `10.100.100.1` como primario por watchdog/script.
-- [ ] **DNS-06**: Cloudflare gerencia apenas DNS publico de `atius.com.br`; nomes de maquinas e IPs privados vivem no DNS interno e em inventario versionado.
-- [ ] **DNS-07**: Servicos internos criticos usam endpoints OCI/DRG por padrao: PgBouncer `10.11.1.11:6432`, Obsidian `10.11.1.11:27124`, Vault `10.13.1.13:8202`, TEI `10.21.1.21:3115`.
-- [ ] **DNS-08**: Validacao final cobre `dig/getent/nslookup`, reachability de servicos, diff repo-wide contra `10.1.1.x`, e registro em Obsidian/GBrain sem segredos.
+- [x] **DNS-01**: Inventario, docs, scripts e validadores usam `oci_private_ip` como campo de roteamento canonico para `atius-srv-1`, `atius-srv-2`, `atius-srv-3` e `horistic-srv`.
+- [x] **DNS-02**: `wg100` / `10.100.100.0/24` aparece apenas como fallback/reserva documentada, com excecao explicita para `GIOVANNI-W11-PC` ate prova de reachability DRG.
+- [x] **DNS-03**: `10.1.1.0/24` nao aparece como caminho ativo em configuracao, scripts, validadores ou runbooks; referencias remanescentes ficam marcadas como historicas ou entram em lista de cleanup.
+- [x] **DNS-04**: O resolvedor interno canonico e `10.11.1.11:53`, servindo short names e `*.atius.internal` para IPs privados OCI/DRG.
+- [x] **DNS-05**: Linux hosts, clientes Windows e edge clients usam resolvers/rotas que preferem DRG/OCI quando disponivel e nao reintroduzem `10.1.1.2` ou `10.100.100.1` como primario por watchdog/script.
+- [x] **DNS-06**: Cloudflare gerencia apenas DNS publico de `atius.com.br`; nomes de maquinas e IPs privados vivem no DNS interno e em inventario versionado.
+- [x] **DNS-07**: Servicos internos criticos usam endpoints OCI/DRG por padrao: PgBouncer `10.11.1.11:6432`, Obsidian `10.11.1.11:27124`, Vault `10.13.1.13:8202`, TEI `10.21.1.21:3115`.
+- [x] **DNS-08**: Validacao final cobre `dig/getent/nslookup`, `ping <hostname>`, reachability de servicos, diff repo-wide contra `10.1.1.x`, dependencia `oci-admin`, e registro em Obsidian/GBrain sem segredos.
+
+## v1.8 Requirements
+
+### Planning Surface Reconciliation
+
+- [x] **PLN-01**: Todos os diretorios de fase existentes aparecem no `ROADMAP.md` como ativos, completos, legados ou superseded; nenhum historico executado e renumerado.
+- [x] **PLN-02**: `MILESTONES.md`, `PROJECT.md`, `ROADMAP.md`, `REQUIREMENTS.md`, `STATE.md` e `config.json` concordam sobre milestone, fase corrente e ordem operacional.
+- [x] **PLN-03**: Cada fase ativa 46-50 possui plano, validacao, stop conditions, rollback e evidencia esperada.
+- [x] **PLN-04**: `gsd-tools` health, stats e roadmap analyzer reconhecem v1.8 e nao reportam fases orfas ou config keys invalidas.
+- [x] **PLN-05**: A ordem final e registrada no repo, Obsidian e GBrain sem segredos.
+
+### Codex OAuth and Wayland ACP Convergence
+
+- [ ] **WAC-01**: Router Phase 32 e auditada em shell funcional sem sobrescrever mudancas concorrentes e possui testes deterministas para metadata, refresh, regenerate, probe e upstream auth.
+- [ ] **WAC-02**: `token_invalidated`, `refresh_token_invalidated`, `invalid_api_key`, 401 e 403 upstream sao distintos da autenticacao interna do Router.
+- [ ] **WAC-03**: Credencial Codex nativa funciona antes de qualquer Headroom, com refresh/regeneration e health persistido sem tokens em logs/respostas.
+- [ ] **WAC-04**: Catalogo final de modelos e reasoning effort passa no Codex CLI e no Wayland sem expectativas antigas de GPT-5.6.
+- [ ] **WAC-05**: `codex-acp` local passa initialize, session/new, prompt, tool, approval, cancel, resume e shutdown.
+- [ ] **WAC-06**: ACP remoto/ACPX/OpenClaw passa Upgrade auth, gateway auth, approvals e reconnect sem reduzir o contrato local.
+- [ ] **WAC-07**: Wayland preserva `Wayland -> codex-acp -> codex`, sem converter GSD skills em runtime agents.
+- [ ] **WAC-08**: Ownership, backup, rollback e validacao live estao registrados antes de liberar Phase 49.
+
+### Wayland Codex Headroom
+
+- [ ] **HDR-01**: Headroom fica pinado em release/commit/hash aprovado e instalado de forma user-level reproduzivel no `atius-srv-3`.
+- [ ] **HDR-02**: O primeiro canario usa `CODEX_HOME` isolado sem copiar/symlinkar SQLite de sessoes e sem mutar `/home/ubuntu/.codex` ativo.
+- [ ] **HDR-03**: Proxy Headroom fica somente em loopback e inicia sem MCP, memory, context-tool, learning ou output shaping.
+- [ ] **HDR-04**: Codex direto passa OAuth, `/v1/responses`, WebSocket, tools, apply_patch, cancel/reconnect e model/effort parity atraves do proxy.
+- [ ] **HDR-05**: Uma carga elegivel comprova transformacao e savings maiores que zero; simples passthrough nao conta como sucesso.
+- [ ] **HDR-06**: `codex-acp` passa o lifecycle completo usando o canario Headroom sem mudar o protocolo ACP.
+- [ ] **HDR-07**: Wayland passa smoke em Chromium headless via Chrome DevTools para conversa, streaming, approval, cancel/resume e model/effort.
+- [ ] **HDR-08**: Rollback ensaiado restaura o caminho nativo sem perda de config, auth, sessions ou provider tags; Obsidian/GBrain recebem evidencia redatada.
 
 ## Future Requirements
 
@@ -159,34 +191,55 @@
 | EMB-06 | Phase 41 | Complete |
 | EMB-07 | Phase 41 | Complete |
 | EMB-08 | Phase 41 | Complete |
-| SSO-01 | Phase 42 | In Progress |
-| SSO-02 | Phase 42 | In Progress |
-| SSO-03 | Phase 42 | In Progress |
-| SSO-04 | Phase 42 | In Progress |
-| SSO-05 | Phase 42 | In Progress |
-| SSO-06 | Phase 42 | In Progress |
+| SSO-01 | Phase 42, Phase 50 | In Progress |
+| SSO-02 | Phase 42, Phase 50 | In Progress |
+| SSO-03 | Phase 42, Phase 50 | In Progress |
+| SSO-04 | Phase 42, Phase 50 | In Progress |
+| SSO-05 | Phase 42, Phase 50 | In Progress |
+| SSO-06 | Phase 42, Phase 50 | In Progress |
 | CDX-01 | Phase 43 | Complete |
 | CDX-02 | Phase 43 | Complete |
 | CDX-03 | Phase 43 | Complete |
 | CDX-04 | Phase 43 | Complete |
 | CDX-05 | Phase 43 | Complete |
 | CDX-06 | Phase 43 | Complete |
-| PKI-01 | Phase 44 | In Progress |
-| PKI-02 | Phase 44 | In Progress |
-| PKI-03 | Phase 44 | In Progress |
-| PKI-04 | Phase 44 | In Progress |
-| PKI-05 | Phase 44 | In Progress |
-| PKI-06 | Phase 44 | In Progress |
-| PKI-07 | Phase 44 | In Progress |
-| PKI-08 | Phase 44 | In Progress |
-| DNS-01 | Phase 45 | Planned |
-| DNS-02 | Phase 45 | Planned |
-| DNS-03 | Phase 45 | Planned |
-| DNS-04 | Phase 45 | Planned |
-| DNS-05 | Phase 45 | Planned |
-| DNS-06 | Phase 45 | Planned |
-| DNS-07 | Phase 45 | Planned |
-| DNS-08 | Phase 45 | Planned |
+| PKI-01 | Phase 44, Phase 47 | Complete |
+| PKI-02 | Phase 44, Phase 47 | Complete |
+| PKI-03 | Phase 47 | Complete |
+| PKI-04 | Phase 47 | Complete |
+| PKI-05 | Phase 47 | Complete |
+| PKI-06 | Phase 47 | Complete |
+| PKI-07 | Phase 47 | Complete |
+| PKI-08 | Phase 47 | Complete |
+| DNS-01 | Phase 45 | Complete |
+| DNS-02 | Phase 45 | Complete |
+| DNS-03 | Phase 45 | Complete |
+| DNS-04 | Phase 45 | Complete |
+| DNS-05 | Phase 45 | Complete |
+| DNS-06 | Phase 45 | Complete |
+| DNS-07 | Phase 45 | Complete |
+| DNS-08 | Phase 45 | Complete |
+| PLN-01 | Phase 46 | Complete |
+| PLN-02 | Phase 46 | Complete |
+| PLN-03 | Phase 46 | Complete |
+| PLN-04 | Phase 46 | Complete |
+| PLN-05 | Phase 46 | Complete |
+| WAC-01 | Phase 48 | Planned |
+| WAC-02 | Phase 48 | Planned |
+| WAC-03 | Phase 48 | Planned |
+| WAC-04 | Phase 48 | Planned |
+| WAC-05 | Phase 48 | Planned |
+| WAC-06 | Phase 48 | Planned |
+| WAC-07 | Phase 48 | Planned |
+| WAC-08 | Phase 48 | Planned |
+| HDR-01 | Phase 49 | Planned |
+| HDR-02 | Phase 49 | Planned |
+| HDR-03 | Phase 49 | Planned |
+| HDR-04 | Phase 49 | Planned |
+| HDR-05 | Phase 49 | Planned |
+| HDR-06 | Phase 49 | Planned |
+| HDR-07 | Phase 49 | Planned |
+| HDR-08 | Phase 49 | Planned |
 
 **Coverage:**
 
@@ -208,7 +261,12 @@
 - v1.7 requirements: 8 total
 - v1.7 mapped to phases: 8
 - v1.7 unmapped: 0
+- v1.8 requirements: 21 total
+- v1.8 mapped to phases: 21
+- v1.8 unmapped: 0
+
+**Total:** 83 requirements | 55 complete | 28 open | 0 unmapped
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-07-10 after adding Phase 45 internal DNS / DRG canonicalization*
+*Last updated: 2026-07-12 after Phase 46 planning reconciliation and v1.8 ordering*

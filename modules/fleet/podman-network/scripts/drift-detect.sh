@@ -10,9 +10,9 @@
 
 set -u
 
-SRV1=10.1.1.1
-SRV2=10.1.1.2
-SRV3=10.1.1.7
+SRV1=10.11.1.11
+SRV2=10.12.1.12
+SRV3=10.13.1.13
 USER=ubuntu
 
 # Path to the remote collector script (vendored alongside this file)
@@ -93,7 +93,7 @@ check() {
 
 echo "=== Podman Fleet Standard Drift Check ($(date -Iseconds)) ==="
 echo ""
-echo "Server hosts: SRV-1=10.1.1.1, SRV-2=10.1.1.2, SRV-3=10.1.1.7"
+echo "Server hosts: SRV-1=10.11.1.11, SRV-2=10.12.1.12, SRV-3=10.13.1.13"
 echo ""
 echo "--- per-server state ---"
 printf "%-30s | %-40s | %-40s | %-40s\n" "Check" "SRV-1" "SRV-2" "SRV-3"

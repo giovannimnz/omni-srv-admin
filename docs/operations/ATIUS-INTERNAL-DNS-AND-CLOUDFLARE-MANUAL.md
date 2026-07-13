@@ -250,13 +250,16 @@ Cloudflare should **not** be the place where we manage:
 - internal service discovery
 - DRG private IP source of truth
 
-## Current Exceptions
+## Current Edge Exceptions
 
 As of `2026-07-10`:
 
-- Linux service binds already prefer OCI private IPs in many places
-- Linux host resolvers still drift in some nodes (`srv-1`, `srv-2`, `srv-3`, `horistic`)
-- `GIOVANNI-W11-PC` still uses `10.100.100.1` as reserve path for some flows
+- Linux service binds and host resolvers prefer the OCI/DRG private plane.
+- `GIOVANNI-W11-PC` is an edge client on `10.100.100.8`, but its DNS and fleet
+  service targets prefer the OCI/DRG addresses reached through the bridge.
+- `GIOVANNI-S23` is an edge client on `10.100.100.9`; final handset-side
+  outbound reachability remains limited by the client `AllowedIPs` scope.
+- `wg100` endpoints remain documented and tested only as reserve fallback.
 
 See:
 

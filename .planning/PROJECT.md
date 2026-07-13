@@ -23,34 +23,37 @@ runtime ou rede interna.
 
 ## Current Delivery Track
 
-**Current milestone:** v1.7 - Internal DNS and DRG Canonicalization
-**Current phase:** 45
-**Current objective:** tornar DNS interno, nomes de maquinas e endpoints de
-servicos DRG/OCI-first, mantendo `wg100` apenas como fallback documentado e
-removendo `10.1.1.0/24` de qualquer caminho ativo.
+**Current milestone:** v1.8 - Runtime Trust and Codex Delivery Convergence
+**Current phase:** 48 - Codex OAuth and Wayland Remote ACP Convergence
+**Current objective:** liberar ownership concorrente e corrigir drift de
+runtime/validacao em Router, Wayland e codex-acp para entao fechar a lane
+Codex/Wayland na ordem OAuth + native ACP -> remote ACP -> Headroom canary, sem
+reabrir fases historicas.
 
-**Open carry-over after v1.7 gate:**
+**Canonical delivery order:**
 
-- v1.4 / Phase 42 - Atius-wide SSO and Login (`42-03`)
-- v1.6 / Phase 44 - Internal Service PKI and Fleet Trust (`44-02`, `44-03`)
+- Phase 46 - planning reconciliation (complete)
+- Phase 47 - PKI listener/trust closeout (complete; continues 44-02/44-03)
+- Phase 48 - Router Codex OAuth + Wayland local/remote ACP convergence (current; blocked on revoked OAuth, runtime drift and test-executor repair)
+- Phase 49 - Headroom isolated canary and Wayland integration
+- Phase 50 - SSO publication/logout/RBAC closeout (continues 42-03)
 
 **Recently shipped out of sequence:**
 
 - v1.3 / Phase 41 - embeddings locais com `embedding-gte-v1`
 - v1.5 / Phase 43 - Codex MCP bootstrap hardening no `GIOVANNI-W11-PC`
 
-## Active Requirements
+## Requirements
 
 ### v1.7 - Internal DNS / DRG Canonicalization
 
-- [ ] **DNS-01**: `oci_private_ip` e a malha DRG/OCI viram a fonte canonica de roteamento interno.
-- [ ] **DNS-02**: `wg100`/`10.100.100.0/24` fica documentado como fallback/reserva, com excecao Windows ate validacao DRG.
-- [ ] **DNS-03**: `10.1.1.0/24` sai de configuracoes ativas e fica apenas como evidencia historica.
-- [ ] **DNS-04**: `10.11.1.11:53` resolve short names e `*.atius.internal` para IPs OCI privados.
-- [ ] **DNS-05**: Resolvers Linux/Windows e watchdogs nao voltam para DNS legado.
-- [ ] **DNS-06**: Cloudflare `atius.com.br` fica separado do DNS interno.
-- [ ] **DNS-07**: PgBouncer, Obsidian, Vault e TEI usam endpoints OCI/DRG por padrao.
-- [ ] **DNS-08**: Validacao final e notas duraveis ficam em repo, Obsidian e GBrain.
+- [x] **DNS-01..DNS-08**: entregues na Phase 45; DRG/OCI e DNS interno sao canonicos e `wg100` permanece reserva/edge.
+
+### v1.8 - Planning / Codex / Wayland
+
+- [x] **PLN-01..PLN-05**: ordem historica/ativa e validacao por fase reconciliadas na Phase 46.
+- [ ] **WAC-01..WAC-08**: OAuth Codex, catalogo e local/remote ACP convergem sem Headroom na Phase 48.
+- [ ] **HDR-01..HDR-08**: Headroom passa canario isolado, ACP, Wayland e rollback na Phase 49.
 
 ### v1.4 - Atius-wide SSO / Login
 
@@ -63,14 +66,14 @@ removendo `10.1.1.0/24` de qualquer caminho ativo.
 
 ### v1.6 - Internal Service PKI / Fleet HTTPS
 
-- [ ] **PKI-01**: Plano de PKI interna renderizado por inventario para os 4 hosts.
-- [ ] **PKI-02**: `omni fleet trust-pki` existe com preflight, init, issue, install, verify e rollback-plan.
-- [ ] **PKI-03**: CA interna root-only fora de Git, `.planning`, Obsidian, GBrain e logs.
-- [ ] **PKI-04**: Cada host possui key/CSR/leaf/chain proprios com SANs corretos.
-- [ ] **PKI-05**: Todos os hosts instalam a CA chain via trust store do sistema.
-- [ ] **PKI-06**: Matriz 4x4 valida HTTPS entre todos os hosts com verify code `0`.
-- [ ] **PKI-07**: A auditoria gera JSON/logs/docs redacted sem chaves ou passphrases.
-- [ ] **PKI-08**: O plano deixa explicito que migracao real de TEI/servicos para HTTPS exige gate separado.
+- [x] **PKI-01**: Plano de PKI interna renderizado por inventario para os 4 hosts.
+- [x] **PKI-02**: `omni fleet trust-pki` existe com preflight, init, issue, install, verify e rollback-plan.
+- [x] **PKI-03**: CA interna root-only fora de Git, `.planning`, Obsidian, GBrain e logs.
+- [x] **PKI-04**: Cada host possui key/CSR/leaf/chain proprios com SANs corretos.
+- [x] **PKI-05**: Todos os hosts instalam a CA chain via trust store do sistema.
+- [x] **PKI-06**: Matriz 4x4 valida HTTPS entre todos os hosts com verify code `0`.
+- [x] **PKI-07**: A auditoria gera JSON/logs/docs redacted sem chaves ou passphrases.
+- [x] **PKI-08**: O plano deixa explicito que migracao real de TEI/servicos para HTTPS exige gate separado.
 
 ## Recently Validated
 
@@ -101,6 +104,11 @@ removendo `10.1.1.0/24` de qualquer caminho ativo.
 - `wg100` / `10.100.100.0/24` is reserve fallback only.
 - `10.1.1.0/24` is retired and must not be reintroduced as active DNS,
   service routing, validation, or rollback path.
+- `oci-admin` is the dependency owner for DRG route/security/private-IP proof.
+- `home-proxy` / residential PPTP is home-edge fallback only; it must not
+  redefine internal DNS or DRG routing.
+- Wayland on `atius-srv-3` must expose GSD as skills/commands, not runtime
+  agents; this is a parallel tooling track, not a DNS blocker.
 
 ### Identity and Auth
 
@@ -129,7 +137,8 @@ removendo `10.1.1.0/24` de qualquer caminho ativo.
 | Internal service PKI uses CA trust, not peer leaf-as-root | Prevent trust-boundary and revocation problems | Active |
 | TEI stays private behind router alias | Avoid self-loop and uncontrolled public exposure | Active |
 | Codex runtime baseline stays lean | Reduce noisy MCP bootstrap and optional dependency failure | Shipped in Phase 43 |
-| Internal DNS is DRG-first | DRG is faster and hardware-free; WireGuard is fallback only | Active in Phase 45 |
+| Internal DNS is DRG-first | DRG is faster and hardware-free; WireGuard is fallback only | Shipped in Phase 45 |
+| Phase planning lives in `.planning` | Avoid stale execution order in docs/runbooks | Reconciled in Phase 46 |
 
 ## Evolution
 
@@ -141,4 +150,4 @@ Update this file whenever:
 4. a cross-session reconciliation changes what the repo claims is complete.
 
 ---
-*Last updated: 2026-07-10 during Phase 45 DNS/DRG replan*
+*Last updated: 2026-07-12 during Phase 46 planning-surface reconciliation*

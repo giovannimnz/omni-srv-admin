@@ -66,7 +66,7 @@ apps:
     namespace: jenkins
     image: localhost/jenkins:podman-latest
     manifest: modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml
-    jnlp_target: http://10.1.1.1:8085/  # via WireGuard wg0
+    jnlp_target: http://10.11.1.11:8085/  # OCI/DRG private plane
     replicas: 2
     install_type: k8s-deployment
     current_version: "0.1.0"
@@ -79,7 +79,7 @@ apps:
     notes:
       - "Phase 14-06: Jenkins agent on K3s, replaces DinD with ephemeral build pods"
       - "Uses Kubernetes plugin + Pod templates per job type (maven, node, python)"
-      - "JNLP over wg0 (10.1.1.1) — no public exposure"
+      - "JNLP over OCI/DRG (10.11.1.11) - no public exposure"
   - id: cloudbeaver
     runtime: podman
     compose: ~/containers/cloudbeaver/podman-compose.yml

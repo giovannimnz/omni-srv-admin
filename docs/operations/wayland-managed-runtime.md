@@ -22,6 +22,8 @@ bash modules/fleet/scripts/wayland-srv3-update.sh --pull
 
 - botão pré-chat `Conversar na pasta` visível no WebUI
 - diretório padrão de `Conversar na pasta`: `/home/ubuntu/Servers` (`~/Servers`)
+- workspaces NFS em `/home/ubuntu/Servers/<host>/GitHub/...` usam modo híbrido
+  por padrão: edita no mount e valida no host dono via alias SSH canônico
 - idioma padrão da tela de login: `Português (Brasil)` quando não existe
   preferência salva
 - runtime source-standalone em `~/GitHub/wayland/dist-server/server.mjs`

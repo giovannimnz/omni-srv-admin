@@ -22,7 +22,7 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - Provider base URLs may be stored either at provider root or with trailing `/v1`; Go must normalize both forms and must not produce duplicated `/v1/v1` paths. MiniMax/DeepSeek must strip a trailing `/v1` before appending Anthropic/native paths.
 - Do not reintroduce active split channels named `MiniMax - OpenAI-Compatible`, `MiniMax - Anthropic-Compatible`, `MiniMax - Embeddings`, `DeepSeek - OpenAI-Compatible`, `DeepSeek - Anthropic-Compatible`, `OpenAI - Embeddings`, or `Codex - Embeddings`.
 - Do not add or reactivate a Python/container sidecar as the canonical owner for `/v1/`, detailed models, or Codex embeddings.
-- Local TEI embeddings must remain governed inside the Go router through `service/embeddinggovernor/` and `relay/embedding_handler.go`; do not move this path back to Python/model-detailed or a separate sidecar/container. Default governed models are `embedding-pt-v1` and `embedding-pt-v1-batch`.
+- Local TEI embeddings must remain governed inside the Go router through `service/embeddinggovernor/` and `relay/embedding_handler.go`; do not move this path back to Python/model-detailed or a separate sidecar/container. Default governed model is `embedding-gte-v1`.
 - Runtime directories must stay excluded from image build context through `.dockerignore`: `/backups`, `/data`, `/logs`, `/runtime`.
 - Router Docs buttons and config must stay same-origin and localized:
   English uses `/en/docs`; Portuguese uses `/pt/docs`. Do not restore
@@ -147,5 +147,5 @@ Expected result: first value should be the most recent/capable visible MiniMax t
 - Current active provider channels: `MiniMax` and `OpenAI - Codex`. `DeepSeek` is intentionally disabled until its upstream key stops returning `401 invalid api key`.
 - `Codex - Embeddings` may exist disabled as a historical/manual fallback channel. It is not the active default route.
 - Codex embeddings can route locally and still return upstream `429 insufficient_quota`; that is quota/licensing, not proof of local channel-selection failure. Keep `text-embedding-3-*` out of `/v1/models` until strict smoke passes.
-- Current active embeddings route: `Local TEI - GTE Embeddings` with public model `embedding-pt-v1`, upstream `http://10.1.1.4:3000`, dimension `768`, protected by the Go-native governor.
+- Current active embeddings route: `TEI - GTE Embeddings` with public model `embedding-gte-v1`, upstream `http://10.21.1.21:3115` over OCI-primary, dimension `768`, protected by the Go-native governor. `http://10.100.100.4:3115` remains reserve fallback, not the primary router upstream.
 - Active Apache `/v1/` and `/health` route directly to Go on `127.0.0.1:3000`; do not restore `127.0.0.1:3300`, `127.0.0.1:3399`, or pod port `3001`.

@@ -7,116 +7,14 @@
   "workflow": {
     "research": true,
     "plan_check": true,
+    "plan_review_convergence": true,
     "verifier": true,
     "nyquist_validation": true,
+    "ai_integration_phase": true,
     "auto_advance": false,
-    "_auto_chain_active": false
+    "_auto_chain_active": false,
+    "use_worktrees": false
   },
-  "currentMilestone": "M015",
-  "currentPhase": "45",
-  "milestones": [
-    {
-      "id": "M001",
-      "name": "Domain Foundation",
-      "status": "done",
-      "completed": "2026-04-19",
-      "phases": [
-        "01",
-        "02"
-      ]
-    },
-    {
-      "id": "M002",
-      "name": "Fork Sync Integration",
-      "status": "done",
-      "completed": "2026-06-05",
-      "phases": [
-        "08"
-      ],
-      "goal": "fork-sync integrated as submodule + repo rebrand atius-srv → omni-srv-admin"
-    },
-    {
-      "id": "M003",
-      "name": "Omni CLI Expansion",
-      "status": "done",
-      "completed": "2026-06-05",
-      "phases": [
-        "09",
-        "10",
-        "11"
-      ],
-      "goal": "omni CLI unificada com subcomandos admin, deploy, backup",
-      "depends_on": "M002"
-    },
-    {
-      "id": "M004",
-      "name": "Omni Fleet Control Plane",
-      "status": "live-implemented-validated",
-      "phase": "12",
-      "phases": [
-        "12"
-      ],
-      "branch": "codex/omni-fleet-control-plane-m004",
-      "artifact_scope": "canonical_full_plan_on_branch",
-      "goal": "base operacional multi-host com install server/node, inventario, PostgreSQL central via PgBouncer, ops scopes, configs/parametros no DB, slash registry, registry, versoes, licencas, auditoria, agente local, monitoramento e contrato futuro com Podman/K3s",
-      "depends_on": "M003"
-    },
-    {
-      "id": "M005",
-      "name": "K3s HA Cluster + Portainer",
-      "status": "live-k3s-portainer-bootstrap-2026-06-14",
-      "phase": "13",
-      "phases": [
-        "13"
-      ],
-      "branch": "codex/k3s-portainer-oci-plan",
-      "live_branches": [
-        "docs/m005-k3s-live-bootstrap",
-        "docs/m005-observability-watchdog",
-        "docs/m005-portainer-admin-endpoint",
-        "docs/m005-watchdog-basic-auth-fix",
-        "docs/m005-gate-review-20260614"
-      ],
-      "artifact_scope": "canonical_full_plan_on_branch",
-      "goal": "cluster K3s HA em ATIUS-SRV-1/2/3 com Portainer em portainer.atius.com.br (live 2026-06-14)",
-      "follow_ups": [
-        "OCI snapshot IDs",
-        "Cloudflare Access policy",
-        "Observability stack",
-        "RWX storage strategy"
-      ],
-      "depends_on": "M004"
-    },
-    {
-      "id": "M006",
-      "name": "SRV-1 Resource Governance + PM2 Hardening",
-      "status": "shipped-v1.0-2026-06-15",
-      "phase": "14",
-      "phases": [
-        "14"
-      ],
-      "branch": "codex/phase14-resource-governor-14-01",
-      "artifact_scope": "local_full_plan",
-      "goal": "fechar pendencias pos-incidente do resource-governor, inviolable-watchdog e PM2 no ATIUS-SRV-1 sem derrubar ATS/Horistic/XRDP",
-      "depends_on": "live fix documented in /home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-13-resource-governor-pm2-live-fix.md"
-    },
-    {
-      "id": "M007",
-      "name": "M005 Follow-ups: OCI snapshots + Cloudflare Access + Observability + RWX",
-      "status": "planning",
-      "phases": [
-        "15",
-        "16",
-        "17"
-      ],
-      "branch": "TBD",
-      "artifact_scope": "local_full_plan",
-      "goal": "fechar os 4 follow-ups abertos de M005 (K3s HA live): OCI snapshot workflow formal, Cloudflare Access policy para admin edges, observability stack live (Prometheus + Grafana + Loki) com alert routing, e decisao + implementacao de RWX storage para K3s",
-      "depends_on": "M005 live (v1.0 shipped 2026-06-15)"
-    }
-  ],
-  "_created": "2026-05-06",
-  "_note": "Merged from domain-infrastructure .planning. domain-infrastructure is now a module of omni-srv-admin.",
   "graphify": {
     "enabled": true,
     "auto_update": true,
@@ -137,5 +35,6 @@
       "governor_header": "X-Embedding-Workload: batch",
       "role": "auxiliary_retrieval"
     }
-  }
+  },
+  "runtime": "codex"
 }

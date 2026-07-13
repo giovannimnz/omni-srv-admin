@@ -20,6 +20,8 @@ access:
   ssh: ubuntu@10.100.100.1
   public_ip: 137.131.190.161
   vpn_ip: 10.100.100.1
+  planned_ssh: ubuntu@10.100.100.11
+  planned_vpn_ip: 10.100.100.11
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -60,6 +62,8 @@ notes:
 | `role` | sim | production, development, sandbox, mobile-node, etc |
 | `owner` | sim | dono/responsável |
 | `access.ssh` | não | endpoint SSH se aplicável |
+| `access.planned_ssh` | não | endpoint futuro reservado quando o inventário precisa registrar um cutover ainda não executado |
+| `access.planned_vpn_ip` | não | IP WireGuard/VPN futuro reservado antes da migração live |
 | `platform` | sim | provider/OS/arch/device |
 | `status` | sim | active, planned, template, retired |
 | `modules` | não | módulos aplicáveis |
@@ -112,7 +116,7 @@ Exemplos:
 id: srv1-shared-smb
 host_id: atius-srv-1
 type: cifs
-source: //10.1.1.2/Shared
+source: //10.11.1.11/Shared
 mount_path: /home/ubuntu/Shared_smb
 display_label: Shared_smb
 places:
@@ -135,3 +139,6 @@ places:
 - Sempre ler `platform` + `constraints`.
 - Módulo só roda se listado em `modules` ou explicitamente permitido.
 - Execução destrutiva requer backup e aprovação explícita.
+- Para peers edge/clientes em renumbering, manter `access.ssh` e `access.vpn_ip`
+  como verdade live até a validação final, e usar `planned_*` apenas para o alvo
+  já reservado do próximo cutover.

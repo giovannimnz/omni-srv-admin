@@ -1,16 +1,18 @@
 ---
 scope: session
 date: 2026-07-10
+updated: 2026-07-11
 counts:
-  decisions: 5
-  lessons: 5
-  patterns: 5
-  surprises: 5
+  decisions: 6
+  lessons: 6
+  patterns: 6
+  surprises: 6
 sources:
   - 019f42bb-e564-7ca3-87b2-8573f3eb516e
   - docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md
   - docs/operations/drg-wireguard-readdress-plan.md
   - live validation 2026-07-10
+  - live validation 2026-07-11
 ---
 
 # DRG / DNS Session Learnings
@@ -46,6 +48,12 @@ Short names like `atius-srv-1` should resolve via an internal zone contract, not
 
 **Rationale:** This is the only durable path to “ping atius-srv-1” working consistently everywhere.
 **Source:** current host naming pattern + user objective
+
+### Public 503s Must Be Classified Before DNS Changes
+If a public host returns `503` after DRG canonicalization, validate the origin/upstream and the live Apache vhost copies before touching DNS.
+
+**Rationale:** One stale upstream can look like a network problem and mask a simple origin drift.
+**Source:** live validation 2026-07-11
 
 ## Lessons
 
@@ -99,6 +107,12 @@ Drive internal DNS, PKI SANs, and service endpoint docs from `inventory/hosts/*.
 **When to use:** Any place where host identity, naming, and endpoint addresses must stay aligned.
 **Source:** `cli/omni/fleet.py`, inventory updates in this session
 
+### Validate Enabled And Available Apache Trees Together
+Treat `/etc/apache2/sites-available` and `/etc/apache2/sites-enabled` as separate live surfaces when the enabled tree contains copied files instead of symlinks.
+
+**When to use:** Apache reverse-proxy repairs and any change that can surface as a public 503.
+**Source:** live validation 2026-07-11
+
 ### Dual-Bind Then Demote
 Keep reserve listeners during transition, move consumers first, then demote the reserve plane in docs and tooling.
 
@@ -142,3 +156,9 @@ The current worktree has `.planning` marked as removed, so a normal GSD phase-pl
 
 **Impact:** Session planning had to be delivered as phase-style docs under `docs/operations/` instead of recreating `.planning/`.
 **Source:** current worktree state
+
+### One Bad Origin Can Break Multiple Public Hosts
+`landscape.atius.com.br` and `vault.atius.com.br` both failed from the same stale `10.1.1.3` Apache upstream copy on `srv1`.
+
+**Impact:** Public 503s were caused by live vhost drift, not by the broader DRG/OCI plane.
+**Source:** live validation 2026-07-11

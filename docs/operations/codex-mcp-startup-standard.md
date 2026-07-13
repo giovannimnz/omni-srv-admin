@@ -14,10 +14,13 @@ OCI stacks, or secrets must not block the default boot path.
 Default `C:\Users\muniz\.codex\config.toml` should keep only:
 
 - `node_repl`
-- `gbrain`
+- `gbrain_http`
 
 The GitHub MCP may still appear from the installed GitHub plugin. Heavy or
 externally-dependent MCPs belong in opt-in templates or launchers.
+`obsidian_http`, `chrome-devtools`, `ijfw-memory`, OpenAI Developer Docs,
+Cloudflare, OCI, Playwright, filesystem, and lab servers must not be added to
+the default `config.toml`.
 
 ## Current Layout
 
@@ -34,6 +37,8 @@ Optional MCP template files:
 ```text
 C:\Users\muniz\.codex\knowledge-mcp.config.toml
 C:\Users\muniz\.codex\browser-mcp.config.toml
+C:\Users\muniz\.codex\memory-mcp.config.toml
+C:\Users\muniz\.codex\docs-mcp.config.toml
 C:\Users\muniz\.codex\oci-mcp.config.toml
 C:\Users\muniz\.codex\cloud-ops-mcp.config.toml
 C:\Users\muniz\.codex\lab-mcp.config.toml
@@ -50,7 +55,8 @@ The Cloudflare plugin MCP manifest was disabled without removing Cloudflare
 skills:
 
 ```text
-C:\Users\muniz\.codex\plugins\cache\openai-curated\cloudflare\d6169bef\.mcp.json
+C:\Users\muniz\.codex\plugins\cache\openai-curated\cloudflare\bd2122cb\.mcp.json
+C:\Users\muniz\.codex\plugins\cache\openai-curated-remote\cloudflare\0.1.2\.mcp.json
 ```
 
 Current content should be:
@@ -68,6 +74,8 @@ codex-cloud-ops
 
 `codex-cloud-ops` loads `CF_GLOBAL_API_KEY` from the machine secrets vault into
 the child Codex process only. It does not persist or print the value.
+It also re-disables an auto-restored Cloudflare plugin manifest before starting
+Codex, so the Vault-backed launcher remains the only Cloudflare MCP path.
 
 For any other MCP or CLI that needs credentials, consult
 [Atius Automation Secret Registry](../security/atius-automation-secret-registry.md)
@@ -104,6 +112,8 @@ Run optional checks:
 ```powershell
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile knowledge-mcp
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile browser-mcp
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile memory-mcp
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile docs-mcp
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile oci-mcp
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile cloud-ops-mcp
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile lab-mcp

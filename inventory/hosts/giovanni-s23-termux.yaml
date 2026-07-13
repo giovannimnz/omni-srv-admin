@@ -7,7 +7,8 @@ owner: giovanni
 access:
   ssh: ubuntu@10.100.100.9:8022
   vpn_ip: 10.100.100.9
-  previous_vpn_ip: 10.100.100.6
+  legacy_ssh: ubuntu@10.100.100.6:8022
+  legacy_vpn_ip: 10.100.100.6
   home_lan_reserved_ip: 192.168.1.9
   home_lan_mac: 8A:DE:15:16:1B:3B
 platform:
@@ -31,10 +32,11 @@ notes:
   last_readdressed: 2026-07-10
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-S23
-  dns_validation: "2026-07-10: canonical wg100 DNS server for mobile peers is 10.100.100.1; the S23 is now live on 10.100.100.9 and resolved through the current hub/client profile."
-  client_config: "S23 client profile now uses 10.100.100.9/32 with wg100 plus OCI/DRG AllowedIPs as of 2026-07-10."
-  live_handshake: "2026-07-10: peer9 is live; hub shows fresh endpoint/handshake for 10.100.100.9 and SSH on port 8022 responds."
-  legacy_wireguard_ip: "10.100.100.6 kept only as historical/rollback context after the 2026-07-10 cutover to 10.100.100.9."
+  dns_validation: "2026-07-10: inside the S23 Termux session, hostname resolution for `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv` returned the OCI-private targets `10.11.1.11`, `10.12.1.12`, `10.13.1.13`, and `10.21.1.21`, while the tunnel DNS path remained `10.100.100.1`."
+  client_config: "2026-07-10: S23 Termux now handshakes on 10.100.100.9/32 after the BE3-aligned renumbering; old 10.100.100.6/32 and 10.1.1.6:8022 are legacy history."
+  live_handshake: "2026-07-10: srv1 saw a recent handshake for 10.100.100.9/32; srv1 and W11 reached 10.100.100.9 by ICMP, and W11 reached TCP 8022."
+  legacy_wireguard_note: "Previous S23 edge IP 10.100.100.6/32 is historical evidence from the pre-cutover state."
+  current_wireguard_state: "Live edge IP is 10.100.100.9/32 and bridge-side reachability is green. The remaining gate for full handset-side proof is route scope: the active profile still behaves like `AllowedIPs = 10.100.100.0/24` instead of including the OCI-private CIDRs."
   codex_gbrain_obsidian: "2026-06-26: Codex and Hermes configured with GBrain and Obsidian MCP bridges over restricted SSH to SRV1."
   retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.6 references are historical evidence only."
   home_proxy_pptp: "2026-07-10: BE3 static reservation confirmed for residential PPTP spike: 192.168.1.9 / 8A:DE:15:16:1B:3B. This is home LAN only, not OCI/DRG identity."

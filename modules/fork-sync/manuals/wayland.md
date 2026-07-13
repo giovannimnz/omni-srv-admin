@@ -39,6 +39,10 @@ ser escolhida enquanto o caminho OCI/DRG estiver disponível.
   `WAYLAND_DISABLE_AUTO_UPDATE=1`.
 - `Conversar na pasta` fica visível no WebUI e usa `/home/ubuntu/Servers` (`~/Servers`) como
   diretório inicial.
+- Workspaces NFS em `/home/ubuntu/Servers/<host>/GitHub/...` agora carregam um
+  contrato híbrido por padrão: o agente edita no mount e usa o alias SSH do
+  host dono para validar em `/home/ubuntu/GitHub/...` ou
+  `/home/horistic/GitHub/...`, conforme o mount.
 - Sem preferência salva, a tela de login entra em `pt-BR`.
 - A detecção do servidor oferece apenas os CLIs canônicos `Codex` e
   `Hermes Agent`; Gemini CLI permanece desativado.
@@ -92,6 +96,14 @@ Os paths protegidos carregam 4 grupos de customização:
    `tests/unit/WebSocketManager.test.ts`,
    `tests/unit/renderer/GuidActionRow.dom.test.tsx`.
 3. Codex ACP e boot/runtime hardening:
+
+   - source of truth: full-history subtree
+     `/home/ubuntu/GitHub/wayland/codex-acp`;
+   - build/test/install: `scripts/atius-build-codex-acp.sh`, sob o limite de
+     20% da CPU total;
+   - runtime entrypoint: `/home/ubuntu/.local/bin/codex-acp-atius`;
+   - o checkout irmão `/home/ubuntu/GitHub/codex-acp` foi aposentado e nao pode
+     voltar a ser dependencia do Wayland ou OpenClaw;
    `src/process/agent/acp/AcpDetector.ts`,
    `src/process/utils/shellEnv.ts`,
    `src/process/webserver/routes/apiRoutes.ts`,
@@ -104,6 +116,7 @@ Os paths protegidos carregam 4 grupos de customização:
    `src/process/task/hermesConfig.ts`,
    `src/renderer/components/agent/AgentModeSelector.tsx`,
    `src/renderer/components/agent/MarqueePillLabel.tsx`,
+   `tests/unit/AcpAgentManagerSkillInjection.test.ts`,
    `src/renderer/pages/guid/GuidPage.tsx`,
    `src/renderer/pages/guid/components/GuidModelSelector.tsx`,
    `src/renderer/pages/guid/hooks/useGuidAgentSelection.ts`,
@@ -139,6 +152,9 @@ Além de proteger os arquivos, o lane agora também atualiza a personalização
 reaplicável. O script canônico é:
 
 ```bash
+bash scripts/atius-build-codex-acp.sh --test --force
+bash scripts/atius-verify-codex-acp.sh --live
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/atiusCodexAcpRuntime.test.ts tests/unit/acpConnectors.test.ts
 bash scripts/atius-refresh-source-patch.sh
 ```
 
@@ -179,7 +195,7 @@ cd /home/ubuntu/GitHub/wayland
 bash scripts/atius-refresh-source-patch.sh --commit-if-changed
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
-NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AcpAgentManagerSkillInjection.test.ts tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
 sudo systemctl restart wayland.service

@@ -457,4 +457,5 @@ def test_offline_validation_harness_passes_all_contract_scenarios():
         "M004-OFF-05",
         "M004-OFF-06",
         "M004-OFF-07",
+        "M004-OFF-08",
     }

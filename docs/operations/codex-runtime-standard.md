@@ -109,6 +109,68 @@ Do not use this profile to chase 1M context. In the current Codex local catalog,
 - Do not re-add `[notice.model_migrations]` mapping `gpt-5.4` to `gpt-5.5` on these machines.
 - Keep `service_tier = "normal"` as the fleet default. Fast/priority is not the canonical baseline.
 - Lower `model_auto_compact_token_limit` as reasoning effort rises. Do not push `xhigh` to `900000`.
+
+### SRV-3 Codex 0.144.1 compatibility exception
+
+On `atius-srv-3`, Codex `0.144.1` warns that explicit
+`service_tier = "normal"` is not advertised for `gpt-5.4` and omits it from
+requests. The base config and four profiles therefore omit this key; omitted
+means standard routing and does not opt into Fast/priority. The runtime also
+uses `[features].hooks`, not deprecated `[features].codex_hooks`.
+
+Canonical binaries on 2026-07-12:
+
+- `/home/ubuntu/.local/bin/codex` -> `0.144.1`
+- login `zsh` `codex` -> `0.144.1`
+- `/usr/local/bin/codex` -> the same user-managed `0.144.1`
+
+The build CPU guard resolves `npm` and `npx` to the newest installed NVM
+runtime and prepends that NVM `bin` directory before execution. This keeps
+build/install commands under the 20 percent cgroup while ensuring `npm root
+-g`, `codex update`, and the running Codex package share the same prefix.
+
+The Cloudflare plugin and its OAuth MCP are disabled only on the Wayland
+runtime. Cloudflare automation continues through the Vault-hydrated ATIUS
+control path; re-enable the plugin only when a headless Chromium OAuth session
+can complete `codex mcp login cloudflare-api`.
+
+Validation on `atius-srv-3`:
+
+- native `gpt-5.6-sol` -> `GPT56_NATIVE_OK`
+- `codex doctor --summary --ascii --no-color` -> `18 ok`, `0 warn`, `0 fail`
+- TUI startup smoke -> no `codex_hooks`, Cloudflare login, or unsupported
+  service-tier warning
+
+## MCP approval standard
+
+Keep MCP approval handling aligned to this baseline on every Codex host:
+
+```toml
+approval_policy = "never"
+approvals_reviewer = "auto_review"
+```
+
+For every configured MCP server table, keep:
+
+```toml
+default_tools_approval_mode = "approve"
+```
+
+For `chrome-devtools`, keep per-tool overrides for the common browser actions used in live sessions, such as:
+
+```toml
+[mcp_servers.chrome-devtools.tools.click]
+approval_mode = "approve"
+```
+
+This does two things:
+
+- normal MCP tool calls do not stop to ask the human by default
+- if an MCP tool still triggers an approval path because of server/tool semantics, Codex routes it to `auto_review` instead of prompting the user directly
+
+Operational caveat:
+
+- OpenAI docs still reserve the right for destructive app/MCP tool calls to require approval when the tool advertises destructive annotations. In practice, the fleet baseline above is the strongest supported "do not ask the human" posture for Codex config.
 - Keep heavy MCPs out of the default startup path. Use `docs/operations/codex-mcp-startup-standard.md` for the current MCP split, smoke checks, Cloudflare vault launcher, and rollback.
 
 ## Validation
@@ -141,6 +203,7 @@ CODEX_BIN="$(command -v codex || ls "$HOME"/.nvm/versions/node/*/bin/codex 2>/de
 - `atius-srv-2`: base config and all 4 profiles applied; doctor loaded the config successfully.
 - `atius-srv-3`: base config and all 4 profiles applied; doctor loaded the config successfully.
 - `horistic-srv`: base config and all 4 profiles applied; standalone `codex` resolved to `0.142.5`, non-interactive `zsh` PATH was fixed with `~/.zshenv`, old NVM `@openai/codex` was removed, and `doctor` passed with `0 fail`.
+- 2026-07-12: MCP approval policy normalized across local W11 + `atius-srv-1/2/3` + `horistic-srv`: `approval_policy = "never"`, `approvals_reviewer = "auto_review"`, and `default_tools_approval_mode = "approve"` on configured MCP servers. Goal: stop human approval prompts such as `chrome-devtools` `click`.
 
 ## Backups
 
@@ -168,4 +231,3 @@ Audit and enforcement completed across `GIOVANNI-W11-PC`, `atius-srv-1`, `atius-
 - Final verification: `NON_NORMAL_COUNT = 0` for active Codex TOML files with `service_tier`, excluding backups/cache/temp.
 - Detailed evidence: `docs/operations/codex-service-tier-audit-2026-07-04.md`.
 - DbOmniFleet policy registered via `omni fleet registry upsert-policy` with `target_id = codex-service-tier`.
-

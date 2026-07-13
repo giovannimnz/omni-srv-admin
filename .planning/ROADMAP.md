@@ -4,16 +4,118 @@
 **Milestone Goal:** Tornar DNS interno, nomes de maquinas e endpoints de servicos DRG/OCI-first, mantendo `wg100` apenas como fallback e removendo `10.1.1.0/24` de qualquer caminho ativo.
 **Milestone Branch Matrix:** `.planning/MILESTONES.md`
 **Requirements:** `.planning/REQUIREMENTS.md`
-**Execution order:** Source-of-truth cleanup -> live resolver cutover -> Cloudflare/internal DNS boundary -> drift automation and durable closeout
+**Execution order:** planning/source-of-truth convergence -> `oci-admin` DRG dependency gate -> internal DNS/resolver cutover -> fallback boundaries and durable closeout
 
 ---
 
+## Historical Phase Registry (01-27)
+
+These phases remain in their original numbers because their directories,
+commits, runbooks and incident evidence are historical identifiers. They are
+listed here so GSD health and operators can distinguish retained history from
+orphaned planning. Superseded means a later canonical phase owns any remaining
+work; it does not erase the earlier implementation evidence.
+
+## Phase 01: Preparacao do Host
+
+**Status:** Complete - historical foundation. Retroactive validation is in
+`.planning/phases/01-preparacao-do-host/01-VALIDATION.md`.
+
+## Phase 02: Migracao Apache2 para Portas Alternativas
+
+**Status:** Complete - historical foundation; retained as executed evidence.
+
+## Phase 03: FreeIPA Server Container (Legacy Plan)
+
+**Status:** Superseded by Phases 33-34. The incomplete legacy plans are kept as
+research history and are not in the active execution queue.
+
+## Phase 08: Rebrand and Fork-Sync Integration
+
+**Status:** Complete - M002 historical delivery.
+
+## Phase 09: Mission Guardian / Omni CLI Expansion
+
+**Status:** Archived into M003. Later fleet-control and production-guard phases
+own current behavior; unsummarized plans are validation debt, not active work.
+
+## Phase 12: Omni Fleet Control Plane
+
+**Status:** Complete - live implementation validated under M004.
+
+## Phase 13: K3s HA and Portainer OCI
+
+**Status:** Complete base rollout. Deferred cloud rollback/observability gates
+are tracked separately and do not reopen the bootstrap phase.
+
+## Phase 14: Resource Governor and PM2 Boot Hardening
+
+**Status:** Complete base hardening. Remaining operational follow-ups are
+tracked by their owning production phases.
+
+## Phase 15: M005 OCI Snapshots
+
+**Status:** Procedurally complete; real restore drills remain explicit live
+gates in the runbook.
+
+## Phase 16: M005 Cloudflare Access
+
+**Status:** Procedurally complete; dashboard-side publication remains a gated
+operation.
+
+## Phase 17: M005 Observability and RWX
+
+**Status:** Procedurally complete; production provisioning remains a gated
+follow-up.
+
+## Phase 18: Ubuntu Pro / ESM Apps Legacy Track
+
+**Status:** Superseded by Phases 28-29, which contain the canonical four-host
+upgrade and validation evidence.
+
+## Phase 19: Fleet Standardization
+
+**Status:** Complete.
+
+## Phase 20: Podman Networking Standardization
+
+**Status:** Complete.
+
+## Phase 21: MT5 KVM Fleet Onboarding
+
+**Status:** Complete for the delivered onboarding scope; later network blocks
+remain inventory state, not unfinished Phase 21 execution.
+
+## Phase 22: Horistic Rename and Rust/Zellij
+
+**Status:** Complete.
+
+## Phase 23: Omni Fleet Governance Legacy Plan
+
+**Status:** Superseded by canonical governance Phases 30-32. Retained plans are
+historical design input and are not executable queue entries.
+
+## Phase 24: Production Recovery Guard Foundation (Legacy Number)
+
+**Status:** Complete implementation source; canonized as Phase 37.
+
+## Phase 25: Production Guard Repair Engine (Legacy Number)
+
+**Status:** Complete implementation source; canonized as Phase 38.
+
+## Phase 26: Production Guard Boot/Login Protocol (Legacy Number)
+
+**Status:** Complete implementation source; canonized as Phase 39.
+
+## Phase 27: Production Guard Horistic Remote and Rename Drift (Legacy Number)
+
+**Status:** Complete implementation source; canonized as Phase 40.
+
 ## Milestone v1.2 Carry-over
 
-The v1.2 phases below remain valid as canonized history. v1.3 shipped, Phase 43
-also shipped out of sequence for runtime reasons, and the active operator focus
-is now Phase 45 because DNS/DRG canonicalization gates safe continuation of
-Phase 42 and Phase 44.
+The v1.2 phases below remain valid as canonized history. v1.3 and Phase 45
+shipped, while unfinished work from Phase 42 and Phase 44 now continues only
+through the ordered v1.8 phases 50 and 47 respectively.
 
 ## Phase 28: G18 Ubuntu Pro/ESM Fleet Gates ✅ COMPLETE
 
@@ -68,7 +170,7 @@ Phase 42 and Phase 44.
 
 ---
 
-### Phase 29.1: Obsidian ARM64 AppImage pilot without Snap on atius-srv-1 (INSERTED)
+## Phase 29.1: Obsidian ARM64 AppImage pilot without Snap on atius-srv-1 (INSERTED)
 
 **Goal:** Validar no `atius-srv-1` uma instalacao ARM64 do Obsidian sem Snap, preservando integralmente `~/GitHub/obsidian-vault/` e deixando instalacao, update, rollback, desktop launcher e futura replicacao sob gerenciamento versionado.
 **Requirements:** GOV-03, GOV-04, GOV-05
@@ -406,7 +508,7 @@ Phase 42 and Phase 44.
 
 **Requirements:** SSO-01, SSO-02, SSO-03, SSO-04, SSO-05, SSO-06
 **Depends on:** Phase 36 Keycloak/FreeIPA coexistence, ATS current SSO/JWT cookie flow, Apache/Cloudflare edge inventory
-**Status:** In Progress
+**Status:** Historical partial; continuation moved to Phase 50. Plans 42-01 and 42-02 remain completed evidence, while 42-03 is not executed in place.
 **Risk:** HIGH — mexe em identidade, cookies `.atius.com.br`, redirect/login cross-subdomain e apps de trading live; qualquer cutover deve ser gateado e reversivel.
 
 **Canonical refs:**
@@ -502,7 +604,7 @@ Phase 42 and Phase 44.
 
 **Requirements:** PKI-01, PKI-02, PKI-03, PKI-04, PKI-05, PKI-06, PKI-07, PKI-08
 **Depends on:** Phase 31 Omni Fleet desired-state/update-plan foundation, Phase 41 TEI service context, `docs/operations/rdp-trust-pki.md`, `docs/security/atius-secrets-vaults.md`
-**Status:** In Progress
+**Status:** Historical partial; continuation moved to Phase 47. Plan 44-01 remains completed evidence, while 44-02 and 44-03 are not executed in place.
 **Risk:** HIGH - mexe em CA interna, trust store, chaves privadas, HTTPS interno e validacao cross-host; erro aqui pode criar falsa confianca ou quebrar clientes TLS.
 
 **Canonical refs:**
@@ -563,47 +665,55 @@ Phase 42 and Phase 44.
 **Goal:** Fazer `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e clientes internos resolverem nomes curtos e `*.atius.internal` para os IPs privados OCI/DRG, usando `10.11.1.11:53` como DNS interno canonico e mantendo WireGuard `wg100` apenas como fallback documentado.
 
 **Requirements:** DNS-01, DNS-02, DNS-03, DNS-04, DNS-05, DNS-06, DNS-07, DNS-08
-**Depends on:** Phase 41 TEI context, Phase 43 MCP bootstrap, Phase 44 PKI surface, `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md`, `docs/operations/ATIUS-INTERNAL-DNS-CANONICALIZATION-PLAN.md`
-**Status:** Planned
+**Depends on:** Phase 41 TEI context, Phase 43 MCP bootstrap, Phase 44 PKI surface, `C:\Users\muniz\Documents\GitHub\oci-admin` DRG/OCI evidence, `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md`
+**Status:** Complete
 **Risk:** HIGH - DNS/resolver drift pode quebrar acesso a DB, Vault, Obsidian, TEI, SSO e automacoes Codex; live resolver mutation precisa de rollback por host.
 
 **Canonical refs:**
 
-- `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md` - contrato publico Cloudflare vs DNS interno.
-- `docs/operations/ATIUS-INTERNAL-DNS-CANONICALIZATION-PLAN.md` - ondas de execucao e validacao.
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-PLAN.md` - plano executavel canonico.
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-VALIDATION.md` - matriz de validacao de fechamento.
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-SESSION-INTAKE.md` - intake das sessoes Codex revisadas.
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-CROSS-PROJECT-DEPENDENCIES.md` - contrato `omni-srv-admin` / `oci-admin`.
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-REVIEWS.md` - convergencia manual de review.
+- `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md` - runbook publico Cloudflare vs DNS interno.
+- `docs/operations/ATIUS-INTERNAL-DNS-CANONICALIZATION-PLAN.md` - referencia/runbook legado; nao e a fonte de execucao da fase.
 - `docs/operations/ATIUS-DRG-DNS-SESSION-LEARNINGS.md` - decisoes e aprendizados da migracao.
 - `docs/operations/ATIUS-FLEET-NETWORK-PORT-MAP.md` - mapa operacional de portas e endpoints.
 - `inventory/hosts/*.yaml` - fonte versionada de `oci_private_ip` e excecoes.
-- `.planning/phases/45-internal-dns-drg-canonicalization/45-PLAN.md` - plano executavel.
 
-**Plans:** 0/4 tasks complete
+**Plans:** 4/4 tasks complete
 
-- [ ] 45-01 - Repo/source-of-truth cleanup and `10.1.1.x` classification
-- [ ] 45-02 - Live Linux/Windows resolver cutover with rollback
-- [ ] 45-03 - Internal DNS authority and Cloudflare boundary hardening
-- [ ] 45-04 - Drift automation, validation matrix and Obsidian/GBrain closeout
+- [x] 45-01 - Planning/source-of-truth convergence, session intake and AGENTS parity
+- [x] 45-02 - `oci-admin` DRG dependency gate and edge-client proof
+- [x] 45-03 - Internal DNS/resolver cutover with hostname ping validation
+- [x] 45-04 - Fallback boundaries, drift automation, remote merge queue and Obsidian/GBrain closeout
 
-**Wave 1 - Source of truth**
+**Wave 1 - Planning source of truth**
 
-- [ ] 45-01 - Align inventory, docs, scripts and validators to `oci_private_ip` primary and `wg100` reserve.
+- [x] 45-01 - Record cross-session intake, enable plan convergence, make `.planning` canonical and fix local AGENTS drift.
 
-**Wave 2 - Resolver cutover**
+**Wave 2 - OCI dependency gate**
 
-- [ ] 45-02 - Fix live resolver drift on SRV-1/SRV-2/SRV-3/Horistic and validate Windows exception.
+- [x] 45-02 - Prove DRG routes/security/private IPs in `oci-admin`, classify W11/S23 edge state and block DNS cutover if OCI evidence is incomplete.
 
-**Wave 3 - DNS authority and public boundary**
+**Wave 3 - Internal DNS/resolver cutover**
 
-- [ ] 45-03 - Ensure `10.11.1.11:53` serves short names and `*.atius.internal`; keep Cloudflare public-only.
+- [x] 45-03 - Ensure `10.11.1.11:53` serves short names and `*.atius.internal`, then validate `ping atius-srv-1` and service reachability.
 
 **Wave 4 - Automation and closeout**
 
-- [ ] 45-04 - Add drift checks, run validation matrix, update Obsidian/GBrain, and leave both checkouts clean.
+- [x] 45-04 - Add drift checks, keep home-proxy/Wayland in the correct lanes, reconcile the remote dirty worktree queue, update Obsidian/GBrain, and leave parity evidence.
 
 **Cross-cutting constraints:**
 
 - `10.1.1.0/24` is retired. Do not reintroduce it as live compatibility, rollback, resolver, validation, or service path.
 - `10.100.100.0/24` is reserve fallback only. `GIOVANNI-W11-PC` may stay on reserve until direct DRG reachability is proven.
 - Public `atius.com.br` DNS stays Cloudflare-managed; internal hostnames and private IP identity stay in internal DNS/inventory.
+- Phase planning stays in `.planning`; docs are runbooks/evidence, not the source of execution order.
+- `oci-admin` must prove OCI/DRG route/security/private-IP state before live resolver cutover is considered complete.
+- Home-proxy/PPTP residential LAN reservations are home-edge fallback only and must not become internal DNS/DRG authority.
+- Wayland GSD skill/runtime work is tracked as a parallel operator-runtime dependency, not a DNS blocker.
 - No secret values may enter Git, `.planning`, Obsidian, GBrain, logs or shell history.
 - Live resolver changes require per-host before/after evidence and a rollback path.
 
@@ -612,11 +722,109 @@ Phase 42 and Phase 44.
 1. `rg -n "10\.1\.1\."` returns only historical/retired references or tracked cleanup notes, not active config or validation.
 2. `dig +short @10.11.1.11 atius-srv-1 atius-srv-2 atius-srv-3 horistic-srv` maps to `10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.21.1.21`.
 3. Linux `getent hosts` on SRV-1/SRV-2/SRV-3/Horistic resolves short names to OCI/DRG IPs.
-4. PgBouncer, Obsidian, Vault and TEI validations prefer `10.11.1.11:6432`, `10.11.1.11:27124`, `10.13.1.13:8202`, `10.21.1.21:3115`.
-5. Cloudflare docs list public `atius.com.br` records only; internal host identity is not delegated to Cloudflare.
-6. Watchdog scripts and resolver configs cannot reapply `10.1.1.2` or make `10.100.100.1` primary.
-7. `GIOVANNI-W11-PC` has explicit status: direct DRG validated or reserve exception retained with next action.
-8. Repo, Obsidian and GBrain all contain the final canonical DNS model and validation evidence.
+4. `ping atius-srv-1` and equivalent short-hostname tests resolve through internal DNS from Linux and Windows validation points; ICMP failures are classified separately from DNS failures.
+5. PgBouncer, Obsidian, Vault and TEI validations prefer `10.11.1.11:6432`, `10.11.1.11:27124`, `10.13.1.13:8202`, `10.21.1.21:3115`.
+6. Cloudflare docs list public `atius.com.br` records only; internal host identity is not delegated to Cloudflare.
+7. Watchdog scripts and resolver configs cannot reapply `10.1.1.2` or make `10.100.100.1` primary.
+8. W11 and S23 have explicit edge-client status: W11 bridge path validated; S23 handset-side outbound proof captured or retained as blocker.
+9. Repo, `oci-admin`, Obsidian and GBrain all contain the final canonical DNS model, responsibility split and validation evidence.
+
+## Milestone v1.8: Runtime Trust and Codex Delivery Convergence
+
+**Milestone Goal:** Close the remaining trust/runtime gates in their actual
+operational order without rewriting historical phase identifiers: reconcile
+planning, close service PKI, converge native Codex OAuth plus remote ACP, add
+Headroom through an isolated canary, then close the SSO publication carry-over.
+
+**Execution lanes:** Phases 46-47 are complete. Phase 48 is the current
+Codex/Wayland infrastructure gate. Phase 49 remains the isolated Headroom lane. Phase 50 closes
+the independent SSO carry-over after PKI. A phase cannot bypass its own stop
+conditions merely because another lane is ready.
+
+- [x] Phase 46: Planning Surface Reconciliation and Validation Architecture
+- [x] Phase 47: Internal Service PKI Listener and Trust Closeout
+- [ ] Phase 48: Codex OAuth and Wayland Remote ACP Convergence
+- [ ] Phase 49: Wayland Codex Headroom Canary and Integration
+- [ ] Phase 50: Atius-wide SSO Publication Closeout
+
+## Phase 46: Planning Surface Reconciliation and Validation Architecture
+
+**Goal:** Restore a healthy, complete and dependency-correct GSD planning surface without renaming historical evidence.
+**Requirements:** PLN-01, PLN-02, PLN-03, PLN-04, PLN-05
+**Depends on:** Phase 45 closeout evidence
+**Status:** Complete
+**Risk:** MEDIUM - incorrect renumbering can orphan executed evidence or make
+GSD report false completion.
+**Plans:** 1/1 complete
+
+- [x] 46-01 - Reconcile historical registry, active ordering, requirements,
+  state/config and per-phase validation contracts.
+
+**Validation:** `.planning/phases/46-planning-surface-reconciliation/46-VALIDATION.md`
+
+## Phase 47: Internal Service PKI Listener and Trust Closeout
+
+**Goal:** Finish host-specific service certificate binding and fleet trust proof on canonical DRG endpoints.
+**Requirements:** PKI-01, PKI-02, PKI-03, PKI-04, PKI-05, PKI-06, PKI-07, PKI-08
+**Depends on:** Phases 44-01 and 45
+**Status:** Complete 2026-07-12
+**Risk:** HIGH - listener certificate changes can break Vault, Obsidian and
+fleet automation.
+**Plans:** 1/1 complete
+
+- [x] 47-01 - Bind issued service leaf/chains, install trust, prove the 4x4
+  matrix and Windows HTTPS without insecure verification.
+
+**Validation:** `.planning/phases/47-internal-service-pki-closeout/47-VALIDATION.md`
+**Verification:** `.planning/phases/47-internal-service-pki-closeout/47-VERIFICATION.md`
+
+## Phase 48: Codex OAuth and Wayland Remote ACP Convergence
+
+**Goal:** Make native Codex OAuth, models and local/remote ACP reliable before any proxy layer is introduced.
+**Requirements:** WAC-01, WAC-02, WAC-03, WAC-04, WAC-05, WAC-06, WAC-07, WAC-08
+**Depends on:** Router Phase 32 completion, ownership release from sessions
+`019f3e9a-9964-7912-a982-65596e9954d3` and
+`019f2ba1-1982-7c03-a17d-3ce28c589ac1`, native Codex model parity
+**Status:** Current - target ownership, native gpt-5.6-sol and Wayland port 25725 parity pass; Router Phase 32 evidence, CPU-capped Go executor repair and full local/remote ACP lifecycle remain
+**Risk:** HIGH - auth or ACP regressions can break every Wayland Codex session.
+**Plans:** 0/2 complete
+
+- [ ] 48-01 - Reconcile Router evidence, renew native ubuntu OAuth, and prove native plus local ACP without Headroom.
+- [ ] 48-02 - Prove authenticated remote WSS, Wayland Chromium lifecycle, and sanitized closeout before Phase 49 can open.
+
+**Validation:** `.planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md`
+
+## Phase 49: Wayland Codex Headroom Canary and Integration
+
+**Goal:** Route the Codex CLI used by Wayland through a pinned, isolated and reversible Headroom canary.
+**Requirements:** HDR-01, HDR-02, HDR-03, HDR-04, HDR-05, HDR-06, HDR-07, HDR-08
+**Depends on:** Phase 48
+**Status:** Planned
+**Risk:** HIGH - Headroom mutates Codex provider/config state and proxies HTTP
+plus WebSocket traffic.
+**Plans:** 0/1 complete
+
+- [ ] 49-01 - Install pinned Headroom canary, prove direct Codex transport,
+  then ACP and Wayland integration with rollback rehearsal.
+
+**Validation:** `.planning/phases/49-wayland-codex-headroom/49-VALIDATION.md`
+
+## Phase 50: Atius-wide SSO Publication Closeout
+
+**Goal:** Close the remaining SSO publication, redirect, logout and RBAC gates after PKI trust is valid.
+**Requirements:** SSO-01, SSO-02, SSO-03, SSO-04, SSO-05, SSO-06
+**Depends on:** Phase 47 and completed Phase 42 plans 42-01/42-02
+**Execution order:** After Phase 49; the PKI dependency is already satisfied,
+but the operator queue remains 48 -> 49 -> 50.
+**Status:** Queued after Phase 49 - continuation of 42-03
+**Risk:** HIGH - redirect, cookie or RBAC regressions can lock operators out of
+multiple production applications.
+**Plans:** 0/1 complete
+
+- [ ] 50-01 - Execute the remaining edge/Keycloak/app-host publication gate,
+  cross-domain logout and RBAC-compatible validation.
+
+**Validation:** `.planning/phases/50-atius-wide-sso-closeout/50-VALIDATION.md`
 
 ## Phase Summary
 
@@ -637,12 +845,17 @@ Phase 42 and Phase 44.
 | 39 | Production Guard Boot/Login | Read-only boot/login protocol | PRG-04 | Complete | MEDIUM |
 | 40 | Production Guard Horistic Remote | Remote checks + webhook-safe | PRG-05..PRG-07 | Complete | MEDIUM |
 | 41 | Local AI Embeddings Gateway | TEI backend + New API alias + client migration | EMB-01..EMB-08 | Complete | HIGH |
-| 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | In Progress | HIGH |
+| 42 | Atius-wide SSO Login | `sso.atius.com.br` + Keycloak/OIDC + ATS reference migration | SSO-01..SSO-06 | Historical partial; continues in 50 | HIGH |
 | 43 | Codex MCP Bootstrap Hardening | Lean default startup + opt-in MCP profiles + cold-start smoke | CDX-01..CDX-06 | Complete | HIGH |
-| 44 | Internal Service PKI and Fleet Trust | Per-host service leaf certs + internal CA trust + 4x4 HTTPS validation | PKI-01..PKI-08 | In Progress | HIGH |
-| 45 | Internal DNS and DRG Canonicalization | DRG/OCI DNS, resolver and service endpoint canonicalization | DNS-01..DNS-08 | Planned | HIGH |
+| 44 | Internal Service PKI and Fleet Trust | Per-host service leaf certs + internal CA trust + 4x4 HTTPS validation | PKI-01..PKI-08 | Historical partial; continues in 47 | HIGH |
+| 45 | Internal DNS and DRG Canonicalization | DRG/OCI DNS, resolver and service endpoint canonicalization | DNS-01..DNS-08 | Complete | HIGH |
+| 46 | Planning Surface Reconciliation | Historical registry, active order and validation architecture | PLN-01..PLN-05 | Complete | MEDIUM |
+| 47 | Internal Service PKI Closeout | Listener leaf/chain binding and trust proof | PKI-01..PKI-08 | Complete 2026-07-12 | HIGH |
+| 48 | Codex OAuth and Wayland ACP Convergence | Router OAuth, native Codex and remote ACP parity | WAC-01..WAC-08 | Executing | HIGH |
+| 49 | Wayland Codex Headroom | Isolated canary, ACP integration and rollback | HDR-01..HDR-08 | Blocked by Phase 48 | HIGH |
+| 50 | Atius-wide SSO Closeout | Remaining publication, redirect, logout and RBAC gate | SSO-01..SSO-06 | Queued after Phase 49 | HIGH |
 
-**Total:** 19 phases | 62 requirements mapped | 16 complete / 3 open
+**Active v1.8:** 5 phases | 2 complete / 1 executing / 2 queued or gated
 
 ### Scope addendum - 2026-06-24
 

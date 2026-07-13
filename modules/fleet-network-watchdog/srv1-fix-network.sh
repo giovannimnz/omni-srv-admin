@@ -12,10 +12,11 @@
 # Estratégia:
 # 1. tailscale set --accept-dns=false (desabilita escrita no resolv.conf)
 # 2. tailscale set --operator=$USER (não pede mais sudo)
-# 3. Reescrever /etc/resolv.conf com 127.0.0.53 (systemd-resolved stub) + 10.11.1.11 (DNS canônico OCI/DRG) + 1.1.1.1 (fallback externo)
-# 4. Garantir DNSStubListener=yes em /etc/systemd/resolved.conf (Ubuntu default = no)
-# 5. Restart systemd-resolved
-# 6. Verificar dig/getent funcionando
+# 3. Fixar DNS= em /etc/systemd/resolved.conf com 10.11.1.11 + 1.1.1.1
+# 4. Reescrever /etc/resolv.conf com 127.0.0.53 (systemd-resolved stub) + 10.11.1.11 (DNS canônico OCI/DRG) + 1.1.1.1 (fallback externo)
+# 5. Garantir DNSStubListener=yes em /etc/systemd/resolved.conf (Ubuntu default = no)
+# 6. Restart systemd-resolved
+# 7. Verificar dig/getent funcionando
 #
 # Idempotente: pode rodar N vezes, sempre chega no estado bom.
 
@@ -46,7 +47,15 @@ if command -v tailscale >/dev/null 2>&1; then
   fi
 fi
 
-# 3. /etc/resolv.conf → 127.0.0.53 (systemd-resolved stub) + 1.1.1.1
+# 3. Fixar DNS= canônico no systemd-resolved
+CURRENT_DNS_LINE=$(grep -E "^DNS=" /etc/systemd/resolved.conf 2>/dev/null | tail -1 || true)
+if [[ "$CURRENT_DNS_LINE" != "DNS=10.11.1.11 1.1.1.1" ]]; then
+  log "Fixando systemd-resolved uplink DNS -> 10.11.1.11 + 1.1.1.1"
+  $SUDO sed -i '/^DNS=/d' /etc/systemd/resolved.conf
+  echo "DNS=10.11.1.11 1.1.1.1" | $SUDO tee -a /etc/systemd/resolved.conf > /dev/null
+fi
+
+# 4. /etc/resolv.conf → 127.0.0.53 (systemd-resolved stub) + 1.1.1.1
 log "Reescrevendo /etc/resolv.conf"
 $SUDO tee /etc/resolv.conf > /dev/null <<'EOF'
 # Managed by srv1-fix-network.sh (Filippo 2026-06-15)
@@ -60,7 +69,7 @@ options edns0 trust-ad
 search vcn01281103.oraclevcn.com
 EOF
 
-# 4. Garantir DNSStubListener=yes (Ubuntu default = no, queremos yes)
+# 5. Garantir DNSStubListener=yes (Ubuntu default = no, queremos yes)
 STUB_LINE=$(grep -E "^#?\s*DNSStubListener=" /etc/systemd/resolved.conf 2>/dev/null | head -1 || true)
 if [[ -z "$STUB_LINE" ]] || [[ "$STUB_LINE" == *"no"* ]] || [[ "$STUB_LINE" == *"#DNSStubListener="* ]]; then
   log "Habilitando DNSStubListener=yes"
@@ -69,17 +78,20 @@ if [[ -z "$STUB_LINE" ]] || [[ "$STUB_LINE" == *"no"* ]] || [[ "$STUB_LINE" == *
   echo "DNSStubListener=yes" | $SUDO tee -a /etc/systemd/resolved.conf > /dev/null
 fi
 
-# 5. Restart
+# 6. Restart
 if [[ $RESTART -eq 1 ]]; then
   log "Reiniciando systemd-resolved"
   $SUDO systemctl restart systemd-resolved
   sleep 2
 fi
 
-# 6. Verify
+# 7. Verify
 log "Verificando DNS"
 if ! getent hosts google.com >/dev/null 2>&1; then
   fail "DNS ainda quebrado após correções"
+fi
+if resolvectl dns 2>/dev/null | grep -q "10\.1\.1\.2"; then
+  fail "systemd-resolved ainda anuncia DNS legado 10.1.1.2"
 fi
 log "✓ DNS funcionando (google.com resolve)"
 

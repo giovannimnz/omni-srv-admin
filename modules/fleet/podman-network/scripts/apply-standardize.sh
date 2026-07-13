@@ -17,9 +17,9 @@ fi
 
 N=$1
 case $N in
-  1) HOST=10.1.1.1 ;;
-  2) HOST=10.1.1.2 ;;
-  3) HOST=10.1.1.7 ;;
+  1) HOST=10.11.1.11 ;;
+  2) HOST=10.12.1.12 ;;
+  3) HOST=10.13.1.13 ;;
 esac
 
 USER=ubuntu

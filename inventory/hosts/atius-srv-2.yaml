@@ -110,7 +110,7 @@ notes:
   knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
   codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
   wg100_readdress: "2026-07-10: `wg100`/10.100.100.2 remains reserve fallback only; the canonical private service path for SRV-2 is `oci_private_ip=10.12.1.12`."
-  dns_validation: "2026-07-10: on srv-2, dig @10.11.1.11 and dig @10.100.100.1 both resolve atius-srv-1/2/3 and horistic-srv to 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21; local resolvectl config still needs DRG promotion."
+  dns_validation: "2026-07-10: srv-2 now resolves through `systemd-resolved` with global DNS `10.11.1.11 1.1.1.1`; `getent hosts atius-srv-1 atius-srv-2 atius-srv-3 horistic-srv` and `ping atius-srv-1` return the OCI-primary targets."
   oci_primary_validation: "2026-07-08: attached secondary VNIC 10.12.1.12, added peer OCI CIDR routes, and validated connectivity to 10.11.1.11:{53,6432,27124}, 10.13.1.13:{8088,8202,8203}, and 10.21.1.21:3115."
   k3s_phase16_blocker: "2026-07-10: live K3s already reports INTERNAL-IP 10.12.1.12 and etcd binds both 10.12.1.12 and 10.100.100.2; remaining blocker is local resolver/env/docs drift that still prefer wg100."
 oci:
