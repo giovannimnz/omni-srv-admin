@@ -61,6 +61,10 @@ The srv2 placement preserves one 500m scheduling unit on `atius-srv-1` for
 node-pinned production workloads such as `router-ai-atius` without weakening
 the cluster `system-reserved` CPU margin.
 
+For the same capacity contract, Alertmanager is pinned to `atius-srv-2` and
+Grafana to `atius-srv-3`; their `local-path` PVCs must remain on the matching
+nodes and use reclaim policy `Retain` after migration.
+
 Prometheus/Grafana are planned through `kube-prometheus-stack` in namespace
 `monitoring`. Grafana uses a Kubernetes Secret for admin credentials and may be
 published only through Cloudflare Access. Prometheus and Alertmanager remain

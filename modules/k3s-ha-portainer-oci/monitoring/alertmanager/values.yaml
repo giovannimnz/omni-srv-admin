@@ -24,13 +24,13 @@
 
 alertmanager:
   alertmanagerSpec:
-    # We provision a single replica on atius-srv-1 to keep PVC usage
+    # We provision a single replica on atius-srv-2 to keep PVC usage
     # local-path-bounded. The chart already adds the alertmanager-* alerts
     # out of the box; we override the route + receivers here.
     replicas: 1
     retention: 120h
     nodeSelector:
-      kubernetes.io/hostname: atius-srv-1
+      kubernetes.io/hostname: atius-srv-2
     resources:
       requests:
         cpu: 450m

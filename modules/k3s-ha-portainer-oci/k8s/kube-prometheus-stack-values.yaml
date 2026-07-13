@@ -50,7 +50,7 @@ grafana:
       - ReadWriteOnce
     size: 10Gi
   nodeSelector:
-    kubernetes.io/hostname: atius-srv-1
+    kubernetes.io/hostname: atius-srv-3
 
 alertmanager:
   enabled: true
@@ -58,7 +58,7 @@ alertmanager:
     replicas: 1
     retention: 120h
     nodeSelector:
-      kubernetes.io/hostname: atius-srv-1
+      kubernetes.io/hostname: atius-srv-2
     resources:
       requests:
         cpu: 450m
