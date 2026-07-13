@@ -56,6 +56,20 @@ ATIUS_ROUTER_DOCS_PROTECTED_FILES = [
     *ATIUS_ROUTER_DOCS_LINK_FILES,
     "scripts/smoke-docs-links.sh",
 ]
+ATIUS_ROUTER_PT_BR_REQUIRED_FILES = [
+    "i18n/locales/pt.yaml",
+    "i18n/i18n.go",
+    "web/default/src/i18n/config.ts",
+    "web/default/src/i18n/languages.ts",
+    "web/default/src/i18n/locales/pt.json",
+    "web/default/scripts/sync-i18n.mjs",
+    "web/classic/src/i18n/i18n.js",
+    "web/classic/src/i18n/language.js",
+    "web/classic/src/i18n/locales/pt.json",
+    "web/classic/src/components/layout/headerbar/LanguageSelector.jsx",
+    "web/classic/src/components/settings/personal/cards/PreferencesSettings.jsx",
+    "scripts/smoke-pt-br-i18n.sh",
+]
 SECRET_VALUE_PATTERNS = [
     re.compile(
         r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----\s+"
@@ -277,6 +291,129 @@ def _atius_router_docs_link_violations(repo: Path) -> list[Path]:
     return violations
 
 
+def _translation_map(path: Path) -> dict[str, Any]:
+    data = _load_json(path)
+    translation = data.get("translation")
+    return translation if isinstance(translation, dict) else {}
+
+
+def _flatten_locale(data: dict[str, Any], prefix: str = "") -> dict[str, Any]:
+    flattened: dict[str, Any] = {}
+    for key, value in data.items():
+        path = f"{prefix}.{key}" if prefix else str(key)
+        if isinstance(value, dict):
+            flattened.update(_flatten_locale(value, path))
+        else:
+            flattened[path] = value
+    return flattened
+
+
+def _placeholders(value: Any) -> list[str]:
+    return sorted(re.findall(r"\{\{[^}]+\}\}", str(value)))
+
+
+def _locale_pair_violations(
+    base: dict[str, Any],
+    pt: dict[str, Any],
+    *,
+    pt_path: Path,
+    locale_name: str,
+    reject_empty_pt_values: bool = False,
+) -> list[tuple[Path, str]]:
+    violations: list[tuple[Path, str]] = []
+    base_flat = _flatten_locale(base)
+    pt_flat = _flatten_locale(pt)
+    if not base_flat or not pt_flat:
+        return [(pt_path, f"{locale_name} locale is empty or invalid")]
+    if set(base_flat) != set(pt_flat):
+        return [(pt_path, f"PT-BR {locale_name} keys differ from base locale")]
+    for key, base_value in base_flat.items():
+        pt_value = pt_flat[key]
+        if reject_empty_pt_values and (
+            pt_value is None or (isinstance(pt_value, str) and not pt_value.strip())
+        ):
+            violations.append((pt_path, f"empty PT-BR value for key: {key}"))
+            break
+        if _placeholders(base_value) != _placeholders(pt_value):
+            violations.append((pt_path, f"placeholder drift for key: {key}"))
+            break
+    return violations
+
+
+def _atius_router_pt_br_violations(repo: Path) -> list[tuple[Path, str]]:
+    violations: list[tuple[Path, str]] = []
+    for rel in ATIUS_ROUTER_PT_BR_REQUIRED_FILES:
+        if not (repo / rel).is_file():
+            violations.append((Path(rel), "required PT-BR file is missing"))
+
+    markers = {
+        "i18n/i18n.go": ["LangPt", "locales/pt.yaml", "strings.HasPrefix(lang, \"pt\")"],
+        "web/default/src/i18n/config.ts": [
+            "import pt from './locales/pt.json'",
+            "supportedLngs:",
+            "'pt'",
+        ],
+        "web/default/src/i18n/languages.ts": [
+            "code: 'pt', label: 'Português'",
+            "normalized.startsWith('pt')",
+        ],
+        "web/classic/src/i18n/i18n.js": ["ptTranslation", "pt: ptTranslation"],
+        "web/classic/src/i18n/language.js": ["'pt'", "lower.startsWith('pt')"],
+        "web/classic/src/components/layout/headerbar/LanguageSelector.jsx": [
+            "onLanguageChange('pt')",
+            "Português",
+        ],
+        "web/classic/src/components/settings/personal/cards/PreferencesSettings.jsx": [
+            "value: 'pt'",
+            "Português",
+        ],
+    }
+    for rel, expected in markers.items():
+        path = repo / rel
+        if not path.is_file():
+            continue
+        text = _read_text(path)
+        missing = [marker for marker in expected if marker not in text]
+        if missing:
+            violations.append((Path(rel), f"missing PT-BR registration: {missing[0]}"))
+
+    backend_base = _load_yaml(repo / "i18n/locales/en.yaml")
+    backend_pt = _load_yaml(repo / "i18n/locales/pt.yaml")
+    violations.extend(
+        _locale_pair_violations(
+            backend_base,
+            backend_pt,
+            pt_path=Path("i18n/locales/pt.yaml"),
+            locale_name="backend YAML",
+        )
+    )
+
+    locale_pairs = [
+        (
+            "web/default/src/i18n/locales/en.json",
+            "web/default/src/i18n/locales/pt.json",
+        ),
+        (
+            "web/classic/src/i18n/locales/en.json",
+            "web/classic/src/i18n/locales/pt.json",
+        ),
+    ]
+    for base_rel, pt_rel in locale_pairs:
+        base = _translation_map(repo / base_rel)
+        pt = _translation_map(repo / pt_rel)
+        violations.extend(
+            _locale_pair_violations(
+                base,
+                pt,
+                pt_path=Path(pt_rel),
+                locale_name="frontend JSON",
+                reject_empty_pt_values=True,
+            )
+        )
+
+    return violations
+
+
 def _add_issue(issues: list[dict[str, str]], code: str, message: str, path: Path | None = None) -> None:
     item = {"code": code, "message": message}
     if path:
@@ -348,6 +485,16 @@ def run_preflight(
         )
     elif any((repo_path / rel).exists() for rel in ATIUS_ROUTER_DOCS_LINK_FILES):
         checks.append({"check": "atius-router-docs-links", "status": "internal-only"})
+
+    is_atius_router = bool(
+        github_repo and github_repo.lower() == "giovannimnz/router-ai-atius"
+    )
+    if is_atius_router:
+        pt_br_violations = _atius_router_pt_br_violations(repo_path)
+        for path, message in pt_br_violations:
+            _add_issue(issues, "atius-router-pt-br-regression", message, path)
+        if not pt_br_violations:
+            checks.append({"check": "atius-router-pt-br", "status": "complete"})
 
     if secret_names is None:
         secret_names, secret_warning = _secret_names(github_repo)

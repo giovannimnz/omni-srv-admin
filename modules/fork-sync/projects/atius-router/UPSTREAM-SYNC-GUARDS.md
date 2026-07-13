@@ -31,6 +31,10 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
   `/docs.json`, `/docs/openapi.json`, `/json` and `/json/` must resolve to
   the docs app OpenAPI 3.x JSON, not to the Go SPA HTML and not to the retired
   `model-detailed` sidecar.
+- PT-BR is mandatory in backend, web/default and web/classic. A protected glob
+  is not sufficient by itself: `scripts/smoke-pt-br-i18n.sh` must pass after
+  every sync and the release preflight must reject missing registrations,
+  locale key drift or placeholder drift.
 
 ## Protected paths that carry this behavior
 
@@ -103,12 +107,23 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `docs/atius-router-docs/content/docs/pt/guide/project-introduction.mdx`
 - `docs/atius-router-docs/content/docs/pt/guide/technical-architecture.mdx`
 - `scripts/smoke-docs-links.sh`
+- `i18n/locales/pt.yaml`
+- `i18n/i18n.go`
+- `web/default/src/i18n/config.ts`
+- `web/default/src/i18n/languages.ts`
+- `web/default/src/i18n/locales/pt.json`
+- `web/default/scripts/sync-i18n.mjs`
+- `web/classic/src/i18n/`
+- `web/classic/src/components/layout/headerbar/LanguageSelector.jsx`
+- `web/classic/src/components/settings/personal/cards/PreferencesSettings.jsx`
+- `scripts/smoke-pt-br-i18n.sh`
 
 ## Required post-sync checks
 
 Run from `/home/ubuntu/GitHub/containers/router-ai-atius` after any upstream sync:
 
 ```bash
+scripts/smoke-pt-br-i18n.sh
 go test ./common ./controller ./service/modelcatalog ./relay/common ./relay/channel/minimax ./relay/channel/deepseek ./relay/channel/codex ./service ./service/embeddinggovernor ./relay -count=1
 python3 -m py_compile tools/clianything.py scripts/smoke-provider-consolidation.py scripts/smoke-embeddings.py
 python3 -m unittest discover -s tests -p 'test_clianything*.py'
