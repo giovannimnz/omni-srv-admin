@@ -20,7 +20,7 @@ persistence:
   storageClass: local-path
 
 nodeSelector:
-  kubernetes.io/hostname: atius-srv-1
+  kubernetes.io/hostname: atius-srv-2
 
 resources:
   requests:
