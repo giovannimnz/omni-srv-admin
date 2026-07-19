@@ -60,8 +60,9 @@ must not be selected as the primary path while OCI/DRG is available.
   narrowed desktop, or mobile drawer widths; long recents and footer controls
   must truncate or compact within the sidebar.
 - Conversations opened from a project, including projects backed by NFS
-  workspaces, must remain visible in the global Recent Chats list and badge;
-  team-scoped conversations remain isolated from the global sidebar.
+  workspaces, must remain visible in the global Recent Chats list and badge and
+  grouped under the Project name even when `customWorkspace=false`; team-scoped
+  conversations remain isolated from the global sidebar.
 - The desktop left sidebar divider must remain a real resize handle that
   persists `wayland:sidebar-width` while preserving the rail snap below the
   collapse threshold.
@@ -203,7 +204,8 @@ Expected result:
 - embedded adapter has no nested `.git`, Cargo/npm versions match, Rust tests
   pass, and the installed wrapper resolves the embedded build,
 - `vitest` passes.
-- project conversations appear in the global Recent Chats list and badge while
+- project conversations appear in the global Recent Chats list and badge,
+  grouped under the Project name even with `customWorkspace=false`, while
   team-scoped conversations remain isolated.
 - `typecheck` passes.
 - `wayland.service` is `active`.

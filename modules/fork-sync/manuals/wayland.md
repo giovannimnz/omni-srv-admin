@@ -1,6 +1,6 @@
 ---
 project: wayland
-version: 3
+version: 4
 created: 2026-07-04
 last_updated: 2026-07-19
 owner_module: omni-srv-admin/modules/fork-sync
@@ -58,8 +58,9 @@ ser escolhida enquanto o caminho OCI/DRG estiver disponível.
 - No mobile, os controles do composer e os intent pills quebram linha de forma
   visível; não dependem de scroll horizontal escondido.
 - Chats abertos a partir de projetos, inclusive em workspaces NFS, permanecem
-  visíveis na lista e no badge global de Recent Chats; chats de team continuam
-  isolados da lateral global.
+  visíveis na lista e no badge global de Recent Chats e agrupados sob o nome do
+  projeto mesmo com `customWorkspace=false`; chats de team continuam isolados
+  da lateral global.
 - O fork remoto existe em `https://github.com/giovannimnz/wayland`.
 - `origin` do checkout local aponta para esse fork, e `upstream` permanece em
   `FerroxLabs/wayland`.
@@ -171,7 +172,7 @@ atual entre `HEAD` e `upstream/main`, limitado aos arquivos protegidos que o
 auto-patcher sabe reaplicar. Esse patch agora cobre o browser picker, modelo
 separado de esforço, `config.toml` mode, Hermes effort e correções mobile da
 GUID, incluindo sidebar sem overflow horizontal, resize persistido e chats de
-projeto preservados na lista global de Recent Chats.
+projeto preservados e agrupados pelo projeto na lista global de Recent Chats.
 
 No `fork-sync`, o `post_sync` roda:
 
@@ -234,3 +235,4 @@ journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "Agen
 | 1 | 2026-07-04 | Criação inicial do lane `wayland` no fork-sync |
 | 2 | 2026-07-05 | Proteção da GUID com modelo/esforço separados, Hermes effort, Codex `config.toml`, acessibilidade do AgentPillBar e mobile wrap |
 | 3 | 2026-07-19 | Proteção de chats de projeto na lista global de Recent Chats e dos testes focados correspondentes |
+| 4 | 2026-07-19 | Agrupamento de chats sob o nome do Project mesmo quando o workspace NFS foi criado com `customWorkspace=false` |
