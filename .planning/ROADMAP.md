@@ -780,17 +780,21 @@ fleet automation.
 
 ## Phase 48: Codex OAuth and Wayland Remote ACP Convergence
 
-**Goal:** Make native Codex OAuth, models and local/remote ACP reliable before any proxy layer is introduced.
-**Requirements:** WAC-01, WAC-02, WAC-03, WAC-04, WAC-05, WAC-06, WAC-07, WAC-08
+**Goal:** Make native Codex OAuth, models, local/remote ACP and owner-host development transport reliable before any proxy layer is introduced.
+**Requirements:** WAC-01, WAC-02, WAC-03, WAC-04, WAC-05, WAC-06, WAC-07, WAC-08, WAC-09, WAC-10
 **Depends on:** Router Phase 32 completion, ownership release from sessions
 `019f3e9a-9964-7912-a982-65596e9954d3` and
 `019f2ba1-1982-7c03-a17d-3ce28c589ac1`, native Codex model parity
-**Status:** Current - target ownership, native gpt-5.6-sol and Wayland port 25725 parity pass; Router Phase 32 evidence, CPU-capped Go executor repair and full local/remote ACP lifecycle remain
+**Status:** Current - target ownership, native gpt-5.6-sol and Wayland port 25725 parity pass; Router Phase 32 evidence, CPU-capped Go executor repair, full local/remote ACP lifecycle and owner-local transport convergence remain
 **Risk:** HIGH - auth or ACP regressions can break every Wayland Codex session.
-**Plans:** 0/2 complete
+**Plans:** 0/6 complete
 
 - [ ] 48-01 - Reconcile Router evidence, renew native ubuntu OAuth, and prove native plus local ACP without Headroom.
 - [ ] 48-02 - Prove authenticated remote WSS, Wayland Chromium lifecycle, and sanitized closeout before Phase 49 can open.
+- [ ] 48-03 - Repair FreeIPA/SSSD FQDN trust and deploy strict encrypted owner aliases with additive inventory metadata and rollback.
+- [ ] 48-04 - Protect the Wayland fork paths, install pinned owner-native ACP launchers, and add ACP stdio-over-SSH with separate `agentCwd`.
+- [ ] 48-05 - Add default-off per-conversation owner-local routing and containment-safe UI path mapping while active work stays owner-native.
+- [ ] 48-06 - Run fork-sync, CPU-capped/headless fleet validation, latency/resource/failure benchmarks, rollback, and durable closeout.
 
 **Validation:** `.planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md`
 
@@ -851,7 +855,7 @@ multiple production applications.
 | 45 | Internal DNS and DRG Canonicalization | DRG/OCI DNS, resolver and service endpoint canonicalization | DNS-01..DNS-08 | Complete | HIGH |
 | 46 | Planning Surface Reconciliation | Historical registry, active order and validation architecture | PLN-01..PLN-05 | Complete | MEDIUM |
 | 47 | Internal Service PKI Closeout | Listener leaf/chain binding and trust proof | PKI-01..PKI-08 | Complete 2026-07-12 | HIGH |
-| 48 | Codex OAuth and Wayland ACP Convergence | Router OAuth, native Codex and remote ACP parity | WAC-01..WAC-08 | Executing | HIGH |
+| 48 | Codex OAuth and Wayland ACP Convergence | Router OAuth, native Codex, remote ACP and owner-local parity | WAC-01..WAC-10 | Executing | HIGH |
 | 49 | Wayland Codex Headroom | Isolated canary, ACP integration and rollback | HDR-01..HDR-08 | Blocked by Phase 48 | HIGH |
 | 50 | Atius-wide SSO Closeout | Remaining publication, redirect, logout and RBAC gate | SSO-01..SSO-06 | Queued after Phase 49 | HIGH |
 

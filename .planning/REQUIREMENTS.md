@@ -125,6 +125,8 @@
 - [ ] **WAC-06**: ACP remoto/ACPX/OpenClaw passa Upgrade auth, gateway auth, approvals e reconnect sem reduzir o contrato local.
 - [ ] **WAC-07**: Wayland preserva `Wayland -> codex-acp -> codex`, sem converter GSD skills em runtime agents.
 - [ ] **WAC-08**: Ownership, backup, rollback e validacao live estao registrados antes de liberar Phase 49.
+- [ ] **WAC-09**: Wayland prefere sessao owner-local para edit/search/Git/watchers/LSP/test/build/runtime, preservando os automounts NFS em `/home/ubuntu/Servers` como discovery, picker, leitura/diff leve, compatibilidade e fallback ate paridade e rollback por host serem comprovados.
+- [ ] **WAC-10**: Comandos owner-host usam FQDNs lowercase `*.atius.internal` resolvidos para OCI/DRG, user e identidade exatos, host-key trust fail-closed e OpenSSH criptografado com multiplexacao persistente; plaintext/HPN NoneSwitch permanecem proibidos e a latencia publica mean/p50/p95/p99 sem converter 13-15 ms em SLA nao medido.
 
 ### Wayland Codex Headroom
 
@@ -232,6 +234,8 @@
 | WAC-06 | Phase 48 | Planned |
 | WAC-07 | Phase 48 | Planned |
 | WAC-08 | Phase 48 | Planned |
+| WAC-09 | Phase 48 | Planned |
+| WAC-10 | Phase 48 | Planned |
 | HDR-01 | Phase 49 | Planned |
 | HDR-02 | Phase 49 | Planned |
 | HDR-03 | Phase 49 | Planned |
@@ -261,12 +265,12 @@
 - v1.7 requirements: 8 total
 - v1.7 mapped to phases: 8
 - v1.7 unmapped: 0
-- v1.8 requirements: 21 total
-- v1.8 mapped to phases: 21
+- v1.8 requirements: 23 total
+- v1.8 mapped to phases: 23
 - v1.8 unmapped: 0
 
-**Total:** 83 requirements | 55 complete | 28 open | 0 unmapped
+**Total:** 85 requirements | 55 complete | 30 open | 0 unmapped
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-07-12 after Phase 46 planning reconciliation and v1.8 ordering*
+*Last updated: 2026-07-19 after Phase 48 owner-local transport spikes and 48-03 scope extension*

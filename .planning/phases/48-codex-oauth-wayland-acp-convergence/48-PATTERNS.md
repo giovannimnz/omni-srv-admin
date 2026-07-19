@@ -1,8 +1,8 @@
 # Phase 48: Codex OAuth and Wayland Remote ACP Convergence - Pattern Map
 
-**Mapped:** 2026-07-12
-**Files analyzed:** 5 inferred Phase 48 execution lanes
-**Analogs found:** 5 / 5
+**Mapped:** 2026-07-19
+**Files analyzed:** 9 inferred Phase 48 execution lanes
+**Analogs found:** 9 / 9
 
 ## File Classification
 
@@ -17,6 +17,17 @@ phase artifacts/workstreams and reuse the listed in-repo analogs.
 | `48-remote-wss-lifecycle.md` | service | request-response | `modules/fork-sync/projects/codex-acp/runtime/openclaw.patch.json5` + `openclaw-codex-acp.service` + `hydrate-gateway-env.sh` | exact |
 | `48-wayland-browser-lifecycle.md` | test | streaming | `docs/operations/wayland-managed-runtime.md` + `.planning/phases/49-wayland-codex-headroom/49-VALIDATION.md` | exact |
 | `48-router-cpu-verification.md` | test | batch | `docs/operations/resource-governor.md` + `modules/fork-sync/projects/atius-router/UPSTREAM-SYNC-GUARDS.md` | exact |
+| `48-owner-trust-transport.md` | service | request-response | `scripts/freeipa-preflight.py` + `modules/fleet-control-plane/scripts/configure-fleet-direct-peers.sh` (patterns only; new renderer required) | partial |
+| `48-owner-acp-stdio.md` | service | streaming | Wayland `AcpAgentManager -> AcpAgentV2 -> AcpSession -> ProcessAcpClient` | exact |
+| `48-owner-path-routing.md` | UI/service | request-response | Wayland `workspaceComputer.ts` route mapping plus ACP session path surfaces | exact |
+| `48-owner-live-validation.md` | test | batch/streaming | Wayland fork-sync guards, resource governor and existing headless ACP reliability tests | exact |
+
+The owner-local lane is deliberately hybrid: encrypted persistent SSH carries
+terminal/ACP control, owner-local filesystems carry active development work,
+and existing NFS automounts remain discovery/picker/light-read-diff and
+fallback surfaces. `RemoteAgentCore` is not an ACP filesystem seam, and the
+legacy fleet peer renderer is an analog only; implementation uses a dedicated
+owner-transport renderer with separate aliases.
 
 ## Pattern Assignments
 

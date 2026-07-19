@@ -5,21 +5,21 @@ milestone_name: Runtime Trust and Codex Delivery Convergence
 current_phase: 48
 current_phase_name: Codex OAuth and Wayland Remote ACP Convergence
 status: executing
-stopped_at: Remaining Phase 48 gates are Router Phase 32 OAuth evidence, deterministic CPU-capped Go verification, and full local/remote ACP lifecycle proof
-last_updated: "2026-07-12T17:15:55.601Z"
-last_activity: 2026-07-12
+stopped_at: Phase 48 plans 48-03 through 48-06 passed research, spike and plan-check; execution remains ordered after 48-02 with live trust checkpoints
+last_updated: "2026-07-19T18:06:51-03:00"
+last_activity: 2026-07-19
 progress:
   total_phases: 5
   completed_phases: 2
-  total_plans: 6
+  total_plans: 10
   completed_plans: 2
-  percent: 33
+  percent: 20
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-07-12 after Phase 48 ownership/runtime audit
-**Last activity:** 2026-07-12
+**Last updated:** 2026-07-19 after Phase 48 owner-local transport spikes and the verified 48-03..48-06 planning loop
+**Last activity:** 2026-07-19
 
 ## Project Reference
 
@@ -173,14 +173,16 @@ See also: .planning/MILESTONES.md
 ## Current Position
 
 Phase: 48 (Codex OAuth and Wayland Remote ACP Convergence) — EXECUTING
-Plans: `48-01-PLAN`, `48-02-PLAN`
+Plans: `48-01-PLAN`, `48-02-PLAN`, `48-03-PLAN`, `48-04-PLAN`, `48-05-PLAN`, `48-06-PLAN` (planning)
 Status: Executing Phase 48
-Last activity: 2026-07-12 — Phase 48 execution started
+Last activity: 2026-07-19 — owner-local research/spikes completed; plans 48-03..48-06 passed the independent checker after three revision cycles
 
 ## Operator Next Steps
 
 - Continue the active Phase 48 task without overlapping its Wayland/codex-acp runtime files; Headroom remains absent.
 - Reconcile Router Phase 32 evidence and finish the CPU-capped Go verification plus native/local/remote ACP lifecycle matrix.
+- Execute 48-03 only after 48-02: repair FreeIPA/host-key trust and activate encrypted FQDN multiplexing without changing NFS or legacy fleet aliases.
+- Execute 48-04..48-06 in order: protect the fork before edits, add ACP stdio-over-SSH, enable only per-conversation owner-local routing, then prove fork-sync/headless/fleet/rollback parity. Keep NFS for discovery/picker/light read-diff/compatibility/fallback.
 - Treat the Wayland GUID effort-selector repair as a Phase 48 regression fix, not as Phase 49 Headroom work.
 - Execute Phase 49 only after every Phase 48 validation and stop condition is green.
 - Execute Phase 50 after Phase 49, reusing 42-01/42-02 as historical evidence rather than reopening Phase 42.
