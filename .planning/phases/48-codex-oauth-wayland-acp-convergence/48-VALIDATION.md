@@ -14,12 +14,20 @@
   approval and cancel/resume.
 - Canonical `*.atius.internal` owner FQDNs resolve to OCI/DRG addresses and
   strict FreeIPA/SSSD host-key trust fails closed for missing or changed keys.
+- The four-host identity matrix is exact and machine-verified:
+  `atius-srv-1.atius.internal/10.11.1.11/ubuntu`,
+  `atius-srv-2.atius.internal/10.12.1.12/ubuntu`,
+  `atius-srv-3.atius.internal/10.13.1.13/ubuntu`, and
+  `horistic-srv.atius.internal/10.21.1.21/horistic`; srv-3 uses
+  `/home/ubuntu/GitHub` with `mode: local`, not an SSH loopback alias.
 - Warm encrypted OpenSSH multiplexing publishes cold/warm/interactive
   mean/p50/p95/p99 and failures; 13-15 ms remains a stretch reference, not an
   SLA or a reason to enable plaintext/HPN NoneSwitch.
-- A direct Codex conversation can opt into ACP stdio-over-SSH through the
-  existing `AcpAgentManager -> AcpAgentV2 -> AcpSession -> ProcessAcpClient`
-  chain, with local UI/SQLite `cwd` and owner-side `agentCwd`.
+- A direct Codex conversation can opt into the existing
+  `AcpAgentManager -> AcpAgentV2 -> AcpSession -> ProcessAcpClient` chain:
+  remote owner modes use ACP stdio-over-SSH, while srv-3 uses direct local
+  stdio to the fixed launcher; both keep local UI/SQLite `cwd` and owner-side
+  `agentCwd`.
 - Active read/write/edit/search/Git/watchers/LSP/test/build/runtime execute on
   the owner filesystem. NFS remains byte-stable and is used only for
   discovery, picker, light read/diff, compatibility and fallback.
@@ -36,6 +44,8 @@
 - Remote ACP only works by weakening auth or approval controls.
 - Any owner alias accepts TOFU, plaintext, dynamic remote commands, agent/env
   forwarding, an unexpected identity, or an untrusted host key.
+- The srv-3 local route omits `user=ubuntu`, changes its canonical FQDN/address
+  or workspace, or opens SSH back to the same host.
 - Any owner-local active operation or callback reads/writes through NFS, or a
   team/cron session reaches the owner transport.
 - A planned owner-local Wayland path is not protected before its first edit,
@@ -51,5 +61,6 @@ codex-acp and repeat the full native smoke.
 
 Focused tests under CPU cap, sanitized live probes, ACP lifecycle transcript,
 Chromium headless network/console snapshot, four-host owner-local matrix,
-latency/resource distributions, NFS invariance, fork-sync proof,
+including the explicit srv-3 `ubuntu` local identity, latency/resource
+distributions, NFS invariance, fork-sync proof,
 backup/rollback paths and durable notes.

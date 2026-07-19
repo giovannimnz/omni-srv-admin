@@ -20,6 +20,20 @@ This synthesis covers only Spike 002 (FreeIPA/FQDN/SSH multiplexing), Spike 003 
 - NFS automount and owner-local sessions solve different problems; complete NFS removal was invalidated, and observed idle NFS cost did not justify it. [VERIFIED: spike 003]
 - Plaintext SSH, patched `none`, HPN NoneSwitch, Telnet, rsh, and raw TCP fail the interactive security/performance gate. [VERIFIED: spike 004]
 
+### Canonical Owner Identity Matrix
+
+The owner contract is explicit even when no network hop is required. In
+particular, `mode: local` for srv-3 skips SSH loopback but does not omit its
+canonical user, FQDN, address, or workspace. [VERIFIED: fleet inventory and
+spikes 002-003]
+
+| Host ID | FQDN | OCI/DRG address | User | Owner workspace | Mode from srv-3 |
+|---|---|---|---|---|---|
+| `atius-srv-1` | `atius-srv-1.atius.internal` | `10.11.1.11` | `ubuntu` | `/home/ubuntu/GitHub` | `ssh` via `wayland-owner-atius-srv-1` |
+| `atius-srv-2` | `atius-srv-2.atius.internal` | `10.12.1.12` | `ubuntu` | `/home/ubuntu/GitHub` | `ssh` via `wayland-owner-atius-srv-2` |
+| `atius-srv-3` | `atius-srv-3.atius.internal` | `10.13.1.13` | `ubuntu` | `/home/ubuntu/GitHub` | `local` |
+| `horistic-srv` | `horistic-srv.atius.internal` | `10.21.1.21` | `horistic` | `/home/horistic/GitHub` | `ssh` via `wayland-owner-horistic-srv` |
+
 ## Target Three-Plane Architecture
 
 ```text
