@@ -81,6 +81,7 @@ must not be selected as the primary path while OCI/DRG is available.
 - `.gitignore`
 - `AGENTS.md`
 - `THIRD-PARTY-NOTICES.md`
+- `design-qa.md`
 - `package.json`
 - `atius-overlay.json`
 - `codex-acp/`

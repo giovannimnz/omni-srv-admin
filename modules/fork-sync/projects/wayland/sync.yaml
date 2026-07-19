@@ -19,6 +19,7 @@ protected_paths:
   - AGENTS.md
   - .gitignore
   - THIRD-PARTY-NOTICES.md
+  - design-qa.md
   - package.json
   - atius-overlay.json
   - codex-acp/

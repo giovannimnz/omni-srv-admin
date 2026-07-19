@@ -167,7 +167,8 @@ Os paths protegidos carregam 6 grupos de customização:
    `src/renderer/services/i18n/locales/*/agentMode.json`,
    `src/renderer/services/i18n/locales/*/conversation.json`.
 6. Documentação do fork:
-   `docs/README.md`, `docs/guides/atius-fork-runtime.md`, `.gitignore`.
+   `design-qa.md`, `docs/README.md`, `docs/guides/atius-fork-runtime.md`,
+   `.gitignore`.
 
 ## 6. Patch refresh
 
@@ -253,3 +254,4 @@ journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "Agen
 | 3 | 2026-07-19 | Proteção de chats de projeto na lista global de Recent Chats e dos testes focados correspondentes |
 | 4 | 2026-07-19 | Agrupamento de chats sob o nome do Project mesmo quando o workspace NFS foi criado com `customWorkspace=false` |
 | 5 | 2026-07-19 | Computador dono e status conectado nos cards de Projects e grupos de Recent Chats |
+| 6 | 2026-07-19 | Indicador conectado alinhado visualmente ao Codex, com verde de sucesso explícito, 8 px e QA headless preservado no fork |
