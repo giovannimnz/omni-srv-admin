@@ -53,6 +53,7 @@ protected_paths:
   - src/renderer/components/layout/Sider/Sider.module.css
   - src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css
   - src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css
+  - src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.tsx
   - src/renderer/components/layout/Sider/SiderFooter.tsx
   - src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css
   - src/renderer/components/layout/Sider/index.tsx
@@ -72,6 +73,8 @@ protected_paths:
   - src/renderer/components/model/modelSelector/modelSelectorTypes.ts
   - src/renderer/components/settings/DirectorySelectionModal.tsx
   - src/renderer/hooks/file/useDirectorySelection.tsx
+  - src/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync.ts
+  - src/renderer/pages/conversation/GroupedHistory/utils/groupingHelpers.ts
   - src/renderer/pages/guid/GuidPage.tsx
   - src/renderer/pages/guid/index.module.css
   - src/renderer/pages/guid/components/AgentPillBar.tsx
@@ -96,6 +99,8 @@ protected_paths:
   - tests/unit/process/task/codexNativeSandbox.test.ts
   - tests/unit/renderer/GuidActionRow.dom.test.tsx
   - tests/unit/renderer/AcpConfigSelector.dom.test.tsx
+  - tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx
+  - tests/unit/renderer/groupingHelpers.test.ts
   - tests/unit/renderer/guidModelSelector.dom.test.tsx
   - tests/unit/RemoteAgentCore.test.ts
   - tests/unit/RemoteAgentManagement.dom.test.tsx

@@ -59,6 +59,9 @@ must not be selected as the primary path while OCI/DRG is available.
 - The left sidebar must not expose a bottom horizontal scrollbar at desktop,
   narrowed desktop, or mobile drawer widths; long recents and footer controls
   must truncate or compact within the sidebar.
+- Conversations opened from a project, including projects backed by NFS
+  workspaces, must remain visible in the global Recent Chats list and badge;
+  team-scoped conversations remain isolated from the global sidebar.
 - The desktop left sidebar divider must remain a real resize handle that
   persists `wayland:sidebar-width` while preserving the rail snap below the
   collapse threshold.
@@ -108,6 +111,7 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/renderer/components/layout/Sider/Sider.module.css`
 - `src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css`
 - `src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css`
+- `src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.tsx`
 - `src/renderer/components/layout/Sider/SiderFooter.tsx`
 - `src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css`
 - `src/renderer/components/layout/Sider/index.tsx`
@@ -127,6 +131,8 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/renderer/components/model/modelSelector/modelSelectorTypes.ts`
 - `src/renderer/components/settings/DirectorySelectionModal.tsx`
 - `src/renderer/hooks/file/useDirectorySelection.tsx`
+- `src/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync.ts`
+- `src/renderer/pages/conversation/GroupedHistory/utils/groupingHelpers.ts`
 - `src/renderer/pages/guid/GuidPage.tsx`
 - `src/renderer/pages/guid/index.module.css`
 - `src/renderer/pages/guid/components/AgentPillBar.tsx`
@@ -153,6 +159,8 @@ must not be selected as the primary path while OCI/DRG is available.
 - `tests/unit/process/task/codexNativeSandbox.test.ts`
 - `tests/unit/renderer/GuidActionRow.dom.test.tsx`
 - `tests/unit/renderer/AcpConfigSelector.dom.test.tsx`
+- `tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx`
+- `tests/unit/renderer/groupingHelpers.test.ts`
 - `tests/unit/renderer/guidModelSelector.dom.test.tsx`
 - `tests/unit/RemoteAgentCore.test.ts`
 - `tests/unit/RemoteAgentManagement.dom.test.tsx`
@@ -179,6 +187,7 @@ bash scripts/atius-verify-codex-acp.sh --live
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/atiusCodexAcpRuntime.test.ts tests/unit/acpConnectors.test.ts tests/unit/AcpAgentManagerSkillInjection.test.ts
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx tests/unit/renderer/groupingHelpers.test.ts
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
@@ -194,6 +203,8 @@ Expected result:
 - embedded adapter has no nested `.git`, Cargo/npm versions match, Rust tests
   pass, and the installed wrapper resolves the embedded build,
 - `vitest` passes.
+- project conversations appear in the global Recent Chats list and badge while
+  team-scoped conversations remain isolated.
 - `typecheck` passes.
 - `wayland.service` is `active`.
 - local HTTP on `127.0.0.1:25725` returns `200`.
