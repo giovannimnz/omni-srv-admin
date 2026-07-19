@@ -1,6 +1,6 @@
 # Wayland upstream sync guards
 
-Updated: 2026-07-13
+Updated: 2026-07-19
 
 This fork tracks `FerroxLabs/wayland` but serves a production runtime on
 `atius-srv-3` at `https://wayland.atius.com.br/`. Upstream sync must preserve
@@ -63,6 +63,9 @@ must not be selected as the primary path while OCI/DRG is available.
   workspaces, must remain visible in the global Recent Chats list and badge and
   grouped under the Project name even when `customWorkspace=false`; team-scoped
   conversations remain isolated from the global sidebar.
+- Project cards and Recent Chat workspace headers must show the owner computer
+  on the right. The green connected dot requires a reachable local path or an
+  active remote filesystem mount; an `autofs` placeholder alone is not live.
 - The desktop left sidebar divider must remain a real resize handle that
   persists `wayland:sidebar-width` while preserving the rail snap below the
   collapse threshold.
@@ -118,6 +121,7 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/renderer/components/layout/Sider/index.tsx`
 - `src/common/adapter/ipcBridge.ts`
 - `src/common/config/storage.ts`
+- `src/common/utils/workspaceComputer.ts`
 - `src/common/types/codex/codexModes.ts`
 - `src/common/types/codex/types/eventData.ts`
 - `src/process/task/AcpAgentManager.ts`
@@ -126,12 +130,17 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/process/task/codexConfig.ts`
 - `src/process/task/codexStaticModelInfo.ts`
 - `src/process/task/hermesConfig.ts`
+- `src/process/bridge/projectBridge.ts`
+- `src/process/services/workspaceComputerStatus.ts`
 - `src/renderer/components/agent/AgentModeSelector.tsx`
 - `src/renderer/components/agent/MarqueePillLabel.tsx`
 - `src/renderer/components/model/modelSelector/EffortSubRow.tsx`
 - `src/renderer/components/model/modelSelector/modelSelectorTypes.ts`
 - `src/renderer/components/settings/DirectorySelectionModal.tsx`
+- `src/renderer/components/workspace/WorkspaceComputerIndicator.tsx`
 - `src/renderer/hooks/file/useDirectorySelection.tsx`
+- `src/renderer/hooks/useWorkspaceComputerStatuses.ts`
+- `src/renderer/pages/conversation/GroupedHistory/index.tsx`
 - `src/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync.ts`
 - `src/renderer/pages/conversation/GroupedHistory/utils/groupingHelpers.ts`
 - `src/renderer/pages/guid/GuidPage.tsx`
@@ -144,6 +153,8 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/renderer/pages/guid/hooks/useGuidAgentSelection.ts`
 - `src/renderer/pages/guid/hooks/useGuidSend.ts`
 - `src/renderer/pages/settings/AgentSettings/RemoteAgentManagement.tsx`
+- `src/renderer/pages/projects/ProjectsListPage.tsx`
+- `src/renderer/pages/projects/components/ProjectCard.tsx`
 - `src/common/types/acpTypes.ts`
 - `src/renderer/services/i18n/i18n-keys.d.ts`
 - `src/renderer/services/i18n/index.ts`
@@ -170,6 +181,8 @@ must not be selected as the primary path while OCI/DRG is available.
 - `tests/unit/useGuidSend.dom.test.ts`
 - `tests/unit/webserver/detectNetworkContext.test.ts`
 - `tests/unit/webserver/cookieOptions.test.ts`
+- `tests/unit/workspaceComputerStatus.test.ts`
+- `tests/unit/WorkspaceComputerIndicator.dom.test.tsx`
 - `docs/README.md`
 - `docs/legal/THIRD-PARTY-NOTICES.md`
 - `docs/guides/atius-codex-acp.md`
@@ -189,6 +202,7 @@ NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx tests/unit/renderer/groupingHelpers.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/workspaceComputerStatus.test.ts tests/unit/WorkspaceComputerIndicator.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
@@ -207,6 +221,8 @@ Expected result:
 - project conversations appear in the global Recent Chats list and badge,
   grouped under the Project name even with `customWorkspace=false`, while
   team-scoped conversations remain isolated.
+- Projects and Recent Chat workspace groups show the owner computer; the green
+  dot follows real local/NFS availability rather than Remote Agent session data.
 - `typecheck` passes.
 - `wayland.service` is `active`.
 - local HTTP on `127.0.0.1:25725` returns `200`.
