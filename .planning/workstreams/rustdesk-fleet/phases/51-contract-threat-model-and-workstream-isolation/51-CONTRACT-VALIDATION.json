@@ -36,15 +36,9 @@
       "evidence_ids": [
         "P51-EV-SECRET"
       ],
-      "findings": [
-        {
-          "category": "vault-owner-review-pending",
-          "location": "approval_status",
-          "path": "modules/rustdesk-fleet/contracts/secret-roles.json"
-        }
-      ],
+      "findings": [],
       "id": "P51-SECRET-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
@@ -92,11 +86,6 @@
       ],
       "findings": [
         {
-          "category": "invalid-review-source-head",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
           "category": "operator-review-pending",
           "location": "review",
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
@@ -112,17 +101,7 @@
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
         },
         {
-          "category": "review-input-manifest-mismatch",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
           "category": "threat-review-pending",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
-          "category": "vault-owner-review-pending",
           "location": "review",
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
         }
@@ -131,7 +110,7 @@
       "status": "BLOCKED"
     }
   ],
-  "generated_at": "2026-07-20T06:14:15Z",
+  "generated_at": "2026-07-20T07:48:35Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
@@ -139,7 +118,7 @@
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md",
-      "sha256": "4d42573a36e9510218b440bc3c3cce150c222f2d8510678ee40f9377f54a959d"
+      "sha256": "737dc76f25328081175f21e7e0b6c2fb49ab3b439dee65a5ae3a94937d41251a"
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md",
@@ -159,7 +138,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/contracts/secret-roles.json",
-      "sha256": "41a0268da9751c25e8ac559122bb911555801558c884bac67282ee4f382c79c9"
+      "sha256": "ff418c161b444c9ba38c1519d28de37b609eb1096deefef5e96bd6f4ca250613"
     },
     {
       "path": "modules/rustdesk-fleet/contracts/threat-model.json",
@@ -178,7 +157,7 @@
   "phase": 51,
   "schema_version": 1,
   "secret_material_present": false,
-  "source_head": "5da60285f8b15f3c3a85240176404c9b00d47f8e",
+  "source_head": "e29537895a3089b13a1b7bf92ac9cae61099cd30",
   "validator_version": 2,
   "workstream": "rustdesk-fleet"
 }
