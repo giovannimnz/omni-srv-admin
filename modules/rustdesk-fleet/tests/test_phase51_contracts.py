@@ -33,6 +33,7 @@ PHASE51_DIR = (
     / ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation"
 )
 REVIEW_PATH = PHASE51_DIR / "51-OPERATIONAL-REVIEW.md"
+SECURITY_PATH = PHASE51_DIR / "51-SECURITY.md"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -232,6 +233,8 @@ def test_requirement_ledger_rejects_id_drift(mutation: str) -> None:
         ("../outside.json", "a" * 64, "2026-07-20T05:00:00Z", "evidence-path-outside-scope"),
         ("modules/rustdesk-fleet/evidence/current.json", "short", "2026-07-20T05:00:00Z", "evidence-digest-shape"),
         ("modules/rustdesk-fleet/evidence/current.json", "a" * 64, "2026-07-19T05:00:00Z", "evidence-currentness"),
+        ("modules/rustdesk-fleet/evidence/does-not-exist.json", "a" * 64, "2026-07-20T05:00:00Z", "evidence-file-missing"),
+        ("modules/rustdesk-fleet/contracts/scope.json", "a" * 64, "2026-07-20T05:00:00Z", "evidence-digest-mismatch"),
     ],
 )
 def test_requirement_ledger_rejects_invalid_pass_evidence(
@@ -250,6 +253,16 @@ def test_requirement_ledger_rejects_invalid_pass_evidence(
     result = validator.validate_ledger(payload, canonical, REPO)
     assert result.status == "BLOCKED"
     assert category in {finding.category for finding in result.findings}
+
+
+def test_security_projection_records_final_signoff() -> None:
+    text = SECURITY_PATH.read_text(encoding="utf-8")
+    assert "status: approved" in text
+    assert "- [x] Accountable operator reviewed all six enterprise controls." in text
+    assert "- [x] Vault owner approved the reserved identity and target paths." in text
+    assert "- [x] Current machine validation report agrees with this projection." in text
+    assert "**Approval:** approved by Giovanni Muniz" in text
+    assert "pending Plan 51-03" not in text
 
 
 def test_complete_fixture_bundle_materializes_all_contracts(tmp_path: Path) -> None:
