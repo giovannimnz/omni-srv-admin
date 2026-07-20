@@ -10,6 +10,8 @@ vault_paths_approval_status: pending
 
 This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault owner may replace the pending fields below; the executor must not infer approval from planning prose or automated tests.
 
+`source_head` identifies the committed tree containing the exact reviewed contracts and other pre-report inputs. Those inputs must be committed before this attestation is completed. The validator permits the later review/report/state/closeout attestation commits while rejecting any unrelated post-review commit or byte drift in a reviewed input.
+
 ```json
 {
   "schema_version": 1,
