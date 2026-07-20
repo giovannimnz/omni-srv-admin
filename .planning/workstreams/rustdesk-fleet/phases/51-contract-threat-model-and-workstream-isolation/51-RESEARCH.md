@@ -40,7 +40,7 @@
 ## Project Constraints (from AGENTS.md)
 
 - Treat this as GSD-managed work. Graphify status/query precedes repository routing; if stale, relationships are approximate until focused reads confirm them. Do not use Graphify as a replacement for exact reads or tests. `[VERIFIED: user-provided AGENTS.md]`
-- The graph observed on 2026-07-20 had `stale: false` but `commit_stale: true`, one commit behind; this research did not rebuild it because the task explicitly forbids indexing. `[VERIFIED: gsd-tools graphify status]`
+- Historical research observation: before the governed rebuild, the graph had `stale: false` but `commit_stale: true`, one commit behind; the researcher correctly did not rebuild it inside the read-only slice. The serialized root owner subsequently rebuilt Graphify under `omni-builds.slice`; the current measured state at `e36e47b` is `stale: false`, `commit_stale: false`, zero commits behind. `[VERIFIED: gsd-tools graphify status before and after governed rebuild]`
 - Any CPU-heavy build, compile, test suite, container build, bundler, or broad indexer must stay at or below 20% of host CPU and use the governed wrapper/profile. Phase 51 should need only narrow Python tests and read-only GSD queries. `[VERIFIED: AGENTS.md]`
 - Managed k3s pods use a 500m total pod CPU unit. This is not exercised by Phase 51 because runtime deployment is out of scope. `[VERIFIED: AGENTS.md; 51-CONTEXT.md]`
 - HashiCorp Vault is the only secret authority. Versioned artifacts may record profile/path/field names and non-secret fingerprints, never secret values. `[VERIFIED: AGENTS.md; 51-CONTEXT.md]`
@@ -393,24 +393,23 @@ No framework or package installation gap exists. `[VERIFIED: Python/pytest avail
 | Node/GSD tools | scoped state queries | yes | Node 24.13.1 | none for GSD lifecycle |
 | ripgrep | focused scans | yes | 15.1.0 | Python path iteration/regex |
 
-## Open Questions
+## Resolved Planning Questions
 
-1. **Are any centralized controls mandatory now?**
+1. **Are any centralized controls mandatory now? — Resolved as a blocking operational decision**
    - Known: official docs allocate the relevant centralized controls to Pro; D-03 allows OSS only for accepted single-operator risk.
-   - Unclear: whether the operational/security reviewer marks any of the six controls mandatory.
-   - Recommendation: start `product-decision.json` as `BLOCKED`; the Phase 51 checkpoint records the answer and derives `GO` or `NO-GO`. Do not infer acceptance from the PRD.
+   - Resolution: start `product-decision.json` as `BLOCKED`; the accountable Phase 51 operational review records all six answers and deterministically derives `GO/oss`, `NO-GO/pro`, or remains `BLOCKED`. Do not infer acceptance from the PRD.
 
-2. **What exact Vault paths will own the RustDesk roles?**
+2. **What exact Vault paths will own the RustDesk roles? — Resolved as reserved paths pending accountable approval**
    - Known: Phase 51 may record paths/names only and must not create/read values.
-   - Recommendation: reserve `kv/atius/rustdesk/server` for server identity/recovery metadata and `kv/atius/rustdesk/targets/<canonical-host-id>` for one target password role each, subject to Vault-owner review. Value creation/hydration remains Phase 52.
+   - Resolution: reserve `kv/atius/rustdesk/server` for server identity/recovery metadata and `kv/atius/rustdesk/targets/<canonical-host-id>` for one target password role each. The Phase 51 operational review must record an accountable Vault owner, the five reserved references, approval status and timestamp before PASS. Value creation/hydration remains Phase 52.
 
-3. **How is legitimate concurrent Phase 48 work handled?**
+3. **How is legitimate concurrent Phase 48 work handled? — Resolved by fail-closed serialization**
    - Known: Phase 48 remains active and the migrated path is currently untracked; automatic rebaseline would hide drift.
-   - Recommendation: serialize the writer, stop the RustDesk transition, review the Phase 48 change against its own workstream, then explicitly rebaseline with old/new provenance and reviewer reason.
+   - Resolution: serialize the writer, stop the RustDesk transition, review the Phase 48 change against its own workstream, then explicitly rebaseline with old/new provenance and reviewer reason. Automatic rebaseline is prohibited.
 
 ## Assumptions Log
 
-No unverified factual assumption is required for the recommended plan. The three unresolved decisions above are explicit checkpoints, not assumed answers.
+No unverified factual assumption is required for the recommended plan. The three planning questions above have explicit fail-closed resolution contracts; their accountable runtime approvals remain planned gates rather than assumed answers.
 
 ## Sources
 

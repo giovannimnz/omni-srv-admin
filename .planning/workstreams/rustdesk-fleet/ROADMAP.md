@@ -1,0 +1,167 @@
+# Roadmap: RustDesk Fleet Remote Access
+
+## Overview
+
+O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados por uma sequência de oito gates observáveis: primeiro fixa contrato, threat model e isolamento do workstream; depois prova supply chain, capacity e recoverability; publica um primary mínimo; valida os canários Linux/Windows; instala os três servidores restantes de forma serial; executa a matriz exaustiva; ensaia resiliência e rollback; e somente então fecha UAT e documentação operacional. O caminho preferencial usa `atius-srv-2` como primary quando ele satisfizer o capacity gate; uma falha nesse gate exige decisão de placement explícita e replanejamento para `atius-srv-3`, nunca promoção silenciosa.
+
+## Milestone Contract
+
+- **Milestone:** v1.9 — RustDesk Fleet Remote Access
+- **Phase span:** 51-58
+- **Included clients:** `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv`, `GIOVANNI-W11-PC`
+- **Excluded clients:** WSL e `GIOVANNI-S23`
+- **Production transport:** direct-first; forced-relay somente em teste controlado ou fallback aprovado
+- **Recovery invariant:** RustGuac, XRDP, AnyDesk, NoMachine e noVNC permanecem instalados; qualquer retirement pertence a outro milestone
+- **Secret boundary:** private key e permanent passwords permanecem apenas no Vault/runtime efêmero; planning, Git, logs, Obsidian, GBrain e evidências guardam somente fingerprints/hashes redacted
+- **Quality invariant:** cada phase deve produzir seu próprio gate automatizado e/ou live; `SUMMARY.md` ou declaração manual sem evidência não autorizam avanço
+
+## Phases
+
+- [ ] **Phase 51: Contract, Threat Model and Workstream Isolation** - Congelar escopo, decisão OSS/Pro, ameaças, políticas e ownership do workstream antes de qualquer mutação de runtime.
+- [ ] **Phase 52: Supply Chain, Capacity and Recoverable Placement** - Provar artefatos, capacity, Vault e restore antes de escolher e autorizar o primary.
+- [ ] **Phase 53: Primary Relay and Public Edge** - Disponibilizar `hbbs`/`hbbr` hardened, persistentes, observáveis e expostos somente pelas portas aprovadas.
+- [ ] **Phase 54: Heterogeneous Canary — Horistic + Windows** - Provar Linux ARM64 e Windows x86-64, incluindo pre-login, UAC, direct e relay, antes do rollout.
+- [ ] **Phase 55: Serialized Linux Fleet Rollout** - Instalar e validar `atius-srv-2` → `atius-srv-3` → `atius-srv-1`, um host por vez, preservando fallbacks.
+- [ ] **Phase 56: Exhaustive Fleet, Transport and Security Matrix** - Executar 20 pares normais, cinco forced-relay e os negativos de autenticação, trust e permissões.
+- [ ] **Phase 57: Standby, Resilience, Upgrade and Rollback** - Provar soak, failover/failback, upgrade/downgrade e rollback real sem split-brain ou perda de identidade.
+- [ ] **Phase 58: Final UAT, Evidence and Operational Closeout** - Auditar requirement por requirement e fechar UAT, runbooks, Obsidian, GBrain e Graphify contra o runtime real.
+
+## Dependency Chain
+
+`51 → 52 → 53 → 54 → 55 → 56 → 57 → 58`
+
+Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidência obrigatória impede o início da seguinte. Fallbacks compartilhados devem permanecer instalados e receber regression smoke em toda phase que altera runtime.
+
+## Phase Details
+
+### Phase 51: Contract, Threat Model and Workstream Isolation
+
+**Goal**: O operador possui um contrato testável e sem ambiguidade para escopo, edição GSD, OSS/Pro, direct/relay, secrets, permissions e preservação dos acessos existentes.
+**Depends on**: Nothing (first phase in v1.9)
+**Requirements**: SCP-01, SCP-02, SCP-03, SCP-05
+**Risks**: Reivindicar recursos Pro no OSS; instalar em host excluído; mutar o workstream da Phase 48; expor secret em evidência; transformar forced-relay em default.
+**Success Criteria** (what must be TRUE):
+  1. O contrato enumera exatamente os cinco hosts incluídos, exclui WSL e `GIOVANNI-S23`, mantém direct-first e declara que todos os fallbacks compartilhados continuam instalados.
+  2. A decisão OSS/Pro é explícita: OSS só avança com aceite documentado das ausências de SSO, RBAC, MFA, API, policy central e auditoria humana; qualquer uma dessas exigências obrigatórias produz `NO-GO` e seleção Pro antes do runtime.
+  3. Threat model, permission profiles, papéis de public/private key, cinco passwords distintas e o ledger requirement-to-evidence existem sem valores secretos.
+  4. O lifecycle GSD exige scope explícito `rustdesk-fleet`, writer único para arquivos compartilhados e prova de integridade da Phase 48 em cada transição.
+  5. **Advance gate:** validators automatizados de escopo, IDs, ausência de secrets e isolamento do workstream, mais a revisão operacional do threat model, devem registrar PASS com artefatos atuais antes da Phase 52; summary-only não conta.
+**Plans**: TBD
+
+### Phase 52: Supply Chain, Capacity and Recoverable Placement
+
+**Goal**: O operador pode autorizar um primary reproduzível somente depois de provar integridade dos artefatos, headroom, secret boundary e recuperação da identidade.
+**Depends on**: Phase 51
+**Requirements**: SCP-04, SRV-01, SRV-05, SRV-07
+**Risks**: Imagem/tag mutável; arquitetura incorreta; `srv-2` cruzar o watchdog; promover `srv-3` silenciosamente; backup sem restore; private key/password em argv, stdout ou arquivo inseguro.
+**Success Criteria** (what must be TRUE):
+  1. Server `1.1.15` e clients `1.4.9` estão resolvidos por tag, commit, arquitetura e digest/checksum verificados, sem `latest` nem build nos hosts.
+  2. `atius-srv-2` só é escolhido como primary com uso pre-deploy `<=78%`, inodes `<=80%`, projeção e medição post-deploy `<=80%` e headroom em bytes para imagem, dois backups e 30 dias de logs; se falhar, a escolha de `atius-srv-3` exige capacity/security gate equivalente e replanejamento explícito dos papéis de DR.
+  3. Vault é a autoridade comprovada para a private server key e cinco permanent passwords distintas; automação e evidence model demonstram hidratação efêmera sem revelar valores.
+  4. Backup e restore reais, em ambiente isolado, reproduzem a mesma public-key fingerprint antes de edge ou clients de frota serem autorizados.
+  5. **Advance gate:** verificadores automatizados de checksums/digests, capacity/inodes/reservas, secret scan e fingerprint, junto do restore live, devem passar antes da Phase 53; projeção, arquivo de backup ou summary-only sem restore não contam.
+**Plans**: TBD
+
+### Phase 53: Primary Relay and Public Edge
+
+**Goal**: Os clients podem alcançar um primary RustDesk estável, hardened, recuperável e observável apenas pela superfície nativa mínima aprovada.
+**Depends on**: Phase 52
+**Requirements**: SRV-02, SRV-03, SRV-04, SRV-06, OPS-01
+**Risks**: Rootful drift; `Network=host` expor portas extras; rotação de identidade; logs sem limite; edge Cloudflare proxied; CPU acima do guardrail; UDP validado apenas localmente.
+**Success Criteria** (what must be TRUE):
+  1. `hbbs` e `hbbr` rodam como Quadlets Podman rootless digest-pinned, sem privilege/socket amplo, com estado gravável mínimo, logs bounded e limite combinado `<=0.8 CPU` e `<=1 GiB RAM`.
+  2. `rustdesk.atius.com.br` resolve em modo DNS-only para o primary aprovado, e probes realmente externos confirmam TCP 21115-21117 e UDP 21116 enquanto 21114/21118/21119 e listeners não aprovados permanecem fechados em IPv4/IPv6.
+  3. Três restarts e um boot preservam fingerprint, identidade, dados, listeners e limites de recursos, sem crescimento de logs fora do contrato.
+  4. Monitoring redacted reporta health, listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas sem secret material.
+  5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
+**Plans**: TBD
+
+### Phase 54: Heterogeneous Canary — Horistic + Windows
+
+**Goal**: O operador prova, nos dois sistemas de maior risco, que RustDesk oferece controle remoto seguro e recuperável antes de tocar os demais clients.
+**Depends on**: Phase 53
+**Requirements**: CLI-01, CLI-02, CLI-04, CLI-06
+**Risks**: LightDM funcionar apenas após login; UAC/secure desktop invisível; GUI-only drift; passwords vazarem pela CLI; canário quebrar um fallback; falso relay sem byte delta.
+**Success Criteria** (what must be TRUE):
+  1. `horistic-srv` instala o `.deb` ARM64 1.4.9 verificado e `GIOVANNI-W11-PC` instala o MSI x86-64 1.4.9 verificado, ambos com package/service/config/ID estáveis e rollback artifacts preservados.
+  2. Horistic prova sessão LXDE/X11 ativa, lock, logout, reconnect, reboot e acesso no LightDM antes de login sem trocar display manager, habilitar autologin ou criar dummy display.
+  3. Windows prova target correto, lock/logon screen, UAC secure desktop, console/RDP session, service recovery e reconnect após reboot.
+  4. Os permission profiles least-privilege são aplicados e testados para keyboard/mouse, clipboard, file transfer, audio, terminal, TCP tunnel, restart, privacy mode e recording; direct-first e um forced-relay correlacionado por UI/log/bytes passam entre os canários, e os fallbacks existentes continuam acessíveis.
+  5. **Advance gate:** suites automatizadas de package/config/service/security e os gates live headless de imagem, input, LightDM pre-login, UAC, direct/relay, reboot e fallback regression devem passar antes da Phase 55; ID/service state ou summary-only não contam.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 55: Serialized Linux Fleet Rollout
+
+**Goal**: Os cinco hosts ficam registrados como clients estáveis depois de um rollout Linux atribuído host a host, sem remover nenhuma rota de recuperação.
+**Depends on**: Phase 54
+**Requirements**: CLI-03, CLI-05, CLI-08, CLI-09
+**Risks**: Instalação paralela esconder causa; ID duplicado; secret em processo/log; pre-login falhar em um servidor; RustDesk alterar LightDM ou fallback; instalar no WSL por engano.
+**Success Criteria** (what must be TRUE):
+  1. O rollout instala e valida estritamente `atius-srv-2` → `atius-srv-3` → `atius-srv-1`, nunca em paralelo, e só inicia o host seguinte após PASS completo e rollback point do anterior.
+  2. Os três hosts usam `.deb` ARM64 1.4.9 verificado e, junto dos canários, totalizam cinco IDs únicos redacted, cinco passwords próprias hidratadas do Vault e package/service/config estáveis.
+  3. Cada Linux prova LXDE/X11 ativo, lock, logout, reconnect, reboot e pre-login LightDM sem autologin, dummy display ou alteração do display manager.
+  4. RustGuac, XRDP, AnyDesk, NoMachine e noVNC permanecem instalados e seus regression smokes passam após cada host, com rollback externo ao RustDesk disponível.
+  5. **Advance gate:** o verificador automatizado de inventory/version/config/ID/secret hygiene e os gates live por host de input, reboot, pre-login e fallbacks devem passar antes da Phase 56; rollout parcial ou summary-only não contam.
+**Plans**: TBD
+
+### Phase 56: Exhaustive Fleet, Transport and Security Matrix
+
+**Goal**: O operador possui prova íntegra de cada direção controller→target, de relay por target e de todas as negações de segurança exigidas.
+**Depends on**: Phase 55
+**Requirements**: CLI-07, VAL-01, VAL-02, VAL-03, VAL-04, VAL-05
+**Risks**: Confundir pares não dirigidos; presumir transporte direct; relay provar só o servidor; aceitar screenshot sem identidade; capability proibida funcionar; conexão alcançar infra pública RustDesk.
+**Success Criteria** (what must be TRUE):
+  1. Os 20/20 pares dirigidos não-self passam em policy normal, e cada sessão registra controller, target, timestamp, screen, keyboard marker, mouse marker, target/session identity e transporte natural observado sem presumir direct.
+  2. Cinco sessões adicionais forced-relay passam, exatamente uma recebida por cada target, com UI, pairing log e byte delta correlacionados no `hbbr`.
+  3. Wrong password falha em 5/5 targets; wrong server key e nonexistent ID falham em profiles disposable Linux e Windows, sem contaminar a configuração gerenciada.
+  4. Toda capability proibida por profile falha, nenhuma sessão contata servidores públicos RustDesk, e ausência de qualquer campo obrigatório gera `BLOCKED`, nunca PASS.
+  5. **Advance gate:** o parser automatizado da expected matrix deve provar exatamente 20 normal + 5 forced-relay, todos os negativos e zero campos/pares ausentes, enquanto as sessões live provam cada marcador antes da Phase 57; amostra parcial, inferência de transporte ou summary-only não contam.
+**Plans**: TBD
+**UI hint**: yes
+
+### Phase 57: Standby, Resilience, Upgrade and Rollback
+
+**Goal**: O operador consegue sustentar sessões, atualizar, recuperar e inverter o serviço sem perder identidade, acesso ou os fallbacks existentes.
+**Depends on**: Phase 56
+**Requirements**: VAL-06, DR-01, DR-02, DR-03, DR-04
+**Risks**: Split-brain; standby com chave divergente; failover só teórico; RTO não medido; rollback ser apenas documentação; soak esconder log/disk growth; downgrade perder password/config.
+**Success Criteria** (what must be TRUE):
+  1. Cada target completa 30 minutos de sessão, três reconnects e reboot; W11↔Horistic completa soak forced-relay de duas horas com interrupção controlada e métricas de resource/log growth dentro do contrato.
+  2. No placement preferencial em `srv-2`, `atius-srv-3` só recebe o rótulo cold standby após capacity gate e restore da mesma identidade, permanecendo stopped/disabled fora do drill; se `srv-3` for o primary aprovado na Phase 52, ele não é falsamente rotulado standby e o topology contract é replanejado antes deste gate.
+  3. Failover real `srv-2`→`srv-3` e failback convergem DNS/ingress, preservam IDs/config, medem RTO alvo de 30 minutos e provam que nunca há dois primaries ativos.
+  4. Upgrade e downgrade do server e dos clients canary, seguidos de rollback real no primary, em um Linux e no Windows, preservam identidade, config, password, direct/relay connectivity e acesso pelos fallbacks.
+  5. **Advance gate:** validators automatizados de identidade, single-primary, versões, RTO e soak, mais os drills live timestamped de failover/failback, upgrade/downgrade e rollback, devem passar antes da Phase 58; backup existente, runbook ou summary-only não contam.
+**Plans**: TBD
+
+### Phase 58: Final UAT, Evidence and Operational Closeout
+
+**Goal**: O milestone fecha com uma única verdade auditável que concorda com o runtime, preserva recovery paths e pode ser repetida por outro ciclo operacional.
+**Depends on**: Phase 57
+**Requirements**: VAL-07, OPS-02, OPS-03, OPS-04
+**Risks**: Evidência conter secrets; docs divergirem do runtime; requisito marcado por herança; Graphify stale; Phase 48 alterada; checkpoints humanos omitidos; fallback removido silenciosamente.
+**Success Criteria** (what must be TRUE):
+  1. Evidências redacted e imutáveis incluem manifest, expected matrix, verdict, host/session JSON, logs sanitizados, socket summaries, screenshots headless e `SHA256SUMS`, e um validator rejeita missing fields, secrets e hashes divergentes.
+  2. Inventory, port map, Cloudflare/OCI notes, module README e runbook concordam com versões, paths, portas, hosts, rollback, monitoring e provas live atuais; todos os fallbacks compartilhados continuam instalados e passam a regressão final.
+  3. `VALIDATION.md`, `VERIFICATION.md` e `UAT.md` concordam requirement por requirement e o `$gsd-verify-work` executa o UAT final, incluindo checkpoints humanos de UAC, pre-login, ABNT2, multi-monitor e qualidade visual.
+  4. Obsidian e GBrain foram consultados/atualizados antes, durante e depois, Graphify está fresh após planning/código/docs, e a integridade do workstream da Phase 48 é comprovada.
+  5. **Closure gate:** audit automatizado 36/36 sem orphan/duplicate, evidence-integrity suite, live final UAT e fallback regression devem passar antes de declarar v1.9 shipped; nenhum summary-only PASS, waiver implícito ou evidência de phase anterior substitui o gate atual.
+**Plans**: TBD
+
+## Progress
+
+**Execution Order:** Phases execute in numeric order: 51 → 52 → 53 → 54 → 55 → 56 → 57 → 58.
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 51. Contract, Threat Model and Workstream Isolation | 0/TBD | Not started | - |
+| 52. Supply Chain, Capacity and Recoverable Placement | 0/TBD | Not started | - |
+| 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
+| 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
+| 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
+| 56. Exhaustive Fleet, Transport and Security Matrix | 0/TBD | Not started | - |
+| 57. Standby, Resilience, Upgrade and Rollback | 0/TBD | Not started | - |
+| 58. Final UAT, Evidence and Operational Closeout | 0/TBD | Not started | - |
+
+---
+*Roadmap created: 2026-07-19 from the approved three-round RustDesk research convergence*
