@@ -142,7 +142,7 @@
       "status": "BLOCKED"
     }
   ],
-  "generated_at": "2026-07-20T05:36:51Z",
+  "generated_at": "2026-07-20T05:40:31Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
@@ -189,7 +189,7 @@
   "phase": 51,
   "schema_version": 1,
   "secret_material_present": false,
-  "source_head": "88ec440a3fccbdcb2719a5b983cec7baa1f1cf99",
+  "source_head": "bca4e2feaf7094c7f33e94467ce64d08b04087c7",
   "validator_version": 2,
   "workstream": "rustdesk-fleet"
 }
