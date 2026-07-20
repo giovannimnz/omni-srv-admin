@@ -2,14 +2,23 @@
   "schema_version": 1,
   "operator_scope": "single-operator",
   "enterprise_controls": [
-    {"id": "sso_oidc", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
-    {"id": "rbac", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
-    {"id": "mfa", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
-    {"id": "central_api", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
-    {"id": "central_device_policy", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
-    {"id": "human_attributed_audit", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false}
+    {"id": "sso_oidc", "mandatory": false, "source": "accountable-operational-review", "review_status": "reviewed", "accepted_absence": true},
+    {"id": "rbac", "mandatory": false, "source": "accountable-operational-review", "review_status": "reviewed", "accepted_absence": true},
+    {"id": "mfa", "mandatory": false, "source": "accountable-operational-review", "review_status": "reviewed", "accepted_absence": true},
+    {"id": "central_api", "mandatory": false, "source": "accountable-operational-review", "review_status": "reviewed", "accepted_absence": true},
+    {"id": "central_device_policy", "mandatory": false, "source": "accountable-operational-review", "review_status": "reviewed", "accepted_absence": true},
+    {"id": "human_attributed_audit", "mandatory": false, "source": "accountable-operational-review", "review_status": "reviewed", "accepted_absence": true}
   ],
-  "declared_decision": "BLOCKED",
-  "derived_decision": "BLOCKED",
-  "required_edition": null
+  "declared_decision": "GO",
+  "derived_decision": "GO",
+  "required_edition": "oss",
+  "custom_ops_api": {
+    "status": "approved-to-plan-and-implement",
+    "kind": "atius-ops-api",
+    "rustdesk_native_api": false,
+    "configure_client_api_server": false,
+    "rustdesk_api_port_21114": "closed",
+    "phase": 53,
+    "requirement_id": "OPS-01"
+  }
 }

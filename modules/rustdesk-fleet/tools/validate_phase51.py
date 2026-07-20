@@ -712,6 +712,16 @@ def validate_product_decision(
         for item in controls
     ):
         errors.append("enterprise-control-shape")
+    if payload.get("custom_ops_api") != {
+        "status": "approved-to-plan-and-implement",
+        "kind": "atius-ops-api",
+        "rustdesk_native_api": False,
+        "configure_client_api_server": False,
+        "rustdesk_api_port_21114": "closed",
+        "phase": 53,
+        "requirement_id": "OPS-01",
+    }:
+        errors.append("custom-ops-api-boundary")
     derived = derive_product_decision(payload)
     if payload.get("declared_decision") != derived["decision"]:
         errors.append("declared-derived-mismatch")
