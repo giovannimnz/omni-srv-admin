@@ -89,7 +89,7 @@
       "status": "PASS"
     }
   ],
-  "generated_at": "2026-07-20T08:08:37Z",
+  "generated_at": "2026-07-20T08:20:24Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
@@ -97,11 +97,11 @@
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md",
-      "sha256": "f8acec3cb573c0e6d03727db15d535855bac5012a04c490b92d1bed8358255cf"
+      "sha256": "26dc9cee5c50659265f526ae68a3e66b82296b8ceb782922db5475f8fa4dbe63"
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md",
-      "sha256": "d0eac055e6849d991446d902a07f6b82c79c119915b36a59fd7c3944bf076b63"
+      "sha256": "d9719b05ec9bbf51a39717361c3642a14e5ca2813bf0dd20171db2ddc4220390"
     },
     {
       "path": "modules/rustdesk-fleet/contracts/permission-profiles.json",
@@ -136,7 +136,7 @@
   "phase": 51,
   "schema_version": 1,
   "secret_material_present": false,
-  "source_head": "b5359594020b6c8b9ea4b360df09e41a949741d5",
+  "source_head": "88ea1c544438a266463e1ea96547e96e706cfffb",
   "validator_version": 2,
   "workstream": "rustdesk-fleet"
 }
