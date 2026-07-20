@@ -16,6 +16,7 @@ PRODUCT_PATH = REPO / "modules/rustdesk-fleet/contracts/product-decision.json"
 PERMISSION_PATH = REPO / "modules/rustdesk-fleet/contracts/permission-profiles.json"
 THREAT_PATH = REPO / "modules/rustdesk-fleet/contracts/threat-model.json"
 SECRET_ROLES_PATH = REPO / "modules/rustdesk-fleet/contracts/secret-roles.json"
+UNSCOPED_COMMAND_PATH = INVALID_DIR / "unscoped-gsd-command.md"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -39,6 +40,63 @@ def test_scope_contract() -> None:
         "P51-LEGACY-001": "PASS",
         "P51-TRANSPORT-001": "PASS",
     }
+
+
+def test_workstream_scope_contract() -> None:
+    payload = _canonical_scope()
+    result = validator.validate_workstream_policy(payload)
+    assert result.id == "P51-WS-001"
+    assert result.status == "PASS"
+    assert payload["gsd_lifecycle"]["required_flag"] == "--ws"
+    assert payload["gsd_lifecycle"]["required_workstream"] == "rustdesk-fleet"
+    assert payload["shared_writers"] == {
+        "mode": "serialized-single-writer",
+        "paths": [
+            ".planning/PROJECT.md",
+            ".planning/MILESTONES.md",
+            ".planning/graphs/graph.json",
+            ".planning/graphs/GRAPH_REPORT.md",
+            ".planning/graphs/manifest.json",
+        ],
+    }
+    assert payload["transition_gates"] == {
+        "precheck_ids": ["P51-WS-001"],
+        "postcheck_ids": ["P51-P48-001"],
+    }
+
+
+def test_workstream_commands_are_checked_independently() -> None:
+    text = UNSCOPED_COMMAND_PATH.read_text(encoding="utf-8")
+    commands = validator.extract_executable_gsd_commands(text, source_kind="markdown")
+    assert len(commands) == 2
+    results = validator.validate_workstream_commands(commands)
+    assert [result.status for result in results] == ["PASS", "FAIL"]
+    assert results[1].findings[0].category == "missing-explicit-workstream"
+
+
+def test_workstream_rejects_wrong_scope_and_accepts_read_only_query() -> None:
+    payload = _canonical_scope()
+    verbs = payload["gsd_lifecycle"]["mutating_verbs"]
+    wrong = validator.validate_workstream_commands(
+        ["node gsd-tools.cjs state begin-phase --ws another-lane 51"],
+        mutating_verbs=verbs,
+    )
+    assert wrong[0].status == "FAIL"
+    assert wrong[0].findings[0].category == "wrong-explicit-workstream"
+
+    read_only = validator.validate_workstream_commands(
+        [
+            "node gsd-tools.cjs query state.json --ws "
+            "runtime-trust-codex-delivery-convergence --pick current_phase"
+        ],
+        mutating_verbs=verbs,
+    )
+    assert read_only[0].status == "PASS"
+
+
+def test_workstream_prose_is_not_an_executable_command() -> None:
+    text = "Every lifecycle command must use --ws rustdesk-fleet."
+    assert validator.extract_executable_gsd_commands(text, source_kind="markdown") == []
 
 
 @pytest.mark.parametrize(
