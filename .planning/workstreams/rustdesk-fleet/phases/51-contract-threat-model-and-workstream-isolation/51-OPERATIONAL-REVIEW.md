@@ -1,24 +1,24 @@
 ---
-status: BLOCKED
-reviewer: null
-reviewed_at: null
+status: APPROVED
+reviewer: Giovanni Muniz
+reviewed_at: "2026-07-20T07:59:32Z"
 vault_owner: Giovanni Muniz
 vault_paths_approval_status: approved
 ---
 
 # Phase 51 Operational Review
 
-This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault owner may replace the pending fields below; the executor must not infer approval from planning prose or automated tests.
+This artifact is `APPROVED` by the accountable operator and Vault owner. The executor records only the explicit declarations below and does not infer approval from planning prose or automated tests.
 
 `source_head` identifies the committed tree containing the exact reviewed contracts and other pre-report inputs. Those inputs must be committed before this attestation is completed. The validator permits the later review/report/state/closeout attestation commits while rejecting any unrelated post-review commit or byte drift in a reviewed input.
 
 ```json
 {
   "schema_version": 1,
-  "status": "BLOCKED",
-  "reviewer": null,
-  "reviewed_at": null,
-  "source_head": "c2158c0fce4d0b033f147804fc7cc4f78dff9258",
+  "status": "APPROVED",
+  "reviewer": "Giovanni Muniz",
+  "reviewed_at": "2026-07-20T07:59:32Z",
+  "source_head": "d7348134eb88c2e14328cd494216028e71cfb92b",
   "enterprise_controls": [
     {"id": "sso_oidc", "mandatory": false, "accepted_absence": true},
     {"id": "rbac", "mandatory": false, "accepted_absence": true},
@@ -40,18 +40,17 @@ This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault
   ],
   "vault_paths_approval_status": "approved",
   "vault_paths_approved_at": "2026-07-20T07:38:59Z",
-  "permission_transport_review": "pending",
-  "threat_review": "pending",
-  "unresolved_high_count": null,
-  "phase48_drift_decision": "pending",
-  "review_input_manifest_digest": "dc738cf82de339863620b9094f3c764cd2641d9c9f967b8d6d8ee43ae3de1791"
+  "permission_transport_review": "approved",
+  "threat_review": "approved",
+  "unresolved_high_count": 0,
+  "phase48_drift_decision": "no-drift",
+  "review_input_manifest_digest": "92c365b2d29c9498830590e75b468669db2ed9a8996f55bf8aee85ee65dea5e8"
 }
 ```
 
 ## Gate
 
-- Missing accountable operator fields: `BLOCKED`.
-- Missing accountable Vault-owner approval: `BLOCKED`.
+- Accountable operator and Vault-owner fields are explicitly approved at the timestamps above.
 - Any mandatory centralized control without authorized Pro replan: `BLOCKED`.
 - Any unresolved high threat or Phase 48 drift: `BLOCKED`.
 - No secret value belongs in this artifact.
