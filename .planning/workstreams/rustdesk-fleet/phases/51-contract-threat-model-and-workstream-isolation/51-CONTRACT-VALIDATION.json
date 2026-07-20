@@ -84,33 +84,12 @@
       "evidence_ids": [
         "P51-EV-REPORT"
       ],
-      "findings": [
-        {
-          "category": "operator-review-pending",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
-          "category": "permission-transport-review-pending",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
-          "category": "phase48-review-pending",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
-          "category": "threat-review-pending",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        }
-      ],
+      "findings": [],
       "id": "P51-REPORT-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     }
   ],
-  "generated_at": "2026-07-20T07:48:35Z",
+  "generated_at": "2026-07-20T08:02:16Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
@@ -118,7 +97,7 @@
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md",
-      "sha256": "737dc76f25328081175f21e7e0b6c2fb49ab3b439dee65a5ae3a94937d41251a"
+      "sha256": "6e1d0fbd495eda10e29ad2c45d0e99368aea66fefab2c2f8269a5517480e532c"
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md",
@@ -153,11 +132,11 @@
       "sha256": "fb09ab641f150069bbd95ebd8dbfafa993cc58b07acf1e4f668fa4377210ad3f"
     }
   ],
-  "overall_status": "BLOCKED",
+  "overall_status": "PASS",
   "phase": 51,
   "schema_version": 1,
   "secret_material_present": false,
-  "source_head": "e29537895a3089b13a1b7bf92ac9cae61099cd30",
+  "source_head": "1cc358c59d698dba77b2de16a3c5cddff79bf26e",
   "validator_version": 2,
   "workstream": "rustdesk-fleet"
 }

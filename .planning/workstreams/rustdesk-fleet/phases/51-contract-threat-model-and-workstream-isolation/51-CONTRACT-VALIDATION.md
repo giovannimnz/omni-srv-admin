@@ -2,16 +2,16 @@
 
 ## Report Identity
 
-- **Source HEAD:** `e29537895a3089b13a1b7bf92ac9cae61099cd30`
+- **Source HEAD:** `1cc358c59d698dba77b2de16a3c5cddff79bf26e`
 - **Validator Version:** `2`
-- **Generated At:** `2026-07-20T07:48:35Z`
+- **Generated At:** `2026-07-20T08:02:16Z`
 
 ## Input Digests
 
 | Path | SHA-256 |
 |---|---|
 | `.planning/workstreams/rustdesk-fleet/REQUIREMENTS.md` | `2415c6afb964b813152a3264a19eb505be3a17293dfca65bdb12a0c62e5c5b5f` |
-| `.planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md` | `737dc76f25328081175f21e7e0b6c2fb49ab3b439dee65a5ae3a94937d41251a` |
+| `.planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md` | `6e1d0fbd495eda10e29ad2c45d0e99368aea66fefab2c2f8269a5517480e532c` |
 | `.planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md` | `d0eac055e6849d991446d902a07f6b82c79c119915b36a59fd7c3944bf076b63` |
 | `modules/rustdesk-fleet/contracts/permission-profiles.json` | `13f06413ac98e764dfbd16993476d7a16e9b60c4546ca3179fa97fa3993e1452` |
 | `modules/rustdesk-fleet/contracts/product-decision.json` | `c558dd45c9e852ee29374c13aa6ebafdba0ffe17ced9da2f71ca9ef168dbe122` |
@@ -35,7 +35,7 @@
 | `P51-WS-001` | PASS | P51-EV-WS |
 | `P51-P48-001` | PASS | P51-EV-P48 |
 | `P51-THREAT-001` | PASS | P51-EV-THREAT |
-| `P51-REPORT-001` | BLOCKED | P51-EV-REPORT |
+| `P51-REPORT-001` | PASS | P51-EV-REPORT |
 
 ## Operational Review
 
@@ -43,6 +43,6 @@ The accountable review is represented by `P51-REPORT-001`; a BLOCKED status cann
 
 ## Overall Status
 
-**BLOCKED**
+**PASS**
 
 Secret material present: `false`
