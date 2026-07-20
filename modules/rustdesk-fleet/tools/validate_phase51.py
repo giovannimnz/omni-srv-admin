@@ -59,6 +59,26 @@ PHASE48_FILES = (
     "tools/verify-router-evidence.py",
 )
 PHASE48_EXCLUSIONS = ("__pycache__", "*.pyc", "*.swp", "*~")
+ACCEPTANCE_KIND_BY_PHASE = {
+    51: "governance-contract",
+    52: "supply-chain-live",
+    53: "server-edge-live",
+    54: "canary-live",
+    55: "fleet-rollout-live",
+    56: "matrix-live",
+    57: "resilience-live",
+    58: "closeout-evidence",
+}
+FIXTURE_DOCUMENT_PATHS = {
+    "scope": "contracts/scope.json",
+    "product_decision": "contracts/product-decision.json",
+    "threat_model": "contracts/threat-model.json",
+    "permission_profiles": "contracts/permission-profiles.json",
+    "secret_roles": "contracts/secret-roles.json",
+    "ledger": "evidence/ledger.json",
+    "phase48_baseline": "evidence/phase48-baseline.json",
+    "operational_review": "evidence/operational-review.json",
+}
 ENTERPRISE_CONTROLS = (
     "sso_oidc",
     "rbac",
@@ -275,7 +295,7 @@ def extract_executable_gsd_commands(text: str, source_kind: str = "script") -> l
             if logical.endswith("\\"):
                 logical = logical[:-1].rstrip()
                 continue
-            for part in re.split(r"\s*(?:&&|;)\s*", logical):
+            for part in re.split(r"\s*(?:&&|\|\||;)\s*", logical):
                 if part:
                     commands.append(part)
             logical = ""
@@ -442,6 +462,148 @@ def validate_phase48_baseline(
         evidence_ids=["P51-EV-P48"],
         findings=[Finding(category, source, "manifest") for category in sorted(set(errors))],
     )
+
+
+def parse_canonical_requirements(path: Path) -> dict[str, int]:
+    text = path.read_text(encoding="utf-8")
+    requirements_section = text.split("## v1.9 Requirements", 1)[1].split("## Future Requirements", 1)[0]
+    defined = re.findall(r"^- \[ \] \*\*([A-Z]+-\d+)\*\*:", requirements_section, flags=re.M)
+    traceability_section = text.split("## Traceability", 1)[1]
+    traced = re.findall(r"^\| ([A-Z]+-\d+) \| Phase (\d+) \|", traceability_section, flags=re.M)
+    traced_ids = [requirement_id for requirement_id, _ in traced]
+    if len(defined) != 36 or len(set(defined)) != 36 or defined != traced_ids:
+        raise ValueError("canonical requirement definitions and traceability differ")
+    return {requirement_id: int(phase) for requirement_id, phase in traced}
+
+
+def _ledger_blocked(categories: list[str], source: str) -> CheckResult:
+    return CheckResult(
+        id="P51-LEDGER-001",
+        status="BLOCKED",
+        evidence_ids=["P51-EV-LEDGER"],
+        findings=[Finding(category, source, "requirements") for category in sorted(set(categories))],
+    )
+
+
+def validate_ledger(
+    payload: dict[str, Any], canonical: dict[str, int], repo: Path, source: str = "ledger.json"
+) -> CheckResult:
+    errors: list[str] = []
+    if not isinstance(payload, dict):
+        return _ledger_blocked(["invalid-shape"], source)
+    if payload.get("schema_version") != 1 or payload.get("milestone") != "v1.9":
+        errors.append("ledger-schema")
+    rows = payload.get("requirements")
+    if payload.get("requirement_count") != 36 or not isinstance(rows, list) or len(rows) != 36:
+        errors.append("ledger-row-count")
+        rows = rows if isinstance(rows, list) else []
+    observed_ids = [row.get("requirement_id") for row in rows if isinstance(row, dict)]
+    if observed_ids != list(canonical) or len(set(observed_ids)) != len(observed_ids):
+        errors.append("ledger-requirement-set")
+    catalog = payload.get("evidence_catalog")
+    if not isinstance(catalog, dict):
+        errors.append("evidence-catalog-shape")
+        catalog = {}
+    all_evidence_ids: list[str] = []
+    for row in rows:
+        if not isinstance(row, dict):
+            errors.append("ledger-row-shape")
+            continue
+        requirement_id = row.get("requirement_id")
+        expected_phase = canonical.get(requirement_id)
+        if row.get("owner_phase") != expected_phase:
+            errors.append("owner-phase-mismatch")
+        if row.get("acceptance_kind") != ACCEPTANCE_KIND_BY_PHASE.get(expected_phase):
+            errors.append("acceptance-kind-mismatch")
+        status = row.get("status")
+        if status not in {"pending", "pass", "blocked", "fail"}:
+            errors.append("invalid-requirement-status")
+        evidence_ids = row.get("evidence_ids")
+        if not isinstance(evidence_ids, list) or len(evidence_ids) != 1 or not all(
+            isinstance(item, str) and re.fullmatch(r"RDF-V19-[A-Z]+-\d+", item) for item in evidence_ids
+        ):
+            errors.append("evidence-id-shape")
+            evidence_ids = []
+        all_evidence_ids.extend(evidence_ids)
+        last_verified_at = row.get("last_verified_at")
+        if status == "pending":
+            if last_verified_at is not None:
+                errors.append("pending-has-currentness")
+            continue
+        if status != "pass":
+            continue
+        if not isinstance(last_verified_at, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", last_verified_at):
+            errors.append("last-verified-at")
+        for evidence_id in evidence_ids:
+            evidence = catalog.get(evidence_id)
+            if not isinstance(evidence, dict):
+                errors.append("unresolved-evidence-id")
+                continue
+            evidence_path = evidence.get("path")
+            digest = evidence.get("sha256")
+            input_digest = evidence.get("input_digest")
+            observed_at = evidence.get("observed_at")
+            if not isinstance(evidence_path, str):
+                errors.append("evidence-path-shape")
+                continue
+            candidate = Path(evidence_path)
+            allowed_prefix = evidence_path.startswith("modules/rustdesk-fleet/") or evidence_path.startswith(
+                ".planning/workstreams/rustdesk-fleet/"
+            )
+            if candidate.is_absolute() or ".." in candidate.parts or not allowed_prefix:
+                errors.append("evidence-path-outside-scope")
+            if candidate.name.upper().endswith("SUMMARY.MD"):
+                errors.append("summary-only-evidence")
+            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest) or not isinstance(
+                input_digest, str
+            ) or not re.fullmatch(r"[0-9a-f]{64}", input_digest):
+                errors.append("evidence-digest-shape")
+            if observed_at != last_verified_at:
+                errors.append("evidence-currentness")
+    if len(set(all_evidence_ids)) != len(all_evidence_ids):
+        errors.append("duplicate-evidence-id")
+    orphan_catalog_ids = set(catalog) - set(all_evidence_ids)
+    if orphan_catalog_ids:
+        errors.append("orphan-evidence-catalog-entry")
+    return _result("P51-LEDGER-001", True, [], source) if not errors else _ledger_blocked(errors, source)
+
+
+def materialize_fixture_bundle(bundle: dict[str, Any], destination: Path) -> dict[str, Path]:
+    if not isinstance(bundle, dict) or bundle.get("schema_version") != 1:
+        raise ValueError("invalid fixture bundle")
+    documents = bundle.get("documents")
+    if not isinstance(documents, dict) or set(documents) != set(FIXTURE_DOCUMENT_PATHS):
+        raise ValueError("fixture bundle document set mismatch")
+    root = destination.resolve()
+    root.mkdir(parents=True, exist_ok=True)
+    written: dict[str, Path] = {}
+    for name, relative in FIXTURE_DOCUMENT_PATHS.items():
+        document = documents[name]
+        if not isinstance(document, dict):
+            raise ValueError("fixture document must be an object")
+        target = (root / relative).resolve(strict=False)
+        if not target.is_relative_to(root):
+            raise ValueError("fixture path escape")
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(json.dumps(document, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        written[name] = target
+    return written
+
+
+def load_structural_fixture(path: Path, repo: Path) -> dict[str, Any]:
+    descriptor = load_json_strict(path)
+    kind = descriptor.get("kind") if isinstance(descriptor, dict) else None
+    if kind == "missing-legacy-tool":
+        payload = load_json_strict(repo / "modules/rustdesk-fleet/contracts/scope.json")
+        payload["preserved_access_tools"] = [
+            item for item in payload["preserved_access_tools"] if item.get("id") != "noVNC"
+        ]
+        return payload
+    if kind == "duplicate-secret-ref":
+        payload = load_json_strict(repo / "modules/rustdesk-fleet/contracts/secret-roles.json")
+        payload["target_password_roles"][1]["vault_path"] = payload["target_password_roles"][0]["vault_path"]
+        return payload
+    raise ValueError("unsupported structural fixture")
 
 
 def derive_product_decision(payload: dict[str, Any]) -> dict[str, str | None]:
@@ -749,6 +911,19 @@ def main(argv: list[str] | None = None) -> int:
         results.append(
             validate_phase48_baseline(
                 load_json_strict(baseline_path), repo, str(baseline_path.relative_to(repo))
+            )
+        )
+        requirements_path = validate_repo_path(
+            repo, repo / ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md"
+        )
+        ledger_path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/evidence/ledger.json")
+        input_paths.extend([requirements_path, ledger_path])
+        results.append(
+            validate_ledger(
+                load_json_strict(ledger_path),
+                parse_canonical_requirements(requirements_path),
+                repo,
+                str(ledger_path.relative_to(repo)),
             )
         )
     except (OSError, ValueError) as exc:

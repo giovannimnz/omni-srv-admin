@@ -110,6 +110,19 @@ def test_workstream_prose_is_not_an_executable_command() -> None:
     assert validator.extract_executable_gsd_commands(text, source_kind="markdown") == []
 
 
+def test_workstream_or_chain_and_duplicate_scope_fail_independently() -> None:
+    commands = validator.extract_executable_gsd_commands(
+        "node gsd-tools.cjs state begin-phase --ws rustdesk-fleet 51 || "
+        "node gsd-tools.cjs state advance-plan 51\n",
+        source_kind="script",
+    )
+    assert [result.status for result in validator.validate_workstream_commands(commands)] == ["PASS", "FAIL"]
+    duplicate = validator.validate_workstream_commands(
+        ["node gsd-tools.cjs state begin-phase --ws rustdesk-fleet --ws rustdesk-fleet 51"]
+    )
+    assert duplicate[0].status == "FAIL"
+
+
 def test_phase48_integrity_contract() -> None:
     payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
     result = validator.validate_phase48_baseline(payload, REPO)

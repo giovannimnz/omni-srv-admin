@@ -1,0 +1,924 @@
+{
+  "documents": {
+    "ledger": {
+      "evidence_catalog": {},
+      "milestone": "v1.9",
+      "requirement_count": 36,
+      "requirements": [
+        {
+          "acceptance_kind": "governance-contract",
+          "evidence_ids": [
+            "RDF-V19-SCP-01"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 51,
+          "requirement_id": "SCP-01",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "governance-contract",
+          "evidence_ids": [
+            "RDF-V19-SCP-02"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 51,
+          "requirement_id": "SCP-02",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "governance-contract",
+          "evidence_ids": [
+            "RDF-V19-SCP-03"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 51,
+          "requirement_id": "SCP-03",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "supply-chain-live",
+          "evidence_ids": [
+            "RDF-V19-SCP-04"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 52,
+          "requirement_id": "SCP-04",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "governance-contract",
+          "evidence_ids": [
+            "RDF-V19-SCP-05"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 51,
+          "requirement_id": "SCP-05",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "supply-chain-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-01"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 52,
+          "requirement_id": "SRV-01",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "server-edge-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-02"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 53,
+          "requirement_id": "SRV-02",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "server-edge-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-03"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 53,
+          "requirement_id": "SRV-03",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "server-edge-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-04"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 53,
+          "requirement_id": "SRV-04",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "supply-chain-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-05"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 52,
+          "requirement_id": "SRV-05",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "server-edge-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-06"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 53,
+          "requirement_id": "SRV-06",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "supply-chain-live",
+          "evidence_ids": [
+            "RDF-V19-SRV-07"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 52,
+          "requirement_id": "SRV-07",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "canary-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-01"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 54,
+          "requirement_id": "CLI-01",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "canary-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-02"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 54,
+          "requirement_id": "CLI-02",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "fleet-rollout-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-03"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 55,
+          "requirement_id": "CLI-03",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "canary-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-04"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 54,
+          "requirement_id": "CLI-04",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "fleet-rollout-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-05"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 55,
+          "requirement_id": "CLI-05",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "canary-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-06"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 54,
+          "requirement_id": "CLI-06",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "matrix-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-07"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 56,
+          "requirement_id": "CLI-07",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "fleet-rollout-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-08"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 55,
+          "requirement_id": "CLI-08",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "fleet-rollout-live",
+          "evidence_ids": [
+            "RDF-V19-CLI-09"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 55,
+          "requirement_id": "CLI-09",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "matrix-live",
+          "evidence_ids": [
+            "RDF-V19-VAL-01"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 56,
+          "requirement_id": "VAL-01",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "matrix-live",
+          "evidence_ids": [
+            "RDF-V19-VAL-02"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 56,
+          "requirement_id": "VAL-02",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "matrix-live",
+          "evidence_ids": [
+            "RDF-V19-VAL-03"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 56,
+          "requirement_id": "VAL-03",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "matrix-live",
+          "evidence_ids": [
+            "RDF-V19-VAL-04"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 56,
+          "requirement_id": "VAL-04",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "matrix-live",
+          "evidence_ids": [
+            "RDF-V19-VAL-05"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 56,
+          "requirement_id": "VAL-05",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "resilience-live",
+          "evidence_ids": [
+            "RDF-V19-VAL-06"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 57,
+          "requirement_id": "VAL-06",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "closeout-evidence",
+          "evidence_ids": [
+            "RDF-V19-VAL-07"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 58,
+          "requirement_id": "VAL-07",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "resilience-live",
+          "evidence_ids": [
+            "RDF-V19-DR-01"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 57,
+          "requirement_id": "DR-01",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "resilience-live",
+          "evidence_ids": [
+            "RDF-V19-DR-02"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 57,
+          "requirement_id": "DR-02",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "resilience-live",
+          "evidence_ids": [
+            "RDF-V19-DR-03"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 57,
+          "requirement_id": "DR-03",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "resilience-live",
+          "evidence_ids": [
+            "RDF-V19-DR-04"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 57,
+          "requirement_id": "DR-04",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "server-edge-live",
+          "evidence_ids": [
+            "RDF-V19-OPS-01"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 53,
+          "requirement_id": "OPS-01",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "closeout-evidence",
+          "evidence_ids": [
+            "RDF-V19-OPS-02"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 58,
+          "requirement_id": "OPS-02",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "closeout-evidence",
+          "evidence_ids": [
+            "RDF-V19-OPS-03"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 58,
+          "requirement_id": "OPS-03",
+          "status": "pending"
+        },
+        {
+          "acceptance_kind": "closeout-evidence",
+          "evidence_ids": [
+            "RDF-V19-OPS-04"
+          ],
+          "last_verified_at": null,
+          "owner_phase": 58,
+          "requirement_id": "OPS-04",
+          "status": "pending"
+        }
+      ],
+      "schema_version": 1
+    },
+    "operational_review": {
+      "reason": "accountable-review-pending",
+      "reviewed_at": null,
+      "reviewer": null,
+      "schema_version": 1,
+      "status": "BLOCKED"
+    },
+    "permission_profiles": {
+      "centralized_rbac_claimed": false,
+      "compensating_controls": [
+        "per-client-config-verification",
+        "negative-capability-tests",
+        "single-operator-accountability"
+      ],
+      "enforcement_model": "desired-local-policy-with-verified-compensating-controls",
+      "profiles": [
+        {
+          "capabilities": {
+            "audio": "deny",
+            "clipboard": "allow",
+            "file_transfer": "deny",
+            "keyboard_mouse": "allow",
+            "privacy_mode": "deny",
+            "recording": "deny",
+            "remote_config_modification": "deny",
+            "remote_restart": "allow",
+            "screen_view": "allow",
+            "tcp_tunnel": "deny",
+            "terminal": "allow"
+          },
+          "id": "admin-maintenance"
+        },
+        {
+          "capabilities": {
+            "audio": "deny",
+            "clipboard": "deny",
+            "file_transfer": "deny",
+            "keyboard_mouse": "deny",
+            "privacy_mode": "deny",
+            "recording": "deny",
+            "remote_config_modification": "deny",
+            "remote_restart": "deny",
+            "screen_view": "allow",
+            "tcp_tunnel": "deny",
+            "terminal": "deny"
+          },
+          "id": "support-observe"
+        }
+      ],
+      "schema_version": 1
+    },
+    "phase48_baseline": {
+      "allowed_exclusions": [
+        "__pycache__",
+        "*.pyc",
+        "*.swp",
+        "*~"
+      ],
+      "file_count": 9,
+      "files": [
+        {
+          "legacy_blob_id": "520f2416e50eb7d6e93879f37e5c94302b998a45",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-01-PLAN.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-01-PLAN.md",
+          "workstream_sha256": "48a662d56f64a7adc1243ad2475ce10a37ca576a871f9c2b7e34d4952465a294"
+        },
+        {
+          "legacy_blob_id": "45c2776e3d1810dfa90a621686a3d9939c3aee64",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-01-ROUTER-EVIDENCE.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-01-ROUTER-EVIDENCE.md",
+          "workstream_sha256": "466990c3333218821b204375b04089d76955849c961fc9ae55812e60f155977c"
+        },
+        {
+          "legacy_blob_id": "2ad47315f4988775096177f8c36d8ebbbdf679bc",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-02-PLAN.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-02-PLAN.md",
+          "workstream_sha256": "e655dc9d9f763b16d70ff4195ea83e1ebc6cc9500db0e3d22c5ba4007f619e95"
+        },
+        {
+          "legacy_blob_id": "10547b9c488693e888d34411e3cf94bee6a841b3",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-CONTEXT.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-CONTEXT.md",
+          "workstream_sha256": "f07bf0aefabdb8993281aa8384ac9e147e187518d53d1f76b13ff16607025ccd"
+        },
+        {
+          "legacy_blob_id": "5851d6e734937f02495be5dd2f6628163412fe65",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md",
+          "workstream_sha256": "4deeb6c496d7daa60a264b9c48159230a0fe27ce6b1423e81d9282ff48834741"
+        },
+        {
+          "legacy_blob_id": "579300b2da05a7af948ee39f48c16016376051b4",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-PATTERNS.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-PATTERNS.md",
+          "workstream_sha256": "3a8e27ac00e71d92fe985d3dafd86fbe0daa78de26c3a589771636c842e459f0"
+        },
+        {
+          "legacy_blob_id": "d59e9569420c41fdf0e9ed69c237fcbdeaac0c63",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-RESEARCH.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-RESEARCH.md",
+          "workstream_sha256": "459ee724a03a4803e999aabd55d70d06381d19b40daa72a44d65fe91b4651345"
+        },
+        {
+          "legacy_blob_id": "1d296a09089559055ffef31513b6a1a494427115",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md",
+          "workstream_sha256": "dc45746e8b2c54cf4560d852ec2f343fa4db9ee6d9e1b6b126fac5e55b43e100"
+        },
+        {
+          "legacy_blob_id": "23dba3ec85c3cea0fcc1cb6d25acba7d3bfb574d",
+          "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/tools/verify-router-evidence.py",
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/tools/verify-router-evidence.py",
+          "workstream_sha256": "1d7390583f2a3ead0ad27b42ad5122217e432e2849fc687412f68a16b872a125"
+        }
+      ],
+      "migrated_phase": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence",
+      "rebaseline_policy": "explicit-serialized-review-only",
+      "schema_version": 1,
+      "source_head": "bff3d151d76655bb049a14e63a25f38abb6551c0",
+      "source_phase": ".planning/phases/48-codex-oauth-wayland-acp-convergence"
+    },
+    "product_decision": {
+      "declared_decision": "BLOCKED",
+      "derived_decision": "BLOCKED",
+      "enterprise_controls": [
+        {
+          "accepted_absence": false,
+          "id": "sso_oidc",
+          "mandatory": false,
+          "review_status": "pending",
+          "source": "accountable-operational-review"
+        },
+        {
+          "accepted_absence": false,
+          "id": "rbac",
+          "mandatory": false,
+          "review_status": "pending",
+          "source": "accountable-operational-review"
+        },
+        {
+          "accepted_absence": false,
+          "id": "mfa",
+          "mandatory": false,
+          "review_status": "pending",
+          "source": "accountable-operational-review"
+        },
+        {
+          "accepted_absence": false,
+          "id": "central_api",
+          "mandatory": false,
+          "review_status": "pending",
+          "source": "accountable-operational-review"
+        },
+        {
+          "accepted_absence": false,
+          "id": "central_device_policy",
+          "mandatory": false,
+          "review_status": "pending",
+          "source": "accountable-operational-review"
+        },
+        {
+          "accepted_absence": false,
+          "id": "human_attributed_audit",
+          "mandatory": false,
+          "review_status": "pending",
+          "source": "accountable-operational-review"
+        }
+      ],
+      "operator_scope": "single-operator",
+      "required_edition": null,
+      "schema_version": 1
+    },
+    "scope": {
+      "excluded_hosts": [
+        "WSL",
+        "GIOVANNI-S23"
+      ],
+      "gsd_lifecycle": {
+        "command_sources": [
+          "fenced-shell",
+          "script"
+        ],
+        "mutating_verbs": [
+          "begin-phase",
+          "advance-plan",
+          "update-progress",
+          "complete-phase",
+          "complete-milestone",
+          "plan-phase",
+          "execute-phase",
+          "verify-work"
+        ],
+        "required_flag": "--ws",
+        "required_workstream": "rustdesk-fleet"
+      },
+      "included_hosts": [
+        "atius-srv-1",
+        "atius-srv-2",
+        "atius-srv-3",
+        "horistic-srv",
+        "GIOVANNI-W11-PC"
+      ],
+      "preserved_access_tools": [
+        {
+          "action": "preserve",
+          "id": "RustGuac",
+          "independently_usable": true
+        },
+        {
+          "action": "preserve",
+          "id": "XRDP",
+          "independently_usable": true
+        },
+        {
+          "action": "preserve",
+          "id": "AnyDesk",
+          "independently_usable": true
+        },
+        {
+          "action": "preserve",
+          "id": "NoMachine",
+          "independently_usable": true
+        },
+        {
+          "action": "preserve",
+          "id": "noVNC",
+          "independently_usable": true
+        }
+      ],
+      "production_transport": {
+        "force_relay_default": false,
+        "forced_relay_allowed_purposes": [
+          "controlled-validation",
+          "proven-fallback"
+        ],
+        "policy": "direct-first"
+      },
+      "schema_version": 1,
+      "shared_writers": {
+        "mode": "serialized-single-writer",
+        "paths": [
+          ".planning/PROJECT.md",
+          ".planning/MILESTONES.md",
+          ".planning/graphs/graph.json",
+          ".planning/graphs/GRAPH_REPORT.md",
+          ".planning/graphs/manifest.json"
+        ]
+      },
+      "transition_gates": {
+        "postcheck_ids": [
+          "P51-P48-001"
+        ],
+        "precheck_ids": [
+          "P51-WS-001"
+        ]
+      },
+      "workstream": "rustdesk-fleet"
+    },
+    "secret_roles": {
+      "authority": "hashicorp-vault",
+      "client_identity_inventory_ref": "modules/rustdesk-fleet/evidence/client-identities.json",
+      "permission_profiles_ref": "modules/rustdesk-fleet/contracts/permission-profiles.json",
+      "recovery_authority": {
+        "approval_status": "pending",
+        "role": "rustdesk-recovery-owner",
+        "vault_path": "kv/atius/rustdesk/server"
+      },
+      "schema_version": 1,
+      "server_identity": {
+        "approval_status": "pending",
+        "private_key_ref": {
+          "field": "private_key",
+          "role": "server-identity-private",
+          "vault_path": "kv/atius/rustdesk/server"
+        },
+        "public_key_ref": {
+          "field": "public_key",
+          "role": "server-identity-public",
+          "vault_path": "kv/atius/rustdesk/server"
+        }
+      },
+      "target_password_roles": [
+        {
+          "approval_status": "pending",
+          "field": "permanent_password",
+          "host": "atius-srv-1",
+          "role": "target-password-atius-srv-1",
+          "vault_path": "kv/atius/rustdesk/targets/atius-srv-1"
+        },
+        {
+          "approval_status": "pending",
+          "field": "permanent_password",
+          "host": "atius-srv-2",
+          "role": "target-password-atius-srv-2",
+          "vault_path": "kv/atius/rustdesk/targets/atius-srv-2"
+        },
+        {
+          "approval_status": "pending",
+          "field": "permanent_password",
+          "host": "atius-srv-3",
+          "role": "target-password-atius-srv-3",
+          "vault_path": "kv/atius/rustdesk/targets/atius-srv-3"
+        },
+        {
+          "approval_status": "pending",
+          "field": "permanent_password",
+          "host": "horistic-srv",
+          "role": "target-password-horistic-srv",
+          "vault_path": "kv/atius/rustdesk/targets/horistic-srv"
+        },
+        {
+          "approval_status": "pending",
+          "field": "permanent_password",
+          "host": "GIOVANNI-W11-PC",
+          "role": "target-password-giovanni-w11-pc",
+          "vault_path": "kv/atius/rustdesk/targets/giovanni-w11-pc"
+        }
+      ],
+      "value_distinctness_phase": 52
+    },
+    "threat_model": {
+      "assets": [
+        "server-private-key",
+        "distributed-server-public-key",
+        "five-target-passwords",
+        "rustdesk-client-ids",
+        "permission-profiles",
+        "recovery-authority",
+        "evidence",
+        "gsd-workstreams"
+      ],
+      "asvs_baseline": [
+        "v5.0.0-2.1.1",
+        "v5.0.0-2.2.1",
+        "v5.0.0-2.2.2",
+        "v5.0.0-2.3.1",
+        "v5.0.0-6.1.1",
+        "v5.0.0-6.3.1",
+        "v5.0.0-8.1.1",
+        "v5.0.0-8.2.1",
+        "v5.0.0-8.2.2",
+        "v5.0.0-8.3.1",
+        "v5.0.0-11.4.1",
+        "v5.0.0-15.3.1"
+      ],
+      "blocking_threshold": "high",
+      "risk_based_l2_subset": [
+        "v5.0.0-16.1.1",
+        "v5.0.0-16.2.5",
+        "v5.0.0-16.3.3",
+        "v5.0.0-16.4.2",
+        "v5.0.0-16.5.1",
+        "v5.0.0-16.5.3"
+      ],
+      "schema_version": 1,
+      "threats": [
+        {
+          "asvs_ids": [
+            "v5.0.0-11.4.1"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T01"
+          ],
+          "id": "T-01",
+          "mitigation": "Pin public fingerprint and prove restore identity in later phases.",
+          "owner": "rustdesk-operator",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Spoofing/Tampering"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-15.3.1",
+            "v5.0.0-16.3.3"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T02"
+          ],
+          "id": "T-02",
+          "mitigation": "Keep private key in Vault/runtime and emit metadata-only findings.",
+          "owner": "vault-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Information Disclosure"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-6.1.1",
+            "v5.0.0-16.3.3"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T03"
+          ],
+          "id": "T-03",
+          "mitigation": "Reserve five unique Vault references; prove values later without output.",
+          "owner": "vault-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Information Disclosure/Elevation"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-8.1.1",
+            "v5.0.0-8.3.1"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T04"
+          ],
+          "id": "T-04",
+          "mitigation": "Use exact deny-by-default profiles and later negative capability tests.",
+          "owner": "rustdesk-operator",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Elevation/Tampering"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-2.3.1"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T05"
+          ],
+          "id": "T-05",
+          "mitigation": "Derive NO-GO/pro for any mandatory centralized control.",
+          "owner": "accountable-reviewer",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Repudiation/Elevation"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-2.2.2"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T06"
+          ],
+          "id": "T-06",
+          "mitigation": "Enforce direct-first and reject forced relay as a default.",
+          "owner": "rustdesk-operator",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Denial of Service/Tampering"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-2.1.1"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T07"
+          ],
+          "id": "T-07",
+          "mitigation": "Enforce exact allowlist and deny excluded or unknown targets.",
+          "owner": "fleet-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Tampering/Elevation"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-2.3.1"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T08"
+          ],
+          "id": "T-08",
+          "mitigation": "Preserve five independent recovery paths and reject decommission intent.",
+          "owner": "fleet-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Denial of Service"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-11.4.1",
+            "v5.0.0-16.4.2"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T09"
+          ],
+          "id": "T-09",
+          "mitigation": "Require explicit workstream scope and Phase 48 integrity proof.",
+          "owner": "gsd-workstream-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Tampering/Repudiation"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-16.1.1",
+            "v5.0.0-16.2.5"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T10"
+          ],
+          "id": "T-10",
+          "mitigation": "Require current machine evidence and reject summary-only closure.",
+          "owner": "evidence-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Repudiation"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-15.3.1",
+            "v5.0.0-16.3.3"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T11"
+          ],
+          "id": "T-11",
+          "mitigation": "Minimize and redact client and session metadata with purpose-bound retention.",
+          "owner": "evidence-owner",
+          "severity": "medium",
+          "status": "mitigated",
+          "stride": "Information Disclosure"
+        },
+        {
+          "asvs_ids": [
+            "v5.0.0-8.2.1",
+            "v5.0.0-16.4.2"
+          ],
+          "disposition": "mitigate",
+          "evidence_ids": [
+            "P51-EV-THREAT-T12"
+          ],
+          "id": "T-12",
+          "mitigation": "Require named recovery authority and accountable Vault path approval before PASS.",
+          "owner": "vault-owner",
+          "severity": "high",
+          "status": "mitigated",
+          "stride": "Elevation/Repudiation"
+        }
+      ],
+      "trust_boundaries": [
+        "operator-review-to-product-decision",
+        "versioned-contract-to-validator",
+        "vault-authority-to-repo-references",
+        "permission-contract-to-later-clients"
+      ]
+    }
+  },
+  "schema_version": 1
+}
