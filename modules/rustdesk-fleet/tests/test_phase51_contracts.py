@@ -107,6 +107,7 @@ def test_product_decision_truth_table() -> None:
     for control in payload["enterprise_controls"]:
         control.update(mandatory=False, review_status="reviewed", accepted_absence=True)
     payload["declared_decision"] = "GO"
+    payload["derived_decision"] = "GO"
     payload["required_edition"] = "oss"
     assert validator.derive_product_decision(payload) == {
         "decision": "GO",
@@ -117,6 +118,7 @@ def test_product_decision_truth_table() -> None:
     payload["enterprise_controls"][0]["mandatory"] = True
     payload["enterprise_controls"][0]["accepted_absence"] = False
     payload["declared_decision"] = "NO-GO"
+    payload["derived_decision"] = "NO-GO"
     payload["required_edition"] = "pro"
     assert validator.derive_product_decision(payload) == {
         "decision": "NO-GO",

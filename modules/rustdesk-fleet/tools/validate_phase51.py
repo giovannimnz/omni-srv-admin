@@ -22,6 +22,65 @@ EXPECTED_INCLUDED_HOSTS = (
 EXPECTED_EXCLUDED_HOSTS = ("WSL", "GIOVANNI-S23")
 EXPECTED_ACCESS_TOOLS = ("RustGuac", "XRDP", "AnyDesk", "NoMachine", "noVNC")
 EXPECTED_RELAY_PURPOSES = ("controlled-validation", "proven-fallback")
+ENTERPRISE_CONTROLS = (
+    "sso_oidc",
+    "rbac",
+    "mfa",
+    "central_api",
+    "central_device_policy",
+    "human_attributed_audit",
+)
+CAPABILITIES = (
+    "screen_view",
+    "keyboard_mouse",
+    "clipboard",
+    "file_transfer",
+    "audio",
+    "terminal",
+    "tcp_tunnel",
+    "remote_restart",
+    "privacy_mode",
+    "recording",
+    "remote_config_modification",
+)
+EXPECTED_PERMISSION_PROFILES = {
+    "admin-maintenance": {
+        "screen_view": "allow",
+        "keyboard_mouse": "allow",
+        "clipboard": "allow",
+        "file_transfer": "deny",
+        "audio": "deny",
+        "terminal": "allow",
+        "tcp_tunnel": "deny",
+        "remote_restart": "allow",
+        "privacy_mode": "deny",
+        "recording": "deny",
+        "remote_config_modification": "deny",
+    },
+    "support-observe": {capability: "allow" if capability == "screen_view" else "deny" for capability in CAPABILITIES},
+}
+ASVS_L1 = (
+    "v5.0.0-2.1.1",
+    "v5.0.0-2.2.1",
+    "v5.0.0-2.2.2",
+    "v5.0.0-2.3.1",
+    "v5.0.0-6.1.1",
+    "v5.0.0-6.3.1",
+    "v5.0.0-8.1.1",
+    "v5.0.0-8.2.1",
+    "v5.0.0-8.2.2",
+    "v5.0.0-8.3.1",
+    "v5.0.0-11.4.1",
+    "v5.0.0-15.3.1",
+)
+ASVS_L2_V16 = (
+    "v5.0.0-16.1.1",
+    "v5.0.0-16.2.5",
+    "v5.0.0-16.3.3",
+    "v5.0.0-16.4.2",
+    "v5.0.0-16.5.1",
+    "v5.0.0-16.5.3",
+)
 
 
 @dataclass(frozen=True)
@@ -139,6 +198,140 @@ def validate_scope(payload: dict[str, Any], source: str = "scope.json") -> list[
     ]
 
 
+def derive_product_decision(payload: dict[str, Any]) -> dict[str, str | None]:
+    controls = payload.get("enterprise_controls")
+    if not isinstance(controls, list):
+        return {"decision": "BLOCKED", "required_edition": None}
+    if any(isinstance(item, dict) and item.get("mandatory") is True for item in controls):
+        return {"decision": "NO-GO", "required_edition": "pro"}
+    reviewed_acceptance = (
+        payload.get("operator_scope") == "single-operator"
+        and len(controls) == len(ENTERPRISE_CONTROLS)
+        and all(
+            isinstance(item, dict)
+            and item.get("review_status") == "reviewed"
+            and item.get("accepted_absence") is True
+            for item in controls
+        )
+    )
+    if reviewed_acceptance:
+        return {"decision": "GO", "required_edition": "oss"}
+    return {"decision": "BLOCKED", "required_edition": None}
+
+
+def validate_product_decision(
+    payload: dict[str, Any], source: str = "product-decision.json"
+) -> CheckResult:
+    errors: list[str] = []
+    controls = payload.get("enterprise_controls")
+    if payload.get("schema_version") != 1 or payload.get("operator_scope") != "single-operator":
+        errors.append("product-shape")
+    if not isinstance(controls, list) or [item.get("id") for item in controls if isinstance(item, dict)] != list(
+        ENTERPRISE_CONTROLS
+    ):
+        errors.append("enterprise-control-set")
+    elif any(
+        not isinstance(item.get("mandatory"), bool)
+        or item.get("review_status") not in {"pending", "reviewed"}
+        or not isinstance(item.get("accepted_absence"), bool)
+        or not isinstance(item.get("source"), str)
+        or not item.get("source")
+        for item in controls
+    ):
+        errors.append("enterprise-control-shape")
+    derived = derive_product_decision(payload)
+    if payload.get("declared_decision") != derived["decision"]:
+        errors.append("declared-derived-mismatch")
+    if payload.get("derived_decision") != derived["decision"]:
+        errors.append("stored-derived-mismatch")
+    if payload.get("required_edition") != derived["required_edition"]:
+        errors.append("required-edition-mismatch")
+    if errors:
+        return _result("P51-PRODUCT-001", False, errors, source)
+    if derived["decision"] == "BLOCKED":
+        return CheckResult(
+            id="P51-PRODUCT-001",
+            status="BLOCKED",
+            evidence_ids=["P51-EV-PRODUCT"],
+            findings=[Finding("accountable-review-pending", source, "enterprise_controls")],
+        )
+    return _result("P51-PRODUCT-001", True, [], source)
+
+
+def validate_permission_profiles(
+    payload: dict[str, Any], source: str = "permission-profiles.json"
+) -> CheckResult:
+    errors: list[str] = []
+    profiles = payload.get("profiles")
+    if payload.get("schema_version") != 1 or payload.get("enforcement_model") != "desired-local-policy-with-verified-compensating-controls":
+        errors.append("permission-shape")
+    if not isinstance(profiles, list) or len(profiles) != 2:
+        errors.append("profile-cardinality")
+    else:
+        observed = {
+            item.get("id"): item.get("capabilities")
+            for item in profiles
+            if isinstance(item, dict) and isinstance(item.get("id"), str)
+        }
+        if observed != EXPECTED_PERMISSION_PROFILES:
+            errors.append("capability-matrix")
+    controls = payload.get("compensating_controls")
+    if not isinstance(controls, list) or not {
+        "per-client-config-verification",
+        "negative-capability-tests",
+        "single-operator-accountability",
+    }.issubset(set(controls)):
+        errors.append("compensating-controls")
+    if payload.get("centralized_rbac_claimed") is not False:
+        errors.append("oss-rbac-overclaim")
+    return _result("P51-PERM-001", not errors, errors, source)
+
+
+def validate_threat_model(payload: dict[str, Any], source: str = "threat-model.json") -> CheckResult:
+    errors: list[str] = []
+    blocked: list[str] = []
+    if payload.get("schema_version") != 1 or payload.get("blocking_threshold") != "high":
+        errors.append("threat-model-shape")
+    if tuple(payload.get("asvs_baseline", [])) != ASVS_L1:
+        errors.append("asvs-l1-set")
+    if tuple(payload.get("risk_based_l2_subset", [])) != ASVS_L2_V16:
+        errors.append("asvs-v16-l2-set")
+    threats = payload.get("threats")
+    if not isinstance(threats, list) or [item.get("id") for item in threats if isinstance(item, dict)] != [
+        f"T-{number:02d}" for number in range(1, 13)
+    ]:
+        errors.append("threat-id-set")
+    else:
+        for item in threats:
+            if not isinstance(item, dict):
+                errors.append("threat-shape")
+                continue
+            required_text = ("stride", "severity", "status", "disposition", "owner", "mitigation")
+            if any(not isinstance(item.get(key), str) or not item.get(key) for key in required_text):
+                errors.append("threat-required-field")
+                continue
+            if not isinstance(item.get("evidence_ids"), list) or not item["evidence_ids"]:
+                errors.append("threat-evidence")
+            if not isinstance(item.get("asvs_ids"), list) or not item["asvs_ids"]:
+                errors.append("threat-asvs")
+            if item["severity"] == "high" and item["status"] not in {"mitigated", "resolved"}:
+                blocked.append("unresolved-high")
+            if item["severity"] == "medium" and (
+                not item["owner"] or not item["mitigation"] or not item.get("evidence_ids")
+            ):
+                blocked.append("unowned-medium")
+    if errors:
+        return _result("P51-THREAT-001", False, sorted(set(errors)), source)
+    if blocked:
+        return CheckResult(
+            id="P51-THREAT-001",
+            status="BLOCKED",
+            evidence_ids=["P51-EV-THREAT"],
+            findings=[Finding(category, source, "threats") for category in sorted(set(blocked))],
+        )
+    return _result("P51-THREAT-001", True, [], source)
+
+
 def scan_secret_material(value: Any, path: str = "contract", location: str = "root") -> list[Finding]:
     """Task 51-01 seam; Task 51-01-03 adds the complete non-disclosing scanner."""
     del value, path, location
@@ -196,20 +389,37 @@ def main(argv: list[str] | None = None) -> int:
         contract_path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/contracts/scope.json")
         payload = load_json_strict(contract_path)
         results = validate_scope(payload, str(contract_path.relative_to(repo)))
+        contract_validators = (
+            ("product-decision.json", validate_product_decision),
+            ("permission-profiles.json", validate_permission_profiles),
+            ("threat-model.json", validate_threat_model),
+        )
+        input_paths = [contract_path]
+        for filename, validator in contract_validators:
+            path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/contracts" / filename)
+            input_paths.append(path)
+            results.append(validator(load_json_strict(path), str(path.relative_to(repo))))
     except (OSError, ValueError) as exc:
         print(f"BLOCKED: {exc.__class__.__name__}", file=sys.stderr)
         return 2
 
-    overall = "FAIL" if any(item.status == "FAIL" for item in results) else "PASS"
+    overall = (
+        "FAIL"
+        if any(item.status == "FAIL" for item in results)
+        else "BLOCKED"
+        if any(item.status == "BLOCKED" for item in results)
+        else "PASS"
+    )
     report = {
         "schema_version": 1,
         "phase": 51,
         "workstream": "rustdesk-fleet",
         "inputs": [
             {
-                "path": str(contract_path.relative_to(repo)),
-                "sha256": _sha256_file(contract_path),
+                "path": str(path.relative_to(repo)),
+                "sha256": _sha256_file(path),
             }
+            for path in sorted(input_paths)
         ],
         "checks": [_serialize_result(result) for result in results],
         "secret_material_present": False,
@@ -228,7 +438,7 @@ def main(argv: list[str] | None = None) -> int:
         md_path.write_text(_render_markdown(report), encoding="utf-8")
     if not args.json_out and not args.markdown_out:
         print(json.dumps(report, indent=2, sort_keys=True))
-    return 1 if overall == "FAIL" else 0
+    return 1 if overall == "FAIL" else 2 if overall == "BLOCKED" else 0
 
 
 if __name__ == "__main__":

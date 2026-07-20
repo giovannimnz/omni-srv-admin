@@ -1,0 +1,44 @@
+{
+  "schema_version": 1,
+  "enforcement_model": "desired-local-policy-with-verified-compensating-controls",
+  "centralized_rbac_claimed": false,
+  "profiles": [
+    {
+      "id": "admin-maintenance",
+      "capabilities": {
+        "screen_view": "allow",
+        "keyboard_mouse": "allow",
+        "clipboard": "allow",
+        "file_transfer": "deny",
+        "audio": "deny",
+        "terminal": "allow",
+        "tcp_tunnel": "deny",
+        "remote_restart": "allow",
+        "privacy_mode": "deny",
+        "recording": "deny",
+        "remote_config_modification": "deny"
+      }
+    },
+    {
+      "id": "support-observe",
+      "capabilities": {
+        "screen_view": "allow",
+        "keyboard_mouse": "deny",
+        "clipboard": "deny",
+        "file_transfer": "deny",
+        "audio": "deny",
+        "terminal": "deny",
+        "tcp_tunnel": "deny",
+        "remote_restart": "deny",
+        "privacy_mode": "deny",
+        "recording": "deny",
+        "remote_config_modification": "deny"
+      }
+    }
+  ],
+  "compensating_controls": [
+    "per-client-config-verification",
+    "negative-capability-tests",
+    "single-operator-accountability"
+  ]
+}

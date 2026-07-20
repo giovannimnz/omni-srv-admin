@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "asvs_baseline": [
+    "v5.0.0-2.1.1", "v5.0.0-2.2.1", "v5.0.0-2.2.2", "v5.0.0-2.3.1",
+    "v5.0.0-6.1.1", "v5.0.0-6.3.1", "v5.0.0-8.1.1", "v5.0.0-8.2.1",
+    "v5.0.0-8.2.2", "v5.0.0-8.3.1", "v5.0.0-11.4.1", "v5.0.0-15.3.1"
+  ],
+  "risk_based_l2_subset": [
+    "v5.0.0-16.1.1", "v5.0.0-16.2.5", "v5.0.0-16.3.3",
+    "v5.0.0-16.4.2", "v5.0.0-16.5.1", "v5.0.0-16.5.3"
+  ],
+  "blocking_threshold": "high",
+  "assets": [
+    "server-private-key", "distributed-server-public-key", "five-target-passwords",
+    "rustdesk-client-ids", "permission-profiles", "recovery-authority", "evidence", "gsd-workstreams"
+  ],
+  "trust_boundaries": [
+    "operator-review-to-product-decision", "versioned-contract-to-validator",
+    "vault-authority-to-repo-references", "permission-contract-to-later-clients"
+  ],
+  "threats": [
+    {"id":"T-01","stride":"Spoofing/Tampering","severity":"high","status":"mitigated","disposition":"mitigate","owner":"rustdesk-operator","mitigation":"Pin public fingerprint and prove restore identity in later phases.","evidence_ids":["P51-EV-THREAT-T01"],"asvs_ids":["v5.0.0-11.4.1"]},
+    {"id":"T-02","stride":"Information Disclosure","severity":"high","status":"mitigated","disposition":"mitigate","owner":"vault-owner","mitigation":"Keep private key in Vault/runtime and emit metadata-only findings.","evidence_ids":["P51-EV-THREAT-T02"],"asvs_ids":["v5.0.0-15.3.1","v5.0.0-16.3.3"]},
+    {"id":"T-03","stride":"Information Disclosure/Elevation","severity":"high","status":"mitigated","disposition":"mitigate","owner":"vault-owner","mitigation":"Reserve five unique Vault references; prove values later without output.","evidence_ids":["P51-EV-THREAT-T03"],"asvs_ids":["v5.0.0-6.1.1","v5.0.0-16.3.3"]},
+    {"id":"T-04","stride":"Elevation/Tampering","severity":"high","status":"mitigated","disposition":"mitigate","owner":"rustdesk-operator","mitigation":"Use exact deny-by-default profiles and later negative capability tests.","evidence_ids":["P51-EV-THREAT-T04"],"asvs_ids":["v5.0.0-8.1.1","v5.0.0-8.3.1"]},
+    {"id":"T-05","stride":"Repudiation/Elevation","severity":"high","status":"mitigated","disposition":"mitigate","owner":"accountable-reviewer","mitigation":"Derive NO-GO/pro for any mandatory centralized control.","evidence_ids":["P51-EV-THREAT-T05"],"asvs_ids":["v5.0.0-2.3.1"]},
+    {"id":"T-06","stride":"Denial of Service/Tampering","severity":"high","status":"mitigated","disposition":"mitigate","owner":"rustdesk-operator","mitigation":"Enforce direct-first and reject forced relay as a default.","evidence_ids":["P51-EV-THREAT-T06"],"asvs_ids":["v5.0.0-2.2.2"]},
+    {"id":"T-07","stride":"Tampering/Elevation","severity":"high","status":"mitigated","disposition":"mitigate","owner":"fleet-owner","mitigation":"Enforce exact allowlist and deny excluded or unknown targets.","evidence_ids":["P51-EV-THREAT-T07"],"asvs_ids":["v5.0.0-2.1.1"]},
+    {"id":"T-08","stride":"Denial of Service","severity":"high","status":"mitigated","disposition":"mitigate","owner":"fleet-owner","mitigation":"Preserve five independent recovery paths and reject decommission intent.","evidence_ids":["P51-EV-THREAT-T08"],"asvs_ids":["v5.0.0-2.3.1"]},
+    {"id":"T-09","stride":"Tampering/Repudiation","severity":"high","status":"mitigated","disposition":"mitigate","owner":"gsd-workstream-owner","mitigation":"Require explicit workstream scope and Phase 48 integrity proof.","evidence_ids":["P51-EV-THREAT-T09"],"asvs_ids":["v5.0.0-11.4.1","v5.0.0-16.4.2"]},
+    {"id":"T-10","stride":"Repudiation","severity":"high","status":"mitigated","disposition":"mitigate","owner":"evidence-owner","mitigation":"Require current machine evidence and reject summary-only closure.","evidence_ids":["P51-EV-THREAT-T10"],"asvs_ids":["v5.0.0-16.1.1","v5.0.0-16.2.5"]},
+    {"id":"T-11","stride":"Information Disclosure","severity":"medium","status":"mitigated","disposition":"mitigate","owner":"evidence-owner","mitigation":"Minimize and redact client and session metadata with purpose-bound retention.","evidence_ids":["P51-EV-THREAT-T11"],"asvs_ids":["v5.0.0-15.3.1","v5.0.0-16.3.3"]},
+    {"id":"T-12","stride":"Elevation/Repudiation","severity":"high","status":"mitigated","disposition":"mitigate","owner":"vault-owner","mitigation":"Require named recovery authority and accountable Vault path approval before PASS.","evidence_ids":["P51-EV-THREAT-T12"],"asvs_ids":["v5.0.0-8.2.1","v5.0.0-16.4.2"]}
+  ]
+}

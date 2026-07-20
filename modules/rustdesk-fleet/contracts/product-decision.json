@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "operator_scope": "single-operator",
+  "enterprise_controls": [
+    {"id": "sso_oidc", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
+    {"id": "rbac", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
+    {"id": "mfa", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
+    {"id": "central_api", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
+    {"id": "central_device_policy", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false},
+    {"id": "human_attributed_audit", "mandatory": false, "source": "accountable-operational-review", "review_status": "pending", "accepted_absence": false}
+  ],
+  "declared_decision": "BLOCKED",
+  "derived_decision": "BLOCKED",
+  "required_edition": null
+}
