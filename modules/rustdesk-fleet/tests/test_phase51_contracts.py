@@ -500,6 +500,14 @@ def test_redact_scanner_reports_metadata_only(category: str, sentinel_factory) -
     assert sentinel not in serialized
 
 
+def test_secret_scanner_allows_named_sha256_digest() -> None:
+    findings = validator.scan_secret_material(
+        {"review_input_manifest_digest": "d92d4d85dda6a020a4a9dd40bef3815df537b28bb86c6a6edbf4282aec529c17"},
+        path="operational-review.md",
+    )
+    assert findings == []
+
+
 def test_phase51_validator_never_reads_vault() -> None:
     source = MODULE_PATH.read_text(encoding="utf-8").lower()
     forbidden = (
@@ -512,14 +520,20 @@ def test_phase51_validator_never_reads_vault() -> None:
     assert not any(token in source for token in forbidden)
 
 
-def test_operational_review_blocks_without_human_fields() -> None:
+def test_operational_review_blocks_on_remaining_human_fields() -> None:
     review = validator.load_operational_review(REVIEW_PATH)
     manifest = validator.build_review_input_manifest(REPO, validator.git_head(REPO))
     result = validator.validate_operational_review(review, REPO, manifest)
     assert result.id == "P51-REPORT-001"
     assert result.status == "BLOCKED"
     categories = {finding.category for finding in result.findings}
-    assert {"operator-review-pending", "vault-owner-review-pending"}.issubset(categories)
+    assert {
+        "operator-review-pending",
+        "permission-transport-review-pending",
+        "threat-review-pending",
+        "phase48-review-pending",
+    }.issubset(categories)
+    assert "vault-owner-review-pending" not in categories
 
 
 def test_report_contains_exact_check_set() -> None:
