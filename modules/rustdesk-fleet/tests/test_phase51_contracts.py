@@ -264,6 +264,14 @@ def test_structural_static_fixtures_match_plan01_failures() -> None:
     assert validator.validate_secret_roles(duplicate).status == "FAIL"
 
 
+def test_summary_only_static_fixture_cannot_close_requirement() -> None:
+    canonical = validator.parse_canonical_requirements(REQUIREMENTS_PATH)
+    payload = validator.load_structural_fixture(INVALID_DIR / "summary-only-ledger.json", REPO)
+    result = validator.validate_ledger(payload, canonical, REPO)
+    assert result.status == "BLOCKED"
+    assert "summary-only-evidence" in {finding.category for finding in result.findings}
+
+
 @pytest.mark.parametrize(
     ("fixture", "failed_check"),
     [

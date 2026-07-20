@@ -1,0 +1,13 @@
+{
+  "schema_version": 1,
+  "kind": "summary-only-ledger",
+  "requirement_id": "SCP-01",
+  "status": "pass",
+  "last_verified_at": "2026-07-20T05:00:00Z",
+  "evidence": {
+    "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-02-SUMMARY.md",
+    "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "input_digest": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+    "observed_at": "2026-07-20T05:00:00Z"
+  }
+}
