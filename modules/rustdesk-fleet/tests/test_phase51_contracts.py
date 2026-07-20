@@ -24,6 +24,9 @@ PHASE48_ROOT = (
     REPO
     / ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence"
 )
+REQUIREMENTS_PATH = REPO / ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md"
+LEDGER_PATH = REPO / "modules/rustdesk-fleet/evidence/ledger.json"
+BUNDLE_PATH = REPO / "modules/rustdesk-fleet/tests/fixtures/valid/minimal-contracts/bundle.json"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -169,6 +172,83 @@ def test_phase48_rejects_incomplete_or_extra_rows(mutation: str) -> None:
 def test_phase48_validator_has_no_rebaseline_cli_option() -> None:
     options = {action.dest for action in validator.build_parser()._actions}
     assert "rebaseline" not in options
+
+
+def test_requirement_ledger_contract() -> None:
+    canonical = validator.parse_canonical_requirements(REQUIREMENTS_PATH)
+    payload = validator.load_json_strict(LEDGER_PATH)
+    result = validator.validate_ledger(payload, canonical, REPO)
+    assert result.id == "P51-LEDGER-001"
+    assert result.status == "PASS"
+    assert len(canonical) == payload["requirement_count"] == 36
+    assert [row["requirement_id"] for row in payload["requirements"]] == list(canonical)
+    assert len({evidence_id for row in payload["requirements"] for evidence_id in row["evidence_ids"]}) == 36
+    assert {row["status"] for row in payload["requirements"]} == {"pending"}
+
+
+@pytest.mark.parametrize("mutation", ["missing", "orphan", "duplicate"])
+def test_requirement_ledger_rejects_id_drift(mutation: str) -> None:
+    canonical = validator.parse_canonical_requirements(REQUIREMENTS_PATH)
+    payload = validator.load_json_strict(LEDGER_PATH)
+    if mutation == "missing":
+        payload["requirements"].pop()
+    elif mutation == "orphan":
+        payload["requirements"][-1]["requirement_id"] = "ORPHAN-99"
+    else:
+        payload["requirements"][-1]["requirement_id"] = payload["requirements"][0]["requirement_id"]
+    assert validator.validate_ledger(payload, canonical, REPO).status == "BLOCKED"
+
+
+@pytest.mark.parametrize(
+    ("path", "digest", "verified_at", "category"),
+    [
+        (".planning/workstreams/rustdesk-fleet/phases/51/SUMMARY.md", "a" * 64, "2026-07-20T05:00:00Z", "summary-only-evidence"),
+        ("../outside.json", "a" * 64, "2026-07-20T05:00:00Z", "evidence-path-outside-scope"),
+        ("modules/rustdesk-fleet/evidence/current.json", "short", "2026-07-20T05:00:00Z", "evidence-digest-shape"),
+        ("modules/rustdesk-fleet/evidence/current.json", "a" * 64, "2026-07-19T05:00:00Z", "evidence-currentness"),
+    ],
+)
+def test_requirement_ledger_rejects_invalid_pass_evidence(
+    path: str, digest: str, verified_at: str, category: str
+) -> None:
+    canonical = validator.parse_canonical_requirements(REQUIREMENTS_PATH)
+    payload = validator.load_json_strict(LEDGER_PATH)
+    row = payload["requirements"][0]
+    row.update(status="pass", last_verified_at="2026-07-20T05:00:00Z")
+    payload["evidence_catalog"][row["evidence_ids"][0]] = {
+        "path": path,
+        "sha256": digest,
+        "input_digest": "b" * 64,
+        "observed_at": verified_at,
+    }
+    result = validator.validate_ledger(payload, canonical, REPO)
+    assert result.status == "BLOCKED"
+    assert category in {finding.category for finding in result.findings}
+
+
+def test_complete_fixture_bundle_materializes_all_contracts(tmp_path: Path) -> None:
+    bundle = validator.load_json_strict(BUNDLE_PATH)
+    written = validator.materialize_fixture_bundle(bundle, tmp_path)
+    assert set(written) == {
+        "scope",
+        "product_decision",
+        "threat_model",
+        "permission_profiles",
+        "secret_roles",
+        "ledger",
+        "phase48_baseline",
+        "operational_review",
+    }
+    assert len(validator.load_json_strict(written["ledger"])["requirements"]) == 36
+    assert len(validator.load_json_strict(written["phase48_baseline"])["files"]) == 9
+    assert validator.load_json_strict(written["operational_review"])["status"] == "BLOCKED"
+
+
+def test_structural_static_fixtures_match_plan01_failures() -> None:
+    missing = validator.load_structural_fixture(INVALID_DIR / "missing-legacy-tool.json", REPO)
+    duplicate = validator.load_structural_fixture(INVALID_DIR / "duplicate-secret-ref.json", REPO)
+    assert _statuses(missing)["P51-LEGACY-001"] == "FAIL"
+    assert validator.validate_secret_roles(duplicate).status == "FAIL"
 
 
 @pytest.mark.parametrize(
