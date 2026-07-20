@@ -20,15 +20,9 @@
       "evidence_ids": [
         "P51-EV-PRODUCT"
       ],
-      "findings": [
-        {
-          "category": "accountable-review-pending",
-          "location": "enterprise_controls",
-          "path": "modules/rustdesk-fleet/contracts/product-decision.json"
-        }
-      ],
+      "findings": [],
       "id": "P51-PRODUCT-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
@@ -118,11 +112,6 @@
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
         },
         {
-          "category": "product-decision-not-approved",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
           "category": "review-input-manifest-mismatch",
           "location": "review",
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
@@ -142,15 +131,15 @@
       "status": "BLOCKED"
     }
   ],
-  "generated_at": "2026-07-20T05:40:31Z",
+  "generated_at": "2026-07-20T06:14:15Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
-      "sha256": "94652e270c1512a25a8c5a906cf79bca83633a452f43a8eaf81c93094ecb98a6"
+      "sha256": "2415c6afb964b813152a3264a19eb505be3a17293dfca65bdb12a0c62e5c5b5f"
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md",
-      "sha256": "01baeeeade81290941250dbc9a78ca0838e6afabfb4d394906cfd87e194a23d5"
+      "sha256": "4d42573a36e9510218b440bc3c3cce150c222f2d8510678ee40f9377f54a959d"
     },
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md",
@@ -162,7 +151,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/contracts/product-decision.json",
-      "sha256": "49eb800b982eb86b29a821c888b7c238b97b6629f31cfdc84a7eb5cab113cfa5"
+      "sha256": "c558dd45c9e852ee29374c13aa6ebafdba0ffe17ced9da2f71ca9ef168dbe122"
     },
     {
       "path": "modules/rustdesk-fleet/contracts/scope.json",
@@ -189,7 +178,7 @@
   "phase": 51,
   "schema_version": 1,
   "secret_material_present": false,
-  "source_head": "bca4e2feaf7094c7f33e94467ce64d08b04087c7",
+  "source_head": "5da60285f8b15f3c3a85240176404c9b00d47f8e",
   "validator_version": 2,
   "workstream": "rustdesk-fleet"
 }
