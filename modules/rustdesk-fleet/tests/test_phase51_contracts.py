@@ -27,6 +27,11 @@ PHASE48_ROOT = (
 REQUIREMENTS_PATH = REPO / ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md"
 LEDGER_PATH = REPO / "modules/rustdesk-fleet/evidence/ledger.json"
 BUNDLE_PATH = REPO / "modules/rustdesk-fleet/tests/fixtures/valid/minimal-contracts/bundle.json"
+PHASE51_DIR = (
+    REPO
+    / ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation"
+)
+REVIEW_PATH = PHASE51_DIR / "51-OPERATIONAL-REVIEW.md"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -409,13 +414,22 @@ def test_secret_role_contract() -> None:
     payload = validator.load_json_strict(SECRET_ROLES_PATH)
     result = validator.validate_secret_roles(payload)
     assert result.id == "P51-SECRET-001"
-    assert result.status == "PASS"
+    assert result.status == "BLOCKED"
     roles = payload["target_password_roles"]
     assert [item["host"] for item in roles] == list(validator.EXPECTED_INCLUDED_HOSTS)
     assert len({item["role"] for item in roles}) == 5
     assert len({item["vault_path"] for item in roles}) == 5
     assert {item["approval_status"] for item in roles} == {"pending"}
     assert payload["value_distinctness_phase"] == 52
+
+
+def test_secret_role_contract_passes_only_after_accountable_approval() -> None:
+    payload = validator.load_json_strict(SECRET_ROLES_PATH)
+    payload["server_identity"]["approval_status"] = "approved"
+    for role in payload["target_password_roles"]:
+        role["approval_status"] = "approved"
+    payload["recovery_authority"]["approval_status"] = "approved"
+    assert validator.validate_secret_roles(payload).status == "PASS"
 
 
 def test_secret_role_contract_rejects_duplicate_reference() -> None:
@@ -462,3 +476,64 @@ def test_phase51_validator_never_reads_vault() -> None:
         "/".join(("hashicorp", "vault")),
     )
     assert not any(token in source for token in forbidden)
+
+
+def test_operational_review_blocks_without_human_fields() -> None:
+    review = validator.load_operational_review(REVIEW_PATH)
+    manifest = validator.build_review_input_manifest(REPO, validator.git_head(REPO))
+    result = validator.validate_operational_review(review, REPO, manifest)
+    assert result.id == "P51-REPORT-001"
+    assert result.status == "BLOCKED"
+    categories = {finding.category for finding in result.findings}
+    assert {"operator-review-pending", "vault-owner-review-pending"}.issubset(categories)
+
+
+def test_report_contains_exact_check_set() -> None:
+    report = validator.build_report(REPO, generated_at="2026-07-20T05:00:00Z")
+    assert [check["id"] for check in report["checks"]] == list(validator.CHECK_ORDER)
+    assert len(report["checks"]) == 11
+    assert report["overall_status"] == "BLOCKED"
+    assert report["secret_material_present"] is False
+
+
+def test_report_exit_precedence() -> None:
+    passed = validator.CheckResult("A", "PASS")
+    blocked = validator.CheckResult("B", "BLOCKED")
+    failed = validator.CheckResult("C", "FAIL")
+    assert validator.derive_overall_status([passed]) == "PASS"
+    assert validator.derive_overall_status([passed, blocked]) == "BLOCKED"
+    assert validator.derive_overall_status([blocked, failed]) == "FAIL"
+    assert validator.exit_code_for_status("PASS") == 0
+    assert validator.exit_code_for_status("BLOCKED") == 2
+    assert validator.exit_code_for_status("FAIL") == 1
+
+
+def test_report_currentness_detects_changed_input(tmp_path: Path) -> None:
+    source = tmp_path / "source.json"
+    source.write_text('{"schema_version": 1}\n', encoding="utf-8")
+    report = {"inputs": validator.collect_input_digests(tmp_path, [source])}
+    assert validator.validate_report_currentness(report, tmp_path).status == "PASS"
+    source.write_text('{"schema_version": 2}\n', encoding="utf-8")
+    result = validator.validate_report_currentness(report, tmp_path)
+    assert result.status == "BLOCKED"
+    assert {finding.category for finding in result.findings} == {"stale-input-digest"}
+
+
+def test_json_markdown_parity_and_atomic_outputs(tmp_path: Path) -> None:
+    report = validator.build_report(REPO, generated_at="2026-07-20T05:00:00Z")
+    markdown = validator.render_markdown(report)
+    assert report["source_head"] in markdown
+    assert report["generated_at"] in markdown
+    for item in report["inputs"]:
+        assert item["path"] in markdown and item["sha256"] in markdown
+    for check in report["checks"]:
+        assert check["id"] in markdown and check["status"] in markdown
+
+    json_path = tmp_path / "51-CONTRACT-VALIDATION.json"
+    markdown_path = tmp_path / "51-CONTRACT-VALIDATION.md"
+    nyquist = tmp_path / "51-VALIDATION.md"
+    nyquist.write_text("immutable strategy\n", encoding="utf-8")
+    validator.write_reports_atomically(report, json_path, markdown_path, tmp_path)
+    assert validator.load_json_strict(json_path) == report
+    assert markdown_path.read_text(encoding="utf-8") == markdown
+    assert nyquist.read_text(encoding="utf-8") == "immutable strategy\n"
