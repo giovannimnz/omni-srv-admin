@@ -602,14 +602,29 @@ def validate_ledger(
             allowed_prefix = evidence_path.startswith("modules/rustdesk-fleet/") or evidence_path.startswith(
                 ".planning/workstreams/rustdesk-fleet/"
             )
-            if candidate.is_absolute() or ".." in candidate.parts or not allowed_prefix:
+            path_in_scope = not candidate.is_absolute() and ".." not in candidate.parts and allowed_prefix
+            if not path_in_scope:
                 errors.append("evidence-path-outside-scope")
             if candidate.name.upper().endswith("SUMMARY.MD"):
                 errors.append("summary-only-evidence")
-            if not isinstance(digest, str) or not re.fullmatch(r"[0-9a-f]{64}", digest) or not isinstance(
-                input_digest, str
-            ) or not re.fullmatch(r"[0-9a-f]{64}", input_digest):
+            digest_shape_valid = (
+                isinstance(digest, str)
+                and re.fullmatch(r"[0-9a-f]{64}", digest) is not None
+                and isinstance(input_digest, str)
+                and re.fullmatch(r"[0-9a-f]{64}", input_digest) is not None
+            )
+            if not digest_shape_valid:
                 errors.append("evidence-digest-shape")
+            if path_in_scope:
+                resolved = (repo / candidate).resolve()
+                if not resolved.is_relative_to(repo.resolve()):
+                    errors.append("evidence-path-outside-scope")
+                elif not resolved.is_file():
+                    errors.append("evidence-file-missing")
+                elif digest_shape_valid:
+                    actual_digest = _sha256_file(resolved)
+                    if digest != actual_digest or input_digest != actual_digest:
+                        errors.append("evidence-digest-mismatch")
             if observed_at != last_verified_at:
                 errors.append("evidence-currentness")
     if len(set(all_evidence_ids)) != len(all_evidence_ids):
