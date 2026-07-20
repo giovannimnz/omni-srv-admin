@@ -603,6 +603,19 @@ def load_structural_fixture(path: Path, repo: Path) -> dict[str, Any]:
         payload = load_json_strict(repo / "modules/rustdesk-fleet/contracts/secret-roles.json")
         payload["target_password_roles"][1]["vault_path"] = payload["target_password_roles"][0]["vault_path"]
         return payload
+    if kind == "summary-only-ledger":
+        payload = load_json_strict(repo / "modules/rustdesk-fleet/evidence/ledger.json")
+        requirement_id = descriptor.get("requirement_id")
+        row = next(
+            (item for item in payload["requirements"] if item.get("requirement_id") == requirement_id),
+            None,
+        )
+        if row is None or descriptor.get("status") != "pass" or not isinstance(descriptor.get("evidence"), dict):
+            raise ValueError("invalid summary-only ledger fixture")
+        row["status"] = "pass"
+        row["last_verified_at"] = descriptor.get("last_verified_at")
+        payload["evidence_catalog"][row["evidence_ids"][0]] = descriptor["evidence"]
+        return payload
     raise ValueError("unsupported structural fixture")
 
 
