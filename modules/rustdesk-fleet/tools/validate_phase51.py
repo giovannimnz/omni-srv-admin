@@ -111,7 +111,17 @@ PRE_REPORT_INPUTS = (
 )
 REQUIREMENTS_RELATIVE_PATH = ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md"
 REVIEW_RELATIVE_PATH = f"{PHASE51_DIR}/51-OPERATIONAL-REVIEW.md"
-VALIDATOR_VERSION = 1
+POST_REVIEW_ALLOWED_PATHS = (
+    REVIEW_RELATIVE_PATH,
+    f"{PHASE51_DIR}/51-CONTRACT-VALIDATION.json",
+    f"{PHASE51_DIR}/51-CONTRACT-VALIDATION.md",
+    f"{PHASE51_DIR}/51-03-SUMMARY.md",
+    f"{PHASE51_DIR}/51-VERIFICATION.md",
+    f"{PHASE51_DIR}/51-UAT.md",
+    ".planning/workstreams/rustdesk-fleet/STATE.md",
+    ".planning/workstreams/rustdesk-fleet/ROADMAP.md",
+)
+VALIDATOR_VERSION = 2
 ENTERPRISE_CONTROLS = (
     "sso_oidc",
     "rbac",
@@ -926,6 +936,43 @@ def git_head(repo: Path) -> str:
     return value
 
 
+def git_commit_exists(repo: Path, commit: object) -> bool:
+    if not isinstance(commit, str) or not re.fullmatch(r"[0-9a-f]{40}", commit):
+        return False
+    completed = subprocess.run(
+        ["git", "cat-file", "-e", f"{commit}^{{commit}}"],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return completed.returncode == 0
+
+
+def git_is_ancestor(repo: Path, ancestor: str, descendant: str) -> bool:
+    completed = subprocess.run(
+        ["git", "merge-base", "--is-ancestor", ancestor, descendant],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    return completed.returncode == 0
+
+
+def git_changed_paths(repo: Path, source_head: str, current_head: str) -> set[str]:
+    completed = subprocess.run(
+        ["git", "diff", "--name-only", "--no-renames", source_head, current_head, "--"],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ValueError("unable to resolve post-review changes")
+    return {line for line in completed.stdout.splitlines() if line}
+
+
 def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> list[dict[str, str]]:
     root = repo.resolve()
     inputs: list[dict[str, str]] = []
@@ -935,6 +982,28 @@ def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> l
         if not resolved.is_file():
             raise ValueError("report input is missing")
         inputs.append({"path": resolved.relative_to(root).as_posix(), "sha256": _sha256_file(resolved)})
+    return sorted(inputs, key=lambda item: item["path"])
+
+
+def collect_git_input_digests(
+    repo: Path, source_head: str, paths: list[Path] | tuple[Path, ...]
+) -> list[dict[str, str]]:
+    if not git_commit_exists(repo, source_head):
+        raise ValueError("review source HEAD is not a commit")
+    inputs: list[dict[str, str]] = []
+    for path in paths:
+        relative = path.as_posix()
+        if path.is_absolute() or relative.startswith("../") or "/../" in relative:
+            raise ValueError("review input path escapes repository")
+        completed = subprocess.run(
+            ["git", "show", f"{source_head}:{relative}"],
+            cwd=repo,
+            capture_output=True,
+            check=False,
+        )
+        if completed.returncode != 0:
+            raise ValueError("review input is absent from source HEAD")
+        inputs.append({"path": relative, "sha256": hashlib.sha256(completed.stdout).hexdigest()})
     return sorted(inputs, key=lambda item: item["path"])
 
 
@@ -950,8 +1019,49 @@ def build_review_input_manifest(repo: Path, source_head: str) -> dict[str, Any]:
         "workstream": "rustdesk-fleet",
         "validator_version": VALIDATOR_VERSION,
         "source_head": source_head,
-        "inputs": collect_input_digests(repo, tuple(Path(item) for item in PRE_REPORT_INPUTS)),
+        "inputs": collect_git_input_digests(
+            repo, source_head, tuple(Path(item) for item in PRE_REPORT_INPUTS)
+        ),
     }
+
+
+def is_utc_timestamp(value: object) -> bool:
+    if not isinstance(value, str) or not re.fullmatch(
+        r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value
+    ):
+        return False
+    try:
+        parsed = datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ")
+    except ValueError:
+        return False
+    return parsed.strftime("%Y-%m-%dT%H:%M:%SZ") == value
+
+
+def validate_review_source(
+    repo: Path, source_head: object, manifest: dict[str, Any]
+) -> list[str]:
+    categories: list[str] = []
+    if not git_commit_exists(repo, source_head):
+        return ["invalid-review-source-head"]
+    assert isinstance(source_head, str)
+    current_head = git_head(repo)
+    if not git_is_ancestor(repo, source_head, current_head):
+        return ["review-source-not-ancestor"]
+    try:
+        pinned_manifest = build_review_input_manifest(repo, source_head)
+        if manifest != pinned_manifest:
+            categories.append("review-manifest-source-mismatch")
+        current_inputs = collect_input_digests(
+            repo, tuple(Path(item) for item in PRE_REPORT_INPUTS)
+        )
+        if current_inputs != pinned_manifest["inputs"]:
+            categories.append("reviewed-input-drift")
+        changed_paths = git_changed_paths(repo, source_head, current_head)
+        if changed_paths - set(POST_REVIEW_ALLOWED_PATHS):
+            categories.append("post-review-scope-drift")
+    except ValueError:
+        categories.append("review-source-unreadable")
+    return sorted(set(categories))
 
 
 def load_operational_review(path: Path) -> dict[str, Any]:
@@ -986,7 +1096,6 @@ def validate_operational_review(
     blocked: list[str] = []
     if not isinstance(review, dict) or review.get("schema_version") != 1:
         return _blocked_result("P51-REPORT-001", ["operational-review-shape"], source, "review")
-    current_head = git_head(repo)
     reviewer = review.get("reviewer")
     reviewed_at = review.get("reviewed_at")
     controls = review.get("enterprise_controls")
@@ -994,8 +1103,7 @@ def validate_operational_review(
         review.get("status") == "APPROVED"
         and isinstance(reviewer, str)
         and bool(reviewer.strip())
-        and isinstance(reviewed_at, str)
-        and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", reviewed_at))
+        and is_utc_timestamp(reviewed_at)
         and isinstance(controls, list)
         and [item.get("id") for item in controls if isinstance(item, dict)] == list(ENTERPRISE_CONTROLS)
         and all(
@@ -1007,8 +1115,7 @@ def validate_operational_review(
     )
     if not operator_ready:
         blocked.append("operator-review-pending")
-    if review.get("source_head") != current_head:
-        blocked.append("stale-review-source-head")
+    blocked.extend(validate_review_source(repo, review.get("source_head"), manifest))
 
     product = load_json_strict(repo / "modules/rustdesk-fleet/contracts/product-decision.json")
     product_result = validate_product_decision(product)
@@ -1037,8 +1144,7 @@ def validate_operational_review(
         and bool(review["vault_owner"].strip())
         and review.get("vault_paths_reviewed") == list(EXPECTED_VAULT_REVIEW_PATHS)
         and review.get("vault_paths_approval_status") == "approved"
-        and isinstance(review.get("vault_paths_approved_at"), str)
-        and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", review["vault_paths_approved_at"]))
+        and is_utc_timestamp(review.get("vault_paths_approved_at"))
     )
     secret_result = validate_secret_roles(
         load_json_strict(repo / "modules/rustdesk-fleet/contracts/secret-roles.json")
@@ -1110,11 +1216,15 @@ def run_checks(repo: Path) -> tuple[list[CheckResult], list[Path]]:
         ledger_path.relative_to(root).as_posix(),
     )
     by_id[ledger.id] = ledger
-    source_head = git_head(root)
-    manifest = build_review_input_manifest(root, source_head)
     review_path = root / REVIEW_RELATIVE_PATH
+    review = load_operational_review(review_path)
+    source_head = review.get("source_head")
+    if not git_commit_exists(root, source_head):
+        source_head = git_head(root)
+    assert isinstance(source_head, str)
+    manifest = build_review_input_manifest(root, source_head)
     review_result = validate_operational_review(
-        load_operational_review(review_path), root, manifest, review_path.relative_to(root).as_posix()
+        review, root, manifest, review_path.relative_to(root).as_posix()
     )
     by_id[review_result.id] = review_result
     if set(by_id) != set(CHECK_ORDER):
