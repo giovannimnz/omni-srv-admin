@@ -119,6 +119,11 @@ POST_REVIEW_ALLOWED_PATHS = (
     f"{PHASE51_DIR}/51-VERIFICATION.md",
     f"{PHASE51_DIR}/51-UAT.md",
     ".planning/workstreams/rustdesk-fleet/STATE.md",
+)
+REVIEW_NORMATIVE_PATHS = (
+    "modules/rustdesk-fleet/tools/validate_phase51.py",
+    f"{PHASE51_DIR}/51-03-PLAN.md",
+    REQUIREMENTS_RELATIVE_PATH,
     ".planning/workstreams/rustdesk-fleet/ROADMAP.md",
 )
 VALIDATOR_VERSION = 2
@@ -973,6 +978,19 @@ def git_changed_paths(repo: Path, source_head: str, current_head: str) -> set[st
     return {line for line in completed.stdout.splitlines() if line}
 
 
+def git_has_worktree_changes(repo: Path, paths: tuple[str, ...]) -> bool:
+    completed = subprocess.run(
+        ["git", "status", "--porcelain=v1", "--untracked-files=all", "--", *paths],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ValueError("unable to inspect review authority worktree")
+    return bool(completed.stdout.strip())
+
+
 def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> list[dict[str, str]]:
     root = repo.resolve()
     inputs: list[dict[str, str]] = []
@@ -1059,6 +1077,8 @@ def validate_review_source(
         changed_paths = git_changed_paths(repo, source_head, current_head)
         if changed_paths - set(POST_REVIEW_ALLOWED_PATHS):
             categories.append("post-review-scope-drift")
+        if git_has_worktree_changes(repo, REVIEW_NORMATIVE_PATHS):
+            categories.append("uncommitted-review-authority-drift")
     except ValueError:
         categories.append("review-source-unreadable")
     return sorted(set(categories))
