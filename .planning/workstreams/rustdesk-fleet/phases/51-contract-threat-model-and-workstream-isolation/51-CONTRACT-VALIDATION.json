@@ -1,0 +1,195 @@
+{
+  "checks": [
+    {
+      "evidence_ids": [
+        "P51-EV-SCOPE"
+      ],
+      "findings": [],
+      "id": "P51-SCOPE-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-LEGACY"
+      ],
+      "findings": [],
+      "id": "P51-LEGACY-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-PRODUCT"
+      ],
+      "findings": [
+        {
+          "category": "accountable-review-pending",
+          "location": "enterprise_controls",
+          "path": "modules/rustdesk-fleet/contracts/product-decision.json"
+        }
+      ],
+      "id": "P51-PRODUCT-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-TRANSPORT"
+      ],
+      "findings": [],
+      "id": "P51-TRANSPORT-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-SECRET"
+      ],
+      "findings": [
+        {
+          "category": "vault-owner-review-pending",
+          "location": "approval_status",
+          "path": "modules/rustdesk-fleet/contracts/secret-roles.json"
+        }
+      ],
+      "id": "P51-SECRET-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-PERM"
+      ],
+      "findings": [],
+      "id": "P51-PERM-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-LEDGER"
+      ],
+      "findings": [],
+      "id": "P51-LEDGER-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-WS"
+      ],
+      "findings": [],
+      "id": "P51-WS-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-P48"
+      ],
+      "findings": [],
+      "id": "P51-P48-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-THREAT"
+      ],
+      "findings": [],
+      "id": "P51-THREAT-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-REPORT"
+      ],
+      "findings": [
+        {
+          "category": "operator-review-pending",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "permission-transport-review-pending",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "phase48-review-pending",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "product-decision-not-approved",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "review-input-manifest-mismatch",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "stale-review-source-head",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "threat-review-pending",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
+          "category": "vault-owner-review-pending",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        }
+      ],
+      "id": "P51-REPORT-001",
+      "status": "BLOCKED"
+    }
+  ],
+  "generated_at": "2026-07-20T05:10:46Z",
+  "inputs": [
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
+      "sha256": "94652e270c1512a25a8c5a906cf79bca83633a452f43a8eaf81c93094ecb98a6"
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md",
+      "sha256": "f04671adc6b5b6b653a5849578861e7fa256e43e14d0e55c57df252d93849306"
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md",
+      "sha256": "d0eac055e6849d991446d902a07f6b82c79c119915b36a59fd7c3944bf076b63"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/permission-profiles.json",
+      "sha256": "13f06413ac98e764dfbd16993476d7a16e9b60c4546ca3179fa97fa3993e1452"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/product-decision.json",
+      "sha256": "49eb800b982eb86b29a821c888b7c238b97b6629f31cfdc84a7eb5cab113cfa5"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/scope.json",
+      "sha256": "10918dc5d49e9c1165c500b99a1876126e1f212ea4f631a686ce99545ff97aeb"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/secret-roles.json",
+      "sha256": "41a0268da9751c25e8ac559122bb911555801558c884bac67282ee4f382c79c9"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/threat-model.json",
+      "sha256": "3ae192bbf08d316f53c770ebff42ae1679442e85ad6ba151c8dab3eaccc661d1"
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/ledger.json",
+      "sha256": "c06f73520a8212d14fefe98b408271920486c9801903299336172c39818bcf5c"
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase48-baseline.json",
+      "sha256": "fb09ab641f150069bbd95ebd8dbfafa993cc58b07acf1e4f668fa4377210ad3f"
+    }
+  ],
+  "overall_status": "BLOCKED",
+  "phase": 51,
+  "schema_version": 1,
+  "secret_material_present": false,
+  "source_head": "682cc20e2aa5cecc35c3641da8cf71e2ac7a8d5d",
+  "validator_version": 1,
+  "workstream": "rustdesk-fleet"
+}
