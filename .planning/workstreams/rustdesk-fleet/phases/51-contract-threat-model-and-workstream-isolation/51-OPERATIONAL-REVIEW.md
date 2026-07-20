@@ -20,14 +20,14 @@ This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault
   "reviewed_at": null,
   "source_head": null,
   "enterprise_controls": [
-    {"id": "sso_oidc", "mandatory": null, "accepted_absence": null},
-    {"id": "rbac", "mandatory": null, "accepted_absence": null},
-    {"id": "mfa", "mandatory": null, "accepted_absence": null},
-    {"id": "central_api", "mandatory": null, "accepted_absence": null},
-    {"id": "central_device_policy", "mandatory": null, "accepted_absence": null},
-    {"id": "human_attributed_audit", "mandatory": null, "accepted_absence": null}
+    {"id": "sso_oidc", "mandatory": false, "accepted_absence": true},
+    {"id": "rbac", "mandatory": false, "accepted_absence": true},
+    {"id": "mfa", "mandatory": false, "accepted_absence": true},
+    {"id": "central_api", "mandatory": false, "accepted_absence": true},
+    {"id": "central_device_policy", "mandatory": false, "accepted_absence": true},
+    {"id": "human_attributed_audit", "mandatory": false, "accepted_absence": true}
   ],
-  "oss_absence_acceptance_or_pro_selection": "pending",
+  "oss_absence_acceptance_or_pro_selection": "accept-oss-absences",
   "pro_replan_authorized": false,
   "vault_owner": null,
   "vault_paths_reviewed": [

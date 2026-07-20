@@ -14,6 +14,7 @@ O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados
 - **Recovery invariant:** RustGuac, XRDP, AnyDesk, NoMachine e noVNC permanecem instalados; qualquer retirement pertence a outro milestone
 - **Secret boundary:** private key e permanent passwords permanecem apenas no Vault/runtime efêmero; planning, Git, logs, Obsidian, GBrain e evidências guardam somente fingerprints/hashes redacted
 - **Quality invariant:** cada phase deve produzir seu próprio gate automatizado e/ou live; `SUMMARY.md` ou declaração manual sem evidência não autorizam avanço
+- **API boundary:** a API operacional custom da Atius é um deliverable separado do RustDesk OSS; ela não usa o campo `API Server` do client, não abre TCP 21114 e não reivindica device/account API, web console ou controles Pro
 
 ## Phases
 
@@ -43,7 +44,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 **Success Criteria** (what must be TRUE):
 
   1. O contrato enumera exatamente os cinco hosts incluídos, exclui WSL e `GIOVANNI-S23`, mantém direct-first e declara que todos os fallbacks compartilhados continuam instalados.
-  2. A decisão OSS/Pro é explícita: OSS só avança com aceite documentado das ausências de SSO, RBAC, MFA, API, policy central e auditoria humana; qualquer uma dessas exigências obrigatórias produz `NO-GO` e seleção Pro antes do runtime.
+  2. A decisão OSS/Pro é explícita: OSS avança com aceite documentado das ausências de SSO, RBAC, MFA, API nativa central do RustDesk, policy central e auditoria humana; qualquer uma dessas exigências obrigatórias produz `NO-GO` e seleção Pro antes do runtime. A API operacional custom da Atius permanece separada e não é configurada como `API Server` do client.
   3. Threat model, permission profiles, papéis de public/private key, cinco passwords distintas e o ledger requirement-to-evidence existem sem valores secretos.
   4. O lifecycle GSD exige scope explícito `rustdesk-fleet`, writer único para arquivos compartilhados e prova de integridade da Phase 48 em cada transição.
   5. **Advance gate:** validators automatizados de escopo, IDs, ausência de secrets e isolamento do workstream, mais a revisão operacional do threat model, devem registrar PASS com artefatos atuais antes da Phase 52; summary-only não conta.
@@ -75,14 +76,14 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 **Goal**: Os clients podem alcançar um primary RustDesk estável, hardened, recuperável e observável apenas pela superfície nativa mínima aprovada.
 **Depends on**: Phase 52
 **Requirements**: SRV-02, SRV-03, SRV-04, SRV-06, OPS-01
-**Risks**: Rootful drift; `Network=host` expor portas extras; rotação de identidade; logs sem limite; edge Cloudflare proxied; CPU acima do guardrail; UDP validado apenas localmente.
+**Risks**: Rootful drift; `Network=host` expor portas extras; rotação de identidade; logs sem limite; edge Cloudflare proxied; CPU acima do guardrail; UDP validado apenas localmente; API operacional custom ser confundida com a API nativa Pro ou expor telemetria sem autenticação/redaction.
 **Success Criteria** (what must be TRUE):
 
   1. `hbbs` e `hbbr` rodam como Quadlets Podman rootless digest-pinned, sem privilege/socket amplo, com estado gravável mínimo, logs bounded e limite combinado `<=0.8 CPU` e `<=1 GiB RAM`.
   2. `rustdesk.atius.com.br` resolve em modo DNS-only para o primary aprovado, e probes realmente externos confirmam TCP 21115-21117 e UDP 21116 enquanto 21114/21118/21119 e listeners não aprovados permanecem fechados em IPv4/IPv6.
   3. Três restarts e um boot preservam fingerprint, identidade, dados, listeners e limites de recursos, sem crescimento de logs fora do contrato.
-  4. Monitoring redacted reporta health, listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas sem secret material.
-  5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
+  4. Monitoring e uma API operacional custom da Atius, em hostname/serviço HTTPS separado e autenticado, expõem endpoints versionados/redacted de health, readiness, status e resumo de métricas para listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas. Ela não configura o `API Server` dos clients, não abre TCP 21114 e não reivindica recursos nativos Pro.
+  5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência, contrato/autenticação/redaction dos endpoints custom e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
 
 **Plans**: TBD
 

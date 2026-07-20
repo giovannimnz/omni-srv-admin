@@ -9,7 +9,7 @@
 ### Scope and Architecture
 
 - [ ] **SCP-01**: O operador instala RustDesk exatamente em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e `GIOVANNI-W11-PC`, excluindo WSL e `GIOVANNI-S23`.
-- [ ] **SCP-02**: O operador usa RustDesk Server OSS enquanto o escopo permanecer single-operator sem SSO, RBAC, MFA, API ou auditoria humana central; qualquer requisito desses promove um gate explícito para Pro.
+- [ ] **SCP-02**: O operador usa RustDesk Server OSS enquanto o escopo permanecer single-operator sem SSO, RBAC, MFA, API nativa central do RustDesk ou auditoria humana central; qualquer requisito desses promove um gate explícito para Pro. Uma API operacional custom da Atius, separada e sem se anunciar como `API Server` do client, não altera essa decisão.
 - [ ] **SCP-03**: O tráfego usa policy direct-first em produção e forced-relay somente em testes controlados ou fallback comprovado.
 - [ ] **SCP-04**: Server `1.1.15` e clients `1.4.9` ficam pinados por tag, commit, digest/checksum e arquitetura, sem `latest` ou build nos hosts.
 - [ ] **SCP-05**: Todo artefato e comando GSD do milestone é isolado em `rustdesk-fleet`, preservando a integridade do workstream da Phase 48 e serializando arquivos compartilhados.
@@ -55,7 +55,7 @@
 
 ### Operations and Closeout
 
-- [ ] **OPS-01**: Monitoring informa health, listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas sem expor secrets.
+- [ ] **OPS-01**: Monitoring e uma API operacional custom da Atius expõem endpoints HTTPS versionados e redacted para health, readiness, status e resumo de métricas — listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas — sem secrets, sem simular a API nativa Pro e sem abrir/configurar TCP 21114 como `API Server` do RustDesk.
 - [ ] **OPS-02**: Inventory, port map, Cloudflare/OCI notes, module README e runbook descrevem exatamente versões, paths, portas, hosts, rollback e provas live.
 - [ ] **OPS-03**: Obsidian e GBrain são consultados/atualizados antes, durante e depois; Graphify fica fresh após mudanças de planning, código e docs.
 - [ ] **OPS-04**: `VALIDATION.md`, `VERIFICATION.md` e `UAT.md` concordam requirement por requirement, incluindo checkpoints humanos de UAC, pre-login, ABNT2, multi-monitor e qualidade visual.
@@ -65,7 +65,7 @@
 ### Central Management
 
 - **PRO-01**: Operadores distintos autenticam via Atius SSO/OIDC com RBAC e MFA no RustDesk Server Pro.
-- **PRO-02**: Device management, policy central, API/web console e audit trail atribuível a pessoa são avaliados após o baseline OSS.
+- **PRO-02**: Device management, policy central, API/web console nativas do RustDesk e audit trail atribuível a pessoa são avaliados após o baseline OSS; a API operacional custom da Atius não substitui essas capacidades Pro.
 
 ## Out of Scope
 
@@ -75,7 +75,7 @@
 | RustDesk no `GIOVANNI-S23` | Exclusão explícita por enquanto. |
 | Remover RustGuac, XRDP, AnyDesk, NoMachine ou noVNC | São fallbacks de recuperação; retirement exige decisão e milestone separados. |
 | Active-active `hbbs` | O baseline usa primary mais cold standby para evitar split-brain de identidade. |
-| Web client, console/API e portas 21114/21118/21119 | Não pertencem ao baseline OSS native-only. |
+| Web client, console/API nativas do RustDesk e portas 21114/21118/21119 | Não pertencem ao baseline OSS native-only; endpoints operacionais custom da Atius usam serviço, autenticação e hostname separados. |
 | Trocar LightDM por GDM, habilitar autologin ou criar virtual seat | Mudança disruptiva fora do canary; falha headless vira blocker ou fase separada. |
 | Pro/custom client sem gate de licença | Só entra se os requisitos Pro forem declarados obrigatórios e autorizados. |
 
@@ -131,4 +131,4 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 
 ---
 *Requirements defined: 2026-07-19*
-*Last updated: 2026-07-19 after roadmap coverage validation*
+*Last updated: 2026-07-20 after accountable OSS acceptance and custom Atius ops API authorization*
