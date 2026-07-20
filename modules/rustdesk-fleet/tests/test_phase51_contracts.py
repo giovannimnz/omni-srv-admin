@@ -539,6 +539,7 @@ def _review_source_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tupl
     source_head = _git(repo, "rev-parse", "HEAD")
     monkeypatch.setattr(validator, "PRE_REPORT_INPUTS", ("input.json",))
     monkeypatch.setattr(validator, "POST_REVIEW_ALLOWED_PATHS", ("review.md",))
+    monkeypatch.setattr(validator, "REVIEW_NORMATIVE_PATHS", ("validator.py",))
     return repo, source_head
 
 
@@ -574,11 +575,18 @@ def test_review_source_rejects_unrelated_post_review_commit(
     repo, source_head = _review_source_repo(tmp_path, monkeypatch)
     manifest = validator.build_review_input_manifest(repo, source_head)
     (repo / "validator.py").write_text("VERSION = 2\n", encoding="utf-8")
+    assert "uncommitted-review-authority-drift" in validator.validate_review_source(
+        repo, source_head, manifest
+    )
     _git(repo, "add", "validator.py")
     _git(repo, "commit", "-qm", "change validator")
     assert "post-review-scope-drift" in validator.validate_review_source(
         repo, source_head, manifest
     )
+
+
+def test_post_review_allowlist_excludes_normative_roadmap() -> None:
+    assert ".planning/workstreams/rustdesk-fleet/ROADMAP.md" not in validator.POST_REVIEW_ALLOWED_PATHS
 
 
 @pytest.mark.parametrize(
