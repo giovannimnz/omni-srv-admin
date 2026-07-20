@@ -18,7 +18,7 @@ O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados
 
 ## Phases
 
-- [ ] **Phase 51: Contract, Threat Model and Workstream Isolation** - Congelar escopo, decisão OSS/Pro, ameaças, políticas e ownership do workstream antes de qualquer mutação de runtime.
+- [x] **Phase 51: Contract, Threat Model and Workstream Isolation** - Congelar escopo, decisão OSS/Pro, ameaças, políticas e ownership do workstream antes de qualquer mutação de runtime. (completed 2026-07-20)
 - [ ] **Phase 52: Supply Chain, Capacity and Recoverable Placement** - Provar artefatos, capacity, Vault e restore antes de escolher e autorizar o primary.
 - [ ] **Phase 53: Primary Relay and Public Edge** - Disponibilizar `hbbs`/`hbbr` hardened, persistentes, observáveis e expostos somente pelas portas aprovadas.
 - [ ] **Phase 54: Heterogeneous Canary — Horistic + Windows** - Provar Linux ARM64 e Windows x86-64, incluindo pre-login, UAC, direct e relay, antes do rollout.
@@ -49,11 +49,11 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. O lifecycle GSD exige scope explícito `rustdesk-fleet`, writer único para arquivos compartilhados e prova de integridade da Phase 48 em cada transição.
   5. **Advance gate:** validators automatizados de escopo, IDs, ausência de secrets e isolamento do workstream, mais a revisão operacional do threat model, devem registrar PASS com artefatos atuais antes da Phase 52; summary-only não conta.
 
-**Plans**: 2/3 plans executed
+**Plans**: 3/3 plans complete
 
 - [x] 51-01-PLAN.md
 - [x] 51-02-PLAN.md
-- [ ] 51-03-PLAN.md
+- [x] 51-03-PLAN.md
 
 ### Phase 52: Supply Chain, Capacity and Recoverable Placement
 
@@ -175,7 +175,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Contract, Threat Model and Workstream Isolation | 2/3 | In Progress|  |
+| 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete   | 2026-07-20 |
 | 52. Supply Chain, Capacity and Recoverable Placement | 0/TBD | Not started | - |
 | 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |

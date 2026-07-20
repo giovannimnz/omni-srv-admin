@@ -8,11 +8,11 @@
 
 ### Scope and Architecture
 
-- [ ] **SCP-01**: O operador instala RustDesk exatamente em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e `GIOVANNI-W11-PC`, excluindo WSL e `GIOVANNI-S23`.
-- [ ] **SCP-02**: O operador usa RustDesk Server OSS enquanto o escopo permanecer single-operator sem SSO, RBAC, MFA, API nativa central do RustDesk ou auditoria humana central; qualquer requisito desses promove um gate explícito para Pro. Uma API operacional custom da Atius, separada e sem se anunciar como `API Server` do client, não altera essa decisão.
-- [ ] **SCP-03**: O tráfego usa policy direct-first em produção e forced-relay somente em testes controlados ou fallback comprovado.
+- [x] **SCP-01**: O operador instala RustDesk exatamente em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e `GIOVANNI-W11-PC`, excluindo WSL e `GIOVANNI-S23`.
+- [x] **SCP-02**: O operador usa RustDesk Server OSS enquanto o escopo permanecer single-operator sem SSO, RBAC, MFA, API nativa central do RustDesk ou auditoria humana central; qualquer requisito desses promove um gate explícito para Pro. Uma API operacional custom da Atius, separada e sem se anunciar como `API Server` do client, não altera essa decisão.
+- [x] **SCP-03**: O tráfego usa policy direct-first em produção e forced-relay somente em testes controlados ou fallback comprovado.
 - [ ] **SCP-04**: Server `1.1.15` e clients `1.4.9` ficam pinados por tag, commit, digest/checksum e arquitetura, sem `latest` ou build nos hosts.
-- [ ] **SCP-05**: Todo artefato e comando GSD do milestone é isolado em `rustdesk-fleet`, preservando a integridade do workstream da Phase 48 e serializando arquivos compartilhados.
+- [x] **SCP-05**: Todo artefato e comando GSD do milestone é isolado em `rustdesk-fleet`, preservando a integridade do workstream da Phase 48 e serializando arquivos compartilhados.
 
 ### Server, Edge, and Secrets
 
@@ -85,11 +85,11 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCP-01 | Phase 51 | Pending |
-| SCP-02 | Phase 51 | Pending |
-| SCP-03 | Phase 51 | Pending |
+| SCP-01 | Phase 51 | Complete |
+| SCP-02 | Phase 51 | Complete |
+| SCP-03 | Phase 51 | Complete |
 | SCP-04 | Phase 52 | Pending |
-| SCP-05 | Phase 51 | Pending |
+| SCP-05 | Phase 51 | Complete |
 | SRV-01 | Phase 52 | Pending |
 | SRV-02 | Phase 53 | Pending |
 | SRV-03 | Phase 53 | Pending |
@@ -123,6 +123,7 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 | OPS-04 | Phase 58 | Pending |
 
 **Coverage:**
+
 - v1.9 requirements: 36 total
 - Mapped to phases: 36
 - Unmapped: 0
