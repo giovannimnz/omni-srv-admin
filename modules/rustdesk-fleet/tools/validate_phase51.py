@@ -8,6 +8,7 @@ import hashlib
 import json
 import re
 import shlex
+import subprocess
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -41,6 +42,23 @@ EXPECTED_SHARED_WRITER_PATHS = (
     ".planning/graphs/GRAPH_REPORT.md",
     ".planning/graphs/manifest.json",
 )
+PHASE48_LEGACY_ROOT = ".planning/phases/48-codex-oauth-wayland-acp-convergence"
+PHASE48_WORKSTREAM_ROOT = (
+    ".planning/workstreams/runtime-trust-codex-delivery-convergence/"
+    "phases/48-codex-oauth-wayland-acp-convergence"
+)
+PHASE48_FILES = (
+    "48-01-PLAN.md",
+    "48-01-ROUTER-EVIDENCE.md",
+    "48-02-PLAN.md",
+    "48-CONTEXT.md",
+    "48-EXECUTION-CHECKPOINT-2026-07-12.md",
+    "48-PATTERNS.md",
+    "48-RESEARCH.md",
+    "48-VALIDATION.md",
+    "tools/verify-router-evidence.py",
+)
+PHASE48_EXCLUSIONS = ("__pycache__", "*.pyc", "*.swp", "*~")
 ENTERPRISE_CONTROLS = (
     "sso_oidc",
     "rbac",
@@ -322,6 +340,108 @@ def validate_workstream_policy(payload: dict[str, Any], source: str = "scope.jso
     ) != ["P51-P48-001"]:
         errors.append("transition-gate-policy")
     return _result("P51-WS-001", not errors, errors, source)
+
+
+def resolve_legacy_blob(repo: Path, source_head: str, legacy_git_path: str) -> str:
+    if not re.fullmatch(r"[0-9a-f]{40}", source_head):
+        return ""
+    if not legacy_git_path.startswith(f"{PHASE48_LEGACY_ROOT}/"):
+        return ""
+    completed = subprocess.run(
+        ["git", "rev-parse", f"{source_head}:{legacy_git_path}"],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    value = completed.stdout.strip()
+    return value if completed.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", value) else ""
+
+
+def _phase48_visible_files(root: Path) -> set[str]:
+    visible: set[str] = set()
+    if not root.is_dir():
+        return visible
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        relative = path.relative_to(root)
+        if "__pycache__" in relative.parts or path.suffix in {".pyc", ".swp"} or path.name.endswith("~"):
+            continue
+        visible.add(relative.as_posix())
+    return visible
+
+
+def validate_phase48_baseline(
+    payload: dict[str, Any],
+    repo: Path,
+    source: str = "phase48-baseline.json",
+    workstream_root: Path | None = None,
+) -> CheckResult:
+    errors: list[str] = []
+    if not isinstance(payload, dict):
+        errors.append("invalid-shape")
+        payload = {}
+    if payload.get("schema_version") != 1:
+        errors.append("invalid-schema")
+    if payload.get("source_phase") != PHASE48_LEGACY_ROOT or payload.get("migrated_phase") != PHASE48_WORKSTREAM_ROOT:
+        errors.append("phase-root-mismatch")
+    if payload.get("allowed_exclusions") != list(PHASE48_EXCLUSIONS):
+        errors.append("invalid-exclusions")
+    if payload.get("rebaseline_policy") != "explicit-serialized-review-only":
+        errors.append("unsafe-rebaseline-policy")
+    source_head = payload.get("source_head")
+    if not isinstance(source_head, str) or not re.fullmatch(r"[0-9a-f]{40}", source_head):
+        errors.append("invalid-source-head")
+        source_head = ""
+    rows = payload.get("files")
+    if payload.get("file_count") != 9 or not isinstance(rows, list) or len(rows) != 9:
+        errors.append("baseline-row-count")
+        rows = rows if isinstance(rows, list) else []
+
+    canonical_legacy = [f"{PHASE48_LEGACY_ROOT}/{relative}" for relative in PHASE48_FILES]
+    canonical_current = [f"{PHASE48_WORKSTREAM_ROOT}/{relative}" for relative in PHASE48_FILES]
+    observed_legacy = [item.get("legacy_git_path") for item in rows if isinstance(item, dict)]
+    observed_current = [item.get("workstream_path") for item in rows if isinstance(item, dict)]
+    if observed_legacy != canonical_legacy or len(set(observed_legacy)) != len(observed_legacy):
+        errors.append("legacy-path-set")
+    if observed_current != canonical_current or len(set(observed_current)) != len(observed_current):
+        errors.append("workstream-path-set")
+
+    current_root = (workstream_root or (repo / PHASE48_WORKSTREAM_ROOT)).resolve()
+    if _phase48_visible_files(current_root) != set(PHASE48_FILES):
+        errors.append("workstream-file-set-drift")
+    for row in rows:
+        if not isinstance(row, dict):
+            errors.append("baseline-row-shape")
+            continue
+        legacy_path = row.get("legacy_git_path")
+        current_path = row.get("workstream_path")
+        expected_blob = row.get("legacy_blob_id")
+        expected_sha = row.get("workstream_sha256")
+        if not all(isinstance(value, str) and value for value in (legacy_path, current_path, expected_blob, expected_sha)):
+            errors.append("baseline-row-shape")
+            continue
+        if not re.fullmatch(r"[0-9a-f]{40}", expected_blob) or not re.fullmatch(r"[0-9a-f]{64}", expected_sha):
+            errors.append("baseline-digest-shape")
+            continue
+        if resolve_legacy_blob(repo, source_head, legacy_path) != expected_blob:
+            errors.append("legacy-blob-drift")
+        try:
+            relative = Path(current_path).relative_to(PHASE48_WORKSTREAM_ROOT)
+            actual_path = (current_root / relative).resolve(strict=True)
+            if not actual_path.is_relative_to(current_root) or _sha256_file(actual_path) != expected_sha:
+                errors.append("workstream-sha256-drift")
+        except (OSError, ValueError):
+            errors.append("workstream-file-missing")
+    if not errors:
+        return _result("P51-P48-001", True, [], source)
+    return CheckResult(
+        id="P51-P48-001",
+        status="BLOCKED",
+        evidence_ids=["P51-EV-P48"],
+        findings=[Finding(category, source, "manifest") for category in sorted(set(errors))],
+    )
 
 
 def derive_product_decision(payload: dict[str, Any]) -> dict[str, str | None]:
@@ -624,6 +744,13 @@ def main(argv: list[str] | None = None) -> int:
             path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/contracts" / filename)
             input_paths.append(path)
             results.append(validator(load_json_strict(path), str(path.relative_to(repo))))
+        baseline_path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/evidence/phase48-baseline.json")
+        input_paths.append(baseline_path)
+        results.append(
+            validate_phase48_baseline(
+                load_json_strict(baseline_path), repo, str(baseline_path.relative_to(repo))
+            )
+        )
     except (OSError, ValueError) as exc:
         print(f"BLOCKED: {exc.__class__.__name__}", file=sys.stderr)
         return 2

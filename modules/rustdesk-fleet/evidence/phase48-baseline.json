@@ -1,0 +1,70 @@
+{
+  "schema_version": 1,
+  "source_head": "bff3d151d76655bb049a14e63a25f38abb6551c0",
+  "source_phase": ".planning/phases/48-codex-oauth-wayland-acp-convergence",
+  "migrated_phase": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence",
+  "file_count": 9,
+  "allowed_exclusions": [
+    "__pycache__",
+    "*.pyc",
+    "*.swp",
+    "*~"
+  ],
+  "rebaseline_policy": "explicit-serialized-review-only",
+  "files": [
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-01-PLAN.md",
+      "legacy_blob_id": "520f2416e50eb7d6e93879f37e5c94302b998a45",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-01-PLAN.md",
+      "workstream_sha256": "48a662d56f64a7adc1243ad2475ce10a37ca576a871f9c2b7e34d4952465a294"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-01-ROUTER-EVIDENCE.md",
+      "legacy_blob_id": "45c2776e3d1810dfa90a621686a3d9939c3aee64",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-01-ROUTER-EVIDENCE.md",
+      "workstream_sha256": "466990c3333218821b204375b04089d76955849c961fc9ae55812e60f155977c"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-02-PLAN.md",
+      "legacy_blob_id": "2ad47315f4988775096177f8c36d8ebbbdf679bc",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-02-PLAN.md",
+      "workstream_sha256": "e655dc9d9f763b16d70ff4195ea83e1ebc6cc9500db0e3d22c5ba4007f619e95"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-CONTEXT.md",
+      "legacy_blob_id": "10547b9c488693e888d34411e3cf94bee6a841b3",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-CONTEXT.md",
+      "workstream_sha256": "f07bf0aefabdb8993281aa8384ac9e147e187518d53d1f76b13ff16607025ccd"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md",
+      "legacy_blob_id": "5851d6e734937f02495be5dd2f6628163412fe65",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-EXECUTION-CHECKPOINT-2026-07-12.md",
+      "workstream_sha256": "4deeb6c496d7daa60a264b9c48159230a0fe27ce6b1423e81d9282ff48834741"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-PATTERNS.md",
+      "legacy_blob_id": "579300b2da05a7af948ee39f48c16016376051b4",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-PATTERNS.md",
+      "workstream_sha256": "3a8e27ac00e71d92fe985d3dafd86fbe0daa78de26c3a589771636c842e459f0"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-RESEARCH.md",
+      "legacy_blob_id": "d59e9569420c41fdf0e9ed69c237fcbdeaac0c63",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-RESEARCH.md",
+      "workstream_sha256": "459ee724a03a4803e999aabd55d70d06381d19b40daa72a44d65fe91b4651345"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md",
+      "legacy_blob_id": "1d296a09089559055ffef31513b6a1a494427115",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md",
+      "workstream_sha256": "dc45746e8b2c54cf4560d852ec2f343fa4db9ee6d9e1b6b126fac5e55b43e100"
+    },
+    {
+      "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/tools/verify-router-evidence.py",
+      "legacy_blob_id": "23dba3ec85c3cea0fcc1cb6d25acba7d3bfb574d",
+      "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/tools/verify-router-evidence.py",
+      "workstream_sha256": "1d7390583f2a3ead0ad27b42ad5122217e432e2849fc687412f68a16b872a125"
+    }
+  ]
+}
