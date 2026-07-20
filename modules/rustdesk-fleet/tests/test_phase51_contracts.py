@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -17,6 +18,12 @@ PERMISSION_PATH = REPO / "modules/rustdesk-fleet/contracts/permission-profiles.j
 THREAT_PATH = REPO / "modules/rustdesk-fleet/contracts/threat-model.json"
 SECRET_ROLES_PATH = REPO / "modules/rustdesk-fleet/contracts/secret-roles.json"
 UNSCOPED_COMMAND_PATH = INVALID_DIR / "unscoped-gsd-command.md"
+PHASE48_BASELINE_PATH = REPO / "modules/rustdesk-fleet/evidence/phase48-baseline.json"
+PHASE48_DRIFT_PATH = INVALID_DIR / "phase48-drift.json"
+PHASE48_ROOT = (
+    REPO
+    / ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence"
+)
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -98,6 +105,70 @@ def test_workstream_rejects_wrong_scope_and_accepts_read_only_query() -> None:
 def test_workstream_prose_is_not_an_executable_command() -> None:
     text = "Every lifecycle command must use --ws rustdesk-fleet."
     assert validator.extract_executable_gsd_commands(text, source_kind="markdown") == []
+
+
+def test_phase48_integrity_contract() -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    result = validator.validate_phase48_baseline(payload, REPO)
+    assert result.id == "P51-P48-001"
+    assert result.status == "PASS"
+    assert payload["file_count"] == 9
+    assert len(payload["files"]) == 9
+    assert payload["allowed_exclusions"] == ["__pycache__", "*.pyc", "*.swp", "*~"]
+    assert payload["rebaseline_policy"] == "explicit-serialized-review-only"
+
+
+@pytest.mark.parametrize(
+    "relative_path",
+    [
+        "48-01-PLAN.md",
+        "48-01-ROUTER-EVIDENCE.md",
+        "48-02-PLAN.md",
+        "48-CONTEXT.md",
+        "48-EXECUTION-CHECKPOINT-2026-07-12.md",
+        "48-PATTERNS.md",
+        "48-RESEARCH.md",
+        "48-VALIDATION.md",
+        "tools/verify-router-evidence.py",
+    ],
+)
+def test_phase48_old_blob_to_migrated_hash(relative_path: str) -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    row = next(item for item in payload["files"] if item["workstream_path"].endswith(relative_path))
+    assert validator.resolve_legacy_blob(REPO, payload["source_head"], row["legacy_git_path"]) == row[
+        "legacy_blob_id"
+    ]
+    assert validator._sha256_file(REPO / row["workstream_path"]) == row["workstream_sha256"]
+
+
+def test_phase48_drift_is_blocked_on_disposable_copy(tmp_path: Path) -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    descriptor = validator.load_json_strict(PHASE48_DRIFT_PATH)
+    copied_root = tmp_path / "phase48"
+    shutil.copytree(PHASE48_ROOT, copied_root)
+    target = copied_root / descriptor["target"]
+    target.write_bytes(target.read_bytes() + b"\n")
+    result = validator.validate_phase48_baseline(payload, REPO, workstream_root=copied_root)
+    assert result.status == "BLOCKED"
+    assert {finding.category for finding in result.findings} == {"workstream-sha256-drift"}
+
+
+@pytest.mark.parametrize("mutation", ["zero", "missing", "extra"])
+def test_phase48_rejects_incomplete_or_extra_rows(mutation: str) -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    if mutation == "zero":
+        payload["files"] = []
+        payload["file_count"] = 0
+    elif mutation == "missing":
+        payload["files"].pop()
+    else:
+        payload["files"].append(dict(payload["files"][0]))
+    assert validator.validate_phase48_baseline(payload, REPO).status == "BLOCKED"
+
+
+def test_phase48_validator_has_no_rebaseline_cli_option() -> None:
+    options = {action.dest for action in validator.build_parser()._actions}
+    assert "rebaseline" not in options
 
 
 @pytest.mark.parametrize(

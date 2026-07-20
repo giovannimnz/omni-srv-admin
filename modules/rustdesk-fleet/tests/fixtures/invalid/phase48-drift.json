@@ -1,0 +1,5 @@
+{
+  "schema_version": 1,
+  "target": "48-CONTEXT.md",
+  "mutation": "append-newline-in-disposable-copy"
+}
