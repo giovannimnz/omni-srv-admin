@@ -175,7 +175,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete   | 2026-07-20 |
+| 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
 | 52. Supply Chain, Capacity and Recoverable Placement | 0/TBD | Not started | - |
 | 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
