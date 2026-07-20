@@ -46,5 +46,41 @@
       "controlled-validation",
       "proven-fallback"
     ]
+  },
+  "gsd_lifecycle": {
+    "required_workstream": "rustdesk-fleet",
+    "required_flag": "--ws",
+    "mutating_verbs": [
+      "begin-phase",
+      "advance-plan",
+      "update-progress",
+      "complete-phase",
+      "complete-milestone",
+      "plan-phase",
+      "execute-phase",
+      "verify-work"
+    ],
+    "command_sources": [
+      "fenced-shell",
+      "script"
+    ]
+  },
+  "shared_writers": {
+    "mode": "serialized-single-writer",
+    "paths": [
+      ".planning/PROJECT.md",
+      ".planning/MILESTONES.md",
+      ".planning/graphs/graph.json",
+      ".planning/graphs/GRAPH_REPORT.md",
+      ".planning/graphs/manifest.json"
+    ]
+  },
+  "transition_gates": {
+    "precheck_ids": [
+      "P51-WS-001"
+    ],
+    "postcheck_ids": [
+      "P51-P48-001"
+    ]
   }
 }

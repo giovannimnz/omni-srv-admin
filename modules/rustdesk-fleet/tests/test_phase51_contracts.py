@@ -39,6 +39,7 @@ def test_scope_contract() -> None:
         "P51-SCOPE-001": "PASS",
         "P51-LEGACY-001": "PASS",
         "P51-TRANSPORT-001": "PASS",
+        "P51-WS-001": "PASS",
     }
 
 

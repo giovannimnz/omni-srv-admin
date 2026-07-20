@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import json
 import re
+import shlex
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -23,6 +24,23 @@ EXPECTED_INCLUDED_HOSTS = (
 EXPECTED_EXCLUDED_HOSTS = ("WSL", "GIOVANNI-S23")
 EXPECTED_ACCESS_TOOLS = ("RustGuac", "XRDP", "AnyDesk", "NoMachine", "noVNC")
 EXPECTED_RELAY_PURPOSES = ("controlled-validation", "proven-fallback")
+EXPECTED_GSD_MUTATING_VERBS = (
+    "begin-phase",
+    "advance-plan",
+    "update-progress",
+    "complete-phase",
+    "complete-milestone",
+    "plan-phase",
+    "execute-phase",
+    "verify-work",
+)
+EXPECTED_SHARED_WRITER_PATHS = (
+    ".planning/PROJECT.md",
+    ".planning/MILESTONES.md",
+    ".planning/graphs/graph.json",
+    ".planning/graphs/GRAPH_REPORT.md",
+    ".planning/graphs/manifest.json",
+)
 ENTERPRISE_CONTROLS = (
     "sso_oidc",
     "rbac",
@@ -165,6 +183,7 @@ def validate_scope(payload: dict[str, Any], source: str = "scope.json") -> list[
             _result("P51-SCOPE-001", False, ["invalid-shape"], source),
             _result("P51-LEGACY-001", False, ["invalid-shape"], source),
             _result("P51-TRANSPORT-001", False, ["invalid-shape"], source),
+            _result("P51-WS-001", False, ["invalid-shape"], source),
         ]
 
     scope_errors: list[str] = []
@@ -214,7 +233,95 @@ def validate_scope(payload: dict[str, Any], source: str = "scope.json") -> list[
         _result("P51-SCOPE-001", not scope_errors, scope_errors, source),
         _result("P51-LEGACY-001", not legacy_errors, legacy_errors, source),
         _result("P51-TRANSPORT-001", not transport_errors, transport_errors, source),
+        validate_workstream_policy(payload, source),
     ]
+
+
+def extract_executable_gsd_commands(text: str, source_kind: str = "script") -> list[str]:
+    """Extract shell commands without treating surrounding prose as executable."""
+    if source_kind == "markdown":
+        regions = re.findall(r"```(?:bash|sh|shell|zsh)\s*\n(.*?)```", text, flags=re.I | re.S)
+    elif source_kind == "script":
+        regions = [text]
+    else:
+        raise ValueError("unsupported command source kind")
+
+    commands: list[str] = []
+    for region in regions:
+        logical = ""
+        for raw_line in region.splitlines():
+            line = raw_line.strip()
+            if not line or line.startswith("#"):
+                continue
+            logical = f"{logical} {line}".strip()
+            if logical.endswith("\\"):
+                logical = logical[:-1].rstrip()
+                continue
+            for part in re.split(r"\s*(?:&&|;)\s*", logical):
+                if part:
+                    commands.append(part)
+            logical = ""
+        if logical:
+            commands.append(logical)
+    return commands
+
+
+def validate_workstream_commands(
+    commands: list[str],
+    mutating_verbs: list[str] | tuple[str, ...] = EXPECTED_GSD_MUTATING_VERBS,
+    source: str = "executable-command",
+) -> list[CheckResult]:
+    """Validate every command independently; read-only commands do not mutate a lane."""
+    results: list[CheckResult] = []
+    for index, command in enumerate(commands):
+        try:
+            tokens = shlex.split(command, comments=True, posix=True)
+        except ValueError:
+            results.append(_result("P51-WS-001", False, ["invalid-shell-command"], source))
+            continue
+        is_mutating = any(verb in tokens for verb in mutating_verbs)
+        if not is_mutating:
+            results.append(_result("P51-WS-001", True, [], source))
+            continue
+        scoped_values = [tokens[pos + 1] for pos, token in enumerate(tokens[:-1]) if token == "--ws"]
+        if scoped_values == ["rustdesk-fleet"]:
+            results.append(_result("P51-WS-001", True, [], source))
+            continue
+        category = "wrong-explicit-workstream" if scoped_values else "missing-explicit-workstream"
+        results.append(
+            CheckResult(
+                id="P51-WS-001",
+                status="FAIL",
+                evidence_ids=["P51-EV-WS"],
+                findings=[Finding(category, source, f"command[{index}]")],
+            )
+        )
+    return results
+
+
+def validate_workstream_policy(payload: dict[str, Any], source: str = "scope.json") -> CheckResult:
+    errors: list[str] = []
+    lifecycle = payload.get("gsd_lifecycle")
+    if not isinstance(lifecycle, dict):
+        errors.append("lifecycle-policy-shape")
+    else:
+        if lifecycle.get("required_workstream") != "rustdesk-fleet" or lifecycle.get("required_flag") != "--ws":
+            errors.append("lifecycle-explicit-scope")
+        if not _is_exact_string_list(lifecycle.get("mutating_verbs"), EXPECTED_GSD_MUTATING_VERBS):
+            errors.append("lifecycle-mutating-verbs")
+        if not _is_exact_string_list(lifecycle.get("command_sources"), ("fenced-shell", "script")):
+            errors.append("lifecycle-command-sources")
+    writers = payload.get("shared_writers")
+    if not isinstance(writers, dict) or writers.get("mode") != "serialized-single-writer" or not _is_exact_string_list(
+        writers.get("paths"), EXPECTED_SHARED_WRITER_PATHS
+    ):
+        errors.append("shared-writer-policy")
+    gates = payload.get("transition_gates")
+    if not isinstance(gates, dict) or gates.get("precheck_ids") != ["P51-WS-001"] or gates.get(
+        "postcheck_ids"
+    ) != ["P51-P48-001"]:
+        errors.append("transition-gate-policy")
+    return _result("P51-WS-001", not errors, errors, source)
 
 
 def derive_product_decision(payload: dict[str, Any]) -> dict[str, str | None]:
