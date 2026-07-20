@@ -926,7 +926,22 @@ def scan_secret_material(value: Any, path: str = "contract", location: str = "ro
             if pattern.search(node):
                 add(category, field_location)
         compact = re.sub(r"[^A-Za-z0-9+/=_-]", "", node)
-        if len(compact) >= 48 and len(set(compact)) >= 16 and not node.startswith(("kv/", "modules/", ".planning/")):
+        field_name = field_location.rsplit(".", maxsplit=1)[-1]
+        named_sha256 = (
+            field_name
+            in {
+                "sha256",
+                "input_digest",
+                "review_input_manifest_digest",
+            }
+            and re.fullmatch(r"[0-9a-f]{64}", node) is not None
+        )
+        if (
+            len(compact) >= 48
+            and len(set(compact)) >= 16
+            and not node.startswith(("kv/", "modules/", ".planning/"))
+            and not named_sha256
+        ):
             add("high-entropy", field_location)
 
     visit(value, location)
