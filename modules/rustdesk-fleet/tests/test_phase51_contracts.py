@@ -3,6 +3,7 @@ from __future__ import annotations
 import importlib.util
 import json
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -517,6 +518,85 @@ def test_report_currentness_detects_changed_input(tmp_path: Path) -> None:
     result = validator.validate_report_currentness(report, tmp_path)
     assert result.status == "BLOCKED"
     assert {finding.category for finding in result.findings} == {"stale-input-digest"}
+
+
+def _git(repo: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", *args], cwd=repo, text=True, capture_output=True, check=True
+    )
+    return completed.stdout.strip()
+
+
+def _review_source_repo(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> tuple[Path, str]:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git(repo, "init", "-q")
+    _git(repo, "config", "user.name", "Phase 51 Test")
+    _git(repo, "config", "user.email", "phase51@example.invalid")
+    (repo / "input.json").write_text('{"schema_version": 1}\n', encoding="utf-8")
+    _git(repo, "add", "input.json")
+    _git(repo, "commit", "-qm", "input baseline")
+    source_head = _git(repo, "rev-parse", "HEAD")
+    monkeypatch.setattr(validator, "PRE_REPORT_INPUTS", ("input.json",))
+    monkeypatch.setattr(validator, "POST_REVIEW_ALLOWED_PATHS", ("review.md",))
+    return repo, source_head
+
+
+def test_review_source_survives_allowed_attestation_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, source_head = _review_source_repo(tmp_path, monkeypatch)
+    manifest = validator.build_review_input_manifest(repo, source_head)
+    (repo / "review.md").write_text("approved\n", encoding="utf-8")
+    _git(repo, "add", "review.md")
+    _git(repo, "commit", "-qm", "record attestation")
+
+    assert validator.validate_review_source(repo, source_head, manifest) == []
+
+
+def test_review_source_rejects_committed_or_worktree_input_drift(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, source_head = _review_source_repo(tmp_path, monkeypatch)
+    manifest = validator.build_review_input_manifest(repo, source_head)
+    (repo / "input.json").write_text('{"schema_version": 2}\n', encoding="utf-8")
+    assert "reviewed-input-drift" in validator.validate_review_source(repo, source_head, manifest)
+
+    _git(repo, "add", "input.json")
+    _git(repo, "commit", "-qm", "drift reviewed input")
+    categories = validator.validate_review_source(repo, source_head, manifest)
+    assert {"post-review-scope-drift", "reviewed-input-drift"}.issubset(categories)
+
+
+def test_review_source_rejects_unrelated_post_review_commit(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    repo, source_head = _review_source_repo(tmp_path, monkeypatch)
+    manifest = validator.build_review_input_manifest(repo, source_head)
+    (repo / "validator.py").write_text("VERSION = 2\n", encoding="utf-8")
+    _git(repo, "add", "validator.py")
+    _git(repo, "commit", "-qm", "change validator")
+    assert "post-review-scope-drift" in validator.validate_review_source(
+        repo, source_head, manifest
+    )
+
+
+@pytest.mark.parametrize(
+    "value",
+    [
+        "2026-02-30T12:00:00Z",
+        "2026-07-20T24:00:00Z",
+        "2026-07-20T05:00:00+00:00",
+        "not-a-timestamp",
+        None,
+    ],
+)
+def test_utc_timestamp_validation_is_semantic(value: object) -> None:
+    assert validator.is_utc_timestamp(value) is False
+
+
+def test_utc_timestamp_validation_accepts_canonical_utc() -> None:
+    assert validator.is_utc_timestamp("2026-07-20T05:00:00Z") is True
 
 
 def test_json_markdown_parity_and_atomic_outputs(tmp_path: Path) -> None:
