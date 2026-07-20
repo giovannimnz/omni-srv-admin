@@ -6,11 +6,14 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import os
 import re
 import shlex
 import subprocess
 import sys
+import tempfile
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -79,6 +82,36 @@ FIXTURE_DOCUMENT_PATHS = {
     "phase48_baseline": "evidence/phase48-baseline.json",
     "operational_review": "evidence/operational-review.json",
 }
+CHECK_ORDER = (
+    "P51-SCOPE-001",
+    "P51-LEGACY-001",
+    "P51-PRODUCT-001",
+    "P51-TRANSPORT-001",
+    "P51-SECRET-001",
+    "P51-PERM-001",
+    "P51-LEDGER-001",
+    "P51-WS-001",
+    "P51-P48-001",
+    "P51-THREAT-001",
+    "P51-REPORT-001",
+)
+PHASE51_DIR = (
+    ".planning/workstreams/rustdesk-fleet/phases/"
+    "51-contract-threat-model-and-workstream-isolation"
+)
+PRE_REPORT_INPUTS = (
+    "modules/rustdesk-fleet/contracts/scope.json",
+    "modules/rustdesk-fleet/contracts/product-decision.json",
+    "modules/rustdesk-fleet/contracts/permission-profiles.json",
+    "modules/rustdesk-fleet/contracts/threat-model.json",
+    "modules/rustdesk-fleet/contracts/secret-roles.json",
+    f"{PHASE51_DIR}/51-SECURITY.md",
+    "modules/rustdesk-fleet/evidence/phase48-baseline.json",
+    "modules/rustdesk-fleet/evidence/ledger.json",
+)
+REQUIREMENTS_RELATIVE_PATH = ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md"
+REVIEW_RELATIVE_PATH = f"{PHASE51_DIR}/51-OPERATIONAL-REVIEW.md"
+VALIDATOR_VERSION = 1
 ENTERPRISE_CONTROLS = (
     "sso_oidc",
     "rbac",
@@ -144,6 +177,10 @@ TARGET_SECRET_PATHS = (
     "kv/atius/rustdesk/targets/atius-srv-3",
     "kv/atius/rustdesk/targets/horistic-srv",
     "kv/atius/rustdesk/targets/giovanni-w11-pc",
+)
+EXPECTED_VAULT_REVIEW_PATHS = (
+    "kv/atius/rustdesk/server",
+    *TARGET_SECRET_PATHS,
 )
 SECRET_PATTERNS = (
     ("private-key-header", re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----", re.I)),
@@ -755,6 +792,7 @@ def validate_threat_model(payload: dict[str, Any], source: str = "threat-model.j
 
 def validate_secret_roles(payload: dict[str, Any], source: str = "secret-roles.json") -> CheckResult:
     errors: list[str] = []
+    approvals: list[str] = []
     if payload.get("schema_version") != 1 or payload.get("authority") != "hashicorp-vault":
         errors.append("secret-role-shape")
     server = payload.get("server_identity")
@@ -774,8 +812,10 @@ def validate_secret_roles(payload: dict[str, Any], source: str = "secret-roles.j
                 "field": field_name,
             }:
                 errors.append("server-identity-reference")
-        if server.get("approval_status") != "pending":
+        if server.get("approval_status") not in {"pending", "approved"}:
             errors.append("server-identity-approval")
+        else:
+            approvals.append(server["approval_status"])
 
     roles = payload.get("target_password_roles")
     if not isinstance(roles, list) or len(roles) != 5:
@@ -793,15 +833,19 @@ def validate_secret_roles(payload: dict[str, Any], source: str = "secret-roles.j
         for item in roles:
             if not isinstance(item, dict) or item.get("field") != "permanent_password" or item.get(
                 "approval_status"
-            ) != "pending":
+            ) not in {"pending", "approved"}:
                 errors.append("target-role-shape")
+            elif isinstance(item, dict):
+                approvals.append(item["approval_status"])
     if payload.get("value_distinctness_phase") != 52:
         errors.append("value-distinctness-phase")
     recovery = payload.get("recovery_authority")
     if not isinstance(recovery, dict) or recovery.get("role") != "rustdesk-recovery-owner" or recovery.get(
         "approval_status"
-    ) != "pending":
+    ) not in {"pending", "approved"}:
         errors.append("recovery-authority")
+    elif isinstance(recovery, dict):
+        approvals.append(recovery["approval_status"])
     if payload.get("client_identity_inventory_ref") != "modules/rustdesk-fleet/evidence/client-identities.json":
         errors.append("client-identity-role")
     if payload.get("permission_profiles_ref") != "modules/rustdesk-fleet/contracts/permission-profiles.json":
@@ -812,6 +856,13 @@ def validate_secret_roles(payload: dict[str, Any], source: str = "secret-roles.j
     result = _result("P51-SECRET-001", not errors, sorted(set(errors)), source)
     if findings:
         result.findings.extend(findings)
+    if not errors and approvals and set(approvals) != {"approved"}:
+        return CheckResult(
+            id="P51-SECRET-001",
+            status="BLOCKED",
+            evidence_ids=["P51-EV-SECRET"],
+            findings=[Finding("vault-owner-review-pending", source, "approval_status")],
+        )
     return result
 
 
@@ -865,6 +916,275 @@ def _sha256_file(path: Path) -> str:
     return digest.hexdigest()
 
 
+def git_head(repo: Path) -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, text=True, capture_output=True, check=False
+    )
+    value = completed.stdout.strip()
+    if completed.returncode != 0 or not re.fullmatch(r"[0-9a-f]{40}", value):
+        raise ValueError("unable to resolve repository HEAD")
+    return value
+
+
+def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> list[dict[str, str]]:
+    root = repo.resolve()
+    inputs: list[dict[str, str]] = []
+    for path in paths:
+        candidate = path if path.is_absolute() else root / path
+        resolved = validate_repo_path(root, candidate)
+        if not resolved.is_file():
+            raise ValueError("report input is missing")
+        inputs.append({"path": resolved.relative_to(root).as_posix(), "sha256": _sha256_file(resolved)})
+    return sorted(inputs, key=lambda item: item["path"])
+
+
+def _canonical_digest(payload: dict[str, Any]) -> str:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    return hashlib.sha256(encoded).hexdigest()
+
+
+def build_review_input_manifest(repo: Path, source_head: str) -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "phase": 51,
+        "workstream": "rustdesk-fleet",
+        "validator_version": VALIDATOR_VERSION,
+        "source_head": source_head,
+        "inputs": collect_input_digests(repo, tuple(Path(item) for item in PRE_REPORT_INPUTS)),
+    }
+
+
+def load_operational_review(path: Path) -> dict[str, Any]:
+    text = path.read_text(encoding="utf-8")
+    match = re.search(r"```json\s*\n(.*?)\n```", text, flags=re.S | re.I)
+    if not match:
+        raise ValueError("operational review JSON block missing")
+
+    def reject_duplicates(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+        result: dict[str, Any] = {}
+        for key, value in pairs:
+            if key in result:
+                raise ValueError("duplicate operational review key")
+            result[key] = value
+        return result
+
+    return json.loads(match.group(1), object_pairs_hook=reject_duplicates)
+
+
+def _blocked_result(check_id: str, categories: list[str], source: str, location: str) -> CheckResult:
+    return CheckResult(
+        id=check_id,
+        status="BLOCKED",
+        evidence_ids=[f"P51-EV-{check_id.removeprefix('P51-').removesuffix('-001')}"],
+        findings=[Finding(category, source, location) for category in sorted(set(categories))],
+    )
+
+
+def validate_operational_review(
+    review: dict[str, Any], repo: Path, manifest: dict[str, Any], source: str = REVIEW_RELATIVE_PATH
+) -> CheckResult:
+    blocked: list[str] = []
+    if not isinstance(review, dict) or review.get("schema_version") != 1:
+        return _blocked_result("P51-REPORT-001", ["operational-review-shape"], source, "review")
+    current_head = git_head(repo)
+    reviewer = review.get("reviewer")
+    reviewed_at = review.get("reviewed_at")
+    controls = review.get("enterprise_controls")
+    operator_ready = (
+        review.get("status") == "APPROVED"
+        and isinstance(reviewer, str)
+        and bool(reviewer.strip())
+        and isinstance(reviewed_at, str)
+        and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", reviewed_at))
+        and isinstance(controls, list)
+        and [item.get("id") for item in controls if isinstance(item, dict)] == list(ENTERPRISE_CONTROLS)
+        and all(
+            isinstance(item, dict)
+            and isinstance(item.get("mandatory"), bool)
+            and isinstance(item.get("accepted_absence"), bool)
+            for item in controls or []
+        )
+    )
+    if not operator_ready:
+        blocked.append("operator-review-pending")
+    if review.get("source_head") != current_head:
+        blocked.append("stale-review-source-head")
+
+    product = load_json_strict(repo / "modules/rustdesk-fleet/contracts/product-decision.json")
+    product_result = validate_product_decision(product)
+    product_controls = product.get("enterprise_controls", []) if isinstance(product, dict) else []
+    review_by_id = {item.get("id"): item for item in controls or [] if isinstance(item, dict)}
+    if operator_ready and any(
+        review_by_id.get(item.get("id"), {}).get("mandatory") != item.get("mandatory")
+        or review_by_id.get(item.get("id"), {}).get("accepted_absence") != item.get("accepted_absence")
+        for item in product_controls
+        if isinstance(item, dict)
+    ):
+        blocked.append("product-review-contract-mismatch")
+    derived = derive_product_decision(product) if isinstance(product, dict) else {"decision": "BLOCKED"}
+    selection = review.get("oss_absence_acceptance_or_pro_selection")
+    if derived.get("decision") == "GO" and selection != "accept-oss-absences":
+        blocked.append("oss-absence-acceptance-missing")
+    elif derived.get("decision") == "NO-GO" and (
+        selection != "select-pro" or review.get("pro_replan_authorized") is not True
+    ):
+        blocked.append("product-no-go-without-replan")
+    elif product_result.status != "PASS":
+        blocked.append("product-decision-not-approved")
+
+    vault_ready = (
+        isinstance(review.get("vault_owner"), str)
+        and bool(review["vault_owner"].strip())
+        and review.get("vault_paths_reviewed") == list(EXPECTED_VAULT_REVIEW_PATHS)
+        and review.get("vault_paths_approval_status") == "approved"
+        and isinstance(review.get("vault_paths_approved_at"), str)
+        and bool(re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", review["vault_paths_approved_at"]))
+    )
+    secret_result = validate_secret_roles(
+        load_json_strict(repo / "modules/rustdesk-fleet/contracts/secret-roles.json")
+    )
+    if not vault_ready or secret_result.status != "PASS":
+        blocked.append("vault-owner-review-pending")
+
+    if review.get("permission_transport_review") != "approved":
+        blocked.append("permission-transport-review-pending")
+    threat_result = validate_threat_model(
+        load_json_strict(repo / "modules/rustdesk-fleet/contracts/threat-model.json")
+    )
+    if (
+        review.get("threat_review") != "approved"
+        or review.get("unresolved_high_count") != 0
+        or threat_result.status != "PASS"
+    ):
+        blocked.append("threat-review-pending")
+    if review.get("phase48_drift_decision") != "no-drift":
+        blocked.append("phase48-review-pending")
+    if review.get("review_input_manifest_digest") != _canonical_digest(manifest):
+        blocked.append("review-input-manifest-mismatch")
+    if scan_secret_material(review, path=source):
+        blocked.append("review-secret-material")
+    return (
+        _result("P51-REPORT-001", True, [], source)
+        if not blocked
+        else _blocked_result("P51-REPORT-001", blocked, source, "review")
+    )
+
+
+def derive_overall_status(results: list[CheckResult]) -> str:
+    if any(item.status == "FAIL" for item in results):
+        return "FAIL"
+    if any(item.status == "BLOCKED" for item in results):
+        return "BLOCKED"
+    return "PASS"
+
+
+def exit_code_for_status(status: str) -> int:
+    return {"PASS": 0, "FAIL": 1, "BLOCKED": 2}[status]
+
+
+def run_checks(repo: Path) -> tuple[list[CheckResult], list[Path]]:
+    root = repo.resolve()
+    scope_path = root / "modules/rustdesk-fleet/contracts/scope.json"
+    by_id = {item.id: item for item in validate_scope(load_json_strict(scope_path), scope_path.relative_to(root).as_posix())}
+    validators = (
+        ("product-decision.json", validate_product_decision),
+        ("permission-profiles.json", validate_permission_profiles),
+        ("threat-model.json", validate_threat_model),
+        ("secret-roles.json", validate_secret_roles),
+    )
+    for filename, validator in validators:
+        path = root / "modules/rustdesk-fleet/contracts" / filename
+        result = validator(load_json_strict(path), path.relative_to(root).as_posix())
+        by_id[result.id] = result
+    baseline_path = root / "modules/rustdesk-fleet/evidence/phase48-baseline.json"
+    baseline = validate_phase48_baseline(
+        load_json_strict(baseline_path), root, baseline_path.relative_to(root).as_posix()
+    )
+    by_id[baseline.id] = baseline
+    requirements_path = root / REQUIREMENTS_RELATIVE_PATH
+    ledger_path = root / "modules/rustdesk-fleet/evidence/ledger.json"
+    ledger = validate_ledger(
+        load_json_strict(ledger_path),
+        parse_canonical_requirements(requirements_path),
+        root,
+        ledger_path.relative_to(root).as_posix(),
+    )
+    by_id[ledger.id] = ledger
+    source_head = git_head(root)
+    manifest = build_review_input_manifest(root, source_head)
+    review_path = root / REVIEW_RELATIVE_PATH
+    review_result = validate_operational_review(
+        load_operational_review(review_path), root, manifest, review_path.relative_to(root).as_posix()
+    )
+    by_id[review_result.id] = review_result
+    if set(by_id) != set(CHECK_ORDER):
+        raise ValueError("validator check set is incomplete")
+    inputs = [root / item for item in PRE_REPORT_INPUTS]
+    inputs.extend([requirements_path, review_path])
+    return [by_id[check_id] for check_id in CHECK_ORDER], inputs
+
+
+def validate_report_currentness(report: dict[str, Any], repo: Path) -> CheckResult:
+    errors: list[str] = []
+    root = repo.resolve()
+    inputs = report.get("inputs") if isinstance(report, dict) else None
+    if not isinstance(inputs, list):
+        return _blocked_result("P51-REPORT-001", ["report-input-shape"], "report", "inputs")
+    for item in inputs:
+        if not isinstance(item, dict) or not isinstance(item.get("path"), str) or not isinstance(
+            item.get("sha256"), str
+        ):
+            errors.append("report-input-shape")
+            continue
+        try:
+            path = validate_repo_path(root, root / item["path"])
+            if not path.is_file():
+                errors.append("missing-report-input")
+            elif _sha256_file(path) != item["sha256"]:
+                errors.append("stale-input-digest")
+        except ValueError:
+            errors.append("report-input-path")
+    return (
+        _result("P51-REPORT-001", True, [], "report")
+        if not errors
+        else _blocked_result("P51-REPORT-001", errors, "report", "inputs")
+    )
+
+
+def build_report(repo: Path, generated_at: str | None = None) -> dict[str, Any]:
+    root = repo.resolve()
+    results, input_paths = run_checks(root)
+    inputs = collect_input_digests(root, tuple(input_paths))
+    secret_categories = {
+        "secret-material",
+        "private-key-header",
+        "bearer-token",
+        "secret-assignment",
+        "uri-credential",
+        "argv-transcript",
+        "screenshot-redaction",
+        "sensitive-field-value",
+        "high-entropy",
+        "review-secret-material",
+    }
+    secret_material_present = any(
+        finding.category in secret_categories for result in results for finding in result.findings
+    )
+    timestamp = generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    return {
+        "schema_version": 1,
+        "phase": 51,
+        "workstream": "rustdesk-fleet",
+        "source_head": git_head(root),
+        "validator_version": VALIDATOR_VERSION,
+        "generated_at": timestamp,
+        "inputs": inputs,
+        "checks": [_serialize_result(result) for result in results],
+        "secret_material_present": secret_material_present,
+        "overall_status": derive_overall_status(results),
+    }
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
@@ -885,100 +1205,103 @@ def _serialize_result(result: CheckResult) -> dict[str, Any]:
     }
 
 
-def _render_markdown(report: dict[str, Any]) -> str:
+def render_markdown(report: dict[str, Any]) -> str:
     lines = [
         "# Phase 51 Contract Validation",
         "",
-        f"**Overall:** {report['overall_status']}",
+        "## Report Identity",
+        "",
+        f"- **Source HEAD:** `{report['source_head']}`",
+        f"- **Validator Version:** `{report['validator_version']}`",
+        f"- **Generated At:** `{report['generated_at']}`",
+        "",
+        "## Input Digests",
+        "",
+        "| Path | SHA-256 |",
+        "|---|---|",
+    ]
+    for item in report["inputs"]:
+        lines.append(f"| `{item['path']}` | `{item['sha256']}` |")
+    lines.extend([
+        "",
+        "## Check Matrix",
         "",
         "| Check | Status | Evidence |",
         "|---|---|---|",
-    ]
+    ])
     for check in report["checks"]:
         lines.append(
             f"| `{check['id']}` | {check['status']} | {', '.join(check['evidence_ids'])} |"
         )
+    lines.extend(
+        [
+            "",
+            "## Operational Review",
+            "",
+            "The accountable review is represented by `P51-REPORT-001`; a BLOCKED status cannot authorize Phase 52.",
+            "",
+            "## Overall Status",
+            "",
+            f"**{report['overall_status']}**",
+            "",
+            f"Secret material present: `{str(report['secret_material_present']).lower()}`",
+        ]
+    )
     return "\n".join(lines) + "\n"
+
+
+def write_reports_atomically(
+    report: dict[str, Any], json_path: Path, markdown_path: Path, repo: Path
+) -> None:
+    root = repo.resolve()
+    resolved_json = validate_repo_path(root, json_path if json_path.is_absolute() else root / json_path)
+    resolved_markdown = validate_repo_path(
+        root, markdown_path if markdown_path.is_absolute() else root / markdown_path
+    )
+    if resolved_json.name != "51-CONTRACT-VALIDATION.json" or resolved_markdown.name != "51-CONTRACT-VALIDATION.md":
+        raise ValueError("runtime report names are fixed")
+    payloads = (
+        (resolved_json, json.dumps(report, indent=2, sort_keys=True) + "\n"),
+        (resolved_markdown, render_markdown(report)),
+    )
+    temporary_paths: list[Path] = []
+    try:
+        for target, content in payloads:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=target.parent, prefix=f".{target.name}.", delete=False
+            ) as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+                temporary_paths.append(Path(handle.name))
+        for temporary, (target, _) in zip(temporary_paths, payloads, strict=True):
+            os.replace(temporary, target)
+    finally:
+        for temporary in temporary_paths:
+            temporary.unlink(missing_ok=True)
 
 
 def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo = args.repo.resolve()
     try:
-        contract_path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/contracts/scope.json")
-        payload = load_json_strict(contract_path)
-        results = validate_scope(payload, str(contract_path.relative_to(repo)))
-        contract_validators = (
-            ("product-decision.json", validate_product_decision),
-            ("permission-profiles.json", validate_permission_profiles),
-            ("threat-model.json", validate_threat_model),
-            ("secret-roles.json", validate_secret_roles),
-        )
-        input_paths = [contract_path]
-        for filename, validator in contract_validators:
-            path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/contracts" / filename)
-            input_paths.append(path)
-            results.append(validator(load_json_strict(path), str(path.relative_to(repo))))
-        baseline_path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/evidence/phase48-baseline.json")
-        input_paths.append(baseline_path)
-        results.append(
-            validate_phase48_baseline(
-                load_json_strict(baseline_path), repo, str(baseline_path.relative_to(repo))
-            )
-        )
-        requirements_path = validate_repo_path(
-            repo, repo / ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md"
-        )
-        ledger_path = validate_repo_path(repo, repo / "modules/rustdesk-fleet/evidence/ledger.json")
-        input_paths.extend([requirements_path, ledger_path])
-        results.append(
-            validate_ledger(
-                load_json_strict(ledger_path),
-                parse_canonical_requirements(requirements_path),
-                repo,
-                str(ledger_path.relative_to(repo)),
-            )
-        )
+        report = build_report(repo)
     except (OSError, ValueError) as exc:
         print(f"BLOCKED: {exc.__class__.__name__}", file=sys.stderr)
         return 2
-
-    overall = (
-        "FAIL"
-        if any(item.status == "FAIL" for item in results)
-        else "BLOCKED"
-        if any(item.status == "BLOCKED" for item in results)
-        else "PASS"
-    )
-    report = {
-        "schema_version": 1,
-        "phase": 51,
-        "workstream": "rustdesk-fleet",
-        "inputs": [
-            {
-                "path": str(path.relative_to(repo)),
-                "sha256": _sha256_file(path),
-            }
-            for path in sorted(input_paths)
-        ],
-        "checks": [_serialize_result(result) for result in results],
-        "secret_material_present": False,
-        "overall_status": overall,
-    }
-
-    if args.json_out:
-        json_path = validate_repo_path(repo, args.json_out if args.json_out.is_absolute() else repo / args.json_out)
-        json_path.parent.mkdir(parents=True, exist_ok=True)
-        json_path.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
-    if args.markdown_out:
-        md_path = validate_repo_path(
-            repo, args.markdown_out if args.markdown_out.is_absolute() else repo / args.markdown_out
-        )
-        md_path.parent.mkdir(parents=True, exist_ok=True)
-        md_path.write_text(_render_markdown(report), encoding="utf-8")
+    if bool(args.json_out) != bool(args.markdown_out):
+        print("BLOCKED: both report output paths are required", file=sys.stderr)
+        return 2
+    if args.json_out and args.markdown_out:
+        try:
+            write_reports_atomically(report, args.json_out, args.markdown_out, repo)
+        except (OSError, ValueError) as exc:
+            print(f"BLOCKED: {exc.__class__.__name__}", file=sys.stderr)
+            return 2
     if not args.json_out and not args.markdown_out:
         print(json.dumps(report, indent=2, sort_keys=True))
-    return 1 if overall == "FAIL" else 2 if overall == "BLOCKED" else 0
+    return exit_code_for_status(report["overall_status"])
 
 
 if __name__ == "__main__":
