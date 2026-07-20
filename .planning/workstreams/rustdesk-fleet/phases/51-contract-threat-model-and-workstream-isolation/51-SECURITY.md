@@ -56,7 +56,9 @@ No accepted risk is recorded. The missing centralized OSS controls remain a `BLO
 
 ## Audit Notes
 
-- Five target secret references and recovery authority are added in Task 51-01-03; values remain out of scope.
+- Server private/public roles are reserved under `kv/atius/rustdesk/server`; five unique target roles are reserved under `kv/atius/rustdesk/targets/<canonical-host-id>`. Every reservation and recovery authority remains `pending` until the accountable Plan 51-03 gate.
+- Phase 51 proves one-to-one role/reference distinctness only. Live value creation and non-output value-distinctness proof belong to Phase 52.
+- Client IDs and permission profiles remain separate typed assets referenced by path; no ID or secret value is present here.
 - Runtime enforcement, client behavior and transport evidence belong to later phases.
 - Summary prose cannot close this gate.
 

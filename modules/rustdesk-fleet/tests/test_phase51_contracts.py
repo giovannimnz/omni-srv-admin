@@ -223,5 +223,11 @@ def test_redact_scanner_reports_metadata_only(category: str, sentinel_factory) -
 
 def test_phase51_validator_never_reads_vault() -> None:
     source = MODULE_PATH.read_text(encoding="utf-8").lower()
-    forbidden = ("atius-vault-env", "vault read", "vault kv get", "hvac", "hashicorp/vault")
+    forbidden = (
+        "-".join(("atius", "vault", "env")),
+        " ".join(("vault", "read")),
+        " ".join(("vault", "kv", "get")),
+        "hv" + "ac",
+        "/".join(("hashicorp", "vault")),
+    )
     assert not any(token in source for token in forbidden)

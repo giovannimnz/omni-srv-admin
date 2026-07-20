@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 import sys
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -80,6 +81,24 @@ ASVS_L2_V16 = (
     "v5.0.0-16.4.2",
     "v5.0.0-16.5.1",
     "v5.0.0-16.5.3",
+)
+TARGET_SECRET_PATHS = (
+    "kv/atius/rustdesk/targets/atius-srv-1",
+    "kv/atius/rustdesk/targets/atius-srv-2",
+    "kv/atius/rustdesk/targets/atius-srv-3",
+    "kv/atius/rustdesk/targets/horistic-srv",
+    "kv/atius/rustdesk/targets/giovanni-w11-pc",
+)
+SECRET_PATTERNS = (
+    ("private-key-header", re.compile(r"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----", re.I)),
+    ("bearer-token", re.compile(r"\bBearer\s+[A-Za-z0-9._~+/-]{16,}", re.I)),
+    (
+        "secret-assignment",
+        re.compile(r"\b(?:password|passwd|secret|token|private[_-]?key)\b\s*[:=]\s*[^\s,;]{6,}", re.I),
+    ),
+    ("uri-credential", re.compile(r"[a-z][a-z0-9+.-]*://[^\s/:@]+:[^\s/@]+@", re.I)),
+    ("argv-transcript", re.compile(r"\b(?:argv|command|process)\b[^\n]*(?:--password|--token|--secret)", re.I)),
+    ("screenshot-redaction", re.compile(r"screenshot[_-]redaction[_-]status\s*[:=]\s*(?:failed|missing|unsafe)", re.I)),
 )
 
 
@@ -332,10 +351,108 @@ def validate_threat_model(payload: dict[str, Any], source: str = "threat-model.j
     return _result("P51-THREAT-001", True, [], source)
 
 
+def validate_secret_roles(payload: dict[str, Any], source: str = "secret-roles.json") -> CheckResult:
+    errors: list[str] = []
+    if payload.get("schema_version") != 1 or payload.get("authority") != "hashicorp-vault":
+        errors.append("secret-role-shape")
+    server = payload.get("server_identity")
+    if not isinstance(server, dict):
+        errors.append("server-identity-shape")
+    else:
+        private_ref = server.get("private_key_ref")
+        public_ref = server.get("public_key_ref")
+        expected = {
+            "private_key_ref": (private_ref, "server-identity-private", "private_key"),
+            "public_key_ref": (public_ref, "server-identity-public", "public_key"),
+        }
+        for _, (reference, role, field_name) in expected.items():
+            if not isinstance(reference, dict) or reference != {
+                "role": role,
+                "vault_path": "kv/atius/rustdesk/server",
+                "field": field_name,
+            }:
+                errors.append("server-identity-reference")
+        if server.get("approval_status") != "pending":
+            errors.append("server-identity-approval")
+
+    roles = payload.get("target_password_roles")
+    if not isinstance(roles, list) or len(roles) != 5:
+        errors.append("target-role-cardinality")
+    else:
+        observed_hosts = tuple(item.get("host") for item in roles if isinstance(item, dict))
+        observed_paths = tuple(item.get("vault_path") for item in roles if isinstance(item, dict))
+        observed_roles = tuple(item.get("role") for item in roles if isinstance(item, dict))
+        if observed_hosts != EXPECTED_INCLUDED_HOSTS:
+            errors.append("target-role-host-set")
+        if observed_paths != TARGET_SECRET_PATHS or len(set(observed_paths)) != 5:
+            errors.append("target-vault-reference-set")
+        if len(observed_roles) != 5 or len(set(observed_roles)) != 5:
+            errors.append("target-role-set")
+        for item in roles:
+            if not isinstance(item, dict) or item.get("field") != "permanent_password" or item.get(
+                "approval_status"
+            ) != "pending":
+                errors.append("target-role-shape")
+    if payload.get("value_distinctness_phase") != 52:
+        errors.append("value-distinctness-phase")
+    recovery = payload.get("recovery_authority")
+    if not isinstance(recovery, dict) or recovery.get("role") != "rustdesk-recovery-owner" or recovery.get(
+        "approval_status"
+    ) != "pending":
+        errors.append("recovery-authority")
+    if payload.get("client_identity_inventory_ref") != "modules/rustdesk-fleet/evidence/client-identities.json":
+        errors.append("client-identity-role")
+    if payload.get("permission_profiles_ref") != "modules/rustdesk-fleet/contracts/permission-profiles.json":
+        errors.append("permission-profile-role")
+    findings = scan_secret_material(payload, path=source)
+    if findings:
+        errors.append("secret-material")
+    result = _result("P51-SECRET-001", not errors, sorted(set(errors)), source)
+    if findings:
+        result.findings.extend(findings)
+    return result
+
+
 def scan_secret_material(value: Any, path: str = "contract", location: str = "root") -> list[Finding]:
-    """Task 51-01 seam; Task 51-01-03 adds the complete non-disclosing scanner."""
-    del value, path, location
-    return []
+    """Return category/path/location only; never retain or echo matched material."""
+    findings: list[Finding] = []
+
+    def add(category: str, field_location: str) -> None:
+        finding = Finding(category, path, field_location)
+        if finding not in findings:
+            findings.append(finding)
+
+    def visit(node: Any, field_location: str) -> None:
+        if isinstance(node, dict):
+            for key, child in node.items():
+                child_location = f"{field_location}.{key}"
+                lowered = key.lower()
+                if isinstance(child, str) and any(term in lowered for term in ("password", "secret", "token")):
+                    safe_reference = lowered.endswith("_ref") or lowered in {
+                        "role",
+                        "vault_path",
+                        "field",
+                        "approval_status",
+                    }
+                    if not safe_reference and child:
+                        add("sensitive-field-value", child_location)
+                visit(child, child_location)
+            return
+        if isinstance(node, list):
+            for index, child in enumerate(node):
+                visit(child, f"{field_location}[{index}]")
+            return
+        if not isinstance(node, str):
+            return
+        for category, pattern in SECRET_PATTERNS:
+            if pattern.search(node):
+                add(category, field_location)
+        compact = re.sub(r"[^A-Za-z0-9+/=_-]", "", node)
+        if len(compact) >= 48 and len(set(compact)) >= 16 and not node.startswith(("kv/", "modules/", ".planning/")):
+            add("high-entropy", field_location)
+
+    visit(value, location)
+    return findings
 
 
 def _sha256_file(path: Path) -> str:
@@ -393,6 +510,7 @@ def main(argv: list[str] | None = None) -> int:
             ("product-decision.json", validate_product_decision),
             ("permission-profiles.json", validate_permission_profiles),
             ("threat-model.json", validate_threat_model),
+            ("secret-roles.json", validate_secret_roles),
         )
         input_paths = [contract_path]
         for filename, validator in contract_validators:
