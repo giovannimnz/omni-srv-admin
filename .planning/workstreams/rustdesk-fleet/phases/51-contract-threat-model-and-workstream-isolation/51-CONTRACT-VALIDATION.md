@@ -2,16 +2,16 @@
 
 ## Report Identity
 
-- **Source HEAD:** `59d352e5199758edc99d6f07571165a089e6fa42`
+- **Source HEAD:** `88ec440a3fccbdcb2719a5b983cec7baa1f1cf99`
 - **Validator Version:** `2`
-- **Generated At:** `2026-07-20T05:34:55Z`
+- **Generated At:** `2026-07-20T05:36:51Z`
 
 ## Input Digests
 
 | Path | SHA-256 |
 |---|---|
 | `.planning/workstreams/rustdesk-fleet/REQUIREMENTS.md` | `94652e270c1512a25a8c5a906cf79bca83633a452f43a8eaf81c93094ecb98a6` |
-| `.planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md` | `f04671adc6b5b6b653a5849578861e7fa256e43e14d0e55c57df252d93849306` |
+| `.planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md` | `01baeeeade81290941250dbc9a78ca0838e6afabfb4d394906cfd87e194a23d5` |
 | `.planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-SECURITY.md` | `d0eac055e6849d991446d902a07f6b82c79c119915b36a59fd7c3944bf076b63` |
 | `modules/rustdesk-fleet/contracts/permission-profiles.json` | `13f06413ac98e764dfbd16993476d7a16e9b60c4546ca3179fa97fa3993e1452` |
 | `modules/rustdesk-fleet/contracts/product-decision.json` | `49eb800b982eb86b29a821c888b7c238b97b6629f31cfdc84a7eb5cab113cfa5` |
