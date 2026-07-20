@@ -6,7 +6,7 @@ current_phase: 51
 current_phase_name: Contract, Threat Model and Workstream Isolation
 status: executing
 stopped_at: Plan 51-03 accountable operator and Vault-owner review checkpoint
-last_updated: "2026-07-20T05:15:03.892Z"
+last_updated: "2026-07-20T06:15:11.901Z"
 last_activity: 2026-07-20
 last_activity_desc: Phase 51 execution started
 progress:
@@ -72,7 +72,7 @@ None yet.
 - [Phase 52]: Observação de pesquisa em `atius-srv-2` foi 84% de uso; remeasurement live e remediation/placement são NO-GO antes de deploy.
 - [Phase 54]: LightDM/LXDE pre-login e Windows UAC secure desktop são incertezas empíricas e precisam de gate live.
 - [All phases]: Mudanças compartilhadas devem ser serializadas com a Phase 48 e Graphify deve permanecer fresh.
-- Phase 51 Plan 03 BLOCKED: accountable operator review and Vault-owner approval are pending; P51-PRODUCT-001, P51-SECRET-001, and P51-REPORT-001 must PASS before Phase 52.
+- Phase 51 Plan 03 BLOCKED: OSS product decision is approved and P51-PRODUCT-001 passes; Vault-owner approval plus accountable permission/transport, threat and Phase 48 review remain pending in P51-SECRET-001 and P51-REPORT-001 before Phase 52.
 
 ## Session Continuity
 
