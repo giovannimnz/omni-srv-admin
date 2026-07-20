@@ -202,7 +202,14 @@ def test_requirement_ledger_contract() -> None:
     assert len(canonical) == payload["requirement_count"] == 36
     assert [row["requirement_id"] for row in payload["requirements"]] == list(canonical)
     assert len({evidence_id for row in payload["requirements"] for evidence_id in row["evidence_ids"]}) == 36
-    assert {row["status"] for row in payload["requirements"]} == {"pending"}
+    passed = {row["requirement_id"] for row in payload["requirements"] if row["status"] == "pass"}
+    assert passed == {"SCP-01", "SCP-02", "SCP-03", "SCP-05"}
+    assert sum(row["status"] == "pending" for row in payload["requirements"]) == 32
+    assert set(payload["evidence_catalog"]) == {f"RDF-V19-{requirement}" for requirement in passed}
+    for evidence in payload["evidence_catalog"].values():
+        evidence_path = REPO / evidence["path"]
+        assert evidence["sha256"] == validator._sha256_file(evidence_path)
+        assert evidence["input_digest"] == evidence["sha256"]
 
 
 @pytest.mark.parametrize("mutation", ["missing", "orphan", "duplicate"])
