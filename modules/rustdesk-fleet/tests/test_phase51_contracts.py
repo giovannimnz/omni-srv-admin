@@ -330,13 +330,38 @@ def test_scope_rejects_path_escape(tmp_path: Path) -> None:
         validator.validate_repo_path(repo, outside)
 
 
-def test_product_decision_contract_starts_blocked() -> None:
+def test_product_decision_contract_records_oss_acceptance() -> None:
     payload = validator.load_json_strict(PRODUCT_PATH)
     derived = validator.derive_product_decision(payload)
     result = validator.validate_product_decision(payload)
-    assert derived == {"decision": "BLOCKED", "required_edition": None}
+    assert derived == {"decision": "GO", "required_edition": "oss"}
     assert result.id == "P51-PRODUCT-001"
-    assert result.status == "BLOCKED"
+    assert result.status == "PASS"
+    assert all(
+        control == {
+            "id": control["id"],
+            "mandatory": False,
+            "source": "accountable-operational-review",
+            "review_status": "reviewed",
+            "accepted_absence": True,
+        }
+        for control in payload["enterprise_controls"]
+    )
+    assert payload["custom_ops_api"] == {
+        "status": "approved-to-plan-and-implement",
+        "kind": "atius-ops-api",
+        "rustdesk_native_api": False,
+        "configure_client_api_server": False,
+        "rustdesk_api_port_21114": "closed",
+        "phase": 53,
+        "requirement_id": "OPS-01",
+    }
+
+
+def test_product_decision_rejects_native_api_confusion() -> None:
+    payload = validator.load_json_strict(PRODUCT_PATH)
+    payload["custom_ops_api"]["rustdesk_native_api"] = True
+    assert validator.validate_product_decision(payload).status == "FAIL"
 
 
 def test_product_decision_truth_table() -> None:
