@@ -48,10 +48,10 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. O lifecycle GSD exige scope explícito `rustdesk-fleet`, writer único para arquivos compartilhados e prova de integridade da Phase 48 em cada transição.
   5. **Advance gate:** validators automatizados de escopo, IDs, ausência de secrets e isolamento do workstream, mais a revisão operacional do threat model, devem registrar PASS com artefatos atuais antes da Phase 52; summary-only não conta.
 
-**Plans**: 1/3 plans executed
+**Plans**: 2/3 plans executed
 
 - [x] 51-01-PLAN.md
-- [ ] 51-02-PLAN.md
+- [x] 51-02-PLAN.md
 - [ ] 51-03-PLAN.md
 
 ### Phase 52: Supply Chain, Capacity and Recoverable Placement
@@ -174,7 +174,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 51. Contract, Threat Model and Workstream Isolation | 1/3 | In Progress|  |
+| 51. Contract, Threat Model and Workstream Isolation | 2/3 | In Progress|  |
 | 52. Supply Chain, Capacity and Recoverable Placement | 0/TBD | Not started | - |
 | 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |

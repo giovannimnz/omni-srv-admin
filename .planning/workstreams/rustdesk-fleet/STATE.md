@@ -5,15 +5,15 @@ milestone_name: RustDesk Fleet Remote Access
 current_phase: 51
 current_phase_name: Contract, Threat Model and Workstream Isolation
 status: executing
-stopped_at: Completed 51-01-PLAN.md
-last_updated: "2026-07-20T04:35:54.661Z"
+stopped_at: Completed 51-02-PLAN.md
+last_updated: "2026-07-20T04:57:16.132Z"
 last_activity: 2026-07-20
 last_activity_desc: Phase 51 execution started
 progress:
   total_phases: 8
   completed_phases: 0
   total_plans: 3
-  completed_plans: 1
+  completed_plans: 2
   percent: 0
 ---
 
@@ -29,7 +29,7 @@ See: `.planning/PROJECT.md` (updated 2026-07-19)
 ## Current Position
 
 Phase: 51 (Contract, Threat Model and Workstream Isolation) — EXECUTING
-Plan: 2 of 3
+Plan: 3 of 3
 Status: Ready to execute
 Last activity: 2026-07-20 — Phase 51 execution started
 
@@ -52,6 +52,7 @@ Progress: [░░░░░░░░░░] 0%
 ## Accumulated Context
 
 | Phase 51 P01 | 14min | 3 tasks | 10 files |
+| Phase 51 P02 | 16min | 3 tasks | 10 files |
 
 ### Decisions
 
@@ -60,6 +61,7 @@ Progress: [░░░░░░░░░░] 0%
 - [All phases]: direct-first em produção, forced-relay controlado e fallbacks RustGuac/XRDP/AnyDesk/NoMachine/noVNC preservados.
 - [All phases]: nenhum avanço por summary-only; cada phase exige seu gate automatizado/live atual.
 - [Phase 51]: Phase 51 records only unique Vault references; live value creation and distinctness remain Phase 52 gates. — Preserves the Vault-only secret boundary and prevents low-entropy value-derived evidence.
+- [Phase 51]: Phase 48 source_head remains a pinned provenance anchor while current migrated bytes are verified independently. — Prevents later RustDesk commits from invalidating the capture commit or auto-accepting preserved-lane drift.
 
 ### Pending Todos
 
@@ -73,6 +75,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-20T04:35:54.647Z
-Stopped at: Completed 51-01-PLAN.md
+Last session: 2026-07-20T04:57:16.118Z
+Stopped at: Completed 51-02-PLAN.md
 Resume file: None
