@@ -98,6 +98,11 @@
       ],
       "findings": [
         {
+          "category": "invalid-review-source-head",
+          "location": "review",
+          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
+        },
+        {
           "category": "operator-review-pending",
           "location": "review",
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
@@ -123,11 +128,6 @@
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
         },
         {
-          "category": "stale-review-source-head",
-          "location": "review",
-          "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
-        },
-        {
           "category": "threat-review-pending",
           "location": "review",
           "path": ".planning/workstreams/rustdesk-fleet/phases/51-contract-threat-model-and-workstream-isolation/51-OPERATIONAL-REVIEW.md"
@@ -142,7 +142,7 @@
       "status": "BLOCKED"
     }
   ],
-  "generated_at": "2026-07-20T05:10:46Z",
+  "generated_at": "2026-07-20T05:34:55Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
@@ -189,7 +189,7 @@
   "phase": 51,
   "schema_version": 1,
   "secret_material_present": false,
-  "source_head": "682cc20e2aa5cecc35c3641da8cf71e2ac7a8d5d",
-  "validator_version": 1,
+  "source_head": "59d352e5199758edc99d6f07571165a089e6fa42",
+  "validator_version": 2,
   "workstream": "rustdesk-fleet"
 }
