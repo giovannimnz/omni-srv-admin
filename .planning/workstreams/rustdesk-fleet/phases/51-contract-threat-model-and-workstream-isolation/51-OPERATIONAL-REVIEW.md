@@ -18,7 +18,7 @@ This artifact is `APPROVED` by the accountable operator and Vault owner. The exe
   "status": "APPROVED",
   "reviewer": "Giovanni Muniz",
   "reviewed_at": "2026-07-20T07:59:32Z",
-  "source_head": "d7348134eb88c2e14328cd494216028e71cfb92b",
+  "source_head": "8326be37121951fdbbf90ae05b86f989a3496568",
   "enterprise_controls": [
     {"id": "sso_oidc", "mandatory": false, "accepted_absence": true},
     {"id": "rbac", "mandatory": false, "accepted_absence": true},
@@ -44,7 +44,7 @@ This artifact is `APPROVED` by the accountable operator and Vault owner. The exe
   "threat_review": "approved",
   "unresolved_high_count": 0,
   "phase48_drift_decision": "no-drift",
-  "review_input_manifest_digest": "92c365b2d29c9498830590e75b468669db2ed9a8996f55bf8aee85ee65dea5e8"
+  "review_input_manifest_digest": "3629770914d9131b88ad8bcfcb6b5d4cebb8d559e79ff3658eebefef84561ae6"
 }
 ```
 
