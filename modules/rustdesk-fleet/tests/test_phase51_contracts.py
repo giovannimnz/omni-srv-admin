@@ -520,11 +520,30 @@ def test_phase51_validator_never_reads_vault() -> None:
     assert not any(token in source for token in forbidden)
 
 
-def test_operational_review_blocks_on_remaining_human_fields() -> None:
+def test_operational_review_passes_after_accountable_approval() -> None:
     review = validator.load_operational_review(REVIEW_PATH)
-    manifest = validator.build_review_input_manifest(REPO, validator.git_head(REPO))
+    manifest = validator.build_review_input_manifest(REPO, review["source_head"])
     result = validator.validate_operational_review(review, REPO, manifest)
     assert result.id == "P51-REPORT-001"
+    assert result.status == "PASS"
+    assert result.findings == []
+
+
+def test_operational_review_blocks_without_remaining_human_fields() -> None:
+    review = validator.load_operational_review(REVIEW_PATH)
+    manifest = validator.build_review_input_manifest(REPO, review["source_head"])
+    review.update(
+        {
+            "status": "BLOCKED",
+            "reviewer": None,
+            "reviewed_at": None,
+            "permission_transport_review": "pending",
+            "threat_review": "pending",
+            "unresolved_high_count": None,
+            "phase48_drift_decision": "pending",
+        }
+    )
+    result = validator.validate_operational_review(review, REPO, manifest)
     assert result.status == "BLOCKED"
     categories = {finding.category for finding in result.findings}
     assert {
@@ -540,7 +559,7 @@ def test_report_contains_exact_check_set() -> None:
     report = validator.build_report(REPO, generated_at="2026-07-20T05:00:00Z")
     assert [check["id"] for check in report["checks"]] == list(validator.CHECK_ORDER)
     assert len(report["checks"]) == 11
-    assert report["overall_status"] == "BLOCKED"
+    assert report["overall_status"] == "PASS"
     assert report["secret_material_present"] is False
 
 
