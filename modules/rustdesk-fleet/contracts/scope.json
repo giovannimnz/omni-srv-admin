@@ -1,0 +1,50 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "included_hosts": [
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "horistic-srv",
+    "GIOVANNI-W11-PC"
+  ],
+  "excluded_hosts": [
+    "WSL",
+    "GIOVANNI-S23"
+  ],
+  "preserved_access_tools": [
+    {
+      "id": "RustGuac",
+      "action": "preserve",
+      "independently_usable": true
+    },
+    {
+      "id": "XRDP",
+      "action": "preserve",
+      "independently_usable": true
+    },
+    {
+      "id": "AnyDesk",
+      "action": "preserve",
+      "independently_usable": true
+    },
+    {
+      "id": "NoMachine",
+      "action": "preserve",
+      "independently_usable": true
+    },
+    {
+      "id": "noVNC",
+      "action": "preserve",
+      "independently_usable": true
+    }
+  ],
+  "production_transport": {
+    "policy": "direct-first",
+    "force_relay_default": false,
+    "forced_relay_allowed_purposes": [
+      "controlled-validation",
+      "proven-fallback"
+    ]
+  }
+}
