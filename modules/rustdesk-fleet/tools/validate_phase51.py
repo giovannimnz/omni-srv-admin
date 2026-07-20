@@ -519,7 +519,7 @@ def validate_phase48_baseline(
 def parse_canonical_requirements(path: Path) -> dict[str, int]:
     text = path.read_text(encoding="utf-8")
     requirements_section = text.split("## v1.9 Requirements", 1)[1].split("## Future Requirements", 1)[0]
-    defined = re.findall(r"^- \[ \] \*\*([A-Z]+-\d+)\*\*:", requirements_section, flags=re.M)
+    defined = re.findall(r"^- \[[ xX]\] \*\*([A-Z]+-\d+)\*\*:", requirements_section, flags=re.M)
     traceability_section = text.split("## Traceability", 1)[1]
     traced = re.findall(r"^\| ([A-Z]+-\d+) \| Phase (\d+) \|", traceability_section, flags=re.M)
     traced_ids = [requirement_id for requirement_id, _ in traced]
