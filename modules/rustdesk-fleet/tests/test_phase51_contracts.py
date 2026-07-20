@@ -15,6 +15,7 @@ INVALID_DIR = REPO / "modules/rustdesk-fleet/tests/fixtures/invalid"
 PRODUCT_PATH = REPO / "modules/rustdesk-fleet/contracts/product-decision.json"
 PERMISSION_PATH = REPO / "modules/rustdesk-fleet/contracts/permission-profiles.json"
 THREAT_PATH = REPO / "modules/rustdesk-fleet/contracts/threat-model.json"
+SECRET_ROLES_PATH = REPO / "modules/rustdesk-fleet/contracts/secret-roles.json"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -171,3 +172,56 @@ def test_threat_contract_unresolved_high_is_blocked() -> None:
     payload["threats"][0]["status"] = "open"
     payload["threats"][0]["disposition"] = "pending"
     assert validator.validate_threat_model(payload).status == "BLOCKED"
+
+
+def test_secret_role_contract() -> None:
+    payload = validator.load_json_strict(SECRET_ROLES_PATH)
+    result = validator.validate_secret_roles(payload)
+    assert result.id == "P51-SECRET-001"
+    assert result.status == "PASS"
+    roles = payload["target_password_roles"]
+    assert [item["host"] for item in roles] == list(validator.EXPECTED_INCLUDED_HOSTS)
+    assert len({item["role"] for item in roles}) == 5
+    assert len({item["vault_path"] for item in roles}) == 5
+    assert {item["approval_status"] for item in roles} == {"pending"}
+    assert payload["value_distinctness_phase"] == 52
+
+
+def test_secret_role_contract_rejects_duplicate_reference() -> None:
+    payload = validator.load_json_strict(SECRET_ROLES_PATH)
+    payload["target_password_roles"][1]["vault_path"] = payload["target_password_roles"][0][
+        "vault_path"
+    ]
+    assert validator.validate_secret_roles(payload).status == "FAIL"
+
+
+@pytest.mark.parametrize(
+    ("category", "sentinel_factory"),
+    [
+        ("private-key-header", lambda: "-----BEGIN " + "PRIVATE KEY-----"),
+        ("bearer-token", lambda: "Bearer " + ("Ab9_" * 12)),
+        ("secret-assignment", lambda: "password=" + ("Xy7!" * 8)),
+        ("uri-credential", lambda: "https://operator:" + ("Qz8" * 8) + "@example.invalid"),
+        ("high-entropy", lambda: "".join(chr(65 + (index * 7) % 26) for index in range(72))),
+        ("argv-transcript", lambda: "argv: rustdesk --password " + ("Uv4" * 8)),
+        ("screenshot-redaction", lambda: "screenshot_redaction_status=failed"),
+    ],
+)
+def test_redact_scanner_reports_metadata_only(category: str, sentinel_factory) -> None:
+    sentinel = sentinel_factory()
+    findings = validator.scan_secret_material({"sample": sentinel}, path="runtime.json")
+    assert category in {item.category for item in findings}
+    serialized = json.dumps(
+        [
+            {"category": item.category, "path": item.path, "location": item.location}
+            for item in findings
+        ],
+        sort_keys=True,
+    )
+    assert sentinel not in serialized
+
+
+def test_phase51_validator_never_reads_vault() -> None:
+    source = MODULE_PATH.read_text(encoding="utf-8").lower()
+    forbidden = ("atius-vault-env", "vault read", "vault kv get", "hvac", "hashicorp/vault")
+    assert not any(token in source for token in forbidden)
