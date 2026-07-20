@@ -2,8 +2,8 @@
 status: BLOCKED
 reviewer: null
 reviewed_at: null
-vault_owner: null
-vault_paths_approval_status: pending
+vault_owner: Giovanni Muniz
+vault_paths_approval_status: approved
 ---
 
 # Phase 51 Operational Review
@@ -18,7 +18,7 @@ This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault
   "status": "BLOCKED",
   "reviewer": null,
   "reviewed_at": null,
-  "source_head": null,
+  "source_head": "c2158c0fce4d0b033f147804fc7cc4f78dff9258",
   "enterprise_controls": [
     {"id": "sso_oidc", "mandatory": false, "accepted_absence": true},
     {"id": "rbac", "mandatory": false, "accepted_absence": true},
@@ -29,7 +29,7 @@ This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault
   ],
   "oss_absence_acceptance_or_pro_selection": "accept-oss-absences",
   "pro_replan_authorized": false,
-  "vault_owner": null,
+  "vault_owner": "Giovanni Muniz",
   "vault_paths_reviewed": [
     "kv/atius/rustdesk/server",
     "kv/atius/rustdesk/targets/atius-srv-1",
@@ -38,13 +38,13 @@ This artifact is deliberately `BLOCKED`. Only the accountable operator and Vault
     "kv/atius/rustdesk/targets/horistic-srv",
     "kv/atius/rustdesk/targets/giovanni-w11-pc"
   ],
-  "vault_paths_approval_status": "pending",
-  "vault_paths_approved_at": null,
+  "vault_paths_approval_status": "approved",
+  "vault_paths_approved_at": "2026-07-20T07:38:59Z",
   "permission_transport_review": "pending",
   "threat_review": "pending",
   "unresolved_high_count": null,
   "phase48_drift_decision": "pending",
-  "review_input_manifest_digest": null
+  "review_input_manifest_digest": "dc738cf82de339863620b9094f3c764cd2641d9c9f967b8d6d8ee43ae3de1791"
 }
 ```
 
