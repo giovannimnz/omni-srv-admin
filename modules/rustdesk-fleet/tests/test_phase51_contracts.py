@@ -440,12 +440,20 @@ def test_secret_role_contract() -> None:
     payload = validator.load_json_strict(SECRET_ROLES_PATH)
     result = validator.validate_secret_roles(payload)
     assert result.id == "P51-SECRET-001"
-    assert result.status == "BLOCKED"
+    assert result.status == "PASS"
     roles = payload["target_password_roles"]
     assert [item["host"] for item in roles] == list(validator.EXPECTED_INCLUDED_HOSTS)
     assert len({item["role"] for item in roles}) == 5
-    assert len({item["vault_path"] for item in roles}) == 5
-    assert {item["approval_status"] for item in roles} == {"pending"}
+    assert [item["vault_path"] for item in roles] == [
+        "kv/atius/rustdesk/targets/atius-srv-1",
+        "kv/atius/rustdesk/targets/atius-srv-2",
+        "kv/atius/rustdesk/targets/atius-srv-3",
+        "kv/atius/rustdesk/targets/horistic-srv",
+        "kv/atius/rustdesk/targets/giovanni-w11-pc",
+    ]
+    assert payload["server_identity"]["approval_status"] == "approved"
+    assert {item["approval_status"] for item in roles} == {"approved"}
+    assert payload["recovery_authority"]["approval_status"] == "approved"
     assert payload["value_distinctness_phase"] == 52
 
 
