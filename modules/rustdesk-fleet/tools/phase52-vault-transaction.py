@@ -54,6 +54,29 @@ EXPECTED_PATH_FIELDS = [
 ]
 APPROVED_HORISTIC_SSH_FINGERPRINT = "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0"
 CONTROL_PLANE_STATE_ROOT = Path("/var/lib/atius-vault-phase52")
+SAFE_BLOCKER_TOKENS = frozenset({
+    "ambiguous-write-ownership",
+    "ambiguous-write-ownership-control-plane-restore-retry",
+    "cas-conflict",
+    "control-plane-install-failed",
+    "control-plane-reinstall-failed",
+    "control-plane-restore-retry-required",
+    "control-plane-restore-test-failed",
+    "owned-version-soft-delete-failed",
+    "pre-backup-failed",
+    "pre-backup-interrupted-before-backup-proof",
+    "raft-snapshot-failed",
+    "resume-after-acknowledged-write",
+    "rollback-resume",
+    "transaction-rollback-triggered",
+    "zero-ack-control-plane-restore-failed",
+    "zero-ack-post-backup-resumed-and-restored",
+})
+SAFE_OUTPUT_REASONS = frozenset({
+    *SAFE_BLOCKER_TOKENS,
+    "operation-blocked",
+    "rollback-retry-required",
+})
 
 
 class Blocked(RuntimeError):
@@ -66,6 +89,36 @@ class CasConflict(Blocked):
 
 class InjectedCrash(BaseException):
     """Abrupt test-only interruption; deliberately bypasses rollback."""
+
+
+def _safe_token(value: Any, allowed: frozenset[str], fallback: str) -> str:
+    if fallback not in allowed:
+        raise Blocked("blocker-fallback-invalid")
+    return value if type(value) is str and value in allowed else fallback
+
+
+def _safe_exception_argument(exc: Blocked) -> Any:
+    return exc.args[0] if len(exc.args) == 1 else None
+
+
+def _safe_blocker(value: Any, fallback: str) -> str:
+    return _safe_token(value, SAFE_BLOCKER_TOKENS, fallback)
+
+
+def _fixed_blocker(token: str) -> str:
+    if token not in SAFE_BLOCKER_TOKENS:
+        raise Blocked("blocker-token-invalid")
+    return token
+
+
+def _sanitized_blocker(exc: Blocked, fallback: str) -> str:
+    return _safe_blocker(_safe_exception_argument(exc), fallback)
+
+
+def _safe_output_reason(exc: Blocked) -> str:
+    return _safe_token(
+        _safe_exception_argument(exc), SAFE_OUTPUT_REASONS, "operation-blocked",
+    )
 
 
 class FaultInjector:
@@ -551,13 +604,18 @@ def _validate_wal(contract: dict[str, Any], wal: Any, transaction_id: str) -> No
     }
     if not isinstance(wal,dict) or not {"schema","transaction_id","status","writes","soft_delete_performed"} <= set(wal) or not set(wal) <= allowed or wal.get("schema")!="phase52-gate-b-wal-v1" or wal.get("transaction_id")!=transaction_id or not isinstance(wal.get("writes"),list) or len(wal["writes"])>7 or type(wal.get("soft_delete_performed")) is not bool:
         raise Blocked("wal-shape-invalid")
+    if "blocker" in wal and (
+        type(wal["blocker"]) is not str
+        or wal["blocker"] not in SAFE_BLOCKER_TOKENS
+    ):
+        raise Blocked("wal-blocker-invalid")
     statuses={
         "PRE_BACKUP","BACKUP_PROVED","CONTROL_PLANE_INSTALLING","CONTROL_PLANE_INSTALLED",
         "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL","CONTROL_PLANE_REINSTALLED",
         "METADATA_PROVED_PRISTINE","CREATING","PASS","ROLLING_BACK",
         "ROLLBACK_BLOCKED_RETRY_REQUIRED","ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION",
         "OWNERSHIP_AMBIGUOUS_BLOCKED","OWNERSHIP_AMBIGUOUS_CONTROL_PLANE_RESTORE_RETRY",
-        "BLOCKED",
+        "BLOCKED","PRE_BACKUP_NO_MUTATION_TERMINAL",
     }
     if wal.get("status") not in statuses: raise Blocked("wal-status-invalid")
     proof_fields = (
@@ -623,6 +681,7 @@ def _reconcile_status_projection(
         "PRE_BACKUP", "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING",
         "CONTROL_PLANE_INSTALLED", "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL",
         "CONTROL_PLANE_REINSTALLED", "METADATA_PROVED_PRISTINE", "BLOCKED",
+        "PRE_BACKUP_NO_MUTATION_TERMINAL",
     }
     evidence_semantics_ok = (
         (evidence_status in no_write_evidence and evidence_count == 0 and evidence_live is False and evidence_ownership == "NONE")
@@ -666,6 +725,10 @@ def _reconcile_status_projection(
     compatible = False
     if wal_status in prewrite_states:
         compatible = evidence_status in {"BLOCKED", wal_status} and evidence_count == 0
+    elif wal_status == "PRE_BACKUP_NO_MUTATION_TERMINAL":
+        compatible = evidence_status in {
+            "PRE_BACKUP", "PRE_BACKUP_NO_MUTATION_TERMINAL",
+        } and evidence_count == 0
     elif wal_status == "CREATING":
         compatible = evidence_status == "CREATING"
         if not wal["writes"]:
@@ -701,6 +764,7 @@ def _reconcile_status_projection(
         "PRE_BACKUP", "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING",
         "CONTROL_PLANE_INSTALLED", "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL",
         "CONTROL_PLANE_REINSTALLED", "METADATA_PROVED_PRISTINE", "BLOCKED",
+        "PRE_BACKUP_NO_MUTATION_TERMINAL",
     }
     if status in no_write_states:
         if rows:
@@ -759,7 +823,7 @@ def _rollback_owned(
     directory: Path,
     transaction_id: str,
     wal: dict[str, Any],
-    blocker: str,
+    blocker: Any,
 ) -> dict[str, Any]:
     if any(
         isinstance(row, dict) and row.get("status") == "intent"
@@ -790,7 +854,9 @@ def _rollback_owned(
         except Blocked:
             wal["control_plane_restored"] = False
         wal["status"] = "ROLLBACK_BLOCKED_RETRY_REQUIRED"
-        wal["blocker"] = str(exc)
+        wal["blocker"] = _sanitized_blocker(
+            exc, "owned-version-soft-delete-failed",
+        )
         atomic_json(directory / "wal.json", wal)
         _write_evidence(
             directory,
@@ -803,7 +869,7 @@ def _rollback_owned(
     status = "ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION" if owned else "BLOCKED"
     wal["status"] = status
     wal["soft_delete_performed"] = bool(owned)
-    wal["blocker"] = blocker
+    wal["blocker"] = _safe_blocker(blocker, "transaction-rollback-triggered")
     atomic_json(directory / "wal.json", wal)
     atomic_json(directory / "ledger.json", _final_ledger(transaction_id, status, owned))
     projection = _runtime_projection(transaction_id, status, owned)
@@ -833,6 +899,41 @@ def _transaction_dir(root: Path, transaction_id: str, *, create: bool) -> Path:
     return directory
 
 
+def _terminate_pre_backup_no_mutation(
+    directory: Path,
+    transaction_id: str,
+    wal: dict[str, Any],
+) -> dict[str, Any]:
+    """Terminate before backup proof without invoking any mutation backend."""
+    forbidden_proofs = {
+        "control_plane_restored", "control_plane_install_proved",
+        "control_plane_restore_tested", "control_plane_reinstall_proved",
+        "metadata_proved_pristine", "created_values_verified",
+    }
+    if (
+        wal.get("status") != "PRE_BACKUP"
+        or wal.get("writes") != []
+        or wal.get("soft_delete_performed") is not False
+        or forbidden_proofs.intersection(wal)
+    ):
+        raise Blocked("pre-backup-wal-proof-invalid")
+    blocker = wal.get("blocker")
+    wal["status"] = "PRE_BACKUP_NO_MUTATION_TERMINAL"
+    wal["blocker"] = _safe_blocker(
+        blocker, "pre-backup-interrupted-before-backup-proof",
+    )
+    atomic_json(directory / "wal.json", wal)
+    atomic_json(
+        directory / "ledger.json",
+        _final_ledger(transaction_id, "PRE_BACKUP_NO_MUTATION_TERMINAL", []),
+    )
+    projection = _runtime_projection(
+        transaction_id, "PRE_BACKUP_NO_MUTATION_TERMINAL", [],
+    )
+    _write_evidence(directory, projection)
+    return projection
+
+
 def _restore_zero_ack_terminal(
     backend: TransactionBackend,
     directory: Path,
@@ -847,14 +948,14 @@ def _restore_zero_ack_terminal(
     except Blocked as exc:
         wal["status"] = "ROLLBACK_BLOCKED_RETRY_REQUIRED"
         wal["control_plane_restored"] = False
-        wal["blocker"] = "zero-ack-control-plane-restore-failed"
+        wal["blocker"] = _fixed_blocker("zero-ack-control-plane-restore-failed")
         atomic_json(directory / "wal.json", wal)
         projection = _runtime_projection(transaction_id, "ROLLBACK_BLOCKED_RETRY_REQUIRED", [])
         _write_evidence(directory, projection)
         raise Blocked("rollback-retry-required") from exc
     wal["status"] = "BLOCKED"
     wal["control_plane_restored"] = True
-    wal["blocker"] = "zero-ack-post-backup-resumed-and-restored"
+    wal["blocker"] = _fixed_blocker("zero-ack-post-backup-resumed-and-restored")
     atomic_json(directory / "wal.json", wal)
     atomic_json(directory / "ledger.json", _final_ledger(transaction_id, "BLOCKED", []))
     projection = _runtime_projection(transaction_id, "BLOCKED", [])
@@ -874,7 +975,9 @@ def _mark_zero_ack_ambiguous(
     except Blocked as exc:
         wal["status"] = "OWNERSHIP_AMBIGUOUS_CONTROL_PLANE_RESTORE_RETRY"
         wal["control_plane_restored"] = False
-        wal["blocker"] = "ambiguous-write-ownership-control-plane-restore-retry"
+        wal["blocker"] = _fixed_blocker(
+            "ambiguous-write-ownership-control-plane-restore-retry",
+        )
         atomic_json(directory / "wal.json", wal)
         _write_evidence(
             directory,
@@ -888,7 +991,7 @@ def _mark_zero_ack_ambiguous(
         raise Blocked("ambiguous-write-ownership-control-plane-restore-retry") from exc
     wal["status"] = "OWNERSHIP_AMBIGUOUS_BLOCKED"
     wal["control_plane_restored"] = True
-    wal["blocker"] = "ambiguous-write-ownership"
+    wal["blocker"] = _fixed_blocker("ambiguous-write-ownership")
     atomic_json(directory / "wal.json", wal)
     _write_evidence(
         directory,
@@ -926,12 +1029,20 @@ def run_transaction(
         directory = _transaction_dir(root, transaction_id, create=True)
         wal = _initial_wal(transaction_id)
         atomic_json(directory / "wal.json", wal)
-        _write_evidence(directory, _runtime_projection(transaction_id, "BLOCKED", []))
+        _write_evidence(directory, _runtime_projection(transaction_id, "PRE_BACKUP", []))
 
-        proof = backend.create_backups(directory, contract)
-        _validate_backup_artifacts(directory, require_root=require_root)
-        restore_proof = backend.prove_isolated_snapshot_restore(directory, contract)
-        _validate_backup_proof(proof, restore_proof)
+        try:
+            proof = backend.create_backups(directory, contract)
+            _validate_backup_artifacts(directory, require_root=require_root)
+            restore_proof = backend.prove_isolated_snapshot_restore(directory, contract)
+            _validate_backup_proof(proof, restore_proof)
+        except Blocked as exc:
+            wal["blocker"] = _sanitized_blocker(exc, "pre-backup-failed")
+            atomic_json(directory / "wal.json", wal)
+            _write_evidence(
+                directory, _runtime_projection(transaction_id, "PRE_BACKUP", []),
+            )
+            raise
         wal["status"] = "BACKUP_PROVED"
         atomic_json(directory / "wal.json", wal)
 
@@ -941,7 +1052,11 @@ def run_transaction(
             backend.install_control_plane(directory, managed_sources or {})
         except Blocked as exc:
             backend.restore_control_plane(directory)
-            wal["status"] = "BLOCKED"; wal["blocker"] = str(exc); wal["control_plane_restored"] = True
+            wal["status"] = "BLOCKED"
+            wal["blocker"] = _sanitized_blocker(
+                exc, "control-plane-install-failed",
+            )
+            wal["control_plane_restored"] = True
             atomic_json(directory / "wal.json", wal)
             raise
         wal["status"] = "CONTROL_PLANE_INSTALLED"
@@ -962,13 +1077,16 @@ def run_transaction(
             atomic_json(directory / "wal.json", wal)
             backend.install_control_plane(directory, managed_sources or {})
         except Blocked as exc:
+            failed_status = wal.get("status")
             try:
                 backend.restore_control_plane(directory)
                 wal["control_plane_restored"] = True
             except Blocked as restore_exc:
                 wal["control_plane_restored"] = False
                 wal["status"] = "ROLLBACK_BLOCKED_RETRY_REQUIRED"
-                wal["blocker"] = "control-plane-restore-retry-required"
+                wal["blocker"] = _fixed_blocker(
+                    "control-plane-restore-retry-required",
+                )
                 atomic_json(directory / "wal.json", wal)
                 _write_evidence(
                     directory,
@@ -978,7 +1096,12 @@ def run_transaction(
                 )
                 raise Blocked("rollback-retry-required") from restore_exc
             wal["status"] = "BLOCKED"
-            wal["blocker"] = str(exc)
+            fallback = (
+                "control-plane-reinstall-failed"
+                if failed_status == "CONTROL_PLANE_INSTALLING"
+                else "control-plane-restore-test-failed"
+            )
+            wal["blocker"] = _sanitized_blocker(exc, fallback)
             atomic_json(directory / "wal.json", wal)
             raise
         wal["status"] = "CONTROL_PLANE_REINSTALLED"
@@ -1058,7 +1181,10 @@ def run_transaction(
                 "OWNERSHIP_AMBIGUOUS_CONTROL_PLANE_RESTORE_RETRY",
             }:
                 raise
-            projection = _rollback_owned(backend, directory, transaction_id, wal, str(exc))
+            projection = _rollback_owned(
+                backend, directory, transaction_id, wal,
+                _safe_exception_argument(exc),
+            )
             owned = _owned_from_wal(wal)
             if not owned:
                 raise
@@ -1109,6 +1235,8 @@ def resume_transaction(
         _validate_wal(contract, wal, transaction_id)
         if wal.get("status") == "ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION":
             raise Blocked("manual-reauthorization-required")
+        if wal.get("status") == "PRE_BACKUP_NO_MUTATION_TERMINAL":
+            raise Blocked("pre-backup-no-mutation-terminal")
         if wal.get("status") == "BLOCKED":
             raise Blocked("transaction-terminal-blocked")
         if wal.get("status") == "OWNERSHIP_AMBIGUOUS_BLOCKED":
@@ -1122,7 +1250,7 @@ def resume_transaction(
                 raise Blocked("ambiguous-write-ownership-control-plane-restore-retry") from exc
             wal["status"] = "OWNERSHIP_AMBIGUOUS_BLOCKED"
             wal["control_plane_restored"] = True
-            wal["blocker"] = "ambiguous-write-ownership"
+            wal["blocker"] = _fixed_blocker("ambiguous-write-ownership")
             atomic_json(directory / "wal.json", wal)
             _write_evidence(
                 directory,
@@ -1137,6 +1265,10 @@ def resume_transaction(
         if wal.get("status") == "PASS":
             evidence = strict_json_bytes((directory / "transaction-evidence.json").read_bytes())
             return _reconcile_status_projection(contract, wal, evidence, transaction_id)
+        if wal.get("status") == "PRE_BACKUP":
+            return _terminate_pre_backup_no_mutation(
+                directory, transaction_id, wal,
+            )
         if any(
             isinstance(row, dict) and row.get("status") == "intent"
             for row in wal.get("writes", [])
@@ -1149,7 +1281,7 @@ def resume_transaction(
                 )
             return _rollback_owned(
                 backend, directory, transaction_id, wal,
-                str(wal.get("blocker", "rollback-resume")),
+                _safe_blocker(wal.get("blocker"), "rollback-resume"),
             )
         acknowledged = _owned_from_wal(wal)
         if acknowledged:
@@ -2487,7 +2619,13 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         raise Blocked("unknown-command")
     except Blocked as exc:
-        print(json.dumps({"status": "BLOCKED", "reason": str(exc)}, sort_keys=True), file=sys.stderr)
+        print(
+            json.dumps(
+                {"status": "BLOCKED", "reason": _safe_output_reason(exc)},
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
         return 2
 
 

@@ -134,6 +134,40 @@ class FakeBackend(tx.TransactionBackend):
         return {"status": "PASS", "write_count": len(expected_versions), "secret_material_present": False}
 
 
+class SensitiveStageFailureBackend(FakeBackend):
+    def __init__(self, failure_stage, reason):
+        super().__init__(cas_conflict_at=1 if failure_stage == "rollback" else None)
+        self.failure_stage = failure_stage
+        self.reason = reason
+        self.install_calls = 0
+        self.restore_calls = 0
+
+    def create_backups(self, transaction_dir, contract):
+        if self.failure_stage == "backup":
+            self.events.append("backup")
+            raise tx.Blocked(self.reason)
+        return super().create_backups(transaction_dir, contract)
+
+    def install_control_plane(self, transaction_dir, managed_sources):
+        self.install_calls += 1
+        self.events.append("install-control-plane")
+        if self.failure_stage == "install" and self.install_calls == 1:
+            raise tx.Blocked(self.reason)
+        if self.failure_stage == "reinstall" and self.install_calls == 2:
+            raise tx.Blocked(self.reason)
+
+    def restore_control_plane(self, transaction_dir):
+        self.restore_calls += 1
+        self.events.append("restore-control-plane")
+        if self.failure_stage == "restore" and self.restore_calls == 1:
+            raise tx.Blocked(self.reason)
+
+    def soft_delete_exact_version(self, vault_path, version):
+        if self.failure_stage == "rollback":
+            raise tx.Blocked(self.reason)
+        return super().soft_delete_exact_version(vault_path, version)
+
+
 def contract():
     return tx.load_contract(CONTRACT)
 
@@ -165,6 +199,7 @@ def test_contract_is_exact_value_free_and_create_only():
         "install", "exact-restore", "reviewed-reinstall", "metadata", "data-writes",
     ]
     assert "ROLLBACK_BLOCKED_RETRY_REQUIRED" in payload["states"]
+    assert "PRE_BACKUP_NO_MUTATION_TERMINAL" in payload["states"]
     assert set(payload["rollback"]["forbidden_operations"]) >= {"metadata-delete", "destroy", "undelete", "remote-delete"}
     text = CONTRACT.read_text()
     assert "private_key_value" not in text and "password_value" not in text
@@ -193,6 +228,330 @@ def test_transaction_orders_backup_restore_proof_before_install_and_put(tmp_path
     assert result["mutation_accounting"]["atius-srv-3"]["authorized_vault_control_plane_mutation"] is True
     assert "mutation" not in result
     assert not any(token in json.dumps(result) for token in ("opaque-sentinel", "kkkkkkkk", "R000000"))
+
+
+def test_backup_failure_persists_sanitized_pre_backup_blocker_and_state(tmp_path):
+    class PartialBackupFailure(FakeBackend):
+        def create_backups(self, transaction_dir, contract):
+            self.events.append("backup")
+            (transaction_dir / "raft.snapshot.partial").write_bytes(b"retained-partial")
+            raise tx.Blocked("raft-snapshot-failed")
+
+    backend = PartialBackupFailure()
+    transaction_id = "20260722T120000Z-babefeed"
+    with pytest.raises(tx.Blocked, match="raft-snapshot-failed"):
+        tx.run_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+
+    directory = tmp_path / transaction_id
+    wal = json.loads((directory / "wal.json").read_text())
+    evidence = json.loads((directory / "transaction-evidence.json").read_text())
+    assert wal["status"] == "PRE_BACKUP"
+    assert wal["blocker"] == "raft-snapshot-failed"
+    assert evidence["status"] == "PRE_BACKUP"
+    assert evidence["live_write_performed"] is False
+    assert evidence["vault_write_ownership"] == "NONE"
+    assert (directory / "raft.snapshot.partial").read_bytes() == b"retained-partial"
+    assert backend.events == ["backup"]
+    assert backend.puts == [] and backend.deleted == []
+
+
+def test_backup_failure_never_persists_arbitrary_blocked_detail(tmp_path):
+    class UnsafeBackupFailure(FakeBackend):
+        def create_backups(self, transaction_dir, contract):
+            self.events.append("backup")
+            raise tx.Blocked("raft failed: opaque-sentinel\nprivate detail")
+
+    backend = UnsafeBackupFailure()
+    transaction_id = "20260722T120000Z-5afe5afe"
+    with pytest.raises(tx.Blocked, match="opaque-sentinel"):
+        tx.run_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+
+    directory = tmp_path / transaction_id
+    wal = json.loads((directory / "wal.json").read_text())
+    assert wal["status"] == "PRE_BACKUP"
+    assert wal["blocker"] == "pre-backup-failed"
+    for artifact in directory.iterdir():
+        assert "opaque-sentinel" not in artifact.read_text(errors="ignore")
+        assert "private detail" not in artifact.read_text(errors="ignore")
+
+
+def test_pre_backup_zero_write_resume_is_explicit_no_mutation_terminal(tmp_path):
+    class PartialBackupFailure(FakeBackend):
+        def create_backups(self, transaction_dir, contract):
+            self.events.append("backup")
+            (transaction_dir / "raft.snapshot.partial").write_bytes(b"retained-partial")
+            raise tx.Blocked("raft-snapshot-failed")
+
+    backend = PartialBackupFailure()
+    transaction_id = "20260722T120000Z-acde5050"
+    with pytest.raises(tx.Blocked, match="raft-snapshot-failed"):
+        tx.run_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+    events_before_resume = list(backend.events)
+
+    result = tx.resume_transaction(
+        contract(), backend, tmp_path, transaction_id, require_root=False,
+    )
+
+    assert result["status"] == "PRE_BACKUP_NO_MUTATION_TERMINAL"
+    assert result["write_count"] == 0
+    assert result["live_write_performed"] is False
+    assert result["vault_write_ownership"] == "NONE"
+    assert backend.events == events_before_resume
+    assert backend.puts == [] and backend.deleted == []
+    directory = tmp_path / transaction_id
+    assert (directory / "raft.snapshot.partial").read_bytes() == b"retained-partial"
+    wal = json.loads((directory / "wal.json").read_text())
+    assert wal["status"] == "PRE_BACKUP_NO_MUTATION_TERMINAL"
+    assert wal["blocker"] == "raft-snapshot-failed"
+    evidence = json.loads((directory / "transaction-evidence.json").read_text())
+    assert tx._reconcile_status_projection(
+        contract(), wal, evidence, transaction_id,
+    ) == result
+    assert gate._validate_recovery_result(
+        contract(), result, transaction_id,
+    ) == result
+    with pytest.raises(tx.Blocked, match="pre-backup-no-mutation-terminal"):
+        tx.resume_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+    assert backend.events == events_before_resume
+
+
+UNSAFE_WAL_BLOCKERS = [
+    None,
+    7,
+    {"detail": "not-a-token"},
+    "vault failed",
+    "vault-failed\nnext-line",
+    "vault failed: SECRET=opaque-sentinel\n/path/to/private",
+    "/path/to/private",
+    "a" * 129,
+    "opaque-sentinel",
+]
+
+
+@pytest.mark.parametrize(
+    "status",
+    [
+        "PRE_BACKUP",
+        "PRE_BACKUP_NO_MUTATION_TERMINAL",
+        "BLOCKED",
+        "ROLLBACK_BLOCKED_RETRY_REQUIRED",
+    ],
+)
+@pytest.mark.parametrize("unsafe_blocker", UNSAFE_WAL_BLOCKERS)
+def test_wal_rejects_unsafe_blocker_for_every_recovery_state(status, unsafe_blocker):
+    transaction_id = "20260722T120000Z-b10c0bad"
+    wal = tx._initial_wal(transaction_id)
+    wal["status"] = status
+    wal["blocker"] = unsafe_blocker
+
+    with pytest.raises(tx.Blocked, match="wal-blocker-invalid"):
+        tx._validate_wal(contract(), wal, transaction_id)
+
+
+def test_pre_backup_rejects_unsafe_wal_blocker_before_artifact_or_backend_mutation(tmp_path):
+    backend = FakeBackend()
+    transaction_id = "20260722T120000Z-b10c0bee"
+    directory = tmp_path / transaction_id
+    directory.mkdir(mode=0o700)
+    wal = tx._initial_wal(transaction_id)
+    wal["blocker"] = "vault failed: SECRET=opaque-sentinel\n/path/to/private"
+    tx.atomic_json(directory / "wal.json", wal)
+    tx.atomic_json(
+        directory / "transaction-evidence.json",
+        tx._runtime_projection(transaction_id, "PRE_BACKUP", []),
+    )
+    wal_before = (directory / "wal.json").read_bytes()
+    evidence_before = (directory / "transaction-evidence.json").read_bytes()
+    events_before = list(backend.events)
+
+    with pytest.raises(tx.Blocked, match="wal-blocker-invalid"):
+        tx.resume_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+
+    assert (directory / "wal.json").read_bytes() == wal_before
+    assert (directory / "transaction-evidence.json").read_bytes() == evidence_before
+    assert not (directory / "ledger.json").exists()
+    assert backend.events == events_before
+    assert backend.puts == [] and backend.deleted == []
+
+
+def test_wal_accepts_strict_blocker_tokens_for_recovery_states(tmp_path):
+    assert tx._fixed_blocker("raft-snapshot-failed") == "raft-snapshot-failed"
+    with pytest.raises(tx.Blocked, match="blocker-token-invalid"):
+        tx._fixed_blocker("opaque-sentinel")
+
+    transaction_id = "20260722T120000Z-b10c0bef"
+    for status in (
+        "PRE_BACKUP",
+        "PRE_BACKUP_NO_MUTATION_TERMINAL",
+        "BLOCKED",
+        "ROLLBACK_BLOCKED_RETRY_REQUIRED",
+    ):
+        wal = tx._initial_wal(transaction_id)
+        wal["status"] = status
+        wal["blocker"] = "raft-snapshot-failed"
+        tx._validate_wal(contract(), wal, transaction_id)
+
+    for index, unsafe in enumerate((
+        "vault failed: SECRET=opaque-sentinel\n/path/to/private",
+        "opaque-sentinel",
+    )):
+        direct_id = f"20260722T120000Z-b10c0bf{index}"
+        directory = tmp_path / direct_id
+        directory.mkdir(mode=0o700)
+        direct_wal = tx._initial_wal(direct_id)
+        direct_wal["blocker"] = unsafe
+        result = tx._terminate_pre_backup_no_mutation(
+            directory, direct_id, direct_wal,
+        )
+        assert result["status"] == "PRE_BACKUP_NO_MUTATION_TERMINAL"
+        terminal = json.loads((directory / "wal.json").read_text())
+        assert terminal["blocker"] == "pre-backup-interrupted-before-backup-proof"
+        assert "opaque-sentinel" not in (directory / "wal.json").read_text()
+
+
+@pytest.mark.parametrize(
+    ("failure_stage", "expected_blocker"),
+    [
+        ("backup", "pre-backup-failed"),
+        ("install", "control-plane-install-failed"),
+        ("restore", "control-plane-restore-test-failed"),
+        ("reinstall", "control-plane-reinstall-failed"),
+        ("rollback", "owned-version-soft-delete-failed"),
+    ],
+)
+def test_every_wal_blocker_producer_maps_regex_valid_sensitive_detail_to_fixed_token(
+    tmp_path, failure_stage, expected_blocker,
+):
+    backend = SensitiveStageFailureBackend(failure_stage, "opaque-sentinel")
+    transaction_id = {
+        "backup": "20260722T120000Z-b10c1001",
+        "install": "20260722T120000Z-b10c1002",
+        "restore": "20260722T120000Z-b10c1003",
+        "reinstall": "20260722T120000Z-b10c1004",
+        "rollback": "20260722T120000Z-b10c1005",
+    }[failure_stage]
+
+    with pytest.raises(tx.Blocked):
+        tx.run_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+
+    directory = tmp_path / transaction_id
+    wal = json.loads((directory / "wal.json").read_text())
+    assert wal["blocker"] == expected_blocker
+    for artifact in directory.iterdir():
+        assert "opaque-sentinel" not in artifact.read_text(errors="ignore")
+
+
+@pytest.mark.parametrize(
+    ("failure_stage", "expected_reason"),
+    [
+        ("backup", "operation-blocked"),
+        ("install", "operation-blocked"),
+        ("restore", "operation-blocked"),
+        ("reinstall", "operation-blocked"),
+        ("rollback", "rollback-retry-required"),
+    ],
+)
+def test_executor_entrypoint_never_emits_sensitive_stage_exception_detail(
+    monkeypatch, tmp_path, capsys, failure_stage, expected_reason,
+):
+    backend = SensitiveStageFailureBackend(failure_stage, "opaque-sentinel")
+    transaction_id = {
+        "backup": "20260722T120000Z-b10c2001",
+        "install": "20260722T120000Z-b10c2002",
+        "restore": "20260722T120000Z-b10c2003",
+        "reinstall": "20260722T120000Z-b10c2004",
+        "rollback": "20260722T120000Z-b10c2005",
+    }[failure_stage]
+
+    def execute_without_live_access(*_args):
+        return tx.run_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+
+    monkeypatch.setattr(tx, "execute_reviewed_live", execute_without_live_access)
+    result = tx.main([
+        "execute-reviewed-live",
+        "--bundle-root", str(tmp_path),
+        "--transaction-id", transaction_id,
+        "--expected-hash", "0" * 64,
+        "--deadline-epoch", str(int(time.time()) + 60),
+    ])
+    captured = capsys.readouterr()
+    assert result == 2 and captured.out == ""
+    assert json.loads(captured.err) == {"status": "BLOCKED", "reason": expected_reason}
+    assert "opaque-sentinel" not in captured.err
+
+
+@pytest.mark.parametrize(
+    ("reason", "expected_reason"),
+    [
+        ("raft-snapshot-failed", "raft-snapshot-failed"),
+        ("arbitrary-valid-looking-token", "operation-blocked"),
+        ("private detail\n/private/path/opaque-sentinel", "operation-blocked"),
+        ({"private": "opaque-sentinel"}, "operation-blocked"),
+    ],
+)
+def test_executor_entrypoint_uses_only_finite_safe_output_reasons(
+    monkeypatch, tmp_path, capsys, reason, expected_reason,
+):
+    def fail_without_live_access(*_args):
+        raise tx.Blocked(reason)
+
+    monkeypatch.setattr(tx, "execute_reviewed_live", fail_without_live_access)
+    result = tx.main([
+        "execute-reviewed-live",
+        "--bundle-root", str(tmp_path),
+        "--transaction-id", "20260722T120000Z-b10c3001",
+        "--expected-hash", "0" * 64,
+        "--deadline-epoch", str(int(time.time()) + 60),
+    ])
+    captured = capsys.readouterr()
+    assert result == 2 and captured.out == ""
+    assert json.loads(captured.err) == {"status": "BLOCKED", "reason": expected_reason}
+    assert not any(
+        marker in captured.err
+        for marker in ("arbitrary-valid-looking-token", "private detail", "/private/path", "opaque-sentinel")
+    )
+
+
+@pytest.mark.parametrize(
+    "reason",
+    [
+        "arbitrary-valid-looking-token",
+        "private detail\n/private/path/opaque-sentinel",
+        {"private": "opaque-sentinel"},
+    ],
+)
+def test_coordinator_entrypoint_never_emits_gate_exception_detail(
+    monkeypatch, tmp_path, capsys, reason,
+):
+    def fail_preflight(*_args, **_kwargs):
+        raise gate.GateBlocked(reason)
+
+    monkeypatch.setattr(gate, "preflight", fail_preflight)
+    result = gate.main([
+        "preflight", "--repo", str(REPO), "--seal", str(tmp_path / "seal.json"),
+        "--skip-self-tests",
+    ])
+    captured = capsys.readouterr()
+    assert result == 2 and captured.out == ""
+    assert json.loads(captured.err) == {"status": "BLOCKED", "reason": "gate-blocked"}
+    assert not any(
+        marker in captured.err
+        for marker in ("arbitrary-valid-looking-token", "private detail", "/private/path", "opaque-sentinel")
+    )
 
 
 @pytest.mark.parametrize("index", range(7))
@@ -449,7 +808,7 @@ def test_zero_ack_rollback_retry_state_only_retries_restore_and_never_puts(tmp_p
     wal = json.loads(wal_path.read_text())
     wal.update({
         "status": "ROLLBACK_BLOCKED_RETRY_REQUIRED", "writes": [],
-        "control_plane_restored": False, "blocker": "fixture-restore-failed",
+        "control_plane_restored": False, "blocker": "zero-ack-control-plane-restore-failed",
     })
     tx.atomic_json(wal_path, wal)
     result = tx.resume_transaction(contract(), backend, tmp_path, transaction_id, require_root=False)
@@ -542,7 +901,7 @@ def test_rollback_retry_with_any_unacknowledged_intent_normalizes_to_ambiguous_w
     wal = json.loads(wal_path.read_text())
     assert any(row["status"] == "intent" for row in wal["writes"])
     wal["status"] = "ROLLBACK_BLOCKED_RETRY_REQUIRED"
-    wal["blocker"] = "fixture-rollback-retry"
+    wal["blocker"] = "owned-version-soft-delete-failed"
     tx.atomic_json(wal_path, wal)
 
     with pytest.raises(tx.Blocked, match="ambiguous-write-ownership"):

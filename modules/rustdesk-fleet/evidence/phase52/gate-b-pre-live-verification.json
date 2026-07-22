@@ -94,41 +94,41 @@
     "path": "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json",
     "sha256": "4aa5bde516804e48207aa92771fd1fec31c5acde885a96f9f053be23833add67"
   },
-  "generated_at": "2026-07-22T16:32:03.071184Z",
-  "hash_set_sha256": "9039271f01fe0d4d94a5b2c5dca1eac5a6d8fa56f8c3fecae7e9ccc77a7054a8",
+  "generated_at": "2026-07-22T18:04:38.963196Z",
+  "hash_set_sha256": "93e0efdc9154423bac2adaaa397b64fd35836550f879257a0ff2dba123fc7bc9",
   "live_write_performed": false,
   "network_performed": false,
   "phase": 52,
   "reviews": [
     {
-      "hash_set_sha256": "9039271f01fe0d4d94a5b2c5dca1eac5a6d8fa56f8c3fecae7e9ccc77a7054a8",
+      "hash_set_sha256": "93e0efdc9154423bac2adaaa397b64fd35836550f879257a0ff2dba123fc7bc9",
       "reviewer": "/root/gate_b_plan_review",
       "status": "PASS"
     },
     {
-      "hash_set_sha256": "9039271f01fe0d4d94a5b2c5dca1eac5a6d8fa56f8c3fecae7e9ccc77a7054a8",
-      "reviewer": "/root/gate_b_local_review_v7",
+      "hash_set_sha256": "93e0efdc9154423bac2adaaa397b64fd35836550f879257a0ff2dba123fc7bc9",
+      "reviewer": "/root/gate_b_parser_review",
       "status": "PASS"
     }
   ],
   "schema": "phase52-gate-b-pre-live-seal-v1",
-  "sealed_at": "2026-07-22T16:36:20.234000Z",
+  "sealed_at": "2026-07-22T18:11:14.226777Z",
   "sealed_sources": [
     {
       "path": "modules/rustdesk-fleet/contracts/phase52-gate-b-transaction.json",
-      "sha256": "7ae240e6a5be7c6fad0196d7fd2d01fc88c62a54ebd39a227bbf942ec9a67029"
+      "sha256": "17ac4cdc1762e4d5aecd8a96837a97fe3014e0fb5debdea615a4ca765f568aa5"
     },
     {
       "path": "modules/rustdesk-fleet/tools/phase52-vault-transaction.py",
-      "sha256": "98fbd28c917c107c29735c598a975e50a6a16b33a766b6eca92bd2624fbd8094"
+      "sha256": "4f1f8062f657044a18b473e37786a4ea2dfe0c4c57d68c15348cec3088c4f7bd"
     },
     {
       "path": "modules/rustdesk-fleet/tools/run-phase52-gate-b.py",
-      "sha256": "6f51c7ff9a02616dabaf2731d1d64b8a348d056c36b849169b00a9d4156fe0f4"
+      "sha256": "dd90d3372c9a50c908d5e8b1a9a1a5de59f7361b41e9854429286ff02f894632"
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py",
-      "sha256": "9cca6ea228753e596ed7a2afd62bb170a64fe9cbda738dbcbd3806d4510ba953"
+      "sha256": "5569af4573968770c7406cda791988727a36fa1463b0cef307ac57fc8054ab00"
     }
   ],
   "secret_material_present": false,

@@ -41,6 +41,7 @@ EXPECTED_CHECKS = {
     "network_performed": False,
     "live_write_performed": False,
 }
+GATE_BLOCKED_OUTPUT_REASON = "gate-blocked"
 
 
 def _checks_are_exact(checks: Any) -> bool:
@@ -705,6 +706,7 @@ def _recovery_semantics_are_exact(
         "PRE_BACKUP", "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING",
         "CONTROL_PLANE_INSTALLED", "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL",
         "CONTROL_PLANE_REINSTALLED", "METADATA_PROVED_PRISTINE", "BLOCKED",
+        "PRE_BACKUP_NO_MUTATION_TERMINAL",
     }
     if status in no_write_states:
         return count == 0 and live is False and ownership == "NONE"
@@ -748,7 +750,7 @@ def _validate_recovery_result(
         "PRE_BACKUP", "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING",
         "CONTROL_PLANE_INSTALLED", "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL",
         "CONTROL_PLANE_REINSTALLED", "METADATA_PROVED_PRISTINE",
-        "BLOCKED", "CREATING", "ROLLING_BACK", "ROLLBACK_BLOCKED_RETRY_REQUIRED",
+        "BLOCKED", "PRE_BACKUP_NO_MUTATION_TERMINAL", "CREATING", "ROLLING_BACK", "ROLLBACK_BLOCKED_RETRY_REQUIRED",
         "ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION", "OWNERSHIP_AMBIGUOUS_BLOCKED",
         "OWNERSHIP_AMBIGUOUS_CONTROL_PLANE_RESTORE_RETRY",
     }
@@ -946,8 +948,14 @@ def main(argv: list[str] | None = None) -> int:
             raise GateBlocked("explicit-operation-required")
         print(json.dumps(result, sort_keys=True, separators=(",", ":")))
         return 0
-    except GateBlocked as exc:
-        print(json.dumps({"status": "BLOCKED", "reason": str(exc)}, sort_keys=True), file=sys.stderr)
+    except GateBlocked:
+        print(
+            json.dumps(
+                {"status": "BLOCKED", "reason": GATE_BLOCKED_OUTPUT_REASON},
+                sort_keys=True,
+            ),
+            file=sys.stderr,
+        )
         return 2
 
 
