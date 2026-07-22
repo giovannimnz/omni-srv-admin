@@ -29,6 +29,7 @@ COORDINATOR = REPO / "modules/rustdesk-fleet/tools/run-phase52-gate-b.py"
 GATE_A = REPO / "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json"
 SEAL = REPO / "modules/rustdesk-fleet/evidence/phase52/gate-b-pre-live-verification.json"
 RUNTIME_EVIDENCE = REPO / "modules/rustdesk-fleet/evidence/phase52/gate-b-transaction.json"
+VAULT_WRITER = REPO / "modules/rustdesk-fleet/tools/atius-vault-phase52-write"
 
 
 def _load(path: Path, name: str):
@@ -846,6 +847,93 @@ def test_metadata_success_requires_explicit_kv_schema_and_fields(monkeypatch, tm
         "oldest_version": 0,
         "versions": {},
     }
+
+
+def test_local_backend_put_uses_dedicated_stdin_writer(monkeypatch):
+    backend = object.__new__(tx.LocalVaultBackend)
+    backend.vault_writer = Path("/usr/local/sbin/atius-vault-phase52-write")
+    private = b'{"private_key":"private","public_key":"public"}'
+    calls = []
+
+    def bounded(command, payload, **kwargs):
+        calls.append((command, payload))
+        return 0, b'{"data":{"version":1}}', b""
+
+    monkeypatch.setattr(tx, "_bounded_process_detailed", bounded)
+    result = backend.put_cas0_stdin(
+        {"vault_path": "kv/atius/rustdesk/server"}, private,
+    )
+    assert result == {"version": 1}
+    assert calls == [
+        ([str(backend.vault_writer), "kv/atius/rustdesk/server"], private),
+    ]
+
+
+def test_dedicated_writer_forwards_exact_json_only_over_interactive_stdin(tmp_path):
+    init = tmp_path / "init.json"
+    init.write_text('{"root_token":"fixture-root-token"}\n')
+    init.chmod(0o600)
+    fake = tmp_path / "podman"
+    fake.write_text(
+        """#!/usr/bin/env python3
+import json, os, sys
+expected = [
+    'exec', '--interactive', '--env', 'VAULT_ADDR', '--env',
+    'VAULT_SKIP_VERIFY', '--env', 'VAULT_TOKEN', 'hashicorp-vault-atius',
+    'vault', 'kv', 'put', '-cas=0', '-format=json',
+    'kv/atius/rustdesk/server', '-',
+]
+assert sys.argv[1:] == expected
+raw = sys.stdin.buffer.read()
+payload = json.loads(raw)
+assert set(payload) == {'private_key', 'public_key'}
+assert all(value not in '\\0'.join(sys.argv) for value in payload.values())
+assert all(value not in os.environ.values() for value in payload.values())
+print('{\"data\":{\"version\":1}}')
+"""
+    )
+    fake.chmod(0o700)
+    private = b'{"private_key":"private-fixture","public_key":"public-fixture"}'
+    env = dict(os.environ)
+    env["ATIUS_PHASE52_INIT"] = str(init)
+    env["ATIUS_PHASE52_PODMAN"] = str(fake)
+    result = subprocess.run(
+        [str(VAULT_WRITER), "kv/atius/rustdesk/server"],
+        input=private, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=env, timeout=5, check=False,
+    )
+    assert result.returncode == 0 and result.stderr == b""
+    assert json.loads(result.stdout) == {"data": {"version": 1}}
+
+
+@pytest.mark.parametrize(
+    ("path", "private", "expected"),
+    [
+        ("kv/atius/not-approved", b'{"private_key":"x"}', 64),
+        ("kv/atius/rustdesk/server", b'{"private_key":"x","public_key":"y","extra":"z"}', 2),
+        ("kv/atius/rustdesk/server", b'{"private_key":"x","private_key":"y","public_key":"z"}', 2),
+        ("kv/atius/rustdesk/server", b"x" * 131073, 2),
+    ],
+    ids=("path", "extra-field", "duplicate-field", "oversize"),
+)
+def test_dedicated_writer_rejects_path_shape_duplicates_and_oversize(
+    tmp_path, path, private, expected,
+):
+    init = tmp_path / "init.json"
+    init.write_text('{"root_token":"fixture-root-token"}\n')
+    init.chmod(0o600)
+    fake = tmp_path / "podman"
+    fake.write_text("#!/bin/sh\nexit 99\n")
+    fake.chmod(0o700)
+    env = dict(os.environ)
+    env["ATIUS_PHASE52_INIT"] = str(init)
+    env["ATIUS_PHASE52_PODMAN"] = str(fake)
+    result = subprocess.run(
+        [str(VAULT_WRITER), path], input=private,
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        env=env, timeout=5, check=False,
+    )
+    assert result.returncode == expected and result.stdout == b"" and result.stderr == b""
 
 
 def test_generator_uses_isolated_hbbs_keypair_and_cleans_container(monkeypatch):
@@ -2122,6 +2210,7 @@ def test_cli_without_explicit_execute_live_is_local_only(monkeypatch, tmp_path):
 def test_source_has_no_secret_transport_in_argv_env_or_output():
     executor = EXECUTOR.read_text()
     coordinator = COORDINATOR.read_text()
+    writer = VAULT_WRITER.read_text()
     assert "put_cas0_stdin" in executor
     assert "encoded_private_json" in executor
     assert "capture_output=True" not in coordinator
@@ -2157,6 +2246,11 @@ def test_source_has_no_secret_transport_in_argv_env_or_output():
     assert "_fsync_file_and_parent(snapshot)" in executor
     assert "private_config.unlink()" in executor
     assert "_fsync_directory(private_config.parent)" in executor
+    assert '"exec", "--interactive"' in writer
+    assert '"-format=json", path, "-"' in writer
+    assert "@-" not in writer
+    assert "tempfile" not in writer
+    assert "private_request" not in " ".join(re.findall(r"command = \[(.*?)\]", writer, re.DOTALL))
     assert "start_new_session=True" not in executor
     assert "start_new_session=True" in coordinator
     assert "/var/lib/atius-vault-phase52" in executor

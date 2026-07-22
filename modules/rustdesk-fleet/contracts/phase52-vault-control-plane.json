@@ -14,6 +14,8 @@
   "srv3_backend": {
     "vault_helper": "/usr/local/sbin/atius-vault",
     "vault_command": ["kv", "get", "-format=json"],
+    "vault_writer": "/usr/local/sbin/atius-vault-phase52-write",
+    "vault_writer_scope": "local-root-only-stdin-cas0",
     "legacy_exporter_used": false,
     "profiles_root": "/etc/atius-vault/profiles"
   },
@@ -56,6 +58,7 @@
   "srv3_control_plane_scope": [
     "/usr/local/sbin/atius-vault-export-rustdesk-phase52",
     "/usr/local/sbin/atius-vault-export-ssh-phase52",
+    "/usr/local/sbin/atius-vault-phase52-write",
     "/etc/atius-vault/profiles/rustdesk-phase52-v1.json",
     "/etc/atius-vault/profiles/rclone-giovanni-drive-phase52-v1.json",
     "/etc/sudoers.d/atius-vault-phase52",

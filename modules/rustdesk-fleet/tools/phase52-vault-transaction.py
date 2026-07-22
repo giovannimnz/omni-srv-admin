@@ -1613,6 +1613,7 @@ class LocalVaultBackend(TransactionBackend):
     def __init__(self, source_root: Path, rclone_config: bytes, approved_fingerprint: str):
         self.source_root = source_root
         self.vault = Path("/usr/local/sbin/atius-vault")
+        self.vault_writer = Path("/usr/local/sbin/atius-vault-phase52-write")
         self.installer = source_root / "modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh"
         self.rclone_config = rclone_config
         self.approved_fingerprint = _validate_approved_fingerprint(
@@ -1624,6 +1625,7 @@ class LocalVaultBackend(TransactionBackend):
         self.control_paths = [
             Path("/usr/local/sbin/atius-vault-export-rustdesk-phase52"),
             Path("/usr/local/sbin/atius-vault-export-ssh-phase52"),
+            self.vault_writer,
             Path("/etc/atius-vault/profiles/rustdesk-phase52-v1.json"),
             Path("/etc/atius-vault/profiles/rclone-giovanni-drive-phase52-v1.json"),
             Path("/etc/sudoers.d/atius-vault-phase52"),
@@ -1885,6 +1887,7 @@ class LocalVaultBackend(TransactionBackend):
         exact = {
             "atius-vault-export-rustdesk-phase52": self.source_root / "modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52",
             "atius-vault-export-ssh-phase52": self.source_root / "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52",
+            "atius-vault-phase52-write": self.source_root / "modules/rustdesk-fleet/tools/atius-vault-phase52-write",
             "phase52-vault-control-plane.json": self.source_root / "modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json",
         }
         if set(managed_sources) != set(exact):
@@ -2384,7 +2387,7 @@ class LocalVaultBackend(TransactionBackend):
 
     def put_cas0_stdin(self, operation: dict[str, Any], encoded_private_json: bytes) -> dict[str, Any]:
         code, stdout, stderr = _bounded_process_detailed(
-            [str(self.vault), "kv", "put", "-cas=0", "-format=json", operation["vault_path"], "@-"],
+            [str(self.vault_writer), operation["vault_path"]],
             encoded_private_json,
         )
         if code != 0:
@@ -2769,6 +2772,7 @@ def _reviewed_live_context(
     managed_sources = {
         "atius-vault-export-rustdesk-phase52": rows["modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52"],
         "atius-vault-export-ssh-phase52": rows["modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52"],
+        "atius-vault-phase52-write": rows["modules/rustdesk-fleet/tools/atius-vault-phase52-write"],
         "phase52-vault-control-plane.json": rows["modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json"],
     }
     if time.time() >= deadline_epoch:

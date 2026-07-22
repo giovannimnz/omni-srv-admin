@@ -3884,6 +3884,7 @@ def run_gate_a_secret_scan(repo: Path) -> CheckResult:
         Path("modules/rustdesk-fleet/tools/atius-vault-phase52-client"),
         Path("modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52"),
         Path("modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52"),
+        Path("modules/rustdesk-fleet/tools/atius-vault-phase52-write"),
         Path("modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh"),
         Path("modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py"),
         Path("modules/rustdesk-fleet/tools/phase52_recovery.py"),

@@ -1,0 +1,199 @@
+#!/usr/bin/env python3
+"""Root-local, stdin-only CAS=0 writer for the reviewed Phase 52 paths."""
+
+import json
+import os
+from pathlib import Path
+import re
+import selectors
+import signal
+import stat
+import subprocess
+import sys
+import time
+
+
+MAX_REQUEST = 131072
+MAX_STDOUT = 65536
+MAX_STDERR = 4096
+TIMEOUT_SECONDS = 30
+VAULT_CONTAINER = "hashicorp-vault-atius"
+EXPECTED_FIELDS = {
+    "kv/atius/rustdesk/server": {"private_key", "public_key"},
+    "kv/atius/rustdesk/targets/atius-srv-1": {"permanent_password"},
+    "kv/atius/rustdesk/targets/atius-srv-2": {"permanent_password"},
+    "kv/atius/rustdesk/targets/atius-srv-3": {"permanent_password"},
+    "kv/atius/rustdesk/targets/horistic-srv": {"permanent_password"},
+    "kv/atius/rustdesk/targets/giovanni-w11-pc": {"permanent_password"},
+    "kv/atius/fleet-backup/rclone/giovanni-drive": {"rclone_conf"},
+}
+
+
+def _pairs(items):
+    result = {}
+    for key, value in items:
+        if key in result:
+            raise ValueError("duplicate-key")
+        result[key] = value
+    return result
+
+
+def _read_private_request(path: str) -> bytes:
+    raw = sys.stdin.buffer.read(MAX_REQUEST + 1)
+    if not raw or len(raw) > MAX_REQUEST:
+        raise ValueError("request-size-invalid")
+    payload = json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs)
+    if (
+        not isinstance(payload, dict)
+        or set(payload) != EXPECTED_FIELDS[path]
+        or any(not isinstance(value, str) or not value for value in payload.values())
+    ):
+        raise ValueError("request-shape-invalid")
+    return raw
+
+
+def _runtime_path(variable: str, production: str) -> Path:
+    override = os.environ.get(variable)
+    if override and os.geteuid() != 0:
+        return Path(override)
+    return Path(production)
+
+
+def _read_root_token() -> str:
+    init_path = _runtime_path("ATIUS_PHASE52_INIT", "/root/hashicorp-vault-atius/init.json")
+    descriptor = os.open(init_path, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+    try:
+        info = os.fstat(descriptor)
+        expected_uid = 0 if os.geteuid() == 0 else os.geteuid()
+        if (
+            not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1
+            or info.st_uid != expected_uid
+            or stat.S_IMODE(info.st_mode) != 0o600
+            or info.st_size <= 0
+            or info.st_size > 4096
+        ):
+            raise ValueError("init-identity-invalid")
+        raw = os.read(descriptor, info.st_size + 1)
+        if len(raw) != info.st_size:
+            raise ValueError("init-read-invalid")
+    finally:
+        os.close(descriptor)
+    payload = json.loads(raw.decode("utf-8"), object_pairs_hook=_pairs)
+    vault_credential = payload.get("root_token") if isinstance(payload, dict) else None
+    if (
+        not isinstance(vault_credential, str)
+        or not vault_credential
+        or len(vault_credential) > 2048
+        or "\n" in vault_credential
+    ):
+        raise ValueError("token-invalid")
+    return vault_credential
+
+
+def _terminate(process: subprocess.Popen) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    try:
+        process.wait(timeout=2)
+    except subprocess.SubprocessError:
+        pass
+
+
+def _run_vault(path: str, private_request: bytes, vault_credential: str) -> tuple[int, bytes, bytes]:
+    podman = _runtime_path("ATIUS_PHASE52_PODMAN", "/usr/bin/podman")
+    command = [
+        str(podman), "exec", "--interactive",
+        "--env", "VAULT_ADDR", "--env", "VAULT_SKIP_VERIFY", "--env", "VAULT_TOKEN",
+        VAULT_CONTAINER, "vault", "kv", "put", "-cas=0", "-format=json", path, "-",
+    ]
+    child_env = {
+        "HOME": "/root" if os.geteuid() == 0 else os.environ.get("HOME", "/tmp"),
+        "PATH": "/usr/sbin:/usr/bin:/sbin:/bin",
+        "VAULT_ADDR": "https://127.0.0.1:8200",
+        "VAULT_SKIP_VERIFY": "true",
+        "VAULT_TOKEN": vault_credential,
+    }
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.PIPE,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        env=child_env,
+        close_fds=True,
+        start_new_session=True,
+        bufsize=0,
+    )
+    assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+    for stream in (process.stdin, process.stdout, process.stderr):
+        os.set_blocking(stream.fileno(), False)
+    selector = selectors.DefaultSelector()
+    selector.register(process.stdin, selectors.EVENT_WRITE, ("stdin", MAX_REQUEST))
+    selector.register(process.stdout, selectors.EVENT_READ, ("stdout", MAX_STDOUT))
+    selector.register(process.stderr, selectors.EVENT_READ, ("stderr", MAX_STDERR))
+    chunks = {"stdout": [], "stderr": []}
+    sizes = {"stdout": 0, "stderr": 0}
+    offset = 0
+    deadline = time.monotonic() + TIMEOUT_SECONDS
+    try:
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError
+            events = selector.select(remaining)
+            if not events:
+                raise TimeoutError
+            for key, _ in events:
+                name, limit = key.data
+                if name == "stdin":
+                    try:
+                        written = os.write(key.fd, private_request[offset:])
+                    except BrokenPipeError:
+                        written = 0
+                    offset += written
+                    if written == 0 or offset == len(private_request):
+                        selector.unregister(key.fileobj)
+                        key.fileobj.close()
+                    continue
+                chunk = os.read(key.fd, 8192)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                sizes[name] += len(chunk)
+                if sizes[name] > limit:
+                    raise OverflowError
+                chunks[name].append(chunk)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise TimeoutError
+        code = process.wait(timeout=remaining)
+        return code, b"".join(chunks["stdout"]), b"".join(chunks["stderr"])
+    except BaseException:
+        _terminate(process)
+        raise
+    finally:
+        selector.close()
+
+
+def main() -> int:
+    if len(sys.argv) != 2 or sys.argv[1] not in EXPECTED_FIELDS:
+        return 64
+    try:
+        private_request = _read_private_request(sys.argv[1])
+        vault_credential = _read_root_token()
+        code, stdout, stderr = _run_vault(
+            sys.argv[1], private_request, vault_credential,
+        )
+    except (OSError, UnicodeError, ValueError, json.JSONDecodeError, subprocess.SubprocessError, TimeoutError, OverflowError):
+        return 2
+    if stdout:
+        os.write(sys.stdout.fileno(), stdout)
+    if stderr:
+        os.write(sys.stderr.fileno(), stderr)
+    return code
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

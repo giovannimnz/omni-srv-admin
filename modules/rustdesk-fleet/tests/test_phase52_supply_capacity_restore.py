@@ -62,6 +62,9 @@ VAULT_CONTROL_BACKEND_PATH = (
 VAULT_CONTROL_DISPATCHER_PATH = (
     REPO / "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52"
 )
+VAULT_CONTROL_WRITER_PATH = (
+    REPO / "modules/rustdesk-fleet/tools/atius-vault-phase52-write"
+)
 VAULT_CONTROL_INSTALLER_PATH = (
     REPO / "modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh"
 )
@@ -2005,11 +2008,15 @@ def test_gate_a_vault_control_plane_contract_is_exact_and_value_free() -> None:
     }
     assert contract["horistic_key_policy"]["reuse_existing_key"] is True
     assert contract["horistic_key_policy"]["rotate_or_generate"] is False
+    assert contract["srv3_backend"]["vault_writer"] == "/usr/local/sbin/atius-vault-phase52-write"
+    assert contract["srv3_backend"]["vault_writer_scope"] == "local-root-only-stdin-cas0"
+    assert "/usr/local/sbin/atius-vault-phase52-write" in contract["srv3_control_plane_scope"]
     serialized = json.dumps(contract, sort_keys=True)
     assert "fixture-token" not in serialized
     for path in (
         VAULT_CONTROL_BACKEND_PATH,
         VAULT_CONTROL_DISPATCHER_PATH,
+        VAULT_CONTROL_WRITER_PATH,
         VAULT_CONTROL_INSTALLER_PATH,
     ):
         assert path.is_file()

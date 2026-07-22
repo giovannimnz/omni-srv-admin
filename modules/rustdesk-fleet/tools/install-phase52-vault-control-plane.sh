@@ -37,8 +37,9 @@ root=$(realpath -e -- "$root")
 script_dir=$(unset CDPATH; cd -- "$(dirname -- "$0")" && pwd -P)
 backend_source=$script_dir/atius-vault-export-rustdesk-phase52
 dispatcher_source=$script_dir/atius-vault-export-ssh-phase52
+writer_source=$script_dir/atius-vault-phase52-write
 contract_source=$script_dir/../contracts/phase52-vault-control-plane.json
-for source in "$backend_source" "$dispatcher_source" "$contract_source"; do
+for source in "$backend_source" "$dispatcher_source" "$writer_source" "$contract_source"; do
   [[ -f "$source" && ! -L "$source" ]] || { echo 'managed-source-missing' >&2; exit 2; }
 done
 
@@ -52,11 +53,11 @@ if "$dry_run"; then
   [[ "$root" != / && -n "$key_file" ]] || { echo 'dry-run-authorized-key-proof-required' >&2; exit 2; }
   authorized_fixture=$root/home/ubuntu/.ssh/authorized_keys
   [[ -f "$authorized_fixture" && ! -L "$authorized_fixture" ]] || { echo 'dry-run-authorized-key-proof-required' >&2; exit 2; }
-  if ! python3 - "$action" "$root" "$backend_source" "$dispatcher_source" "$contract_source" "$key_file" "$expected_fingerprint" <<'PY'
+  if ! python3 - "$action" "$root" "$backend_source" "$dispatcher_source" "$writer_source" "$contract_source" "$key_file" "$expected_fingerprint" <<'PY'
 import hashlib,json,pathlib,stat,sys
 action=sys.argv[1]; root=pathlib.Path(sys.argv[2])
-sources=[pathlib.Path(item) for item in sys.argv[3:6]]
-key=pathlib.Path(sys.argv[6]); fingerprint=sys.argv[7]
+sources=[pathlib.Path(item) for item in sys.argv[3:7]]
+key=pathlib.Path(sys.argv[7]); fingerprint=sys.argv[8]
 authorized=root/'home/ubuntu/.ssh/authorized_keys'; info=authorized.lstat()
 key_tokens=key.read_text().strip().split(); blob=key_tokens[1]
 rows=authorized.read_text().splitlines(); matches=[]
@@ -85,14 +86,15 @@ PY
   exit 0
 fi
 
-if ! python3 - "$action" "$root" "$backend_source" "$dispatcher_source" "$contract_source" "$key_file" "$expected_fingerprint" <<'PY'
+if ! python3 - "$action" "$root" "$backend_source" "$dispatcher_source" "$writer_source" "$contract_source" "$key_file" "$expected_fingerprint" <<'PY'
 import fcntl,hashlib,json,os,pathlib,shutil,stat,subprocess,sys,tempfile
-action,root_s,backend_s,dispatcher_s,contract_s,key_s,fingerprint=sys.argv[1:]
-root=pathlib.Path(root_s); backend=pathlib.Path(backend_s); dispatcher=pathlib.Path(dispatcher_s)
+action,root_s,backend_s,dispatcher_s,writer_s,contract_s,key_s,fingerprint=sys.argv[1:]
+root=pathlib.Path(root_s); backend=pathlib.Path(backend_s); dispatcher=pathlib.Path(dispatcher_s); writer=pathlib.Path(writer_s)
 state=root/'var/lib/atius-vault-phase52'; manifest=state/'install-state.json'; backup=state/'rollback'
 targets={
  'backend':root/'usr/local/sbin/atius-vault-export-rustdesk-phase52',
  'dispatcher':root/'usr/local/sbin/atius-vault-export-ssh-phase52',
+ 'writer':root/'usr/local/sbin/atius-vault-phase52-write',
  'rustdesk_profile':root/'etc/atius-vault/profiles/rustdesk-phase52-v1.json',
  'rclone_profile':root/'etc/atius-vault/profiles/rclone-giovanni-drive-phase52-v1.json',
  'sudoers':root/'etc/sudoers.d/atius-vault-phase52',
@@ -185,7 +187,7 @@ def load_manifest(statuses):
  if not manifest.is_file(): raise SystemExit('rollback-state-missing')
  validate_control_file(manifest,0o600,'control-plane-manifest')
  payload=json.loads(manifest.read_text())
- if not isinstance(payload,dict) or set(payload)!={'schema','status','key_fingerprint','key_rotation_performed','targets'} or payload.get('schema')!=2 or payload.get('status') not in statuses or set(payload.get('targets',{}))!=set(targets): raise SystemExit('control-plane-manifest-shape-drift')
+ if not isinstance(payload,dict) or set(payload)!={'schema','status','key_fingerprint','key_rotation_performed','targets'} or payload.get('schema')!=3 or payload.get('status') not in statuses or set(payload.get('targets',{}))!=set(targets): raise SystemExit('control-plane-manifest-shape-drift')
  if any(not isinstance(row,dict) or set(row)!=row_keys for row in payload['targets'].values()): raise SystemExit('control-plane-manifest-shape-drift')
  return payload
 def validate_previous(name,row):
@@ -197,7 +199,7 @@ def expected_installed_metadata(name,row):
  if name=='authorized_keys':
   if not row['had_previous']: raise SystemExit('installed-target-identity-drift')
   return row['previous_mode'],row['previous_uid'],row['previous_gid']
- modes={'backend':0o700,'dispatcher':dispatcher_install_mode,'rustdesk_profile':0o600,'rclone_profile':0o600,'sudoers':0o440}
+ modes={'backend':0o700,'dispatcher':dispatcher_install_mode,'writer':0o700,'rustdesk_profile':0o600,'rclone_profile':0o600,'sudoers':0o440}
  return modes[name],control_plane_uid,control_plane_gid
 def target_state(name,target,row,allow_restored):
  validate_previous(name,row)
@@ -268,7 +270,7 @@ if ' '.join(tokens[:key_index]) != expected_legacy: raise SystemExit('legacy-aut
 preserved_key=' '.join(tokens[key_index:])
 entry='restrict,no-user-rc,command="/usr/local/sbin/atius-vault-export-ssh-phase52" '+preserved_key
 existing[line_index]=entry
-payload={'schema':2,'status':'installing','key_fingerprint':fingerprint,'key_rotation_performed':False,'targets':{}}
+payload={'schema':3,'status':'installing','key_fingerprint':fingerprint,'key_rotation_performed':False,'targets':{}}
 prepare_control_dir(backup,0o700,'control-plane-backup')
 for name,target in targets.items():
  had=target.exists() or target.is_symlink(); row={'had_previous':had,'previous_mode':None,'previous_uid':None,'previous_gid':None,'previous_sha256':None,'installed_sha256':None,'installed_identity':None}
@@ -287,6 +289,7 @@ def install_managed(name,data,mode,uid,gid):
 try:
  install_managed('backend',backend.read_bytes(),0o700,control_plane_uid,control_plane_gid)
  install_managed('dispatcher',dispatcher.read_bytes(),dispatcher_install_mode,control_plane_uid,control_plane_gid)
+ install_managed('writer',writer.read_bytes(),0o700,control_plane_uid,control_plane_gid)
  dispatcher_info=identity(targets['dispatcher'])
  if stat.S_IMODE(dispatcher_info.st_mode)!=dispatcher_install_mode or dispatcher_info.st_uid!=control_plane_uid or dispatcher_info.st_gid!=control_plane_gid: raise RuntimeError('dispatcher-installed-identity-drift')
  install_managed('rustdesk_profile',generated['rustdesk_profile'].encode(),0o600,control_plane_uid,control_plane_gid)

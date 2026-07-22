@@ -12,7 +12,7 @@
     "managed_sources": [
       {
         "path": "modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json",
-        "sha256": "bd5458ca74a7b59d3751db5a0c3cd740f19da2970a1030f58301e62c0fbb86a4"
+        "sha256": "a05061e96cb1dc5e1d060c7a7ed90f4d7a24711bf3a5dc006279823351da312e"
       },
       {
         "path": "modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json",
@@ -25,6 +25,10 @@
       {
         "path": "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52",
         "sha256": "2f356d2017eff05c88e809ef3aeb84ee9998efeb1b3744f740495ef390f5b5eb"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/atius-vault-phase52-write",
+        "sha256": "2aa7d944fc611b353ccbdee4e9882769f2e7d0ff206a9b1121c77c5b6910f3ee"
       },
       {
         "path": "modules/rustdesk-fleet/tools/atius-vault-phase52-client",
@@ -40,7 +44,7 @@
       },
       {
         "path": "modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh",
-        "sha256": "001f6ef8c25ca38cf926e3c9ccbae84c84a70fcbf95440cdbf2e53425a5a1e4d"
+        "sha256": "1dbe8bf648c07d4e0d57b2ea01f39f9a4947c54cb68580db9a9fbcffcda4ba9d"
       },
       {
         "path": "modules/rustdesk-fleet/tools/rustdesk-vault-hydrate",
@@ -76,7 +80,7 @@
       },
       {
         "path": "modules/rustdesk-fleet/tools/validate_phase52.py",
-        "sha256": "d7f1af49609331b3993014c7567140470e80c4ad3b6913499330d1e0a10f2948"
+        "sha256": "a58155d77b367289ac021ad5d28d0db47a3b090574cbed4055ba9d94e1c9ef5a"
       },
       {
         "path": "modules/fleet-backup/tests/test_phase52_backup_b.py",
@@ -84,7 +88,7 @@
       },
       {
         "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
-        "sha256": "e3720c676904d81c2400f7401c815cbd3af9e31064e37a231cb6f33f3534d963"
+        "sha256": "a11e9852fe3399c89fa6ea5f55ab523410ffdf65e8c757b74b80157c8f6d5fe2"
       },
       {
         "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-07-AUTHORIZATION.md",
@@ -92,27 +96,27 @@
       }
     ],
     "path": "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json",
-    "sha256": "4aa5bde516804e48207aa92771fd1fec31c5acde885a96f9f053be23833add67"
+    "sha256": "75b395d265795a1284f54b9afa6d35c44f5b4d3cb3ed3e3a77ad1ea2694042a1"
   },
-  "generated_at": "2026-07-22T20:24:30.595644Z",
-  "hash_set_sha256": "0004136addd11177d90f240f33cdf1fb9100d4282803d2a501052c7cae5b5617",
+  "generated_at": "2026-07-22T20:48:16.969386Z",
+  "hash_set_sha256": "70e344be98c09eedf33a587c477234a5fea509a18ec48096c1188766a7daf509",
   "live_write_performed": false,
   "network_performed": false,
   "phase": 52,
   "reviews": [
     {
-      "hash_set_sha256": "0004136addd11177d90f240f33cdf1fb9100d4282803d2a501052c7cae5b5617",
+      "hash_set_sha256": "70e344be98c09eedf33a587c477234a5fea509a18ec48096c1188766a7daf509",
       "reviewer": "codex-gate-b-hash-review-2",
       "status": "PASS"
     },
     {
-      "hash_set_sha256": "0004136addd11177d90f240f33cdf1fb9100d4282803d2a501052c7cae5b5617",
+      "hash_set_sha256": "70e344be98c09eedf33a587c477234a5fea509a18ec48096c1188766a7daf509",
       "reviewer": "codex-snapshot-bridge-reviewer-1",
       "status": "PASS"
     }
   ],
   "schema": "phase52-gate-b-pre-live-seal-v1",
-  "sealed_at": "2026-07-22T20:26:48.623213Z",
+  "sealed_at": "2026-07-22T20:55:08.725828Z",
   "sealed_sources": [
     {
       "path": "modules/rustdesk-fleet/contracts/phase52-gate-b-transaction.json",
@@ -120,7 +124,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tools/phase52-vault-transaction.py",
-      "sha256": "382eeb1b0fa5b6752fd0f2951196b94600c79042ce9c051375aa08d3f4706238"
+      "sha256": "03ad38b56671e1ea866e547ced586f8d054d6ef327bae71393b89e3616bfa6e9"
     },
     {
       "path": "modules/rustdesk-fleet/tools/run-phase52-gate-b.py",
@@ -128,7 +132,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py",
-      "sha256": "e635a069c64fa863835b22e47a4c01d50f895cc0e44db724a6cdf6a801e8acc5"
+      "sha256": "a62a5c2075582895fa9ddc3a907cbec4f2eb00e25bb3e42af93144844bd986ac"
     }
   ],
   "secret_material_present": false,
