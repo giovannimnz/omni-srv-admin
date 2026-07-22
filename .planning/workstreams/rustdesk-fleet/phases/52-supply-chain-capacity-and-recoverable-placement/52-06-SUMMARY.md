@@ -16,13 +16,13 @@ tech-stack:
   patterns: [canonical report projection, raw-byte parity, fail-closed ledger promotion]
 key-files:
   created:
-    - modules/rustdesk-fleet/evidence/phase52/52-GATE-REPORT.json
-    - modules/rustdesk-fleet/evidence/phase52/52-GATE-REPORT.md
+    - .planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-GATE-REPORT.json
+    - .planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-GATE-REPORT.md
     - .planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-PHASE53-TOPOLOGY-REVIEW.md
   modified:
     - modules/rustdesk-fleet/tools/validate_phase52.py
     - modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py
-    - modules/rustdesk-fleet/evidence/phase52/phase52-integrated-report.json
+    - modules/rustdesk-fleet/evidence/phase52/integrated-gate.json
 key-decisions:
   - "No selected candidate means the canonical Phase 52 verdict is BLOCKED and Phase 53 is not authorized."
   - "SCP-04, SRV-01, SRV-05 and SRV-07 remain pending unless the full current gate passes."
