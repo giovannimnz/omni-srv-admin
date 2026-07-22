@@ -28,6 +28,7 @@ CAPACITY_MUTATIONS_PATH = (
 )
 CAPACITY_PROPOSAL_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json"
 CAPACITY_SUMMARY_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-summary.json"
+FULL_GATE_SUMMARY_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
 OPERATIONAL_DECISIONS_PATH = (
     REPO
     / ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md"
@@ -794,7 +795,12 @@ def test_capacity_live_evidence_is_serial_current_and_not_placement() -> None:
     assert chain["mutation_performed"] is False
     assert placement["selected_candidate"] is None
     assert [row["capacity_status"] for row in placement["candidates"]] == ["NO-GO", "NO-GO", "PASS"]
-    assert all(row["vault_status"] == "PENDING" for row in placement["candidates"])
+    assert [row["vault_status"] for row in placement["candidates"]] == [
+        "SKIPPED_DUE_TO_GATE",
+        "SKIPPED_DUE_TO_GATE",
+        "BLOCKED",
+    ]
+    assert validator.load_json_strict(FULL_GATE_SUMMARY_PATH)["overall_status"] == "BLOCKED"
     horistic = chain["attempts"][2]["horistic_colocation"]
     assert horistic["phase52_review_status"] == "PASS"
     assert horistic["phase53_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"

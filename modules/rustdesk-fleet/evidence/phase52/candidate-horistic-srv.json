@@ -1,0 +1,229 @@
+{
+  "candidate": "horistic-srv",
+  "first_non_pass_stage": "vault",
+  "persisted_before_fallback": true,
+  "public_listener_created": false,
+  "record_digest": "506516743c086c4cbfa189d77574f449fa03a67c403f5171d846d406157f6672",
+  "schema_version": 1,
+  "secret_material_present": false,
+  "stages": {
+    "backup": {
+      "evidence_ids": [],
+      "findings": [
+        "predecessor-stage-not-pass"
+      ],
+      "input_digest": "d096c1020c750cc923ba364e4ada3cd41bff56e3366356169e751b56ef211015",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "predecessor_stage": "vault",
+      "secret_material_present": false,
+      "status": "SKIPPED_DUE_TO_GATE"
+    },
+    "capacity": {
+      "calculations": [
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": true,
+          "projected_post_ok": true,
+          "required_incremental_bytes": 16928065536,
+          "status": "PASS",
+          "still_unmaterialized_reservations": 16928065536
+        },
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": true,
+          "projected_post_ok": true,
+          "required_incremental_bytes": 16928065536,
+          "status": "PASS",
+          "still_unmaterialized_reservations": 16928065536
+        }
+      ],
+      "evidence_ids": [
+        "P52-EV-FULL-CAPACITY-HORISTIC-SRV"
+      ],
+      "findings": [],
+      "input_digest": "c440016990d0fe900296dc9ff041bdbdaf765d37a49a64d134e9622e0a95c914",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "read_only": true,
+      "samples": [
+        {
+          "architecture": "aarch64",
+          "available_bytes": 58728673280,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "horistic-srv",
+          "inode_available": 12321808,
+          "inode_total": 12966400,
+          "inode_used": 644592,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T03:18:59Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "not-observed",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 103859404800,
+          "used_bytes": 45113954304
+        },
+        {
+          "architecture": "aarch64",
+          "available_bytes": 58728673280,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "horistic-srv",
+          "inode_available": 12321808,
+          "inode_total": 12966400,
+          "inode_used": 644592,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T03:18:59Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "not-observed",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 103859404800,
+          "used_bytes": 45113954304
+        }
+      ],
+      "secret_material_present": false,
+      "status": "PASS"
+    },
+    "capacity_finalize": {
+      "evidence_ids": [],
+      "findings": [
+        "predecessor-stage-not-pass"
+      ],
+      "input_digest": "db25734b72846026791a0609e70c1f1ee76d144a3e23fb55d3d613351a2e0965",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "predecessor_stage": "vault",
+      "secret_material_present": false,
+      "status": "SKIPPED_DUE_TO_GATE"
+    },
+    "restore": {
+      "evidence_ids": [],
+      "findings": [
+        "predecessor-stage-not-pass"
+      ],
+      "input_digest": "6890b709e51187bad6bf305b8e26672285c266c0a0f23515345a2cbe4512bb39",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "predecessor_stage": "vault",
+      "secret_material_present": false,
+      "status": "SKIPPED_DUE_TO_GATE"
+    },
+    "rollback": {
+      "disposable_artifacts_present": false,
+      "evidence_ids": [
+        "P52-EV-ROLLBACK-NOOP-HORISTIC-SRV"
+      ],
+      "findings": [],
+      "inactive": true,
+      "input_digest": "e0a52d4c72c152da7bdff47eea2f60e47c0144e7d18fb265771f3c5ead20852f",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "retained_backups_deleted": false,
+      "secret_material_present": false,
+      "status": "PASS"
+    },
+    "supply": {
+      "candidate": "horistic-srv",
+      "evidence_ids": [
+        "P52-EV-SUPPLY-OBSERVATION"
+      ],
+      "findings": [],
+      "input_digest": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:58Z",
+      "secret_material_present": false,
+      "status": "PASS"
+    },
+    "topology_security": {
+      "evidence_ids": [],
+      "findings": [
+        "predecessor-stage-not-pass"
+      ],
+      "input_digest": "a6b310d740fb2c5308b18766cae8b6ab409974f13c07b633fe7dba18e9af2d66",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "predecessor_stage": "vault",
+      "secret_material_present": false,
+      "status": "SKIPPED_DUE_TO_GATE"
+    },
+    "vault": {
+      "evidence_ids": [
+        "P52-EV-VAULT-READINESS-HORISTIC-SRV"
+      ],
+      "findings": [
+        "vault-export-helper-missing"
+      ],
+      "input_digest": "87fb20c33c7dc58723138374261a6818728965ffa1e8fa91efe357058edf6971",
+      "mutation": {
+        "classes": [],
+        "performed": false
+      },
+      "observed_at": "2026-07-22T03:18:59Z",
+      "readiness": {
+        "mutation_performed": false,
+        "paths": {
+          "fleet_backup_module": {
+            "exists": false,
+            "is_dir": false,
+            "is_file": false
+          },
+          "rclone_config": {
+            "exists": false,
+            "is_dir": false,
+            "is_file": false
+          },
+          "vault_helper": {
+            "exists": false,
+            "is_dir": false,
+            "is_file": false
+          }
+        },
+        "read_only": true,
+        "tools": {
+          "omni": false,
+          "podman": true,
+          "python3": true,
+          "rclone": false,
+          "sqlite3": false
+        }
+      },
+      "reference_count": 7,
+      "secret_material_present": false,
+      "status": "BLOCKED"
+    }
+  },
+  "verdict": "NO-GO",
+  "windows_install_performed": false
+}

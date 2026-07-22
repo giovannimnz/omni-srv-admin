@@ -35,7 +35,12 @@ CAPACITY_POLICY = Path("modules/rustdesk-fleet/contracts/capacity-policy.json")
 PLACEMENT_DECISION = Path("modules/rustdesk-fleet/contracts/placement-decision.json")
 CAPACITY_PROPOSAL = Path("modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json")
 CAPACITY_SUMMARY = Path("modules/rustdesk-fleet/evidence/phase52/capacity-summary.json")
+FULL_GATE_SUMMARY = Path("modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json")
 SECRET_ROLES = Path("modules/rustdesk-fleet/contracts/secret-roles.json")
+HORISTIC_REVIEW = Path(
+    ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
+    "52-HORISTIC-TOPOLOGY-IMPACT-REVIEW.md"
+)
 OPERATIONAL_DECISIONS = Path(
     ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
     "52-OPERATIONAL-DECISIONS.md"
@@ -98,6 +103,11 @@ CAPACITY_EVIDENCE_NAMES = {
     "atius-srv-2": "capacity-atius-srv-2.json",
     "atius-srv-3": "capacity-atius-srv-3.json",
     "horistic-srv": "capacity-horistic-srv.json",
+}
+FULL_GATE_EVIDENCE_NAMES = {
+    "atius-srv-2": "candidate-atius-srv-2.json",
+    "atius-srv-3": "candidate-atius-srv-3.json",
+    "horistic-srv": "candidate-horistic-srv.json",
 }
 READ_ONLY_PREFLIGHT_ACTIONS = ("capacity-sample",)
 APPROVED_VAULT_REFERENCES = (
@@ -164,6 +174,24 @@ print(json.dumps({
     "resource_wrapper": shutil.which("omni") or "not-observed",
     "resource_profile": profile,
     "command_version": "phase52-capacity-read-only-v2",
+    "read_only": True,
+    "mutation_performed": False,
+}, sort_keys=True))
+"""
+
+REMOTE_FULL_GATE_READINESS_SCRIPT = """\
+import json
+import pathlib
+import shutil
+
+paths = {
+    "vault_helper": pathlib.Path("/home/ubuntu/.local/bin/atius-vault-env"),
+    "fleet_backup_module": pathlib.Path("/home/ubuntu/GitHub/omni-srv-admin/modules/fleet-backup"),
+    "rclone_config": pathlib.Path("/home/ubuntu/.config/rclone/rclone.conf"),
+}
+print(json.dumps({
+    "tools": {name: bool(shutil.which(name)) for name in ("python3", "omni", "podman", "rclone", "sqlite3")},
+    "paths": {name: {"exists": path.exists(), "is_file": path.is_file(), "is_dir": path.is_dir()} for name, path in paths.items()},
     "read_only": True,
     "mutation_performed": False,
 }, sort_keys=True))
@@ -953,6 +981,328 @@ def run_candidate_chain(
     }
 
 
+def build_full_gate_readiness_command(candidate: str) -> list[str]:
+    if candidate not in CANDIDATES:
+        raise ValueError("unknown candidate")
+    return [
+        "ssh",
+        "-n",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=10",
+        "-o",
+        "ConnectionAttempts=1",
+        SSH_ALIASES[candidate],
+        f"python3 -c {shlex.quote(REMOTE_FULL_GATE_READINESS_SCRIPT)}",
+    ]
+
+
+def collect_full_gate_readiness(candidate: str) -> dict[str, Any]:
+    completed = subprocess.run(
+        build_full_gate_readiness_command(candidate),
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ValueError(f"read-only full-gate readiness probe failed for {candidate}")
+    try:
+        payload = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        raise ValueError(f"invalid full-gate readiness output for {candidate}") from None
+    if (
+        not isinstance(payload, dict)
+        or payload.get("read_only") is not True
+        or payload.get("mutation_performed") is not False
+        or not isinstance(payload.get("tools"), dict)
+        or not isinstance(payload.get("paths"), dict)
+    ):
+        raise ValueError(f"unsafe full-gate readiness output for {candidate}")
+    return payload
+
+
+def _stage_input_digest(*payloads: Any) -> str:
+    return hashlib.sha256(
+        json.dumps(payloads, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+
+
+def _update_placement_from_full_gate(
+    placement: dict[str, Any], summary: dict[str, Any]
+) -> dict[str, Any]:
+    updated = json.loads(json.dumps(placement))
+    by_candidate = {row["candidate"]: row for row in summary["attempts"]}
+    stage_to_field = dict(zip(FULL_CANDIDATE_STAGES, STAGE_FIELDS, strict=True))
+    for row in updated["candidates"]:
+        candidate = row["candidate"]
+        attempt = by_candidate.get(candidate)
+        if attempt is None:
+            row["evaluated"] = False
+            continue
+        row["evaluated"] = True
+        evidence_ids: list[str] = []
+        for stage, field_name in stage_to_field.items():
+            stage_record = attempt["stages"][stage]
+            row[field_name] = stage_record["status"]
+            evidence_ids.extend(stage_record.get("evidence_ids", []))
+        row["evidence_ids"] = list(dict.fromkeys(evidence_ids))
+        row["verdict"] = attempt["verdict"]
+    derived = derive_placement(updated)
+    updated["selected_candidate"] = derived["selected_candidate"]
+    updated["overall_status"] = derived["overall_status"]
+    updated["windows_install_performed"] = False
+    updated["windows_access_proven"] = False
+    updated["cold_standby_claimed"] = False
+    return updated
+
+
+def validate_full_candidate_summary(
+    summary: dict[str, Any], placement: dict[str, Any], evidence_root: Path
+) -> CheckResult:
+    fail: list[str] = []
+    blocked: list[str] = []
+    if summary.get("attempt_order") != list(CANDIDATES):
+        fail.append("candidate-order-bypass")
+    attempts = summary.get("attempts")
+    if not isinstance(attempts, list) or len(attempts) != len(CANDIDATES):
+        fail.append("candidate-shape")
+        attempts = []
+    for index, attempt in enumerate(attempts):
+        candidate = CANDIDATES[index]
+        if not isinstance(attempt, dict) or attempt.get("candidate") != candidate:
+            fail.append("candidate-shape")
+            continue
+        if set(attempt.get("stages", {})) != set(FULL_CANDIDATE_STAGES):
+            fail.append("stage-vector-shape")
+        unsigned = dict(attempt)
+        stored_digest = unsigned.pop("record_digest", None)
+        expected_digest = hashlib.sha256(
+            json.dumps(unsigned, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        if stored_digest != expected_digest:
+            fail.append("candidate-record-digest-drift")
+        evidence_path = evidence_root / FULL_GATE_EVIDENCE_NAMES[candidate]
+        try:
+            persisted = load_json_strict(evidence_path)
+        except (OSError, ValueError):
+            fail.append("candidate-evidence-missing")
+        else:
+            if persisted != attempt:
+                fail.append("candidate-evidence-drift")
+        if attempt.get("secret_material_present") is not False or attempt.get(
+            "windows_install_performed"
+        ) is not False:
+            fail.append("phase-boundary-drift")
+        if index and attempts[index - 1].get("verdict") != "NO-GO":
+            fail.append("candidate-order-bypass")
+    derived = derive_placement(placement)
+    if (
+        summary.get("selected_candidate") != derived["selected_candidate"]
+        or summary.get("overall_status") != derived["overall_status"]
+    ):
+        fail.append("stored-verdict-drift")
+    placement_result = validate_placement_decision(placement)
+    if placement_result.status == "FAIL":
+        fail.extend(item.category for item in placement_result.findings)
+    if summary.get("windows_install_performed") is not False or summary.get(
+        "secret_material_present"
+    ) is not False:
+        fail.append("phase-boundary-drift")
+    if not fail and summary.get("overall_status") != "PASS":
+        first_non_pass = next(
+            (
+                row.get("first_non_pass_stage")
+                for row in reversed(attempts)
+                if row.get("first_non_pass_stage") is not None
+            ),
+            "unknown",
+        )
+        blocked.append(f"no-primary:{first_non_pass}")
+    return _check_result(
+        "P52-FULL-GATE-001",
+        "FAIL" if fail else "BLOCKED" if blocked else "PASS",
+        sorted(set(fail + blocked)),
+        FULL_GATE_SUMMARY.as_posix(),
+    )
+
+
+def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
+    policy = load_json_strict(validate_repo_path(repo, repo / CAPACITY_POLICY))
+    placement_path = validate_repo_path(repo, repo / PLACEMENT_DECISION)
+    placement = load_json_strict(placement_path)
+    supply_contract = load_json_strict(validate_repo_path(repo, repo / SUPPLY_CONTRACT))
+    supply_path = validate_repo_path(repo, repo / SUPPLY_OBSERVATION)
+    supply = load_json_strict(supply_path)
+    secret_roles_path = validate_repo_path(repo, repo / SECRET_ROLES)
+    secret_roles = load_json_strict(secret_roles_path)
+    decision_path = validate_repo_path(repo, repo / OPERATIONAL_DECISIONS)
+    review_path = validate_repo_path(repo, repo / HORISTIC_REVIEW)
+    evidence_root = validate_repo_path(repo, repo / evidence_dir)
+
+    if validate_capacity_policy(policy).status != "PASS":
+        raise ValueError("capacity policy is not approved")
+    if validate_supply_contract(supply_contract).status != "PASS" or validate_supply_observation(
+        supply, supply_contract, repo=repo
+    ).status != "PASS":
+        raise ValueError("supply evidence is not current PASS")
+    if validate_vault_metadata(secret_roles).status != "PASS":
+        raise ValueError("Vault reference contract is not approved")
+    if policy["approval"]["source_sha256"] != _sha256_file(decision_path):
+        raise ValueError("capacity approval source digest drift")
+    review_text = review_path.read_text(encoding="utf-8")
+    if "**Status:** Approved for Phase 52 candidate evaluation" not in review_text:
+        raise ValueError("Horistic Phase 52 topology review is not current PASS")
+
+    supply_digest = _sha256_file(supply_path)
+    decision_digest = _sha256_file(decision_path)
+    secret_roles_digest = _sha256_file(secret_roles_path)
+    review_digest = _sha256_file(review_path)
+    contexts: dict[str, dict[str, Any]] = {candidate: {} for candidate in CANDIDATES}
+    callbacks_by_candidate: dict[str, dict[str, Any]] = {}
+
+    for candidate in CANDIDATES:
+        context = contexts[candidate]
+
+        def supply_stage(host: str = candidate) -> dict[str, Any]:
+            return {
+                "status": "PASS",
+                "input_digest": supply_digest,
+                "evidence_ids": ["P52-EV-SUPPLY-OBSERVATION"],
+                "findings": [],
+                "mutation": {"performed": False, "classes": []},
+                "candidate": host,
+            }
+
+        def capacity_stage(host: str = candidate, state: dict[str, Any] = context) -> dict[str, Any]:
+            samples = [collect_capacity_sample(host), collect_capacity_sample(host)]
+            calculations = [derive_candidate_capacity(sample, policy) for sample in samples]
+            state["samples"] = samples
+            status = "PASS" if all(row["status"] == "PASS" for row in calculations) else "NO-GO"
+            return {
+                "status": status,
+                "input_digest": _stage_input_digest(decision_digest, supply_digest, samples),
+                "evidence_ids": [f"P52-EV-FULL-CAPACITY-{host.upper()}"],
+                "findings": [] if status == "PASS" else _capacity_findings(calculations),
+                "samples": samples,
+                "calculations": calculations,
+                "read_only": True,
+                "mutation": {"performed": False, "classes": []},
+            }
+
+        def vault_stage(host: str = candidate, state: dict[str, Any] = context) -> dict[str, Any]:
+            readiness = collect_full_gate_readiness(host)
+            state["readiness"] = readiness
+            vault_helper = readiness["paths"].get("vault_helper", {})
+            findings = [] if vault_helper.get("is_file") is True else ["vault-export-helper-missing"]
+            return {
+                "status": "PASS" if not findings else "BLOCKED",
+                "input_digest": _stage_input_digest(secret_roles_digest, readiness),
+                "evidence_ids": [f"P52-EV-VAULT-READINESS-{host.upper()}"],
+                "findings": findings,
+                "reference_count": len(APPROVED_VAULT_REFERENCES),
+                "readiness": readiness,
+                "mutation": {"performed": False, "classes": []},
+            }
+
+        def backup_stage(host: str = candidate, state: dict[str, Any] = context) -> dict[str, Any]:
+            readiness = state.get("readiness") or collect_full_gate_readiness(host)
+            tools = readiness["tools"]
+            paths = readiness["paths"]
+            findings: list[str] = []
+            if tools.get("rclone") is not True:
+                findings.append("rclone-missing")
+            if paths.get("rclone_config", {}).get("is_file") is not True:
+                findings.append("rclone-config-missing")
+            if paths.get("fleet_backup_module", {}).get("is_dir") is not True:
+                findings.append("managed-fleet-backup-module-missing")
+            if not findings:
+                findings.append("live-backup-runner-not-authorized-by-current-contract")
+            return {
+                "status": "BLOCKED",
+                "input_digest": _stage_input_digest(readiness),
+                "evidence_ids": [f"P52-EV-BACKUP-READINESS-{host.upper()}"],
+                "findings": findings,
+                "mutation": {"performed": False, "classes": []},
+            }
+
+        def unreachable_stage(name: str, host: str = candidate) -> dict[str, Any]:
+            return {
+                "status": "BLOCKED",
+                "input_digest": _stage_input_digest(host, name),
+                "evidence_ids": [f"P52-EV-{name.upper()}-{host.upper()}"],
+                "findings": ["stage-preconditions-not-satisfied"],
+                "mutation": {"performed": False, "classes": []},
+            }
+
+        def rollback_stage(host: str = candidate) -> dict[str, Any]:
+            return {
+                "status": "PASS",
+                "input_digest": _stage_input_digest(host, "rollback", "no-artifacts"),
+                "evidence_ids": [f"P52-EV-ROLLBACK-NOOP-{host.upper()}"],
+                "findings": [],
+                "inactive": True,
+                "disposable_artifacts_present": False,
+                "retained_backups_deleted": False,
+                "mutation": {"performed": False, "classes": []},
+            }
+
+        def topology_stage(host: str = candidate) -> dict[str, Any]:
+            topology = horistic_topology_evidence() if host == "horistic-srv" else {
+                "status": "PASS",
+                "client_colocation": False,
+                "independent_dr_claimed": False,
+            }
+            return {
+                **topology,
+                "input_digest": review_digest if host == "horistic-srv" else _stage_input_digest(host),
+                "evidence_ids": [f"P52-EV-TOPOLOGY-{host.upper()}"],
+                "findings": [],
+                "mutation": {"performed": False, "classes": []},
+            }
+
+        callbacks_by_candidate[candidate] = {
+            "supply": supply_stage,
+            "capacity": capacity_stage,
+            "vault": vault_stage,
+            "backup": backup_stage,
+            "restore": lambda host=candidate: unreachable_stage("restore", host),
+            "capacity_finalize": lambda host=candidate: unreachable_stage("capacity-finalize", host),
+            "rollback": rollback_stage,
+            "topology_security": topology_stage,
+        }
+
+    def persist(payload: dict[str, Any]) -> None:
+        path = validate_repo_path(
+            repo, evidence_root / FULL_GATE_EVIDENCE_NAMES[payload["candidate"]]
+        )
+        _write_json_atomically(payload, path)
+
+    lock_path = evidence_root / ".full-candidate-chain.lock"
+    with lock_path.open("a+b") as lock:
+        os.chmod(lock_path, 0o600)
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError("full candidate chain lock is held") from None
+        summary = run_candidate_chain(CANDIDATES, callbacks_by_candidate, persist)
+        summary["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace(
+            "+00:00", "Z"
+        )
+        summary["decision_source_digest"] = decision_digest
+        summary["supply_digest"] = supply_digest
+        summary["topology_review_digest"] = review_digest
+        summary["windows_access_proven"] = False
+        summary["public_listener_created"] = False
+        updated_placement = _update_placement_from_full_gate(placement, summary)
+        _write_json_atomically(summary, evidence_root / FULL_GATE_SUMMARY.name)
+        _write_json_atomically(updated_placement, placement_path)
+        fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+    lock_path.unlink(missing_ok=True)
+    return validate_full_candidate_summary(summary, updated_placement, evidence_root)
+
+
 def _exact_keys(value: Any, expected: set[str]) -> bool:
     return isinstance(value, dict) and set(value) == expected
 
@@ -1677,7 +2027,15 @@ def validate_placement_decision(
             errors.append("candidate-shape")
         if any(
             candidate.get(field)
-            not in {"PASS", "NO-GO", "PENDING", "SKIPPED_BY_GATE", "SKIPPED_DUE_TO_GATE"}
+            not in {
+                "PASS",
+                "NO-GO",
+                "FAIL",
+                "BLOCKED",
+                "PENDING",
+                "SKIPPED_BY_GATE",
+                "SKIPPED_DUE_TO_GATE",
+            }
             for field in STAGE_FIELDS
         ):
             errors.append("stage-status-shape")
@@ -2431,7 +2789,11 @@ def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> l
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
-    parser.add_argument("--only", choices=("supply", "capacity-proposal", "capacity-live"), default="supply")
+    parser.add_argument(
+        "--only",
+        choices=("supply", "capacity-proposal", "capacity-live", "full-candidate-chain"),
+        default="supply",
+    )
     parser.add_argument("--evidence-dir", type=Path, default=SUPPLY_OBSERVATION.parent)
     return parser
 
@@ -2443,6 +2805,10 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(effective_argv)
     repo = args.repo.resolve()
     try:
+        if args.only == "full-candidate-chain":
+            result = run_full_candidate_chain(repo, args.evidence_dir)
+            print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))
+            return exit_code_for_status(result.status)
         if args.only == "capacity-live":
             result = run_capacity_live(repo, args.evidence_dir)
             print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))

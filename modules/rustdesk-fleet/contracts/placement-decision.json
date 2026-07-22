@@ -6,52 +6,59 @@
   ],
   "candidates": [
     {
-      "backup_status": "PENDING",
+      "backup_status": "SKIPPED_DUE_TO_GATE",
       "candidate": "atius-srv-2",
-      "capacity_finalize_status": "PENDING",
+      "capacity_finalize_status": "SKIPPED_DUE_TO_GATE",
       "capacity_status": "NO-GO",
       "evaluated": true,
       "evidence_ids": [
-        "P52-EV-CAPACITY-ATIUS-SRV-2"
+        "P52-EV-SUPPLY-OBSERVATION",
+        "P52-EV-FULL-CAPACITY-ATIUS-SRV-2",
+        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-2"
       ],
-      "restore_status": "PENDING",
-      "rollback_status": "PENDING",
+      "restore_status": "SKIPPED_DUE_TO_GATE",
+      "rollback_status": "PASS",
       "supply_status": "PASS",
-      "topology_security_status": "PENDING",
-      "vault_status": "PENDING",
+      "topology_security_status": "SKIPPED_DUE_TO_GATE",
+      "vault_status": "SKIPPED_DUE_TO_GATE",
       "verdict": "NO-GO"
     },
     {
-      "backup_status": "PENDING",
+      "backup_status": "SKIPPED_DUE_TO_GATE",
       "candidate": "atius-srv-3",
-      "capacity_finalize_status": "PENDING",
+      "capacity_finalize_status": "SKIPPED_DUE_TO_GATE",
       "capacity_status": "NO-GO",
       "evaluated": true,
       "evidence_ids": [
-        "P52-EV-CAPACITY-ATIUS-SRV-3"
+        "P52-EV-SUPPLY-OBSERVATION",
+        "P52-EV-FULL-CAPACITY-ATIUS-SRV-3",
+        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-3"
       ],
-      "restore_status": "PENDING",
-      "rollback_status": "PENDING",
+      "restore_status": "SKIPPED_DUE_TO_GATE",
+      "rollback_status": "PASS",
       "supply_status": "PASS",
-      "topology_security_status": "PENDING",
-      "vault_status": "PENDING",
+      "topology_security_status": "SKIPPED_DUE_TO_GATE",
+      "vault_status": "SKIPPED_DUE_TO_GATE",
       "verdict": "NO-GO"
     },
     {
-      "backup_status": "PENDING",
+      "backup_status": "SKIPPED_DUE_TO_GATE",
       "candidate": "horistic-srv",
-      "capacity_finalize_status": "PENDING",
+      "capacity_finalize_status": "SKIPPED_DUE_TO_GATE",
       "capacity_status": "PASS",
       "client_colocation": true,
       "evaluated": true,
       "evidence_ids": [
-        "P52-EV-CAPACITY-HORISTIC-SRV"
+        "P52-EV-SUPPLY-OBSERVATION",
+        "P52-EV-FULL-CAPACITY-HORISTIC-SRV",
+        "P52-EV-VAULT-READINESS-HORISTIC-SRV",
+        "P52-EV-ROLLBACK-NOOP-HORISTIC-SRV"
       ],
       "phase53_review_required": true,
       "phase54_review_required": true,
       "phase57_review_required": true,
-      "restore_status": "PENDING",
-      "rollback_status": "PENDING",
+      "restore_status": "SKIPPED_DUE_TO_GATE",
+      "rollback_status": "PASS",
       "server_client_evidence_domains": {
         "client": "phase54-client-evidence",
         "server": "phase53-server-evidence"
@@ -65,9 +72,9 @@
         "server": "phase53-server-rollback"
       },
       "supply_status": "PASS",
-      "topology_security_status": "PENDING",
-      "vault_status": "PENDING",
-      "verdict": "PENDING"
+      "topology_security_status": "SKIPPED_DUE_TO_GATE",
+      "vault_status": "BLOCKED",
+      "verdict": "NO-GO"
     }
   ],
   "cold_standby_claimed": false,
