@@ -15,6 +15,7 @@ import stat
 import subprocess
 import sys
 import tarfile
+import tempfile
 import time
 
 import pytest
@@ -170,6 +171,76 @@ class SensitiveStageFailureBackend(FakeBackend):
 
 def contract():
     return tx.load_contract(CONTRACT)
+
+
+def fake_vault_snapshot_bridge(snapshot_bytes=b"snapshot", fail_at=None):
+    container_files = {}
+    calls = []
+
+    def fake_process(command, private_input, **kwargs):
+        calls.append(command)
+        if command[:5] == [
+            "/usr/local/sbin/atius-vault", "operator", "raft", "snapshot", "save",
+        ]:
+            if fail_at == "save":
+                raise tx.Blocked("fixture-save-failed")
+            container_files[command[-1]] = snapshot_bytes
+        elif command[:2] == ["/usr/bin/podman", "cp"]:
+            if fail_at == "copy":
+                raise tx.Blocked("fixture-copy-failed")
+            _, container_path = command[2].split(":", 1)
+            (Path(command[3]) / Path(container_path).name).write_bytes(container_files[container_path])
+        elif command[:4] == ["/usr/bin/podman", "exec", tx.VAULT_CONTAINER, "rm"]:
+            if fail_at == "cleanup":
+                raise tx.Blocked("fixture-cleanup-failed")
+            if fail_at == "cleanup_oserror":
+                raise OSError("fixture-cleanup-oserror")
+            container_files.pop(command[-1], None)
+        else:
+            raise AssertionError(command)
+        return 0, b""
+
+    return fake_process, container_files, calls
+
+
+def reviewed_bootstrap_fixture(executor_source: bytes) -> tuple[bytes, str]:
+    executor_path = "modules/rustdesk-fleet/tools/phase52-vault-transaction.py"
+    gate_a_path = "gate-a.json"
+    gate_a_raw = json.dumps(
+        {"status": "PASS", "managed_sources": []},
+        sort_keys=True, separators=(",", ":"),
+    ).encode()
+    sealed_sources = [{"path": executor_path, "sha256": hashlib.sha256(executor_source).hexdigest()}]
+    gate_a = {
+        "path": gate_a_path,
+        "sha256": hashlib.sha256(gate_a_raw).hexdigest(),
+        "managed_sources": [],
+    }
+    canonical = {"sealed_sources": sealed_sources, "gate_a": gate_a}
+    digest = hashlib.sha256(
+        json.dumps(canonical, sort_keys=True, separators=(",", ":")).encode()
+    ).hexdigest()
+    files = [*sealed_sources, {"path": gate_a_path, "sha256": gate_a["sha256"]}]
+    manifest = {
+        "schema": "phase52-reviewed-root-bundle-v1",
+        "hash_set_sha256": digest,
+        "sealed_sources": sealed_sources,
+        "gate_a": gate_a,
+        "files": files,
+        "secret_material_present": False,
+    }
+    rows = {
+        "manifest.json": json.dumps(manifest, sort_keys=True, separators=(",", ":")).encode() + b"\n",
+        executor_path: executor_source,
+        gate_a_path: gate_a_raw,
+        "private/rclone.conf": b"[giovanni-drive]\ntype = drive\nfixture = private\n",
+    }
+    buffer = io.BytesIO()
+    with tarfile.open(fileobj=buffer, mode="w") as archive:
+        for name, raw in rows.items():
+            info = tarfile.TarInfo(name); info.size = len(raw); info.mode = 0o600
+            archive.addfile(info, io.BytesIO(raw))
+    return buffer.getvalue(), digest
 
 
 def test_contract_is_exact_value_free_and_create_only():
@@ -524,6 +595,62 @@ def test_executor_entrypoint_uses_only_finite_safe_output_reasons(
         marker in captured.err
         for marker in ("arbitrary-valid-looking-token", "private detail", "/private/path", "opaque-sentinel")
     )
+
+
+def test_executor_entrypoint_cleans_reviewed_tmpfs_when_context_load_fails(
+    monkeypatch, capsys,
+):
+    root = Path(tempfile.mkdtemp(prefix="atius-phase52-reviewed-test-", dir="/dev/shm"))
+    root.chmod(0o700)
+    private = root / "private"; private.mkdir(mode=0o700)
+    (private / "rclone.conf").write_text("opaque-private-sentinel", encoding="utf-8")
+
+    def fail_context(*_args, **_kwargs):
+        raise tx.Blocked("reviewed-bundle-manifest-invalid")
+
+    monkeypatch.setattr(tx, "_reviewed_live_context", fail_context)
+    result = tx.main([
+        "execute-reviewed-live", "--bundle-root", str(root),
+        "--transaction-id", "20260722T120000Z-b10c3002",
+        "--expected-hash", "0" * 64,
+        "--deadline-epoch", str(int(time.time()) + 60),
+    ])
+    captured = capsys.readouterr()
+
+    assert result == 2 and not root.exists()
+    assert "opaque-private-sentinel" not in captured.out + captured.err
+
+
+def test_executor_entrypoint_cleanup_failure_is_fail_closed_and_sanitized(
+    monkeypatch, capsys,
+):
+    root = Path(tempfile.mkdtemp(prefix="atius-phase52-reviewed-test-", dir="/dev/shm"))
+    root.chmod(0o700)
+    real_rmtree = tx.shutil.rmtree
+
+    monkeypatch.setattr(
+        tx, "execute_reviewed_live",
+        lambda *_args: (_ for _ in ()).throw(tx.Blocked("opaque-private-sentinel")),
+    )
+    monkeypatch.setattr(
+        tx.shutil, "rmtree",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(OSError("opaque-cleanup-detail")),
+    )
+    try:
+        result = tx.main([
+            "execute-reviewed-live", "--bundle-root", str(root),
+            "--transaction-id", "20260722T120000Z-b10c3003",
+            "--expected-hash", "0" * 64,
+            "--deadline-epoch", str(int(time.time()) + 60),
+        ])
+        captured = capsys.readouterr()
+    finally:
+        monkeypatch.setattr(tx.shutil, "rmtree", real_rmtree)
+        real_rmtree(root, ignore_errors=True)
+
+    assert result == 2
+    assert json.loads(captured.err) == {"status": "BLOCKED", "reason": "operation-blocked"}
+    assert "opaque" not in captured.out + captured.err
 
 
 @pytest.mark.parametrize(
@@ -1232,6 +1359,181 @@ def test_isolated_restore_identity_rejects_noop_snapshot_post():
     tx._validate_isolated_restore_identity(pre, post)
 
 
+def test_raft_snapshot_bridges_container_namespace_and_cleans_temp(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    fake_process, container_files, calls = fake_vault_snapshot_bridge(b"raft-snapshot")
+    monkeypatch.setattr(tx, "_bounded_process", fake_process)
+    snapshot = tmp_path / "raft.snapshot"
+
+    backend._create_raft_snapshot(snapshot)
+
+    assert snapshot.read_bytes() == b"raft-snapshot"
+    assert stat.S_IMODE(snapshot.stat().st_mode) == 0o600
+    assert snapshot.stat().st_uid == os.geteuid()
+    assert snapshot.stat().st_nlink == 1
+    assert container_files == {}
+    assert calls[0][:5] == [str(backend.vault), "operator", "raft", "snapshot", "save"]
+    assert calls[1][:2] == [str(tx.PODMAN), "cp"]
+    assert calls[2][:4] == [str(tx.PODMAN), "exec", tx.VAULT_CONTAINER, "rm"]
+    assert calls[0][-1].startswith("/tmp/phase52-raft-")
+    assert calls[1][2] == f"{tx.VAULT_CONTAINER}:{calls[0][-1]}"
+    assert list(tmp_path.glob(".raft-staging-*")) == []
+
+
+@pytest.mark.parametrize("fail_at", ["save", "copy", "cleanup", "cleanup_oserror"])
+def test_raft_snapshot_bridge_failure_is_sanitized_and_removes_host_partial(
+    monkeypatch, tmp_path, fail_at
+):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    fake_process, _, calls = fake_vault_snapshot_bridge(fail_at=fail_at)
+    monkeypatch.setattr(tx, "_bounded_process", fake_process)
+    snapshot = tmp_path / "raft.snapshot"
+
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(snapshot)
+
+    assert not snapshot.exists()
+    assert any(command[:4] == [str(tx.PODMAN), "exec", tx.VAULT_CONTAINER, "rm"] for command in calls)
+    assert list(tmp_path.glob(".raft-staging-*")) == []
+
+
+def test_raft_snapshot_bridge_rejects_empty_staged_snapshot(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    fake_process, container_files, _ = fake_vault_snapshot_bridge(b"")
+    monkeypatch.setattr(tx, "_bounded_process", fake_process)
+    snapshot = tmp_path / "raft.snapshot"
+
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(snapshot)
+
+    assert not snapshot.exists() and container_files == {}
+    assert list(tmp_path.glob(".raft-staging-*")) == []
+
+
+@pytest.mark.parametrize("invalid_kind", ["symlink", "directory", "hardlink", "wrong_uid"])
+def test_raft_snapshot_bridge_rejects_invalid_staged_identity(
+    monkeypatch, tmp_path, invalid_kind
+):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    base_process, _, _ = fake_vault_snapshot_bridge()
+
+    def invalid_process(command, private_input, **kwargs):
+        result = base_process(command, private_input, **kwargs)
+        if command[:2] == [str(tx.PODMAN), "cp"] and invalid_kind != "wrong_uid":
+            _, container_path = command[2].split(":", 1)
+            staged = Path(command[3]) / Path(container_path).name
+            if invalid_kind == "symlink":
+                staged.unlink(); staged.symlink_to(tmp_path / "missing")
+            elif invalid_kind == "directory":
+                staged.unlink(); staged.mkdir()
+            elif invalid_kind == "hardlink":
+                os.link(staged, staged.parent / "unexpected-hardlink")
+        return result
+
+    if invalid_kind == "wrong_uid":
+        real_euid = os.geteuid()
+        euid_calls = 0
+
+        def mismatched_euid():
+            nonlocal euid_calls
+            euid_calls += 1
+            return real_euid if euid_calls == 1 else real_euid + 1
+
+        monkeypatch.setattr(tx.os, "geteuid", mismatched_euid)
+    monkeypatch.setattr(tx, "_bounded_process", invalid_process)
+    snapshot = tmp_path / "raft.snapshot"
+
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(snapshot)
+
+    assert not snapshot.exists()
+
+
+def test_raft_snapshot_bridge_publish_race_never_overwrites_competitor(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    fake_process, _, _ = fake_vault_snapshot_bridge()
+    monkeypatch.setattr(tx, "_bounded_process", fake_process)
+    snapshot = tmp_path / "raft.snapshot"
+
+    def racing_link(source_path, destination_path, **kwargs):
+        Path(destination_path).write_bytes(b"competitor")
+        raise FileExistsError(destination_path)
+
+    monkeypatch.setattr(tx.os, "link", racing_link)
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(snapshot)
+
+    assert snapshot.read_bytes() == b"competitor"
+    assert list(tmp_path.glob(".raft-staging-*")) == []
+
+
+def test_raft_snapshot_bridge_mkdtemp_failure_is_sanitized(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    calls = []
+    monkeypatch.setattr(tx.tempfile, "mkdtemp", lambda **kwargs: (_ for _ in ()).throw(OSError("fixture-mkdtemp")))
+    monkeypatch.setattr(tx, "_bounded_process", lambda *args, **kwargs: calls.append(args))
+
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(tmp_path / "raft.snapshot")
+
+    assert calls == [] and list(tmp_path.glob(".raft-staging-*")) == []
+
+
+def test_raft_snapshot_bridge_staging_setup_failure_is_sanitized_and_cleaned(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    real_mkdtemp = tx.tempfile.mkdtemp
+    real_open = tx.os.open
+    created = []
+    calls = []
+
+    def tracked_mkdtemp(**kwargs):
+        value = real_mkdtemp(**kwargs); created.append(Path(value)); return value
+
+    def failing_open(path, flags, *args, **kwargs):
+        if created and Path(path) == created[0]:
+            raise OSError("fixture-staging-open")
+        return real_open(path, flags, *args, **kwargs)
+
+    monkeypatch.setattr(tx.tempfile, "mkdtemp", tracked_mkdtemp)
+    monkeypatch.setattr(tx.os, "open", failing_open)
+    monkeypatch.setattr(tx, "_bounded_process", lambda *args, **kwargs: calls.append(args))
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(tmp_path / "raft.snapshot")
+
+    assert calls == [] and list(tmp_path.glob(".raft-staging-*")) == []
+
+
+def test_raft_snapshot_bridge_rejects_preexisting_host_target(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    snapshot = tmp_path / "raft.snapshot"; snapshot.write_bytes(b"do-not-overwrite")
+    monkeypatch.setattr(tx, "_bounded_process", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not run")))
+
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(snapshot)
+
+    assert snapshot.read_bytes() == b"do-not-overwrite"
+
+
+def test_raft_snapshot_bridge_rejects_preexisting_dangling_symlink_without_commands(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    snapshot = tmp_path / "raft.snapshot"; snapshot.symlink_to(tmp_path / "missing")
+    monkeypatch.setattr(tx, "_bounded_process", lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("must not run")))
+
+    with pytest.raises(tx.Blocked, match="^raft-snapshot-failed$"):
+        backend._create_raft_snapshot(snapshot)
+
+    assert snapshot.is_symlink() and snapshot.readlink() == tmp_path / "missing"
+
+
 def test_control_plane_tree_backup_restores_exact_state_and_absence(monkeypatch, tmp_path):
     source = tmp_path / "source"; source.mkdir()
     backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
@@ -1242,11 +1544,7 @@ def test_control_plane_tree_backup_restores_exact_state_and_absence(monkeypatch,
     backend.control_state_path = state_root
     transaction = tmp_path / "transaction"; transaction.mkdir()
 
-    def fake_process(command, private_input, **kwargs):
-        if "save" in command:
-            Path(command[-1]).write_bytes(b"snapshot")
-        return 0, b""
-
+    fake_process, _, _ = fake_vault_snapshot_bridge()
     monkeypatch.setattr(tx, "_bounded_process", fake_process)
     backend.create_backups(transaction, contract())
     legacy.write_bytes(b"after")
@@ -1272,9 +1570,7 @@ def test_control_plane_tree_restore_rejects_symlink_without_deleting(monkeypatch
     state_root = tmp_path / "state"; state_root.mkdir(); (state_root / "value").write_bytes(b"before")
     backend.control_state_path = state_root
     transaction = tmp_path / "transaction"; transaction.mkdir()
-    def fake_process(command, private_input, **kwargs):
-        if "save" in command: Path(command[-1]).write_bytes(b"snapshot")
-        return 0, b""
+    fake_process, _, _ = fake_vault_snapshot_bridge()
     monkeypatch.setattr(tx, "_bounded_process", fake_process)
     backend.create_backups(transaction, contract())
     (state_root / "value").unlink(); (state_root / "value").symlink_to(tmp_path / "outside")
@@ -1292,10 +1588,7 @@ def test_restore_prevalidates_every_payload_before_first_live_mutation(monkeypat
     backend.control_state_path = tmp_path / "absent-state"
     transaction = tmp_path / "transaction"; transaction.mkdir()
 
-    def fake_process(command, private_input, **kwargs):
-        if "save" in command: Path(command[-1]).write_bytes(b"snapshot")
-        return 0, b""
-
+    fake_process, _, _ = fake_vault_snapshot_bridge()
     monkeypatch.setattr(tx, "_bounded_process", fake_process)
     backend.create_backups(transaction, contract())
     first.write_bytes(b"live-first"); second.write_bytes(b"live-second")
@@ -1567,7 +1860,10 @@ def test_source_has_no_secret_transport_in_argv_env_or_output():
     assert 'health_payload.get("storage_type") != "raft"' in isolated
     assert "raft.db" in isolated
     assert "_fsync_file_and_parent(snapshot)" in executor
+    assert "private_config.unlink()" in executor
+    assert "_fsync_directory(private_config.parent)" in executor
     assert "start_new_session=True" not in executor
+    assert "start_new_session=True" in coordinator
     assert "/var/lib/atius-vault-phase52" in executor
 
 
@@ -1579,8 +1875,105 @@ def test_remote_bootstrap_recomputes_canonical_hash_and_private_digest_ephemeral
     assert "while offset<len(data)" in bootstrap
     assert "hmac.compare_digest" in bootstrap
     assert "private_digest" in bootstrap
+    assert "os.execve" not in bootstrap
+    assert "subprocess.Popen" in bootstrap and "child.wait" in bootstrap
+    assert "os.killpg" in bootstrap and "start_new_session=True" in bootstrap
+    assert "signal.SIGTERM" in bootstrap and "signal.SIGKILL" in bootstrap
+    assert "shutil.rmtree(root" in bootstrap
     assert "private_digest" not in json.dumps(gate.preflight(REPO, tmp_path := Path("/dev/shm/phase52-no-write-seal.json"), run_self_tests=False))
     tmp_path.unlink(missing_ok=True)
+
+
+@pytest.mark.parametrize("child_exit", [0, 2])
+def test_remote_bootstrap_supervisor_propagates_exit_and_removes_private_root(child_exit):
+    bundle, digest = reviewed_bootstrap_fixture(
+        f"raise SystemExit({child_exit})\n".encode()
+    )
+    before = set(Path("/dev/shm").glob("atius-phase52-reviewed-*"))
+    result = subprocess.run(
+        [
+            sys.executable, "-c", gate.REMOTE_BOOTSTRAP,
+            "execute-reviewed-live", digest, "20260722T120000Z-b10c4001",
+            str(int(time.time()) + 60),
+        ],
+        input=bundle, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        timeout=10, check=False,
+    )
+    after = set(Path("/dev/shm").glob("atius-phase52-reviewed-*"))
+
+    assert result.returncode == child_exit
+    assert after - before == set()
+
+
+def test_remote_bootstrap_term_stops_child_and_removes_private_root(tmp_path):
+    pid_file = Path("/dev/shm") / f"phase52-bootstrap-child-{os.getpid()}.pid"
+    pid_file.unlink(missing_ok=True)
+    executor_source = (
+        "import json,os,pathlib,subprocess,sys,time\n"
+        "grandchild=subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)'])\n"
+        f"pathlib.Path({str(pid_file)!r}).write_text(json.dumps([os.getpid(),grandchild.pid]))\n"
+        "time.sleep(30)\n"
+    ).encode()
+    bundle, digest = reviewed_bootstrap_fixture(executor_source)
+    before = set(Path("/dev/shm").glob("atius-phase52-reviewed-*"))
+    process = subprocess.Popen(
+        [
+            sys.executable, "-c", gate.REMOTE_BOOTSTRAP,
+            "execute-reviewed-live", digest, "20260722T120000Z-b10c4002",
+            str(int(time.time()) + 60),
+        ],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    )
+    assert process.stdin is not None
+    process.stdin.write(bundle); process.stdin.close()
+    deadline = time.monotonic() + 5
+    while not pid_file.exists() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert pid_file.exists()
+    child_pids = json.loads(pid_file.read_text())
+    process.send_signal(signal.SIGTERM)
+    process.wait(timeout=5)
+    deadline = time.monotonic() + 2
+    while any(Path(f"/proc/{pid}").exists() for pid in child_pids) and time.monotonic() < deadline:
+        time.sleep(0.02)
+    after = set(Path("/dev/shm").glob("atius-phase52-reviewed-*"))
+    pid_file.unlink(missing_ok=True)
+
+    assert all(not Path(f"/proc/{pid}").exists() for pid in child_pids)
+    assert after - before == set()
+
+
+def test_remote_bootstrap_unexpected_executor_exit_kills_grandchild_group():
+    pid_file = Path("/dev/shm") / f"phase52-bootstrap-orphan-{os.getpid()}.pid"
+    pid_file.unlink(missing_ok=True)
+    executor_source = (
+        "import pathlib,subprocess,sys\n"
+        "grandchild=subprocess.Popen([sys.executable,'-c','import time; time.sleep(30)'])\n"
+        f"pathlib.Path({str(pid_file)!r}).write_text(str(grandchild.pid))\n"
+        "raise SystemExit(2)\n"
+    ).encode()
+    bundle, digest = reviewed_bootstrap_fixture(executor_source)
+    before = set(Path("/dev/shm").glob("atius-phase52-reviewed-*"))
+    result = subprocess.run(
+        [
+            sys.executable, "-c", gate.REMOTE_BOOTSTRAP,
+            "execute-reviewed-live", digest, "20260722T120000Z-b10c4003",
+            str(int(time.time()) + 60),
+        ],
+        input=bundle, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        timeout=10, check=False,
+    )
+    assert pid_file.exists()
+    grandchild_pid = int(pid_file.read_text())
+    deadline = time.monotonic() + 2
+    while Path(f"/proc/{grandchild_pid}").exists() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    after = set(Path("/dev/shm").glob("atius-phase52-reviewed-*"))
+    pid_file.unlink(missing_ok=True)
+
+    assert result.returncode == 2
+    assert not Path(f"/proc/{grandchild_pid}").exists()
+    assert after - before == set()
 
 
 def test_child_environment_is_allowlisted_and_silent_child_times_out(monkeypatch):

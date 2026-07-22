@@ -441,7 +441,7 @@ def _reviewed_bundle(repo: Path, seal_payload: dict[str, Any], rclone_config: by
 
 
 REMOTE_BOOTSTRAP = r'''
-import hashlib,hmac,io,json,os,pathlib,re,shutil,stat,sys,tarfile,tempfile,time
+import hashlib,hmac,io,json,os,pathlib,re,shutil,signal,stat,subprocess,sys,tarfile,tempfile,time
 def pairs(items):
  result={}
  for key,value in items:
@@ -458,6 +458,35 @@ if operation not in {"execute-reviewed-live","status-reviewed-live","resume-revi
 if not re.fullmatch(r"[0-9]{8}T[0-9]{6}Z-[a-f0-9]{8}",transaction_id): raise SystemExit(26)
 if time.time()>=deadline_epoch: raise SystemExit(27)
 root=pathlib.Path(tempfile.mkdtemp(prefix="atius-phase52-reviewed-",dir="/dev/shm")); root.chmod(0o700)
+child=None
+child_group_stopped=False
+def stop_group():
+ global child_group_stopped
+ if child is None or child_group_stopped: return
+ child_group_stopped=True
+ pgid=child.pid
+ try: os.killpg(pgid,signal.SIGTERM)
+ except ProcessLookupError: pass
+ deadline=time.monotonic()+2
+ while time.monotonic()<deadline:
+  child.poll()
+  try: os.killpg(pgid,0)
+  except ProcessLookupError: break
+  time.sleep(0.02)
+ try: os.killpg(pgid,signal.SIGKILL)
+ except ProcessLookupError: pass
+ if child.poll() is None:
+  try: child.wait(timeout=2)
+  except subprocess.TimeoutExpired:
+   try: os.killpg(pgid,signal.SIGKILL)
+   except ProcessLookupError: pass
+   child.wait(timeout=2)
+def stop(signum,frame):
+ if child is not None:
+  try: os.killpg(child.pid,signal.SIGTERM)
+  except ProcessLookupError: pass
+ raise SystemExit(128+signum)
+signal.signal(signal.SIGTERM,stop); signal.signal(signal.SIGINT,stop); signal.signal(signal.SIGHUP,stop)
 try:
  with tarfile.open(fileobj=io.BytesIO(raw),mode="r:") as archive:
   members=archive.getmembers()
@@ -507,8 +536,15 @@ try:
  if time.time()>=deadline_epoch: raise SystemExit(27)
  executor=root/"modules/rustdesk-fleet/tools/phase52-vault-transaction.py"
  child_env={key:value for key in ("PATH","HOME","USER","LOGNAME","LANG","LC_ALL","XDG_RUNTIME_DIR") if (value:=os.getenv(key))}
- os.execve(sys.executable,[sys.executable,str(executor),operation,"--bundle-root",str(root),"--transaction-id",transaction_id,"--expected-hash",expected_hash,"--deadline-epoch",str(deadline_epoch)],child_env)
-finally: shutil.rmtree(root,ignore_errors=True)
+ child=subprocess.Popen([sys.executable,str(executor),operation,"--bundle-root",str(root),"--transaction-id",transaction_id,"--expected-hash",expected_hash,"--deadline-epoch",str(deadline_epoch)],env=child_env,stdin=subprocess.DEVNULL,close_fds=True,start_new_session=True)
+ raise SystemExit(child.wait())
+finally:
+ stop_group()
+ for _ in range(2):
+  try:
+   if root.exists() or root.is_symlink(): shutil.rmtree(root)
+  except OSError: pass
+ if root.exists() or root.is_symlink(): raise SystemExit(29)
 '''
 
 

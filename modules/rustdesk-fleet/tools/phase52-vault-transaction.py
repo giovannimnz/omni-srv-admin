@@ -54,6 +54,8 @@ EXPECTED_PATH_FIELDS = [
 ]
 APPROVED_HORISTIC_SSH_FINGERPRINT = "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0"
 CONTROL_PLANE_STATE_ROOT = Path("/var/lib/atius-vault-phase52")
+VAULT_CONTAINER = "hashicorp-vault-atius"
+PODMAN = Path("/usr/bin/podman")
 SAFE_BLOCKER_TOKENS = frozenset({
     "ambiguous-write-ownership",
     "ambiguous-write-ownership-control-plane-restore-retry",
@@ -1590,14 +1592,100 @@ class LocalVaultBackend(TransactionBackend):
         _, raw = _bounded_process(command, payload)
         return strict_json_bytes(raw)
 
+    def _create_raft_snapshot(self, snapshot: Path) -> None:
+        """Bridge a Vault CLI snapshot from its container namespace to the host."""
+        if snapshot.exists() or snapshot.is_symlink():
+            raise Blocked("raft-snapshot-failed")
+        container_snapshot = f"/tmp/phase52-raft-{secrets.token_hex(16)}.snapshot"
+        staging_dir: Path | None = None
+        staged: Path | None = None
+        container_save_attempted = False
+        published = False
+        snapshot_ready = False
+        operation_failed = False
+        cleanup_failed = False
+        try:
+            staging_dir = Path(tempfile.mkdtemp(prefix=".raft-staging-", dir=snapshot.parent))
+            staging_descriptor = os.open(
+                staging_dir,
+                os.O_RDONLY | os.O_DIRECTORY | os.O_CLOEXEC | os.O_NOFOLLOW,
+            )
+            try:
+                staging_info = os.fstat(staging_descriptor)
+                if (
+                    not stat.S_ISDIR(staging_info.st_mode)
+                    or staging_info.st_uid != os.geteuid()
+                ):
+                    raise Blocked("raft-snapshot-failed")
+                os.fchmod(staging_descriptor, 0o700)
+                os.fsync(staging_descriptor)
+            finally:
+                os.close(staging_descriptor)
+            staged = staging_dir / Path(container_snapshot).name
+            container_save_attempted = True
+            _bounded_process(
+                [str(self.vault), "operator", "raft", "snapshot", "save", container_snapshot],
+                b"", max_stdout=4096,
+            )
+            _bounded_process(
+                [str(PODMAN), "cp", f"{VAULT_CONTAINER}:{container_snapshot}", str(staging_dir)],
+                b"", max_stdout=4096,
+            )
+            descriptor = os.open(staged, os.O_RDONLY | os.O_CLOEXEC | os.O_NOFOLLOW)
+            try:
+                info = os.fstat(descriptor)
+                if (
+                    not stat.S_ISREG(info.st_mode)
+                    or info.st_nlink != 1
+                    or info.st_uid != os.geteuid()
+                    or info.st_size == 0
+                ):
+                    raise Blocked("raft-snapshot-failed")
+                os.fchmod(descriptor, 0o600)
+                os.fsync(descriptor)
+            finally:
+                os.close(descriptor)
+        except (Blocked, OSError):
+            operation_failed = True
+        finally:
+            if container_save_attempted:
+                try:
+                    _bounded_process(
+                        [str(PODMAN), "exec", VAULT_CONTAINER, "rm", "-f", "--", container_snapshot],
+                        b"", max_stdout=4096,
+                    )
+                except (Blocked, OSError):
+                    cleanup_failed = True
+        if not operation_failed and not cleanup_failed and staged is not None:
+            try:
+                os.link(staged, snapshot, follow_symlinks=False)
+                published = True
+                staged.unlink()
+                _fsync_file_and_parent(snapshot)
+                snapshot_ready = True
+            except (Blocked, OSError):
+                operation_failed = True
+        try:
+            if staged is not None and (staged.exists() or staged.is_symlink()):
+                staged.unlink()
+            if staging_dir is not None:
+                staging_dir.rmdir()
+                _fsync_parent(staging_dir)
+        except OSError:
+            operation_failed = True
+        if published and (operation_failed or cleanup_failed or not snapshot_ready):
+            try:
+                snapshot.unlink(missing_ok=True)
+                _fsync_parent(snapshot)
+                snapshot_ready = False
+            except OSError:
+                operation_failed = True
+        if operation_failed or cleanup_failed or not snapshot_ready:
+            raise Blocked("raft-snapshot-failed")
+
     def create_backups(self, transaction_dir: Path, contract: dict[str, Any]) -> dict[str, Any]:
         snapshot = transaction_dir / "raft.snapshot"
-        try: _bounded_process([str(self.vault), "operator", "raft", "snapshot", "save", str(snapshot)], b"", max_stdout=4096)
-        except Blocked: raise Blocked("raft-snapshot-failed")
-        if not snapshot.is_file() or snapshot.stat().st_size == 0:
-            raise Blocked("raft-snapshot-failed")
-        snapshot.chmod(0o600)
-        _fsync_file_and_parent(snapshot)
+        self._create_raft_snapshot(snapshot)
         bundle = transaction_dir / "control-plane.tar"
         records = []
         file_bytes: list[tuple[str, bytes]] = []
@@ -2491,14 +2579,22 @@ def _reviewed_live_context(
     }
     if time.time() >= deadline_epoch:
         raise Blocked("remote-deadline-expired")
+    backend = LocalVaultBackend(
+        root,
+        rclone_config,
+        contract["authorization"]["approved_horistic_ssh_key_fingerprint"],
+    )
+    try:
+        private_config.unlink()
+        _fsync_directory(private_config.parent)
+        private_config.parent.rmdir()
+        _fsync_directory(root)
+    except OSError as exc:
+        raise Blocked("rclone-private-cleanup-failed") from exc
     return {
         "root": root,
         "contract": contract,
-        "backend": LocalVaultBackend(
-            root,
-            rclone_config,
-            contract["authorization"]["approved_horistic_ssh_key_fingerprint"],
-        ),
+        "backend": backend,
         "backup_root": Path(contract["backup"]["root"]),
         "managed_sources": managed_sources,
     }
@@ -2586,6 +2682,24 @@ def resume_reviewed_live(
         shutil.rmtree(context["root"], ignore_errors=True)
 
 
+def _cleanup_reviewed_bundle_root(bundle_root: Path) -> None:
+    """Remove only bootstrap-owned tmpfs roots, including context-load failures."""
+    root = Path(bundle_root)
+    if (
+        not root.is_absolute()
+        or root.parent != Path("/dev/shm")
+        or not re.fullmatch(r"atius-phase52-reviewed-[A-Za-z0-9._-]+", root.name)
+    ):
+        return
+    try:
+        if root.exists() or root.is_symlink():
+            shutil.rmtree(root)
+    except OSError as exc:
+        raise Blocked("reviewed-bundle-cleanup-failed") from exc
+    if root.exists() or root.is_symlink():
+        raise Blocked("reviewed-bundle-cleanup-failed")
+
+
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser()
     sub = parser.add_subparsers(dest="command", required=True)
@@ -2609,12 +2723,15 @@ def main(argv: list[str] | None = None) -> int:
                 "status-reviewed-live": status_reviewed_live,
                 "resume-reviewed-live": resume_reviewed_live,
             }[args.command]
-            result = operation(
-                args.bundle_root,
-                args.transaction_id,
-                args.expected_hash,
-                args.deadline_epoch,
-            )
+            try:
+                result = operation(
+                    args.bundle_root,
+                    args.transaction_id,
+                    args.expected_hash,
+                    args.deadline_epoch,
+                )
+            finally:
+                _cleanup_reviewed_bundle_root(args.bundle_root)
             print(json.dumps(result, sort_keys=True, separators=(",", ":")))
             return 0
         raise Blocked("unknown-command")
