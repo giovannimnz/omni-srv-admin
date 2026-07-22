@@ -11,18 +11,18 @@
 - [x] **SCP-01**: O operador instala RustDesk exatamente em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e `GIOVANNI-W11-PC`, excluindo WSL e `GIOVANNI-S23`.
 - [x] **SCP-02**: O operador usa RustDesk Server OSS enquanto o escopo permanecer single-operator sem SSO, RBAC, MFA, API nativa central do RustDesk ou auditoria humana central; qualquer requisito desses promove um gate explícito para Pro. Uma API operacional custom da Atius, separada e sem se anunciar como `API Server` do client, não altera essa decisão.
 - [x] **SCP-03**: O tráfego usa policy direct-first em produção e forced-relay somente em testes controlados ou fallback comprovado.
-- [ ] **SCP-04**: Server `1.1.15` e clients `1.4.9` ficam pinados por tag, commit, digest/checksum e arquitetura, sem `latest` ou build nos hosts.
+- [x] **SCP-04**: Server `1.1.15` e clients `1.4.9` ficam pinados por tag, commit, digest/checksum e arquitetura, sem `latest` ou build nos hosts.
 - [x] **SCP-05**: Todo artefato e comando GSD do milestone é isolado em `rustdesk-fleet`, preservando a integridade do workstream da Phase 48 e serializando arquivos compartilhados.
 
 ### Server, Edge, and Secrets
 
-- [ ] **SRV-01**: `atius-srv-2` só recebe o primary após usar no máximo 78% antes do deploy, no máximo 80% depois, inodes no máximo 80% e headroom em bytes suficiente para imagem, dois backups e 30 dias de logs.
+- [x] **SRV-01**: O primary só é selecionado após usar no máximo 78% antes do deploy, no máximo 80% depois, inodes no máximo 80% e headroom em bytes suficiente para imagem, dois backups e 30 dias de logs; `horistic-srv` passou esse gate após `atius-srv-2/3` ficarem `NO-GO`.
 - [ ] **SRV-02**: `hbbs` e `hbbr` rodam em Quadlets Podman rootless hardened, `Network=host`, sem privilege/socket amplo e com limite combinado de no máximo 0,8 CPU e 1 GiB RAM.
 - [ ] **SRV-03**: O primary expõe somente TCP 21115-21117 e UDP 21116; TCP 21114/21118/21119 e qualquer listener não aprovado permanecem fechados em IPv4/IPv6 conforme a política definida.
 - [ ] **SRV-04**: `rustdesk.atius.com.br` usa DNS-only e ingress OCI/host deny-first; probes realmente externos comprovam TCP e UDP antes do rollout.
-- [ ] **SRV-05**: A private server key e os cinco permanent passwords existem somente no Vault/runtime efêmero; clients recebem uma única public key pinada e artefatos guardam apenas fingerprints/hashes.
+- [x] **SRV-05**: A private server key e os cinco permanent passwords existem somente no Vault/runtime efêmero; clients recebem uma única public key pinada e artefatos guardam apenas fingerprints/hashes.
 - [ ] **SRV-06**: Três restarts e um boot preservam a fingerprint, a identidade, os dados e os listeners do primary sem crescimento de logs ou recursos fora do contrato.
-- [ ] **SRV-07**: Backup e restore reais do estado do server preservam a mesma public key antes de publicar o edge e antes de instalar clients de frota.
+- [x] **SRV-07**: Backup e restore reais do estado do server preservam a mesma public key antes de publicar o edge e antes de instalar clients de frota.
 
 ### Managed Clients
 
@@ -88,15 +88,15 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 | SCP-01 | Phase 51 | Complete |
 | SCP-02 | Phase 51 | Complete |
 | SCP-03 | Phase 51 | Complete |
-| SCP-04 | Phase 52 | Pending |
+| SCP-04 | Phase 52 | Complete |
 | SCP-05 | Phase 51 | Complete |
-| SRV-01 | Phase 52 | Pending |
+| SRV-01 | Phase 52 | Complete |
 | SRV-02 | Phase 53 | Pending |
 | SRV-03 | Phase 53 | Pending |
 | SRV-04 | Phase 53 | Pending |
-| SRV-05 | Phase 52 | Pending |
+| SRV-05 | Phase 52 | Complete |
 | SRV-06 | Phase 53 | Pending |
-| SRV-07 | Phase 52 | Pending |
+| SRV-07 | Phase 52 | Complete |
 | CLI-01 | Phase 54 | Pending |
 | CLI-02 | Phase 54 | Pending |
 | CLI-03 | Phase 55 | Pending |
@@ -132,4 +132,4 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 
 ---
 *Requirements defined: 2026-07-19*
-*Last updated: 2026-07-20 after accountable OSS acceptance and custom Atius ops API authorization*
+*Last updated: 2026-07-22 after Phase 52 live gate and independent closeout*
