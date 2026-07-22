@@ -44,7 +44,7 @@ set -euo pipefail
 out=$3
 [[ ${FAKE_HYDRATOR_FAIL:-0} == 0 ]] || exit 2
 [[ ${FAKE_HYDRATOR_SKIP_CONFIG:-0} == 0 ]] || exit 0
-printf 'secret-sentinel-config\\n' > "$out/rclone.conf"
+printf '[giovanni-drive]\\ntype = drive\\ntoken = secret-sentinel-config\\n' > "$out/rclone.conf"
 chmod "${FAKE_HYDRATOR_CONFIG_MODE:-600}" "$out/rclone.conf"
 if [[ ${FAKE_HYDRATOR_HARDLINK:-0} == 1 ]]; then ln "$out/rclone.conf" "$out/config-hardlink"; fi
 python3 - "$out" <<'PY'
@@ -111,10 +111,21 @@ case "$verb" in
         fi
       done
     fi
+    if [[ ${FAKE_RCLONE_REFRESH_VALID_CONFIG:-0} == 1 ]]; then
+      args=("$@")
+      for ((i=0; i<${#args[@]}; i++)); do
+        if [[ ${args[$i]} == --config ]]; then
+          printf '[giovanni-drive]\\ntype = drive\\ntoken = refreshed-token\\n' > "${args[$((i+1))]}"
+          chmod 600 "${args[$((i+1))]}"
+        fi
+      done
+    fi
     cp -- "$1" "$FAKE_RCLONE_ROOT/object"
+    [[ ${FAKE_RCLONE_FAIL_COPY_AFTER_WRITE:-0} == 0 ]] || exit 42
     ;;
   cat)
     [[ ${FAKE_RCLONE_FAIL_CAT:-0} == 0 ]] || exit 43
+    if [[ ${FAKE_RCLONE_REJECT_CAT_LOG_LEVEL:-0} == 1 && " $* " == *" --log-level ERROR "* ]]; then exit 44; fi
     if [[ ${FAKE_RCLONE_SLEEP_CAT:-0} == 1 ]]; then sleep 3; fi
     if [[ ${FAKE_RCLONE_CORRUPT:-0} == 1 ]]; then
       printf 'corrupt'
@@ -238,12 +249,29 @@ esac
         verbs = [line.split("\t", 1)[0] for line in self.calls.read_text(encoding="utf-8").splitlines()]
         self.assertEqual(verbs, ["copyto", "cat"])
 
-    def test_upload_failure_blocks_and_does_not_attempt_cat(self) -> None:
+    def test_upload_failure_blocks_after_bounded_remote_reconciliation(self) -> None:
         completed = self._run_copy(FAKE_RCLONE_FAIL_COPY="1")
         self.assertEqual(completed.returncode, 2)
         self.assertEqual(json.loads(completed.stdout)["blocker"], "rclone-copy-failed")
         verbs = [line.split("\t", 1)[0] for line in self.calls.read_text(encoding="utf-8").splitlines()]
-        self.assertEqual(verbs, ["copyto"])
+        self.assertEqual(verbs, ["copyto", "cat"])
+
+    def test_upload_nonzero_after_exact_remote_write_reconciles_to_pass(self) -> None:
+        completed = self._run_copy(FAKE_RCLONE_FAIL_COPY_AFTER_WRITE="1")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["status"], "PASS")
+        self.assertEqual(payload["local_sha256"], payload["remote_sha256"])
+        verbs = [line.split("\t", 1)[0] for line in self.calls.read_text(encoding="utf-8").splitlines()]
+        self.assertEqual(verbs, ["copyto", "cat"])
+
+    def test_remote_rehash_omits_incompatible_cat_log_level_flag(self) -> None:
+        completed = self._run_copy(FAKE_RCLONE_REJECT_CAT_LOG_LEVEL="1")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["status"], "PASS")
+        text = self.copy_script.read_text()
+        self.assertIn('rclone cat \\', text)
+        self.assertIn('--config "$rehash_config" "$destination" \\', text)
 
     def test_hash_mismatch_blocks_without_secret_output(self) -> None:
         completed = self._run_copy(FAKE_RCLONE_CORRUPT="1")
@@ -280,6 +308,11 @@ esac
         changed_config = self._run_copy(FAKE_RCLONE_MUTATE_USED_CONFIG="1")
         self.assertEqual(changed_config.returncode, 2)
         self.assertEqual(json.loads(changed_config.stdout)["blocker"], "rclone-config-snapshot-changed")
+
+    def test_valid_ephemeral_oauth_refresh_is_accepted_while_original_stays_pinned(self) -> None:
+        completed = self._run_copy(FAKE_RCLONE_REFRESH_VALID_CONFIG="1")
+        self.assertEqual(completed.returncode, 0, completed.stderr)
+        self.assertEqual(json.loads(completed.stdout)["status"], "PASS")
 
     def test_destination_outside_allowlist_blocks_before_rclone(self) -> None:
         completed = self._run_copy("giovanni-drive:ATIUS-SRV/SRV-1/forbidden.tar")

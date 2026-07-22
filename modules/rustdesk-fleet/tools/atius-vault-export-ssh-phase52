@@ -33,8 +33,8 @@ readonly legacy_command_max_bytes=16384
 original=${SSH_ORIGINAL_COMMAND-}
 (( ${#original} <= legacy_command_max_bytes )) || exit 64
 case "$original" in
-  rustdesk-phase52-v1) [[ -x "$BACKEND" ]] || exit 2; exec sudo -n -- "$BACKEND" rustdesk-phase52-v1 ;;
-  rclone-giovanni-drive-phase52-v1) [[ -x "$BACKEND" ]] || exit 2; exec sudo -n -- "$BACKEND" rclone-giovanni-drive-phase52-v1 ;;
+  rustdesk-phase52-v1) [[ -f "$BACKEND" && ! -L "$BACKEND" ]] || exit 2; exec sudo -n -- "$BACKEND" rustdesk-phase52-v1 ;;
+  rclone-giovanni-drive-phase52-v1) [[ -f "$BACKEND" && ! -L "$BACKEND" ]] || exit 2; exec sudo -n -- "$BACKEND" rclone-giovanni-drive-phase52-v1 ;;
   atius-vault-env) [[ -x "$LEGACY" ]] || exit 2; exec "$LEGACY" ;;
   atius-vault-env\ *)
     [[ "$original" =~ ^atius-vault-env(\ [A-Za-z0-9_.:-]+)*$ ]] || exit 64

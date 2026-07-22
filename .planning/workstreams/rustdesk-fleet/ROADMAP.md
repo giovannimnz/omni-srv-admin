@@ -2,7 +2,7 @@
 
 ## Overview
 
-O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados por uma sequência de oito gates observáveis: primeiro fixa contrato, threat model e isolamento do workstream; depois prova supply chain, capacity e recoverability; publica um primary mínimo; valida os canários Linux/Windows; instala os três servidores restantes de forma serial; executa a matriz exaustiva; ensaia resiliência e rollback; e somente então fecha UAT e documentação operacional. O caminho preferencial usa `atius-srv-2` como primary quando ele satisfizer o capacity gate; uma falha nesse gate exige decisão de placement explícita e replanejamento para `atius-srv-3`, nunca promoção silenciosa.
+O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados por uma sequência de oito gates observáveis: primeiro fixa contrato, threat model e isolamento do workstream; depois prova supply chain, capacity e recoverability; publica um primary mínimo; valida os canários Linux/Windows; instala os três servidores restantes de forma serial; executa a matriz exaustiva; ensaia resiliência e rollback; e somente então fecha UAT e documentação operacional. O caminho preferencial começou em `atius-srv-2`, mas os gates de capacity mantiveram `atius-srv-2` e `atius-srv-3` em `NO-GO`; após impact review e full-vector PASS, `horistic-srv` foi selecionado explicitamente, sem promoção silenciosa.
 
 ## Milestone Contract
 
@@ -19,7 +19,7 @@ O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados
 ## Phases
 
 - [x] **Phase 51: Contract, Threat Model and Workstream Isolation** - Congelar escopo, decisão OSS/Pro, ameaças, políticas e ownership do workstream antes de qualquer mutação de runtime. (completed 2026-07-20)
-- [ ] **Phase 52: Supply Chain, Capacity and Recoverable Placement** - Provar artefatos, capacity, Vault e restore antes de escolher e autorizar o primary.
+- [x] **Phase 52: Supply Chain, Capacity and Recoverable Placement** - Provar artefatos, capacity, Vault e restore antes de escolher e autorizar o primary. (completed 2026-07-22)
 - [ ] **Phase 53: Primary Relay and Public Edge** - Disponibilizar `hbbs`/`hbbr` hardened, persistentes, observáveis e expostos somente pelas portas aprovadas.
 - [ ] **Phase 54: Heterogeneous Canary — Horistic + Windows** - Provar Linux ARM64 e Windows x86-64, incluindo pre-login, UAC, direct e relay, antes do rollout.
 - [ ] **Phase 55: Serialized Linux Fleet Rollout** - Instalar e validar `atius-srv-2` → `atius-srv-3` → `atius-srv-1`, um host por vez, preservando fallbacks.
@@ -64,12 +64,12 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 **Success Criteria** (what must be TRUE):
 
   1. Server `1.1.15` e clients `1.4.9` estão resolvidos por tag, commit, arquitetura e digest/checksum verificados, sem `latest` nem build nos hosts.
-  2. `atius-srv-2` só é escolhido como primary com uso pre-deploy `<=78%`, inodes `<=80%`, projeção e medição post-deploy `<=80%` e headroom em bytes para imagem, dois backups e 30 dias de logs; se falhar, a escolha de `atius-srv-3` exige capacity/security gate equivalente e replanejamento explícito dos papéis de DR.
+  2. `atius-srv-2` só é escolhido como primary com uso pre-deploy `<=78%`, inodes `<=80%`, projeção e medição post-deploy `<=80%` e headroom em bytes para imagem, dois backups e 30 dias de logs; qualquer fallback, inclusive `atius-srv-3` ou `horistic-srv`, exige capacity/security/recovery gate equivalente e replanejamento explícito dos papéis de DR.
   3. Vault é a autoridade comprovada para a private server key e cinco permanent passwords distintas; automação e evidence model demonstram hidratação efêmera sem revelar valores.
   4. Backup e restore reais, em ambiente isolado, reproduzem a mesma public-key fingerprint antes de edge ou clients de frota serem autorizados.
   5. **Advance gate:** verificadores automatizados de checksums/digests, capacity/inodes/reservas, secret scan e fingerprint, junto do restore live, devem passar antes da Phase 53; projeção, arquivo de backup ou summary-only sem restore não contam.
 
-**Plans**: 6/7 plans executed — gap-closure Gate A/B in progress; phase gate `BLOCKED/no-primary`
+**Plans**: 7/7 plans complete — full gate `PASS`; `horistic-srv` selecionado; Phase 53 `READY`
 
 **Wave 1**
 
@@ -97,7 +97,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 **Wave 7** *(blocked on Wave 6 completion; gap closure)*
 
-- [ ] 52-07-PLAN.md — Implementar Gate A sem writes Vault e, somente após PASS independente, provisionar Gate B create-only e repetir o full gate live.
+- [x] 52-07-PLAN.md — Gate A, Gate B create-only, full gate live e closeout independente concluídos com PASS.
 
 ### Phase 53: Primary Relay and Public Edge
 
@@ -174,8 +174,8 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 **Success Criteria** (what must be TRUE):
 
   1. Cada target completa 30 minutos de sessão, três reconnects e reboot; W11↔Horistic completa soak forced-relay de duas horas com interrupção controlada e métricas de resource/log growth dentro do contrato.
-  2. No placement preferencial em `srv-2`, `atius-srv-3` só recebe o rótulo cold standby após capacity gate e restore da mesma identidade, permanecendo stopped/disabled fora do drill; se `srv-3` for o primary aprovado na Phase 52, ele não é falsamente rotulado standby e o topology contract é replanejado antes deste gate.
-  3. Failover real `srv-2`→`srv-3` e failback convergem DNS/ingress, preservam IDs/config, medem RTO alvo de 30 minutos e provam que nunca há dois primaries ativos.
+  2. Com `horistic-srv` como primary aprovado, nenhum host co-located é tratado como DR; o standby exige failure domain independente, capacity gate e restore da mesma identidade, permanecendo stopped/disabled fora do drill.
+  3. Failover real entre `horistic-srv` e o standby aprovado, seguido de failback, converge DNS/ingress, preserva IDs/config, mede RTO alvo de 30 minutos e prova que nunca há dois primaries ativos.
   4. Upgrade e downgrade do server e dos clients canary, seguidos de rollback real no primary, em um Linux e no Windows, preservam identidade, config, password, direct/relay connectivity e acesso pelos fallbacks.
   5. **Advance gate:** validators automatizados de identidade, single-primary, versões, RTO e soak, mais os drills live timestamped de failover/failback, upgrade/downgrade e rollback, devem passar antes da Phase 58; backup existente, runbook ou summary-only não contam.
 
@@ -204,7 +204,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
-| 52. Supply Chain, Capacity and Recoverable Placement | 6/6 | Blocked | - |
+| 52. Supply Chain, Capacity and Recoverable Placement | 7/7 | Complete | 2026-07-22 |
 | 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |

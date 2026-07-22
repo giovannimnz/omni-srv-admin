@@ -1,37 +1,66 @@
 {
-  "schema": "phase52-gate-b-transaction-evidence-v1",
-  "phase": 52,
-  "gate": "B",
-  "status": "BLOCKED",
-  "reason": "pre-live-seal-pending",
-  "transaction_id": null,
-  "write_count": 0,
-  "vault_versions": [],
+  "coordinator_transport": {
+    "direct_probe": "PASS",
+    "fallback_probe": "NOT_RUN",
+    "forced_relay_policy": "preserve-approved-runtime-policy",
+    "policy": "direct-first",
+    "selected_route": "direct"
+  },
+  "live_write_performed": true,
   "mutation_accounting": {
     "atius-srv-2": {
-      "candidate_data_plane_mutation": false,
-      "authorized_vault_control_plane_mutation": false
+      "authorized_vault_control_plane_mutation": false,
+      "candidate_data_plane_mutation": false
     },
     "atius-srv-3": {
-      "candidate_data_plane_mutation": false,
-      "authorized_vault_control_plane_mutation": true
+      "authorized_vault_control_plane_mutation": true,
+      "candidate_data_plane_mutation": false
     },
-    "vault_data_create_only_write_count": 0
+    "vault_data_create_only_write_count": 7
   },
-  "live_write_performed": false,
-  "vault_write_ownership": "NONE",
-  "ssh_performed": false,
-  "network_performed": false,
-  "secret_material_present": false,
-  "windows_install_performed": false,
   "network_listener_created": false,
-  "send_attempted": false,
-  "remote_transaction_exists": false,
-  "coordinator_transport": {
-    "policy": "direct-first",
-    "direct_probe": "NOT_RUN",
-    "fallback_probe": "NOT_RUN",
-    "selected_route": "none",
-    "forced_relay_policy": "preserve-approved-runtime-policy"
-  }
+  "schema": "phase52-gate-b-transaction-evidence-v1",
+  "secret_material_present": false,
+  "status": "PASS",
+  "transaction_id": "20260722T210600Z-c32c0a66",
+  "vault_versions": [
+    {
+      "id": "rustdesk-server-identity",
+      "vault_path": "kv/atius/rustdesk/server",
+      "version": 1
+    },
+    {
+      "id": "rustdesk-password-atius-srv-1",
+      "vault_path": "kv/atius/rustdesk/targets/atius-srv-1",
+      "version": 1
+    },
+    {
+      "id": "rustdesk-password-atius-srv-2",
+      "vault_path": "kv/atius/rustdesk/targets/atius-srv-2",
+      "version": 1
+    },
+    {
+      "id": "rustdesk-password-atius-srv-3",
+      "vault_path": "kv/atius/rustdesk/targets/atius-srv-3",
+      "version": 1
+    },
+    {
+      "id": "rustdesk-password-horistic-srv",
+      "vault_path": "kv/atius/rustdesk/targets/horistic-srv",
+      "version": 1
+    },
+    {
+      "id": "rustdesk-password-giovanni-w11-pc",
+      "vault_path": "kv/atius/rustdesk/targets/giovanni-w11-pc",
+      "version": 1
+    },
+    {
+      "id": "rclone-config",
+      "vault_path": "kv/atius/fleet-backup/rclone/giovanni-drive",
+      "version": 1
+    }
+  ],
+  "vault_write_ownership": "FSYNCED_WAL_ACK",
+  "windows_install_performed": false,
+  "write_count": 7
 }

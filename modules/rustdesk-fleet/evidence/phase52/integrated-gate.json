@@ -3,20 +3,20 @@
     {
       "candidate": "atius-srv-2",
       "first_non_pass_stage": "capacity",
-      "record_digest": "3f35b7a4e2cb58a3b2a1d939831bce85c51b393a46f01e3ca0436fe0367410fc",
+      "record_digest": "0eef58be5e67afe0826c69b9cb2f4c8d3d3eef968be19029d06628912ac53790",
       "verdict": "NO-GO"
     },
     {
       "candidate": "atius-srv-3",
       "first_non_pass_stage": "capacity",
-      "record_digest": "722292e1db9f688d36f73890be4cd333644a06c1c3cc7ff851a4d6e36ceb6a74",
+      "record_digest": "c70e1b5d74f83bb1d0d70d7de72324e0ef2a2b3eaa41000faaf3f4d150c321af",
       "verdict": "NO-GO"
     },
     {
       "candidate": "horistic-srv",
-      "first_non_pass_stage": "vault",
-      "record_digest": "9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737",
-      "verdict": "NO-GO"
+      "first_non_pass_stage": null,
+      "record_digest": "78ba5e00e406318d6c70d72965c765cca4fd4034ea0d163f5b6540a1dd9d4bc4",
+      "verdict": "PASS"
     }
   ],
   "checks": [
@@ -30,138 +30,59 @@
     },
     {
       "evidence_ids": [
-        "P52-EV-FULL-CAPACITY-ATIUS-SRV-2",
-        "P52-EV-FULL-CAPACITY-ATIUS-SRV-3",
         "P52-EV-FULL-CAPACITY-HORISTIC-SRV"
       ],
-      "findings": [
-        {
-          "category": "no-selected-candidate",
-          "location": "attempts.*.stages.capacity",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "pre-disk-threshold-exceeded",
-          "location": "attempts.*.stages.capacity",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "projected-post-threshold-exceeded",
-          "location": "attempts.*.stages.capacity",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-CAPACITY-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
         "P52-EV-PLACEMENT"
       ],
-      "findings": [
-        {
-          "category": "placement-pending",
-          "location": "contract",
-          "path": "modules/rustdesk-fleet/contracts/placement-decision.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-PLACEMENT-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
         "P52-EV-VAULT-READINESS-HORISTIC-SRV"
       ],
-      "findings": [
-        {
-          "category": "no-selected-candidate",
-          "location": "attempts.*.stages.vault",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "predecessor-stage-not-pass",
-          "location": "attempts.*.stages.vault",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "rustdesk-vault-backend-missing",
-          "location": "attempts.*.stages.vault",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-VAULT-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
-        "P52-EV-BACKUP"
+        "P52-EV-BACKUP-READINESS-HORISTIC-SRV"
       ],
-      "findings": [
-        {
-          "category": "no-selected-candidate",
-          "location": "attempts.horistic-srv.readiness",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "predecessor-stage-not-pass",
-          "location": "attempts.horistic-srv.readiness",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "rclone-config-missing",
-          "location": "attempts.horistic-srv.readiness",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-BACKUP-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
-        "P52-EV-RESTORE"
+        "P52-EV-RESTORE-HORISTIC-SRV"
       ],
-      "findings": [
-        {
-          "category": "no-selected-candidate",
-          "location": "attempts.*.stages.restore",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "predecessor-stage-not-pass",
-          "location": "attempts.*.stages.restore",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-RESTORE-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
-        "P52-EV-ROLLBACK-NOOP-HORISTIC-SRV"
+        "P52-EV-ROLLBACK-HORISTIC-SRV"
       ],
-      "findings": [
-        {
-          "category": "rollback-requires-current-capacity-pass",
-          "location": "attempts.*.stages.rollback",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-ROLLBACK-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
-        "P52-EV-TOPOLOGY"
+        "P52-EV-TOPOLOGY-HORISTIC-SRV"
       ],
-      "findings": [
-        {
-          "category": "no-selected-candidate",
-          "location": "contract",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        }
-      ],
+      "findings": [],
       "id": "P52-TOPOLOGY-001",
-      "status": "BLOCKED"
+      "status": "PASS"
     },
     {
       "evidence_ids": [
@@ -192,7 +113,7 @@
     "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
     "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
   },
-  "generated_at": "2026-07-22T05:50:46Z",
+  "generated_at": "2026-07-22T22:41:53Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-HORISTIC-TOPOLOGY-IMPACT-REVIEW.md",
@@ -208,7 +129,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/contracts/placement-decision.json",
-      "sha256": "9a0dde4c82a879618e1969ac140b6a1c03a9a0d20b648222aecf0225fa292b8c"
+      "sha256": "386ea86a0da95ad6df1ce137525dc0341e8fea595b4b91b5646ca03987a20e89"
     },
     {
       "path": "modules/rustdesk-fleet/contracts/scope.json",
@@ -224,7 +145,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/evidence/ledger.json",
-      "sha256": "fdf9c1fb071d6ea8c72280c165ba9793199420fd7dea7ba3cc039fff8581b047"
+      "sha256": "8e10bd05465476af45cd9e59e8f90a28a835403d67faff8e98e69ba2d5748607"
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase48-baseline.json",
@@ -232,7 +153,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json",
-      "sha256": "fc0c4411e3529fb74fe85150dc95b9ccb14e0607224ffcb727225d16585959ed"
+      "sha256": "2bd7170d8295171fc53c163c81b0283dabe2281e9b967d90af11eddf78b8c3b0"
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase52/supply-observation.json",
@@ -240,7 +161,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
-      "sha256": "f47e955619936615d34dc98b8fca58048514675765e988eb596bbbb05ce09846"
+      "sha256": "e1c5ccf280f86ea0874c96cb60e3410e7db25650fab7545196f561bdd4917454"
     },
     {
       "path": "modules/rustdesk-fleet/tools/validate_phase51.py",
@@ -248,18 +169,18 @@
     },
     {
       "path": "modules/rustdesk-fleet/tools/validate_phase52.py",
-      "sha256": "9ffd546174230788c166300cfbc7365340d22485258313cf63df653671d3e243"
+      "sha256": "a58155d77b367289ac021ad5d28d0db47a3b090574cbed4055ba9d94e1c9ef5a"
     }
   ],
-  "overall_status": "BLOCKED",
+  "overall_status": "PASS",
   "phase": 52,
-  "phase53_advance_status": "BLOCKED",
-  "phase53_topology_review_status": "BLOCKED",
+  "phase53_advance_status": "READY",
+  "phase53_topology_review_status": "PASS",
   "public_listener_created": false,
   "schema_version": 1,
   "secret_material_present": false,
-  "selected_candidate": null,
-  "source_head": "a8ae1c2df3b019e2abdd4999c1e90c979352d53b",
+  "selected_candidate": "horistic-srv",
+  "source_head": "c50fb07130d3a28dd853a6dd356dc675ccdc6403",
   "windows_access_proven": false,
   "windows_install_performed": false,
   "workstream": "rustdesk-fleet"

@@ -373,6 +373,19 @@ def hbbs_liveness(name: str, state_dir: Path) -> bool:
     return container_running(name) and sqlite_readiness
 
 
+def wait_hbbs_liveness(
+    name: str, state_dir: Path, *, timeout_seconds: float = 15.0, poll_interval: float = 0.1
+) -> bool:
+    deadline = time.monotonic() + timeout_seconds
+    while True:
+        if hbbs_liveness(name, state_dir):
+            return True
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            return False
+        time.sleep(min(poll_interval, remaining))
+
+
 def strict_json_bytes(raw: bytes) -> dict[str, Any]:
     def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
         result: dict[str, Any] = {}
@@ -399,6 +412,27 @@ def secure_regular(path: Path, *, mode: int = 0o600, maximum: int = ARCHIVE_MAX_
         raise RecoveryBlocked("file-owner-mode-invalid")
     if info.st_size <= 0 or info.st_size > maximum:
         raise RecoveryBlocked("file-size-invalid")
+
+
+def normalize_hbbs_sqlite(path: Path) -> None:
+    try:
+        resolved = path.resolve(strict=True)
+        info = path.lstat()
+    except OSError as exc:
+        raise RecoveryBlocked("file-identity-invalid") from exc
+    if (
+        resolved != path
+        or path.is_symlink()
+        or not stat.S_ISREG(info.st_mode)
+        or info.st_uid != os.getuid()
+        or info.st_nlink != 1
+        or stat.S_IMODE(info.st_mode) not in {0o600, 0o644}
+        or info.st_size <= 0
+        or info.st_size > SQLITE_MAX_BYTES
+    ):
+        raise RecoveryBlocked("file-owner-mode-invalid")
+    os.chmod(path, 0o600)
+    secure_regular(path, maximum=SQLITE_MAX_BYTES)
 
 
 def sqlite_snapshot(source: Path, destination: Path) -> dict[str, Any]:

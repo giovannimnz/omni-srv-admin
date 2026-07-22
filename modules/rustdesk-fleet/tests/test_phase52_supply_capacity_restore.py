@@ -638,7 +638,8 @@ def test_capacity_finalize_reconciles_actuals_and_remaining_reservations() -> No
 
 def test_placement_derives_strict_serial_chain_and_recomputes_stored_verdict() -> None:
     placement = _placement()
-    assert validator.validate_placement_decision(placement).status == "BLOCKED"
+    assert validator.validate_placement_decision(placement).status == "PASS"
+    assert placement["selected_candidate"] == "horistic-srv"
 
     srv2 = _candidate("atius-srv-2", evaluated=True, status="PASS")
     srv2["verdict"] = "PASS"
@@ -858,14 +859,14 @@ def test_capacity_live_evidence_is_serial_current_and_not_placement() -> None:
     assert chain["capacity_eligible_candidate"] == "horistic-srv"
     assert chain["selected_candidate"] is None
     assert chain["mutation_performed"] is False
-    assert placement["selected_candidate"] is None
+    assert placement["selected_candidate"] == "horistic-srv"
     assert [row["capacity_status"] for row in placement["candidates"]] == ["NO-GO", "NO-GO", "PASS"]
     assert [row["vault_status"] for row in placement["candidates"]] == [
         "SKIPPED_DUE_TO_GATE",
         "SKIPPED_DUE_TO_GATE",
-        "BLOCKED",
+        "PASS",
     ]
-    assert validator.load_json_strict(FULL_GATE_SUMMARY_PATH)["overall_status"] == "BLOCKED"
+    assert validator.load_json_strict(FULL_GATE_SUMMARY_PATH)["overall_status"] == "PASS"
     horistic = chain["attempts"][2]["horistic_colocation"]
     assert horistic["phase52_review_status"] == "PASS"
     assert horistic["phase53_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
@@ -1887,24 +1888,20 @@ def test_vault_restore_mutation_catalog_is_complete_and_non_secret() -> None:
     assert "permanent_password_value" not in serialized
 
 
-def test_report_builds_exact_blocked_check_set_from_current_no_primary() -> None:
+def test_report_builds_exact_pass_check_set_from_current_horistic_primary() -> None:
     report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
     assert [item["id"] for item in report["checks"]] == list(validator.PHASE52_CHECK_ORDER)
     assert len(report["checks"]) == len(set(item["id"] for item in report["checks"])) == 11
-    assert report["overall_status"] == "BLOCKED"
-    assert report["selected_candidate"] is None
-    assert report["phase53_advance_status"] == "BLOCKED"
-    assert report["phase53_topology_review_status"] == "BLOCKED"
+    assert report["overall_status"] == "PASS"
+    assert report["selected_candidate"] == "horistic-srv"
+    assert report["phase53_advance_status"] == "READY"
+    assert report["phase53_topology_review_status"] == "PASS"
     assert report["windows_install_performed"] is False
     assert report["windows_access_proven"] is False
     assert report["secret_material_present"] is False
     by_id = {item["id"]: item for item in report["checks"]}
     assert by_id["P52-SUPPLY-001"]["status"] == "PASS"
-    assert by_id["P52-PLACEMENT-001"]["status"] == "BLOCKED"
-    assert by_id["P52-VAULT-001"]["status"] == "BLOCKED"
-    backup_findings = {item["category"] for item in by_id["P52-BACKUP-001"]["findings"]}
-    assert {"no-selected-candidate", "predecessor-stage-not-pass"}.issubset(backup_findings)
-    assert by_id["P52-TOPOLOGY-001"]["status"] == "BLOCKED"
+    assert all(item["status"] == "PASS" and item["findings"] == [] for item in report["checks"])
     assert by_id["P52-REPORT-001"]["status"] == "PASS"
     assert by_id["P51-WS-001"]["status"] == "PASS"
     assert by_id["P51-P48-001"]["status"] == "PASS"
@@ -1940,13 +1937,13 @@ def test_report_rejects_duplicate_stale_self_hash_secret_and_stored_verdict_drif
     assert "secret-material" in _categories(result)
 
     verdict = copy.deepcopy(report)
-    verdict["overall_status"] = "PASS"
+    verdict["overall_status"] = "BLOCKED"
     result = validator.validate_phase52_report(verdict, REPO)
     assert result.status == "FAIL"
     assert "stored-verdict-drift" in _categories(result)
 
 
-def test_report_outputs_are_atomic_parity_and_topology_is_fail_closed(tmp_path: Path) -> None:
+def test_report_outputs_are_atomic_parity_and_topology_is_ready(tmp_path: Path) -> None:
     report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
     integrated = tmp_path / "integrated-gate.json"
     machine = tmp_path / "52-GATE-REPORT.json"
@@ -1964,29 +1961,26 @@ def test_report_outputs_are_atomic_parity_and_topology_is_fail_closed(tmp_path: 
     assert integrated.read_bytes() == machine.read_bytes()
     assert validator.validate_phase52_output_parity(report, integrated, machine, markdown).status == "PASS"
     topology_text = topology.read_text(encoding="utf-8")
-    assert "**Status:** BLOCKED" in topology_text
-    assert "**Selected candidate:** `none`" in topology_text
-    assert "**Phase 53 advance status:** `BLOCKED`" in topology_text
-    assert "no-selected-candidate" in topology_text
-    assert "predecessor-stage-not-pass" in topology_text
+    assert "**Status:** PASS" in topology_text
+    assert "**Selected candidate:** `horistic-srv`" in topology_text
+    assert "**Phase 53 advance status:** `READY`" in topology_text
+    assert "Current blockers: none." in topology_text
     assert "Phase 54" in topology_text and "Phase 57" in topology_text
     assert "windows_install_performed=false" in topology_text
 
 
-def test_blocked_report_does_not_promote_phase52_ledger_rows() -> None:
+def test_pass_report_promotes_exact_phase52_ledger_rows() -> None:
     report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
     ledger = validator.load_json_strict(LEDGER_PATH)
-    before = copy.deepcopy(ledger)
     updated, promoted = validator.update_phase52_ledger(ledger, report)
-    assert promoted is False
-    assert updated == before
+    assert promoted is True
     rows = {
         item["requirement_id"]: item
         for item in updated["requirements"]
         if item["requirement_id"] in validator.PHASE52_REQUIREMENTS
     }
     assert set(rows) == set(validator.PHASE52_REQUIREMENTS)
-    assert all(item["status"] == "pending" and item["last_verified_at"] is None for item in rows.values())
+    assert all(item["status"] == "pass" and item["last_verified_at"] == report["generated_at"] for item in rows.values())
 
 
 def test_report_cli_accepts_canonical_output_paths() -> None:
@@ -2217,6 +2211,12 @@ def test_gate_a_corrective_dispatcher_preserves_legacy_grammar() -> None:
     assert "rustdesk-phase52-v1" in text
     assert "rclone-giovanni-drive-phase52-v1" in text
     assert "eval" not in text
+
+
+def test_gate_a_dispatcher_does_not_require_caller_execute_permission_on_root_backend() -> None:
+    text = VAULT_CONTROL_DISPATCHER_PATH.read_text(encoding="utf-8")
+    assert '[[ -x "$BACKEND" ]]' not in text
+    assert '[[ -f "$BACKEND" && ! -L "$BACKEND" ]]' in text
 
 
 def test_gate_a_dispatcher_uses_canonical_live_root_paths_for_exact_sudoers_match(
@@ -2571,6 +2571,39 @@ def _load_phase52_live_drill() -> tuple[object, object]:
     sys.modules[live_spec.name] = live
     live_spec.loader.exec_module(live)
     return recovery, live
+
+
+def test_gate_a_hbbs_readiness_waits_for_detached_container_startup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recovery, _ = _load_phase52_live_drill()
+    probes = iter((False, False, True))
+    monkeypatch.setattr(recovery, "hbbs_liveness", lambda _name, _state: next(probes))
+    monkeypatch.setattr(recovery.time, "sleep", lambda _seconds: None)
+    assert recovery.wait_hbbs_liveness("fixture", tmp_path, timeout_seconds=1.0)
+    monkeypatch.setattr(recovery, "hbbs_liveness", lambda _name, _state: False)
+    assert not recovery.wait_hbbs_liveness("fixture", tmp_path, timeout_seconds=0.0)
+
+
+def test_gate_a_hbbs_sqlite_mode_is_normalized_only_after_exact_identity_checks(
+    tmp_path: Path,
+) -> None:
+    recovery, _ = _load_phase52_live_drill()
+    database = tmp_path / "db_v2.sqlite3"
+    database.write_bytes(b"sqlite-fixture")
+    database.chmod(0o644)
+    recovery.normalize_hbbs_sqlite(database)
+    assert stat.S_IMODE(database.stat().st_mode) == 0o600
+
+    database.chmod(0o666)
+    with pytest.raises(recovery.RecoveryBlocked, match="file-owner-mode-invalid"):
+        recovery.normalize_hbbs_sqlite(database)
+
+    database.chmod(0o600)
+    hardlink = tmp_path / "db-hardlink"
+    os.link(database, hardlink)
+    with pytest.raises(recovery.RecoveryBlocked, match="file-owner-mode-invalid"):
+        recovery.normalize_hbbs_sqlite(database)
 
 
 def test_gate_a_fourth_cycle_managed_source_verifier_checks_every_pin(tmp_path: Path) -> None:

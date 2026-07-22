@@ -206,8 +206,17 @@ def test_requirement_ledger_contract() -> None:
     assert [row["requirement_id"] for row in payload["requirements"]] == list(canonical)
     assert len({evidence_id for row in payload["requirements"] for evidence_id in row["evidence_ids"]}) == 36
     passed = {row["requirement_id"] for row in payload["requirements"] if row["status"] == "pass"}
-    assert passed == {"SCP-01", "SCP-02", "SCP-03", "SCP-05"}
-    assert sum(row["status"] == "pending" for row in payload["requirements"]) == 32
+    assert passed == {
+        "SCP-01",
+        "SCP-02",
+        "SCP-03",
+        "SCP-04",
+        "SCP-05",
+        "SRV-01",
+        "SRV-05",
+        "SRV-07",
+    }
+    assert sum(row["status"] == "pending" for row in payload["requirements"]) == 28
     assert set(payload["evidence_catalog"]) == {f"RDF-V19-{requirement}" for requirement in passed}
     for evidence in payload["evidence_catalog"].values():
         evidence_path = REPO / evidence["path"]

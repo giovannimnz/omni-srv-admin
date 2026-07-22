@@ -18,6 +18,7 @@ source_archive=''
 destination=''
 rclone_config=''
 workdir=''
+rehash_workdir=''
 expected_size_bytes=''
 
 emit_error() {
@@ -40,6 +41,10 @@ cleanup() {
       "$workdir/rclone.snapshot.conf" \
       "$workdir/provenance.snapshot.json"
     rmdir -- "$workdir" 2>/dev/null || true
+  fi
+  if [[ -n "$rehash_workdir" && -d "$rehash_workdir" && ! -L "$rehash_workdir" ]]; then
+    rm -f -- "$rehash_workdir/rclone.conf" "$rehash_workdir/$PROVENANCE_BASENAME"
+    rmdir -- "$rehash_workdir" 2>/dev/null || true
   fi
   exit "$rc"
 }
@@ -80,6 +85,19 @@ validate_owned_parent() {
 
 file_identity() {
   stat -c '%d:%i:%u:%h:%a:%s' -- "$1"
+}
+
+validate_rclone_config_shape() {
+  python3 - "$1" "$APPROVED_REMOTE" <<'PY' >/dev/null
+import configparser,pathlib,sys
+path=pathlib.Path(sys.argv[1]); expected=sys.argv[2]
+try:
+ parser=configparser.RawConfigParser(strict=True,interpolation=None)
+ parser.read_string(path.read_text(encoding="utf-8"))
+ if parser.sections()!=[expected] or parser.defaults(): raise ValueError
+except (configparser.Error,OSError,UnicodeError,ValueError):
+ raise SystemExit(1)
+PY
 }
 
 copy_exclusive_bounded() {
@@ -202,6 +220,7 @@ snapshot_stable_file "$provenance" "$provenance_snapshot" 600 >/dev/null || die 
 
 config_identity=$(file_identity "$rclone_config")
 config_original_identity=$config_identity
+config_original_sha256=$(sha256sum -- "$rclone_config" | awk '{print $1}')
 IFS=: read -r config_device config_inode config_uid _ <<< "$config_identity"
 python3 - \
   "$provenance_snapshot" "$PROVENANCE_SCHEMA" "$(basename -- "$rclone_config")" \
@@ -268,9 +287,9 @@ local_sha256=${source_snapshot_record#*$'\t'}
 size_bytes=$(stat -c '%s' -- "$source_snapshot")
 [[ "$size_bytes" == "$expected_size_bytes" && "$size_bytes" -le "$MAX_ARCHIVE_BYTES" ]] || die 'source-size-mismatch'
 snapshot_identity=$(file_identity "$source_snapshot")
-config_snapshot_identity=$(file_identity "$config_snapshot")
 
-if ! timeout "$timeout_seconds" rclone copyto "$source_snapshot" "$destination" \
+copy_status=0
+timeout "$timeout_seconds" rclone copyto "$source_snapshot" "$destination" \
   --config "$config_snapshot" \
   --transfers 1 \
   --checkers 1 \
@@ -279,17 +298,24 @@ if ! timeout "$timeout_seconds" rclone copyto "$source_snapshot" "$destination" 
   --low-level-retries 3 \
   --immutable \
   --log-level ERROR \
-  >/dev/null 2>/dev/null; then
-  die 'rclone-copy-failed'
-fi
+  >/dev/null 2>/dev/null || copy_status=$?
 
-remote_sha256=$(
-  timeout "$timeout_seconds" rclone cat "$destination" \
-    --config "$config_snapshot" \
+rehash_workdir=$(mktemp -d "$runtime_root/rustdesk-phase52-rehash.XXXXXX") || die 'rclone-rehash-workdir-failed'
+chmod 700 "$rehash_workdir"
+validate_owned_parent "$rehash_workdir" 700 || die 'rclone-rehash-workdir-failed'
+if ! "$hydrator" --materialize --output-dir "$rehash_workdir" >/dev/null 2>/dev/null; then
+  die 'rclone-rehash-failed'
+fi
+rehash_config="$rehash_workdir/rclone.conf"
+rehash_config=$(canonical_file "$rehash_config") || die 'rclone-rehash-failed'
+validate_owned_file "$rehash_config" 600 || die 'rclone-rehash-failed'
+
+if ! remote_sha256=$(
+  timeout "$timeout_seconds" rclone cat \
+    --config "$rehash_config" "$destination" \
     --bwlimit "$bwlimit" \
     --retries 2 \
     --low-level-retries 3 \
-    --log-level ERROR \
     2>/dev/null | python3 -c 'import hashlib,sys
 expected=int(sys.argv[1]); total=0; digest=hashlib.sha256()
 while True:
@@ -300,14 +326,24 @@ while True:
  digest.update(chunk)
 if total!=expected: raise SystemExit(2)
 print(digest.hexdigest())' "$expected_size_bytes"
-) || die 'rclone-rehash-failed'
+); then
+  if (( copy_status != 0 )); then
+    die 'rclone-copy-failed'
+  fi
+  die 'rclone-rehash-failed'
+fi
 
 [[ "$remote_sha256" == "$local_sha256" ]] || die 'remote-hash-mismatch'
+rm -f -- "$rehash_workdir/rclone.conf" "$rehash_workdir/$PROVENANCE_BASENAME"
+rmdir -- "$rehash_workdir" || die 'rclone-rehash-workdir-cleanup-failed'
+rehash_workdir=''
 [[ $(file_identity "$source_snapshot") == "$snapshot_identity" ]] || die 'source-snapshot-changed'
 [[ $(sha256sum -- "$source_snapshot" | awk '{print $1}') == "$local_sha256" ]] || die 'source-snapshot-changed'
-[[ $(file_identity "$config_snapshot") == "$config_snapshot_identity" ]] || die 'rclone-config-snapshot-changed'
+validate_owned_file "$config_snapshot" 600 || die 'rclone-config-snapshot-changed'
+(( $(stat -c '%s' -- "$config_snapshot") <= 65536 )) || die 'rclone-config-snapshot-changed'
+validate_rclone_config_shape "$config_snapshot" || die 'rclone-config-snapshot-changed'
 [[ $(file_identity "$rclone_config") == "$config_original_identity" ]] || die 'rclone-config-snapshot-changed'
-cmp -s -- "$rclone_config" "$config_snapshot" || die 'rclone-config-snapshot-changed'
+[[ $(sha256sum -- "$rclone_config" | awk '{print $1}') == "$config_original_sha256" ]] || die 'rclone-config-snapshot-changed'
 
 python3 - "$destination" "$local_sha256" "$remote_sha256" "$size_bytes" "$RETENTION" <<'PY'
 import json

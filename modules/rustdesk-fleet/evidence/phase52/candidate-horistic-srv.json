@@ -1,27 +1,88 @@
 {
   "authorized_live_write_candidate": "horistic-srv",
   "candidate": "horistic-srv",
-  "first_non_pass_stage": "vault",
+  "first_non_pass_stage": null,
   "persisted_before_fallback": true,
   "public_listener_created": false,
-  "record_digest": "9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737",
+  "record_digest": "78ba5e00e406318d6c70d72965c765cca4fd4034ea0d163f5b6540a1dd9d4bc4",
   "schema_version": 1,
   "secret_material_present": false,
   "stages": {
     "backup": {
-      "evidence_ids": [],
-      "findings": [
-        "predecessor-stage-not-pass"
-      ],
-      "input_digest": "d096c1020c750cc923ba364e4ada3cd41bff56e3366356169e751b56ef211015",
-      "mutation": {
-        "classes": [],
-        "performed": false
+      "action_details": {
+        "backup_a": {
+          "archive_sha256": "96bf0e3a7fa6b196084344feebb277b5044afbd0cd6a58e61f8c0b07230c27ec",
+          "destination_class": "candidate-local",
+          "entries": [
+            "db_v2.sqlite3"
+          ],
+          "generation_id": "5aba73b0a8e27413a0391c55fdfa6e23",
+          "label": "A",
+          "member_sha256": "e9dbf62ad709b5ba5c81a613de67c37479ebd6184934bfa688515bf10796a1c9",
+          "mode": "0600",
+          "schema": "phase52-backup-manifest-v2",
+          "secret_material_present": false,
+          "size_bytes": 26112,
+          "source_snapshot_sha256": "e9dbf62ad709b5ba5c81a613de67c37479ebd6184934bfa688515bf10796a1c9",
+          "transaction_id": "d9ffe265f7a60b6ec370edb3f1649365"
+        },
+        "backup_b": {
+          "archive_sha256": "96bf0e3a7fa6b196084344feebb277b5044afbd0cd6a58e61f8c0b07230c27ec",
+          "destination_class": "modules/fleet-backup:gdrive",
+          "entries": [
+            "db_v2.sqlite3"
+          ],
+          "generation_id": "96fa802d9fd30ffe0692ee68e2d2b5a6",
+          "label": "B",
+          "local_sha256": "96bf0e3a7fa6b196084344feebb277b5044afbd0cd6a58e61f8c0b07230c27ec",
+          "member_sha256": "e9dbf62ad709b5ba5c81a613de67c37479ebd6184934bfa688515bf10796a1c9",
+          "mode": "0600",
+          "remote_object": "giovanni-drive:ATIUS-SRV/HORISTIC-SRV/Backup/RustDesk/phase52/backup-b/d9ffe265f7a60b6ec370edb3f1649365.tar",
+          "remote_sha256": "96bf0e3a7fa6b196084344feebb277b5044afbd0cd6a58e61f8c0b07230c27ec",
+          "retention": {
+            "deletion_requires_new_explicit_approval": true,
+            "retain_until": "phase57-pass-plus-30-days"
+          },
+          "schema": "phase52-backup-manifest-v2",
+          "secret_material_present": false,
+          "size_bytes": 26112,
+          "source_snapshot_sha256": "e9dbf62ad709b5ba5c81a613de67c37479ebd6184934bfa688515bf10796a1c9",
+          "transaction_id": "d9ffe265f7a60b6ec370edb3f1649365"
+        },
+        "remote_rehash_verified": true,
+        "sqlite_ready": true,
+        "state_only": [
+          "db_v2.sqlite3"
+        ]
       },
-      "observed_at": "2026-07-22T05:50:46Z",
-      "predecessor_stage": "vault",
+      "evidence_ids": [
+        "P52-EV-BACKUP-READINESS-HORISTIC-SRV"
+      ],
+      "findings": [],
+      "input_digest": "e96c7686961f0176ad2b67e7af3688c5807a1a12282dee6490af50723d67acc7",
+      "mutation": {
+        "classes": [
+          "isolated-source-runtime",
+          "isolated-hbbs-container-lifecycle",
+          "state-only-backup-a",
+          "state-only-backup-b-local",
+          "state-only-backup-b-remote-create",
+          "redacted-evidence-write"
+        ],
+        "cleanup_pending": [
+          "source-runtime",
+          "disposable-partial"
+        ],
+        "performed": true,
+        "retained_artifacts": [
+          "backup-a",
+          "backup-b-local",
+          "backup-b-remote"
+        ]
+      },
+      "observed_at": "2026-07-22T22:15:44Z",
       "secret_material_present": false,
-      "status": "SKIPPED_DUE_TO_GATE"
+      "status": "PASS"
     },
     "capacity": {
       "calculations": [
@@ -50,101 +111,160 @@
         "P52-EV-FULL-CAPACITY-HORISTIC-SRV"
       ],
       "findings": [],
-      "input_digest": "06bd437470f54d108a0ed8876715bf8817335bc95376e94522c65f5c288307fe",
+      "input_digest": "c6be4d85b9ffdd6835bdf4352b328ab837717d8a0e0ac791a6ea60ad46b81b43",
       "mutation": {
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:50:45Z",
+      "observed_at": "2026-07-22T22:15:16Z",
       "read_only": true,
       "samples": [
         {
           "architecture": "aarch64",
-          "available_bytes": 58617274368,
+          "available_bytes": 43521339392,
           "command_version": "phase52-capacity-read-only-v2",
           "filesystem_source": "/dev/sda1",
           "hostname": "horistic-srv",
-          "inode_available": 12321185,
+          "inode_available": 12265281,
           "inode_total": 12966400,
-          "inode_used": 645215,
+          "inode_used": 701119,
           "mount_point": "/",
           "mutation_performed": false,
-          "observed_at": "2026-07-22T05:50:45Z",
+          "observed_at": "2026-07-22T22:15:16Z",
           "podman_graphroot": "not-observed",
           "podman_version": "not-observed",
           "read_only": true,
           "resource_profile": "not-observed",
           "resource_wrapper": "not-observed",
           "total_bytes": 103859404800,
-          "used_bytes": 45225353216
+          "used_bytes": 60321288192
         },
         {
           "architecture": "aarch64",
-          "available_bytes": 58617274368,
+          "available_bytes": 43521339392,
           "command_version": "phase52-capacity-read-only-v2",
           "filesystem_source": "/dev/sda1",
           "hostname": "horistic-srv",
-          "inode_available": 12321185,
+          "inode_available": 12265281,
           "inode_total": 12966400,
-          "inode_used": 645215,
+          "inode_used": 701119,
           "mount_point": "/",
           "mutation_performed": false,
-          "observed_at": "2026-07-22T05:50:45Z",
+          "observed_at": "2026-07-22T22:15:16Z",
           "podman_graphroot": "not-observed",
           "podman_version": "not-observed",
           "read_only": true,
           "resource_profile": "not-observed",
           "resource_wrapper": "not-observed",
           "total_bytes": 103859404800,
-          "used_bytes": 45225353216
+          "used_bytes": 60321288192
         }
       ],
       "secret_material_present": false,
       "status": "PASS"
     },
     "capacity_finalize": {
-      "evidence_ids": [],
-      "findings": [
-        "predecessor-stage-not-pass"
-      ],
-      "input_digest": "db25734b72846026791a0609e70c1f1ee76d144a3e23fb55d3d613351a2e0965",
-      "mutation": {
-        "classes": [],
-        "performed": false
+      "action_details": {
+        "actual_backup_a_bytes": 26112,
+        "actual_backup_b_bytes": 26112,
+        "capacity": {
+          "capacity_finalize_status": "PASS",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": true,
+          "projected_post_ok": true,
+          "required_incremental_bytes": 16928065536,
+          "status": "PASS",
+          "still_unmaterialized_reservations": 8338130944
+        }
       },
-      "observed_at": "2026-07-22T05:50:46Z",
-      "predecessor_stage": "vault",
-      "secret_material_present": false,
-      "status": "SKIPPED_DUE_TO_GATE"
-    },
-    "restore": {
-      "evidence_ids": [],
-      "findings": [
-        "predecessor-stage-not-pass"
-      ],
-      "input_digest": "6890b709e51187bad6bf305b8e26672285c266c0a0f23515345a2cbe4512bb39",
-      "mutation": {
-        "classes": [],
-        "performed": false
-      },
-      "observed_at": "2026-07-22T05:50:46Z",
-      "predecessor_stage": "vault",
-      "secret_material_present": false,
-      "status": "SKIPPED_DUE_TO_GATE"
-    },
-    "rollback": {
-      "disposable_artifacts_present": false,
       "evidence_ids": [
-        "P52-EV-ROLLBACK-NOOP-HORISTIC-SRV"
+        "P52-EV-CAPACITY-FINALIZE-HORISTIC-SRV"
       ],
       "findings": [],
-      "inactive": true,
-      "input_digest": "e0a52d4c72c152da7bdff47eea2f60e47c0144e7d18fb265771f3c5ead20852f",
+      "input_digest": "6882b555de2cf76791d4d600c6f1e554edee3fc6fc8fe123e8cab6f9919dc1ff",
       "mutation": {
         "classes": [],
-        "performed": false
+        "cleanup_pending": [],
+        "performed": false,
+        "retained_artifacts": [
+          "backup-a",
+          "backup-b-local",
+          "backup-b-remote"
+        ]
       },
-      "observed_at": "2026-07-22T05:50:46Z",
+      "observed_at": "2026-07-22T22:15:53Z",
+      "secret_material_present": false,
+      "status": "PASS"
+    },
+    "restore": {
+      "action_details": {
+        "image": "docker.io/rustdesk/rustdesk-server@sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+        "image_running": true,
+        "network_mode": "none",
+        "port_bindings": {},
+        "public_fingerprint": "17857234cdcf8cb4a2709871da5b6f6342cfa37fb893226ab420897a7b3cb937",
+        "public_listener_delta": [],
+        "sqlite_integrity": "ok",
+        "sqlite_ready": true
+      },
+      "evidence_ids": [
+        "P52-EV-RESTORE-HORISTIC-SRV"
+      ],
+      "findings": [],
+      "input_digest": "f99cbce91c16b30856d56e2b92f742e3b238484940e03f1b9331df4143c935f0",
+      "mutation": {
+        "classes": [
+          "disposable-isolated-restore-state",
+          "isolated-hbbs-container-lifecycle"
+        ],
+        "cleanup_pending": [
+          "restore-b.tar",
+          "disposable-partial",
+          "restore-state"
+        ],
+        "performed": true,
+        "retained_artifacts": [
+          "backup-a",
+          "backup-b-local",
+          "backup-b-remote"
+        ]
+      },
+      "observed_at": "2026-07-22T22:15:53Z",
+      "secret_material_present": false,
+      "status": "PASS"
+    },
+    "rollback": {
+      "action_details": {
+        "cleanup_pending": [],
+        "remote_delete_performed": false,
+        "remote_rehash_verified": true,
+        "retained_artifacts": [
+          "backup-a",
+          "backup-b-local",
+          "backup-b-remote"
+        ],
+        "retained_rehash_verified": true,
+        "terminal": true
+      },
+      "evidence_ids": [
+        "P52-EV-ROLLBACK-HORISTIC-SRV"
+      ],
+      "findings": [],
+      "input_digest": "3455da8440625bf7eb69c2f7523001246de4278707fe894138269574832a4e09",
+      "mutation": {
+        "classes": [
+          "verified-drill-artifact-rollback-removal"
+        ],
+        "cleanup_pending": [],
+        "performed": true,
+        "retained_artifacts": [
+          "backup-a",
+          "backup-b-local",
+          "backup-b-remote"
+        ]
+      },
+      "observed_at": "2026-07-22T22:16:34Z",
       "retained_backups_deleted": false,
       "secret_material_present": false,
       "status": "PASS"
@@ -160,38 +280,68 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:50:45Z",
+      "observed_at": "2026-07-22T22:15:15Z",
       "secret_material_present": false,
       "status": "PASS"
     },
     "topology_security": {
-      "evidence_ids": [],
-      "findings": [
-        "predecessor-stage-not-pass"
+      "client_colocation": true,
+      "evidence_ids": [
+        "P52-EV-TOPOLOGY-HORISTIC-SRV"
       ],
-      "input_digest": "a6b310d740fb2c5308b18766cae8b6ab409974f13c07b633fe7dba18e9af2d66",
+      "findings": [],
+      "independent_dr_claimed": false,
+      "input_digest": "74cb04c303f7605e5e2740d209b4492a906c8658b6a5f88f7dbb2636403de1c6",
       "mutation": {
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:50:46Z",
-      "predecessor_stage": "vault",
+      "observed_at": "2026-07-22T22:16:34Z",
+      "phase52_review_status": "PASS",
+      "phase53_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+      "phase54_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+      "phase57_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
       "secret_material_present": false,
-      "status": "SKIPPED_DUE_TO_GATE"
+      "server_client_evidence_domains": {
+        "client": "phase54-client-evidence",
+        "server": "phase53-server-evidence"
+      },
+      "server_client_resource_domains": {
+        "client": "rustdesk-client-horistic-srv",
+        "server": "rustdesk-server-horistic-srv"
+      },
+      "server_client_rollback_domains": {
+        "client": "phase54-client-rollback",
+        "server": "phase53-server-rollback"
+      },
+      "status": "PASS"
     },
     "vault": {
+      "action_details": {
+        "provider_api": "references-v1",
+        "public_fingerprint": "17857234cdcf8cb4a2709871da5b6f6342cfa37fb893226ab420897a7b3cb937",
+        "reference_count": 7
+      },
       "evidence_ids": [
         "P52-EV-VAULT-READINESS-HORISTIC-SRV"
       ],
-      "findings": [
-        "rustdesk-vault-backend-missing"
-      ],
-      "input_digest": "11dd89a750c61764658cd2b692416c56f4a55260610b16ca6ce79f073d22ce3b",
+      "findings": [],
+      "input_digest": "64d2c6a026eec37afb82a057f40ef0283b11d7b4a29c207dd3369517f0a83606",
       "mutation": {
-        "classes": [],
-        "performed": false
+        "classes": [
+          "ephemeral-vault-hydration"
+        ],
+        "cleanup_pending": [
+          "ephemeral-identity"
+        ],
+        "performed": true,
+        "retained_artifacts": [
+          "backup-a",
+          "backup-b-local",
+          "backup-b-remote"
+        ]
       },
-      "observed_at": "2026-07-22T05:50:46Z",
+      "observed_at": "2026-07-22T22:15:19Z",
       "readiness": {
         "home": "/home/horistic",
         "mutation_performed": false,
@@ -201,15 +351,35 @@
             "is_dir": true,
             "is_file": false
           },
-          "rclone_config": {
-            "exists": false,
+          "live_drill": {
+            "exists": true,
             "is_dir": false,
+            "is_file": true
+          },
+          "rclone_copy": {
+            "exists": true,
+            "is_dir": false,
+            "is_file": true
+          },
+          "rclone_fetch": {
+            "exists": true,
+            "is_dir": false,
+            "is_file": true
+          },
+          "rclone_vault_hydrator": {
+            "exists": true,
+            "is_dir": false,
+            "is_file": true
+          },
+          "runtime_tmpfs": {
+            "exists": true,
+            "is_dir": true,
             "is_file": false
           },
           "rustdesk_vault_backend": {
-            "exists": false,
+            "exists": true,
             "is_dir": false,
-            "is_file": false
+            "is_file": true
           },
           "rustdesk_vault_provider": {
             "exists": true,
@@ -223,25 +393,25 @@
           }
         },
         "read_only": true,
+        "runtime_root": "/run/user/1001",
         "tools": {
           "omni": false,
           "podman": true,
           "python3": true,
           "rclone": true,
-          "sqlite3": false
+          "sqlite3": true
         },
         "vault_provider": {
-          "blocker": "rustdesk-vault-backend-missing",
-          "reference_count": 7,
+          "blocker": "none",
           "secret_material_present": false,
-          "status": "BLOCKED"
+          "status": "PASS"
         }
       },
       "reference_count": 7,
       "secret_material_present": false,
-      "status": "BLOCKED"
+      "status": "PASS"
     }
   },
-  "verdict": "NO-GO",
+  "verdict": "PASS",
   "windows_install_performed": false
 }

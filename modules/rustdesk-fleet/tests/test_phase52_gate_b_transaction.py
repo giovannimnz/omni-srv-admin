@@ -2450,14 +2450,16 @@ def test_bounded_helpers_serialize_subreaper_and_restore_process_state(tmp_path)
     assert all(not Path(f"/proc/{pid}").exists() for pid in child_pids)
 
 
-def test_committed_runtime_evidence_is_initial_redacted_blocked_projection():
+def test_committed_runtime_evidence_is_redacted_success_projection():
     evidence = json.loads(RUNTIME_EVIDENCE.read_text())
-    assert evidence["status"] == "BLOCKED"
-    assert evidence["live_write_performed"] is False
-    assert evidence["write_count"] == 0
-    assert evidence["vault_write_ownership"] == "NONE"
-    assert evidence["send_attempted"] is False
-    assert evidence["remote_transaction_exists"] is False
-    assert evidence["vault_versions"] == []
+    assert evidence["status"] == "PASS"
+    assert evidence["live_write_performed"] is True
+    assert evidence["write_count"] == 7
+    assert evidence["vault_write_ownership"] == "FSYNCED_WAL_ACK"
+    assert len(evidence["vault_versions"]) == 7
+    assert all(row["version"] == 1 for row in evidence["vault_versions"])
+    assert len({row["vault_path"] for row in evidence["vault_versions"]}) == 7
+    assert evidence["network_listener_created"] is False
+    assert evidence["windows_install_performed"] is False
     assert evidence["secret_material_present"] is False
     assert "mutation" not in evidence

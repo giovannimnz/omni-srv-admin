@@ -465,7 +465,7 @@ def direct_action(action: str, root: Path, state: dict[str, Any], dry_run: bool)
         if code or stderr or not stdout.strip():
             raise recovery.RecoveryBlocked("source-hbbs-start-failed")
         try:
-            if not recovery.hbbs_liveness(container_name, source_root):
+            if not recovery.wait_hbbs_liveness(container_name, source_root):
                 raise recovery.RecoveryBlocked("source-hbbs-not-ready")
             code, inspect_out, inspect_err = recovery.bounded_process(["podman", "inspect", container_name], timeout=30)
             inspected = json.loads(inspect_out)[0]
@@ -478,6 +478,7 @@ def direct_action(action: str, root: Path, state: dict[str, Any], dry_run: bool)
         if recovery.listener_snapshot() != before_listeners:
             raise recovery.RecoveryBlocked("public-listener-delta")
         source = source_root / "db_v2.sqlite3"
+        recovery.normalize_hbbs_sqlite(source)
         snapshot_a = root / "sqlite-a.work"
         snapshot_b = root / "sqlite-b.work"
         a = recovery.sqlite_snapshot(source, snapshot_a)
@@ -569,7 +570,7 @@ def direct_action(action: str, root: Path, state: dict[str, Any], dry_run: bool)
         if code or stderr or not stdout.strip():
             raise recovery.RecoveryBlocked("restore-hbbs-start-failed")
         try:
-            if not recovery.hbbs_liveness(container_name, restore):
+            if not recovery.wait_hbbs_liveness(container_name, restore):
                 raise recovery.RecoveryBlocked("restore-hbbs-not-ready")
             code, inspect_out, inspect_err = recovery.bounded_process(["podman", "inspect", container_name], timeout=30)
             inspected = json.loads(inspect_out)[0]
