@@ -21,6 +21,7 @@ PLACEMENT_PATH = REPO / "modules/rustdesk-fleet/contracts/placement-decision.jso
 CAPACITY_MUTATIONS_PATH = (
     REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-capacity-placement-mutations.json"
 )
+CAPACITY_PROPOSAL_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase52", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -560,3 +561,49 @@ def test_capacity_placement_mutation_catalog_is_complete() -> None:
         "missing-horistic-colocation",
         "missing-horistic-reviews",
     }.issubset(ids)
+
+
+def test_capacity_accepts_reserved_filesystem_blocks() -> None:
+    policy = _capacity_policy()
+    sample = _raw_sample(used=10, total=100)
+    sample["available_bytes"] = 80
+    result = validator.validate_capacity_observation(sample, policy)
+    assert "byte-counter-reconciliation" not in _categories(result)
+
+
+def test_capacity_proposal_binds_exact_accountable_approval_and_two_samples() -> None:
+    proposal = validator.load_json_strict(CAPACITY_PROPOSAL_PATH)
+    policy = _capacity_policy()
+    result = validator.validate_capacity_proposal(proposal, policy, REPO)
+    assert result.id == "P52-CAPACITY-001"
+    assert result.status == "BLOCKED"
+    assert proposal["approval"]["status"] == "approved"
+    assert proposal["approval"]["accountable"] == "Giovanni Muniz"
+    assert proposal["approval"]["approved_at"] == "2026-07-22T00:51:46Z"
+    assert [item["candidate"] for item in proposal["candidates"]] == list(validator.CANDIDATES)
+    assert all(len(item["samples"]) == 2 for item in proposal["candidates"])
+    assert proposal["mutation_performed"] is False
+    assert proposal["remediation_policy"] == "none"
+    assert proposal["selected_candidate"] is None
+
+
+def test_capacity_proposal_rejects_approval_digest_or_stored_verdict_drift() -> None:
+    proposal = validator.load_json_strict(CAPACITY_PROPOSAL_PATH)
+    policy = _capacity_policy()
+    digest_drift = copy.deepcopy(proposal)
+    digest_drift["approval"]["source_sha256"] = "0" * 64
+    result = validator.validate_capacity_proposal(digest_drift, policy, REPO)
+    assert result.status == "BLOCKED"
+    assert "approval-source-drift" in _categories(result)
+
+    verdict_drift = copy.deepcopy(proposal)
+    verdict_drift["candidates"][0]["capacity_verdict"] = "PASS"
+    result = validator.validate_capacity_proposal(verdict_drift, policy, REPO)
+    assert result.status in {"FAIL", "BLOCKED"}
+    assert "stored-verdict-drift" in _categories(result)
+
+
+def test_capacity_proposal_cli_is_validation_only() -> None:
+    parser = validator.build_parser()
+    options = {action.dest for action in parser._actions}
+    assert not {"cleanup", "remediate", "admit_candidate", "install"} & options

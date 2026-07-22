@@ -27,6 +27,10 @@ SUPPLY_OBSERVATION = Path("modules/rustdesk-fleet/evidence/phase52/supply-observ
 CAPACITY_POLICY = Path("modules/rustdesk-fleet/contracts/capacity-policy.json")
 PLACEMENT_DECISION = Path("modules/rustdesk-fleet/contracts/placement-decision.json")
 CAPACITY_PROPOSAL = Path("modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json")
+OPERATIONAL_DECISIONS = Path(
+    ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
+    "52-OPERATIONAL-DECISIONS.md"
+)
 SERVER_COMMIT = "9bae9f2f39d92c4b4ba2e28e089da5071897b22e"
 CLIENT_COMMIT = "6c578292e8ebbbec708b76986ba8c4bc7c509747"
 MULTIARCH_DIGEST = "sha256:10818ec05b179039c6660f4d8e74b303f0db2858bbad2b18e24992ea22d54cd6"
@@ -328,7 +332,7 @@ def _raw_counter_errors(sample: Any) -> list[str]:
     if sample.get("read_only") is not True or sample.get("mutation_performed") is not False:
         errors.append("observation-mutation")
     if not errors:
-        if sample["used_bytes"] + sample["available_bytes"] != sample["total_bytes"]:
+        if sample["used_bytes"] > sample["total_bytes"] or sample["available_bytes"] > sample["total_bytes"]:
             errors.append("byte-counter-reconciliation")
         if sample["inode_used"] + sample["inode_available"] != sample["inode_total"]:
             errors.append("inode-counter-reconciliation")
@@ -597,6 +601,122 @@ def validate_placement_decision(
         blocked.append("placement-pending")
     status = "FAIL" if errors else "BLOCKED" if blocked else "PASS"
     return _check_result("P52-PLACEMENT-001", status, errors + blocked, source)
+
+
+def _proposal_capacity_verdict(samples: list[dict[str, Any]], policy: dict[str, Any]) -> str:
+    results = [derive_candidate_capacity(sample, policy) for sample in samples]
+    return "NO-GO" if any(item["status"] == "NO-GO" for item in results) else "FULL-GATE-PENDING"
+
+
+def validate_capacity_proposal(
+    proposal: dict[str, Any],
+    policy: dict[str, Any],
+    repo: Path,
+    source: str = "modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json",
+) -> CheckResult:
+    fail: list[str] = []
+    blocked: list[str] = []
+    expected_keys = {
+        "schema_version",
+        "phase",
+        "workstream",
+        "generated_at",
+        "input_digests",
+        "approval",
+        "candidate_order",
+        "candidates",
+        "read_only",
+        "mutation_performed",
+        "remediation_policy",
+        "selected_candidate",
+        "overall_status",
+        "windows_install_performed",
+        "windows_access_proven",
+        "findings",
+    }
+    if not _exact_keys(proposal, expected_keys):
+        return _check_result("P52-CAPACITY-001", "FAIL", ["proposal-shape"], source)
+    if proposal.get("schema_version") != 1 or proposal.get("phase") != 52 or proposal.get(
+        "workstream"
+    ) != "rustdesk-fleet":
+        fail.append("proposal-shape")
+    if not _is_current(proposal.get("generated_at"), policy.get("observation_max_age_seconds", 0)):
+        blocked.append("stale-proposal")
+    if proposal.get("read_only") is not True or proposal.get("mutation_performed") is not False:
+        fail.append("proposal-mutation")
+    if proposal.get("remediation_policy") != "none":
+        fail.append("remediation-authority-drift")
+    if proposal.get("selected_candidate") is not None or proposal.get("overall_status") != "BLOCKED":
+        fail.append("stored-verdict-drift")
+    if proposal.get("windows_install_performed") is not False or proposal.get("windows_access_proven") is not False:
+        fail.append("windows-phase-boundary")
+    if proposal.get("findings") != ["full-candidate-gate-not-run"]:
+        fail.append("proposal-finding-drift")
+    if proposal.get("candidate_order") != list(CANDIDATES):
+        fail.append("candidate-order-drift")
+
+    root = repo.resolve()
+    expected_inputs = collect_input_digests(root, [CAPACITY_POLICY, PLACEMENT_DECISION, OPERATIONAL_DECISIONS])
+    if proposal.get("input_digests") != expected_inputs:
+        blocked.append("stale-input-digest")
+    approval = proposal.get("approval")
+    expected_approval = policy.get("approval")
+    if not isinstance(approval, dict) or approval != expected_approval:
+        blocked.append("approval-contract-drift")
+    if isinstance(approval, dict):
+        try:
+            approval_path = validate_repo_path(root, root / approval["source_path"])
+            if not approval_path.is_file() or _sha256_file(approval_path) != approval["source_sha256"]:
+                blocked.append("approval-source-drift")
+        except (KeyError, ValueError):
+            blocked.append("approval-source-drift")
+    else:
+        blocked.append("approval-source-drift")
+
+    aliases = {
+        "atius-srv-2": "atius-srv-2-direct",
+        "atius-srv-3": "atius-srv-3-direct",
+        "horistic-srv": "horistic-srv-1",
+    }
+    hostnames = {
+        "atius-srv-2": {"atius-srv-2", "atius-srv-2.atius.internal"},
+        "atius-srv-3": {"atius-srv-3", "atius-srv-3.atius.internal"},
+        "horistic-srv": {"horistic-srv", "horistic-srv.atius.internal"},
+    }
+    candidates = proposal.get("candidates")
+    if not isinstance(candidates, list) or len(candidates) != 3:
+        fail.append("candidate-shape")
+        candidates = []
+    for index, candidate in enumerate(candidates):
+        expected_candidate = CANDIDATES[index]
+        if not _exact_keys(candidate, {"candidate", "ssh_alias", "samples", "capacity_verdict", "latest_capacity"}):
+            fail.append("candidate-shape")
+            continue
+        if candidate.get("candidate") != expected_candidate or candidate.get("ssh_alias") != aliases[expected_candidate]:
+            fail.append("candidate-order-drift")
+        samples = candidate.get("samples")
+        if not isinstance(samples, list) or len(samples) != 2:
+            fail.append("sample-cardinality")
+            continue
+        for sample_index, sample in enumerate(samples):
+            if not isinstance(sample, dict) or sample.get("hostname") not in hostnames[expected_candidate]:
+                fail.append("candidate-hostname-drift")
+                continue
+            sample_result = validate_capacity_observation(
+                sample, policy, f"{source}:candidates[{index}].samples[{sample_index}]"
+            )
+            if sample_result.status == "FAIL":
+                fail.extend(item.category for item in sample_result.findings)
+            elif "stale-observation" in {item.category for item in sample_result.findings}:
+                blocked.append("stale-observation")
+        derived_verdict = _proposal_capacity_verdict(samples, policy)
+        latest = derive_candidate_capacity(samples[-1], policy)
+        if candidate.get("capacity_verdict") != derived_verdict or candidate.get("latest_capacity") != latest:
+            fail.append("stored-verdict-drift")
+    if not fail:
+        blocked.append("full-gate-pending")
+    status = "FAIL" if fail else "BLOCKED"
+    return _check_result("P52-CAPACITY-001", status, fail + blocked, source)
 
 
 def validate_supply_contract(
@@ -1209,7 +1329,7 @@ def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> l
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
-    parser.add_argument("--only", choices=("supply",), default="supply")
+    parser.add_argument("--only", choices=("supply", "capacity-proposal"), default="supply")
     parser.add_argument("--evidence-dir", type=Path, default=SUPPLY_OBSERVATION.parent)
     return parser
 
@@ -1218,6 +1338,18 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo = args.repo.resolve()
     try:
+        if args.only == "capacity-proposal":
+            policy_path = validate_repo_path(repo, repo / CAPACITY_POLICY)
+            proposal_path = validate_repo_path(repo, repo / args.evidence_dir / CAPACITY_PROPOSAL.name)
+            policy = load_json_strict(policy_path)
+            policy_result = validate_capacity_policy(policy, policy_path.relative_to(repo).as_posix())
+            if policy_result.status != "PASS":
+                print(json.dumps({"status": policy_result.status, "check": policy_result.id}, sort_keys=True))
+                return exit_code_for_status(policy_result.status)
+            proposal = load_json_strict(proposal_path)
+            result = validate_capacity_proposal(proposal, policy, repo, proposal_path.relative_to(repo).as_posix())
+            print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))
+            return exit_code_for_status(result.status)
         contract_path = validate_repo_path(repo, repo / SUPPLY_CONTRACT)
         contract = load_json_strict(contract_path)
         contract_result = validate_supply_contract(contract, contract_path.relative_to(repo).as_posix())

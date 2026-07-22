@@ -1,6 +1,7 @@
 # Phase 52 — Operational Decisions
 
 **Status:** Approved
+**approval_status:** approved
 **Accountable/operator:** Giovanni Muniz
 **Approved at:** `2026-07-22T00:51:46Z`
 **Secret material present:** false

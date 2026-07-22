@@ -1,0 +1,215 @@
+{
+  "schema_version": 1,
+  "phase": 52,
+  "workstream": "rustdesk-fleet",
+  "generated_at": "2026-07-22T02:30:53Z",
+  "input_digests": [
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md",
+      "sha256": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/capacity-policy.json",
+      "sha256": "59a97e2f7229fc08df7c54de3f7f7091ec4daa370ac85eb6423e421547b0a1c5"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/placement-decision.json",
+      "sha256": "2ec85ff409b71233508b03579b52f5686009c2bf78db0cd9230125c2624a87bd"
+    }
+  ],
+  "approval": {
+    "status": "approved",
+    "accountable": "Giovanni Muniz",
+    "approved_at": "2026-07-22T00:51:46Z",
+    "source_path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md",
+    "source_sha256": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a"
+  },
+  "candidate_order": [
+    "atius-srv-2",
+    "atius-srv-3",
+    "horistic-srv"
+  ],
+  "candidates": [
+    {
+      "candidate": "atius-srv-2",
+      "ssh_alias": "atius-srv-2-direct",
+      "samples": [
+        {
+          "observed_at": "2026-07-22T02:29:27Z",
+          "hostname": "atius-srv-2",
+          "architecture": "aarch64",
+          "filesystem_source": "/dev/sda1",
+          "mount_point": "/",
+          "total_bytes": 207907635200,
+          "used_bytes": 175474053120,
+          "available_bytes": 32416804864,
+          "inode_total": 25932800,
+          "inode_used": 2665925,
+          "inode_available": 23266875,
+          "podman_graphroot": "/home/ubuntu/.local/share/containers/storage",
+          "podman_version": "podman version 4.9.3",
+          "resource_wrapper": "/home/ubuntu/.local/bin/omni",
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "command_version": "python-statvfs-v1",
+          "read_only": true,
+          "mutation_performed": false
+        },
+        {
+          "observed_at": "2026-07-22T02:29:30Z",
+          "hostname": "atius-srv-2",
+          "architecture": "aarch64",
+          "filesystem_source": "/dev/sda1",
+          "mount_point": "/",
+          "total_bytes": 207907635200,
+          "used_bytes": 175474098176,
+          "available_bytes": 32416759808,
+          "inode_total": 25932800,
+          "inode_used": 2665925,
+          "inode_available": 23266875,
+          "podman_graphroot": "/home/ubuntu/.local/share/containers/storage",
+          "podman_version": "podman version 4.9.3",
+          "resource_wrapper": "/home/ubuntu/.local/bin/omni",
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "command_version": "python-statvfs-v1",
+          "read_only": true,
+          "mutation_performed": false
+        }
+      ],
+      "capacity_verdict": "NO-GO",
+      "latest_capacity": {
+        "status": "NO-GO",
+        "pre_disk_ok": false,
+        "inode_ok": true,
+        "projected_post_ok": false,
+        "headroom_ok": true,
+        "capacity_finalize_status": "PENDING",
+        "required_incremental_bytes": 16928065536,
+        "still_unmaterialized_reservations": 16928065536
+      }
+    },
+    {
+      "candidate": "atius-srv-3",
+      "ssh_alias": "atius-srv-3-direct",
+      "samples": [
+        {
+          "observed_at": "2026-07-22T02:29:28Z",
+          "hostname": "atius-srv-3.atius.internal",
+          "architecture": "aarch64",
+          "filesystem_source": "/dev/sda1",
+          "mount_point": "/",
+          "total_bytes": 207907635200,
+          "used_bytes": 173488939008,
+          "available_bytes": 34401918976,
+          "inode_total": 25932800,
+          "inode_used": 2163272,
+          "inode_available": 23769528,
+          "podman_graphroot": "/home/ubuntu/.local/share/containers/storage",
+          "podman_version": "podman version 4.9.3",
+          "resource_wrapper": "not-observed",
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "command_version": "python-statvfs-v1",
+          "read_only": true,
+          "mutation_performed": false
+        },
+        {
+          "observed_at": "2026-07-22T02:29:32Z",
+          "hostname": "atius-srv-3.atius.internal",
+          "architecture": "aarch64",
+          "filesystem_source": "/dev/sda1",
+          "mount_point": "/",
+          "total_bytes": 207907635200,
+          "used_bytes": 173489000448,
+          "available_bytes": 34401857536,
+          "inode_total": 25932800,
+          "inode_used": 2163272,
+          "inode_available": 23769528,
+          "podman_graphroot": "/home/ubuntu/.local/share/containers/storage",
+          "podman_version": "podman version 4.9.3",
+          "resource_wrapper": "not-observed",
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "command_version": "python-statvfs-v1",
+          "read_only": true,
+          "mutation_performed": false
+        }
+      ],
+      "capacity_verdict": "NO-GO",
+      "latest_capacity": {
+        "status": "NO-GO",
+        "pre_disk_ok": false,
+        "inode_ok": true,
+        "projected_post_ok": false,
+        "headroom_ok": true,
+        "capacity_finalize_status": "PENDING",
+        "required_incremental_bytes": 16928065536,
+        "still_unmaterialized_reservations": 16928065536
+      }
+    },
+    {
+      "candidate": "horistic-srv",
+      "ssh_alias": "horistic-srv-1",
+      "samples": [
+        {
+          "observed_at": "2026-07-22T02:29:30Z",
+          "hostname": "horistic-srv",
+          "architecture": "aarch64",
+          "filesystem_source": "/dev/sda1",
+          "mount_point": "/",
+          "total_bytes": 103859404800,
+          "used_bytes": 45120532480,
+          "available_bytes": 58722095104,
+          "inode_total": 12966400,
+          "inode_used": 644591,
+          "inode_available": 12321809,
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "resource_wrapper": "not-observed",
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "command_version": "python-statvfs-v1",
+          "read_only": true,
+          "mutation_performed": false
+        },
+        {
+          "observed_at": "2026-07-22T02:29:33Z",
+          "hostname": "horistic-srv",
+          "architecture": "aarch64",
+          "filesystem_source": "/dev/sda1",
+          "mount_point": "/",
+          "total_bytes": 103859404800,
+          "used_bytes": 45120532480,
+          "available_bytes": 58722095104,
+          "inode_total": 12966400,
+          "inode_used": 644591,
+          "inode_available": 12321809,
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "resource_wrapper": "not-observed",
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "command_version": "python-statvfs-v1",
+          "read_only": true,
+          "mutation_performed": false
+        }
+      ],
+      "capacity_verdict": "FULL-GATE-PENDING",
+      "latest_capacity": {
+        "status": "PASS",
+        "pre_disk_ok": true,
+        "inode_ok": true,
+        "projected_post_ok": true,
+        "headroom_ok": true,
+        "capacity_finalize_status": "PENDING",
+        "required_incremental_bytes": 16928065536,
+        "still_unmaterialized_reservations": 16928065536
+      }
+    }
+  ],
+  "read_only": true,
+  "mutation_performed": false,
+  "remediation_policy": "none",
+  "selected_candidate": null,
+  "overall_status": "BLOCKED",
+  "windows_install_performed": false,
+  "windows_access_proven": false,
+  "findings": [
+    "full-candidate-gate-not-run"
+  ]
+}

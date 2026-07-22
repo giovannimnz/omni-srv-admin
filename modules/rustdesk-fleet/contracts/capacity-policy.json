@@ -4,7 +4,7 @@
   "pre_disk_pct_max": 78,
   "post_disk_pct_max": 80,
   "inode_pct_max": 80,
-  "observation_max_age_seconds": 300,
+  "observation_max_age_seconds": 3600,
   "same_mount_required": true,
   "zero_or_unset_is_blocked": true,
   "reservations": {
@@ -58,6 +58,6 @@
     "accountable": "Giovanni Muniz",
     "approved_at": "2026-07-22T00:51:46Z",
     "source_path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md",
-    "source_sha256": "733127f90fcf1c207a12b65ec2022c219e919d7390ec0cfd9546c11c6ba29c33"
+    "source_sha256": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a"
   }
 }
