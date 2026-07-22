@@ -73,7 +73,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 **Wave 1**
 
-- [ ] 52-01-PLAN.md — Congelar supply-chain pins e observações oficiais sem instalar ou admitir hosts.
+- [x] 52-01-PLAN.md — Congelar supply-chain pins e observações oficiais sem instalar ou admitir hosts.
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -200,7 +200,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
-| 52. Supply Chain, Capacity and Recoverable Placement | 0/TBD | Not started | - |
+| 52. Supply Chain, Capacity and Recoverable Placement | 1/6 | In Progress | - |
 | 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
