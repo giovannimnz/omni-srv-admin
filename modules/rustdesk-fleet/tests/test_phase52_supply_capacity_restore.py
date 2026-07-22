@@ -818,6 +818,34 @@ def test_capacity_live_evidence_is_serial_current_and_not_placement() -> None:
     assert horistic["independent_dr_claimed"] is False
 
 
+def test_capacity_live_stale_boundary_is_blocked_while_tamper_remains_fail() -> None:
+    chain = validator.load_json_strict(CAPACITY_SUMMARY_PATH)
+    policy = _capacity_policy()
+    placement = _placement()
+    earliest_observation = min(
+        datetime.fromisoformat(sample["observed_at"].replace("Z", "+00:00"))
+        for attempt in chain["attempts"]
+        for sample in attempt["samples"]
+    )
+    boundary = earliest_observation + timedelta(seconds=policy["observation_max_age_seconds"])
+
+    current = validator.validate_capacity_live_summary(chain, policy, placement, REPO, now=boundary)
+    assert current.status == "BLOCKED"
+    assert "stale-observation" not in _categories(current)
+
+    expired_at = boundary + timedelta(seconds=1)
+    expired = validator.validate_capacity_live_summary(chain, policy, placement, REPO, now=expired_at)
+    assert expired.status == "BLOCKED"
+    assert "stale-observation" in _categories(expired)
+    assert "stored-verdict-drift" not in _categories(expired)
+
+    tampered = copy.deepcopy(chain)
+    tampered["attempts"][2]["calculations"][0]["headroom_ok"] = False
+    tampered_result = validator.validate_capacity_live_summary(tampered, policy, placement, REPO, now=expired_at)
+    assert tampered_result.status == "FAIL"
+    assert "stored-verdict-drift" in _categories(tampered_result)
+
+
 def test_vault_metadata_accepts_only_the_six_approved_references() -> None:
     payload = _secret_roles()
     result = validator.validate_vault_metadata(payload)

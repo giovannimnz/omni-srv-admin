@@ -1849,10 +1849,18 @@ def _apply_capacity_chain_to_placement(
 
 
 def validate_capacity_live_summary(
-    chain: dict[str, Any], policy: dict[str, Any], placement: dict[str, Any], repo: Path
+    chain: dict[str, Any],
+    policy: dict[str, Any],
+    placement: dict[str, Any],
+    repo: Path,
+    *,
+    now: datetime | None = None,
 ) -> CheckResult:
     fail: list[str] = []
     blocked: list[str] = []
+    reference_time = _parse_utc(chain.get("generated_at"))
+    if reference_time is None:
+        fail.append("generated-at-shape")
     if chain.get("attempt_order") != [item.get("candidate") for item in chain.get("attempts", [])]:
         fail.append("candidate-order-drift")
     if chain.get("attempt_order") != list(CANDIDATES[: len(chain.get("attempt_order", []))]):
@@ -1877,7 +1885,14 @@ def validate_capacity_live_summary(
         if not isinstance(samples, list) or len(samples) != 2:
             fail.append("sample-cardinality")
             continue
-        derived = [derive_candidate_capacity(sample, policy) for sample in samples]
+        for sample in samples:
+            sample_result = validate_capacity_observation(sample, policy, now=now)
+            if sample_result.status == "FAIL":
+                fail.extend(item.category for item in sample_result.findings)
+            elif "stale-observation" in {item.category for item in sample_result.findings}:
+                if "stale-observation" not in blocked:
+                    blocked.append("stale-observation")
+        derived = [derive_candidate_capacity(sample, policy, now=reference_time) for sample in samples]
         expected = "NO-GO" if any(item["status"] == "NO-GO" for item in derived) else "PRELIMINARY_ELIGIBLE"
         if attempt.get("calculations") != derived or attempt.get("preliminary_verdict") != expected:
             fail.append("stored-verdict-drift")
