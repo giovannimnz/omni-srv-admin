@@ -1,0 +1,96 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "policy": {
+    "automatic_pin_refresh": false,
+    "build_on_target": false,
+    "candidate_admission_performed": false,
+    "managed_cache_root": "/home/ubuntu/.cache/atius/rustdesk/supply-chain",
+    "observation_ttl_seconds": 86400,
+    "windows_install_performed": false
+  },
+  "server": {
+    "version": "1.1.15",
+    "tag": "1.1.15",
+    "commit": "9bae9f2f39d92c4b4ba2e28e089da5071897b22e",
+    "git_repository": "https://github.com/rustdesk/rustdesk-server.git",
+    "release_api_url": "https://api.github.com/repos/rustdesk/rustdesk-server/releases/tags/1.1.15",
+    "candidates": [
+      {
+        "host": "atius-srv-2",
+        "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+        "selected": false,
+        "client_colocation_if_selected": false,
+        "server_identity_domain": "rustdesk-server-atius-srv-2",
+        "future_client_identity_domain": "rustdesk-client-atius-srv-2"
+      },
+      {
+        "host": "atius-srv-3",
+        "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+        "selected": false,
+        "client_colocation_if_selected": false,
+        "server_identity_domain": "rustdesk-server-atius-srv-3",
+        "future_client_identity_domain": "rustdesk-client-atius-srv-3"
+      },
+      {
+        "host": "horistic-srv",
+        "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+        "selected": false,
+        "client_colocation_if_selected": true,
+        "server_identity_domain": "rustdesk-server-horistic-srv",
+        "future_client_identity_domain": "rustdesk-client-horistic-srv"
+      }
+    ],
+    "classic_image": {
+      "repository": "docker.io/rustdesk/rustdesk-server",
+      "tag_reference": "docker.io/rustdesk/rustdesk-server:1.1.15",
+      "immutable_reference": "docker.io/rustdesk/rustdesk-server@sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+      "registry_tag_api_url": "https://hub.docker.com/v2/repositories/rustdesk/rustdesk-server/tags/1.1.15",
+      "multiarch_digest": "sha256:10818ec05b179039c6660f4d8e74b303f0db2858bbad2b18e24992ea22d54cd6",
+      "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+      "architecture": "arm64",
+      "os": "linux",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-server-1.1.15-linux-arm64.oci.tar",
+      "phase52_action": "verify-and-stage",
+      "install_phase": 53
+    },
+    "release_zip": {
+      "asset_name": "rustdesk-server-linux-arm64v8.zip",
+      "source_url": "https://github.com/rustdesk/rustdesk-server/releases/download/1.1.15/rustdesk-server-linux-arm64v8.zip",
+      "sha256": "4998dd6d32431f9aaf5841663339793bc154d7152313e128832d6b610580abe4",
+      "size_bytes": 5494849,
+      "architecture": "linux-arm64v8",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-server-linux-arm64v8.zip",
+      "phase52_action": "verify-and-stage",
+      "install_phase": 53
+    }
+  },
+  "clients": {
+    "version": "1.4.9",
+    "tag": "1.4.9",
+    "commit": "6c578292e8ebbbec708b76986ba8c4bc7c509747",
+    "git_repository": "https://github.com/rustdesk/rustdesk.git",
+    "release_api_url": "https://api.github.com/repos/rustdesk/rustdesk/releases/tags/1.4.9",
+    "linux_arm64_deb": {
+      "asset_name": "rustdesk-1.4.9-aarch64.deb",
+      "source_url": "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-aarch64.deb",
+      "sha256": "ce62c996f14d33f3bbe3a330e953644a44bace7f05885a7953f7395d69fb49c0",
+      "size_bytes": 21694032,
+      "architecture": "arm64",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-1.4.9-aarch64.deb",
+      "phase52_action": "verify-and-stage",
+      "install_phase": 54,
+      "fleet_install_phase": 55
+    },
+    "windows_x86_64_msi": {
+      "asset_name": "rustdesk-1.4.9-x86_64.msi",
+      "source_url": "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.msi",
+      "sha256": "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa",
+      "size_bytes": 24825856,
+      "architecture": "x86_64",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-1.4.9-x86_64.msi",
+      "phase52_action": "verify-and-stage",
+      "install_phase": 54
+    }
+  }
+}
