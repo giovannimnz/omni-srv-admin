@@ -4,7 +4,7 @@
   "plan": "52-07",
   "gate": "A",
   "status": "PASS",
-  "verified_at": "2026-07-22T20:44:13Z",
+  "verified_at": "2026-07-22T21:26:29Z",
   "authorization": {
     "accountable": "Giovanni Muniz",
     "recorded_at": "2026-07-22T03:19:28-03:00",
@@ -14,7 +14,7 @@
     {"path": "modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json", "sha256": "a05061e96cb1dc5e1d060c7a7ed90f4d7a24711bf3a5dc006279823351da312e"},
     {"path": "modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json", "sha256": "b96e3904522412bbee836c4bdd7416c9eba8d9875217a9edb3a66d43276a17fa"},
     {"path": "modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52", "sha256": "54b762f83a3505a1419af9694f44ef4f56228cf08ccfcb94441e008b8d0a17ee"},
-    {"path": "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52", "sha256": "2f356d2017eff05c88e809ef3aeb84ee9998efeb1b3744f740495ef390f5b5eb"},
+    {"path": "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52", "sha256": "7262c90f6bcc5c04476ffba174dfae8bc1d72766b25e71b22907fbf0fc723bac"},
     {"path": "modules/rustdesk-fleet/tools/atius-vault-phase52-write", "sha256": "2aa7d944fc611b353ccbdee4e9882769f2e7d0ff206a9b1121c77c5b6910f3ee"},
     {"path": "modules/rustdesk-fleet/tools/atius-vault-phase52-client", "sha256": "003ad17411b9e39f57e2585aa818e267bea57891a610b98ce45382e36c603a34"},
     {"path": "modules/rustdesk-fleet/tools/rustdesk-vault-provider", "sha256": "f1c4288a0f1f43eafcc0d2276a17958e419cdc69e028d5d517a83e9a01435195"},
@@ -30,7 +30,7 @@
     {"path": "modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py", "sha256": "093e9076669ee707edae1314e5232c78d09e5ac85c05060e06dc8d8661d5c68a"},
     {"path": "modules/rustdesk-fleet/tools/validate_phase52.py", "sha256": "a58155d77b367289ac021ad5d28d0db47a3b090574cbed4055ba9d94e1c9ef5a"},
     {"path": "modules/fleet-backup/tests/test_phase52_backup_b.py", "sha256": "ed8408bc7ba6e3cf5cf723089531e29db9f7912a6bf55206e364bf105fd6ccf5"},
-    {"path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py", "sha256": "a11e9852fe3399c89fa6ea5f55ab523410ffdf65e8c757b74b80157c8f6d5fe2"},
+    {"path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py", "sha256": "97bc0afbc501dff0e1655327a8421ea8bb3ddb9cd6b903f7bce7f505ea334389"},
     {"path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-07-AUTHORIZATION.md", "sha256": "515177a096cbec8863e4a0962c82c066ff140029e1efcf4a77e1e102db4f1f16"}
   ],
   "checks": [
@@ -60,6 +60,7 @@
     {"id": "gate-a-twelfth-corrective-tdd-red", "status": "PASS", "result": "8 failed, 1 passed, 256 deselected; invalid restore reconciliation fixtures reached fetch while the valid fixture preserved the path"},
     {"id": "gate-a-twelfth-corrective-green", "status": "PASS", "result": "9 passed, 256 deselected"},
     {"id": "gate-a-vault-stdin-writer-corrective", "status": "PASS", "result": "7 focused writer tests and 265 supply/capacity tests passed; full JSON uses interactive stdin with no @- or global wrapper change"},
+    {"id": "gate-a-live-root-dispatcher-corrective", "status": "PASS", "result": "266 governed supply/capacity tests passed; live root resolves the exact /usr/local backend path while fixture-root behavior remains unchanged"},
     {"id": "phase52-focused-suite", "status": "PASS", "result": "299 passed"},
     {"id": "managed-source-secret-scan", "status": "PASS", "check": "P52-GATE-A-SECRET-SCAN"},
     {"id": "shell-and-python-syntax", "status": "PASS"},

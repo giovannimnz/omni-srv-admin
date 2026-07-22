@@ -5,16 +5,29 @@ set -euo pipefail
 set +x
 IFS=$'\n\t'
 umask 077
+
+phase52_managed_path() {
+  local root=$1 relative=$2
+  [[ "$root" == /* && "$relative" != /* && -n "$relative" ]] || return 64
+  if [[ "$root" == / ]]; then
+    printf '/%s' "$relative"
+  else
+    printf '%s/%s' "$root" "$relative"
+  fi
+}
+
+# Tests source this file to exercise the same path resolver used by the live
+# dispatcher without touching /usr/local or widening the forced-command API.
+if [[ "${BASH_SOURCE[0]}" != "$0" ]]; then
+  return 0
+fi
+
 root_prefix_from_self=$(realpath -e -- "$0")
 root_prefix_from_self=${root_prefix_from_self%/usr/local/sbin/atius-vault-export-ssh-phase52}
 [[ -n "$root_prefix_from_self" ]] || root_prefix_from_self=/
-if [[ "$root_prefix_from_self" == / ]]; then
-  readonly BACKEND=/usr/local/sbin/atius-vault-export-rustdesk-phase52
-  readonly LEGACY=/home/ubuntu/.local/bin/atius-vault-export-ssh
-else
-  readonly BACKEND="$root_prefix_from_self/usr/local/sbin/atius-vault-export-rustdesk-phase52"
-  readonly LEGACY="$root_prefix_from_self/home/ubuntu/.local/bin/atius-vault-export-ssh"
-fi
+BACKEND=$(phase52_managed_path "$root_prefix_from_self" usr/local/sbin/atius-vault-export-rustdesk-phase52)
+LEGACY=$(phase52_managed_path "$root_prefix_from_self" home/ubuntu/.local/bin/atius-vault-export-ssh)
+readonly BACKEND LEGACY
 readonly legacy_command_max_bytes=16384
 [[ $# -eq 0 ]] || exit 64
 original=${SSH_ORIGINAL_COMMAND-}

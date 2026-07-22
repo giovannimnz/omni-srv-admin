@@ -2219,12 +2219,37 @@ def test_gate_a_corrective_dispatcher_preserves_legacy_grammar() -> None:
     assert "eval" not in text
 
 
-def test_gate_a_dispatcher_uses_canonical_live_root_paths_for_exact_sudoers_match() -> None:
+def test_gate_a_dispatcher_uses_canonical_live_root_paths_for_exact_sudoers_match(
+    tmp_path: Path,
+) -> None:
     text = VAULT_CONTROL_DISPATCHER_PATH.read_text(encoding="utf-8")
-    assert 'if [[ "$root_prefix_from_self" == / ]]; then' in text
-    assert "readonly BACKEND=/usr/local/sbin/atius-vault-export-rustdesk-phase52" in text
-    assert "readonly LEGACY=/home/ubuntu/.local/bin/atius-vault-export-ssh" in text
-    assert 'readonly BACKEND="$root_prefix_from_self/usr/local/sbin/atius-vault-export-rustdesk-phase52"' in text
+    assert "phase52_managed_path" in text
+    command = (
+        'source "$1"; '
+        'phase52_managed_path "$2" usr/local/sbin/atius-vault-export-rustdesk-phase52; '
+        "printf '\\n'; "
+        'phase52_managed_path "$2" home/ubuntu/.local/bin/atius-vault-export-ssh'
+    )
+    live = subprocess.run(
+        ["bash", "-c", command, "bash", str(VAULT_CONTROL_DISPATCHER_PATH), "/"],
+        text=True, capture_output=True, check=False,
+    )
+    assert live.returncode == 0, live.stderr
+    assert live.stdout.splitlines() == [
+        "/usr/local/sbin/atius-vault-export-rustdesk-phase52",
+        "/home/ubuntu/.local/bin/atius-vault-export-ssh",
+    ]
+    fixture_root = tmp_path / "root"
+    fixture_root.mkdir()
+    fixture = subprocess.run(
+        ["bash", "-c", command, "bash", str(VAULT_CONTROL_DISPATCHER_PATH), str(fixture_root)],
+        text=True, capture_output=True, check=False,
+    )
+    assert fixture.returncode == 0, fixture.stderr
+    assert fixture.stdout.splitlines() == [
+        f"{fixture_root}/usr/local/sbin/atius-vault-export-rustdesk-phase52",
+        f"{fixture_root}/home/ubuntu/.local/bin/atius-vault-export-ssh",
+    ]
 
 
 def test_gate_a_corrective_installer_preserves_identity_and_validates_sudoers() -> None:
