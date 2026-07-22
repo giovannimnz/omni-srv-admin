@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from concurrent.futures import ThreadPoolExecutor
 import fcntl
+import base64
 import copy
 import hashlib
 import importlib.util
@@ -811,6 +812,27 @@ def test_successful_empty_metadata_json_is_not_pristine(monkeypatch, tmp_path):
         backend.metadata("kv/atius/rustdesk/server")
 
 
+def test_metadata_exact_kv_v2_absence_is_pristine_and_other_stderr_is_ambiguous(monkeypatch, tmp_path):
+    backend = object.__new__(tx.LocalVaultBackend)
+    backend.vault = tmp_path / "atius-vault"
+    expected = b"No value found at kv/metadata/atius/rustdesk/server\n"
+    monkeypatch.setattr(tx, "_bounded_process_detailed", lambda *a, **k: (2, b"", expected))
+    assert backend.metadata("kv/atius/rustdesk/server") == {
+        "current_version": 0, "oldest_version": 0, "versions": {},
+    }
+
+    for stderr in (
+        b"No value found at kv/atius/rustdesk/server\n",
+        b"No value found at kv/metadata/atius/rustdesk/other\n",
+        expected + b"extra\n",
+    ):
+        monkeypatch.setattr(
+            tx, "_bounded_process_detailed", lambda *a, _stderr=stderr, **k: (2, b"", _stderr),
+        )
+        with pytest.raises(tx.Blocked, match="vault-metadata-absence-ambiguous"):
+            backend.metadata("kv/atius/rustdesk/server")
+
+
 def test_metadata_success_requires_explicit_kv_schema_and_fields(monkeypatch, tmp_path):
     backend = object.__new__(tx.LocalVaultBackend)
     backend.vault = tmp_path / "atius-vault"
@@ -824,6 +846,100 @@ def test_metadata_success_requires_explicit_kv_schema_and_fields(monkeypatch, tm
         "oldest_version": 0,
         "versions": {},
     }
+
+
+def test_generator_uses_isolated_hbbs_keypair_and_cleans_container(monkeypatch):
+    payload = contract()
+    backend = tx.LocalVaultBackend(
+        REPO, b"[giovanni-drive]\ntype = drive\n",
+        payload["authorization"]["approved_horistic_ssh_key_fingerprint"],
+    )
+    image = payload["generator"]["immutable_reference"]
+    digest = payload["generator"]["linux_arm64_digest"]
+    monkeypatch.setattr(backend, "_json", lambda command: [{
+        "Architecture": "arm64", "RepoDigests": [image],
+    }])
+    calls = []
+    key_root = None
+    private_raw = b"p" * 32 + b"q" * 32
+    public_raw = b"q" * 32
+
+    def bounded(command, private_input, **kwargs):
+        nonlocal key_root
+        calls.append(command)
+        if command[1] == "create":
+            mount = command[command.index("--mount") + 1]
+            source = mount.split("source=", 1)[1].split(",target=", 1)[0]
+            key_root = Path(source)
+            return 0, ("a" * 64 + "\n").encode()
+        if command[1] == "start":
+            assert key_root is not None
+            (key_root / "id_ed25519").write_text(base64.b64encode(private_raw).decode() + "\n")
+            (key_root / "id_ed25519.pub").write_text(base64.b64encode(public_raw).decode() + "\n")
+            return 0, ("a" * 64 + "\n").encode()
+        if command[1] in {"stop", "rm"}:
+            return 0, b"removed\n"
+        raise AssertionError(command)
+
+    monkeypatch.setattr(tx, "_bounded_process", bounded)
+    runtime = Path(tempfile.mkdtemp(prefix="atius-phase52-generator-test-", dir="/dev/shm"))
+    runtime.chmod(0o700)
+    try:
+        values = backend.generate_values(payload, runtime)
+        tx._validate_private_values(payload, values)
+        identity = values["rustdesk-server-identity"]
+        assert len(base64.b64decode(identity["private_key"])) == 64
+        assert len(base64.b64decode(identity["public_key"])) == 32
+        create = calls[0]
+        assert create[0] == str(tx.PODMAN) and create[1] == "create"
+        assert create[create.index("--network") + 1] == "none"
+        assert create[create.index("--cpus") + 1] == "0.8"
+        assert create[create.index("--entrypoint") + 1] == "hbbs"
+        assert "-p" not in create and "--publish" not in create
+        assert any(command[1:4] == ["stop", "--time", "1"] for command in calls)
+        assert calls[-1][1:5] == ["rm", "-f", "--ignore", "--time"]
+        assert key_root is not None and not key_root.exists()
+        assert digest in image
+    finally:
+        tx.shutil.rmtree(runtime, ignore_errors=True)
+
+
+def test_generator_cleans_ambiguous_create_side_effect(monkeypatch):
+    payload = contract()
+    backend = tx.LocalVaultBackend(
+        REPO, b"[giovanni-drive]\ntype = drive\n",
+        payload["authorization"]["approved_horistic_ssh_key_fingerprint"],
+    )
+    image = payload["generator"]["immutable_reference"]
+    monkeypatch.setattr(backend, "_json", lambda command: [{
+        "Architecture": "arm64", "RepoDigests": [image],
+    }])
+    calls = []
+    key_root = None
+
+    def bounded(command, private_input, **kwargs):
+        nonlocal key_root
+        calls.append(command)
+        if command[1] == "create":
+            mount = command[command.index("--mount") + 1]
+            source = mount.split("source=", 1)[1].split(",target=", 1)[0]
+            key_root = Path(source)
+            raise tx.Blocked("child-command-timeout")
+        if command[1] == "rm":
+            assert command[2:6] == ["-f", "--ignore", "--time", "1"]
+            return 0, b""
+        raise AssertionError(command)
+
+    monkeypatch.setattr(tx, "_bounded_process", bounded)
+    runtime = Path(tempfile.mkdtemp(prefix="atius-phase52-generator-create-fault-", dir="/dev/shm"))
+    runtime.chmod(0o700)
+    try:
+        with pytest.raises(tx.Blocked, match="child-command-timeout"):
+            backend.generate_values(payload, runtime)
+        assert [command[1] for command in calls] == ["create", "rm"]
+        assert key_root is not None and not key_root.exists()
+    finally:
+        tx.shutil.rmtree(runtime, ignore_errors=True)
 
 
 @pytest.mark.parametrize(
@@ -2036,6 +2152,8 @@ def test_source_has_no_secret_transport_in_argv_env_or_output():
     assert 'BASH = Path("/usr/bin/bash")' in executor
     assert '[str(BASH), str(self.installer)' in executor
     assert '[str(self.installer), "--install"' not in executor
+    assert '"--entrypoint", "hbbs"' in executor
+    assert "rustdesk-utils" not in executor
     assert "_fsync_file_and_parent(snapshot)" in executor
     assert "private_config.unlink()" in executor
     assert "_fsync_directory(private_config.parent)" in executor

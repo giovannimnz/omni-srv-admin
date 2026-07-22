@@ -2216,7 +2216,10 @@ class LocalVaultBackend(TransactionBackend):
             [str(self.vault), "kv", "metadata", "get", "-format=json", vault_path], b"",
         )
         if code == 2 and stdout == b"":
-            expected = f"No value found at {vault_path}\n".encode()
+            mount, separator, relative = vault_path.partition("/")
+            if not separator or not mount or not relative:
+                raise Blocked("vault-metadata-absence-ambiguous")
+            expected = f"No value found at {mount}/metadata/{relative}\n".encode()
             if stderr == expected:
                 return {"current_version": 0, "oldest_version": 0, "versions": {}}
             raise Blocked("vault-metadata-absence-ambiguous")
@@ -2247,7 +2250,7 @@ class LocalVaultBackend(TransactionBackend):
 
     def generate_values(self, contract: dict[str, Any], runtime_dir: Path) -> dict[str, dict[str, str]]:
         image = contract["generator"]["immutable_reference"]
-        inspect = self._json(["podman", "image", "inspect", image])
+        inspect = self._json([str(PODMAN), "image", "inspect", image])
         if (
             not isinstance(inspect, list) or len(inspect) != 1 or not isinstance(inspect[0], dict)
             or inspect[0].get("Architecture") != "arm64"
@@ -2257,28 +2260,101 @@ class LocalVaultBackend(TransactionBackend):
             )
         ):
             raise Blocked("generator-image-digest-drift")
-        _, raw = _bounded_process([
-            "podman", "run", "--rm", "--network", "none", "--pull", "never",
-            "--read-only", "--tmpfs", "/tmp:rw,noexec,nosuid,nodev,mode=0700",
-            "--entrypoint", "rustdesk-utils", image, "genkeypair",
-        ], b"", max_stdout=4096, max_stderr=4096, timeout_seconds=30)
-        lines = [line.strip() for line in raw.decode("ascii", "strict").splitlines() if line.strip()]
-        labelled = {}
-        for line in lines:
-            match = re.fullmatch(r"(?i)(private|public)(?: key)?\s*:\s*([A-Za-z0-9+/]{43}=?)", line)
-            if match:
-                labelled[match.group(1).lower()] = match.group(2)
-        if set(labelled) != {"private", "public"}:
-            raise Blocked("generator-output-invalid")
-        for value in labelled.values():
-            try:
-                decoded = base64.b64decode(value + "=" * (-len(value) % 4), validate=True)
-            except Exception as exc:
-                raise Blocked("generator-output-invalid") from exc
-            if len(decoded) != 32:
-                raise Blocked("generator-output-invalid")
-        private_key = labelled["private"]
-        public_key = labelled["public"]
+        try:
+            runtime_info = runtime_dir.lstat()
+        except OSError as exc:
+            raise Blocked("generator-runtime-invalid") from exc
+        if (
+            runtime_dir.parent != Path("/dev/shm")
+            or runtime_dir.is_symlink()
+            or not stat.S_ISDIR(runtime_info.st_mode)
+            or runtime_info.st_uid != os.geteuid()
+            or stat.S_IMODE(runtime_info.st_mode) != 0o700
+        ):
+            raise Blocked("generator-runtime-invalid")
+        container_name = f"atius-phase52-keygen-{secrets.token_hex(12)}"
+        key_root = runtime_dir / "rustdesk-keygen"
+        try:
+            key_root.mkdir(mode=0o700)
+        except OSError as exc:
+            raise Blocked("generator-runtime-invalid") from exc
+        create_attempted = False
+        try:
+            create_attempted = True
+            _, container_raw = _bounded_process([
+                str(PODMAN), "create", "--name", container_name,
+                "--network", "none", "--pull", "never", "--read-only",
+                "--cap-drop", "all", "--security-opt", "no-new-privileges",
+                "--cpus", "0.8", "--memory", "256m", "--pids-limit", "128",
+                "--log-driver", "none",
+                "--mount", f"type=bind,source={key_root},target=/root,rw",
+                "--entrypoint", "hbbs", image,
+            ], b"", max_stdout=4096, max_stderr=4096, timeout_seconds=30)
+            if not re.fullmatch(rb"[a-f0-9]{64}\n?", container_raw):
+                raise Blocked("generator-container-create-invalid")
+            _bounded_process([
+                str(PODMAN), "start", container_name,
+            ], b"", max_stdout=4096, max_stderr=4096, timeout_seconds=15)
+            private_path = key_root / "id_ed25519"
+            public_path = key_root / "id_ed25519.pub"
+            deadline = time.monotonic() + 15
+            while time.monotonic() < deadline:
+                if private_path.is_file() and public_path.is_file():
+                    break
+                time.sleep(0.1)
+            _bounded_process([
+                str(PODMAN), "stop", "--time", "1", container_name,
+            ], b"", max_stdout=4096, max_stderr=4096, timeout_seconds=15)
+            encoded_keys: list[str] = []
+            decoded_keys: list[bytes] = []
+            for path, decoded_size in ((private_path, 64), (public_path, 32)):
+                try:
+                    info = path.lstat()
+                except OSError as exc:
+                    raise Blocked("generator-output-invalid") from exc
+                if (
+                    path.is_symlink()
+                    or not stat.S_ISREG(info.st_mode)
+                    or info.st_nlink != 1
+                    or info.st_uid != os.geteuid()
+                    or info.st_size <= 0
+                    or info.st_size > 256
+                ):
+                    raise Blocked("generator-output-invalid")
+                try:
+                    path.chmod(0o600)
+                    value = path.read_text(encoding="ascii").strip()
+                except (OSError, UnicodeError) as exc:
+                    raise Blocked("generator-output-invalid") from exc
+                if not re.fullmatch(r"[A-Za-z0-9+/]+={0,2}", value):
+                    raise Blocked("generator-output-invalid")
+                try:
+                    decoded = base64.b64decode(
+                        value + "=" * (-len(value) % 4), validate=True,
+                    )
+                except Exception as exc:
+                    raise Blocked("generator-output-invalid") from exc
+                if len(decoded) != decoded_size:
+                    raise Blocked("generator-output-invalid")
+                encoded_keys.append(value)
+                decoded_keys.append(decoded)
+            if not hmac.compare_digest(decoded_keys[0][32:], decoded_keys[1]):
+                raise Blocked("generator-keypair-mismatch")
+            private_key, public_key = encoded_keys
+        finally:
+            cleanup_error: BaseException | None = None
+            if create_attempted:
+                try:
+                    _bounded_process([
+                        str(PODMAN), "rm", "-f", "--ignore", "--time", "1", container_name,
+                    ], b"", max_stdout=4096, max_stderr=4096, timeout_seconds=15)
+                except BaseException as exc:
+                    cleanup_error = exc
+            shutil.rmtree(key_root, ignore_errors=True)
+            if key_root.exists() or key_root.is_symlink():
+                raise Blocked("generator-runtime-cleanup-failed")
+            if cleanup_error is not None:
+                raise Blocked("generator-container-cleanup-failed") from cleanup_error
         self._public_fingerprint = hashlib.sha256(public_key.encode("ascii")).hexdigest()
         alphabet = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         passwords = ["R" + "".join(secrets.choice(alphabet) for _ in range(31)) for _ in range(5)]

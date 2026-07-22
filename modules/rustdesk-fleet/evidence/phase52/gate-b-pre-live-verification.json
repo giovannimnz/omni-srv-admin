@@ -94,25 +94,25 @@
     "path": "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json",
     "sha256": "4aa5bde516804e48207aa92771fd1fec31c5acde885a96f9f053be23833add67"
   },
-  "generated_at": "2026-07-22T19:56:14.469628Z",
-  "hash_set_sha256": "07f16bee83594b286c8ca38c12f2721c5cfd9720bc1397e7b380ad35c493c9c6",
+  "generated_at": "2026-07-22T20:24:30.595644Z",
+  "hash_set_sha256": "0004136addd11177d90f240f33cdf1fb9100d4282803d2a501052c7cae5b5617",
   "live_write_performed": false,
   "network_performed": false,
   "phase": 52,
   "reviews": [
     {
-      "hash_set_sha256": "07f16bee83594b286c8ca38c12f2721c5cfd9720bc1397e7b380ad35c493c9c6",
-      "reviewer": "codex-snapshot-bridge-reviewer-1",
+      "hash_set_sha256": "0004136addd11177d90f240f33cdf1fb9100d4282803d2a501052c7cae5b5617",
+      "reviewer": "codex-gate-b-hash-review-2",
       "status": "PASS"
     },
     {
-      "hash_set_sha256": "07f16bee83594b286c8ca38c12f2721c5cfd9720bc1397e7b380ad35c493c9c6",
-      "reviewer": "codex-gate-b-hash-review-2",
+      "hash_set_sha256": "0004136addd11177d90f240f33cdf1fb9100d4282803d2a501052c7cae5b5617",
+      "reviewer": "codex-snapshot-bridge-reviewer-1",
       "status": "PASS"
     }
   ],
   "schema": "phase52-gate-b-pre-live-seal-v1",
-  "sealed_at": "2026-07-22T19:58:03.040302Z",
+  "sealed_at": "2026-07-22T20:26:48.623213Z",
   "sealed_sources": [
     {
       "path": "modules/rustdesk-fleet/contracts/phase52-gate-b-transaction.json",
@@ -120,7 +120,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tools/phase52-vault-transaction.py",
-      "sha256": "19eac9d2a06db97e3ceec31dba64d305ffa5fb027bf0be40f17371a3634f06a7"
+      "sha256": "382eeb1b0fa5b6752fd0f2951196b94600c79042ce9c051375aa08d3f4706238"
     },
     {
       "path": "modules/rustdesk-fleet/tools/run-phase52-gate-b.py",
@@ -128,7 +128,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py",
-      "sha256": "bfc9e6bf924a7ae2e872d12c89cd5700f83878997cc8f4c698fec8e8f4097a6d"
+      "sha256": "e635a069c64fa863835b22e47a4c01d50f895cc0e44db724a6cdf6a801e8acc5"
     }
   ],
   "secret_material_present": false,
