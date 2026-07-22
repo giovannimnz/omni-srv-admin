@@ -29,6 +29,15 @@ CAPACITY_MUTATIONS_PATH = (
 CAPACITY_PROPOSAL_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json"
 CAPACITY_SUMMARY_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-summary.json"
 FULL_GATE_SUMMARY_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+INTEGRATED_GATE_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/integrated-gate.json"
+LEDGER_PATH = REPO / "modules/rustdesk-fleet/evidence/ledger.json"
+PHASE52_DIR = (
+    REPO
+    / ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement"
+)
+PHASE52_REPORT_JSON_PATH = PHASE52_DIR / "52-GATE-REPORT.json"
+PHASE52_REPORT_MD_PATH = PHASE52_DIR / "52-GATE-REPORT.md"
+PHASE53_TOPOLOGY_REVIEW_PATH = PHASE52_DIR / "52-PHASE53-TOPOLOGY-REVIEW.md"
 OPERATIONAL_DECISIONS_PATH = (
     REPO
     / ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md"
@@ -1275,3 +1284,109 @@ def test_vault_restore_mutation_catalog_is_complete_and_non_secret() -> None:
     serialized = json.dumps(catalog, sort_keys=True)
     assert "BEGIN PRIVATE KEY" not in serialized
     assert "permanent_password_value" not in serialized
+
+
+def test_report_builds_exact_blocked_check_set_from_current_no_primary() -> None:
+    report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
+    assert [item["id"] for item in report["checks"]] == list(validator.PHASE52_CHECK_ORDER)
+    assert len(report["checks"]) == len(set(item["id"] for item in report["checks"])) == 11
+    assert report["overall_status"] == "BLOCKED"
+    assert report["selected_candidate"] is None
+    assert report["phase53_advance_status"] == "BLOCKED"
+    assert report["phase53_topology_review_status"] == "BLOCKED"
+    assert report["windows_install_performed"] is False
+    assert report["windows_access_proven"] is False
+    assert report["secret_material_present"] is False
+    by_id = {item["id"]: item for item in report["checks"]}
+    assert by_id["P52-SUPPLY-001"]["status"] == "PASS"
+    assert by_id["P52-PLACEMENT-001"]["status"] == "BLOCKED"
+    assert by_id["P52-VAULT-001"]["status"] == "BLOCKED"
+    assert by_id["P52-TOPOLOGY-001"]["status"] == "BLOCKED"
+    assert by_id["P52-REPORT-001"]["status"] == "PASS"
+    assert by_id["P51-WS-001"]["status"] == "PASS"
+    assert by_id["P51-P48-001"]["status"] == "PASS"
+
+
+def test_report_rejects_duplicate_stale_self_hash_secret_and_stored_verdict_drift() -> None:
+    report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
+
+    duplicate = copy.deepcopy(report)
+    duplicate["checks"].append(copy.deepcopy(duplicate["checks"][0]))
+    result = validator.validate_phase52_report(duplicate, REPO)
+    assert result.status == "FAIL"
+    assert "report-check-set" in _categories(result)
+
+    stale = copy.deepcopy(report)
+    stale["inputs"][0]["sha256"] = "0" * 64
+    result = validator.validate_phase52_report(stale, REPO)
+    assert result.status == "BLOCKED"
+    assert "stale-input-digest" in _categories(result)
+
+    self_cycle = copy.deepcopy(report)
+    self_cycle["inputs"].append(
+        {"path": PHASE52_REPORT_JSON_PATH.relative_to(REPO).as_posix(), "sha256": "0" * 64}
+    )
+    result = validator.validate_phase52_report(self_cycle, REPO)
+    assert result.status == "FAIL"
+    assert "report-self-hash-cycle" in _categories(result)
+
+    secret = copy.deepcopy(report)
+    secret["secret_material_present"] = True
+    result = validator.validate_phase52_report(secret, REPO)
+    assert result.status == "FAIL"
+    assert "secret-material" in _categories(result)
+
+    verdict = copy.deepcopy(report)
+    verdict["overall_status"] = "PASS"
+    result = validator.validate_phase52_report(verdict, REPO)
+    assert result.status == "FAIL"
+    assert "stored-verdict-drift" in _categories(result)
+
+
+def test_report_outputs_are_atomic_parity_and_topology_is_fail_closed(tmp_path: Path) -> None:
+    report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
+    integrated = tmp_path / "integrated-gate.json"
+    machine = tmp_path / "52-GATE-REPORT.json"
+    markdown = tmp_path / "52-GATE-REPORT.md"
+    topology = tmp_path / "52-PHASE53-TOPOLOGY-REVIEW.md"
+    validator.write_phase52_outputs_atomically(
+        report,
+        integrated_path=integrated,
+        json_path=machine,
+        markdown_path=markdown,
+        topology_path=topology,
+        repo=REPO,
+        allow_test_paths=True,
+    )
+    assert integrated.read_bytes() == machine.read_bytes()
+    assert validator.validate_phase52_output_parity(report, integrated, machine, markdown).status == "PASS"
+    topology_text = topology.read_text(encoding="utf-8")
+    assert "**Status:** BLOCKED" in topology_text
+    assert "**Selected candidate:** `none`" in topology_text
+    assert "**Phase 53 advance status:** `BLOCKED`" in topology_text
+    assert "vault-export-helper-missing" in topology_text
+    assert "Phase 54" in topology_text and "Phase 57" in topology_text
+    assert "windows_install_performed=false" in topology_text
+
+
+def test_blocked_report_does_not_promote_phase52_ledger_rows() -> None:
+    report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
+    ledger = validator.load_json_strict(LEDGER_PATH)
+    before = copy.deepcopy(ledger)
+    updated, promoted = validator.update_phase52_ledger(ledger, report)
+    assert promoted is False
+    assert updated == before
+    rows = {
+        item["requirement_id"]: item
+        for item in updated["requirements"]
+        if item["requirement_id"] in validator.PHASE52_REQUIREMENTS
+    }
+    assert set(rows) == set(validator.PHASE52_REQUIREMENTS)
+    assert all(item["status"] == "pending" and item["last_verified_at"] is None for item in rows.values())
+
+
+def test_report_cli_accepts_canonical_output_paths() -> None:
+    parser = validator.build_parser()
+    options = {action.dest for action in parser._actions}
+    assert {"json_out", "markdown_out", "integrated_out", "topology_out"}.issubset(options)
+    assert not {"install", "cleanup", "remediate", "publish"} & options
