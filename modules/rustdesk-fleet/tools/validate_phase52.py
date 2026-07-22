@@ -4,10 +4,12 @@
 from __future__ import annotations
 
 import argparse
+import copy
 from datetime import datetime, timezone
 import fcntl
 import hashlib
 import hmac
+import importlib.util
 import json
 import os
 import re
@@ -36,6 +38,8 @@ PLACEMENT_DECISION = Path("modules/rustdesk-fleet/contracts/placement-decision.j
 CAPACITY_PROPOSAL = Path("modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json")
 CAPACITY_SUMMARY = Path("modules/rustdesk-fleet/evidence/phase52/capacity-summary.json")
 FULL_GATE_SUMMARY = Path("modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json")
+INTEGRATED_GATE = Path("modules/rustdesk-fleet/evidence/phase52/integrated-gate.json")
+LEDGER = Path("modules/rustdesk-fleet/evidence/ledger.json")
 SECRET_ROLES = Path("modules/rustdesk-fleet/contracts/secret-roles.json")
 HORISTIC_REVIEW = Path(
     ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
@@ -44,6 +48,46 @@ HORISTIC_REVIEW = Path(
 OPERATIONAL_DECISIONS = Path(
     ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
     "52-OPERATIONAL-DECISIONS.md"
+)
+PHASE52_DIR = Path(
+    ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement"
+)
+PHASE52_REPORT_JSON = PHASE52_DIR / "52-GATE-REPORT.json"
+PHASE52_REPORT_MARKDOWN = PHASE52_DIR / "52-GATE-REPORT.md"
+PHASE53_TOPOLOGY_REVIEW = PHASE52_DIR / "52-PHASE53-TOPOLOGY-REVIEW.md"
+PHASE48_BASELINE = Path("modules/rustdesk-fleet/evidence/phase48-baseline.json")
+PHASE51_VALIDATOR = Path("modules/rustdesk-fleet/tools/validate_phase51.py")
+PHASE52_TESTS = Path("modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py")
+SCOPE_CONTRACT = Path("modules/rustdesk-fleet/contracts/scope.json")
+PHASE52_REQUIREMENTS = ("SCP-04", "SRV-01", "SRV-05", "SRV-07")
+PHASE52_CHECK_ORDER = (
+    "P52-SUPPLY-001",
+    "P52-CAPACITY-001",
+    "P52-PLACEMENT-001",
+    "P52-VAULT-001",
+    "P52-BACKUP-001",
+    "P52-RESTORE-001",
+    "P52-ROLLBACK-001",
+    "P52-TOPOLOGY-001",
+    "P52-REPORT-001",
+    "P51-WS-001",
+    "P51-P48-001",
+)
+PHASE52_REPORT_INPUTS = (
+    SUPPLY_CONTRACT,
+    SUPPLY_OBSERVATION,
+    CAPACITY_POLICY,
+    PLACEMENT_DECISION,
+    FULL_GATE_SUMMARY,
+    SECRET_ROLES,
+    OPERATIONAL_DECISIONS,
+    HORISTIC_REVIEW,
+    LEDGER,
+    PHASE48_BASELINE,
+    SCOPE_CONTRACT,
+    PHASE51_VALIDATOR,
+    Path("modules/rustdesk-fleet/tools/validate_phase52.py"),
+    PHASE52_TESTS,
 )
 SERVER_COMMIT = "9bae9f2f39d92c4b4ba2e28e089da5071897b22e"
 CLIENT_COMMIT = "6c578292e8ebbbec708b76986ba8c4bc7c509747"
@@ -2786,15 +2830,593 @@ def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> l
     return sorted(rows, key=lambda item: item["path"])
 
 
+def _serialize_check(result: CheckResult) -> dict[str, Any]:
+    return {
+        "id": result.id,
+        "status": result.status,
+        "evidence_ids": result.evidence_ids,
+        "findings": [
+            {"category": item.category, "path": item.path, "location": item.location}
+            for item in result.findings
+        ],
+    }
+
+
+def _load_phase51_validator(repo: Path) -> Any:
+    path = validate_repo_path(repo, repo / PHASE51_VALIDATOR)
+    name = "rustdesk_phase51_for_phase52"
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise ValueError("Phase 51 validator cannot be loaded")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _phase51_checks(repo: Path) -> tuple[CheckResult, CheckResult]:
+    phase51 = _load_phase51_validator(repo)
+    scope_path = validate_repo_path(repo, repo / SCOPE_CONTRACT)
+    scope_results = phase51.validate_scope(
+        phase51.load_json_strict(scope_path), scope_path.relative_to(repo).as_posix()
+    )
+    workstream = next(item for item in scope_results if item.id == "P51-WS-001")
+    baseline_path = validate_repo_path(repo, repo / PHASE48_BASELINE)
+    baseline = phase51.validate_phase48_baseline(
+        phase51.load_json_strict(baseline_path), repo, baseline_path.relative_to(repo).as_posix()
+    )
+
+    def convert(result: Any) -> CheckResult:
+        return CheckResult(
+            id=result.id,
+            status=result.status,
+            evidence_ids=list(result.evidence_ids),
+            findings=[Finding(item.category, item.path, item.location) for item in result.findings],
+        )
+
+    return convert(workstream), convert(baseline)
+
+
+def _stage_check(
+    check_id: str,
+    stage: str,
+    full_gate: dict[str, Any],
+    *,
+    require_selected: bool = False,
+) -> CheckResult:
+    attempts = full_gate.get("attempts") if isinstance(full_gate, dict) else None
+    if not isinstance(attempts, list) or not attempts:
+        return _check_result(check_id, "FAIL", ["candidate-shape"], FULL_GATE_SUMMARY.as_posix())
+    records: list[dict[str, Any]] = []
+    for attempt in attempts:
+        stages = attempt.get("stages") if isinstance(attempt, dict) else None
+        record = stages.get(stage) if isinstance(stages, dict) else None
+        if not isinstance(record, dict):
+            return _check_result(check_id, "FAIL", ["stage-vector-shape"], FULL_GATE_SUMMARY.as_posix())
+        records.append(record)
+    evidence_ids = list(
+        dict.fromkeys(
+            item
+            for record in records
+            for item in record.get("evidence_ids", [])
+            if isinstance(item, str) and item
+        )
+    )
+    findings = list(
+        dict.fromkeys(
+            item
+            for record in records
+            for item in record.get("findings", [])
+            if isinstance(item, str)
+        )
+    )
+    statuses = [record.get("status") for record in records]
+    if any(status == "FAIL" for status in statuses):
+        status = "FAIL"
+    elif require_selected and full_gate.get("selected_candidate") is None:
+        status = "BLOCKED"
+        findings.append("no-selected-candidate")
+    elif any(status in {"BLOCKED", "NO-GO", "SKIPPED_DUE_TO_GATE", "SKIPPED_BY_GATE"} for status in statuses):
+        status = "BLOCKED"
+    elif statuses and all(status == "PASS" for status in statuses):
+        status = "PASS"
+    else:
+        status = "BLOCKED"
+        findings.append("stage-status-incomplete")
+    return CheckResult(
+        id=check_id,
+        status=status,
+        evidence_ids=evidence_ids or [f"P52-EV-{stage.upper().replace('_', '-')}"],
+        findings=[
+            Finding(category, FULL_GATE_SUMMARY.as_posix(), f"attempts.*.stages.{stage}")
+            for category in sorted(set(findings))
+        ],
+    )
+
+
+def _capacity_report_check(
+    policy: dict[str, Any], full_gate: dict[str, Any]
+) -> CheckResult:
+    policy_result = validate_capacity_policy(policy)
+    if policy_result.status != "PASS":
+        return policy_result
+    return _stage_check("P52-CAPACITY-001", "capacity", full_gate, require_selected=True)
+
+
+def _topology_report_check(full_gate: dict[str, Any]) -> CheckResult:
+    selected = full_gate.get("selected_candidate")
+    if selected is None:
+        return _check_result(
+            "P52-TOPOLOGY-001",
+            "BLOCKED",
+            ["no-selected-candidate"],
+            FULL_GATE_SUMMARY.as_posix(),
+        )
+    attempts = {
+        item.get("candidate"): item
+        for item in full_gate.get("attempts", [])
+        if isinstance(item, dict)
+    }
+    selected_attempt = attempts.get(selected)
+    record = (
+        selected_attempt.get("stages", {}).get("topology_security")
+        if isinstance(selected_attempt, dict)
+        else None
+    )
+    if not isinstance(record, dict):
+        return _check_result(
+            "P52-TOPOLOGY-001", "FAIL", ["selected-topology-missing"], FULL_GATE_SUMMARY.as_posix()
+        )
+    status = record.get("status")
+    return CheckResult(
+        id="P52-TOPOLOGY-001",
+        status="PASS" if status == "PASS" else "FAIL" if status == "FAIL" else "BLOCKED",
+        evidence_ids=list(record.get("evidence_ids", [])) or ["P52-EV-TOPOLOGY"],
+        findings=[
+            Finding(item, FULL_GATE_SUMMARY.as_posix(), "selected.topology_security")
+            for item in record.get("findings", [])
+            if isinstance(item, str)
+        ],
+    )
+
+
+def _git_head(repo: Path) -> str:
+    completed = subprocess.run(
+        ["git", "rev-parse", "HEAD"], cwd=repo, text=True, capture_output=True, check=False
+    )
+    value = completed.stdout.strip()
+    if completed.returncode != 0 or re.fullmatch(r"[0-9a-f]{40}", value) is None:
+        raise ValueError("unable to resolve source HEAD")
+    return value
+
+
+def build_phase52_report(repo: Path, generated_at: str | None = None) -> dict[str, Any]:
+    root = repo.resolve()
+    contract = load_json_strict(validate_repo_path(root, root / SUPPLY_CONTRACT))
+    observation = load_json_strict(validate_repo_path(root, root / SUPPLY_OBSERVATION))
+    policy = load_json_strict(validate_repo_path(root, root / CAPACITY_POLICY))
+    placement = load_json_strict(validate_repo_path(root, root / PLACEMENT_DECISION))
+    full_gate = load_json_strict(validate_repo_path(root, root / FULL_GATE_SUMMARY))
+    secret_roles = load_json_strict(validate_repo_path(root, root / SECRET_ROLES))
+
+    contract_result = validate_supply_contract(contract)
+    supply = (
+        contract_result
+        if contract_result.status != "PASS"
+        else validate_supply_observation(observation, contract, repo=root)
+    )
+    capacity = _capacity_report_check(policy, full_gate)
+    placement_result = validate_placement_decision(placement)
+    vault_contract = validate_vault_metadata(secret_roles)
+    vault = (
+        vault_contract
+        if vault_contract.status != "PASS"
+        else _stage_check("P52-VAULT-001", "vault", full_gate, require_selected=True)
+    )
+    backup = _stage_check("P52-BACKUP-001", "backup", full_gate, require_selected=True)
+    restore = _stage_check("P52-RESTORE-001", "restore", full_gate, require_selected=True)
+    rollback = _stage_check("P52-ROLLBACK-001", "rollback", full_gate)
+    topology = _topology_report_check(full_gate)
+    report_check = _check_result("P52-REPORT-001", "PASS", [], INTEGRATED_GATE.as_posix())
+    workstream, phase48 = _phase51_checks(root)
+    results = [
+        supply,
+        capacity,
+        placement_result,
+        vault,
+        backup,
+        restore,
+        rollback,
+        topology,
+        report_check,
+        workstream,
+        phase48,
+    ]
+    if tuple(item.id for item in results) != PHASE52_CHECK_ORDER:
+        raise ValueError("Phase 52 report check set is incomplete")
+    timestamp = generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
+        "+00:00", "Z"
+    )
+    selected = full_gate.get("selected_candidate")
+    overall = derive_overall_status(results)
+    topology_status = topology.status if selected is not None else "BLOCKED"
+    attempts = full_gate.get("attempts", [])
+    candidate_attempts = [
+        {
+            "candidate": item.get("candidate"),
+            "record_digest": item.get("record_digest"),
+            "verdict": item.get("verdict"),
+            "first_non_pass_stage": item.get("first_non_pass_stage"),
+        }
+        for item in attempts
+        if isinstance(item, dict)
+    ]
+    return {
+        "schema_version": 1,
+        "phase": 52,
+        "workstream": "rustdesk-fleet",
+        "source_head": _git_head(root),
+        "generated_at": timestamp,
+        "inputs": collect_input_digests(root, PHASE52_REPORT_INPUTS),
+        "checks": [_serialize_check(item) for item in results],
+        "selected_candidate": selected,
+        "candidate_attempts": candidate_attempts,
+        "phase53_topology_review_status": topology_status,
+        "phase53_advance_status": (
+            "READY" if overall == "PASS" and selected is not None and topology_status == "PASS" else "BLOCKED"
+        ),
+        "future_topology_reviews": {
+            "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+            "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        },
+        "windows_install_performed": False,
+        "windows_access_proven": False,
+        "public_listener_created": False,
+        "secret_material_present": False,
+        "overall_status": overall,
+    }
+
+
+def validate_phase52_report(report: dict[str, Any], repo: Path) -> CheckResult:
+    root = repo.resolve()
+    fail: list[str] = []
+    blocked: list[str] = []
+    expected_keys = {
+        "schema_version",
+        "phase",
+        "workstream",
+        "source_head",
+        "generated_at",
+        "inputs",
+        "checks",
+        "selected_candidate",
+        "candidate_attempts",
+        "phase53_topology_review_status",
+        "phase53_advance_status",
+        "future_topology_reviews",
+        "windows_install_performed",
+        "windows_access_proven",
+        "public_listener_created",
+        "secret_material_present",
+        "overall_status",
+    }
+    if not _exact_keys(report, expected_keys) or report.get("schema_version") != 1 or report.get(
+        "phase"
+    ) != 52 or report.get("workstream") != "rustdesk-fleet":
+        fail.append("report-shape")
+    checks = report.get("checks")
+    check_ids = [item.get("id") for item in checks if isinstance(item, dict)] if isinstance(checks, list) else []
+    if tuple(check_ids) != PHASE52_CHECK_ORDER or len(check_ids) != len(set(check_ids)):
+        fail.append("report-check-set")
+    statuses: list[str] = []
+    if isinstance(checks, list):
+        for item in checks:
+            if not isinstance(item, dict) or set(item) != {"id", "status", "evidence_ids", "findings"}:
+                fail.append("report-check-shape")
+                continue
+            if item.get("status") not in {"PASS", "BLOCKED", "FAIL"}:
+                fail.append("report-check-status")
+            else:
+                statuses.append(item["status"])
+    inputs = report.get("inputs")
+    input_paths: list[str] = []
+    output_paths = {
+        INTEGRATED_GATE.as_posix(),
+        PHASE52_REPORT_JSON.as_posix(),
+        PHASE52_REPORT_MARKDOWN.as_posix(),
+        PHASE53_TOPOLOGY_REVIEW.as_posix(),
+    }
+    if not isinstance(inputs, list):
+        fail.append("report-input-shape")
+    else:
+        for item in inputs:
+            if not isinstance(item, dict) or set(item) != {"path", "sha256"}:
+                fail.append("report-input-shape")
+                continue
+            path_text = item.get("path")
+            digest = item.get("sha256")
+            if not isinstance(path_text, str) or not _sha256(digest):
+                fail.append("report-input-shape")
+                continue
+            input_paths.append(path_text)
+            if path_text in output_paths:
+                fail.append("report-self-hash-cycle")
+                continue
+            try:
+                path = validate_repo_path(root, root / path_text)
+                if not path.is_file() or _sha256_file(path) != digest:
+                    blocked.append("stale-input-digest")
+            except ValueError:
+                fail.append("report-input-path")
+        if input_paths != sorted(input_paths) or len(input_paths) != len(set(input_paths)):
+            fail.append("report-input-order")
+    full_gate = load_json_strict(validate_repo_path(root, root / FULL_GATE_SUMMARY))
+    placement = load_json_strict(validate_repo_path(root, root / PLACEMENT_DECISION))
+    expected_attempts = [
+        {
+            "candidate": item.get("candidate"),
+            "record_digest": item.get("record_digest"),
+            "verdict": item.get("verdict"),
+            "first_non_pass_stage": item.get("first_non_pass_stage"),
+        }
+        for item in full_gate.get("attempts", [])
+        if isinstance(item, dict)
+    ]
+    if report.get("candidate_attempts") != expected_attempts:
+        blocked.append("candidate-attempt-digest-drift")
+    if report.get("selected_candidate") != full_gate.get("selected_candidate") or report.get(
+        "selected_candidate"
+    ) != placement.get("selected_candidate"):
+        fail.append("stored-placement-drift")
+    expected_overall = "FAIL" if "FAIL" in statuses else "BLOCKED" if "BLOCKED" in statuses else "PASS"
+    if report.get("overall_status") != expected_overall:
+        fail.append("stored-verdict-drift")
+    expected_advance = (
+        "READY"
+        if expected_overall == "PASS"
+        and report.get("selected_candidate") is not None
+        and report.get("phase53_topology_review_status") == "PASS"
+        else "BLOCKED"
+    )
+    if report.get("phase53_advance_status") != expected_advance:
+        fail.append("stored-verdict-drift")
+    if report.get("future_topology_reviews") != {
+        "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+    }:
+        fail.append("temporal-review-drift")
+    if (
+        report.get("windows_install_performed") is not False
+        or report.get("windows_access_proven") is not False
+        or report.get("public_listener_created") is not False
+    ):
+        fail.append("phase-boundary-drift")
+    if report.get("secret_material_present") is not False:
+        fail.append("secret-material")
+    if re.search(
+        r"-----BEGIN (?:RSA |OPENSSH |EC )?PRIVATE KEY-----|\bBearer\s+[A-Za-z0-9._~+/-]{16,}",
+        json.dumps(report, sort_keys=True),
+        flags=re.I,
+    ):
+        fail.append("secret-material")
+    source_head = report.get("source_head")
+    if not isinstance(source_head, str) or re.fullmatch(r"[0-9a-f]{40}", source_head) is None:
+        fail.append("source-head-shape")
+    if not isinstance(report.get("generated_at"), str) or _parse_utc(report.get("generated_at")) is None:
+        fail.append("report-timestamp")
+    status = "FAIL" if fail else "BLOCKED" if blocked else "PASS"
+    return _check_result(
+        "P52-REPORT-001",
+        status,
+        sorted(set(fail + blocked)),
+        INTEGRATED_GATE.as_posix(),
+    )
+
+
+def render_phase52_markdown(report: dict[str, Any]) -> str:
+    lines = [
+        "# Phase 52 Supply Chain, Capacity and Recoverable Placement Gate",
+        "",
+        "## Report Identity",
+        "",
+        f"- **Source HEAD:** `{report['source_head']}`",
+        f"- **Generated at:** `{report['generated_at']}`",
+        f"- **Selected candidate:** `{report['selected_candidate'] or 'none'}`",
+        f"- **Phase 53 advance status:** `{report['phase53_advance_status']}`",
+        f"- **Windows install performed:** `{str(report['windows_install_performed']).lower()}`",
+        f"- **Secret material present:** `{str(report['secret_material_present']).lower()}`",
+        "",
+        "## Check Matrix",
+        "",
+        "| Check | Status | Findings |",
+        "|---|---|---|",
+    ]
+    for check in report["checks"]:
+        findings = ", ".join(item["category"] for item in check["findings"]) or "none"
+        lines.append(f"| `{check['id']}` | {check['status']} | {findings} |")
+    lines.extend(["", "## Candidate Attempts", "", "| Candidate | Verdict | First non-PASS | Record digest |", "|---|---|---|---|"])
+    for attempt in report["candidate_attempts"]:
+        lines.append(
+            f"| `{attempt['candidate']}` | {attempt['verdict']} | {attempt['first_non_pass_stage'] or 'none'} | `{attempt['record_digest']}` |"
+        )
+    lines.extend(
+        [
+            "",
+            "## Temporal Boundaries",
+            "",
+            "Phase 54 and Phase 57 topology reviews remain required immediately before their own phases; neither is a Phase 53 prerequisite.",
+            "The verified MSI remains staged only. Phase 54 still owns Windows installation and real access proof to the Atius servers.",
+            "",
+            "## Overall Status",
+            "",
+            f"**{report['overall_status']}**",
+        ]
+    )
+    return "\n".join(lines) + "\n"
+
+
+def render_phase53_topology_review(report: dict[str, Any]) -> str:
+    selected = report.get("selected_candidate") or "none"
+    vault = next(item for item in report["checks"] if item["id"] == "P52-VAULT-001")
+    blockers = sorted({item["category"] for item in vault["findings"]}) or ["no-selected-candidate"]
+    status = report["phase53_topology_review_status"]
+    return "\n".join(
+        [
+            "# Phase 52 — Phase 53 Topology Review",
+            "",
+            f"**Status:** {status}",
+            f"**Reviewed at:** `{report['generated_at']}`",
+            "**Accountable decision source:** `52-OPERATIONAL-DECISIONS.md` (Giovanni Muniz)",
+            f"**Selected candidate:** `{selected}`",
+            f"**Phase 53 advance status:** `{report['phase53_advance_status']}`",
+            "**Secret material present:** false",
+            "",
+            "## Current decision",
+            "",
+            "No recoverable primary is selected. Phase 53 is blocked and no production deployment, native listener, DNS or edge change is authorized.",
+            f"Current blockers: {', '.join(blockers)}.",
+            "",
+            "## Deferred selected-host contract",
+            "",
+            "When a candidate earns one current full-vector PASS, Phase 53 must use rootless server placement with the approved combined budget of at most 0.8 CPU, at most 1 GiB RAM, bounded disk/log reservations, and only the approved future native listener boundary.",
+            "The native listener boundary remains disabled in this review. Rollback must preserve RustGuac, XRDP, AnyDesk, NoMachine and noVNC.",
+            "If Horistic is selected after remediation and a fresh full gate, server/client resource, identity, evidence and rollback domains remain separate; co-location is not independent DR.",
+            "",
+            "## Temporal reviews",
+            "",
+            "- Phase 54 topology review remains required immediately before Phase 54.",
+            "- Phase 57 topology review remains required immediately before Phase 57.",
+            "- Neither future review is required merely to evaluate a later Phase 53 transition.",
+            "",
+            "## Windows boundary",
+            "",
+            "`windows_install_performed=false`; Phase 54 still owns installation and real Atius-server access proof.",
+            "",
+        ]
+    )
+
+
+def _phase52_json_text(report: dict[str, Any]) -> str:
+    return json.dumps(report, indent=2, sort_keys=True) + "\n"
+
+
+def write_phase52_outputs_atomically(
+    report: dict[str, Any],
+    *,
+    integrated_path: Path,
+    json_path: Path,
+    markdown_path: Path,
+    topology_path: Path,
+    repo: Path,
+    allow_test_paths: bool = False,
+) -> None:
+    root = repo.resolve()
+    paths = [integrated_path, json_path, markdown_path, topology_path]
+    resolved = (
+        [item.resolve(strict=False) for item in paths]
+        if allow_test_paths
+        else [validate_repo_path(root, item if item.is_absolute() else root / item) for item in paths]
+    )
+    if not allow_test_paths and [item.relative_to(root) for item in resolved] != [
+        INTEGRATED_GATE,
+        PHASE52_REPORT_JSON,
+        PHASE52_REPORT_MARKDOWN,
+        PHASE53_TOPOLOGY_REVIEW,
+    ]:
+        raise ValueError("Phase 52 report output names are fixed")
+    json_text = _phase52_json_text(report)
+    payloads = (
+        (resolved[0], json_text),
+        (resolved[1], json_text),
+        (resolved[2], render_phase52_markdown(report)),
+        (resolved[3], render_phase53_topology_review(report)),
+    )
+    temporary_paths: list[Path] = []
+    try:
+        for target, content in payloads:
+            target.parent.mkdir(parents=True, exist_ok=True)
+            with tempfile.NamedTemporaryFile(
+                mode="w", encoding="utf-8", dir=target.parent, prefix=f".{target.name}.", delete=False
+            ) as handle:
+                handle.write(content)
+                handle.flush()
+                os.fsync(handle.fileno())
+                temporary_paths.append(Path(handle.name))
+        for temporary, (target, _) in zip(temporary_paths, payloads, strict=True):
+            os.replace(temporary, target)
+    finally:
+        for temporary in temporary_paths:
+            temporary.unlink(missing_ok=True)
+
+
+def validate_phase52_output_parity(
+    report: dict[str, Any], integrated_path: Path, json_path: Path, markdown_path: Path
+) -> CheckResult:
+    errors: list[str] = []
+    try:
+        expected_json = _phase52_json_text(report)
+        if integrated_path.read_text(encoding="utf-8") != expected_json or json_path.read_text(
+            encoding="utf-8"
+        ) != expected_json:
+            errors.append("json-parity-drift")
+        if markdown_path.read_text(encoding="utf-8") != render_phase52_markdown(report):
+            errors.append("markdown-parity-drift")
+    except OSError:
+        errors.append("report-output-missing")
+    return _check_result(
+        "P52-REPORT-001",
+        "PASS" if not errors else "FAIL",
+        errors,
+        PHASE52_REPORT_JSON.as_posix(),
+    )
+
+
+def update_phase52_ledger(
+    ledger: dict[str, Any], report: dict[str, Any]
+) -> tuple[dict[str, Any], bool]:
+    updated = copy.deepcopy(ledger)
+    if report.get("overall_status") != "PASS" or report.get("phase53_advance_status") != "READY":
+        return updated, False
+    rows = {
+        item.get("requirement_id"): item
+        for item in updated.get("requirements", [])
+        if isinstance(item, dict)
+    }
+    if set(PHASE52_REQUIREMENTS) - set(rows):
+        raise ValueError("Phase 52 ledger rows are missing")
+    report_digest = hashlib.sha256(_phase52_json_text(report).encode("utf-8")).hexdigest()
+    catalog = updated.get("evidence_catalog")
+    if not isinstance(catalog, dict):
+        raise ValueError("ledger evidence catalog is invalid")
+    for requirement in PHASE52_REQUIREMENTS:
+        row = rows[requirement]
+        evidence_id = f"RDF-V19-{requirement}"
+        if row.get("evidence_ids") != [evidence_id]:
+            raise ValueError("Phase 52 ledger evidence ID drift")
+        row["status"] = "pass"
+        row["last_verified_at"] = report["generated_at"]
+        catalog[evidence_id] = {
+            "path": INTEGRATED_GATE.as_posix(),
+            "sha256": report_digest,
+            "input_digest": report_digest,
+            "observed_at": report["generated_at"],
+        }
+    return updated, True
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument(
         "--only",
-        choices=("supply", "capacity-proposal", "capacity-live", "full-candidate-chain"),
+        choices=("supply", "capacity-proposal", "capacity-live", "full-candidate-chain", "report"),
         default="supply",
     )
     parser.add_argument("--evidence-dir", type=Path, default=SUPPLY_OBSERVATION.parent)
+    parser.add_argument("--json-out", type=Path)
+    parser.add_argument("--markdown-out", type=Path)
+    parser.add_argument("--integrated-out", type=Path, default=INTEGRATED_GATE)
+    parser.add_argument("--topology-out", type=Path, default=PHASE53_TOPOLOGY_REVIEW)
     return parser
 
 
@@ -2805,6 +3427,38 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(effective_argv)
     repo = args.repo.resolve()
     try:
+        report_requested = args.only == "report" or args.json_out is not None or args.markdown_out is not None
+        if report_requested:
+            if args.json_out is None or args.markdown_out is None:
+                raise ValueError("both Phase 52 report projections are required")
+            report = build_phase52_report(repo)
+            report_result = validate_phase52_report(report, repo)
+            if report_result.status != "PASS":
+                print(json.dumps({"status": report_result.status, "check": report_result.id}, sort_keys=True))
+                return exit_code_for_status(report_result.status)
+            write_phase52_outputs_atomically(
+                report,
+                integrated_path=args.integrated_out,
+                json_path=args.json_out,
+                markdown_path=args.markdown_out,
+                topology_path=args.topology_out,
+                repo=repo,
+            )
+            parity = validate_phase52_output_parity(
+                report,
+                validate_repo_path(repo, repo / args.integrated_out),
+                validate_repo_path(repo, repo / args.json_out),
+                validate_repo_path(repo, repo / args.markdown_out),
+            )
+            if parity.status != "PASS":
+                print(json.dumps({"status": parity.status, "check": parity.id}, sort_keys=True))
+                return exit_code_for_status(parity.status)
+            ledger_path = validate_repo_path(repo, repo / LEDGER)
+            ledger, promoted = update_phase52_ledger(load_json_strict(ledger_path), report)
+            if promoted:
+                _write_json_atomically(ledger, ledger_path)
+            print(json.dumps({"status": report["overall_status"], "check": "P52-REPORT-001"}, sort_keys=True))
+            return exit_code_for_status(report["overall_status"])
         if args.only == "full-candidate-chain":
             result = run_full_candidate_chain(repo, args.evidence_dir)
             print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))
