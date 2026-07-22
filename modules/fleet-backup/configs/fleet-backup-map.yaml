@@ -26,6 +26,23 @@ fleet:
     backup_target: giovanni-drive:ATIUS-SRV/SRV-3/Backup/snapshots/
     max_runtime_seconds: 1800
 
+# Contrato isolado da Phase 52. Este bloco nao participa da fila fleet acima,
+# nao instala timer e nao autoriza retencao destrutiva.
+phase52_copy_only:
+  horistic-srv:
+    ssh_alias: horistic-srv-1
+    mode: copy-only
+    state_allowlist:
+      - db_v2.sqlite3
+    backup_target_prefix: giovanni-drive:ATIUS-SRV/HORISTIC-SRV/Backup/RustDesk/phase52/backup-b/
+    transfers: 1
+    checkers: 1
+    max_runtime_seconds: 900
+    bwlimit: 4M
+    retention: phase57-pass-plus-30-days
+    deletion_requires_new_explicit_approval: true
+    install_timer: false
+
 cooldown_seconds: 300
 max_retries_per_job: 5
 rate_limit_quota_per_minute: 840000

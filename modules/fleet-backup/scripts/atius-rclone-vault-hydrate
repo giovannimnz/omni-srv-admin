@@ -1,0 +1,33 @@
+#!/usr/bin/env bash
+# Fail-closed Phase 52 rclone config hydrator.
+# No Vault profile/path binding has been approved for this consumer yet.
+set -euo pipefail
+IFS=$'\n\t'
+umask 077
+
+readonly HELPER="${HOME:?HOME is required}/.local/bin/atius-vault-env"
+
+[[ ${1:-} == '--materialize' && ${2:-} == '--output-dir' && -n ${3:-} && $# -eq 3 ]] || {
+  printf '{"blocker":"invalid-interface","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n'
+  exit 2
+}
+output_dir=$(realpath -e -- "$3" 2>/dev/null || true)
+[[ -n "$output_dir" && "$output_dir" == "$3" && -d "$output_dir" && ! -L "$output_dir" ]] || {
+  printf '{"blocker":"output-dir-invalid","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n'
+  exit 2
+}
+[[ $(stat -c '%u:%a' -- "$output_dir") == "$(id -u):700" && $(stat -f -c '%T' -- "$output_dir") == 'tmpfs' ]] || {
+  printf '{"blocker":"output-dir-insecure","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n'
+  exit 2
+}
+
+status='BLOCKED'
+if [[ ! -x "$HELPER" ]]; then
+  blocker='vault-helper-missing'
+else
+  blocker='rclone-vault-binding-not-approved'
+fi
+
+printf '{"blocker":"%s","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"%s"}\n' \
+  "$blocker" "$status"
+exit 2

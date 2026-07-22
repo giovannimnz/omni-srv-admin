@@ -44,6 +44,10 @@ OPERATIONAL_DECISIONS_PATH = (
 )
 SECRET_ROLES_PATH = REPO / "modules/rustdesk-fleet/contracts/secret-roles.json"
 VAULT_HELPER_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-vault-hydrate"
+VAULT_PROVIDER_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-vault-provider"
+VAULT_PROVIDER_INSTALLER_PATH = (
+    REPO / "modules/rustdesk-fleet/tools/install-rustdesk-vault-provider.sh"
+)
 VAULT_RESTORE_MUTATIONS_PATH = (
     REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-vault-restore-mutations.json"
 )
@@ -76,6 +80,32 @@ def _secret_roles() -> dict:
 
 
 def _write_fake_vault_provider(path: Path, values: dict[str, str]) -> None:
+    path.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys\n"
+        "request = json.load(sys.stdin)\n"
+        f"values = {values!r}\n"
+        "json.dump({'request_count': len(request['references']), 'values': values}, sys.stdout)\n",
+        encoding="utf-8",
+    )
+    path.chmod(0o700)
+
+
+def _approved_values() -> dict[str, str]:
+    return {
+        "kv/atius/rustdesk/server#private_key": "fixture-private-value",
+        "kv/atius/rustdesk/server#public_key": "fixture-public-value",
+        **{
+            f"kv/atius/rustdesk/targets/{host}#permanent_password": f"fixture-password-{index}"
+            for index, host in enumerate(
+                ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv", "giovanni-w11-pc"),
+                start=1,
+            )
+        },
+    }
+
+
+def _write_fake_exact_vault_backend(path: Path, values: dict[str, str]) -> None:
     path.write_text(
         "#!/usr/bin/env python3\n"
         "import json, sys\n"
@@ -869,6 +899,397 @@ def test_vault_metadata_accepts_only_the_six_approved_references() -> None:
     assert "unknown-vault-reference" in _categories(blocked)
 
 
+def test_full_gate_readiness_is_remote_home_aware(tmp_path: Path) -> None:
+    remote_home = tmp_path / "home" / "horistic"
+    remote_home.mkdir(parents=True)
+    completed = subprocess.run(
+        [sys.executable, "-c", validator.REMOTE_FULL_GATE_READINESS_SCRIPT],
+        env={"HOME": str(remote_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    payload = json.loads(completed.stdout)
+    assert payload["home"] == str(remote_home)
+    assert payload["paths"]["vault_helper"]["exists"] is False
+    assert payload["paths"]["rustdesk_vault_provider"]["exists"] is False
+    assert "/home/ubuntu" not in validator.REMOTE_FULL_GATE_READINESS_SCRIPT
+    assert payload["vault_provider"] == {
+        "status": "BLOCKED",
+        "blocker": "rustdesk-vault-provider-missing",
+        "secret_material_present": False,
+    }
+
+
+def test_versioned_vault_provider_rejects_non_exact_references_without_backend_call(
+    tmp_path: Path,
+) -> None:
+    marker = tmp_path / "backend-called"
+    backend = tmp_path / "backend"
+    backend.write_text(
+        "#!/bin/sh\n"
+        f"touch {marker}\n"
+        "exit 99\n",
+        encoding="utf-8",
+    )
+    backend.chmod(0o700)
+    request = {
+        "references": [
+            {"vault_path": path, "field": field}
+            for path, field in validator.APPROVED_VAULT_REFERENCES
+        ]
+    }
+    request["references"].append(
+        {"vault_path": "kv/atius/rustdesk/targets/not-approved", "field": "permanent_password"}
+    )
+    completed = subprocess.run(
+        [str(VAULT_PROVIDER_PATH)],
+        input=json.dumps(request),
+        env={
+            "HOME": str(tmp_path),
+            "PATH": os.environ["PATH"],
+            "ATIUS_RUSTDESK_VAULT_BACKEND": str(backend),
+        },
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert completed.stdout == completed.stderr == ""
+    assert not marker.exists()
+
+
+def test_versioned_vault_provider_exact_protocol_and_safe_self_check(tmp_path: Path) -> None:
+    values = _approved_values()
+    backend = tmp_path / "atius-rustdesk-vault-export"
+    _write_fake_exact_vault_backend(backend, values)
+    request = {
+        "references": [
+            {"vault_path": path, "field": field}
+            for path, field in validator.APPROVED_VAULT_REFERENCES
+        ]
+    }
+    env = {
+        "HOME": str(tmp_path),
+        "PATH": os.environ["PATH"],
+        "ATIUS_RUSTDESK_VAULT_BACKEND": str(backend),
+    }
+    completed = subprocess.run(
+        [str(VAULT_PROVIDER_PATH)],
+        input=json.dumps(request),
+        env=env,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert completed.stderr == ""
+    assert json.loads(completed.stdout) == {"request_count": 7, "values": values}
+
+    checked = subprocess.run(
+        [str(VAULT_PROVIDER_PATH), "--self-check"],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert checked.stderr == ""
+    safe_result = json.loads(checked.stdout)
+    assert safe_result == {
+        "status": "PASS",
+        "blocker": "none",
+        "reference_count": 7,
+        "secret_material_present": False,
+    }
+    assert all(value not in checked.stdout for value in values.values())
+
+
+def test_versioned_vault_provider_and_installer_fail_closed_without_backend(tmp_path: Path) -> None:
+    target_home = tmp_path / "home" / "horistic"
+    target_bin = target_home / ".local" / "bin"
+    target_bin.mkdir(parents=True)
+    existing = target_bin / "rustdesk-vault-provider"
+    existing.write_text("previous-provider\n", encoding="utf-8")
+    existing.chmod(0o755)
+
+    installed = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(target_home)],
+        env={"HOME": str(target_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(installed.stdout)["status"] == "PASS"
+    assert existing.stat().st_mode & 0o777 == 0o700
+    state_dir = target_home / ".local/state/atius-rustdesk-vault-provider"
+    assert (state_dir / "install-state").stat().st_mode & 0o777 == 0o600
+    assert (state_dir / "provider.pre-phase52").stat().st_mode & 0o777 == 0o600
+
+    blocked = subprocess.run(
+        [str(existing), "--self-check"],
+        env={"HOME": str(target_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert blocked.returncode == 2
+    assert blocked.stderr == ""
+    assert json.loads(blocked.stdout)["blocker"] == "rustdesk-vault-backend-missing"
+
+    rolled_back = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(target_home)],
+        env={"HOME": str(target_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(rolled_back.stdout)["status"] == "PASS"
+    assert existing.read_text(encoding="utf-8") == "previous-provider\n"
+    assert existing.stat().st_mode & 0o777 == 0o755
+    assert not (state_dir / "install-state").exists()
+    assert not (state_dir / "provider.pre-phase52").exists()
+
+
+def test_vault_provider_bounds_pathological_input_and_backend_output(tmp_path: Path) -> None:
+    base_env = {"HOME": str(tmp_path), "PATH": os.environ["PATH"]}
+    pathological_requests = (
+        b"{" + (b" " * (16 * 1024)) + b"}",
+        b"\xff\xfe\xfd",
+        (b"[" * 2_000) + b"0" + (b"]" * 2_000),
+    )
+    for payload in pathological_requests:
+        completed = subprocess.run(
+            [str(VAULT_PROVIDER_PATH)],
+            input=payload,
+            env=base_env,
+            capture_output=True,
+            check=False,
+        )
+        assert completed.returncode == 2
+        assert completed.stdout == completed.stderr == b""
+
+    backend = tmp_path / "oversized-backend"
+    backend.write_text(
+        "#!/usr/bin/env python3\n"
+        "import sys\n"
+        "sys.stdin.buffer.read()\n"
+        "sys.stdout.buffer.write(b'x' * (64 * 1024 + 1))\n",
+        encoding="utf-8",
+    )
+    backend.chmod(0o700)
+    checked = subprocess.run(
+        [str(VAULT_PROVIDER_PATH), "--self-check"],
+        env={**base_env, "ATIUS_RUSTDESK_VAULT_BACKEND": str(backend)},
+        capture_output=True,
+        check=False,
+    )
+    assert checked.returncode == 2
+    assert checked.stderr == b""
+    assert json.loads(checked.stdout)["blocker"] == "rustdesk-vault-backend-output-too-large"
+
+
+def test_vault_provider_rejects_invalid_backend_unicode_without_traceback(tmp_path: Path) -> None:
+    backend = tmp_path / "invalid-unicode-backend"
+    backend.write_bytes(b"#!/bin/sh\nprintf '\\377\\376\\375'\n")
+    backend.chmod(0o700)
+    completed = subprocess.run(
+        [str(VAULT_PROVIDER_PATH), "--self-check"],
+        env={
+            "HOME": str(tmp_path),
+            "PATH": os.environ["PATH"],
+            "ATIUS_RUSTDESK_VAULT_BACKEND": str(backend),
+        },
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert completed.stderr == b""
+    assert json.loads(completed.stdout)["status"] == "BLOCKED"
+
+
+def test_vault_provider_installer_rejects_symlink_parent_and_drift(tmp_path: Path) -> None:
+    symlink_home = tmp_path / "symlink-home"
+    symlink_home.mkdir()
+    escaped = tmp_path / "escaped"
+    escaped.mkdir()
+    (symlink_home / ".local").symlink_to(escaped, target_is_directory=True)
+    rejected = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(symlink_home)],
+        env={"HOME": str(symlink_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rejected.returncode == 2
+    assert not any(escaped.iterdir())
+
+    owner_home = tmp_path / "owner-home"
+    owner_home.mkdir()
+    fake_bin = tmp_path / "fake-bin"
+    fake_bin.mkdir()
+    fake_id = fake_bin / "id"
+    fake_id.write_text("#!/bin/sh\necho 424242\n", encoding="utf-8")
+    fake_id.chmod(0o700)
+    owner_rejected = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(owner_home)],
+        env={"HOME": str(owner_home), "PATH": f"{fake_bin}:/usr/bin:/bin"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert owner_rejected.returncode == 2
+    assert "target home owner mismatch" in owner_rejected.stderr
+
+    target_home = tmp_path / "drift-home"
+    target_home.mkdir()
+    installed = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(target_home)],
+        env={"HOME": str(target_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(installed.stdout)["status"] == "PASS"
+    target = target_home / ".local/bin/rustdesk-vault-provider"
+    target.write_text("drifted-provider\n", encoding="utf-8")
+    target.chmod(0o700)
+    rollback = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(target_home)],
+        env={"HOME": str(target_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rollback.returncode == 2
+    assert "installed provider drift" in rollback.stderr
+    assert (target_home / ".local/state/atius-rustdesk-vault-provider/install-state").is_file()
+
+
+def test_vault_provider_installer_dry_run_is_zero_write_and_modes_fail_closed(
+    tmp_path: Path,
+) -> None:
+    dry_home = tmp_path / "dry-home"
+    dry_home.mkdir()
+    before = list(dry_home.rglob("*"))
+    completed = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--dry-run", "--home", str(dry_home)],
+        env={"HOME": str(dry_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(completed.stdout)["dry_run"] is True
+    assert list(dry_home.rglob("*")) == before == []
+
+    writable_home = tmp_path / "writable-home"
+    writable_home.mkdir(mode=0o775)
+    writable_home.chmod(0o775)
+    rejected = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(writable_home)],
+        env={"HOME": str(writable_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rejected.returncode == 2
+    assert "group/world writable" in rejected.stderr
+    assert list(writable_home.rglob("*")) == []
+
+    state_mode_home = tmp_path / "state-mode-home"
+    (state_mode_home / ".local/state").mkdir(parents=True, mode=0o755)
+    (state_mode_home / ".local/state").chmod(0o755)
+    rejected_state = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(state_mode_home)],
+        env={"HOME": str(state_mode_home), "PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rejected_state.returncode == 2
+    assert "state directory mode drift" in rejected_state.stderr
+
+
+def test_vault_provider_installer_recovers_interrupted_install_and_rollback(
+    tmp_path: Path,
+) -> None:
+    stage_home = tmp_path / "stage-crash-home"
+    stage_home.mkdir()
+    stage_env = {"HOME": str(stage_home), "PATH": os.environ["PATH"]}
+    interrupted_stage = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(stage_home)],
+        env={**stage_env, "ATIUS_RUSTDESK_INSTALLER_TEST_INTERRUPT_AFTER": "stage"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert interrupted_stage.returncode == 75
+    stage_state = stage_home / ".local/state/atius-rustdesk-vault-provider"
+    assert (stage_state / "provider.transaction").is_file()
+    assert not (stage_state / "transaction-journal").exists()
+    completed_after_stage = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(stage_home)],
+        env=stage_env,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(completed_after_stage.stdout)["status"] == "PASS"
+    assert not (stage_state / "provider.transaction").exists()
+
+    target_home = tmp_path / "crash-home"
+    target = target_home / ".local/bin/rustdesk-vault-provider"
+    target.parent.mkdir(parents=True)
+    target.write_text("baseline-provider\n", encoding="utf-8")
+    target.chmod(0o755)
+    env = {"HOME": str(target_home), "PATH": os.environ["PATH"]}
+
+    interrupted_install = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(target_home)],
+        env={**env, "ATIUS_RUSTDESK_INSTALLER_TEST_INTERRUPT_AFTER": "journal"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert interrupted_install.returncode == 75
+    state_dir = target_home / ".local/state/atius-rustdesk-vault-provider"
+    assert (state_dir / "transaction-journal").is_file()
+    assert (state_dir / "provider.transaction").is_file()
+
+    recovered_install = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(target_home)],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(recovered_install.stdout)["recovered"] is True
+    assert (state_dir / "install-state").is_file()
+    assert not (state_dir / "transaction-journal").exists()
+
+    interrupted_rollback = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(target_home)],
+        env={**env, "ATIUS_RUSTDESK_INSTALLER_TEST_INTERRUPT_AFTER": "target"},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert interrupted_rollback.returncode == 75
+    assert target.read_text(encoding="utf-8") == "baseline-provider\n"
+    assert (state_dir / "transaction-journal").is_file()
+
+    recovered_rollback = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(target_home)],
+        env=env,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    assert json.loads(recovered_rollback.stdout)["recovered"] is True
+    assert target.read_text(encoding="utf-8") == "baseline-provider\n"
+    assert not (state_dir / "install-state").exists()
+    assert not (state_dir / "provider.pre-phase52").exists()
+    assert not (state_dir / "transaction-journal").exists()
+
+
 def test_vault_helper_hydrates_tmpfs_without_disclosure(tmp_path: Path) -> None:
     sentinel_private = f"private-{secrets.token_urlsafe(32)}"
     sentinel_public = f"public-{secrets.token_urlsafe(32)}"
@@ -1151,11 +1572,7 @@ def test_full_candidate_gate_persists_nogo_before_return(tmp_path: Path) -> None
     assert persisted[-1]["persisted_before_fallback"] is True
 
 
-@pytest.mark.parametrize(
-    "failed_stage",
-    ["supply", "capacity", "vault", "backup", "restore", "capacity_finalize", "rollback"],
-)
-def test_candidate_chain_persists_complete_nogo_and_reaches_fallback(failed_stage: str) -> None:
+def test_candidate_chain_reaches_horistic_without_disabling_live_write_guard() -> None:
     persisted: list[dict] = []
     calls: list[tuple[str, str]] = []
 
@@ -1179,25 +1596,108 @@ def test_candidate_chain_persists_complete_nogo_and_reaches_fallback(failed_stag
         return result
 
     callbacks_by_candidate = {
-        "atius-srv-2": callbacks("atius-srv-2", failed_stage),
+        "atius-srv-2": callbacks("atius-srv-2", "capacity"),
         "atius-srv-3": callbacks("atius-srv-3", None),
+        "horistic-srv": callbacks("horistic-srv", None),
     }
 
     def persist(payload: dict) -> None:
-        if payload["candidate"] == "atius-srv-3":
-            assert persisted[-1]["candidate"] == "atius-srv-2"
+        if persisted:
             assert persisted[-1]["verdict"] == "NO-GO"
         persisted.append(copy.deepcopy(payload))
 
     summary = validator.run_candidate_chain(
-        ("atius-srv-2", "atius-srv-3"), callbacks_by_candidate, persist
+        validator.CANDIDATES,
+        callbacks_by_candidate,
+        persist,
     )
-    assert [row["candidate"] for row in persisted] == ["atius-srv-2", "atius-srv-3"]
-    assert persisted[0]["first_non_pass_stage"] == failed_stage
+    assert [row["candidate"] for row in persisted] == list(validator.CANDIDATES)
+    assert persisted[0]["first_non_pass_stage"] == "capacity"
+    assert persisted[1]["first_non_pass_stage"] == "vault"
+    assert persisted[1]["stages"]["vault"]["findings"] == [
+        "unauthorized-live-write-candidate"
+    ]
     assert list(persisted[0]["stages"]) == list(validator.FULL_CANDIDATE_STAGES)
-    assert summary["selected_candidate"] == "atius-srv-3"
+    assert summary["selected_candidate"] == "horistic-srv"
     assert summary["overall_status"] == "PASS"
+    assert summary["authorized_live_write_candidate"] == "horistic-srv"
+    assert all(
+        row["authorized_live_write_candidate"] == "horistic-srv" for row in persisted
+    )
     assert summary["windows_install_performed"] is False
+    assert ("atius-srv-2", "rollback") not in calls
+    assert ("atius-srv-3", "vault") not in calls
+    assert ("atius-srv-3", "rollback") not in calls
+    with pytest.raises(ValueError, match="authorized live write candidate is invalid"):
+        validator.run_candidate_chain(
+            validator.CANDIDATES,
+            callbacks_by_candidate,
+            lambda _: None,
+            authorized_live_write_candidate="atius-srv-3",
+        )
+
+
+def test_persisted_full_gate_summary_requires_exact_horistic_authority(tmp_path: Path) -> None:
+    def callbacks(candidate: str) -> dict[str, object]:
+        return {
+            stage: (
+                lambda stage_name=stage: {
+                    "status": (
+                        "NO-GO"
+                        if candidate == "atius-srv-2" and stage_name == "capacity"
+                        else "BLOCKED"
+                        if candidate == "horistic-srv" and stage_name == "vault"
+                        else "PASS"
+                    ),
+                    "mutation": {"performed": False, "classes": []},
+                }
+            )
+            for stage in validator.FULL_CANDIDATE_STAGES
+        }
+
+    evidence_root = tmp_path / "phase52"
+    evidence_root.mkdir()
+
+    def persist(payload: dict) -> None:
+        name = validator.FULL_GATE_EVIDENCE_NAMES[payload["candidate"]]
+        (evidence_root / name).write_text(json.dumps(payload), encoding="utf-8")
+
+    summary = validator.run_candidate_chain(
+        validator.CANDIDATES,
+        {candidate: callbacks(candidate) for candidate in validator.CANDIDATES},
+        persist,
+    )
+    placement = validator._update_placement_from_full_gate(_placement(), summary)
+    baseline = validator.validate_full_candidate_summary(summary, placement, evidence_root)
+    assert baseline.status == "BLOCKED"
+    assert "authorized-live-write-candidate-drift" not in _categories(baseline)
+
+    tampered = copy.deepcopy(summary)
+    tampered["authorized_live_write_candidate"] = "atius-srv-3"
+    result = validator.validate_full_candidate_summary(tampered, placement, evidence_root)
+    assert result.status == "FAIL"
+    assert "authorized-live-write-candidate-drift" in _categories(result)
+
+
+def test_rollback_callback_is_not_run_after_capacity_nogo() -> None:
+    rollback_calls: list[bool] = []
+    callbacks = {
+        "supply": lambda: {"status": "PASS"},
+        "capacity": lambda: {"status": "NO-GO"},
+        "vault": lambda: {"status": "PASS"},
+        "backup": lambda: {"status": "PASS"},
+        "restore": lambda: {"status": "PASS"},
+        "capacity_finalize": lambda: {"status": "PASS"},
+        "rollback": lambda: rollback_calls.append(True) or {"status": "PASS"},
+        "topology_security": lambda: {"status": "PASS"},
+    }
+    result = validator.run_full_candidate_gate("horistic-srv", callbacks, lambda _: None)
+    assert rollback_calls == []
+    assert result["stages"]["rollback"]["status"] == "BLOCKED"
+    assert result["stages"]["rollback"]["findings"] == [
+        "rollback-requires-current-capacity-pass"
+    ]
+    assert result["stages"]["rollback"]["mutation"] == {"performed": False, "classes": []}
 
 
 def test_full_candidate_gate_converts_stage_exception_to_blocked_and_runs_rollback() -> None:
@@ -1270,6 +1770,51 @@ def test_candidate_write_authority_is_capacity_gated_and_exact() -> None:
     assert validator.enforce_candidate_write(
         "horistic-srv", "state-only-backup-a", capacity_status="PASS", isolated=True
     ) is None
+    with pytest.raises(ValueError, match="unauthorized-live-write-candidate"):
+        validator.enforce_candidate_write(
+            "atius-srv-3", "state-only-backup-a", capacity_status="PASS", isolated=True
+        )
+
+
+def test_live_write_candidate_guard_blocks_callbacks_before_any_mutation() -> None:
+    calls: list[str] = []
+
+    def callback(stage: str) -> dict[str, object]:
+        calls.append(stage)
+        return {
+            "status": "PASS",
+            "mutation": {
+                "performed": stage in validator.LIVE_WRITE_CAPABLE_STAGES,
+                "classes": ["synthetic-write"] if stage in validator.LIVE_WRITE_CAPABLE_STAGES else [],
+            },
+        }
+
+    callbacks = {
+        stage: (lambda stage_name=stage: callback(stage_name))
+        for stage in validator.FULL_CANDIDATE_STAGES
+    }
+    persisted: list[dict[str, object]] = []
+    result = validator.run_full_candidate_gate(
+        "atius-srv-2",
+        callbacks,
+        persisted.append,
+        authorized_live_write_candidate=validator.AUTHORIZED_LIVE_WRITE_CANDIDATE,
+    )
+    assert calls == ["supply", "capacity"]
+    assert result["stages"]["vault"]["status"] == "BLOCKED"
+    assert result["stages"]["vault"]["findings"] == ["unauthorized-live-write-candidate"]
+    assert result["stages"]["vault"]["mutation"] == {"performed": False, "classes": []}
+    assert result["stages"]["rollback"]["status"] == "BLOCKED"
+    assert result["stages"]["rollback"]["mutation"] == {"performed": False, "classes": []}
+    assert result["authorized_live_write_candidate"] == "horistic-srv"
+    assert persisted == [result]
+    with pytest.raises(ValueError, match="authorized live write candidate is invalid"):
+        validator.run_full_candidate_gate(
+            "horistic-srv",
+            callbacks,
+            lambda _: None,
+            authorized_live_write_candidate="atius-srv-3",
+        )
 
 
 def test_horistic_topology_contract_accepts_current_review_and_future_jit_gates() -> None:
@@ -1329,9 +1874,8 @@ def test_report_builds_exact_blocked_check_set_from_current_no_primary() -> None
     assert by_id["P52-SUPPLY-001"]["status"] == "PASS"
     assert by_id["P52-PLACEMENT-001"]["status"] == "BLOCKED"
     assert by_id["P52-VAULT-001"]["status"] == "BLOCKED"
-    assert {"rclone-missing", "rclone-config-missing", "managed-fleet-backup-module-missing"}.issubset(
-        {item["category"] for item in by_id["P52-BACKUP-001"]["findings"]}
-    )
+    backup_findings = {item["category"] for item in by_id["P52-BACKUP-001"]["findings"]}
+    assert {"no-selected-candidate", "predecessor-stage-not-pass"}.issubset(backup_findings)
     assert by_id["P52-TOPOLOGY-001"]["status"] == "BLOCKED"
     assert by_id["P52-REPORT-001"]["status"] == "PASS"
     assert by_id["P51-WS-001"]["status"] == "PASS"
@@ -1395,9 +1939,8 @@ def test_report_outputs_are_atomic_parity_and_topology_is_fail_closed(tmp_path: 
     assert "**Status:** BLOCKED" in topology_text
     assert "**Selected candidate:** `none`" in topology_text
     assert "**Phase 53 advance status:** `BLOCKED`" in topology_text
-    assert "vault-export-helper-missing" in topology_text
-    assert "rclone-missing" in topology_text
-    assert "managed-fleet-backup-module-missing" in topology_text
+    assert "no-selected-candidate" in topology_text
+    assert "predecessor-stage-not-pass" in topology_text
     assert "Phase 54" in topology_text and "Phase 57" in topology_text
     assert "windows_install_performed=false" in topology_text
 

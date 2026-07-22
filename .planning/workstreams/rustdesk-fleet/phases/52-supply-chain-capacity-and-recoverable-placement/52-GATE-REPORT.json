@@ -3,19 +3,19 @@
     {
       "candidate": "atius-srv-2",
       "first_non_pass_stage": "capacity",
-      "record_digest": "aa8cb9253296dc9d13c94018896ad55c9c4b847a8e6e4227b32fd6cd8f1320f6",
+      "record_digest": "846b65c6f403bbcf4fa43bd04dff99ca1928f11adafc9de9c75bf8f3c3b475fa",
       "verdict": "NO-GO"
     },
     {
       "candidate": "atius-srv-3",
       "first_non_pass_stage": "capacity",
-      "record_digest": "92114eaa6a75baa461025cad305b5fcf63b915a19cbb66d00309b0b9c7864d53",
+      "record_digest": "68c8918d8d8a03a7eb40defc3ae5c4d676a4fce0b0b8693e12ea71017a9b52b5",
       "verdict": "NO-GO"
     },
     {
       "candidate": "horistic-srv",
       "first_non_pass_stage": "vault",
-      "record_digest": "506516743c086c4cbfa189d77574f449fa03a67c403f5171d846d406157f6672",
+      "record_digest": "f9a2ec6677e309671943b1bd9663ccb73813e208b4d56eb44ebccd6749db9eca",
       "verdict": "NO-GO"
     }
   ],
@@ -84,7 +84,7 @@
           "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
         },
         {
-          "category": "vault-export-helper-missing",
+          "category": "rustdesk-vault-backend-missing",
           "location": "attempts.*.stages.vault",
           "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
         }
@@ -98,11 +98,6 @@
       ],
       "findings": [
         {
-          "category": "managed-fleet-backup-module-missing",
-          "location": "attempts.horistic-srv.readiness",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
           "category": "no-selected-candidate",
           "location": "attempts.horistic-srv.readiness",
           "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
@@ -114,11 +109,6 @@
         },
         {
           "category": "rclone-config-missing",
-          "location": "attempts.horistic-srv.readiness",
-          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
-        },
-        {
-          "category": "rclone-missing",
           "location": "attempts.horistic-srv.readiness",
           "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
         }
@@ -147,13 +137,17 @@
     },
     {
       "evidence_ids": [
-        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-2",
-        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-3",
         "P52-EV-ROLLBACK-NOOP-HORISTIC-SRV"
       ],
-      "findings": [],
+      "findings": [
+        {
+          "category": "rollback-requires-current-capacity-pass",
+          "location": "attempts.*.stages.rollback",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        }
+      ],
       "id": "P52-ROLLBACK-001",
-      "status": "PASS"
+      "status": "BLOCKED"
     },
     {
       "evidence_ids": [
@@ -198,7 +192,7 @@
     "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
     "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
   },
-  "generated_at": "2026-07-22T03:39:52Z",
+  "generated_at": "2026-07-22T05:39:33Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-HORISTIC-TOPOLOGY-IMPACT-REVIEW.md",
@@ -214,7 +208,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/contracts/placement-decision.json",
-      "sha256": "cf0b852fe8c61b8a4eb2df3c00d42ea0cfad8023ba5780781fe51c27aef78a7c"
+      "sha256": "9a0dde4c82a879618e1969ac140b6a1c03a9a0d20b648222aecf0225fa292b8c"
     },
     {
       "path": "modules/rustdesk-fleet/contracts/scope.json",
@@ -238,7 +232,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json",
-      "sha256": "547e4464c8e9ea25181bd663fee526194222713c2a4454d7cc9ef90b105682b0"
+      "sha256": "6f7b012f3e98fc99d03a5d9faa2735b764e10aa8348256d05878f531a0d6e02a"
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase52/supply-observation.json",
@@ -246,7 +240,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
-      "sha256": "c79388f050e9a5202a34cab354a372d2de2795ef418b6cc77b18d443c4891607"
+      "sha256": "cfeef0cc6afaaa5e1910c34f3a2e602fb61ff563f6cc3275b927b72f89308ebb"
     },
     {
       "path": "modules/rustdesk-fleet/tools/validate_phase51.py",
@@ -254,7 +248,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tools/validate_phase52.py",
-      "sha256": "fb449c5ff2bb0e90260fc2fa1046910356635895b0730e9fe7b3c09dde7647bf"
+      "sha256": "9ffd546174230788c166300cfbc7365340d22485258313cf63df653671d3e243"
     }
   ],
   "overall_status": "BLOCKED",
@@ -265,7 +259,7 @@
   "schema_version": 1,
   "secret_material_present": false,
   "selected_candidate": null,
-  "source_head": "60a0fa8ca556cc2c16bf784a951ad0ca74bfc195",
+  "source_head": "a8959a6d9d4e31b43c9cf1f051fdcef612fdcc42",
   "windows_access_proven": false,
   "windows_install_performed": false,
   "workstream": "rustdesk-fleet"

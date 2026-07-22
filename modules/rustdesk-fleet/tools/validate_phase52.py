@@ -138,6 +138,14 @@ BOUNDED_FULL_GATE_WRITES = (
     "redacted-evidence-write",
     "verified-drill-artifact-rollback-removal",
 )
+AUTHORIZED_LIVE_WRITE_CANDIDATE = "horistic-srv"
+LIVE_WRITE_CAPABLE_STAGES = (
+    "vault",
+    "backup",
+    "restore",
+    "capacity_finalize",
+    "rollback",
+)
 SSH_ALIASES = {
     "atius-srv-2": "atius-srv-2-direct",
     "atius-srv-3": "atius-srv-3-direct",
@@ -227,15 +235,51 @@ REMOTE_FULL_GATE_READINESS_SCRIPT = """\
 import json
 import pathlib
 import shutil
+import subprocess
 
+home = pathlib.Path.home()
 paths = {
-    "vault_helper": pathlib.Path("/home/ubuntu/.local/bin/atius-vault-env"),
-    "fleet_backup_module": pathlib.Path("/home/ubuntu/GitHub/omni-srv-admin/modules/fleet-backup"),
-    "rclone_config": pathlib.Path("/home/ubuntu/.config/rclone/rclone.conf"),
+    "vault_helper": home / ".local/bin/atius-vault-env",
+    "rustdesk_vault_provider": home / ".local/bin/rustdesk-vault-provider",
+    "rustdesk_vault_backend": home / ".local/bin/atius-rustdesk-vault-export",
+    "fleet_backup_module": home / "GitHub/omni-srv-admin/modules/fleet-backup",
+    "rclone_config": home / ".config/rclone/rclone.conf",
 }
+provider = paths["rustdesk_vault_provider"]
+provider_probe = {
+    "status": "BLOCKED",
+    "blocker": "rustdesk-vault-provider-missing",
+    "secret_material_present": False,
+}
+if provider.is_file():
+    try:
+        completed = subprocess.run(
+            [str(provider), "--self-check"],
+            text=True,
+            capture_output=True,
+            timeout=30,
+            check=False,
+        )
+        candidate = json.loads(completed.stdout) if completed.stdout else {}
+        if (
+            completed.stderr == ""
+            and isinstance(candidate, dict)
+            and set(candidate) == {"status", "blocker", "reference_count", "secret_material_present"}
+            and candidate.get("status") in {"PASS", "BLOCKED"}
+            and isinstance(candidate.get("blocker"), str)
+            and candidate.get("reference_count") == 7
+            and candidate.get("secret_material_present") is False
+        ):
+            provider_probe = candidate
+        else:
+            provider_probe["blocker"] = "rustdesk-vault-provider-probe-invalid"
+    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+        provider_probe["blocker"] = "rustdesk-vault-provider-probe-failed"
 print(json.dumps({
+    "home": str(home),
     "tools": {name: bool(shutil.which(name)) for name in ("python3", "omni", "podman", "rclone", "sqlite3")},
     "paths": {name: {"exists": path.exists(), "is_file": path.is_file(), "is_dir": path.is_dir()} for name, path in paths.items()},
+    "vault_provider": provider_probe,
     "read_only": True,
     "mutation_performed": False,
 }, sort_keys=True))
@@ -913,11 +957,17 @@ def enforce_candidate_write(
     capacity_status: str,
     isolated: bool,
     authorized: bool = True,
+    authorized_live_write_candidate: str = AUTHORIZED_LIVE_WRITE_CANDIDATE,
 ) -> None:
     if candidate not in CANDIDATES:
         raise ValueError("unknown candidate")
     if action not in BOUNDED_FULL_GATE_WRITES:
         raise ValueError("candidate write action is forbidden")
+    if (
+        authorized_live_write_candidate != AUTHORIZED_LIVE_WRITE_CANDIDATE
+        or candidate != authorized_live_write_candidate
+    ):
+        raise ValueError("unauthorized-live-write-candidate")
     if capacity_status != "PASS":
         raise ValueError("candidate write requires current capacity PASS")
     if isolated is not True:
@@ -955,14 +1005,47 @@ def run_full_candidate_gate(
     candidate: str,
     stage_callbacks: dict[str, Any],
     persist: Any,
+    *,
+    authorized_live_write_candidate: str = AUTHORIZED_LIVE_WRITE_CANDIDATE,
 ) -> dict[str, Any]:
     if candidate not in CANDIDATES or set(stage_callbacks) != set(FULL_CANDIDATE_STAGES):
         raise ValueError("candidate gate contract is incomplete")
+    if authorized_live_write_candidate != AUTHORIZED_LIVE_WRITE_CANDIDATE:
+        raise ValueError("authorized live write candidate is invalid")
     stages: dict[str, dict[str, Any]] = {}
     first_non_pass: str | None = None
     for stage in FULL_CANDIDATE_STAGES:
         if first_non_pass is not None and stage != "rollback":
             stages[stage] = _skipped_stage_record(candidate, stage, first_non_pass)
+            continue
+        if stage == "rollback" and stages.get("capacity", {}).get("status") != "PASS":
+            record = _stage_record(
+                candidate,
+                stage,
+                {
+                    "status": "BLOCKED",
+                    "findings": ["rollback-requires-current-capacity-pass"],
+                    "inactive": True,
+                    "mutation": {"performed": False, "classes": []},
+                },
+            )
+            stages[stage] = record
+            if first_non_pass is None:
+                first_non_pass = stage
+            continue
+        if stage in LIVE_WRITE_CAPABLE_STAGES and candidate != authorized_live_write_candidate:
+            record = _stage_record(
+                candidate,
+                stage,
+                {
+                    "status": "BLOCKED",
+                    "findings": ["unauthorized-live-write-candidate"],
+                    "mutation": {"performed": False, "classes": []},
+                },
+            )
+            stages[stage] = record
+            if first_non_pass is None:
+                first_non_pass = stage
             continue
         try:
             record = _stage_record(candidate, stage, stage_callbacks[stage]())
@@ -986,6 +1069,7 @@ def run_full_candidate_gate(
         "secret_material_present": False,
         "windows_install_performed": False,
         "public_listener_created": False,
+        "authorized_live_write_candidate": authorized_live_write_candidate,
     }
     result["record_digest"] = hashlib.sha256(
         json.dumps(result, sort_keys=True, separators=(",", ":")).encode("utf-8")
@@ -998,7 +1082,11 @@ def run_candidate_chain(
     candidates: tuple[str, ...],
     callbacks_by_candidate: dict[str, dict[str, Any]],
     persist: Any,
+    *,
+    authorized_live_write_candidate: str = AUTHORIZED_LIVE_WRITE_CANDIDATE,
 ) -> dict[str, Any]:
+    if authorized_live_write_candidate != AUTHORIZED_LIVE_WRITE_CANDIDATE:
+        raise ValueError("authorized live write candidate is invalid")
     if not candidates or tuple(CANDIDATES[: len(candidates)]) != candidates:
         raise ValueError("candidate chain order is invalid")
     attempts: list[dict[str, Any]] = []
@@ -1007,7 +1095,12 @@ def run_candidate_chain(
     for candidate in candidates:
         if candidate not in callbacks_by_candidate:
             raise ValueError("candidate callbacks are missing")
-        result = run_full_candidate_gate(candidate, callbacks_by_candidate[candidate], persist)
+        result = run_full_candidate_gate(
+            candidate,
+            callbacks_by_candidate[candidate],
+            persist,
+            authorized_live_write_candidate=authorized_live_write_candidate,
+        )
         attempts.append(result)
         if result["verdict"] == "PASS":
             selected = candidate
@@ -1022,6 +1115,7 @@ def run_candidate_chain(
         "overall_status": "PASS" if selected is not None else "BLOCKED",
         "windows_install_performed": False,
         "secret_material_present": False,
+        "authorized_live_write_candidate": authorized_live_write_candidate,
     }
 
 
@@ -1062,6 +1156,11 @@ def collect_full_gate_readiness(candidate: str) -> dict[str, Any]:
         or payload.get("mutation_performed") is not False
         or not isinstance(payload.get("tools"), dict)
         or not isinstance(payload.get("paths"), dict)
+        or not isinstance(payload.get("home"), str)
+        or not payload["home"].startswith("/")
+        or not isinstance(payload.get("vault_provider"), dict)
+        or payload["vault_provider"].get("status") not in {"PASS", "BLOCKED"}
+        or payload["vault_provider"].get("secret_material_present") is not False
     ):
         raise ValueError(f"unsafe full-gate readiness output for {candidate}")
     return payload
@@ -1107,6 +1206,8 @@ def validate_full_candidate_summary(
 ) -> CheckResult:
     fail: list[str] = []
     blocked: list[str] = []
+    if summary.get("authorized_live_write_candidate") != AUTHORIZED_LIVE_WRITE_CANDIDATE:
+        fail.append("authorized-live-write-candidate-drift")
     if summary.get("attempt_order") != list(CANDIDATES):
         fail.append("candidate-order-bypass")
     attempts = summary.get("attempts")
@@ -1118,6 +1219,8 @@ def validate_full_candidate_summary(
         if not isinstance(attempt, dict) or attempt.get("candidate") != candidate:
             fail.append("candidate-shape")
             continue
+        if attempt.get("authorized_live_write_candidate") != AUTHORIZED_LIVE_WRITE_CANDIDATE:
+            fail.append("authorized-live-write-candidate-drift")
         if set(attempt.get("stages", {})) != set(FULL_CANDIDATE_STAGES):
             fail.append("stage-vector-shape")
         unsigned = dict(attempt)
@@ -1239,7 +1342,18 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
             readiness = collect_full_gate_readiness(host)
             state["readiness"] = readiness
             vault_helper = readiness["paths"].get("vault_helper", {})
-            findings = [] if vault_helper.get("is_file") is True else ["vault-export-helper-missing"]
+            provider = readiness["paths"].get("rustdesk_vault_provider", {})
+            provider_probe = readiness.get("vault_provider", {})
+            findings: list[str] = []
+            if vault_helper.get("is_file") is not True:
+                findings.append("vault-export-helper-missing")
+            if provider.get("is_file") is not True:
+                findings.append("rustdesk-vault-provider-missing")
+            elif provider_probe.get("status") != "PASS":
+                blocker = provider_probe.get("blocker")
+                findings.append(
+                    blocker if isinstance(blocker, str) and blocker else "rustdesk-vault-provider-not-ready"
+                )
             return {
                 "status": "PASS" if not findings else "BLOCKED",
                 "input_digest": _stage_input_digest(secret_roles_digest, readiness),
@@ -1330,7 +1444,12 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
             fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
         except BlockingIOError:
             raise ValueError("full candidate chain lock is held") from None
-        summary = run_candidate_chain(CANDIDATES, callbacks_by_candidate, persist)
+        summary = run_candidate_chain(
+            CANDIDATES,
+            callbacks_by_candidate,
+            persist,
+            authorized_live_write_candidate=AUTHORIZED_LIVE_WRITE_CANDIDATE,
+        )
         summary["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace(
             "+00:00", "Z"
         )

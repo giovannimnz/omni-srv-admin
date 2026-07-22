@@ -1,7 +1,7 @@
 # Phase 52 — Phase 53 Topology Review
 
 **Status:** BLOCKED
-**Reviewed at:** `2026-07-22T03:39:52Z`
+**Reviewed at:** `2026-07-22T05:39:33Z`
 **Accountable decision source:** `52-OPERATIONAL-DECISIONS.md` (Giovanni Muniz)
 **Selected candidate:** `none`
 **Phase 53 advance status:** `BLOCKED`
@@ -10,7 +10,7 @@
 ## Current decision
 
 No recoverable primary is selected. Phase 53 is blocked and no production deployment, native listener, DNS or edge change is authorized.
-Current blockers: managed-fleet-backup-module-missing, no-selected-candidate, placement-pending, pre-disk-threshold-exceeded, predecessor-stage-not-pass, projected-post-threshold-exceeded, rclone-config-missing, rclone-missing, vault-export-helper-missing.
+Current blockers: no-selected-candidate, placement-pending, pre-disk-threshold-exceeded, predecessor-stage-not-pass, projected-post-threshold-exceeded, rclone-config-missing, rustdesk-vault-backend-missing.
 
 ## Deferred selected-host contract
 

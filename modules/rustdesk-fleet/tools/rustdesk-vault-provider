@@ -1,0 +1,227 @@
+#!/usr/bin/env python3
+"""Exact-reference, no-log adapter for the Phase 52 RustDesk Vault channel."""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import selectors
+import subprocess
+import sys
+import time
+from typing import Any
+
+
+APPROVED_REFERENCES = (
+    ("kv/atius/rustdesk/server", "private_key"),
+    ("kv/atius/rustdesk/server", "public_key"),
+    ("kv/atius/rustdesk/targets/atius-srv-1", "permanent_password"),
+    ("kv/atius/rustdesk/targets/atius-srv-2", "permanent_password"),
+    ("kv/atius/rustdesk/targets/atius-srv-3", "permanent_password"),
+    ("kv/atius/rustdesk/targets/horistic-srv", "permanent_password"),
+    ("kv/atius/rustdesk/targets/giovanni-w11-pc", "permanent_password"),
+)
+EXPECTED_KEYS = {f"{path}#{field}" for path, field in APPROVED_REFERENCES}
+MAX_REQUEST_BYTES = 16 * 1024
+MAX_BACKEND_STDOUT_BYTES = 64 * 1024
+MAX_BACKEND_STDERR_BYTES = 4 * 1024
+MAX_PROVIDER_STDOUT_BYTES = 128 * 1024
+BACKEND_TIMEOUT_SECONDS = 30
+
+
+class ProviderBlocked(Exception):
+    def __init__(self, blocker: str) -> None:
+        super().__init__(blocker)
+        self.blocker = blocker
+
+
+def _request() -> dict[str, Any]:
+    return {
+        "references": [
+            {"vault_path": path, "field": field} for path, field in APPROVED_REFERENCES
+        ]
+    }
+
+
+def _validate_request(payload: Any) -> None:
+    if not isinstance(payload, dict) or set(payload) != {"references"}:
+        raise ProviderBlocked("rustdesk-vault-request-invalid")
+    references = payload.get("references")
+    expected = [
+        {"vault_path": path, "field": field} for path, field in APPROVED_REFERENCES
+    ]
+    if references != expected:
+        raise ProviderBlocked("rustdesk-vault-reference-allowlist-mismatch")
+
+
+def _backend_path() -> Path:
+    configured = os.environ.get("ATIUS_RUSTDESK_VAULT_BACKEND")
+    try:
+        path = Path(configured) if configured else Path.home() / ".local/bin/atius-rustdesk-vault-export"
+        available = (
+            path.is_absolute()
+            and not path.is_symlink()
+            and path.is_file()
+            and os.access(path, os.X_OK)
+        )
+    except (OSError, ValueError):
+        available = False
+        path = Path("/")
+    if not available:
+        raise ProviderBlocked("rustdesk-vault-backend-missing")
+    return path
+
+
+def _bounded_backend_exchange(backend: Path, request: bytes) -> tuple[int, bytes, bytes]:
+    process: subprocess.Popen[bytes] | None = None
+    selector = selectors.DefaultSelector()
+    try:
+        process = subprocess.Popen(
+            [str(backend)],
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=0,
+        )
+        assert process.stdin is not None and process.stdout is not None and process.stderr is not None
+        process.stdin.write(request)
+        process.stdin.close()
+        selector.register(process.stdout, selectors.EVENT_READ, ("stdout", MAX_BACKEND_STDOUT_BYTES))
+        selector.register(process.stderr, selectors.EVENT_READ, ("stderr", MAX_BACKEND_STDERR_BYTES))
+        chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
+        sizes = {"stdout": 0, "stderr": 0}
+        deadline = time.monotonic() + BACKEND_TIMEOUT_SECONDS
+        exceeded = False
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError
+            events = selector.select(remaining)
+            if not events:
+                raise TimeoutError
+            for key, _ in events:
+                stream_name, limit = key.data
+                chunk = os.read(key.fd, 8192)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                sizes[stream_name] += len(chunk)
+                if sizes[stream_name] > limit:
+                    exceeded = True
+                    break
+                chunks[stream_name].append(chunk)
+            if exceeded:
+                break
+        if exceeded:
+            raise ProviderBlocked("rustdesk-vault-backend-output-too-large")
+        remaining = max(0.001, deadline - time.monotonic())
+        returncode = process.wait(timeout=remaining)
+        return returncode, b"".join(chunks["stdout"]), b"".join(chunks["stderr"])
+    except ProviderBlocked:
+        raise
+    except (BrokenPipeError, OSError, subprocess.SubprocessError, TimeoutError):
+        raise ProviderBlocked("rustdesk-vault-backend-failed") from None
+    finally:
+        selector.close()
+        if process is not None and process.poll() is None:
+            process.kill()
+            try:
+                process.wait(timeout=2)
+            except subprocess.SubprocessError:
+                pass
+
+
+def _read_values(payload: dict[str, Any]) -> dict[str, str]:
+    backend = _backend_path()
+    try:
+        request = json.dumps(payload, separators=(",", ":")).encode("utf-8")
+        returncode, stdout_bytes, stderr_bytes = _bounded_backend_exchange(
+            backend, request
+        )
+        stdout = stdout_bytes.decode("utf-8")
+        stderr = stderr_bytes.decode("utf-8")
+    except (OSError, RecursionError, UnicodeDecodeError, ValueError):
+        raise ProviderBlocked("rustdesk-vault-backend-failed") from None
+    if returncode != 0 or stderr:
+        raise ProviderBlocked("rustdesk-vault-backend-failed")
+    try:
+        response = json.loads(stdout)
+    except (json.JSONDecodeError, RecursionError, UnicodeDecodeError, ValueError):
+        raise ProviderBlocked("rustdesk-vault-backend-response-invalid") from None
+    if not isinstance(response, dict) or set(response) != {"request_count", "values"}:
+        raise ProviderBlocked("rustdesk-vault-backend-response-invalid")
+    values = response.get("values")
+    if response.get("request_count") != len(APPROVED_REFERENCES) or not isinstance(values, dict):
+        raise ProviderBlocked("rustdesk-vault-backend-response-invalid")
+    if set(values) != EXPECTED_KEYS:
+        raise ProviderBlocked("rustdesk-vault-backend-reference-mismatch")
+    if any(not isinstance(value, str) or not value for value in values.values()):
+        raise ProviderBlocked("rustdesk-vault-backend-value-missing")
+    return values
+
+
+def _self_check() -> int:
+    blocker = "none"
+    status = "PASS"
+    try:
+        values = _read_values(_request())
+        passwords = [
+            values[f"{path}#{field}"]
+            for path, field in APPROVED_REFERENCES
+            if field == "permanent_password"
+        ]
+        if len(passwords) != 5 or len(set(passwords)) != 5:
+            raise ProviderBlocked("rustdesk-vault-passwords-not-distinct")
+    except ProviderBlocked as error:
+        status = "BLOCKED"
+        blocker = error.blocker
+    result = {
+        "status": status,
+        "blocker": blocker,
+        "reference_count": len(APPROVED_REFERENCES),
+        "secret_material_present": False,
+    }
+    _emit_json(result)
+    return 0 if status == "PASS" else 2
+
+
+def _emit_json(payload: dict[str, Any]) -> None:
+    encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    if len(encoded) > MAX_PROVIDER_STDOUT_BYTES:
+        raise ProviderBlocked("rustdesk-vault-provider-output-too-large")
+    os.write(sys.stdout.fileno(), encoded)
+
+
+def main() -> int:
+    if sys.argv[1:] == ["--self-check"]:
+        return _self_check()
+    if sys.argv[1:]:
+        return 2
+    try:
+        raw_request = sys.stdin.buffer.read(MAX_REQUEST_BYTES + 1)
+        if len(raw_request) > MAX_REQUEST_BYTES:
+            raise ProviderBlocked("rustdesk-vault-request-too-large")
+        payload = json.loads(raw_request.decode("utf-8"))
+        _validate_request(payload)
+        values = _read_values(payload)
+        response = {"request_count": len(APPROVED_REFERENCES), "values": values}
+        _emit_json(response)
+    except (
+        json.JSONDecodeError,
+        BrokenPipeError,
+        OSError,
+        ProviderBlocked,
+        RecursionError,
+        UnicodeDecodeError,
+        ValueError,
+    ):
+        return 2
+    return 0
+
+
+if __name__ == "__main__":
+    try:
+        raise SystemExit(main())
+    except (BrokenPipeError, OSError, ProviderBlocked, RecursionError, UnicodeDecodeError, ValueError):
+        os._exit(2)

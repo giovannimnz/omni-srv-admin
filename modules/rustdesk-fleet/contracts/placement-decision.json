@@ -13,11 +13,10 @@
       "evaluated": true,
       "evidence_ids": [
         "P52-EV-SUPPLY-OBSERVATION",
-        "P52-EV-FULL-CAPACITY-ATIUS-SRV-2",
-        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-2"
+        "P52-EV-FULL-CAPACITY-ATIUS-SRV-2"
       ],
       "restore_status": "SKIPPED_DUE_TO_GATE",
-      "rollback_status": "PASS",
+      "rollback_status": "BLOCKED",
       "supply_status": "PASS",
       "topology_security_status": "SKIPPED_DUE_TO_GATE",
       "vault_status": "SKIPPED_DUE_TO_GATE",
@@ -31,11 +30,10 @@
       "evaluated": true,
       "evidence_ids": [
         "P52-EV-SUPPLY-OBSERVATION",
-        "P52-EV-FULL-CAPACITY-ATIUS-SRV-3",
-        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-3"
+        "P52-EV-FULL-CAPACITY-ATIUS-SRV-3"
       ],
       "restore_status": "SKIPPED_DUE_TO_GATE",
-      "rollback_status": "PASS",
+      "rollback_status": "BLOCKED",
       "supply_status": "PASS",
       "topology_security_status": "SKIPPED_DUE_TO_GATE",
       "vault_status": "SKIPPED_DUE_TO_GATE",
