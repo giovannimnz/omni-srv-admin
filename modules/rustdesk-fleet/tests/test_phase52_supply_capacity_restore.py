@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import copy
+from datetime import datetime, timedelta, timezone
 import importlib.util
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -12,6 +14,8 @@ import pytest
 REPO = Path(__file__).resolve().parents[3]
 MODULE_PATH = REPO / "modules/rustdesk-fleet/tools/validate_phase52.py"
 CONTRACT_PATH = REPO / "modules/rustdesk-fleet/contracts/supply-chain.json"
+OBSERVATION_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/supply-observation.json"
+MUTATIONS_PATH = REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-supply-mutations.json"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase52", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -156,3 +160,112 @@ def test_supply_status_precedence_and_exit_codes() -> None:
     assert validator.exit_code_for_status("PASS") == 0
     assert validator.exit_code_for_status("FAIL") == 1
     assert validator.exit_code_for_status("BLOCKED") == 2
+
+
+def test_supply_observation_matches_contract() -> None:
+    contract = _contract()
+    observation = validator.load_json_strict(OBSERVATION_PATH)
+    result = validator.validate_supply_observation(observation, contract, repo=REPO)
+    assert result.id == "P52-SUPPLY-001"
+    assert result.status == "PASS"
+    assert observation["status"] == "PASS"
+    assert observation["windows_install_performed"] is False
+    assert observation["secret_material_present"] is False
+    assert observation["candidate_admission_performed"] is False
+    assert observation["server"]["commit"] == contract["server"]["commit"]
+    assert observation["clients"]["commit"] == contract["clients"]["commit"]
+    assert observation["classic_image"]["multiarch_digest"] == contract["server"]["classic_image"]["multiarch_digest"]
+    assert observation["classic_image"]["linux_arm64_digest"] == contract["server"]["classic_image"]["linux_arm64_digest"]
+
+
+def test_supply_observation_is_derived_not_trusted() -> None:
+    contract = _contract()
+    observation = validator.load_json_strict(OBSERVATION_PATH)
+    observation["status"] = "FAIL"
+    result = validator.validate_supply_observation(observation, contract, repo=REPO)
+    assert result.status == "FAIL"
+    assert "stored-verdict-drift" in _categories(result)
+
+
+def test_supply_observation_rejects_stale_timestamp() -> None:
+    contract = _contract()
+    observation = validator.load_json_strict(OBSERVATION_PATH)
+    observation["observed_at"] = (
+        datetime.now(timezone.utc) - timedelta(seconds=contract["policy"]["observation_ttl_seconds"] + 1)
+    ).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+    result = validator.validate_supply_observation(observation, contract, repo=REPO)
+    assert result.status == "BLOCKED"
+    assert "stale-observation" in _categories(result)
+
+
+def test_supply_observation_rejects_missing_cached_asset(tmp_path: Path) -> None:
+    contract = _contract()
+    observation = validator.load_json_strict(OBSERVATION_PATH)
+    cache_root = tmp_path / "cache"
+    cache_root.mkdir()
+    for artifact in observation["artifacts"]:
+        source = Path(artifact["cache_path"])
+        target = cache_root / source.name
+        shutil.copy2(source, target)
+        artifact["cache_path"] = str(target)
+    Path(observation["artifacts"][0]["cache_path"]).unlink()
+    result = validator.validate_supply_observation(
+        observation, contract, repo=REPO, allowed_cache_root=cache_root
+    )
+    assert result.status == "BLOCKED"
+    assert "cached-asset-missing" in _categories(result)
+
+
+def _apply_catalog_mutation(payload: dict, mutation: dict) -> None:
+    target = payload
+    path = mutation["path"]
+    for part in path[:-1]:
+        target = target[part]
+    if mutation["operation"] == "delete":
+        del target[path[-1]]
+    else:
+        target[path[-1]] = mutation["value"]
+
+
+def test_supply_mutation_catalog_exercises_every_negative() -> None:
+    catalog = validator.load_json_strict(MUTATIONS_PATH)
+    ids = [item["id"] for item in catalog["mutations"]]
+    assert len(ids) == len(set(ids)) >= 11
+    assert {
+        "mutable-reference",
+        "changed-server-commit",
+        "wrong-multiarch-digest",
+        "wrong-arm64-child-digest",
+        "wrong-server-zip-checksum",
+        "wrong-linux-deb-checksum",
+        "wrong-windows-msi-checksum",
+        "wrong-server-architecture",
+        "wrong-client-architecture",
+        "missing-official-asset",
+        "phase52-windows-install-attempt",
+    }.issubset(ids)
+    for mutation in catalog["mutations"]:
+        payload = copy.deepcopy(_contract())
+        _apply_catalog_mutation(payload, mutation)
+        result = validator.validate_supply_contract(payload)
+        assert result.status in {"FAIL", "BLOCKED"}, mutation["id"]
+        assert mutation["expected_category"] in _categories(result), mutation["id"]
+
+
+def test_supply_quarantines_unexpected_bytes(tmp_path: Path) -> None:
+    destination = tmp_path / "artifact.bin"
+    destination.write_bytes(b"unexpected")
+    quarantine = validator.verify_or_quarantine_file(destination, "0" * 64)
+    assert quarantine is not None
+    assert quarantine.parent == tmp_path / "quarantine"
+    assert not destination.exists()
+    assert quarantine.read_bytes() == b"unexpected"
+
+
+def test_supply_cli_exposes_no_install_or_pin_refresh() -> None:
+    options = {action.dest for action in validator.build_parser()._actions}
+    assert not {"install", "update_pins", "admit_candidate"} & options
+    source = MODULE_PATH.read_text(encoding="utf-8").lower()
+    assert "podman build" not in source
+    assert "docker build" not in source
+    assert "msiexec" not in source
