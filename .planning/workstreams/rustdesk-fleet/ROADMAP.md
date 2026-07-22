@@ -69,7 +69,31 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Backup e restore reais, em ambiente isolado, reproduzem a mesma public-key fingerprint antes de edge ou clients de frota serem autorizados.
   5. **Advance gate:** verificadores automatizados de checksums/digests, capacity/inodes/reservas, secret scan e fingerprint, junto do restore live, devem passar antes da Phase 53; projeção, arquivo de backup ou summary-only sem restore não contam.
 
-**Plans**: TBD
+**Plans**: 6 plans
+
+**Wave 1**
+
+- [ ] 52-01-PLAN.md — Congelar supply-chain pins e observações oficiais sem instalar ou admitir hosts.
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 52-02-PLAN.md — Codificar capacity/placement e materializar os budgets, retention e authority aprovados.
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 52-03-PLAN.md — Executar o routing capacity read-only, zero-cleanup e persistir `NO-GO` atual por candidato.
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 52-04-PLAN.md — Implementar Vault tmpfs/no-output e a state machine de backup/restore isolado.
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 52-05-PLAN.md — Executar o full candidate gate, `capacity_finalize`, rollback e fallback até placement recuperável.
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 52-06-PLAN.md — Renderizar report/ledger, topology review da Phase 53 e fechar full-suite/Graphify gates.
 
 ### Phase 53: Primary Relay and Public Edge
 
