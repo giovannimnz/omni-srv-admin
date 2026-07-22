@@ -1,0 +1,104 @@
+{
+  "calculations": [
+    {
+      "capacity_finalize_status": "PENDING",
+      "headroom_ok": true,
+      "inode_ok": true,
+      "pre_disk_ok": true,
+      "projected_post_ok": true,
+      "required_incremental_bytes": 16928065536,
+      "status": "PASS",
+      "still_unmaterialized_reservations": 16928065536
+    },
+    {
+      "capacity_finalize_status": "PENDING",
+      "headroom_ok": true,
+      "inode_ok": true,
+      "pre_disk_ok": true,
+      "projected_post_ok": true,
+      "required_incremental_bytes": 16928065536,
+      "status": "PASS",
+      "still_unmaterialized_reservations": 16928065536
+    }
+  ],
+  "candidate": "horistic-srv",
+  "decision_source_digest": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a",
+  "evidence_id": "P52-EV-CAPACITY-HORISTIC-SRV",
+  "findings": [
+    "full-candidate-gate-pending"
+  ],
+  "generated_at": "2026-07-22T02:46:16Z",
+  "horistic_colocation": {
+    "client_colocation": true,
+    "future_client_resource_domain": "rustdesk-client-horistic-srv",
+    "independent_dr_claimed": false,
+    "phase52_review_status": "PASS",
+    "phase53_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+    "phase54_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+    "phase57_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+    "server_resource_domain": "rustdesk-server-horistic-srv"
+  },
+  "mutation_performed": false,
+  "phase": 52,
+  "predecessor": "atius-srv-3",
+  "predecessor_status": "NO-GO",
+  "preliminary_verdict": "PRELIMINARY_ELIGIBLE",
+  "read_only": true,
+  "reservations": {
+    "backup_a_bytes": 4294967296,
+    "backup_b_bytes": 4294967296,
+    "combined_daily_log_budget_bytes": 134217728,
+    "loaded_image_bytes": 5543936,
+    "log_reserve_30d_bytes": 4026531840,
+    "log_retention_days": 30,
+    "peak_import_workspace_bytes": 5543936,
+    "preserved_oci_archive_bytes": 5543936,
+    "state_growth_budget_bytes": 4294967296
+  },
+  "samples": [
+    {
+      "architecture": "aarch64",
+      "available_bytes": 58721636352,
+      "command_version": "phase52-capacity-read-only-v2",
+      "filesystem_source": "/dev/sda1",
+      "hostname": "horistic-srv",
+      "inode_available": 12321809,
+      "inode_total": 12966400,
+      "inode_used": 644591,
+      "mount_point": "/",
+      "mutation_performed": false,
+      "observed_at": "2026-07-22T02:46:16Z",
+      "podman_graphroot": "not-observed",
+      "podman_version": "not-observed",
+      "read_only": true,
+      "resource_profile": "not-observed",
+      "resource_wrapper": "not-observed",
+      "total_bytes": 103859404800,
+      "used_bytes": 45120991232
+    },
+    {
+      "architecture": "aarch64",
+      "available_bytes": 58721636352,
+      "command_version": "phase52-capacity-read-only-v2",
+      "filesystem_source": "/dev/sda1",
+      "hostname": "horistic-srv",
+      "inode_available": 12321809,
+      "inode_total": 12966400,
+      "inode_used": 644591,
+      "mount_point": "/",
+      "mutation_performed": false,
+      "observed_at": "2026-07-22T02:46:16Z",
+      "podman_graphroot": "not-observed",
+      "podman_version": "not-observed",
+      "read_only": true,
+      "resource_profile": "not-observed",
+      "resource_wrapper": "not-observed",
+      "total_bytes": 103859404800,
+      "used_bytes": 45120991232
+    }
+  ],
+  "schema_version": 1,
+  "ssh_alias": "horistic-srv-1",
+  "supply_digest": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db",
+  "workstream": "rustdesk-fleet"
+}

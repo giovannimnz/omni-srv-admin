@@ -22,6 +22,7 @@ CAPACITY_MUTATIONS_PATH = (
     REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-capacity-placement-mutations.json"
 )
 CAPACITY_PROPOSAL_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json"
+CAPACITY_SUMMARY_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-summary.json"
 OPERATIONAL_DECISIONS_PATH = (
     REPO
     / ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md"
@@ -695,3 +696,34 @@ def test_capacity_live_parser_remains_blocked_and_exposes_no_mutation_action() -
     assert not {"cleanup", "remediate", "write", "load", "install"} & {
         action.dest for action in parser._actions
     }
+
+
+def test_capacity_live_evidence_is_serial_current_and_not_placement() -> None:
+    chain = validator.load_json_strict(CAPACITY_SUMMARY_PATH)
+    placement = _placement()
+    result = validator.validate_capacity_live_summary(chain, _capacity_policy(), placement, REPO)
+    assert result.id == "P52-CAPACITY-LIVE-001"
+    assert result.status == "BLOCKED"
+    assert chain["attempt_order"] == list(validator.CANDIDATES)
+    assert [item["predecessor_status"] for item in chain["attempts"]] == [
+        "NOT_APPLICABLE",
+        "NO-GO",
+        "NO-GO",
+    ]
+    assert [item["preliminary_verdict"] for item in chain["attempts"]] == [
+        "NO-GO",
+        "NO-GO",
+        "PRELIMINARY_ELIGIBLE",
+    ]
+    assert chain["capacity_eligible_candidate"] == "horistic-srv"
+    assert chain["selected_candidate"] is None
+    assert chain["mutation_performed"] is False
+    assert placement["selected_candidate"] is None
+    assert [row["capacity_status"] for row in placement["candidates"]] == ["NO-GO", "NO-GO", "PASS"]
+    assert all(row["vault_status"] == "PENDING" for row in placement["candidates"])
+    horistic = chain["attempts"][2]["horistic_colocation"]
+    assert horistic["phase52_review_status"] == "PASS"
+    assert horistic["phase53_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+    assert horistic["phase54_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+    assert horistic["phase57_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+    assert horistic["independent_dr_claimed"] is False

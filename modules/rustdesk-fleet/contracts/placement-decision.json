@@ -1,6 +1,4 @@
 {
-  "schema_version": 1,
-  "workstream": "rustdesk-fleet",
   "candidate_order": [
     "atius-srv-2",
     "atius-srv-3",
@@ -8,67 +6,75 @@
   ],
   "candidates": [
     {
+      "backup_status": "PENDING",
       "candidate": "atius-srv-2",
-      "evaluated": false,
-      "supply_status": "PENDING",
-      "capacity_status": "PENDING",
-      "vault_status": "PENDING",
-      "backup_status": "PENDING",
-      "restore_status": "PENDING",
       "capacity_finalize_status": "PENDING",
+      "capacity_status": "NO-GO",
+      "evaluated": true,
+      "evidence_ids": [
+        "P52-EV-CAPACITY-ATIUS-SRV-2"
+      ],
+      "restore_status": "PENDING",
       "rollback_status": "PENDING",
+      "supply_status": "PASS",
       "topology_security_status": "PENDING",
-      "evidence_ids": [],
-      "verdict": "PENDING"
+      "vault_status": "PENDING",
+      "verdict": "NO-GO"
     },
     {
+      "backup_status": "PENDING",
       "candidate": "atius-srv-3",
-      "evaluated": false,
-      "supply_status": "PENDING",
-      "capacity_status": "PENDING",
-      "vault_status": "PENDING",
-      "backup_status": "PENDING",
-      "restore_status": "PENDING",
       "capacity_finalize_status": "PENDING",
+      "capacity_status": "NO-GO",
+      "evaluated": true,
+      "evidence_ids": [
+        "P52-EV-CAPACITY-ATIUS-SRV-3"
+      ],
+      "restore_status": "PENDING",
       "rollback_status": "PENDING",
+      "supply_status": "PASS",
       "topology_security_status": "PENDING",
-      "evidence_ids": [],
-      "verdict": "PENDING"
+      "vault_status": "PENDING",
+      "verdict": "NO-GO"
     },
     {
-      "candidate": "horistic-srv",
-      "evaluated": false,
-      "supply_status": "PENDING",
-      "capacity_status": "PENDING",
-      "vault_status": "PENDING",
       "backup_status": "PENDING",
-      "restore_status": "PENDING",
+      "candidate": "horistic-srv",
       "capacity_finalize_status": "PENDING",
-      "rollback_status": "PENDING",
-      "topology_security_status": "PENDING",
-      "evidence_ids": [],
-      "verdict": "PENDING",
+      "capacity_status": "PASS",
       "client_colocation": true,
-      "server_client_resource_domains": {
-        "server": "rustdesk-server-horistic-srv",
-        "client": "rustdesk-client-horistic-srv"
-      },
-      "server_client_evidence_domains": {
-        "server": "phase53-server-evidence",
-        "client": "phase54-client-evidence"
-      },
-      "server_client_rollback_domains": {
-        "server": "phase53-server-rollback",
-        "client": "phase54-client-rollback"
-      },
+      "evaluated": true,
+      "evidence_ids": [
+        "P52-EV-CAPACITY-HORISTIC-SRV"
+      ],
       "phase53_review_required": true,
       "phase54_review_required": true,
-      "phase57_review_required": true
+      "phase57_review_required": true,
+      "restore_status": "PENDING",
+      "rollback_status": "PENDING",
+      "server_client_evidence_domains": {
+        "client": "phase54-client-evidence",
+        "server": "phase53-server-evidence"
+      },
+      "server_client_resource_domains": {
+        "client": "rustdesk-client-horistic-srv",
+        "server": "rustdesk-server-horistic-srv"
+      },
+      "server_client_rollback_domains": {
+        "client": "phase54-client-rollback",
+        "server": "phase53-server-rollback"
+      },
+      "supply_status": "PASS",
+      "topology_security_status": "PENDING",
+      "vault_status": "PENDING",
+      "verdict": "PENDING"
     }
   ],
-  "selected_candidate": null,
+  "cold_standby_claimed": false,
   "overall_status": "BLOCKED",
-  "windows_install_performed": false,
+  "schema_version": 1,
+  "selected_candidate": null,
   "windows_access_proven": false,
-  "cold_standby_claimed": false
+  "windows_install_performed": false,
+  "workstream": "rustdesk-fleet"
 }

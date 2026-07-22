@@ -9,6 +9,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import shutil
 import struct
 import subprocess
@@ -27,6 +28,7 @@ SUPPLY_OBSERVATION = Path("modules/rustdesk-fleet/evidence/phase52/supply-observ
 CAPACITY_POLICY = Path("modules/rustdesk-fleet/contracts/capacity-policy.json")
 PLACEMENT_DECISION = Path("modules/rustdesk-fleet/contracts/placement-decision.json")
 CAPACITY_PROPOSAL = Path("modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json")
+CAPACITY_SUMMARY = Path("modules/rustdesk-fleet/evidence/phase52/capacity-summary.json")
 OPERATIONAL_DECISIONS = Path(
     ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
     "52-OPERATIONAL-DECISIONS.md"
@@ -84,6 +86,11 @@ SSH_ALIASES = {
     "atius-srv-2": "atius-srv-2-direct",
     "atius-srv-3": "atius-srv-3-direct",
     "horistic-srv": "horistic-srv-1",
+}
+CAPACITY_EVIDENCE_NAMES = {
+    "atius-srv-2": "capacity-atius-srv-2.json",
+    "atius-srv-3": "capacity-atius-srv-3.json",
+    "horistic-srv": "capacity-horistic-srv.json",
 }
 READ_ONLY_PREFLIGHT_ACTIONS = ("capacity-sample",)
 REMOTE_CAPACITY_SCRIPT = """\
@@ -553,10 +560,7 @@ def build_capacity_probe_command(candidate: str) -> list[str]:
         "-o",
         "ConnectionAttempts=1",
         SSH_ALIASES[candidate],
-        "--",
-        "python3",
-        "-c",
-        REMOTE_CAPACITY_SCRIPT,
+        f"python3 -c {shlex.quote(REMOTE_CAPACITY_SCRIPT)}",
     ]
 
 
@@ -679,6 +683,160 @@ def evaluate_capacity_chain(
         "windows_access_proven": False,
         "overall_status": "BLOCKED",
     }
+
+
+def _candidate_evidence(attempt: dict[str, Any], generated_at: str) -> dict[str, Any]:
+    candidate = attempt["candidate"]
+    return {
+        "schema_version": 1,
+        "phase": 52,
+        "workstream": "rustdesk-fleet",
+        "evidence_id": f"P52-EV-CAPACITY-{candidate.upper()}",
+        "generated_at": generated_at,
+        **attempt,
+    }
+
+
+def _apply_capacity_chain_to_placement(
+    placement: dict[str, Any], chain: dict[str, Any]
+) -> dict[str, Any]:
+    updated = json.loads(json.dumps(placement))
+    attempts = {item["candidate"]: item for item in chain["attempts"]}
+    for row in updated["candidates"]:
+        attempt = attempts.get(row["candidate"])
+        if attempt is None:
+            continue
+        row["evaluated"] = True
+        row["supply_status"] = "PASS"
+        row["capacity_status"] = "NO-GO" if attempt["preliminary_verdict"] == "NO-GO" else "PASS"
+        for field in (
+            "vault_status",
+            "backup_status",
+            "restore_status",
+            "capacity_finalize_status",
+            "rollback_status",
+            "topology_security_status",
+        ):
+            row[field] = "PENDING"
+        row["evidence_ids"] = [f"P52-EV-CAPACITY-{row['candidate'].upper()}"]
+        row["verdict"] = _candidate_verdict(row)
+    updated["selected_candidate"] = None
+    updated["overall_status"] = "BLOCKED"
+    updated["windows_install_performed"] = False
+    updated["windows_access_proven"] = False
+    updated["cold_standby_claimed"] = False
+    return updated
+
+
+def validate_capacity_live_summary(
+    chain: dict[str, Any], policy: dict[str, Any], placement: dict[str, Any], repo: Path
+) -> CheckResult:
+    fail: list[str] = []
+    blocked: list[str] = []
+    if chain.get("attempt_order") != [item.get("candidate") for item in chain.get("attempts", [])]:
+        fail.append("candidate-order-drift")
+    if chain.get("attempt_order") != list(CANDIDATES[: len(chain.get("attempt_order", []))]):
+        fail.append("candidate-order-drift")
+    if (
+        chain.get("selected_candidate") is not None
+        or chain.get("overall_status") != "BLOCKED"
+        or chain.get("mutation_performed") is not False
+        or chain.get("read_only") is not True
+        or chain.get("windows_install_performed") is not False
+        or chain.get("windows_access_proven") is not False
+    ):
+        fail.append("preflight-boundary-drift")
+    if chain.get("decision_source_digest") != _sha256_file(repo / OPERATIONAL_DECISIONS):
+        blocked.append("approval-source-drift")
+    if chain.get("supply_digest") != _sha256_file(repo / SUPPLY_OBSERVATION):
+        blocked.append("supply-evidence-drift")
+
+    eligible: str | None = None
+    for index, attempt in enumerate(chain.get("attempts", [])):
+        samples = attempt.get("samples")
+        if not isinstance(samples, list) or len(samples) != 2:
+            fail.append("sample-cardinality")
+            continue
+        derived = [derive_candidate_capacity(sample, policy) for sample in samples]
+        expected = "NO-GO" if any(item["status"] == "NO-GO" for item in derived) else "PRELIMINARY_ELIGIBLE"
+        if attempt.get("calculations") != derived or attempt.get("preliminary_verdict") != expected:
+            fail.append("stored-verdict-drift")
+        if index and chain["attempts"][index - 1].get("preliminary_verdict") != "NO-GO":
+            fail.append("candidate-order-bypass")
+        if expected == "PRELIMINARY_ELIGIBLE" and eligible is None:
+            eligible = attempt["candidate"]
+    if chain.get("capacity_eligible_candidate") != eligible:
+        fail.append("stored-verdict-drift")
+
+    placement_result = validate_placement_decision(placement)
+    if placement_result.status == "FAIL":
+        fail.extend(item.category for item in placement_result.findings)
+    if not fail:
+        blocked.append("full-gate-pending")
+    return _check_result(
+        "P52-CAPACITY-LIVE-001",
+        "FAIL" if fail else "BLOCKED",
+        fail + blocked,
+        CAPACITY_SUMMARY.as_posix(),
+    )
+
+
+def run_capacity_live(repo: Path, evidence_dir: Path) -> CheckResult:
+    """Execute the serial read-only routing chain and persist each reached verdict immediately."""
+    policy_path = validate_repo_path(repo, repo / CAPACITY_POLICY)
+    placement_path = validate_repo_path(repo, repo / PLACEMENT_DECISION)
+    supply_path = validate_repo_path(repo, repo / SUPPLY_OBSERVATION)
+    decision_path = validate_repo_path(repo, repo / OPERATIONAL_DECISIONS)
+    policy = load_json_strict(policy_path)
+    placement = load_json_strict(placement_path)
+    supply = load_json_strict(supply_path)
+    if validate_capacity_policy(policy).status != "PASS":
+        raise ValueError("capacity policy is not approved")
+    if validate_supply_observation(supply, load_json_strict(repo / SUPPLY_CONTRACT), repo=repo).status != "PASS":
+        raise ValueError("supply evidence is not current PASS")
+    decision_digest = _sha256_file(decision_path)
+    if policy["approval"]["source_sha256"] != decision_digest:
+        raise ValueError("capacity approval source digest drift")
+    supply_digest = _sha256_file(supply_path)
+
+    samples_by_candidate: dict[str, list[dict[str, Any]]] = {}
+    persisted_predecessors: set[str] = set()
+    chain: dict[str, Any] | None = None
+    evidence_root = validate_repo_path(repo, repo / evidence_dir)
+    for candidate in CANDIDATES:
+        samples_by_candidate[candidate] = [collect_capacity_sample(candidate), collect_capacity_sample(candidate)]
+        chain = evaluate_capacity_chain(
+            samples_by_candidate,
+            policy,
+            decision_source_digest=decision_digest,
+            supply_digest=supply_digest,
+            persisted_predecessors=persisted_predecessors,
+        )
+        attempt = chain["attempts"][-1]
+        evidence_path = validate_repo_path(repo, evidence_root / CAPACITY_EVIDENCE_NAMES[candidate])
+        _write_json_atomically(_candidate_evidence(attempt, chain["generated_at"]), evidence_path)
+        if attempt["preliminary_verdict"] == "NO-GO":
+            persisted_predecessors.add(candidate)
+            continue
+        break
+    if chain is None:
+        raise ValueError("capacity chain produced no evidence")
+    chain["routing"] = [
+        {
+            "candidate": candidate,
+            "status": (
+                next(item["preliminary_verdict"] for item in chain["attempts"] if item["candidate"] == candidate)
+                if candidate in chain["attempt_order"]
+                else "NOT_NEEDED_AFTER_PRELIMINARY_ELIGIBILITY"
+            ),
+        }
+        for candidate in CANDIDATES
+    ]
+    updated_placement = _apply_capacity_chain_to_placement(placement, chain)
+    summary_path = validate_repo_path(repo, evidence_root / CAPACITY_SUMMARY.name)
+    _write_json_atomically(chain, summary_path)
+    _write_json_atomically(updated_placement, placement_path)
+    return validate_capacity_live_summary(chain, policy, updated_placement, repo)
 
 
 def _candidate_verdict(candidate: dict[str, Any]) -> str:
@@ -1553,7 +1711,9 @@ def main(argv: list[str] | None = None) -> int:
     repo = args.repo.resolve()
     try:
         if args.only == "capacity-live":
-            raise ValueError("capacity-live evidence has not been materialized")
+            result = run_capacity_live(repo, args.evidence_dir)
+            print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))
+            return exit_code_for_status(result.status)
         if args.only == "capacity-proposal":
             policy_path = validate_repo_path(repo, repo / CAPACITY_POLICY)
             proposal_path = validate_repo_path(repo, repo / args.evidence_dir / CAPACITY_PROPOSAL.name)

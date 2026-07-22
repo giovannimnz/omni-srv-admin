@@ -1,0 +1,334 @@
+{
+  "attempt_order": [
+    "atius-srv-2",
+    "atius-srv-3",
+    "horistic-srv"
+  ],
+  "attempts": [
+    {
+      "calculations": [
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": false,
+          "projected_post_ok": false,
+          "required_incremental_bytes": 16928065536,
+          "status": "NO-GO",
+          "still_unmaterialized_reservations": 16928065536
+        },
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": false,
+          "projected_post_ok": false,
+          "required_incremental_bytes": 16928065536,
+          "status": "NO-GO",
+          "still_unmaterialized_reservations": 16928065536
+        }
+      ],
+      "candidate": "atius-srv-2",
+      "decision_source_digest": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a",
+      "findings": [
+        "pre-disk-threshold-exceeded",
+        "projected-post-threshold-exceeded"
+      ],
+      "horistic_colocation": null,
+      "mutation_performed": false,
+      "predecessor": null,
+      "predecessor_status": "NOT_APPLICABLE",
+      "preliminary_verdict": "NO-GO",
+      "read_only": true,
+      "reservations": {
+        "backup_a_bytes": 4294967296,
+        "backup_b_bytes": 4294967296,
+        "combined_daily_log_budget_bytes": 134217728,
+        "loaded_image_bytes": 5543936,
+        "log_reserve_30d_bytes": 4026531840,
+        "log_retention_days": 30,
+        "peak_import_workspace_bytes": 5543936,
+        "preserved_oci_archive_bytes": 5543936,
+        "state_growth_budget_bytes": 4294967296
+      },
+      "samples": [
+        {
+          "architecture": "aarch64",
+          "available_bytes": 32415072256,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "atius-srv-2",
+          "inode_available": 23266875,
+          "inode_total": 25932800,
+          "inode_used": 2665925,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T02:46:14Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 207907635200,
+          "used_bytes": 175475785728
+        },
+        {
+          "architecture": "aarch64",
+          "available_bytes": 32415068160,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "atius-srv-2",
+          "inode_available": 23266875,
+          "inode_total": 25932800,
+          "inode_used": 2665925,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T02:46:15Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 207907635200,
+          "used_bytes": 175475789824
+        }
+      ],
+      "ssh_alias": "atius-srv-2-direct",
+      "supply_digest": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db"
+    },
+    {
+      "calculations": [
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": false,
+          "projected_post_ok": false,
+          "required_incremental_bytes": 16928065536,
+          "status": "NO-GO",
+          "still_unmaterialized_reservations": 16928065536
+        },
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": false,
+          "projected_post_ok": false,
+          "required_incremental_bytes": 16928065536,
+          "status": "NO-GO",
+          "still_unmaterialized_reservations": 16928065536
+        }
+      ],
+      "candidate": "atius-srv-3",
+      "decision_source_digest": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a",
+      "findings": [
+        "pre-disk-threshold-exceeded",
+        "projected-post-threshold-exceeded"
+      ],
+      "horistic_colocation": null,
+      "mutation_performed": false,
+      "predecessor": "atius-srv-2",
+      "predecessor_status": "NO-GO",
+      "preliminary_verdict": "NO-GO",
+      "read_only": true,
+      "reservations": {
+        "backup_a_bytes": 4294967296,
+        "backup_b_bytes": 4294967296,
+        "combined_daily_log_budget_bytes": 134217728,
+        "loaded_image_bytes": 5543936,
+        "log_reserve_30d_bytes": 4026531840,
+        "log_retention_days": 30,
+        "peak_import_workspace_bytes": 5543936,
+        "preserved_oci_archive_bytes": 5543936,
+        "state_growth_budget_bytes": 4294967296
+      },
+      "samples": [
+        {
+          "architecture": "aarch64",
+          "available_bytes": 34402955264,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "atius-srv-3.atius.internal",
+          "inode_available": 23769577,
+          "inode_total": 25932800,
+          "inode_used": 2163223,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T02:46:15Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 207907635200,
+          "used_bytes": 173487902720
+        },
+        {
+          "architecture": "aarch64",
+          "available_bytes": 34402942976,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "atius-srv-3.atius.internal",
+          "inode_available": 23769577,
+          "inode_total": 25932800,
+          "inode_used": 2163223,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T02:46:15Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 207907635200,
+          "used_bytes": 173487915008
+        }
+      ],
+      "ssh_alias": "atius-srv-3-direct",
+      "supply_digest": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db"
+    },
+    {
+      "calculations": [
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": true,
+          "projected_post_ok": true,
+          "required_incremental_bytes": 16928065536,
+          "status": "PASS",
+          "still_unmaterialized_reservations": 16928065536
+        },
+        {
+          "capacity_finalize_status": "PENDING",
+          "headroom_ok": true,
+          "inode_ok": true,
+          "pre_disk_ok": true,
+          "projected_post_ok": true,
+          "required_incremental_bytes": 16928065536,
+          "status": "PASS",
+          "still_unmaterialized_reservations": 16928065536
+        }
+      ],
+      "candidate": "horistic-srv",
+      "decision_source_digest": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a",
+      "findings": [
+        "full-candidate-gate-pending"
+      ],
+      "horistic_colocation": {
+        "client_colocation": true,
+        "future_client_resource_domain": "rustdesk-client-horistic-srv",
+        "independent_dr_claimed": false,
+        "phase52_review_status": "PASS",
+        "phase53_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "phase54_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "phase57_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "server_resource_domain": "rustdesk-server-horistic-srv"
+      },
+      "mutation_performed": false,
+      "predecessor": "atius-srv-3",
+      "predecessor_status": "NO-GO",
+      "preliminary_verdict": "PRELIMINARY_ELIGIBLE",
+      "read_only": true,
+      "reservations": {
+        "backup_a_bytes": 4294967296,
+        "backup_b_bytes": 4294967296,
+        "combined_daily_log_budget_bytes": 134217728,
+        "loaded_image_bytes": 5543936,
+        "log_reserve_30d_bytes": 4026531840,
+        "log_retention_days": 30,
+        "peak_import_workspace_bytes": 5543936,
+        "preserved_oci_archive_bytes": 5543936,
+        "state_growth_budget_bytes": 4294967296
+      },
+      "samples": [
+        {
+          "architecture": "aarch64",
+          "available_bytes": 58721636352,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "horistic-srv",
+          "inode_available": 12321809,
+          "inode_total": 12966400,
+          "inode_used": 644591,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T02:46:16Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "not-observed",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 103859404800,
+          "used_bytes": 45120991232
+        },
+        {
+          "architecture": "aarch64",
+          "available_bytes": 58721636352,
+          "command_version": "phase52-capacity-read-only-v2",
+          "filesystem_source": "/dev/sda1",
+          "hostname": "horistic-srv",
+          "inode_available": 12321809,
+          "inode_total": 12966400,
+          "inode_used": 644591,
+          "mount_point": "/",
+          "mutation_performed": false,
+          "observed_at": "2026-07-22T02:46:16Z",
+          "podman_graphroot": "not-observed",
+          "podman_version": "not-observed",
+          "read_only": true,
+          "resource_profile": "not-observed",
+          "resource_wrapper": "not-observed",
+          "total_bytes": 103859404800,
+          "used_bytes": 45120991232
+        }
+      ],
+      "ssh_alias": "horistic-srv-1",
+      "supply_digest": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db"
+    }
+  ],
+  "capacity_eligible_candidate": "horistic-srv",
+  "decision_source_digest": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a",
+  "generated_at": "2026-07-22T02:46:16Z",
+  "mutation_performed": false,
+  "overall_status": "BLOCKED",
+  "pending_stages": [
+    "vault",
+    "backup",
+    "restore",
+    "capacity_finalize",
+    "rollback",
+    "topology-security"
+  ],
+  "phase": 52,
+  "read_only": true,
+  "routing": [
+    {
+      "candidate": "atius-srv-2",
+      "status": "NO-GO"
+    },
+    {
+      "candidate": "atius-srv-3",
+      "status": "NO-GO"
+    },
+    {
+      "candidate": "horistic-srv",
+      "status": "PRELIMINARY_ELIGIBLE"
+    }
+  ],
+  "schema_version": 1,
+  "selected_candidate": null,
+  "supply_digest": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db",
+  "unmaterialized_reservation_terms": [
+    "loaded_image_bytes",
+    "preserved_oci_archive_bytes",
+    "peak_import_workspace_bytes",
+    "backup_a_bytes",
+    "backup_b_bytes",
+    "log_reserve_30d_bytes",
+    "state_growth_budget_bytes"
+  ],
+  "windows_access_proven": false,
+  "windows_install_performed": false,
+  "workstream": "rustdesk-fleet"
+}
