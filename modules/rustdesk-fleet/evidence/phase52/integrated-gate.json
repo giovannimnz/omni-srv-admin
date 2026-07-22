@@ -1,0 +1,272 @@
+{
+  "candidate_attempts": [
+    {
+      "candidate": "atius-srv-2",
+      "first_non_pass_stage": "capacity",
+      "record_digest": "aa8cb9253296dc9d13c94018896ad55c9c4b847a8e6e4227b32fd6cd8f1320f6",
+      "verdict": "NO-GO"
+    },
+    {
+      "candidate": "atius-srv-3",
+      "first_non_pass_stage": "capacity",
+      "record_digest": "92114eaa6a75baa461025cad305b5fcf63b915a19cbb66d00309b0b9c7864d53",
+      "verdict": "NO-GO"
+    },
+    {
+      "candidate": "horistic-srv",
+      "first_non_pass_stage": "vault",
+      "record_digest": "506516743c086c4cbfa189d77574f449fa03a67c403f5171d846d406157f6672",
+      "verdict": "NO-GO"
+    }
+  ],
+  "checks": [
+    {
+      "evidence_ids": [
+        "P52-EV-SUPPLY"
+      ],
+      "findings": [],
+      "id": "P52-SUPPLY-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-FULL-CAPACITY-ATIUS-SRV-2",
+        "P52-EV-FULL-CAPACITY-ATIUS-SRV-3",
+        "P52-EV-FULL-CAPACITY-HORISTIC-SRV"
+      ],
+      "findings": [
+        {
+          "category": "no-selected-candidate",
+          "location": "attempts.*.stages.capacity",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "pre-disk-threshold-exceeded",
+          "location": "attempts.*.stages.capacity",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "projected-post-threshold-exceeded",
+          "location": "attempts.*.stages.capacity",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        }
+      ],
+      "id": "P52-CAPACITY-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-PLACEMENT"
+      ],
+      "findings": [
+        {
+          "category": "placement-pending",
+          "location": "contract",
+          "path": "modules/rustdesk-fleet/contracts/placement-decision.json"
+        }
+      ],
+      "id": "P52-PLACEMENT-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-VAULT-READINESS-HORISTIC-SRV"
+      ],
+      "findings": [
+        {
+          "category": "no-selected-candidate",
+          "location": "attempts.*.stages.vault",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "predecessor-stage-not-pass",
+          "location": "attempts.*.stages.vault",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "vault-export-helper-missing",
+          "location": "attempts.*.stages.vault",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        }
+      ],
+      "id": "P52-VAULT-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-BACKUP"
+      ],
+      "findings": [
+        {
+          "category": "managed-fleet-backup-module-missing",
+          "location": "attempts.horistic-srv.readiness",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "no-selected-candidate",
+          "location": "attempts.horistic-srv.readiness",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "predecessor-stage-not-pass",
+          "location": "attempts.horistic-srv.readiness",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "rclone-config-missing",
+          "location": "attempts.horistic-srv.readiness",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "rclone-missing",
+          "location": "attempts.horistic-srv.readiness",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        }
+      ],
+      "id": "P52-BACKUP-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-RESTORE"
+      ],
+      "findings": [
+        {
+          "category": "no-selected-candidate",
+          "location": "attempts.*.stages.restore",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        },
+        {
+          "category": "predecessor-stage-not-pass",
+          "location": "attempts.*.stages.restore",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        }
+      ],
+      "id": "P52-RESTORE-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-2",
+        "P52-EV-ROLLBACK-NOOP-ATIUS-SRV-3",
+        "P52-EV-ROLLBACK-NOOP-HORISTIC-SRV"
+      ],
+      "findings": [],
+      "id": "P52-ROLLBACK-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-TOPOLOGY"
+      ],
+      "findings": [
+        {
+          "category": "no-selected-candidate",
+          "location": "contract",
+          "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json"
+        }
+      ],
+      "id": "P52-TOPOLOGY-001",
+      "status": "BLOCKED"
+    },
+    {
+      "evidence_ids": [
+        "P52-EV-REPORT"
+      ],
+      "findings": [],
+      "id": "P52-REPORT-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-WS"
+      ],
+      "findings": [],
+      "id": "P51-WS-001",
+      "status": "PASS"
+    },
+    {
+      "evidence_ids": [
+        "P51-EV-P48"
+      ],
+      "findings": [],
+      "id": "P51-P48-001",
+      "status": "PASS"
+    }
+  ],
+  "future_topology_reviews": {
+    "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+    "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+  },
+  "generated_at": "2026-07-22T03:37:36Z",
+  "inputs": [
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-HORISTIC-TOPOLOGY-IMPACT-REVIEW.md",
+      "sha256": "74cb04c303f7605e5e2740d209b4492a906c8658b6a5f88f7dbb2636403de1c6"
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md",
+      "sha256": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/capacity-policy.json",
+      "sha256": "59a97e2f7229fc08df7c54de3f7f7091ec4daa370ac85eb6423e421547b0a1c5"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/placement-decision.json",
+      "sha256": "cf0b852fe8c61b8a4eb2df3c00d42ea0cfad8023ba5780781fe51c27aef78a7c"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/scope.json",
+      "sha256": "10918dc5d49e9c1165c500b99a1876126e1f212ea4f631a686ce99545ff97aeb"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/secret-roles.json",
+      "sha256": "ff418c161b444c9ba38c1519d28de37b609eb1096deefef5e96bd6f4ca250613"
+    },
+    {
+      "path": "modules/rustdesk-fleet/contracts/supply-chain.json",
+      "sha256": "b600adeb1e1285b7f98662feb8fbd629a7518c06b2885e3194d513613f946a36"
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/ledger.json",
+      "sha256": "fdf9c1fb071d6ea8c72280c165ba9793199420fd7dea7ba3cc039fff8581b047"
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase48-baseline.json",
+      "sha256": "fb09ab641f150069bbd95ebd8dbfafa993cc58b07acf1e4f668fa4377210ad3f"
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json",
+      "sha256": "547e4464c8e9ea25181bd663fee526194222713c2a4454d7cc9ef90b105682b0"
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase52/supply-observation.json",
+      "sha256": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db"
+    },
+    {
+      "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
+      "sha256": "c79388f050e9a5202a34cab354a372d2de2795ef418b6cc77b18d443c4891607"
+    },
+    {
+      "path": "modules/rustdesk-fleet/tools/validate_phase51.py",
+      "sha256": "269539f1b4387bf7aeb698be0c7a52d2a7537a65ecf4073e64fbc07dfb77a7a3"
+    },
+    {
+      "path": "modules/rustdesk-fleet/tools/validate_phase52.py",
+      "sha256": "46c30db2ed6ab7e5bd7bce933af53c8b24d130f2b35a8ececc5dee905afe6989"
+    }
+  ],
+  "overall_status": "BLOCKED",
+  "phase": 52,
+  "phase53_advance_status": "BLOCKED",
+  "phase53_topology_review_status": "BLOCKED",
+  "public_listener_created": false,
+  "schema_version": 1,
+  "secret_material_present": false,
+  "selected_candidate": null,
+  "source_head": "4b417932e212141c752e70873603d5f235d0853a",
+  "windows_access_proven": false,
+  "windows_install_performed": false,
+  "workstream": "rustdesk-fleet"
+}
