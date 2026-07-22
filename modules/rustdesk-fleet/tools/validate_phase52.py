@@ -2107,8 +2107,10 @@ def validate_placement_decision(
     return _check_result("P52-PLACEMENT-001", status, errors + blocked, source)
 
 
-def _proposal_capacity_verdict(samples: list[dict[str, Any]], policy: dict[str, Any]) -> str:
-    results = [derive_candidate_capacity(sample, policy) for sample in samples]
+def _proposal_capacity_verdict(
+    samples: list[dict[str, Any]], policy: dict[str, Any], *, now: datetime | None = None
+) -> str:
+    results = [derive_candidate_capacity(sample, policy, now=now) for sample in samples]
     return "NO-GO" if any(item["status"] == "NO-GO" for item in results) else "FULL-GATE-PENDING"
 
 
@@ -2191,6 +2193,7 @@ def validate_capacity_proposal(
     if not isinstance(candidates, list) or len(candidates) != 3:
         fail.append("candidate-shape")
         candidates = []
+    proposal_reference_time = _parse_utc(proposal.get("generated_at"))
     for index, candidate in enumerate(candidates):
         expected_candidate = CANDIDATES[index]
         if not _exact_keys(candidate, {"candidate", "ssh_alias", "samples", "capacity_verdict", "latest_capacity"}):
@@ -2213,8 +2216,8 @@ def validate_capacity_proposal(
                 fail.extend(item.category for item in sample_result.findings)
             elif "stale-observation" in {item.category for item in sample_result.findings}:
                 blocked.append("stale-observation")
-        derived_verdict = _proposal_capacity_verdict(samples, policy)
-        latest = derive_candidate_capacity(samples[-1], policy)
+        derived_verdict = _proposal_capacity_verdict(samples, policy, now=proposal_reference_time)
+        latest = derive_candidate_capacity(samples[-1], policy, now=proposal_reference_time)
         if candidate.get("capacity_verdict") != derived_verdict or candidate.get("latest_capacity") != latest:
             fail.append("stored-verdict-drift")
     if not fail:
@@ -2940,7 +2943,25 @@ def _capacity_report_check(
     policy_result = validate_capacity_policy(policy)
     if policy_result.status != "PASS":
         return policy_result
-    return _stage_check("P52-CAPACITY-001", "capacity", full_gate, require_selected=True)
+    result = _stage_check("P52-CAPACITY-001", "capacity", full_gate, require_selected=True)
+    attempts = full_gate.get("attempts", []) if isinstance(full_gate, dict) else []
+    if any(
+        not _is_current(sample.get("observed_at"), policy["observation_max_age_seconds"])
+        for attempt in attempts
+        if isinstance(attempt, dict)
+        for sample in attempt.get("stages", {}).get("capacity", {}).get("samples", [])
+        if isinstance(sample, dict)
+    ):
+        result.findings.append(
+            Finding(
+                "stale-observation",
+                FULL_GATE_SUMMARY.as_posix(),
+                "attempts.*.stages.capacity.samples",
+            )
+        )
+        if result.status == "PASS":
+            result.status = "BLOCKED"
+    return result
 
 
 def _backup_report_check(full_gate: dict[str, Any]) -> CheckResult:
