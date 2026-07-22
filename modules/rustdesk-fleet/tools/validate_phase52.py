@@ -2943,6 +2943,35 @@ def _capacity_report_check(
     return _stage_check("P52-CAPACITY-001", "capacity", full_gate, require_selected=True)
 
 
+def _backup_report_check(full_gate: dict[str, Any]) -> CheckResult:
+    result = _stage_check("P52-BACKUP-001", "backup", full_gate, require_selected=True)
+    horistic = next(
+        (
+            item
+            for item in full_gate.get("attempts", [])
+            if isinstance(item, dict) and item.get("candidate") == "horistic-srv"
+        ),
+        None,
+    )
+    vault = horistic.get("stages", {}).get("vault") if isinstance(horistic, dict) else None
+    readiness = vault.get("readiness") if isinstance(vault, dict) else None
+    if isinstance(readiness, dict):
+        tools = readiness.get("tools", {})
+        paths = readiness.get("paths", {})
+        categories = [item.category for item in result.findings]
+        if tools.get("rclone") is not True:
+            categories.append("rclone-missing")
+        if paths.get("rclone_config", {}).get("is_file") is not True:
+            categories.append("rclone-config-missing")
+        if paths.get("fleet_backup_module", {}).get("is_dir") is not True:
+            categories.append("managed-fleet-backup-module-missing")
+        result.findings = [
+            Finding(category, FULL_GATE_SUMMARY.as_posix(), "attempts.horistic-srv.readiness")
+            for category in sorted(set(categories))
+        ]
+    return result
+
+
 def _topology_report_check(full_gate: dict[str, Any]) -> CheckResult:
     selected = full_gate.get("selected_candidate")
     if selected is None:
@@ -3013,7 +3042,7 @@ def build_phase52_report(repo: Path, generated_at: str | None = None) -> dict[st
         if vault_contract.status != "PASS"
         else _stage_check("P52-VAULT-001", "vault", full_gate, require_selected=True)
     )
-    backup = _stage_check("P52-BACKUP-001", "backup", full_gate, require_selected=True)
+    backup = _backup_report_check(full_gate)
     restore = _stage_check("P52-RESTORE-001", "restore", full_gate, require_selected=True)
     rollback = _stage_check("P52-ROLLBACK-001", "rollback", full_gate)
     topology = _topology_report_check(full_gate)
@@ -3202,6 +3231,14 @@ def validate_phase52_report(report: dict[str, Any], repo: Path) -> CheckResult:
     source_head = report.get("source_head")
     if not isinstance(source_head, str) or re.fullmatch(r"[0-9a-f]{40}", source_head) is None:
         fail.append("source-head-shape")
+    elif subprocess.run(
+        ["git", "merge-base", "--is-ancestor", source_head, "HEAD"],
+        cwd=root,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+    ).returncode != 0:
+        blocked.append("source-head-not-current-ancestor")
     if not isinstance(report.get("generated_at"), str) or _parse_utc(report.get("generated_at")) is None:
         fail.append("report-timestamp")
     status = "FAIL" if fail else "BLOCKED" if blocked else "PASS"
@@ -3257,8 +3294,22 @@ def render_phase52_markdown(report: dict[str, Any]) -> str:
 
 def render_phase53_topology_review(report: dict[str, Any]) -> str:
     selected = report.get("selected_candidate") or "none"
-    vault = next(item for item in report["checks"] if item["id"] == "P52-VAULT-001")
-    blockers = sorted({item["category"] for item in vault["findings"]}) or ["no-selected-candidate"]
+    blocker_checks = {
+        "P52-CAPACITY-001",
+        "P52-PLACEMENT-001",
+        "P52-VAULT-001",
+        "P52-BACKUP-001",
+        "P52-RESTORE-001",
+        "P52-TOPOLOGY-001",
+    }
+    blockers = sorted(
+        {
+            finding["category"]
+            for item in report["checks"]
+            if item["id"] in blocker_checks
+            for finding in item["findings"]
+        }
+    ) or ["no-selected-candidate"]
     status = report["phase53_topology_review_status"]
     return "\n".join(
         [

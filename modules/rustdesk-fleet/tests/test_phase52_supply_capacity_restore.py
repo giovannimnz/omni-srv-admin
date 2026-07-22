@@ -1301,6 +1301,9 @@ def test_report_builds_exact_blocked_check_set_from_current_no_primary() -> None
     assert by_id["P52-SUPPLY-001"]["status"] == "PASS"
     assert by_id["P52-PLACEMENT-001"]["status"] == "BLOCKED"
     assert by_id["P52-VAULT-001"]["status"] == "BLOCKED"
+    assert {"rclone-missing", "rclone-config-missing", "managed-fleet-backup-module-missing"}.issubset(
+        {item["category"] for item in by_id["P52-BACKUP-001"]["findings"]}
+    )
     assert by_id["P52-TOPOLOGY-001"]["status"] == "BLOCKED"
     assert by_id["P52-REPORT-001"]["status"] == "PASS"
     assert by_id["P51-WS-001"]["status"] == "PASS"
@@ -1365,6 +1368,8 @@ def test_report_outputs_are_atomic_parity_and_topology_is_fail_closed(tmp_path: 
     assert "**Selected candidate:** `none`" in topology_text
     assert "**Phase 53 advance status:** `BLOCKED`" in topology_text
     assert "vault-export-helper-missing" in topology_text
+    assert "rclone-missing" in topology_text
+    assert "managed-fleet-backup-module-missing" in topology_text
     assert "Phase 54" in topology_text and "Phase 57" in topology_text
     assert "windows_install_performed=false" in topology_text
 
