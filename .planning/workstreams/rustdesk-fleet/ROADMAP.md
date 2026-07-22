@@ -69,7 +69,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Backup e restore reais, em ambiente isolado, reproduzem a mesma public-key fingerprint antes de edge ou clients de frota serem autorizados.
   5. **Advance gate:** verificadores automatizados de checksums/digests, capacity/inodes/reservas, secret scan e fingerprint, junto do restore live, devem passar antes da Phase 53; projeção, arquivo de backup ou summary-only sem restore não contam.
 
-**Plans**: 4/6 plans executed
+**Plans**: 5/6 plans executed
 
 **Wave 1**
 
@@ -89,7 +89,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 52-05-PLAN.md — Executar o full candidate gate, `capacity_finalize`, rollback e fallback até placement recuperável.
+- [x] 52-05-PLAN.md — Executar o full candidate gate, `capacity_finalize`, rollback e fallback até placement recuperável.
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -200,7 +200,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
-| 52. Supply Chain, Capacity and Recoverable Placement | 4/6 | In Progress|  |
+| 52. Supply Chain, Capacity and Recoverable Placement | 5/6 | In Progress|  |
 | 53. Primary Relay and Public Edge | 0/TBD | Not started | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |

@@ -5,16 +5,16 @@ milestone_name: RustDesk Fleet Remote Access
 current_phase: 52
 current_phase_name: Supply Chain, Capacity and Recoverable Placement
 status: executing
-stopped_at: Completed 52-04-PLAN.md; ready for live full candidate gate
-last_updated: "2026-07-22T03:07:21.438Z"
+stopped_at: Completed 52-05-PLAN.md with current BLOCKED no-primary; ready for Plan 52-06 closeout
+last_updated: "2026-07-22T03:21:34.774Z"
 last_activity: 2026-07-22
-last_activity_desc: Plan 52-03 capacity routing persisted both Atius NO-GO and Horistic preliminary eligibility
+last_activity_desc: Plan 52-04 implemented the Vault and isolated recovery control plane
 progress:
   total_phases: 8
   completed_phases: 1
   total_plans: 9
-  completed_plans: 7
-  percent: 78
+  completed_plans: 8
+  percent: 89
 ---
 
 # Project State
@@ -29,26 +29,26 @@ See: `.planning/PROJECT.md` (updated 2026-07-19)
 ## Current Position
 
 Phase: 52 (Supply Chain, Capacity and Recoverable Placement) — EXECUTING
-Plan: 5 of 6
-Status: Ready to execute Plan 52-05
-Last activity: 2026-07-22 — Plan 52-04 implemented the Vault and isolated recovery control plane
+Plan: 6 of 6
+Status: Ready to execute Plan 52-06 closeout with Phase 52 BLOCKED
+Last activity: 2026-07-22 — Plan 52-05 persisted a current no-primary result without remote mutation
 
-Progress: [████████░░] 78%
+Progress: [█████████░] 89%
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 7
+- Total plans completed: 8
 - Average duration: 11min for Phase 52
-- Total execution time: 45min for Phase 52
+- Total execution time: 53min for Phase 52
 
 **By Phase:**
 
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 51 | 3 | - | - |
-| 52 | 4 | 45min | 11min |
+| 52 | 5 | 53min | 11min |
 
 ## Accumulated Context
 
@@ -59,6 +59,7 @@ Progress: [████████░░] 78%
 | Phase 52 P02 | 14min | 2 tasks | 7 files |
 | Phase 52 P03 | 6min | 2 tasks | 7 files |
 | Phase 52 P04 | 13min | 2 tasks | 4 files |
+| Phase 52 P05 | 8min | 2 tasks | 7 files |
 
 ### Decisions
 
@@ -74,6 +75,7 @@ Progress: [████████░░] 78%
 - [Phase 52]: `atius-srv-2` and `atius-srv-3` are current capacity NO-GO with zero cleanup; Horistic is preliminary only and remains unselected until the full gate.
 - [Phase 52]: Vault hydration emits only aggregate metadata/public fingerprint over a dedicated descriptor; values remain ephemeral and archives remain state-only.
 - [Phase 52]: Restore cleanup is allowed only for a marked disposable target after restore, no-listener and stopped/disabled checks pass; verified backups are retained on failure.
+- [Phase 52]: Missing Horistic Vault export and managed GDrive backup readiness is a hard no-primary gate; no alternate secret or backup path is improvised.
 
 ### Pending Todos
 
@@ -81,12 +83,12 @@ None yet.
 
 ### Blockers/Concerns
 
-- [Phase 52]: Current read-only routing confirms both Atius candidates exceed admission thresholds; Horistic still requires the live Vault/two-backup/isolated-restore execution, capacity_finalize, rollback and topology-security gate before selection.
+- [Phase 52]: Both Atius candidates remain current capacity NO-GO. Horistic passes capacity but lacks the approved Vault export helper and managed fleet-backup GDrive prerequisites, so the current full gate is BLOCKED/no-primary before any remote write.
 - [Phase 54]: LightDM/LXDE pre-login e Windows UAC secure desktop são incertezas empíricas e precisam de gate live.
 - [All phases]: Mudanças compartilhadas devem ser serializadas com a Phase 48 e Graphify deve permanecer fresh.
 
 ## Session Continuity
 
-Last session: 2026-07-22T03:07:21.426Z
-Stopped at: Completed 52-04-PLAN.md; ready for live full candidate gate
+Last session: 2026-07-22T03:21:34.747Z
+Stopped at: Completed 52-05-PLAN.md with current BLOCKED no-primary; ready for Plan 52-06 closeout
 Resume file: None
