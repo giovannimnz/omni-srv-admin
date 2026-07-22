@@ -1102,7 +1102,7 @@ def test_full_candidate_gate_persists_nogo_before_return(tmp_path: Path) -> None
         "horistic-srv", callbacks, lambda payload: persisted.append(copy.deepcopy(payload))
     )
     assert result["verdict"] == "NO-GO"
-    assert result["stages"]["backup"] == "BLOCKED"
+    assert result["stages"]["backup"]["status"] == "BLOCKED"
     assert result["stages"]["restore"]["status"] == "SKIPPED_DUE_TO_GATE"
     assert persisted[-1] == result
     assert persisted[-1]["persisted_before_fallback"] is True

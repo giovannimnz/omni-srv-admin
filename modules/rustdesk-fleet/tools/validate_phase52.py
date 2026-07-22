@@ -616,11 +616,25 @@ def create_verified_backup(
             temporary.unlink(missing_ok=True)
             fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
     verified = _verify_archive(archive_path)
+    generated_at = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+    source_input_digest = _sha256_file(source_dir / "db_v2.sqlite3")
     return {
         "status": "PASS",
         "label": label,
         "archive_path": str(archive_path),
         **verified,
+        "archive_sha256": verified["sha256"],
+        "generated_at": generated_at,
+        "generation_id": secrets.token_hex(16),
+        "destination_class": (
+            "candidate-local" if label == "A" else "modules/fleet-backup:gdrive"
+        ),
+        "source_input_digest": source_input_digest,
+        "verified_copy": True,
+        "retention": {
+            "retain_until": "phase57-pass-plus-30-days",
+            "deletion_requires_new_explicit_approval": True,
+        },
         "secret_material_present": False,
     }
 
@@ -639,7 +653,37 @@ def validate_recovery_backups(
         assert isinstance(backup_a, dict) and isinstance(backup_b, dict)
         if backup_a.get("archive_path") == backup_b.get("archive_path"):
             blocked.append("backup-path-collision")
+        if not (
+            backup_a.get("status") == backup_b.get("status") == "PASS"
+            and (
+                backup_a.get("archive_sha256") != backup_b.get("archive_sha256")
+                or backup_a.get("generated_at") != backup_b.get("generated_at")
+            )
+        ):
+            blocked.append("backup-generation-not-independent")
+        if backup_a.get("generation_id") == backup_b.get("generation_id"):
+            blocked.append("backup-generation-id-collision")
+        if (
+            backup_a.get("destination_class") != "candidate-local"
+            or backup_b.get("destination_class") != "modules/fleet-backup:gdrive"
+        ):
+            blocked.append("backup-destination-drift")
+        if (
+            not _sha256(backup_a.get("source_input_digest"))
+            or backup_a.get("source_input_digest") != backup_b.get("source_input_digest")
+        ):
+            blocked.append("backup-source-input-drift")
+        expected_retention = {
+            "retain_until": "phase57-pass-plus-30-days",
+            "deletion_requires_new_explicit_approval": True,
+        }
         for backup in (backup_a, backup_b):
+            if (
+                backup.get("verified_copy") is not True
+                or backup.get("secret_material_present") is not False
+                or backup.get("retention") != expected_retention
+            ):
+                blocked.append(f"backup-{str(backup.get('label', '')).lower()}-verification-drift")
             try:
                 observed = _verify_archive(Path(str(backup.get("archive_path"))))
             except (OSError, ValueError):
@@ -738,6 +782,103 @@ def cleanup_restore_runtime(
     return _check_result("P52-ROLLBACK-001", "PASS", [], source)
 
 
+def _stage_record(candidate: str, stage: str, value: Any) -> dict[str, Any]:
+    if isinstance(value, str):
+        value = {"status": value}
+    if not isinstance(value, dict):
+        raise ValueError("candidate stage returned invalid result")
+    status = value.get("status")
+    if status not in {"PASS", "NO-GO", "FAIL", "BLOCKED"}:
+        raise ValueError("candidate stage returned invalid status")
+    digest = value.get("input_digest")
+    if not _sha256(digest):
+        digest = hashlib.sha256(f"{candidate}:{stage}".encode("utf-8")).hexdigest()
+    evidence_ids = value.get("evidence_ids", [])
+    if not isinstance(evidence_ids, list) or not all(
+        isinstance(item, str) and item for item in evidence_ids
+    ):
+        raise ValueError("candidate stage evidence IDs are invalid")
+    findings = value.get("findings", [])
+    if not isinstance(findings, list) or not all(isinstance(item, str) for item in findings):
+        raise ValueError("candidate stage findings are invalid")
+    mutation = value.get("mutation", {"performed": False, "classes": []})
+    if (
+        not isinstance(mutation, dict)
+        or mutation.get("performed") not in {True, False}
+        or not isinstance(mutation.get("classes"), list)
+    ):
+        raise ValueError("candidate stage mutation metadata is invalid")
+    return {
+        **value,
+        "status": status,
+        "observed_at": value.get("observed_at")
+        or datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "input_digest": digest,
+        "evidence_ids": evidence_ids,
+        "findings": findings,
+        "mutation": mutation,
+        "secret_material_present": False,
+    }
+
+
+def _skipped_stage_record(candidate: str, stage: str, predecessor: str) -> dict[str, Any]:
+    return {
+        "status": "SKIPPED_DUE_TO_GATE",
+        "observed_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+        "input_digest": hashlib.sha256(f"{candidate}:{stage}:{predecessor}".encode("utf-8")).hexdigest(),
+        "evidence_ids": [],
+        "findings": ["predecessor-stage-not-pass"],
+        "predecessor_stage": predecessor,
+        "mutation": {"performed": False, "classes": []},
+        "secret_material_present": False,
+    }
+
+
+def enforce_candidate_write(
+    candidate: str,
+    action: str,
+    *,
+    capacity_status: str,
+    isolated: bool,
+    authorized: bool = True,
+) -> None:
+    if candidate not in CANDIDATES:
+        raise ValueError("unknown candidate")
+    if action not in BOUNDED_FULL_GATE_WRITES:
+        raise ValueError("candidate write action is forbidden")
+    if capacity_status != "PASS":
+        raise ValueError("candidate write requires current capacity PASS")
+    if isolated is not True:
+        raise ValueError("candidate write isolation is not proven")
+    if authorized is not True:
+        raise ValueError("candidate write authorization is absent")
+
+
+def horistic_topology_evidence() -> dict[str, Any]:
+    return {
+        "status": "PASS",
+        "client_colocation": True,
+        "independent_dr_claimed": False,
+        "phase52_review_status": "PASS",
+        "phase53_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "phase54_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "phase57_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+        "server_client_resource_domains": {
+            "server": "rustdesk-server-horistic-srv",
+            "client": "rustdesk-client-horistic-srv",
+        },
+        "server_client_evidence_domains": {
+            "server": "phase53-server-evidence",
+            "client": "phase54-client-evidence",
+        },
+        "server_client_rollback_domains": {
+            "server": "phase53-server-rollback",
+            "client": "phase54-client-rollback",
+        },
+        "secret_material_present": False,
+    }
+
+
 def run_full_candidate_gate(
     candidate: str,
     stage_callbacks: dict[str, Any],
@@ -745,30 +886,71 @@ def run_full_candidate_gate(
 ) -> dict[str, Any]:
     if candidate not in CANDIDATES or set(stage_callbacks) != set(FULL_CANDIDATE_STAGES):
         raise ValueError("candidate gate contract is incomplete")
-    stages = {stage: "PENDING" for stage in FULL_CANDIDATE_STAGES}
-    failure_seen = False
+    stages: dict[str, dict[str, Any]] = {}
+    first_non_pass: str | None = None
     for stage in FULL_CANDIDATE_STAGES:
-        if failure_seen and stage != "rollback":
-            stages[stage] = "SKIPPED_BY_GATE"
+        if first_non_pass is not None and stage != "rollback":
+            stages[stage] = _skipped_stage_record(candidate, stage, first_non_pass)
             continue
-        status = stage_callbacks[stage]()
-        if status not in {"PASS", "NO-GO", "FAIL", "BLOCKED"}:
-            raise ValueError("candidate stage returned invalid status")
-        stages[stage] = status
-        if status != "PASS":
-            failure_seen = True
-    verdict = "PASS" if all(status == "PASS" for status in stages.values()) else "NO-GO"
+        try:
+            record = _stage_record(candidate, stage, stage_callbacks[stage]())
+        except Exception:
+            record = _stage_record(
+                candidate,
+                stage,
+                {"status": "BLOCKED", "findings": ["stage-exception"]},
+            )
+        stages[stage] = record
+        if record["status"] != "PASS" and first_non_pass is None:
+            first_non_pass = stage
+    verdict = "PASS" if all(record["status"] == "PASS" for record in stages.values()) else "NO-GO"
     result = {
+        "schema_version": 1,
         "candidate": candidate,
         "stages": stages,
         "verdict": verdict,
+        "first_non_pass_stage": first_non_pass,
         "persisted_before_fallback": True,
         "secret_material_present": False,
         "windows_install_performed": False,
         "public_listener_created": False,
     }
+    result["record_digest"] = hashlib.sha256(
+        json.dumps(result, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
     persist(result)
     return result
+
+
+def run_candidate_chain(
+    candidates: tuple[str, ...],
+    callbacks_by_candidate: dict[str, dict[str, Any]],
+    persist: Any,
+) -> dict[str, Any]:
+    if not candidates or tuple(CANDIDATES[: len(candidates)]) != candidates:
+        raise ValueError("candidate chain order is invalid")
+    attempts: list[dict[str, Any]] = []
+    selected: str | None = None
+    predecessor_nogo_digests: list[str] = []
+    for candidate in candidates:
+        if candidate not in callbacks_by_candidate:
+            raise ValueError("candidate callbacks are missing")
+        result = run_full_candidate_gate(candidate, callbacks_by_candidate[candidate], persist)
+        attempts.append(result)
+        if result["verdict"] == "PASS":
+            selected = candidate
+            break
+        predecessor_nogo_digests.append(result["record_digest"])
+    return {
+        "schema_version": 1,
+        "attempt_order": [row["candidate"] for row in attempts],
+        "attempts": attempts,
+        "predecessor_nogo_digests": predecessor_nogo_digests,
+        "selected_candidate": selected,
+        "overall_status": "PASS" if selected is not None else "BLOCKED",
+        "windows_install_performed": False,
+        "secret_material_present": False,
+    }
 
 
 def _exact_keys(value: Any, expected: set[str]) -> bool:
@@ -1493,7 +1675,11 @@ def validate_placement_decision(
             errors.append("candidate-shape" if index < 2 else "horistic-colocation-contract")
         if not isinstance(candidate.get("evaluated"), bool):
             errors.append("candidate-shape")
-        if any(candidate.get(field) not in {"PASS", "NO-GO", "PENDING", "SKIPPED_BY_GATE"} for field in STAGE_FIELDS):
+        if any(
+            candidate.get(field)
+            not in {"PASS", "NO-GO", "PENDING", "SKIPPED_BY_GATE", "SKIPPED_DUE_TO_GATE"}
+            for field in STAGE_FIELDS
+        ):
             errors.append("stage-status-shape")
         if candidate.get("verdict") != _candidate_verdict(candidate):
             errors.append("stored-verdict-drift")
