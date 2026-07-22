@@ -56,6 +56,7 @@ APPROVED_HORISTIC_SSH_FINGERPRINT = "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW
 CONTROL_PLANE_STATE_ROOT = Path("/var/lib/atius-vault-phase52")
 VAULT_CONTAINER = "hashicorp-vault-atius"
 PODMAN = Path("/usr/bin/podman")
+VAULT_OVERLAY_ROOT = Path("/var/lib/containers/storage/overlay")
 SAFE_BLOCKER_TOKENS = frozenset({
     "ambiguous-write-ownership",
     "ambiguous-write-ownership-control-plane-restore-retry",
@@ -1779,12 +1780,62 @@ class LocalVaultBackend(TransactionBackend):
         return {"raft_snapshot_valid": True, "control_plane_bundle_valid": True}
 
     def prove_isolated_snapshot_restore(self, transaction_dir: Path, contract: dict[str, Any]) -> dict[str, Any]:
+        vault_binary = self._container_vault_binary()
         command = [
             "unshare", "--net", "--mount", "--fork", "--pid", "--mount-proc", sys.executable,
             str(Path(__file__).resolve()), "isolated-raft-restore-proof",
             "--snapshot", str(transaction_dir / "raft.snapshot"),
+            "--vault-bin", str(vault_binary),
         ]
         return self._json(command)
+
+    def _container_vault_binary(self) -> Path:
+        payload = self._json([str(PODMAN), "inspect", VAULT_CONTAINER])
+        if not isinstance(payload, list) or len(payload) != 1 or not isinstance(payload[0], dict):
+            raise Blocked("isolated-vault-binary-missing")
+        row = payload[0]
+        state = row.get("State")
+        graph = row.get("GraphDriver")
+        data = graph.get("Data") if isinstance(graph, dict) else None
+        merged_raw = data.get("MergedDir") if isinstance(data, dict) else None
+        if (
+            row.get("Name") != VAULT_CONTAINER
+            or not isinstance(state, dict)
+            or state.get("Running") is not True
+            or not isinstance(merged_raw, str)
+        ):
+            raise Blocked("isolated-vault-binary-missing")
+        merged = Path(merged_raw)
+        try:
+            relative = merged.relative_to(VAULT_OVERLAY_ROOT)
+            merged_info = merged.lstat()
+        except (OSError, ValueError) as exc:
+            raise Blocked("isolated-vault-binary-missing") from exc
+        if (
+            len(relative.parts) != 2
+            or not re.fullmatch(r"[a-f0-9]{64}", relative.parts[0])
+            or relative.parts[1] != "merged"
+            or merged.is_symlink()
+            or not stat.S_ISDIR(merged_info.st_mode)
+            or merged_info.st_uid != os.geteuid()
+        ):
+            raise Blocked("isolated-vault-binary-missing")
+        binary = merged / "bin/vault"
+        try:
+            info = binary.lstat()
+        except OSError as exc:
+            raise Blocked("isolated-vault-binary-missing") from exc
+        if (
+            binary.is_symlink()
+            or not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1
+            or info.st_uid != os.geteuid()
+            or not info.st_mode & 0o111
+            or info.st_size <= 0
+            or info.st_size > 1024 * 1024 * 1024
+        ):
+            raise Blocked("isolated-vault-binary-missing")
+        return binary
 
     def install_control_plane(self, transaction_dir: Path, managed_sources: dict[str, bytes]) -> None:
         if not managed_sources:
@@ -2289,12 +2340,28 @@ def _validate_isolated_restore_identity(pre: Any, post: Any) -> None:
         raise Blocked("isolated-vault-restore-noop")
 
 
-def isolated_restore_proof(snapshot: Path) -> int:
+def isolated_restore_proof(snapshot: Path, vault_binary: Path | None = None) -> int:
     if not snapshot.is_file() or snapshot.is_symlink() or snapshot.stat().st_size == 0:
         return 2
-    vault_bin = shutil.which("vault", path=_safe_child_env().get("PATH"))
+    vault_bin = str(vault_binary) if vault_binary is not None else shutil.which(
+        "vault", path=_safe_child_env().get("PATH"),
+    )
     if not vault_bin:
         raise Blocked("isolated-vault-binary-missing")
+    if vault_binary is not None:
+        try:
+            info = vault_binary.lstat()
+        except OSError as exc:
+            raise Blocked("isolated-vault-binary-missing") from exc
+        if (
+            vault_binary.is_symlink()
+            or not stat.S_ISREG(info.st_mode)
+            or info.st_nlink != 1
+            or info.st_uid != os.geteuid()
+            or not info.st_mode & 0o111
+            or info.st_size <= 0
+        ):
+            raise Blocked("isolated-vault-binary-missing")
     _, inspected = _bounded_process(
         [vault_bin, "operator", "raft", "snapshot", "inspect", str(snapshot)], b"",
         max_stdout=65536, max_stderr=4096, timeout_seconds=30,
@@ -2705,6 +2772,7 @@ def main(argv: list[str] | None = None) -> int:
     sub = parser.add_subparsers(dest="command", required=True)
     proof = sub.add_parser("isolated-raft-restore-proof")
     proof.add_argument("--snapshot", type=Path, required=True)
+    proof.add_argument("--vault-bin", type=Path)
     live_parsers = {}
     for command in ("execute-reviewed-live", "status-reviewed-live", "resume-reviewed-live"):
         live = sub.add_parser(command)
@@ -2716,7 +2784,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     try:
         if args.command == "isolated-raft-restore-proof":
-            return isolated_restore_proof(args.snapshot)
+            return isolated_restore_proof(args.snapshot, args.vault_bin)
         if args.command in {"execute-reviewed-live", "status-reviewed-live", "resume-reviewed-live"}:
             operation = {
                 "execute-reviewed-live": execute_reviewed_live,

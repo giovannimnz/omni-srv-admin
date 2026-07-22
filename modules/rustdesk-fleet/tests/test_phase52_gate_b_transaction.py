@@ -1534,6 +1534,68 @@ def test_raft_snapshot_bridge_rejects_preexisting_dangling_symlink_without_comma
     assert snapshot.is_symlink() and snapshot.readlink() == tmp_path / "missing"
 
 
+def test_container_vault_binary_is_bound_to_running_overlay_inode(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    overlay = tmp_path / "overlay"
+    merged = overlay / ("a" * 64) / "merged"
+    binary = merged / "bin/vault"; binary.parent.mkdir(parents=True)
+    binary.write_bytes(b"vault-binary"); binary.chmod(0o755)
+    monkeypatch.setattr(tx, "VAULT_OVERLAY_ROOT", overlay)
+    monkeypatch.setattr(backend, "_json", lambda command: [{
+        "Name": tx.VAULT_CONTAINER,
+        "State": {"Running": True},
+        "GraphDriver": {"Data": {"MergedDir": str(merged)}},
+    }])
+
+    assert backend._container_vault_binary() == binary
+
+
+@pytest.mark.parametrize("invalid_kind", ["stopped", "symlink", "hardlink", "outside"])
+def test_container_vault_binary_rejects_untrusted_runtime_identity(
+    monkeypatch, tmp_path, invalid_kind
+):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    overlay = tmp_path / "overlay"
+    merged = overlay / ("b" * 64) / "merged"
+    binary = merged / "bin/vault"; binary.parent.mkdir(parents=True)
+    binary.write_bytes(b"vault-binary"); binary.chmod(0o755)
+    if invalid_kind == "symlink":
+        binary.unlink(); binary.symlink_to(tmp_path / "missing")
+    elif invalid_kind == "hardlink":
+        os.link(binary, binary.parent / "vault-hardlink")
+    elif invalid_kind == "outside":
+        merged = tmp_path / "outside"; binary = merged / "bin/vault"
+        binary.parent.mkdir(parents=True); binary.write_bytes(b"vault"); binary.chmod(0o755)
+    monkeypatch.setattr(tx, "VAULT_OVERLAY_ROOT", overlay)
+    monkeypatch.setattr(backend, "_json", lambda command: [{
+        "Name": tx.VAULT_CONTAINER,
+        "State": {"Running": invalid_kind != "stopped"},
+        "GraphDriver": {"Data": {"MergedDir": str(merged)}},
+    }])
+
+    with pytest.raises(tx.Blocked, match="^isolated-vault-binary-missing$"):
+        backend._container_vault_binary()
+
+
+def test_isolated_restore_command_uses_validated_container_vault_binary(monkeypatch, tmp_path):
+    source = tmp_path / "source"; source.mkdir()
+    backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
+    binary = tmp_path / "vault"
+    observed = []
+    monkeypatch.setattr(backend, "_container_vault_binary", lambda: binary)
+    monkeypatch.setattr(backend, "_json", lambda command: observed.append(command) or {
+        "status": "PASS", "network_namespace": "isolated", "host_listener": False,
+        "public_listener": False, "port_bindings": [], "integrity": "PASS",
+    })
+
+    result = backend.prove_isolated_snapshot_restore(tmp_path, contract())
+
+    assert result["status"] == "PASS"
+    assert observed[0][-2:] == ["--vault-bin", str(binary)]
+
+
 def test_control_plane_tree_backup_restores_exact_state_and_absence(monkeypatch, tmp_path):
     source = tmp_path / "source"; source.mkdir()
     backend = tx.LocalVaultBackend(source, b"[giovanni-drive]\ntype = drive\n", "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0")
