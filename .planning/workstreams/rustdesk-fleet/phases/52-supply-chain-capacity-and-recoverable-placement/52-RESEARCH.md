@@ -349,35 +349,35 @@ This is a real restore even before clients exist because a fresh isolated runtim
 ## Common Pitfalls
 
 ### Pitfall 1: Accepting the rounded `df` number
-**What goes wrong:** a host appears close enough while exact bytes violate the threshold or omit future reservations.  
+**What goes wrong:** a host appears close enough while exact bytes violate the threshold or omit future reservations.
 **How to avoid:** persist raw counts and use integer inequalities; require both projected and measured post evidence. `[VERIFIED: SRV-01]`
 
 ### Pitfall 2: Counting only the compressed registry image
-**What goes wrong:** OCI archive, extracted graphroot bytes, import workspace, backups, state, and logs consume unbudgeted disk.  
+**What goes wrong:** OCI archive, extracted graphroot bytes, import workspace, backups, state, and logs consume unbudgeted disk.
 **How to avoid:** measure/count each incremental term once and preserve the formula inputs. `[VERIFIED: Podman docs; SRV-01]`
 
 ### Pitfall 3: Automatically changing expected digests
-**What goes wrong:** a mutated tag becomes the new "truth" and defeats pinning.  
+**What goes wrong:** a mutated tag becomes the new "truth" and defeats pinning.
 **How to avoid:** expected identifiers are reviewed inputs; mismatch is `BLOCKED` and requires an explicit upgrade/research change. `[VERIFIED: SCP-04]`
 
 ### Pitfall 4: Leaking secrets through a validation command
-**What goes wrong:** secret values enter argv, stdout, `ps`, history, or logs even though repo files are clean.  
+**What goes wrong:** secret values enter argv, stdout, `ps`, history, or logs even though repo files are clean.
 **How to avoid:** file/stdin-safe hydration, tmpfs, restrictive modes, xtrace off, aggregate-only results, and negative process/log tests. `[VERIFIED: AGENTS.md; SRV-05]`
 
 ### Pitfall 5: Backing up the private key outside Vault
-**What goes wrong:** the archive becomes a second unmanaged identity authority.  
+**What goes wrong:** the archive becomes a second unmanaged identity authority.
 **How to avoid:** exclude the private key; restore state and rehydrate the identity from Vault. `[VERIFIED: Vault boundary]`
 
 ### Pitfall 6: Calling `srv-3` a standby too early
-**What goes wrong:** topology evidence claims resilience before equivalent capacity, same-identity restore, stopped/disabled proof, and later failover drills.  
+**What goes wrong:** topology evidence claims resilience before equivalent capacity, same-identity restore, stopped/disabled proof, and later failover drills.
 **How to avoid:** Phase 52 records only a primary candidate and restore result; Phase 57 owns the cold-standby label. `[VERIFIED: ROADMAP Phase 57]`
 
 ### Pitfall 7: Installing the Windows client during supply verification
-**What goes wrong:** Phase 54 canary prerequisites and rollback evidence are bypassed.  
+**What goes wrong:** Phase 54 canary prerequisites and rollback evidence are bypassed.
 **How to avoid:** hash/stage the MSI only. `GIOVANNI-W11-PC` remains without RustDesk until mandatory Phase 54 execution after Phases 52 and 53. `[VERIFIED: 51-VERIFICATION.md; ROADMAP.md]`
 
 ### Pitfall 8: Treating Horistic co-location as ordinary canary topology
-**What goes wrong:** a Phase 54 reboot simultaneously removes the primary and the Linux client, client/server metrics are conflated, or a local relay result is overstated as independent resilience.  
+**What goes wrong:** a Phase 54 reboot simultaneously removes the primary and the Linux client, client/server metrics are conflated, or a local relay result is overstated as independent resilience.
 **How to avoid:** set explicit co-location flags, split evidence/resource/rollback domains, probe the public edge from Windows, require joint post-reboot recovery, and defer independent-path/failover claims to Phases 56/57. `[VERIFIED: operator authorization; ROADMAP.md]`
 
 ## Code Examples
@@ -598,5 +598,5 @@ All test infrastructure facts above follow the current Phase 51 pattern; the Pha
 - Recoverability: MEDIUM — source/state inputs are verified, but only Phase execution can prove the actual backup/restore and fingerprint invariant.
 - Pitfalls: HIGH — each maps to a locked stop condition or observed host state.
 
-**Research date:** 2026-07-20  
+**Research date:** 2026-07-20
 **Valid until:** 2026-07-27 for mutable registry/release observations; local locked contracts remain valid until changed. Re-resolve all external identifiers at execution regardless of this date.
