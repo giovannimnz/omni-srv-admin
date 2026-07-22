@@ -4,10 +4,19 @@
 from __future__ import annotations
 
 import argparse
+from datetime import datetime, timezone
 import hashlib
 import json
+import os
 import re
+import shutil
+import struct
+import subprocess
 import sys
+import tempfile
+import urllib.error
+import urllib.request
+import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
@@ -299,12 +308,393 @@ def validate_supply_contract(
 
 
 def validate_supply_observation(
-    observation: dict[str, Any], contract: dict[str, Any], source: str = "supply-observation.json"
+    observation: dict[str, Any],
+    contract: dict[str, Any],
+    source: str = "supply-observation.json",
+    *,
+    repo: Path | None = None,
+    allowed_cache_root: Path | None = None,
 ) -> CheckResult:
-    """Task 52-01-02 extends this seam with fresh official-source checks."""
-    if not isinstance(observation, dict):
-        return _result("BLOCKED", ["observation-missing"], source)
-    return _result("BLOCKED", ["observation-not-implemented"], source)
+    fail: list[str] = []
+    blocked: list[str] = []
+    expected_keys = {
+        "schema_version",
+        "phase",
+        "workstream",
+        "observed_at",
+        "source_urls",
+        "input_digests",
+        "server",
+        "clients",
+        "classic_image",
+        "artifacts",
+        "windows_install_performed",
+        "candidate_admission_performed",
+        "secret_material_present",
+        "findings",
+        "status",
+    }
+    if not _exact_keys(observation, expected_keys):
+        return _result("FAIL", ["observation-shape"], source)
+    if observation.get("schema_version") != 1 or observation.get("phase") != 52 or observation.get(
+        "workstream"
+    ) != "rustdesk-fleet":
+        fail.append("observation-shape")
+
+    observed_at = observation.get("observed_at")
+    parsed = _parse_utc(observed_at)
+    if parsed is None:
+        fail.append("observation-timestamp")
+    else:
+        age = (datetime.now(timezone.utc) - parsed).total_seconds()
+        if age < -300 or age > contract["policy"]["observation_ttl_seconds"]:
+            blocked.append("stale-observation")
+
+    expected_sources = sorted(
+        {
+            contract["server"]["git_repository"],
+            contract["server"]["release_api_url"],
+            contract["server"]["classic_image"]["registry_tag_api_url"],
+            contract["server"]["release_zip"]["source_url"],
+            contract["clients"]["git_repository"],
+            contract["clients"]["release_api_url"],
+            contract["clients"]["linux_arm64_deb"]["source_url"],
+            contract["clients"]["windows_x86_64_msi"]["source_url"],
+        }
+    )
+    if observation.get("source_urls") != expected_sources:
+        fail.append("official-source-drift")
+    if observation.get("server") != {"tag": "1.1.15", "commit": SERVER_COMMIT}:
+        fail.append("server-tag-observation-drift")
+    if observation.get("clients") != {"tag": "1.4.9", "commit": CLIENT_COMMIT}:
+        fail.append("client-tag-observation-drift")
+    expected_image = {
+        "tag": "1.1.15",
+        "multiarch_digest": MULTIARCH_DIGEST,
+        "linux_arm64_digest": ARM64_IMAGE_DIGEST,
+        "architecture": "arm64",
+        "os": "linux",
+        "inspection_method": "docker-hub-platform-manifest+podman-image-inspect",
+    }
+    if observation.get("classic_image") != expected_image:
+        fail.append("image-observation-drift")
+    if observation.get("windows_install_performed") is not False:
+        fail.append("windows-install-attempt")
+    if observation.get("candidate_admission_performed") is not False:
+        fail.append("candidate-admission-claimed")
+    if observation.get("secret_material_present") is not False:
+        fail.append("secret-material")
+    if observation.get("findings") != []:
+        fail.append("unexpected-findings")
+
+    input_digests = observation.get("input_digests")
+    if repo is not None:
+        expected_inputs = collect_input_digests(repo, [SUPPLY_CONTRACT])
+        if input_digests != expected_inputs:
+            blocked.append("stale-input-digest")
+    elif not isinstance(input_digests, list):
+        fail.append("input-digest-shape")
+
+    artifacts = observation.get("artifacts")
+    if not isinstance(artifacts, list) or [item.get("kind") for item in artifacts if isinstance(item, dict)] != [
+        "server-oci-archive",
+        "server-release-zip",
+        "linux-client-deb",
+        "windows-client-msi",
+    ]:
+        fail.append("artifact-set-drift")
+        artifacts = artifacts if isinstance(artifacts, list) else []
+    expected_static = {
+        "server-release-zip": (ZIP_SHA256, 5494849, "linux-arm64v8"),
+        "linux-client-deb": (DEB_SHA256, 21694032, "arm64"),
+        "windows-client-msi": (MSI_SHA256, 24825856, "x86_64"),
+    }
+    cache_root = (allowed_cache_root or Path(contract["policy"]["managed_cache_root"])).resolve()
+    for artifact in artifacts:
+        if not isinstance(artifact, dict) or set(artifact) != {
+            "kind",
+            "source_url",
+            "cache_path",
+            "size_bytes",
+            "sha256",
+            "architecture",
+            "inspection_method",
+        }:
+            fail.append("artifact-observation-shape")
+            continue
+        kind = artifact["kind"]
+        if kind in expected_static:
+            expected_sha, expected_size, expected_arch = expected_static[kind]
+            if (artifact.get("sha256"), artifact.get("size_bytes"), artifact.get("architecture")) != (
+                expected_sha,
+                expected_size,
+                expected_arch,
+            ):
+                fail.append("artifact-byte-observation-drift")
+        elif kind == "server-oci-archive":
+            if not _sha256(artifact.get("sha256")) or not _positive_int(artifact.get("size_bytes")) or artifact.get(
+                "architecture"
+            ) != "arm64":
+                fail.append("oci-archive-observation-drift")
+        cache_path = Path(artifact.get("cache_path", "")).resolve(strict=False)
+        if not cache_path.is_relative_to(cache_root):
+            fail.append("cache-path-outside-managed-root")
+            continue
+        if not cache_path.is_file():
+            blocked.append("cached-asset-missing")
+            continue
+        if cache_path.stat().st_size != artifact.get("size_bytes") or _sha256_file(cache_path) != artifact.get(
+            "sha256"
+        ):
+            blocked.append("cached-asset-drift")
+
+    computed = "FAIL" if fail else "BLOCKED" if blocked else "PASS"
+    if observation.get("status") != computed:
+        if computed == "PASS":
+            fail.append("stored-verdict-drift")
+        else:
+            blocked.append("stored-verdict-drift")
+    categories = fail + blocked
+    return _result("FAIL" if fail else "BLOCKED" if blocked else "PASS", categories, source)
+
+
+def _parse_utc(value: Any) -> datetime | None:
+    if not isinstance(value, str) or not re.fullmatch(r"\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}Z", value):
+        return None
+    try:
+        return datetime.strptime(value, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=timezone.utc)
+    except ValueError:
+        return None
+
+
+def verify_or_quarantine_file(path: Path, expected_sha256: str) -> Path | None:
+    if _sha256_file(path) == expected_sha256:
+        return None
+    quarantine_dir = path.parent / "quarantine"
+    quarantine_dir.mkdir(mode=0o700, parents=True, exist_ok=True)
+    target = quarantine_dir / f"{path.name}.sha256-mismatch"
+    if target.exists():
+        target = quarantine_dir / f"{path.name}.{_sha256_file(path)[:12]}.sha256-mismatch"
+    os.replace(path, target)
+    os.chmod(target, 0o600)
+    return target
+
+
+def _download_verified(url: str, destination: Path, expected_sha256: str, expected_size: int) -> dict[str, Any]:
+    destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if destination.is_file() and destination.stat().st_size == expected_size and _sha256_file(destination) == expected_sha256:
+        return {"size_bytes": expected_size, "sha256": expected_sha256}
+    temporary = destination.with_name(f".{destination.name}.download")
+    temporary.unlink(missing_ok=True)
+    try:
+        request = urllib.request.Request(url, headers={"User-Agent": "omni-srv-admin-phase52/1"})
+        with urllib.request.urlopen(request, timeout=120) as response, temporary.open("wb") as handle:
+            shutil.copyfileobj(response, handle, length=1024 * 1024)
+        os.chmod(temporary, 0o600)
+        if temporary.stat().st_size != expected_size or _sha256_file(temporary) != expected_sha256:
+            verify_or_quarantine_file(temporary, expected_sha256)
+            raise ValueError("downloaded artifact failed checksum or size")
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return {"size_bytes": destination.stat().st_size, "sha256": _sha256_file(destination)}
+
+
+def _http_json(url: str) -> dict[str, Any]:
+    request = urllib.request.Request(url, headers={"User-Agent": "omni-srv-admin-phase52/1"})
+    with urllib.request.urlopen(request, timeout=45) as response:
+        payload = json.load(response)
+    if not isinstance(payload, dict):
+        raise ValueError("official JSON response is not an object")
+    return payload
+
+
+def _resolve_tag_commit(repository: str, tag: str) -> str:
+    completed = subprocess.run(
+        ["git", "ls-remote", "--tags", repository, f"refs/tags/{tag}", f"refs/tags/{tag}^{{}}"],
+        text=True,
+        capture_output=True,
+        timeout=60,
+        check=False,
+    )
+    if completed.returncode != 0:
+        raise ValueError("official git tag resolution failed")
+    rows = [line.split() for line in completed.stdout.splitlines() if line.strip()]
+    peeled = [sha for sha, ref in rows if ref.endswith("^{}")]
+    direct = [sha for sha, ref in rows if ref == f"refs/tags/{tag}"]
+    commits = peeled or direct
+    if len(commits) != 1 or not re.fullmatch(r"[0-9a-f]{40}", commits[0]):
+        raise ValueError("official git tag resolution is ambiguous")
+    return commits[0]
+
+
+def _release_asset(release: dict[str, Any], asset_name: str) -> dict[str, Any]:
+    matches = [item for item in release.get("assets", []) if isinstance(item, dict) and item.get("name") == asset_name]
+    if len(matches) != 1:
+        raise ValueError("official release asset is absent or ambiguous")
+    return matches[0]
+
+
+def _zip_arm64(path: Path) -> bool:
+    with zipfile.ZipFile(path) as archive:
+        binaries = [name for name in archive.namelist() if Path(name).name in {"hbbs", "hbbr"}]
+        if {Path(name).name for name in binaries} != {"hbbs", "hbbr"}:
+            return False
+        for name in binaries:
+            header = archive.read(name)[:20]
+            if len(header) < 20 or header[:4] != b"\x7fELF" or struct.unpack("<H", header[18:20])[0] != 183:
+                return False
+    return True
+
+
+def _run_checked(command: list[str], timeout: int) -> str:
+    completed = subprocess.run(command, text=True, capture_output=True, timeout=timeout, check=False)
+    if completed.returncode != 0:
+        raise ValueError("guarded artifact inspection failed")
+    return completed.stdout.strip()
+
+
+def _stage_oci(contract: dict[str, Any]) -> dict[str, Any]:
+    image = contract["server"]["classic_image"]
+    reference = image["immutable_reference"]
+    destination = Path(image["cache_path"])
+    destination.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    _run_checked(["podman", "pull", "--arch", "arm64", "--os", "linux", reference], 300)
+    inspect = json.loads(_run_checked(["podman", "image", "inspect", reference], 60))
+    if not isinstance(inspect, list) or len(inspect) != 1 or inspect[0].get("Architecture") != "arm64" or inspect[0].get(
+        "Os"
+    ) != "linux":
+        raise ValueError("pinned image architecture inspection failed")
+    temporary = destination.with_name(f".{destination.name}.save")
+    temporary.unlink(missing_ok=True)
+    try:
+        _run_checked(["podman", "save", "--format", "oci-archive", "-o", str(temporary), reference], 300)
+        os.chmod(temporary, 0o600)
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+    return {
+        "kind": "server-oci-archive",
+        "source_url": reference,
+        "cache_path": str(destination),
+        "size_bytes": destination.stat().st_size,
+        "sha256": _sha256_file(destination),
+        "architecture": "arm64",
+        "inspection_method": "podman-image-inspect+oci-archive-save",
+    }
+
+
+def refresh_supply_observation(repo: Path, contract: dict[str, Any]) -> dict[str, Any]:
+    contract_result = validate_supply_contract(contract)
+    if contract_result.status != "PASS":
+        raise ValueError("supply contract is not valid")
+    server_commit = _resolve_tag_commit(contract["server"]["git_repository"], contract["server"]["tag"])
+    client_commit = _resolve_tag_commit(contract["clients"]["git_repository"], contract["clients"]["tag"])
+    if server_commit != SERVER_COMMIT or client_commit != CLIENT_COMMIT:
+        raise ValueError("official tag commit drift")
+
+    server_release = _http_json(contract["server"]["release_api_url"])
+    client_release = _http_json(contract["clients"]["release_api_url"])
+    registry = _http_json(contract["server"]["classic_image"]["registry_tag_api_url"])
+    if registry.get("digest") != MULTIARCH_DIGEST:
+        raise ValueError("official image manifest drift")
+    children = [
+        item
+        for item in registry.get("images", [])
+        if isinstance(item, dict) and item.get("architecture") == "arm64" and item.get("os") == "linux"
+    ]
+    if len(children) != 1 or children[0].get("digest") != ARM64_IMAGE_DIGEST:
+        raise ValueError("official image ARM64 child drift")
+
+    artifact_specs = (
+        ("server-release-zip", contract["server"]["release_zip"], server_release),
+        ("linux-client-deb", contract["clients"]["linux_arm64_deb"], client_release),
+        ("windows-client-msi", contract["clients"]["windows_x86_64_msi"], client_release),
+    )
+    artifacts = [_stage_oci(contract)]
+    for kind, spec, release in artifact_specs:
+        official = _release_asset(release, spec["asset_name"])
+        official_digest = official.get("digest")
+        if official.get("browser_download_url") != spec["source_url"] or official.get("size") != spec[
+            "size_bytes"
+        ] or official_digest != f"sha256:{spec['sha256']}":
+            raise ValueError("official release asset drift")
+        destination = Path(spec["cache_path"])
+        byte_meta = _download_verified(spec["source_url"], destination, spec["sha256"], spec["size_bytes"])
+        if kind == "server-release-zip":
+            if not _zip_arm64(destination):
+                raise ValueError("server ZIP architecture inspection failed")
+            method = "elf-e_machine-aarch64-for-hbbs-and-hbbr"
+        elif kind == "linux-client-deb":
+            if _run_checked(["dpkg-deb", "-f", str(destination), "Architecture"], 30) != "arm64":
+                raise ValueError("DEB architecture inspection failed")
+            method = "dpkg-deb-architecture"
+        else:
+            method = "official-x86_64-asset-name+sha256;metadata-and-authenticode-deferred-phase54"
+        artifacts.append(
+            {
+                "kind": kind,
+                "source_url": spec["source_url"],
+                "cache_path": str(destination),
+                "size_bytes": byte_meta["size_bytes"],
+                "sha256": byte_meta["sha256"],
+                "architecture": spec["architecture"],
+                "inspection_method": method,
+            }
+        )
+
+    source_urls = sorted(
+        {
+            contract["server"]["git_repository"],
+            contract["server"]["release_api_url"],
+            contract["server"]["classic_image"]["registry_tag_api_url"],
+            contract["server"]["release_zip"]["source_url"],
+            contract["clients"]["git_repository"],
+            contract["clients"]["release_api_url"],
+            contract["clients"]["linux_arm64_deb"]["source_url"],
+            contract["clients"]["windows_x86_64_msi"]["source_url"],
+        }
+    )
+    return {
+        "schema_version": 1,
+        "phase": 52,
+        "workstream": "rustdesk-fleet",
+        "observed_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "source_urls": source_urls,
+        "input_digests": collect_input_digests(repo, [SUPPLY_CONTRACT]),
+        "server": {"tag": "1.1.15", "commit": server_commit},
+        "clients": {"tag": "1.4.9", "commit": client_commit},
+        "classic_image": {
+            "tag": "1.1.15",
+            "multiarch_digest": MULTIARCH_DIGEST,
+            "linux_arm64_digest": ARM64_IMAGE_DIGEST,
+            "architecture": "arm64",
+            "os": "linux",
+            "inspection_method": "docker-hub-platform-manifest+podman-image-inspect",
+        },
+        "artifacts": artifacts,
+        "windows_install_performed": False,
+        "candidate_admission_performed": False,
+        "secret_material_present": False,
+        "findings": [],
+        "status": "PASS",
+    }
+
+
+def _write_json_atomically(payload: dict[str, Any], destination: Path) -> None:
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(
+        mode="w", encoding="utf-8", dir=destination.parent, prefix=f".{destination.name}.", delete=False
+    ) as handle:
+        json.dump(payload, handle, indent=2, sort_keys=True)
+        handle.write("\n")
+        handle.flush()
+        os.fsync(handle.fileno())
+        temporary = Path(handle.name)
+    try:
+        os.replace(temporary, destination)
+    finally:
+        temporary.unlink(missing_ok=True)
 
 
 def _sha256_file(path: Path) -> str:
@@ -346,11 +736,11 @@ def main(argv: list[str] | None = None) -> int:
             print(json.dumps({"status": contract_result.status, "check": contract_result.id}, sort_keys=True))
             return exit_code_for_status(contract_result.status)
         observation_path = validate_repo_path(repo, repo / args.evidence_dir / SUPPLY_OBSERVATION.name)
-        if not observation_path.is_file():
-            print(json.dumps({"status": "BLOCKED", "check": "P52-SUPPLY-001"}, sort_keys=True))
-            return 2
-        result = validate_supply_observation(load_json_strict(observation_path), contract)
-    except (OSError, ValueError) as exc:
+        observation = refresh_supply_observation(repo, contract)
+        result = validate_supply_observation(observation, contract, repo=repo)
+        if result.status == "PASS":
+            _write_json_atomically(observation, observation_path)
+    except (OSError, ValueError, subprocess.SubprocessError, urllib.error.URLError) as exc:
         print(f"BLOCKED: {exc.__class__.__name__}", file=sys.stderr)
         return 2
     print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))

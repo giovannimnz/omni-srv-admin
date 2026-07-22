@@ -1,0 +1,81 @@
+{
+  "artifacts": [
+    {
+      "architecture": "arm64",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-server-1.1.15-linux-arm64.oci.tar",
+      "inspection_method": "podman-image-inspect+oci-archive-save",
+      "kind": "server-oci-archive",
+      "sha256": "e494b3a568498bb4179a63ebc9dd9b86492fc0ca2928dc7adac83e1441f83170",
+      "size_bytes": 5543936,
+      "source_url": "docker.io/rustdesk/rustdesk-server@sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208"
+    },
+    {
+      "architecture": "linux-arm64v8",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-server-linux-arm64v8.zip",
+      "inspection_method": "elf-e_machine-aarch64-for-hbbs-and-hbbr",
+      "kind": "server-release-zip",
+      "sha256": "4998dd6d32431f9aaf5841663339793bc154d7152313e128832d6b610580abe4",
+      "size_bytes": 5494849,
+      "source_url": "https://github.com/rustdesk/rustdesk-server/releases/download/1.1.15/rustdesk-server-linux-arm64v8.zip"
+    },
+    {
+      "architecture": "arm64",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-1.4.9-aarch64.deb",
+      "inspection_method": "dpkg-deb-architecture",
+      "kind": "linux-client-deb",
+      "sha256": "ce62c996f14d33f3bbe3a330e953644a44bace7f05885a7953f7395d69fb49c0",
+      "size_bytes": 21694032,
+      "source_url": "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-aarch64.deb"
+    },
+    {
+      "architecture": "x86_64",
+      "cache_path": "/home/ubuntu/.cache/atius/rustdesk/supply-chain/rustdesk-1.4.9-x86_64.msi",
+      "inspection_method": "official-x86_64-asset-name+sha256;metadata-and-authenticode-deferred-phase54",
+      "kind": "windows-client-msi",
+      "sha256": "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa",
+      "size_bytes": 24825856,
+      "source_url": "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.msi"
+    }
+  ],
+  "candidate_admission_performed": false,
+  "classic_image": {
+    "architecture": "arm64",
+    "inspection_method": "docker-hub-platform-manifest+podman-image-inspect",
+    "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+    "multiarch_digest": "sha256:10818ec05b179039c6660f4d8e74b303f0db2858bbad2b18e24992ea22d54cd6",
+    "os": "linux",
+    "tag": "1.1.15"
+  },
+  "clients": {
+    "commit": "6c578292e8ebbbec708b76986ba8c4bc7c509747",
+    "tag": "1.4.9"
+  },
+  "findings": [],
+  "input_digests": [
+    {
+      "path": "modules/rustdesk-fleet/contracts/supply-chain.json",
+      "sha256": "b600adeb1e1285b7f98662feb8fbd629a7518c06b2885e3194d513613f946a36"
+    }
+  ],
+  "observed_at": "2026-07-22T02:04:07Z",
+  "phase": 52,
+  "schema_version": 1,
+  "secret_material_present": false,
+  "server": {
+    "commit": "9bae9f2f39d92c4b4ba2e28e089da5071897b22e",
+    "tag": "1.1.15"
+  },
+  "source_urls": [
+    "https://api.github.com/repos/rustdesk/rustdesk-server/releases/tags/1.1.15",
+    "https://api.github.com/repos/rustdesk/rustdesk/releases/tags/1.4.9",
+    "https://github.com/rustdesk/rustdesk-server.git",
+    "https://github.com/rustdesk/rustdesk-server/releases/download/1.1.15/rustdesk-server-linux-arm64v8.zip",
+    "https://github.com/rustdesk/rustdesk.git",
+    "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-aarch64.deb",
+    "https://github.com/rustdesk/rustdesk/releases/download/1.4.9/rustdesk-1.4.9-x86_64.msi",
+    "https://hub.docker.com/v2/repositories/rustdesk/rustdesk-server/tags/1.1.15"
+  ],
+  "status": "PASS",
+  "windows_install_performed": false,
+  "workstream": "rustdesk-fleet"
+}

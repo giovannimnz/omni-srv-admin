@@ -1,0 +1,82 @@
+{
+  "schema_version": 1,
+  "check_id": "P52-SUPPLY-001",
+  "mutations": [
+    {
+      "id": "mutable-reference",
+      "operation": "replace",
+      "path": ["server", "tag"],
+      "value": "latest",
+      "expected_category": "mutable-reference"
+    },
+    {
+      "id": "changed-server-commit",
+      "operation": "replace",
+      "path": ["server", "commit"],
+      "value": "0000000000000000000000000000000000000000",
+      "expected_category": "server-commit-drift"
+    },
+    {
+      "id": "wrong-multiarch-digest",
+      "operation": "replace",
+      "path": ["server", "classic_image", "multiarch_digest"],
+      "value": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "expected_category": "multiarch-digest-drift"
+    },
+    {
+      "id": "wrong-arm64-child-digest",
+      "operation": "replace",
+      "path": ["server", "classic_image", "linux_arm64_digest"],
+      "value": "sha256:1111111111111111111111111111111111111111111111111111111111111111",
+      "expected_category": "arm64-digest-drift"
+    },
+    {
+      "id": "wrong-server-zip-checksum",
+      "operation": "replace",
+      "path": ["server", "release_zip", "sha256"],
+      "value": "2222222222222222222222222222222222222222222222222222222222222222",
+      "expected_category": "release-zip-checksum-drift"
+    },
+    {
+      "id": "wrong-linux-deb-checksum",
+      "operation": "replace",
+      "path": ["clients", "linux_arm64_deb", "sha256"],
+      "value": "3333333333333333333333333333333333333333333333333333333333333333",
+      "expected_category": "linux-deb-checksum-drift"
+    },
+    {
+      "id": "wrong-windows-msi-checksum",
+      "operation": "replace",
+      "path": ["clients", "windows_x86_64_msi", "sha256"],
+      "value": "4444444444444444444444444444444444444444444444444444444444444444",
+      "expected_category": "windows-msi-checksum-drift"
+    },
+    {
+      "id": "wrong-server-architecture",
+      "operation": "replace",
+      "path": ["server", "classic_image", "architecture"],
+      "value": "amd64",
+      "expected_category": "server-architecture-drift"
+    },
+    {
+      "id": "wrong-client-architecture",
+      "operation": "replace",
+      "path": ["clients", "linux_arm64_deb", "architecture"],
+      "value": "amd64",
+      "expected_category": "linux-client-architecture-drift"
+    },
+    {
+      "id": "missing-official-asset",
+      "operation": "delete",
+      "path": ["clients", "windows_x86_64_msi", "source_url"],
+      "expected_category": "contract-shape"
+    },
+    {
+      "id": "phase52-windows-install-attempt",
+      "operation": "replace",
+      "path": ["policy", "windows_install_performed"],
+      "value": true,
+      "expected_category": "windows-install-attempt"
+    }
+  ]
+}
