@@ -1,0 +1,130 @@
+{
+  "schema": "atius-rustdesk-phase52-gate-b-transaction-v1",
+  "schema_version": 1,
+  "phase": 52,
+  "gate": "B",
+  "authorization": {
+    "accountable": "Giovanni Muniz",
+    "approved_horistic_ssh_key_fingerprint": "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW4AXJ7W0",
+    "recorded_at": "2026-07-22T03:19:28-03:00",
+    "record_path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-07-AUTHORIZATION.md"
+  },
+  "generator": {
+    "image": "docker.io/rustdesk/rustdesk-server:1.1.15",
+    "immutable_reference": "docker.io/rustdesk/rustdesk-server@sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+    "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+    "network_mode": "none",
+    "port_bindings": [],
+    "key_format": "rustdesk-native-raw-base64",
+    "password_format": "R-prefixed-32-alphanumeric",
+    "password_count": 5,
+    "passwords_distinct": true,
+    "runtime": "verified-tmpfs-only"
+  },
+  "writes": [
+    {"id": "rustdesk-server-identity", "vault_path": "kv/atius/rustdesk/server", "fields": ["private_key", "public_key"], "cas": 0},
+    {"id": "rustdesk-password-atius-srv-1", "vault_path": "kv/atius/rustdesk/targets/atius-srv-1", "fields": ["permanent_password"], "cas": 0},
+    {"id": "rustdesk-password-atius-srv-2", "vault_path": "kv/atius/rustdesk/targets/atius-srv-2", "fields": ["permanent_password"], "cas": 0},
+    {"id": "rustdesk-password-atius-srv-3", "vault_path": "kv/atius/rustdesk/targets/atius-srv-3", "fields": ["permanent_password"], "cas": 0},
+    {"id": "rustdesk-password-horistic-srv", "vault_path": "kv/atius/rustdesk/targets/horistic-srv", "fields": ["permanent_password"], "cas": 0},
+    {"id": "rustdesk-password-giovanni-w11-pc", "vault_path": "kv/atius/rustdesk/targets/giovanni-w11-pc", "fields": ["permanent_password"], "cas": 0},
+    {"id": "rclone-config", "vault_path": "kv/atius/fleet-backup/rclone/giovanni-drive", "fields": ["rclone_conf"], "cas": 0}
+  ],
+  "write_policy": {
+    "create_only": true,
+    "expected_put_count": 7,
+    "expected_rustdesk_value_count": 7,
+    "expected_total_value_count": 8,
+    "metadata_reads": 2,
+    "required_current_version": 0,
+    "required_oldest_version": 0,
+    "required_history": {},
+    "private_input": "bounded-stdin-only",
+    "result_allowlist": ["version"],
+    "max_private_request_bytes": 262144
+  },
+  "lock": {
+    "path": "/var/lock/atius-vault-phase52-gate-b.lock",
+    "owner": "root",
+    "mode": "0600",
+    "exclusive": true,
+    "wait_seconds": 0
+  },
+  "backup": {
+    "root": "/var/backups/atius-vault/phase52",
+    "owner": "root",
+    "directory_mode": "0700",
+    "file_mode": "0600",
+    "artifacts": ["raft.snapshot", "control-plane.tar", "manifest.json", "wal.json", "ledger.json"],
+    "before_durable_control_plane_install": true,
+    "control_plane_state_root": "/var/lib/atius-vault-phase52",
+    "required_success_sequence": ["install", "exact-restore", "reviewed-reinstall", "metadata", "data-writes"],
+    "raft_restore": {
+      "target": "disposable-vault",
+      "network_namespace": "isolated",
+      "host_listener": false,
+      "public_listener": false,
+      "port_bindings": [],
+      "live_cluster_restore": false,
+      "integrity_required": true
+    },
+    "retain_until": "phase58-pass-plus-30-days",
+    "removal_requires_separate_approval": true
+  },
+  "wal": {
+    "mode": "0600",
+    "intent_before_put": true,
+    "intent_fsync": true,
+    "acknowledged_version_fsync": true,
+    "parent_directory_fsync_after_rename": true,
+    "ambiguous_ownership": "BLOCKED_NO_DELETE"
+  },
+  "states": [
+    "PRE_BACKUP", "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING", "CONTROL_PLANE_INSTALLED",
+    "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL", "CONTROL_PLANE_REINSTALLED", "METADATA_PROVED_PRISTINE",
+    "VALUES_GENERATED_TMPFS", "CREATING", "CREATED_VERIFIED", "FULL_GATE_RUNNING", "PASS",
+    "BLOCKED", "OWNERSHIP_AMBIGUOUS_BLOCKED", "OWNERSHIP_AMBIGUOUS_CONTROL_PLANE_RESTORE_RETRY",
+    "ROLLING_BACK", "ROLLBACK_BLOCKED_RETRY_REQUIRED", "ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION"
+  ],
+  "rollback": {
+    "restore_exact_reviewed_control_plane_bundle": true,
+    "allowed_vault_operation": "soft-delete-exact-owned-version",
+    "forbidden_operations": ["metadata-delete", "destroy", "undelete", "remote-delete"],
+    "terminal_after_soft_delete": "ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION",
+    "automatic_retry_after_soft_delete": false,
+    "ownership_source": "fsynced-wal-acknowledged-version"
+  },
+  "mutation_accounting": {
+    "atius-srv-2": {"candidate_data_plane_mutation": false, "authorized_vault_control_plane_mutation": false},
+    "atius-srv-3": {"candidate_data_plane_mutation": false, "authorized_vault_control_plane_mutation": true},
+    "vault_data": {"expected_create_only_writes": 7, "soft_delete_only_on_exact_owned_rollback": true},
+    "global_mutation_field_forbidden": true
+  },
+  "live_coordinator": {
+    "ssh_target": "ubuntu@10.13.1.13",
+    "ssh_fallback_target": "ubuntu@10.100.100.3",
+    "private_first": true,
+    "route_policy": "direct-first",
+    "fallback_after_direct_probe_failure_only": true,
+    "forced_relay_policy": "preserve-approved-runtime-policy",
+    "bundle_transport": "bounded-private-stdin",
+    "remote_staging": "root-owned-tmpfs",
+    "remote_rehash_before_install": true,
+    "remote_deadline_seconds": 600,
+    "transport_ambiguity_status": "REMOTE_OUTCOME_AMBIGUOUS_BLOCKED",
+    "automatic_retry_on_transport_ambiguity": false,
+    "recovery_action": "explicit-status-then-restore-or-rollback-only-resume",
+    "recovery_protocol": "phase52-reviewed-recovery-v1",
+    "execute_flag": "--execute-live"
+  },
+  "prohibitions": {
+    "secret_in_argv": true,
+    "secret_in_environment": true,
+    "secret_in_stdout_or_stderr": true,
+    "secret_in_evidence_or_logs": true,
+    "windows_install": true,
+    "public_listener": true,
+    "srv2_or_srv3_candidate_data_plane_mutation": true,
+    "remote_backup_delete": true
+  }
+}

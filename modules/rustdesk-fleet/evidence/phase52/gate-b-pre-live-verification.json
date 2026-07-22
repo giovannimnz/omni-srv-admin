@@ -1,0 +1,137 @@
+{
+  "checks": {
+    "cas_conflict_owned_rollback_count": 3,
+    "fault_injection_cases": 70,
+    "live_write_performed": false,
+    "network_performed": false,
+    "status": "PASS",
+    "success_write_count": 7
+  },
+  "gate": "B",
+  "gate_a": {
+    "managed_sources": [
+      {
+        "path": "modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json",
+        "sha256": "bd5458ca74a7b59d3751db5a0c3cd740f19da2970a1030f58301e62c0fbb86a4"
+      },
+      {
+        "path": "modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json",
+        "sha256": "b96e3904522412bbee836c4bdd7416c9eba8d9875217a9edb3a66d43276a17fa"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52",
+        "sha256": "54b762f83a3505a1419af9694f44ef4f56228cf08ccfcb94441e008b8d0a17ee"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52",
+        "sha256": "2f356d2017eff05c88e809ef3aeb84ee9998efeb1b3744f740495ef390f5b5eb"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/atius-vault-phase52-client",
+        "sha256": "003ad17411b9e39f57e2585aa818e267bea57891a610b98ce45382e36c603a34"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/rustdesk-vault-provider",
+        "sha256": "f1c4288a0f1f43eafcc0d2276a17958e419cdc69e028d5d517a83e9a01435195"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/install-rustdesk-vault-provider.sh",
+        "sha256": "cb520c9a241f1447ecec654806a0f2af5bc8a55a7d1bf96105b456979245666f"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh",
+        "sha256": "001f6ef8c25ca38cf926e3c9ccbae84c84a70fcbf95440cdbf2e53425a5a1e4d"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/rustdesk-vault-hydrate",
+        "sha256": "a674034d835f411eb1dce8472d3b6620c5e24d07a44b223b0df4264683a42a3e"
+      },
+      {
+        "path": "modules/fleet-backup/scripts/atius-rclone-vault-hydrate",
+        "sha256": "35bb4091f1551e47a01d85730993f173833fb1176b2ffe9fdf501d17d07d4f3d"
+      },
+      {
+        "path": "modules/fleet-backup/scripts/rclone-copy-verified-phase52.sh",
+        "sha256": "c27177fd96c7a728de7db4b935d263f7afa01e35ddb5a6a829c066b1d9178f43"
+      },
+      {
+        "path": "modules/fleet-backup/scripts/rclone-fetch-verified-phase52.sh",
+        "sha256": "a713d28dde99f429a1266ec362ca4518d8f1b42a6e44918cca9d40ce9ea857a8"
+      },
+      {
+        "path": "modules/fleet-backup/scripts/phase52-install-state.py",
+        "sha256": "5ebdc2ac6a9c77f2534dfab9c2008dd3353e549d4f245bcb4c03d33d2e3a9308"
+      },
+      {
+        "path": "modules/fleet-backup/scripts/install-fleet-backup.sh",
+        "sha256": "4a84796e4743dea2de0096a8a226dd6f222bfe1a14de18b114642caf88cf9d0a"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/phase52_recovery.py",
+        "sha256": "202a3d9128c774ac1211ecd64d67e10e782d53886948e97c3c9a12ee366a6d4e"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py",
+        "sha256": "093e9076669ee707edae1314e5232c78d09e5ac85c05060e06dc8d8661d5c68a"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tools/validate_phase52.py",
+        "sha256": "d7f1af49609331b3993014c7567140470e80c4ad3b6913499330d1e0a10f2948"
+      },
+      {
+        "path": "modules/fleet-backup/tests/test_phase52_backup_b.py",
+        "sha256": "ed8408bc7ba6e3cf5cf723089531e29db9f7912a6bf55206e364bf105fd6ccf5"
+      },
+      {
+        "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
+        "sha256": "e3720c676904d81c2400f7401c815cbd3af9e31064e37a231cb6f33f3534d963"
+      },
+      {
+        "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-07-AUTHORIZATION.md",
+        "sha256": "515177a096cbec8863e4a0962c82c066ff140029e1efcf4a77e1e102db4f1f16"
+      }
+    ],
+    "path": "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json",
+    "sha256": "4aa5bde516804e48207aa92771fd1fec31c5acde885a96f9f053be23833add67"
+  },
+  "generated_at": "2026-07-22T16:32:03.071184Z",
+  "hash_set_sha256": "9039271f01fe0d4d94a5b2c5dca1eac5a6d8fa56f8c3fecae7e9ccc77a7054a8",
+  "live_write_performed": false,
+  "network_performed": false,
+  "phase": 52,
+  "reviews": [
+    {
+      "hash_set_sha256": "9039271f01fe0d4d94a5b2c5dca1eac5a6d8fa56f8c3fecae7e9ccc77a7054a8",
+      "reviewer": "/root/gate_b_plan_review",
+      "status": "PASS"
+    },
+    {
+      "hash_set_sha256": "9039271f01fe0d4d94a5b2c5dca1eac5a6d8fa56f8c3fecae7e9ccc77a7054a8",
+      "reviewer": "/root/gate_b_local_review_v7",
+      "status": "PASS"
+    }
+  ],
+  "schema": "phase52-gate-b-pre-live-seal-v1",
+  "sealed_at": "2026-07-22T16:36:20.234000Z",
+  "sealed_sources": [
+    {
+      "path": "modules/rustdesk-fleet/contracts/phase52-gate-b-transaction.json",
+      "sha256": "7ae240e6a5be7c6fad0196d7fd2d01fc88c62a54ebd39a227bbf942ec9a67029"
+    },
+    {
+      "path": "modules/rustdesk-fleet/tools/phase52-vault-transaction.py",
+      "sha256": "98fbd28c917c107c29735c598a975e50a6a16b33a766b6eca92bd2624fbd8094"
+    },
+    {
+      "path": "modules/rustdesk-fleet/tools/run-phase52-gate-b.py",
+      "sha256": "6f51c7ff9a02616dabaf2731d1d64b8a348d056c36b849169b00a9d4156fe0f4"
+    },
+    {
+      "path": "modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py",
+      "sha256": "9cca6ea228753e596ed7a2afd62bb170a64fe9cbda738dbcbd3806d4510ba953"
+    }
+  ],
+  "secret_material_present": false,
+  "ssh_performed": false,
+  "status": "PASS"
+}
