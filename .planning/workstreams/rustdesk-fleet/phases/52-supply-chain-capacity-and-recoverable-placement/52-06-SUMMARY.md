@@ -88,6 +88,7 @@ status: complete
 4. **Task 52-06-02 initial artifacts:** `29f9d0718` — blocked candidate closeout rendered.
 5. **Task 52-06-02 freshness correction:** `60a0fa8ca` — expired capacity evidence classified as blocked.
 6. **Task 52-06-02 final artifacts:** `47e882a0f` — raw-byte report parity and topology finalized.
+7. **Follow-up boundary fix:** `984ae9d50` — capacity-live expiry separated from structural/tamper drift.
 
 ## Canonical Gate Result
 
@@ -104,7 +105,7 @@ status: complete
 ## Verification
 
 - Canonical report CLI returned the expected fail-closed result: `P52-REPORT-001=BLOCKED`, exit `2`.
-- Full governed RustDesk suite passed: `215 passed in 3.78s`.
+- Full governed RustDesk suite passed after the boundary regression fix: `216 passed in 3.88s`.
 - Direct report validation confirmed `overall_status=BLOCKED`, `phase53_advance_status=BLOCKED`, `ledger_promoted=false`, parity `PASS`, report validation `PASS`, `P51-WS-001=PASS` and `P51-P48-001=PASS`.
 - SSO hygiene scan passed across 21 files with redacted reporting.
 - `git diff --check` passed for the plan-owned changes.
@@ -143,7 +144,15 @@ status: complete
 - **Verification:** Full suite increased to `215 passed`; stale current capacity evidence remains fail-closed.
 - **Committed in:** `60a0fa8ca`.
 
-**Total deviations:** 3 correctness/readiness fixes. **Impact:** stricter fail-closed reporting only; no authority, requirement completion or runtime mutation was added.
+**4. [Rule 1 - Bug] Separated capacity-live expiry from historical calculation integrity**
+
+- **Found during:** independent post-closeout full-suite validation.
+- **Issue:** `validate_capacity_live_summary` recomputed persisted calculations at the current clock, so a naturally expired Horistic sample became a false `stored-verdict-drift` failure.
+- **Fix:** Recompute persisted calculations at the chain's validated `generated_at`, evaluate freshness separately at the validation clock, and retain structural/tamper findings as `FAIL`.
+- **Verification:** At the inclusive age boundary the gate remains `BLOCKED` without stale finding; one second later it is `BLOCKED/stale-observation`; modified calculations remain `FAIL/stored-verdict-drift`; full suite is `216 passed`.
+- **Committed in:** `984ae9d50`.
+
+**Total deviations:** 4 correctness/readiness fixes. **Impact:** stricter deterministic fail-closed reporting only; no authority, requirement completion or runtime mutation was added.
 
 ## Issues Encountered
 
@@ -169,7 +178,7 @@ Plan execution for Phase 52 is 6/6, but the phase gate remains `BLOCKED/no-prima
 
 ## Self-Check: PASSED
 
-- All six implementation/report/topology artifacts exist and the six task commits exist.
+- All six implementation/report/topology artifacts exist and the seven task/fix commits exist.
 - JSON report surfaces are byte-identical, Markdown is derived from the same projection and the topology decision agrees with the gate.
 - Test, secret scan and diff checks passed; final Graphify refresh is the post-metadata closeout step.
 
