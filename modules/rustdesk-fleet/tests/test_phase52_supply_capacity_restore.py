@@ -858,7 +858,7 @@ def test_vault_helper_hydrates_tmpfs_without_disclosure(tmp_path: Path) -> None:
     assert not runtime_dir.exists()
 
 
-def test_password_distinctness_is_aggregate_and_non_reusable(tmp_path: Path) -> None:
+def test_secret_password_distinctness_is_aggregate_and_non_reusable(tmp_path: Path) -> None:
     passwords = [f"password-{secrets.token_urlsafe(24)}" for _ in range(5)]
     values = {
         "kv/atius/rustdesk/server#private_key": f"private-{secrets.token_urlsafe(24)}",
@@ -898,3 +898,27 @@ def test_password_distinctness_is_aggregate_and_non_reusable(tmp_path: Path) -> 
         "status": "BLOCKED",
         "unique": 4,
     }
+
+
+def test_vault_runtime_and_cleanup_fail_closed_off_tmpfs(tmp_path: Path) -> None:
+    runtime_dir = tmp_path / "rustdesk-not-tmpfs"
+    runtime_dir.mkdir(mode=0o700)
+    (runtime_dir / "id_ed25519").write_text("synthetic-private", encoding="utf-8")
+    (runtime_dir / "id_ed25519.pub").write_text("synthetic-public", encoding="utf-8")
+    (runtime_dir / "id_ed25519").chmod(0o600)
+    (runtime_dir / "id_ed25519.pub").chmod(0o600)
+    result = validator.validate_hydration_runtime(runtime_dir)
+    assert result["status"] == "BLOCKED"
+    assert result["runtime_tmpfs"] is False
+
+    completed = subprocess.run(
+        [str(VAULT_HELPER_PATH), "cleanup", "--runtime-dir", str(runtime_dir)],
+        cwd=REPO,
+        env={"PATH": os.environ["PATH"]},
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert completed.stdout == completed.stderr == ""
+    assert runtime_dir.exists()

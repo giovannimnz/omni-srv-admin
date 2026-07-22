@@ -1,0 +1,31 @@
+#!/usr/bin/env bash
+set -euo pipefail
+set +x
+umask 077
+
+script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd -P)
+runtime_dir=""
+previous=""
+for argument in "$@"; do
+  if [[ "$previous" == "--runtime-dir" ]]; then
+    runtime_dir=$argument
+    break
+  fi
+  previous=$argument
+done
+
+cleanup_on_failure() {
+  local rc=$?
+  trap - EXIT HUP INT TERM
+  if (( rc != 0 )) && [[ -n "$runtime_dir" ]]; then
+    python3 "$script_dir/validate_phase52.py" --vault-helper cleanup --runtime-dir "$runtime_dir" \
+      >/dev/null 2>/dev/null || rc=2
+  fi
+  exit "$rc"
+}
+trap cleanup_on_failure EXIT HUP INT TERM
+
+python3 "$script_dir/validate_phase52.py" --vault-helper "$@"
+rc=$?
+trap - EXIT HUP INT TERM
+exit "$rc"

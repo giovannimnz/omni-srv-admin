@@ -6,11 +6,14 @@ from __future__ import annotations
 import argparse
 from datetime import datetime, timezone
 import hashlib
+import hmac
 import json
 import os
 import re
+import secrets
 import shlex
 import shutil
+import stat
 import struct
 import subprocess
 import sys
@@ -29,6 +32,7 @@ CAPACITY_POLICY = Path("modules/rustdesk-fleet/contracts/capacity-policy.json")
 PLACEMENT_DECISION = Path("modules/rustdesk-fleet/contracts/placement-decision.json")
 CAPACITY_PROPOSAL = Path("modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json")
 CAPACITY_SUMMARY = Path("modules/rustdesk-fleet/evidence/phase52/capacity-summary.json")
+SECRET_ROLES = Path("modules/rustdesk-fleet/contracts/secret-roles.json")
 OPERATIONAL_DECISIONS = Path(
     ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/"
     "52-OPERATIONAL-DECISIONS.md"
@@ -93,6 +97,15 @@ CAPACITY_EVIDENCE_NAMES = {
     "horistic-srv": "capacity-horistic-srv.json",
 }
 READ_ONLY_PREFLIGHT_ACTIONS = ("capacity-sample",)
+APPROVED_VAULT_REFERENCES = (
+    ("kv/atius/rustdesk/server", "private_key"),
+    ("kv/atius/rustdesk/server", "public_key"),
+    ("kv/atius/rustdesk/targets/atius-srv-1", "permanent_password"),
+    ("kv/atius/rustdesk/targets/atius-srv-2", "permanent_password"),
+    ("kv/atius/rustdesk/targets/atius-srv-3", "permanent_password"),
+    ("kv/atius/rustdesk/targets/horistic-srv", "permanent_password"),
+    ("kv/atius/rustdesk/targets/giovanni-w11-pc", "permanent_password"),
+)
 REMOTE_CAPACITY_SCRIPT = """\
 import datetime
 import json
@@ -225,6 +238,241 @@ def _check_result(check_id: str, status: str, categories: list[str], source: str
         evidence_ids=[f"P52-EV-{evidence}"],
         findings=[_finding(category, source) for category in sorted(set(categories))],
     )
+
+
+def approved_vault_references(payload: dict[str, Any]) -> list[tuple[str, str]]:
+    """Return contract references only; secret values are never accepted here."""
+    server = payload.get("server_identity") if isinstance(payload, dict) else None
+    targets = payload.get("target_password_roles") if isinstance(payload, dict) else None
+    if not isinstance(server, dict) or not isinstance(targets, list):
+        return []
+    rows: list[tuple[str, str]] = []
+    for key in ("private_key_ref", "public_key_ref"):
+        reference = server.get(key)
+        if not isinstance(reference, dict):
+            return []
+        path, field_name = reference.get("vault_path"), reference.get("field")
+        if not isinstance(path, str) or not isinstance(field_name, str):
+            return []
+        rows.append((path, field_name))
+    for reference in targets:
+        if not isinstance(reference, dict):
+            return []
+        path, field_name = reference.get("vault_path"), reference.get("field")
+        if not isinstance(path, str) or not isinstance(field_name, str):
+            return []
+        rows.append((path, field_name))
+    return rows
+
+
+def validate_vault_metadata(
+    payload: dict[str, Any], source: str = "modules/rustdesk-fleet/contracts/secret-roles.json"
+) -> CheckResult:
+    blocked: list[str] = []
+    if not isinstance(payload, dict) or payload.get("schema_version") != 1 or payload.get("authority") != "hashicorp-vault":
+        blocked.append("vault-contract-shape")
+    references = approved_vault_references(payload)
+    if tuple(references) != APPROVED_VAULT_REFERENCES or len(set(references)) != len(references):
+        blocked.append("unknown-vault-reference")
+    server = payload.get("server_identity") if isinstance(payload, dict) else None
+    targets = payload.get("target_password_roles") if isinstance(payload, dict) else None
+    approvals = []
+    if isinstance(server, dict):
+        approvals.append(server.get("approval_status"))
+    if isinstance(targets, list):
+        approvals.extend(item.get("approval_status") for item in targets if isinstance(item, dict))
+    recovery = payload.get("recovery_authority") if isinstance(payload, dict) else None
+    if isinstance(recovery, dict):
+        approvals.append(recovery.get("approval_status"))
+    if approvals != ["approved"] * 7:
+        blocked.append("vault-approval-missing")
+    if isinstance(payload, dict) and payload.get("value_distinctness_phase") != 52:
+        blocked.append("distinctness-phase-drift")
+    return _check_result("P52-VAULT-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def _mount_type(path: Path) -> str | None:
+    resolved = path.resolve(strict=False)
+    best: tuple[int, str] | None = None
+    try:
+        rows = Path("/proc/self/mountinfo").read_text(encoding="utf-8").splitlines()
+    except OSError:
+        return None
+    for row in rows:
+        fields = row.split()
+        if "-" not in fields or len(fields) < 7:
+            continue
+        separator = fields.index("-")
+        mount_point = Path(fields[4].replace("\\040", " ")).resolve(strict=False)
+        if resolved != mount_point and not resolved.is_relative_to(mount_point):
+            continue
+        candidate = (len(mount_point.parts), fields[separator + 1])
+        if best is None or candidate[0] > best[0]:
+            best = candidate
+    return best[1] if best else None
+
+
+def _mode(path: Path) -> str:
+    return f"{stat.S_IMODE(path.stat().st_mode):04o}"
+
+
+def validate_hydration_runtime(runtime_dir: Path) -> dict[str, Any]:
+    files = (runtime_dir / "id_ed25519", runtime_dir / "id_ed25519.pub")
+    tmpfs = _mount_type(runtime_dir) == "tmpfs"
+    runtime_mode = _mode(runtime_dir) if runtime_dir.is_dir() else "missing"
+    file_modes = {path.name: _mode(path) if path.is_file() else "missing" for path in files}
+    passed = tmpfs and runtime_mode == "0700" and all(value == "0600" for value in file_modes.values())
+    return {
+        "status": "PASS" if passed else "BLOCKED",
+        "runtime_tmpfs": tmpfs,
+        "runtime_mode": runtime_mode,
+        "file_modes": file_modes,
+        "secret_material_present": False,
+    }
+
+
+def verify_password_distinctness(passwords: list[str]) -> dict[str, Any]:
+    if len(passwords) != 5 or any(not isinstance(value, str) or not value for value in passwords):
+        return {"count": len(passwords), "unique": 0, "status": "BLOCKED", "secret_material_present": False}
+    ephemeral_key = secrets.token_bytes(32)
+    digests = {hmac.digest(ephemeral_key, value.encode("utf-8"), "sha256") for value in passwords}
+    unique = len(digests)
+    return {
+        "count": 5,
+        "unique": unique,
+        "status": "PASS" if unique == 5 else "BLOCKED",
+        "secret_material_present": False,
+    }
+
+
+def _vault_provider_values(provider: Path, references: list[tuple[str, str]]) -> dict[str, str]:
+    if not provider.is_absolute() or not provider.is_file() or not os.access(provider, os.X_OK):
+        raise ValueError("Vault provider is unavailable")
+    request = {"references": [{"vault_path": path, "field": field} for path, field in references]}
+    completed = subprocess.run(
+        [str(provider)],
+        input=json.dumps(request, separators=(",", ":")),
+        text=True,
+        capture_output=True,
+        timeout=30,
+        check=False,
+    )
+    if completed.returncode != 0 or completed.stderr:
+        raise ValueError("Vault provider failed")
+    try:
+        response = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        raise ValueError("Vault provider response is invalid") from None
+    expected = {f"{path}#{field}" for path, field in references}
+    values = response.get("values") if isinstance(response, dict) else None
+    if (
+        not isinstance(response, dict)
+        or set(response) != {"request_count", "values"}
+        or response.get("request_count") != len(references)
+        or not isinstance(values, dict)
+        or set(values) != expected
+        or any(not isinstance(value, str) or not value for value in values.values())
+    ):
+        raise ValueError("Vault provider response does not match approved references")
+    return values
+
+
+def _write_private_file(path: Path, value: str) -> None:
+    descriptor = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+    try:
+        os.write(descriptor, value.encode("utf-8"))
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _validate_runtime_target(runtime_dir: Path) -> None:
+    if runtime_dir.name in {"", ".", ".."} or not runtime_dir.name.startswith("rustdesk-"):
+        raise ValueError("runtime directory name is unsafe")
+    if runtime_dir.is_symlink() or _mount_type(runtime_dir.parent) != "tmpfs":
+        raise ValueError("runtime directory is not on confirmed tmpfs")
+
+
+def _cleanup_runtime(runtime_dir: Path) -> None:
+    _validate_runtime_target(runtime_dir)
+    if runtime_dir.exists():
+        if runtime_dir.is_symlink() or not runtime_dir.is_dir():
+            raise ValueError("runtime cleanup target is unsafe")
+        shutil.rmtree(runtime_dir)
+    if runtime_dir.exists():
+        raise ValueError("runtime cleanup could not be proved")
+
+
+def _write_safe_result(payload: dict[str, Any]) -> None:
+    descriptor_text = os.environ.get("RUSTDESK_VAULT_RESULT_FD")
+    if descriptor_text is None or not descriptor_text.isdigit() or int(descriptor_text) < 3:
+        raise ValueError("dedicated result descriptor is required")
+    encoded = (json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+    os.write(int(descriptor_text), encoded)
+
+
+def vault_helper_main(argv: list[str]) -> int:
+    parser = argparse.ArgumentParser(add_help=False)
+    parser.add_argument("mode", choices=("verify-metadata", "hydrate-server-identity", "verify-password-distinctness", "cleanup"))
+    parser.add_argument("--contract", type=Path)
+    parser.add_argument("--runtime-dir", type=Path)
+    args = parser.parse_args(argv)
+    try:
+        if args.mode == "cleanup":
+            if args.runtime_dir is None:
+                raise ValueError("cleanup requires runtime directory")
+            _cleanup_runtime(args.runtime_dir)
+            return 0
+        if args.contract is None:
+            raise ValueError("Vault contract is required")
+        contract = load_json_strict(args.contract)
+        metadata = validate_vault_metadata(contract, args.contract.name)
+        if metadata.status != "PASS":
+            _write_safe_result({"status": "BLOCKED", "secret_material_present": False})
+            return 2
+        references = approved_vault_references(contract)
+        provider_text = os.environ.get("RUSTDESK_VAULT_PROVIDER", "")
+        values = _vault_provider_values(Path(provider_text), references)
+        if args.mode == "verify-metadata":
+            result = {
+                "status": "PASS",
+                "vault_path_count": 6,
+                "value_count": 7,
+                "secret_material_present": False,
+            }
+        elif args.mode == "verify-password-distinctness":
+            result = verify_password_distinctness(
+                [values[f"{path}#{field}"] for path, field in references if field == "permanent_password"]
+            )
+        else:
+            if args.runtime_dir is None:
+                raise ValueError("hydration requires runtime directory")
+            _validate_runtime_target(args.runtime_dir)
+            args.runtime_dir.mkdir(mode=0o700, parents=False, exist_ok=False)
+            try:
+                _write_private_file(
+                    args.runtime_dir / "id_ed25519",
+                    values["kv/atius/rustdesk/server#private_key"],
+                )
+                public_value = values["kv/atius/rustdesk/server#public_key"]
+                _write_private_file(args.runtime_dir / "id_ed25519.pub", public_value)
+                result = validate_hydration_runtime(args.runtime_dir)
+                result["public_key_fingerprint"] = "sha256:" + hashlib.sha256(
+                    public_value.encode("utf-8")
+                ).hexdigest()
+                if result["status"] != "PASS":
+                    raise ValueError("runtime hygiene validation failed")
+            except BaseException:
+                _cleanup_runtime(args.runtime_dir)
+                raise
+        _write_safe_result(result)
+        return exit_code_for_status(result["status"])
+    except (OSError, ValueError, subprocess.SubprocessError):
+        try:
+            _write_safe_result({"status": "BLOCKED", "secret_material_present": False})
+        except (OSError, ValueError):
+            pass
+        return 2
 
 
 def _exact_keys(value: Any, expected: set[str]) -> bool:
@@ -1707,7 +1955,10 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
-    args = build_parser().parse_args(argv)
+    effective_argv = list(sys.argv[1:] if argv is None else argv)
+    if effective_argv[:1] == ["--vault-helper"]:
+        return vault_helper_main(effective_argv[1:])
+    args = build_parser().parse_args(effective_argv)
     repo = args.repo.resolve()
     try:
         if args.only == "capacity-live":
