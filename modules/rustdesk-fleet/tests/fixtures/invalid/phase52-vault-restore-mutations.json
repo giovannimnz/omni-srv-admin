@@ -1,0 +1,21 @@
+{
+  "schema_version": 1,
+  "mutations": [
+    {"id":"unknown-vault-reference","expected_check":"P52-VAULT-001","expected_status":"BLOCKED"},
+    {"id":"duplicate-password-result","expected_check":"P52-VAULT-001","expected_status":"BLOCKED"},
+    {"id":"secret-bearing-argv","expected_check":"P52-VAULT-001","expected_status":"BLOCKED"},
+    {"id":"secret-bearing-output","expected_check":"P52-VAULT-001","expected_status":"BLOCKED"},
+    {"id":"permissive-runtime","expected_check":"P52-VAULT-001","expected_status":"BLOCKED"},
+    {"id":"non-tmpfs-runtime","expected_check":"P52-VAULT-001","expected_status":"BLOCKED"},
+    {"id":"private-key-archive","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"missing-backup-b","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"corrupt-backup-b","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"active-source","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"wrong-database","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"sqlite-integrity-failure","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"fingerprint-mismatch","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"public-listener","expected_check":"P52-RESTORE-001","expected_status":"BLOCKED"},
+    {"id":"restored-service-active","expected_check":"P52-ROLLBACK-001","expected_status":"BLOCKED"},
+    {"id":"cleanup-failure","expected_check":"P52-ROLLBACK-001","expected_status":"BLOCKED"}
+  ]
+}

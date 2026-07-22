@@ -7,8 +7,10 @@ import json
 import os
 import secrets
 import shutil
+import sqlite3
 import subprocess
 import sys
+import tarfile
 from pathlib import Path
 
 import pytest
@@ -32,6 +34,9 @@ OPERATIONAL_DECISIONS_PATH = (
 )
 SECRET_ROLES_PATH = REPO / "modules/rustdesk-fleet/contracts/secret-roles.json"
 VAULT_HELPER_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-vault-hydrate"
+VAULT_RESTORE_MUTATIONS_PATH = (
+    REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-vault-restore-mutations.json"
+)
 
 SPEC = importlib.util.spec_from_file_location("validate_phase52", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -108,6 +113,16 @@ def _run_vault_helper(
     with os.fdopen(read_fd, encoding="utf-8") as handle:
         safe_output = handle.read()
     return completed, json.loads(safe_output) if safe_output else {}
+
+
+def _create_sqlite_source(path: Path) -> Path:
+    path.mkdir(mode=0o700, parents=True)
+    database = path / "db_v2.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE peers (id TEXT PRIMARY KEY, note TEXT NOT NULL)")
+        connection.execute("INSERT INTO peers VALUES (?, ?)", ("fixture-peer", "non-secret-state"))
+    database.chmod(0o600)
+    return database
 
 
 def test_supply_contract_exact_pins() -> None:
@@ -922,3 +937,175 @@ def test_vault_runtime_and_cleanup_fail_closed_off_tmpfs(tmp_path: Path) -> None
     assert completed.returncode == 2
     assert completed.stdout == completed.stderr == ""
     assert runtime_dir.exists()
+
+
+def test_backup_restore_state_machine_positive_flow(tmp_path: Path) -> None:
+    source_dir = tmp_path / "source-state"
+    database = _create_sqlite_source(source_dir)
+    source_state = {
+        "active": False,
+        "public_listener": False,
+        "image_digest": validator.ARM64_IMAGE_DIGEST,
+        "architecture": "arm64",
+    }
+    assert validator.quiesce_source(source_state).status == "PASS"
+    assert validator.verify_sqlite_integrity(database).status == "PASS"
+    assert validator.verify_state_allowlist(source_dir).status == "PASS"
+
+    backup_a = validator.create_verified_backup(
+        source_dir, tmp_path / "backup-a.tar", source_state, label="A"
+    )
+    backup_b = validator.create_verified_backup(
+        source_dir, tmp_path / "backup-b.tar", source_state, label="B"
+    )
+    assert backup_a["status"] == backup_b["status"] == "PASS"
+    assert backup_a["archive_path"] != backup_b["archive_path"]
+    assert backup_a["entries"] == backup_b["entries"] == ["db_v2.sqlite3"]
+    assert backup_a["archive_mode"] == backup_b["archive_mode"] == "0600"
+    assert len(backup_a["sha256"]) == len(backup_b["sha256"]) == 64
+    assert validator.validate_recovery_backups(backup_a, backup_b).status == "PASS"
+
+    restored = validator.restore_isolated(Path(backup_a["archive_path"]), tmp_path / "restores")
+    restored_dir = Path(restored["runtime_dir"])
+    assert restored["status"] == "PASS"
+    assert restored_dir.name.startswith("rustdesk-restore-")
+    assert validator.verify_sqlite_integrity(restored_dir / "db_v2.sqlite3").status == "PASS"
+
+    public_key = tmp_path / "id_ed25519.pub"
+    public_key.write_bytes(b"synthetic-public-identity")
+    expected_fingerprint = "sha256:" + validator.hashlib.sha256(public_key.read_bytes()).hexdigest()
+    assert validator.verify_public_fingerprint(public_key, expected_fingerprint).status == "PASS"
+    assert validator.verify_no_public_listener({"public_listener": False}).status == "PASS"
+
+    rollback = validator.cleanup_restore_runtime(
+        restored_dir,
+        {"service_active": False, "service_enabled": False, "public_listener": False},
+        restore_verified=True,
+    )
+    assert rollback.id == "P52-ROLLBACK-001"
+    assert rollback.status == "PASS"
+    assert not restored_dir.exists()
+    assert Path(backup_a["archive_path"]).exists()
+    assert Path(backup_b["archive_path"]).exists()
+
+
+def test_backup_excludes_identity_and_requires_quiesced_source(tmp_path: Path) -> None:
+    source_dir = tmp_path / "source-state"
+    _create_sqlite_source(source_dir)
+    (source_dir / "id_ed25519").write_text("synthetic-private-key", encoding="utf-8")
+    result = validator.verify_state_allowlist(source_dir)
+    assert result.status == "BLOCKED"
+    assert "private-key-in-state" in _categories(result)
+
+    active = {
+        "active": True,
+        "public_listener": False,
+        "image_digest": validator.ARM64_IMAGE_DIGEST,
+        "architecture": "arm64",
+    }
+    with pytest.raises(ValueError, match="quiesced"):
+        validator.create_verified_backup(source_dir, tmp_path / "active.tar", active, label="A")
+    assert not (tmp_path / "active.tar").exists()
+
+
+def test_restore_blocks_missing_b_corrupt_archive_and_path_escape(tmp_path: Path) -> None:
+    source_dir = tmp_path / "source-state"
+    _create_sqlite_source(source_dir)
+    source_state = {
+        "active": False,
+        "public_listener": False,
+        "image_digest": validator.ARM64_IMAGE_DIGEST,
+        "architecture": "arm64",
+    }
+    backup_a = validator.create_verified_backup(
+        source_dir, tmp_path / "backup-a.tar", source_state, label="A"
+    )
+    missing_b = validator.validate_recovery_backups(backup_a, None)
+    assert missing_b.status == "BLOCKED"
+    assert "missing-backup-b" in _categories(missing_b)
+
+    corrupt = tmp_path / "corrupt.tar"
+    corrupt.write_bytes(b"not-a-tar")
+    corrupt.chmod(0o600)
+    with pytest.raises(ValueError, match="archive"):
+        validator.restore_isolated(corrupt, tmp_path / "corrupt-restores")
+
+    escaping = tmp_path / "escaping.tar"
+    payload = tmp_path / "payload"
+    payload.write_text("state", encoding="utf-8")
+    with tarfile.open(escaping, "w") as archive:
+        archive.add(payload, arcname="../db_v2.sqlite3")
+    escaping.chmod(0o600)
+    with pytest.raises(ValueError, match="allowlist"):
+        validator.restore_isolated(escaping, tmp_path / "escape-restores")
+
+
+def test_restore_blocks_sqlite_fingerprint_network_and_early_cleanup(tmp_path: Path) -> None:
+    corrupt_db = tmp_path / "db_v2.sqlite3"
+    corrupt_db.write_bytes(b"not-sqlite")
+    assert validator.verify_sqlite_integrity(corrupt_db).status == "BLOCKED"
+
+    public_key = tmp_path / "id_ed25519.pub"
+    public_key.write_bytes(b"synthetic-public-identity")
+    mismatch = validator.verify_public_fingerprint(public_key, "sha256:" + "0" * 64)
+    assert mismatch.status == "BLOCKED"
+    assert validator.verify_no_public_listener({"public_listener": True}).status == "BLOCKED"
+
+    restore_dir = tmp_path / "rustdesk-restore-early"
+    restore_dir.mkdir()
+    (restore_dir / ".phase52-disposable-restore").write_text("fixture", encoding="utf-8")
+    blocked = validator.cleanup_restore_runtime(
+        restore_dir,
+        {"service_active": True, "service_enabled": False, "public_listener": False},
+        restore_verified=False,
+    )
+    assert blocked.status == "BLOCKED"
+    assert restore_dir.exists()
+
+
+def test_full_candidate_gate_persists_nogo_before_return(tmp_path: Path) -> None:
+    persisted: list[dict] = []
+    callbacks = {
+        "supply": lambda: "PASS",
+        "capacity": lambda: "PASS",
+        "vault": lambda: "PASS",
+        "backup": lambda: "BLOCKED",
+        "restore": lambda: "PASS",
+        "capacity_finalize": lambda: "PASS",
+        "rollback": lambda: "PASS",
+        "topology_security": lambda: "PASS",
+    }
+    result = validator.run_full_candidate_gate(
+        "horistic-srv", callbacks, lambda payload: persisted.append(copy.deepcopy(payload))
+    )
+    assert result["verdict"] == "NO-GO"
+    assert result["stages"]["backup"] == "BLOCKED"
+    assert result["stages"]["restore"] == "SKIPPED_BY_GATE"
+    assert persisted[-1] == result
+    assert persisted[-1]["persisted_before_fallback"] is True
+
+
+def test_vault_restore_mutation_catalog_is_complete_and_non_secret() -> None:
+    catalog = validator.load_json_strict(VAULT_RESTORE_MUTATIONS_PATH)
+    ids = {item["id"] for item in catalog["mutations"]}
+    assert {
+        "unknown-vault-reference",
+        "duplicate-password-result",
+        "secret-bearing-argv",
+        "secret-bearing-output",
+        "permissive-runtime",
+        "non-tmpfs-runtime",
+        "private-key-archive",
+        "missing-backup-b",
+        "corrupt-backup-b",
+        "active-source",
+        "wrong-database",
+        "sqlite-integrity-failure",
+        "fingerprint-mismatch",
+        "public-listener",
+        "restored-service-active",
+        "cleanup-failure",
+    }.issubset(ids)
+    serialized = json.dumps(catalog, sort_keys=True)
+    assert "BEGIN PRIVATE KEY" not in serialized
+    assert "permanent_password_value" not in serialized
