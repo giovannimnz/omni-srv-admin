@@ -198,7 +198,7 @@
     "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
     "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
   },
-  "generated_at": "2026-07-22T03:37:36Z",
+  "generated_at": "2026-07-22T03:39:52Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-HORISTIC-TOPOLOGY-IMPACT-REVIEW.md",
@@ -254,7 +254,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tools/validate_phase52.py",
-      "sha256": "46c30db2ed6ab7e5bd7bce933af53c8b24d130f2b35a8ececc5dee905afe6989"
+      "sha256": "fb449c5ff2bb0e90260fc2fa1046910356635895b0730e9fe7b3c09dde7647bf"
     }
   ],
   "overall_status": "BLOCKED",
@@ -265,7 +265,7 @@
   "schema_version": 1,
   "secret_material_present": false,
   "selected_candidate": null,
-  "source_head": "4b417932e212141c752e70873603d5f235d0853a",
+  "source_head": "60a0fa8ca556cc2c16bf784a951ad0ca74bfc195",
   "windows_access_proven": false,
   "windows_install_performed": false,
   "workstream": "rustdesk-fleet"
