@@ -13,9 +13,11 @@ import importlib.util
 import json
 import os
 import re
+import selectors
 import secrets
 import shlex
 import shutil
+import signal
 import sqlite3
 import stat
 import struct
@@ -25,6 +27,7 @@ import tempfile
 import tarfile
 import urllib.error
 import urllib.request
+import time
 import zipfile
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -58,6 +61,10 @@ PHASE53_TOPOLOGY_REVIEW = PHASE52_DIR / "52-PHASE53-TOPOLOGY-REVIEW.md"
 PHASE48_BASELINE = Path("modules/rustdesk-fleet/evidence/phase48-baseline.json")
 PHASE51_VALIDATOR = Path("modules/rustdesk-fleet/tools/validate_phase51.py")
 PHASE52_TESTS = Path("modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py")
+LIVE_DRILL_SOURCE = Path("modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py")
+RECOVERY_SOURCE = Path("modules/rustdesk-fleet/tools/phase52_recovery.py")
+LIVE_DRILL_CONTRACT = Path("modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json")
+REMOTE_MANAGED_SOURCE_DIGEST_BLOCKER = "remote-managed-source-digest-drift"
 SCOPE_CONTRACT = Path("modules/rustdesk-fleet/contracts/scope.json")
 PHASE52_REQUIREMENTS = ("SCP-04", "SRV-01", "SRV-05", "SRV-07")
 PHASE52_CHECK_ORDER = (
@@ -233,50 +240,34 @@ print(json.dumps({
 
 REMOTE_FULL_GATE_READINESS_SCRIPT = """\
 import json
+import os
 import pathlib
 import shutil
-import subprocess
 
 home = pathlib.Path.home()
+runtime_root = pathlib.Path('/run/user') / str(os.getuid())
 paths = {
     "vault_helper": home / ".local/bin/atius-vault-env",
     "rustdesk_vault_provider": home / ".local/bin/rustdesk-vault-provider",
-    "rustdesk_vault_backend": home / ".local/bin/atius-rustdesk-vault-export",
+    "rustdesk_vault_backend": home / ".local/bin/atius-vault-phase52-client",
     "fleet_backup_module": home / "GitHub/omni-srv-admin/modules/fleet-backup",
-    "rclone_config": home / ".config/rclone/rclone.conf",
+    "rclone_vault_hydrator": home / ".local/bin/atius-rclone-vault-hydrate",
+    "rclone_copy": home / ".local/bin/rclone-copy-verified-phase52",
+    "rclone_fetch": home / ".local/bin/rclone-fetch-verified-phase52",
+    "live_drill": home / "GitHub/omni-srv-admin/modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py",
+    "runtime_tmpfs": runtime_root,
 }
 provider = paths["rustdesk_vault_provider"]
+backend = paths["rustdesk_vault_backend"]
+provider_ready = provider.is_file() and backend.is_file()
 provider_probe = {
-    "status": "BLOCKED",
-    "blocker": "rustdesk-vault-provider-missing",
+    "status": "PASS" if provider_ready else "BLOCKED",
+    "blocker": "none" if provider_ready else "rustdesk-vault-provider-missing",
     "secret_material_present": False,
 }
-if provider.is_file():
-    try:
-        completed = subprocess.run(
-            [str(provider), "--self-check"],
-            text=True,
-            capture_output=True,
-            timeout=30,
-            check=False,
-        )
-        candidate = json.loads(completed.stdout) if completed.stdout else {}
-        if (
-            completed.stderr == ""
-            and isinstance(candidate, dict)
-            and set(candidate) == {"status", "blocker", "reference_count", "secret_material_present"}
-            and candidate.get("status") in {"PASS", "BLOCKED"}
-            and isinstance(candidate.get("blocker"), str)
-            and candidate.get("reference_count") == 7
-            and candidate.get("secret_material_present") is False
-        ):
-            provider_probe = candidate
-        else:
-            provider_probe["blocker"] = "rustdesk-vault-provider-probe-invalid"
-    except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
-        provider_probe["blocker"] = "rustdesk-vault-provider-probe-failed"
 print(json.dumps({
     "home": str(home),
+    "runtime_root": str(runtime_root),
     "tools": {name: bool(shutil.which(name)) for name in ("python3", "omni", "podman", "rclone", "sqlite3")},
     "paths": {name: {"exists": path.exists(), "is_file": path.is_file(), "is_dir": path.is_dir()} for name, path in paths.items()},
     "vault_provider": provider_probe,
@@ -922,6 +913,9 @@ def _stage_record(candidate: str, stage: str, value: Any) -> dict[str, Any]:
         not isinstance(mutation, dict)
         or mutation.get("performed") not in {True, False}
         or not isinstance(mutation.get("classes"), list)
+        or not all(isinstance(item, str) and item for item in mutation.get("classes", []))
+        or len(mutation.get("classes", [])) != len(set(mutation.get("classes", [])))
+        or (mutation.get("performed") is True and not mutation.get("classes"))
     ):
         raise ValueError("candidate stage mutation metadata is invalid")
     return {
@@ -1158,12 +1152,207 @@ def collect_full_gate_readiness(candidate: str) -> dict[str, Any]:
         or not isinstance(payload.get("paths"), dict)
         or not isinstance(payload.get("home"), str)
         or not payload["home"].startswith("/")
+        or not isinstance(payload.get("runtime_root"), str)
+        or not payload["runtime_root"].startswith("/")
         or not isinstance(payload.get("vault_provider"), dict)
         or payload["vault_provider"].get("status") not in {"PASS", "BLOCKED"}
         or payload["vault_provider"].get("secret_material_present") is not False
     ):
         raise ValueError(f"unsafe full-gate readiness output for {candidate}")
     return payload
+
+
+def build_live_drill_command(
+    candidate: str, action: str, transaction_dir: str, *, initialize: bool = False
+) -> list[str]:
+    if candidate != "horistic-srv" or action not in (
+        "preflight", "vault", "backup", "restore", "capacity-finalize", "rollback"
+    ):
+        raise ValueError("live drill is restricted to Horistic and exact actions")
+    transaction = Path(transaction_dir)
+    if not transaction.is_absolute() or transaction.name.startswith("."):
+        raise ValueError("invalid live-drill transaction path")
+    arguments = [
+        "--action", action,
+        "--transaction-dir", transaction.as_posix(),
+    ]
+    repo_root = Path(__file__).resolve().parents[3]
+    managed = {
+        "live_drill_sha256": _sha256_file(repo_root / LIVE_DRILL_SOURCE),
+        "recovery_sha256": _sha256_file(repo_root / RECOVERY_SOURCE),
+        "live_drill_contract_sha256": _sha256_file(repo_root / LIVE_DRILL_CONTRACT),
+        "validator_sha256": _sha256_file(repo_root / Path("modules/rustdesk-fleet/tools/validate_phase52.py")),
+        "capacity_policy_sha256": _sha256_file(repo_root / CAPACITY_POLICY),
+        "provider_sha256": _sha256_file(repo_root / Path("modules/rustdesk-fleet/tools/rustdesk-vault-provider")),
+        "client_sha256": _sha256_file(repo_root / Path("modules/rustdesk-fleet/tools/atius-vault-phase52-client")),
+        "rclone_hydrate_sha256": _sha256_file(repo_root / Path("modules/fleet-backup/scripts/atius-rclone-vault-hydrate")),
+        "rclone_copy_sha256": _sha256_file(repo_root / Path("modules/fleet-backup/scripts/rclone-copy-verified-phase52.sh")),
+        "rclone_fetch_sha256": _sha256_file(repo_root / Path("modules/fleet-backup/scripts/rclone-fetch-verified-phase52.sh")),
+    }
+    arguments.extend(["--expected-managed-source-digests", json.dumps(managed, sort_keys=True, separators=(",", ":"))])
+    if initialize:
+        arguments.append("--initialize")
+    remote_command = "python3 \"$HOME/GitHub/omni-srv-admin/modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py\" " + " ".join(
+        shlex.quote(item) for item in arguments
+    )
+    return [
+        "ssh", "-n", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+        "-o", "ConnectionAttempts=1", SSH_ALIASES[candidate],
+        remote_command,
+    ]
+
+
+def _kill_process_group(process: subprocess.Popen[bytes]) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    try:
+        process.wait(timeout=2)
+    except subprocess.SubprocessError:
+        pass
+
+
+def _run_bounded_text_command(
+    command: list[str], *, timeout: int, stdout_limit: int, stderr_limit: int
+) -> tuple[int, str, str]:
+    process = subprocess.Popen(
+        command,
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        bufsize=0,
+        start_new_session=True,
+    )
+    selector = selectors.DefaultSelector()
+    chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
+    sizes = {"stdout": 0, "stderr": 0}
+    deadline = time.monotonic() + timeout
+    try:
+        assert process.stdout is not None and process.stderr is not None
+        selector.register(process.stdout, selectors.EVENT_READ, ("stdout", stdout_limit))
+        selector.register(process.stderr, selectors.EVENT_READ, ("stderr", stderr_limit))
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError("bounded-command-timeout")
+            events = selector.select(remaining)
+            if not events:
+                raise TimeoutError("bounded-command-timeout")
+            for key, _ in events:
+                name, limit = key.data
+                chunk = os.read(key.fd, 8192)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                sizes[name] += len(chunk)
+                if sizes[name] > limit:
+                    raise OverflowError(f"bounded-command-{name}-overflow")
+                chunks[name].append(chunk)
+        code = process.wait(timeout=max(0.01, deadline - time.monotonic()))
+        return (
+            code,
+            b"".join(chunks["stdout"]).decode("utf-8", errors="strict"),
+            b"".join(chunks["stderr"]).decode("utf-8", errors="strict"),
+        )
+    except BaseException:
+        _kill_process_group(process)
+        raise
+    finally:
+        selector.close()
+
+
+def _validate_live_action_contract(action: str, details: dict[str, Any], mutation: dict[str, Any], status: str) -> None:
+    recovery_path = Path(__file__).with_name("phase52_recovery.py")
+    spec = importlib.util.spec_from_file_location("phase52_controller_recovery_contract", recovery_path)
+    if spec is None or spec.loader is None:
+        raise ValueError("live-drill action details invalid")
+    recovery = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = recovery
+    try:
+        spec.loader.exec_module(recovery)
+        recovery.validate_mutation(mutation)
+        if status == "PASS":
+            recovery.validate_action_result(action, details)
+    except Exception as exc:
+        raise ValueError("live-drill action details invalid") from exc
+
+
+def run_live_drill_action(
+    candidate: str, action: str, transaction_dir: str, *, initialize: bool = False
+) -> dict[str, Any]:
+    returncode, stdout, stderr = _run_bounded_text_command(
+        build_live_drill_command(candidate, action, transaction_dir, initialize=initialize),
+        timeout=930,
+        stdout_limit=131072,
+        stderr_limit=4096,
+    )
+    if stderr:
+        raise ValueError("live-drill stream contract failed")
+    try:
+        payload = json.loads(stdout)
+    except json.JSONDecodeError:
+        raise ValueError("live-drill output invalid") from None
+    if not isinstance(payload, dict):
+        raise ValueError("live-drill result invalid")
+    expected_keys = {
+        "schema", "transaction_id", "action", "status", "details", "mutation",
+        "secret_material_present",
+    }
+    if payload.get("status") == "BLOCKED":
+        expected_keys.add("blocker")
+    mutation = payload.get("mutation")
+    allowed_mutations = {
+        "redacted-evidence-write", "ephemeral-vault-hydration", "isolated-source-runtime",
+        "isolated-hbbs-container-lifecycle", "state-only-backup-a",
+        "state-only-backup-b-local", "state-only-backup-b-remote-create",
+        "disposable-isolated-restore-state", "verified-drill-artifact-rollback-removal",
+    }
+    if (
+        set(payload) != expected_keys
+        or payload.get("schema") != "phase52-live-drill-result-v2"
+        or payload.get("action") != action
+        or not isinstance(payload.get("transaction_id"), str)
+        or re.fullmatch(r"[0-9a-f]{32}", payload["transaction_id"]) is None
+        or payload.get("secret_material_present") is not False
+        or not isinstance(payload.get("details"), dict)
+        or not isinstance(mutation, dict)
+        or set(mutation) != {"performed", "classes", "cleanup_pending", "retained_artifacts"}
+        or mutation.get("performed") not in {True, False}
+        or not isinstance(mutation.get("classes"), list)
+        or len(mutation["classes"]) != len(set(mutation["classes"]))
+        or not set(mutation["classes"]).issubset(allowed_mutations)
+        or (mutation.get("performed") is True and not mutation["classes"])
+        or not isinstance(mutation.get("cleanup_pending"), list)
+        or mutation.get("retained_artifacts") != ["backup-a", "backup-b-local", "backup-b-remote"]
+        or (returncode == 0) != (payload.get("status") == "PASS")
+        or (returncode == 2) != (payload.get("status") == "BLOCKED")
+        or returncode not in {0, 2}
+    ):
+        raise ValueError("live-drill result invalid")
+    _validate_live_action_contract(
+        action, payload["details"], mutation, str(payload["status"])
+    )
+    return payload
+
+
+def validate_all_predecessor_mutations(summary: dict[str, Any]) -> list[str]:
+    attempts = summary.get("attempts") if isinstance(summary, dict) else None
+    selected = summary.get("selected_candidate") if isinstance(summary, dict) else None
+    if not isinstance(attempts, list):
+        return []
+    findings: list[str] = []
+    for attempt in attempts:
+        if not isinstance(attempt, dict) or (selected is not None and attempt.get("candidate") == selected):
+            break
+        stages = attempt.get("stages")
+        if not isinstance(stages, dict) or any(
+            not isinstance(record, dict)
+            or record.get("mutation") != {"performed": False, "classes": []}
+            for record in stages.values()
+        ):
+            findings.append("predecessor-mutation")
+    return sorted(set(findings))
 
 
 def _stage_input_digest(*payloads: Any) -> str:
@@ -1206,6 +1395,7 @@ def validate_full_candidate_summary(
 ) -> CheckResult:
     fail: list[str] = []
     blocked: list[str] = []
+    fail.extend(validate_all_predecessor_mutations(summary))
     if summary.get("authorized_live_write_candidate") != AUTHORIZED_LIVE_WRITE_CANDIDATE:
         fail.append("authorized-live-write-candidate-drift")
     if summary.get("attempt_order") != list(CANDIDATES):
@@ -1345,6 +1535,7 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
             provider = readiness["paths"].get("rustdesk_vault_provider", {})
             provider_probe = readiness.get("vault_provider", {})
             findings: list[str] = []
+            vault_result: dict[str, Any] | None = None
             if vault_helper.get("is_file") is not True:
                 findings.append("vault-export-helper-missing")
             if provider.get("is_file") is not True:
@@ -1354,6 +1545,25 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
                 findings.append(
                     blocker if isinstance(blocker, str) and blocker else "rustdesk-vault-provider-not-ready"
                 )
+            required_paths = ("rclone_vault_hydrator", "rclone_copy", "rclone_fetch", "live_drill")
+            for required_path in required_paths:
+                if readiness["paths"].get(required_path, {}).get("is_file") is not True:
+                    findings.append(f"{required_path.replace('_', '-')}-missing")
+            if host == "horistic-srv" and not findings:
+                transaction_dir = str(
+                    Path(readiness["runtime_root"])
+                    / f"rustdesk-phase52-{secrets.token_hex(12)}"
+                )
+                state["transaction_dir"] = transaction_dir
+                preflight = run_live_drill_action(
+                    host, "preflight", transaction_dir, initialize=True
+                )
+                if preflight.get("status") != "PASS":
+                    findings.append(str(preflight.get("blocker") or "live-drill-preflight-blocked"))
+                else:
+                    vault_result = run_live_drill_action(host, "vault", transaction_dir)
+                    if vault_result.get("status") != "PASS":
+                        findings.append(str(vault_result.get("blocker") or "live-vault-blocked"))
             return {
                 "status": "PASS" if not findings else "BLOCKED",
                 "input_digest": _stage_input_digest(secret_roles_digest, readiness),
@@ -1361,7 +1571,8 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
                 "findings": findings,
                 "reference_count": len(APPROVED_VAULT_REFERENCES),
                 "readiness": readiness,
-                "mutation": {"performed": False, "classes": []},
+                "action_details": (vault_result or {}).get("details", {}),
+                "mutation": (vault_result or {}).get("mutation", {"performed": False, "classes": []}),
             }
 
         def backup_stage(host: str = candidate, state: dict[str, Any] = context) -> dict[str, Any]:
@@ -1371,39 +1582,60 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
             findings: list[str] = []
             if tools.get("rclone") is not True:
                 findings.append("rclone-missing")
-            if paths.get("rclone_config", {}).get("is_file") is not True:
-                findings.append("rclone-config-missing")
+            if paths.get("rclone_vault_hydrator", {}).get("is_file") is not True:
+                findings.append("rclone-vault-hydrator-missing")
+            if paths.get("rclone_copy", {}).get("is_file") is not True:
+                findings.append("rclone-copy-missing")
+            if paths.get("rclone_fetch", {}).get("is_file") is not True:
+                findings.append("rclone-fetch-missing")
             if paths.get("fleet_backup_module", {}).get("is_dir") is not True:
                 findings.append("managed-fleet-backup-module-missing")
-            if not findings:
-                findings.append("live-backup-runner-not-authorized-by-current-contract")
+            live_result: dict[str, Any] | None = None
+            if not findings and host == "horistic-srv" and isinstance(state.get("transaction_dir"), str):
+                live_result = run_live_drill_action(host, "backup", state["transaction_dir"])
+                if live_result.get("status") != "PASS":
+                    findings.append(str(live_result.get("blocker") or "live-backup-blocked"))
             return {
-                "status": "BLOCKED",
+                "status": "PASS" if not findings else "BLOCKED",
                 "input_digest": _stage_input_digest(readiness),
                 "evidence_ids": [f"P52-EV-BACKUP-READINESS-{host.upper()}"],
                 "findings": findings,
-                "mutation": {"performed": False, "classes": []},
+                "action_details": (live_result or {}).get("details", {}),
+                "mutation": (live_result or {}).get("mutation", {"performed": False, "classes": []}),
             }
 
-        def unreachable_stage(name: str, host: str = candidate) -> dict[str, Any]:
+        def live_stage(name: str, host: str = candidate, state: dict[str, Any] = context) -> dict[str, Any]:
+            transaction_dir = state.get("transaction_dir")
+            if host != "horistic-srv" or not isinstance(transaction_dir, str):
+                result = {"status": "BLOCKED", "blocker": "stage-preconditions-not-satisfied"}
+            else:
+                result = run_live_drill_action(host, name, transaction_dir)
             return {
-                "status": "BLOCKED",
+                "status": result.get("status", "BLOCKED"),
                 "input_digest": _stage_input_digest(host, name),
                 "evidence_ids": [f"P52-EV-{name.upper()}-{host.upper()}"],
-                "findings": ["stage-preconditions-not-satisfied"],
-                "mutation": {"performed": False, "classes": []},
+                "findings": [] if result.get("status") == "PASS" else [str(result.get("blocker") or "live-drill-blocked")],
+                "action_details": result.get("details", {}),
+                "mutation": result.get("mutation", {"performed": False, "classes": []}),
             }
 
-        def rollback_stage(host: str = candidate) -> dict[str, Any]:
+        def rollback_stage(host: str = candidate, state: dict[str, Any] = context) -> dict[str, Any]:
+            if not isinstance(state.get("transaction_dir"), str):
+                return {
+                    "status": "PASS", "input_digest": _stage_input_digest(host, "rollback", "no-artifacts"),
+                    "evidence_ids": [f"P52-EV-ROLLBACK-NOOP-{host.upper()}"], "findings": [],
+                    "inactive": True, "disposable_artifacts_present": False,
+                    "retained_backups_deleted": False, "mutation": {"performed": False, "classes": []},
+                }
+            result = run_live_drill_action(host, "rollback", state["transaction_dir"])
             return {
-                "status": "PASS",
-                "input_digest": _stage_input_digest(host, "rollback", "no-artifacts"),
-                "evidence_ids": [f"P52-EV-ROLLBACK-NOOP-{host.upper()}"],
-                "findings": [],
-                "inactive": True,
-                "disposable_artifacts_present": False,
-                "retained_backups_deleted": False,
-                "mutation": {"performed": False, "classes": []},
+                "status": result.get("status", "BLOCKED"),
+                "input_digest": _stage_input_digest(host, "rollback"),
+                "evidence_ids": [f"P52-EV-ROLLBACK-{host.upper()}"],
+                "findings": [] if result.get("status") == "PASS" else [str(result.get("blocker") or "rollback-blocked")],
+                "retained_backups_deleted": result.get("retained_backups_deleted", False),
+                "action_details": result.get("details", {}),
+                "mutation": result.get("mutation", {"performed": False, "classes": []}),
             }
 
         def topology_stage(host: str = candidate) -> dict[str, Any]:
@@ -1425,8 +1657,8 @@ def run_full_candidate_chain(repo: Path, evidence_dir: Path) -> CheckResult:
             "capacity": capacity_stage,
             "vault": vault_stage,
             "backup": backup_stage,
-            "restore": lambda host=candidate: unreachable_stage("restore", host),
-            "capacity_finalize": lambda host=candidate: unreachable_stage("capacity-finalize", host),
+            "restore": lambda host=candidate: live_stage("restore", host),
+            "capacity_finalize": lambda host=candidate: live_stage("capacity-finalize", host),
             "rollback": rollback_stage,
             "topology_security": topology_stage,
         }
@@ -3025,16 +3257,38 @@ def _stage_check(
     if not isinstance(attempts, list) or not attempts:
         return _check_result(check_id, "FAIL", ["candidate-shape"], FULL_GATE_SUMMARY.as_posix())
     records: list[dict[str, Any]] = []
+    candidates: list[str] = []
     for attempt in attempts:
         stages = attempt.get("stages") if isinstance(attempt, dict) else None
         record = stages.get(stage) if isinstance(stages, dict) else None
         if not isinstance(record, dict):
             return _check_result(check_id, "FAIL", ["stage-vector-shape"], FULL_GATE_SUMMARY.as_posix())
         records.append(record)
+        candidate = attempt.get("candidate") if isinstance(attempt, dict) else None
+        if not isinstance(candidate, str) or not candidate:
+            return _check_result(check_id, "FAIL", ["candidate-shape"], FULL_GATE_SUMMARY.as_posix())
+        candidates.append(candidate)
+    if len(set(candidates)) != len(candidates):
+        return _check_result(check_id, "FAIL", ["candidate-duplicate"], FULL_GATE_SUMMARY.as_posix())
+    selected = full_gate.get("selected_candidate")
+    evaluation_records = records
+    if selected is not None:
+        if candidates.count(selected) != 1:
+            return _check_result(check_id, "FAIL", ["selected-candidate-shape"], FULL_GATE_SUMMARY.as_posix())
+        evaluation_records = [records[candidates.index(selected)]]
+        predecessor_records = records[: candidates.index(selected)]
+        if any(
+            isinstance(record.get("mutation"), dict)
+            and record["mutation"].get("performed") is not False
+            for record in predecessor_records
+        ):
+            return _check_result(
+                check_id, "FAIL", ["predecessor-mutation"], FULL_GATE_SUMMARY.as_posix()
+            )
     evidence_ids = list(
         dict.fromkeys(
             item
-            for record in records
+            for record in evaluation_records
             for item in record.get("evidence_ids", [])
             if isinstance(item, str) and item
         )
@@ -3042,15 +3296,15 @@ def _stage_check(
     findings = list(
         dict.fromkeys(
             item
-            for record in records
+            for record in evaluation_records
             for item in record.get("findings", [])
             if isinstance(item, str)
         )
     )
-    statuses = [record.get("status") for record in records]
+    statuses = [record.get("status") for record in evaluation_records]
     if any(status == "FAIL" for status in statuses):
         status = "FAIL"
-    elif require_selected and full_gate.get("selected_candidate") is None:
+    elif require_selected and selected is None:
         status = "BLOCKED"
         findings.append("no-selected-candidate")
     elif any(status in {"BLOCKED", "NO-GO", "SKIPPED_DUE_TO_GATE", "SKIPPED_BY_GATE"} for status in statuses):
@@ -3116,8 +3370,12 @@ def _backup_report_check(full_gate: dict[str, Any]) -> CheckResult:
         categories = [item.category for item in result.findings]
         if tools.get("rclone") is not True:
             categories.append("rclone-missing")
-        if paths.get("rclone_config", {}).get("is_file") is not True:
-            categories.append("rclone-config-missing")
+        if paths.get("rclone_vault_hydrator", {}).get("is_file") is not True:
+            categories.append("rclone-vault-hydrator-missing")
+        if paths.get("rclone_copy", {}).get("is_file") is not True:
+            categories.append("rclone-copy-missing")
+        if paths.get("rclone_fetch", {}).get("is_file") is not True:
+            categories.append("rclone-fetch-missing")
         if paths.get("fleet_backup_module", {}).get("is_dir") is not True:
             categories.append("managed-fleet-backup-module-missing")
         result.findings = [
@@ -3199,7 +3457,7 @@ def build_phase52_report(repo: Path, generated_at: str | None = None) -> dict[st
     )
     backup = _backup_report_check(full_gate)
     restore = _stage_check("P52-RESTORE-001", "restore", full_gate, require_selected=True)
-    rollback = _stage_check("P52-ROLLBACK-001", "rollback", full_gate)
+    rollback = _stage_check("P52-ROLLBACK-001", "rollback", full_gate, require_selected=True)
     topology = _topology_report_check(full_gate)
     report_check = _check_result("P52-REPORT-001", "PASS", [], INTEGRATED_GATE.as_posix())
     workstream, phase48 = _phase51_checks(root)
@@ -3466,6 +3724,15 @@ def render_phase53_topology_review(report: dict[str, Any]) -> str:
         }
     ) or ["no-selected-candidate"]
     status = report["phase53_topology_review_status"]
+    if status == "PASS" and selected != "none" and report.get("phase53_advance_status") == "READY":
+        decision = (
+            f"Horistic candidate `{selected}` has the current full-vector PASS. "
+            "Phase 53 is READY within the reviewed rootless server budget; no native listener, DNS, edge, or Windows mutation is performed by this review."
+        )
+        blocker_line = "Current blockers: none."
+    else:
+        decision = "No recoverable primary is selected. Phase 53 is blocked and no production deployment, native listener, DNS or edge change is authorized."
+        blocker_line = f"Current blockers: {', '.join(blockers)}."
     return "\n".join(
         [
             "# Phase 52 — Phase 53 Topology Review",
@@ -3479,8 +3746,8 @@ def render_phase53_topology_review(report: dict[str, Any]) -> str:
             "",
             "## Current decision",
             "",
-            "No recoverable primary is selected. Phase 53 is blocked and no production deployment, native listener, DNS or edge change is authorized.",
-            f"Current blockers: {', '.join(blockers)}.",
+            decision,
+            blocker_line,
             "",
             "## Deferred selected-host contract",
             "",
@@ -3610,12 +3877,52 @@ def update_phase52_ledger(
     return updated, True
 
 
+def run_gate_a_secret_scan(repo: Path) -> CheckResult:
+    reviewed = (
+        Path("modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json"),
+        Path("modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json"),
+        Path("modules/rustdesk-fleet/tools/atius-vault-phase52-client"),
+        Path("modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52"),
+        Path("modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52"),
+        Path("modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh"),
+        Path("modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py"),
+        Path("modules/rustdesk-fleet/tools/phase52_recovery.py"),
+        Path("modules/rustdesk-fleet/tools/rustdesk-vault-provider"),
+        Path("modules/rustdesk-fleet/tools/install-rustdesk-vault-provider.sh"),
+        Path("modules/fleet-backup/scripts/atius-rclone-vault-hydrate"),
+        Path("modules/fleet-backup/scripts/rclone-copy-verified-phase52.sh"),
+        Path("modules/fleet-backup/scripts/rclone-fetch-verified-phase52.sh"),
+        PHASE52_DIR / "52-07-AUTHORIZATION.md",
+        Path("modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json"),
+    )
+    findings: list[str] = []
+    patterns = (
+        re.compile(r"-----BEGIN (?:OPENSSH |RSA |EC )?PRIVATE KEY-----"),
+        re.compile(r"(?<![A-Za-z0-9])R[A-Za-z0-9]{31}(?![A-Za-z0-9])"),
+        re.compile(r"(?im)^\s*(?:token|password|private_key)\s*=\s*[^<\s][^\n]+$"),
+    )
+    for relative in reviewed:
+        path = validate_repo_path(repo, repo / relative)
+        if not path.is_file():
+            findings.append(f"managed-source-missing:{relative.as_posix()}")
+            continue
+        text = path.read_text(encoding="utf-8")
+        if any(pattern.search(text) for pattern in patterns):
+            findings.append(f"secret-pattern:{relative.as_posix()}")
+    return _check_result(
+        "P52-GATE-A-SECRET-SCAN",
+        "PASS" if not findings else "FAIL",
+        findings,
+        "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json",
+    )
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
     parser.add_argument(
         "--only",
-        choices=("supply", "capacity-proposal", "capacity-live", "full-candidate-chain", "report"),
+        choices=("supply", "capacity-proposal", "capacity-live", "full-candidate-chain", "report", "secret-scan"),
         default="supply",
     )
     parser.add_argument("--evidence-dir", type=Path, default=SUPPLY_OBSERVATION.parent)
@@ -3633,6 +3940,10 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(effective_argv)
     repo = args.repo.resolve()
     try:
+        if args.only == "secret-scan":
+            result = run_gate_a_secret_scan(repo)
+            print(json.dumps({"status": result.status, "check": result.id}, sort_keys=True))
+            return exit_code_for_status(result.status)
         report_requested = args.only == "report" or args.json_out is not None or args.markdown_out is not None
         if report_requested:
             if args.json_out is None or args.markdown_out is None:

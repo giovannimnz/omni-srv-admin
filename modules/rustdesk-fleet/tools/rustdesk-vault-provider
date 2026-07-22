@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import selectors
+import signal
 import subprocess
 import sys
 import time
@@ -36,6 +37,17 @@ class ProviderBlocked(Exception):
         self.blocker = blocker
 
 
+def kill_process_group(process: subprocess.Popen[bytes]) -> None:
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    try:
+        process.wait(timeout=2)
+    except subprocess.SubprocessError:
+        pass
+
+
 def _request() -> dict[str, Any]:
     return {
         "references": [
@@ -58,7 +70,7 @@ def _validate_request(payload: Any) -> None:
 def _backend_path() -> Path:
     configured = os.environ.get("ATIUS_RUSTDESK_VAULT_BACKEND")
     try:
-        path = Path(configured) if configured else Path.home() / ".local/bin/atius-rustdesk-vault-export"
+        path = Path(configured) if configured else Path.home() / ".local/bin/atius-vault-phase52-client"
         available = (
             path.is_absolute()
             and not path.is_symlink()
@@ -83,6 +95,7 @@ def _bounded_backend_exchange(backend: Path, request: bytes) -> tuple[int, bytes
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             bufsize=0,
+            start_new_session=True,
         )
         assert process.stdin is not None and process.stdout is not None and process.stderr is not None
         process.stdin.write(request)
@@ -124,12 +137,8 @@ def _bounded_backend_exchange(backend: Path, request: bytes) -> tuple[int, bytes
         raise ProviderBlocked("rustdesk-vault-backend-failed") from None
     finally:
         selector.close()
-        if process is not None and process.poll() is None:
-            process.kill()
-            try:
-                process.wait(timeout=2)
-            except subprocess.SubprocessError:
-                pass
+        if process is not None:
+            kill_process_group(process)
 
 
 def _read_values(payload: dict[str, Any]) -> dict[str, str]:

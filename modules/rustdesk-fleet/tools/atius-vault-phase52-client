@@ -1,0 +1,133 @@
+#!/usr/bin/env python3
+"""Bounded read-only Horistic client for both Phase 52 Vault protocols."""
+
+from __future__ import annotations
+
+import json
+import os
+from pathlib import Path
+import selectors
+import signal
+import subprocess
+import sys
+import time
+from typing import Any
+
+RUSTDESK = (
+    ("kv/atius/rustdesk/server", "private_key"), ("kv/atius/rustdesk/server", "public_key"),
+    ("kv/atius/rustdesk/targets/atius-srv-1", "permanent_password"),
+    ("kv/atius/rustdesk/targets/atius-srv-2", "permanent_password"),
+    ("kv/atius/rustdesk/targets/atius-srv-3", "permanent_password"),
+    ("kv/atius/rustdesk/targets/horistic-srv", "permanent_password"),
+    ("kv/atius/rustdesk/targets/giovanni-w11-pc", "permanent_password"),
+)
+RCLONE = (("kv/atius/fleet-backup/rclone/giovanni-drive", "rclone_conf"),)
+MAX_REQUEST = 16 * 1024
+MAX_STDOUT = 128 * 1024
+MAX_STDERR = 4 * 1024
+SSH_TARGET = "ubuntu@atius-srv-3"
+SSH_IDENTITY = "/home/horistic/.ssh/atius-vault-export-ed25519"
+
+
+def kill_process_group(process: subprocess.Popen[bytes]) -> None:
+    # Descendants may keep pipes open after the leader exits; always target the PGID.
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except ProcessLookupError:
+        pass
+    try:
+        process.wait(timeout=2)
+    except subprocess.SubprocessError:
+        pass
+
+
+def strict_pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in items:
+        if key in result:
+            raise ValueError("duplicate")
+        result[key] = value
+    return result
+
+
+def bounded(command: list[str], request: bytes) -> tuple[int, bytes, bytes]:
+    process = subprocess.Popen(
+        command, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+        bufsize=0, start_new_session=True,
+    )
+    selector = selectors.DefaultSelector()
+    try:
+        assert process.stdin and process.stdout and process.stderr
+        process.stdin.write(request)
+        process.stdin.close()
+        selector.register(process.stdout, selectors.EVENT_READ, ("stdout", MAX_STDOUT))
+        selector.register(process.stderr, selectors.EVENT_READ, ("stderr", MAX_STDERR))
+        chunks: dict[str, list[bytes]] = {"stdout": [], "stderr": []}
+        sizes = {"stdout": 0, "stderr": 0}
+        deadline = time.monotonic() + 30
+        while selector.get_map():
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                raise TimeoutError
+            events = selector.select(remaining)
+            if not events:
+                raise TimeoutError
+            for key, _ in events:
+                name, limit = key.data
+                chunk = os.read(key.fd, 8192)
+                if not chunk:
+                    selector.unregister(key.fileobj)
+                    continue
+                sizes[name] += len(chunk)
+                if sizes[name] > limit:
+                    raise OverflowError
+                chunks[name].append(chunk)
+        return process.wait(timeout=max(0.01, deadline - time.monotonic())), b"".join(chunks["stdout"]), b"".join(chunks["stderr"])
+    except BaseException:
+        kill_process_group(process)
+        raise
+    finally:
+        selector.close()
+
+
+def main() -> int:
+    if sys.argv[1:]:
+        return 64
+    try:
+        raw = sys.stdin.buffer.read(MAX_REQUEST + 1)
+        if len(raw) > MAX_REQUEST:
+            return 2
+        external = json.loads(raw.decode(), object_pairs_hook=strict_pairs)
+        if not isinstance(external, dict) or set(external) != {"references"}:
+            return 2
+        references = external["references"]
+        rustdesk = [{"vault_path": path, "field": field} for path, field in RUSTDESK]
+        rclone = [{"vault_path": path, "field": field} for path, field in RCLONE]
+        if references == rustdesk:
+            protocol = "rustdesk-phase52-v1"
+        elif references == rclone:
+            protocol = "rclone-giovanni-drive-phase52-v1"
+        else:
+            return 2
+        envelope = json.dumps({"protocol": protocol, "references": references}, separators=(",", ":")).encode()
+        completed, stdout, stderr = bounded([
+            "ssh", "-T", "-o", "BatchMode=yes", "-o", "ConnectTimeout=10",
+            "-o", "ConnectionAttempts=1", "-o", "IdentitiesOnly=yes",
+            "-o", "IdentityAgent=none", "-o", "ProxyCommand=none",
+            "-o", "ProxyJump=none", "-o", "ClearAllForwardings=yes",
+            "-i", SSH_IDENTITY, SSH_TARGET, protocol,
+        ], envelope)
+        if completed or stderr:
+            return 2
+        response = json.loads(stdout.decode(), object_pairs_hook=strict_pairs)
+        expected = {f"{item['vault_path']}#{item['field']}" for item in references}
+        if not isinstance(response, dict) or set(response) != {"request_count", "values"} or response.get("request_count") != len(references) or not isinstance(response.get("values"), dict) or set(response["values"]) != expected:
+            return 2
+        os.write(sys.stdout.fileno(), stdout)
+        return 0
+    except (OSError, ValueError, UnicodeError, json.JSONDecodeError, subprocess.SubprocessError, TimeoutError, OverflowError):
+        return 2
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

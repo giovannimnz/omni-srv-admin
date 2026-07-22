@@ -18,6 +18,7 @@ from unittest import mock
 MODULE = Path(__file__).resolve().parents[1]
 COPY_SCRIPT = MODULE / "scripts/rclone-copy-verified-phase52.sh"
 HYDRATOR = MODULE / "scripts/atius-rclone-vault-hydrate"
+FETCH_SCRIPT = MODULE / "scripts/rclone-fetch-verified-phase52.sh"
 INSTALLER = MODULE / "scripts/install-fleet-backup.sh"
 STATE_HELPER = MODULE / "scripts/phase52-install-state.py"
 MAP = MODULE / "configs/fleet-backup-map.yaml"
@@ -52,19 +53,24 @@ root = pathlib.Path(os.sys.argv[1])
 config = root / 'rclone.conf'
 info = config.stat()
 payload = {
-  'schema': 'atius-rclone-vault-provenance-v1',
+  'schema': 'atius-rclone-vault-provenance-v2',
   'status': 'PASS',
   'materialized_by': 'atius-rclone-vault-hydrate',
+  'profile': 'rclone-giovanni-drive-phase52',
+  'protocol': 'rclone-giovanni-drive-phase52-v1',
+  'vault_path': 'kv/atius/fleet-backup/rclone/giovanni-drive',
+  'field': 'rclone_conf',
   'config_basename': config.name,
-  'config_sha256': hashlib.sha256(config.read_bytes()).hexdigest(),
   'config_device': info.st_dev,
   'config_inode': info.st_ino,
   'config_uid': os.getuid(),
+  'config_mode': '0600',
+  'config_size_bytes': info.st_size,
   'approved_remote': 'giovanni-drive',
   'secret_material_present': False,
 }
 field = os.environ.get('FAKE_HYDRATOR_BAD_FIELD')
-if field == 'digest': payload['config_sha256'] = '0' * 64
+if field == 'digest': payload['config_size_bytes'] += 1
 if field == 'inode': payload['config_inode'] += 1
 if field == 'remote': payload['approved_remote'] = 'lookalike-drive'
 marker = root / '.atius-rclone-vault-provenance.json'
@@ -165,6 +171,8 @@ esac
                 str(self.archive),
                 "--destination",
                 destination or f"{PREFIX}backup-b-test.tar",
+                "--expected-size-bytes",
+                str(self.archive.stat().st_size),
             ],
             text=True,
             capture_output=True,
@@ -196,6 +204,7 @@ esac
     def _installed_targets(home: Path) -> list[Path]:
         return [
             home / ".local/bin/rclone-copy-verified-phase52",
+            home / ".local/bin/rclone-fetch-verified-phase52",
             home / ".local/bin/atius-rclone-vault-hydrate",
             home / ".config/atius/fleet-backup/fleet-backup-map.yaml",
         ]
@@ -239,7 +248,7 @@ esac
     def test_hash_mismatch_blocks_without_secret_output(self) -> None:
         completed = self._run_copy(FAKE_RCLONE_CORRUPT="1")
         self.assertEqual(completed.returncode, 2)
-        self.assertEqual(json.loads(completed.stdout)["blocker"], "remote-hash-mismatch")
+        self.assertEqual(json.loads(completed.stdout)["blocker"], "rclone-rehash-failed")
         self.assertNotIn("secret-sentinel-config", completed.stdout + completed.stderr)
 
     def test_cat_failure_and_timeout_block_and_cleanup_snapshots(self) -> None:
@@ -301,7 +310,7 @@ esac
         completed = self._run_copy(FAKE_HYDRATOR_HARDLINK="1")
         self.assertEqual(json.loads(completed.stdout)["blocker"], "hydrated-rclone-config-identity-invalid")
 
-    def test_config_provenance_binds_digest_inode_and_remote(self) -> None:
+    def test_config_provenance_binds_size_inode_and_remote(self) -> None:
         for field in ("digest", "inode", "remote"):
             completed = self._run_copy(FAKE_HYDRATOR_BAD_FIELD=field)
             self.assertEqual(completed.returncode, 2)
@@ -367,7 +376,7 @@ esac
         production_uploader.chmod(0o700)
         production_hydrator.chmod(0o700)
         completed = subprocess.run(
-            [str(production_uploader), "--source", str(self.archive), "--destination", f"{PREFIX}blocked.tar"],
+            [str(production_uploader), "--source", str(self.archive), "--destination", f"{PREFIX}blocked.tar", "--expected-size-bytes", str(self.archive.stat().st_size)],
             text=True,
             capture_output=True,
             check=False,
@@ -384,7 +393,7 @@ esac
 
     def test_hydrator_fails_closed_without_approved_binding(self) -> None:
         home = self.work / "home"
-        helper = home / ".local/bin/atius-vault-env"
+        helper = home / ".local/bin/atius-vault-phase52-client"
         helper.parent.mkdir(parents=True)
         helper.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
         helper.chmod(0o700)
@@ -400,7 +409,7 @@ esac
             json.loads(completed.stdout),
             {
                 "status": "BLOCKED",
-                "blocker": "rclone-vault-binding-not-approved",
+                "blocker": "vault-profile-invalid",
                 "config_materialized": False,
                 "config_storage": "tmpfs-required",
                 "secret_material_present": False,
@@ -716,6 +725,113 @@ esac
         self.assertIn("--checkers 1", text)
         self.assertIn("--bwlimit", text)
         self.assertIn('timeout "$timeout_seconds"', text)
+
+    def test_gate_a_hydrator_uses_exact_profile_and_one_remote(self) -> None:
+        home = self.work / "gate-a-home"
+        helper = home / ".local/bin/atius-vault-phase52-client"
+        helper.parent.mkdir(parents=True, mode=0o700)
+        helper.write_text(
+            "#!/usr/bin/env python3\n"
+            "import json,sys\n"
+            "request=json.load(sys.stdin)\n"
+            "assert request == {'references':[{'vault_path':'kv/atius/fleet-backup/rclone/giovanni-drive','field':'rclone_conf'}]}\n"
+            "value='[giovanni-drive]\\ntype = drive\\ntoken = fixture-token\\n'\n"
+            "print(json.dumps({'request_count':1,'values':{'kv/atius/fleet-backup/rclone/giovanni-drive#rclone_conf':value}}))\n",
+            encoding="utf-8",
+        )
+        helper.chmod(0o700)
+        completed = subprocess.run(
+            [str(HYDRATOR), "--materialize", "--output-dir", str(self.tmpfs)],
+            text=True,
+            capture_output=True,
+            check=False,
+            env={**os.environ, "HOME": str(home)},
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        payload = json.loads(completed.stdout)
+        self.assertEqual(payload["status"], "PASS")
+        self.assertEqual(payload["profile"], "rclone-giovanni-drive-phase52")
+        self.assertEqual(payload["approved_remote"], "giovanni-drive")
+        self.assertFalse(payload["secret_material_present"])
+        self.assertNotIn("fixture-token", completed.stdout + completed.stderr)
+        self.assertEqual(
+            (self.tmpfs / "rclone.conf").read_text(encoding="utf-8").splitlines()[0],
+            "[giovanni-drive]",
+        )
+
+    def test_gate_a_fetcher_is_bounded_atomic_and_delete_free(self) -> None:
+        self.assertTrue(FETCH_SCRIPT.is_file())
+        text = FETCH_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("--expected-sha256", text)
+        self.assertIn("rclone cat", text)
+        self.assertIn("DESTINATION_PREFIX", text)
+        self.assertNotRegex(text, r"rclone\s+(delete|purge|move|sync|cleanup)\b")
+
+    def test_gate_a_corrective_provenance_contains_no_config_or_secret_digest(self) -> None:
+        hydrate = HYDRATOR.read_text(encoding="utf-8")
+        copy = COPY_SCRIPT.read_text(encoding="utf-8")
+        self.assertNotIn("config_sha256", hydrate)
+        self.assertNotIn("config_sha256", copy)
+        self.assertIn("vault_path", hydrate)
+        self.assertIn("rclone-giovanni-drive-phase52", hydrate)
+
+    def test_gate_a_corrective_copy_and_fetch_enforce_expected_size_and_four_gib_limit(self) -> None:
+        for path in (COPY_SCRIPT, FETCH_SCRIPT):
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("4294967296", text)
+            self.assertIn("--expected-size-bytes", text)
+        fetch = FETCH_SCRIPT.read_text(encoding="utf-8")
+        self.assertTrue("mktemp" in fetch or "O_EXCL" in fetch)
+        self.assertIn("stream-size-exceeded", fetch)
+
+    def test_gate_a_fetcher_streams_to_exclusive_stage_and_verifies_size_hash(self) -> None:
+        fetcher = self.tool_dir / FETCH_SCRIPT.name
+        shutil.copy2(FETCH_SCRIPT, fetcher)
+        fetcher.chmod(0o700)
+        shutil.copy2(self.archive, self.remote_root / "object")
+        output_dir = self.work / "restore-output"
+        output_dir.mkdir(mode=0o700)
+        output = output_dir / "backup-b.tar"
+        digest = __import__("hashlib").sha256(self.archive.read_bytes()).hexdigest()
+        env = self._env()
+        completed = subprocess.run(
+            [str(fetcher), "--source", f"{PREFIX}backup-b-test.tar", "--expected-sha256", digest,
+             "--expected-size-bytes", str(self.archive.stat().st_size), "--output", str(output)],
+            text=True, capture_output=True, check=False, env=env,
+        )
+        self.assertEqual(completed.returncode, 0, completed.stdout + completed.stderr)
+        self.assertEqual(output.read_bytes(), self.archive.read_bytes())
+        self.assertEqual(output.stat().st_mode & 0o777, 0o600)
+        self.assertEqual(json.loads(completed.stdout)["status"], "PASS")
+
+        oversized_output = output_dir / "oversized.tar"
+        oversized = subprocess.run(
+            [str(fetcher), "--source", f"{PREFIX}backup-b-test.tar", "--expected-sha256", digest,
+             "--expected-size-bytes", str(self.archive.stat().st_size - 1), "--output", str(oversized_output)],
+            text=True, capture_output=True, check=False, env=env,
+        )
+        self.assertEqual(oversized.returncode, 2)
+        self.assertEqual(json.loads(oversized.stdout)["blocker"], "stream-size-exceeded")
+        self.assertFalse(oversized_output.exists())
+        self.assertEqual(list(output_dir.glob(".phase52-fetch.*")), [])
+
+    def test_gate_a_third_cycle_rclone_parsers_suppress_all_parse_exceptions_and_streams(self) -> None:
+        hydrate = HYDRATOR.read_text(encoding="utf-8")
+        copy = COPY_SCRIPT.read_text(encoding="utf-8")
+        fetch = FETCH_SCRIPT.read_text(encoding="utf-8")
+        for text in (hydrate, copy, fetch):
+            self.assertIn("rclone_parse_blocked", text)
+            self.assertIn("stderr_suppressed", text)
+        self.assertIn("configparser.Error", hydrate)
+        self.assertIn("tarfile.TarError", copy)
+
+    def test_gate_a_third_cycle_fetch_stage_has_no_pathname_reopen_race(self) -> None:
+        text = FETCH_SCRIPT.read_text(encoding="utf-8")
+        self.assertIn("tempfile.mkstemp", text)
+        self.assertIn("os.link", text)
+        self.assertIn("follow_symlinks=False", text)
+        self.assertNotIn("os.open(path,os.O_WRONLY|os.O_TRUNC)", text)
+        self.assertNotIn("mv -n", text)
 
 
 if __name__ == "__main__":

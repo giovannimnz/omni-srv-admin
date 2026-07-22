@@ -1,0 +1,65 @@
+{
+  "schema_version": 1,
+  "phase": 52,
+  "gate": "A",
+  "backend_protocol": "rustdesk-phase52-v1",
+  "rclone_protocol": "rclone-giovanni-drive-phase52-v1",
+  "provider_external_api": {"exact_keys": ["references"], "protocol_field_exposed": false},
+  "horistic_client": {
+    "managed_path": "/home/horistic/.local/bin/atius-vault-phase52-client",
+    "shared_by": ["rustdesk-vault-provider", "atius-rclone-vault-hydrate"],
+    "transport": "bounded-private-stdin-stdout",
+    "read_only": true
+  },
+  "srv3_backend": {
+    "vault_helper": "/usr/local/sbin/atius-vault",
+    "vault_command": ["kv", "get", "-format=json"],
+    "legacy_exporter_used": false,
+    "profiles_root": "/etc/atius-vault/profiles"
+  },
+  "limits": {
+    "request_bytes": 16384,
+    "stdout_bytes": 131072,
+    "stderr_bytes": 4096,
+    "timeout_seconds": 30
+  },
+  "rustdesk_references": [
+    {"vault_path": "kv/atius/rustdesk/server", "fields": ["private_key", "public_key"]},
+    {"vault_path": "kv/atius/rustdesk/targets/atius-srv-1", "fields": ["permanent_password"]},
+    {"vault_path": "kv/atius/rustdesk/targets/atius-srv-2", "fields": ["permanent_password"]},
+    {"vault_path": "kv/atius/rustdesk/targets/atius-srv-3", "fields": ["permanent_password"]},
+    {"vault_path": "kv/atius/rustdesk/targets/horistic-srv", "fields": ["permanent_password"]},
+    {"vault_path": "kv/atius/rustdesk/targets/giovanni-w11-pc", "fields": ["permanent_password"]}
+  ],
+  "rclone_binding": {
+    "profile": "rclone-giovanni-drive-phase52",
+    "vault_path": "kv/atius/fleet-backup/rclone/giovanni-drive",
+    "field": "rclone_conf",
+    "approved_remote": "giovanni-drive"
+  },
+  "ssh_original_commands": [
+    "rustdesk-phase52-v1",
+    "rclone-giovanni-drive-phase52-v1"
+  ],
+  "legacy_ssh_original_command_grammar": "atius-vault-env PROFILE...",
+  "horistic_key_policy": {
+    "reuse_existing_key": true,
+    "rotate_or_generate": false,
+    "required_fingerprint_format": "SHA256:<full-openssh-fingerprint>",
+    "required_authorized_keys_options": "restrict,no-user-rc"
+  },
+  "rclone_provenance": {
+    "schema": "atius-rclone-vault-provenance-v2",
+    "secret_or_config_digest_allowed": false,
+    "identity_fields": ["config_device", "config_inode", "config_uid", "config_mode", "config_size_bytes"]
+  },
+  "srv3_control_plane_scope": [
+    "/usr/local/sbin/atius-vault-export-rustdesk-phase52",
+    "/usr/local/sbin/atius-vault-export-ssh-phase52",
+    "/etc/atius-vault/profiles/rustdesk-phase52-v1.json",
+    "/etc/atius-vault/profiles/rclone-giovanni-drive-phase52-v1.json",
+    "/etc/sudoers.d/atius-vault-phase52",
+    "/home/ubuntu/.ssh/authorized_keys"
+  ],
+  "secret_material_present": false
+}

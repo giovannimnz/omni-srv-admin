@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Forced-command compatibility dispatcher. Exact Phase 52 protocols are added;
+# the existing validated `atius-vault-env PROFILE...` grammar remains delegated.
+set -euo pipefail
+set +x
+IFS=$'\n\t'
+umask 077
+root_prefix_from_self=$(realpath -e -- "$0")
+root_prefix_from_self=${root_prefix_from_self%/usr/local/sbin/atius-vault-export-ssh-phase52}
+[[ -n "$root_prefix_from_self" ]] || root_prefix_from_self=/
+readonly BACKEND="$root_prefix_from_self/usr/local/sbin/atius-vault-export-rustdesk-phase52"
+readonly LEGACY="$root_prefix_from_self/home/ubuntu/.local/bin/atius-vault-export-ssh"
+readonly legacy_command_max_bytes=16384
+[[ $# -eq 0 ]] || exit 64
+original=${SSH_ORIGINAL_COMMAND-}
+(( ${#original} <= legacy_command_max_bytes )) || exit 64
+case "$original" in
+  rustdesk-phase52-v1) [[ -x "$BACKEND" ]] || exit 2; exec sudo -n -- "$BACKEND" rustdesk-phase52-v1 ;;
+  rclone-giovanni-drive-phase52-v1) [[ -x "$BACKEND" ]] || exit 2; exec sudo -n -- "$BACKEND" rclone-giovanni-drive-phase52-v1 ;;
+  atius-vault-env) [[ -x "$LEGACY" ]] || exit 2; exec "$LEGACY" ;;
+  atius-vault-env\ *)
+    [[ "$original" =~ ^atius-vault-env(\ [A-Za-z0-9_.:-]+)*$ ]] || exit 64
+    [[ -x "$LEGACY" ]] || exit 2
+    exec "$LEGACY"
+    ;;
+  *) exit 64 ;;
+esac

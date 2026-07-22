@@ -1,33 +1,70 @@
 #!/usr/bin/env bash
-# Fail-closed Phase 52 rclone config hydrator.
-# No Vault profile/path binding has been approved for this consumer yet.
+# Exact Phase 52 rclone binding; values exist only in client stdout -> private tmpfs.
 set -euo pipefail
+set +x
 IFS=$'\n\t'
 umask 077
-
-readonly HELPER="${HOME:?HOME is required}/.local/bin/atius-vault-env"
-
-[[ ${1:-} == '--materialize' && ${2:-} == '--output-dir' && -n ${3:-} && $# -eq 3 ]] || {
-  printf '{"blocker":"invalid-interface","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n'
-  exit 2
-}
-output_dir=$(realpath -e -- "$3" 2>/dev/null || true)
-[[ -n "$output_dir" && "$output_dir" == "$3" && -d "$output_dir" && ! -L "$output_dir" ]] || {
-  printf '{"blocker":"output-dir-invalid","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n'
-  exit 2
-}
-[[ $(stat -c '%u:%a' -- "$output_dir") == "$(id -u):700" && $(stat -f -c '%T' -- "$output_dir") == 'tmpfs' ]] || {
-  printf '{"blocker":"output-dir-insecure","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n'
-  exit 2
-}
-
-status='BLOCKED'
-if [[ ! -x "$HELPER" ]]; then
-  blocker='vault-helper-missing'
-else
-  blocker='rclone-vault-binding-not-approved'
-fi
-
-printf '{"blocker":"%s","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"%s"}\n' \
-  "$blocker" "$status"
-exit 2
+readonly PROFILE='rclone-giovanni-drive-phase52'
+readonly PROTOCOL='rclone-giovanni-drive-phase52-v1'
+readonly VAULT_PATH='kv/atius/fleet-backup/rclone/giovanni-drive'
+readonly FIELD='rclone_conf'
+readonly APPROVED_REMOTE='giovanni-drive'
+readonly PROVENANCE_BASENAME='.atius-rclone-vault-provenance.json'
+readonly CLIENT="${HOME:?HOME required}/.local/bin/atius-vault-phase52-client"
+# rclone_parse_blocked and stderr_suppressed are the only public parse outcome.
+blocked(){ printf '{"blocker":"%s","config_materialized":false,"config_storage":"tmpfs-required","secret_material_present":false,"status":"BLOCKED"}\n' "$1"; exit 2; }
+[[ ${1:-} == --materialize && ${2:-} == --output-dir && -n ${3:-} && $# -eq 3 ]] || blocked invalid-interface
+output=$(realpath -e -- "$3" 2>/dev/null) || blocked output-dir-invalid
+[[ "$output" == "$3" && -d "$output" && ! -L "$output" && $(stat -c '%u:%a' -- "$output") == "$(id -u):700" && $(stat -f -c '%T' -- "$output") == tmpfs ]] || blocked output-dir-insecure
+[[ -x "$CLIENT" && -f "$CLIENT" && ! -L "$CLIENT" ]] || blocked vault-client-missing
+python3 - "$CLIENT" "$output" "$PROFILE" "$PROTOCOL" "$VAULT_PATH" "$FIELD" "$APPROVED_REMOTE" "$PROVENANCE_BASENAME" <<'PY' || { rm -f -- "$output/rclone.conf" "$output/$PROVENANCE_BASENAME"; blocked vault-profile-invalid; }
+import configparser,json,os,pathlib,selectors,signal,subprocess,sys,time
+client,out_s,profile,protocol,vault_path,field,remote,prov_name=sys.argv[1:]
+out=pathlib.Path(out_s)
+if any(out.iterdir()): raise SystemExit(2)
+request=json.dumps({'references':[{'vault_path':vault_path,'field':field}]},separators=(',',':')).encode()
+process=subprocess.Popen([client],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,bufsize=0,start_new_session=True)
+selector=selectors.DefaultSelector(); chunks={'stdout':[],'stderr':[]}; sizes={'stdout':0,'stderr':0}; deadline=time.monotonic()+30
+try:
+ process.stdin.write(request); process.stdin.close()
+ selector.register(process.stdout,selectors.EVENT_READ,('stdout',131072)); selector.register(process.stderr,selectors.EVENT_READ,('stderr',4096))
+ while selector.get_map():
+  remaining=deadline-time.monotonic()
+  if remaining<=0: raise TimeoutError
+  events=selector.select(remaining)
+  if not events: raise TimeoutError
+  for key,_ in events:
+   name,limit=key.data; chunk=os.read(key.fd,8192)
+   if not chunk: selector.unregister(key.fileobj); continue
+   sizes[name]+=len(chunk)
+   if sizes[name]>limit: raise OverflowError
+   chunks[name].append(chunk)
+ stdout=b''.join(chunks['stdout']); stderr=b''.join(chunks['stderr'])
+ if process.wait(timeout=max(.01,deadline-time.monotonic())) or stderr: raise ValueError
+except BaseException:
+ try: os.killpg(process.pid,signal.SIGKILL)
+ except ProcessLookupError: pass
+ try: process.wait(timeout=2)
+ except subprocess.SubprocessError: pass
+ raise SystemExit(2)
+finally: selector.close()
+try:
+ payload=json.loads(stdout)
+ expected_key=vault_path+'#'+field
+ if set(payload)!={'request_count','values'} or payload['request_count']!=1 or set(payload['values'])!={expected_key}: raise ValueError
+ config=payload['values'][expected_key]
+ if not isinstance(config,str) or not config or len(config.encode())>65536: raise ValueError
+ parser=configparser.RawConfigParser(strict=True,interpolation=None); parser.read_string(config)
+ if parser.sections()!=[remote] or parser.defaults(): raise ValueError
+except (configparser.Error, json.JSONDecodeError, KeyError, TypeError, UnicodeError, ValueError):
+ raise SystemExit(2)
+path=out/'rclone.conf'; fd=os.open(path,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+try: os.write(fd,config.encode()); os.fsync(fd)
+finally: os.close(fd)
+info=path.stat()
+provenance={'schema':'atius-rclone-vault-provenance-v2','status':'PASS','materialized_by':'atius-rclone-vault-hydrate','profile':profile,'protocol':protocol,'vault_path':vault_path,'field':field,'config_basename':'rclone.conf','config_device':info.st_dev,'config_inode':info.st_ino,'config_uid':info.st_uid,'config_mode':'0600','config_size_bytes':info.st_size,'approved_remote':remote,'secret_material_present':False}
+marker=out/prov_name; fd=os.open(marker,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+try: os.write(fd,(json.dumps(provenance,sort_keys=True,separators=(',',':'))+'\n').encode()); os.fsync(fd)
+finally: os.close(fd)
+PY
+printf '{"approved_remote":"%s","config_materialized":true,"config_storage":"tmpfs","profile":"%s","secret_material_present":false,"status":"PASS"}\n' "$APPROVED_REMOTE" "$PROFILE"

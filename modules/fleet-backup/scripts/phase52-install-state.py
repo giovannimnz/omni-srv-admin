@@ -17,10 +17,11 @@ import tempfile
 from typing import Any
 
 
-SCHEMA = "atius-fleet-backup-phase52-install-v2"
+SCHEMA = "atius-fleet-backup-phase52-install-v3"
 GENERATION_RE = re.compile(r"^[0-9a-f]{32}$")
 TARGET_ROWS = (
     ("scripts/rclone-copy-verified-phase52.sh", ".local/bin/rclone-copy-verified-phase52", 0o700),
+    ("scripts/rclone-fetch-verified-phase52.sh", ".local/bin/rclone-fetch-verified-phase52", 0o700),
     ("scripts/atius-rclone-vault-hydrate", ".local/bin/atius-rclone-vault-hydrate", 0o700),
     ("configs/fleet-backup-map.yaml", ".config/atius/fleet-backup/fleet-backup-map.yaml", 0o600),
 )

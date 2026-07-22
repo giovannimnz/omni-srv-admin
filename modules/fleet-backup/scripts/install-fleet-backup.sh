@@ -91,10 +91,12 @@ install_phase52_horistic() {
 
   if [[ "$dry_run" == true ]]; then
     echo "DRY-RUN: install $HOME_DIR/.local/bin/rclone-copy-verified-phase52"
+    echo "DRY-RUN: install $HOME_DIR/.local/bin/rclone-fetch-verified-phase52"
     echo "DRY-RUN: install $HOME_DIR/.local/bin/atius-rclone-vault-hydrate"
     echo "DRY-RUN: install $HOME_DIR/.config/atius/fleet-backup/fleet-backup-map.yaml"
     echo 'DRY-RUN: timer_action=none'
-    echo 'DRY-RUN: vault_binding=blocked-until-approved'
+    echo 'DRY-RUN: vault_binding=rclone-giovanni-drive-phase52'
+    echo 'DRY-RUN: persistent_rclone_config=false'
     return
   fi
 
@@ -124,7 +126,7 @@ install_phase52_horistic() {
   trap - ERR INT TERM HUP
   echo "OK: Phase 52 copy-only instalado; rollback_state=$state_dir"
   echo 'OK: timer_action=none'
-  echo 'BLOCKED: rclone Vault binding ainda não aprovado'
+  echo 'OK: rclone Vault binding efêmero instalado'
 }
 
 if [[ "$phase52_only" == true ]]; then

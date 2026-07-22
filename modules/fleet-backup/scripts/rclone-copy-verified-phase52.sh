@@ -7,15 +7,18 @@ umask 077
 readonly DESTINATION_PREFIX='giovanni-drive:ATIUS-SRV/HORISTIC-SRV/Backup/RustDesk/phase52/backup-b/'
 readonly APPROVED_REMOTE='giovanni-drive'
 readonly PROVENANCE_BASENAME='.atius-rclone-vault-provenance.json'
-readonly PROVENANCE_SCHEMA='atius-rclone-vault-provenance-v1'
+readonly PROVENANCE_SCHEMA='atius-rclone-vault-provenance-v2'
 readonly RETENTION='phase57-pass-plus-30-days'
 readonly DEFAULT_TIMEOUT_SECONDS=900
 readonly DEFAULT_BWLIMIT='4M'
+readonly MAX_ARCHIVE_BYTES=4294967296
+# All parser failures are fail-closed with rclone_parse_blocked and stderr_suppressed.
 
 source_archive=''
 destination=''
 rclone_config=''
 workdir=''
+expected_size_bytes=''
 
 emit_error() {
   printf '{"blocker":"%s","operation":"copy-only","secret_material_present":false,"status":"BLOCKED"}\n' "$1"
@@ -48,7 +51,7 @@ trap 'exit 143' TERM
 trap 'exit 129' HUP
 
 usage() {
-  echo 'usage: rclone-copy-verified-phase52.sh --source ARCHIVE --destination REMOTE_FILE' >&2
+  echo 'usage: rclone-copy-verified-phase52.sh --source ARCHIVE --destination REMOTE_FILE --expected-size-bytes BYTES' >&2
   exit 2
 }
 
@@ -79,11 +82,29 @@ file_identity() {
   stat -c '%d:%i:%u:%h:%a:%s' -- "$1"
 }
 
+copy_exclusive_bounded() {
+  python3 - "$1" "$2" "$3" <<'PY'
+import os,pathlib,sys
+source=pathlib.Path(sys.argv[1]); destination=pathlib.Path(sys.argv[2]); maximum=int(sys.argv[3]); total=0
+fd=os.open(destination,os.O_WRONLY|os.O_CREAT|os.O_EXCL,0o600)
+try:
+ with source.open('rb') as input_handle:
+  while True:
+   chunk=input_handle.read(1048576)
+   if not chunk: break
+   total+=len(chunk)
+   if total>maximum: raise SystemExit(2)
+   os.write(fd,chunk)
+ os.fsync(fd)
+finally: os.close(fd)
+PY
+}
+
 snapshot_stable_file() {
   local original=$1 snapshot=$2 expected_mode=$3 before after original_hash snapshot_hash
   before=$(file_identity "$original") || return 1
   original_hash=$(sha256sum -- "$original" | awk '{print $1}') || return 1
-  cp --reflink=never -- "$original" "$snapshot" || return 1
+  copy_exclusive_bounded "$original" "$snapshot" "$MAX_ARCHIVE_BYTES" || return 1
   chmod "$expected_mode" "$snapshot" || return 1
   after=$(file_identity "$original") || return 1
   snapshot_hash=$(sha256sum -- "$snapshot" | awk '{print $1}') || return 1
@@ -104,12 +125,18 @@ while (($#)); do
       destination=$2
       shift 2
       ;;
+    --expected-size-bytes)
+      (($# >= 2)) || usage
+      expected_size_bytes=$2
+      shift 2
+      ;;
     --help|-h) usage ;;
     *) usage ;;
   esac
 done
 
-[[ -n "$source_archive" && -n "$destination" ]] || usage
+[[ -n "$source_archive" && -n "$destination" && "$expected_size_bytes" =~ ^[1-9][0-9]*$ ]] || usage
+(( expected_size_bytes <= MAX_ARCHIVE_BYTES )) || die 'expected-size-exceeded'
 command -v python3 >/dev/null 2>&1 || die 'python3-missing'
 command -v rclone >/dev/null 2>&1 || die 'rclone-missing'
 command -v timeout >/dev/null 2>&1 || die 'timeout-missing'
@@ -118,6 +145,7 @@ source_archive=$(canonical_file "$source_archive") || die 'source-not-canonical-
 validate_owned_file "$source_archive" 600 || die 'source-identity-invalid'
 source_parent=$(dirname -- "$source_archive")
 validate_owned_parent "$source_parent" || die 'source-parent-insecure'
+[[ $(stat -c '%s' -- "$source_archive") == "$expected_size_bytes" ]] || die 'source-size-mismatch'
 
 [[ "$destination" == "$DESTINATION_PREFIX"* ]] || die 'destination-outside-allowlist'
 destination_name=${destination#"$DESTINATION_PREFIX"}
@@ -166,15 +194,18 @@ source_snapshot="$workdir/source.snapshot"
 config_snapshot="$workdir/rclone.snapshot.conf"
 provenance_snapshot="$workdir/provenance.snapshot.json"
 source_snapshot_record=$(snapshot_stable_file "$source_archive" "$source_snapshot" 600) || die 'source-snapshot-unstable'
-config_snapshot_record=$(snapshot_stable_file "$rclone_config" "$config_snapshot" 600) || die 'rclone-config-snapshot-unstable'
+copy_exclusive_bounded "$rclone_config" "$config_snapshot" 65536 || die 'rclone-config-snapshot-unstable'
+chmod 600 "$config_snapshot"
+validate_owned_file "$config_snapshot" 600 || die 'rclone-config-snapshot-unstable'
+cmp -s -- "$rclone_config" "$config_snapshot" || die 'rclone-config-snapshot-unstable'
 snapshot_stable_file "$provenance" "$provenance_snapshot" 600 >/dev/null || die 'rclone-provenance-snapshot-unstable'
 
-config_identity=${config_snapshot_record%%$'\t'*}
-config_sha256=${config_snapshot_record#*$'\t'}
+config_identity=$(file_identity "$rclone_config")
+config_original_identity=$config_identity
 IFS=: read -r config_device config_inode config_uid _ <<< "$config_identity"
 python3 - \
   "$provenance_snapshot" "$PROVENANCE_SCHEMA" "$(basename -- "$rclone_config")" \
-  "$config_sha256" "$config_device" "$config_inode" "$config_uid" "$APPROVED_REMOTE" <<'PY' \
+  "$config_device" "$config_inode" "$config_uid" "$APPROVED_REMOTE" <<'PY' \
   >/dev/null || die 'rclone-provenance-invalid'
 import json
 import pathlib
@@ -186,11 +217,16 @@ expected = {
     "status": "PASS",
     "materialized_by": "atius-rclone-vault-hydrate",
     "config_basename": sys.argv[3],
-    "config_sha256": sys.argv[4],
-    "config_device": int(sys.argv[5]),
-    "config_inode": int(sys.argv[6]),
-    "config_uid": int(sys.argv[7]),
-    "approved_remote": sys.argv[8],
+    "profile": "rclone-giovanni-drive-phase52",
+    "protocol": "rclone-giovanni-drive-phase52-v1",
+    "vault_path": "kv/atius/fleet-backup/rclone/giovanni-drive",
+    "field": "rclone_conf",
+    "config_device": int(sys.argv[4]),
+    "config_inode": int(sys.argv[5]),
+    "config_uid": int(sys.argv[6]),
+    "config_mode": "0600",
+    "config_size_bytes": path.parent.joinpath(sys.argv[3]).stat().st_size,
+    "approved_remote": sys.argv[7],
     "secret_material_present": False,
 }
 try:
@@ -224,12 +260,13 @@ try:
             or stat.S_IMODE(member.mode) != 0o600
         ):
             raise ValueError("allowlist")
-except (OSError, tarfile.TarError, ValueError):
+except (OSError, UnicodeError, tarfile.TarError, ValueError):
     raise SystemExit(1)
 PY
 
 local_sha256=${source_snapshot_record#*$'\t'}
 size_bytes=$(stat -c '%s' -- "$source_snapshot")
+[[ "$size_bytes" == "$expected_size_bytes" && "$size_bytes" -le "$MAX_ARCHIVE_BYTES" ]] || die 'source-size-mismatch'
 snapshot_identity=$(file_identity "$source_snapshot")
 config_snapshot_identity=$(file_identity "$config_snapshot")
 
@@ -253,14 +290,24 @@ remote_sha256=$(
     --retries 2 \
     --low-level-retries 3 \
     --log-level ERROR \
-    2>/dev/null | sha256sum | awk '{print $1}'
+    2>/dev/null | python3 -c 'import hashlib,sys
+expected=int(sys.argv[1]); total=0; digest=hashlib.sha256()
+while True:
+ chunk=sys.stdin.buffer.read(1048576)
+ if not chunk: break
+ total+=len(chunk)
+ if total>expected or total>4294967296: raise SystemExit(2)
+ digest.update(chunk)
+if total!=expected: raise SystemExit(2)
+print(digest.hexdigest())' "$expected_size_bytes"
 ) || die 'rclone-rehash-failed'
 
 [[ "$remote_sha256" == "$local_sha256" ]] || die 'remote-hash-mismatch'
 [[ $(file_identity "$source_snapshot") == "$snapshot_identity" ]] || die 'source-snapshot-changed'
 [[ $(sha256sum -- "$source_snapshot" | awk '{print $1}') == "$local_sha256" ]] || die 'source-snapshot-changed'
 [[ $(file_identity "$config_snapshot") == "$config_snapshot_identity" ]] || die 'rclone-config-snapshot-changed'
-[[ $(sha256sum -- "$config_snapshot" | awk '{print $1}') == "$config_sha256" ]] || die 'rclone-config-snapshot-changed'
+[[ $(file_identity "$rclone_config") == "$config_original_identity" ]] || die 'rclone-config-snapshot-changed'
+cmp -s -- "$rclone_config" "$config_snapshot" || die 'rclone-config-snapshot-changed'
 
 python3 - "$destination" "$local_sha256" "$remote_sha256" "$size_bytes" "$RETENTION" <<'PY'
 import json

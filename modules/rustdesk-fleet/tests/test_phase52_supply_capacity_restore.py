@@ -1,16 +1,21 @@
 from __future__ import annotations
 
 import copy
+import base64
 from datetime import datetime, timedelta, timezone
 import importlib.util
+import io
 import json
 import os
 import secrets
+import signal
 import shutil
 import sqlite3
+import stat
 import subprocess
 import sys
 import tarfile
+import time
 from pathlib import Path
 
 import pytest
@@ -48,6 +53,24 @@ VAULT_PROVIDER_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-vault-provid
 VAULT_PROVIDER_INSTALLER_PATH = (
     REPO / "modules/rustdesk-fleet/tools/install-rustdesk-vault-provider.sh"
 )
+VAULT_CONTROL_CONTRACT_PATH = (
+    REPO / "modules/rustdesk-fleet/contracts/phase52-vault-control-plane.json"
+)
+VAULT_CONTROL_BACKEND_PATH = (
+    REPO / "modules/rustdesk-fleet/tools/atius-vault-export-rustdesk-phase52"
+)
+VAULT_CONTROL_DISPATCHER_PATH = (
+    REPO / "modules/rustdesk-fleet/tools/atius-vault-export-ssh-phase52"
+)
+VAULT_CONTROL_INSTALLER_PATH = (
+    REPO / "modules/rustdesk-fleet/tools/install-phase52-vault-control-plane.sh"
+)
+LIVE_DRILL_PATH = REPO / "modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py"
+LIVE_DRILL_CONTRACT_PATH = (
+    REPO / "modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json"
+)
+RECOVERY_PATH = REPO / "modules/rustdesk-fleet/tools/phase52_recovery.py"
+VAULT_CLIENT_PATH = REPO / "modules/rustdesk-fleet/tools/atius-vault-phase52-client"
 VAULT_RESTORE_MUTATIONS_PATH = (
     REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-vault-restore-mutations.json"
 )
@@ -1020,6 +1043,7 @@ def test_versioned_vault_provider_and_installer_fail_closed_without_backend(tmp_
     )
     assert json.loads(installed.stdout)["status"] == "PASS"
     assert existing.stat().st_mode & 0o777 == 0o700
+    assert (target_bin / "atius-vault-phase52-client").stat().st_mode & 0o777 == 0o700
     state_dir = target_home / ".local/state/atius-rustdesk-vault-provider"
     assert (state_dir / "install-state").stat().st_mode & 0o777 == 0o600
     assert (state_dir / "provider.pre-phase52").stat().st_mode & 0o777 == 0o600
@@ -1033,7 +1057,7 @@ def test_versioned_vault_provider_and_installer_fail_closed_without_backend(tmp_
     )
     assert blocked.returncode == 2
     assert blocked.stderr == ""
-    assert json.loads(blocked.stdout)["blocker"] == "rustdesk-vault-backend-missing"
+    assert json.loads(blocked.stdout)["blocker"] == "rustdesk-vault-backend-failed"
 
     rolled_back = subprocess.run(
         [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(target_home)],
@@ -1045,6 +1069,7 @@ def test_versioned_vault_provider_and_installer_fail_closed_without_backend(tmp_
     assert json.loads(rolled_back.stdout)["status"] == "PASS"
     assert existing.read_text(encoding="utf-8") == "previous-provider\n"
     assert existing.stat().st_mode & 0o777 == 0o755
+    assert not (target_bin / "atius-vault-phase52-client").exists()
     assert not (state_dir / "install-state").exists()
     assert not (state_dir / "provider.pre-phase52").exists()
 
@@ -1966,3 +1991,1999 @@ def test_report_cli_accepts_canonical_output_paths() -> None:
     options = {action.dest for action in parser._actions}
     assert {"json_out", "markdown_out", "integrated_out", "topology_out"}.issubset(options)
     assert not {"install", "cleanup", "remediate", "publish"} & options
+
+
+def test_gate_a_vault_control_plane_contract_is_exact_and_value_free() -> None:
+    contract = validator.load_json_strict(VAULT_CONTROL_CONTRACT_PATH)
+    assert contract["backend_protocol"] == "rustdesk-phase52-v1"
+    assert contract["rclone_protocol"] == "rclone-giovanni-drive-phase52-v1"
+    assert contract["rclone_binding"] == {
+        "profile": "rclone-giovanni-drive-phase52",
+        "vault_path": "kv/atius/fleet-backup/rclone/giovanni-drive",
+        "field": "rclone_conf",
+        "approved_remote": "giovanni-drive",
+    }
+    assert contract["horistic_key_policy"]["reuse_existing_key"] is True
+    assert contract["horistic_key_policy"]["rotate_or_generate"] is False
+    serialized = json.dumps(contract, sort_keys=True)
+    assert "fixture-token" not in serialized
+    for path in (
+        VAULT_CONTROL_BACKEND_PATH,
+        VAULT_CONTROL_DISPATCHER_PATH,
+        VAULT_CONTROL_INSTALLER_PATH,
+    ):
+        assert path.is_file()
+        assert os.access(path, os.X_OK)
+
+
+def test_gate_a_readiness_uses_ephemeral_vault_hydration_and_fetcher() -> None:
+    text = MODULE_PATH.read_text(encoding="utf-8")
+    assert "rclone_vault_hydrator" in text
+    assert "rclone_copy" in text
+    assert "rclone_fetch" in text
+    assert "runtime_tmpfs" in text
+    assert "~/.config/rclone/rclone.conf" not in text
+
+
+def test_gate_a_stage_check_uses_selected_candidate_not_expected_predecessor_nogo() -> None:
+    stages = {
+        name: {
+            "status": "PASS",
+            "evidence_ids": [f"P52-EV-HORISTIC-{name.upper()}"],
+            "findings": [],
+        }
+        for name in validator.FULL_CANDIDATE_STAGES
+    }
+    predecessor_stages = copy.deepcopy(stages)
+    predecessor_stages["capacity"] = {
+        "status": "NO-GO",
+        "evidence_ids": ["P52-EV-SRV2-CAPACITY"],
+        "findings": ["capacity-threshold-exceeded"],
+    }
+    summary = {
+        "selected_candidate": "horistic-srv",
+        "attempts": [
+            {"candidate": "atius-srv-2", "stages": predecessor_stages},
+            {"candidate": "atius-srv-3", "stages": predecessor_stages},
+            {"candidate": "horistic-srv", "stages": stages},
+        ],
+    }
+    for stage in ("vault", "backup", "restore", "capacity", "rollback"):
+        result = validator._stage_check(
+            f"P52-GATE-A-{stage.upper()}", stage, summary, require_selected=True
+        )
+        assert result.status == "PASS"
+        assert all("threshold" not in finding.category for finding in result.findings)
+
+
+def test_gate_a_live_drill_declares_ordered_actions_and_offline_pinned_hbbs() -> None:
+    assert LIVE_DRILL_PATH.is_file()
+    text = LIVE_DRILL_PATH.read_text(encoding="utf-8")
+    for action in (
+        "preflight",
+        "vault",
+        "backup",
+        "restore",
+        "capacity-finalize",
+        "rollback",
+    ):
+        assert action in text
+    assert validator.ARM64_IMAGE_DIGEST in text
+    recovery_text = RECOVERY_PATH.read_text(encoding="utf-8")
+    assert "--network" in recovery_text and "none" in recovery_text
+    assert "--publish" not in text + recovery_text and "-p " not in text + recovery_text
+
+
+def test_gate_a_backend_rejects_duplicate_reordered_extra_oversized_and_legacy() -> None:
+    expected = {
+        "protocol": "rustdesk-phase52-v1",
+        "references": [
+            {"vault_path": path, "field": field}
+            for path, field in validator.APPROVED_VAULT_REFERENCES
+        ],
+    }
+    malformed = [
+        b'{"protocol":"rustdesk-phase52-v1","protocol":"rustdesk-phase52-v1","references":[]}',
+        json.dumps({**expected, "references": list(reversed(expected["references"]))}).encode(),
+        json.dumps({**expected, "extra": False}).encode(),
+        b"{" + b"x" * 16384 + b"}",
+    ]
+    for payload in malformed:
+        completed = subprocess.run(
+            [str(VAULT_CONTROL_BACKEND_PATH), "rustdesk-phase52-v1"],
+            input=payload,
+            capture_output=True,
+            check=False,
+        )
+        assert completed.returncode == 2
+        assert completed.stdout == b"" and completed.stderr == b""
+    legacy = subprocess.run(
+        [str(VAULT_CONTROL_BACKEND_PATH), "rustdesk-phase52"],
+        input=b"{}",
+        capture_output=True,
+        check=False,
+    )
+    assert legacy.returncode == 64
+    assert legacy.stdout == b"" and legacy.stderr == b""
+
+
+def test_gate_a_control_plane_installer_dry_run_is_zero_write(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    root.mkdir(mode=0o700)
+    ssh_dir = root / "home/ubuntu/.ssh"
+    ssh_dir.mkdir(parents=True, mode=0o700)
+    fixture_key = tmp_path / "fixture-key"
+    subprocess.run(
+        ["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(fixture_key)],
+        check=True,
+    )
+    public = fixture_key.with_suffix(".pub")
+    key_type, key_blob, comment = public.read_text(encoding="utf-8").strip().split(maxsplit=2)
+    authorized = ssh_dir / "authorized_keys"
+    authorized.write_text(
+        f'command="/home/ubuntu/.local/bin/atius-vault-export-ssh",no-agent-forwarding,no-X11-forwarding,no-pty,no-port-forwarding {key_type} {key_blob} {comment}\n',
+        encoding="utf-8",
+    )
+    authorized.chmod(0o600)
+    fingerprint = subprocess.run(
+        ["ssh-keygen", "-lf", str(public), "-E", "sha256"],
+        text=True, capture_output=True, check=True,
+    ).stdout.split()[1]
+    before = {path.relative_to(root): (path.stat().st_mode, path.read_bytes() if path.is_file() else b"") for path in root.rglob("*")}
+    completed = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--install", "--dry-run", "--root", str(root),
+         "--authorized-key-file", str(public), "--expected-fingerprint", fingerprint],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "PASS"
+    assert payload["live_write_performed"] is False
+    assert payload["key_rotation_performed"] is False
+    assert payload["secret_material_present"] is False
+    assert payload["replacement_count"] == 1
+    assert payload["authorized_keys_mode"] == "0600"
+    after = {path.relative_to(root): (path.stat().st_mode, path.read_bytes() if path.is_file() else b"") for path in root.rglob("*")}
+    assert after == before
+
+
+def test_gate_a_corrective_recovery_is_versioned_and_external_runners_are_forbidden() -> None:
+    assert LIVE_DRILL_CONTRACT_PATH.is_file()
+    assert RECOVERY_PATH.is_file()
+    live_text = LIVE_DRILL_PATH.read_text(encoding="utf-8")
+    assert "phase52_recovery" in live_text
+    assert "runtime-contract" not in live_text
+    assert "action_runners" not in live_text
+    contract = validator.load_json_strict(LIVE_DRILL_CONTRACT_PATH)
+    assert contract["external_action_runners_allowed"] is False
+    assert contract["actions"] == [
+        "preflight", "vault", "backup", "restore", "capacity-finalize", "rollback"
+    ]
+
+
+def test_gate_a_corrective_rollback_is_terminal_after_partial_failure(tmp_path: Path) -> None:
+    spec = importlib.util.spec_from_file_location("phase52_recovery_test", RECOVERY_PATH)
+    assert spec and spec.loader
+    recovery = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = recovery
+    spec.loader.exec_module(recovery)
+    state = recovery.initial_state("a" * 32)
+    state["completed_actions"] = ["preflight", "vault"]
+    state["active_action"] = "backup"
+    state["cleanup_pending"] = ["disposable-source-runtime"]
+    recovery.validate_transition("rollback", state)
+    rolled = recovery.rollback_state(state)
+    assert rolled["terminal"] is True
+    assert rolled["completed_actions"][-1] == "rollback"
+    assert rolled["cleanup_pending"] == []
+    assert recovery.rollback_state(rolled) == rolled
+
+
+def test_gate_a_corrective_vault_client_preserves_provider_api_and_internal_envelope() -> None:
+    assert VAULT_CLIENT_PATH.is_file() and os.access(VAULT_CLIENT_PATH, os.X_OK)
+    provider_text = VAULT_PROVIDER_PATH.read_text(encoding="utf-8")
+    client_text = VAULT_CLIENT_PATH.read_text(encoding="utf-8")
+    backend_text = VAULT_CONTROL_BACKEND_PATH.read_text(encoding="utf-8")
+    assert 'set(payload) != {"references"}' in provider_text
+    assert "atius-vault-phase52-client" in provider_text
+    assert '"protocol"' in client_text and '"references"' in client_text
+    assert "/usr/local/sbin/atius-vault" in backend_text
+    assert "kv\", \"get\", \"-format=json" in backend_text
+    assert "atius-vault-export-env" not in backend_text
+
+
+def test_gate_a_corrective_streams_are_bounded_during_read_and_kill_process_groups() -> None:
+    for path in (VAULT_CLIENT_PATH, VAULT_CONTROL_BACKEND_PATH):
+        text = path.read_text(encoding="utf-8")
+        assert "selectors" in text
+        assert "start_new_session" in text
+        assert "killpg" in text
+        assert "subprocess.run" not in text
+
+
+def test_gate_a_corrective_dispatcher_preserves_legacy_grammar() -> None:
+    text = VAULT_CONTROL_DISPATCHER_PATH.read_text(encoding="utf-8")
+    assert "atius-vault-env" in text
+    assert "atius-vault-export-ssh" in text
+    assert "rustdesk-phase52-v1" in text
+    assert "rclone-giovanni-drive-phase52-v1" in text
+    assert "eval" not in text
+
+
+def test_gate_a_corrective_installer_preserves_identity_and_validates_sudoers() -> None:
+    text = VAULT_CONTROL_INSTALLER_PATH.read_text(encoding="utf-8")
+    for required in ("st_uid", "st_gid", "st_nlink", "visudo", "authorized-key-entry-not-unique"):
+        assert required in text
+    assert "symlink" in text.lower()
+    assert "hardlink" in text.lower()
+
+
+def test_gate_a_corrective_predecessor_mutation_is_rejected_even_when_selected_passes() -> None:
+    record = {"status": "PASS", "evidence_ids": ["fixture"], "findings": [], "mutation": {"performed": False, "classes": []}}
+    predecessor = copy.deepcopy(record)
+    predecessor["status"] = "NO-GO"
+    predecessor["mutation"] = {"performed": True, "classes": ["unexpected-write"]}
+    summary = {
+        "selected_candidate": "horistic-srv",
+        "attempts": [
+            {"candidate": "atius-srv-2", "stages": {"capacity": predecessor}},
+            {"candidate": "horistic-srv", "stages": {"capacity": record}},
+        ],
+    }
+    result = validator._stage_check("P52-CORRECTIVE", "capacity", summary, require_selected=True)
+    assert result.status == "FAIL"
+    assert "predecessor-mutation" in _categories(result)
+
+
+def test_gate_a_corrective_topology_renderer_has_truthful_pass_branch() -> None:
+    report = validator.build_phase52_report(REPO, generated_at="2026-07-22T03:30:00Z")
+    report["selected_candidate"] = "horistic-srv"
+    report["phase53_topology_review_status"] = "PASS"
+    report["phase53_advance_status"] = "READY"
+    report["overall_status"] = "PASS"
+    for check in report["checks"]:
+        check["status"] = "PASS"
+        check["findings"] = []
+    text = validator.render_phase53_topology_review(report)
+    assert "No recoverable primary is selected" not in text
+    assert "Phase 53 is blocked" not in text
+    assert "Horistic" in text and "READY" in text
+
+
+def test_gate_a_composed_provider_client_dispatch_transport_and_direct_backend(tmp_path: Path) -> None:
+    profile_root = tmp_path / "profiles"
+    profile_root.mkdir(mode=0o700)
+    references = [
+        {"vault_path": path, "field": field}
+        for path, field in validator.APPROVED_VAULT_REFERENCES
+    ]
+    (profile_root / "rustdesk-phase52-v1.json").write_text(
+        json.dumps({"protocol": "rustdesk-phase52-v1", "references": references}),
+        encoding="utf-8",
+    )
+    (profile_root / "rustdesk-phase52-v1.json").chmod(0o600)
+    fake_bin = tmp_path / "bin"
+    fake_bin.mkdir(mode=0o700)
+    fake_vault = fake_bin / "atius-vault"
+    fake_vault.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json,sys\n"
+        "path=sys.argv[-1]\n"
+        "values={'private_key':'private-fixture','public_key':'public-fixture'} if path.endswith('/server') else {'permanent_password':'R'+path.rsplit('/',1)[-1].replace('-','')[:20].ljust(31,'x')}\n"
+        "print(json.dumps({'data':{'data':values}}))\n",
+        encoding="utf-8",
+    )
+    fake_vault.chmod(0o700)
+    fake_ssh = fake_bin / "ssh"
+    fake_ssh.write_text(
+        "#!/usr/bin/env bash\nset -euo pipefail\nprotocol=${!#}\nexec \"$FAKE_PHASE52_BACKEND\" \"$protocol\"\n",
+        encoding="utf-8",
+    )
+    fake_ssh.chmod(0o700)
+    completed = subprocess.run(
+        [str(VAULT_PROVIDER_PATH), "--self-check"],
+        text=True,
+        capture_output=True,
+        check=False,
+        env={
+            **os.environ,
+            "PATH": f"{fake_bin}:{os.environ['PATH']}",
+            "ATIUS_RUSTDESK_VAULT_BACKEND": str(VAULT_CLIENT_PATH),
+            "ATIUS_PHASE52_PROFILE_ROOT": str(profile_root),
+            "ATIUS_PHASE52_VAULT_BIN": str(fake_vault),
+            "ATIUS_PHASE52_SSH_TARGET": "fixture-srv3",
+            "FAKE_PHASE52_BACKEND": str(VAULT_CONTROL_BACKEND_PATH),
+        },
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert json.loads(completed.stdout) == {
+        "status": "PASS", "blocker": "none", "reference_count": 7,
+        "secret_material_present": False,
+    }
+    assert "private-fixture" not in completed.stdout + completed.stderr
+    assert "public-fixture" not in completed.stdout + completed.stderr
+
+
+def test_gate_a_third_cycle_dispatcher_is_installed_root_owned_and_executable() -> None:
+    text = VAULT_CONTROL_INSTALLER_PATH.read_text(encoding="utf-8")
+    assert "dispatcher_install_mode=0o755" in text
+    assert "control_plane_uid=0" in text and "control_plane_gid=0" in text
+    assert "dispatcher-installed-identity-drift" in text
+
+
+def test_gate_a_third_cycle_client_pins_existing_transport_identity_and_ssh_policy() -> None:
+    text = VAULT_CLIENT_PATH.read_text(encoding="utf-8")
+    assert 'SSH_TARGET = "ubuntu@atius-srv-3"' in text
+    assert 'SSH_IDENTITY = "/home/horistic/.ssh/atius-vault-export-ed25519"' in text
+    for option in (
+        "IdentitiesOnly=yes", "IdentityAgent=none", "ProxyCommand=none",
+        "ProxyJump=none", "ClearAllForwardings=yes",
+    ):
+        assert option in text
+    assert "ATIUS_PHASE52_SSH_TARGET" not in text
+
+
+def test_gate_a_third_cycle_dispatcher_legacy_grammar_is_exact_and_unbounded_by_count() -> None:
+    text = VAULT_CONTROL_DISPATCHER_PATH.read_text(encoding="utf-8")
+    assert "[A-Za-z0-9_.:-]+" in text
+    assert "legacy_command_max_bytes=16384" in text
+    assert "{0,7}" not in text
+    assert "[a-z0-9][a-z0-9-]" not in text
+
+
+def test_gate_a_third_cycle_control_plane_dry_run_proves_exact_key_replacement() -> None:
+    text = VAULT_CONTROL_INSTALLER_PATH.read_text(encoding="utf-8")
+    for proof in (
+        "dry-run-authorized-key-proof-required", "old_forced_command",
+        "old_options", "authorized_keys_uid", "authorized_keys_gid",
+        "authorized_keys_mode", "replacement_count", "replacement_line_sha256",
+    ):
+        assert proof in text
+    assert "authorized_key_fingerprint_verified" in text
+
+
+def test_gate_a_third_cycle_control_plane_validates_parents_lock_fsync_and_drift() -> None:
+    text = VAULT_CONTROL_INSTALLER_PATH.read_text(encoding="utf-8")
+    for required in (
+        "validate_parent_chain", "flock", "fsync_parent", "installed-target-drift",
+        "control-plane-global.lock",
+    ):
+        assert required in text
+
+
+def test_gate_a_third_cycle_provider_and_client_share_one_transaction_journal() -> None:
+    text = VAULT_PROVIDER_INSTALLER_PATH.read_text(encoding="utf-8")
+    assert "client_state_file" not in text
+    assert "client_backup_file" not in text
+    assert "provider_target_path" in text and "client_target_path" in text
+    assert "provider_installed_sha256" in text and "client_installed_sha256" in text
+    assert "transaction-journal" in text
+
+
+def test_gate_a_third_cycle_all_bounded_process_failures_kill_the_process_group() -> None:
+    for path in (VAULT_PROVIDER_PATH, VAULT_CLIENT_PATH, VAULT_CONTROL_BACKEND_PATH, RECOVERY_PATH):
+        text = path.read_text(encoding="utf-8")
+        assert "kill_process_group" in text
+        assert "if process.poll() is None:" not in text
+
+
+def test_gate_a_third_cycle_composed_path_uses_installed_dispatcher_fake_sudo_and_backend(tmp_path: Path) -> None:
+    installer = VAULT_CONTROL_INSTALLER_PATH.read_text(encoding="utf-8")
+    dispatcher = VAULT_CONTROL_DISPATCHER_PATH.read_text(encoding="utf-8")
+    backend = VAULT_CONTROL_BACKEND_PATH.read_text(encoding="utf-8")
+    assert "fixture_root_relative_runtime" in installer
+    assert "root_prefix_from_self" in dispatcher
+    assert "root_prefix_from_self" in backend
+    assert "sudo -n --" in dispatcher
+    assert "mode_as_uid_proof" in backend
+    root = tmp_path / "root"
+    ssh_dir = root / "home/ubuntu/.ssh"
+    ssh_dir.mkdir(parents=True, mode=0o700)
+    key = tmp_path / "fixture-key"
+    subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)], check=True)
+    public = key.with_suffix(".pub")
+    key_type, blob, comment = public.read_text(encoding="utf-8").strip().split(maxsplit=2)
+    authorized = ssh_dir / "authorized_keys"
+    authorized.write_text(
+        f'command="/home/ubuntu/.local/bin/atius-vault-export-ssh",no-agent-forwarding,no-X11-forwarding,no-pty,no-port-forwarding {key_type} {blob} {comment}\n', encoding="utf-8"
+    )
+    authorized.chmod(0o600)
+    fingerprint = subprocess.run(["ssh-keygen", "-lf", str(public), "-E", "sha256"], text=True, capture_output=True, check=True).stdout.split()[1]
+    legacy = root / "home/ubuntu/.local/bin/atius-vault-export-ssh"
+    legacy.parent.mkdir(parents=True, mode=0o700)
+    legacy.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8"); legacy.chmod(0o755)
+    installed = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--install", "--root", str(root),
+         "--authorized-key-file", str(public), "--expected-fingerprint", fingerprint],
+        text=True, capture_output=True, check=False,
+    )
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+    installed_dispatcher = root / "usr/local/sbin/atius-vault-export-ssh-phase52"
+    installed_backend = root / "usr/local/sbin/atius-vault-export-rustdesk-phase52"
+    assert stat.S_IMODE(installed_dispatcher.stat().st_mode) == 0o755
+    assert stat.S_IMODE(installed_backend.stat().st_mode) == 0o700
+    fake_vault = root / "usr/local/sbin/atius-vault"
+    fake_vault.write_text(
+        "#!/usr/bin/env python3\nimport json,sys\np=sys.argv[-1]\n"
+        "v={'private_key':'private-fixture','public_key':'public-fixture'} if p.endswith('/server') else {'permanent_password':'R'+p.rsplit('/',1)[-1].replace('-','')[:20].ljust(31,'x')}\n"
+        "print(json.dumps({'data':{'data':v}}))\n", encoding="utf-8",
+    ); fake_vault.chmod(0o755)
+    fake_bin = tmp_path / "bin"; fake_bin.mkdir(mode=0o700)
+    sudo_log = tmp_path / "sudo.log"
+    (fake_bin / "sudo").write_text(
+        "#!/bin/sh\nprintf '%s %s\\n' \"$(id -u)\" \"$(stat -c %a \"$3\")\" > \"$FAKE_SUDO_LOG\"\nshift 2\nexec \"$@\"\n",
+        encoding="utf-8",
+    ); (fake_bin / "sudo").chmod(0o700)
+    (fake_bin / "ssh").write_text(
+        "#!/bin/sh\nprotocol=\"\"\nfor item in \"$@\"; do protocol=$item; done\nSSH_ORIGINAL_COMMAND=$protocol exec \"$FAKE_DISPATCHER\"\n",
+        encoding="utf-8",
+    ); (fake_bin / "ssh").chmod(0o700)
+    completed = subprocess.run(
+        [str(VAULT_PROVIDER_PATH), "--self-check"], text=True, capture_output=True, check=False,
+        env={**os.environ, "PATH": f"{fake_bin}:{os.environ['PATH']}",
+             "ATIUS_RUSTDESK_VAULT_BACKEND": str(VAULT_CLIENT_PATH),
+             "FAKE_DISPATCHER": str(installed_dispatcher), "FAKE_SUDO_LOG": str(sudo_log)},
+    )
+    assert completed.returncode == 0, completed.stdout + completed.stderr
+    assert json.loads(completed.stdout)["status"] == "PASS"
+    assert sudo_log.read_text(encoding="utf-8").split()[1] == "700"
+
+
+def test_gate_a_third_cycle_controller_pins_remote_drill_recovery_and_contract_digests() -> None:
+    text = MODULE_PATH.read_text(encoding="utf-8")
+    for required in (
+        "live_drill_sha256", "recovery_sha256", "live_drill_contract_sha256",
+        "remote-managed-source-digest-drift", "--expected-managed-source-digests",
+    ):
+        assert required in text
+
+
+def test_gate_a_third_cycle_action_results_have_exact_action_specific_proofs() -> None:
+    recovery_text = RECOVERY_PATH.read_text(encoding="utf-8")
+    live_text = LIVE_DRILL_PATH.read_text(encoding="utf-8")
+    assert "ACTION_DETAIL_KEYS" in recovery_text
+    assert "validate_action_result" in recovery_text
+    assert "validate_action_result(action" in live_text
+    for proof in ("image_running", "sqlite_ready", "remote_rehash_verified", "retained_rehash_verified"):
+        assert proof in recovery_text + live_text
+
+
+def test_gate_a_third_cycle_partial_failure_persists_and_emits_planned_mutation() -> None:
+    text = LIVE_DRILL_PATH.read_text(encoding="utf-8")
+    for required in (
+        "planned_mutation", "planned_cleanup", "action_journal",
+        "failure_mutation", "failure_cleanup_pending",
+    ):
+        assert required in text
+    assert 'state["active_action"] = args.action' in text
+
+
+def test_gate_a_third_cycle_hbbs_proves_liveness_readiness_and_container_absence() -> None:
+    text = LIVE_DRILL_PATH.read_text(encoding="utf-8") + RECOVERY_PATH.read_text(encoding="utf-8")
+    for required in (
+        "container_running", "hbbs_liveness", "sqlite_readiness",
+        "checked_stop_remove", "container_absent",
+    ):
+        assert required in text
+
+
+def test_gate_a_third_cycle_rollback_journals_paths_inodes_and_rehashes_retained_backups() -> None:
+    text = LIVE_DRILL_PATH.read_text(encoding="utf-8") + RECOVERY_PATH.read_text(encoding="utf-8")
+    for required in (
+        "artifact_journal", "st_dev", "st_ino", "retained_rehash_verified",
+        "remote_delete_performed", "disposable_partial",
+    ):
+        assert required in text
+
+
+def test_gate_a_third_cycle_capacity_finalize_uses_canonical_policy_derivation() -> None:
+    text = LIVE_DRILL_PATH.read_text(encoding="utf-8")
+    for required in (
+        "capacity-policy.json", "derive_candidate_capacity", "inode_total",
+        "mount_point", "materialized_reservations", "observed_at",
+    ):
+        assert required in text
+    assert "snapshot-a.sqlite3" not in text and "snapshot-b.sqlite3" not in text
+
+
+def test_gate_a_third_cycle_all_predecessor_stage_mutations_are_globally_rejected() -> None:
+    text = MODULE_PATH.read_text(encoding="utf-8")
+    assert "validate_all_predecessor_mutations" in text
+    summary = {
+        "selected_candidate": "horistic-srv",
+        "attempts": [
+            {"candidate": "atius-srv-2", "stages": {
+                "supply": {"status": "PASS", "mutation": {"performed": True, "classes": ["unexpected"]}},
+                "capacity": {"status": "NO-GO", "mutation": {"performed": False, "classes": []}},
+            }},
+            {"candidate": "horistic-srv", "stages": {
+                "supply": {"status": "PASS", "mutation": {"performed": False, "classes": []}},
+                "capacity": {"status": "PASS", "mutation": {"performed": False, "classes": []}},
+            }},
+        ],
+    }
+    assert validator.validate_all_predecessor_mutations(summary) == ["predecessor-mutation"]
+
+
+def test_gate_a_third_cycle_action_history_must_be_an_exact_actions_prefix() -> None:
+    spec = importlib.util.spec_from_file_location("phase52_recovery_prefix_test", RECOVERY_PATH)
+    assert spec and spec.loader
+    recovery = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = recovery
+    spec.loader.exec_module(recovery)
+    state = recovery.initial_state("b" * 32)
+    state["completed_actions"] = ["preflight", "backup"]
+    with pytest.raises(recovery.RecoveryBlocked, match="action-history-invalid"):
+        recovery.validate_transition("restore", state)
+
+
+def _load_phase52_live_drill() -> tuple[object, object]:
+    recovery_spec = importlib.util.spec_from_file_location("phase52_recovery", RECOVERY_PATH)
+    assert recovery_spec and recovery_spec.loader
+    recovery = importlib.util.module_from_spec(recovery_spec)
+    sys.modules[recovery_spec.name] = recovery
+    recovery_spec.loader.exec_module(recovery)
+    live_spec = importlib.util.spec_from_file_location("phase52_live_drill_fourth", LIVE_DRILL_PATH)
+    assert live_spec and live_spec.loader
+    live = importlib.util.module_from_spec(live_spec)
+    sys.modules[live_spec.name] = live
+    live_spec.loader.exec_module(live)
+    return recovery, live
+
+
+def test_gate_a_fourth_cycle_managed_source_verifier_checks_every_pin(tmp_path: Path) -> None:
+    recovery, live = _load_phase52_live_drill()
+    with pytest.raises(recovery.RecoveryBlocked, match="remote-managed-source-digest-drift"):
+        live.verify_managed_source_digests(
+            json.dumps({"live_drill_sha256": "0" * 64}), dry_run=False
+        )
+    repo = LIVE_DRILL_PATH.resolve().parents[3]
+    paths = {
+        "live_drill_sha256": LIVE_DRILL_PATH,
+        "recovery_sha256": RECOVERY_PATH,
+        "live_drill_contract_sha256": LIVE_DRILL_CONTRACT_PATH,
+        "validator_sha256": MODULE_PATH,
+        "capacity_policy_sha256": CAPACITY_POLICY_PATH,
+        "provider_sha256": VAULT_PROVIDER_PATH,
+        "client_sha256": VAULT_CLIENT_PATH,
+        "rclone_hydrate_sha256": repo / "modules/fleet-backup/scripts/atius-rclone-vault-hydrate",
+        "rclone_copy_sha256": repo / "modules/fleet-backup/scripts/rclone-copy-verified-phase52.sh",
+        "rclone_fetch_sha256": repo / "modules/fleet-backup/scripts/rclone-fetch-verified-phase52.sh",
+    }
+    exact = {key: __import__("hashlib").sha256(path.read_bytes()).hexdigest() for key, path in paths.items()}
+    live.verify_managed_source_digests(json.dumps(exact), dry_run=True)
+
+
+def test_gate_a_fourth_cycle_action_specific_value_invariants_are_executable() -> None:
+    recovery, _ = _load_phase52_live_drill()
+    digest = "a" * 64
+    tx = "b" * 32
+    manifest = {
+        "schema": recovery.BACKUP_SCHEMA,
+        "transaction_id": tx,
+        "label": "A",
+        "generation_id": "c" * 32,
+        "source_snapshot_sha256": digest,
+        "archive_sha256": digest,
+        "member_sha256": digest,
+        "size_bytes": 10240,
+        "entries": ["db_v2.sqlite3"],
+        "mode": "0600",
+        "secret_material_present": False,
+        "destination_class": "candidate-local",
+    }
+    backup_b = {
+        **manifest,
+        "label": "B",
+        "generation_id": "d" * 32,
+        "destination_class": "modules/fleet-backup:gdrive",
+        "remote_object": f"giovanni-drive:ATIUS-SRV/HORISTIC-SRV/Backup/RustDesk/phase52/backup-b/{tx}.tar",
+        "local_sha256": digest,
+        "remote_sha256": digest,
+        "retention": {
+            "retain_until": "phase57-pass-plus-30-days",
+            "deletion_requires_new_explicit_approval": True,
+        },
+    }
+    valid = {
+        "preflight": {"image": recovery.IMMUTABLE_HBBS, "image_running": False, "network_mode": "none", "published_ports": []},
+        "vault": {"reference_count": 7, "provider_api": "references-v1", "public_fingerprint": digest},
+        "backup": {"backup_a": manifest, "backup_b": backup_b, "state_only": ["db_v2.sqlite3"], "remote_rehash_verified": True, "sqlite_ready": True},
+        "restore": {"sqlite_integrity": "ok", "sqlite_ready": True, "public_fingerprint": digest, "image": recovery.IMMUTABLE_HBBS, "image_running": True, "network_mode": "none", "port_bindings": {}, "public_listener_delta": []},
+        "capacity-finalize": {"capacity": {"status": "PASS", "capacity_finalize_status": "PASS", "pre_disk_ok": True, "inode_ok": True, "projected_post_ok": True, "headroom_ok": True}, "actual_backup_a_bytes": 10240, "actual_backup_b_bytes": 10240},
+        "rollback": {"terminal": True, "retained_artifacts": list(recovery.RETAINED), "cleanup_pending": [], "retained_rehash_verified": True, "remote_rehash_verified": True, "remote_delete_performed": False},
+    }
+    for action, details in valid.items():
+        recovery.validate_action_result(action, details)
+        invalid = copy.deepcopy(details)
+        key = next(iter(invalid))
+        invalid[key] = None
+        with pytest.raises(recovery.RecoveryBlocked, match="action-result-value-invalid"):
+            recovery.validate_action_result(action, invalid)
+    values = {
+        "kv/atius/rustdesk/server#private_key": base64.b64encode(b"p" * 64).decode(),
+        "kv/atius/rustdesk/server#public_key": base64.b64encode(b"u" * 32).decode(),
+        **{
+            f"kv/atius/rustdesk/targets/{host}#permanent_password": "R" + str(index) * 31
+            for index, host in enumerate(
+                ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv", "giovanni-w11-pc"),
+                start=1,
+            )
+        },
+    }
+    assert len(recovery.validate_vault_values(values)) == 64
+    invalid_values = dict(values)
+    invalid_values["kv/atius/rustdesk/targets/atius-srv-2#permanent_password"] = invalid_values[
+        "kv/atius/rustdesk/targets/atius-srv-1#permanent_password"
+    ]
+    with pytest.raises(recovery.RecoveryBlocked, match="vault-password-contract-invalid"):
+        recovery.validate_vault_values(invalid_values)
+
+
+def test_gate_a_fourth_cycle_capacity_import_executes_and_pre_manifest_inventory_blocks(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    transaction_id = "e" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    retained.mkdir(parents=True, mode=0o700)
+    (retained / "backup-a.tar").write_bytes(b"a" * 10240)
+    (retained / "backup-b.tar").write_bytes(b"b" * 10240)
+    state = recovery.initial_state(transaction_id)
+    live.journal_artifact(root, state, retained, disposable=False)
+    with pytest.raises(recovery.RecoveryBlocked, match="capacity-finalize-nogo"):
+        live.direct_action("capacity-finalize", root, state, False)
+    with pytest.raises(recovery.RecoveryBlocked, match="rollback-artifact-journal-missing"):
+        live.direct_action("rollback", root, state, False)
+    assert (retained / "backup-a.tar").is_file()
+    assert (retained / "backup-b.tar").is_file()
+
+
+def test_gate_a_fourth_cycle_action_details_survive_candidate_evidence() -> None:
+    details = {"remote_rehash_verified": True, "retained_rehash_verified": True}
+    stage = validator._stage_record(
+        "horistic-srv",
+        "backup",
+        {"status": "PASS", "action_details": details, "mutation": {"performed": False, "classes": []}},
+    )
+    attempt = {"candidate": "horistic-srv", "stages": {"backup": stage}}
+    evidence = validator._candidate_evidence(attempt, "2026-07-22T09:00:00Z")
+    assert evidence["stages"]["backup"]["action_details"] == details
+
+
+def test_gate_a_fourth_cycle_mutation_journal_records_observed_writes_before_failure(
+    tmp_path: Path
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    state = recovery.initial_state("f" * 32)
+    live.observe_mutation(root, state, "ephemeral-vault-hydration", ["ephemeral-identity"])
+    live.observe_mutation(root, state, "redacted-evidence-write", ["disposable-partial"])
+    observed = live.observed_mutation(state)
+    assert observed["performed"] is True
+    assert observed["classes"] == ["ephemeral-vault-hydration", "redacted-evidence-write"]
+    assert observed["cleanup_pending"] == ["ephemeral-identity", "disposable-partial"]
+    assert [row["status"] for row in state["action_journal"]] == ["mutation-observed", "mutation-observed"]
+
+
+def test_gate_a_fourth_cycle_predecessor_shape_is_exact() -> None:
+    summary = {
+        "selected_candidate": "horistic-srv",
+        "attempts": [
+            {"candidate": "atius-srv-2", "stages": {"capacity": {"status": "NO-GO"}}},
+            {"candidate": "horistic-srv", "stages": {}},
+        ],
+    }
+    assert validator.validate_all_predecessor_mutations(summary) == ["predecessor-mutation"]
+
+
+def test_gate_a_fourth_cycle_backend_rejects_non_0600_profile(tmp_path: Path) -> None:
+    profile_root = tmp_path / "profiles"
+    profile_root.mkdir(mode=0o700)
+    reference = {"vault_path": "kv/atius/rustdesk/server", "field": "public_key"}
+    profile = profile_root / "rustdesk-phase52-v1.json"
+    profile.write_text(json.dumps({"protocol": "rustdesk-phase52-v1", "references": [reference]}), encoding="utf-8")
+    profile.chmod(0o640)
+    fake_vault = tmp_path / "atius-vault"
+    fake_vault.write_text("#!/bin/sh\nexit 99\n", encoding="utf-8")
+    fake_vault.chmod(0o700)
+    completed = subprocess.run(
+        [str(VAULT_CONTROL_BACKEND_PATH), "rustdesk-phase52-v1"],
+        input=json.dumps({"protocol": "rustdesk-phase52-v1", "references": [reference]}).encode(),
+        capture_output=True,
+        check=False,
+        env={**os.environ, "ATIUS_PHASE52_PROFILE_ROOT": str(profile_root), "ATIUS_PHASE52_VAULT_BIN": str(fake_vault)},
+    )
+    assert completed.returncode == 2
+    assert completed.stdout == completed.stderr == b""
+
+
+def test_gate_a_fourth_cycle_requires_exact_legacy_forced_command_and_options(tmp_path: Path) -> None:
+    root = tmp_path / "root"
+    ssh_dir = root / "home/ubuntu/.ssh"
+    ssh_dir.mkdir(parents=True, mode=0o700)
+    key = tmp_path / "key"
+    subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)], check=True)
+    public = key.with_suffix(".pub")
+    key_type, blob, comment = public.read_text().strip().split(maxsplit=2)
+    authorized = ssh_dir / "authorized_keys"
+    authorized.write_text(f'command="/home/ubuntu/.local/bin/atius-vault-export-ssh",no-port-forwarding {key_type} {blob} {comment}\n')
+    authorized.chmod(0o600)
+    fingerprint = subprocess.run(["ssh-keygen", "-lf", str(public), "-E", "sha256"], text=True, capture_output=True, check=True).stdout.split()[1]
+    completed = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--install", "--dry-run", "--root", str(root), "--authorized-key-file", str(public), "--expected-fingerprint", fingerprint],
+        text=True, capture_output=True, check=False,
+    )
+    assert completed.returncode == 2
+    assert "legacy-authorized-key-policy-drift" in completed.stderr
+
+
+@pytest.mark.parametrize("interruption", ["provider-target", "client-target"])
+def test_gate_a_fourth_cycle_provider_client_recovers_after_either_target(
+    tmp_path: Path, interruption: str
+) -> None:
+    home = tmp_path / interruption
+    home.mkdir(mode=0o700)
+    env = {**os.environ, "HOME": str(home), "ATIUS_RUSTDESK_INSTALLER_TEST_INTERRUPT_AFTER": interruption}
+    interrupted = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(home)],
+        env=env, text=True, capture_output=True, check=False,
+    )
+    assert interrupted.returncode == 75
+    recovered = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(home)],
+        env={**os.environ, "HOME": str(home)}, text=True, capture_output=True, check=False,
+    )
+    assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+    assert (home / ".local/bin/rustdesk-vault-provider").read_bytes() == VAULT_PROVIDER_PATH.read_bytes()
+    assert (home / ".local/bin/atius-vault-phase52-client").read_bytes() == VAULT_CLIENT_PATH.read_bytes()
+    interrupted_rollback = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(home)],
+        env=env, text=True, capture_output=True, check=False,
+    )
+    assert interrupted_rollback.returncode == 75
+    recovered_rollback = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(home)],
+        env={**os.environ, "HOME": str(home)}, text=True, capture_output=True, check=False,
+    )
+    assert recovered_rollback.returncode == 0, recovered_rollback.stdout + recovered_rollback.stderr
+    assert not (home / ".local/bin/rustdesk-vault-provider").exists()
+    assert not (home / ".local/bin/atius-vault-phase52-client").exists()
+
+
+def test_gate_a_fourth_cycle_control_plane_rejects_lock_and_installed_identity_drift(
+    tmp_path: Path
+) -> None:
+    root = tmp_path / "root"
+    ssh_dir = root / "home/ubuntu/.ssh"
+    ssh_dir.mkdir(parents=True, mode=0o700)
+    key = tmp_path / "key"
+    subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)], check=True)
+    public = key.with_suffix(".pub")
+    key_type, blob, comment = public.read_text().strip().split(maxsplit=2)
+    authorized = ssh_dir / "authorized_keys"
+    authorized.write_text(
+        f'command="/home/ubuntu/.local/bin/atius-vault-export-ssh",no-agent-forwarding,no-X11-forwarding,no-pty,no-port-forwarding {key_type} {blob} {comment}\n'
+    )
+    authorized.chmod(0o600)
+    legacy = root / "home/ubuntu/.local/bin/atius-vault-export-ssh"
+    legacy.parent.mkdir(parents=True, mode=0o700)
+    legacy.write_text("#!/bin/sh\nexit 0\n"); legacy.chmod(0o755)
+    fingerprint = subprocess.run(["ssh-keygen", "-lf", str(public), "-E", "sha256"], text=True, capture_output=True, check=True).stdout.split()[1]
+    install = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--install", "--root", str(root), "--authorized-key-file", str(public), "--expected-fingerprint", fingerprint],
+        text=True, capture_output=True, check=False,
+    )
+    assert install.returncode == 0, install.stdout + install.stderr
+    lock = root / "var/lib/atius-vault-phase52/control-plane-global.lock"
+    lock.chmod(0o644)
+    rollback = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--rollback", "--root", str(root)],
+        text=True, capture_output=True, check=False,
+    )
+    assert rollback.returncode == 2
+    assert "control-plane-lock-identity-drift" in rollback.stderr
+    lock.chmod(0o600)
+    backend = root / "usr/local/sbin/atius-vault-export-rustdesk-phase52"
+    backend.chmod(0o755)
+    rollback = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--rollback", "--root", str(root)],
+        text=True, capture_output=True, check=False,
+    )
+    assert rollback.returncode == 2
+    assert "installed-target-identity-drift" in rollback.stderr
+    backend.chmod(0o700)
+    state_dir = root / "var/lib/atius-vault-phase52"
+    state_dir.chmod(0o755)
+    rollback = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--rollback", "--root", str(root)],
+        text=True, capture_output=True, check=False,
+    )
+    assert rollback.returncode == 2
+    assert "control-plane-state-identity-drift" in rollback.stderr
+    state_dir.chmod(0o700)
+    manifest = state_dir / "install-state.json"
+    manifest_alias = state_dir / "install-state.alias"
+    os.link(manifest, manifest_alias)
+    rollback = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--rollback", "--root", str(root)],
+        text=True, capture_output=True, check=False,
+    )
+    assert rollback.returncode == 2
+    assert "control-plane-manifest-identity-drift" in rollback.stderr
+
+
+def test_gate_a_fourth_cycle_controller_streaming_bound_kills_process_group(tmp_path: Path) -> None:
+    script = tmp_path / "overflow.py"
+    pid_file = tmp_path / "child.pid"
+    script.write_text(
+        "import pathlib,subprocess,sys,time\n"
+        "child=subprocess.Popen(['sleep','60'])\n"
+        "pathlib.Path(sys.argv[1]).write_text(str(child.pid))\n"
+        "sys.stdout.write('x'*200000); sys.stdout.flush(); time.sleep(60)\n",
+        encoding="utf-8",
+    )
+    with pytest.raises((OverflowError, TimeoutError)):
+        validator._run_bounded_text_command(
+            [sys.executable, str(script), str(pid_file)], timeout=2, stdout_limit=1024, stderr_limit=1024
+        )
+    child_pid = int(pid_file.read_text())
+    deadline = time.monotonic() + 2
+    while time.monotonic() < deadline:
+        try:
+            os.kill(child_pid, 0)
+        except ProcessLookupError:
+            break
+        time.sleep(0.02)
+    else:
+        os.kill(child_pid, signal.SIGKILL)
+        pytest.fail("bounded controller left a descendant alive")
+
+
+def _phase52_control_fixture(tmp_path: Path) -> tuple[Path, Path, str]:
+    root = tmp_path / "root"
+    ssh_dir = root / "home/ubuntu/.ssh"
+    ssh_dir.mkdir(parents=True, mode=0o700)
+    key = tmp_path / "transport"
+    subprocess.run(["ssh-keygen", "-q", "-t", "ed25519", "-N", "", "-f", str(key)], check=True)
+    public = key.with_suffix(".pub")
+    key_type, blob, comment = public.read_text().strip().split(maxsplit=2)
+    authorized = ssh_dir / "authorized_keys"
+    authorized.write_text(
+        f'command="/home/ubuntu/.local/bin/atius-vault-export-ssh",no-agent-forwarding,no-X11-forwarding,no-pty,no-port-forwarding {key_type} {blob} {comment}\n'
+    )
+    authorized.chmod(0o600)
+    legacy = root / "home/ubuntu/.local/bin/atius-vault-export-ssh"
+    legacy.parent.mkdir(parents=True, mode=0o700)
+    legacy.write_text("#!/bin/sh\nexit 0\n", encoding="utf-8")
+    legacy.chmod(0o755)
+    fingerprint = subprocess.run(
+        ["ssh-keygen", "-lf", str(public), "-E", "sha256"],
+        text=True,
+        capture_output=True,
+        check=True,
+    ).stdout.split()[1]
+    return root, public, fingerprint
+
+
+def _run_control_install(root: Path, public: Path, fingerprint: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        [
+            str(VAULT_CONTROL_INSTALLER_PATH), "--install", "--root", str(root),
+            "--authorized-key-file", str(public), "--expected-fingerprint", fingerprint,
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+
+
+def test_gate_a_fifth_cycle_provider_recovery_rejects_installed_hash_with_wrong_mode(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir(mode=0o700)
+    env = {**os.environ, "HOME": str(home)}
+    interrupted = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(home)],
+        env={**env, "ATIUS_RUSTDESK_INSTALLER_TEST_INTERRUPT_AFTER": "client-target"},
+        text=True, capture_output=True, check=False,
+    )
+    assert interrupted.returncode == 75
+    provider = home / ".local/bin/rustdesk-vault-provider"
+    provider.chmod(0o600)
+    recovered = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(home)],
+        env=env, text=True, capture_output=True, check=False,
+    )
+    assert recovered.returncode == 2
+    assert "provider install recovery mode drift" in recovered.stderr
+
+
+def test_gate_a_fifth_cycle_requested_rollback_aborts_interrupted_install(tmp_path: Path) -> None:
+    home = tmp_path / "home"
+    home.mkdir(mode=0o700)
+    env = {**os.environ, "HOME": str(home)}
+    interrupted = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--install", "--home", str(home)],
+        env={**env, "ATIUS_RUSTDESK_INSTALLER_TEST_INTERRUPT_AFTER": "provider-target"},
+        text=True, capture_output=True, check=False,
+    )
+    assert interrupted.returncode == 75
+    rollback = subprocess.run(
+        [str(VAULT_PROVIDER_INSTALLER_PATH), "--rollback", "--home", str(home)],
+        env=env, text=True, capture_output=True, check=False,
+    )
+    assert rollback.returncode == 0, rollback.stdout + rollback.stderr
+    assert json.loads(rollback.stdout)["action"] == "rollback"
+    assert not (home / ".local/bin/rustdesk-vault-provider").exists()
+    assert not (home / ".local/bin/atius-vault-phase52-client").exists()
+
+
+def test_gate_a_fifth_cycle_control_rollback_prevalidates_missing_target_without_partial_restore(
+    tmp_path: Path,
+) -> None:
+    root, public, fingerprint = _phase52_control_fixture(tmp_path)
+    installed = _run_control_install(root, public, fingerprint)
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+    backend = root / "usr/local/sbin/atius-vault-export-rustdesk-phase52"
+    dispatcher = root / "usr/local/sbin/atius-vault-export-ssh-phase52"
+    dispatcher_before = dispatcher.read_bytes()
+    backend.unlink()
+    rollback = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--rollback", "--root", str(root)],
+        text=True, capture_output=True, check=False,
+    )
+    assert rollback.returncode == 2
+    assert "installed-target-missing" in rollback.stderr
+    assert dispatcher.read_bytes() == dispatcher_before
+
+
+def test_gate_a_fifth_cycle_control_recovers_installing_manifest(tmp_path: Path) -> None:
+    root, public, fingerprint = _phase52_control_fixture(tmp_path)
+    installed = _run_control_install(root, public, fingerprint)
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+    manifest = root / "var/lib/atius-vault-phase52/install-state.json"
+    payload = json.loads(manifest.read_text())
+    payload["status"] = "installing"
+    manifest.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+    manifest.chmod(0o600)
+    recovered = _run_control_install(root, public, fingerprint)
+    assert recovered.returncode == 0, recovered.stdout + recovered.stderr
+    assert json.loads(manifest.read_text())["status"] == "installed"
+
+
+def test_gate_a_fifth_cycle_control_atomic_rejects_ancestor_symlink_before_mkdir(tmp_path: Path) -> None:
+    root, public, fingerprint = _phase52_control_fixture(tmp_path)
+    outside = tmp_path / "outside"
+    outside.mkdir(mode=0o700)
+    (root / "etc").symlink_to(outside, target_is_directory=True)
+    installed = _run_control_install(root, public, fingerprint)
+    assert installed.returncode == 2
+    assert "parent-chain-drift" in installed.stderr
+    assert list(outside.rglob("*")) == []
+
+
+def test_gate_a_fifth_cycle_container_absence_is_exact_and_cleanup_is_idempotent(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    recovery, _ = _load_phase52_live_drill()
+    responses = iter([(125, b"", b"transport-error")])
+    monkeypatch.setattr(recovery, "bounded_process", lambda *args, **kwargs: next(responses))
+    with pytest.raises(recovery.RecoveryBlocked, match="container-exists-check-failed"):
+        recovery.checked_stop_remove("fixture")
+    responses = iter([(1, b"", b"")])
+    monkeypatch.setattr(recovery, "bounded_process", lambda *args, **kwargs: next(responses))
+    recovery.checked_stop_remove("fixture")
+    responses = iter([(0, b"", b""), (0, b"", b""), (0, b"", b""), (1, b"", b"")])
+    monkeypatch.setattr(recovery, "bounded_process", lambda *args, **kwargs: next(responses))
+    recovery.checked_stop_remove("fixture")
+
+
+def test_gate_a_fifth_cycle_rollback_without_manifest_preserves_unresolved_backup(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    transaction_id = "9" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    (root / "sqlite-a.work").write_bytes(b"partial")
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    retained.mkdir(parents=True, mode=0o700)
+    (retained / "backup-a.tar").write_bytes(b"partial")
+    state = recovery.initial_state(transaction_id)
+    live.journal_artifact(root, state, root / "sqlite-a.work", disposable=True)
+    live.journal_artifact(root, state, retained, disposable=False)
+    with pytest.raises(recovery.RecoveryBlocked, match="rollback-artifact-journal-missing"):
+        live.direct_action("rollback", root, state, False)
+    assert (root / "sqlite-a.work").is_file()
+    assert (retained / "backup-a.tar").is_file()
+
+
+def test_gate_a_fifth_cycle_dry_run_uses_live_action_schemas(tmp_path: Path) -> None:
+    recovery, live = _load_phase52_live_drill()
+    for action in recovery.ACTIONS:
+        details, mutation = live.direct_action(action, tmp_path, recovery.initial_state("8" * 32), True)
+        recovery.validate_action_result(action, details)
+        recovery.validate_mutation(mutation)
+
+
+def test_gate_a_fifth_cycle_mutation_semantics_reject_false_types_and_empty_classes() -> None:
+    recovery, _ = _load_phase52_live_drill()
+    invalid = (
+        {"performed": "false", "classes": [], "cleanup_pending": [], "retained_artifacts": list(recovery.RETAINED)},
+        {"performed": True, "classes": [], "cleanup_pending": [], "retained_artifacts": list(recovery.RETAINED)},
+        {"performed": False, "classes": ["not-approved"], "cleanup_pending": [], "retained_artifacts": list(recovery.RETAINED)},
+    )
+    for mutation in invalid:
+        with pytest.raises(recovery.RecoveryBlocked):
+            recovery.validate_mutation(mutation)
+
+
+def test_gate_a_fifth_cycle_controller_rejects_pass_with_invalid_action_details(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    payload = {
+        "schema": "phase52-live-drill-result-v2",
+        "transaction_id": "7" * 32,
+        "action": "preflight",
+        "status": "PASS",
+        "details": {"image": "lookalike"},
+        "mutation": {"performed": False, "classes": [], "cleanup_pending": [], "retained_artifacts": ["backup-a", "backup-b-local", "backup-b-remote"]},
+        "secret_material_present": False,
+    }
+    monkeypatch.setattr(
+        validator,
+        "_run_bounded_text_command",
+        lambda *args, **kwargs: (0, json.dumps(payload), ""),
+    )
+    with pytest.raises(ValueError, match="live-drill action details invalid"):
+        validator.run_live_drill_action("horistic-srv", "preflight", "/dev/shm/phase52-fixture")
+
+
+def test_gate_a_fifth_cycle_managed_pins_include_installed_executables(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    home = tmp_path / "home"
+    bin_dir = home / ".local/bin"
+    bin_dir.mkdir(parents=True, mode=0o700)
+    installed = {
+        "provider_sha256": VAULT_PROVIDER_PATH,
+        "client_sha256": VAULT_CLIENT_PATH,
+        "rclone_hydrate_sha256": REPO / "modules/fleet-backup/scripts/atius-rclone-vault-hydrate",
+        "rclone_copy_sha256": REPO / "modules/fleet-backup/scripts/rclone-copy-verified-phase52.sh",
+        "rclone_fetch_sha256": REPO / "modules/fleet-backup/scripts/rclone-fetch-verified-phase52.sh",
+    }
+    names = {
+        "provider_sha256": "rustdesk-vault-provider",
+        "client_sha256": "atius-vault-phase52-client",
+        "rclone_hydrate_sha256": "atius-rclone-vault-hydrate",
+        "rclone_copy_sha256": "rclone-copy-verified-phase52",
+        "rclone_fetch_sha256": "rclone-fetch-verified-phase52",
+    }
+    for key, source in installed.items():
+        shutil.copy2(source, bin_dir / names[key])
+        (bin_dir / names[key]).chmod(0o700)
+    repo = LIVE_DRILL_PATH.resolve().parents[3]
+    paths = {
+        "live_drill_sha256": LIVE_DRILL_PATH,
+        "recovery_sha256": RECOVERY_PATH,
+        "live_drill_contract_sha256": LIVE_DRILL_CONTRACT_PATH,
+        "validator_sha256": MODULE_PATH,
+        "capacity_policy_sha256": CAPACITY_POLICY_PATH,
+        "provider_sha256": VAULT_PROVIDER_PATH,
+        "client_sha256": VAULT_CLIENT_PATH,
+        "rclone_hydrate_sha256": repo / "modules/fleet-backup/scripts/atius-rclone-vault-hydrate",
+        "rclone_copy_sha256": repo / "modules/fleet-backup/scripts/rclone-copy-verified-phase52.sh",
+        "rclone_fetch_sha256": repo / "modules/fleet-backup/scripts/rclone-fetch-verified-phase52.sh",
+    }
+    exact = {key: __import__("hashlib").sha256(path.read_bytes()).hexdigest() for key, path in paths.items()}
+    monkeypatch.setenv("HOME", str(home))
+    live.verify_managed_source_digests(json.dumps(exact), dry_run=False)
+    (bin_dir / names["provider_sha256"]).write_text("drift\n")
+    with pytest.raises(recovery.RecoveryBlocked, match="installed-managed-source-digest-drift"):
+        live.verify_managed_source_digests(json.dumps(exact), dry_run=False)
+
+
+def test_gate_a_sixth_cycle_remote_create_without_manifest_blocks_and_preserves_inventory(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    transaction_id = "1" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    retained.mkdir(parents=True, mode=0o700)
+    (retained / "backup-b.tar").write_bytes(b"remote-copy-source")
+    state = recovery.initial_state(transaction_id)
+    live.journal_artifact(root, state, retained, disposable=False)
+    state["observed_mutation"] = recovery.mutation(
+        True, ["state-only-backup-b-remote-create"]
+    )
+    with pytest.raises(recovery.RecoveryBlocked, match="remote-object-inventory-missing"):
+        live.direct_action("rollback", root, state, False)
+    assert retained.is_dir()
+    assert (retained / "backup-b.tar").is_file()
+    destination = (
+        "giovanni-drive:ATIUS-SRV/HORISTIC-SRV/Backup/RustDesk/"
+        f"phase52/backup-b/{transaction_id}.tar"
+    )
+    intent = live.persist_remote_object_intent(
+        retained, transaction_id, destination, "a" * 64, 10240, verified=False
+    )
+    assert intent == live.load_remote_object_intent(retained, transaction_id)
+    assert intent["status"] == "copy-planned"
+    with pytest.raises(recovery.RecoveryBlocked, match="remote-object-intent-unresolved"):
+        live.direct_action("rollback", root, state, False)
+    assert retained.is_dir()
+
+
+def test_gate_a_sixth_cycle_terminal_rollback_emits_full_valid_schema(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, capsys: pytest.CaptureFixture[str]
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    state = recovery.initial_state("2" * 32)
+    rollback_details = {
+        "terminal": True,
+        "retained_artifacts": [],
+        "cleanup_pending": [],
+        "retained_rehash_verified": False,
+        "remote_rehash_verified": False,
+        "remote_delete_performed": False,
+    }
+    state["facts"] = {"rollback": rollback_details}
+    state["retained_artifacts"] = []
+    state = recovery.rollback_state(state)
+    live.atomic_state(root, state)
+    monkeypatch.setattr(live, "tmpfs_owned", lambda _path: None)
+    monkeypatch.setattr(live, "verify_managed_source_digests", lambda *args, **kwargs: None)
+    monkeypatch.setattr(
+        sys,
+        "argv",
+        [str(LIVE_DRILL_PATH), "--action", "rollback", "--transaction-dir", str(root)],
+    )
+    assert live.main() == 0
+    payload = json.loads(capsys.readouterr().out)
+    recovery.validate_action_result("rollback", payload["details"])
+
+
+def test_gate_a_sixth_cycle_mutation_false_rejects_observed_or_pending_work() -> None:
+    recovery, _ = _load_phase52_live_drill()
+    invalid = (
+        recovery.mutation(False, []) | {"classes": ["redacted-evidence-write"]},
+        recovery.mutation(False, []) | {"cleanup_pending": ["disposable-partial"]},
+    )
+    for mutation in invalid:
+        with pytest.raises(recovery.RecoveryBlocked, match="mutation-false-contradiction"):
+            recovery.validate_mutation(mutation)
+
+
+def test_gate_a_sixth_cycle_installing_manifest_never_blesses_wrong_mode(
+    tmp_path: Path,
+) -> None:
+    root, public, fingerprint = _phase52_control_fixture(tmp_path)
+    installed = _run_control_install(root, public, fingerprint)
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+    manifest = root / "var/lib/atius-vault-phase52/install-state.json"
+    payload = json.loads(manifest.read_text())
+    payload["status"] = "installing"
+    payload["targets"]["backend"]["installed_identity"] = None
+    manifest.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+    manifest.chmod(0o600)
+    backend = root / "usr/local/sbin/atius-vault-export-rustdesk-phase52"
+    backend.chmod(0o777)
+    recovered = _run_control_install(root, public, fingerprint)
+    assert recovered.returncode == 2
+    assert "installed-target-identity-drift" in recovered.stderr
+    assert stat.S_IMODE(backend.stat().st_mode) == 0o777
+
+
+def test_gate_a_sixth_cycle_rollback_recovers_installing_manifest(
+    tmp_path: Path,
+) -> None:
+    root, public, fingerprint = _phase52_control_fixture(tmp_path)
+    installed = _run_control_install(root, public, fingerprint)
+    assert installed.returncode == 0, installed.stdout + installed.stderr
+    manifest = root / "var/lib/atius-vault-phase52/install-state.json"
+    payload = json.loads(manifest.read_text())
+    payload["status"] = "installing"
+    manifest.write_text(json.dumps(payload, sort_keys=True, separators=(",", ":")) + "\n")
+    manifest.chmod(0o600)
+    rollback = subprocess.run(
+        [str(VAULT_CONTROL_INSTALLER_PATH), "--rollback", "--root", str(root)],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert rollback.returncode == 0, rollback.stdout + rollback.stderr
+    assert not (root / "var/lib/atius-vault-phase52").exists()
+    assert not (root / "usr/local/sbin/atius-vault-export-rustdesk-phase52").exists()
+    assert "command=\"/home/ubuntu/.local/bin/atius-vault-export-ssh\"" in (
+        root / "home/ubuntu/.ssh/authorized_keys"
+    ).read_text()
+
+
+def test_gate_a_sixth_cycle_partial_retained_cleanup_rejects_inode_replacement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    recovery, live = _load_phase52_live_drill()
+    monkeypatch.setenv("HOME", str(tmp_path))
+    transaction_id = "3" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    retained.mkdir(parents=True, mode=0o700)
+    state = recovery.initial_state(transaction_id)
+    live.journal_artifact(root, state, retained, disposable=False)
+    retained.rename(retained.with_name(retained.name + ".original"))
+    retained.mkdir(mode=0o700)
+    (retained / "replacement").write_text("must-survive\n", encoding="utf-8")
+    with pytest.raises(recovery.RecoveryBlocked, match="rollback-artifact-identity-drift"):
+        live.direct_action("rollback", root, state, False)
+    assert (retained / "replacement").read_text(encoding="utf-8") == "must-survive\n"
+
+
+def _gate_a_seventh_rollback_fixture(
+    tmp_path: Path,
+) -> tuple[object, object, Path, dict[str, object], Path, dict[str, object]]:
+    recovery, live = _load_phase52_live_drill()
+    transaction_id = "4" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    retained.mkdir(parents=True, mode=0o700)
+    archive_a = retained / "backup-a.tar"
+    archive_b = retained / "backup-b.tar"
+    member_payload = b"phase52-sqlite-state"
+    snapshot = root / "fixture.sqlite3"
+    snapshot.write_bytes(member_payload)
+    snapshot.chmod(0o600)
+    generated_a = recovery.state_archive(
+        snapshot, archive_a, label="A", transaction_id=transaction_id
+    )
+    generated_b = recovery.state_archive(
+        snapshot, archive_b, label="B", transaction_id=transaction_id
+    )
+    snapshot.unlink()
+    digest_a = generated_a["archive_sha256"]
+    digest_b = generated_b["archive_sha256"]
+    dry_details, _ = recovery.dry_run_details("backup", root)
+    manifest_a = copy.deepcopy(dry_details["backup_a"])
+    manifest_b = copy.deepcopy(dry_details["backup_b"])
+    member_digest = __import__("hashlib").sha256(member_payload).hexdigest()
+    for manifest, generated in (
+        (manifest_a, generated_a),
+        (manifest_b, generated_b),
+    ):
+        manifest["transaction_id"] = transaction_id
+        for field in (
+            "generation_id", "source_snapshot_sha256", "member_sha256",
+            "archive_sha256", "size_bytes",
+        ):
+            manifest[field] = generated[field]
+    destination = (
+        "giovanni-drive:ATIUS-SRV/HORISTIC-SRV/Backup/RustDesk/"
+        f"phase52/backup-b/{transaction_id}.tar"
+    )
+    manifest_b.update(
+        {
+            "remote_object": destination,
+            "local_sha256": digest_b,
+            "remote_sha256": digest_b,
+        }
+    )
+    manifests = {"A": manifest_a, "B": manifest_b}
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    live.persist_remote_object_intent(
+        retained, transaction_id, destination, digest_b,
+        archive_b.stat().st_size, verified=True,
+    )
+    state = recovery.initial_state(transaction_id)
+    live.journal_artifact(root, state, retained, disposable=False)
+    live.journal_artifact(root, state, archive_a, disposable=False)
+    live.journal_artifact(root, state, archive_b, disposable=False)
+    return recovery, live, root, state, retained, manifests
+
+
+def test_gate_a_seventh_cycle_retained_tar_rehash_rejects_byte_identical_inode_replacement(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    archive = retained / "backup-a.tar"
+    original = root / "backup-a.original"
+    archive.rename(original)
+    archive.write_bytes(original.read_bytes())
+    archive.chmod(0o600)
+    monkeypatch.setattr(
+        recovery,
+        "bounded_process",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("remote fetch reached")),
+    )
+    with pytest.raises(recovery.RecoveryBlocked, match="rollback-artifact-identity-drift"):
+        live.direct_action("rollback", root, state, False)
+    assert archive.read_bytes() == original.read_bytes()
+
+
+def test_gate_a_seventh_cycle_manifest_reconciles_copy_verified_intent(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    intent_path = retained / live.REMOTE_INTENT_FILE
+    intent = json.loads(intent_path.read_text(encoding="utf-8"))
+    intent["size_bytes"] += 1
+    live.atomic_json(intent_path, intent)
+    monkeypatch.setattr(
+        recovery,
+        "bounded_process",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("remote fetch reached")),
+    )
+    with pytest.raises(recovery.RecoveryBlocked, match="remote-object-intent-manifest-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+def test_gate_a_seventh_cycle_backup_manifest_schema_is_exact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    manifests["unexpected"] = {"accepted": False}
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    monkeypatch.setattr(
+        recovery,
+        "bounded_process",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("remote fetch reached")),
+    )
+    with pytest.raises(recovery.RecoveryBlocked, match="backup-manifest-schema-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+def _gate_a_block_remote_fetch(
+    recovery: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        recovery,
+        "bounded_process",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("remote fetch reached")),
+    )
+
+
+def test_gate_a_eighth_cycle_tar_size_must_match_manifest_before_hash(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    manifests["A"]["size_bytes"] += 1
+    manifests["B"]["size_bytes"] += 1
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    intent_path = retained / live.REMOTE_INTENT_FILE
+    intent = json.loads(intent_path.read_text(encoding="utf-8"))
+    intent["size_bytes"] += 1
+    live.atomic_json(intent_path, intent)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-backup-size-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+def test_gate_a_eighth_cycle_integer_schema_rejects_bool(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    manifests["B"]["size_bytes"] = True
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    intent_path = retained / live.REMOTE_INTENT_FILE
+    intent = json.loads(intent_path.read_text(encoding="utf-8"))
+    intent["size_bytes"] = True
+    live.atomic_json(intent_path, intent)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="backup-manifest-schema-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+def test_gate_a_eighth_cycle_json_loaders_reject_duplicate_keys(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, _, _, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    manifest_path = retained / "backup-manifests.json"
+    duplicate_manifest = (
+        '{"A":' + json.dumps(manifests["A"], separators=(",", ":"))
+        + ',"A":' + json.dumps(manifests["A"], separators=(",", ":"))
+        + ',"B":' + json.dumps(manifests["B"], separators=(",", ":")) + '}\n'
+    )
+    manifest_path.write_text(duplicate_manifest, encoding="utf-8")
+    manifest_path.chmod(0o600)
+    with pytest.raises(recovery.RecoveryBlocked, match="backup-manifest-schema-invalid"):
+        live.load_reconciled_backup_manifests(retained, "4" * 32)
+    live.atomic_json(manifest_path, manifests)
+    intent_path = retained / live.REMOTE_INTENT_FILE
+    raw_intent = intent_path.read_text(encoding="utf-8").replace(
+        '"status":"copy-verified"',
+        '"status":"copy-planned","status":"copy-verified"',
+    )
+    intent_path.write_text(raw_intent, encoding="utf-8")
+    intent_path.chmod(0o600)
+    with pytest.raises(recovery.RecoveryBlocked, match="remote-object-inventory-invalid"):
+        live.load_reconciled_backup_manifests(retained, "4" * 32)
+
+
+def test_gate_a_eighth_cycle_retention_requires_exact_bool(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    intent_path = retained / live.REMOTE_INTENT_FILE
+    intent = json.loads(intent_path.read_text(encoding="utf-8"))
+    intent["retention"]["deletion_requires_new_explicit_approval"] = 1
+    live.atomic_json(intent_path, intent)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="remote-object-inventory-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+@pytest.mark.parametrize("variant", ["source-snapshot", "generation-id"])
+def test_gate_a_eighth_cycle_backup_pair_invariants_are_strict(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    if variant == "source-snapshot":
+        manifests["B"]["source_snapshot_sha256"] = "f" * 64
+        manifests["B"]["member_sha256"] = "f" * 64
+    else:
+        manifests["B"]["generation_id"] = manifests["A"]["generation_id"]
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="backup-manifest-pair-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+def test_gate_a_eighth_cycle_retained_inventory_is_exact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    (retained / "unexpected.bin").write_bytes(b"not-allowed")
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-inventory-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+@pytest.mark.parametrize("unexpected", [None, ".unexpected", "nested"])
+def test_gate_a_ninth_cycle_missing_manifest_preserves_complete_local_backups(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, unexpected: str | None
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    (retained / "backup-manifests.json").unlink()
+    (retained / live.REMOTE_INTENT_FILE).unlink()
+    state["observed_mutation"] = recovery.mutation(
+        True, ["state-only-backup-a", "state-only-backup-b-local"]
+    )
+    if unexpected == ".unexpected":
+        (retained / unexpected).write_bytes(b"hidden")
+    elif unexpected == "nested":
+        (retained / unexpected).mkdir(mode=0o700)
+    blocker = (
+        "retained-local-backup-inventory-unresolved"
+        if unexpected is None
+        else "partial-retained-inventory-drift"
+    )
+    with pytest.raises(recovery.RecoveryBlocked, match=blocker):
+        live.direct_action("rollback", root, state, False)
+    assert retained.is_dir()
+    assert (retained / "backup-a.tar").is_file()
+    assert (retained / "backup-b.tar").is_file()
+    if unexpected is not None:
+        assert (retained / unexpected).exists()
+
+
+@pytest.mark.parametrize("variant", ["archive-sha256", "size-bytes"])
+def test_gate_a_ninth_cycle_backup_pair_requires_equal_archive_identity(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    if variant == "archive-sha256":
+        manifests["B"]["archive_sha256"] = "f" * 64
+        manifests["B"]["local_sha256"] = "f" * 64
+        manifests["B"]["remote_sha256"] = "f" * 64
+    else:
+        manifests["B"]["size_bytes"] += 1
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    live.persist_remote_object_intent(
+        retained,
+        "4" * 32,
+        manifests["B"]["remote_object"],
+        manifests["B"]["archive_sha256"],
+        manifests["B"]["size_bytes"],
+        verified=True,
+    )
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="backup-manifest-pair-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+@pytest.mark.parametrize("generation_id", ["A" * 32, "g" * 32])
+def test_gate_a_ninth_cycle_generation_id_is_lowercase_hex(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, generation_id: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    manifests["B"]["generation_id"] = generation_id
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="backup-manifest-schema-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+def test_gate_a_ninth_cycle_retained_directory_mode_is_exact(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    retained.chmod(0o755)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-identity-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+def _gate_a_malicious_tar(kind: str) -> tuple[bytes, str]:
+    if kind == "blob":
+        return b"not-a-tar" * 1024, "0" * 64
+    payload = b"member-payload"
+    stream = io.BytesIO()
+    with tarfile.open(fileobj=stream, mode="w:") as bundle:
+        def add_regular(name: str, data: bytes = payload) -> None:
+            member = tarfile.TarInfo(name)
+            member.size = len(data)
+            member.mode = 0o600
+            member.uid = member.gid = 0
+            member.mtime = 0
+            bundle.addfile(member, io.BytesIO(data))
+
+        if kind == "path-traversal":
+            add_regular("../db_v2.sqlite3")
+        elif kind == "link":
+            member = tarfile.TarInfo("db_v2.sqlite3")
+            member.type = tarfile.SYMTYPE
+            member.linkname = "../../outside"
+            member.mode = 0o600
+            bundle.addfile(member)
+        elif kind == "duplicate":
+            add_regular("db_v2.sqlite3")
+            add_regular("db_v2.sqlite3")
+        elif kind == "extra":
+            add_regular("db_v2.sqlite3")
+            add_regular("extra.sqlite3")
+        else:
+            raise AssertionError(kind)
+    return stream.getvalue(), __import__("hashlib").sha256(payload).hexdigest()
+
+
+@pytest.mark.parametrize("kind", ["blob", "path-traversal", "link", "duplicate", "extra"])
+def test_gate_a_ninth_cycle_retained_tar_structure_is_safe(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    tar_bytes, member_digest = _gate_a_malicious_tar(kind)
+    archive_digest = __import__("hashlib").sha256(tar_bytes).hexdigest()
+    for label in ("A", "B"):
+        archive = retained / f"backup-{label.lower()}.tar"
+        archive.write_bytes(tar_bytes)
+        archive.chmod(0o600)
+        manifests[label]["archive_sha256"] = archive_digest
+        manifests[label]["size_bytes"] = len(tar_bytes)
+        manifests[label]["source_snapshot_sha256"] = member_digest
+        manifests[label]["member_sha256"] = member_digest
+    manifests["B"]["local_sha256"] = archive_digest
+    manifests["B"]["remote_sha256"] = archive_digest
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    live.persist_remote_object_intent(
+        retained,
+        "4" * 32,
+        manifests["B"]["remote_object"],
+        archive_digest,
+        len(tar_bytes),
+        verified=True,
+    )
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-tar-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+@pytest.mark.parametrize(
+    ("present", "classes"),
+    [
+        ({"A"}, []),
+        ({"A"}, ["state-only-backup-a"]),
+        ({"A", "B"}, ["state-only-backup-a"]),
+        (set(), ["state-only-backup-a"]),
+        ({"B"}, []),
+        (set(), ["state-only-backup-b-local"]),
+    ],
+)
+def test_gate_a_tenth_cycle_pre_manifest_crash_windows_preserve_and_block(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    present: set[str],
+    classes: list[str],
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    (retained / "backup-manifests.json").unlink()
+    (retained / live.REMOTE_INTENT_FILE).unlink()
+    for label in {"A", "B"} - present:
+        (retained / f"backup-{label.lower()}.tar").unlink()
+    state["observed_mutation"] = recovery.mutation(bool(classes), classes)
+
+    with pytest.raises(
+        recovery.RecoveryBlocked,
+        match="retained-local-backup-inventory-unresolved",
+    ):
+        live.direct_action("rollback", root, state, False)
+
+    assert retained.is_dir()
+    assert {
+        entry.name for entry in retained.iterdir()
+    } == {f"backup-{label.lower()}.tar" for label in present}
+
+
+def _gate_a_exact_tar_end(payload_size: int) -> int:
+    return 512 + ((payload_size + 511) // 512) * 512 + 1024
+
+
+def _gate_a_rechecksum_tar_header(raw: bytes) -> bytes:
+    updated = bytearray(raw)
+    updated[148:156] = b"        "
+    updated[148:156] = f"{sum(updated[:512]):06o}\0 ".encode("ascii")
+    return bytes(updated)
+
+
+def _gate_a_tenth_tar_bytes(kind: str) -> tuple[bytes, str]:
+    payload = b"phase52-canonical-member"
+    stream = io.BytesIO()
+    kwargs: dict[str, object] = {"fileobj": stream, "mode": "w:"}
+    if kind in {"pax-global", "pax-member"}:
+        kwargs["format"] = tarfile.PAX_FORMAT
+        if kind == "pax-global":
+            kwargs["pax_headers"] = {"comment": "forbidden"}
+    elif kind in {"gnu-format", "gnu-longname"}:
+        kwargs["format"] = tarfile.GNU_FORMAT
+    else:
+        kwargs["format"] = tarfile.USTAR_FORMAT
+    with tarfile.open(**kwargs) as bundle:
+        name = "x" * 120 if kind == "gnu-longname" else "db_v2.sqlite3"
+        member = tarfile.TarInfo(name)
+        member.size = len(payload)
+        member.mode = 0o600
+        member.uid = member.gid = 0
+        member.mtime = 0
+        if kind == "pax-member":
+            member.pax_headers = {"comment": "forbidden"}
+        bundle.addfile(member, io.BytesIO(payload))
+    raw = stream.getvalue()
+    canonical_end = _gate_a_exact_tar_end(len(payload))
+    if kind == "truncated-end-blocks":
+        raw = raw[: canonical_end - 512]
+    elif kind == "trailing-zero-block":
+        raw = raw[:canonical_end] + b"\0" * 512
+    elif kind == "trailing-junk":
+        raw = raw[:canonical_end] + b"junk"
+    elif kind == "gnu-sparse":
+        sparse = bytearray(raw[:canonical_end])
+        sparse[156:157] = tarfile.GNUTYPE_SPARSE
+        raw = _gate_a_rechecksum_tar_header(bytes(sparse))
+    else:
+        raw = raw[:canonical_end]
+    return raw, __import__("hashlib").sha256(payload).hexdigest()
+
+
+def _gate_a_tenth_metadata_tar(field: str) -> tuple[bytes, str]:
+    payload = b"phase52-canonical-member"
+    stream = io.BytesIO()
+    with tarfile.open(fileobj=stream, mode="w:", format=tarfile.USTAR_FORMAT) as bundle:
+        member = tarfile.TarInfo("db_v2.sqlite3")
+        member.size = len(payload)
+        member.mode = 0o600
+        member.uid = member.gid = 0
+        member.mtime = 0
+        if field in {"uid", "gid", "mtime", "devmajor", "devminor"}:
+            setattr(member, field, 1)
+        elif field == "mode":
+            member.mode = 0o640
+        elif field in {"uname", "gname"}:
+            setattr(member, field, "root")
+        elif field == "linkname":
+            member.linkname = "unexpected"
+        else:
+            raise AssertionError(field)
+        bundle.addfile(member, io.BytesIO(payload))
+    raw = stream.getvalue()[: _gate_a_exact_tar_end(len(payload))]
+    if field in {"devmajor", "devminor"}:
+        updated = bytearray(raw)
+        offset = 329 if field == "devmajor" else 337
+        updated[offset : offset + 8] = b"0000001\0"
+        raw = _gate_a_rechecksum_tar_header(bytes(updated))
+    return raw, __import__("hashlib").sha256(payload).hexdigest()
+
+
+def _gate_a_replace_retained_pair(
+    live: object,
+    retained: Path,
+    manifests: dict[str, object],
+    tar_bytes: bytes,
+    member_digest: str,
+) -> None:
+    archive_digest = __import__("hashlib").sha256(tar_bytes).hexdigest()
+    for label in ("A", "B"):
+        archive = retained / f"backup-{label.lower()}.tar"
+        archive.write_bytes(tar_bytes)
+        archive.chmod(0o600)
+        manifests[label]["archive_sha256"] = archive_digest
+        manifests[label]["size_bytes"] = len(tar_bytes)
+        manifests[label]["source_snapshot_sha256"] = member_digest
+        manifests[label]["member_sha256"] = member_digest
+    manifests["B"]["local_sha256"] = archive_digest
+    manifests["B"]["remote_sha256"] = archive_digest
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    live.persist_remote_object_intent(
+        retained,
+        "4" * 32,
+        manifests["B"]["remote_object"],
+        archive_digest,
+        len(tar_bytes),
+        verified=True,
+    )
+
+
+@pytest.mark.parametrize(
+    "kind",
+    [
+        "pax-global",
+        "pax-member",
+        "gnu-format",
+        "gnu-longname",
+        "gnu-sparse",
+        "truncated-end-blocks",
+        "trailing-zero-block",
+        "trailing-junk",
+    ],
+)
+def test_gate_a_tenth_cycle_retained_tar_requires_canonical_physical_format(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, kind: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    tar_bytes, member_digest = _gate_a_tenth_tar_bytes(kind)
+    _gate_a_replace_retained_pair(live, retained, manifests, tar_bytes, member_digest)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-tar-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+@pytest.mark.parametrize(
+    "field",
+    ["mode", "uid", "gid", "uname", "gname", "mtime", "devmajor", "devminor", "linkname"],
+)
+def test_gate_a_tenth_cycle_retained_tar_metadata_is_canonical(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, field: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    tar_bytes, member_digest = _gate_a_tenth_metadata_tar(field)
+    _gate_a_replace_retained_pair(live, retained, manifests, tar_bytes, member_digest)
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-tar-invalid"):
+        live.direct_action("rollback", root, state, False)
+
+
+def test_gate_a_tenth_cycle_archive_hash_is_checked_before_tar_parser(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    wrong_digest = "f" * 64
+    for label in ("A", "B"):
+        manifests[label]["archive_sha256"] = wrong_digest
+    manifests["B"]["local_sha256"] = wrong_digest
+    manifests["B"]["remote_sha256"] = wrong_digest
+    live.atomic_json(retained / "backup-manifests.json", manifests)
+    live.persist_remote_object_intent(
+        retained,
+        "4" * 32,
+        manifests["B"]["remote_object"],
+        wrong_digest,
+        manifests["B"]["size_bytes"],
+        verified=True,
+    )
+    monkeypatch.setattr(
+        live,
+        "validate_retained_tar",
+        lambda *_args, **_kwargs: (_ for _ in ()).throw(AssertionError("parser reached")),
+    )
+    _gate_a_block_remote_fetch(recovery, monkeypatch)
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-backup-drift"):
+        live.direct_action("rollback", root, state, False)
+
+
+@pytest.mark.parametrize(
+    "classes",
+    [
+        ["state-only-backup-a"],
+        ["state-only-backup-b-local"],
+        ["state-only-backup-a", "state-only-backup-b-local"],
+    ],
+)
+def test_gate_a_eleventh_cycle_declared_local_mutation_requires_retained_root(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, classes: list[str]
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live = _load_phase52_live_drill()
+    transaction_id = "6" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    state = recovery.initial_state(transaction_id)
+    state["observed_mutation"] = recovery.mutation(True, classes)
+
+    with pytest.raises(
+        recovery.RecoveryBlocked,
+        match="retained-local-backup-inventory-missing",
+    ):
+        live.direct_action("rollback", root, state, False)
+
+    assert not retained.exists() and not retained.is_symlink()
+
+
+@pytest.mark.parametrize("identity", ["regular", "symlink"])
+def test_gate_a_eleventh_cycle_non_directory_retained_root_is_fail_closed(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, identity: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live = _load_phase52_live_drill()
+    transaction_id = "7" * 32
+    root = tmp_path / "transaction"
+    root.mkdir(mode=0o700)
+    retained = tmp_path / ".local/share/atius-rustdesk-phase52" / transaction_id
+    retained.parent.mkdir(parents=True, mode=0o700)
+    if identity == "regular":
+        retained.write_bytes(b"not-a-directory")
+    else:
+        target = tmp_path / "retained-target"
+        target.mkdir(mode=0o700)
+        retained.symlink_to(target, target_is_directory=True)
+    state = recovery.initial_state(transaction_id)
+    live.journal_artifact(root, state, retained, disposable=False)
+    state["observed_mutation"] = recovery.mutation(
+        True, ["state-only-backup-a"]
+    )
+
+    with pytest.raises(recovery.RecoveryBlocked, match="retained-identity-drift"):
+        live.direct_action("rollback", root, state, False)
+
+    assert retained.exists() or retained.is_symlink()
+
+
+def _gate_a_restore_fetch_must_not_run(
+    recovery: object, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setattr(
+        recovery,
+        "bounded_process",
+        lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("restore fetch reached")),
+    )
+
+
+@pytest.mark.parametrize("variant", ["b-only", "wrong-transaction", "duplicate-key"])
+def test_gate_a_twelfth_cycle_restore_rejects_unreconciled_manifest_before_fetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    manifest_path = retained / "backup-manifests.json"
+    if variant == "b-only":
+        live.atomic_json(manifest_path, {"B": manifests["B"]})
+    elif variant == "wrong-transaction":
+        manifests["A"]["transaction_id"] = "5" * 32
+        live.atomic_json(manifest_path, manifests)
+    else:
+        manifest_path.write_text(
+            '{"A":' + json.dumps(manifests["A"], separators=(",", ":"))
+            + ',"A":' + json.dumps(manifests["A"], separators=(",", ":"))
+            + ',"B":' + json.dumps(manifests["B"], separators=(",", ":")) + '}\n',
+            encoding="utf-8",
+        )
+        manifest_path.chmod(0o600)
+    _gate_a_restore_fetch_must_not_run(recovery, monkeypatch)
+
+    with pytest.raises(recovery.RecoveryBlocked):
+        live.direct_action("restore", root, state, False)
+
+
+@pytest.mark.parametrize("variant", ["missing", "drift"])
+def test_gate_a_twelfth_cycle_restore_reconciles_remote_intent_before_fetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    intent_path = retained / live.REMOTE_INTENT_FILE
+    if variant == "missing":
+        intent_path.unlink()
+    else:
+        intent = json.loads(intent_path.read_text(encoding="utf-8"))
+        intent["status"] = "copy-planned"
+        intent["verified_remote_sha256"] = None
+        live.atomic_json(intent_path, intent)
+    _gate_a_restore_fetch_must_not_run(recovery, monkeypatch)
+
+    with pytest.raises(recovery.RecoveryBlocked):
+        live.direct_action("restore", root, state, False)
+
+
+def test_gate_a_twelfth_cycle_restore_rejects_retained_identity_drift_before_fetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, retained, _ = _gate_a_seventh_rollback_fixture(tmp_path)
+    original = retained.with_name(retained.name + ".original")
+    retained.rename(original)
+    retained.symlink_to(original, target_is_directory=True)
+    _gate_a_restore_fetch_must_not_run(recovery, monkeypatch)
+
+    with pytest.raises(recovery.RecoveryBlocked):
+        live.direct_action("restore", root, state, False)
+
+
+@pytest.mark.parametrize("variant", ["missing", "mismatch"])
+def test_gate_a_twelfth_cycle_restore_requires_matching_backup_facts_before_fetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, variant: str
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, _, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    state["completed_actions"] = ["preflight", "vault", "backup"]
+    if variant == "mismatch":
+        facts = {
+            "backup_a": copy.deepcopy(manifests["A"]),
+            "backup_b": copy.deepcopy(manifests["B"]),
+            "state_only": ["db_v2.sqlite3"],
+            "remote_rehash_verified": True,
+            "sqlite_ready": True,
+        }
+        facts["backup_b"]["archive_sha256"] = "f" * 64
+        state.setdefault("facts", {})["backup"] = facts
+    _gate_a_restore_fetch_must_not_run(recovery, monkeypatch)
+
+    with pytest.raises(recovery.RecoveryBlocked):
+        live.direct_action("restore", root, state, False)
+
+
+def test_gate_a_twelfth_cycle_valid_reconciled_restore_reaches_fetch(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    monkeypatch.setenv("HOME", str(tmp_path))
+    recovery, live, root, state, _, manifests = _gate_a_seventh_rollback_fixture(tmp_path)
+    state["completed_actions"] = ["preflight", "vault", "backup"]
+    state.setdefault("facts", {})["backup"] = {
+        "backup_a": copy.deepcopy(manifests["A"]),
+        "backup_b": copy.deepcopy(manifests["B"]),
+        "state_only": ["db_v2.sqlite3"],
+        "remote_rehash_verified": True,
+        "sqlite_ready": True,
+    }
+    _gate_a_restore_fetch_must_not_run(recovery, monkeypatch)
+
+    with pytest.raises(AssertionError, match="restore fetch reached"):
+        live.direct_action("restore", root, state, False)
