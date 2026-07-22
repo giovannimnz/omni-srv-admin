@@ -2,8 +2,8 @@
 
 ## Report Identity
 
-- **Source HEAD:** `a8959a6d9d4e31b43c9cf1f051fdcef612fdcc42`
-- **Generated at:** `2026-07-22T05:39:33Z`
+- **Source HEAD:** `a8ae1c2df3b019e2abdd4999c1e90c979352d53b`
+- **Generated at:** `2026-07-22T05:50:46Z`
 - **Selected candidate:** `none`
 - **Phase 53 advance status:** `BLOCKED`
 - **Windows install performed:** `false`
@@ -29,9 +29,9 @@
 
 | Candidate | Verdict | First non-PASS | Record digest |
 |---|---|---|---|
-| `atius-srv-2` | NO-GO | capacity | `846b65c6f403bbcf4fa43bd04dff99ca1928f11adafc9de9c75bf8f3c3b475fa` |
-| `atius-srv-3` | NO-GO | capacity | `68c8918d8d8a03a7eb40defc3ae5c4d676a4fce0b0b8693e12ea71017a9b52b5` |
-| `horistic-srv` | NO-GO | vault | `f9a2ec6677e309671943b1bd9663ccb73813e208b4d56eb44ebccd6749db9eca` |
+| `atius-srv-2` | NO-GO | capacity | `3f35b7a4e2cb58a3b2a1d939831bce85c51b393a46f01e3ca0436fe0367410fc` |
+| `atius-srv-3` | NO-GO | capacity | `722292e1db9f688d36f73890be4cd333644a06c1c3cc7ff851a4d6e36ceb6a74` |
+| `horistic-srv` | NO-GO | vault | `9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737` |
 
 ## Temporal Boundaries
 

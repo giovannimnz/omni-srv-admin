@@ -3,19 +3,19 @@
     {
       "candidate": "atius-srv-2",
       "first_non_pass_stage": "capacity",
-      "record_digest": "846b65c6f403bbcf4fa43bd04dff99ca1928f11adafc9de9c75bf8f3c3b475fa",
+      "record_digest": "3f35b7a4e2cb58a3b2a1d939831bce85c51b393a46f01e3ca0436fe0367410fc",
       "verdict": "NO-GO"
     },
     {
       "candidate": "atius-srv-3",
       "first_non_pass_stage": "capacity",
-      "record_digest": "68c8918d8d8a03a7eb40defc3ae5c4d676a4fce0b0b8693e12ea71017a9b52b5",
+      "record_digest": "722292e1db9f688d36f73890be4cd333644a06c1c3cc7ff851a4d6e36ceb6a74",
       "verdict": "NO-GO"
     },
     {
       "candidate": "horistic-srv",
       "first_non_pass_stage": "vault",
-      "record_digest": "f9a2ec6677e309671943b1bd9663ccb73813e208b4d56eb44ebccd6749db9eca",
+      "record_digest": "9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737",
       "verdict": "NO-GO"
     }
   ],
@@ -192,7 +192,7 @@
     "phase54": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
     "phase57": "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
   },
-  "generated_at": "2026-07-22T05:39:33Z",
+  "generated_at": "2026-07-22T05:50:46Z",
   "inputs": [
     {
       "path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-HORISTIC-TOPOLOGY-IMPACT-REVIEW.md",
@@ -232,7 +232,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json",
-      "sha256": "6f7b012f3e98fc99d03a5d9faa2735b764e10aa8348256d05878f531a0d6e02a"
+      "sha256": "fc0c4411e3529fb74fe85150dc95b9ccb14e0607224ffcb727225d16585959ed"
     },
     {
       "path": "modules/rustdesk-fleet/evidence/phase52/supply-observation.json",
@@ -240,7 +240,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
-      "sha256": "cfeef0cc6afaaa5e1910c34f3a2e602fb61ff563f6cc3275b927b72f89308ebb"
+      "sha256": "f47e955619936615d34dc98b8fca58048514675765e988eb596bbbb05ce09846"
     },
     {
       "path": "modules/rustdesk-fleet/tools/validate_phase51.py",
@@ -259,7 +259,7 @@
   "schema_version": 1,
   "secret_material_present": false,
   "selected_candidate": null,
-  "source_head": "a8959a6d9d4e31b43c9cf1f051fdcef612fdcc42",
+  "source_head": "a8ae1c2df3b019e2abdd4999c1e90c979352d53b",
   "windows_access_proven": false,
   "windows_install_performed": false,
   "workstream": "rustdesk-fleet"

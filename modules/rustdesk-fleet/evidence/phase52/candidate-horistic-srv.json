@@ -4,7 +4,7 @@
   "first_non_pass_stage": "vault",
   "persisted_before_fallback": true,
   "public_listener_created": false,
-  "record_digest": "f9a2ec6677e309671943b1bd9663ccb73813e208b4d56eb44ebccd6749db9eca",
+  "record_digest": "9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737",
   "schema_version": 1,
   "secret_material_present": false,
   "stages": {
@@ -18,7 +18,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:26Z",
+      "observed_at": "2026-07-22T05:50:46Z",
       "predecessor_stage": "vault",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -50,17 +50,17 @@
         "P52-EV-FULL-CAPACITY-HORISTIC-SRV"
       ],
       "findings": [],
-      "input_digest": "2d8d8a303390dd4a26eee593c33df04d70bf9035606e8196dfbeb97449fcdac1",
+      "input_digest": "06bd437470f54d108a0ed8876715bf8817335bc95376e94522c65f5c288307fe",
       "mutation": {
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:25Z",
+      "observed_at": "2026-07-22T05:50:45Z",
       "read_only": true,
       "samples": [
         {
           "architecture": "aarch64",
-          "available_bytes": 58617634816,
+          "available_bytes": 58617274368,
           "command_version": "phase52-capacity-read-only-v2",
           "filesystem_source": "/dev/sda1",
           "hostname": "horistic-srv",
@@ -69,18 +69,18 @@
           "inode_used": 645215,
           "mount_point": "/",
           "mutation_performed": false,
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "podman_graphroot": "not-observed",
           "podman_version": "not-observed",
           "read_only": true,
           "resource_profile": "not-observed",
           "resource_wrapper": "not-observed",
           "total_bytes": 103859404800,
-          "used_bytes": 45224992768
+          "used_bytes": 45225353216
         },
         {
           "architecture": "aarch64",
-          "available_bytes": 58617634816,
+          "available_bytes": 58617274368,
           "command_version": "phase52-capacity-read-only-v2",
           "filesystem_source": "/dev/sda1",
           "hostname": "horistic-srv",
@@ -89,14 +89,14 @@
           "inode_used": 645215,
           "mount_point": "/",
           "mutation_performed": false,
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "podman_graphroot": "not-observed",
           "podman_version": "not-observed",
           "read_only": true,
           "resource_profile": "not-observed",
           "resource_wrapper": "not-observed",
           "total_bytes": 103859404800,
-          "used_bytes": 45224992768
+          "used_bytes": 45225353216
         }
       ],
       "secret_material_present": false,
@@ -112,7 +112,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:26Z",
+      "observed_at": "2026-07-22T05:50:46Z",
       "predecessor_stage": "vault",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -127,7 +127,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:26Z",
+      "observed_at": "2026-07-22T05:50:46Z",
       "predecessor_stage": "vault",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -144,7 +144,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:26Z",
+      "observed_at": "2026-07-22T05:50:46Z",
       "retained_backups_deleted": false,
       "secret_material_present": false,
       "status": "PASS"
@@ -160,7 +160,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:25Z",
+      "observed_at": "2026-07-22T05:50:45Z",
       "secret_material_present": false,
       "status": "PASS"
     },
@@ -174,7 +174,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:26Z",
+      "observed_at": "2026-07-22T05:50:46Z",
       "predecessor_stage": "vault",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -191,7 +191,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:26Z",
+      "observed_at": "2026-07-22T05:50:46Z",
       "readiness": {
         "home": "/home/horistic",
         "mutation_performed": false,

@@ -4,7 +4,7 @@
   "first_non_pass_stage": "capacity",
   "persisted_before_fallback": true,
   "public_listener_created": false,
-  "record_digest": "846b65c6f403bbcf4fa43bd04dff99ca1928f11adafc9de9c75bf8f3c3b475fa",
+  "record_digest": "3f35b7a4e2cb58a3b2a1d939831bce85c51b393a46f01e3ca0436fe0367410fc",
   "schema_version": 1,
   "secret_material_present": false,
   "stages": {
@@ -18,7 +18,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "predecessor_stage": "capacity",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -53,53 +53,53 @@
         "pre-disk-threshold-exceeded",
         "projected-post-threshold-exceeded"
       ],
-      "input_digest": "79568f2f74fa1bb7881886575664569c858682b9a950cec86a8baaf4fb92c531",
+      "input_digest": "4d0cf4af64ff23d41705bd227072bfe841eba4c248fc39bed0f336e97bd92593",
       "mutation": {
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "read_only": true,
       "samples": [
         {
           "architecture": "aarch64",
-          "available_bytes": 32306716672,
+          "available_bytes": 32164179968,
           "command_version": "phase52-capacity-read-only-v2",
           "filesystem_source": "/dev/sda1",
           "hostname": "atius-srv-2",
-          "inode_available": 23266281,
+          "inode_available": 23266280,
           "inode_total": 25932800,
-          "inode_used": 2666519,
+          "inode_used": 2666520,
           "mount_point": "/",
           "mutation_performed": false,
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:43Z",
           "podman_graphroot": "not-observed",
           "podman_version": "not-observed",
           "read_only": true,
           "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
           "resource_wrapper": "not-observed",
           "total_bytes": 207907635200,
-          "used_bytes": 175584141312
+          "used_bytes": 175726678016
         },
         {
           "architecture": "aarch64",
-          "available_bytes": 32306716672,
+          "available_bytes": 32164179968,
           "command_version": "phase52-capacity-read-only-v2",
           "filesystem_source": "/dev/sda1",
           "hostname": "atius-srv-2",
-          "inode_available": 23266281,
+          "inode_available": 23266280,
           "inode_total": 25932800,
-          "inode_used": 2666519,
+          "inode_used": 2666520,
           "mount_point": "/",
           "mutation_performed": false,
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "podman_graphroot": "not-observed",
           "podman_version": "not-observed",
           "read_only": true,
           "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
           "resource_wrapper": "not-observed",
           "total_bytes": 207907635200,
-          "used_bytes": 175584141312
+          "used_bytes": 175726678016
         }
       ],
       "secret_material_present": false,
@@ -115,7 +115,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "predecessor_stage": "capacity",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -130,7 +130,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "predecessor_stage": "capacity",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -146,7 +146,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "secret_material_present": false,
       "status": "BLOCKED"
     },
@@ -161,7 +161,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:23Z",
+      "observed_at": "2026-07-22T05:50:43Z",
       "secret_material_present": false,
       "status": "PASS"
     },
@@ -175,7 +175,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "predecessor_stage": "capacity",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"
@@ -190,7 +190,7 @@
         "classes": [],
         "performed": false
       },
-      "observed_at": "2026-07-22T05:38:24Z",
+      "observed_at": "2026-07-22T05:50:44Z",
       "predecessor_stage": "capacity",
       "secret_material_present": false,
       "status": "SKIPPED_DUE_TO_GATE"

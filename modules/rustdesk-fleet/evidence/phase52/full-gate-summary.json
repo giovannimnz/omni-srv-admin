@@ -11,7 +11,7 @@
       "first_non_pass_stage": "capacity",
       "persisted_before_fallback": true,
       "public_listener_created": false,
-      "record_digest": "846b65c6f403bbcf4fa43bd04dff99ca1928f11adafc9de9c75bf8f3c3b475fa",
+      "record_digest": "3f35b7a4e2cb58a3b2a1d939831bce85c51b393a46f01e3ca0436fe0367410fc",
       "schema_version": 1,
       "secret_material_present": false,
       "stages": {
@@ -25,7 +25,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -60,53 +60,53 @@
             "pre-disk-threshold-exceeded",
             "projected-post-threshold-exceeded"
           ],
-          "input_digest": "79568f2f74fa1bb7881886575664569c858682b9a950cec86a8baaf4fb92c531",
+          "input_digest": "4d0cf4af64ff23d41705bd227072bfe841eba4c248fc39bed0f336e97bd92593",
           "mutation": {
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "read_only": true,
           "samples": [
             {
               "architecture": "aarch64",
-              "available_bytes": 32306716672,
+              "available_bytes": 32164179968,
               "command_version": "phase52-capacity-read-only-v2",
               "filesystem_source": "/dev/sda1",
               "hostname": "atius-srv-2",
-              "inode_available": 23266281,
+              "inode_available": 23266280,
               "inode_total": 25932800,
-              "inode_used": 2666519,
+              "inode_used": 2666520,
               "mount_point": "/",
               "mutation_performed": false,
-              "observed_at": "2026-07-22T05:38:24Z",
+              "observed_at": "2026-07-22T05:50:43Z",
               "podman_graphroot": "not-observed",
               "podman_version": "not-observed",
               "read_only": true,
               "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
               "resource_wrapper": "not-observed",
               "total_bytes": 207907635200,
-              "used_bytes": 175584141312
+              "used_bytes": 175726678016
             },
             {
               "architecture": "aarch64",
-              "available_bytes": 32306716672,
+              "available_bytes": 32164179968,
               "command_version": "phase52-capacity-read-only-v2",
               "filesystem_source": "/dev/sda1",
               "hostname": "atius-srv-2",
-              "inode_available": 23266281,
+              "inode_available": 23266280,
               "inode_total": 25932800,
-              "inode_used": 2666519,
+              "inode_used": 2666520,
               "mount_point": "/",
               "mutation_performed": false,
-              "observed_at": "2026-07-22T05:38:24Z",
+              "observed_at": "2026-07-22T05:50:44Z",
               "podman_graphroot": "not-observed",
               "podman_version": "not-observed",
               "read_only": true,
               "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
               "resource_wrapper": "not-observed",
               "total_bytes": 207907635200,
-              "used_bytes": 175584141312
+              "used_bytes": 175726678016
             }
           ],
           "secret_material_present": false,
@@ -122,7 +122,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -137,7 +137,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -153,7 +153,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "secret_material_present": false,
           "status": "BLOCKED"
         },
@@ -168,7 +168,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:23Z",
+          "observed_at": "2026-07-22T05:50:43Z",
           "secret_material_present": false,
           "status": "PASS"
         },
@@ -182,7 +182,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -197,7 +197,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -212,7 +212,7 @@
       "first_non_pass_stage": "capacity",
       "persisted_before_fallback": true,
       "public_listener_created": false,
-      "record_digest": "68c8918d8d8a03a7eb40defc3ae5c4d676a4fce0b0b8693e12ea71017a9b52b5",
+      "record_digest": "722292e1db9f688d36f73890be4cd333644a06c1c3cc7ff851a4d6e36ceb6a74",
       "schema_version": 1,
       "secret_material_present": false,
       "stages": {
@@ -226,7 +226,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -261,53 +261,53 @@
             "pre-disk-threshold-exceeded",
             "projected-post-threshold-exceeded"
           ],
-          "input_digest": "9fcf6a10552e4edf4c09990907b49adc7f84ff24c8849510ece891b14df59946",
+          "input_digest": "c3fa99123c8ae449f77435977f7ca1c9f06e1b3d4dd815880bec9805eeb1f5ff",
           "mutation": {
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "read_only": true,
           "samples": [
             {
               "architecture": "aarch64",
-              "available_bytes": 34227499008,
+              "available_bytes": 34043248640,
               "command_version": "phase52-capacity-read-only-v2",
               "filesystem_source": "/dev/sda1",
               "hostname": "atius-srv-3.atius.internal",
-              "inode_available": 23768904,
+              "inode_available": 23768864,
               "inode_total": 25932800,
-              "inode_used": 2163896,
+              "inode_used": 2163936,
               "mount_point": "/",
               "mutation_performed": false,
-              "observed_at": "2026-07-22T05:38:24Z",
+              "observed_at": "2026-07-22T05:50:44Z",
               "podman_graphroot": "not-observed",
               "podman_version": "not-observed",
               "read_only": true,
               "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
               "resource_wrapper": "not-observed",
               "total_bytes": 207907635200,
-              "used_bytes": 173663358976
+              "used_bytes": 173847609344
             },
             {
               "architecture": "aarch64",
-              "available_bytes": 34227490816,
+              "available_bytes": 34043240448,
               "command_version": "phase52-capacity-read-only-v2",
               "filesystem_source": "/dev/sda1",
               "hostname": "atius-srv-3.atius.internal",
-              "inode_available": 23768904,
+              "inode_available": 23768864,
               "inode_total": 25932800,
-              "inode_used": 2163896,
+              "inode_used": 2163936,
               "mount_point": "/",
               "mutation_performed": false,
-              "observed_at": "2026-07-22T05:38:25Z",
+              "observed_at": "2026-07-22T05:50:45Z",
               "podman_graphroot": "not-observed",
               "podman_version": "not-observed",
               "read_only": true,
               "resource_profile": "RG_PROFILE_BUILDS_CPU_TOTAL_PCT=20",
               "resource_wrapper": "not-observed",
               "total_bytes": 207907635200,
-              "used_bytes": 173663367168
+              "used_bytes": 173847617536
             }
           ],
           "secret_material_present": false,
@@ -323,7 +323,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -338,7 +338,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -354,7 +354,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "secret_material_present": false,
           "status": "BLOCKED"
         },
@@ -369,7 +369,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:24Z",
+          "observed_at": "2026-07-22T05:50:44Z",
           "secret_material_present": false,
           "status": "PASS"
         },
@@ -383,7 +383,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -398,7 +398,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "predecessor_stage": "capacity",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -413,7 +413,7 @@
       "first_non_pass_stage": "vault",
       "persisted_before_fallback": true,
       "public_listener_created": false,
-      "record_digest": "f9a2ec6677e309671943b1bd9663ccb73813e208b4d56eb44ebccd6749db9eca",
+      "record_digest": "9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737",
       "schema_version": 1,
       "secret_material_present": false,
       "stages": {
@@ -427,7 +427,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:26Z",
+          "observed_at": "2026-07-22T05:50:46Z",
           "predecessor_stage": "vault",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -459,17 +459,17 @@
             "P52-EV-FULL-CAPACITY-HORISTIC-SRV"
           ],
           "findings": [],
-          "input_digest": "2d8d8a303390dd4a26eee593c33df04d70bf9035606e8196dfbeb97449fcdac1",
+          "input_digest": "06bd437470f54d108a0ed8876715bf8817335bc95376e94522c65f5c288307fe",
           "mutation": {
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "read_only": true,
           "samples": [
             {
               "architecture": "aarch64",
-              "available_bytes": 58617634816,
+              "available_bytes": 58617274368,
               "command_version": "phase52-capacity-read-only-v2",
               "filesystem_source": "/dev/sda1",
               "hostname": "horistic-srv",
@@ -478,18 +478,18 @@
               "inode_used": 645215,
               "mount_point": "/",
               "mutation_performed": false,
-              "observed_at": "2026-07-22T05:38:25Z",
+              "observed_at": "2026-07-22T05:50:45Z",
               "podman_graphroot": "not-observed",
               "podman_version": "not-observed",
               "read_only": true,
               "resource_profile": "not-observed",
               "resource_wrapper": "not-observed",
               "total_bytes": 103859404800,
-              "used_bytes": 45224992768
+              "used_bytes": 45225353216
             },
             {
               "architecture": "aarch64",
-              "available_bytes": 58617634816,
+              "available_bytes": 58617274368,
               "command_version": "phase52-capacity-read-only-v2",
               "filesystem_source": "/dev/sda1",
               "hostname": "horistic-srv",
@@ -498,14 +498,14 @@
               "inode_used": 645215,
               "mount_point": "/",
               "mutation_performed": false,
-              "observed_at": "2026-07-22T05:38:25Z",
+              "observed_at": "2026-07-22T05:50:45Z",
               "podman_graphroot": "not-observed",
               "podman_version": "not-observed",
               "read_only": true,
               "resource_profile": "not-observed",
               "resource_wrapper": "not-observed",
               "total_bytes": 103859404800,
-              "used_bytes": 45224992768
+              "used_bytes": 45225353216
             }
           ],
           "secret_material_present": false,
@@ -521,7 +521,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:26Z",
+          "observed_at": "2026-07-22T05:50:46Z",
           "predecessor_stage": "vault",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -536,7 +536,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:26Z",
+          "observed_at": "2026-07-22T05:50:46Z",
           "predecessor_stage": "vault",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -553,7 +553,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:26Z",
+          "observed_at": "2026-07-22T05:50:46Z",
           "retained_backups_deleted": false,
           "secret_material_present": false,
           "status": "PASS"
@@ -569,7 +569,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:25Z",
+          "observed_at": "2026-07-22T05:50:45Z",
           "secret_material_present": false,
           "status": "PASS"
         },
@@ -583,7 +583,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:26Z",
+          "observed_at": "2026-07-22T05:50:46Z",
           "predecessor_stage": "vault",
           "secret_material_present": false,
           "status": "SKIPPED_DUE_TO_GATE"
@@ -600,7 +600,7 @@
             "classes": [],
             "performed": false
           },
-          "observed_at": "2026-07-22T05:38:26Z",
+          "observed_at": "2026-07-22T05:50:46Z",
           "readiness": {
             "home": "/home/horistic",
             "mutation_performed": false,
@@ -657,12 +657,12 @@
   ],
   "authorized_live_write_candidate": "horistic-srv",
   "decision_source_digest": "bcbacd98e5828fc8808d99ea63238506c321b9efee4eb5dc268aed572c570f8a",
-  "generated_at": "2026-07-22T05:38:26Z",
+  "generated_at": "2026-07-22T05:50:46Z",
   "overall_status": "BLOCKED",
   "predecessor_nogo_digests": [
-    "846b65c6f403bbcf4fa43bd04dff99ca1928f11adafc9de9c75bf8f3c3b475fa",
-    "68c8918d8d8a03a7eb40defc3ae5c4d676a4fce0b0b8693e12ea71017a9b52b5",
-    "f9a2ec6677e309671943b1bd9663ccb73813e208b4d56eb44ebccd6749db9eca"
+    "3f35b7a4e2cb58a3b2a1d939831bce85c51b393a46f01e3ca0436fe0367410fc",
+    "722292e1db9f688d36f73890be4cd333644a06c1c3cc7ff851a4d6e36ceb6a74",
+    "9e9fb2284f3fa39b7801383568bf6728a36d67cb8c96d9481019caf02e258737"
   ],
   "public_listener_created": false,
   "schema_version": 1,
