@@ -2,24 +2,25 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Runtime Trust and Codex Delivery Convergence
-current_phase: 48
-current_phase_name: Codex OAuth and Wayland Remote ACP Convergence
+current_phase: 47.1
+current_phase_name: Internal DNS Authority and FreeIPA Convergence
 status: executing
-stopped_at: Phase 48 plans 48-03 through 48-06 passed research, spike and plan-check; execution remains ordered after 48-02 with live trust checkpoints
-last_updated: "2026-07-19T18:06:51-03:00"
-last_activity: 2026-07-19
+stopped_at: "Phase 47.1 planned and independently verified: 8 plans in 8 waves; execute 47.1-01 next and keep Phase 48 plan 48-03 blocked until the release gate passes"
+last_updated: "2026-07-22T08:36:38.181Z"
+last_activity: 2026-07-22
+last_activity_desc: Phase 47.1 research, Nyquist validation, 8-plan revision and independent plan-check completed
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 2
-  total_plans: 10
+  total_plans: 18
   completed_plans: 2
-  percent: 20
+  percent: 11
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-07-19 after Phase 48 owner-local transport spikes and the verified 48-03..48-06 planning loop
-**Last activity:** 2026-07-19
+**Last updated:** 2026-07-22 after Phase 47.1 planning verification
+**Last activity:** 2026-07-22 — Phase 47.1 research, Nyquist validation, 8-plan revision and independent plan-check completed
 
 ## Project Reference
 
@@ -27,7 +28,7 @@ See: `.planning/ROADMAP.md`
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** Phase 48 — Codex OAuth and Wayland Remote ACP Convergence
+**Current focus:** Phase 47.1 — Internal DNS Authority and FreeIPA Convergence; Phase 48 plans 48-01/48-02 remain an independent execution lane
 
 ## Milestones
 
@@ -172,9 +173,9 @@ See also: .planning/MILESTONES.md
 
 ## Current Position
 
-Phase: 48 (Codex OAuth and Wayland Remote ACP Convergence) — EXECUTING
-Plans: `48-01-PLAN`, `48-02-PLAN`, `48-03-PLAN`, `48-04-PLAN`, `48-05-PLAN`, `48-06-PLAN` (planning)
-Status: Executing Phase 48
+Phase: 47.1 (Internal DNS Authority and FreeIPA Convergence) — PLANNING; Phase 48 plans 48-01/48-02 may continue independently
+Plans: Phase 47.1 planning in progress; existing Phase 48 plans remain preserved
+Status: Ready to execute
 Last activity: 2026-07-19 — owner-local research/spikes completed; plans 48-03..48-06 passed the independent checker after three revision cycles
 
 ## Operator Next Steps
@@ -348,6 +349,11 @@ Status: PLANNING (2026-06-24)
 - Artifacts: `.planning/spikes/001-fleet-service-pki-trust-matrix/README.md`, `.planning/phases/44-internal-service-pki-and-fleet-trust/44-CONTEXT.md`, `44-RESEARCH.md`, `44-VALIDATION.md`, and `44-01..03-PLAN.md`.
 - No CA, private key, trust-store mutation, service restart, port change, or router channel change was executed in this planning step.
 
+### Roadmap Evolution
+
+- Phase 47.1 inserted after Phase 47: Internal DNS Authority and FreeIPA Convergence (URGENT)
+- Phase 47.1 planned after Phase 47: 8 verified plans for authoritative DNS and FreeIPA convergence before Phase 48 plan 48-03
+
 ## Phase 44-01 execution - 2026-07-05
 
 - Implemented the `omni fleet trust-pki` CLI resource surface.
@@ -413,7 +419,7 @@ Status: PLANNING (2026-06-24)
 ## Session
 
 **Last session:** 2026-06-25T03:25:13.517Z
-**Stopped at:** Completed 42-01-PLAN.md
+**Stopped at:** Phase 47.1 planned and independently verified: 8 plans in 8 waves; execute 47.1-01 next and keep Phase 48 plan 48-03 blocked until the release gate passes
 **Resume file:** None
 
 ## Phase 29 inventory probe correction - 2026-06-25T03:32:16Z
