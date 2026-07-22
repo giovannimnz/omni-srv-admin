@@ -1,6 +1,6 @@
 # Milestone Branch Matrix
 
-**Last updated:** 2026-07-12
+**Last updated:** 2026-07-22
 
 This file is the shared milestone index for `main`, planning branches, and
 cross-session resumes. It should answer three questions quickly:
@@ -13,9 +13,10 @@ cross-session resumes. It should answer three questions quickly:
 
 | Milestone | Phase span | Theme | Canonical artifacts | Status |
 |---|---|---|---|---|
-| v1.8 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/phases/{46,47,48,49,50}-*/` | Current: Phases 46-47 complete; Phase 48 executing |
+| v1.8 | 46-50 + 47.1 | Runtime Trust and Codex Delivery Convergence | `.planning/phases/{46,47,47.1,48,49,50}-*/` | Current: Phase 47.1 planning as urgent DNS prerequisite; Phase 48 executing only its independent lane |
 | v1.7 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
 | v1.6 carry-over | 47 | Internal Service PKI listener/trust closeout | `.planning/phases/47-internal-service-pki-closeout/` | Shipped 2026-07-12 |
+| DNS authority prerequisite | 47.1 | FreeIPA authoritative DNS plus CoreDNS/AdGuard forwarding | `.planning/phases/47.1-internal-dns-authority-and-freeipa-convergence/` | Planning; blocks Phase 48 plan 48-03 and later |
 | Codex/Wayland lane | 48-49 | OAuth/ACP convergence then Headroom | `.planning/phases/{48,49}-*/` | Phase 48 executing; Phase 49 blocked until full Phase 48 validation |
 | v1.4 carry-over | 50 | Atius-wide SSO publication closeout | `.planning/phases/50-atius-wide-sso-closeout/` | Queued after Phase 49; continues delivered 42-01/42-02 |
 
@@ -84,7 +85,7 @@ cross-session resumes. It should answer three questions quickly:
 | M013 | 43 | Codex MCP Bootstrap Hardening | `.planning/phases/43-codex-mcp-bootstrap-hardening/` | Shipped |
 | M014 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | Historical partial; continues in Phase 47 |
 | M015 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
-| M016 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/ROADMAP.md` + phase validation files | Current |
+| M016 | 46-50 + 47.1 | Runtime Trust and Codex Delivery Convergence | `.planning/ROADMAP.md` + phase validation files | Current |
 
 ## Separation Rules
 
@@ -100,6 +101,7 @@ cross-session resumes. It should answer three questions quickly:
 
 ## Current Operator Queue
 
-1. Continue Phase 48: close Router evidence plus native/local/remote ACP validation without Headroom.
-2. Execute Phase 49 only after every Phase 48 stop condition is green: isolated Headroom canary, ACP/Wayland promotion and rollback rehearsal.
-3. Execute Phase 50 after Phase 49: close the remaining SSO publication/logout/RBAC gate using completed 42-01/42-02 evidence.
+1. Plan and execute Phase 47.1 before Phase 48 plan 48-03: converge FreeIPA authoritative DNS, CoreDNS/AdGuard conditional forwarding, client split DNS and rollback.
+2. Phase 48 plans 48-01/48-02 may continue independently; 48-03..48-06 consume the completed 47.1 authority contract.
+3. Execute Phase 49 only after every Phase 48 stop condition is green: isolated Headroom canary, ACP/Wayland promotion and rollback rehearsal.
+4. Execute Phase 50 after Phase 49: close the remaining SSO publication/logout/RBAC gate using completed 42-01/42-02 evidence.

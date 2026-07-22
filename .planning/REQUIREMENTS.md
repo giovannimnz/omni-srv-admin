@@ -115,6 +115,17 @@
 - [x] **PLN-04**: `gsd-tools` health, stats e roadmap analyzer reconhecem v1.8 e nao reportam fases orfas ou config keys invalidas.
 - [x] **PLN-05**: A ordem final e registrada no repo, Obsidian e GBrain sem segredos.
 
+### Internal DNS Authority and FreeIPA Convergence
+
+- [ ] **IDA-01**: FreeIPA e a unica autoridade de `atius.internal`, das quatro zonas PTR OCI/DRG e dos registros IdM SOA/NS/SRV/TXT; A/PTR dos quatro hosts correspondem exatamente aos `oci_private_ip` do inventario.
+- [ ] **IDA-02**: O DNS FreeIPA e publicado somente na rede privada por um secondary private IP dedicado em `10.13.1.0/24`, escolhido por OCI OperationPlan aprovado e validado, sem hardcode especulativo, sem reutilizar `10.13.1.13` e sem expor `10.89.53.10` fora do srv-3.
+- [ ] **IDA-03**: CoreDNS em `10.11.1.11` encaminha `atius.internal` e as quatro zonas reversas ao FreeIPA, mantendo AdGuard no caminho de recursao publica; AdGuard usa conditional forwarding e `local_ptr_upstreams`, nao rewrites ou hostsfile como fonte de verdade.
+- [ ] **IDA-04**: Linux usa route-only/split DNS deterministico para `atius.internal`, Windows usa NRPT para o namespace interno e edge clients usam FQDN/search suffix documentado; DNS publico nao e fallback coigual para nomes internos.
+- [ ] **IDA-05**: Cutover usa backup de FreeIPA/CoreDNS/AdGuard, canario ausente de fontes estaticas, TTL/cache controlado, rollout por cliente/host e rollback ensaiado antes de remover FQDNs duplicados de `/etc/hosts` ou CoreDNS static hosts.
+- [ ] **IDA-06**: `hostname -f` no srv-3 retorna `atius-srv-3.atius.internal`, os quatro host entries FreeIPA publicam as chaves SSH consumidas pelo SSSD e a identidade local `ubuntu@atius-srv-3.atius.internal` nao cria self-SSH.
+- [ ] **IDA-07**: A fase prova um segundo failure domain/replica DNS FreeIPA ou mantem um stop condition explicito que impede dependencia rigida de DNS/autenticacao em um unico container; fallback publico nunca responde pela zona interna.
+- [ ] **IDA-08**: Validacao final cobre A/PTR/SOA/NS/SRV/TXT/NXDOMAIN, TCP e UDP 53, `dig`, `getent`, `resolvectl`, `Resolve-DnsName`/`nslookup`, SSSD host keys, latencia e rollback, com inventario/ROADMAP/Obsidian/GBrain coerentes e sem segredos.
+
 ### Codex OAuth and Wayland ACP Convergence
 
 - [ ] **WAC-01**: Router Phase 32 e auditada em shell funcional sem sobrescrever mudancas concorrentes e possui testes deterministas para metadata, refresh, regenerate, probe e upstream auth.
@@ -226,6 +237,14 @@
 | PLN-03 | Phase 46 | Complete |
 | PLN-04 | Phase 46 | Complete |
 | PLN-05 | Phase 46 | Complete |
+| IDA-01 | Phase 47.1 | Planned |
+| IDA-02 | Phase 47.1 | Planned |
+| IDA-03 | Phase 47.1 | Planned |
+| IDA-04 | Phase 47.1 | Planned |
+| IDA-05 | Phase 47.1 | Planned |
+| IDA-06 | Phase 47.1 | Planned |
+| IDA-07 | Phase 47.1 | Planned |
+| IDA-08 | Phase 47.1 | Planned |
 | WAC-01 | Phase 48 | Planned |
 | WAC-02 | Phase 48 | Planned |
 | WAC-03 | Phase 48 | Planned |
@@ -265,12 +284,12 @@
 - v1.7 requirements: 8 total
 - v1.7 mapped to phases: 8
 - v1.7 unmapped: 0
-- v1.8 requirements: 23 total
-- v1.8 mapped to phases: 23
+- v1.8 requirements: 31 total
+- v1.8 mapped to phases: 31
 - v1.8 unmapped: 0
 
-**Total:** 85 requirements | 55 complete | 30 open | 0 unmapped
+**Total:** 93 requirements | 55 complete | 38 open | 0 unmapped
 
 ---
 *Requirements defined: 2026-06-24*
-*Last updated: 2026-07-19 after Phase 48 owner-local transport spikes and 48-03 scope extension*
+*Last updated: 2026-07-22 after inserting Phase 47.1 for authoritative DNS and FreeIPA convergence*
