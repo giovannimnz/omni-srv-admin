@@ -8,8 +8,13 @@ umask 077
 root_prefix_from_self=$(realpath -e -- "$0")
 root_prefix_from_self=${root_prefix_from_self%/usr/local/sbin/atius-vault-export-ssh-phase52}
 [[ -n "$root_prefix_from_self" ]] || root_prefix_from_self=/
-readonly BACKEND="$root_prefix_from_self/usr/local/sbin/atius-vault-export-rustdesk-phase52"
-readonly LEGACY="$root_prefix_from_self/home/ubuntu/.local/bin/atius-vault-export-ssh"
+if [[ "$root_prefix_from_self" == / ]]; then
+  readonly BACKEND=/usr/local/sbin/atius-vault-export-rustdesk-phase52
+  readonly LEGACY=/home/ubuntu/.local/bin/atius-vault-export-ssh
+else
+  readonly BACKEND="$root_prefix_from_self/usr/local/sbin/atius-vault-export-rustdesk-phase52"
+  readonly LEGACY="$root_prefix_from_self/home/ubuntu/.local/bin/atius-vault-export-ssh"
+fi
 readonly legacy_command_max_bytes=16384
 [[ $# -eq 0 ]] || exit 64
 original=${SSH_ORIGINAL_COMMAND-}

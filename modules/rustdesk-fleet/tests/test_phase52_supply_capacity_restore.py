@@ -2219,6 +2219,14 @@ def test_gate_a_corrective_dispatcher_preserves_legacy_grammar() -> None:
     assert "eval" not in text
 
 
+def test_gate_a_dispatcher_uses_canonical_live_root_paths_for_exact_sudoers_match() -> None:
+    text = VAULT_CONTROL_DISPATCHER_PATH.read_text(encoding="utf-8")
+    assert 'if [[ "$root_prefix_from_self" == / ]]; then' in text
+    assert "readonly BACKEND=/usr/local/sbin/atius-vault-export-rustdesk-phase52" in text
+    assert "readonly LEGACY=/home/ubuntu/.local/bin/atius-vault-export-ssh" in text
+    assert 'readonly BACKEND="$root_prefix_from_self/usr/local/sbin/atius-vault-export-rustdesk-phase52"' in text
+
+
 def test_gate_a_corrective_installer_preserves_identity_and_validates_sudoers() -> None:
     text = VAULT_CONTROL_INSTALLER_PATH.read_text(encoding="utf-8")
     for required in ("st_uid", "st_gid", "st_nlink", "visudo", "authorized-key-entry-not-unique"):
