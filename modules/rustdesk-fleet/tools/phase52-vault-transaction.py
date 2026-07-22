@@ -56,6 +56,7 @@ APPROVED_HORISTIC_SSH_FINGERPRINT = "SHA256:4m+0420TZvKfUXyKrD5lLK2n/65QOBdWSgnW
 CONTROL_PLANE_STATE_ROOT = Path("/var/lib/atius-vault-phase52")
 VAULT_CONTAINER = "hashicorp-vault-atius"
 PODMAN = Path("/usr/bin/podman")
+BASH = Path("/usr/bin/bash")
 VAULT_OVERLAY_ROOT = Path("/var/lib/containers/storage/overlay")
 SAFE_BLOCKER_TOKENS = frozenset({
     "ambiguous-write-ownership",
@@ -720,14 +721,18 @@ def _reconcile_status_projection(
         raise Blocked("transaction-evidence-invalid")
 
     wal_status = wal["status"]
-    prewrite_states = {
+    prewrite_states = (
         "PRE_BACKUP", "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING",
         "CONTROL_PLANE_INSTALLED", "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL",
         "CONTROL_PLANE_REINSTALLED", "METADATA_PROVED_PRISTINE",
-    }
+    )
     compatible = False
     if wal_status in prewrite_states:
-        compatible = evidence_status in {"BLOCKED", wal_status} and evidence_count == 0
+        wal_index = prewrite_states.index(wal_status)
+        compatible = (
+            evidence_status == "BLOCKED"
+            or evidence_status in prewrite_states[: wal_index + 1]
+        ) and evidence_count == 0
     elif wal_status == "PRE_BACKUP_NO_MUTATION_TERMINAL":
         compatible = evidence_status in {
             "PRE_BACKUP", "PRE_BACKUP_NO_MUTATION_TERMINAL",
@@ -742,7 +747,9 @@ def _reconcile_status_projection(
         compatible = evidence_status in {"CREATING", "ROLLING_BACK"}
     elif wal_status == "ROLLBACK_BLOCKED_RETRY_REQUIRED":
         compatible = evidence_status in {"CREATING", "ROLLBACK_BLOCKED_RETRY_REQUIRED"}
-        compatible = compatible or (not wal["writes"] and evidence_status == "BLOCKED")
+        compatible = compatible or (
+            not wal["writes"] and evidence_status in {"BLOCKED", "PRE_BACKUP"}
+        )
     elif wal_status == "ROLLED_BACK_REQUIRES_MANUAL_REAUTHORIZATION":
         compatible = evidence_status in {
             "CREATING", "ROLLBACK_BLOCKED_RETRY_REQUIRED",
@@ -758,6 +765,9 @@ def _reconcile_status_projection(
         }
     elif wal_status == "BLOCKED":
         compatible = evidence_status in {"BLOCKED", "ROLLBACK_BLOCKED_RETRY_REQUIRED"}
+        compatible = compatible or (
+            not wal["writes"] and evidence_status == "PRE_BACKUP"
+        )
     if not compatible:
         raise Blocked("transaction-evidence-leads-wal")
 
@@ -1054,13 +1064,35 @@ def run_transaction(
         try:
             backend.install_control_plane(directory, managed_sources or {})
         except Blocked as exc:
-            backend.restore_control_plane(directory)
+            try:
+                backend.restore_control_plane(directory)
+            except Blocked as restore_exc:
+                wal["status"] = "ROLLBACK_BLOCKED_RETRY_REQUIRED"
+                wal["control_plane_restored"] = False
+                wal["blocker"] = _fixed_blocker(
+                    "control-plane-restore-retry-required",
+                )
+                atomic_json(directory / "wal.json", wal)
+                _write_evidence(
+                    directory,
+                    _runtime_projection(
+                        transaction_id, "ROLLBACK_BLOCKED_RETRY_REQUIRED", [],
+                    ),
+                )
+                raise Blocked("rollback-retry-required") from restore_exc
             wal["status"] = "BLOCKED"
             wal["blocker"] = _sanitized_blocker(
                 exc, "control-plane-install-failed",
             )
             wal["control_plane_restored"] = True
             atomic_json(directory / "wal.json", wal)
+            atomic_json(
+                directory / "ledger.json",
+                _final_ledger(transaction_id, "BLOCKED", []),
+            )
+            _write_evidence(
+                directory, _runtime_projection(transaction_id, "BLOCKED", []),
+            )
             raise
         wal["status"] = "CONTROL_PLANE_INSTALLED"
         wal["control_plane_install_proved"] = True
@@ -1106,6 +1138,13 @@ def run_transaction(
             )
             wal["blocker"] = _sanitized_blocker(exc, fallback)
             atomic_json(directory / "wal.json", wal)
+            atomic_json(
+                directory / "ledger.json",
+                _final_ledger(transaction_id, "BLOCKED", []),
+            )
+            _write_evidence(
+                directory, _runtime_projection(transaction_id, "BLOCKED", []),
+            )
             raise
         wal["status"] = "CONTROL_PLANE_REINSTALLED"
         wal["control_plane_reinstall_proved"] = True
@@ -1464,14 +1503,17 @@ def _bounded_process_detailed_serial(
 ) -> tuple[int, bytes, bytes]:
     baseline_descendants = set(_descendant_pids(os.getpid()))
     tracked_descendants: set[int] = set()
-    process = subprocess.Popen(
-        command,
-        stdin=subprocess.PIPE,
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-        close_fds=True,
-        env=_safe_child_env(),
-    )
+    try:
+        process = subprocess.Popen(
+            command,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            close_fds=True,
+            env=_safe_child_env(),
+        )
+    except OSError as exc:
+        raise Blocked("child-command-start-failed") from exc
     assert process.stdin and process.stdout and process.stderr
     os.set_blocking(process.stdin.fileno(), False)
     selector = selectors.DefaultSelector()
@@ -1874,7 +1916,7 @@ class LocalVaultBackend(TransactionBackend):
             if len(parts) < 2 or not re.fullmatch(r"SHA256:[A-Za-z0-9+/]{43}", parts[1]):
                 raise Blocked("authorized-key-fingerprint-invalid")
             approved = _validate_approved_fingerprint(parts[1], self.approved_fingerprint)
-            try: _bounded_process([str(self.installer), "--install", "--authorized-key-file", str(public), "--expected-fingerprint", approved], b"", max_stdout=4096)
+            try: _bounded_process([str(BASH), str(self.installer), "--install", "--authorized-key-file", str(public), "--expected-fingerprint", approved], b"", max_stdout=4096)
             except Blocked: raise Blocked("control-plane-install-failed")
         finally:
             shutil.rmtree(source_dir, ignore_errors=True)
@@ -2020,7 +2062,17 @@ class LocalVaultBackend(TransactionBackend):
 
             # Prevalidate every independent live target and the entire mutable
             # tree.  No mutation is permitted until this inventory is complete.
-            for path in self.control_paths:
+            for row in manifest["targets"]:
+                path = Path(row["path"])
+                parent_required = (
+                    row["present"] is True
+                    or path.exists()
+                    or path.is_symlink()
+                    or path.parent.exists()
+                    or path.parent.is_symlink()
+                )
+                if not parent_required:
+                    continue
                 try:
                     parent_info = path.parent.lstat()
                 except OSError as exc:

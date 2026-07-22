@@ -944,6 +944,64 @@ def test_zero_ack_rollback_retry_state_only_retries_restore_and_never_puts(tmp_p
     assert backend.events[-1] == "restore-control-plane"
 
 
+def test_initial_install_restore_failure_persists_retry_before_resume(tmp_path):
+    class InstallAndRestoreFailure(FakeBackend):
+        def __init__(self):
+            super().__init__()
+            self.restore_failures = 1
+
+        def install_control_plane(self, transaction_dir, managed_sources):
+            self.events.append("install-control-plane")
+            raise tx.Blocked("fixture-control-plane-install-failed")
+
+        def restore_control_plane(self, transaction_dir):
+            self.events.append("restore-control-plane")
+            if self.restore_failures:
+                self.restore_failures -= 1
+                raise tx.Blocked("fixture-control-plane-restore-failed")
+
+    backend = InstallAndRestoreFailure()
+    transaction_id = "20260722T120000Z-acde6767"
+    with pytest.raises(tx.Blocked, match="rollback-retry-required"):
+        tx.run_transaction(contract(), backend, tmp_path, transaction_id, require_root=False)
+    directory = tmp_path / transaction_id
+    wal = json.loads((directory / "wal.json").read_text())
+    evidence = json.loads((directory / "transaction-evidence.json").read_text())
+    assert wal["status"] == evidence["status"] == "ROLLBACK_BLOCKED_RETRY_REQUIRED"
+    assert wal["control_plane_restored"] is False and wal["writes"] == []
+    assert backend.puts == [] and backend.deleted == []
+
+    recovered = tx.resume_transaction(
+        contract(), backend, tmp_path, transaction_id, require_root=False,
+    )
+    assert recovered["status"] == "BLOCKED"
+    assert backend.puts == [] and backend.deleted == []
+
+
+def test_initial_install_failure_persists_terminal_evidence_after_restore(tmp_path):
+    class InstallFailure(FakeBackend):
+        def install_control_plane(self, transaction_dir, managed_sources):
+            self.events.append("install-control-plane")
+            raise tx.Blocked("fixture-control-plane-install-failed")
+
+    backend = InstallFailure()
+    transaction_id = "20260722T120000Z-acde6868"
+    with pytest.raises(tx.Blocked, match="fixture-control-plane-install-failed"):
+        tx.run_transaction(contract(), backend, tmp_path, transaction_id, require_root=False)
+    directory = tmp_path / transaction_id
+    wal = json.loads((directory / "wal.json").read_text())
+    evidence = json.loads((directory / "transaction-evidence.json").read_text())
+    ledger = json.loads((directory / "ledger.json").read_text())
+    assert wal["status"] == evidence["status"] == ledger["status"] == "BLOCKED"
+    assert wal["control_plane_restored"] is True and wal["writes"] == []
+    assert backend.puts == [] and backend.deleted == []
+
+    with pytest.raises(tx.Blocked, match="transaction-terminal-blocked"):
+        tx.resume_transaction(
+            contract(), backend, tmp_path, transaction_id, require_root=False,
+        )
+
+
 def test_pre_reinstall_restore_double_failure_persists_retry_and_resume_is_restore_only(tmp_path):
     class RestoreFailures(FakeBackend):
         def __init__(self, failures):
@@ -1350,6 +1408,49 @@ def test_status_reconciliation_reports_terminal_and_ambiguous_wal_not_stale_evid
     assert gate._validate_recovery_result(payload, ambiguous, transaction_id) == ambiguous
 
 
+def test_status_reconciliation_accepts_only_earlier_prewrite_evidence():
+    payload = contract()
+    transaction_id = "20260722T235959Z-c1d2e3f4"
+    stale = tx._runtime_projection(transaction_id, "PRE_BACKUP", [])
+    for status in (
+        "BACKUP_PROVED", "CONTROL_PLANE_INSTALLING", "CONTROL_PLANE_INSTALLED",
+        "CONTROL_PLANE_RESTORED_BEFORE_REINSTALL", "CONTROL_PLANE_REINSTALLED",
+        "METADATA_PROVED_PRISTINE",
+    ):
+        wal = {
+            "schema": "phase52-gate-b-wal-v1", "transaction_id": transaction_id,
+            "status": status, "writes": [], "soft_delete_performed": False,
+        }
+        assert tx._reconcile_status_projection(
+            payload, wal, stale, transaction_id,
+        )["status"] == status
+
+    leading = tx._runtime_projection(transaction_id, "CONTROL_PLANE_INSTALLED", [])
+    earlier_wal = {
+        "schema": "phase52-gate-b-wal-v1", "transaction_id": transaction_id,
+        "status": "BACKUP_PROVED", "writes": [], "soft_delete_performed": False,
+    }
+    with pytest.raises(tx.Blocked, match="transaction-evidence-leads-wal"):
+        tx._reconcile_status_projection(payload, earlier_wal, leading, transaction_id)
+
+    blocked_wal = {
+        "schema": "phase52-gate-b-wal-v1", "transaction_id": transaction_id,
+        "status": "BLOCKED", "writes": [], "soft_delete_performed": False,
+        "blocker": "control-plane-install-failed", "control_plane_restored": True,
+    }
+    assert tx._reconcile_status_projection(
+        payload, blocked_wal, stale, transaction_id,
+    )["status"] == "BLOCKED"
+    for leading_status in ("CONTROL_PLANE_INSTALLED", "METADATA_PROVED_PRISTINE"):
+        with pytest.raises(tx.Blocked, match="transaction-evidence-leads-wal"):
+            tx._reconcile_status_projection(
+                payload,
+                blocked_wal,
+                tx._runtime_projection(transaction_id, leading_status, []),
+                transaction_id,
+            )
+
+
 def test_isolated_restore_identity_rejects_noop_snapshot_post():
     pre = {"cluster_id": "same", "raft_sha256": "a" * 64, "sentinel_written": True}
     no_op_post = {"initialized": True, "raft_sha256": "a" * 64, "sealed": True}
@@ -1604,7 +1705,8 @@ def test_control_plane_tree_backup_restores_exact_state_and_absence(monkeypatch,
     legacy = tmp_path / "legacy"; legacy.write_bytes(b"before"); legacy.chmod(0o640)
     state_root = tmp_path / "state"; (state_root / "nested").mkdir(parents=True)
     (state_root / "nested" / "value").write_bytes(b"original")
-    backend.control_paths = [legacy]
+    absent_target = tmp_path / "absent-parent" / "profile.json"
+    backend.control_paths = [legacy, absent_target]
     backend.control_state_path = state_root
     transaction = tmp_path / "transaction"; transaction.mkdir()
 
@@ -1616,6 +1718,7 @@ def test_control_plane_tree_backup_restores_exact_state_and_absence(monkeypatch,
     (state_root / "residual").write_bytes(b"must-disappear")
     backend.restore_control_plane(transaction)
     assert legacy.read_bytes() == b"before" and stat.S_IMODE(legacy.stat().st_mode) == 0o640
+    assert not absent_target.exists() and not absent_target.parent.exists()
     assert (state_root / "nested" / "value").read_bytes() == b"original"
     assert not (state_root / "residual").exists()
 
@@ -1930,6 +2033,9 @@ def test_source_has_no_secret_transport_in_argv_env_or_output():
     assert 'health_payload.get("sealed") is not True' in isolated
     assert 'health_payload.get("initialized") is not True' in isolated
     assert 'raft_dir / "vault.db"' in isolated
+    assert 'BASH = Path("/usr/bin/bash")' in executor
+    assert '[str(BASH), str(self.installer)' in executor
+    assert '[str(self.installer), "--install"' not in executor
     assert "_fsync_file_and_parent(snapshot)" in executor
     assert "private_config.unlink()" in executor
     assert "_fsync_directory(private_config.parent)" in executor
@@ -2054,6 +2160,15 @@ def test_child_environment_is_allowlisted_and_silent_child_times_out(monkeypatch
         tx._bounded_process(
             [sys.executable, "-c", "import time; time.sleep(5)"], b"", timeout_seconds=0.05,
         )
+
+
+def test_bounded_process_normalizes_spawn_oserror(monkeypatch):
+    def fail_spawn(*args, **kwargs):
+        raise PermissionError("fixture-non-executable")
+
+    monkeypatch.setattr(subprocess, "Popen", fail_spawn)
+    with pytest.raises(tx.Blocked, match="^child-command-start-failed$"):
+        tx._bounded_process(["/fixture/non-executable"], b"")
 
 
 def test_internal_timeout_terminates_descendant_process_tree(tmp_path):
