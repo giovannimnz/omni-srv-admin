@@ -34,6 +34,8 @@ PHASE51_DIR = (
 )
 REVIEW_PATH = PHASE51_DIR / "51-OPERATIONAL-REVIEW.md"
 SECURITY_PATH = PHASE51_DIR / "51-SECURITY.md"
+REPORT_PATH = PHASE51_DIR / "51-CONTRACT-VALIDATION.json"
+REPORT_MARKDOWN_PATH = PHASE51_DIR / "51-CONTRACT-VALIDATION.md"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase51", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -540,13 +542,29 @@ def test_phase51_validator_never_reads_vault() -> None:
     assert not any(token in source for token in forbidden)
 
 
-def test_operational_review_passes_after_accountable_approval() -> None:
-    review = validator.load_operational_review(REVIEW_PATH)
-    manifest = validator.build_review_input_manifest(REPO, review["source_head"])
-    result = validator.validate_operational_review(review, REPO, manifest)
-    assert result.id == "P51-REPORT-001"
-    assert result.status == "PASS"
-    assert result.findings == []
+def test_sealed_operational_review_passes_after_accountable_approval() -> None:
+    report = validator.load_json_strict(REPORT_PATH)
+    report_check = next(check for check in report["checks"] if check["id"] == "P51-REPORT-001")
+    assert report_check["status"] == "PASS"
+    assert report_check["findings"] == []
+    assert validator.git_commit_exists(REPO, report["source_head"])
+    assert validator.git_is_ancestor(REPO, report["source_head"], validator.git_head(REPO))
+    expected_paths = sorted(
+        {
+            *validator.PRE_REPORT_INPUTS,
+            validator.REQUIREMENTS_RELATIVE_PATH,
+            validator.REVIEW_RELATIVE_PATH,
+        }
+    )
+    assert [item["path"] for item in report["inputs"]] == expected_paths
+
+    pinned_inputs = validator.collect_git_input_digests(
+        REPO,
+        report["source_head"],
+        tuple(Path(item["path"]) for item in report["inputs"]),
+    )
+    assert pinned_inputs == sorted(report["inputs"], key=lambda item: item["path"])
+    assert REPORT_MARKDOWN_PATH.read_text(encoding="utf-8") == validator.render_markdown(report)
 
 
 def test_operational_review_blocks_without_remaining_human_fields() -> None:
@@ -576,7 +594,7 @@ def test_operational_review_blocks_without_remaining_human_fields() -> None:
 
 
 def test_report_contains_exact_check_set() -> None:
-    report = validator.build_report(REPO, generated_at="2026-07-20T05:00:00Z")
+    report = validator.load_json_strict(REPORT_PATH)
     assert [check["id"] for check in report["checks"]] == list(validator.CHECK_ORDER)
     assert len(report["checks"]) == 11
     assert report["overall_status"] == "PASS"
