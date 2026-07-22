@@ -24,6 +24,9 @@ from typing import Any
 
 SUPPLY_CONTRACT = Path("modules/rustdesk-fleet/contracts/supply-chain.json")
 SUPPLY_OBSERVATION = Path("modules/rustdesk-fleet/evidence/phase52/supply-observation.json")
+CAPACITY_POLICY = Path("modules/rustdesk-fleet/contracts/capacity-policy.json")
+PLACEMENT_DECISION = Path("modules/rustdesk-fleet/contracts/placement-decision.json")
+CAPACITY_PROPOSAL = Path("modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json")
 SERVER_COMMIT = "9bae9f2f39d92c4b4ba2e28e089da5071897b22e"
 CLIENT_COMMIT = "6c578292e8ebbbec708b76986ba8c4bc7c509747"
 MULTIARCH_DIGEST = "sha256:10818ec05b179039c6660f4d8e74b303f0db2858bbad2b18e24992ea22d54cd6"
@@ -32,6 +35,47 @@ ZIP_SHA256 = "4998dd6d32431f9aaf5841663339793bc154d7152313e128832d6b610580abe4"
 DEB_SHA256 = "ce62c996f14d33f3bbe3a330e953644a44bace7f05885a7953f7395d69fb49c0"
 MSI_SHA256 = "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa"
 CANDIDATES = ("atius-srv-2", "atius-srv-3", "horistic-srv")
+MAX_BYTES = (2**63) - 1
+CAPACITY_RESERVATION_KEYS = (
+    "loaded_image_bytes",
+    "preserved_oci_archive_bytes",
+    "peak_import_workspace_bytes",
+    "backup_a_bytes",
+    "backup_b_bytes",
+    "combined_daily_log_budget_bytes",
+    "log_retention_days",
+    "log_reserve_30d_bytes",
+    "state_growth_budget_bytes",
+)
+COUNTED_RESERVATION_KEYS = (
+    "loaded_image_bytes",
+    "preserved_oci_archive_bytes",
+    "peak_import_workspace_bytes",
+    "backup_a_bytes",
+    "backup_b_bytes",
+    "log_reserve_30d_bytes",
+    "state_growth_budget_bytes",
+)
+MATERIALIZABLE_RESERVATION_KEYS = COUNTED_RESERVATION_KEYS[:5]
+STAGE_FIELDS = (
+    "supply_status",
+    "capacity_status",
+    "vault_status",
+    "backup_status",
+    "restore_status",
+    "capacity_finalize_status",
+    "rollback_status",
+    "topology_security_status",
+)
+BOUNDED_FULL_GATE_WRITES = (
+    "pinned-artifact-staging",
+    "pinned-artifact-load",
+    "state-only-backup-a",
+    "state-only-backup-b",
+    "disposable-isolated-restore-state",
+    "redacted-evidence-write",
+    "verified-drill-artifact-rollback-removal",
+)
 
 
 @dataclass(frozen=True)
@@ -97,6 +141,16 @@ def _result(status: str, categories: list[str], source: str) -> CheckResult:
     )
 
 
+def _check_result(check_id: str, status: str, categories: list[str], source: str) -> CheckResult:
+    evidence = check_id.removeprefix("P52-").removesuffix("-001")
+    return CheckResult(
+        id=check_id,
+        status=status,
+        evidence_ids=[f"P52-EV-{evidence}"],
+        findings=[_finding(category, source) for category in sorted(set(categories))],
+    )
+
+
 def _exact_keys(value: Any, expected: set[str]) -> bool:
     return isinstance(value, dict) and set(value) == expected
 
@@ -108,6 +162,441 @@ def _positive_int(value: Any) -> bool:
 def _sha256(value: Any, prefix: bool = False) -> bool:
     pattern = r"sha256:[0-9a-f]{64}" if prefix else r"[0-9a-f]{64}"
     return isinstance(value, str) and re.fullmatch(pattern, value) is not None
+
+
+def _bounded_int(value: Any, *, allow_zero: bool = True) -> bool:
+    minimum = 0 if allow_zero else 1
+    return isinstance(value, int) and not isinstance(value, bool) and minimum <= value <= MAX_BYTES
+
+
+def pct_at_most(used: Any, total: Any, limit: Any) -> bool:
+    """Compare raw integer counters without floats, rounding, or bool coercion."""
+    return (
+        _bounded_int(used)
+        and _bounded_int(total, allow_zero=False)
+        and _bounded_int(limit)
+        and limit <= 100
+        and used <= total
+        and used * 100 <= total * limit
+    )
+
+
+def checked_add_bytes(*values: Any) -> int:
+    total = 0
+    for value in values:
+        if not _bounded_int(value):
+            raise ValueError("invalid byte counter")
+        if total > MAX_BYTES - value:
+            raise ValueError("byte counter overflow")
+        total += value
+    return total
+
+
+def validate_capacity_policy(
+    payload: dict[str, Any], source: str = "modules/rustdesk-fleet/contracts/capacity-policy.json"
+) -> CheckResult:
+    errors: list[str] = []
+    expected_keys = {
+        "schema_version",
+        "workstream",
+        "pre_disk_pct_max",
+        "post_disk_pct_max",
+        "inode_pct_max",
+        "observation_max_age_seconds",
+        "same_mount_required",
+        "zero_or_unset_is_blocked",
+        "reservations",
+        "still_unmaterialized_policy",
+        "backup_a_retention",
+        "backup_b_retention",
+        "remediation_policy",
+        "zero_cleanup_candidates",
+        "bounded_full_gate_write_allowlist",
+        "bounded_writes_require_capacity_pass",
+        "destructive_storage_mutation_default",
+        "approval",
+    }
+    if not _exact_keys(payload, expected_keys):
+        return _check_result("P52-CAPACITY-001", "FAIL", ["contract-shape"], source)
+    if payload.get("schema_version") != 1 or payload.get("workstream") != "rustdesk-fleet":
+        errors.append("contract-shape")
+    if (payload.get("pre_disk_pct_max"), payload.get("post_disk_pct_max"), payload.get("inode_pct_max")) != (
+        78,
+        80,
+        80,
+    ):
+        errors.append("threshold-drift")
+    if not _bounded_int(payload.get("observation_max_age_seconds"), allow_zero=False):
+        errors.append("observation-ttl")
+    if payload.get("same_mount_required") is not True or payload.get("zero_or_unset_is_blocked") is not True:
+        errors.append("fail-closed-policy-drift")
+
+    reservations = payload.get("reservations")
+    if not _exact_keys(reservations, set(CAPACITY_RESERVATION_KEYS)):
+        errors.append("contract-shape")
+        reservations = reservations if isinstance(reservations, dict) else {}
+    if any(not _bounded_int(reservations.get(key), allow_zero=False) for key in CAPACITY_RESERVATION_KEYS):
+        errors.append("invalid-reservation")
+    expected_approved = {
+        "combined_daily_log_budget_bytes": 134_217_728,
+        "log_retention_days": 30,
+        "log_reserve_30d_bytes": 4_026_531_840,
+        "state_growth_budget_bytes": 4_294_967_296,
+        "backup_a_bytes": 4_294_967_296,
+        "backup_b_bytes": 4_294_967_296,
+    }
+    if any(reservations.get(key) != value for key, value in expected_approved.items()):
+        errors.append("approved-reservation-drift")
+    if reservations.get("combined_daily_log_budget_bytes", 0) * reservations.get(
+        "log_retention_days", 0
+    ) != reservations.get("log_reserve_30d_bytes"):
+        errors.append("log-reservation-reconciliation")
+    if payload.get("still_unmaterialized_policy") != list(COUNTED_RESERVATION_KEYS):
+        errors.append("unmaterialized-policy-drift")
+
+    expected_retention = {
+        "retain_until": "phase57-pass-plus-30-days",
+        "deletion_requires_new_explicit_approval": True,
+    }
+    for key, destination in (
+        ("backup_a_retention", "candidate-local"),
+        ("backup_b_retention", "modules/fleet-backup:gdrive"),
+    ):
+        retention = payload.get(key)
+        if not isinstance(retention, dict) or retention != {"destination": destination, **expected_retention}:
+            errors.append("backup-retention-drift")
+    if payload.get("remediation_policy") != "none":
+        errors.append("remediation-authority-drift")
+    if payload.get("zero_cleanup_candidates") != ["atius-srv-2", "atius-srv-3"]:
+        errors.append("zero-cleanup-candidate-drift")
+    if payload.get("bounded_full_gate_write_allowlist") != list(BOUNDED_FULL_GATE_WRITES):
+        errors.append("bounded-write-allowlist-drift")
+    if payload.get("bounded_writes_require_capacity_pass") is not True:
+        errors.append("bounded-write-precondition-drift")
+    if payload.get("destructive_storage_mutation_default") != "blocked":
+        errors.append("destructive-mutation-policy-drift")
+
+    approval = payload.get("approval")
+    if not isinstance(approval, dict) or set(approval) != {
+        "status",
+        "accountable",
+        "approved_at",
+        "source_path",
+        "source_sha256",
+    }:
+        errors.append("approval-shape")
+    elif (
+        approval.get("status") != "approved"
+        or approval.get("accountable") != "Giovanni Muniz"
+        or approval.get("approved_at") != "2026-07-22T00:51:46Z"
+        or approval.get("source_path")
+        != ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md"
+        or not _sha256(approval.get("source_sha256"))
+    ):
+        errors.append("approval-drift")
+    return _check_result("P52-CAPACITY-001", "PASS" if not errors else "FAIL", errors, source)
+
+
+def _raw_counter_errors(sample: Any) -> list[str]:
+    if not isinstance(sample, dict):
+        return ["raw-counter-shape"]
+    required_strings = (
+        "observed_at",
+        "hostname",
+        "architecture",
+        "filesystem_source",
+        "mount_point",
+        "podman_graphroot",
+        "podman_version",
+        "resource_wrapper",
+        "resource_profile",
+        "command_version",
+    )
+    required_ints = (
+        "total_bytes",
+        "used_bytes",
+        "available_bytes",
+        "inode_total",
+        "inode_used",
+        "inode_available",
+    )
+    errors: list[str] = []
+    if any(not isinstance(sample.get(key), str) or not sample.get(key) for key in required_strings):
+        errors.append("raw-counter-shape")
+    if any(not _bounded_int(sample.get(key)) for key in required_ints):
+        errors.append("raw-counter-shape")
+    if sample.get("read_only") is not True or sample.get("mutation_performed") is not False:
+        errors.append("observation-mutation")
+    if not errors:
+        if sample["used_bytes"] + sample["available_bytes"] != sample["total_bytes"]:
+            errors.append("byte-counter-reconciliation")
+        if sample["inode_used"] + sample["inode_available"] != sample["inode_total"]:
+            errors.append("inode-counter-reconciliation")
+        if sample["total_bytes"] <= 0 or sample["inode_total"] <= 0:
+            errors.append("raw-counter-shape")
+    return errors
+
+
+def _is_current(timestamp: Any, max_age: int, now: datetime | None = None) -> bool:
+    parsed = _parse_utc(timestamp)
+    current = now or datetime.now(timezone.utc)
+    if parsed is None:
+        return False
+    age = (current - parsed).total_seconds()
+    return -300 <= age <= max_age
+
+
+def derive_candidate_capacity(
+    sample: dict[str, Any], policy: dict[str, Any], *, now: datetime | None = None
+) -> dict[str, Any]:
+    reservations = policy["reservations"]
+    try:
+        required = checked_add_bytes(*(reservations[key] for key in COUNTED_RESERVATION_KEYS))
+    except (KeyError, ValueError):
+        return {
+            "status": "NO-GO",
+            "pre_disk_ok": False,
+            "inode_ok": False,
+            "projected_post_ok": False,
+            "headroom_ok": False,
+            "capacity_finalize_status": "NO-GO",
+            "required_incremental_bytes": None,
+            "still_unmaterialized_reservations": None,
+        }
+    shape_ok = not _raw_counter_errors(sample)
+    current = shape_ok and _is_current(sample.get("observed_at"), policy["observation_max_age_seconds"], now)
+    pre_ok = shape_ok and pct_at_most(sample["used_bytes"], sample["total_bytes"], policy["pre_disk_pct_max"])
+    inode_ok = shape_ok and pct_at_most(sample["inode_used"], sample["inode_total"], policy["inode_pct_max"])
+    try:
+        projected_used = checked_add_bytes(sample.get("used_bytes"), required)
+    except ValueError:
+        projected_used = None
+    projected_ok = projected_used is not None and pct_at_most(
+        projected_used, sample.get("total_bytes"), policy["post_disk_pct_max"]
+    )
+    headroom_ok = shape_ok and sample["available_bytes"] >= required
+
+    finalize_status = "PENDING"
+    still_unmaterialized = required
+    finalize = sample.get("capacity_finalize")
+    if finalize is not None:
+        finalize_errors = _raw_counter_errors(finalize)
+        if not _is_current(finalize.get("observed_at"), policy["observation_max_age_seconds"], now):
+            finalize_errors.append("stale-finalize-observation")
+        if finalize.get("filesystem_source") != sample.get("filesystem_source") or finalize.get(
+            "mount_point"
+        ) != sample.get("mount_point"):
+            finalize_errors.append("finalize-mount-mismatch")
+        if finalize.get("total_bytes") != sample.get("total_bytes"):
+            finalize_errors.append("finalize-total-mismatch")
+        actual_a = finalize.get("actual_backup_a_bytes")
+        actual_b = finalize.get("actual_backup_b_bytes")
+        if not _bounded_int(actual_a, allow_zero=False) or actual_a > reservations["backup_a_bytes"]:
+            finalize_errors.append("backup-a-reserve-exceeded")
+        if not _bounded_int(actual_b, allow_zero=False) or actual_b > reservations["backup_b_bytes"]:
+            finalize_errors.append("backup-b-reserve-exceeded")
+        materialized = finalize.get("materialized_reservations")
+        if not isinstance(materialized, dict) or set(materialized) - set(MATERIALIZABLE_RESERVATION_KEYS):
+            finalize_errors.append("materialized-reservation-shape")
+            materialized = {}
+        for key, value in materialized.items():
+            if not _bounded_int(value, allow_zero=False) or value > reservations[key]:
+                finalize_errors.append("materialized-reservation-mismatch")
+        if materialized.get("backup_a_bytes") != actual_a or materialized.get("backup_b_bytes") != actual_b:
+            finalize_errors.append("backup-materialized-mismatch")
+        try:
+            still_unmaterialized = checked_add_bytes(
+                *(reservations[key] for key in COUNTED_RESERVATION_KEYS if key not in materialized)
+            )
+            final_projected = checked_add_bytes(finalize.get("used_bytes"), still_unmaterialized)
+        except ValueError:
+            finalize_errors.append("finalize-overflow")
+            final_projected = None
+        if final_projected is None or not pct_at_most(
+            final_projected, finalize.get("total_bytes"), policy["post_disk_pct_max"]
+        ):
+            finalize_errors.append("finalize-post-threshold")
+        if not pct_at_most(finalize.get("inode_used"), finalize.get("inode_total"), policy["inode_pct_max"]):
+            finalize_errors.append("finalize-inode-threshold")
+        finalize_status = "PASS" if not finalize_errors else "NO-GO"
+
+    status = "PASS" if all((current, pre_ok, inode_ok, projected_ok, headroom_ok)) else "NO-GO"
+    if finalize is not None and finalize_status != "PASS":
+        status = "NO-GO"
+    return {
+        "status": status,
+        "pre_disk_ok": pre_ok,
+        "inode_ok": inode_ok,
+        "projected_post_ok": projected_ok,
+        "headroom_ok": headroom_ok,
+        "capacity_finalize_status": finalize_status,
+        "required_incremental_bytes": required,
+        "still_unmaterialized_reservations": still_unmaterialized,
+    }
+
+
+def validate_capacity_observation(
+    sample: dict[str, Any],
+    policy: dict[str, Any],
+    source: str = "capacity-observation",
+    *,
+    now: datetime | None = None,
+) -> CheckResult:
+    errors = _raw_counter_errors(sample)
+    blocked: list[str] = []
+    if not _is_current(sample.get("observed_at"), policy.get("observation_max_age_seconds", 0), now):
+        blocked.append("stale-observation")
+    finalize = sample.get("capacity_finalize") if isinstance(sample, dict) else None
+    if isinstance(finalize, dict):
+        if finalize.get("filesystem_source") != sample.get("filesystem_source") or finalize.get(
+            "mount_point"
+        ) != sample.get("mount_point"):
+            errors.append("finalize-mount-mismatch")
+        derived = derive_candidate_capacity(sample, policy, now=now)
+        if derived["capacity_finalize_status"] != "PASS":
+            blocked.append("capacity-finalize-no-go")
+    elif isinstance(sample, dict) and any(key in sample for key in ("disk_percent", "inode_percent")):
+        errors.append("raw-counter-shape")
+    if not errors and not blocked and derive_candidate_capacity(sample, policy, now=now)["status"] != "PASS":
+        blocked.append("capacity-no-go")
+    status = "FAIL" if errors else "BLOCKED" if blocked else "PASS"
+    return _check_result("P52-CAPACITY-001", status, errors + blocked, source)
+
+
+def _candidate_verdict(candidate: dict[str, Any]) -> str:
+    if candidate.get("evaluated") is not True:
+        return "PENDING"
+    stages = [candidate.get(field) for field in STAGE_FIELDS]
+    if stages and all(status == "PASS" for status in stages):
+        return "PASS"
+    if any(status in {"NO-GO", "FAIL", "BLOCKED"} for status in stages):
+        return "NO-GO"
+    return "PENDING"
+
+
+def _horistic_contract_valid(candidate: Any) -> bool:
+    if not isinstance(candidate, dict) or candidate.get("client_colocation") is not True:
+        return False
+    for field in (
+        "server_client_resource_domains",
+        "server_client_evidence_domains",
+        "server_client_rollback_domains",
+    ):
+        domains = candidate.get(field)
+        if (
+            not isinstance(domains, dict)
+            or set(domains) != {"server", "client"}
+            or not all(isinstance(value, str) and value for value in domains.values())
+            or domains["server"] == domains["client"]
+        ):
+            return False
+    return all(candidate.get(field) is True for field in (
+        "phase53_review_required",
+        "phase54_review_required",
+        "phase57_review_required",
+    ))
+
+
+def derive_placement(payload: dict[str, Any]) -> dict[str, Any]:
+    candidates = payload.get("candidates") if isinstance(payload, dict) else None
+    if not isinstance(candidates, list) or len(candidates) != len(CANDIDATES):
+        return {"selected_candidate": None, "overall_status": "BLOCKED", "verdicts": [], "errors": ["candidate-shape"]}
+    verdicts = [_candidate_verdict(item) if isinstance(item, dict) else "PENDING" for item in candidates]
+    errors: list[str] = []
+    selected: str | None = None
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict) or candidate.get("candidate") != CANDIDATES[index]:
+            errors.append("candidate-shape")
+            continue
+        if candidate.get("evaluated") is True and any(verdict != "NO-GO" for verdict in verdicts[:index]):
+            errors.append("candidate-order-bypass")
+        if verdicts[index] == "PASS" and selected is None and all(
+            verdict == "NO-GO" for verdict in verdicts[:index]
+        ):
+            selected = CANDIDATES[index]
+        if selected is not None and any(
+            isinstance(later, dict) and later.get("evaluated") is True for later in candidates[index + 1 :]
+        ):
+            errors.append("candidate-order-bypass")
+    if selected == "horistic-srv" and not _horistic_contract_valid(candidates[2]):
+        errors.append("horistic-colocation-contract")
+        selected = None
+    return {
+        "selected_candidate": selected,
+        "overall_status": "PASS" if selected is not None and not errors else "BLOCKED",
+        "verdicts": verdicts,
+        "errors": sorted(set(errors)),
+    }
+
+
+def validate_placement_decision(
+    payload: dict[str, Any], source: str = "modules/rustdesk-fleet/contracts/placement-decision.json"
+) -> CheckResult:
+    errors: list[str] = []
+    blocked: list[str] = []
+    expected_top = {
+        "schema_version",
+        "workstream",
+        "candidate_order",
+        "candidates",
+        "selected_candidate",
+        "overall_status",
+        "windows_install_performed",
+        "windows_access_proven",
+        "cold_standby_claimed",
+    }
+    if not _exact_keys(payload, expected_top):
+        return _check_result("P52-PLACEMENT-001", "FAIL", ["contract-shape"], source)
+    if payload.get("schema_version") != 1 or payload.get("workstream") != "rustdesk-fleet" or payload.get(
+        "candidate_order"
+    ) != list(CANDIDATES):
+        errors.append("contract-shape")
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list) or len(candidates) != 3:
+        errors.append("candidate-shape")
+        candidates = []
+    for index, candidate in enumerate(candidates):
+        if not isinstance(candidate, dict) or candidate.get("candidate") != CANDIDATES[index]:
+            errors.append("candidate-shape")
+            continue
+        base_keys = {"candidate", "evaluated", *STAGE_FIELDS, "evidence_ids", "verdict"}
+        horistic_keys = {
+            "client_colocation",
+            "server_client_resource_domains",
+            "server_client_evidence_domains",
+            "server_client_rollback_domains",
+            "phase53_review_required",
+            "phase54_review_required",
+            "phase57_review_required",
+        }
+        if set(candidate) != (base_keys | horistic_keys if index == 2 else base_keys):
+            errors.append("candidate-shape" if index < 2 else "horistic-colocation-contract")
+        if not isinstance(candidate.get("evaluated"), bool):
+            errors.append("candidate-shape")
+        if any(candidate.get(field) not in {"PASS", "NO-GO", "PENDING", "SKIPPED_BY_GATE"} for field in STAGE_FIELDS):
+            errors.append("stage-status-shape")
+        if candidate.get("verdict") != _candidate_verdict(candidate):
+            errors.append("stored-verdict-drift")
+        if not isinstance(candidate.get("evidence_ids"), list) or not all(
+            isinstance(item, str) and item for item in candidate.get("evidence_ids", [])
+        ):
+            errors.append("evidence-id-shape")
+    if len(candidates) == 3 and not _horistic_contract_valid(candidates[2]):
+        errors.append("horistic-colocation-contract")
+    derived = derive_placement(payload)
+    errors.extend(derived["errors"])
+    if payload.get("selected_candidate") != derived["selected_candidate"] or payload.get(
+        "overall_status"
+    ) != derived["overall_status"]:
+        errors.append("stored-verdict-drift")
+    if payload.get("windows_install_performed") is not False or payload.get("windows_access_proven") is not False:
+        errors.append("windows-phase-boundary")
+    if payload.get("cold_standby_claimed") is not False:
+        errors.append("premature-standby-claim")
+    if not errors and derived["overall_status"] != "PASS":
+        blocked.append("placement-pending")
+    status = "FAIL" if errors else "BLOCKED" if blocked else "PASS"
+    return _check_result("P52-PLACEMENT-001", status, errors + blocked, source)
 
 
 def validate_supply_contract(

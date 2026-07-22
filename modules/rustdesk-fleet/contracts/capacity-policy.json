@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "pre_disk_pct_max": 78,
+  "post_disk_pct_max": 80,
+  "inode_pct_max": 80,
+  "observation_max_age_seconds": 300,
+  "same_mount_required": true,
+  "zero_or_unset_is_blocked": true,
+  "reservations": {
+    "loaded_image_bytes": 5543936,
+    "preserved_oci_archive_bytes": 5543936,
+    "peak_import_workspace_bytes": 5543936,
+    "backup_a_bytes": 4294967296,
+    "backup_b_bytes": 4294967296,
+    "combined_daily_log_budget_bytes": 134217728,
+    "log_retention_days": 30,
+    "log_reserve_30d_bytes": 4026531840,
+    "state_growth_budget_bytes": 4294967296
+  },
+  "still_unmaterialized_policy": [
+    "loaded_image_bytes",
+    "preserved_oci_archive_bytes",
+    "peak_import_workspace_bytes",
+    "backup_a_bytes",
+    "backup_b_bytes",
+    "log_reserve_30d_bytes",
+    "state_growth_budget_bytes"
+  ],
+  "backup_a_retention": {
+    "destination": "candidate-local",
+    "retain_until": "phase57-pass-plus-30-days",
+    "deletion_requires_new_explicit_approval": true
+  },
+  "backup_b_retention": {
+    "destination": "modules/fleet-backup:gdrive",
+    "retain_until": "phase57-pass-plus-30-days",
+    "deletion_requires_new_explicit_approval": true
+  },
+  "remediation_policy": "none",
+  "zero_cleanup_candidates": [
+    "atius-srv-2",
+    "atius-srv-3"
+  ],
+  "bounded_full_gate_write_allowlist": [
+    "pinned-artifact-staging",
+    "pinned-artifact-load",
+    "state-only-backup-a",
+    "state-only-backup-b",
+    "disposable-isolated-restore-state",
+    "redacted-evidence-write",
+    "verified-drill-artifact-rollback-removal"
+  ],
+  "bounded_writes_require_capacity_pass": true,
+  "destructive_storage_mutation_default": "blocked",
+  "approval": {
+    "status": "approved",
+    "accountable": "Giovanni Muniz",
+    "approved_at": "2026-07-22T00:51:46Z",
+    "source_path": ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md",
+    "source_sha256": "733127f90fcf1c207a12b65ec2022c219e919d7390ec0cfd9546c11c6ba29c33"
+  }
+}
