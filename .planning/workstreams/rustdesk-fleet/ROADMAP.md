@@ -69,7 +69,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Backup e restore reais, em ambiente isolado, reproduzem a mesma public-key fingerprint antes de edge ou clients de frota serem autorizados.
   5. **Advance gate:** verificadores automatizados de checksums/digests, capacity/inodes/reservas, secret scan e fingerprint, junto do restore live, devem passar antes da Phase 53; projeção, arquivo de backup ou summary-only sem restore não contam.
 
-**Plans**: 6/6 plans executed — phase gate `BLOCKED/no-primary`
+**Plans**: 6/7 plans executed — gap-closure Gate A/B in progress; phase gate `BLOCKED/no-primary`
 
 **Wave 1**
 
@@ -94,6 +94,10 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 **Wave 6** *(blocked on Wave 5 completion)*
 
 - [x] 52-06-PLAN.md — Renderizou report/ledger e topology review; o resultado atual permanece `BLOCKED/no-primary`, sem autorização para a Phase 53.
+
+**Wave 7** *(blocked on Wave 6 completion; gap closure)*
+
+- [ ] 52-07-PLAN.md — Implementar Gate A sem writes Vault e, somente após PASS independente, provisionar Gate B create-only e repetir o full gate live.
 
 ### Phase 53: Primary Relay and Public Edge
 
