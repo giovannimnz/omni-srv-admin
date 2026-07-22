@@ -80,6 +80,71 @@ BOUNDED_FULL_GATE_WRITES = (
     "redacted-evidence-write",
     "verified-drill-artifact-rollback-removal",
 )
+SSH_ALIASES = {
+    "atius-srv-2": "atius-srv-2-direct",
+    "atius-srv-3": "atius-srv-3-direct",
+    "horistic-srv": "horistic-srv-1",
+}
+READ_ONLY_PREFLIGHT_ACTIONS = ("capacity-sample",)
+REMOTE_CAPACITY_SCRIPT = """\
+import datetime
+import json
+import os
+import platform
+import shutil
+import socket
+
+mount_source = "not-observed"
+try:
+    for line in open("/proc/self/mountinfo", encoding="utf-8"):
+        fields = line.split()
+        if len(fields) > 6 and fields[4] == "/" and "-" in fields:
+            separator = fields.index("-")
+            mount_source = fields[separator + 2]
+            break
+except OSError:
+    pass
+
+stats = os.statvfs("/")
+block_size = stats.f_frsize
+total_bytes = stats.f_blocks * block_size
+available_bytes = stats.f_bavail * block_size
+used_bytes = (stats.f_blocks - stats.f_bfree) * block_size
+inode_total = stats.f_files
+inode_available = stats.f_favail
+inode_used = stats.f_files - stats.f_ffree
+
+profile = "not-observed"
+profile_path = "/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/configs/resource-governor.env"
+try:
+    for line in open(profile_path, encoding="utf-8"):
+        if line.startswith("RG_PROFILE_BUILDS_CPU_TOTAL_PCT="):
+            profile = line.strip()
+            break
+except OSError:
+    pass
+
+print(json.dumps({
+    "observed_at": datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+    "hostname": socket.gethostname(),
+    "architecture": platform.machine(),
+    "filesystem_source": mount_source,
+    "mount_point": "/",
+    "total_bytes": total_bytes,
+    "used_bytes": used_bytes,
+    "available_bytes": available_bytes,
+    "inode_total": inode_total,
+    "inode_used": inode_used,
+    "inode_available": inode_available,
+    "podman_graphroot": "not-observed",
+    "podman_version": "not-observed",
+    "resource_wrapper": shutil.which("omni") or "not-observed",
+    "resource_profile": profile,
+    "command_version": "phase52-capacity-read-only-v2",
+    "read_only": True,
+    "mutation_performed": False,
+}, sort_keys=True))
+"""
 
 
 @dataclass(frozen=True)
@@ -465,6 +530,155 @@ def validate_capacity_observation(
         blocked.append("capacity-no-go")
     status = "FAIL" if errors else "BLOCKED" if blocked else "PASS"
     return _check_result("P52-CAPACITY-001", status, errors + blocked, source)
+
+
+def enforce_zero_cleanup(candidate: str, action: str) -> None:
+    """Reject every action not explicitly allowed by the read-only routing preflight."""
+    if candidate not in CANDIDATES:
+        raise ValueError("unknown capacity candidate")
+    if action not in READ_ONLY_PREFLIGHT_ACTIONS:
+        raise ValueError("action is forbidden by the read-only capacity preflight")
+
+
+def build_capacity_probe_command(candidate: str) -> list[str]:
+    """Construct the bounded SSH argv only after the action-class gate passes."""
+    enforce_zero_cleanup(candidate, "capacity-sample")
+    return [
+        "ssh",
+        "-n",
+        "-o",
+        "BatchMode=yes",
+        "-o",
+        "ConnectTimeout=10",
+        "-o",
+        "ConnectionAttempts=1",
+        SSH_ALIASES[candidate],
+        "--",
+        "python3",
+        "-c",
+        REMOTE_CAPACITY_SCRIPT,
+    ]
+
+
+def collect_capacity_sample(candidate: str) -> dict[str, Any]:
+    """Collect one structured sample without invoking a shell or a remote write action."""
+    command = build_capacity_probe_command(candidate)
+    completed = subprocess.run(command, text=True, capture_output=True, timeout=30, check=False)
+    if completed.returncode != 0:
+        raise ValueError(f"read-only capacity probe failed for {candidate}")
+    try:
+        sample = json.loads(completed.stdout)
+    except json.JSONDecodeError:
+        raise ValueError(f"invalid capacity probe output for {candidate}") from None
+    errors = _raw_counter_errors(sample)
+    if errors:
+        raise ValueError(f"invalid capacity sample for {candidate}: {','.join(sorted(set(errors)))}")
+    return sample
+
+
+def _capacity_findings(results: list[dict[str, Any]]) -> list[str]:
+    findings: set[str] = set()
+    if any(not item["pre_disk_ok"] for item in results):
+        findings.add("pre-disk-threshold-exceeded")
+    if any(not item["inode_ok"] for item in results):
+        findings.add("inode-threshold-exceeded")
+    if any(not item["projected_post_ok"] for item in results):
+        findings.add("projected-post-threshold-exceeded")
+    if any(not item["headroom_ok"] for item in results):
+        findings.add("insufficient-available-bytes")
+    if not findings:
+        findings.add("full-candidate-gate-pending")
+    return sorted(findings)
+
+
+def evaluate_capacity_chain(
+    samples_by_candidate: dict[str, list[dict[str, Any]]],
+    policy: dict[str, Any],
+    *,
+    decision_source_digest: str,
+    supply_digest: str,
+    persisted_predecessors: set[str],
+) -> dict[str, Any]:
+    """Derive the strict serial preflight without turning capacity into placement."""
+    if not _sha256(decision_source_digest) or not _sha256(supply_digest):
+        raise ValueError("capacity chain requires current input digests")
+    attempts: list[dict[str, Any]] = []
+    eligible: str | None = None
+    for index, candidate in enumerate(CANDIDATES):
+        samples = samples_by_candidate.get(candidate)
+        if samples is None:
+            continue
+        if index > 0 and CANDIDATES[index - 1] not in persisted_predecessors:
+            raise ValueError("persisted predecessor NO-GO is required before fallback")
+        if len(samples) != 2:
+            raise ValueError("exactly two current samples are required per candidate")
+        if samples[0].get("filesystem_source") != samples[1].get("filesystem_source") or samples[0].get(
+            "mount_point"
+        ) != samples[1].get("mount_point") or samples[0].get("total_bytes") != samples[1].get("total_bytes"):
+            raise ValueError("capacity samples do not describe the same current mount")
+        results = [derive_candidate_capacity(sample, policy) for sample in samples]
+        preliminary = "NO-GO" if any(item["status"] == "NO-GO" for item in results) else "PRELIMINARY_ELIGIBLE"
+        if eligible is not None:
+            raise ValueError("candidate evaluated after preliminary eligibility")
+        if preliminary == "PRELIMINARY_ELIGIBLE":
+            eligible = candidate
+        attempts.append(
+            {
+                "candidate": candidate,
+                "ssh_alias": SSH_ALIASES[candidate],
+                "predecessor": CANDIDATES[index - 1] if index else None,
+                "predecessor_status": "NO-GO" if index else "NOT_APPLICABLE",
+                "samples": samples,
+                "calculations": results,
+                "reservations": policy["reservations"],
+                "decision_source_digest": decision_source_digest,
+                "supply_digest": supply_digest,
+                "read_only": True,
+                "mutation_performed": False,
+                "preliminary_verdict": preliminary,
+                "findings": _capacity_findings(results),
+                "horistic_colocation": (
+                    {
+                        "client_colocation": True,
+                        "server_resource_domain": "rustdesk-server-horistic-srv",
+                        "future_client_resource_domain": "rustdesk-client-horistic-srv",
+                        "phase52_review_status": "PASS",
+                        "phase53_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+                        "phase54_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+                        "phase57_review": "REQUIRED_IMMEDIATELY_BEFORE_PHASE",
+                        "independent_dr_claimed": False,
+                    }
+                    if candidate == "horistic-srv"
+                    else None
+                ),
+            }
+        )
+    return {
+        "schema_version": 1,
+        "phase": 52,
+        "workstream": "rustdesk-fleet",
+        "generated_at": datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "attempt_order": [item["candidate"] for item in attempts],
+        "attempts": attempts,
+        "decision_source_digest": decision_source_digest,
+        "supply_digest": supply_digest,
+        "capacity_eligible_candidate": eligible,
+        "selected_candidate": None,
+        "unmaterialized_reservation_terms": list(COUNTED_RESERVATION_KEYS),
+        "pending_stages": [
+            "vault",
+            "backup",
+            "restore",
+            "capacity_finalize",
+            "rollback",
+            "topology-security",
+        ],
+        "read_only": True,
+        "mutation_performed": False,
+        "windows_install_performed": False,
+        "windows_access_proven": False,
+        "overall_status": "BLOCKED",
+    }
 
 
 def _candidate_verdict(candidate: dict[str, Any]) -> str:
@@ -1329,7 +1543,7 @@ def collect_input_digests(repo: Path, paths: list[Path] | tuple[Path, ...]) -> l
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--repo", type=Path, default=Path.cwd())
-    parser.add_argument("--only", choices=("supply", "capacity-proposal"), default="supply")
+    parser.add_argument("--only", choices=("supply", "capacity-proposal", "capacity-live"), default="supply")
     parser.add_argument("--evidence-dir", type=Path, default=SUPPLY_OBSERVATION.parent)
     return parser
 
@@ -1338,6 +1552,8 @@ def main(argv: list[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     repo = args.repo.resolve()
     try:
+        if args.only == "capacity-live":
+            raise ValueError("capacity-live evidence has not been materialized")
         if args.only == "capacity-proposal":
             policy_path = validate_repo_path(repo, repo / CAPACITY_POLICY)
             proposal_path = validate_repo_path(repo, repo / args.evidence_dir / CAPACITY_PROPOSAL.name)
