@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "mutations": [
+    {"id": "reservation-omitted", "target": "capacity-policy", "operation": "delete", "path": ["reservations", "backup_a_bytes"], "expected_category": "contract-shape"},
+    {"id": "reservation-zero", "target": "capacity-policy", "operation": "set", "path": ["reservations", "backup_a_bytes"], "value": 0, "expected_category": "invalid-reservation"},
+    {"id": "reservation-negative", "target": "capacity-policy", "operation": "set", "path": ["reservations", "backup_b_bytes"], "value": -1, "expected_category": "invalid-reservation"},
+    {"id": "reservation-overflow", "target": "capacity-policy", "operation": "set", "path": ["reservations", "state_growth_budget_bytes"], "value": 9223372036854775808, "expected_category": "invalid-reservation"},
+    {"id": "stale-observation", "target": "capacity-observation", "operation": "set", "path": ["observed_at"], "value": "2020-01-01T00:00:00Z", "expected_category": "stale-observation"},
+    {"id": "different-mount", "target": "capacity-finalize", "operation": "set", "path": ["mount_point"], "value": "/different", "expected_category": "finalize-mount-mismatch"},
+    {"id": "rounded-only", "target": "capacity-observation", "operation": "delete", "path": ["used_bytes"], "expected_category": "raw-counter-shape"},
+    {"id": "order-bypass", "target": "placement", "operation": "set", "path": ["candidates", 1, "evaluated"], "value": true, "expected_category": "candidate-order-bypass"},
+    {"id": "missing-horistic-colocation", "target": "placement", "operation": "delete", "path": ["candidates", 2, "client_colocation"], "expected_category": "horistic-colocation-contract"},
+    {"id": "missing-horistic-reviews", "target": "placement", "operation": "set", "path": ["candidates", 2, "phase54_review_required"], "value": false, "expected_category": "horistic-colocation-contract"}
+  ]
+}

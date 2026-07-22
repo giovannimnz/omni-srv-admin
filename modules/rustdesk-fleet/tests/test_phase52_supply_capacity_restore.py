@@ -16,6 +16,11 @@ MODULE_PATH = REPO / "modules/rustdesk-fleet/tools/validate_phase52.py"
 CONTRACT_PATH = REPO / "modules/rustdesk-fleet/contracts/supply-chain.json"
 OBSERVATION_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/supply-observation.json"
 MUTATIONS_PATH = REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-supply-mutations.json"
+CAPACITY_POLICY_PATH = REPO / "modules/rustdesk-fleet/contracts/capacity-policy.json"
+PLACEMENT_PATH = REPO / "modules/rustdesk-fleet/contracts/placement-decision.json"
+CAPACITY_MUTATIONS_PATH = (
+    REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-capacity-placement-mutations.json"
+)
 
 SPEC = importlib.util.spec_from_file_location("validate_phase52", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -26,6 +31,14 @@ SPEC.loader.exec_module(validator)
 
 def _contract() -> dict:
     return validator.load_json_strict(CONTRACT_PATH)
+
+
+def _capacity_policy() -> dict:
+    return validator.load_json_strict(CAPACITY_POLICY_PATH)
+
+
+def _placement() -> dict:
+    return validator.load_json_strict(PLACEMENT_PATH)
 
 
 def _categories(result) -> set[str]:
@@ -269,3 +282,281 @@ def test_supply_cli_exposes_no_install_or_pin_refresh() -> None:
     assert "podman build" not in source
     assert "docker build" not in source
     assert "msiexec" not in source
+
+
+def _raw_sample(*, used: int, total: int = 100_000, inode_used: int = 10, observed_at: str | None = None) -> dict:
+    return {
+        "observed_at": observed_at
+        or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
+        "hostname": "atius-srv-2",
+        "architecture": "aarch64",
+        "filesystem_source": "/dev/vda1",
+        "mount_point": "/",
+        "total_bytes": total,
+        "used_bytes": used,
+        "available_bytes": total - used,
+        "inode_total": 100,
+        "inode_used": inode_used,
+        "inode_available": 100 - inode_used,
+        "podman_graphroot": "/home/ubuntu/.local/share/containers/storage",
+        "podman_version": "4.9.3",
+        "resource_wrapper": "omni srv1-ops resources run builds",
+        "resource_profile": "builds",
+        "command_version": "phase52-capacity-v1",
+        "read_only": True,
+        "mutation_performed": False,
+    }
+
+
+def _candidate(host: str, *, evaluated: bool, status: str = "PENDING") -> dict:
+    row = {
+        "candidate": host,
+        "evaluated": evaluated,
+        "supply_status": status,
+        "capacity_status": status,
+        "vault_status": status,
+        "backup_status": status,
+        "restore_status": status,
+        "capacity_finalize_status": status,
+        "rollback_status": status,
+        "topology_security_status": status,
+        "evidence_ids": [f"P52-EV-{host.upper()}"],
+        "verdict": "PENDING",
+    }
+    if host == "horistic-srv":
+        row.update(
+            {
+                "client_colocation": True,
+                "server_client_resource_domains": {"server": "horistic-server", "client": "horistic-client"},
+                "server_client_evidence_domains": {"server": "ev-server", "client": "ev-client"},
+                "server_client_rollback_domains": {"server": "rb-server", "client": "rb-client"},
+                "phase53_review_required": True,
+                "phase54_review_required": True,
+                "phase57_review_required": True,
+            }
+        )
+    return row
+
+
+def test_capacity_policy_materializes_approved_d04_d05_d06() -> None:
+    policy = _capacity_policy()
+    assert validator.validate_capacity_policy(policy).status == "PASS"
+    assert policy["pre_disk_pct_max"] == 78
+    assert policy["post_disk_pct_max"] == policy["inode_pct_max"] == 80
+    reservations = policy["reservations"]
+    assert reservations["combined_daily_log_budget_bytes"] == 134_217_728
+    assert reservations["log_retention_days"] == 30
+    assert reservations["log_reserve_30d_bytes"] == 4_026_531_840
+    assert reservations["state_growth_budget_bytes"] == 4_294_967_296
+    assert reservations["backup_a_bytes"] == reservations["backup_b_bytes"] == 4_294_967_296
+    assert policy["backup_a_retention"]["destination"] == "candidate-local"
+    assert policy["backup_b_retention"]["destination"] == "modules/fleet-backup:gdrive"
+    assert policy["remediation_policy"] == "none"
+    assert policy["approval"]["accountable"] == "Giovanni Muniz"
+    assert policy["approval"]["approved_at"] == "2026-07-22T00:51:46Z"
+
+
+@pytest.mark.parametrize(
+    ("used", "total", "limit", "expected"),
+    [
+        (77_999, 100_000, 78, True),
+        (78_000, 100_000, 78, True),
+        (78_001, 100_000, 78, False),
+        (79_999, 100_000, 80, True),
+        (80_000, 100_000, 80, True),
+        (80_001, 100_000, 80, False),
+        (True, 100_000, 80, False),
+        (80_000.0, 100_000, 80, False),
+        (-1, 100_000, 80, False),
+        (1, 0, 80, False),
+    ],
+)
+def test_capacity_integer_boundary(used: object, total: object, limit: object, expected: bool) -> None:
+    assert validator.pct_at_most(used, total, limit) is expected
+
+
+def test_capacity_checked_add_rejects_bool_negative_and_overflow() -> None:
+    assert validator.checked_add_bytes(1, 2, 3) == 6
+    for values in ((True, 1), (-1, 1), ((2**63) - 1, 1)):
+        with pytest.raises(ValueError):
+            validator.checked_add_bytes(*values)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "category"),
+    [
+        (("reservations", "backup_a_bytes", 0), "invalid-reservation"),
+        (("reservations", "backup_b_bytes", -1), "invalid-reservation"),
+        (("reservations", "state_growth_budget_bytes", True), "invalid-reservation"),
+        (("reservations", "log_reserve_30d_bytes", 2**63), "invalid-reservation"),
+        (("remediation_policy", None, "cleanup"), "remediation-authority-drift"),
+    ],
+)
+def test_capacity_policy_rejects_invalid_approved_inputs(mutation: tuple, category: str) -> None:
+    policy = copy.deepcopy(_capacity_policy())
+    parent, child, value = mutation
+    if child is None:
+        policy[parent] = value
+    else:
+        policy[parent][child] = value
+    result = validator.validate_capacity_policy(policy)
+    assert result.status in {"FAIL", "BLOCKED"}
+    assert category in _categories(result)
+
+
+def test_capacity_observation_rejects_stale_mount_mismatch_and_rounded_only() -> None:
+    policy = _capacity_policy()
+    stale = _raw_sample(
+        used=1,
+        observed_at=(datetime.now(timezone.utc) - timedelta(seconds=policy["observation_max_age_seconds"] + 1))
+        .replace(microsecond=0)
+        .isoformat()
+        .replace("+00:00", "Z"),
+    )
+    assert "stale-observation" in _categories(validator.validate_capacity_observation(stale, policy))
+
+    rounded = _raw_sample(used=1)
+    rounded.pop("used_bytes")
+    rounded["disk_percent"] = "1%"
+    assert "raw-counter-shape" in _categories(validator.validate_capacity_observation(rounded, policy))
+
+    mismatch = _raw_sample(used=1)
+    mismatch["capacity_finalize"] = {
+        **_raw_sample(used=2),
+        "mount_point": "/different",
+        "actual_backup_a_bytes": 1,
+        "actual_backup_b_bytes": 1,
+        "materialized_reservations": {
+            "loaded_image_bytes": 1,
+            "preserved_oci_archive_bytes": 1,
+            "peak_import_workspace_bytes": 1,
+            "backup_a_bytes": 1,
+            "backup_b_bytes": 1,
+        },
+    }
+    result = validator.validate_capacity_observation(mismatch, policy)
+    assert "finalize-mount-mismatch" in _categories(result)
+
+
+def test_capacity_derivation_uses_all_reservations_and_inode_boundary() -> None:
+    policy = _capacity_policy()
+    required = sum(
+        policy["reservations"][key]
+        for key in (
+            "loaded_image_bytes",
+            "preserved_oci_archive_bytes",
+            "peak_import_workspace_bytes",
+            "backup_a_bytes",
+            "backup_b_bytes",
+            "log_reserve_30d_bytes",
+            "state_growth_budget_bytes",
+        )
+    )
+    total = required * 5
+    at_boundary = _raw_sample(used=total * 78 // 100, total=total, inode_used=80)
+    result = validator.derive_candidate_capacity(at_boundary, policy)
+    assert result["required_incremental_bytes"] == required
+    assert result["pre_disk_ok"] is True
+    assert result["inode_ok"] is True
+    assert result["status"] in {"PASS", "NO-GO"}
+
+    above_inode = _raw_sample(used=1, total=total, inode_used=81)
+    assert validator.derive_candidate_capacity(above_inode, policy)["inode_ok"] is False
+
+
+def test_capacity_finalize_reconciles_actuals_and_remaining_reservations() -> None:
+    policy = _capacity_policy()
+    sample = _raw_sample(used=1, total=100_000_000_000)
+    sample["capacity_finalize"] = {
+        **_raw_sample(used=2, total=100_000_000_000),
+        "actual_backup_a_bytes": policy["reservations"]["backup_a_bytes"],
+        "actual_backup_b_bytes": policy["reservations"]["backup_b_bytes"],
+        "materialized_reservations": {
+            "loaded_image_bytes": policy["reservations"]["loaded_image_bytes"],
+            "preserved_oci_archive_bytes": policy["reservations"]["preserved_oci_archive_bytes"],
+            "peak_import_workspace_bytes": policy["reservations"]["peak_import_workspace_bytes"],
+            "backup_a_bytes": policy["reservations"]["backup_a_bytes"],
+            "backup_b_bytes": policy["reservations"]["backup_b_bytes"],
+        },
+    }
+    derived = validator.derive_candidate_capacity(sample, policy)
+    assert derived["capacity_finalize_status"] == "PASS"
+    assert derived["still_unmaterialized_reservations"] == (
+        policy["reservations"]["log_reserve_30d_bytes"]
+        + policy["reservations"]["state_growth_budget_bytes"]
+    )
+
+    sample["capacity_finalize"]["actual_backup_a_bytes"] += 1
+    assert validator.derive_candidate_capacity(sample, policy)["capacity_finalize_status"] == "NO-GO"
+
+
+def test_placement_derives_strict_serial_chain_and_recomputes_stored_verdict() -> None:
+    placement = _placement()
+    assert validator.validate_placement_decision(placement).status == "BLOCKED"
+
+    srv2 = _candidate("atius-srv-2", evaluated=True, status="PASS")
+    srv2["verdict"] = "PASS"
+    selected_srv2 = {**placement, "candidates": [srv2, _candidate("atius-srv-3", evaluated=False), _candidate("horistic-srv", evaluated=False)], "selected_candidate": "atius-srv-2", "overall_status": "PASS"}
+    assert validator.derive_placement(selected_srv2)["selected_candidate"] == "atius-srv-2"
+    assert validator.validate_placement_decision(selected_srv2).status == "PASS"
+
+    drift = copy.deepcopy(selected_srv2)
+    drift["selected_candidate"] = "atius-srv-3"
+    result = validator.validate_placement_decision(drift)
+    assert result.status == "FAIL"
+    assert "stored-verdict-drift" in _categories(result)
+
+
+def test_placement_rejects_order_bypass_partial_vector_and_windows_evidence() -> None:
+    placement = _placement()
+    bypass = copy.deepcopy(placement)
+    bypass["candidates"][1] = _candidate("atius-srv-3", evaluated=True, status="PASS")
+    result = validator.validate_placement_decision(bypass)
+    assert result.status in {"FAIL", "BLOCKED"}
+    assert "candidate-order-bypass" in _categories(result)
+
+    partial = copy.deepcopy(placement)
+    partial["candidates"][0] = _candidate("atius-srv-2", evaluated=True, status="PASS")
+    partial["candidates"][0]["vault_status"] = "PENDING"
+    assert validator.derive_placement(partial)["selected_candidate"] is None
+
+    windows = copy.deepcopy(placement)
+    windows["windows_install_performed"] = True
+    windows["windows_access_proven"] = True
+    assert "windows-phase-boundary" in _categories(validator.validate_placement_decision(windows))
+
+
+def test_horistic_selection_requires_two_prior_nogos_and_separate_domains() -> None:
+    placement = _placement()
+    rows = []
+    for host in ("atius-srv-2", "atius-srv-3"):
+        row = _candidate(host, evaluated=True, status="NO-GO")
+        row["verdict"] = "NO-GO"
+        rows.append(row)
+    horistic = _candidate("horistic-srv", evaluated=True, status="PASS")
+    horistic["verdict"] = "PASS"
+    selected = {**placement, "candidates": [*rows, horistic], "selected_candidate": "horistic-srv", "overall_status": "PASS"}
+    assert validator.validate_placement_decision(selected).status == "PASS"
+
+    conflated = copy.deepcopy(selected)
+    conflated["candidates"][2]["server_client_resource_domains"]["client"] = "horistic-server"
+    result = validator.validate_placement_decision(conflated)
+    assert result.status == "FAIL"
+    assert "horistic-colocation-contract" in _categories(result)
+
+
+def test_capacity_placement_mutation_catalog_is_complete() -> None:
+    catalog = validator.load_json_strict(CAPACITY_MUTATIONS_PATH)
+    ids = {item["id"] for item in catalog["mutations"]}
+    assert {
+        "reservation-omitted",
+        "reservation-zero",
+        "reservation-negative",
+        "reservation-overflow",
+        "stale-observation",
+        "different-mount",
+        "rounded-only",
+        "order-bypass",
+        "missing-horistic-colocation",
+        "missing-horistic-reviews",
+    }.issubset(ids)
