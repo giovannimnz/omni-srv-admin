@@ -94,25 +94,25 @@
     "path": "modules/rustdesk-fleet/evidence/phase52/gate-a-verification.json",
     "sha256": "4aa5bde516804e48207aa92771fd1fec31c5acde885a96f9f053be23833add67"
   },
-  "generated_at": "2026-07-22T19:13:34.025858Z",
-  "hash_set_sha256": "fd2c4147be6faf02cbde4196212d67c59d3546c84a349e04fa38ee18cb6050c0",
+  "generated_at": "2026-07-22T19:33:05.835722Z",
+  "hash_set_sha256": "496164cb94f29d06fa4d2e588bc2c8b3b8358848eb83345dea03405f2c68dac7",
   "live_write_performed": false,
   "network_performed": false,
   "phase": 52,
   "reviews": [
     {
-      "hash_set_sha256": "fd2c4147be6faf02cbde4196212d67c59d3546c84a349e04fa38ee18cb6050c0",
+      "hash_set_sha256": "496164cb94f29d06fa4d2e588bc2c8b3b8358848eb83345dea03405f2c68dac7",
       "reviewer": "codex-snapshot-bridge-reviewer-1",
       "status": "PASS"
     },
     {
-      "hash_set_sha256": "fd2c4147be6faf02cbde4196212d67c59d3546c84a349e04fa38ee18cb6050c0",
+      "hash_set_sha256": "496164cb94f29d06fa4d2e588bc2c8b3b8358848eb83345dea03405f2c68dac7",
       "reviewer": "codex-gate-b-hash-review-2",
       "status": "PASS"
     }
   ],
   "schema": "phase52-gate-b-pre-live-seal-v1",
-  "sealed_at": "2026-07-22T19:17:06.902245Z",
+  "sealed_at": "2026-07-22T19:36:27.663783Z",
   "sealed_sources": [
     {
       "path": "modules/rustdesk-fleet/contracts/phase52-gate-b-transaction.json",
@@ -120,7 +120,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tools/phase52-vault-transaction.py",
-      "sha256": "109f96371ac19ab3c0cfec92cb7ffe05a60c13a5c8673aeea739ec3233b979a1"
+      "sha256": "82cac98b10550fb34a62a43b17ee80682f66ad127c88549044d1685818ad4b2f"
     },
     {
       "path": "modules/rustdesk-fleet/tools/run-phase52-gate-b.py",
@@ -128,7 +128,7 @@
     },
     {
       "path": "modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py",
-      "sha256": "34ca16d663f3f3b12e3194e4e52d04e85f63325e6c8f84baccfc5cbcd51f0a31"
+      "sha256": "9f2f5fe715f2bf0e789dfbb61539eec2bd64f5c2e2135403f524ddf2e8cb6671"
     }
   ],
   "secret_material_present": false,

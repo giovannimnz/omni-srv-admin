@@ -2325,18 +2325,13 @@ def _validate_isolated_restore_identity(pre: Any, post: Any) -> None:
         or not pre["cluster_id"]
         or not re.fullmatch(r"[a-f0-9]{64}", str(pre.get("raft_sha256", "")))
         or not isinstance(post, dict)
-        or set(post) != {"cluster_id", "raft_sha256", "sealed", "storage_type"}
-        or not isinstance(post.get("cluster_id"), str)
-        or not post["cluster_id"]
+        or set(post) != {"initialized", "raft_sha256", "sealed"}
         or not re.fullmatch(r"[a-f0-9]{64}", str(post.get("raft_sha256", "")))
+        or post.get("initialized") is not True
         or post.get("sealed") is not True
-        or post.get("storage_type") != "raft"
     ):
         raise Blocked("isolated-vault-restore-identity-invalid")
-    if (
-        hmac.compare_digest(pre["cluster_id"], post["cluster_id"])
-        or hmac.compare_digest(pre["raft_sha256"], post["raft_sha256"])
-    ):
+    if hmac.compare_digest(pre["raft_sha256"], post["raft_sha256"]):
         raise Blocked("isolated-vault-restore-noop")
 
 
@@ -2377,10 +2372,14 @@ def isolated_restore_proof(snapshot: Path, vault_binary: Path | None = None) -> 
     process: subprocess.Popen[bytes] | None = None
     try:
         config = runtime / "vault.hcl"
+        raft_dir = runtime / "raft"
+        raft_dir.mkdir(mode=0o700)
         config.write_text(
             'disable_mlock = true\nui = false\n'
-            f'storage "raft" {{ path = "{runtime / "raft"}" node_id = "phase52-disposable" }}\n'
-            'listener "tcp" { address = "127.0.0.1:18202" tls_disable = true }\n',
+            'api_addr = "http://127.0.0.1:18202"\n'
+            'cluster_addr = "http://127.0.0.1:18203"\n'
+            f'storage "raft" {{ path = "{raft_dir}" node_id = "phase52-disposable" }}\n'
+            'listener "tcp" { address = "127.0.0.1:18202" cluster_address = "127.0.0.1:18203" tls_disable = true }\n',
             encoding="utf-8",
         )
         config.chmod(0o600)
@@ -2441,8 +2440,7 @@ def isolated_restore_proof(snapshot: Path, vault_binary: Path | None = None) -> 
             }
             if token is not None:
                 headers["X-Vault-Token"] = token
-            method = "POST" if path == "/v1/sys/storage/raft/snapshot?force=true" else "PUT"
-            req = urllib.request.Request(base + path, data=payload, headers=headers, method=method)
+            req = urllib.request.Request(base + path, data=payload, headers=headers, method="PUT")
             with urllib.request.urlopen(req, timeout=10) as response:
                 raw = response.read(131073)
             if len(raw) > 131072:
@@ -2465,7 +2463,7 @@ def isolated_restore_proof(snapshot: Path, vault_binary: Path | None = None) -> 
             b'{"marker":"phase52-pre-restore"}',
             token,
         )
-        raft_db = runtime / "raft" / "raft.db"
+        raft_db = raft_dir / "vault.db"
         if not raft_db.is_file() or raft_db.is_symlink():
             raise Blocked("isolated-vault-raft-storage-missing")
         pre_identity = {
@@ -2473,7 +2471,7 @@ def isolated_restore_proof(snapshot: Path, vault_binary: Path | None = None) -> 
             "raft_sha256": sha256_file(raft_db),
             "sentinel_written": True,
         }
-        request("/v1/sys/storage/raft/snapshot?force=true", snapshot.read_bytes(), token)
+        request("/v1/sys/storage/raft/snapshot-force", snapshot.read_bytes(), token)
         # A force restore replaces the disposable cluster's seal and token
         # material.  Never use the bootstrap token as post-restore evidence.
         del token, keys, init
@@ -2499,16 +2497,17 @@ def isolated_restore_proof(snapshot: Path, vault_binary: Path | None = None) -> 
         if (
             health_payload.get("initialized") is not True
             or health_payload.get("sealed") is not True
-            or health_payload.get("storage_type") != "raft"
         ):
             raise Blocked("isolated-vault-post-restore-read-failed")
+        # A Shamir-sealed Vault 2.0 health response omits cluster_id and
+        # storage_type.  The changed durable Raft database plus initialized,
+        # sealed restart is the available no-op-resistant restore proof.
         _validate_isolated_restore_identity(
             pre_identity,
             {
-                "cluster_id": health_payload.get("cluster_id"),
+                "initialized": health_payload.get("initialized"),
                 "raft_sha256": sha256_file(raft_db),
                 "sealed": health_payload.get("sealed"),
-                "storage_type": health_payload.get("storage_type"),
             },
         )
         result = {"status": "PASS", "network_namespace": "isolated", "host_listener": False, "public_listener": False, "port_bindings": [], "integrity": "PASS"}

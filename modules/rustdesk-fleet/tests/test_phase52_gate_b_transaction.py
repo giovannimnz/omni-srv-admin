@@ -1352,11 +1352,13 @@ def test_status_reconciliation_reports_terminal_and_ambiguous_wal_not_stale_evid
 
 def test_isolated_restore_identity_rejects_noop_snapshot_post():
     pre = {"cluster_id": "same", "raft_sha256": "a" * 64, "sentinel_written": True}
-    no_op_post = {"cluster_id": "same", "raft_sha256": "a" * 64, "sealed": True, "storage_type": "raft"}
+    no_op_post = {"initialized": True, "raft_sha256": "a" * 64, "sealed": True}
     with pytest.raises(tx.Blocked, match="isolated-vault-restore-noop"):
         tx._validate_isolated_restore_identity(pre, no_op_post)
-    post = {"cluster_id": "different", "raft_sha256": "b" * 64, "sealed": True, "storage_type": "raft"}
+    post = {"initialized": True, "raft_sha256": "b" * 64, "sealed": True}
     tx._validate_isolated_restore_identity(pre, post)
+    with pytest.raises(tx.Blocked, match="isolated-vault-restore-identity-invalid"):
+        tx._validate_isolated_restore_identity(pre, {**post, "initialized": False})
 
 
 def test_raft_snapshot_bridges_container_namespace_and_cleans_temp(monkeypatch, tmp_path):
@@ -1917,10 +1919,17 @@ def test_source_has_no_secret_transport_in_argv_env_or_output():
     assert isolated.count('"vault", "server"') == 0  # argv is built from vault_bin, not a shell string
     assert isolated.count("process = start()") == 2
     assert "start_new_session=True" not in isolated
+    assert '(runtime / "raft").mkdir(mode=0o700)' not in isolated
+    assert 'raft_dir.mkdir(mode=0o700)' in isolated
+    assert 'api_addr = "http://127.0.0.1:18202"' in isolated
+    assert 'cluster_addr = "http://127.0.0.1:18203"' in isolated
+    assert 'cluster_address = "127.0.0.1:18203"' in isolated
+    assert 'request("/v1/sys/storage/raft/snapshot-force"' in isolated
+    assert "snapshot?force=true" not in isolated
     assert "/v1/sys/storage/raft/configuration" not in isolated
     assert 'health_payload.get("sealed") is not True' in isolated
-    assert 'health_payload.get("storage_type") != "raft"' in isolated
-    assert "raft.db" in isolated
+    assert 'health_payload.get("initialized") is not True' in isolated
+    assert 'raft_dir / "vault.db"' in isolated
     assert "_fsync_file_and_parent(snapshot)" in executor
     assert "private_config.unlink()" in executor
     assert "_fsync_directory(private_config.parent)" in executor
