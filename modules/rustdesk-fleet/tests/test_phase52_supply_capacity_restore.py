@@ -1103,9 +1103,146 @@ def test_full_candidate_gate_persists_nogo_before_return(tmp_path: Path) -> None
     )
     assert result["verdict"] == "NO-GO"
     assert result["stages"]["backup"] == "BLOCKED"
-    assert result["stages"]["restore"] == "SKIPPED_BY_GATE"
+    assert result["stages"]["restore"]["status"] == "SKIPPED_DUE_TO_GATE"
     assert persisted[-1] == result
     assert persisted[-1]["persisted_before_fallback"] is True
+
+
+@pytest.mark.parametrize(
+    "failed_stage",
+    ["supply", "capacity", "vault", "backup", "restore", "capacity_finalize", "rollback"],
+)
+def test_candidate_chain_persists_complete_nogo_and_reaches_fallback(failed_stage: str) -> None:
+    persisted: list[dict] = []
+    calls: list[tuple[str, str]] = []
+
+    def callbacks(candidate: str, failure: str | None) -> dict[str, object]:
+        result: dict[str, object] = {}
+        for stage in validator.FULL_CANDIDATE_STAGES:
+            def invoke(stage_name: str = stage) -> dict[str, object]:
+                calls.append((candidate, stage_name))
+                return {
+                    "status": "BLOCKED" if stage_name == failure else "PASS",
+                    "input_digest": "a" * 64,
+                    "evidence_ids": [f"fixture-{candidate}-{stage_name}"],
+                    "findings": ["synthetic-stage-failure"] if stage_name == failure else [],
+                    "mutation": {
+                        "performed": False,
+                        "classes": [],
+                    },
+                }
+
+            result[stage] = invoke
+        return result
+
+    callbacks_by_candidate = {
+        "atius-srv-2": callbacks("atius-srv-2", failed_stage),
+        "atius-srv-3": callbacks("atius-srv-3", None),
+    }
+
+    def persist(payload: dict) -> None:
+        if payload["candidate"] == "atius-srv-3":
+            assert persisted[-1]["candidate"] == "atius-srv-2"
+            assert persisted[-1]["verdict"] == "NO-GO"
+        persisted.append(copy.deepcopy(payload))
+
+    summary = validator.run_candidate_chain(
+        ("atius-srv-2", "atius-srv-3"), callbacks_by_candidate, persist
+    )
+    assert [row["candidate"] for row in persisted] == ["atius-srv-2", "atius-srv-3"]
+    assert persisted[0]["first_non_pass_stage"] == failed_stage
+    assert list(persisted[0]["stages"]) == list(validator.FULL_CANDIDATE_STAGES)
+    assert summary["selected_candidate"] == "atius-srv-3"
+    assert summary["overall_status"] == "PASS"
+    assert summary["windows_install_performed"] is False
+
+
+def test_full_candidate_gate_converts_stage_exception_to_blocked_and_runs_rollback() -> None:
+    persisted: list[dict] = []
+    rollback_calls: list[bool] = []
+
+    def explode() -> dict[str, object]:
+        raise RuntimeError("synthetic secret-capable failure")
+
+    callbacks = {
+        "supply": lambda: {"status": "PASS"},
+        "capacity": lambda: {"status": "PASS"},
+        "vault": explode,
+        "backup": lambda: {"status": "PASS"},
+        "restore": lambda: {"status": "PASS"},
+        "capacity_finalize": lambda: {"status": "PASS"},
+        "rollback": lambda: rollback_calls.append(True) or {"status": "PASS"},
+        "topology_security": lambda: {"status": "PASS"},
+    }
+    result = validator.run_full_candidate_gate("horistic-srv", callbacks, persisted.append)
+    assert result["stages"]["vault"]["status"] == "BLOCKED"
+    assert result["stages"]["vault"]["findings"] == ["stage-exception"]
+    assert rollback_calls == [True]
+    assert result["verdict"] == "NO-GO"
+    assert persisted == [result]
+
+
+def test_backup_independence_contract_requires_distinct_generation_and_destination(tmp_path: Path) -> None:
+    source_dir = tmp_path / "source-state"
+    _create_sqlite_source(source_dir)
+    source_state = {
+        "active": False,
+        "public_listener": False,
+        "image_digest": validator.ARM64_IMAGE_DIGEST,
+        "architecture": "arm64",
+    }
+    backup_a = validator.create_verified_backup(
+        source_dir, tmp_path / "backup-a.tar", source_state, label="A"
+    )
+    backup_b = validator.create_verified_backup(
+        source_dir, tmp_path / "backup-b.tar", source_state, label="B"
+    )
+    assert backup_a["status"] == backup_b["status"] == "PASS"
+    assert backup_a["archive_sha256"] != backup_b["archive_sha256"] or backup_a["generated_at"] != backup_b["generated_at"]
+    assert backup_a["generation_id"] != backup_b["generation_id"]
+    assert backup_a["destination_class"] == "candidate-local"
+    assert backup_b["destination_class"] == "modules/fleet-backup:gdrive"
+    assert backup_a["source_input_digest"] == backup_b["source_input_digest"]
+    assert backup_a["verified_copy"] is backup_b["verified_copy"] is True
+    assert validator.validate_recovery_backups(backup_a, backup_b).status == "PASS"
+
+    conflated = copy.deepcopy(backup_b)
+    conflated["generation_id"] = backup_a["generation_id"]
+    assert validator.validate_recovery_backups(backup_a, conflated).status == "BLOCKED"
+
+
+def test_candidate_write_authority_is_capacity_gated_and_exact() -> None:
+    with pytest.raises(ValueError, match="capacity PASS"):
+        validator.enforce_candidate_write(
+            "horistic-srv", "state-only-backup-a", capacity_status="NO-GO", isolated=True
+        )
+    with pytest.raises(ValueError, match="forbidden"):
+        validator.enforce_candidate_write(
+            "atius-srv-2", "cleanup", capacity_status="PASS", isolated=True
+        )
+    with pytest.raises(ValueError, match="isolation"):
+        validator.enforce_candidate_write(
+            "horistic-srv", "state-only-backup-a", capacity_status="PASS", isolated=False
+        )
+    assert validator.enforce_candidate_write(
+        "horistic-srv", "state-only-backup-a", capacity_status="PASS", isolated=True
+    ) is None
+
+
+def test_horistic_topology_contract_accepts_current_review_and_future_jit_gates() -> None:
+    topology = validator.horistic_topology_evidence()
+    assert topology["status"] == "PASS"
+    assert topology["client_colocation"] is True
+    assert topology["phase52_review_status"] == "PASS"
+    assert topology["phase53_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+    assert topology["phase54_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+    assert topology["phase57_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
+    for domains in (
+        topology["server_client_resource_domains"],
+        topology["server_client_evidence_domains"],
+        topology["server_client_rollback_domains"],
+    ):
+        assert domains["server"] != domains["client"]
 
 
 def test_vault_restore_mutation_catalog_is_complete_and_non_secret() -> None:
