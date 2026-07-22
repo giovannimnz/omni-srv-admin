@@ -4,7 +4,10 @@ import copy
 from datetime import datetime, timedelta, timezone
 import importlib.util
 import json
+import os
+import secrets
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 
@@ -27,6 +30,8 @@ OPERATIONAL_DECISIONS_PATH = (
     REPO
     / ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md"
 )
+SECRET_ROLES_PATH = REPO / "modules/rustdesk-fleet/contracts/secret-roles.json"
+VAULT_HELPER_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-vault-hydrate"
 
 SPEC = importlib.util.spec_from_file_location("validate_phase52", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -49,6 +54,60 @@ def _placement() -> dict:
 
 def _categories(result) -> set[str]:
     return {item.category for item in result.findings}
+
+
+def _secret_roles() -> dict:
+    return validator.load_json_strict(SECRET_ROLES_PATH)
+
+
+def _write_fake_vault_provider(path: Path, values: dict[str, str]) -> None:
+    path.write_text(
+        "#!/usr/bin/env python3\n"
+        "import json, sys\n"
+        "request = json.load(sys.stdin)\n"
+        f"values = {values!r}\n"
+        "json.dump({'request_count': len(request['references']), 'values': values}, sys.stdout)\n",
+        encoding="utf-8",
+    )
+    path.chmod(0o700)
+
+
+def _run_vault_helper(
+    tmp_path: Path,
+    mode: str,
+    values: dict[str, str],
+    *,
+    runtime_dir: Path | None = None,
+) -> tuple[subprocess.CompletedProcess[str], dict]:
+    provider = tmp_path / "fake-vault-provider"
+    _write_fake_vault_provider(provider, values)
+    read_fd, write_fd = os.pipe()
+    env = {
+        "PATH": os.environ["PATH"],
+        "RUSTDESK_VAULT_PROVIDER": str(provider),
+        "RUSTDESK_VAULT_RESULT_FD": str(write_fd),
+    }
+    command = [
+        str(VAULT_HELPER_PATH),
+        mode,
+        "--contract",
+        str(SECRET_ROLES_PATH),
+    ]
+    if runtime_dir is not None:
+        command.extend(["--runtime-dir", str(runtime_dir)])
+    completed = subprocess.run(
+        command,
+        cwd=REPO,
+        env=env,
+        pass_fds=(write_fd,),
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    os.close(write_fd)
+    with os.fdopen(read_fd, encoding="utf-8") as handle:
+        safe_output = handle.read()
+    return completed, json.loads(safe_output) if safe_output else {}
 
 
 def test_supply_contract_exact_pins() -> None:
@@ -727,3 +786,115 @@ def test_capacity_live_evidence_is_serial_current_and_not_placement() -> None:
     assert horistic["phase54_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
     assert horistic["phase57_review"] == "REQUIRED_IMMEDIATELY_BEFORE_PHASE"
     assert horistic["independent_dr_claimed"] is False
+
+
+def test_vault_metadata_accepts_only_the_six_approved_references() -> None:
+    payload = _secret_roles()
+    result = validator.validate_vault_metadata(payload)
+    assert result.id == "P52-VAULT-001"
+    assert result.status == "PASS"
+    refs = validator.approved_vault_references(payload)
+    assert refs == [
+        ("kv/atius/rustdesk/server", "private_key"),
+        ("kv/atius/rustdesk/server", "public_key"),
+        ("kv/atius/rustdesk/targets/atius-srv-1", "permanent_password"),
+        ("kv/atius/rustdesk/targets/atius-srv-2", "permanent_password"),
+        ("kv/atius/rustdesk/targets/atius-srv-3", "permanent_password"),
+        ("kv/atius/rustdesk/targets/horistic-srv", "permanent_password"),
+        ("kv/atius/rustdesk/targets/giovanni-w11-pc", "permanent_password"),
+    ]
+
+    unknown = copy.deepcopy(payload)
+    unknown["target_password_roles"][0]["vault_path"] = "kv/atius/rustdesk/targets/unknown"
+    blocked = validator.validate_vault_metadata(unknown)
+    assert blocked.status == "BLOCKED"
+    assert "unknown-vault-reference" in _categories(blocked)
+
+
+def test_vault_helper_hydrates_tmpfs_without_disclosure(tmp_path: Path) -> None:
+    sentinel_private = f"private-{secrets.token_urlsafe(32)}"
+    sentinel_public = f"public-{secrets.token_urlsafe(32)}"
+    passwords = [f"password-{secrets.token_urlsafe(24)}" for _ in range(5)]
+    values = {
+        "kv/atius/rustdesk/server#private_key": sentinel_private,
+        "kv/atius/rustdesk/server#public_key": sentinel_public,
+        **{
+            f"kv/atius/rustdesk/targets/{host}#permanent_password": password
+            for host, password in zip(
+                ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv", "giovanni-w11-pc"),
+                passwords,
+                strict=True,
+            )
+        },
+    }
+    runtime_dir = Path("/dev/shm") / f"rustdesk-vault-test-{secrets.token_hex(8)}"
+    completed, result = _run_vault_helper(
+        tmp_path, "hydrate-server-identity", values, runtime_dir=runtime_dir
+    )
+    try:
+        assert completed.returncode == 0
+        assert completed.stdout == completed.stderr == ""
+        assert result["status"] == "PASS"
+        assert result["secret_material_present"] is False
+        assert result["runtime_tmpfs"] is True
+        assert result["runtime_mode"] == "0700"
+        assert result["file_modes"] == {"id_ed25519": "0600", "id_ed25519.pub": "0600"}
+        assert result["public_key_fingerprint"].startswith("sha256:")
+        assert runtime_dir.stat().st_mode & 0o777 == 0o700
+        assert (runtime_dir / "id_ed25519").read_text(encoding="utf-8") == sentinel_private
+        assert (runtime_dir / "id_ed25519.pub").read_text(encoding="utf-8") == sentinel_public
+        combined = completed.stdout + completed.stderr + json.dumps(result, sort_keys=True)
+        assert all(secret not in combined for secret in [sentinel_private, sentinel_public, *passwords])
+        assert all(secret not in " ".join(completed.args) for secret in values.values())
+    finally:
+        subprocess.run(
+            [str(VAULT_HELPER_PATH), "cleanup", "--runtime-dir", str(runtime_dir)],
+            cwd=REPO,
+            env={"PATH": os.environ["PATH"]},
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+    assert not runtime_dir.exists()
+
+
+def test_password_distinctness_is_aggregate_and_non_reusable(tmp_path: Path) -> None:
+    passwords = [f"password-{secrets.token_urlsafe(24)}" for _ in range(5)]
+    values = {
+        "kv/atius/rustdesk/server#private_key": f"private-{secrets.token_urlsafe(24)}",
+        "kv/atius/rustdesk/server#public_key": f"public-{secrets.token_urlsafe(24)}",
+        **{
+            f"kv/atius/rustdesk/targets/{host}#permanent_password": password
+            for host, password in zip(
+                ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv", "giovanni-w11-pc"),
+                passwords,
+                strict=True,
+            )
+        },
+    }
+    first, first_result = _run_vault_helper(tmp_path, "verify-password-distinctness", values)
+    second, second_result = _run_vault_helper(tmp_path, "verify-password-distinctness", values)
+    assert first.returncode == second.returncode == 0
+    assert first.stdout == first.stderr == second.stdout == second.stderr == ""
+    assert first_result == second_result == {
+        "count": 5,
+        "secret_material_present": False,
+        "status": "PASS",
+        "unique": 5,
+    }
+    serialized = json.dumps(first_result, sort_keys=True) + json.dumps(second_result, sort_keys=True)
+    assert all(password not in serialized for password in passwords)
+    assert "hmac" not in serialized.lower()
+
+    duplicate_values = dict(values)
+    duplicate_values["kv/atius/rustdesk/targets/giovanni-w11-pc#permanent_password"] = passwords[0]
+    duplicate, duplicate_result = _run_vault_helper(
+        tmp_path, "verify-password-distinctness", duplicate_values
+    )
+    assert duplicate.returncode == 2
+    assert duplicate_result == {
+        "count": 5,
+        "secret_material_present": False,
+        "status": "BLOCKED",
+        "unique": 4,
+    }
