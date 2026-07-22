@@ -22,6 +22,10 @@ CAPACITY_MUTATIONS_PATH = (
     REPO / "modules/rustdesk-fleet/tests/fixtures/invalid/phase52-capacity-placement-mutations.json"
 )
 CAPACITY_PROPOSAL_PATH = REPO / "modules/rustdesk-fleet/evidence/phase52/capacity-proposal.json"
+OPERATIONAL_DECISIONS_PATH = (
+    REPO
+    / ".planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-OPERATIONAL-DECISIONS.md"
+)
 
 SPEC = importlib.util.spec_from_file_location("validate_phase52", MODULE_PATH)
 assert SPEC and SPEC.loader
@@ -607,3 +611,87 @@ def test_capacity_proposal_cli_is_validation_only() -> None:
     parser = validator.build_parser()
     options = {action.dest for action in parser._actions}
     assert not {"cleanup", "remediate", "admit_candidate", "install"} & options
+
+
+@pytest.mark.parametrize(
+    "action",
+    [
+        "cleanup",
+        "remediation",
+        "reclamation",
+        "prune",
+        "delete",
+        "move",
+        "compress",
+        "vacuum",
+        "glob",
+        "symlink",
+        *validator.BOUNDED_FULL_GATE_WRITES,
+    ],
+)
+@pytest.mark.parametrize("candidate", validator.CANDIDATES)
+def test_zero_cleanup_rejects_every_non_read_only_action(candidate: str, action: str) -> None:
+    with pytest.raises(ValueError, match="read-only capacity preflight"):
+        validator.enforce_zero_cleanup(candidate, action)
+
+
+def test_zero_cleanup_allows_only_capacity_probe_before_command_construction() -> None:
+    assert validator.enforce_zero_cleanup("atius-srv-2", "capacity-sample") is None
+    command = validator.build_capacity_probe_command("atius-srv-2")
+    assert isinstance(command, list)
+    assert command[:2] == ["ssh", "-n"]
+    assert "BatchMode=yes" in command
+    assert "ConnectTimeout=10" in command
+    assert "atius-srv-2-direct" in command
+    assert not any(token in command for token in ("rm", "mv", "find", "tar", "gzip", "podman"))
+
+
+def test_capacity_routing_requires_persisted_predecessor_nogo(tmp_path: Path) -> None:
+    policy = _capacity_policy()
+    decision_digest = validator._sha256_file(OPERATIONAL_DECISIONS_PATH)
+    supply_digest = validator._sha256_file(OBSERVATION_PATH)
+    total = 100_000_000_000
+    no_go = [_raw_sample(used=79_000_000_000, total=total), _raw_sample(used=79_000_000_000, total=total)]
+    eligible = [_raw_sample(used=10_000_000_000, total=total), _raw_sample(used=10_000_000_000, total=total)]
+    for sample in no_go + eligible:
+        sample["hostname"] = "fixture"
+
+    with pytest.raises(ValueError, match="persisted predecessor NO-GO"):
+        validator.evaluate_capacity_chain(
+            {"atius-srv-3": no_go},
+            policy,
+            decision_source_digest=decision_digest,
+            supply_digest=supply_digest,
+            persisted_predecessors=set(),
+        )
+
+    chain = validator.evaluate_capacity_chain(
+        {
+            "atius-srv-2": no_go,
+            "atius-srv-3": no_go,
+            "horistic-srv": eligible,
+        },
+        policy,
+        decision_source_digest=decision_digest,
+        supply_digest=supply_digest,
+        persisted_predecessors={"atius-srv-2", "atius-srv-3"},
+    )
+    assert chain["attempt_order"] == list(validator.CANDIDATES)
+    assert [item["preliminary_verdict"] for item in chain["attempts"]] == [
+        "NO-GO",
+        "NO-GO",
+        "PRELIMINARY_ELIGIBLE",
+    ]
+    assert chain["capacity_eligible_candidate"] == "horistic-srv"
+    assert chain["selected_candidate"] is None
+    assert chain["overall_status"] == "BLOCKED"
+    assert chain["mutation_performed"] is False
+
+
+def test_capacity_live_parser_remains_blocked_and_exposes_no_mutation_action() -> None:
+    parser = validator.build_parser()
+    only = next(action for action in parser._actions if action.dest == "only")
+    assert "capacity-live" in only.choices
+    assert not {"cleanup", "remediate", "write", "load", "install"} & {
+        action.dest for action in parser._actions
+    }
