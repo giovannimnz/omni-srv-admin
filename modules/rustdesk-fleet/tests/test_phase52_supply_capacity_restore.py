@@ -1063,6 +1063,29 @@ def test_restore_blocks_sqlite_fingerprint_network_and_early_cleanup(tmp_path: P
     assert restore_dir.exists()
 
 
+def test_rollback_cleanup_failure_remains_blocking(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    restore_dir = tmp_path / "rustdesk-restore-cleanup-failure"
+    restore_dir.mkdir()
+    marker = restore_dir / ".phase52-disposable-restore"
+    marker.write_text("fixture", encoding="utf-8")
+    marker.chmod(0o600)
+
+    def refuse_cleanup(_path: Path) -> None:
+        raise OSError("synthetic cleanup refusal")
+
+    monkeypatch.setattr(validator.shutil, "rmtree", refuse_cleanup)
+    result = validator.cleanup_restore_runtime(
+        restore_dir,
+        {"service_active": False, "service_enabled": False, "public_listener": False},
+        restore_verified=True,
+    )
+    assert result.status == "BLOCKED"
+    assert "cleanup-failure" in _categories(result)
+    assert restore_dir.exists()
+
+
 def test_full_candidate_gate_persists_nogo_before_return(tmp_path: Path) -> None:
     persisted: list[dict] = []
     callbacks = {

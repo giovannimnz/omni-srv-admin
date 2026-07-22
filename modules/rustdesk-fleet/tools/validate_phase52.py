@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+import fcntl
 import hashlib
 import hmac
 import json
@@ -13,11 +14,13 @@ import re
 import secrets
 import shlex
 import shutil
+import sqlite3
 import stat
 import struct
 import subprocess
 import sys
 import tempfile
+import tarfile
 import urllib.error
 import urllib.request
 import zipfile
@@ -473,6 +476,299 @@ def vault_helper_main(argv: list[str]) -> int:
         except (OSError, ValueError):
             pass
         return 2
+
+
+STATE_BACKUP_ALLOWLIST = ("db_v2.sqlite3",)
+FULL_CANDIDATE_STAGES = (
+    "supply",
+    "capacity",
+    "vault",
+    "backup",
+    "restore",
+    "capacity_finalize",
+    "rollback",
+    "topology_security",
+)
+
+
+def verify_state_allowlist(source_dir: Path, source: str = "state-directory") -> CheckResult:
+    blocked: list[str] = []
+    if not source_dir.is_dir() or source_dir.is_symlink():
+        blocked.append("state-directory-missing")
+    else:
+        observed = sorted(
+            path.relative_to(source_dir).as_posix()
+            for path in source_dir.rglob("*")
+            if path.is_file() or path.is_symlink()
+        )
+        if "id_ed25519" in observed or "id_ed25519.pub" in observed:
+            blocked.append("private-key-in-state" if "id_ed25519" in observed else "identity-in-state")
+        if observed != list(STATE_BACKUP_ALLOWLIST):
+            blocked.append("state-allowlist-drift")
+        database = source_dir / "db_v2.sqlite3"
+        if database.is_symlink() or not database.is_file() or _mode(database) != "0600":
+            blocked.append("state-mode-or-type")
+    return _check_result("P52-RESTORE-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def verify_sqlite_integrity(database: Path, source: str = "db_v2.sqlite3") -> CheckResult:
+    blocked: list[str] = []
+    if database.name != "db_v2.sqlite3" or not database.is_file() or database.is_symlink():
+        blocked.append("wrong-database")
+    else:
+        try:
+            uri = f"file:{database.resolve()}?mode=ro"
+            with sqlite3.connect(uri, uri=True, timeout=5) as connection:
+                rows = connection.execute("PRAGMA integrity_check").fetchall()
+            if rows != [("ok",)]:
+                blocked.append("sqlite-integrity-failure")
+        except sqlite3.DatabaseError:
+            blocked.append("sqlite-integrity-failure")
+    return _check_result("P52-RESTORE-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def quiesce_source(source_state: dict[str, Any], source: str = "source-runtime") -> CheckResult:
+    blocked: list[str] = []
+    if not isinstance(source_state, dict):
+        blocked.append("source-state-shape")
+    else:
+        if source_state.get("active") is not False:
+            blocked.append("active-source")
+        if source_state.get("public_listener") is not False:
+            blocked.append("public-listener")
+        if source_state.get("image_digest") != ARM64_IMAGE_DIGEST:
+            blocked.append("unpinned-source-image")
+        if source_state.get("architecture") != "arm64":
+            blocked.append("source-architecture")
+    return _check_result("P52-RESTORE-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def _verify_archive(archive_path: Path) -> dict[str, Any]:
+    if not archive_path.is_file() or archive_path.is_symlink() or _mode(archive_path) != "0600":
+        raise ValueError("archive mode or type is invalid")
+    try:
+        with tarfile.open(archive_path, "r:") as archive:
+            members = archive.getmembers()
+            names = [member.name for member in members]
+            if names != list(STATE_BACKUP_ALLOWLIST):
+                raise ValueError("archive allowlist mismatch")
+            for member in members:
+                candidate = Path(member.name)
+                if (
+                    candidate.is_absolute()
+                    or ".." in candidate.parts
+                    or not member.isfile()
+                    or member.issym()
+                    or member.islnk()
+                    or stat.S_IMODE(member.mode) != 0o600
+                ):
+                    raise ValueError("archive allowlist mismatch")
+    except tarfile.TarError:
+        raise ValueError("archive is corrupt") from None
+    return {
+        "entries": names,
+        "sha256": _sha256_file(archive_path),
+        "size_bytes": archive_path.stat().st_size,
+        "archive_mode": _mode(archive_path),
+    }
+
+
+def create_verified_backup(
+    source_dir: Path,
+    archive_path: Path,
+    source_state: dict[str, Any],
+    *,
+    label: str,
+) -> dict[str, Any]:
+    if label not in {"A", "B"}:
+        raise ValueError("backup label must be A or B")
+    if quiesce_source(source_state).status != "PASS":
+        raise ValueError("source must be quiesced before backup")
+    if verify_state_allowlist(source_dir).status != "PASS":
+        raise ValueError("source state is not allowlisted")
+    if verify_sqlite_integrity(source_dir / "db_v2.sqlite3").status != "PASS":
+        raise ValueError("source SQLite integrity failed")
+    archive_path.parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    if archive_path.exists() or archive_path.is_symlink():
+        raise ValueError("backup target already exists")
+    lock_path = archive_path.with_name(f".{archive_path.name}.lock")
+    temporary = archive_path.with_name(f".{archive_path.name}.partial")
+    temporary.unlink(missing_ok=True)
+    with lock_path.open("a+b") as lock:
+        os.chmod(lock_path, 0o600)
+        try:
+            fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError:
+            raise ValueError("backup lock is held") from None
+        try:
+            database = source_dir / "db_v2.sqlite3"
+            with database.open("rb") as input_handle, tarfile.open(temporary, "w:") as archive:
+                info = tarfile.TarInfo("db_v2.sqlite3")
+                info.size = database.stat().st_size
+                info.mode = 0o600
+                info.uid = info.gid = 0
+                info.uname = info.gname = ""
+                info.mtime = 0
+                archive.addfile(info, input_handle)
+            os.chmod(temporary, 0o600)
+            os.replace(temporary, archive_path)
+        finally:
+            temporary.unlink(missing_ok=True)
+            fcntl.flock(lock.fileno(), fcntl.LOCK_UN)
+    verified = _verify_archive(archive_path)
+    return {
+        "status": "PASS",
+        "label": label,
+        "archive_path": str(archive_path),
+        **verified,
+        "secret_material_present": False,
+    }
+
+
+def validate_recovery_backups(
+    backup_a: dict[str, Any] | None,
+    backup_b: dict[str, Any] | None,
+    source: str = "backup-manifests",
+) -> CheckResult:
+    blocked: list[str] = []
+    if not isinstance(backup_a, dict) or backup_a.get("label") != "A":
+        blocked.append("missing-backup-a")
+    if not isinstance(backup_b, dict) or backup_b.get("label") != "B":
+        blocked.append("missing-backup-b")
+    if not blocked:
+        assert isinstance(backup_a, dict) and isinstance(backup_b, dict)
+        if backup_a.get("archive_path") == backup_b.get("archive_path"):
+            blocked.append("backup-path-collision")
+        for backup in (backup_a, backup_b):
+            try:
+                observed = _verify_archive(Path(str(backup.get("archive_path"))))
+            except (OSError, ValueError):
+                blocked.append(f"corrupt-backup-{str(backup.get('label', '')).lower()}")
+                continue
+            if any(backup.get(key) != observed[key] for key in ("entries", "sha256", "size_bytes", "archive_mode")):
+                blocked.append(f"backup-{str(backup.get('label', '')).lower()}-manifest-drift")
+    return _check_result("P52-RESTORE-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def restore_isolated(archive_path: Path, restore_parent: Path) -> dict[str, Any]:
+    verified = _verify_archive(archive_path)
+    restore_parent.mkdir(mode=0o700, parents=True, exist_ok=True)
+    os.chmod(restore_parent, 0o700)
+    runtime_dir = Path(tempfile.mkdtemp(prefix="rustdesk-restore-", dir=restore_parent))
+    os.chmod(runtime_dir, 0o700)
+    try:
+        marker = runtime_dir / ".phase52-disposable-restore"
+        marker.write_text("phase52-disposable\n", encoding="utf-8")
+        marker.chmod(0o600)
+        with tarfile.open(archive_path, "r:") as archive:
+            member = archive.getmember("db_v2.sqlite3")
+            input_handle = archive.extractfile(member)
+            if input_handle is None:
+                raise ValueError("archive database is missing")
+            destination = runtime_dir / "db_v2.sqlite3"
+            descriptor = os.open(destination, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            try:
+                with os.fdopen(descriptor, "wb", closefd=False) as output_handle:
+                    shutil.copyfileobj(input_handle, output_handle, length=1024 * 1024)
+                    output_handle.flush()
+                    os.fsync(output_handle.fileno())
+            finally:
+                os.close(descriptor)
+        if verify_sqlite_integrity(runtime_dir / "db_v2.sqlite3").status != "PASS":
+            raise ValueError("restored SQLite integrity failed")
+        return {
+            "status": "PASS",
+            "runtime_dir": str(runtime_dir),
+            "archive_sha256": verified["sha256"],
+            "entries": verified["entries"],
+            "public_network": False,
+            "published_ports": [],
+            "secret_material_present": False,
+        }
+    except BaseException:
+        shutil.rmtree(runtime_dir, ignore_errors=False)
+        raise
+
+
+def verify_public_fingerprint(
+    public_key_path: Path, expected_fingerprint: str, source: str = "public-identity"
+) -> CheckResult:
+    blocked: list[str] = []
+    if not public_key_path.is_file() or public_key_path.is_symlink():
+        blocked.append("public-key-missing")
+    else:
+        observed = "sha256:" + hashlib.sha256(public_key_path.read_bytes()).hexdigest()
+        if observed != expected_fingerprint:
+            blocked.append("fingerprint-mismatch")
+    return _check_result("P52-RESTORE-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def verify_no_public_listener(runtime_state: dict[str, Any], source: str = "restore-runtime") -> CheckResult:
+    blocked = [] if isinstance(runtime_state, dict) and runtime_state.get("public_listener") is False else ["public-listener"]
+    return _check_result("P52-RESTORE-001", "PASS" if not blocked else "BLOCKED", blocked, source)
+
+
+def cleanup_restore_runtime(
+    runtime_dir: Path,
+    runtime_state: dict[str, Any],
+    *,
+    restore_verified: bool,
+    source: str = "restore-runtime",
+) -> CheckResult:
+    blocked: list[str] = []
+    marker = runtime_dir / ".phase52-disposable-restore"
+    if not restore_verified:
+        blocked.append("restore-not-verified")
+    if runtime_dir.is_symlink() or not runtime_dir.name.startswith("rustdesk-restore-") or not marker.is_file():
+        blocked.append("unsafe-cleanup-target")
+    if not isinstance(runtime_state, dict) or runtime_state.get("service_active") is not False:
+        blocked.append("restored-service-active")
+    if not isinstance(runtime_state, dict) or runtime_state.get("service_enabled") is not False:
+        blocked.append("restored-service-enabled")
+    if not isinstance(runtime_state, dict) or runtime_state.get("public_listener") is not False:
+        blocked.append("public-listener")
+    if blocked:
+        return _check_result("P52-ROLLBACK-001", "BLOCKED", blocked, source)
+    try:
+        shutil.rmtree(runtime_dir)
+    except OSError:
+        return _check_result("P52-ROLLBACK-001", "BLOCKED", ["cleanup-failure"], source)
+    if runtime_dir.exists():
+        return _check_result("P52-ROLLBACK-001", "BLOCKED", ["cleanup-failure"], source)
+    return _check_result("P52-ROLLBACK-001", "PASS", [], source)
+
+
+def run_full_candidate_gate(
+    candidate: str,
+    stage_callbacks: dict[str, Any],
+    persist: Any,
+) -> dict[str, Any]:
+    if candidate not in CANDIDATES or set(stage_callbacks) != set(FULL_CANDIDATE_STAGES):
+        raise ValueError("candidate gate contract is incomplete")
+    stages = {stage: "PENDING" for stage in FULL_CANDIDATE_STAGES}
+    failure_seen = False
+    for stage in FULL_CANDIDATE_STAGES:
+        if failure_seen and stage != "rollback":
+            stages[stage] = "SKIPPED_BY_GATE"
+            continue
+        status = stage_callbacks[stage]()
+        if status not in {"PASS", "NO-GO", "FAIL", "BLOCKED"}:
+            raise ValueError("candidate stage returned invalid status")
+        stages[stage] = status
+        if status != "PASS":
+            failure_seen = True
+    verdict = "PASS" if all(status == "PASS" for status in stages.values()) else "NO-GO"
+    result = {
+        "candidate": candidate,
+        "stages": stages,
+        "verdict": verdict,
+        "persisted_before_fallback": True,
+        "secret_material_present": False,
+        "windows_install_performed": False,
+        "public_listener_created": False,
+    }
+    persist(result)
+    return result
 
 
 def _exact_keys(value: Any, expected: set[str]) -> bool:
