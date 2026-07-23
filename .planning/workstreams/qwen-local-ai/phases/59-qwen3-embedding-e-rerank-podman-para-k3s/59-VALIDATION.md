@@ -33,21 +33,41 @@ This phase is executed with validation at three mandatory boundaries:
 2. **Plan boundary — 9/9 plans:** the executor runs the plan-level
    `<verification>`, re-runs all task acceptance criteria during the SUMMARY
    self-check, and must write `## Self-Check: PASSED` before the plan is closed.
-3. **Wave boundary — Waves 0 through 8:** `execute-phase` runs the configured
-   `bash scripts/gsd-wave-regression.sh` post-merge test gate after the last
-   plan in the wave, then dispatches the active `execute:wave:post` gates. The
-   next wave is not released until this gate sequence finishes; `verify.key-links`
-   then checks every prior-wave artifact before dispatch.
+3. **Wave boundary — Waves 0 through 8:** every plan has exactly one wave, and
+   its terminal `<verification>` must run
+   `qwen-canary-inventory.py assert-wave-gate --wave N`. The command verifies
+   the required evidence, lineage and PASS statuses for that wave, writes
+   `59-WAVE-N-GATE.json`, and exits non-zero on any absent, malformed, BLOCK or
+   UNKNOWN input. Therefore the executor cannot produce the plan SUMMARY or
+   dispatch the next wave after a failed wave gate. `execute-phase` then runs
+   the configured `bash scripts/gsd-wave-regression.sh` as a second,
+   phase-neutral post-merge regression check, followed by active
+   `execute:wave:post` gates.
 
 The runner is intentionally phase-neutral and regression-oriented: it runs all
 discovered `scripts/embeddings-bench` unittest files and the Qwen reranker Node
 suite once its lockfile exists. The unrelated legacy CLI suite is not part of
-this wave gate because its current host-only baseline has two pre-existing
+this regression check because its current host-only baseline has two pre-existing
 environment failures (`/home/ubuntu` runtime paths); those failures must not be
 misclassified as Phase 59 regressions. The runner does not replace the
 task-specific commands above, which remain responsible for live readbacks,
 Kubernetes dry-runs, owner-host Go tests, Qdrant checks, and the 72-hour
 asynchronous soak verification.
+
+`assert-wave-gate` has this immutable evidence contract; it is implemented and
+fixture-tested by Plan 59-01 before any later wave can start:
+
+| Wave | Terminal gate evidence | Result required to release the successor |
+|---|---|---|
+| 0 | `59-WAVE0-GATE.json`, baseline contract, GTE freeze, inventory and selected network branch | PASS |
+| 1 | `59-02-GATE-READBACK.json`, reranker image and warmup evidence | PASS |
+| 2 | `59-03-GATE-READBACK.json`, rendered K3s evidence and `59-K3S-ROLLOUT.json` | PASS |
+| 3 | `59-04-GATE-READBACK.json`, `59-ROUTER-LIFECYCLE.json` | PASS |
+| 4 | `59-05-GATE-READBACK.json`, Qdrant preflight, reindex and alias evidence | PASS |
+| 5 | `59-06-GATE-READBACK.json`, functional smoke report and zero-governor-work readback | PASS |
+| 6 | `59-07-GATE-READBACK.json`, frozen qrels and quality/capacity report | PASS |
+| 7 | original-UID async manifest, soak image evidence and 72-hour report | dispatch gate: `external_job_waiting`; release gate after resume: PASS |
+| 8 | `59-09-GATE-READBACK.json`, rollback/replay, knowledge closeout and no-promotion decision | PASS |
 
 Wave 7 has one deliberate deferred state: `external_job_waiting`. In that wave,
 the soak Job's manifest contains the core verification command and original-UID
@@ -64,7 +84,7 @@ the checks have already passed.
 
 ### 59-01-02
 
-`python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-W0-INVENTORY.json --lease-decision .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-LEASE-STATE-DECISION.md --baseline-contract .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-GTE-BASELINE-FREEZE.json --gate .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-WAVE0-GATE.json --require-phase-50-summary .planning/workstreams/runtime-trust-codex-delivery-convergence/phases/50-atius-wide-sso-closeout/50-01-SUMMARY.md --require-frozen-before-any-qwen-live-result &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-gate --gate .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-WAVE0-GATE.json --baseline-contract .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-GTE-BASELINE-FREEZE.json --require PASS`
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-W0-INVENTORY.json --lease-decision .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-LEASE-STATE-DECISION.md --baseline-contract .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-GTE-BASELINE-FREEZE.json --gate .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-WAVE0-GATE.json --require-frozen-before-any-qwen-live-result &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-gate --gate .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-WAVE0-GATE.json --baseline-contract .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-GTE-BASELINE-FREEZE.json --require PASS`
 
 ### 59-02-01
 
@@ -170,7 +190,7 @@ summary.
 
 ## Sign-Off
 
-- [ ] Phase 50 completion is proven.
+- [ ] Wave 0 has current read-only inventory, one verified pre-/post-Phase 54 network branch, and an immutable pre-Qwen GTE baseline.
 - [ ] Wave 0 GTE-only numeric freeze is PASS before any Qwen live result.
 - [ ] Sealed baseline/freeze/gate hashes never change after Plan 01.
 - [ ] Plan 03 two-replica init-download/effective-500m tests pass.

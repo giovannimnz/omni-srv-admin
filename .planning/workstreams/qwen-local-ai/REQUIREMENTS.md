@@ -29,4 +29,4 @@
 
 - A migração de rede Horistic é propriedade do workstream `network-horistic-readdress`, Phase 54.
 - Secrets, tokens, dados brutos de produção e material de Vault não entram em Git, `.planning`, Obsidian, GBrain ou logs.
-- A Phase 59 depende da Phase 50 apenas como gate de ordem herdado e da leitura autoritativa de inventário produzida pela Phase 54 se a migração de rede ocorrer primeiro.
+- A Phase 59 resolve explicitamente a topologia antes da Wave 0: se a Phase 54 ainda não tiver sido executada, inventário versionado e probes live devem concordar no ramo `pre-phase54` (`10.21.1.21`); se já tiver sido executada, `54-04-SUMMARY.md`, `54-04-EVIDENCE.md`, inventário versionado e probes live devem concordar no ramo `post-phase54` (`10.31.1.31`). Estado misto, evidência ausente ou divergência bloqueiam a Wave 0. O gate de ordem herdado da Phase 50 (SSO) não é uma dependência técnica ou operacional do canário Qwen.

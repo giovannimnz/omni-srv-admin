@@ -9,7 +9,7 @@
 
 **Goal:** Operar Qwen3 Embedding e Rerank como canary ARM64 isolado no k3s, com GTE titular preservado, pipeline global de dois ciclos, índices Qdrant 1024d reversíveis e evidência funcional, de qualidade, capacidade e soak de 72 horas antes de qualquer promoção manual.
 **Requirements:** QAI-01..QAI-08
-**Depends on:** Phase 50; Phase 41 como contexto técnico; e o inventário autoritativo do workstream `network-horistic-readdress`/Phase 54 se a migração de IP ocorrer primeiro.
+**Depends on:** Phase 41 como contexto técnico; e o inventário autoritativo do workstream `network-horistic-readdress`/Phase 54 se a migração de IP ocorrer primeiro.
 **Status:** Planned
 **Risk:** HIGH
 **Plans:** 0/9 complete
