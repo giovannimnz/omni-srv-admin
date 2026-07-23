@@ -1,13 +1,15 @@
 #!/usr/bin/env python3
-"""Hermetic Phase 53 edge transaction primitives.
+"""Hermetic Phase 53 edge transaction primitives and explicit readback CLI.
 
-This module deliberately has no live backend and no command-line entry point.
-Plan 05 must inject provider/root implementations after its explicit live gate.
+The default CLI is zero-live and fail-closed. Only ``--verify-host-policy``
+performs a read-only nft query when no hermetic observed JSON is supplied;
+all mutation backends remain injected by the explicitly gated Plan 05 runner.
 """
 
 from __future__ import annotations
 
 import argparse
+from collections import Counter
 import copy
 from datetime import datetime, timezone
 import hashlib
@@ -133,31 +135,39 @@ def store_bounded_snapshot(
         raise EdgeBlocked("snapshot-record-limit")
 
     destination.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    os.chmod(destination.parent, 0o700)
-    temporary = destination.parent / f".{destination.name}.{os.getpid()}.{uuid.uuid4().hex}"
+    parent_flags = os.O_RDONLY | os.O_DIRECTORY
+    if hasattr(os, "O_NOFOLLOW"):
+        parent_flags |= os.O_NOFOLLOW
+    try:
+        parent_fd = os.open(destination.parent, parent_flags)
+    except OSError as exc:
+        raise EdgeBlocked("snapshot-parent-symlink-forbidden") from exc
+    os.fchmod(parent_fd, 0o700)
+    temporary_name = f".{destination.name}.{os.getpid()}.{uuid.uuid4().hex}"
     flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
     if hasattr(os, "O_NOFOLLOW"):
         flags |= os.O_NOFOLLOW
-    descriptor = os.open(temporary, flags, 0o600)
     try:
+        descriptor = os.open(temporary_name, flags, 0o600, dir_fd=parent_fd)
         os.fchmod(descriptor, 0o600)
         with os.fdopen(descriptor, "wb", closefd=True) as handle:
             handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
-        os.replace(temporary, destination)
-        os.chmod(destination, 0o600)
-        parent_flags = os.O_RDONLY | os.O_DIRECTORY
-        if hasattr(os, "O_NOFOLLOW"):
-            parent_flags |= os.O_NOFOLLOW
-        parent_fd = os.open(destination.parent, parent_flags)
-        try:
-            os.fsync(parent_fd)
-        finally:
-            os.close(parent_fd)
+        os.replace(
+            temporary_name,
+            destination.name,
+            src_dir_fd=parent_fd,
+            dst_dir_fd=parent_fd,
+        )
+        os.chmod(destination.name, 0o600, dir_fd=parent_fd, follow_symlinks=False)
+        os.fsync(parent_fd)
     finally:
-        if temporary.exists():
-            temporary.unlink()
+        try:
+            os.unlink(temporary_name, dir_fd=parent_fd)
+        except FileNotFoundError:
+            pass
+        os.close(parent_fd)
     return {"bytes": len(encoded), "sha256": hashlib.sha256(encoded).hexdigest()}
 
 
@@ -359,6 +369,9 @@ def validate_nft_candidate(
         raise EdgeBlocked("nft-contract-digest-invalid")
     if f"table inet {OWNED_TABLE}" not in active:
         raise EdgeBlocked("nft-owned-table-invalid")
+    table_declarations = re.findall(r"\btable\s+\w+\s+[A-Za-z0-9_.:-]+\s*\{", active)
+    chain_declarations = re.findall(r"\bchain\s+([A-Za-z0-9_.:-]+)\s*\{", active)
+    active_counter_rules = [line.strip() for line in active.splitlines() if "counter" in line]
     if "flush ruleset" in lowered or any(
         token in lowered for token in ("k3s", "cni", "flannel", "kube-")
     ):
@@ -378,6 +391,13 @@ def validate_nft_candidate(
         raise EdgeBlocked("nft-ipv4-allow-invalid")
     if "ip protocol tcp tcp dport { 21114, 21118, 21119 } counter drop" not in active:
         raise EdgeBlocked("nft-ipv4-forbidden-invalid")
+    if (
+        len(table_declarations) != 1
+        or chain_declarations != ["native_edge_input"]
+        or len(active_counter_rules) != 5
+        or any(interface_clause not in line for line in active_counter_rules)
+    ):
+        raise EdgeBlocked("nft-extra-chain-or-rule")
     return {
         "family": "inet",
         "table": OWNED_TABLE,
@@ -634,7 +654,11 @@ class EdgeTransaction:
         except Exception:
             self._try_containment()
             return self._blocked_receipt("rollback-observe-failed")
-        if self._poststate is None or current["state"] != self._poststate["state"]:
+        if (
+            self._poststate is None
+            or current.get("revision") != self._poststate.get("revision")
+            or current["state"] != self._poststate["state"]
+        ):
             if not self._try_containment():
                 return self._blocked_receipt("rollback-containment-failed")
             self.state = "CONTAINED_REQUIRES_MANUAL_RECOVERY"
@@ -756,15 +780,15 @@ def semantics_from_nft_json(payload: dict[str, Any], public_interface: str) -> d
     objects = payload.get("nftables")
     if not isinstance(objects, list):
         raise EdgeBlocked("nft-live-readback-invalid")
-    table_ok = False
-    chain_ok = False
-    signatures: set[tuple[str, str, tuple[int, ...], str]] = set()
+    table_count = 0
+    chain_count = 0
+    signatures: list[tuple[str, str, tuple[int, ...], str]] = []
     for item in objects:
         if not isinstance(item, dict):
             continue
         table = item.get("table")
         if isinstance(table, dict) and table.get("family") == "inet" and table.get("name") == OWNED_TABLE:
-            table_ok = True
+            table_count += 1
         chain = item.get("chain")
         if (
             isinstance(chain, dict)
@@ -775,20 +799,26 @@ def semantics_from_nft_json(payload: dict[str, Any], public_interface: str) -> d
             and chain.get("prio") == EXPECTED_PRIORITY
             and chain.get("policy") == "accept"
         ):
-            chain_ok = True
+            chain_count += 1
         rule = item.get("rule")
-        if isinstance(rule, dict) and rule.get("family") == "inet" and rule.get("table") == OWNED_TABLE:
+        if (
+            isinstance(rule, dict)
+            and rule.get("family") == "inet"
+            and rule.get("table") == OWNED_TABLE
+            and rule.get("chain") == "native_edge_input"
+        ):
             signature = _rule_signature(rule, public_interface)
-            if signature is not None:
-                signatures.add(signature)
-    expected = {
+            if signature is None:
+                raise EdgeBlocked("nft-live-semantic-readback-drift")
+            signatures.append(signature)
+    expected = [
         ("ipv6", "tcp", (21114, 21115, 21116, 21117, 21118, 21119), "drop"),
         ("ipv6", "udp", (21116,), "drop"),
         ("ipv4", "tcp", (21115, 21116, 21117), "accept"),
         ("ipv4", "udp", (21116,), "accept"),
         ("ipv4", "tcp", (21114, 21118, 21119), "drop"),
-    }
-    if not table_ok or not chain_ok or signatures != expected:
+    ]
+    if table_count != 1 or chain_count != 1 or Counter(signatures) != Counter(expected):
         raise EdgeBlocked("nft-live-semantic-readback-drift")
     return {
         "family": "inet",
