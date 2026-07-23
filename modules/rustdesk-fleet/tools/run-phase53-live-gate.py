@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Fail-closed Phase 53 transaction interface; live handlers arrive in Plans 02-06."""
+"""Fail-closed Phase 53 transaction orchestrator.
+
+The stage dispatcher is deliberately adapter-driven: the transaction contract,
+ordering and evidence checks live here, while runtime/network/provider adapters
+must be injected explicitly by the owning live plan.  This keeps the CLI safe
+when a handler or its current preflight inputs are absent.
+"""
 
 from __future__ import annotations
 
@@ -12,7 +18,7 @@ import os
 from pathlib import Path
 import subprocess
 import sys
-from typing import Any, Mapping
+from typing import Any, Callable, Mapping
 
 
 LIVE_FLAG = "ATIUS_RUN_RUSTDESK_PHASE53_LIVE"
@@ -34,6 +40,18 @@ STAGES = (
     "rollback",
     "report",
 )
+CLI_STAGES = STAGES + ("edge-probes",)
+EDGE_PROBES_SEQUENCE = (
+    "preflight",
+    "runtime",
+    "ops-api",
+    "host-edge",
+    "oci-edge",
+    "ip-probes",
+    "dns-publication",
+    "hostname-probes",
+)
+PREFLIGHT_FILENAMES = ("preflight.json", "phase53-preflight.json")
 RECEIPT_KEYS = {
     "schema_version",
     "transaction_id",
@@ -68,8 +86,7 @@ class GateBlocked(RuntimeError):
     """A deterministic safety gate refused to authorize work."""
 
 
-class LiveStageNotImplemented(GateBlocked):
-    """Wave 0 exposes interfaces but deliberately performs no live action."""
+StageAdapter = Callable[[], Mapping[str, Any] | "StageReceipt"]
 
 
 def _utc_now() -> str:
@@ -321,10 +338,17 @@ class Phase53LiveGate:
         *,
         repo: Path,
         environ: Mapping[str, str] | None = None,
+        evidence_dir: Path | None = None,
+        stage_adapters: Mapping[str, StageAdapter] | None = None,
     ) -> None:
         self.repo = repo.resolve(strict=True)
         self.environ = dict(os.environ if environ is None else environ)
+        self.evidence_dir = (
+            (evidence_dir or self.repo / "modules/rustdesk-fleet/evidence/phase53")
+            .resolve()
+        )
         self.contracts = load_current_contracts(self.repo)
+        self.stage_adapters = dict(stage_adapters or {})
         self.receipts: list[StageReceipt] = []
         self.transaction_id: str | None = None
         self._mutation_authorized = False
@@ -349,6 +373,15 @@ class Phase53LiveGate:
             raise GateBlocked("preflight-evidence-invalid")
         self._mutation_authorized = True
 
+    def load_preflight(self) -> dict[str, Any]:
+        """Load one current, value-free preflight descriptor from the evidence dir."""
+        for filename in PREFLIGHT_FILENAMES:
+            path = self.evidence_dir / filename
+            if not path.exists():
+                continue
+            return _strict_json(path)
+        raise GateBlocked("preflight-input-required")
+
     def accept_receipt(self, receipt: StageReceipt) -> None:
         if not self._mutation_authorized:
             raise GateBlocked("mutation-not-authorized")
@@ -363,13 +396,44 @@ class Phase53LiveGate:
             raise GateBlocked("ambiguous-stage-resume")
         self.receipts.append(receipt)
 
-    def run_stage(self, stage: str) -> None:
+    def _run_adapter(self, stage: str) -> dict[str, Any]:
+        adapter = self.stage_adapters.get(stage)
+        if adapter is None:
+            raise GateBlocked(f"stage-adapter-required:{stage}")
+        try:
+            result = adapter()
+        except GateBlocked:
+            raise
+        except Exception as exc:
+            raise GateBlocked(f"stage-adapter-failed:{stage}") from exc
+        if isinstance(result, StageReceipt):
+            receipt = result
+        elif isinstance(result, Mapping):
+            try:
+                receipt = StageReceipt.from_mapping(result)
+            except GateBlocked:
+                raise
+            except (TypeError, ValueError) as exc:
+                raise GateBlocked(f"stage-receipt-invalid:{stage}") from exc
+        else:
+            raise GateBlocked(f"stage-receipt-invalid:{stage}")
+        self.accept_receipt(receipt)
+        return receipt.to_mapping()
+
+    def run_stage(self, stage: str) -> dict[str, Any]:
         self.require_explicit_live_flag()
         if not self._mutation_authorized:
             raise GateBlocked("mutation-not-authorized")
-        if stage not in STAGES:
+        if stage not in CLI_STAGES:
             raise GateBlocked("stage-not-allowed")
-        raise LiveStageNotImplemented(f"stage-not-implemented:{stage}")
+        sequence = EDGE_PROBES_SEQUENCE if stage == "edge-probes" else (stage,)
+        receipts = [self._run_adapter(item) for item in sequence]
+        return {
+            "stage": stage,
+            "receipt_count": len(receipts),
+            "receipts": receipts,
+            "secret_material_present": False,
+        }
 
 
 def _blocked_payload(blocker: str) -> dict[str, Any]:
@@ -385,7 +449,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[3])
     parser.add_argument("--evidence-dir", type=Path)
-    parser.add_argument("--stage", choices=STAGES)
+    parser.add_argument("--stage", choices=CLI_STAGES)
     return parser
 
 
@@ -394,7 +458,12 @@ def main() -> int:
     try:
         gate = Phase53LiveGate(repo=args.repo)
         gate.require_explicit_live_flag()
-        raise GateBlocked("preflight-input-required")
+        preflight = gate.load_preflight()
+        gate.authorize_first_mutation(preflight)
+        stage = args.stage or "preflight"
+        result = gate.run_stage(stage)
+        sys.stdout.write(json.dumps(result, sort_keys=True, separators=(",", ":")) + "\n")
+        return 0
     except (GateBlocked, OSError, ValueError) as exc:
         blocker = str(exc) if isinstance(exc, GateBlocked) else "gate-initialization-failed"
         sys.stdout.write(json.dumps(_blocked_payload(blocker), sort_keys=True, separators=(",", ":")) + "\n")
