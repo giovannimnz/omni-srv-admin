@@ -36,6 +36,8 @@ OPS_API_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-ops-api.py"
 OPS_API_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-ops-api.service"
 OPS_API_VHOST = REPO / "modules/rustdesk-fleet/apache/rustdesk-ops.atius.com.br.conf"
 EDGE_APPLIER = REPO / "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+EDGE_PROBE = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.py"
+EDGE_PROBE_PS1 = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1"
 EDGE_NFT_POLICY = REPO / "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft"
 EDGE_BOOT_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service"
 
@@ -2263,3 +2265,546 @@ def test_nft_json_readback_rejects_additional_owned_table_chain() -> None:
     )
     with pytest.raises(module.EdgeBlocked, match="nft-live-semantic-readback-drift"):
         module.semantics_from_nft_json(payload, "ens3")
+
+
+def _phase53_digest() -> str:
+    return _load_strict(RUNTIME_CONTRACT)["upstream"]["linux_arm64_digest"]
+
+
+def _tcp_positive(port: int, owner: str) -> dict[str, Any]:
+    return {
+        "port": port,
+        "connected": True,
+        "owner": owner,
+        "container": f"atius-rustdesk-server-{owner}",
+        "cgroup": "atius-rustdesk-phase53.slice",
+        "image_digest": _phase53_digest(),
+        "socket_port": port,
+        "counter_before": 10,
+        "counter_after": 11,
+    }
+
+
+def _probe_origin(
+    origin_id: str,
+    origin_class: str,
+    egress_id: str,
+    source_ip: str,
+    source_port: int,
+    *,
+    attempt_id: str,
+) -> dict[str, Any]:
+    route = "private" if origin_class == "windows" else "direct"
+    return {
+        "origin_id": origin_id,
+        "origin_class": origin_class,
+        "attestation": {
+            "verified": True,
+            "subject": origin_id,
+            "issued_at": "2026-07-23T02:00:00Z",
+        },
+        "same_host": False,
+        "egress_id": egress_id,
+        "transport": {
+            "selected_route": route,
+            "attempts": [{"route": route, "ssh_rc": 0}],
+        },
+        "tcp": {
+            "positive_control": {"port": 22, "connected": True},
+            "positive": [
+                _tcp_positive(21115, "hbbs"),
+                _tcp_positive(21116, "hbbs"),
+                _tcp_positive(21117, "hbbr"),
+            ],
+            "negative": [
+                {"port": 21114, "connected": False},
+                {"port": 21118, "connected": False},
+                {"port": 21119, "connected": False},
+            ],
+        },
+        "udp": {
+            "attempt_id": attempt_id,
+            "started_at": "2026-07-23T02:01:00Z",
+            "ended_at": "2026-07-23T02:01:10Z",
+            "source_ip": source_ip,
+            "source_port": source_port,
+            "destination_ip": "203.0.113.8",
+            "destination_port": 21116,
+            "counter_before": 20,
+            "counter_after": 21,
+            "capture": {
+                "mode": "metadata-only",
+                "source_ip": source_ip,
+                "source_port": source_port,
+                "destination_ip": "203.0.113.8",
+                "destination_port": 21116,
+                "captured_at": "2026-07-23T02:01:05Z",
+            },
+            "owner": {
+                "process": "hbbs",
+                "container": "atius-rustdesk-server-hbbs",
+                "cgroup": "atius-rustdesk-phase53.slice",
+                "image_digest": _phase53_digest(),
+                "socket_port": 21116,
+            },
+            "disposable_attempt": True,
+        },
+    }
+
+
+def _external_probe_bundle() -> dict[str, Any]:
+    return {
+        "schema_version": 1,
+        "target_kind": "public-ipv4",
+        "target": "203.0.113.8",
+        "started_at": "2026-07-23T02:00:30Z",
+        "completed_at": "2026-07-23T02:02:00Z",
+        "origins": [
+            _probe_origin(
+                "GIOVANNI-W11-PC",
+                "windows",
+                "w11-egress",
+                "198.51.100.10",
+                40101,
+                attempt_id="udp-w11-0001",
+            ),
+            _probe_origin(
+                "independent-probe-1",
+                "independent-public",
+                "independent-egress",
+                "198.51.100.20",
+                40202,
+                attempt_id="udp-independent-0001",
+            ),
+        ],
+    }
+
+
+def _barrier_b(module: Any) -> dict[str, Any]:
+    preflight = _phase53_edge_preflight()
+    return {
+        "schema_version": 1,
+        "barrier": "B",
+        "address_consensus": copy.deepcopy(preflight["address_consensus"]),
+        "address_observed_at": "2026-07-23T02:02:30Z",
+        "authorization_time": "2026-07-23T02:03:00Z",
+        "source_head": preflight["source_head"],
+        "contract_digests": copy.deepcopy(preflight["contract_digests"]),
+        "attachment_digest": module._semantic_digest(_allowed_oci_pages()),
+        "native_record_set": [],
+    }
+
+
+class _FakeDnsEdgeBackend(_FakeEdgeBackend):
+    def __init__(self) -> None:
+        super().__init__()
+        self.dns_revision = 1
+        self.dns_records: list[dict[str, Any]] = []
+        self.dns_mutation_count = 0
+        self.raise_after_dns_write = False
+        self.force_dns_stale = False
+        self.dns_race_before_restore = False
+
+    def snapshot_dns(self) -> dict[str, Any]:
+        self.calls.append("dns-snapshot")
+        return {
+            "revision": str(self.dns_revision),
+            "records": copy.deepcopy(self.dns_records),
+        }
+
+    def current_dns_revision(self) -> str:
+        self.calls.append("dns-current-revision")
+        if self.force_dns_stale:
+            return str(self.dns_revision + 1)
+        return str(self.dns_revision)
+
+    def apply_dns(
+        self, records: list[dict[str, Any]], *, expected_revision: str
+    ) -> None:
+        self.calls.append("dns-apply")
+        if str(self.dns_revision) != str(expected_revision):
+            raise RuntimeError("dns-cas-conflict")
+        self.dns_records = copy.deepcopy(records)
+        self.dns_revision += 1
+        self.dns_mutation_count += 1
+        if self.raise_after_dns_write:
+            raise RuntimeError("dns-partial-write")
+
+    def observe_dns(self) -> dict[str, Any]:
+        self.calls.append("dns-observe")
+        return {
+            "revision": str(self.dns_revision),
+            "records": copy.deepcopy(self.dns_records),
+        }
+
+    def restore_dns_if_current(
+        self, snapshot: dict[str, Any], *, expected_revision: str
+    ) -> None:
+        self.calls.append("dns-restore-if-current")
+        if self.dns_race_before_restore:
+            self.dns_revision += 1
+        if str(self.dns_revision) != str(expected_revision):
+            raise RuntimeError("dns-restore-cas-conflict")
+        self.dns_records = copy.deepcopy(snapshot["records"])
+        self.dns_revision += 1
+
+
+def _edge_with_ip_proof(module: Any) -> tuple[Any, _FakeDnsEdgeBackend, dict[str, Any]]:
+    backend = _FakeDnsEdgeBackend()
+    transaction = _edge_transaction(module, backend)
+    transaction.execute_edge(
+        preflight=_phase53_edge_preflight(),
+        nft_candidate=_rendered_nft_candidate(module),
+        public_interface="ens3",
+        oci_candidate=_allowed_oci_pages(),
+    )
+    receipt = module.validate_external_probe_bundle(
+        _external_probe_bundle(),
+        expected_target="203.0.113.8",
+        expected_digest=_phase53_digest(),
+    )
+    return transaction, backend, receipt
+
+
+def test_probe_strict_json_rejects_duplicate_unknown_and_secret_surfaces() -> None:
+    module = _edge_applier_module()
+    with pytest.raises(module.EdgeBlocked, match="duplicate-json-key"):
+        module.strict_json_bytes(
+            b'{"schema_version":1,"schema_version":1}', max_bytes=4096
+        )
+
+    unknown = _external_probe_bundle()
+    unknown["unexpected"] = True
+    with pytest.raises(module.EdgeBlocked, match="probe-schema-invalid"):
+        module.validate_external_probe_bundle(
+            unknown,
+            expected_target="203.0.113.8",
+            expected_digest=_phase53_digest(),
+        )
+
+    for forbidden in (
+        {"nonce": "fixture"},
+        {"payload": "fixture"},
+        {"argv": ["ssh"]},
+        {"Authorization": "Bearer fixture"},
+    ):
+        unsafe = _external_probe_bundle()
+        unsafe["origins"][0]["udp"].update(forbidden)
+        with pytest.raises(module.EdgeBlocked, match="probe-secret-surface"):
+            module.validate_external_probe_bundle(
+                unsafe,
+                expected_target="203.0.113.8",
+                expected_digest=_phase53_digest(),
+            )
+
+
+def test_external_probe_receipt_is_two_origin_value_free_and_exact() -> None:
+    module = _edge_applier_module()
+    receipt = module.validate_external_probe_bundle(
+        _external_probe_bundle(),
+        expected_target="203.0.113.8",
+        expected_digest=_phase53_digest(),
+    )
+    assert receipt == {
+        "schema_version": 1,
+        "scope": "public-ipv4",
+        "target": "203.0.113.8",
+        "completed_at": "2026-07-23T02:02:00Z",
+        "origin_ids": ["GIOVANNI-W11-PC", "independent-probe-1"],
+        "origin_count": 2,
+        "tcp_positive_ports": [21115, 21116, 21117],
+        "tcp_negative_ports": [21114, 21118, 21119],
+        "udp_port": 21116,
+        "udp_attempt_ids": ["udp-independent-0001", "udp-w11-0001"],
+        "secret_material_present": False,
+    }
+    encoded = json.dumps(receipt).lower()
+    assert not any(
+        token in encoded
+        for token in ("nonce", "payload", "argv", "stdout", "stderr", "authorization")
+    )
+
+
+@pytest.mark.parametrize(
+    ("mutator", "blocker"),
+    [
+        (
+            lambda payload: payload["origins"][0].update({"same_host": True}),
+            "probe-same-host-forbidden",
+        ),
+        (
+            lambda payload: payload["origins"][1].update(
+                {"egress_id": "w11-egress"}
+            ),
+            "probe-origin-not-distinct",
+        ),
+        (
+            lambda payload: payload["origins"][1]["attestation"].update(
+                {"verified": False}
+            ),
+            "probe-origin-unattested",
+        ),
+        (
+            lambda payload: payload["origins"][0]["tcp"]["positive_control"].update(
+                {"connected": False}
+            ),
+            "probe-tcp-positive-control-failed",
+        ),
+        (
+            lambda payload: payload["origins"][0]["tcp"]["positive"][0].update(
+                {"image_digest": "sha256:" + "0" * 64}
+            ),
+            "probe-tcp-correlation-invalid",
+        ),
+        (
+            lambda payload: payload["origins"][0]["tcp"]["negative"][0].update(
+                {"connected": True}
+            ),
+            "probe-tcp-forbidden-open",
+        ),
+        (
+            lambda payload: payload["origins"][0]["udp"].update(
+                {"counter_after": 20}
+            ),
+            "probe-udp-counter-invalid",
+        ),
+        (
+            lambda payload: payload["origins"][0]["udp"]["capture"].update(
+                {"source_port": 49999}
+            ),
+            "probe-udp-tuple-invalid",
+        ),
+        (
+            lambda payload: payload["origins"][0]["udp"]["owner"].update(
+                {"process": "foreign"}
+            ),
+            "probe-udp-owner-invalid",
+        ),
+        (
+            lambda payload: payload["origins"][1]["udp"].update(
+                {"attempt_id": "udp-w11-0001"}
+            ),
+            "probe-udp-replay",
+        ),
+    ],
+)
+def test_external_probe_adversarial_matrix_fails_closed(
+    mutator: Any, blocker: str
+) -> None:
+    module = _edge_applier_module()
+    payload = _external_probe_bundle()
+    mutator(payload)
+    with pytest.raises(module.EdgeBlocked, match=blocker):
+        module.validate_external_probe_bundle(
+            payload,
+            expected_target="203.0.113.8",
+            expected_digest=_phase53_digest(),
+        )
+
+
+def test_udp_capture_must_be_inside_attempt_window() -> None:
+    module = _edge_applier_module()
+    payload = _external_probe_bundle()
+    payload["origins"][0]["udp"]["capture"]["captured_at"] = (
+        "2026-07-23T02:02:00Z"
+    )
+    with pytest.raises(module.EdgeBlocked, match="probe-udp-window-invalid"):
+        module.validate_external_probe_bundle(
+            payload,
+            expected_target="203.0.113.8",
+            expected_digest=_phase53_digest(),
+        )
+
+
+class _FakeWindowsRouteRunner:
+    def __init__(self, private_rc: int, public_rc: int = 0) -> None:
+        self.private_rc = private_rc
+        self.public_rc = public_rc
+        self.calls: list[str] = []
+
+    def __call__(self, route: str) -> int:
+        self.calls.append(route)
+        return self.private_rc if route == "private" else self.public_rc
+
+
+def test_windows_private_first_fallback_is_only_for_ssh_rc255() -> None:
+    module = _edge_applier_module()
+    unavailable = _FakeWindowsRouteRunner(255, 255)
+    with pytest.raises(
+        module.EdgeBlocked, match="windows-origin-unavailable-after-fallback"
+    ):
+        module.run_windows_private_first(unavailable)
+    assert unavailable.calls == ["private", "public-native"]
+
+    functional_failure = _FakeWindowsRouteRunner(1, 0)
+    with pytest.raises(module.EdgeBlocked, match="windows-private-probe-failed"):
+        module.run_windows_private_first(functional_failure)
+    assert functional_failure.calls == ["private"]
+
+    private_ok = _FakeWindowsRouteRunner(0, 0)
+    assert module.run_windows_private_first(private_ok) == {
+        "selected_route": "private",
+        "attempts": [{"route": "private", "ssh_rc": 0}],
+    }
+    assert private_ok.calls == ["private"]
+
+
+def test_barrier_b_is_post_ip_fresh_and_equal_to_barrier_a() -> None:
+    module = _edge_applier_module()
+    transaction, backend, receipt = _edge_with_ip_proof(module)
+    result = transaction.publish_dns_last(
+        barrier_b=_barrier_b(module),
+        ip_probe_receipt=receipt,
+        now=module.datetime(2026, 7, 23, 2, 3, 30, tzinfo=module.timezone.utc),
+    )
+    assert result["state"] == "DNS_PUBLISHED"
+    assert result["record"] == {
+        "name": "rustdesk.atius.com.br",
+        "type": "A",
+        "content": "203.0.113.8",
+        "proxied": False,
+    }
+    assert backend.dns_records == [result["record"]]
+    assert backend.calls.index("dns-apply") > backend.calls.index("oci-apply")
+
+
+@pytest.mark.parametrize(
+    ("mutator", "blocker"),
+    [
+        (
+            lambda barrier: barrier["address_consensus"].update(
+                {"horistic-egress-ipv4": "203.0.113.9"}
+            ),
+            "barrier-b-address-drift",
+        ),
+        (
+            lambda barrier: barrier.update(
+                {"address_observed_at": "2026-07-23T01:59:00Z"}
+            ),
+            "barrier-b-stale",
+        ),
+        (
+            lambda barrier: barrier.update(
+                {"address_observed_at": "2026-07-23T02:01:59Z"}
+            ),
+            "barrier-b-before-ip-proof",
+        ),
+        (
+            lambda barrier: barrier.update({"attachment_digest": "0" * 64}),
+            "barrier-b-attachment-drift",
+        ),
+        (
+            lambda barrier: barrier.update(
+                {
+                    "native_record_set": [
+                        {
+                            "type": "AAAA",
+                            "name": "rustdesk.atius.com.br",
+                            "content": "2001:db8::8",
+                            "proxied": False,
+                        }
+                    ]
+                }
+            ),
+            "barrier-b-dns-not-closed",
+        ),
+    ],
+)
+def test_barrier_b_drift_staleness_and_order_block_before_dns(
+    mutator: Any, blocker: str
+) -> None:
+    module = _edge_applier_module()
+    transaction, backend, receipt = _edge_with_ip_proof(module)
+    barrier = _barrier_b(module)
+    mutator(barrier)
+    with pytest.raises(module.EdgeBlocked, match=blocker):
+        transaction.publish_dns_last(
+            barrier_b=barrier,
+            ip_probe_receipt=receipt,
+            now=module.datetime(2026, 7, 23, 2, 3, 30, tzinfo=module.timezone.utc),
+        )
+    assert backend.dns_mutation_count == 0
+
+
+def test_dns_is_unreachable_before_two_origin_ip_proof_and_cas() -> None:
+    module = _edge_applier_module()
+    transaction, backend, receipt = _edge_with_ip_proof(module)
+    incomplete = copy.deepcopy(receipt)
+    incomplete["origin_count"] = 1
+    with pytest.raises(module.EdgeBlocked, match="ip-proof-incomplete"):
+        transaction.publish_dns_last(
+            barrier_b=_barrier_b(module),
+            ip_probe_receipt=incomplete,
+            now=module.datetime(2026, 7, 23, 2, 3, 30, tzinfo=module.timezone.utc),
+        )
+    assert backend.dns_mutation_count == 0
+
+    backend.force_dns_stale = True
+    with pytest.raises(module.EdgeBlocked, match="dns-cas-stale"):
+        transaction.publish_dns_last(
+            barrier_b=_barrier_b(module),
+            ip_probe_receipt=receipt,
+            now=module.datetime(2026, 7, 23, 2, 3, 30, tzinfo=module.timezone.utc),
+        )
+    assert backend.dns_mutation_count == 0
+
+
+def test_dns_partial_write_rolls_back_exactly_and_is_idempotent() -> None:
+    module = _edge_applier_module()
+    transaction, backend, receipt = _edge_with_ip_proof(module)
+    backend.raise_after_dns_write = True
+    with pytest.raises(module.EdgeBlocked, match="backend-dns-apply-failed"):
+        transaction.publish_dns_last(
+            barrier_b=_barrier_b(module),
+            ip_probe_receipt=receipt,
+            now=module.datetime(2026, 7, 23, 2, 3, 30, tzinfo=module.timezone.utc),
+        )
+    assert backend.dns_records == []
+    rollback = transaction.rollback_dns()
+    assert rollback["state"] == "DNS_ROLLED_BACK"
+    assert transaction.rollback_dns() == rollback
+
+
+def test_dns_concurrent_drift_contains_without_destructive_restore() -> None:
+    module = _edge_applier_module()
+    transaction, backend, receipt = _edge_with_ip_proof(module)
+    transaction.publish_dns_last(
+        barrier_b=_barrier_b(module),
+        ip_probe_receipt=receipt,
+        now=module.datetime(2026, 7, 23, 2, 3, 30, tzinfo=module.timezone.utc),
+    )
+    backend.dns_records.append(
+        {
+            "name": "rustdesk.atius.com.br",
+            "type": "TXT",
+            "content": "concurrent",
+            "proxied": False,
+        }
+    )
+    backend.dns_revision += 1
+    receipt = transaction.rollback_dns()
+    assert receipt["state"] == "CONTAINED_REQUIRES_MANUAL_RECOVERY"
+    assert backend.contained is True
+    assert "dns-restore-if-current" not in backend.calls
+
+
+def test_probe_scripts_are_offline_value_free_and_powershell_has_no_disk_surface() -> None:
+    assert EDGE_PROBE.is_file(), EDGE_PROBE
+    assert EDGE_PROBE_PS1.is_file(), EDGE_PROBE_PS1
+    python_source = EDGE_PROBE.read_text(encoding="utf-8")
+    powershell_source = EDGE_PROBE_PS1.read_text(encoding="utf-8")
+    assert "explicit-offline-observation-required" in python_source
+    assert "--validate-observation" in python_source
+    assert "ConvertFrom-Json" in powershell_source
+    assert "ConvertTo-Json -Compress" in powershell_source
+    for forbidden in (
+        "Start-Transcript",
+        "Stop-Transcript",
+        "Out-File",
+        "Set-Content",
+        "Add-Content",
+        "Tee-Object",
+        "Test-NetConnection",
+        "Invoke-WebRequest",
+    ):
+        assert forbidden not in powershell_source
