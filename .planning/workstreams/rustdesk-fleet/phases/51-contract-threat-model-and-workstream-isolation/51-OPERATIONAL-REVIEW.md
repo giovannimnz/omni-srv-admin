@@ -1,7 +1,7 @@
 ---
 status: APPROVED
 reviewer: Giovanni Muniz
-reviewed_at: "2026-07-20T07:59:32Z"
+reviewed_at: "2026-07-23T14:34:57Z"
 vault_owner: Giovanni Muniz
 vault_paths_approval_status: approved
 ---
@@ -17,8 +17,8 @@ This artifact is `APPROVED` by the accountable operator and Vault owner. The exe
   "schema_version": 1,
   "status": "APPROVED",
   "reviewer": "Giovanni Muniz",
-  "reviewed_at": "2026-07-20T07:59:32Z",
-  "source_head": "be35a3f0c5f3596de35bb70183eeb134def270f9",
+  "reviewed_at": "2026-07-23T14:34:57Z",
+  "source_head": "0085c029f7c4a441dcda0f714b3690d33289b2f7",
   "enterprise_controls": [
     {"id": "sso_oidc", "mandatory": false, "accepted_absence": true},
     {"id": "rbac", "mandatory": false, "accepted_absence": true},
@@ -43,8 +43,8 @@ This artifact is `APPROVED` by the accountable operator and Vault owner. The exe
   "permission_transport_review": "approved",
   "threat_review": "approved",
   "unresolved_high_count": 0,
-  "phase48_drift_decision": "no-drift",
-  "review_input_manifest_digest": "df4345e099218c969fd3d714c7da0242878d69a47be2b850e930717729548fce"
+  "phase48_drift_decision": "authorized-rebaseline",
+  "review_input_manifest_digest": "43c83f9abad54345ffed5d7987b8f243f1518632bf08f97f2e0b52e410d9a728"
 }
 ```
 
@@ -52,5 +52,5 @@ This artifact is `APPROVED` by the accountable operator and Vault owner. The exe
 
 - Accountable operator and Vault-owner fields are explicitly approved at the timestamps above.
 - Any mandatory centralized control without authorized Pro replan: `BLOCKED`.
-- Any unresolved high threat or Phase 48 drift: `BLOCKED`.
+- Any unresolved high threat or Phase 48 drift without an explicit serialized rebaseline review: `BLOCKED`.
 - No secret value belongs in this artifact.
