@@ -1,0 +1,19 @@
+#!/usr/sbin/nft -f
+
+# ATIUS-PHASE53-EDGE
+# Managed-By: omni-srv-admin/rustdesk-fleet/phase53
+# contract-sha256=1708fda3e0d9bcbfee05a3bf354deae56e2922dc743405514f4efb0cf6fac3d8
+# __PHASE53_PUBLIC_INTERFACE__ is rendered from the revalidated live interface.
+
+table inet atius_rustdesk_phase53 {
+    chain native_edge_input {
+        type filter hook input priority 300; policy accept;
+
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip6 nexthdr tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip6 nexthdr udp udp dport 21116 counter drop
+
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol tcp tcp dport { 21115, 21116, 21117 } counter accept
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol udp udp dport 21116 counter accept
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol tcp tcp dport { 21114, 21118, 21119 } counter drop
+    }
+}

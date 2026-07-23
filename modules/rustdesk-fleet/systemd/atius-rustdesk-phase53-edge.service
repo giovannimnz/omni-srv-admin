@@ -1,0 +1,21 @@
+[Unit]
+Description=ATIUS RustDesk Phase 53 owned public edge policy
+Documentation=https://github.com/giovannimuniz/omni-srv-admin
+DefaultDependencies=no
+Wants=network-pre.target
+Before=network-pre.target
+ConditionPathIsReadWrite=/etc/atius-rustdesk/phase53-edge.nft
+
+[Service]
+Type=oneshot
+ExecStartPre=/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft
+ExecStart=/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft
+ExecStartPost=/usr/local/libexec/apply-phase53-edge.py --verify-host-policy --candidate /etc/atius-rustdesk/phase53-edge.nft
+RemainAfterExit=yes
+NoNewPrivileges=yes
+ProtectSystem=strict
+ProtectHome=yes
+PrivateTmp=yes
+
+[Install]
+WantedBy=network-pre.target
