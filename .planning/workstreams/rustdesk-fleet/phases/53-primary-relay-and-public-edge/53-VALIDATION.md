@@ -3,7 +3,7 @@ phase: 53
 slug: primary-relay-and-public-edge
 status: draft
 nyquist_compliant: true
-wave_0_complete: false
+wave_0_complete: true
 created: 2026-07-22
 ---
 
@@ -44,8 +44,8 @@ created: 2026-07-22
 
 | Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
 |---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 53-01-01 | 01 | 0 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53-CONTRACT | Strict schemas, exact sockets/resources and stored-verdict rejection | unit/contract | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'contract or schema or mutation'` | ❌ W0 | ⬜ pending |
-| 53-01-02 | 01 | 0 | SRV-02, OPS-01 | T53-SECRET, T53-EXEC | Secret-bearing argv/env/evidence/API/log fixtures and unflagged/ambiguous live stages fail closed | unit/security | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'secret or redact or auth or live_flag or stage_receipt'` | ❌ W0 | ⬜ pending |
+| 53-01-01 | 01 | 0 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53-CONTRACT | Strict schemas, exact sockets/resources and stored-verdict rejection | unit/contract | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'contract or schema or mutation'` | ✅ | ✅ green |
+| 53-01-02 | 01 | 0 | SRV-02, OPS-01 | T53-SECRET, T53-EXEC | Secret-bearing argv/env/evidence/API/log fixtures and unflagged/ambiguous live stages fail closed | unit/security | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'secret or redact or auth or live_flag or stage_receipt'` | ✅ | ✅ green |
 | 53-02-01 | 02 | 1 | SRV-02 | T53-RUNTIME | Rootless digest-pinned Quadlets, exact mounts/caps and aggregate cgroup budget | unit/integration | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'quadlet or runtime or cgroup'` | ❌ W0 | ⬜ pending |
 | 53-02-02 | 02 | 1 | SRV-06 | T53-IDENTITY, T53-ROLLBACK-SRV | Hydration is tmpfs/no-output; fingerprint, SQLite and bounded logs persist; rollback is terminal | integration/fault | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'identity or sqlite or rollback or linger or log_bound'` | ❌ W0 | ⬜ pending |
 | 53-03-01 | 03 | 2 | OPS-01 | T53-API-AUTH, T53-API-LEAK, T53-READINESS, T53-APACHE | Backend auth/redaction/readiness plus reversible Apache publication and no TCP 21114 | unit/integration | `omni srv1-ops resources run builds -- pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'ops_api or apache or readiness'` | ❌ W0 | ⬜ pending |
@@ -64,15 +64,15 @@ created: 2026-07-22
 
 ## Wave 0 Requirements
 
-- [ ] `modules/rustdesk-fleet/tests/test_phase53_primary_edge.py` — strict
+- [x] `modules/rustdesk-fleet/tests/test_phase53_primary_edge.py` — strict
   contracts, mutation fixtures, redaction tests and live-runner fakes.
-- [ ] `modules/rustdesk-fleet/contracts/phase53-runtime.json` — exact local
+- [x] `modules/rustdesk-fleet/contracts/phase53-runtime.json` — exact local
   socket, paths, identity, resource and log contract.
-- [ ] `modules/rustdesk-fleet/contracts/phase53-edge.json` — effective
+- [x] `modules/rustdesk-fleet/contracts/phase53-edge.json` — effective
   host/OCI/DNS/IPv4/IPv6 contract.
-- [ ] `modules/rustdesk-fleet/contracts/phase53-ops-api.json` — endpoint,
+- [x] `modules/rustdesk-fleet/contracts/phase53-ops-api.json` — endpoint,
   authentication, redaction and readiness schema.
-- [ ] `modules/rustdesk-fleet/tools/run-phase53-live-gate.py` — explicit-live,
+- [x] `modules/rustdesk-fleet/tools/run-phase53-live-gate.py` — explicit-live,
   resumable transaction with stage receipts and terminal rollback.
 
 ---

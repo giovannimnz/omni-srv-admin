@@ -3,17 +3,17 @@ gsd_state_version: 1.0
 milestone: v1.9
 milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
-current_phase_name: Primary Relay and Public Edge
-status: ready_to_execute
-stopped_at: Phase 53 planned in 6 serial waves
-last_updated: "2026-07-22T23:55:00-03:00"
-last_activity: 2026-07-22
-last_activity_desc: Plan 52-07 completed the create-only Vault gate, recoverability drill and independent closeout
+current_phase_name: primary-relay-and-public-edge
+status: executing
+stopped_at: Completed 53-01-PLAN.md
+last_updated: "2026-07-23T00:25:36.273Z"
+last_activity: 2026-07-23
+last_activity_desc: Phase 53 execution started
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 16
+  completed_plans: 11
   percent: 25
 ---
 
@@ -24,14 +24,14 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-19)
 
 **Core value:** Todos os cinco computadores autorizados podem acessar e controlar os demais por RustDesk self-hosted, com segurança, rollback e evidência completa, sem degradar os acessos existentes.
-**Current focus:** Phase 53 — Primary Relay and Public Edge
+**Current focus:** Phase 53 — primary-relay-and-public-edge
 
 ## Current Position
 
-Phase: 53 (Primary Relay and Public Edge) — READY
-Plan: 6 plans across waves 0-5
-Status: Phase 53 research, three-round review and executable planning complete; ready for Wave 0
-Last activity: 2026-07-22 — Plan 52-07 completed the create-only Vault gate, recoverability drill and independent closeout
+Phase: 53 (primary-relay-and-public-edge) — EXECUTING
+Plan: 2 of 6
+Status: Ready to execute
+Last activity: 2026-07-23 — Phase 53 execution started
 
 Milestone progress: [██░░░░░░░░] 25% — 2 of 8 phases complete; Phase 53 execution is next
 
@@ -49,6 +49,7 @@ Milestone progress: [██░░░░░░░░] 25% — 2 of 8 phases compl
 |-------|-------|-------|----------|
 | 51 | 3 | - | - |
 | 52 | 7 | 65min + live gate | cross-session |
+| Phase 53 P01 | 12min | 2 tasks | 5 files |
 
 ## Accumulated Context
 
@@ -79,6 +80,7 @@ Milestone progress: [██░░░░░░░░] 25% — 2 of 8 phases compl
 - [Phase 52]: Restore cleanup is allowed only for a marked disposable target after restore, no-listener and stopped/disabled checks pass; verified backups are retained on failure.
 - [Phase 52]: Horistic uses the reviewed restricted Vault dispatcher and managed GDrive backup path; no alternate secret or backup path was improvised.
 - [Phase 52]: The canonical report has exactly eleven PASS checks; SCP-04, SRV-01, SRV-05 and SRV-07 are promoted and Phase 53 topology is READY.
+- [Phase 53]: Phase 53 live mutation authorization is bound to the exact flag, current Git HEAD, current contract digests, pre-state, unambiguous ownership and rollback readiness. — Prevents stale source or persisted verdict text from authorizing infrastructure changes.
 
 ### Pending Todos
 
@@ -91,6 +93,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-22T23:55:00-03:00
-Stopped at: Phase 53 planned in 6 serial waves
-Resume file: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-01-PLAN.md
+Last session: 2026-07-23T00:25:36.259Z
+Stopped at: Completed 53-01-PLAN.md
+Resume file: None
