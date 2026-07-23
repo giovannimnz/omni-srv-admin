@@ -4,11 +4,13 @@ Documentation=https://github.com/giovannimuniz/omni-srv-admin
 DefaultDependencies=no
 Wants=network-pre.target
 Before=network-pre.target
-ConditionPathIsReadWrite=/etc/atius-rustdesk/phase53-edge.nft
-ConditionPathExists=/etc/atius-rustdesk/phase53-edge.template.nft
 
 [Service]
 Type=oneshot
+ExecStartPre=/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.nft
+ExecStartPre=/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.template.nft
+ExecStartPre=/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.json
+ExecStartPre=/usr/bin/test -x /usr/local/libexec/apply-phase53-edge.py
 ExecStartPre=/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft
 ExecStart=/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft
 ExecStartPost=/usr/local/libexec/apply-phase53-edge.py --verify-host-policy --candidate /etc/atius-rustdesk/phase53-edge.nft --contract /etc/atius-rustdesk/phase53-edge.json --template /etc/atius-rustdesk/phase53-edge.template.nft
