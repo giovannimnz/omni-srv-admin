@@ -1,5 +1,15 @@
 {
-  "schema_version": 1,
-  "target": "48-CONTEXT.md",
-  "mutation": "append-newline-in-disposable-copy"
+  "schema_version": 2,
+  "mutations": [
+    {
+      "id": "migrated-file-drift",
+      "target": "48-CONTEXT.md",
+      "expected_category": "workstream-sha256-drift"
+    },
+    {
+      "id": "successor-file-drift",
+      "target": "48-03-PLAN.md",
+      "expected_category": "successor-sha256-drift"
+    }
+  ]
 }

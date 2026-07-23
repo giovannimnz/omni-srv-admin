@@ -432,7 +432,7 @@
           "legacy_blob_id": "520f2416e50eb7d6e93879f37e5c94302b998a45",
           "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-01-PLAN.md",
           "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-01-PLAN.md",
-          "workstream_sha256": "48a662d56f64a7adc1243ad2475ce10a37ca576a871f9c2b7e34d4952465a294"
+          "workstream_sha256": "83b93228b5316816c7d4bd5e473c822795c6034181305d4211a7e0417ec032a4"
         },
         {
           "legacy_blob_id": "45c2776e3d1810dfa90a621686a3d9939c3aee64",
@@ -444,7 +444,7 @@
           "legacy_blob_id": "2ad47315f4988775096177f8c36d8ebbbdf679bc",
           "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-02-PLAN.md",
           "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-02-PLAN.md",
-          "workstream_sha256": "e655dc9d9f763b16d70ff4195ea83e1ebc6cc9500db0e3d22c5ba4007f619e95"
+          "workstream_sha256": "01345d170ff2e2b287cbb66dcb1bbf41724bb17c9e5c53a1c91f39f02e374f88"
         },
         {
           "legacy_blob_id": "10547b9c488693e888d34411e3cf94bee6a841b3",
@@ -462,19 +462,19 @@
           "legacy_blob_id": "579300b2da05a7af948ee39f48c16016376051b4",
           "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-PATTERNS.md",
           "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-PATTERNS.md",
-          "workstream_sha256": "3a8e27ac00e71d92fe985d3dafd86fbe0daa78de26c3a589771636c842e459f0"
+          "workstream_sha256": "c0da74b570013535ed9e3c0d8f94810a925921aa65ceda41f8b29cda3870218f"
         },
         {
           "legacy_blob_id": "d59e9569420c41fdf0e9ed69c237fcbdeaac0c63",
           "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-RESEARCH.md",
           "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-RESEARCH.md",
-          "workstream_sha256": "459ee724a03a4803e999aabd55d70d06381d19b40daa72a44d65fe91b4651345"
+          "workstream_sha256": "b6057e8c12fa59d475faea7d25b4bbb8ca906de16ea9725e220e32fb0ef635a0"
         },
         {
           "legacy_blob_id": "1d296a09089559055ffef31513b6a1a494427115",
           "legacy_git_path": ".planning/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md",
           "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md",
-          "workstream_sha256": "dc45746e8b2c54cf4560d852ec2f343fa4db9ee6d9e1b6b126fac5e55b43e100"
+          "workstream_sha256": "eb51c6ab572ca3e5da775bdc66c5897777f1576c1cd8bdd2e183ea6cf07f7c45"
         },
         {
           "legacy_blob_id": "23dba3ec85c3cea0fcc1cb6d25acba7d3bfb574d",
@@ -483,11 +483,40 @@
           "workstream_sha256": "1d7390583f2a3ead0ad27b42ad5122217e432e2849fc687412f68a16b872a125"
         }
       ],
+      "authorized_successor_files": [
+        {
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-03-PLAN.md",
+          "workstream_sha256": "138b454d43c0ee0e62f9895d05e2ef077c03100a24bfcf5fcbf4f018b75f6fd5"
+        },
+        {
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-03-RESEARCH.md",
+          "workstream_sha256": "007be0f6b27eb9888484c9ccdf200fcc6c9b749c8dd1e6c98b83b57e5a48582b"
+        },
+        {
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-04-PLAN.md",
+          "workstream_sha256": "1bb594f8cee40f870c67613c55f804a804fd4d95c42993885982b9ee32cbe34d"
+        },
+        {
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-05-PLAN.md",
+          "workstream_sha256": "e972b8cc55d61d9555b3c0592c7e78f96828868e36ff845d2af3eae3acacc480"
+        },
+        {
+          "workstream_path": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-06-PLAN.md",
+          "workstream_sha256": "e60ab4387faedb506d6f2d7ffb5b0d6172ca0f9db1760d2a36f308b0448ca1b9"
+        }
+      ],
       "migrated_phase": ".planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence",
       "rebaseline_policy": "explicit-serialized-review-only",
-      "schema_version": 1,
+      "rebaseline_review": {
+        "reason": "Explicitly authorized srv1-canonical super-merge with namespaced-path normalization and approved Phase 48 successor plans 03-06.",
+        "reviewed_at": "2026-07-23T14:23:21Z",
+        "reviewer": "Giovanni Muniz",
+        "source_commit": "ee1ca2ebb2f4931ff3f4412aad533053af3384db"
+      },
+      "schema_version": 2,
       "source_head": "bff3d151d76655bb049a14e63a25f38abb6551c0",
-      "source_phase": ".planning/phases/48-codex-oauth-wayland-acp-convergence"
+      "source_phase": ".planning/phases/48-codex-oauth-wayland-acp-convergence",
+      "successor_file_count": 5
     },
     "product_decision": {
       "declared_decision": "BLOCKED",

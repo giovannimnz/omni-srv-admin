@@ -25,10 +25,10 @@
       "sha256": "8a70bced3cfa4f0d588707720bc20ebef0ed4e14b0143aca9c5cc154f50eb00a"
     },
     "RDF-V19-SCP-05": {
-      "input_digest": "fb09ab641f150069bbd95ebd8dbfafa993cc58b07acf1e4f668fa4377210ad3f",
-      "observed_at": "2026-07-20T07:59:32Z",
+      "input_digest": "688f2aad35469c304049def8795ae15fc47fb07b7c20207bd316dd33fd37112b",
+      "observed_at": "2026-07-23T14:23:21Z",
       "path": "modules/rustdesk-fleet/evidence/phase48-baseline.json",
-      "sha256": "fb09ab641f150069bbd95ebd8dbfafa993cc58b07acf1e4f668fa4377210ad3f"
+      "sha256": "688f2aad35469c304049def8795ae15fc47fb07b7c20207bd316dd33fd37112b"
     },
     "RDF-V19-SRV-01": {
       "input_digest": "8a70bced3cfa4f0d588707720bc20ebef0ed4e14b0143aca9c5cc154f50eb00a",
@@ -97,7 +97,7 @@
       "evidence_ids": [
         "RDF-V19-SCP-05"
       ],
-      "last_verified_at": "2026-07-20T07:59:32Z",
+      "last_verified_at": "2026-07-23T14:23:21Z",
       "owner_phase": 51,
       "requirement_id": "SCP-05",
       "status": "pass"

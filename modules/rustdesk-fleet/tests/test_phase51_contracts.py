@@ -139,8 +139,24 @@ def test_phase48_integrity_contract() -> None:
     assert result.status == "PASS"
     assert payload["file_count"] == 9
     assert len(payload["files"]) == 9
+    assert payload["schema_version"] == 2
+    assert payload["source_head"] == "bff3d151d76655bb049a14e63a25f38abb6551c0"
+    assert payload["successor_file_count"] == 5
+    assert [
+        Path(item["workstream_path"]).name
+        for item in payload["authorized_successor_files"]
+    ] == [
+        "48-03-PLAN.md",
+        "48-03-RESEARCH.md",
+        "48-04-PLAN.md",
+        "48-05-PLAN.md",
+        "48-06-PLAN.md",
+    ]
     assert payload["allowed_exclusions"] == ["__pycache__", "*.pyc", "*.swp", "*~"]
     assert payload["rebaseline_policy"] == "explicit-serialized-review-only"
+    assert payload["rebaseline_review"]["reviewer"] == "Giovanni Muniz"
+    assert validator.is_utc_timestamp(payload["rebaseline_review"]["reviewed_at"])
+    assert validator.git_commit_exists(REPO, payload["rebaseline_review"]["source_commit"])
 
 
 @pytest.mark.parametrize(
@@ -166,16 +182,33 @@ def test_phase48_old_blob_to_migrated_hash(relative_path: str) -> None:
     assert validator._sha256_file(REPO / row["workstream_path"]) == row["workstream_sha256"]
 
 
-def test_phase48_drift_is_blocked_on_disposable_copy(tmp_path: Path) -> None:
+@pytest.mark.parametrize("relative_path", validator.PHASE48_AUTHORIZED_SUCCESSORS)
+def test_phase48_authorized_successor_hash(relative_path: str) -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    row = next(
+        item
+        for item in payload["authorized_successor_files"]
+        if item["workstream_path"].endswith(relative_path)
+    )
+    assert validator._sha256_file(REPO / row["workstream_path"]) == row["workstream_sha256"]
+
+
+@pytest.mark.parametrize("mutation_index", [0, 1])
+def test_phase48_drift_is_blocked_on_disposable_copy(
+    tmp_path: Path, mutation_index: int
+) -> None:
     payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
     descriptor = validator.load_json_strict(PHASE48_DRIFT_PATH)
+    mutation = descriptor["mutations"][mutation_index]
     copied_root = tmp_path / "phase48"
     shutil.copytree(PHASE48_ROOT, copied_root)
-    target = copied_root / descriptor["target"]
+    target = copied_root / mutation["target"]
     target.write_bytes(target.read_bytes() + b"\n")
     result = validator.validate_phase48_baseline(payload, REPO, workstream_root=copied_root)
     assert result.status == "BLOCKED"
-    assert {finding.category for finding in result.findings} == {"workstream-sha256-drift"}
+    assert {finding.category for finding in result.findings} == {
+        mutation["expected_category"]
+    }
 
 
 @pytest.mark.parametrize("mutation", ["zero", "missing", "extra"])
@@ -189,6 +222,60 @@ def test_phase48_rejects_incomplete_or_extra_rows(mutation: str) -> None:
     else:
         payload["files"].append(dict(payload["files"][0]))
     assert validator.validate_phase48_baseline(payload, REPO).status == "BLOCKED"
+
+
+@pytest.mark.parametrize("mutation", ["missing", "extra", "duplicate", "hash"])
+def test_phase48_rejects_successor_manifest_drift(mutation: str) -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    if mutation == "missing":
+        payload["authorized_successor_files"].pop()
+    elif mutation == "extra":
+        payload["authorized_successor_files"].append(
+            {
+                "workstream_path": (
+                    f"{validator.PHASE48_WORKSTREAM_ROOT}/48-07-PLAN.md"
+                ),
+                "workstream_sha256": "0" * 64,
+            }
+        )
+    elif mutation == "duplicate":
+        payload["authorized_successor_files"][-1] = dict(
+            payload["authorized_successor_files"][0]
+        )
+    else:
+        payload["authorized_successor_files"][0]["workstream_sha256"] = "0" * 64
+    assert validator.validate_phase48_baseline(payload, REPO).status == "BLOCKED"
+
+
+def test_phase48_rejects_source_commit_without_approved_bytes() -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    payload["rebaseline_review"][
+        "source_commit"
+    ] = "5e869577beb43bbf40f1a26ca2f395b994d05a07"
+    result = validator.validate_phase48_baseline(payload, REPO)
+    assert result.status == "BLOCKED"
+    assert {
+        "rebaseline-source-tree-drift",
+        "successor-source-tree-drift",
+    }.intersection({finding.category for finding in result.findings})
+
+
+@pytest.mark.parametrize(
+    ("field", "value", "expected_category"),
+    [
+        ("reviewer", "", "rebaseline-reviewer-missing"),
+        ("reviewed_at", "not-a-timestamp", "rebaseline-reviewed-at-invalid"),
+        ("reason", "", "rebaseline-reason-missing"),
+    ],
+)
+def test_phase48_rejects_incomplete_rebaseline_review(
+    field: str, value: str, expected_category: str
+) -> None:
+    payload = validator.load_json_strict(PHASE48_BASELINE_PATH)
+    payload["rebaseline_review"][field] = value
+    result = validator.validate_phase48_baseline(payload, REPO)
+    assert result.status == "BLOCKED"
+    assert expected_category in {finding.category for finding in result.findings}
 
 
 def test_phase48_validator_has_no_rebaseline_cli_option() -> None:
@@ -291,6 +378,14 @@ def test_complete_fixture_bundle_materializes_all_contracts(tmp_path: Path) -> N
     }
     assert len(validator.load_json_strict(written["ledger"])["requirements"]) == 36
     assert len(validator.load_json_strict(written["phase48_baseline"])["files"]) == 9
+    assert (
+        len(
+            validator.load_json_strict(written["phase48_baseline"])[
+                "authorized_successor_files"
+            ]
+        )
+        == 5
+    )
     assert validator.load_json_strict(written["operational_review"])["status"] == "BLOCKED"
 
 

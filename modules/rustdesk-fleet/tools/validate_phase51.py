@@ -61,6 +61,13 @@ PHASE48_FILES = (
     "48-VALIDATION.md",
     "tools/verify-router-evidence.py",
 )
+PHASE48_AUTHORIZED_SUCCESSORS = (
+    "48-03-PLAN.md",
+    "48-03-RESEARCH.md",
+    "48-04-PLAN.md",
+    "48-05-PLAN.md",
+    "48-06-PLAN.md",
+)
 PHASE48_EXCLUSIONS = ("__pycache__", "*.pyc", "*.swp", "*~")
 ACCEPTANCE_KIND_BY_PHASE = {
     51: "governance-contract",
@@ -126,7 +133,7 @@ REVIEW_NORMATIVE_PATHS = (
     REQUIREMENTS_RELATIVE_PATH,
     ".planning/workstreams/rustdesk-fleet/ROADMAP.md",
 )
-VALIDATOR_VERSION = 2
+VALIDATOR_VERSION = 3
 ENTERPRISE_CONTROLS = (
     "sso_oidc",
     "rbac",
@@ -454,7 +461,7 @@ def validate_phase48_baseline(
     if not isinstance(payload, dict):
         errors.append("invalid-shape")
         payload = {}
-    if payload.get("schema_version") != 1:
+    if payload.get("schema_version") != 2:
         errors.append("invalid-schema")
     if payload.get("source_phase") != PHASE48_LEGACY_ROOT or payload.get("migrated_phase") != PHASE48_WORKSTREAM_ROOT:
         errors.append("phase-root-mismatch")
@@ -462,6 +469,27 @@ def validate_phase48_baseline(
         errors.append("invalid-exclusions")
     if payload.get("rebaseline_policy") != "explicit-serialized-review-only":
         errors.append("unsafe-rebaseline-policy")
+    rebaseline_review = payload.get("rebaseline_review")
+    if not isinstance(rebaseline_review, dict):
+        errors.append("rebaseline-review-missing")
+        rebaseline_review = {}
+    reviewer = rebaseline_review.get("reviewer")
+    reviewed_at = rebaseline_review.get("reviewed_at")
+    review_source_commit = rebaseline_review.get("source_commit")
+    reason = rebaseline_review.get("reason")
+    if not isinstance(reviewer, str) or not reviewer.strip():
+        errors.append("rebaseline-reviewer-missing")
+    if not is_utc_timestamp(reviewed_at):
+        errors.append("rebaseline-reviewed-at-invalid")
+    if (
+        not isinstance(review_source_commit, str)
+        or not re.fullmatch(r"[0-9a-f]{40}", review_source_commit)
+        or not git_commit_exists(repo, review_source_commit)
+        or not git_is_ancestor(repo, review_source_commit, git_head(repo))
+    ):
+        errors.append("rebaseline-source-commit-invalid")
+    if not isinstance(reason, str) or not reason.strip():
+        errors.append("rebaseline-reason-missing")
     source_head = payload.get("source_head")
     if not isinstance(source_head, str) or not re.fullmatch(r"[0-9a-f]{40}", source_head):
         errors.append("invalid-source-head")
@@ -480,8 +508,29 @@ def validate_phase48_baseline(
     if observed_current != canonical_current or len(set(observed_current)) != len(observed_current):
         errors.append("workstream-path-set")
 
+    successor_rows = payload.get("authorized_successor_files")
+    if (
+        payload.get("successor_file_count") != len(PHASE48_AUTHORIZED_SUCCESSORS)
+        or not isinstance(successor_rows, list)
+        or len(successor_rows) != len(PHASE48_AUTHORIZED_SUCCESSORS)
+    ):
+        errors.append("successor-row-count")
+        successor_rows = successor_rows if isinstance(successor_rows, list) else []
+    canonical_successors = [
+        f"{PHASE48_WORKSTREAM_ROOT}/{relative}"
+        for relative in PHASE48_AUTHORIZED_SUCCESSORS
+    ]
+    observed_successors = [
+        item.get("workstream_path") for item in successor_rows if isinstance(item, dict)
+    ]
+    if (
+        observed_successors != canonical_successors
+        or len(set(observed_successors)) != len(observed_successors)
+    ):
+        errors.append("successor-path-set")
+
     current_root = (workstream_root or (repo / PHASE48_WORKSTREAM_ROOT)).resolve()
-    if _phase48_visible_files(current_root) != set(PHASE48_FILES):
+    if _phase48_visible_files(current_root) != set(PHASE48_FILES + PHASE48_AUTHORIZED_SUCCESSORS):
         errors.append("workstream-file-set-drift")
     for row in rows:
         if not isinstance(row, dict):
@@ -499,6 +548,17 @@ def validate_phase48_baseline(
             continue
         if resolve_legacy_blob(repo, source_head, legacy_path) != expected_blob:
             errors.append("legacy-blob-drift")
+        source_tree = subprocess.run(
+            ["git", "show", f"{review_source_commit}:{current_path}"],
+            cwd=repo,
+            capture_output=True,
+            check=False,
+        )
+        if (
+            source_tree.returncode != 0
+            or hashlib.sha256(source_tree.stdout).hexdigest() != expected_sha
+        ):
+            errors.append("rebaseline-source-tree-drift")
         try:
             relative = Path(current_path).relative_to(PHASE48_WORKSTREAM_ROOT)
             actual_path = (current_root / relative).resolve(strict=True)
@@ -506,6 +566,38 @@ def validate_phase48_baseline(
                 errors.append("workstream-sha256-drift")
         except (OSError, ValueError):
             errors.append("workstream-file-missing")
+    for row in successor_rows:
+        if not isinstance(row, dict):
+            errors.append("successor-row-shape")
+            continue
+        current_path = row.get("workstream_path")
+        expected_sha = row.get("workstream_sha256")
+        if (
+            not isinstance(current_path, str)
+            or not current_path
+            or not isinstance(expected_sha, str)
+            or not re.fullmatch(r"[0-9a-f]{64}", expected_sha)
+        ):
+            errors.append("successor-row-shape")
+            continue
+        source_tree = subprocess.run(
+            ["git", "show", f"{review_source_commit}:{current_path}"],
+            cwd=repo,
+            capture_output=True,
+            check=False,
+        )
+        if (
+            source_tree.returncode != 0
+            or hashlib.sha256(source_tree.stdout).hexdigest() != expected_sha
+        ):
+            errors.append("successor-source-tree-drift")
+        try:
+            relative = Path(current_path).relative_to(PHASE48_WORKSTREAM_ROOT)
+            actual_path = (current_root / relative).resolve(strict=True)
+            if not actual_path.is_relative_to(current_root) or _sha256_file(actual_path) != expected_sha:
+                errors.append("successor-sha256-drift")
+        except (OSError, ValueError):
+            errors.append("successor-file-missing")
     if not errors:
         return _result("P51-P48-001", True, [], source)
     return CheckResult(
@@ -1223,8 +1315,20 @@ def validate_operational_review(
         or threat_result.status != "PASS"
     ):
         blocked.append("threat-review-pending")
-    if review.get("phase48_drift_decision") != "no-drift":
+    phase48_decision = review.get("phase48_drift_decision")
+    if phase48_decision not in {"no-drift", "authorized-rebaseline"}:
         blocked.append("phase48-review-pending")
+    elif phase48_decision == "authorized-rebaseline":
+        baseline = load_json_strict(
+            repo / "modules/rustdesk-fleet/evidence/phase48-baseline.json"
+        )
+        rebaseline_review = baseline.get("rebaseline_review", {})
+        if (
+            not isinstance(rebaseline_review, dict)
+            or rebaseline_review.get("reviewer") != review.get("reviewer")
+            or not is_utc_timestamp(rebaseline_review.get("reviewed_at"))
+        ):
+            blocked.append("phase48-rebaseline-review-mismatch")
     if review.get("review_input_manifest_digest") != _canonical_digest(manifest):
         blocked.append("review-input-manifest-mismatch")
     if scan_secret_material(review, path=source):
