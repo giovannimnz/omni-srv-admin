@@ -2551,6 +2551,43 @@ def _origin_policy() -> dict[str, Any]:
     }
 
 
+def _hostname_probe_bundle() -> dict[str, Any]:
+    origins: list[dict[str, Any]] = []
+    for policy, egress in zip(
+        _origin_policy()["origins"],
+        ("198.51.100.10", "198.51.100.20"),
+        strict=True,
+    ):
+        origins.append(
+            {
+                "origin_id": policy["origin_id"],
+                "attestation": {
+                    "transaction_id": "phase53-probe-transaction-0001",
+                    "target": "rustdesk.atius.com.br",
+                    "origin_id": policy["origin_id"],
+                    "origin_class": policy["origin_class"],
+                    "host_identity_sha256": policy["host_identity_sha256"],
+                    "executor_digest": policy["executor_digest"],
+                    "egress_ipv4": egress,
+                    "issued_at": "2026-07-23T02:04:00Z",
+                },
+                "resolved_addresses": ["203.0.113.8"],
+                "record_types": ["A"],
+                "checked_at": "2026-07-23T02:04:10Z",
+                "tcp_positive_ports": [21115, 21116, 21117],
+                "tcp_negative_ports": [21114, 21118, 21119],
+            }
+        )
+    return {
+        "schema_version": 1,
+        "transaction_id": "phase53-probe-transaction-0001",
+        "hostname": "rustdesk.atius.com.br",
+        "expected_ipv4": "203.0.113.8",
+        "completed_at": "2026-07-23T02:04:20Z",
+        "origins": origins,
+    }
+
+
 def _raw(value: Any) -> bytes:
     return json.dumps(value, sort_keys=True).encode("utf-8")
 
@@ -3096,6 +3133,37 @@ def test_dns_postwrite_semantic_drift_contains_and_restores_exactly() -> None:
         transaction.publish_dns_last()
     assert backend.contained is True
     assert backend.dns_records == []
+
+
+def test_hostname_proof_is_internal_state_and_failure_rolls_back_all() -> None:
+    module = _edge_applier_module()
+    transaction, backend, _ = _edge_with_ip_proof(module)
+    transaction.publish_dns_last()
+    transaction.clock.now = datetime(
+        2026, 7, 23, 2, 4, 30, tzinfo=timezone.utc
+    )
+    receipt = transaction.accept_hostname_probes(
+        _raw(_hostname_probe_bundle()),
+        policy_raw=_raw(_origin_policy()),
+    )
+    assert receipt["scope"] == "public-hostname"
+    assert transaction.state == "HOSTNAME_PROBES_VERIFIED"
+
+    transaction, backend, _ = _edge_with_ip_proof(module)
+    transaction.publish_dns_last()
+    transaction.clock.now = datetime(
+        2026, 7, 23, 2, 4, 30, tzinfo=timezone.utc
+    )
+    invalid = _hostname_probe_bundle()
+    invalid["origins"][0]["record_types"] = ["A", "AAAA"]
+    with pytest.raises(module.EdgeBlocked, match="hostname-probe-invalid"):
+        transaction.accept_hostname_probes(
+            _raw(invalid),
+            policy_raw=_raw(_origin_policy()),
+        )
+    assert backend.dns_records == []
+    assert backend.contained is True
+    assert transaction.state == "ROLLED_BACK"
 
 
 def test_dns_concurrent_drift_contains_without_destructive_restore() -> None:
