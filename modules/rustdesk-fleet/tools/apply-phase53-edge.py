@@ -355,6 +355,10 @@ def _active_nft_source(candidate: str) -> str:
     )
 
 
+def _normalize_active_nft(candidate: str) -> str:
+    return re.sub(r"\s+", " ", _active_nft_source(candidate)).strip()
+
+
 def validate_nft_candidate(
     candidate: str,
     *,
@@ -397,6 +401,12 @@ def validate_nft_candidate(
         or len(active_counter_rules) != 5
         or any(interface_clause not in line for line in active_counter_rules)
     ):
+        raise EdgeBlocked("nft-extra-chain-or-rule")
+    template_path = Path(__file__).resolve().parents[1] / "nftables/atius-rustdesk-phase53.nft"
+    expected_candidate = render_nft_candidate(
+        template_path.read_text(encoding="utf-8"), public_interface=public_interface
+    )
+    if _normalize_active_nft(candidate) != _normalize_active_nft(expected_candidate):
         raise EdgeBlocked("nft-extra-chain-or-rule")
     return {
         "family": "inet",
@@ -726,51 +736,60 @@ def _normalize_protocol(value: Any) -> str | None:
     return None
 
 
+def _exact_match(expression: Any) -> tuple[dict[str, Any], Any] | None:
+    if not isinstance(expression, dict) or set(expression) != {"match"}:
+        return None
+    match = expression["match"]
+    if not isinstance(match, dict) or set(match) != {"op", "left", "right"} or match["op"] != "==":
+        return None
+    if not isinstance(match["left"], dict):
+        return None
+    return match["left"], match["right"]
+
+
 def _rule_signature(rule: dict[str, Any], public_interface: str) -> tuple[str, str, tuple[int, ...], str] | None:
-    interface: str | None = None
-    family: str | None = None
-    protocol: str | None = None
-    ports: tuple[int, ...] | None = None
-    verdict: str | None = None
     expressions = rule.get("expr")
-    if not isinstance(expressions, list):
+    if not isinstance(expressions, list) or len(expressions) != 6:
         return None
-    for expression in expressions:
-        if not isinstance(expression, dict):
-            continue
-        if "accept" in expression:
-            verdict = "accept"
-        if "drop" in expression:
-            verdict = "drop"
-        match = expression.get("match")
-        if not isinstance(match, dict) or match.get("op") != "==":
-            continue
-        left = match.get("left")
-        right = match.get("right")
-        if not isinstance(left, dict):
-            continue
-        meta = left.get("meta")
-        if isinstance(meta, dict):
-            key = meta.get("key")
-            if key == "iifname" and isinstance(right, str):
-                interface = right
-            elif key == "nfproto" and right in {"ipv4", "ipv6"}:
-                family = str(right)
-            elif key == "l4proto":
-                protocol = _normalize_protocol(right)
-        payload = left.get("payload")
-        if isinstance(payload, dict):
-            payload_protocol = payload.get("protocol")
-            field = payload.get("field")
-            if payload_protocol == "ip" and field == "protocol":
-                family = "ipv4"
-                protocol = _normalize_protocol(right)
-            elif field == "dport" and payload_protocol in {"tcp", "udp"}:
-                protocol = str(payload_protocol)
-                ports = _right_values(right)
-    if interface != public_interface or None in {family, protocol, ports, verdict}:
+
+    interface_match = _exact_match(expressions[0])
+    family_match = _exact_match(expressions[1])
+    protocol_match = _exact_match(expressions[2])
+    port_match = _exact_match(expressions[3])
+    if any(
+        match is None
+        for match in (interface_match, family_match, protocol_match, port_match)
+    ):
         return None
-    assert family is not None and protocol is not None and ports is not None and verdict is not None
+    assert interface_match and family_match and protocol_match and port_match
+    if interface_match[0] != {"meta": {"key": "iifname"}} or interface_match[1] != public_interface:
+        return None
+    if family_match[0] != {"meta": {"key": "nfproto"}} or family_match[1] not in {"ipv4", "ipv6"}:
+        return None
+    family = str(family_match[1])
+    if protocol_match[0] != {"meta": {"key": "l4proto"}}:
+        return None
+    protocol = _normalize_protocol(protocol_match[1])
+    if protocol not in {"tcp", "udp"}:
+        return None
+    if port_match[0] != {"payload": {"protocol": protocol, "field": "dport"}}:
+        return None
+    try:
+        ports = _right_values(port_match[1])
+    except EdgeBlocked:
+        return None
+    counter = expressions[4]
+    if not isinstance(counter, dict) or set(counter) != {"counter"}:
+        return None
+    counter_value = counter["counter"]
+    if not isinstance(counter_value, dict) or set(counter_value) != {"packets", "bytes"}:
+        return None
+    verdict_expression = expressions[5]
+    if not isinstance(verdict_expression, dict) or len(verdict_expression) != 1:
+        return None
+    verdict = next(iter(verdict_expression))
+    if verdict not in {"accept", "drop"} or verdict_expression[verdict] is not None:
+        return None
     return family, protocol, ports, verdict
 
 
@@ -781,6 +800,7 @@ def semantics_from_nft_json(payload: dict[str, Any], public_interface: str) -> d
     if not isinstance(objects, list):
         raise EdgeBlocked("nft-live-readback-invalid")
     table_count = 0
+    owned_chain_count = 0
     chain_count = 0
     signatures: list[tuple[str, str, tuple[int, ...], str]] = []
     for item in objects:
@@ -790,6 +810,12 @@ def semantics_from_nft_json(payload: dict[str, Any], public_interface: str) -> d
         if isinstance(table, dict) and table.get("family") == "inet" and table.get("name") == OWNED_TABLE:
             table_count += 1
         chain = item.get("chain")
+        if (
+            isinstance(chain, dict)
+            and chain.get("family") == "inet"
+            and chain.get("table") == OWNED_TABLE
+        ):
+            owned_chain_count += 1
         if (
             isinstance(chain, dict)
             and chain.get("family") == "inet"
@@ -818,7 +844,12 @@ def semantics_from_nft_json(payload: dict[str, Any], public_interface: str) -> d
         ("ipv4", "udp", (21116,), "accept"),
         ("ipv4", "tcp", (21114, 21118, 21119), "drop"),
     ]
-    if table_count != 1 or chain_count != 1 or Counter(signatures) != Counter(expected):
+    if (
+        table_count != 1
+        or owned_chain_count != 1
+        or chain_count != 1
+        or Counter(signatures) != Counter(expected)
+    ):
         raise EdgeBlocked("nft-live-semantic-readback-drift")
     return {
         "family": "inet",
