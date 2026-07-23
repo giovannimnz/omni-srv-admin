@@ -839,10 +839,10 @@ can break Kerberos/SSSD, Vault, internal services and every owner-host alias.
 
 **Canonical refs:**
 
-- `.planning/phases/47.1-internal-dns-authority-and-freeipa-convergence/47.1-CONTEXT.md`
-- `.planning/phases/45-internal-dns-drg-canonicalization/45-CONTEXT.md`
-- `.planning/phases/45-internal-dns-drg-canonicalization/45-VALIDATION.md`
-- `.planning/phases/48-codex-oauth-wayland-acp-convergence/48-03-PLAN.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/47.1-internal-dns-authority-and-freeipa-convergence/47.1-CONTEXT.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/45-internal-dns-drg-canonicalization/45-CONTEXT.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/45-internal-dns-drg-canonicalization/45-VALIDATION.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-03-PLAN.md`
 - `inventory/hosts/*.yaml`
 - `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md`
 - `docs/domain/freeipa-dns-client-enrollment.md`

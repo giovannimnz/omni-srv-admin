@@ -18,6 +18,13 @@ import tempfile
 from datetime import datetime, timezone
 from typing import Any
 
+EDGE_TARGET_MAP = {
+    "horistic_wireguard": {"from": "10.100.100.4", "to": "10.100.100.31"},
+    "s23_wireguard": {"from": "10.100.100.9", "to": "10.100.100.10"},
+    "s20_lan": {"from": "192.168.1.10", "to": "192.168.1.11"},
+    "s20_wireguard": {"from": None, "to": "10.100.100.11"},
+}
+
 
 def utc_now() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
@@ -77,6 +84,16 @@ def run(args: argparse.Namespace) -> int:
             "PASS" if evidence_json and evidence_json.get("status") == "PASS" else "BLOCK",
         )
     )
+    if args.plan in {"54-05", "54-06"}:
+        observed_target_map = evidence_json.get("target_map") if evidence_json else None
+        checks.append(
+            check(
+                "edge_target_map",
+                "exact Horistic, S23 and S20 LAN/WireGuard migration map",
+                observed_target_map,
+                "PASS" if observed_target_map == EDGE_TARGET_MAP else "BLOCK",
+            )
+        )
 
     phase_root = evidence.parent
     rollback = phase_root / "rollback-receipt.json"

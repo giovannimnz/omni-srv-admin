@@ -20,6 +20,10 @@ confundir IP de túnel com reserva LAN.
 - A reserva pública `163.176.232.119` deve ser preservada, com prova de
   associação antes/depois; nenhum plano pode liberá-la ou trocá-la por IP
   efêmero.
+- O fallback WireGuard do Horistic passa de `10.100.100.4` para
+  `10.100.100.31`, alinhado ao novo sufixo `.31`; o peer `.4` permanece
+  disponível somente até o handshake do `.31`, os probes SSH/TCP/DNS e o gate
+  final.
 - O S23 passa de WireGuard `10.100.100.9` para `10.100.100.10`. A reserva
   residencial do S23 continua sendo LAN BE3 `192.168.1.9` até existir uma
   decisão explícita diferente.

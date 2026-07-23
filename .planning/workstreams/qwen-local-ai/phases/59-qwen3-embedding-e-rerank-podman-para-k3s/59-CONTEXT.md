@@ -73,7 +73,7 @@ gates aprovados.
 
 ### Existing GTE contract and k3s
 
-- `.planning/phases/41-local-ai-embeddings-gateway-horistic-srv/41-CONTEXT.md` — alias GTE, 768d, TEI privado, router sem self-loop e regra de reindexacao.
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/41-local-ai-embeddings-gateway-horistic-srv/41-CONTEXT.md` — alias GTE, 768d, TEI privado, router sem self-loop e regra de reindexacao.
 - `k8s/ebeddings-local/tei-gte.yaml` — Deployment, Service, quota unit e limites atuais do GTE Embedding.
 - `k8s/ebeddings-local/tei-gte-reranker.yaml` — TEI GTE Reranker FP16, HPA 2-4, NodePort privado e PDB.
 - `inventory/hosts/horistic-srv.yaml` — host ARM64, node k3s, IP privado e contratos operacionais atuais.

@@ -30,7 +30,7 @@ validation remains gated by the evidence artifacts and human checkpoints.
 | A1 | `54-06:48-52` distinguishes retiring `.21` private-IP/VNIC/subnet from an OCI-retained primary `10.21.0.0/16` residual. |
 | A2 | `54-02:40-45` persists the overlap/route table with profile, source, destination, CIDR, next-hop, port, direction, return path, rule ID and result for all ATIUS↔Horistic paths. |
 | A3 | `54-02:40-45` defines ordered writes, ACTIVE/AVAILABLE waits, timeout, `UPDATING`/unknown-write blocking and no blind retry. |
-| A4 | `54-05:54-55` enumerates S23 `.10` `AllowedIPs` (`10.11.1.11/32`, `10.12.1.12/32`, `10.13.1.13/32`, `10.31.1.31/32`, `10.100.100.0/24` and approved services) plus device/tunnel/fallback checks. |
+| A4 | `54-05` enumerates the exact Horistic `.4 -> .31`, S23 `.9 -> .10` and S20 `.11` target map, S23 `.10` `AllowedIPs` (`10.11.1.11/32`, `10.12.1.12/32`, `10.13.1.13/32`, `10.31.1.31/32`, `10.100.100.0/24` and approved services), plus host/device/tunnel/fallback checks. |
 | A5 | `54-05:45-49` names `/home/ubuntu/GitHub/vpn-atius/home-proxy`, its headless Playwright/console route and receipt, and blocks when powered-off collision proof is unavailable. |
 | A6 | `54-04:45-57` enumerates the target paths, owners/diff-by-owner checks, S20 inventory creation rule and explicit absent receipt for the remote home-proxy AGENTS path. |
 | A7 | `54-04:55-56` creates `.21-CLASSIFICATION.md` with active/rollback allowlist and historical/benchmark/proposal/NFS/Wayland denylist. |

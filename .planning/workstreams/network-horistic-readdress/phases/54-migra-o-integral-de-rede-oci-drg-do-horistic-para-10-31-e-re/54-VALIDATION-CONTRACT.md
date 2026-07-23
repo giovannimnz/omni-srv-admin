@@ -1,4 +1,4 @@
-# Fase 52 — contrato de validação automática
+# Fase 54 — contrato de validação automática
 
 Cada plano termina com uma tarefa `type="auto"` de validação. Essa tarefa é
 parte do plano, não uma atividade posterior opcional, e deve ser executada antes
@@ -17,8 +17,8 @@ Interface:
 ```text
 python3 modules/fleet-control-plane/scripts/phase54_network_gate.py final \
   --plan 54-0N \
-  --evidence .planning/phases/54-.../54-0N-EVIDENCE.json \
-  --gate .planning/phases/54-.../54-0N-GATE.json
+  --evidence .planning/workstreams/network-horistic-readdress/phases/54-.../54-0N-EVIDENCE.json \
+  --gate .planning/workstreams/network-horistic-readdress/phases/54-.../54-0N-GATE.json
 ```
 
 O runner deve:
@@ -57,5 +57,5 @@ quando todos os gates requeridos estão em `PASS`.
 | 54-02 | overlap matrix, `lpg_ready`, CIDR/subnet ACTIVE/containment, regras/rotas ida-retorno e attachment VNIC |
 | 54-03 | endereços/rotas/ARP, K3s worker, public-IP OCIDs/estado, origin direto/Cloudflare/TLS/SSH e reversa dry-run |
 | 54-04 | listeners/HTTP/SSH/TEI/reranker/PgBouncer/Router/exporters, FreeIPA A/PTR/SOA/TTL, forwards e classificação `.21` |
-| 54-05 | BE3 screenshot/readback/lease/collision, peer11, `AllowedIPs`, handshakes, device-side S23/S20 e fallback |
+| 54-05 | target map Horistic `.4 -> .31`, S23 `.9 -> .10`, S20 LAN/WG `.11`; BE3 screenshot/readback/lease/collision, peer11, `AllowedIPs`, handshakes, device-side e fallback |
 | 54-06 | duas matrizes completas separadas por ≥15 min, rollback receipt, public-IP reverse dry-run e residual CIDR explícito |

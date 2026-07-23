@@ -17,6 +17,10 @@
   VCNs in other ATIUS profiles. The plan must not claim DRG readiness merely
   because a new Horistic subnet exists; every route preview must re-check
   overlap and `lpg_ready`.
+- The active Horistic WireGuard reserve is `.4`; the requested target is
+  `10.100.100.31`. Add `.31` as a distinct peer/AllowedIP, prove a current
+  handshake plus SSH/TCP/DNS over it, and retain `.4` until the final Phase 54
+  retirement gate.
 - The active S23 WireGuard peer is `.9`; `.10` must be added and handshaken
   before `.9` is removed. S20's current BE3 static binding is `192.168.1.10`
   for MAC `72:EE:E2:ED:7B:8C`; `.11` needs collision/lease validation and a
