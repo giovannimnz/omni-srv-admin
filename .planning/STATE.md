@@ -151,6 +151,12 @@ See also: .planning/MILESTONES.md
 
 ## Notes
 
+- 2026-07-23: Phase 51 (`Qwen3 Embedding e Rerank Podman para k3s`) planned
+  with research, pattern map, Nyquist validation and 9 executable plans in
+  Waves 0-8. Decision coverage is 24/24 and the independent checker found no
+  blockers; three scope warnings were accepted for Plans 51-03/04/05 at the
+  formal 10-file threshold. Execution remains fail-closed on Phase 50 and on
+  the immutable Wave 0 baseline/inventory gate; GTE stays titular.
 - 2026-07-06: Reconciled the planning surface so `ROADMAP.md`, `REQUIREMENTS.md`, `PROJECT.md`, `MILESTONES.md`, and phase summaries agree on the current state: Phase 37 is complete, Phase 41 is complete with `embedding-gte-v1` on namespace `ebeddings-local`, Phase 42 is in progress with `42-01` and `42-02` complete, Phase 43 is complete, and Phase 44 is in progress with `44-01` complete.
 - 2026-07-05: Phase 43 effectively closed on `GIOVANNI-W11-PC`. The Codex bootstrap now defaults to a lean MCP baseline, heavy MCPs moved to opt-in profiles, and cold-start smoke is documented and repeatable without printing secrets.
 - 2026-07-05: Phase 44 `44-01` closed. `omni fleet trust-pki` exists as a versioned dry-run resource surface with inventory SAN rendering, onboarding/reconcile/rotate flows, allowlisted command shapes, and focused tests. Live CA/trust rollout remains gated in `44-02`.

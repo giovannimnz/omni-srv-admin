@@ -88,7 +88,7 @@ O maior risco é de integração, não de formato: o artifact comunitário LOCKE
 
 | Component | Pin pesquisado | Purpose | Diretriz |
 |---|---|---|---|
-| TEI CPU ARM64 | imagem já usada no repo: digest `sha256:16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e`; revalidar plataforma antes do apply | OrtBackend/ONNX do embedding | Usar a variante `cpu-arm64`, digest pinado, `--pooling mean`, um tokenizer worker e cache persistente. [VERIFIED: `k8s/ebeddings-local/tei-gte-reranker.yaml`] [CITED: https://huggingface.co/docs/text-embeddings-inference/en/supported_models] |
+| TEI CPU ARM64 | imagem já usada no repo: digest `sha256:16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e`; revalidar plataforma antes do apply | OrtBackend/ONNX do embedding | Usar a variante `cpu-arm64`, digest pinado, `--pooling mean`, um tokenizer worker e `emptyDir` per-pod populado por init container pinado/checksumado. [VERIFIED: `k8s/ebeddings-local/tei-gte-reranker.yaml`] [CITED: https://huggingface.co/docs/text-embeddings-inference/en/supported_models] |
 | Embedding artifact | revision `8fe0c238c7c48016d28e750413ca492024be3ddf`; `model.onnx` 599,154,560 bytes; Xet SHA-256 `bd775071a80a1dde99a18d1a7083bf388a5ad4ce9db6d81806f25c4d6102ff08` | Qwen3 0.6B INT8, 1024d | Pin revision e verificar o arquivo antes de servir. [VERIFIED: Hugging Face model API/HEAD] |
 | Reranker artifact | revision `9995c50e2310679108a55f5ccd16ba8be9f17c20`; `onnx/model_quantized.onnx` 1,219,344,796 bytes; Xet SHA-256 `c9428382bb48bb31e01a6034647c86d6270761781735cafbf6d5cb4a396d0450` | Qwen3 reranker INT8 dinâmico | Pin revision, arquivo e tokenizer; não usar `main`. [VERIFIED: Hugging Face model API/HEAD] |
 | `@huggingface/transformers` | `4.2.0`, publicado/modificado em 2026-04-22 | tokenizer, CausalLM e ONNX Runtime no serviço Node | Manter pin exato e gerar lockfile; package legitimacy `OK`, 1,698,750 downloads/semana, sem postinstall. [VERIFIED: npm registry + package-legitimacy seam] |
@@ -150,8 +150,8 @@ GTE aliases + 768d collections remain separate and untouched throughout.
 ```text
 k8s/qwen-canary/
 ├── namespace-resources.yaml          # Namespace, PSA labels, LimitRange, ResourceQuota
-├── tei-qwen3-embedding.yaml          # Deployment(2), PVC, Service/NodePort, PDB
-├── qwen3-reranker.yaml               # Deployment, PVC, Service/NodePort, PDB; HPA staged
+├── tei-qwen3-embedding.yaml          # Deployment(2), per-pod emptyDir/init download, Service/NodePort, PDB
+├── qwen3-reranker.yaml               # Artifact embedded in image, Service/NodePort, PDB; HPA staged
 ├── network-policy.yaml               # default-deny + explicit flows, only if CNI enforcement passes
 ├── qdrant-seed-jobs.yaml             # idempotent collection/alias creation; no secrets inline
 └── kustomization.yaml
@@ -247,10 +247,11 @@ Start quota sizing as a declared ceiling, not a measured recommendation:
 | Embedding pods | 2 | LOCKED D-09. [VERIFIED: `51-CONTEXT.md`] |
 | Reranker pods | 2 during integrated test; HPA object disabled/omitted until warmup | LOCKED D-10. [VERIFIED: `51-CONTEXT.md`] |
 | CPU requests/limits | 2000m total for four runtime pods | Four pods × 500m. [VERIFIED: `AGENTS.md`] |
-| Extra Job/init CPU | Must fit quota explicitly or run before scaling runtime | Kubernetes counts admitted resources; avoid deadlocking rollout with an undersized quota. [CITED: https://kubernetes.io/docs/concepts/policy/resource-quotas/] |
+| Extra Job/init CPU | Four runtime pods plus exactly one active 500m tool Job fit 2500m; each embedding pod remains effectively 500m | Kubernetes computes effective pod CPU as `max(max(init requests), sum(app requests))`; init=500m and TEI=500m therefore admit as 500m, not 1000m. [CITED: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/] |
 | Embedding memory | request 2Gi / limit 4Gi per pod as hypothesis | Podman observed 1.37–1.40Gi current under the benchmark; k3s warmup peak is unknown. [VERIFIED: benchmark] [ASSUMED] |
 | Reranker memory | do not lock before one-pod warmup; temporary request 2Gi / limit 4Gi is hypothesis | ONNX file is ~1.22GB, but runtime RSS/peak is unmeasured. [VERIFIED: Hugging Face HEAD] [ASSUMED] |
-| Cache PVC | Separate embedding/reranker PVCs or pre-seeded read-only model volume | A shared RWO PVC may prevent two replicas from scheduling across nodes; target is currently one node but topology must be explicit. [ASSUMED] |
+| Embedding cache | Per-pod `emptyDir`; 500m init container downloads the exact `janni-t` revision/file to `.partial`, verifies SHA-256 and atomically renames | Removes shared-RWO ambiguity while keeping each replica independently reproducible. TEI reads local files with remote fallback disabled; controlled startup egress is validated separately. |
+| Reranker artifact | Embedded and checksum-verified in the Plan 02 image | No reranker PVC or init download is required. |
 
 Use normal pod networking and two private NodePorts. Exact ports remain unresolved; select unused values after checking cluster Services and the fleet port map. NodePort is reachable on node addresses by default, so private routing/firewall or `nodePortAddresses` must prevent unintended public exposure. [CITED: https://kubernetes.io/docs/concepts/services-networking/service/]
 
@@ -301,10 +302,10 @@ Before k3s:
 **What goes wrong:** two router replicas each allow two slots, producing four active cycles.
 **Avoid:** prove one replica or implement shared state with atomic acquire/release/expiry. [ASSUMED]
 
-### RWO cache versus replicas
+### Shared cache versus replicas
 
-**What goes wrong:** two pods cannot mount or roll safely when PVC/node topology differs.
-**Avoid:** inspect StorageClass/access mode and choose pre-seeded immutable image/cache, per-pod PVCs or a topology-compatible shared volume. [ASSUMED]
+**What goes wrong:** two pods cannot mount or roll safely when shared-volume topology differs.
+**Avoid:** use independent per-pod `emptyDir` for embedding with the pinned init-download flow; keep the reranker artifact embedded in its digest-pinned image. Validate two replicas and Kubernetes effective 500m init accounting.
 
 ### NodePort exposure
 
@@ -325,7 +326,7 @@ Before k3s:
 
 | Status | Item | Evidence now | How to prove before promotion |
 |---|---|---|---|
-| Known | Artifact embedding revision/hash, mean pooling contract, 1024d output | HF metadata plus Podman benchmark. [VERIFIED: HF API/HEAD + benchmark] | Init-container/hash verification, k3s golden smoke and saved redacted signature. |
+| Known | Artifact embedding revision/hash, mean pooling contract, 1024d output | HF metadata plus Podman benchmark. [VERIFIED: HF API/HEAD + benchmark] | Per-pod 500m init-container `.partial` download/hash/atomic rename, k3s golden smoke and saved redacted signature. |
 | Known | Qwen 1024 preliminary CPU is within GTE+5% on three profiles | Pareado em 500m, porém em Podman e por palavras. [VERIFIED: benchmark] | Repetir no k3s, mesma janela, tokens medidos, warm cache, ≥5 rounds/profile e intervalo/variância. |
 | Known | Reranker algorithm is prompt + last-position yes/no logits + softmax | Official model cards and prototype. [CITED: official Qwen/HF pages] | Golden set with expected ordering, batch equivalence and score bounds `[0,1]`. |
 | Unknown | TEI image digest still resolves to Linux/arm64 and loads the pinned `janni-t` revision in k3s | Existing digest is used by GTE, not yet proved for this deployment. [ASSUMED] | `skopeo inspect --raw`, image ID/platform capture, rollout and backend log showing OrtBackend. |
@@ -337,7 +338,7 @@ Before k3s:
 | Unknown | Free NodePorts and private-only reachability | Existing reranker uses 31216; Qwen ports not assigned. [ASSUMED] | Cluster-wide Service inventory, socket/firewall inventory, SRV-1 success and public/unauthorized failure probes. |
 | Unknown | 1024d quality advantage justifies 33.3% more vector coordinates than 768d | Benchmark measured correctness/perf, not retrieval quality. [VERIFIED: benchmark] | Recall@20/nDCG@10 on frozen PT-BR/code qrels, plus Qdrant disk/RAM/latency comparison. |
 | Unknown | No starvation with priority rerank | Architecture is LOCKED but not implemented. [ASSUMED] | Deterministic scheduler tests and sustained mixed-load test with bounded max wait per class. |
-| Unknown | No measurable GTE impact for 72h | Canary has not run in k3s. [ASSUMED] | Baseline 24h before, 72h concurrent soak, matched GTE latency/error/CPU samples and rollback trigger thresholds. |
+| Unknown | No measurable GTE impact for 72h | Canary has not run in k3s. [ASSUMED] | Plan 51-01 must freeze a qualifying historical GTE-only window ending before Wave 0, or BLOCK until a new baseline-only window completes; Plan 51-08 then runs the 72h soak against those immutable bands. |
 
 ## Validation Architecture
 
@@ -397,7 +398,7 @@ python3 scripts/embeddings-bench/compare-embeddings.py
 # L5 events and soak
 kubectl -n qwen-canary get events --sort-by=.lastTimestamp
 python3 scripts/embeddings-bench/qwen-canary-soak.py \
-  --duration 72h --slots 2 --capture-gte-baseline --fail-on-oom --fail-on-starvation
+  --duration 72h --slots 2 --gte-baseline-freeze 51-GTE-BASELINE-FREEZE.json --fail-on-oom --fail-on-starvation
 ```
 
 ### Required Acceptance Criteria
@@ -475,30 +476,70 @@ Store only: git SHA, manifest digest, image digest/platform, model revision/file
 | Per-request embedding/rerank leases | two cycle-wide pipeline leases | prevents embedding completion from releasing capacity before vector search/rerank. [VERIFIED: context] |
 | Podman Qwen prototype | k3s `qwen-canary` with quota, probes and isolation | repeatability and scheduling improve, but compatibility must be re-proved. [VERIFIED: spike/context] |
 
-## Open Questions
+## Open Questions (RESOLVED BY FAIL-CLOSED GATES)
+
+Nenhum resultado live é assumido abaixo. O Plan 51-01 grava
+`51-WAVE0-GATE.json` com `status=PASS|BLOCK|UNKNOWN`; somente `PASS` permite
+qualquer tarefa downstream. `BLOCK` e `UNKNOWN` devem produzir exit não zero no
+comando `qwen-canary-inventory.py assert-gate`.
 
 1. **Qual é a topologia live do router?**
-   Known: o governor é Go e compartilhado entre embedding/rerank. [VERIFIED: local runbook]
-   Unknown: número de réplicas e restart model. [ASSUMED]
-   Recommendation: tornar esta a primeira decisão de implementação; storage da lease depende dela.
+   Output obrigatório do Plan 51-01:
+   `51-W0-INVENTORY.json` (`router_topology`) e
+   `51-LEASE-STATE-DECISION.md`, ambos referenciados por
+   `51-WAVE0-GATE.json`.
+   PASS: exatamente uma réplica/restart domain permite `in_process`, ou um
+   backend atômico compartilhado já existente é provado com operação,
+   ownership, TTL e source integration. BLOCK: múltiplas réplicas sem esse
+   backend, identidade ambígua ou decisão divergente do inventário.
+   Downstream bloqueado: Plans 51-02 a 51-08, com enforcement direto em 51-04.
 
 2. **Quais memory requests/limits são seguros para o reranker?**
-   Known: artifact INT8 tem ~1.22GB. [VERIFIED: HF HEAD]
-   Unknown: RSS e pico ARM64. [ASSUMED]
-   Recommendation: um pod, sem HPA, warmup e batch 1/4/20 antes de fixar quota integrada.
+   Output obrigatório do Plan 51-01:
+   `51-W0-INVENTORY.json` (`reranker_warmup_prerequisites`) e
+   `51-BASELINE-CONTRACT.json` (`reranker_sizing_gate`).
+   PASS: capacidade para um warmup ARM64 de 500m, limites temporários,
+   métricas RSS/startup/OOM e stop conditions estão declarados; o valor final
+   continua sendo medido em 51-02, não inventado. BLOCK: falta de headroom,
+   métricas, limite temporário ou rollback.
+   Downstream bloqueado: 51-02 Task 2 e Plans 51-03 a 51-08.
 
 3. **Quais NodePorts e controles de rede estão livres/efetivos?**
-   Known: GTE reranker usa 31216. [VERIFIED: manifest]
-   Unknown: inventário live e CNI policy enforcement. [ASSUMED]
-   Recommendation: inventário cluster-wide e testes positivo/negativo antes de registrar channel.
+   Output obrigatório do Plan 51-01:
+   `51-W0-INVENTORY.json` (`private_network_branch`, NodePorts, firewall,
+   `nodePortAddresses`, CNI enforcement e probes planejados).
+   PASS: dois NodePorts sem colisão e uma branch exata é selecionada:
+   NetworkPolicy comprovadamente enforced, ou NetworkPolicy omitida com
+   firewall/`nodePortAddresses` e probes positivo/negativo obrigatórios.
+   BLOCK: colisão, alcance público, branch ambígua ou ausência de controle
+   efetivo.
+   Downstream bloqueado: Plans 51-03, 51-04, 51-06 e 51-08.
 
 4. **Onde e em qual versão roda Qdrant?**
-   Unknown nesta pesquisa interrompida. [ASSUMED]
-   Recommendation: preflight de versão, auth, capacidade, schema, aliases e snapshot/restore antes do primeiro seed.
+   Output obrigatório do Plan 51-01:
+   `51-W0-INVENTORY.json` (`qdrant`) e o hash do export read-only inicial em
+   `51-WAVE0-GATE.json`.
+   PASS: identidade/version/auth-mode/capacidade/collections/aliases/snapshot
+   e operação atômica de alias são legíveis e compatíveis. BLOCK: endpoint ou
+   auth ambíguo, capacidade/snapshot insuficiente, alias export incompleto ou
+   recurso necessário não suportado.
+   Downstream bloqueado: Plans 51-05 a 51-08.
 
 5. **Qual threshold define “sem impacto mensurável no GTE”?**
-   D-22 exige ausência de impacto, mas não fixa tolerâncias de p95/erro/CPU. [VERIFIED: context]
-   Recommendation: congelar baseline e bandas antes do soak; não defini-las depois de ver o resultado.
+   Output obrigatório do Plan 51-01:
+   `51-BASELINE-CONTRACT.json` com métricas, janela, suficiência, floors e
+   equações, mais `51-GTE-BASELINE-FREEZE.json` com janela GTE-only,
+   proveniência, bandas numéricas, hashes e
+   `frozen_before_any_qwen_live_result=true`, ambos referenciados por
+   `51-WAVE0-GATE.json`.
+   PASS: uma janela histórica válida termina antes da Wave 0 e congela os
+   números, ou uma nova janela baseline-only termina antes de qualquer Qwen.
+   BLOCK: histórico insuficiente, qualquer número unset, proveniência/hash
+   ausente ou possibilidade de ajuste após observar Qwen.
+   Os três artefatos ficam imutáveis após 51-01. Plans 51-02..51-09 geram
+   readbacks próprios que verificam hashes originais e topologia/pins/aliases
+   atuais; idade isolada não reescreve nem invalida história, inclusive após
+   o soak >72h. Downstream bloqueado: Plans 51-02 a 51-09.
 
 ## Assumptions Log
 

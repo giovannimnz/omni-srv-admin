@@ -9,121 +9,140 @@ created: 2026-07-23
 
 # Phase 51 — Validation Strategy
 
-> Per-phase validation contract for feedback sampling during execution. GTE
-> remains the production baseline; every Qwen result is canary evidence until
-> the quality, capacity, soak, and manual-promotion gates pass.
+GTE remains titular. Plan 51-01 seals `51-BASELINE-CONTRACT.json`,
+`51-GTE-BASELINE-FREEZE.json`, and `51-WAVE0-GATE.json`; Plans 51-02..51-09
+create plan-scoped readbacks that verify the original hashes and current
+topology, pins, endpoints and aliases without rewriting sealed evidence.
 
----
+Heavy builds/tests run through the `builds` profile at no more than 20% host
+CPU. Runtime pods remain at 500m. The namespace ceiling is five pods/2500m:
+four runtime pods plus exactly one 500m tool Job.
 
-## Test Infrastructure
+## Exact Per-Task Automated Commands
 
-| Property | Value |
-|----------|-------|
-| **Framework** | Go `testing`/race detector for the governor and router; Node test runner for the ONNX reranker; Python benchmark/evaluation scripts; `kubectl`/Kustomize for k3s |
-| **Config file** | Existing router and service configs plus Wave 0 scripts under `scripts/embeddings-bench/`; exact owner-host router paths must be inventoried before edits |
-| **Quick run command** | `go test ./service/embeddinggovernor -count=1 && npm --prefix services/qwen-reranker-onnx test` |
-| **Full suite command** | Focused Go race tests, Node tests, rendered-manifest validation, private component smokes, and paired quality/capacity scripts described below |
-| **Estimated runtime** | Quick: under 60 seconds; pre-canary suite: up to 20 minutes after models are warm; soak: 72 hours |
+The commands below are copied literally from each final `<automated>` element.
 
-Heavy suites, image builds, and compilation must run through the project
-`builds` profile and stay under the 20% host CPU guardrail. Runtime pods remain
-governed by their explicit `500m` requests/limits, not by the build guardrail.
+### 51-01-01
 
----
+`python3 -m unittest scripts/embeddings-bench/tests/test_qwen_canary_inventory.py -v`
 
-## Sampling Rate
+### 51-01-02
 
-- **After every task commit:** Run the narrowest relevant unit/static command,
-  with a target feedback latency below 60 seconds.
-- **After every plan wave:** Run all focused tests for the components changed in
-  that wave and validate rendered manifests server-side when cluster access is
-  available.
-- **Before integrated canary traffic:** L0 static checks and L1/L2 unit and
-  component gates must be green.
-- **Before `$gsd-verify-work`:** Full L0-L5 evidence must be green, including the
-  72-hour soak and rollback drill.
-- **Max feedback latency:** 60 seconds for task-local checks; long-running
-  component, capacity, and soak gates are explicit plan checkpoints.
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --lease-decision .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-LEASE-STATE-DECISION.md --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --require-phase-50-summary .planning/phases/50-atius-wide-sso-closeout/50-01-SUMMARY.md --require-frozen-before-any-qwen-live-result &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-gate --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --require PASS`
 
----
+### 51-02-01
 
-## Per-Task Verification Map
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-02 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-02-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-02-GATE-READBACK.json --require PASS &amp;&amp; npm --prefix services/qwen-reranker-onnx test`
 
-The planner must replace provisional task IDs with final plan/task IDs while
-preserving every row and its ordering constraints.
+### 51-02-02
 
-| Task ID | Plan | Wave | Requirement | Threat Ref | Secure Behavior | Test Type | Automated Command | File Exists | Status |
-|---------|------|------|-------------|------------|-----------------|-----------|-------------------|-------------|--------|
-| 51-W0-01 | W0 | 0 | Validation harness | T-51-01 | Evidence excludes secrets, raw vectors, and corpus contents | static/unit | Focused Python/Node fixture tests | ❌ W0 | ⬜ pending |
-| 51-W0-02 | W0 | 0 | Governor pipeline lease | T-51-02 | Exactly two global leases; exact-once release on success/error/cancel/TTL | unit/race | `go test ./service/embeddinggovernor -run 'TestPipeline\|TestPriority\|TestTTL\|TestCancel\|TestNoStarvation' -count=20 -race` | ❌ W0 | ⬜ pending |
-| 51-W0-03 | W0 | 0 | Reranker contract | T-51-03 | Bounded input/queue, cancellation, stable finite scores, graceful drain | unit | `npm --prefix services/qwen-reranker-onnx test` | ❌ W0 | ⬜ pending |
-| 51-STATIC | TBD | 1 | Pins, manifests, quota, aliases | T-51-01 / T-51-04 | Immutable artifacts, four runtime pods at `500m`, private-only workers | static | `kubectl kustomize k8s/qwen-canary` plus server-side dry-run | ❌ W0 | ⬜ pending |
-| 51-EMBED | TBD | 2 | Qwen embedding INT8 1024d | T-51-01 | Pinned TEI/ONNX artifact, no direct public access | component | `python3 scripts/embeddings-bench/qwen-canary-smoke.py --expect-dim 1024 --batch-sizes 1,4 --min-single-batch-cosine 0.9999` | ❌ W0 | ⬜ pending |
-| 51-RERANK | TBD | 2 | Qwen reranker INT8 | T-51-03 | Private `/rerank`, payload limits, scores in `[0,1]` | component | `python3 scripts/reranker-smoke.py --native --base-url http://10.21.1.21:<nodeport>` | ✅ existing script, extend as needed | ⬜ pending |
-| 51-PIPELINE | TBD | 3 | Embedding → Qdrant → Rerank | T-51-02 / T-51-05 | Alias isolation, dimensions enforced, no leaked lease | integration | `qwen-canary-smoke.py --pipeline --concurrency 3 --expect-slots 2 --test-timeout --test-cancel --test-ttl` | ❌ W0 | ⬜ pending |
-| 51-QUALITY | TBD | 4 | GTE 768d vs Qwen 1024d | — | Frozen equivalent corpus/chunking/IDs prevents biased comparison | quality | `evaluate-rag-quality.py --top-k 20 --ndcg-k 10 --require-non-inferior` | ❌ W0 | ⬜ pending |
-| 51-CAPACITY | TBD | 4 | CPU, memory, fairness | T-51-02 / T-51-03 | No OOM/starvation and Qwen CPU-seconds `<= 1.05 × GTE` | capacity | Paired collector, at least five warm rounds per profile | ❌ W0 | ⬜ pending |
-| 51-SOAK | TBD | 5 | 72-hour canary | T-51-02 / T-51-04 | GTE remains titular and unaffected; Qwen remains isolated | soak | `qwen-canary-soak.py --duration 72h --slots 2 --capture-gte-baseline --fail-on-oom --fail-on-starvation` | ❌ W0 | ⬜ pending |
-| 51-ROLLBACK | TBD | 5 | Promotion/rollback | T-51-05 | Atomic alias restore, no emergency reindex, Qwen retained for diagnosis | integration/manual gate | Alias export/switch/restore plus immediate GTE smoke | ❌ W0 | ⬜ pending |
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-02 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-02-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-02-GATE-READBACK.json --require PASS &amp;&amp; python3 -c "import json; p='.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-RERANKER-WARMUP.json'; d=json.load(open(p)); assert d['architecture'] in ('arm64','aarch64'); assert d['model_revision']=='9995c50e2310679108a55f5ccd16ba8be9f17c20'; assert d['artifact_sha256']=='c9428382bb48bb31e01a6034647c86d6270761781735cafbf6d5cb4a396d0450'; assert d['cpu_limit_millicores']==500; assert d['oom_count']==0 and d['ranking_sanity_passed']"`
 
-*Status: ⬜ pending · ✅ green · ❌ red · ⚠️ flaky*
+### 51-03-01
 
----
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-03 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-03-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-03-GATE-READBACK.json --require PASS &amp;&amp; python3 -m unittest scripts/embeddings-bench/tests/test_qwen_canary_manifests.py -v &amp;&amp; kubectl kustomize k8s/qwen-canary &gt;/tmp/qwen-canary-rendered.yaml &amp;&amp; kubectl apply --dry-run=server -f /tmp/qwen-canary-rendered.yaml`
 
-## Wave 0 Requirements
+### 51-03-02
 
-- [ ] Focused Go tests for pipeline lease state transitions, global two-slot
-  admission, rerank priority, TTL, cancellation, exact-once release, and
-  starvation.
-- [ ] Node tests for prompt/token IDs, stable softmax, malformed/oversized input,
-  document limits, bounded queue, cancellation, timeout, and graceful shutdown.
-- [ ] `scripts/embeddings-bench/qwen-canary-smoke.py` for private backend and
-  router contracts.
-- [ ] `scripts/embeddings-bench/evaluate-rag-quality.py` plus a frozen PT-BR
-  technical/code corpus and qrels for paired Recall@20/nDCG@10.
-- [ ] Token-normalized CPU/RSS/latency collector with warmup exclusion and
-  equivalent GTE/Qwen workloads.
-- [ ] `scripts/embeddings-bench/qwen-canary-soak.py` with restart/OOM/TTL,
-  starvation, and GTE-baseline evidence.
-- [ ] Idempotent Qdrant schema/alias inspection and rollback smoke without
-  secrets or corpus contents in logs.
-- [ ] Rendered-manifest validation for resources, pinning, security context,
-  namespace isolation, NodePorts, probes, PDB, and staged HPA.
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-03 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-03-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-03-GATE-READBACK.json --require PASS &amp;&amp; { kubectl diff -k k8s/qwen-canary &gt; /tmp/qwen-canary.diff; rc=$?; test "$rc" -eq 0 -o "$rc" -eq 1; }`
 
----
+### 51-03-03
 
-## Manual-Only Verifications
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-03 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-03-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-03-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-K3S-ROLLOUT.json --gate-set k3s-rollout`
 
-| Behavior | Requirement | Why Manual | Test Instructions |
-|----------|-------------|------------|-------------------|
-| Router topology and lease-state decision | Two pipeline slots are global | The correct state mechanism depends on the live router replica/restart topology | Inventory the owner-host runtime. Permit in-process state only with one proved replica; otherwise require a shared atomic store and a three-request concurrency proof |
-| ARM64 artifact and image compatibility | Reproducible TEI/ONNX and reranker startup | Registry/model metadata does not prove the exact target execution path | Capture image platform/digest, model revision/hash, OrtBackend/native runtime logs, startup time, and deterministic private smoke |
-| Private NodePort reachability | Workers cannot bypass router/governor publicly | Effective exposure depends on node interfaces, firewall, and CNI behavior | Prove SRV-1 private success and public/unrelated-pod failure for both backends |
-| Reranker memory sizing | Safe requests/limits | RSS and startup peak are unknown until one-pod warmup | Run batch 1/4/20 warmup at `500m`, capture cgroup peak/RSS/restarts, then freeze memory values before scaling to two |
-| Qdrant preflight and rollback | 1024d collections remain isolated and recoverable | Live version, auth, storage, aliases, and snapshots must be inspected | Test disposable 1024d collection, alias export/switch/restore, snapshot behavior, and capacity before seed |
-| Quality approval | Recall@20 and nDCG@10 are non-inferior | Qrels for Portuguese technical/code queries require owner review | Freeze corpus/qrels before results, run paired report, inspect failed slices, and sign off without changing labels post hoc |
-| Soak and promotion | 72 hours without measurable GTE impact | Long-duration operational evidence and promotion authority are manual gates | Freeze baseline/tolerances first, run 72h, review daily evidence, execute rollback drill, then request explicit promotion approval |
+### 51-04-01
 
----
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-04 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-04-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-04-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-K3S-ROLLOUT.json --gate-set k3s-rollout &amp;&amp; ssh -n atius-srv-1 'cd /home/ubuntu/GitHub/containers/router-ai-atius &amp;&amp; omni srv1-ops resources run builds -- go test -race ./service/embeddinggovernor ./service/modelcatalog ./relay -run "Pipeline|Governor|Embedding|Catalog|Rerank" -count=3 &amp;&amp; test -z "$(git diff --cached --name-only)"'`
 
-## Validation Sign-Off
+### 51-04-02
 
-- [ ] All tasks have `<automated>` verify or Wave 0 dependencies.
-- [ ] Sampling continuity: no three consecutive tasks without automated verify.
-- [ ] Wave 0 covers all MISSING references.
-- [ ] No watch-mode flags.
-- [ ] Feedback latency below 60 seconds for task-local checks.
-- [ ] GTE aliases, quota, and 768d collections stayed unchanged.
-- [ ] Qwen embedding ran as two `500m` pods; reranker warmup ran as one and
-  integrated test as two `500m` pods.
-- [ ] Recall@20 and nDCG@10 are not below GTE globally or for PT-BR
-  technical/code slices.
-- [ ] Single/batch cosine is at least `0.9999`.
-- [ ] Qwen end-to-end CPU-seconds are at most 5% above the matched GTE baseline.
-- [ ] No OOM, unexpected restart, lease leak, or starvation occurred.
-- [ ] The 72-hour soak and alias rollback drill passed.
-- [ ] Manual promotion approval was recorded; otherwise GTE remains titular.
-- [ ] `nyquist_compliant: true` and `wave_0_complete: true` are set only after
-  the corresponding evidence exists.
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-04 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-04-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-04-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-K3S-ROLLOUT.json --gate-set k3s-rollout &amp;&amp; python3 -c "import json; p='.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-ROUTER-LIFECYCLE.json'; d=json.load(open(p)); assert d['source_commit']['status']=='PASS'; assert d['live_activation']['status']=='PENDING'"`
+
+### 51-04-03
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-04 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-04-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-04-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py validate --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-ROUTER-LIFECYCLE.json --gate-set router-live`
+
+### 51-05-01
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-05 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-05-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-05-GATE-READBACK.json --require PASS &amp;&amp; python3 -m unittest scripts/embeddings-bench/tests/test_qdrant_qwen_canary.py -v &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py dry-run --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --all-corpora --include-dual-index`
+
+### 51-05-02
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-05 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-05-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-05-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py preflight --read-only --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --tool-image-evidence .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-QDRANT-TOOL-IMAGE.json --export-aliases .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-QDRANT-ALIAS-EXPORT.json`
+
+### 51-05-03
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-05 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-05-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-05-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py verify --evidence .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-QDRANT-REINDEX.json --require-idempotent-replay --require-dual-index-sources gbrain,obsidian,graphify --require-incumbent-unchanged`
+
+### 51-06-01
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-06 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-06-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-06-GATE-READBACK.json --require PASS &amp;&amp; python3 -c "import json; d=json.load(open('.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-ROUTER-LIFECYCLE.json')); assert d['live_activation']['status']=='PASS'; assert d['active_router_sha']==d['source_commit']['after_sha']" &amp;&amp; python3 -m unittest scripts/embeddings-bench/tests/test_qwen_canary_smoke.py -v`
+
+### 51-06-02
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-06 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-06-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-06-GATE-READBACK.json --require PASS &amp;&amp; python3 -c "import json; d=json.load(open('.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-ROUTER-LIFECYCLE.json')); assert d['live_activation']['status']=='PASS'; assert d['active_router_sha']==d['source_commit']['after_sha']" &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-smoke.py verify-report --report .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-FUNCTIONAL-SMOKE.json --require-all`
+
+### 51-07-01
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-07 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-07-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-07-GATE-READBACK.json --require PASS &amp;&amp; python3 -m unittest scripts/embeddings-bench/tests/test_evaluate_rag_quality.py -v &amp;&amp; python3 scripts/embeddings-bench/evaluate-rag-quality.py validate-fixtures --corpus scripts/embeddings-bench/fixtures/qwen3-corpus.jsonl --qrels scripts/embeddings-bench/fixtures/qwen3-qrels.json --freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-EVAL-FREEZE.json`
+
+### 51-07-02
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-07 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-07-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-07-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/evaluate-rag-quality.py review --qrels scripts/embeddings-bench/fixtures/qwen3-qrels.json --freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-EVAL-FREEZE.json --assert-no-results`
+
+### 51-07-03
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-07 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-07-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-07-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/evaluate-rag-quality.py verify-report --report .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-QUALITY-CAPACITY-EVAL.json --freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-EVAL-FREEZE.json --min-rounds 5 --max-cpu-ratio 1.05 --require-no-regression`
+
+### 51-08-01
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-08 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-08-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-08-GATE-READBACK.json --require PASS &amp;&amp; python3 -m unittest scripts/embeddings-bench/tests/test_qwen_canary_soak.py -v &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-soak.py verify-image --evidence .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-SOAK-TOOL-IMAGE.json --job k8s/qwen-canary/qwen-soak-job.yaml --require-arm64 --require-digest-pin --require-cpu-millicores 500`
+
+### 51-08-02
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-08 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-08-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-08-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-soak.py verify-dispatch --manifest .planning/async-jobs/phase-51-qwen-soak.json --job k8s/qwen-canary/qwen-soak-job.yaml --require-original-job-uid --require-single-job --require-dual-index-suspended --require-zero-active-before-dispatch --require-runtime-pods 4 --require-tool-pods 1 --require-total-cpu-millicores 2500 --require-status running`
+
+### 51-09-01
+
+`test -f .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-08-SUMMARY.md &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-soak.py verify-report --report .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-SOAK-EVIDENCE.json --contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --min-hours 72 --require-original-job --require-continuous --require-dual-index-suspended &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-09 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-09-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-09-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py preflight-rollback --alias-export .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-QDRANT-ALIAS-EXPORT.json --soak .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-SOAK-EVIDENCE.json --require-current-hashes --require-gte-smoke-command`
+
+### 51-09-02
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-09 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-09-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-09-GATE-READBACK.json --require PASS &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py verify-rollback --evidence .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-ROLLBACK-DRILL.json --require-no-reindex --require-gte-smoke &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py verify-dual-index-reconciliation --evidence .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-DUAL-INDEX-RECONCILIATION.json --require-sources gbrain,obsidian,graphify --require-no-lost-writes --require-no-duplicate-writes --require-idempotent-replay --require-cronjob-restored &amp;&amp; python3 -c "import json; d=json.load(open('.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-KNOWLEDGE-CLOSEOUT.json')); assert d['obsidian_http']['readback']=='PASS'; assert d['gbrain_http']['readback']=='PASS'; assert d['redaction']=='PASS'"`
+
+### 51-09-03
+
+`python3 scripts/embeddings-bench/qwen-canary-inventory.py refresh-lineage --plan-id 51-09 --inventory .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-W0-INVENTORY.json --baseline-contract .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-BASELINE-CONTRACT.json --gte-baseline-freeze .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-GTE-BASELINE-FREEZE.json --gate .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-WAVE0-GATE.json --output .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-09-GATE-READBACK.json &amp;&amp; python3 scripts/embeddings-bench/qwen-canary-inventory.py assert-lineage --readback .planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-09-GATE-READBACK.json --require PASS &amp;&amp; python3 -c "from pathlib import Path; s=Path('.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-PROMOTION-DECISION.md').read_text(); assert 'PROMOTION_EXECUTED: false' in s; assert any(x in s for x in ('approved-for-separate-promotion-change','rejected','defer'))" &amp;&amp; python3 scripts/embeddings-bench/qdrant-qwen-canary.py verify-current-aliases --require-gte-titular --require-no-promotion`
+
+## Manual Gates
+
+- 51-03-02: first live `qwen-canary` apply.
+- 51-04-02: exact router activation.
+- 51-05-02: Qdrant creation/reindex.
+- 51-07-02: frozen qrels.
+- 51-09-01: post-soak alias drill.
+- 51-09-03: explicit decision with `PROMOTION_EXECUTED: false`.
+
+## Async Closure
+
+51-08-02 is the final Plan 08 task and returns literal `external_job_waiting`.
+The execute-phase core may close `51-08-SUMMARY.md` only after the manifest's
+literal `verification_command` reconciles the original Job UID without
+redispatch, writes and verifies `51-SOAK-EVIDENCE.json` for at least 72
+continuous hours, and refreshes Plan 08 lineage. Plan 09 depends on that closed
+summary.
+
+## Sign-Off
+
+- [ ] Phase 50 completion is proven.
+- [ ] Wave 0 GTE-only numeric freeze is PASS before any Qwen live result.
+- [ ] Sealed baseline/freeze/gate hashes never change after Plan 01.
+- [ ] Plan 03 two-replica init-download/effective-500m tests pass.
+- [ ] Plan 04 live router activation is PASS before Plan 06 traffic.
+- [ ] Dual-index is suspended with zero active Job before soak and restored/replayed only in Plan 09.
+- [ ] Original soak Job supplies at least 72 continuous hours.
+- [ ] Rollback, GTE smokes, no-loss/no-duplicate replay and knowledge readbacks pass.
+- [ ] `PROMOTION_EXECUTED: false`; GTE remains titular.
+- [ ] Set `nyquist_compliant: true` and `wave_0_complete: true` only after execution evidence exists.
 
 **Approval:** pending

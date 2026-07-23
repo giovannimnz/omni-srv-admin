@@ -656,6 +656,74 @@ through the ordered v1.8 phases 50 and 47 respectively.
 
 **Current open gate:** `44-02` and `44-03` remain blocked on explicit live CA/trust mutation approval and the full 4x4 verification rollout.
 
+### Phase 51: Qwen3 Embedding e Rerank Podman para k3s
+
+**Goal:** Operar Qwen3 Embedding e Rerank como canary ARM64 isolado no k3s, com GTE titular preservado, pipeline global de dois ciclos, índices Qdrant 1024d reversíveis e evidência funcional, de qualidade, capacidade e soak de 72 horas antes de qualquer promoção manual.
+**Requirements**: Nenhum ID de requisito atribuído; rastreabilidade por D-01..D-24 e gates de `51-VALIDATION.md`.
+**Depends on:** Phase 50; Phase 41 e fundações atuais do router/GTE/Qdrant permanecem contexto técnico obrigatório. Wave 0 resolve topologia, endpoints e consistência antes de implementação. Coordenar com a Phase 52 para que o endpoint privado inventariado seja a fonte autoritativa caso a migração de IP ocorra primeiro.
+**Plans:** 9 plans
+
+**Success Criteria:**
+
+1. GTE permanece titular, com aliases, namespace `ebeddings-local` e índices 768d intactos durante toda a fase.
+2. `qwen-canary` executa embedding TEI/OrtBackend exato em mean/1024d com 2×500m e reranker q8 dedicado após warmup de 1 pod em 2×500m, sem `hostNetwork` e com NodePorts privados.
+3. O router admite no máximo dois ciclos completos Embedding→VectorDB→Rerank, usa `pipeline_id`, prioriza continuação de rerank e libera leases exatamente uma vez em sucesso, erro, cancelamento e TTL.
+4. As três collections Qdrant exatas são 1024d/Cosine, possuem assinatura de embedding e corpus/chunk/logical IDs equivalentes, sem misturar ou preencher vetores GTE 768d.
+5. Smokes passam para saúde, batch 1/4, dimensão, normalização, cosine ≥0.9999, rerank nativo/público, três ciclos concorrentes, falhas, alcance privado e isolamento GTE.
+6. Recall@20 e nDCG@10 não ficam abaixo de GTE globalmente nem nos slices PT técnico/código; CPU-seconds/1.000 tokens é ≤1.05× GTE em pelo menos cinco rounds warm, sem OOM, restart ou starvation.
+7. Uma janela GTE-only válida encerrada antes da Wave 0 congela métricas, proveniência e bandas numéricas em `51-GTE-BASELINE-FREEZE.json` antes de qualquer resultado live Qwen; contrato, freeze e gate ficam imutáveis, enquanto readbacks plan-scoped revalidam hashes/topologia/pins/aliases durante e após o soak contínuo ≥72h.
+8. Rollback atômico é exercitado sem reindex emergencial e uma decisão manual explícita é registrada; a Phase 51 não promove Qwen automaticamente.
+
+Plans:
+
+**Wave 0**
+
+- [ ] 51-01-PLAN.md — Harness, inventário live, baseline GTE-only numérico congelado, artefatos imutáveis e decisão de estado dos leases
+
+**Wave 1** *(blocked on Wave 0 completion)*
+
+- [ ] 51-02-PLAN.md — Reranker dedicado q8: contratos TDD, limites, lifecycle, imagem ARM64 e warmup
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 51-03-PLAN.md — Manifests com init-download per-pod e rollout controlado do namespace `qwen-canary`
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 51-04-PLAN.md — Catálogo/router/governor com aliases canary, `/v1/rerank` e dois slots de pipeline
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 51-05-PLAN.md — Collections Qdrant 1024d, reindex idempotente e aliases/rollback atômicos
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 51-06-PLAN.md — Smokes funcionais, concorrência, cancel/TTL, alcance privado e isolamento GTE
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 51-07-PLAN.md — Avaliação pareada de qualidade e capacidade com corpus/qrels congelados
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 51-08-PLAN.md — Imagem ARM64 de soak, suspensão serializada do dual-index e dispatch terminal `external_job_waiting`
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
+- [ ] 51-09-PLAN.md — Rollback drill, restore/replay do dual-index, runbook/guards/knowledge e decisão manual sem promoção
+
+**Execution Waves:**
+
+- Wave 0: 51-01
+- Wave 1: 51-02
+- Wave 2: 51-03
+- Wave 3: 51-04
+- Wave 4: 51-05
+- Wave 5: 51-06
+- Wave 6: 51-07
+- Wave 7: 51-08
+- Wave 8: 51-09
+
 ---
 
 ## Milestone v1.7: Internal DNS and DRG Canonicalization
