@@ -1,0 +1,12 @@
+/home/ubuntu/.logs/oci-admin/*.log {
+    daily
+    size 10M
+    rotate 14
+    compress
+    delaycompress
+    missingok
+    notifempty
+    copytruncate
+    su ubuntu ubuntu
+    create 0640 ubuntu ubuntu
+}

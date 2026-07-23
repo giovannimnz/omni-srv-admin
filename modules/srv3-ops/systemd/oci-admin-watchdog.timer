@@ -1,0 +1,13 @@
+[Unit]
+Description=Executa o watchdog PM2 do OCI Admin a cada 30 segundos
+
+[Timer]
+OnBootSec=45s
+OnUnitActiveSec=30s
+AccuracySec=5s
+RandomizedDelaySec=3s
+Persistent=true
+Unit=oci-admin-watchdog.service
+
+[Install]
+WantedBy=timers.target

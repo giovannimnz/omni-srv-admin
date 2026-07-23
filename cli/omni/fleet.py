@@ -1142,7 +1142,8 @@ def _diskstats() -> dict[str, int]:
     return totals
 
 
-def _service_health() -> dict[str, str]:
+def _service_health(host_id: str) -> dict[str, str]:
+    normalized_host_id = host_id.lower().split(".", 1)[0]
     candidates = [
         "omni-fleet-agent.service",
         "resource-governor-watchdog.service",
@@ -1150,6 +1151,15 @@ def _service_health() -> dict[str, str]:
         "pgbouncer.service",
         "postgresql.service",
     ]
+    required: set[str] = set()
+    if normalized_host_id == "atius-srv-3":
+        required = {
+            "pm2-ubuntu.service",
+            "oci-admin-env.service",
+            "oci-admin-mcp-env.service",
+            "oci-admin-watchdog.timer",
+        }
+        candidates.extend(sorted(required))
     health: dict[str, str] = {}
     for unit in candidates:
         try:
@@ -1162,8 +1172,49 @@ def _service_health() -> dict[str, str]:
         except (FileNotFoundError, OSError):
             return health
         state = completed.stdout.strip() or "unknown"
-        if completed.returncode == 0 or state not in {"unknown", "inactive"}:
+        if unit in required or completed.returncode == 0 or state not in {"unknown", "inactive"}:
             health[unit] = state
+
+    if normalized_host_id == "atius-srv-3":
+        pm2 = shutil.which("pm2")
+        if not pm2:
+            health["pm2:oci-admin"] = "unavailable"
+            return health
+        try:
+            completed = subprocess.run(
+                [pm2, "jlist"],
+                capture_output=True,
+                text=True,
+                timeout=10,
+                env={**os.environ, "PM2_HOME": "/home/ubuntu/.pm2"},
+            )
+            apps = json.loads(completed.stdout) if completed.returncode == 0 else []
+        except (OSError, subprocess.SubprocessError, json.JSONDecodeError):
+            health["pm2:oci-admin"] = "unavailable"
+        else:
+            by_name = {
+                str(app.get("name")): str(app.get("pm2_env", {}).get("status", "unknown"))
+                for app in apps
+                if app.get("pm2_env", {}).get("namespace") == "oci-admin"
+            }
+            for name in ("oci-admin-web", "oci-admin-mcp-http"):
+                health[f"pm2:{name}"] = by_name.get(name, "missing")
+
+        for name, url in (
+            ("http:oci-admin-web", "http://10.13.1.13:8080/healthz"),
+            ("http:oci-admin-mcp", "http://10.13.1.13:8090/healthz"),
+        ):
+            try:
+                completed = subprocess.run(
+                    ["curl", "-fsS", "-o", "/dev/null", "--max-time", "5", url],
+                    capture_output=True,
+                    text=True,
+                    timeout=7,
+                )
+            except (FileNotFoundError, OSError, subprocess.SubprocessError):
+                health[name] = "unavailable"
+            else:
+                health[name] = "healthy" if completed.returncode == 0 else "failed"
     return health
 
 
@@ -1210,7 +1261,20 @@ def _collect_telemetry(host_id: str) -> dict[str, Any]:
             uptime_seconds = int(float(uptime_path.read_text().split()[0]))
         except (ValueError, IndexError):
             uptime_seconds = None
+    service_health = _service_health(host_id)
     health = _resource_health(load_1m, cpu_count, memory_used_pct, disk_used_pct)
+    unhealthy_service_states = {
+        "failed",
+        "inactive",
+        "missing",
+        "offline",
+        "stopped",
+        "errored",
+        "unavailable",
+        "unknown",
+    }
+    if health == "healthy" and any(state in unhealthy_service_states for state in service_health.values()):
+        health = "degraded"
     return {
         "host": host_id,
         "agent_version": FLEET_AGENT_VERSION,
@@ -1240,7 +1304,7 @@ def _collect_telemetry(host_id: str) -> dict[str, Any]:
             "io": _diskstats(),
             "pressure": _proc_pressure("io"),
         },
-        "service_health": _service_health(),
+        "service_health": service_health,
         "uptime_seconds": uptime_seconds,
         "generated_at": _now(),
     }

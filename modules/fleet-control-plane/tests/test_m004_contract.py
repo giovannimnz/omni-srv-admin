@@ -338,6 +338,22 @@ def test_agent_heartbeat_collects_resource_telemetry(monkeypatch, tmp_path):
     assert (telemetry_dir / "atius-srv-2.json").exists()
 
 
+def test_srv3_heartbeat_degrades_when_oci_admin_pm2_is_missing(monkeypatch):
+    monkeypatch.setattr(
+        fleet_module,
+        "_service_health",
+        lambda host_id: {"pm2:oci-admin-web": "missing"}
+        if host_id.lower().split(".", 1)[0] == "atius-srv-3"
+        else {},
+    )
+
+    for host_id in ("atius-srv-3", "atius-srv-3.atius.internal"):
+        payload = fleet_module._collect_telemetry(host_id)
+
+        assert payload["health"] in {"degraded", "critical"}
+        assert payload["service_health"]["pm2:oci-admin-web"] == "missing"
+
+
 def test_agent_once_executes_only_approved_allowlisted_plan(tmp_path):
     plan = tmp_path / "plan.json"
     plan.write_text(
