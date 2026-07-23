@@ -1,5 +1,5 @@
 ---
-phase: 51
+phase: 59
 slug: qwen3-embedding-e-rerank-podman-para-k3s
 status: draft
 nyquist_compliant: false
