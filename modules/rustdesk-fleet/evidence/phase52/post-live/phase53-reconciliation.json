@@ -1,0 +1,44 @@
+{
+  "authority": {
+    "live_authority": false,
+    "replay_authorized": false,
+    "vault_write_authorized": false
+  },
+  "mutation_performed": false,
+  "phase53_plan_count": 6,
+  "plans": [
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-01-PLAN.md",
+      "sha256": "21b7862e3f7714fdf9a784445c903bde7c0eeca3c8ed2ba38e8816f4e6fd75d3",
+      "summary_exists": true
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-02-PLAN.md",
+      "sha256": "075cf474ff90db956d7790b9b0f830d669c9e6bf7ca875288ba4c8e1d8f58097",
+      "summary_exists": true
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-03-PLAN.md",
+      "sha256": "889676f55fc276c10910fa3dd42891aeef004ccc556148f453f7463b582ad056",
+      "summary_exists": true
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-04-PLAN.md",
+      "sha256": "b0b4acb6164400ddb09e042b63dff68ecb1430dea626589103bfcc8022e36dee",
+      "summary_exists": false
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05-PLAN.md",
+      "sha256": "5d7bb3bd6a406c1950fee05468188d1b33f16518ae88c1c1b631d9fb3ad5ca49",
+      "summary_exists": false
+    },
+    {
+      "path": ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-06-PLAN.md",
+      "sha256": "9aaf2ce2361f73e2cec089871e4c94c2bc1b4a3b1ffa9853586fe3b5a0d44d8d",
+      "summary_exists": false
+    }
+  ],
+  "read_only": true,
+  "secret_material_present": false,
+  "status": "PASS"
+}

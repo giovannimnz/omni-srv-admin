@@ -1,0 +1,18 @@
+{
+  "authority": {
+    "live_authority": false,
+    "replay_authorized": false,
+    "vault_write_authorized": false
+  },
+  "hash_set_sha256": "6139c7fcbd524d4adf510b4dcc377ee753bbc5a6c7348c9d0d1ea2b3e2dcbf90",
+  "input_statuses": [
+    "PASS",
+    "PASS",
+    "PASS"
+  ],
+  "mutation_performed": false,
+  "read_only": true,
+  "schema_anchor": "phase52_post_live_successor_v1",
+  "secret_material_present": false,
+  "status": "PASS"
+}

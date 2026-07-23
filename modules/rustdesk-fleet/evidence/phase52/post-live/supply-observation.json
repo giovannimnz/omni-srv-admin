@@ -1,0 +1,28 @@
+{
+  "mutation_performed": false,
+  "observations": [
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase52/supply-observation.json",
+      "sha256": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db",
+      "size_bytes": 3675
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase52/capacity-horistic-srv.json",
+      "sha256": "69997872cbe0b9e2f886cc67b8c0379499628a068cc1e9d6996f60b8df39622e",
+      "size_bytes": 3444
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase52/integrated-gate.json",
+      "sha256": "8a70bced3cfa4f0d588707720bc20ebef0ed4e14b0143aca9c5cc154f50eb00a",
+      "size_bytes": 5474
+    },
+    {
+      "path": "modules/rustdesk-fleet/evidence/phase52/gate-b-transaction.json",
+      "sha256": "d4eeb2da7956c177595d41f6170cdc7ee50a0b6eab3b7bb0054800212d173001",
+      "size_bytes": 1861
+    }
+  ],
+  "read_only": true,
+  "secret_material_present": false,
+  "status": "PASS"
+}
