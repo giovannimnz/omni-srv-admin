@@ -324,7 +324,12 @@ def test_supply_status_precedence_and_exit_codes() -> None:
 def test_supply_observation_matches_contract() -> None:
     contract = _contract()
     observation = validator.load_json_strict(OBSERVATION_PATH)
-    result = validator.validate_supply_observation(observation, contract, repo=REPO)
+    result = validator.validate_supply_observation(
+        observation,
+        contract,
+        repo=REPO,
+        now=datetime(2026, 7, 22, 3, 30, tzinfo=timezone.utc),
+    )
     assert result.id == "P52-SUPPLY-001"
     assert result.status == "PASS"
     assert observation["status"] == "PASS"
@@ -341,7 +346,12 @@ def test_supply_observation_is_derived_not_trusted() -> None:
     contract = _contract()
     observation = validator.load_json_strict(OBSERVATION_PATH)
     observation["status"] = "FAIL"
-    result = validator.validate_supply_observation(observation, contract, repo=REPO)
+    result = validator.validate_supply_observation(
+        observation,
+        contract,
+        repo=REPO,
+        now=datetime(2026, 7, 22, 3, 30, tzinfo=timezone.utc),
+    )
     assert result.status == "FAIL"
     assert "stored-verdict-drift" in _categories(result)
 
