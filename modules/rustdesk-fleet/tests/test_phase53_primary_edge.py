@@ -1,8 +1,12 @@
 from __future__ import annotations
 
 import copy
+import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
 from typing import Any
 
 import pytest
@@ -13,6 +17,7 @@ CONTRACT_DIR = REPO / "modules/rustdesk-fleet/contracts"
 RUNTIME_CONTRACT = CONTRACT_DIR / "phase53-runtime.json"
 EDGE_CONTRACT = CONTRACT_DIR / "phase53-edge.json"
 OPS_API_CONTRACT = CONTRACT_DIR / "phase53-ops-api.json"
+LIVE_GATE_PATH = REPO / "modules/rustdesk-fleet/tools/run-phase53-live-gate.py"
 
 
 class DuplicateKeyError(ValueError):
@@ -428,3 +433,154 @@ def test_future_implementation_symbol_is_red_only_for_owner_plan(
 ) -> None:
     assert owner_plan in {"53-02", "53-03", "53-04", "53-05", "53-06"}
     assert (REPO / "modules/rustdesk-fleet" / artifact).is_file()
+
+
+def _live_gate_module() -> Any:
+    spec = importlib.util.spec_from_file_location("phase53_live_gate", LIVE_GATE_PATH)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _current_preflight(module: Any, *, rollback_ready: bool = True) -> dict[str, Any]:
+    bundle = module.load_current_contracts(REPO)
+    return {
+        "source_head": "a" * 40,
+        "contract_digests": bundle.digests,
+        "pre_state_digest": "b" * 64,
+        "rollback_ready": rollback_ready,
+        "ownership_unambiguous": True,
+    }
+
+
+def test_live_flag_is_exact_and_required_before_first_mutation() -> None:
+    module = _live_gate_module()
+    gate = module.Phase53LiveGate(repo=REPO, environ={})
+    with pytest.raises(module.GateBlocked, match="explicit-live-flag-required"):
+        gate.require_explicit_live_flag()
+
+    malformed = module.Phase53LiveGate(
+        repo=REPO, environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "true"}
+    )
+    with pytest.raises(module.GateBlocked, match="explicit-live-flag-required"):
+        malformed.require_explicit_live_flag()
+
+    enabled = module.Phase53LiveGate(
+        repo=REPO, environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"}
+    )
+    enabled.require_explicit_live_flag()
+
+
+@pytest.mark.parametrize(
+    ("mutation", "blocker"),
+    [
+        ({"rollback_ready": False}, "rollback-readiness-required"),
+        ({"ownership_unambiguous": False}, "ownership-ambiguous"),
+        ({"pre_state_digest": None}, "pre-state-required"),
+        ({"contract_digests": {}}, "contract-digest-drift"),
+    ],
+)
+def test_live_flag_preflight_and_rollback_gate_fail_closed(
+    mutation: dict[str, Any], blocker: str
+) -> None:
+    module = _live_gate_module()
+    gate = module.Phase53LiveGate(
+        repo=REPO, environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"}
+    )
+    preflight = _current_preflight(module)
+    preflight.update(mutation)
+    with pytest.raises(module.GateBlocked, match=blocker):
+        gate.authorize_first_mutation(preflight)
+
+
+def test_stage_receipt_schema_rejects_pass_text_and_ambiguous_resume() -> None:
+    module = _live_gate_module()
+    gate = module.Phase53LiveGate(
+        repo=REPO, environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"}
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+    receipt = module.StageReceipt.create(
+        transaction_id="c" * 32,
+        stage="preflight",
+        input_digest="d" * 64,
+        observations={"source_head": "a" * 40},
+        mutation={"performed": False, "classes": [], "cleanup_pending": []},
+        rollback_state="ready",
+    )
+    gate.accept_receipt(receipt)
+    with pytest.raises(module.GateBlocked, match="duplicate-stage-receipt"):
+        gate.accept_receipt(receipt)
+
+    stored = receipt.to_mapping()
+    stored["status"] = "PASS"
+    with pytest.raises(module.GateBlocked, match="receipt-status-invalid"):
+        module.StageReceipt.from_mapping(stored)
+
+    stored = receipt.to_mapping()
+    stored["observations"] = {"verdict": "PASS"}
+    with pytest.raises(module.GateBlocked, match="stored-verdict-forbidden"):
+        module.StageReceipt.from_mapping(stored)
+
+
+@pytest.mark.parametrize(
+    "payload",
+    [
+        {"argv": ["tool", "--token", "fixture-secret"]},
+        {"env": {"API_TOKEN": "fixture-secret"}},
+        {"headers": {"Authorization": "Bearer fixture-secret"}},
+        {"private_key": "fixture-secret"},
+        {"payload_nonce": "fixture-secret"},
+    ],
+)
+def test_secret_and_redact_surfaces_are_value_free(payload: dict[str, Any]) -> None:
+    module = _live_gate_module()
+    sanitized = module.sanitize_for_evidence(payload)
+    encoded = json.dumps(sanitized, sort_keys=True)
+    assert "fixture-secret" not in encoded
+    assert "payload_nonce" not in encoded
+    assert module.contains_secret_material(sanitized) is False
+
+
+@pytest.mark.parametrize(
+    "headers",
+    [
+        {},
+        {"Authorization": ""},
+        {"Authorization": "Basic invalid"},
+        {"Authorization": "Bearer"},
+        {"Authorization": "Bearer fixture-secret extra"},
+    ],
+)
+def test_auth_missing_and_malformed_receive_uniform_denial(headers: dict[str, str]) -> None:
+    module = _live_gate_module()
+    response = module.deny_untrusted_backend_auth(headers)
+    assert response == {
+        "status": 401,
+        "body": {"error": "unauthorized"},
+        "headers": {"Cache-Control": "no-store"},
+    }
+    assert "fixture-secret" not in json.dumps(response, sort_keys=True)
+
+
+def test_unflagged_cli_refuses_without_runtime_evidence(tmp_path: Path) -> None:
+    env = {"PATH": os.environ["PATH"]}
+    completed = subprocess.run(
+        [sys.executable, str(LIVE_GATE_PATH), "--repo", str(REPO), "--evidence-dir", str(tmp_path)],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload == {
+        "blocker": "explicit-live-flag-required",
+        "mutation_performed": False,
+        "secret_material_present": False,
+        "status": "BLOCKED",
+    }
+    assert list(tmp_path.iterdir()) == []
