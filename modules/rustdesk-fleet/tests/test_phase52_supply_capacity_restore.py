@@ -105,6 +105,8 @@ def test_post_live_successor_boundary_is_non_authorizing() -> None:
     result = validator.validate_post_live_successor_boundary(REPO)
     assert result.status == "PASS"
     assert validator.PHASE52_POST_LIVE_SUCCESSOR_V1 == "phase52_post_live_successor_v1"
+    contract = validator.load_json_strict(validator.PHASE52_POST_LIVE_SUCCESSOR)
+    assert contract["review_quorum"]["require_checkout_snapshots_equal"] is True
 
 
 def _secret_roles() -> dict:

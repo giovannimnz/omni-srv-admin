@@ -141,30 +141,72 @@ def test_source_freeze_detects_byte_drift(tmp_path: Path) -> None:
 def test_independent_review_quorum_requires_distinct_identity_and_same_hash() -> None:
     verifier = _load_verifier()
     expected = "a" * 64
+    source_commit = "b" * 40
     reviews = [
         {
             "schema_anchor": ANCHOR,
             "reviewer_id": "fresh-reviewer-1",
             "checkout_mode": "read-only",
+            "source_freeze_commit": source_commit,
             "verdict": "PASS",
             "hash_set_sha256": expected,
             "unresolved_high_count": 0,
+            "findings": [],
+            "checkout_before": "c" * 64,
+            "checkout_after": "c" * 64,
+            "mutation_detected": False,
             "secret_material_present": False,
         },
         {
             "schema_anchor": ANCHOR,
             "reviewer_id": "fresh-reviewer-2",
             "checkout_mode": "read-only",
+            "source_freeze_commit": source_commit,
             "verdict": "PASS",
             "hash_set_sha256": expected,
             "unresolved_high_count": 0,
+            "findings": [],
+            "checkout_before": "d" * 64,
+            "checkout_after": "d" * 64,
+            "mutation_detected": False,
             "secret_material_present": False,
         },
     ]
-    assert verifier.validate_independent_reviews(reviews, expected)["status"] == "PASS"
+    assert verifier.validate_independent_reviews(reviews, expected, source_commit)["status"] == "PASS"
     reviews[1]["reviewer_id"] = reviews[0]["reviewer_id"]
     with pytest.raises(ValueError, match="independent"):
-        verifier.validate_independent_reviews(reviews, expected)
+        verifier.validate_independent_reviews(reviews, expected, source_commit)
+
+
+@pytest.mark.parametrize(
+    ("field", "value"),
+    [
+        ("source_freeze_commit", "0" * 40),
+        ("checkout_after", "0" * 64),
+        ("mutation_detected", True),
+    ],
+)
+def test_review_quorum_rejects_unbound_or_mutated_checkout(field: str, value: object) -> None:
+    verifier = _load_verifier()
+    source_commit = "b" * 40
+    review = {
+        "schema_anchor": ANCHOR,
+        "reviewer_id": "reviewer",
+        "checkout_mode": "read-only",
+        "source_freeze_commit": source_commit,
+        "verdict": "PASS",
+        "hash_set_sha256": "a" * 64,
+        "unresolved_high_count": 0,
+        "findings": [],
+        "checkout_before": "c" * 64,
+        "checkout_after": "c" * 64,
+        "mutation_detected": False,
+        "secret_material_present": False,
+    }
+    other = dict(review, reviewer_id="other", checkout_before="d" * 64, checkout_after="d" * 64)
+    review[field] = value
+    with pytest.raises(ValueError, match="independent"):
+        verifier.validate_independent_reviews([review, other], "a" * 64, source_commit)
 
 
 def test_cli_exposes_only_offline_read_only_surfaces() -> None:

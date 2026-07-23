@@ -46,8 +46,11 @@
   "review_quorum": {
     "checkout_mode": "read-only",
     "minimum_reviewers": 2,
+    "require_checkout_snapshots_equal": true,
     "require_distinct_reviewer_ids": true,
     "require_same_hash_set_sha256": true,
+    "require_source_freeze_commit": true,
+    "required_mutation_detected": false,
     "required_unresolved_high_count": 0,
     "required_verdict": "PASS"
   },

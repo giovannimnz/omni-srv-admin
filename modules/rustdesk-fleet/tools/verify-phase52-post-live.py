@@ -196,8 +196,11 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
     if quorum != {
         "checkout_mode": "read-only",
         "minimum_reviewers": 2,
+        "require_checkout_snapshots_equal": True,
         "require_distinct_reviewer_ids": True,
         "require_same_hash_set_sha256": True,
+        "require_source_freeze_commit": True,
+        "required_mutation_detected": False,
         "required_unresolved_high_count": 0,
         "required_verdict": "PASS",
     }:
@@ -459,24 +462,56 @@ def build_successor_attestation(repo: Path) -> dict[str, Any]:
 
 
 def validate_independent_reviews(
-    reviews: list[dict[str, Any]], expected_hash_set: str
+    reviews: list[dict[str, Any]],
+    expected_hash_set: str,
+    source_freeze_commit: str,
 ) -> dict[str, Any]:
-    if len(reviews) != 2 or not _is_sha256(expected_hash_set):
+    if (
+        len(reviews) != 2
+        or not _is_sha256(expected_hash_set)
+        or not isinstance(source_freeze_commit, str)
+        or len(source_freeze_commit) != 40
+    ):
         raise ValueError("independent review quorum requires exactly two reviews")
     identities: list[str] = []
+    expected_keys = {
+        "schema_anchor",
+        "reviewer_id",
+        "checkout_mode",
+        "source_freeze_commit",
+        "verdict",
+        "hash_set_sha256",
+        "unresolved_high_count",
+        "findings",
+        "checkout_before",
+        "checkout_after",
+        "mutation_detected",
+        "secret_material_present",
+    }
     for review in reviews:
         if (
             not isinstance(review, dict)
+            or set(review) != expected_keys
             or review.get("schema_anchor") != PHASE52_POST_LIVE_SUCCESSOR_V1
             or review.get("checkout_mode") != "read-only"
+            or review.get("source_freeze_commit") != source_freeze_commit
             or review.get("verdict") != "PASS"
             or review.get("hash_set_sha256") != expected_hash_set
             or review.get("unresolved_high_count") != 0
+            or not isinstance(review.get("findings"), list)
+            or review.get("checkout_before") != review.get("checkout_after")
+            or not _is_sha256(review.get("checkout_before"))
+            or review.get("mutation_detected") is not False
             or review.get("secret_material_present") is not False
             or not isinstance(review.get("reviewer_id"), str)
             or not review["reviewer_id"]
         ):
             raise ValueError("independent review rejected")
+        if any(
+            isinstance(finding, dict) and finding.get("severity") == "high"
+            for finding in review["findings"]
+        ):
+            raise ValueError("independent review has unresolved high finding")
         identities.append(review["reviewer_id"])
     if len(set(identities)) != 2:
         raise ValueError("independent reviewer identities must be distinct")
@@ -531,7 +566,11 @@ def verify_attestation(
         "authority": dict(AUTHORITY),
     }
     if reviews is not None:
-        result["reviews"] = validate_independent_reviews(reviews, expected)
+        result["reviews"] = validate_independent_reviews(
+            reviews,
+            expected,
+            source_commit,
+        )
     return result
 
 

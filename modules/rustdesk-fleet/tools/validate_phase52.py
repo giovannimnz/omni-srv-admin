@@ -331,6 +331,14 @@ def validate_post_live_successor_boundary(repo: Path) -> CheckResult:
         "vault_write_authorized": False,
     }:
         blocked.append("post-live-successor-authority-drift")
+    quorum = contract.get("review_quorum")
+    if (
+        not isinstance(quorum, dict)
+        or quorum.get("require_checkout_snapshots_equal") is not True
+        or quorum.get("require_source_freeze_commit") is not True
+        or quorum.get("required_mutation_detected") is not False
+    ):
+        blocked.append("post-live-successor-review-boundary-drift")
     return _check_result(
         "P52-POST-LIVE-SUCCESSOR-001",
         "PASS" if not blocked else "BLOCKED",
