@@ -50,6 +50,7 @@
     "require_distinct_reviewer_ids": true,
     "require_same_hash_set_sha256": true,
     "require_source_freeze_commit": true,
+    "required_findings": [],
     "required_mutation_detected": false,
     "required_unresolved_high_count": 0,
     "required_verdict": "PASS"

@@ -184,6 +184,10 @@ def test_independent_review_quorum_requires_distinct_identity_and_same_hash() ->
         ("source_freeze_commit", "0" * 40),
         ("checkout_after", "0" * 64),
         ("mutation_detected", True),
+        ("unresolved_high_count", False),
+        ("unresolved_high_count", 0.0),
+        ("findings", ["high"]),
+        ("findings", [{"severity": "HIGH"}]),
     ],
 )
 def test_review_quorum_rejects_unbound_or_mutated_checkout(field: str, value: object) -> None:

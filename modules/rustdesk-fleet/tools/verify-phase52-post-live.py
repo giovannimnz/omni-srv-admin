@@ -8,6 +8,7 @@ import copy
 import hashlib
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -200,6 +201,7 @@ def validate_contract(contract: dict[str, Any]) -> dict[str, Any]:
         "require_distinct_reviewer_ids": True,
         "require_same_hash_set_sha256": True,
         "require_source_freeze_commit": True,
+        "required_findings": [],
         "required_mutation_detected": False,
         "required_unresolved_high_count": 0,
         "required_verdict": "PASS",
@@ -467,10 +469,11 @@ def validate_independent_reviews(
     source_freeze_commit: str,
 ) -> dict[str, Any]:
     if (
-        len(reviews) != 2
+        not isinstance(reviews, list)
+        or len(reviews) != 2
         or not _is_sha256(expected_hash_set)
         or not isinstance(source_freeze_commit, str)
-        or len(source_freeze_commit) != 40
+        or re.fullmatch(r"[0-9a-f]{40}", source_freeze_commit) is None
     ):
         raise ValueError("independent review quorum requires exactly two reviews")
     identities: list[str] = []
@@ -497,21 +500,18 @@ def validate_independent_reviews(
             or review.get("source_freeze_commit") != source_freeze_commit
             or review.get("verdict") != "PASS"
             or review.get("hash_set_sha256") != expected_hash_set
+            or not _is_sha256(review.get("hash_set_sha256"))
+            or type(review.get("unresolved_high_count")) is not int
             or review.get("unresolved_high_count") != 0
-            or not isinstance(review.get("findings"), list)
+            or review.get("findings") != []
             or review.get("checkout_before") != review.get("checkout_after")
             or not _is_sha256(review.get("checkout_before"))
             or review.get("mutation_detected") is not False
             or review.get("secret_material_present") is not False
             or not isinstance(review.get("reviewer_id"), str)
-            or not review["reviewer_id"]
+            or re.fullmatch(r"[a-z0-9][a-z0-9-]{2,63}", review["reviewer_id"]) is None
         ):
             raise ValueError("independent review rejected")
-        if any(
-            isinstance(finding, dict) and finding.get("severity") == "high"
-            for finding in review["findings"]
-        ):
-            raise ValueError("independent review has unresolved high finding")
         identities.append(review["reviewer_id"])
     if len(set(identities)) != 2:
         raise ValueError("independent reviewer identities must be distinct")

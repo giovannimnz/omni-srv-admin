@@ -336,6 +336,7 @@ def validate_post_live_successor_boundary(repo: Path) -> CheckResult:
         not isinstance(quorum, dict)
         or quorum.get("require_checkout_snapshots_equal") is not True
         or quorum.get("require_source_freeze_commit") is not True
+        or quorum.get("required_findings") != []
         or quorum.get("required_mutation_detected") is not False
     ):
         blocked.append("post-live-successor-review-boundary-drift")

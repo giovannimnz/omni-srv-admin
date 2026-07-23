@@ -23,7 +23,7 @@ legacy_targets=(
   "/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-28-phase42-atius-wide-sso.md"
 )
 
-# Explicit scopes are fail-closed; the legacy set remains zero-argument only.
+# Explicit scopes are fail-closed and value-free; legacy is zero-argument only.
 if (( "$#" > 0 )); then
   targets=("$@")
   for target in "${targets[@]}"; do
