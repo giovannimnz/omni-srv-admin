@@ -2054,3 +2054,56 @@ def test_rollback_cas_rejects_same_state_with_new_generation() -> None:
     assert receipt["state"] == "CONTAINED_REQUIRES_MANUAL_RECOVERY"
     assert backend.contained is True
     assert "restore-if-current" not in backend.calls
+
+
+def test_nft_json_readback_rejects_extra_predicate_inside_expected_rule() -> None:
+    module = _edge_applier_module()
+    payload = _valid_nft_json_readback()
+    rule = payload["nftables"][2]["rule"]
+    rule["expr"].insert(
+        4,
+        {
+            "match": {
+                "op": "==",
+                "left": {"ct": {"key": "state"}},
+                "right": "new",
+            }
+        },
+    )
+    with pytest.raises(module.EdgeBlocked, match="nft-live-semantic-readback-drift"):
+        module.semantics_from_nft_json(payload, "ens3")
+
+
+def test_nft_candidate_rejects_extra_predicate_on_expected_line() -> None:
+    module = _edge_applier_module()
+    candidate = _rendered_nft_candidate(module).replace(
+        "counter accept\n",
+        "counter accept ct state new\n",
+        1,
+    )
+    with pytest.raises(module.EdgeBlocked, match="nft-extra-chain-or-rule"):
+        module.validate_nft_candidate(
+            candidate,
+            contract_digest=module.sha256_file(EDGE_CONTRACT),
+            public_interface="ens3",
+        )
+
+
+def test_nft_json_readback_rejects_additional_owned_table_chain() -> None:
+    module = _edge_applier_module()
+    payload = _valid_nft_json_readback()
+    payload["nftables"].insert(
+        2,
+        {
+            "chain": {
+                "family": "inet",
+                "table": "atius_rustdesk_phase53",
+                "name": "shadow_input",
+                "hook": "input",
+                "prio": 301,
+                "policy": "accept",
+            }
+        },
+    )
+    with pytest.raises(module.EdgeBlocked, match="nft-live-semantic-readback-drift"):
+        module.semantics_from_nft_json(payload, "ens3")
