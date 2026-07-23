@@ -37,13 +37,13 @@ python3 -m omni srv autoclean all --apply
 - XRDP/Xorg/LightDM session logs (`/var/log/xrdp*.log`,
   `/var/log/lightdm/*`, `~/.xorgxrdp.*.log`, `~/.Xorg.*.log`,
   `~/.xsession-errors`).
-- Unused Docker/Podman images, stopped containers, unused networks and Docker
-  builder cache.
+- Unused Podman images, stopped containers and unused networks.
 - systemd journal down to 500M when `sudo -n journalctl` is available.
 
 ## What It Does Not Delete Automatically
 
 - Container volumes, unless `--include-volumes` is explicitly passed.
+- k3s/containerd images, snapshots and `/var/lib/rancher/k3s`.
 - Backup/quarantine directories:
   - `~/pre-upgrade-24.04-backup`
   - `~/srv3-disk-relief-before-config-clone-*`
@@ -83,7 +83,7 @@ fleet-storage-audit.timer next: 2026-06-14 08:24 BRT
 
 Impact: `daemon-reload` + user timers only. Does not drop RDP/XRDP.
 
-## 2026-06-13 Snapshot
+## 2026-06-13 Snapshot historico
 
 | Host | OS | Disk | Main findings |
 |---|---|---:|---|
@@ -93,9 +93,12 @@ Impact: `daemon-reload` + user timers only. Does not drop RDP/XRDP.
 
 ## Pending Manual Decisions
 
-- SRV-2: Docker volumes are 25G but active; no volume prune without explicit review.
+- SRV-2: os volumes Docker de 25G pertencem ao snapshot historico anterior a
+  migracao. Nao sao alvo do cleanup atual; qualquer retirada residual exige
+  inventario e backup especificos.
 - SRV-2: `router-ai-zentrius` lives at `/home/ubuntu/docker/Atius/router-ai-zentrius`.
-  Do not treat old `router-ai-atius` paths as current on this host.
+  O nome do path e legado e nao define o runtime; nao tratar paths antigos de
+  `router-ai-atius` como atuais neste host.
 - SRV-3: fix or disable broken `inviolable-watchdog.timer`; current failure is
   `status=203/EXEC` because `/home/ubuntu/scripts/inviolable-watchdog.sh` is
   absent.

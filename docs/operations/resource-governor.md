@@ -5,7 +5,7 @@
 Recomendação base para o teu cenário:
 
 - usar `cgroups v2` + `systemd-run` como camada primária
-- usar flags nativas de `podman`/`docker`/compiladores como camada secundária
+- usar flags nativas de `podman`/compiladores como camada secundária
 - registrar PSI, swap, disco, top consumers e hotspots de build em `~/.logs/resource-governor/`
 
 Implementação versionada neste repo:
@@ -156,7 +156,7 @@ omni srv1-ops resources snapshot
 omni srv1-ops resources audit
 ```
 
-## Docker vs Podman vs compiladores
+## Podman, k3s e compiladores
 
 ### Podman
 
@@ -174,31 +174,18 @@ Se quiser endurecer ainda mais:
 podman build --cpus 2 --memory 6g --memory-swap 7g ...
 ```
 
-### Docker run
+### k3s
 
-`docker run` aceita limites nativos e deve usar sempre que o container for pesado:
+O cleanup de host nao executa prune no containerd do k3s e nao acessa
+`/var/lib/rancher/k3s`. Garbage collection de imagens e snapshots do cluster
+fica sob responsabilidade do kubelet/k3s e deve ser ajustado por politica do
+cluster, nao por scripts Podman do usuario.
 
-```bash
-docker run \
-  --cpus 2 \
-  --memory 6g \
-  --memory-swap 7g \
-  --device-read-bps /dev/sda:60mb \
-  --device-write-bps /dev/sda:30mb \
-  ...
-```
+### Docker legado
 
-### Docker build
-
-Aqui está a limitação importante.
-
-`docker build` roda dentro do `dockerd` root daemon. Então um `systemd-run --user` em volta do cliente **não** garante limite efetivo no builder.
-
-O que fazer:
-
-1. preferir `podman build` quando possível
-2. para Docker, usar builder dedicado / system slice root-level / `--cgroup-parent` depois de instalar a slice no escopo correto
-3. não assumir que `docker build` ficou protegido só porque foi chamado por uma shell limitada no user scope
+Docker nao faz parte do cleanup atual da frota. Referencias remanescentes no
+repo servem para inventario ou migracao de workloads antigos; novos builds e
+containers usam Podman, com migracao gradual para k3s.
 
 ## Observabilidade implementada
 
@@ -238,7 +225,7 @@ Os wrappers normalizam `XDG_RUNTIME_DIR=/run/user/<uid>` e
 Regra atual:
 
 - `profile=builds` agenda hygiene automaticamente
-- perfis fora de `builds` também agendam se o comando parecer de risco (`docker`, `podman`, `make`, `cargo`, `bun`, `npm`, `pnpm`, `yarn`, `next`, `vite`, `playwright`, `pip`, `uv`, etc.)
+- perfis fora de `builds` também agendam se o comando parecer de risco (`podman`, `make`, `cargo`, `bun`, `npm`, `pnpm`, `yarn`, `next`, `vite`, `playwright`, `pip`, `uv`, etc.)
 - `RG_PROFILE_BUILDS_SERIALIZE=1` limita a uma execução ativa; concorrentes
   aguardam no lock por até `RG_PROFILE_BUILDS_QUEUE_TIMEOUT_SEC`
 
@@ -248,7 +235,7 @@ Sequência agendada:
 2. snapshot leve após 15 min
 3. audit de rechecagem após 35 min
 
-Isto cobre não só Docker/Podman, mas também compiladores e instaladores que deixam cache/artifacts em disco.
+Isto cobre Podman, compiladores e instaladores que deixam cache/artifacts em disco.
 
 Os nomes são fixos:
 
@@ -270,7 +257,7 @@ métricas ficam em:
 
 - limpa caches regeneráveis (`codex-update-manager`, `ms-playwright`, `go-build`, `copilot`, `node-gyp`, `codex-desktop`, além de npm/bun/pnpm/pip)
 - roda `podman image prune -f` e `podman volume prune -f` (o `podman builder prune -f` não existe no podman 3.4.4 deste host)
-- roda `docker image prune -f` e `docker builder prune -f`
+- não chama Docker nem executa prune sobre containerd/k3s
 - trim de logs locais
 - **não** mexe em `/tmp` nem journal neste modo leve
 
@@ -291,7 +278,7 @@ Captura:
 - PSI `cpu/memory/io`
 - top CPU
 - top memória
-- quantidade de containers Docker/Podman rodando
+- quantidade de containers Podman rodando
 - alerts por threshold
 
 Saída:
@@ -314,7 +301,7 @@ Captura:
 
 - hotspots de `node_modules`, `.next`, `target`, `dist`, `.venv`, `data`
 - fixed paths grandes (`~/.cache/codex-update-manager`, `~/.rustup`, `~/.local/share/containers/storage`)
-- imagens Docker/Podman
+- imagens Podman
 - containers ativos
 - top CPU/mem no momento do audit
 
@@ -416,13 +403,11 @@ executa `daemon-reload`, habilita os timers do governor/inviolable e habilita
 apenas os services críticos do governor (`cgroup-init`, `watchdog`, `patcher`).
 Esse fluxo não para PM2, XRDP ou SSHD.
 
-### Fase 3 — hardening específico de Docker
+### Fase 3 — migracao gradual para k3s
 
-Se quiser proteção real para `docker build`, criar estratégia dedicada:
-
-- builder `buildx` próprio
-- slice root-level ou override de builder container
-- ou migração operacional dos builds para Podman
+Manter o resource governor nos builds Podman e tratar recursos dos workloads
+k3s por requests/limits Kubernetes. O cleanup Podman nao deve ser reutilizado
+para remover imagens, snapshots ou volumes do containerd.
 
 ## Watchdog contínuo
 

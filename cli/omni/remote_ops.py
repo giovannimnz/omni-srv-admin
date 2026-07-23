@@ -216,8 +216,6 @@ echo "-- apt/dpkg"
 ps -eo pid,comm,args | grep -E 'apt|dpkg|unattended|do-release' | grep -v grep || true
 echo "-- journal"
 journalctl --disk-usage 2>/dev/null || true
-echo "-- docker df"
-docker system df 2>/dev/null || true
 echo "-- podman df"
 podman system df 2>/dev/null || true
 echo "-- pm2 logs"
@@ -226,8 +224,8 @@ echo "-- home top"
 timeout 45s du -x -h -d1 "$HOME" 2>/dev/null | sort -h | tail -25 || true
 echo "-- varlog top"
 timeout 20s du -x -h -d1 /var/log 2>/dev/null | sort -h | tail -20 || true
-echo "-- container storage"
-du -sh "$HOME/.local/share/containers/storage" /var/lib/docker 2>/dev/null || true
+echo "-- podman storage"
+du -sh "$HOME/.local/share/containers/storage" 2>/dev/null || true
 echo "-- candidate bulky backups"
 find "$HOME" -xdev -maxdepth 1 \( -name 'pre-upgrade-24.04-backup' -o -name 'srv3-disk-relief-before-config-clone-*' -o -name '.config-clone-backups' -o -name '.backups' \) -exec du -sh {} \; 2>/dev/null | sort -h || true
 echo "-- large media-ish >100M"
@@ -308,17 +306,9 @@ fi
 log "phase=containers unused images/networks (no volumes by default)"
 if command -v podman >/dev/null 2>&1; then
   podman images -f dangling=true 2>/dev/null | tail -20 | tee -a "$LOG" || true
-  [ "$DRY_RUN" = "0" ] && podman image prune -af 2>&1 | tail -10 | tee -a "$LOG" || true
+  [ "$DRY_RUN" = "0" ] && podman image prune -f 2>&1 | tail -10 | tee -a "$LOG" || true
   [ "$DRY_RUN" = "0" ] && podman system prune -f 2>&1 | tail -10 | tee -a "$LOG" || true
   [ "$DRY_RUN" = "0" ] && [ "$INCLUDE_VOLUMES" = "1" ] && podman volume prune -f 2>&1 | tail -10 | tee -a "$LOG" || true
-fi
-if command -v docker >/dev/null 2>&1; then
-  docker images -f dangling=true 2>/dev/null | tail -20 | tee -a "$LOG" || true
-  [ "$DRY_RUN" = "0" ] && docker image prune -af 2>&1 | tail -10 | tee -a "$LOG" || true
-  [ "$DRY_RUN" = "0" ] && docker builder prune -af 2>&1 | tail -10 | tee -a "$LOG" || true
-  [ "$DRY_RUN" = "0" ] && docker container prune -f 2>&1 | tail -10 | tee -a "$LOG" || true
-  [ "$DRY_RUN" = "0" ] && docker network prune -f 2>&1 | tail -10 | tee -a "$LOG" || true
-  [ "$DRY_RUN" = "0" ] && [ "$INCLUDE_VOLUMES" = "1" ] && docker volume prune -f 2>&1 | tail -10 | tee -a "$LOG" || true
 fi
 
 log "phase=journal"
@@ -410,26 +400,29 @@ def remote_exec(host_id: str, cmd: tuple[str], timeout: int) -> None:
 @srv.command("cleanup")
 @click.argument("host_id")
 @click.option("--dry-run", is_flag=True, help="Simula sem modificar.")
+@click.option("--include-volumes", is_flag=True, help="Inclui volumes Podman sem uso. Desligado por padrão.")
 @click.option("--phase", default="all", help="Fase: 1=pods, 2=journal, 3=tmp, 4=caches, 5=logs, all")
-def remote_cleanup(host_id: str, dry_run: bool, phase: str) -> None:
+def remote_cleanup(host_id: str, dry_run: bool, include_volumes: bool, phase: str) -> None:
     """Executa limpeza remota via SSH."""
     path, ssh_target, hid = _find_host(host_id)
     
     click.echo(f"=== Cleanup {hid} (dry-run={'yes' if dry_run else 'no'}, phase={phase}) ===")
     click.echo(f"Host: {ssh_target}")
     
-    # Fase 1: Podman/Docker prune
+    # Fase 1: Podman prune. k3s/containerd storage is intentionally untouched.
     if phase in ("all", "1"):
-        click.echo("--- Fase 1: Container prune ---")
+        click.echo("--- Fase 1: Podman prune ---")
         if dry_run:
-            click.echo("  [dry-run] podman image prune -af && podman volume prune -f")
+            click.echo("  [dry-run] podman image prune -f")
+            if include_volumes:
+                click.echo("  [dry-run] podman volume prune -f")
         else:
-            for cmd, label in [
+            prune_commands = [
                 ("podman image prune -f 2>&1 | tail -3", "Podman img"),
-                ("podman volume prune -f 2>&1 | tail -3", "Podman vol"),
-                ("docker image prune -f 2>&1 | tail -3", "Docker img"),
-                ("docker builder prune -f 2>&1 | tail -3", "Docker build"),
-            ]:
+            ]
+            if include_volumes:
+                prune_commands.append(("podman volume prune -f 2>&1 | tail -3", "Podman vol"))
+            for cmd, label in prune_commands:
                 try:
                     r = _run_host(path, ssh_target, hid, cmd, timeout=120)
                     out = r.stdout.strip()[:120]

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Backup Dangling Docker Volumes + Podman Images → GDrive.
+Backup Dangling Podman Volumes + Images → GDrive.
 Robusto: state tracking, per-item timeout, single-pass pipeline, resume automático.
 
 Problemas corrigidos:
@@ -90,12 +90,12 @@ def mark_volume_failed(state, vol_name, error):
 
 def backup_volume(vol_name, mount_path):
     """
-    Backup single Docker volume using single-pass pipeline:
+    Backup single Podman volume using single-pass pipeline:
     tar czf - (reads + compresses) | pv -L 80M (rate-limit) > dest.tar.gz
     No intermediate files. No 3x I/O.
     """
     local_dest = LOCAL_TEMP / f"{vol_name}.tar.gz"
-    gdrive_dest = GDRIVE_BASE / "docker-volumes" / f"{vol_name}.tar.gz"
+    gdrive_dest = GDRIVE_BASE / "podman-volumes" / f"{vol_name}.tar.gz"
     
     # Ensure GDrive dir exists
     gdrive_dest.parent.mkdir(parents=True, exist_ok=True)
@@ -105,7 +105,7 @@ def backup_volume(vol_name, mount_path):
     
     # Check size for dynamic timeout
     size_bytes_out, _, _ = run_cmd(
-        f"sudo du -sb {shlex_quote(mount_path)} 2>/dev/null | awk '{{print $1}}'",
+        f"du -sb {shlex_quote(mount_path)} 2>/dev/null | awk '{{print $1}}'",
         timeout=10
     )
     try:
@@ -121,7 +121,7 @@ def backup_volume(vol_name, mount_path):
 
     # Single-pass pipeline: tar | pigz (parallel compress) | pv (I/O throttle) > file
     cmd = (
-        f"sudo tar cf - -C {shlex_quote(mount_path)} . 2>/dev/null "
+        f"tar cf - -C {shlex_quote(mount_path)} . 2>/dev/null "
         f"| {COMPRESS_CMD} "
         f"| pv -q -L {IO_RATE} -W "
         f"> {shlex_quote(str(local_dest))}"
@@ -221,16 +221,16 @@ def main():
         return
 
     log("=" * 65)
-    log("BACKUP DANGLING — Docker Volumes + Podman Images")
+    log("BACKUP DANGLING — Podman Volumes + Images")
     log(f"GDrive: {GDRIVE_BASE}")
     log(f"I/O limit: {IO_RATE}/s via pv")
     log(f"Per-item timeout: {ITEM_TIMEOUT}s")
     log(f"State: {STATE_FILE}")
     log("=" * 65)
 
-    # === FASE 1: Docker Volumes ===
-    log("\n=== FASE 1: Docker Volumes ===")
-    out, _, _ = run_cmd("sudo docker volume ls -qf dangling=true 2>/dev/null", timeout=10)
+    # === FASE 1: Podman Volumes ===
+    log("\n=== FASE 1: Podman Volumes ===")
+    out, _, _ = run_cmd("podman volume ls -qf dangling=true 2>/dev/null", timeout=10)
     volumes = [v for v in out.strip().split('\n') if v.strip()]
     log(f"Volumes dangling: {len(volumes)}")
 
@@ -247,7 +247,7 @@ def main():
             continue
 
         mount_out, _, _ = run_cmd(
-            f"sudo docker volume inspect {vol_name} --format '{{{{.Mountpoint}}}}' 2>/dev/null",
+            f"podman volume inspect {vol_name} --format '{{{{.Mountpoint}}}}' 2>/dev/null",
             timeout=10
         )
         mount_path = mount_out.strip()
@@ -259,7 +259,7 @@ def main():
         ok = backup_volume(vol_name, mount_path)
         if ok:
             mark_volume_done(state, vol_name, "?", 
-                           GDRIVE_BASE / "docker-volumes" / f"{vol_name}.tar.gz")
+                           GDRIVE_BASE / "podman-volumes" / f"{vol_name}.tar.gz")
             vol_ok += 1
         else:
             mark_volume_failed(state, vol_name, "backup failed")
@@ -317,8 +317,8 @@ def main():
 
     # === CLEANUP ===
     log("\n=== CLEANUP ===")
-    out, err, rc = run_cmd("sudo docker volume prune -f", timeout=60)
-    log(f"docker volume prune: {'OK' if rc == 0 else err[:100]}")
+    out, err, rc = run_cmd("podman volume prune -f", timeout=60)
+    log(f"podman volume prune: {'OK' if rc == 0 else err[:100]}")
 
     out, err, rc = run_cmd("podman image prune -f", timeout=60)
     log(f"podman image prune: {'OK' if rc == 0 else err[:100]}")

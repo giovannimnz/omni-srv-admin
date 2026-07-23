@@ -25,6 +25,7 @@ IPs publicos estiverem respondendo.
   grandes/antigos, imagens dangling e journal.
 - Volumes de containers nao entram por padrao. Use `--include-volumes` apenas
   depois de validar que nao ha volumes vivos.
+- Storage do k3s/containerd nao entra no cleanup automatico.
 - Backups grandes como `pre-upgrade-24.04-backup`,
   `srv3-disk-relief-before-config-clone-*`, `.config-clone-backups` e
   `.backups` entram como manual-review, nunca delete automatico.

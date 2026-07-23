@@ -158,24 +158,49 @@ cleanup_caches() {
     done
 }
 
-# === FASE 3: Podman/Docker build garbage ===
+# === FASE 3: Podman build garbage ===
 cleanup_podman() {
-    log "FASE 3 — Podman/Docker build garbage"
+    local podman_bin="/usr/bin/podman"
+    local build_lock="$HOME/.local/state/omni/resource-governor-builds.lock"
+    local prune_lock="$HOME/.local/state/omni/podman-prune.lock"
+    local before after
+    local build_lock_fd prune_lock_fd
+
+    log "FASE 3 — Podman build garbage"
+
+    if [[ ! -x "$podman_bin" ]]; then
+        log "  SKIP podman prune: $podman_bin indisponivel"
+        return 0
+    fi
 
     if [[ "$DRY_RUN" = "1" ]]; then
-        local count=$(podman images -f dangling=true -q 2>/dev/null | wc -l)
+        local count=$($podman_bin images -f dangling=true -q 2>/dev/null | wc -l)
         log "  DRY podman image prune: $count dangling images"
-        local docker_count=$(docker images -f dangling=true -q 2>/dev/null | wc -l)
-        log "  DRY docker image prune: $docker_count dangling images"
-    else
-        podman image prune -f 2>&1 | tail -3 | tee -a "$LOG"
-        if podman system prune --help >/dev/null 2>&1; then
-            log "  podman builder prune indisponível nesta versão; mantendo image/volume prune conservador"
-        fi
-        podman volume prune -f 2>&1 | tail -3 | tee -a "$LOG"
-        docker image prune -f 2>&1 | tail -3 | tee -a "$LOG" || true
-        docker builder prune -f 2>&1 | tail -3 | tee -a "$LOG" || true
+        return 0
     fi
+
+    # Do not race an active build. The post-build unit declares BUILD_LOCK_HELD=1
+    # because it already owns this lock before invoking this script.
+    if [[ "${BUILD_LOCK_HELD:-0}" != "1" ]]; then
+        exec {build_lock_fd}>"$build_lock"
+        if ! flock -sn "$build_lock_fd"; then
+            log "  SKIP podman prune: build ativo ou aguardando lock"
+            return 0
+        fi
+    fi
+
+    # Serialize pruning itself so weekly, daily, and post-build cleanup cannot overlap.
+    exec {prune_lock_fd}>"$prune_lock"
+    if ! flock -n "$prune_lock_fd"; then
+        log "  SKIP podman prune: outra limpeza ja esta em execucao"
+        return 0
+    fi
+
+    before=$($podman_bin system df --format '{{.Size}}' 2>/dev/null | head -1 || true)
+    $podman_bin image prune -f 2>&1 | tail -3 | tee -a "$LOG"
+    $podman_bin volume prune -f 2>&1 | tail -3 | tee -a "$LOG"
+    after=$($podman_bin system df --format '{{.Size}}' 2>/dev/null | head -1 || true)
+    log "  Podman antes/depois: ${before:-indisponivel} -> ${after:-indisponivel}"
 }
 
 # === FASE 4: Logs locais ~/.logs (trim + retenção 15d) ===

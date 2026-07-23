@@ -291,45 +291,18 @@ def analyze_disk_deep():
         except ValueError:
             pass
 
-    # Podman builder cache (may not exist on older Podman)
-    out, _, _ = run_cmd("podman system df 2>/dev/null | grep 'Build cache' | awk '{print $4}'", timeout=5)
-    if out and 'B' in out:
-        reclaimable.append({
-            "source": "podman-build-cache",
-            "action": "podman builder prune -f 2>/dev/null || true",
-            "desc": "Podman build cache"
-        })
-
-    # Docker dangling images
+    # Unused Podman volumes are reported for explicit review only.
     out, _, _ = run_cmd(
-        "sudo docker images --filter dangling=true --format '{{.Size}}' 2>/dev/null | "
-        "grep -oP '\\d+' | awk '{sum+=$1} END {print sum}'",
-        timeout=10
-    )
-    # Simpler approach: just prune and check
-    out, _, _ = run_cmd(
-        "sudo docker image prune -af 2>&1 | grep 'Total reclaimed space' | grep -oP '[\\d.]+[KMG]?B'",
-        timeout=30
-    )
-    if out and out.strip():
-        reclaimable.append({
-            "source": "docker-dangling",
-            "action": "sudo docker image prune -af",
-            "desc": f"Docker dangling images ({out.strip()})"
-        })
-
-    # Unused Docker volumes
-    out, _, _ = run_cmd(
-        "sudo docker volume ls -qf dangling=true 2>/dev/null | wc -l",
+        "podman volume ls -qf dangling=true 2>/dev/null | wc -l",
         timeout=5
     )
     if out and out.strip():
         count = int(out.strip())
         if count > 0:
             reclaimable.append({
-                "source": "docker-volumes",
-                "action": "sudo docker volume prune -f",
-                "desc": f"Docker unused volumes ({count} encontrados)"
+                "source": "podman-volumes",
+                "action": "podman volume prune -f",
+                "desc": f"Podman unused volumes ({count} encontrados; revisar antes de aplicar)"
             })
 
     # Snap cache (old revisions)
