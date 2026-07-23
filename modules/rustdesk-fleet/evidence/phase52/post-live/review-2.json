@@ -1,0 +1,14 @@
+{
+  "checkout_after": "6f76711a2269b8dd6a2fe8b221b4a334e0e87ab340278456d378cf7c3357f9be",
+  "checkout_before": "6f76711a2269b8dd6a2fe8b221b4a334e0e87ab340278456d378cf7c3357f9be",
+  "checkout_mode": "read-only",
+  "findings": [],
+  "hash_set_sha256": "6139c7fcbd524d4adf510b4dcc377ee753bbc5a6c7348c9d0d1ea2b3e2dcbf90",
+  "mutation_detected": false,
+  "reviewer_id": "fresh-reviewer-52-08-f",
+  "schema_anchor": "phase52_post_live_successor_v1",
+  "secret_material_present": false,
+  "source_freeze_commit": "6bb2e0abad5cad3eb1ff750bcb92130c06ee0f6c",
+  "unresolved_high_count": 0,
+  "verdict": "PASS"
+}
