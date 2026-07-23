@@ -24,17 +24,18 @@ runtime ou rede interna.
 ## Current Delivery Track
 
 **Current milestone:** v1.8 - Runtime Trust and Codex Delivery Convergence
-**Current phase:** 48 - Codex OAuth and Wayland Remote ACP Convergence
-**Current objective:** liberar ownership concorrente e corrigir drift de
-runtime/validacao em Router, Wayland e codex-acp para entao fechar a lane
-Codex/Wayland na ordem OAuth + native ACP -> remote ACP -> Headroom canary, sem
-reabrir fases historicas.
+**Current phase:** 47.1 - Internal DNS Authority and FreeIPA Convergence
+**Current objective:** planejar e executar a autoridade FreeIPA, o forwarding
+CoreDNS/AdGuard e o split DNS deterministico antes do owner-host trust de
+48-03; a lane independente de Phase 48 plans 48-01/48-02 pode continuar sem
+Headroom e sem competir com a correcao `oci_admin_http`.
 
 **Canonical delivery order:**
 
 - Phase 46 - planning reconciliation (complete)
 - Phase 47 - PKI listener/trust closeout (complete; continues 44-02/44-03)
-- Phase 48 - Router Codex OAuth + Wayland local/remote ACP convergence (current; blocked on revoked OAuth, runtime drift and test-executor repair)
+- Phase 47.1 - FreeIPA authoritative internal DNS plus CoreDNS/AdGuard convergence (current prerequisite for 48-03)
+- Phase 48 - Router Codex OAuth + Wayland local/remote ACP convergence (48-01/48-02 may continue; 48-03+ blocked on 47.1)
 - Phase 49 - Headroom isolated canary and Wayland integration
 - Phase 50 - SSO publication/logout/RBAC closeout (continues 42-03)
 
@@ -73,6 +74,7 @@ depois de restore/failover real.
 ### v1.8 - Planning / Codex / Wayland
 
 - [x] **PLN-01..PLN-05**: ordem historica/ativa e validacao por fase reconciliadas na Phase 46.
+- [ ] **IDA-01..IDA-08**: FreeIPA, CoreDNS, AdGuard, A/PTR/SRV, split DNS, host keys, HA gate e rollback convergem na Phase 47.1.
 - [ ] **WAC-01..WAC-08**: OAuth Codex, catalogo e local/remote ACP convergem sem Headroom na Phase 48.
 - [ ] **HDR-01..HDR-08**: Headroom passa canario isolado, ACP, Wayland e rollback na Phase 49.
 
@@ -134,7 +136,9 @@ depois de restore/failover real.
 - `wg100` / `10.100.100.0/24` is reserve fallback only.
 - `10.1.1.0/24` is retired and must not be reintroduced as active DNS,
   service routing, validation, or rollback path.
-- `oci-admin` is the dependency owner for DRG route/security/private-IP proof.
+- `oci-admin` is the dependency owner for DRG route/security/private-IP proof;
+  Phase 47.1 consumes a read-only snapshot and requires an approved OperationPlan
+  before assigning the dedicated FreeIPA DNS secondary private IP.
 - `home-proxy` / residential PPTP is home-edge fallback only; it must not
   redefine internal DNS or DRG routing.
 - Wayland on `atius-srv-3` must expose GSD as skills/commands, not runtime
@@ -168,6 +172,7 @@ depois de restore/failover real.
 | TEI stays private behind router alias | Avoid self-loop and uncontrolled public exposure | Active |
 | Codex runtime baseline stays lean | Reduce noisy MCP bootstrap and optional dependency failure | Shipped in Phase 43 |
 | Internal DNS is DRG-first | DRG is faster and hardware-free; WireGuard is fallback only | Shipped in Phase 45 |
+| FreeIPA owns `atius.internal` authority | Preserve A/PTR/SRV/Kerberos/SSSD in one source while CoreDNS and AdGuard remain resolver frontends | Planned in Phase 47.1 |
 | Phase planning lives in `.planning` | Avoid stale execution order in docs/runbooks | Reconciled in Phase 46 |
 | RustDesk v1.9 starts OSS and direct-first | Five-host single-operator scope does not require Pro control plane; relay remains testable fallback | Pending validation; Pro becomes mandatory if SSO/RBAC/human audit is required |
 | RustDesk uses isolated GSD workstream | Preserve Phase 48 and prevent cross-lane planning mutations | Workstreams migrated with external snapshot on 2026-07-19 |

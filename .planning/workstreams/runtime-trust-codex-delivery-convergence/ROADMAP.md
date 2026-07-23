@@ -656,6 +656,74 @@ through the ordered v1.8 phases 50 and 47 respectively.
 
 **Current open gate:** `44-02` and `44-03` remain blocked on explicit live CA/trust mutation approval and the full 4x4 verification rollout.
 
+### Phase 51: Qwen3 Embedding e Rerank Podman para k3s
+
+**Goal:** Operar Qwen3 Embedding e Rerank como canary ARM64 isolado no k3s, com GTE titular preservado, pipeline global de dois ciclos, índices Qdrant 1024d reversíveis e evidência funcional, de qualidade, capacidade e soak de 72 horas antes de qualquer promoção manual.
+**Requirements**: Nenhum ID de requisito atribuído; rastreabilidade por D-01..D-24 e gates de `51-VALIDATION.md`.
+**Depends on:** Phase 50; Phase 41 e fundações atuais do router/GTE/Qdrant permanecem contexto técnico obrigatório. Wave 0 resolve topologia, endpoints e consistência antes de implementação. Coordenar com a Phase 52 para que o endpoint privado inventariado seja a fonte autoritativa caso a migração de IP ocorra primeiro.
+**Plans:** 9 plans
+
+**Success Criteria:**
+
+1. GTE permanece titular, com aliases, namespace `ebeddings-local` e índices 768d intactos durante toda a fase.
+2. `qwen-canary` executa embedding TEI/OrtBackend exato em mean/1024d com 2×500m e reranker q8 dedicado após warmup de 1 pod em 2×500m, sem `hostNetwork` e com NodePorts privados.
+3. O router admite no máximo dois ciclos completos Embedding→VectorDB→Rerank, usa `pipeline_id`, prioriza continuação de rerank e libera leases exatamente uma vez em sucesso, erro, cancelamento e TTL.
+4. As três collections Qdrant exatas são 1024d/Cosine, possuem assinatura de embedding e corpus/chunk/logical IDs equivalentes, sem misturar ou preencher vetores GTE 768d.
+5. Smokes passam para saúde, batch 1/4, dimensão, normalização, cosine ≥0.9999, rerank nativo/público, três ciclos concorrentes, falhas, alcance privado e isolamento GTE.
+6. Recall@20 e nDCG@10 não ficam abaixo de GTE globalmente nem nos slices PT técnico/código; CPU-seconds/1.000 tokens é ≤1.05× GTE em pelo menos cinco rounds warm, sem OOM, restart ou starvation.
+7. Uma janela GTE-only válida encerrada antes da Wave 0 congela métricas, proveniência e bandas numéricas em `51-GTE-BASELINE-FREEZE.json` antes de qualquer resultado live Qwen; contrato, freeze e gate ficam imutáveis, enquanto readbacks plan-scoped revalidam hashes/topologia/pins/aliases durante e após o soak contínuo ≥72h.
+8. Rollback atômico é exercitado sem reindex emergencial e uma decisão manual explícita é registrada; a Phase 51 não promove Qwen automaticamente.
+
+Plans:
+
+**Wave 0**
+
+- [ ] 51-01-PLAN.md — Harness, inventário live, baseline GTE-only numérico congelado, artefatos imutáveis e decisão de estado dos leases
+
+**Wave 1** *(blocked on Wave 0 completion)*
+
+- [ ] 51-02-PLAN.md — Reranker dedicado q8: contratos TDD, limites, lifecycle, imagem ARM64 e warmup
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 51-03-PLAN.md — Manifests com init-download per-pod e rollout controlado do namespace `qwen-canary`
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 51-04-PLAN.md — Catálogo/router/governor com aliases canary, `/v1/rerank` e dois slots de pipeline
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 51-05-PLAN.md — Collections Qdrant 1024d, reindex idempotente e aliases/rollback atômicos
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 51-06-PLAN.md — Smokes funcionais, concorrência, cancel/TTL, alcance privado e isolamento GTE
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 51-07-PLAN.md — Avaliação pareada de qualidade e capacidade com corpus/qrels congelados
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 51-08-PLAN.md — Imagem ARM64 de soak, suspensão serializada do dual-index e dispatch terminal `external_job_waiting`
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
+- [ ] 51-09-PLAN.md — Rollback drill, restore/replay do dual-index, runbook/guards/knowledge e decisão manual sem promoção
+
+**Execution Waves:**
+
+- Wave 0: 51-01
+- Wave 1: 51-02
+- Wave 2: 51-03
+- Wave 3: 51-04
+- Wave 4: 51-05
+- Wave 5: 51-06
+- Wave 6: 51-07
+- Wave 7: 51-08
+- Wave 8: 51-09
+
 ---
 
 ## Milestone v1.7: Internal DNS and DRG Canonicalization
@@ -736,13 +804,16 @@ operational order without rewriting historical phase identifiers: reconcile
 planning, close service PKI, converge native Codex OAuth plus remote ACP, add
 Headroom through an isolated canary, then close the SSO publication carry-over.
 
-**Execution lanes:** Phases 46-47 are complete. Phase 48 is the current
-Codex/Wayland infrastructure gate. Phase 49 remains the isolated Headroom lane. Phase 50 closes
-the independent SSO carry-over after PKI. A phase cannot bypass its own stop
-conditions merely because another lane is ready.
+**Execution lanes:** Phases 46-47 are complete. Inserted Phase 47.1 is the
+urgent internal-DNS authority prerequisite for Phase 48 plan 48-03 and later
+owner-local transport work; Phase 48 plans 48-01/48-02 may continue in their
+independent OAuth/ACP lane. Phase 49 remains the isolated Headroom lane. Phase
+50 closes the independent SSO carry-over after PKI. A phase cannot bypass its
+own stop conditions merely because another lane is ready.
 
 - [x] Phase 46: Planning Surface Reconciliation and Validation Architecture
 - [x] Phase 47: Internal Service PKI Listener and Trust Closeout
+- [ ] Phase 47.1: Internal DNS Authority and FreeIPA Convergence (INSERTED)
 - [ ] Phase 48: Codex OAuth and Wayland Remote ACP Convergence
 - [ ] Phase 49: Wayland Codex Headroom Canary and Integration
 - [ ] Phase 50: Atius-wide SSO Publication Closeout
@@ -778,19 +849,135 @@ fleet automation.
 **Validation:** `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/47-internal-service-pki-closeout/47-VALIDATION.md`
 **Verification:** `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/47-internal-service-pki-closeout/47-VERIFICATION.md`
 
+### Phase 47.1: Internal DNS Authority and FreeIPA Convergence (INSERTED)
+
+**Goal:** Make FreeIPA the single authoritative source for `atius.internal`,
+the four OCI/DRG reverse zones and IdM service discovery, while CoreDNS remains
+the canonical DRG resolver at `10.11.1.11` and AdGuard remains the filtering
+resolver through explicit conditional forwarding and reversible client cutover.
+**Requirements:** IDA-01, IDA-02, IDA-03, IDA-04, IDA-05, IDA-06, IDA-07, IDA-08
+**Depends on:** Phase 45 closeout evidence, Phase 47, canonical
+`inventory/hosts/*.yaml`, and read-only OCI/DRG private-IP, route and security
+proof from `oci_admin_http` before any live network mutation.
+**Blocks:** Phase 48 plan 48-03 and therefore 48-04..48-06. Phase 48 plans
+48-01/48-02 and the separate `oci_admin_http` MCP correction may continue.
+**Status:** Planned - ready to execute before Phase 48 plan 48-03
+**Risk:** HIGH - authoritative DNS, FreeIPA, resolver and reverse-zone mistakes
+can break Kerberos/SSSD, Vault, internal services and every owner-host alias.
+**Plans:** 0/8 complete
+
+- [ ] 47.1-01 - Build the declarative authority model, reconciler CLI, sanitized fixtures and focused validator tests.
+- [ ] 47.1-02 - Discover exact targets/owners, capture backups and OCI proof, approve the OperationPlan and publish the private endpoint.
+- [ ] 47.1-03 - Converge direct FreeIPA forward/reverse authority, srv-3 FQDN and four SSSD host-key records.
+- [ ] 47.1-04 - Establish a distinct replica/equivalent failure domain and prove primary-loss recovery before any cutover.
+- [ ] 47.1-05 - Cut CoreDNS over to the resilient FreeIPA authority with canary, fail-closed NXDOMAIN and rollback.
+- [ ] 47.1-06 - Cut AdGuard over through conditional forwarding without overwriting its dirty checkout or creating duplicate authority.
+- [ ] 47.1-07 - Roll out manifest-bound Linux route-only DNS, Windows NRPT and edge-client policy with per-target rollback.
+- [ ] 47.1-08 - Run the final matrix, rollback/latency proof and durable closeout, then emit the Phase 48 release gate.
+
+**Wave 1 - Declarative foundation**
+
+- [ ] 47.1-01 - Desired-state schema, reconciler and tests.
+
+**Wave 2 *(blocked on Wave 1 completion)* - Discovery, backup and OCI gate**
+
+- [ ] 47.1-02 - Exact target manifest, backups, OperationPlan and private endpoint.
+
+**Wave 3 *(blocked on Wave 2 completion)* - Direct authority and host identity**
+
+- [ ] 47.1-03 - FreeIPA A/PTR/SOA/NS/SRV/TXT, FQDN and SSSD key convergence.
+
+**Wave 4 *(blocked on Wave 3 completion)* - Resilience before cutover**
+
+- [ ] 47.1-04 - Replica/equivalent failure domain and primary-loss recovery PASS.
+
+**Wave 5 *(blocked on Wave 4 completion)* - CoreDNS frontend**
+
+- [ ] 47.1-05 - CoreDNS conditional forwarding, canary and rollback.
+
+**Wave 6 *(blocked on Wave 5 completion)* - AdGuard frontend**
+
+- [ ] 47.1-06 - AdGuard conditional forward/local PTR cutover under dirty-owner gate.
+
+**Wave 7 *(blocked on Wave 6 completion)* - Client split DNS**
+
+- [ ] 47.1-07 - Linux, Windows and edge rollout from the approved target manifest.
+
+**Wave 8 *(blocked on Wave 7 completion)* - Matrix, rollback and release**
+
+- [ ] 47.1-08 - Full evidence, durable closeout and non-bypassable `47.1-RELEASE-GATE.json`.
+
+**Canonical refs:**
+
+- `.planning/phases/47.1-internal-dns-authority-and-freeipa-convergence/47.1-CONTEXT.md`
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-CONTEXT.md`
+- `.planning/phases/45-internal-dns-drg-canonicalization/45-VALIDATION.md`
+- `.planning/phases/48-codex-oauth-wayland-acp-convergence/48-03-PLAN.md`
+- `inventory/hosts/*.yaml`
+- `docs/operations/ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md`
+- `docs/domain/freeipa-dns-client-enrollment.md`
+
+**Success Criteria:**
+
+1. FreeIPA is authoritative for `atius.internal` and the exact reverse zones
+   `1.11.10.in-addr.arpa`, `1.12.10.in-addr.arpa`,
+   `1.13.10.in-addr.arpa`, and `1.21.10.in-addr.arpa`; SOA, NS and existing
+   LDAP/Kerberos SRV/TXT records remain valid.
+
+2. A/PTR identity is exact and symmetric:
+   `atius-srv-1.atius.internal -> 10.11.1.11`,
+   `atius-srv-2.atius.internal -> 10.12.1.12`,
+   `atius-srv-3.atius.internal -> 10.13.1.13`, and
+   `horistic-srv.atius.internal -> 10.21.1.21`; no `.0.*` host address or
+   active `10.1.1.*` path is introduced.
+
+3. FreeIPA DNS is exposed privately through a dedicated secondary IP in
+   `10.13.1.0/24` selected and approved by an OCI OperationPlan; the plan does
+   not guess an address, repurpose `10.13.1.13`, expose DNS publicly or depend
+   on the Podman-only `10.89.53.10` outside srv-3.
+
+4. CoreDNS at `10.11.1.11` and AdGuard forward only `atius.internal` plus the
+   four private reverse zones to FreeIPA; public recursion/filtering remains
+   AdGuard-owned, and AdGuard rewrites/hosts-file inheritance never become the
+   internal source of truth.
+
+5. Linux route-only DNS, Windows NRPT and edge-client FQDN resolution are
+   deterministic; public DNS is not a co-equal resolver for the internal
+   namespace and internal NXDOMAIN never leaks to a public fallback.
+
+6. A canary name absent from `/etc/hosts`, AdGuard rewrites and CoreDNS static
+   hosts proves the authoritative path before duplicate FQDN compatibility
+   records are removed; every live change has backup, bounded TTL/cache flush,
+   one-host rollback and fail-closed evidence.
+
+7. `atius-srv-3` returns the exact FQDN from `hostname -f`; FreeIPA/SSSD
+   publishes the four host keys, and `ubuntu@atius-srv-3.atius.internal` remains
+   explicit local identity metadata rather than a self-SSH target.
+
+8. Failure-domain/replica readiness is proved before DNS or authentication
+   becomes hard-dependent on one FreeIPA container, and final `dig`, `getent`,
+   `resolvectl`, `Resolve-DnsName`/`nslookup`, TCP/UDP 53, host-key and rollback
+   evidence is recorded without secrets.
+
 ## Phase 48: Codex OAuth and Wayland Remote ACP Convergence
 
-**Goal:** Make native Codex OAuth, models and local/remote ACP reliable before any proxy layer is introduced.
-**Requirements:** WAC-01, WAC-02, WAC-03, WAC-04, WAC-05, WAC-06, WAC-07, WAC-08
+**Goal:** Make native Codex OAuth, models, local/remote ACP and owner-host development transport reliable before any proxy layer is introduced.
+**Requirements:** WAC-01, WAC-02, WAC-03, WAC-04, WAC-05, WAC-06, WAC-07, WAC-08, WAC-09, WAC-10
 **Depends on:** Router Phase 32 completion, ownership release from sessions
 `019f3e9a-9964-7912-a982-65596e9954d3` and
 `019f2ba1-1982-7c03-a17d-3ce28c589ac1`, native Codex model parity
-**Status:** Current - target ownership, native gpt-5.6-sol and Wayland port 25725 parity pass; Router Phase 32 evidence, CPU-capped Go executor repair and full local/remote ACP lifecycle remain
+**Plan dependency:** Phase 47.1 must be complete before 48-03 starts; 48-01 and
+48-02 remain independent of that DNS-authority gate.
+**Status:** Current - target ownership, native gpt-5.6-sol and Wayland port 25725 parity pass; Router Phase 32 evidence, CPU-capped Go executor repair, full local/remote ACP lifecycle and owner-local transport convergence remain
 **Risk:** HIGH - auth or ACP regressions can break every Wayland Codex session.
-**Plans:** 0/2 complete
+**Plans:** 0/6 complete
 
 - [ ] 48-01 - Reconcile Router evidence, renew native ubuntu OAuth, and prove native plus local ACP without Headroom.
 - [ ] 48-02 - Prove authenticated remote WSS, Wayland Chromium lifecycle, and sanitized closeout before Phase 49 can open.
+- [ ] 48-03 - Consume the completed Phase 47.1 DNS/FreeIPA authority, then deploy strict encrypted owner aliases with additive inventory metadata and rollback.
+- [ ] 48-04 - Protect the Wayland fork paths, install pinned owner-native ACP launchers, and add ACP stdio-over-SSH with separate `agentCwd`.
+- [ ] 48-05 - Add default-off per-conversation owner-local routing and containment-safe UI path mapping while active work stays owner-native.
+- [ ] 48-06 - Run fork-sync, CPU-capped/headless fleet validation, latency/resource/failure benchmarks, rollback, and durable closeout.
 
 **Validation:** `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/48-codex-oauth-wayland-acp-convergence/48-VALIDATION.md`
 
@@ -851,11 +1038,12 @@ multiple production applications.
 | 45 | Internal DNS and DRG Canonicalization | DRG/OCI DNS, resolver and service endpoint canonicalization | DNS-01..DNS-08 | Complete | HIGH |
 | 46 | Planning Surface Reconciliation | Historical registry, active order and validation architecture | PLN-01..PLN-05 | Complete | MEDIUM |
 | 47 | Internal Service PKI Closeout | Listener leaf/chain binding and trust proof | PKI-01..PKI-08 | Complete 2026-07-12 | HIGH |
-| 48 | Codex OAuth and Wayland ACP Convergence | Router OAuth, native Codex and remote ACP parity | WAC-01..WAC-08 | Executing | HIGH |
+| 47.1 | Internal DNS Authority and FreeIPA Convergence | Authoritative FreeIPA A/PTR/SRV, CoreDNS/AdGuard forwarding and deterministic split DNS | IDA-01..IDA-08 | Planning; blocks 48-03 | HIGH |
+| 48 | Codex OAuth and Wayland ACP Convergence | Router OAuth, native Codex, remote ACP and owner-local parity | WAC-01..WAC-10 | Executing | HIGH |
 | 49 | Wayland Codex Headroom | Isolated canary, ACP integration and rollback | HDR-01..HDR-08 | Blocked by Phase 48 | HIGH |
 | 50 | Atius-wide SSO Closeout | Remaining publication, redirect, logout and RBAC gate | SSO-01..SSO-06 | Queued after Phase 49 | HIGH |
 
-**Active v1.8:** 5 phases | 2 complete / 1 executing / 2 queued or gated
+**Active v1.8:** 6 phases | 2 complete / 1 planning / 1 executing / 2 queued or gated
 
 ### Scope addendum - 2026-06-24
 

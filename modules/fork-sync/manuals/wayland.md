@@ -1,8 +1,8 @@
 ---
 project: wayland
-version: 1
+version: 5
 created: 2026-07-04
-last_updated: 2026-07-04
+last_updated: 2026-07-19
 owner_module: omni-srv-admin/modules/fork-sync
 ---
 
@@ -57,6 +57,14 @@ ser escolhida enquanto o caminho OCI/DRG estiver disponível.
   do usuário de serviço em vez de uma predefinição Wayland.
 - No mobile, os controles do composer e os intent pills quebram linha de forma
   visível; não dependem de scroll horizontal escondido.
+- Chats abertos a partir de projetos, inclusive em workspaces NFS, permanecem
+  visíveis na lista e no badge global de Recent Chats e agrupados sob o nome do
+  projeto mesmo com `customWorkspace=false`; chats de team continuam isolados
+  da lateral global.
+- Cards de Projects e cabeçalhos de pasta em Recent Chats exibem o computador
+  dono à direita. A bolinha verde aparece apenas quando o path local existe ou
+  há um mount NFS real ativo; o placeholder `autofs` isolado não conta como
+  conectado.
 - O fork remoto existe em `https://github.com/giovannimnz/wayland`.
 - `origin` do checkout local aponta para esse fork, e `upstream` permanece em
   `FerroxLabs/wayland`.
@@ -82,7 +90,7 @@ PYTHONPATH=modules/fork-sync/cli python3 -m fork_sync sync wayland
 
 ## 5. Protected paths
 
-Os paths protegidos carregam 4 grupos de customização:
+Os paths protegidos carregam 6 grupos de customização:
 
 1. Runtime standalone source:
    `package.json`, `scripts/build-server.mjs`, `scripts/build-mcp-servers.js`,
@@ -129,14 +137,29 @@ Os paths protegidos carregam 4 grupos de customização:
    `src/renderer/components/layout/Sider/Sider.module.css`,
    `src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css`,
    `src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css`,
+   `src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.tsx`,
    `src/renderer/components/layout/Sider/SiderFooter.tsx`,
    `src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css`,
    `src/renderer/components/layout/Sider/index.tsx`,
+   `src/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync.ts`,
+   `src/renderer/pages/conversation/GroupedHistory/index.tsx`,
+   `src/renderer/pages/conversation/GroupedHistory/utils/groupingHelpers.ts`,
+   `src/renderer/components/workspace/WorkspaceComputerIndicator.tsx`,
+   `src/renderer/hooks/useWorkspaceComputerStatuses.ts`,
+   `src/renderer/pages/projects/ProjectsListPage.tsx`,
+   `src/renderer/pages/projects/components/ProjectCard.tsx`,
+   `src/common/utils/workspaceComputer.ts`,
+   `src/process/bridge/projectBridge.ts`,
+   `src/process/services/workspaceComputerStatus.ts`,
    `src/renderer/pages/guid/components/AgentPillBar.tsx`,
    `src/renderer/pages/guid/index.module.css`,
    `src/renderer/pages/guid/components/newChatStarter/IntentPillBar.module.css`,
    `src/renderer/styles/layout.css`,
    `tests/unit/AgentPillBar.dom.test.tsx`,
+   `tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx`,
+   `tests/unit/renderer/groupingHelpers.test.ts`,
+   `tests/unit/workspaceComputerStatus.test.ts`,
+   `tests/unit/WorkspaceComputerIndicator.dom.test.tsx`,
    `tests/unit/renderer/guidModelSelector.dom.test.tsx`,
    `tests/unit/useGuidSend.dom.test.ts`.
 5. i18n da personalização:
@@ -144,7 +167,8 @@ Os paths protegidos carregam 4 grupos de customização:
    `src/renderer/services/i18n/locales/*/agentMode.json`,
    `src/renderer/services/i18n/locales/*/conversation.json`.
 6. Documentação do fork:
-   `docs/README.md`, `docs/guides/atius-fork-runtime.md`, `.gitignore`.
+   `design-qa.md`, `docs/README.md`, `docs/guides/atius-fork-runtime.md`,
+   `.gitignore`.
 
 ## 6. Patch refresh
 
@@ -162,7 +186,9 @@ Ele regenera `patches/atius-webui-workspace-visible.patch` a partir do delta
 atual entre `HEAD` e `upstream/main`, limitado aos arquivos protegidos que o
 auto-patcher sabe reaplicar. Esse patch agora cobre o browser picker, modelo
 separado de esforço, `config.toml` mode, Hermes effort e correções mobile da
-GUID, incluindo sidebar sem overflow horizontal e resize persistido.
+GUID, incluindo sidebar sem overflow horizontal, resize persistido e chats de
+projeto preservados e agrupados pelo projeto na lista global de Recent Chats,
+incluindo o indicador do computador dono e seu status de mount.
 
 No `fork-sync`, o `post_sync` roda:
 
@@ -195,6 +221,8 @@ cd /home/ubuntu/GitHub/wayland
 bash scripts/atius-refresh-source-patch.sh --commit-if-changed
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/WebSocketManager.test.ts tests/unit/renderer/GuidActionRow.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/guid/firstSafeCuratedModel.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx tests/unit/renderer/groupingHelpers.test.ts
+NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/workspaceComputerStatus.test.ts tests/unit/WorkspaceComputerIndicator.dom.test.tsx
 NODE_OPTIONS=--max-old-space-size=4096 ./node_modules/.bin/vitest run tests/unit/AcpAgentManagerSkillInjection.test.ts tests/unit/AgentPillBar.dom.test.tsx tests/unit/renderer/guidModelSelector.dom.test.tsx tests/unit/useGuidSend.dom.test.ts tests/unit/process/task/codexNativeSandbox.test.ts tests/unit/process/task/codexConfigEffort.test.ts
 npm run typecheck
 bash scripts/atius-build-renderer-overlay.sh
@@ -211,7 +239,7 @@ journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "Agen
   customização ATIUS.
 - Não manter `patches/atius-webui-workspace-visible.patch` stale; regenere com
   `scripts/atius-refresh-source-patch.sh` sempre que mudar a personalização do
-  browser picker.
+  browser picker, sidebar ou Recent Chats.
 - Não remover `protected_paths` só porque upstream convergiu visualmente; validar
   antes o comportamento em `wayland.atius.com.br`.
 - Não trocar o post-install hook do runtime sem atualizar o inventário do
@@ -223,3 +251,7 @@ journalctl -u wayland.service --since "5 minutes ago" --no-pager | grep -E "Agen
 |--------|------|---------|
 | 1 | 2026-07-04 | Criação inicial do lane `wayland` no fork-sync |
 | 2 | 2026-07-05 | Proteção da GUID com modelo/esforço separados, Hermes effort, Codex `config.toml`, acessibilidade do AgentPillBar e mobile wrap |
+| 3 | 2026-07-19 | Proteção de chats de projeto na lista global de Recent Chats e dos testes focados correspondentes |
+| 4 | 2026-07-19 | Agrupamento de chats sob o nome do Project mesmo quando o workspace NFS foi criado com `customWorkspace=false` |
+| 5 | 2026-07-19 | Computador dono e status conectado nos cards de Projects e grupos de Recent Chats |
+| 6 | 2026-07-19 | Indicador conectado alinhado visualmente ao Codex, com verde de sucesso explícito, 8 px e QA headless preservado no fork |

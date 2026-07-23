@@ -25,6 +25,12 @@ Wayland treats these mounted GitHub trees as hybrid workspaces:
 - reserve `10.100.100.0/24` addresses are not the primary execution path when
   the OCI/DRG alias is available
 
+The planned Phase 48 owner-local metadata follows the canonical identity
+matrix in `ATIUS-INTERNAL-DNS-AND-CLOUDFLARE-MANUAL.md`. In particular,
+`atius-srv-3.atius.internal` remains `mode: local` at `10.13.1.13`, but its
+explicit owner user is `ubuntu` and its owner workspace is
+`/home/ubuntu/GitHub`; no self-SSH alias is created.
+
 ## Security contract
 
 Each remote export is restricted to `10.13.1.13` and uses:

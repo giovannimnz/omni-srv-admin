@@ -2,24 +2,25 @@
 gsd_state_version: 1.0
 milestone: v1.8
 milestone_name: Runtime Trust and Codex Delivery Convergence
-current_phase: 48
-current_phase_name: Codex OAuth and Wayland Remote ACP Convergence
+current_phase: 47.1
+current_phase_name: Internal DNS Authority and FreeIPA Convergence
 status: executing
-stopped_at: Remaining Phase 48 gates are Router Phase 32 OAuth evidence, deterministic CPU-capped Go verification, and full local/remote ACP lifecycle proof
-last_updated: "2026-07-12T17:15:55.601Z"
-last_activity: 2026-07-12
+stopped_at: "Phase 47.1 planned and independently verified: 8 plans in 8 waves; execute 47.1-01 next and keep Phase 48 plan 48-03 blocked until the release gate passes"
+last_updated: "2026-07-22T08:36:38.181Z"
+last_activity: 2026-07-22
+last_activity_desc: Phase 47.1 research, Nyquist validation, 8-plan revision and independent plan-check completed
 progress:
-  total_phases: 5
+  total_phases: 6
   completed_phases: 2
-  total_plans: 6
+  total_plans: 18
   completed_plans: 2
-  percent: 33
+  percent: 11
 ---
 
 # State: Omni Srv Admin (omni-srv-admin)
 
-**Last updated:** 2026-07-12 after Phase 48 ownership/runtime audit
-**Last activity:** 2026-07-12
+**Last updated:** 2026-07-22 after Phase 47.1 planning verification
+**Last activity:** 2026-07-22 — Phase 47.1 research, Nyquist validation, 8-plan revision and independent plan-check completed
 
 ## Project Reference
 
@@ -27,7 +28,7 @@ See: `.planning/workstreams/runtime-trust-codex-delivery-convergence/ROADMAP.md`
 See also: .planning/MILESTONES.md
 
 **Core value:** Gestão centralizada de servidores, aplicações GitHub e containers
-**Current focus:** Phase 48 — Codex OAuth and Wayland Remote ACP Convergence
+**Current focus:** Phase 47.1 — Internal DNS Authority and FreeIPA Convergence; Phase 48 plans 48-01/48-02 remain an independent execution lane
 
 ## Milestones
 
@@ -150,6 +151,12 @@ See also: .planning/MILESTONES.md
 
 ## Notes
 
+- 2026-07-23: Phase 51 (`Qwen3 Embedding e Rerank Podman para k3s`) planned
+  with research, pattern map, Nyquist validation and 9 executable plans in
+  Waves 0-8. Decision coverage is 24/24 and the independent checker found no
+  blockers; three scope warnings were accepted for Plans 51-03/04/05 at the
+  formal 10-file threshold. Execution remains fail-closed on Phase 50 and on
+  the immutable Wave 0 baseline/inventory gate; GTE stays titular.
 - 2026-07-06: Reconciled the planning surface so `ROADMAP.md`, `REQUIREMENTS.md`, `PROJECT.md`, `MILESTONES.md`, and phase summaries agree on the current state: Phase 37 is complete, Phase 41 is complete with `embedding-gte-v1` on namespace `ebeddings-local`, Phase 42 is in progress with `42-01` and `42-02` complete, Phase 43 is complete, and Phase 44 is in progress with `44-01` complete.
 - 2026-07-05: Phase 43 effectively closed on `GIOVANNI-W11-PC`. The Codex bootstrap now defaults to a lean MCP baseline, heavy MCPs moved to opt-in profiles, and cold-start smoke is documented and repeatable without printing secrets.
 - 2026-07-05: Phase 44 `44-01` closed. `omni fleet trust-pki` exists as a versioned dry-run resource surface with inventory SAN rendering, onboarding/reconcile/rotate flows, allowlisted command shapes, and focused tests. Live CA/trust rollout remains gated in `44-02`.
@@ -172,15 +179,17 @@ See also: .planning/MILESTONES.md
 
 ## Current Position
 
-Phase: 48 (Codex OAuth and Wayland Remote ACP Convergence) — EXECUTING
-Plans: `48-01-PLAN`, `48-02-PLAN`
-Status: Executing Phase 48
-Last activity: 2026-07-12 — Phase 48 execution started
+Phase: 47.1 (Internal DNS Authority and FreeIPA Convergence) — PLANNING; Phase 48 plans 48-01/48-02 may continue independently
+Plans: Phase 47.1 planning in progress; existing Phase 48 plans remain preserved
+Status: Ready to execute
+Last activity: 2026-07-19 — owner-local research/spikes completed; plans 48-03..48-06 passed the independent checker after three revision cycles
 
 ## Operator Next Steps
 
 - Continue the active Phase 48 task without overlapping its Wayland/codex-acp runtime files; Headroom remains absent.
 - Reconcile Router Phase 32 evidence and finish the CPU-capped Go verification plus native/local/remote ACP lifecycle matrix.
+- Execute 48-03 only after 48-02: repair FreeIPA/host-key trust and activate encrypted FQDN multiplexing without changing NFS or legacy fleet aliases.
+- Execute 48-04..48-06 in order: protect the fork before edits, add ACP stdio-over-SSH, enable only per-conversation owner-local routing, then prove fork-sync/headless/fleet/rollback parity. Keep NFS for discovery/picker/light read-diff/compatibility/fallback.
 - Treat the Wayland GUID effort-selector repair as a Phase 48 regression fix, not as Phase 49 Headroom work.
 - Execute Phase 49 only after every Phase 48 validation and stop condition is green.
 - Execute Phase 50 after Phase 49, reusing 42-01/42-02 as historical evidence rather than reopening Phase 42.
@@ -346,6 +355,11 @@ Status: PLANNING (2026-06-24)
 - Artifacts: `.planning/spikes/001-fleet-service-pki-trust-matrix/README.md`, `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/44-internal-service-pki-and-fleet-trust/44-CONTEXT.md`, `44-RESEARCH.md`, `44-VALIDATION.md`, and `44-01..03-PLAN.md`.
 - No CA, private key, trust-store mutation, service restart, port change, or router channel change was executed in this planning step.
 
+### Roadmap Evolution
+
+- Phase 47.1 inserted after Phase 47: Internal DNS Authority and FreeIPA Convergence (URGENT)
+- Phase 47.1 planned after Phase 47: 8 verified plans for authoritative DNS and FreeIPA convergence before Phase 48 plan 48-03
+
 ## Phase 44-01 execution - 2026-07-05
 
 - Implemented the `omni fleet trust-pki` CLI resource surface.
@@ -411,7 +425,7 @@ Status: PLANNING (2026-06-24)
 ## Session
 
 **Last session:** 2026-06-25T03:25:13.517Z
-**Stopped at:** Completed 42-01-PLAN.md
+**Stopped at:** Phase 47.1 planned and independently verified: 8 plans in 8 waves; execute 47.1-01 next and keep Phase 48 plan 48-03 blocked until the release gate passes
 **Resume file:** None
 
 ## Phase 29 inventory probe correction - 2026-06-25T03:32:16Z

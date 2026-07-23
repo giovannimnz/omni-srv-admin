@@ -85,7 +85,7 @@ cross-session resumes. It should answer three questions quickly:
 | M013 | 43 | Codex MCP Bootstrap Hardening | `.planning/phases/43-codex-mcp-bootstrap-hardening/` | Shipped |
 | M014 | 44 | Internal Service PKI and Fleet Trust | `.planning/phases/44-internal-service-pki-and-fleet-trust/` | Historical partial; continues in Phase 47 |
 | M015 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
-| M016 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/ROADMAP.md` + phase validation files | Current |
+| M016 | 46-50 + 47.1 | Runtime Trust and Codex Delivery Convergence | `.planning/ROADMAP.md` + phase validation files | Current |
 
 ## Separation Rules
 

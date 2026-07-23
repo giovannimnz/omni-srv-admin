@@ -52,6 +52,23 @@ The target contract is:
 Short names must resolve to the OCI private IP by default. `ping atius-srv-1`
 must choose `10.11.1.11`, not `10.100.100.1`.
 
+### Wayland Owner Identity Contract
+
+Phase 48 owner-local development uses one explicit identity shape for every
+server. `local` describes the absence of a network hop; it does not make the
+srv-3 user implicit or anonymous.
+
+| Host ID | FQDN | OCI/DRG address | Login user | Owner workspace | Mode from srv-3 |
+|---|---|---|---|---|---|
+| `atius-srv-1` | `atius-srv-1.atius.internal` | `10.11.1.11` | `ubuntu` | `/home/ubuntu/GitHub` | `ssh` |
+| `atius-srv-2` | `atius-srv-2.atius.internal` | `10.12.1.12` | `ubuntu` | `/home/ubuntu/GitHub` | `ssh` |
+| `atius-srv-3` | `atius-srv-3.atius.internal` | `10.13.1.13` | `ubuntu` | `/home/ubuntu/GitHub` | `local` |
+| `horistic-srv` | `horistic-srv.atius.internal` | `10.21.1.21` | `horistic` | `/home/horistic/GitHub` | `ssh` |
+
+Only the three `ssh` rows receive dedicated `wayland-owner-*` aliases. The
+srv-3 row must still be validated as `id -un=ubuntu`, but it must not open a
+loopback SSH connection.
+
 ### Address Preference Order
 
 For all Linux machine-to-machine operations, prefer:
@@ -92,6 +109,13 @@ Rule:
 - `oci_private_ip` is the canonical service/routing address
 - `vpn_ip` is reserve/fallback only
 - public IP must never be preferred for internal service routing
+
+The Phase 48 Wayland owner transport is a narrower contract stored additively
+in `inventory/remotes/wayland-github-*.yaml` under `owner_transport`. Its
+allowlisted fields are `mode`, `fqdn`, `oci_private_ip`, `user`,
+`workspace_root`, and, only for `mode: ssh`, `alias`. Do not derive this path
+from legacy `access.ssh`, which may intentionally continue to describe a
+reserve or break-glass route used by other fleet tooling.
 
 ### Public Zone
 

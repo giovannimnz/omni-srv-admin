@@ -13,6 +13,7 @@
     "ai_integration_phase": true,
     "auto_advance": false,
     "_auto_chain_active": false,
+    "test_command": "bash scripts/gsd-wave-regression.sh",
     "use_worktrees": false
   },
   "graphify": {

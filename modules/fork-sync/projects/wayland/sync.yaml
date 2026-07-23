@@ -19,6 +19,7 @@ protected_paths:
   - AGENTS.md
   - .gitignore
   - THIRD-PARTY-NOTICES.md
+  - design-qa.md
   - package.json
   - atius-overlay.json
   - codex-acp/
@@ -41,6 +42,7 @@ protected_paths:
   - src/process/agent/AgentRegistry.ts
   - src/process/agent/remote/RemoteAgentCore.ts
   - src/process/bridge/remoteAgentBridge.ts
+  - src/process/bridge/projectBridge.ts
   - src/process/acp/compat/typeBridge.ts
   - src/process/extensions/data/bundle-vendored/agentProfileMerge.ts
   - src/process/extensions/resolvers/ChannelPluginResolver.ts
@@ -53,11 +55,13 @@ protected_paths:
   - src/renderer/components/layout/Sider/Sider.module.css
   - src/renderer/components/layout/Sider/SiderAccordion/SiderAccordionShell.module.css
   - src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.module.css
+  - src/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.tsx
   - src/renderer/components/layout/Sider/SiderFooter.tsx
   - src/renderer/components/layout/Sider/SiderFooter/SiderFooterQuickActions.module.css
   - src/renderer/components/layout/Sider/index.tsx
   - src/common/adapter/ipcBridge.ts
   - src/common/config/storage.ts
+  - src/common/utils/workspaceComputer.ts
   - src/common/types/codex/codexModes.ts
   - src/common/types/codex/types/eventData.ts
   - src/process/task/AcpAgentManager.ts
@@ -66,12 +70,18 @@ protected_paths:
   - src/process/task/codexConfig.ts
   - src/process/task/codexStaticModelInfo.ts
   - src/process/task/hermesConfig.ts
+  - src/process/services/workspaceComputerStatus.ts
   - src/renderer/components/agent/AgentModeSelector.tsx
   - src/renderer/components/agent/MarqueePillLabel.tsx
   - src/renderer/components/model/modelSelector/EffortSubRow.tsx
   - src/renderer/components/model/modelSelector/modelSelectorTypes.ts
   - src/renderer/components/settings/DirectorySelectionModal.tsx
+  - src/renderer/components/workspace/WorkspaceComputerIndicator.tsx
   - src/renderer/hooks/file/useDirectorySelection.tsx
+  - src/renderer/hooks/useWorkspaceComputerStatuses.ts
+  - src/renderer/pages/conversation/GroupedHistory/index.tsx
+  - src/renderer/pages/conversation/GroupedHistory/hooks/useConversationListSync.ts
+  - src/renderer/pages/conversation/GroupedHistory/utils/groupingHelpers.ts
   - src/renderer/pages/guid/GuidPage.tsx
   - src/renderer/pages/guid/index.module.css
   - src/renderer/pages/guid/components/AgentPillBar.tsx
@@ -82,6 +92,8 @@ protected_paths:
   - src/renderer/pages/guid/hooks/useGuidAgentSelection.ts
   - src/renderer/pages/guid/hooks/useGuidSend.ts
   - src/renderer/pages/settings/AgentSettings/RemoteAgentManagement.tsx
+  - src/renderer/pages/projects/ProjectsListPage.tsx
+  - src/renderer/pages/projects/components/ProjectCard.tsx
   - src/common/types/acpTypes.ts
   - src/renderer/services/i18n/i18n-keys.d.ts
   - src/renderer/services/i18n/index.ts
@@ -96,6 +108,8 @@ protected_paths:
   - tests/unit/process/task/codexNativeSandbox.test.ts
   - tests/unit/renderer/GuidActionRow.dom.test.tsx
   - tests/unit/renderer/AcpConfigSelector.dom.test.tsx
+  - tests/unit/renderer/components/layout/Sider/SiderAccordion/SiderRecentChatsSection.dom.test.tsx
+  - tests/unit/renderer/groupingHelpers.test.ts
   - tests/unit/renderer/guidModelSelector.dom.test.tsx
   - tests/unit/RemoteAgentCore.test.ts
   - tests/unit/RemoteAgentManagement.dom.test.tsx
@@ -104,6 +118,8 @@ protected_paths:
   - tests/unit/useGuidSend.dom.test.ts
   - tests/unit/webserver/detectNetworkContext.test.ts
   - tests/unit/webserver/cookieOptions.test.ts
+  - tests/unit/workspaceComputerStatus.test.ts
+  - tests/unit/WorkspaceComputerIndicator.dom.test.tsx
   - docs/README.md
   - docs/legal/THIRD-PARTY-NOTICES.md
   - docs/guides/atius-codex-acp.md
