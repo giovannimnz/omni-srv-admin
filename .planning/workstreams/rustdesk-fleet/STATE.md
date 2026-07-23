@@ -5,16 +5,16 @@ milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: primary-relay-and-public-edge
 status: executing
-stopped_at: Completed 53-02-PLAN.md
-last_updated: "2026-07-23T01:02:59Z"
+stopped_at: Completed 53-03-PLAN.md
+last_updated: "2026-07-23T01:19:00Z"
 last_activity: 2026-07-23
-last_activity_desc: Plan 53-02 completed the hardened rootless server transaction and rollback foundation
+last_activity_desc: Plan 53-03 completed the authenticated operations API and reversible Apache candidate
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
-  percent: 75
+  completed_plans: 13
+  percent: 81
 ---
 
 # Project State
@@ -29,17 +29,17 @@ See: `.planning/PROJECT.md` (updated 2026-07-19)
 ## Current Position
 
 Phase: 53 (primary-relay-and-public-edge) — EXECUTING
-Plan: 3 of 6
-Status: Ready to execute Plan 53-03
-Last activity: 2026-07-23 — Plan 53-02 completed the hardened rootless server transaction and rollback foundation
+Plan: 4 of 6
+Status: Ready to execute Plan 53-04
+Last activity: 2026-07-23 — Plan 53-03 completed the authenticated operations API and reversible Apache candidate
 
-Milestone progress: [████████░░] 75% — 12 of 16 plans complete; Phase 53 Plan 53-03 is next
+Milestone progress: [████████░░] 81% — 13 of 16 plans complete; Phase 53 Plan 53-04 is next
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 12
+- Total plans completed: 13
 - Average duration: not recomputed because Plan 52-07 spanned sessions
 - Total execution time: 65min measured for Plans 52-01–06; Plan 52-07 cross-session
 
@@ -51,6 +51,7 @@ Milestone progress: [████████░░] 75% — 12 of 16 plans comp
 | 52 | 7 | 65min + live gate | cross-session |
 | Phase 53 P01 | 12min | 2 tasks | 5 files |
 | Phase 53 P02 | 11min | 2 tasks | 7 files |
+| Phase 53 P03 | 15min | 1 task | 4 files |
 
 ## Accumulated Context
 
@@ -83,6 +84,7 @@ Milestone progress: [████████░░] 75% — 12 of 16 plans comp
 - [Phase 52]: The canonical report has exactly eleven PASS checks; SCP-04, SRV-01, SRV-05 and SRV-07 are promoted and Phase 53 topology is READY.
 - [Phase 53]: Phase 53 live mutation authorization is bound to the exact flag, current Git HEAD, current contract digests, pre-state, unambiguous ownership and rollback readiness. — Prevents stale source or persisted verdict text from authorizing infrastructure changes.
 - [Phase 53]: The server runtime is rootless and digest-pinned; identity is tmpfs-only, linger is conditional, and Plan 02 cannot open public ingress or install a client.
+- [Phase 53]: The ATIUS operations API is loopback-only, backend-authenticated and observational; its HTTPS Apache candidate remains unapplied until Plan 05.
 
 ### Pending Todos
 
@@ -95,6 +97,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-23T01:02:59Z
-Stopped at: Completed 53-02-PLAN.md
+Last session: 2026-07-23T01:19:00Z
+Stopped at: Completed 53-03-PLAN.md
 Resume file: None

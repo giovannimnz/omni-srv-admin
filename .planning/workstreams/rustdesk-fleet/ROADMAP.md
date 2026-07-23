@@ -113,11 +113,11 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Monitoring e uma API operacional custom da Atius, em hostname/serviço HTTPS separado e autenticado, expõem endpoints versionados/redacted de health, readiness, status e resumo de métricas para listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas. Ela não configura o `API Server` dos clients, não abre TCP 21114 e não reivindica recursos nativos Pro.
   5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência, contrato/autenticação/redaction dos endpoints custom e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
 
-**Plans**: 2/6 plans executed
+**Plans**: 3/6 plans executed
 
 - [x] 53-01-PLAN.md — Strict contracts, hermetic tests and resumable live-runner foundation.
 - [x] 53-02-PLAN.md — Rootless digest-pinned `hbbs`/`hbbr`, persistent identity/state and bounded resources.
-- [ ] 53-03-PLAN.md — Separate authenticated/redacted Atius operational API and reversible Apache publication.
+- [x] 53-03-PLAN.md — Separate authenticated/redacted Atius operational API and reversible Apache publication.
 - [ ] 53-04-PLAN.md — Effective host/OCI edge policy, DNS-last transaction and two-origin probe tooling.
 - [ ] 53-05-PLAN.md — Controlled live deployment, public TCP/UDP proof and API/regression gate.
 - [ ] 53-06-PLAN.md — Restart/reboot lifecycle, containment-first rollback, production restore and independent closeout handoff.
@@ -212,7 +212,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
 | 52. Supply Chain, Capacity and Recoverable Placement | 7/7 | Complete | 2026-07-22 |
-| 53. Primary Relay and Public Edge | 2/6 | In Progress|  |
+| 53. Primary Relay and Public Edge | 3/6 | In Progress|  |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
 | 56. Exhaustive Fleet, Transport and Security Matrix | 0/TBD | Not started | - |
