@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import copy
+import configparser
 import importlib.util
 import json
 import os
@@ -18,6 +19,9 @@ RUNTIME_CONTRACT = CONTRACT_DIR / "phase53-runtime.json"
 EDGE_CONTRACT = CONTRACT_DIR / "phase53-edge.json"
 OPS_API_CONTRACT = CONTRACT_DIR / "phase53-ops-api.json"
 LIVE_GATE_PATH = REPO / "modules/rustdesk-fleet/tools/run-phase53-live-gate.py"
+HBBS_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
+HBBR_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container"
+PHASE53_SLICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53.slice"
 
 
 class DuplicateKeyError(ValueError):
@@ -39,6 +43,14 @@ def _load_strict(path: Path) -> dict[str, Any]:
     )
     assert isinstance(payload, dict)
     return payload
+
+
+def _load_unit(path: Path) -> configparser.ConfigParser:
+    parser = configparser.ConfigParser(interpolation=None, strict=False)
+    parser.optionxform = str
+    with path.open(encoding="utf-8") as handle:
+        parser.read_file(handle)
+    return parser
 
 
 def _assert_keys(payload: dict[str, Any], expected: set[str]) -> None:
@@ -415,6 +427,73 @@ def test_contract_schema_preserves_phase_boundaries() -> None:
         "phase52-gate-b-replay",
         "phase54-client-installation",
     ]
+
+
+def test_quadlets_are_digest_pinned_rootless_hardened_and_socket_exact() -> None:
+    runtime = _load_strict(RUNTIME_CONTRACT)
+    expected_image = runtime["upstream"]["immutable_reference"]
+    expected = {
+        HBBS_QUADLET: ("hbbs", "35%", "448M", {21115, 21116, 21118}, {21116}),
+        HBBR_QUADLET: ("hbbr", "35%", "384M", {21117, 21119}, set()),
+    }
+
+    for path, (command, cpu, memory, tcp, udp) in expected.items():
+        assert path.is_file(), path
+        unit = _load_unit(path)
+        container = unit["Container"]
+        service = unit["Service"]
+        encoded = path.read_text(encoding="utf-8")
+
+        assert container["Image"] == expected_image
+        assert container["Pull"] == "never"
+        assert container["Network"] == "host"
+        assert container["ReadOnly"] == "true"
+        assert container["NoNewPrivileges"] == "true"
+        assert container["DropCapability"] == "ALL"
+        assert container["PidsLimit"] == "128"
+        assert container["Exec"].split()[0] == command
+        assert service["Slice"] == "atius-rustdesk-phase53.slice"
+        assert service["CPUQuota"] == cpu
+        assert service["MemoryMax"] == memory
+        assert service["StandardOutput"] == "null"
+        assert service["StandardError"] == "null"
+
+        assert "%h/.local/share/atius-rustdesk/server/state:/root:rw" in encoded
+        assert "%t/atius-rustdesk/server-identity/id_ed25519:/root/id_ed25519:ro" in encoded
+        assert "%t/atius-rustdesk/server-identity/id_ed25519.pub:/root/id_ed25519.pub:ro" in encoded
+        assert "%h/.local/state/atius-rustdesk/server/logs" in encoded
+        assert "/run/podman/podman.sock" not in encoded
+        assert "Privileged=true" not in encoded
+        assert "AddCapability=" not in encoded
+
+        declared = runtime["runtime"]["local_runtime_required"][command]
+        assert set(declared["tcp"]) == tcp
+        assert set(declared["udp"]) == udp
+        assert 21114 not in tcp | udp
+
+
+def test_runtime_parent_and_child_cgroup_arithmetic_effective_readback() -> None:
+    runtime = _load_strict(RUNTIME_CONTRACT)
+    assert PHASE53_SLICE.is_file(), PHASE53_SLICE
+    unit = _load_unit(PHASE53_SLICE)
+    assert unit["Slice"]["CPUQuota"] == "80%"
+    assert unit["Slice"]["MemoryMax"] == "1G"
+    assert unit["Slice"]["TasksMax"] == "512"
+
+    fake_effective_readback = {
+        "atius-rustdesk-phase53.slice": {"cpu_percent": 80, "memory_bytes": 1073741824},
+        "atius-rustdesk-server-hbbs.service": {"cpu_percent": 35, "memory_bytes": 469762048},
+        "atius-rustdesk-server-hbbr.service": {"cpu_percent": 35, "memory_bytes": 402653184},
+    }
+    assert fake_effective_readback["atius-rustdesk-phase53.slice"] == runtime["resources"][
+        "aggregate"
+    ]
+    children = [
+        fake_effective_readback["atius-rustdesk-server-hbbs.service"],
+        fake_effective_readback["atius-rustdesk-server-hbbr.service"],
+    ]
+    assert sum(item["cpu_percent"] for item in children) == 70
+    assert sum(item["memory_bytes"] for item in children) == 872415232
 
 
 @pytest.mark.parametrize(
