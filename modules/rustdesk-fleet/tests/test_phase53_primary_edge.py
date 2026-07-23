@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import copy
 import configparser
+import base64
 import importlib.util
 import json
 import os
 from pathlib import Path
+import sqlite3
 import subprocess
 import sys
 from typing import Any
@@ -22,6 +24,13 @@ LIVE_GATE_PATH = REPO / "modules/rustdesk-fleet/tools/run-phase53-live-gate.py"
 HBBS_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
 HBBR_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container"
 PHASE53_SLICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53.slice"
+SERVER_INSTALLER = REPO / "modules/rustdesk-fleet/tools/install-phase53-server.py"
+SERVER_LOGROTATE_SERVICE = (
+    REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.service"
+)
+SERVER_LOGROTATE_TIMER = (
+    REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.timer"
+)
 
 
 class DuplicateKeyError(ValueError):
@@ -51,6 +60,16 @@ def _load_unit(path: Path) -> configparser.ConfigParser:
     with path.open(encoding="utf-8") as handle:
         parser.read_file(handle)
     return parser
+
+
+def _server_installer_module() -> Any:
+    assert SERVER_INSTALLER.is_file(), SERVER_INSTALLER
+    spec = importlib.util.spec_from_file_location("phase53_server_installer", SERVER_INSTALLER)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
 
 
 def _assert_keys(payload: dict[str, Any], expected: set[str]) -> None:
@@ -494,6 +513,185 @@ def test_runtime_parent_and_child_cgroup_arithmetic_effective_readback() -> None
     ]
     assert sum(item["cpu_percent"] for item in children) == 70
     assert sum(item["memory_bytes"] for item in children) == 872415232
+
+
+def _vault_fixture() -> dict[str, str]:
+    values = {
+        "kv/atius/rustdesk/server#private_key": base64.b64encode(b"p" * 64).decode(),
+        "kv/atius/rustdesk/server#public_key": base64.b64encode(b"u" * 32).decode(),
+    }
+    for index, host in enumerate(
+        ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv", "giovanni-w11-pc"),
+        start=1,
+    ):
+        values[f"kv/atius/rustdesk/targets/{host}#permanent_password"] = (
+            f"R{index:031d}"
+        )
+    return values
+
+
+class _FakeServerRunner:
+    def __init__(self, *, linger: bool = False) -> None:
+        self.linger = linger
+        self.calls: list[tuple[str, ...]] = []
+
+    def __call__(
+        self,
+        argv: list[str],
+        request: bytes | None = None,
+        *,
+        timeout: float = 30,
+        stdout_limit: int = 131072,
+    ) -> tuple[int, bytes, bytes]:
+        del request, timeout, stdout_limit
+        command = tuple(argv)
+        self.calls.append(command)
+        if command[:2] == ("loginctl", "show-user"):
+            return 0, (b"yes\n" if self.linger else b"no\n"), b""
+        if command[:2] == ("loginctl", "enable-linger"):
+            self.linger = True
+        elif command[:2] == ("loginctl", "disable-linger"):
+            self.linger = False
+        return 0, b"", b""
+
+
+def _new_server_transaction(
+    module: Any,
+    tmp_path: Path,
+    runner: _FakeServerRunner,
+    *,
+    fault_after: str | None = None,
+) -> Any:
+    home = tmp_path / "home"
+    runtime = tmp_path / "run-user-1000"
+    home.mkdir()
+    runtime.mkdir()
+    return module.Phase53ServerTransaction(
+        repo=REPO,
+        home=home,
+        runtime_dir=runtime,
+        uid=1000,
+        command_runner=runner,
+        provider_exchange=_vault_fixture,
+        tmpfs_checker=lambda path: path == runtime,
+        fault_after=fault_after,
+    )
+
+
+def test_identity_hydration_is_tmpfs_only_and_evidence_is_value_free(
+    tmp_path: Path,
+) -> None:
+    module = _server_installer_module()
+    transaction = _new_server_transaction(module, tmp_path, _FakeServerRunner())
+    transaction.snapshot_prestate()
+    evidence = transaction.hydrate_identity()
+
+    identity = transaction.runtime_dir / "atius-rustdesk/server-identity"
+    assert identity.parent.parent == transaction.runtime_dir
+    assert {path.name for path in identity.iterdir()} == {"id_ed25519", "id_ed25519.pub"}
+    assert all((path.stat().st_mode & 0o777) == 0o600 for path in identity.iterdir())
+    assert set(evidence) == {
+        "provider_api",
+        "reference_count",
+        "public_fingerprint",
+        "secret_material_present",
+    }
+    assert evidence["secret_material_present"] is False
+    encoded = json.dumps(evidence, sort_keys=True)
+    assert not any(value in encoded for value in _vault_fixture().values())
+    assert not list(transaction.home.rglob("id_ed25519*"))
+
+
+def test_sqlite_state_digest_and_integrity_are_preserved_by_install_and_rollback(
+    tmp_path: Path,
+) -> None:
+    module = _server_installer_module()
+    runner = _FakeServerRunner()
+    transaction = _new_server_transaction(module, tmp_path, runner)
+    state = transaction.state_dir
+    state.mkdir(parents=True)
+    database = state / "db_v2.sqlite3"
+    with sqlite3.connect(database) as connection:
+        connection.execute("CREATE TABLE peer (id TEXT PRIMARY KEY)")
+        connection.execute("INSERT INTO peer VALUES ('fixture-peer')")
+
+    before = module.sqlite_observation(database)
+    transaction.install_closed()
+    transaction.rollback_server()
+    after = module.sqlite_observation(database)
+    assert before == after
+    assert after["integrity"] == "ok"
+
+
+@pytest.mark.parametrize("fault_after", ["prestate", "identity", "units", "linger", "reload", "start"])
+def test_rollback_restores_units_linger_and_preserves_client_legacy_paths(
+    tmp_path: Path, fault_after: str
+) -> None:
+    module = _server_installer_module()
+    runner = _FakeServerRunner(linger=False)
+    transaction = _new_server_transaction(module, tmp_path, runner, fault_after=fault_after)
+    existing_unit = transaction.quadlet_dir / "atius-rustdesk-server-hbbs.container"
+    existing_unit.parent.mkdir(parents=True)
+    existing_unit.write_text("preexisting-unit\n", encoding="utf-8")
+    client = transaction.home / ".local/share/atius-rustdesk/client/sentinel"
+    legacy = transaction.home / ".local/share/RustGuac/sentinel"
+    for sentinel in (client, legacy):
+        sentinel.parent.mkdir(parents=True)
+        sentinel.write_text("preserve\n", encoding="utf-8")
+
+    with pytest.raises(module.Phase53ServerBlocked, match=f"fault-injected-{fault_after}"):
+        transaction.install_closed()
+
+    assert existing_unit.read_text(encoding="utf-8") == "preexisting-unit\n"
+    assert client.read_text(encoding="utf-8") == "preserve\n"
+    assert legacy.read_text(encoding="utf-8") == "preserve\n"
+    assert runner.linger is False
+    assert not transaction.identity_dir.exists()
+    transaction.rollback_server()
+    assert runner.linger is False
+
+
+def test_linger_preexisting_yes_is_never_disabled_on_rollback(tmp_path: Path) -> None:
+    module = _server_installer_module()
+    runner = _FakeServerRunner(linger=True)
+    transaction = _new_server_transaction(module, tmp_path, runner)
+    transaction.install_closed()
+    transaction.rollback_server()
+    assert runner.linger is True
+    assert not any(call[:2] == ("loginctl", "disable-linger") for call in runner.calls)
+
+
+def test_log_bound_rotation_is_actual_bounded_and_retained(tmp_path: Path) -> None:
+    module = _server_installer_module()
+    log_dir = tmp_path / "logs"
+    log_dir.mkdir()
+    (log_dir / "hbbs.log").write_bytes(b"a" * 800)
+    (log_dir / "hbbr.log").write_bytes(b"b" * 800)
+    stale = log_dir / "hbbs-20231231.log"
+    stale.write_bytes(b"stale")
+
+    result = module.enforce_log_bounds(
+        log_dir,
+        daily_bytes=1024,
+        retention_days=30,
+        now=module.datetime(2026, 7, 22, tzinfo=module.timezone.utc),
+    )
+    current = sum((log_dir / name).stat().st_size for name in ("hbbs.log", "hbbr.log"))
+    today = sum(path.stat().st_size for path in log_dir.glob("*-20260722.log"))
+    assert current == 0
+    assert 0 < today <= 1024
+    assert result["rotated_bytes"] == today
+    assert result["daily_limit_bytes"] == 1024
+    assert stale.exists() is False
+
+    for path in (SERVER_LOGROTATE_SERVICE, SERVER_LOGROTATE_TIMER):
+        assert path.is_file(), path
+    service = SERVER_LOGROTATE_SERVICE.read_text(encoding="utf-8")
+    timer = _load_unit(SERVER_LOGROTATE_TIMER)
+    assert "--rotate-logs" in service
+    assert "%h/.local/state/atius-rustdesk/server/logs" in service
+    assert timer["Timer"]["Persistent"] == "true"
+    assert timer["Install"]["WantedBy"] == "timers.target"
 
 
 @pytest.mark.parametrize(
