@@ -34,6 +34,9 @@ SERVER_LOGROTATE_TIMER = (
 OPS_API_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-ops-api.py"
 OPS_API_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-ops-api.service"
 OPS_API_VHOST = REPO / "modules/rustdesk-fleet/apache/rustdesk-ops.atius.com.br.conf"
+EDGE_APPLIER = REPO / "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+EDGE_NFT_POLICY = REPO / "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft"
+EDGE_BOOT_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service"
 
 
 class DuplicateKeyError(ValueError):
@@ -78,6 +81,16 @@ def _server_installer_module() -> Any:
 def _ops_api_module() -> Any:
     assert OPS_API_PATH.is_file(), OPS_API_PATH
     spec = importlib.util.spec_from_file_location("phase53_ops_api", OPS_API_PATH)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _edge_applier_module() -> Any:
+    assert EDGE_APPLIER.is_file(), EDGE_APPLIER
+    spec = importlib.util.spec_from_file_location("phase53_edge_applier", EDGE_APPLIER)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -712,7 +725,6 @@ def test_log_bound_rotation_is_actual_bounded_and_retained(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     ("artifact", "owner_plan"),
     [
-        ("tools/apply-phase53-edge.py", "53-04"),
         ("evidence/phase53/deploy-transaction.json", "53-05"),
         ("tools/validate_phase53.py", "53-06"),
     ],
@@ -1153,3 +1165,406 @@ def test_unflagged_cli_refuses_without_runtime_evidence(tmp_path: Path) -> None:
         "status": "BLOCKED",
     }
     assert list(tmp_path.iterdir()) == []
+
+
+def _oci_rule(
+    protocol: str,
+    first: int,
+    last: int,
+    *,
+    family: str = "ipv4",
+    source: str | None = None,
+) -> dict[str, Any]:
+    return {
+        "family": family,
+        "protocol": protocol,
+        "source": source or ("0.0.0.0/0" if family == "ipv4" else "::/0"),
+        "port_min": first,
+        "port_max": last,
+    }
+
+
+def _allowed_oci_pages() -> dict[str, Any]:
+    return {
+        "pagination_complete": True,
+        "pages": [
+            {
+                "page_token": "first",
+                "next_page": "second",
+                "security_lists": [
+                    {
+                        "id": "sl-primary",
+                        "ingress_rules": [_oci_rule("tcp", 21115, 21117)],
+                    }
+                ],
+                "network_security_groups": [],
+                "attachments": [{"id": "vnic-primary", "nsg_ids": ["nsg-edge"]}],
+            },
+            {
+                "page_token": "second",
+                "next_page": None,
+                "security_lists": [],
+                "network_security_groups": [
+                    {
+                        "id": "nsg-edge",
+                        "ingress_rules": [_oci_rule("udp", 21116, 21116)],
+                    }
+                ],
+                "attachments": [],
+            },
+        ],
+    }
+
+
+def _phase53_edge_preflight() -> dict[str, Any]:
+    return {
+        "phase52_pass_count": 11,
+        "phase52_check_count": 11,
+        "selected_primary": "horistic-srv",
+        "address_consensus": {
+            "oci-vnic-public-ipv4": "203.0.113.8",
+            "horistic-egress-ipv4": "203.0.113.8",
+            "ssh-horistic-srv.atius.com.br-a": "203.0.113.8",
+        },
+        "address_observed_at": "2026-07-23T02:00:00Z",
+        "backups_retained": True,
+        "dns_closed": True,
+        "native_ingress_closed": True,
+        "legacy_smokes": True,
+        "rollback_ready": True,
+    }
+
+
+class _FakeEdgeBackend:
+    def __init__(self) -> None:
+        self.state: dict[str, Any] = {
+            "nft": {"present": False, "candidate": None, "semantics": None},
+            "oci": _allowed_oci_pages(),
+            "k3s": "k3s-byte-sentinel",
+        }
+        self.revision = 1
+        self.calls: list[str] = []
+        self.mutation_count = 0
+        self.contained = False
+        self.force_stale_revision = False
+        self.force_concurrent_drift = False
+
+    def snapshot(self) -> dict[str, Any]:
+        self.calls.append("snapshot")
+        return {
+            "revision": str(self.revision),
+            "state": copy.deepcopy(self.state),
+        }
+
+    def current_revision(self) -> str:
+        if self.force_stale_revision:
+            return str(self.revision + 1)
+        return str(self.revision)
+
+    def syntax_check_nft(self, candidate: str) -> None:
+        assert "table inet atius_rustdesk_phase53" in candidate
+        self.calls.append("nft-check")
+
+    def apply_nft(self, candidate: str, semantics: dict[str, Any]) -> None:
+        self.calls.append("nft-apply")
+        self.state["nft"] = {
+            "present": True,
+            "candidate": candidate,
+            "semantics": copy.deepcopy(semantics),
+        }
+        self.revision += 1
+        self.mutation_count += 1
+
+    def apply_oci(self, candidate: dict[str, Any]) -> None:
+        self.calls.append("oci-apply")
+        self.state["oci"] = copy.deepcopy(candidate)
+        self.revision += 1
+        self.mutation_count += 1
+
+    def observe(self) -> dict[str, Any]:
+        if self.force_concurrent_drift:
+            self.state["oci"]["pages"][0]["security_lists"][0]["ingress_rules"].append(
+                _oci_rule("tcp", 21114, 21114)
+            )
+            self.revision += 1
+            self.force_concurrent_drift = False
+        return {"revision": str(self.revision), "state": copy.deepcopy(self.state)}
+
+    def restore(self, snapshot: dict[str, Any]) -> None:
+        self.calls.append("restore")
+        self.state = copy.deepcopy(snapshot["state"])
+        self.revision += 1
+
+    def contain_owned_ingress(self) -> None:
+        self.calls.append("contain")
+        self.contained = True
+
+
+def _rendered_nft_candidate(module: Any) -> str:
+    template = EDGE_NFT_POLICY.read_text(encoding="utf-8")
+    return module.render_nft_candidate(template, public_interface="ens3")
+
+
+def test_oci_pagination_audits_full_security_list_and_nsg_union() -> None:
+    module = _edge_applier_module()
+    result = module.audit_effective_oci_ingress(
+        _allowed_oci_pages(), _load_strict(EDGE_CONTRACT)
+    )
+    assert result == {
+        "pagination_complete": True,
+        "security_list_ids": ["sl-primary"],
+        "network_security_group_ids": ["nsg-edge"],
+        "attachment_ids": ["vnic-primary"],
+        "ipv4_tcp": [21115, 21116, 21117],
+        "ipv4_udp": [21116],
+        "ipv6": [],
+    }
+
+
+@pytest.mark.parametrize(
+    ("mutator", "blocker"),
+    [
+        (
+            lambda pages: pages["pages"][0]["security_lists"][0]["ingress_rules"].append(
+                _oci_rule("tcp", 21114, 21119)
+            ),
+            "oci-effective-ingress-forbidden",
+        ),
+        (
+            lambda pages: pages["pages"][1]["network_security_groups"][0][
+                "ingress_rules"
+            ].append(_oci_rule("all", 0, 65535)),
+            "oci-effective-ingress-broad",
+        ),
+        (
+            lambda pages: pages["pages"][1]["network_security_groups"][0][
+                "ingress_rules"
+            ].append(_oci_rule("tcp", 21115, 21117, family="ipv6")),
+            "oci-effective-ingress-ipv6",
+        ),
+    ],
+)
+def test_oci_union_broad_forbidden_and_ipv6_rules_fail_closed(
+    mutator: Any, blocker: str
+) -> None:
+    module = _edge_applier_module()
+    pages = _allowed_oci_pages()
+    mutator(pages)
+    with pytest.raises(module.EdgeBlocked, match=blocker):
+        module.audit_effective_oci_ingress(pages, _load_strict(EDGE_CONTRACT))
+
+
+@pytest.mark.parametrize(
+    ("mutator", "blocker"),
+    [
+        (lambda pages: pages.update({"pagination_complete": False}), "oci-pagination-incomplete"),
+        (
+            lambda pages: pages["pages"][1].update({"page_token": "first"}),
+            "oci-pagination-token-repeated",
+        ),
+        (
+            lambda pages: pages["pages"][1].update(
+                {"network_security_groups": []}
+            ),
+            "oci-attachment-unexpanded",
+        ),
+    ],
+)
+def test_oci_pagination_and_attachment_completeness_are_mandatory(
+    mutator: Any, blocker: str
+) -> None:
+    module = _edge_applier_module()
+    pages = _allowed_oci_pages()
+    mutator(pages)
+    with pytest.raises(module.EdgeBlocked, match=blocker):
+        module.audit_effective_oci_ingress(pages, _load_strict(EDGE_CONTRACT))
+
+
+def test_listener_audit_rejects_extra_owner_and_digest_drift() -> None:
+    module = _edge_applier_module()
+    digest = _load_strict(RUNTIME_CONTRACT)["upstream"]["linux_arm64_digest"]
+    exact = [
+        {"owner": "hbbs", "protocol": "tcp", "port": port, "digest": digest}
+        for port in (21115, 21116, 21118)
+    ] + [
+        {"owner": "hbbs", "protocol": "udp", "port": 21116, "digest": digest},
+        {"owner": "hbbr", "protocol": "tcp", "port": 21117, "digest": digest},
+        {"owner": "hbbr", "protocol": "tcp", "port": 21119, "digest": digest},
+    ]
+    assert module.audit_runtime_listeners(exact, digest)["listener_count"] == 6
+
+    for drifted in (
+        exact + [{"owner": "hbbs", "protocol": "tcp", "port": 21114, "digest": digest}],
+        [dict(exact[0], owner="foreign")] + exact[1:],
+        [dict(exact[0], digest="sha256:" + "0" * 64)] + exact[1:],
+    ):
+        with pytest.raises(module.EdgeBlocked, match="listener-effective-drift"):
+            module.audit_runtime_listeners(drifted, digest)
+
+
+def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
+    module = _edge_applier_module()
+    candidate = _rendered_nft_candidate(module)
+    result = module.validate_nft_candidate(
+        candidate,
+        contract_digest=module.sha256_file(EDGE_CONTRACT),
+        public_interface="ens3",
+    )
+    assert result == {
+        "family": "inet",
+        "table": "atius_rustdesk_phase53",
+        "hook": "input",
+        "priority": 300,
+        "public_interface": "ens3",
+        "ipv4_tcp": [21115, 21116, 21117],
+        "ipv4_udp": [21116],
+        "ipv6_denied": [21114, 21115, 21116, 21117, 21118, 21119],
+    }
+    lowered = candidate.lower()
+    assert "flush ruleset" not in lowered
+    assert not any(token in lowered for token in ("k3s", "cni", "flannel", "kube-"))
+
+
+@pytest.mark.parametrize(
+    ("replacement", "blocker"),
+    [
+        ("ATIUS-PHASE53-EDGE", "nft-ownership-marker-invalid"),
+        ("priority 300", "nft-priority-invalid"),
+        ('iifname "ens3"', "nft-interface-invalid"),
+        ("ip6 nexthdr tcp", "nft-ipv6-deny-invalid"),
+    ],
+)
+def test_nft_ownership_effective_semantics_fail_on_drift(
+    replacement: str, blocker: str
+) -> None:
+    module = _edge_applier_module()
+    candidate = _rendered_nft_candidate(module).replace(replacement, "DRIFT", 1)
+    with pytest.raises(module.EdgeBlocked, match=blocker):
+        module.validate_nft_candidate(
+            candidate,
+            contract_digest=module.sha256_file(EDGE_CONTRACT),
+            public_interface="ens3",
+        )
+
+
+def test_boot_unit_loads_fixed_policy_before_network_pre_and_verifies_readback() -> None:
+    assert EDGE_BOOT_SERVICE.is_file(), EDGE_BOOT_SERVICE
+    unit = _load_unit(EDGE_BOOT_SERVICE)
+    service = unit["Service"]
+    encoded = EDGE_BOOT_SERVICE.read_text(encoding="utf-8")
+    assert unit["Unit"]["DefaultDependencies"] == "no"
+    assert unit["Unit"]["Before"] == "network-pre.target"
+    assert unit["Unit"]["Wants"] == "network-pre.target"
+    assert service["Type"] == "oneshot"
+    assert "/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft" in encoded
+    assert service["ExecStart"] == "/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft"
+    assert "--verify-host-policy" in service["ExecStartPost"]
+    assert unit["Install"]["WantedBy"] == "network-pre.target"
+
+
+def test_snapshot_storage_is_bounded_root_only_and_rejects_secret_surfaces(
+    tmp_path: Path,
+) -> None:
+    module = _edge_applier_module()
+    destination = tmp_path / "rollback/snapshot.json"
+    snapshot = {"revision": "1", "state": {"nft": {}, "oci": {}, "k3s": "digest"}}
+    receipt = module.store_bounded_snapshot(destination, snapshot, max_bytes=4096)
+    assert receipt["bytes"] <= 4096
+    assert destination.stat().st_mode & 0o777 == 0o600
+    assert destination.parent.stat().st_mode & 0o777 == 0o700
+    assert json.loads(destination.read_text(encoding="utf-8")) == snapshot
+
+    with pytest.raises(module.EdgeBlocked, match="snapshot-too-large"):
+        module.store_bounded_snapshot(destination, {"state": "x" * 5000}, max_bytes=100)
+    with pytest.raises(module.EdgeBlocked, match="snapshot-secret-surface"):
+        module.store_bounded_snapshot(
+            destination, {"Authorization": "Bearer fixture-secret"}, max_bytes=4096
+        )
+    destination.unlink()
+    destination.symlink_to(tmp_path / "redirect")
+    with pytest.raises(module.EdgeBlocked, match="snapshot-symlink-forbidden"):
+        module.store_bounded_snapshot(destination, snapshot, max_bytes=4096)
+
+
+def test_cas_stale_revision_blocks_before_any_nft_or_oci_mutation() -> None:
+    module = _edge_applier_module()
+    backend = _FakeEdgeBackend()
+    backend.force_stale_revision = True
+    transaction = module.EdgeTransaction(
+        contract=_load_strict(EDGE_CONTRACT), backend=backend
+    )
+    with pytest.raises(module.EdgeBlocked, match="edge-cas-stale"):
+        transaction.execute_edge(
+            preflight=_phase53_edge_preflight(),
+            nft_candidate=_rendered_nft_candidate(module),
+            public_interface="ens3",
+            oci_candidate=_allowed_oci_pages(),
+        )
+    assert backend.mutation_count == 0
+    assert "nft-apply" not in backend.calls
+    assert "oci-apply" not in backend.calls
+
+
+def test_semantic_rollback_restores_exact_prestate_and_is_idempotent() -> None:
+    module = _edge_applier_module()
+    backend = _FakeEdgeBackend()
+    original = copy.deepcopy(backend.state)
+    transaction = module.EdgeTransaction(
+        contract=_load_strict(EDGE_CONTRACT), backend=backend
+    )
+    result = transaction.execute_edge(
+        preflight=_phase53_edge_preflight(),
+        nft_candidate=_rendered_nft_candidate(module),
+        public_interface="ens3",
+        oci_candidate=_allowed_oci_pages(),
+    )
+    assert result["state"] == "EDGE_POLICY_APPLIED"
+    rollback = transaction.rollback_edge()
+    assert rollback["state"] == "ROLLED_BACK"
+    assert backend.state == original
+    assert transaction.rollback_edge() == rollback
+    assert backend.state["k3s"] == "k3s-byte-sentinel"
+
+
+def test_semantic_rollback_concurrent_drift_contains_without_overwrite() -> None:
+    module = _edge_applier_module()
+    backend = _FakeEdgeBackend()
+    transaction = module.EdgeTransaction(
+        contract=_load_strict(EDGE_CONTRACT), backend=backend
+    )
+    transaction.execute_edge(
+        preflight=_phase53_edge_preflight(),
+        nft_candidate=_rendered_nft_candidate(module),
+        public_interface="ens3",
+        oci_candidate=_allowed_oci_pages(),
+    )
+    backend.force_concurrent_drift = True
+    result = transaction.rollback_edge()
+    assert result["state"] == "CONTAINED_REQUIRES_MANUAL_RECOVERY"
+    assert backend.contained is True
+    assert "restore" not in backend.calls
+
+
+@pytest.mark.parametrize(
+    "fault_after",
+    ["snapshot", "authorize", "nft-check", "nft-apply", "nft-readback", "oci-apply", "oci-audit"],
+)
+def test_rollback_fault_boundaries_are_terminal_and_preserve_k3s(
+    fault_after: str,
+) -> None:
+    module = _edge_applier_module()
+    backend = _FakeEdgeBackend()
+    original = copy.deepcopy(backend.state)
+    transaction = module.EdgeTransaction(
+        contract=_load_strict(EDGE_CONTRACT), backend=backend, fault_after=fault_after
+    )
+    with pytest.raises(module.EdgeBlocked, match=f"fault-injected-{fault_after}"):
+        transaction.execute_edge(
+            preflight=_phase53_edge_preflight(),
+            nft_candidate=_rendered_nft_candidate(module),
+            public_interface="ens3",
+            oci_candidate=_allowed_oci_pages(),
+        )
+    assert backend.state == original
+    assert backend.state["k3s"] == "k3s-byte-sentinel"
+    assert transaction.state in {"ROLLED_BACK", "NEW"}
