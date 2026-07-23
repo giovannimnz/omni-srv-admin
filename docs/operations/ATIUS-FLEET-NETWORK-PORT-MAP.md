@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.7.4 — 2026-07-23
+> Versão: 1.7.9 — 2026-07-23
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -98,7 +98,8 @@ Camadas:
 | atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.100.100.3      | 100.72.102.57    | 10.13.1.13  |
 | horistic-srv   | horistic-srv    | 163.176.232.119  | 10.100.100.4      | 100.102.126.61   | 10.21.1.21  |
 | GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.8 (legacy `10.100.100.5`) | - | LAN BE3 192.168.1.8 |
-| GIOVANNI-S23   | GIOVANNI-S23    | (TBD, dynamic)   | 10.100.100.9 (legacy `10.100.100.6`) | - | LAN BE3 192.168.1.9 |
+| GIOVANNI-S20   | GIOVANNI-S20    | dynamic/home     | 10.100.100.9 (configured, no handshake) | - | LAN BE3 192.168.1.9; stale lease `.62` at 2026-07-23 readback |
+| GIOVANNI-S23   | GIOVANNI-S23    | dynamic/home     | 10.100.100.10 (configured, no handshake; previous `.9`) | - | LAN BE3 192.168.1.10 |
 | atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.100.100.16 | - | 10.0.0.61 |
 | atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.100.100.17 | - | 10.0.0.188 |
 
@@ -112,7 +113,8 @@ caminho SSH público não usa PPTP, WireGuard ou Cloudflare Tunnel no cliente.
 | Device | Home LAN reserved IP | MAC | Purpose | Status |
 |--------|----------------------|-----|---------|--------|
 | `GIOVANNI-W11-PC` | `192.168.1.8` | `44:FA:66:01:6F:AB` | PPTP residencial em casa | reserved, spike |
-| `GIOVANNI-S23` | `192.168.1.9` | `8A:DE:15:16:1B:3B` | PPTP residencial em casa | reserved, spike |
+| `GIOVANNI-S20` | `192.168.1.9` | `30:AB:6A:3C:96:D1` | Termux + Ubuntu PRoot no mesmo handset/IP | reservation enabled; handset lease renew pending |
+| `GIOVANNI-S23` | `192.168.1.10` | `64:1B:2F:C2:DC:A3` | Termux SSH residencial | reserved; LAN host key proven |
 
 #### Casa Remote Gateway — runtime ativo 2026-07-19
 
@@ -126,12 +128,19 @@ Automatic, SSL `Full (strict)`, WebSockets on e zero Tunnels. HTTP `:80`
 chega ao Apache e recebe `301`; HTTPS/WSS usa `:443`. O record aponta ao edge
 público do SRV-1, não ao WAN residencial.
 
-| Regra BE3 | Proto | WAN externa | LAN destino | Interna | Usuário/serviço | Source allowlist |
+| Regra BE3 | Proto | WAN externa | LAN destino | Interna | Usuário/serviço | Remote Host live / target |
 |---|---|---:|---|---:|---|---|
-| `atius-w11-ssh` | TCP | 8122 | `192.168.1.8` | 22 | `muniz`, Windows OpenSSH/PowerShell 7 | egress público SRV-1 `137.131.190.161` |
-| `atius-s23-ssh` | TCP | 8322 | `192.168.1.9` | 8022 | `termux`, Termux OpenSSH | egress público SRV-1 `137.131.190.161` |
-| `atius-wsl-ssh` | TCP | 8222 | `192.168.1.8` | 8022 | `muniz`, Windows portproxy -> WSL Ubuntu | egress público SRV-1 `137.131.190.161` |
-| `atius-w11-rdp` | TCP | 3389 | `192.168.1.8` | 3389 | `muniz`, Windows RDP/NLA | egress público SRV-1 `137.131.190.161` |
+| `atius-w11-ssh` | TCP | 8122 | `192.168.1.8` | 22 | `muniz`, Windows OpenSSH/PowerShell 7 | `137.131.190.161`; external SSH host-key PASS |
+| `atius-s23-ssh` | TCP | 8322 | `192.168.1.10` | 8022 | `termux`, Termux OpenSSH | `137.131.190.161`; external connection closed before KEX |
+| `atius-wsl-ssh` | TCP | 8222 | `192.168.1.8` | 8022 | `muniz`, Windows portproxy -> WSL Ubuntu | `137.131.190.161`; external SSH host-key PASS |
+| `atius-w11-rdp` | TCP | 3389 | `192.168.1.8` | 3389 | `muniz`, Windows RDP/NLA | `137.131.190.161`; RDP/NLA validate separately |
+
+S20 slots are reserved but not published:
+
+| Logical target | Proposed public port | LAN target | Publication status |
+|---|---:|---|---|
+| `GIOVANNI-S20` Termux | 8422 | `192.168.1.9:<internal-port-pending>` | blocked on DHCP renew, listener, user, fingerprint and authentication |
+| `GIOVANNI-S20-UBUNTU` PRoot | 8522 | `192.168.1.9:<internal-port-pending>` | blocked on PRoot listener, user, fingerprint and authentication |
 
 Proxy interno no SRV-1: ATS `/v1/auth/me` em `127.0.0.1:8015`; gateway Casa
 SSH em `127.0.0.1:8196`; gateway RDP dedicado em `127.0.0.1:8197`; RustGuac em
@@ -154,7 +163,9 @@ reservado, documentado no runbook do `home-proxy`.
 |---|---:|---|---:|---:|---|
 | `ssh-giovanni-w11-pc.atius.com.br` | `137.131.140.20` | DNS-only | 8122 | nft -> 2222 | WAN 8122 -> `192.168.1.8:22` |
 | `ssh-giovanni-wsl-pc.atius.com.br` | `137.131.140.20` | DNS-only | 8222 | nft -> 8822 | WAN 8222 -> `192.168.1.8:8022` |
-| `ssh-giovanni-s23.atius.com.br` | `137.131.140.20` | DNS-only | 8322 | nft -> 8022 | WAN 8322 -> `192.168.1.9:8022` |
+| `ssh-giovanni-s23.atius.com.br` | `137.131.140.20` | DNS-only | 8322 | nft -> 8022 | WAN 8322 -> `192.168.1.10:8022` |
+| `ssh-giovanni-s20.atius.com.br` | reserved, not published | DNS-only candidate | 8422 | pending | same handset `192.168.1.9`, internal port pending proof |
+| `ssh-giovanni-s20-ubuntu.atius.com.br` | reserved, not published | DNS-only candidate | 8522 | pending | same handset `192.168.1.9`, internal port pending proof |
 | `ssh-horistic-srv.atius.com.br` | `163.176.232.119` | DNS-only | 22 | public VNIC Horistic | `10.0.0.65:22` |
 | `ssh.atius.com.br/compute/*` | `137.131.140.20` | DNS-only | 443 | Apache -> 8196/8089 | RustGuac -> relay correspondente |
 | `rdp.atius.com.br/giovanni-w11-pc` | `137.131.190.161` | proxied | 443 | Apache -> 8197/8089 | WAN 3389 -> `192.168.1.8:3389` |
@@ -170,7 +181,9 @@ de WireGuard no cliente:
 |---|---|---|
 | W11 | `ssh muniz@10.100.100.8` | `ssh -p 8122 muniz@ssh-giovanni-w11-pc.atius.com.br` |
 | WSL | `ssh -p 8022 muniz@10.100.100.8` | `ssh -p 8222 muniz@ssh-giovanni-wsl-pc.atius.com.br` |
-| S23 | `ssh -p 8022 termux@10.100.100.9` | `ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br` |
+| S23 | `ssh -p 8022 termux@10.100.100.10` | `ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br` |
+| S20 | configured WG `10.100.100.9`, SSH unproven | no fallback published; `8422` remains reserved |
+| S20 Ubuntu PRoot | shares S20 IP, SSH unproven | no fallback published; `8522` remains reserved |
 | Horistic | `ssh horistic@10.21.1.21` | `ssh -p 22 horistic@ssh-horistic-srv.atius.com.br` |
 
 Em 2026-07-22, os dois caminhos do S23 autenticaram e chegaram ao mesmo Termux.
@@ -187,11 +200,17 @@ reapply reais passaram sem detach/release, mantendo o service de secondary
 addresses. Os launchers canônicos são `/compute/<slug>`; `/ssh-*` permanece
 alias browser.
 
-The Casa SSH public IPs and the Horistic public IP are OCI `RESERVED`; the W11 IP is also the dedicated
-`dns-casa.atius.com.br` A record on DNS port 53. This sharing is intentional
-and must remain represented as separate port bindings. Native and browser SSH
-are `GO` 4/4. RDP reaches RustGuac/NLA but remains partial until the correct
-Microsoft Account password proves the interactive desktop.
+The Casa SSH public IPs and the Horistic public IP are OCI `RESERVED`; the W11
+IP is also the dedicated `dns-casa.atius.com.br` A record on DNS port 53. This
+sharing is intentional and must remain represented as separate port bindings.
+The 2026-07-19 validation reached native and browser SSH `GO` 4/4. The current
+2026-07-23 readback is narrower: W11 and WSL passed native SSH plus browser
+HTTP `200`, WebSocket `101` and `connected`; S23 returned launcher `200` and
+WebSocket `101`, but stayed `disconnected`, while native `8322` closed before
+KEX. The RDP headless readback passed the SSO/ATS redirects and reached the
+canonical same-origin form with CSRF and an empty required Microsoft password
+field. No POST was authorized because the correct credential is absent from
+Vault, so WebSocket/NLA/desktop were `NOT RUN`, not PASS or FAIL.
 
 | Native SSH (histórico, superseded) | Porta pública SRV-1 | Backend BE3 | Estado |
 |---|---:|---:|---|
@@ -251,9 +270,11 @@ WireGuard/DNS validation 2026-06-17 (historico `wg0`):
 - W11 e S23 tinham peers novos no hub e configs gerados; esse estado foi
   superseded no replanejamento `wg100` de 2026-07-06, em que W11
   `10.100.100.5` e S23 `10.100.100.6` ja tiveram handshake validado no SRV-1.
-  Esse estado foi superseded pelo cutover de 2026-07-10: W11 agora opera em
-  `10.100.100.8` e S23 em `10.100.100.9`, alinhados com a LAN
-  `192.168.1.8/.9` do BE3; `.5/.6` ficam apenas como historico/cleanup.
+  Esse estado foi superseded pelo cutover de 2026-07-10: W11 passou a
+  `10.100.100.8` e S23 a `10.100.100.9`, então alinhados com a LAN
+  `192.168.1.8/.9` do BE3; `.5/.6` ficaram como historico/cleanup. O cutover
+  posterior de 2026-07-23 reservou WG `.9` para S20 e `.10` para S23, ainda
+  sem handshake dos handsets no primeiro readback.
 
 Cloudflare:
 - `*.atius.com.br` → origem pública SRV-1/Apache2; validação 2026-07-05
@@ -701,6 +722,31 @@ Validado em 2026-07-05:
 
 ## 10. Changelog
 
+- **1.7.9 (2026-07-23)** — validou em headless a cadeia RDP ate o formulario
+  canonico autenticado, com CSRF e senha Microsoft obrigatoria vazia. Como a
+  credencial correta nao existe no Vault, nenhum POST foi autorizado e
+  WebSocket/NLA/desktop ficaram `NOT RUN`.
+- **1.7.8 (2026-07-23)** — reconciliou o browser headless apos a correcao
+  BE3: W11/WSL `200` + WebSocket `101` + `connected`; S23 launcher `200` +
+  WebSocket `101`, mas `disconnected`. S20 segue sem card, aliases browser
+  `404` e zero WebSocket.
+- **1.7.7 (2026-07-23)** — apos backup nativo, corrigiu as quatro regras
+  BE3 para `Remote Host=137.131.190.161`. Probes externos no SRV-3
+  confirmaram banners e host keys de W11 `8122` e WSL `8222`; S23 `8322`
+  ainda fechou antes do KEX. A automacao periodica de healthcheck por timeout
+  foi rejeitada e removida por nao provar troca do WAN; promocao automatica
+  continua `NO-GO`. S20 e RDP/browser continuam gates separados.
+- **1.7.6 (2026-07-23)** — reconciliou S23/S20 com o estado live: reservas
+  BE3 `.10`/`.9` e MACs atuais; hub WG `.10`/`.9` ainda sem handshake;
+  S20 ainda em lease antigo `.62`; slots `8422/8522` apenas reservados.
+  Registrou também o incidente DNS Casa por WAN novo `191.31.48.191` fora do
+  allowlist e o drift das regras BE3/relay para IPs antigos/incorretos. A
+  promoção governada corrigiu o allowlist DNS e o W11 voltou a resolver pelo
+  DNS Casa; a correção NAT/relay posterior está registrada na 1.7.7.
+- **1.7.5 (2026-07-23)** — backend LAN/BE3 do `GIOVANNI-S23` movido para
+  `192.168.1.10:8022`; NAT `GIOVANNI-S23-SSH` preserva TCP externo `8322`,
+  interno `8022`. Probe via WSL confirmou a host key ED25519 pinada do S23
+  no novo backend. A afirmação WG `.9` foi superseded pela 1.7.6.
 - **1.7.4 (2026-07-22)** — Phase 07 consolidou W11/WSL/S23 no shared IP
   `137.131.140.20` com portas `8122/8222/8322`; split-IP anterior foi mantido
   apenas como rollback retained e validado por drill/reapply completos.

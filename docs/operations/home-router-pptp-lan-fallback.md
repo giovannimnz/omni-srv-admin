@@ -12,8 +12,9 @@ Documentar a linha de arquitetura para uma VPN residencial PPTP no Huawei BE3, r
 
 - Nao usar L2TP. Esta linha e PPTP-only.
 - `GIOVANNI-W11-PC` deve ficar reservado no router como `192.168.1.8`, MAC `44:FA:66:01:6F:AB`.
-- `GIOVANNI-S23` deve ficar reservado no router como `192.168.1.9`, MAC `8A:DE:15:16:1B:3B`.
-- Apenas esses dois clientes devem usar o canal; se a exclusividade tecnica nao for comprovada, o modo deve ser rotulado como `GO risk-accepted dns-correlated`, nao como enforcement forte.
+- `GIOVANNI-S20` deve ficar reservado no router como `192.168.1.9`, MAC `30:AB:6A:3C:96:D1`.
+- `GIOVANNI-S23` deve ficar reservado no router como `192.168.1.10`, MAC `64:1B:2F:C2:DC:A3`.
+- Apenas esses tres clientes devem usar o canal; se a exclusividade tecnica nao for comprovada, o modo deve ser rotulado como `GO risk-accepted dns-correlated`, nao como enforcement forte.
 - WireGuard fica como fallback remoto/off-home, nao como preferencia quando os dois dispositivos estiverem em casa.
 - Segredos ficam no Vault; docs registram apenas paths/nomes de variaveis.
 - Este PPTP e home-edge residencial. Nao substitui OCI/DRG, nao anuncia `192.168.1.0/24` para DRG/wg100 e nao vira source of truth para DNS interno, PgBouncer, K3s, Vault, Obsidian, TEI ou inventory routing.
@@ -37,7 +38,7 @@ O isolamento continua obrigatorio como boundary tecnico interno, nao como produt
 
 Usar o mesmo padrao operacional da Phase 4: firewall deny-by-default, estado auditavel, Vault-first, rollback documentado e validacao externa. Rollback de PPTP precisa remover TCP 1723/GRE sem quebrar DNS/proxy; rollback de AdGuard/proxy nao pode deixar PPTP aberto por acidente.
 
-DNS/AdGuard/DHCP entra como catalogo operacional de identidade: `GIOVANNI-W11-PC` e `GIOVANNI-S23` devem aparecer por hostname, IP fixo, MAC/lease, PTR/client registry, query logs e freshness. Isso ajuda a saber quem e quem nos logs PPTP/firewall, mas nao e identidade criptografica nem autorizacao forte.
+DNS/AdGuard/DHCP entra como catalogo operacional de identidade: `GIOVANNI-W11-PC`, `GIOVANNI-S20` e `GIOVANNI-S23` devem aparecer por hostname, IP fixo, MAC/lease, PTR/client registry, query logs e freshness. Isso ajuda a saber quem e quem nos logs PPTP/firewall, mas nao e identidade criptografica nem autorizacao forte.
 
 ## Critical Gate
 

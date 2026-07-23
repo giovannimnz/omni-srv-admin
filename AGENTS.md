@@ -18,7 +18,24 @@ For more information about GSD agents, run `/gsd-help`.
 - Falha no caminho privado direto de W11, WSL, S23 ou Horistic deve ser seguida imediatamente pela rota SSH pública nativa, sem dependencia de WireGuard.
 - W11: `ssh muniz@10.100.100.8` -> `ssh -p 8122 muniz@ssh-giovanni-w11-pc.atius.com.br`.
 - WSL: `ssh -p 8022 muniz@10.100.100.8` -> `ssh -p 8222 muniz@ssh-giovanni-wsl-pc.atius.com.br`.
-- S23: `ssh -p 8022 termux@10.100.100.9` -> `ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br`.
+- S23: `ssh -p 8022 termux@10.100.100.10` -> `ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br`.
+- S23 LAN/BE3: backend `192.168.1.10:8022`; NAT
+  `GIOVANNI-S23-SSH` TCP externo `8322` -> `192.168.1.10:8022`.
+  O endpoint WireGuard configurado no hub e `10.100.100.10:8022`; em
+  2026-07-23 ainda estava sem handshake do handset.
+- S20 LAN/BE3: reserva `192.168.1.9`, MAC `30:AB:6A:3C:96:D1`; o hub
+  reserva `10.100.100.9/32`, tambem sem handshake do handset em 2026-07-23.
+  Os slots `8422` (Termux) e `8522` (Ubuntu PRoot) sao apenas reservados:
+  nao publicar nem tratar como fallback ate provar listener, usuario,
+  fingerprint, NAT, relay, DNS e browser end to end.
+- Correcao 2026-07-23: com backup nativo do BE3, as quatro regras Casa
+  passaram a restringir `Remote Host` ao egress real do relay
+  `137.131.190.161`. Probes externos no SRV-3 validaram W11 `8122` e WSL
+  `8222`; no browser headless, W11/WSL chegaram a `connected`, enquanto S23
+  chegou ao launcher/WebSocket e ficou `disconnected`. S23 `8322` ainda
+  fechava antes do KEX e continua pendente. No RDP, o fluxo headless chegou
+  ao formulario canonico autenticado; WebSocket/NLA/desktop nao foram
+  executados porque a credencial Microsoft correta nao existe no Vault.
 - Horistic: `ssh horistic@10.21.1.21` -> `ssh -p 22 horistic@ssh-horistic-srv.atius.com.br`.
 - Preserve a evidencia de ambos os probes antes de declarar indisponibilidade. `ssh.atius.com.br/ssh-*` e interface de browser, nao hostname OpenSSH.
 

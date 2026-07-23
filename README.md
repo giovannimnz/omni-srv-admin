@@ -171,7 +171,9 @@ Hosts atuais:
 | `atius-srv-1` | production | active | Oracle OCI / Ubuntu 22.04 / PRD |
 | `atius-srv-2` | development | planned | DEV/Zentrius |
 | `atius-srv-3` | sandbox | planned | ARM sandbox |
-| `giovanni-s23-termux` | mobile-node | active via VPN e Casa gateway | Termux em `10.100.100.9:8022`; fallback sem VPN `ssh-giovanni-s23.atius.com.br:8322` |
+| `giovanni-s20-termux` | mobile-node | address reserved, SSH pending | Hub WG `10.100.100.9`; LAN BE3 `192.168.1.9`; slot público `8422` ainda não publicado |
+| `giovanni-s20-proot` | mobile-ubuntu | address reserved, SSH pending | Mesmo handset/IP do S20; slot público `8522` ainda não publicado |
+| `giovanni-s23-termux` | mobile-node | configured, handset WG pending | Hub WG `10.100.100.10`; LAN BE3 `192.168.1.10:8022`; fallback público `ssh-giovanni-s23.atius.com.br:8322` |
 | `giovanni-s23-proot` | mobile-ubuntu | planned | Ubuntu PRoot no S23 |
 | `dell-inspiron-3520` | personal-workstation | planned | desktop pessoal Linux |
 | `support-template` | temporary-support | template | suporte remoto com escopo explícito |

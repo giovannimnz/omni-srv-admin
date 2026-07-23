@@ -86,8 +86,9 @@ Home edge exception:
 
 - `casa.atius.com.br` and `dns-casa.atius.com.br` belong to the residential
   `home-proxy` edge and are not internal machine identity records.
-- Residential PPTP reservations `192.168.1.8`/`192.168.1.9` are local BE3 LAN
-  bindings for W11/S23, not `access.oci_private_ip` or internal DNS targets.
+- Residential reservations `192.168.1.8`/`.9`/`.10` are local BE3 LAN
+  bindings for W11/S20/S23, not `access.oci_private_ip` or internal DNS
+  targets.
 
 ## Source Of Truth
 
@@ -281,9 +282,35 @@ As of `2026-07-10`:
 - Linux service binds and host resolvers prefer the OCI/DRG private plane.
 - `GIOVANNI-W11-PC` is an edge client on `10.100.100.8`, but its DNS and fleet
   service targets prefer the OCI/DRG addresses reached through the bridge.
-- `GIOVANNI-S23` is an edge client on `10.100.100.9`; final handset-side
-  outbound reachability remains limited by the client `AllowedIPs` scope.
+- The hub configuration reserves `10.100.100.10/32` for `GIOVANNI-S23` and
+  `10.100.100.9/32` for `GIOVANNI-S20`. Both peers had zero handshake,
+  endpoint and traffic at the 2026-07-23 readback, so they are configured
+  identities rather than proven handset sessions.
 - `wg100` endpoints remain documented and tested only as reserve fallback.
+
+Residential DNS incident 2026-07-23:
+
+- BE3 WAN changed from `152.241.106.225` to `191.31.48.191`.
+- BE3 clients received only `137.131.140.20` as DNS; raw Internet and direct
+  DNS to `8.8.8.8` worked, while `137.131.140.20:53` timed out.
+- AdGuard remained healthy locally, but the fail-closed `verified` nft set
+  still authorized the old WAN. The watcher refused promotion because
+  `verified_home_wan.healthcheck.status` was `unknown` and the planned
+  healthcheck was not implemented. Restarting AdGuard does not repair this
+  state; use the governed WAN promotion flow with backup and verification.
+- Recovery completed through that governed flow: `verified` now contains
+  `191.31.48.191`, its packet counter is increasing, and W11 successfully
+  resolved `example.com` through `137.131.140.20`. The authenticated Stage2
+  also promoted the Apache Casa origin to
+  `HOME_ROUTER_BE3_ORIGIN=https://191.31.48.191:8888`, with
+  candidate/provisional cleared. This closes the DNS outage, not the separate
+  handset lifecycle and S20 SSH gates.
+- A periodic healthcheck based only on timeout was evaluated and rejected:
+  timeout does not prove that the verified WAN changed. The temporary timer
+  and service were removed, and automatic WAN promotion remains `NO-GO`
+  until an external probe can conclusively distinguish origin replacement
+  from transient unreachability. Until then, use the backed-up governed
+  manual flow and retain fail-closed state.
 
 See:
 

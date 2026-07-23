@@ -1,0 +1,32 @@
+id: giovanni-s20-termux
+aliases:
+  - s20-termux
+  - galaxy-s20-termux
+role: mobile-node
+owner: giovanni
+access:
+  ssh: pending-live-proof
+  vpn_ip_configured: 10.100.100.9
+  home_lan_reserved_ip: 192.168.1.9
+  home_lan_mac: 30:AB:6A:3C:96:D1
+  candidate_internal_ssh_port: pending-live-proof
+  reserved_public_ssh_port: 8422
+  reserved_public_hostname: ssh-giovanni-s20.atius.com.br
+  reserved_browser_path: https://ssh.atius.com.br/compute/ssh-giovanni-s20
+platform:
+  provider: android-termux
+  device: samsung-galaxy-s20
+  os: termux
+  arch: arm64
+status: pending-validation
+modules: []
+constraints:
+  - no-systemd
+  - termux-paths
+  - ssh-user-port-fingerprint-not-yet-proven
+  - public-slot-reserved-not-published
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  lan_state: "BE3 reservation is enabled for 192.168.1.9, but on 2026-07-23 the handset still held stale DHCP lease 192.168.1.62 and did not answer SSH there."
+  wireguard_state: "SRV-1 hub assigns 10.100.100.9/32 to GIOVANNI-S20; handshake=0, endpoint=none and RX/TX=0 at readback, so handset identity remains unproven."
+  publication_gate: "Do not create NAT, relay, DNS or browser publication until the handset renews DHCP and listener, user, fingerprint and authentication are proven."

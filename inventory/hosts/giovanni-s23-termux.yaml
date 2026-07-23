@@ -5,19 +5,20 @@ aliases:
 role: mobile-node
 owner: giovanni
 access:
-  ssh: termux@10.100.100.9:8022
-  home_lan_ssh: termux@192.168.1.9:8022
+  ssh: termux@10.100.100.10:8022
+  home_lan_ssh: termux@192.168.1.10:8022
   casa_wan_ssh: termux@ssh-giovanni-s23.atius.com.br:8322
   ssh_fallback_command: "ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br"
   ssh_route_order:
-    - termux@10.100.100.9:8022
+    - termux@10.100.100.10:8022
     - termux@ssh-giovanni-s23.atius.com.br:8322
   casa_browser_ssh: https://ssh.atius.com.br/ssh-giovanni-s23
-  vpn_ip: 10.100.100.9
+  vpn_ip: 10.100.100.10
+  previous_vpn_ip: 10.100.100.9
   legacy_ssh: termux@10.100.100.6:8022
   legacy_vpn_ip: 10.100.100.6
-  home_lan_reserved_ip: 192.168.1.9
-  home_lan_mac: 8A:DE:15:16:1B:3B
+  home_lan_reserved_ip: 192.168.1.10
+  home_lan_mac: 64:1B:2F:C2:DC:A3
 platform:
   provider: android-termux
   device: samsung-galaxy-s23
@@ -42,13 +43,14 @@ notes:
   wireguard_key_rotated: 2026-06-17
   dns_name: GIOVANNI-S23
   dns_validation: "2026-07-10: inside the S23 Termux session, hostname resolution for `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv` returned the OCI-private targets `10.11.1.11`, `10.12.1.12`, `10.13.1.13`, and `10.21.1.21`, while the tunnel DNS path remained `10.100.100.1`."
-  client_config: "2026-07-10: S23 Termux now handshakes on 10.100.100.9/32 after the BE3-aligned renumbering; old 10.100.100.6/32 and 10.1.1.6:8022 are legacy history."
-  live_handshake: "2026-07-10: srv1 saw a recent handshake for 10.100.100.9/32; srv1 and W11 reached 10.100.100.9 by ICMP, and W11 reached TCP 8022."
+  client_config: "2026-07-23: the SRV-1 hub assigns 10.100.100.10/32 to S23. The handset profile and cryptographic identity remain pending live readback; 10.100.100.9/32 was the previous live assignment."
+  previous_live_handshake: "2026-07-10: srv1 saw a handshake for the then-current 10.100.100.9/32 assignment; srv1 and W11 reached it by ICMP, and W11 reached TCP 8022."
   legacy_wireguard_note: "Previous S23 edge IP 10.100.100.6/32 is historical evidence from the pre-cutover state."
-  current_wireguard_state: "Live edge IP is 10.100.100.9/32 and bridge-side reachability is green. The remaining gate for full handset-side proof is route scope: the active profile still behaves like `AllowedIPs = 10.100.100.0/24` instead of including the OCI-private CIDRs."
+  current_wireguard_state: "Hub assignment is 10.100.100.10/32. At the 2026-07-23 readback it had handshake=0, endpoint=none and RX/TX=0; do not claim handset cutover until a live handshake proves the peer."
   codex_gbrain_obsidian: "2026-06-26: Codex and Hermes configured with GBrain and Obsidian MCP bridges over restricted SSH to SRV1."
   retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.6 references are historical evidence only."
-  home_proxy_pptp: "2026-07-10: BE3 static reservation confirmed for residential PPTP spike: 192.168.1.9 / 8A:DE:15:16:1B:3B. This is home LAN only, not OCI/DRG identity."
-  casa_remote_gateway: "2026-07-19: production Casa access uses public SSH login termux through BE3 TCP NAT WAN 8322 -> 192.168.1.9:8022, source-restricted to atius-srv-1 public egress. The app UID remains Android-assigned and is not the public SSH username. Browser path ssh.atius.com.br/ssh-giovanni-s23 is ATS-admin-gated through Apache/RustGuac; no Cloudflare Tunnel or WireGuard in the data path."
+  home_proxy_pptp: "2026-07-23: BE3 static reservation is 192.168.1.10 / 64:1B:2F:C2:DC:A3. This is home LAN only, not OCI/DRG identity."
+  casa_remote_gateway: "2026-07-19: production Casa access uses public SSH login termux through BE3 TCP NAT WAN 8322 -> 192.168.1.10:8022, source-restricted to atius-srv-1 public egress. The app UID remains Android-assigned and is not the public SSH username. Browser path ssh.atius.com.br/ssh-giovanni-s23 is ATS-admin-gated through Apache/RustGuac; no Cloudflare Tunnel or WireGuard in the data path."
+  be3_lan_cutover: "2026-07-23: canonical S23 LAN backend is 192.168.1.10:8022; WSL observed the pinned S23 ED25519 host key SHA256:IknMvx6ZnCXIJCNzUUp48VKpD8aQRlaPsBqe4FPIvC4. After a native BE3 backup, all Casa rules were corrected to Remote Host 137.131.190.161. External W11/WSL probes passed, while S23 public 8322 still closed before KEX."
   casa_validation: "2026-07-19: native SSH and the final RustGuac browser 4/4 E2E reached Termux; proof includes two WebSocket 101 handshakes, three command markers, 70-second idle and reconnect. Android suspension may still require wake/retry."
-  ssh_failover_policy: "2026-07-22: always try termux@10.100.100.9:8022 first when the private WireGuard path is expected; on any failure, immediately try ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br before declaring the handset unreachable. Both paths authenticated successfully during this validation."
+  ssh_failover_policy: "Try termux@10.100.100.10:8022 first when the private WireGuard path is expected; on any failure, immediately try ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br before declaring the handset unreachable. The .10 WireGuard assignment remains pending handset handshake."

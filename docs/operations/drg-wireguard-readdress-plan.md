@@ -41,7 +41,8 @@ Current client reservations:
 | Endpoint | Legacy address | `wg100` target | Status |
 |---|---:|---:|---|
 | `GIOVANNI-W11-PC` | `10.1.1.5` | `10.100.100.8` | live; direct SRV-1 handshake validated on 2026-07-10; previous `10.100.100.5` is historical/cleanup only |
-| `GIOVANNI-S23` | `10.1.1.6` | `10.100.100.9` | live; direct SRV-1 handshake validated on 2026-07-10; previous `10.100.100.6` is historical/cleanup only |
+| `GIOVANNI-S20` | - | `10.100.100.9` | configured on the hub on 2026-07-23; no handset handshake, endpoint or traffic yet |
+| `GIOVANNI-S23` | `10.1.1.6` | `10.100.100.10` | configured on the hub on 2026-07-23; no handset handshake, endpoint or traffic yet; `.9` was the previous live assignment |
 | `peer11` | - | `10.100.100.11` | config generated; import/handshake pending |
 | `peer12` | - | `10.100.100.12` | config generated; import/handshake pending |
 | `peer13` | - | `10.100.100.13` | config generated; import/handshake pending |
@@ -119,8 +120,9 @@ Reservations after the replan:
   a routed site later, reserve W11 as `10.72.0.0/16` and S23 as
   `10.73.0.0/16`.
 - `home-proxy` PPTP residencial (`GIOVANNI-W11-PC=192.168.1.8`,
-  `GIOVANNI-S23=192.168.1.9`) is a home-edge access path only. Do not advertise
-  `192.168.1.0/24` into DRG/wg100 and do not model W11/S23 as routed sites
+  `GIOVANNI-S20=192.168.1.9`, `GIOVANNI-S23=192.168.1.10`) is a home-edge
+  access path only. Do not advertise `192.168.1.0/24` into DRG/wg100 and do
+  not model W11/S20/S23 as routed sites
   without a separate routed-site phase.
 - Do not allocate OCI VCN/subnet space from `10.100.0.0/16`; it remains the
   WireGuard control-plane family.
@@ -141,7 +143,8 @@ Live and pending host assignments:
 | `atius-srv-3` | `10.100.100.3` | live |
 | `horistic-srv` | `10.100.100.4` | live |
 | `GIOVANNI-W11-PC` | `10.100.100.8` | live handshake to SRV-1 after the 2026-07-10 cutover; previous `.5` is historical/cleanup only |
-| `GIOVANNI-S23` | `10.100.100.9` | live handshake to SRV-1 after the 2026-07-10 cutover; previous `.6` is historical/cleanup only |
+| `GIOVANNI-S20` | `10.100.100.9` | configured on hub; handshake/endpoint/traffic still zero on 2026-07-23 |
+| `GIOVANNI-S23` | `10.100.100.10` | configured on hub; handshake/endpoint/traffic still zero on 2026-07-23; `.9` was live before this cutover |
 | `peer11`-`peer17` | `10.100.100.11`-`10.100.100.17` | generated, pending device import |
 
 The OCI/DRG private plane is now the canonical service path:
@@ -181,9 +184,10 @@ The OCI/DRG private plane is now the canonical service path:
 
 - Keep `10.100.100.0/24` as reserve path only.
 - Do not reintroduce `10.1.1.0/24` as live compatibility or rollback path.
-- Treat SRV-1 hub, `vpn.atius.com.br` on SRV-1, W11 `10.100.100.8` and S23
-  `10.100.100.9` as the current live edge truth. Keep `10.100.100.5/.6` only
-  as historical evidence or temporary cleanup scope.
+- Treat SRV-1 hub and `vpn.atius.com.br` on SRV-1 as live. W11
+  `10.100.100.8` is proven; S20 `10.100.100.9` and S23 `10.100.100.10` are
+  current hub assignments but remain pending handset handshake. Keep
+  `10.100.100.5/.6` only as historical evidence or temporary cleanup scope.
 - Expand the current S23 profile, historically named peer6, so handset-side
   traffic can reach the OCI-private CIDRs `10.11.0.0/16`, `10.12.0.0/16`,
   `10.13.0.0/16`, and `10.21.0.0/16`; the live profile still behaves like
