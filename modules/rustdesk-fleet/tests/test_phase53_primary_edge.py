@@ -499,7 +499,6 @@ def test_runtime_parent_and_child_cgroup_arithmetic_effective_readback() -> None
 @pytest.mark.parametrize(
     ("artifact", "owner_plan"),
     [
-        ("quadlets/atius-rustdesk-server-hbbs.container", "53-02"),
         ("tools/rustdesk-ops-api.py", "53-03"),
         ("tools/apply-phase53-edge.py", "53-04"),
         ("evidence/phase53/deploy-transaction.json", "53-05"),

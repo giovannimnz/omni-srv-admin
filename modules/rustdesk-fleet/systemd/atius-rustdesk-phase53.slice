@@ -1,0 +1,11 @@
+[Unit]
+Description=Atius RustDesk Phase 53 aggregate resource ceiling
+
+[Slice]
+CPUAccounting=true
+CPUQuota=80%
+MemoryAccounting=true
+MemoryMax=1G
+MemorySwapMax=0
+TasksAccounting=true
+TasksMax=512

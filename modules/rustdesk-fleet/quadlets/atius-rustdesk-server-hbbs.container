@@ -1,0 +1,38 @@
+[Unit]
+Description=Atius RustDesk OSS hbbs primary
+Documentation=https://github.com/rustdesk/rustdesk-server
+Wants=network-online.target
+After=network-online.target
+
+[Container]
+ContainerName=atius-rustdesk-server-hbbs
+Image=docker.io/rustdesk/rustdesk-server@sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208
+Pull=never
+Network=host
+Exec=hbbs -r rustdesk.atius.com.br:21117
+ReadOnly=true
+NoNewPrivileges=true
+DropCapability=ALL
+PidsLimit=128
+Volume=%h/.local/share/atius-rustdesk/server/state:/root:rw
+Volume=%t/atius-rustdesk/server-identity/id_ed25519:/root/id_ed25519:ro
+Volume=%t/atius-rustdesk/server-identity/id_ed25519.pub:/root/id_ed25519.pub:ro
+Tmpfs=/tmp:rw,noexec,nosuid,nodev,size=16m
+PodmanArgs=--log-driver=k8s-file --log-opt=path=%h/.local/state/atius-rustdesk/server/logs/hbbs.log
+
+[Service]
+Slice=atius-rustdesk-phase53.slice
+CPUQuota=35%
+MemoryMax=448M
+MemorySwapMax=0
+TasksMax=192
+NoNewPrivileges=true
+Restart=on-failure
+RestartSec=5s
+TimeoutStartSec=90s
+TimeoutStopSec=30s
+StandardOutput=null
+StandardError=null
+
+[Install]
+WantedBy=default.target
