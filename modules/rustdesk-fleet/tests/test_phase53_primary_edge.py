@@ -447,7 +447,13 @@ def _live_gate_module() -> Any:
 def _current_preflight(module: Any, *, rollback_ready: bool = True) -> dict[str, Any]:
     bundle = module.load_current_contracts(REPO)
     return {
-        "source_head": "a" * 40,
+        "source_head": subprocess.run(
+            ["git", "rev-parse", "HEAD"],
+            cwd=REPO,
+            text=True,
+            capture_output=True,
+            check=True,
+        ).stdout.strip(),
         "contract_digests": bundle.digests,
         "pre_state_digest": "b" * 64,
         "rollback_ready": rollback_ready,
@@ -522,6 +528,42 @@ def test_stage_receipt_schema_rejects_pass_text_and_ambiguous_resume() -> None:
     stored["observations"] = {"verdict": "PASS"}
     with pytest.raises(module.GateBlocked, match="stored-verdict-forbidden"):
         module.StageReceipt.from_mapping(stored)
+
+
+@pytest.mark.parametrize("boundary_index", range(1, 11))
+def test_stage_receipt_fault_injection_blocks_every_skipped_boundary(
+    boundary_index: int,
+) -> None:
+    module = _live_gate_module()
+    gate = module.Phase53LiveGate(
+        repo=REPO, environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"}
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+    transaction_id = "e" * 32
+    for stage in module.STAGES[:boundary_index]:
+        gate.accept_receipt(
+            module.StageReceipt.create(
+                transaction_id=transaction_id,
+                stage=stage,
+                input_digest="f" * 64,
+                observations={"raw_observation_digest": "0" * 64},
+                mutation={"performed": False, "classes": [], "cleanup_pending": []},
+                rollback_state="ready",
+            )
+        )
+    skipped = module.STAGES[(boundary_index + 1) % len(module.STAGES)]
+    blocker = "duplicate-stage-receipt" if boundary_index == 10 else "ambiguous-stage-resume"
+    with pytest.raises(module.GateBlocked, match=blocker):
+        gate.accept_receipt(
+            module.StageReceipt.create(
+                transaction_id=transaction_id,
+                stage=skipped,
+                input_digest="f" * 64,
+                observations={"raw_observation_digest": "0" * 64},
+                mutation={"performed": False, "classes": [], "cleanup_pending": []},
+                rollback_state="ready",
+            )
+        )
 
 
 @pytest.mark.parametrize(
