@@ -1,4 +1,4 @@
-# Phase 51: Qwen3 Embedding e Rerank Podman para k3s - Context
+# Phase 59: Qwen3 Embedding e Rerank Podman para k3s - Context
 
 **Gathered:** 2026-07-23
 **Status:** Ready for planning
@@ -147,5 +147,5 @@ gates aprovados.
 
 ---
 
-*Phase: 51-qwen3-embedding-e-rerank-podman-para-k3s*
+*Phase: 59-qwen3-embedding-e-rerank-podman-para-k3s*
 *Context gathered: 2026-07-23*

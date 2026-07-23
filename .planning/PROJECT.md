@@ -60,6 +60,27 @@ depois de restore/failover real.
 `.planning/workstreams/rustdesk-fleet/{REQUIREMENTS,ROADMAP,STATE}.md` e
 `.planning/research/rustdesk-fleet/`.
 
+## Parallel Workstream: Horistic OCI/DRG Readdress
+
+**Goal:** migrar o Horistic para `10.31.0.0/16` / `10.31.1.0/24` /
+`10.31.1.31`, preservar o public IP reservado e reenumerar S23/S20 sem remover
+o caminho `.21` antes dos gates.
+
+**Canonical planning:**
+`.planning/workstreams/network-horistic-readdress/{REQUIREMENTS,ROADMAP,STATE}.md`.
+Esta é a Phase 54 isolada do workstream; a Phase 54 de `rustdesk-fleet`
+permanece intacta.
+
+## Parallel Workstream: Qwen Local AI Canary
+
+**Goal:** validar Qwen3 embedding/rerank ARM64 como canário reversível, com GTE
+titular, collections separadas e promoção somente manual.
+
+**Canonical planning:**
+`.planning/workstreams/qwen-local-ai/{REQUIREMENTS,ROADMAP,STATE}.md`.
+A antiga Phase 51 local foi reenumerada como Phase 59 para preservar as Phases
+51-58 canônicas de `rustdesk-fleet`.
+
 **Recently shipped out of sequence:**
 
 - v1.3 / Phase 41 - embeddings locais com `embedding-gte-v1`
@@ -86,6 +107,14 @@ depois de restore/failover real.
 - [ ] **VAL-01..VAL-07**: a matriz 20+5, negativos, GUI, reboot e soak produzem evidência íntegra.
 - [ ] **DR-01..DR-04**: standby, failover/failback, upgrade/downgrade e rollback real passam.
 - [ ] **OPS-01..OPS-04**: monitoring, docs, inventory, Obsidian, GBrain, Graphify e UAT convergem com o runtime.
+
+### Network lane - Phase 54
+
+- [ ] **NET-01..NET-11**: migração `10.21` -> `10.31`, public IP reservado, S23/S20, serviços, evidências e rollback convergem no workstream isolado.
+
+### Local AI lane - Phase 59
+
+- [ ] **QAI-01..QAI-08**: canário Qwen, collections 1024d, governor, qualidade/capacidade, soak e rollback convergem sem promoção automática.
 
 ### v1.4 - Atius-wide SSO / Login
 
@@ -176,6 +205,8 @@ depois de restore/failover real.
 | Phase planning lives in `.planning` | Avoid stale execution order in docs/runbooks | Reconciled in Phase 46 |
 | RustDesk v1.9 starts OSS and direct-first | Five-host single-operator scope does not require Pro control plane; relay remains testable fallback | Pending validation; Pro becomes mandatory if SSO/RBAC/human audit is required |
 | RustDesk uses isolated GSD workstream | Preserve Phase 48 and prevent cross-lane planning mutations | Workstreams migrated with external snapshot on 2026-07-19 |
+| Network readdress uses isolated Phase 54 | Preserve canonical RustDesk numbering while honoring the operator-selected 52 -> 54 reenumeration | Legacy receipts preserved byte for byte on 2026-07-23 |
+| Qwen canary moved from Phase 51 to 59 | Preserve canonical RustDesk Phases 51-58 from `atius-srv-1` | Reenumerated with path and artifact IDs on 2026-07-23 |
 
 ## Evolution
 
@@ -187,4 +218,4 @@ Update this file whenever:
 4. a cross-session reconciliation changes what the repo claims is complete.
 
 ---
-*Last updated: 2026-07-19 during RustDesk v1.9 milestone initialization*
+*Last updated: 2026-07-23 during canonical fleet super-merge*

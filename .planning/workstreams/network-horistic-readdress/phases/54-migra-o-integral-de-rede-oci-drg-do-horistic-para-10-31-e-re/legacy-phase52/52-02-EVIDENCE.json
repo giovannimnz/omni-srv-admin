@@ -1,0 +1,33 @@
+{
+  "schema": "gsd.validation.evidence.v1",
+  "phase": 52,
+  "plan": "52-02",
+  "status": "BLOCKED",
+  "mode": "read-only",
+  "mutations_attempted": false,
+  "previous_gate": "PASS:52-01",
+  "target": {
+    "vcn_cidr": "10.31.0.0/16",
+    "subnet_cidr": "10.31.1.0/24",
+    "private_ip": "10.31.1.31"
+  },
+  "overlap": {
+    "direct_target_overlap": false,
+    "checked_blocks": ["10.0.0.0/16", "10.1.0.0/16", "10.42.0.0/16", "10.43.0.0/16", "10.65.172.0/24", "10.89.53.0/24", "10.100.0.0/16", "100.64.0.0/10", "192.168.1.0/24"],
+    "lpg_ready": false,
+    "lpg_blocker": "current-inventory-cidr-overlap"
+  },
+  "operation_plans": {
+    "previews_persisted": false,
+    "mutations_attempted": false
+  },
+  "human_gate": {
+    "required_signal": "APROVADO: phase52-wave1",
+    "observed": false
+  },
+  "stop_condition": {
+    "id": "executor-checkpoint-not-produced",
+    "result": "BLOCKED",
+    "details": "The executor stopped before producing the required network OperationPlan preview matrix."
+  }
+}

@@ -1,10 +1,10 @@
-# Phase 51: Qwen3 Embedding e Rerank Podman para k3s - Discussion Log
+# Phase 59: Qwen3 Embedding e Rerank Podman para k3s - Discussion Log
 
 > **Audit trail only.** Do not use as input to planning, research, or execution agents.
 > Decisions are captured in CONTEXT.md — this log preserves the alternatives considered.
 
 **Date:** 2026-07-23
-**Phase:** 51-Qwen3 Embedding e Rerank Podman para k3s
+**Phase:** 59-Qwen3 Embedding e Rerank Podman para k3s
 **Areas discussed:** contratos de modelos e runtimes, dimensao e indices, topologia k3s e governor, canary/promocao/rollback
 
 ---

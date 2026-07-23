@@ -1,0 +1,39 @@
+{
+  "plan": "52-01",
+  "status": "PASS",
+  "mutations_attempted": true,
+  "captured_at": "2026-07-23T08:20:00Z",
+  "production_mutations_attempted": false,
+  "host_backups": {
+    "status": "PASS",
+    "horistic": {
+      "path": "/var/backups/omni-srv-admin/phase52/20260723T081521Z-horistic",
+      "checksum_status": "PASS",
+      "restore_staging_status": "PASS",
+      "sha256sums_sha256": "7fa4d4ab034309917081ea203b3d6ed17b39375644d62501e8d0c0470a5a70b1"
+    },
+    "srv1": {
+      "path": "/var/backups/omni-srv-admin/phase52/20260723T081521Z-srv1",
+      "checksum_status": "PASS",
+      "restore_staging_status": "PASS",
+      "sha256sums_sha256": "f24f8192637a95ce58ec1232fc8278284d26cfde479df6f30cd08a09038c48f8"
+    }
+  },
+  "host_access": {
+    "srv1_private_ssh": "PASS",
+    "horistic_primary_ssh": "PASS",
+    "horistic_fallback_ssh": "PASS",
+    "horistic_user": "horistic"
+  },
+  "oci_volume_snapshot": {
+    "status": "PASS",
+    "lifecycle_state": "AVAILABLE",
+    "backup_type": "INCREMENTAL",
+    "size_in_gbs": 100,
+    "backup_ocid": "ocid1.bootvolumebackup.oc1.sa-saopaulo-1.abtxeljrzlychdv4jgqdmric6o5uq5lnc3zqbvp3e527tibjxcrcz2ywn36q",
+    "operation_id": "9789abb0-536c-4a3e-9b2c-a4a2586fda5b",
+    "plan_hash": "sha256:554c790125a94ad3b03a3be472bbf74bfaafcfa4cf7c4e44232552298700bb6f"
+  },
+  "restore_scope": ["route", "DNS", "K3s agent", "host", "WireGuard peers", "reserved public IP"],
+  "approval": "APROVADO: phase52-wave0"
+}

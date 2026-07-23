@@ -1,0 +1,96 @@
+{
+  "schema": "gsd.validation.evidence.v1",
+  "phase": 52,
+  "plan": "52-01",
+  "status": "PASS",
+  "mode": "read-only-with-backup-exports",
+  "captured_at": "2026-07-23T08:20:00Z",
+  "production_mutations_attempted": false,
+  "mutations_attempted": true,
+  "mutation_scope": ["oci boot volume backup only"],
+  "human_gate": {
+    "required_signal": "APROVADO: phase52-wave0",
+    "observed": true,
+    "remote_access_authorized": true,
+    "srv1_private_path": "10.100.100.1",
+    "public_path_used": false
+  },
+  "oci_readback": {
+    "authenticated_context": true,
+    "profiles_requested": ["atius1", "atius2", "atius3", "horistic"],
+    "profiles_loaded": 4,
+    "partial": false,
+    "region": "sa-saopaulo-1",
+    "horistic": {
+      "current_vcn_cidr": "10.21.0.0/16",
+      "current_subnet_cidr": "10.21.1.0/24",
+      "current_private_ip": "10.21.1.21",
+      "secondary_vnic_confirmed": true,
+      "reserved_public_ip": "163.176.232.119",
+      "reserved_public_ip_state": "ASSIGNED",
+      "reserved_public_ip_private_binding": "10.0.0.65",
+      "reserved_public_ip_id": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa",
+      "reserved_public_ip_private_ip_id": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna"
+    },
+    "drg": {
+      "central_drg_exists": true,
+      "attachment_profiles": ["atius1", "atius2", "atius3", "horistic"],
+      "attachment_states": ["attached_to_central"],
+      "collection_blockers": [],
+      "operation_plan_previews": []
+    },
+    "fresh_volume_snapshot": {
+      "status": "PASS",
+      "lifecycle_state": "AVAILABLE",
+      "backup_type": "INCREMENTAL",
+      "size_in_gbs": 100,
+      "backup_ocid": "ocid1.bootvolumebackup.oc1.sa-saopaulo-1.abtxeljrzlychdv4jgqdmric6o5uq5lnc3zqbvp3e527tibjxcrcz2ywn36q",
+      "operation_id": "9789abb0-536c-4a3e-9b2c-a4a2586fda5b",
+      "plan_hash": "sha256:554c790125a94ad3b03a3be472bbf74bfaafcfa4cf7c4e44232552298700bb6f",
+      "typed_confirmation": "APPLY:586fda5b"
+    }
+  },
+  "host_readback": {
+    "srv1_ssh_via_wireguard": "PASS",
+    "srv1_sudo_noninteractive": "PASS",
+    "horistic_primary_ssh": "PASS",
+    "horistic_fallback_ssh": "PASS",
+    "horistic_user": "horistic",
+    "horistic_identity_file": "/home/muniz/.ssh/private-horistic.pem",
+    "public_path_used": false,
+    "k3s_nodes_ready": ["atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv"]
+  },
+  "rollback": {
+    "status": "PASS",
+    "host_backups_status": "PASS",
+    "horistic": {
+      "backup_path": "/var/backups/omni-srv-admin/phase52/20260723T081521Z-horistic",
+      "checksum_manifest": "SHA256SUMS",
+      "checksum_verification": "checksum-verify.txt",
+      "restore_staging": "restore-staging",
+      "archive_count": 2,
+      "restored_entry_count": 228,
+      "sha256sums_sha256": "7fa4d4ab034309917081ea203b3d6ed17b39375644d62501e8d0c0470a5a70b1"
+    },
+    "srv1": {
+      "backup_path": "/var/backups/omni-srv-admin/phase52/20260723T081521Z-srv1",
+      "checksum_manifest": "SHA256SUMS",
+      "checksum_verification": "checksum-verify.txt",
+      "restore_staging": "restore-staging",
+      "archive_count": 5,
+      "restored_entry_count": 582,
+      "sha256sums_sha256": "f24f8192637a95ce58ec1232fc8278284d26cfde479df6f30cd08a09038c48f8"
+    },
+    "oci_volume_snapshot_status": "PASS"
+  },
+  "stop_condition": {
+    "id": "wave0-rollback-ready",
+    "result": "PASS",
+    "details": "Host backups, restore staging, and fresh OCI boot-volume backup are verified."
+  },
+  "gate_run": {
+    "status": "PENDING",
+    "exit_code": null,
+    "gate_path": "52-01-GATE.json"
+  }
+}

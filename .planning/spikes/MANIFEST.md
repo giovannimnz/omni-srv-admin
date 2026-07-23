@@ -25,6 +25,9 @@ The earlier internal service PKI spike remains part of this portfolio.
   sample is not an SLA.
 - Preserve the NFS workspace tree until an owner-local remote mode proves
   equivalent project discovery, editing, reconnect and rollback behavior.
+- Embedding runtime benchmarks must preserve the live GTE Deployment, run no
+  more than one `500m` canary at a time, keep model endpoints private, and
+  reject any candidate that violates the 1024-dimension contract.
 
 ## Spikes
 
@@ -34,3 +37,5 @@ The earlier internal service PKI spike remains part of this portfolio.
 | 002 | freeipa-fqdn-ssh-multiplexing | standard | Canonical `*.atius.internal` owner-host execution can reach a 13-15 ms warm target through encrypted persistent SSH with fail-closed host-key trust | PARTIAL | wayland,ssh,freeipa,drg,latency |
 | 003 | wayland-nfs-vs-owner-local | standard | Persistent owner-local sessions make complete removal of the srv-3 NFS workspace tree beneficial and safe | INVALIDATED | wayland,nfs,remote-development,resources |
 | 004 | plaintext-transport-negative-gate | standard | Disabling SSH encryption or adopting HPN NoneSwitch materially improves interactive command latency on the ATIUS DRG | INVALIDATED | ssh,security,hpn,latency |
+| 005 | embedding-runtime-cpu-efficiency | comparison | Qwen3-Embedding-0.6B at 1024 dimensions can run quantized to 8-bit in k3s under a strict 500m CPU pod ceiling with lower CPU cost than the current GTE service | INVALIDATED | embeddings,qwen3,int8,gguf,onnx,k3s,arm64,cpu |
+| 006 | qwen-podman-rag-stack | rollout-plan | A Qwen3 embedding/reranker canary can be isolated behind the existing router/governor while GTE remains titular and rollback-safe | PREFLIGHT | qwen3,embeddings,reranker,onnx,podman,k3s,arm64 |

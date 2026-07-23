@@ -1,4 +1,4 @@
-# Phase 51: Qwen3 Embedding e Rerank Podman para k3s - Research
+# Phase 59: Qwen3 Embedding e Rerank Podman para k3s - Research
 
 **Researched:** 2026-07-23
 **Domain:** inferência CPU ARM64, TEI/ONNX, reranking, k3s, governor de pipeline e Qdrant
@@ -52,20 +52,20 @@
 
 ## Summary
 
-Implemente a fase como uma trilha canary inteiramente paralela: dois pods TEI de embedding, um pod inicial e depois dois pods do reranker dedicado, três coleções Qdrant 1024d e aliases Qwen separados. O router continua sendo a única borda pública, o governor passa a possuir a lease do ciclo inteiro e o GTE 768d não é alterado. [VERIFIED: `.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-CONTEXT.md`]
+Implemente a fase como uma trilha canary inteiramente paralela: dois pods TEI de embedding, um pod inicial e depois dois pods do reranker dedicado, três coleções Qdrant 1024d e aliases Qwen separados. O router continua sendo a única borda pública, o governor passa a possuir a lease do ciclo inteiro e o GTE 768d não é alterado. [VERIFIED: `.planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-CONTEXT.md`]
 
 O embedding já foi comprovado no mesmo artifact LOCKED em ARM64/Podman, `500m`, `mean`, batch 1/4, saída normalizada 1024d e cosine single/batch `0.99999995`. No corpus pareado, Qwen 1024d consumiu 15.84, 17.01 e 16.81 CPU-s/1k palavras contra 18.90, 16.93 e 17.10 do GTE; portanto passa preliminarmente o teto GTE+5%, mas essa evidência não substitui medição k3s nem avaliação Recall@20/nDCG@10. [VERIFIED: `scripts/embeddings-bench/results-2026-07-22-gte-qwen.md`]
 
 O maior risco é de integração, não de formato: o artifact comunitário LOCKED declara mean pooling, enquanto o modelo oficial Qwen3 documenta last-token pooling. O benchmark valida o comportamento do artifact específico, mas a qualidade precisa ser tratada como hipótese até passar no corpus técnico PT-BR/código. [CITED: https://huggingface.co/janni-t/qwen3-embedding-0.6b-int8-tei-onnx] [CITED: https://huggingface.co/Qwen/Qwen3-Embedding-0.6B]
 
-**Primary recommendation:** construir primeiro contratos e testes determinísticos, depois manifests/pinning, então governor/Qdrant, e só por último executar warmup, canary integrado e soak; nenhum alias titular muda nesta fase. [VERIFIED: `51-CONTEXT.md`]
+**Primary recommendation:** construir primeiro contratos e testes determinísticos, depois manifests/pinning, então governor/Qdrant, e só por último executar warmup, canary integrado e soak; nenhum alias titular muda nesta fase. [VERIFIED: `59-CONTEXT.md`]
 
 ## Architectural Responsibility Map
 
 | Capability | Primary Tier | Secondary Tier | Rationale |
 |---|---|---|---|
 | Auth, alias público e conversão `/v1/rerank` | API / Backend (router) | — | O router já é a única borda pública e converte o contrato público para o backend privado. [VERIFIED: `docs/operations/local-ai-embeddings.md`] |
-| Pipeline lease, prioridade, TTL e cancelamento | API / Backend (`embeddinggovernor`) | Storage compartilhado somente se multi-réplica | A admissão precisa cobrir o ciclo completo e não pode ficar dentro dos workers. [VERIFIED: `51-CONTEXT.md`] |
+| Pipeline lease, prioridade, TTL e cancelamento | API / Backend (`embeddinggovernor`) | Storage compartilhado somente se multi-réplica | A admissão precisa cobrir o ciclo completo e não pode ficar dentro dos workers. [VERIFIED: `59-CONTEXT.md`] |
 | Embedding INT8 1024d | k3s worker / inference | Service privado | TEI/OrtBackend executa o artifact ONNX; o Service oferece balanceamento entre réplicas. [CITED: https://huggingface.co/docs/text-embeddings-inference/en/supported_models] |
 | Busca top-K e coleções canary | Database / Storage (Qdrant) | API / Backend | A coleção fixa dimensão/métrica e o pipeline envia os candidatos ao reranker. [CITED: https://qdrant.tech/documentation/manage-data/collections/] |
 | Rerank INT8 | k3s worker / inference | API adapter | Serviço dedicado calcula probabilidade `yes/no`; o router normaliza a resposta pública. [CITED: https://huggingface.co/onnx-community/Qwen3-Reranker-0.6B-ONNX] |
@@ -143,7 +143,7 @@ router-ai-atius (public /v1; aliases; auth; conversion)
 GTE aliases + 768d collections remain separate and untouched throughout.
 ```
 
-[VERIFIED: `51-CONTEXT.md`] [VERIFIED: `docs/operations/local-ai-embeddings.md`]
+[VERIFIED: `59-CONTEXT.md`] [VERIFIED: `docs/operations/local-ai-embeddings.md`]
 
 ## Recommended Project Structure and Probable Files
 
@@ -186,7 +186,7 @@ The router source paths are canonical but were not available in this checkout du
 
 ### Pattern 1: Pipeline lease as an explicit state machine
 
-Represent each cycle as `queued -> embedding -> vector_db -> rerank_pending -> reranking -> terminal`, with one idempotent release path for `success`, `failure`, `cancelled` or `expired`. A lease carries `pipeline_id`, `created_at`, `expires_at`, workload, model aliases and current stage. [VERIFIED: `51-CONTEXT.md`]
+Represent each cycle as `queued -> embedding -> vector_db -> rerank_pending -> reranking -> terminal`, with one idempotent release path for `success`, `failure`, `cancelled` or `expired`. A lease carries `pipeline_id`, `created_at`, `expires_at`, workload, model aliases and current stage. [VERIFIED: `59-CONTEXT.md`]
 
 Required invariants:
 
@@ -196,7 +196,7 @@ Required invariants:
 - cancellation propagates through request context and releases exactly once;
 - TTL is checked while queued and at stage transitions;
 - vector DB time counts inside the lease, although it is not an inference stage;
-- standalone embedding retains call-scoped admission and cannot consume a pipeline slot. [VERIFIED: `51-CONTEXT.md`]
+- standalone embedding retains call-scoped admission and cannot consume a pipeline slot. [VERIFIED: `59-CONTEXT.md`]
 
 If the router has exactly one replica, in-process guarded state is acceptable for the canary. If it has multiple replicas or can restart during active cycles, local memory cannot provide global two-slot semantics; prove single-replica topology or add a shared consistency mechanism before enabling Qwen pipeline traffic. [ASSUMED]
 
@@ -244,8 +244,8 @@ Start quota sizing as a declared ceiling, not a measured recommendation:
 
 | Resource | Initial canary ceiling | Basis |
 |---|---:|---|
-| Embedding pods | 2 | LOCKED D-09. [VERIFIED: `51-CONTEXT.md`] |
-| Reranker pods | 2 during integrated test; HPA object disabled/omitted until warmup | LOCKED D-10. [VERIFIED: `51-CONTEXT.md`] |
+| Embedding pods | 2 | LOCKED D-09. [VERIFIED: `59-CONTEXT.md`] |
+| Reranker pods | 2 during integrated test; HPA object disabled/omitted until warmup | LOCKED D-10. [VERIFIED: `59-CONTEXT.md`] |
 | CPU requests/limits | 2000m total for four runtime pods | Four pods × 500m. [VERIFIED: `AGENTS.md`] |
 | Extra Job/init CPU | Four runtime pods plus exactly one active 500m tool Job fit 2500m; each embedding pod remains effectively 500m | Kubernetes computes effective pod CPU as `max(max(init requests), sum(app requests))`; init=500m and TEI=500m therefore admit as 500m, not 1000m. [CITED: https://kubernetes.io/docs/concepts/workloads/pods/init-containers/] |
 | Embedding memory | request 2Gi / limit 4Gi per pod as hypothesis | Podman observed 1.37–1.40Gi current under the benchmark; k3s warmup peak is unknown. [VERIFIED: benchmark] [ASSUMED] |
@@ -263,7 +263,7 @@ Reuse `services/qwen-reranker-onnx/server.mjs`, preserving prompt construction, 
 
 Before k3s:
 
-- expose only `/health`, `/metrics` and private `/rerank`; remove or disable direct `/v1/rerank` so public conversion remains router-owned; [VERIFIED: `51-CONTEXT.md`]
+- expose only `/health`, `/metrics` and private `/rerank`; remove or disable direct `/v1/rerank` so public conversion remains router-owned; [VERIFIED: `59-CONTEXT.md`]
 - distinguish malformed input (`400`), too large (`413`), queue full (`429`), timeout (`504`), cancelled request and model unavailable (`503`); [ASSUMED]
 - cap request body by bytes, documents, characters and tokenized length before inference; [VERIFIED: existing prototype body/doc caps]
 - bind abort/connection-close to queued work so abandoned requests do not run; [ASSUMED]
@@ -276,9 +276,9 @@ Before k3s:
 
 | Problem | Don't Build | Use Instead | Why |
 |---|---|---|---|
-| Embedding inference | another direct ONNX runtime | TEI OrtBackend with locked artifact | D-02 excludes parallel embedding runtime; TEI already supplies batching, health and metrics. [VERIFIED: `51-CONTEXT.md`] |
+| Embedding inference | another direct ONNX runtime | TEI OrtBackend with locked artifact | D-02 excludes parallel embedding runtime; TEI already supplies batching, health and metrics. [VERIFIED: `59-CONTEXT.md`] |
 | Vector index | custom ANN store | Qdrant collections + aliases | Enforces vector schema and supports atomic alias changes. [CITED: https://qdrant.tech/documentation/manage-data/collections/] |
-| CPU isolation | queue alone | requests/limits + quota + governor | Queue and scheduler solve different limits. [VERIFIED: `51-CONTEXT.md`] |
+| CPU isolation | queue alone | requests/limits + quota + governor | Queue and scheduler solve different limits. [VERIFIED: `59-CONTEXT.md`] |
 | Secret distribution | inline YAML/env committed to Git | Vault-fed Kubernetes Secret/runtime loader | Project security contract. [VERIFIED: `AGENTS.md`] |
 | Rerank model scoring | heuristic similarity | official prompt and yes/no logits | The model is a CausalLM reranker, not a classifier endpoint. [CITED: https://huggingface.co/onnx-community/Qwen3-Reranker-0.6B-ONNX] |
 | Rollback migration | deleting/rebuilding current index | versioned physical collections + aliases | Keeps GTE data intact and rollback bounded. [CITED: https://qdrant.tech/documentation/manage-data/collections/] |
@@ -288,7 +288,7 @@ Before k3s:
 ### Pooling drift
 
 **What goes wrong:** substituting official last-token pooling or an older benchmark manifest silently creates a different vector space.
-**Avoid:** enforce `mean`, signature metadata and golden-vector fingerprint; fail startup/smoke if dimension/norm/fingerprint differs. [VERIFIED: `51-CONTEXT.md`]
+**Avoid:** enforce `mean`, signature metadata and golden-vector fingerprint; fail startup/smoke if dimension/norm/fingerprint differs. [VERIFIED: `59-CONTEXT.md`]
 **Warning signs:** Recall regression despite valid 1024-length vectors, or single/batch cosine below `0.9999`.
 
 ### Probe-induced restart under throttling
@@ -320,7 +320,7 @@ Before k3s:
 ### Quality comparison with non-equivalent corpus
 
 **What goes wrong:** changed chunks/IDs make Recall/nDCG incomparable.
-**Avoid:** same query set, qrels, chunking and logical IDs; only embedding/reranker path differs. [VERIFIED: `51-CONTEXT.md`]
+**Avoid:** same query set, qrels, chunking and logical IDs; only embedding/reranker path differs. [VERIFIED: `59-CONTEXT.md`]
 
 ## Known / Unknown / How to Prove
 
@@ -338,7 +338,7 @@ Before k3s:
 | Unknown | Free NodePorts and private-only reachability | Existing reranker uses 31216; Qwen ports not assigned. [ASSUMED] | Cluster-wide Service inventory, socket/firewall inventory, SRV-1 success and public/unauthorized failure probes. |
 | Unknown | 1024d quality advantage justifies 33.3% more vector coordinates than 768d | Benchmark measured correctness/perf, not retrieval quality. [VERIFIED: benchmark] | Recall@20/nDCG@10 on frozen PT-BR/code qrels, plus Qdrant disk/RAM/latency comparison. |
 | Unknown | No starvation with priority rerank | Architecture is LOCKED but not implemented. [ASSUMED] | Deterministic scheduler tests and sustained mixed-load test with bounded max wait per class. |
-| Unknown | No measurable GTE impact for 72h | Canary has not run in k3s. [ASSUMED] | Plan 51-01 must freeze a qualifying historical GTE-only window ending before Wave 0, or BLOCK until a new baseline-only window completes; Plan 51-08 then runs the 72h soak against those immutable bands. |
+| Unknown | No measurable GTE impact for 72h | Canary has not run in k3s. [ASSUMED] | Plan 59-01 must freeze a qualifying historical GTE-only window ending before Wave 0, or BLOCK until a new baseline-only window completes; Plan 59-08 then runs the 72h soak against those immutable bands. |
 
 ## Validation Architecture
 
@@ -398,7 +398,7 @@ python3 scripts/embeddings-bench/compare-embeddings.py
 # L5 events and soak
 kubectl -n qwen-canary get events --sort-by=.lastTimestamp
 python3 scripts/embeddings-bench/qwen-canary-soak.py \
-  --duration 72h --slots 2 --gte-baseline-freeze 51-GTE-BASELINE-FREEZE.json --fail-on-oom --fail-on-starvation
+  --duration 72h --slots 2 --gte-baseline-freeze 59-GTE-BASELINE-FREEZE.json --fail-on-oom --fail-on-starvation
 ```
 
 ### Required Acceptance Criteria
@@ -427,7 +427,7 @@ Store only: git SHA, manifest digest, image digest/platform, model revision/file
 - **Before integrated traffic:** L0–L2 all green and pins captured.
 - **Per capacity run:** three warm runs minimum per profile; report variance, not only best result. [ASSUMED]
 - **During 72h soak:** scrape/snapshot at 1-minute resolution for service metrics, 5-minute aggregate evidence, immediate event capture on restart/OOM/TTL; daily summary. [ASSUMED]
-- **Phase gate:** L0–L5 green, full reindex complete, rollback drill green and explicit manual approval; otherwise GTE remains titular. [VERIFIED: `51-CONTEXT.md`]
+- **Phase gate:** L0–L5 green, full reindex complete, rollback drill green and explicit manual approval; otherwise GTE remains titular. [VERIFIED: `59-CONTEXT.md`]
 
 ### Wave 0 Gaps
 
@@ -447,7 +447,7 @@ Store only: git SHA, manifest digest, image digest/platform, model revision/file
 |---|---|---|
 | V2 Authentication | yes, public router only | Bearer auth remains router-owned; workers have no public ingress. [VERIFIED: `docs/operations/local-ai-embeddings.md`] |
 | V3 Session Management | no user session; yes pipeline lease lifecycle | opaque `pipeline_id`, bounded TTL, exact-once release, no authorization data in ID. [ASSUMED] |
-| V4 Access Control | yes | alias allowlist, private backend network path, namespace RBAC and negative reachability tests. [VERIFIED: `51-CONTEXT.md`] |
+| V4 Access Control | yes | alias allowlist, private backend network path, namespace RBAC and negative reachability tests. [VERIFIED: `59-CONTEXT.md`] |
 | V5 Input Validation | yes | body bytes, UTF-8 strings, batch/doc/token limits, dimensions, finite scores and top_n bounds. [VERIFIED: prototype] |
 | V6 Cryptography | yes for supply chain/integrity | SHA-256 model verification, image digest pinning, Vault for secrets; do not hand-roll crypto. [VERIFIED: `AGENTS.md`] |
 | V8 Data Protection | yes | no raw technical corpus/query contents in metrics or evidence; Qdrant auth/backup policy must be discovered. [ASSUMED] |
@@ -469,7 +469,7 @@ Store only: git SHA, manifest digest, image digest/platform, model revision/file
 
 ## State of the Art and Local Baseline
 
-| Existing/local approach | Phase 51 approach | Impact |
+| Existing/local approach | Phase 59 approach | Impact |
 |---|---|---|
 | GTE embedding, 768d, CLS, one 500m pod, `hostNetwork` | Qwen INT8, 1024d, mean, two 500m pods, normal pod network + private NodePort | separate vector space and doubled embedding allocation; no in-place replacement. [VERIFIED: manifests/context] |
 | GTE reranker FP16 in TEI, HPA 2–4 | Qwen INT8 in dedicated Transformers.js/ORT service, warmup 1 then integrated 2 | backend contract must be hardened and measured; HPA is future target. [VERIFIED: manifests/context] |
@@ -478,68 +478,68 @@ Store only: git SHA, manifest digest, image digest/platform, model revision/file
 
 ## Open Questions (RESOLVED BY FAIL-CLOSED GATES)
 
-Nenhum resultado live é assumido abaixo. O Plan 51-01 grava
-`51-WAVE0-GATE.json` com `status=PASS|BLOCK|UNKNOWN`; somente `PASS` permite
+Nenhum resultado live é assumido abaixo. O Plan 59-01 grava
+`59-WAVE0-GATE.json` com `status=PASS|BLOCK|UNKNOWN`; somente `PASS` permite
 qualquer tarefa downstream. `BLOCK` e `UNKNOWN` devem produzir exit não zero no
 comando `qwen-canary-inventory.py assert-gate`.
 
 1. **Qual é a topologia live do router?**
-   Output obrigatório do Plan 51-01:
-   `51-W0-INVENTORY.json` (`router_topology`) e
-   `51-LEASE-STATE-DECISION.md`, ambos referenciados por
-   `51-WAVE0-GATE.json`.
+   Output obrigatório do Plan 59-01:
+   `59-W0-INVENTORY.json` (`router_topology`) e
+   `59-LEASE-STATE-DECISION.md`, ambos referenciados por
+   `59-WAVE0-GATE.json`.
    PASS: exatamente uma réplica/restart domain permite `in_process`, ou um
    backend atômico compartilhado já existente é provado com operação,
    ownership, TTL e source integration. BLOCK: múltiplas réplicas sem esse
    backend, identidade ambígua ou decisão divergente do inventário.
-   Downstream bloqueado: Plans 51-02 a 51-08, com enforcement direto em 51-04.
+   Downstream bloqueado: Plans 59-02 a 59-08, com enforcement direto em 59-04.
 
 2. **Quais memory requests/limits são seguros para o reranker?**
-   Output obrigatório do Plan 51-01:
-   `51-W0-INVENTORY.json` (`reranker_warmup_prerequisites`) e
-   `51-BASELINE-CONTRACT.json` (`reranker_sizing_gate`).
+   Output obrigatório do Plan 59-01:
+   `59-W0-INVENTORY.json` (`reranker_warmup_prerequisites`) e
+   `59-BASELINE-CONTRACT.json` (`reranker_sizing_gate`).
    PASS: capacidade para um warmup ARM64 de 500m, limites temporários,
    métricas RSS/startup/OOM e stop conditions estão declarados; o valor final
-   continua sendo medido em 51-02, não inventado. BLOCK: falta de headroom,
+   continua sendo medido em 59-02, não inventado. BLOCK: falta de headroom,
    métricas, limite temporário ou rollback.
-   Downstream bloqueado: 51-02 Task 2 e Plans 51-03 a 51-08.
+   Downstream bloqueado: 59-02 Task 2 e Plans 59-03 a 59-08.
 
 3. **Quais NodePorts e controles de rede estão livres/efetivos?**
-   Output obrigatório do Plan 51-01:
-   `51-W0-INVENTORY.json` (`private_network_branch`, NodePorts, firewall,
+   Output obrigatório do Plan 59-01:
+   `59-W0-INVENTORY.json` (`private_network_branch`, NodePorts, firewall,
    `nodePortAddresses`, CNI enforcement e probes planejados).
    PASS: dois NodePorts sem colisão e uma branch exata é selecionada:
    NetworkPolicy comprovadamente enforced, ou NetworkPolicy omitida com
    firewall/`nodePortAddresses` e probes positivo/negativo obrigatórios.
    BLOCK: colisão, alcance público, branch ambígua ou ausência de controle
    efetivo.
-   Downstream bloqueado: Plans 51-03, 51-04, 51-06 e 51-08.
+   Downstream bloqueado: Plans 59-03, 59-04, 59-06 e 59-08.
 
 4. **Onde e em qual versão roda Qdrant?**
-   Output obrigatório do Plan 51-01:
-   `51-W0-INVENTORY.json` (`qdrant`) e o hash do export read-only inicial em
-   `51-WAVE0-GATE.json`.
+   Output obrigatório do Plan 59-01:
+   `59-W0-INVENTORY.json` (`qdrant`) e o hash do export read-only inicial em
+   `59-WAVE0-GATE.json`.
    PASS: identidade/version/auth-mode/capacidade/collections/aliases/snapshot
    e operação atômica de alias são legíveis e compatíveis. BLOCK: endpoint ou
    auth ambíguo, capacidade/snapshot insuficiente, alias export incompleto ou
    recurso necessário não suportado.
-   Downstream bloqueado: Plans 51-05 a 51-08.
+   Downstream bloqueado: Plans 59-05 a 59-08.
 
 5. **Qual threshold define “sem impacto mensurável no GTE”?**
-   Output obrigatório do Plan 51-01:
-   `51-BASELINE-CONTRACT.json` com métricas, janela, suficiência, floors e
-   equações, mais `51-GTE-BASELINE-FREEZE.json` com janela GTE-only,
+   Output obrigatório do Plan 59-01:
+   `59-BASELINE-CONTRACT.json` com métricas, janela, suficiência, floors e
+   equações, mais `59-GTE-BASELINE-FREEZE.json` com janela GTE-only,
    proveniência, bandas numéricas, hashes e
    `frozen_before_any_qwen_live_result=true`, ambos referenciados por
-   `51-WAVE0-GATE.json`.
+   `59-WAVE0-GATE.json`.
    PASS: uma janela histórica válida termina antes da Wave 0 e congela os
    números, ou uma nova janela baseline-only termina antes de qualquer Qwen.
    BLOCK: histórico insuficiente, qualquer número unset, proveniência/hash
    ausente ou possibilidade de ajuste após observar Qwen.
-   Os três artefatos ficam imutáveis após 51-01. Plans 51-02..51-09 geram
+   Os três artefatos ficam imutáveis após 59-01. Plans 59-02..59-09 geram
    readbacks próprios que verificam hashes originais e topologia/pins/aliases
    atuais; idade isolada não reescreve nem invalida história, inclusive após
-   o soak >72h. Downstream bloqueado: Plans 51-02 a 51-09.
+   o soak >72h. Downstream bloqueado: Plans 59-02 a 59-09.
 
 ## Assumptions Log
 
@@ -559,7 +559,7 @@ comando `qwen-canary-inventory.py assert-gate`.
 
 ### Primary — HIGH confidence
 
-- `.planning/phases/51-qwen3-embedding-e-rerank-podman-para-k3s/51-CONTEXT.md` — D-01..D-24, scope e refs.
+- `.planning/workstreams/qwen-local-ai/phases/59-qwen3-embedding-e-rerank-podman-para-k3s/59-CONTEXT.md` — D-01..D-24, scope e refs.
 - `scripts/embeddings-bench/results-2026-07-22-gte-qwen.md` e `compare-embeddings.py` — evidência ARM64/500m, cosine e CPU.
 - `services/qwen-reranker-onnx/server.mjs` e `package.json` — protótipo e runtime.
 - `k8s/ebeddings-local/tei-gte.yaml` e `tei-gte-reranker.yaml` — baseline k3s.

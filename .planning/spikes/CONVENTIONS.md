@@ -39,3 +39,21 @@
   filesystem namespace, cache, locking, project browser or remote agent.
 - Any future NFS retirement is per host and reversible; never remove the whole
   workspace tree merely to save idle resources.
+
+## Embedding Runtime Benchmarks
+
+- Treat `ebeddings-local/tei-gte` as a read-only baseline. Benchmark manifests
+  must use the separate `embeddings-bench` namespace and start at zero replicas.
+- Enforce one active canary and `500m` total canary CPU with Kubernetes quota,
+  in addition to per-pod requests and limits.
+- Run candidates sequentially with one tokenizer/inference thread. Never
+  compare candidates while two canaries are competing for the node.
+- Record CPU-seconds and CFS throttling directly from container cgroup v2
+  counters; use kubelet samples for in-run shape and memory. Also record
+  peak/mean millicores, latency and dimension/finite-value validation.
+- Model revision, image digest, quantization, pooling, dimensions,
+  normalization and chunking are part of the embedding contract.
+- Never mix 768- and 1024-dimensional vectors in one table or index. A model
+  change requires a new alias plus reembedding/reindexing before cutover.
+- No benchmark Deployment may create an Ingress, NodePort, public DNS route or
+  router alias. Bind host-network canaries only to the private node address.

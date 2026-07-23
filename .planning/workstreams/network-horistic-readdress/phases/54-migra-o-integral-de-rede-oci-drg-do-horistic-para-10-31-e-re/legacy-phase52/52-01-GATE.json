@@ -1,0 +1,55 @@
+{
+  "schema": "gsd.validation.v1",
+  "phase": 52,
+  "plan": "52-01",
+  "mode": "read-only",
+  "status": "PASS",
+  "started_at": "2026-07-23T09:05:00.655810Z",
+  "finished_at": "2026-07-23T09:05:00.705859Z",
+  "checks": [
+    {
+      "id": "evidence_exists",
+      "expected": "evidence file exists and is non-empty",
+      "observed": "/mnt/c/Users/muniz/Documents/GitHub/omni-srv-admin/.planning/phases/52-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/52-01-EVIDENCE.json",
+      "result": "PASS"
+    },
+    {
+      "id": "evidence_machine_readable",
+      "expected": "JSON object with status PASS",
+      "observed": "PASS",
+      "result": "PASS"
+    },
+    {
+      "id": "rollback_receipt",
+      "expected": "rollback receipt status PASS",
+      "observed": "PASS",
+      "result": "PASS"
+    },
+    {
+      "id": "backup_restore_staging",
+      "expected": "local backup directory or verified remote host backup receipts PASS",
+      "observed": {
+        "source": "rollback-receipt.json",
+        "remote_host_backups": "PASS",
+        "horistic_restore": "PASS",
+        "srv1_restore": "PASS"
+      },
+      "result": "PASS"
+    }
+  ],
+  "artifacts": [
+    {
+      "path": "/mnt/c/Users/muniz/Documents/GitHub/omni-srv-admin/.planning/phases/52-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/52-01-EVIDENCE.json",
+      "sha256": "55d4b460ab011eaa5bcdf9488a1971610fefbeacda4bbdc542386222741e3ed8",
+      "redacted": true
+    },
+    {
+      "path": "/mnt/c/Users/muniz/Documents/GitHub/omni-srv-admin/.planning/phases/52-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/rollback-receipt.json",
+      "sha256": "bd7fc332c671caf6b01fb871c3fd7615334d1dd4ce402ac4f8696d55d4ca584e",
+      "redacted": true
+    }
+  ],
+  "evidence_sha256": "55d4b460ab011eaa5bcdf9488a1971610fefbeacda4bbdc542386222741e3ed8",
+  "next_wave_gate": "PASS:52-01",
+  "mutations_attempted": true
+}

@@ -1,4 +1,4 @@
-# Phase 51: Qwen3 Embedding e Rerank Podman para k3s - Pattern Map
+# Phase 59: Qwen3 Embedding e Rerank Podman para k3s - Pattern Map
 
 **Mapped:** 2026-07-23
 **Files/responsibilities analyzed:** 25
@@ -85,7 +85,7 @@ spec:
     limits.cpu: 500m
 ```
 
-Do not copy the one-pod quota values. Phase 51 requires two embedding pods and,
+Do not copy the one-pod quota values. Phase 59 requires two embedding pods and,
 after warmup, two reranker pods. If a pod gains an init container, Kubernetes
 quota/admission math still has to be rendered and checked explicitly.
 
@@ -212,7 +212,7 @@ prove private success plus public/unrelated-pod failure.
 
 **Analog:** none in this checkout.
 
-Use `51-RESEARCH.md` as the design source. The file is conditional: create/apply
+Use `59-RESEARCH.md` as the design source. The file is conditional: create/apply
 default-deny plus minimum DNS/router/Qdrant/model-fetch flows only after a live
 test proves the installed CNI enforces `NetworkPolicy`. An accepted YAML object
 without positive and negative traffic tests is not evidence.
@@ -541,7 +541,7 @@ errors—not tokens, headers, full vectors or corpus text.
 
 ### Validation pattern
 
-**Sources:** `51-VALIDATION.md`; router guard checks at
+**Sources:** `59-VALIDATION.md`; router guard checks at
 `UPSTREAM-SYNC-GUARDS.md:123-135`
 
 Use focused Go race tests for lease transitions and Node tests for the
@@ -574,7 +574,7 @@ access exists. Heavy build/test work must run through the `builds` profile.
 | `k8s/qwen-canary/network-policy.yaml` | No `NetworkPolicy` manifest exists; use research guidance plus live CNI enforcement proof |
 | `k8s/qwen-canary/qdrant-seed-jobs.yaml` | No Qdrant implementation exists; inventory live API/version/auth first |
 | `services/qwen-reranker-onnx/package-lock.json` | Generate from exact package pin; do not borrow an unrelated lock |
-| `services/qwen-reranker-onnx/server.test.mjs` | No Node test suite for this service; derive cases from `51-VALIDATION.md` |
+| `services/qwen-reranker-onnx/server.test.mjs` | No Node test suite for this service; derive cases from `59-VALIDATION.md` |
 | Frozen corpus/qrels files | Existing scripts only contain inline samples; define immutable fixture format/version |
 | Owner-host governor source | Not present in checkout; only protected path names are available |
 | Owner-host embedding handler | Not present in checkout |
@@ -600,7 +600,7 @@ manifests, Node/ONNX prototype, Python benchmark/smoke harness)
 
 ## PATTERN MAPPING COMPLETE
 
-**Phase:** 51 - Qwen3 Embedding e Rerank Podman para k3s
+**Phase:** 59 - Qwen3 Embedding e Rerank Podman para k3s
 **Files/responsibilities classified:** 25
 **Analogs found:** 16 / 25
 
