@@ -1,0 +1,122 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "primary_host": "horistic-srv",
+  "upstream": {
+    "version": "1.1.15",
+    "architecture": "arm64",
+    "repository": "docker.io/rustdesk/rustdesk-server",
+    "immutable_reference": "docker.io/rustdesk/rustdesk-server@sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+    "linux_arm64_digest": "sha256:17c3422e0a6a65199ef69ac5cbb265ce9314a04524afcf9bb7a374fec0b1c208",
+    "pull_policy": "never",
+    "build_on_target": false
+  },
+  "runtime": {
+    "engine": "podman",
+    "rootless": true,
+    "manager": "user-systemd-quadlet",
+    "network": "host",
+    "read_only_rootfs": true,
+    "no_new_privileges": true,
+    "drop_capabilities": "all",
+    "containers": {
+      "hbbs": {
+        "command": "hbbs",
+        "tcp": [21115, 21116, 21118],
+        "udp": [21116]
+      },
+      "hbbr": {
+        "command": "hbbr",
+        "tcp": [21117, 21119],
+        "udp": []
+      }
+    },
+    "local_runtime_required": {
+      "hbbs": {
+        "tcp": [21115, 21116, 21118],
+        "udp": [21116]
+      },
+      "hbbr": {
+        "tcp": [21117, 21119],
+        "udp": []
+      }
+    },
+    "local_runtime_forbidden": {
+      "tcp": [21114],
+      "unexpected_delta": "any-socket-outside-pinned-upstream-set"
+    }
+  },
+  "paths": {
+    "quadlets": "/home/horistic/.config/containers/systemd/atius-rustdesk-server-*.container",
+    "state": "/home/horistic/.local/share/atius-rustdesk/server/state",
+    "runtime_identity": "/run/user/<uid>/atius-rustdesk/server-identity",
+    "logs": "/home/horistic/.local/state/atius-rustdesk/server/logs",
+    "rollback": "/home/horistic/.local/share/atius-rustdesk/server/rollback/<transaction-id>"
+  },
+  "identity": {
+    "authority": "hashicorp-vault",
+    "private_key_ref": {
+      "vault_path": "kv/atius/rustdesk/server",
+      "field": "private_key"
+    },
+    "public_key_ref": {
+      "vault_path": "kv/atius/rustdesk/server",
+      "field": "public_key"
+    },
+    "runtime_medium": "tmpfs",
+    "durable_evidence": ["public_fingerprint", "value_free_metadata"],
+    "forbidden_surfaces": ["argv", "environment_dump", "stdout", "stderr", "journal", "evidence", "documentation"]
+  },
+  "resources": {
+    "parent_slice": "atius-rustdesk-phase53.slice",
+    "services": {
+      "hbbs": {
+        "cpu_percent": 35,
+        "memory_bytes": 469762048
+      },
+      "hbbr": {
+        "cpu_percent": 35,
+        "memory_bytes": 402653184
+      },
+      "ops_api": {
+        "cpu_percent": 10,
+        "memory_bytes": 201326592
+      }
+    },
+    "server_pair": {
+      "cpu_percent": 70,
+      "memory_bytes": 872415232
+    },
+    "aggregate": {
+      "cpu_percent": 80,
+      "memory_bytes": 1073741824
+    }
+  },
+  "logs": {
+    "authoritative_path": "/home/horistic/.local/state/atius-rustdesk/server/logs",
+    "daily_bytes": 134217728,
+    "retention_days": 30,
+    "reserve_bytes": 4026531840
+  },
+  "rollback": {
+    "containment_first": [
+      "restore-host-and-oci-ingress",
+      "restore-dns-record-set",
+      "stop-phase53-domains",
+      "restore-apache-nft-oci-and-linger",
+      "prove-public-ports-closed-and-legacy-access"
+    ],
+    "terminal_states": ["ROLLED_BACK", "RESTORED_PRODUCTION"],
+    "preserve_phase52_backups": true,
+    "preserve_legacy_access": ["RustGuac", "XRDP", "AnyDesk", "NoMachine", "noVNC"],
+    "future_client_domain_untouched": true
+  },
+  "prohibitions": [
+    "tag-only-image",
+    "automatic-image-update",
+    "host-build",
+    "rootful-runtime",
+    "phase52-gate-b-replay",
+    "phase54-client-installation"
+  ]
+}

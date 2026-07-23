@@ -1,0 +1,56 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "hostname": "rustdesk-ops.atius.com.br",
+  "transport": {
+    "public": "apache-https-443",
+    "backend": "loopback-or-private-unix-socket",
+    "direct_public_backend": false
+  },
+  "endpoints": [
+    {"method": "GET", "path": "/v1/health"},
+    {"method": "GET", "path": "/v1/readiness"},
+    {"method": "GET", "path": "/v1/status"},
+    {"method": "GET", "path": "/v1/metrics/summary"}
+  ],
+  "backend_auth": {
+    "required": true,
+    "credential_authority": "hashicorp-vault",
+    "runtime_hydration": "private-bounded-transport",
+    "uniform_denial_status": 401,
+    "apache_auth_is_sufficient": false
+  },
+  "redaction": {
+    "authorization_header_logged": false,
+    "secret_material_in_response": false,
+    "payload_nonce_persisted": false,
+    "forbidden_categories": [
+      "private_key",
+      "password",
+      "bearer_token",
+      "authorization_header",
+      "reusable_token",
+      "client_secret"
+    ]
+  },
+  "readiness_inputs": [
+    "immutable-image-digest",
+    "exact-listener-ownership",
+    "public-fingerprint-continuity",
+    "effective-edge-policy",
+    "resource-ceilings",
+    "disk-and-log-bounds",
+    "bounded-restart-counters"
+  ],
+  "metrics_semantics": {
+    "inputs": ["direct-bytes", "relay-bytes", "failure-summaries"],
+    "transport_claim_allowed": false,
+    "session-correlation-phase": 54
+  },
+  "forbidden_semantics": {
+    "rustdesk_client_api_server": false,
+    "tcp_21114": false,
+    "pro_device_or_account_api": false,
+    "stored_pass_verdict": false
+  }
+}

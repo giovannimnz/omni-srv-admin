@@ -406,6 +406,25 @@ def test_contract_schema_preserves_phase_boundaries() -> None:
     encoded = json.dumps(payloads, sort_keys=True).lower()
     assert "msiexec" not in encoded
     assert "install-client" not in encoded
-    assert "phase52-gate-b" not in encoded
-    assert "gate-b replay" not in encoded
+    assert _load_strict(RUNTIME_CONTRACT)["prohibitions"][-2:] == [
+        "phase52-gate-b-replay",
+        "phase54-client-installation",
+    ]
 
+
+@pytest.mark.parametrize(
+    ("artifact", "owner_plan"),
+    [
+        ("quadlets/atius-rustdesk-server-hbbs.container", "53-02"),
+        ("tools/rustdesk-ops-api.py", "53-03"),
+        ("tools/apply-phase53-edge.py", "53-04"),
+        ("evidence/phase53/deploy-transaction.json", "53-05"),
+        ("tools/validate_phase53.py", "53-06"),
+    ],
+)
+@pytest.mark.xfail(strict=True, reason="implementation intentionally belongs to a later Phase 53 plan")
+def test_future_implementation_symbol_is_red_only_for_owner_plan(
+    artifact: str, owner_plan: str
+) -> None:
+    assert owner_plan in {"53-02", "53-03", "53-04", "53-05", "53-06"}
+    assert (REPO / "modules/rustdesk-fleet" / artifact).is_file()

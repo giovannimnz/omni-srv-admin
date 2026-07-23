@@ -1,0 +1,78 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "primary_host": "horistic-srv",
+  "hostnames": {
+    "native": "rustdesk.atius.com.br",
+    "operations": "rustdesk-ops.atius.com.br"
+  },
+  "address_consensus": {
+    "required_equal_sources": [
+      "oci-vnic-public-ipv4",
+      "horistic-egress-ipv4",
+      "ssh-horistic-srv.atius.com.br-a"
+    ],
+    "mismatch_action": "block-before-write"
+  },
+  "effective_ingress": {
+    "host_policy": "owned-nftables-scope",
+    "oci_policy": "security-lists-plus-attached-nsgs",
+    "union_audit_required": true,
+    "broad_allow_action": "block"
+  },
+  "public_ipv4_allowed": {
+    "tcp": [21115, 21116, 21117],
+    "udp": [21116]
+  },
+  "public_forbidden": {
+    "tcp": [21114, 21118, 21119],
+    "unexpected": "all-other-phase53-exposure"
+  },
+  "ipv6_policy": {
+    "rustdesk": "deny-all",
+    "aaaa_record": false
+  },
+  "dns_last": {
+    "type": "A",
+    "proxied": false,
+    "aaaa": false,
+    "concurrent_cname": false,
+    "publish_after": ["host-ingress", "oci-ingress", "public-ip-probes"],
+    "rollback_exact": true
+  },
+  "external_probes": {
+    "origins": ["GIOVANNI-W11-PC-private-first", "independent-public-origin"],
+    "tcp": {
+      "positive": [21115, 21116, 21117],
+      "negative": [21114, 21118, 21119],
+      "targets": ["public-ipv4", "native-hostname"]
+    },
+    "udp_correlation": [
+      "disposable-nonce-not-persisted",
+      "nft-counter-delta",
+      "metadata-only-capture-tuple",
+      "pinned-hbbs-socket-owner",
+      "distinct-origin-attempt-timestamp"
+    ],
+    "same_host_allowed": false
+  },
+  "transaction_order": [
+    "phase52-currentness",
+    "address-consensus",
+    "pre-state-and-rollback-readiness",
+    "closed-runtime-and-ops-api",
+    "host-ingress",
+    "oci-ingress-union-audit",
+    "public-ip-probes",
+    "publish-dns-a",
+    "hostname-probes",
+    "lifecycle-and-regressions"
+  ],
+  "rollback_order": [
+    "close-or-restore-ingress",
+    "restore-dns-record-set",
+    "stop-phase53-domains",
+    "restore-owned-host-and-oci-state",
+    "prove-closed-and-legacy-access"
+  ]
+}
