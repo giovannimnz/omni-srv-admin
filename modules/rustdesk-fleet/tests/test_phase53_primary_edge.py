@@ -1913,3 +1913,144 @@ def test_snapshot_storage_rejects_parent_symlink_shape_secret_values_and_record_
         module.store_bounded_snapshot(
             tmp_path / "records.json", records, max_bytes=4096, max_records=3
         )
+
+
+def _nft_json_rule(
+    family: str,
+    protocol: str,
+    ports: list[int],
+    verdict: str,
+    *,
+    chain: str = "native_edge_input",
+) -> dict[str, Any]:
+    right: int | dict[str, list[int]] = ports[0] if len(ports) == 1 else {"set": ports}
+    return {
+        "rule": {
+            "family": "inet",
+            "table": "atius_rustdesk_phase53",
+            "chain": chain,
+            "expr": [
+                {
+                    "match": {
+                        "op": "==",
+                        "left": {"meta": {"key": "iifname"}},
+                        "right": "ens3",
+                    }
+                },
+                {
+                    "match": {
+                        "op": "==",
+                        "left": {"meta": {"key": "nfproto"}},
+                        "right": family,
+                    }
+                },
+                {
+                    "match": {
+                        "op": "==",
+                        "left": {"meta": {"key": "l4proto"}},
+                        "right": protocol,
+                    }
+                },
+                {
+                    "match": {
+                        "op": "==",
+                        "left": {"payload": {"protocol": protocol, "field": "dport"}},
+                        "right": right,
+                    }
+                },
+                {"counter": {"packets": 0, "bytes": 0}},
+                {verdict: None},
+            ],
+        }
+    }
+
+
+def _valid_nft_json_readback() -> dict[str, Any]:
+    return {
+        "nftables": [
+            {"table": {"family": "inet", "name": "atius_rustdesk_phase53"}},
+            {
+                "chain": {
+                    "family": "inet",
+                    "table": "atius_rustdesk_phase53",
+                    "name": "native_edge_input",
+                    "hook": "input",
+                    "prio": 300,
+                    "policy": "accept",
+                }
+            },
+            _nft_json_rule("ipv6", "tcp", [21114, 21115, 21116, 21117, 21118, 21119], "drop"),
+            _nft_json_rule("ipv6", "udp", [21116], "drop"),
+            _nft_json_rule("ipv4", "tcp", [21115, 21116, 21117], "accept"),
+            _nft_json_rule("ipv4", "udp", [21116], "accept"),
+            _nft_json_rule("ipv4", "tcp", [21114, 21118, 21119], "drop"),
+        ]
+    }
+
+
+@pytest.mark.parametrize("mutation", ["wrong-chain", "catch-all", "duplicate"])
+def test_nft_json_readback_requires_exact_owned_chain_rules(mutation: str) -> None:
+    module = _edge_applier_module()
+    payload = _valid_nft_json_readback()
+    if mutation == "wrong-chain":
+        for item in payload["nftables"]:
+            if "rule" in item:
+                item["rule"]["chain"] = "shadow_chain"
+    elif mutation == "catch-all":
+        payload["nftables"].append(
+            {
+                "rule": {
+                    "family": "inet",
+                    "table": "atius_rustdesk_phase53",
+                    "chain": "native_edge_input",
+                    "expr": [
+                        {
+                            "match": {
+                                "op": "==",
+                                "left": {"meta": {"key": "iifname"}},
+                                "right": "ens3",
+                            }
+                        },
+                        {"accept": None},
+                    ],
+                }
+            }
+        )
+    else:
+        payload["nftables"].append(copy.deepcopy(payload["nftables"][-1]))
+    with pytest.raises(module.EdgeBlocked, match="nft-live-semantic-readback-drift"):
+        module.semantics_from_nft_json(payload, "ens3")
+
+
+def test_nft_candidate_rejects_extra_relevant_chain_or_rule() -> None:
+    module = _edge_applier_module()
+    candidate = _rendered_nft_candidate(module).replace(
+        "\n}",
+        '\n    chain shadow_input { type filter hook input priority 301; policy accept; iifname "ens3" counter accept; }\n}',
+        1,
+    )
+    with pytest.raises(module.EdgeBlocked, match="nft-extra-chain-or-rule"):
+        module.validate_nft_candidate(
+            candidate,
+            contract_digest=module.sha256_file(EDGE_CONTRACT),
+            public_interface="ens3",
+        )
+
+
+def test_rollback_cas_rejects_same_state_with_new_generation() -> None:
+    module = _edge_applier_module()
+    backend = _FakeEdgeBackend()
+    transaction = module.EdgeTransaction(
+        contract=_load_strict(EDGE_CONTRACT), backend=backend
+    )
+    transaction.execute_edge(
+        preflight=_phase53_edge_preflight(),
+        nft_candidate=_rendered_nft_candidate(module),
+        public_interface="ens3",
+        oci_candidate=_allowed_oci_pages(),
+    )
+    backend.revision += 1
+    receipt = transaction.rollback_edge()
+    assert receipt["state"] == "CONTAINED_REQUIRES_MANUAL_RECOVERY"
+    assert backend.contained is True
+    assert "restore-if-current" not in backend.calls
