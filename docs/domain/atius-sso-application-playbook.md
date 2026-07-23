@@ -24,7 +24,9 @@ Divisão de responsabilidade:
 
 ### Hostes canônicos
 
-- login canônico: `https://sso.atius.com.br/login`
+- login humano canônico: `https://<app>.atius.com.br/sso`
+- alias de compatibilidade: `https://<app>.atius.com.br/login` -> `/sso` com `308`
+- control plane/fallback: `https://sso.atius.com.br/login`
 - logout global: `https://sso.atius.com.br/api/sso/logout`
 - IdP OIDC/fallback: `https://auth.atius.com.br/realms/atius`
 - backend ATS de validação de sessão: `https://api.atius.com.br/v1/auth/me`
@@ -34,8 +36,8 @@ Divisão de responsabilidade:
 ```text
 browser
   -> app.atius.com.br
-  -> redirect para sso.atius.com.br/login?return_to=<app-url>
-  -> sso.atius.com.br valida return_to e autentica
+  -> redirect para app.atius.com.br/sso?return_to=<app-url>
+  -> facade local exige return_to same-origin e autentica via ATS
   -> auth-token volta para .atius.com.br
   -> app valida sessao em api.atius.com.br/v1/auth/me
   -> proxy server-side do app injeta credencial interna no backend privado
@@ -43,7 +45,8 @@ browser
 
 Leitura prática:
 
-- `sso.atius.com.br` é o shell/facade de login e logout
+- `sso.atius.com.br` é o control plane/fallback central e owner do logout global
+- `/sso` no app é a facade humana canônica do shell de login
 - `auth.atius.com.br` é o IdP/OIDC quando o fluxo usa Keycloak
 - `api.atius.com.br` é a autoridade reaproveitável para validar a sessão ATS
 - o app integrado nunca deve expor o segredo do backend interno no browser
@@ -68,7 +71,8 @@ Leitura prática:
 #### App integrado
 
 - detecta ausência/invalidade da sessão
-- redireciona para `sso.atius.com.br/login?return_to=<url-atual>`
+- redireciona para `<app>.atius.com.br/sso?return_to=<url-atual>`
+- aceita `return_to` somente do próprio origin
 - valida a sessão com `GET /v1/auth/me` ou via endpoint local equivalente
 - expõe só proxy server-side para backend interno sensível
 
@@ -80,7 +84,8 @@ Exemplo: `vpn.atius.com.br`
 
 Padrão:
 
-- middleware/proxy local redireciona para `sso.atius.com.br/login`
+- middleware/proxy local redireciona para a facade `/sso` do próprio host
+- `/login` é alias `308`, nunca uma segunda implementação de login
 - endpoint local de sessão confirma `auth-token`
 - browser nunca recebe token interno do backend
 - logout local limpa cookies e volta ao fluxo canônico
@@ -123,6 +128,9 @@ Use esta sequência quando o app ainda não tem integração nenhuma com o SSO:
 3. Confirmar qual backend interno o proxy local vai falar e qual credencial interna ele vai injetar.
 4. Adicionar o host/path na allowlist central do ATS.
 5. Implementar o gate local:
+   - facade `/sso` com proxy mínimo de shell/assets/endpoints ATS
+   - alias `/login` com `308`
+   - forwarded host/proto exatos, CORS do app e `return_to` same-origin
    - middleware de redirect
    - endpoint local de sessão
    - proxy server-side autenticado
@@ -175,6 +183,18 @@ Regras:
 - sem userinfo
 - sem path traversal
 - sem host confusion
+
+As-built Casa Remote Gateway, validado em 2026-07-20:
+
+| Host | Paths aceitos |
+|---|---|
+| `ssh.atius.com.br` | `/ssh-giovanni-w11-pc`, `/ssh-giovanni-wsl-pc`, `/ssh-giovanni-s23`, `/ssh-horistic-srv` |
+| `rdp.atius.com.br` | `/giovanni-w11-pc` |
+
+Adicionar um DNS/vhost novo sem atualizar essa tabela no código faz o ATS
+apagar `atius_sso_login_return_to` e renderizar o fallback
+`trade.atius.com.br/`. Portanto, o smoke de inclusão precisa provar também o
+texto visual de “Destino seguro” em browser anônimo, além do primeiro `302`.
 
 ### Passo 3. Integrar o app
 

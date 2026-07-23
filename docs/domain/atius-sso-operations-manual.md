@@ -11,12 +11,14 @@ Fontes canônicas complementares:
 - `docs/domain/atius-sso-manual-index.md`
 - `docs/domain/atius-wide-sso.md`
 - `docs/domain/atius-sso-application-playbook.md`
-- `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
 - `~/.codex/skills/atius-sso/SKILL.md`
 
 ## Contrato curto
 
-- Login canônico: `https://sso.atius.com.br/login`
+- Login humano canônico por app: `https://<app>.atius.com.br/sso`
+- Alias de compatibilidade: `https://<app>.atius.com.br/login` -> `/sso` com `308`
+- Control plane/fallback central: `https://sso.atius.com.br/login`
 - Logout global: `https://sso.atius.com.br/api/sso/logout`
 - IdP/OIDC: `https://auth.atius.com.br/realms/atius`
 - Validação de sessão: `GET https://api.atius.com.br/v1/auth/me`
@@ -32,8 +34,8 @@ interna do backend no browser.
 browser
   -> app.atius.com.br/path
   -> app detecta falta de auth-token
-  -> redirect para sso.atius.com.br/login?return_to=<app-url>
-  -> sso valida return_to e autentica
+  -> redirect para app.atius.com.br/sso?return_to=<app-url>
+  -> facade local exige return_to same-origin e usa o shell ATS
   -> auth-token emitido para .atius.com.br
   -> app consulta api.atius.com.br/v1/auth/me
   -> app libera página/proxy server-side
@@ -41,8 +43,9 @@ browser
 
 Papéis:
 
-- `sso.atius.com.br`: login/logout, `return_to`, shell visual e emissão/limpeza
-  da sessão ATS.
+- `sso.atius.com.br`: control plane/fallback central, logout e contrato global.
+- `/sso` no app: endereço humano do login, com proxy mínimo do shell/assets e
+  endpoints exatos de autenticação ATS.
 - `auth.atius.com.br`: IdP/OIDC/Keycloak quando o fluxo usar bridge OIDC.
 - `api.atius.com.br`: autoridade de sessão ATS reaproveitável.
 - App de destino: gate local, autorização local quando existir, proxy interno e
@@ -62,6 +65,9 @@ Use quando o app ainda não tem integração com SSO Atius.
 5. Adicionar host/path na allowlist central:
    `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/lib/sso/redirects.ts`
 6. Implementar no app:
+   - facade `/sso` e alias `/login` com `308`;
+   - `X-Forwarded-Host/Proto/Port` exatos e Origin no CORS ATS;
+   - `return_to` restrito ao origin do próprio app;
    - middleware/gate de redirect;
    - endpoint local de sessão;
    - proxy server-side para backend interno;
@@ -100,15 +106,16 @@ Smokes mínimos:
 
 ```bash
 curl -Iks "https://<app>.atius.com.br/"
-curl -Iks "https://sso.atius.com.br/login?return_to=https%3A%2F%2F<app>.atius.com.br%2F"
+curl -Iks "https://<app>.atius.com.br/sso?return_to=https%3A%2F%2F<app>.atius.com.br%2F"
+curl -Iks "https://<app>.atius.com.br/login"
 curl -Iks "https://sso.atius.com.br/api/sso/login?return_to=https%3A%2F%2F<app>.atius.com.br%2F"
 ```
 
 Login fake:
 
 ```bash
-curl -isS -X POST 'https://sso.atius.com.br/v1/token/generate' \
-  -H 'Origin: https://sso.atius.com.br' \
+curl -isS -X POST 'https://<app>.atius.com.br/v1/token/generate' \
+  -H 'Origin: https://<app>.atius.com.br' \
   -H 'Content-Type: application/json' \
   --data '{"email":"fake@example.com","senha":"senha-falsa"}'
 ```
@@ -129,6 +136,9 @@ Validação mínima:
 Critérios de aceite:
 
 - sem fallback indevido para `trade.atius.com.br`;
+- browser permanece em `https://<app>.atius.com.br/sso` durante o login;
+- `/login` responde `308` para `/sso`;
+- `return_to` cross-origin é rejeitado ou normalizado para a raiz do app;
 - sem open redirect;
 - sem token interno no bundle ou network do browser;
 - `auth-token` validado server-side;

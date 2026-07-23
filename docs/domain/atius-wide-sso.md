@@ -23,7 +23,10 @@ Use este documento quando o trabalho for de plataforma/host:
 
 ## Objetivo
 
-Publicar `https://sso.atius.com.br` como host canonico de login/logout do ATS sem vazar segredo, sem abrir redirect arbitrario e sem perder rollback de Apache/DNS/Cloudflare/Keycloak.
+Publicar `https://sso.atius.com.br` como control plane/fallback central de login
+e logout do ATS sem vazar segredo, sem abrir redirect arbitrario e sem perder
+rollback de Apache/DNS/Cloudflare/Keycloak. Para apps integrados, a URL humana
+canônica é `https://<app>.atius.com.br/sso`.
 
 O fluxo primario do SSO usa as credenciais do banco ATS: a tela `sso.atius.com.br/login` chama `/v1/token/generate`, recebe o cookie `auth-token` em `.atius.com.br` e redireciona para o `return_to` permitido. Keycloak/OIDC fica disponivel apenas para rotas auxiliares e rollback controlado, nao como caminho visual padrao para `remote.atius.com.br/mt5/*`.
 
@@ -31,8 +34,8 @@ O fluxo primario do SSO usa as credenciais do banco ATS: a tela `sso.atius.com.b
 
 ```text
 app protegido
-  -> sso.atius.com.br/login
-  -> ATS facade valida return_to
+  -> app.atius.com.br/sso
+  -> facade local valida return_to same-origin
   -> login ATS e/ou bridge OIDC
   -> auth-token em .atius.com.br
   -> app de destino consulta /v1/auth/me
@@ -41,7 +44,8 @@ app protegido
 
 Separação de papéis:
 
-- `sso.atius.com.br`: UX canônica de login/logout e normalização de `return_to`
+- `sso.atius.com.br`: control plane/fallback central, logout e contrato global
+- `app.atius.com.br/sso`: UX canônica do app e normalização same-origin de `return_to`
 - `auth.atius.com.br`: issuer OIDC/Keycloak
 - `api.atius.com.br`: validação de sessão e auth ATS reaproveitável
 - app de destino: gate local, proxy local e autorização de domínio quando houver
@@ -113,6 +117,25 @@ Não usar `setifempty` para esses campos.
 - `/login` em `remote.atius.com.br` deve redirecionar para `https://sso.atius.com.br/login?return_to=https://remote.atius.com.br/mt5/1/`
 
 ## Contrato de login ATS SSO
+
+### Padrão app-local
+
+- entrada humana: `https://<app>.atius.com.br/sso`;
+- `/login` do app: redirect `308` para `/sso`;
+- proxy: somente shell de login, assets imutáveis necessários e endpoints ATS
+  exatos de login, sessão e refresh;
+- headers: `X-Forwarded-Host`, `X-Forwarded-Proto` e
+  `X-Forwarded-Port` fixados para o host público do app;
+- CORS: origin exato do app no `atius-api`;
+- `return_to`: mesmo origin do app; cross-origin é rejeitado ou normalizado
+  para a raiz;
+- rollout: migrar apps em ondas. O host central permanece como fallback até a
+  facade local de cada app passar testes HTTP e browser headless.
+
+`ssh.atius.com.br` é a implementação de referência publicada em 2026-07-21.
+Não inferir que os demais apps já foram migrados.
+
+### Control plane central
 
 - Host: `https://sso.atius.com.br/login`
 - Entrada: `return_to` com allowlist em `frontend/src/lib/sso/redirects.ts`
