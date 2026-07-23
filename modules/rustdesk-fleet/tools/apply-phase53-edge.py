@@ -359,17 +359,30 @@ def _normalize_active_nft(candidate: str) -> str:
     return re.sub(r"\s+", " ", _active_nft_source(candidate)).strip()
 
 
+def _has_exact_nft_metadata(source: str, value: str) -> bool:
+    return any(line.strip() == f"# {value}" for line in source.splitlines())
+
+
 def validate_nft_candidate(
     candidate: str,
     *,
     contract_digest: str,
     public_interface: str,
+    template: str | None = None,
 ) -> dict[str, Any]:
+    if template is None:
+        raise EdgeBlocked("nft-template-required")
+    if not _has_exact_nft_metadata(template, OWNERSHIP_MARKER):
+        raise EdgeBlocked("nft-template-ownership-marker-invalid")
+    if not _has_exact_nft_metadata(template, f"contract-sha256={contract_digest}"):
+        raise EdgeBlocked("nft-template-contract-digest-invalid")
+    if _active_nft_source(template).count("__PHASE53_PUBLIC_INTERFACE__") != 5:
+        raise EdgeBlocked("nft-template-interface-placeholder-invalid")
     active = _active_nft_source(candidate)
     lowered = active.lower()
-    if OWNERSHIP_MARKER not in candidate:
+    if not _has_exact_nft_metadata(candidate, OWNERSHIP_MARKER):
         raise EdgeBlocked("nft-ownership-marker-invalid")
-    if f"contract-sha256={contract_digest}" not in candidate:
+    if not _has_exact_nft_metadata(candidate, f"contract-sha256={contract_digest}"):
         raise EdgeBlocked("nft-contract-digest-invalid")
     if f"table inet {OWNED_TABLE}" not in active:
         raise EdgeBlocked("nft-owned-table-invalid")
@@ -402,9 +415,8 @@ def validate_nft_candidate(
         or any(interface_clause not in line for line in active_counter_rules)
     ):
         raise EdgeBlocked("nft-extra-chain-or-rule")
-    template_path = Path(__file__).resolve().parents[1] / "nftables/atius-rustdesk-phase53.nft"
     expected_candidate = render_nft_candidate(
-        template_path.read_text(encoding="utf-8"), public_interface=public_interface
+        template, public_interface=public_interface
     )
     if _normalize_active_nft(candidate) != _normalize_active_nft(expected_candidate):
         raise EdgeBlocked("nft-extra-chain-or-rule")
@@ -501,10 +513,12 @@ class EdgeTransaction:
         *,
         contract: dict[str, Any],
         backend: Any,
+        nft_template: str,
         fault_after: str | None = None,
     ) -> None:
         self.contract = copy.deepcopy(contract)
         self.backend = backend
+        self.nft_template = nft_template
         self.fault_after = fault_after
         self.state = "NEW"
         self._prestate: dict[str, Any] | None = None
@@ -575,6 +589,7 @@ class EdgeTransaction:
                 Path(__file__).resolve().parents[1] / "contracts/phase53-edge.json"
             ),
             public_interface=public_interface,
+            template=self.nft_template,
         )
         self._require_cas(str(self._prestate["revision"]))
         try:
@@ -749,27 +764,45 @@ def _exact_match(expression: Any) -> tuple[dict[str, Any], Any] | None:
 
 def _rule_signature(rule: dict[str, Any], public_interface: str) -> tuple[str, str, tuple[int, ...], str] | None:
     expressions = rule.get("expr")
-    if not isinstance(expressions, list) or len(expressions) != 6:
+    if not isinstance(expressions, list) or len(expressions) not in {5, 6}:
         return None
 
     interface_match = _exact_match(expressions[0])
-    family_match = _exact_match(expressions[1])
-    protocol_match = _exact_match(expressions[2])
-    port_match = _exact_match(expressions[3])
-    if any(
-        match is None
-        for match in (interface_match, family_match, protocol_match, port_match)
-    ):
+    if interface_match is None:
         return None
-    assert interface_match and family_match and protocol_match and port_match
     if interface_match[0] != {"meta": {"key": "iifname"}} or interface_match[1] != public_interface:
         return None
-    if family_match[0] != {"meta": {"key": "nfproto"}} or family_match[1] not in {"ipv4", "ipv6"}:
-        return None
-    family = str(family_match[1])
-    if protocol_match[0] != {"meta": {"key": "l4proto"}}:
-        return None
-    protocol = _normalize_protocol(protocol_match[1])
+
+    if len(expressions) == 6:
+        family_match = _exact_match(expressions[1])
+        protocol_match = _exact_match(expressions[2])
+        port_match = _exact_match(expressions[3])
+        if any(
+            match is None
+            for match in (family_match, protocol_match, port_match)
+        ):
+            return None
+        assert family_match and protocol_match and port_match
+        if family_match != ({"meta": {"key": "nfproto"}}, "ipv6"):
+            return None
+        if protocol_match[0] != {"meta": {"key": "l4proto"}}:
+            return None
+        family = "ipv6"
+        protocol = _normalize_protocol(protocol_match[1])
+        counter_index = 4
+        verdict_index = 5
+    else:
+        protocol_match = _exact_match(expressions[1])
+        port_match = _exact_match(expressions[2])
+        if protocol_match is None or port_match is None:
+            return None
+        if protocol_match[0] != {"payload": {"protocol": "ip", "field": "protocol"}}:
+            return None
+        family = "ipv4"
+        protocol = _normalize_protocol(protocol_match[1])
+        counter_index = 3
+        verdict_index = 4
+
     if protocol not in {"tcp", "udp"}:
         return None
     if port_match[0] != {"payload": {"protocol": protocol, "field": "dport"}}:
@@ -778,13 +811,13 @@ def _rule_signature(rule: dict[str, Any], public_interface: str) -> tuple[str, s
         ports = _right_values(port_match[1])
     except EdgeBlocked:
         return None
-    counter = expressions[4]
+    counter = expressions[counter_index]
     if not isinstance(counter, dict) or set(counter) != {"counter"}:
         return None
     counter_value = counter["counter"]
     if not isinstance(counter_value, dict) or set(counter_value) != {"packets", "bytes"}:
         return None
-    verdict_expression = expressions[5]
+    verdict_expression = expressions[verdict_index]
     if not isinstance(verdict_expression, dict) or len(verdict_expression) != 1:
         return None
     verdict = next(iter(verdict_expression))
@@ -892,14 +925,22 @@ def _collect_live_nft_semantics(public_interface: str) -> dict[str, Any]:
 
 
 def _verify_host_policy(args: argparse.Namespace) -> dict[str, Any]:
+    if not args.template:
+        raise EdgeBlocked("nft-template-required")
     candidate_path = Path(args.candidate)
     contract_path = Path(args.contract)
+    template_path = Path(args.template)
     candidate = candidate_path.read_text(encoding="utf-8")
+    try:
+        template = template_path.read_text(encoding="utf-8")
+    except OSError as exc:
+        raise EdgeBlocked("nft-template-input-invalid") from exc
     public_interface = args.public_interface or _infer_public_interface(candidate)
     expected = validate_nft_candidate(
         candidate,
         contract_digest=sha256_file(contract_path),
         public_interface=public_interface,
+        template=template,
     )
     if args.observed_json:
         observed_payload = json.loads(Path(args.observed_json).read_text(encoding="utf-8"))
@@ -939,6 +980,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--verify-host-policy", action="store_true")
     parser.add_argument("--candidate", required=True)
     parser.add_argument("--contract", required=True)
+    parser.add_argument("--template")
     parser.add_argument("--public-interface")
     parser.add_argument("--observed-json")
     try:
