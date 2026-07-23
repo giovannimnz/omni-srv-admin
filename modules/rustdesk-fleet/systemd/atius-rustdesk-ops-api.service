@@ -1,0 +1,32 @@
+[Unit]
+Description=ATIUS RustDesk read-only operations API
+After=atius-rustdesk-server-hbbs.service atius-rustdesk-server-hbbr.service
+Requires=atius-rustdesk-server-hbbs.service atius-rustdesk-server-hbbr.service
+
+[Service]
+Type=simple
+Slice=atius-rustdesk-phase53.slice
+CPUQuota=10%
+MemoryMax=192M
+MemorySwapMax=0
+TasksMax=64
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+LoadCredential=ops-api-token:%t/atius-rustdesk/ops-api-token
+ExecStart=/usr/bin/python3 %h/.local/lib/atius-rustdesk/rustdesk-ops-api.py --listen 127.0.0.1 --port 32113 --token-file %d/ops-api-token --observations-file %t/atius-rustdesk/ops-observations.json
+StandardOutput=null
+StandardError=null
+Restart=on-failure
+RestartSec=5s
+StartLimitBurst=3
+
+[Install]
+WantedBy=default.target
+
