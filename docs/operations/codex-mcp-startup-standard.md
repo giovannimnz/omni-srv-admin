@@ -3,8 +3,8 @@
 Status: active on `GIOVANNI-W11-PC` since 2026-07-05.
 
 Detailed MCP protocol, topology, validation, and production behavior for the
-shared GBrain/Obsidian knowledge endpoints live in
-[Codex GBrain + Obsidian MCP Contract](./codex-gbrain-obsidian-mcp.md).
+shared ATIUS HTTP MCP endpoints live in
+[Codex ATIUS HTTP MCP Contract](./codex-gbrain-obsidian-mcp.md).
 
 ## Goal
 
@@ -15,12 +15,15 @@ Default `C:\Users\muniz\.codex\config.toml` should keep only:
 
 - `node_repl`
 - `gbrain_http`
+- `obsidian_http`
+- `oci_admin_http`
 
-The GitHub MCP may still appear from the installed GitHub plugin. Heavy or
-externally-dependent MCPs belong in opt-in templates or launchers.
-`obsidian_http`, `chrome-devtools`, `ijfw-memory`, OpenAI Developer Docs,
-Cloudflare, OCI, Playwright, filesystem, and lab servers must not be added to
-the default `config.toml`.
+The three ATIUS HTTP MCPs are the approved operational exceptions and share
+the Vault-backed `ATIUS_MCP_TOKEN`. The GitHub MCP may still appear from the
+installed GitHub plugin. Other heavy or externally-dependent MCPs belong in
+opt-in templates or launchers. Chrome DevTools, `ijfw-memory`, OpenAI Developer
+Docs, Cloudflare API, local Oracle OCI MCPs, Playwright, filesystem, and lab
+servers must not be added to the default `config.toml`.
 
 ## Current Layout
 
@@ -103,8 +106,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-sm
 Expected baseline:
 
 ```text
-codex-doctor: ok, configured_mcp_servers=2
-codex-mcp-list: ok, default list excludes heavy optional MCPs
+codex-doctor: ok
+codex-mcp-list: ok, canonical ATIUS HTTP MCPs present and retired aliases absent
 ```
 
 Run optional checks:
@@ -119,25 +122,30 @@ powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-sm
 powershell -NoProfile -ExecutionPolicy Bypass -File scripts\codex-mcp-startup-smoke.ps1 -Profile lab-mcp
 ```
 
-Observed 2026-07-05:
+Observed 2026-07-22:
 
-- `knowledge-mcp`: validate `ATIUS_MCP_TOKEN`, public GBrain health
+- `knowledge-mcp`: validate `ATIUS_MCP_TOKEN`, the three canonical registry
+  names, public GBrain health
   `https://mcp.atius.com.br/gbrain/health` when exposed, MCP `initialize` on
   `https://mcp.atius.com.br/gbrain`, and session-aware MCP `initialize` on
-  `https://mcp.atius.com.br/obsidian`.
+  `https://mcp.atius.com.br/obsidian`. It also validates anonymous `401`,
+  authenticated `initialize => 200`, identity `oci-admin`, and nine tools on
+  `https://mcp.atius.com.br/oci-admin`.
 - `gbrain`: SRV-1 HTTP MCP remains on local backend `127.0.0.1:3131`; the
   standard client path is the public edge, not the old SSH or wg0-only route.
   `POST initialize` is the canonical smoke; `/gbrain/health` may be absent on
   some edge revisions and should not be treated as the primary gate.
 - `obsidian`: `10.11.1.11:27124` is the DRG primary private path; public Codex MCP uses `https://mcp.atius.com.br/obsidian`.
 - `browser-mcp`: Chrome executable and `npx` present.
-- `oci-mcp`: `uv`, `oracle-oci-mcp`, and OCI config present.
+- `oci-mcp`: legacy opt-in local `uv`/`oracle-oci-mcp` toolchain and OCI config;
+  this is separate from the canonical remote `oci_admin_http` entry.
 - `lab-mcp`: `npx` present.
 - `cloud-ops-mcp`: process env is `missing-env`, but `CF_GLOBAL_API_KEY` is available via `atius-vault-env cloudflare`; use `codex-cloud-ops`.
 
 HTTP contract standard (validated 2026-07-10):
 
-- Raw `GET`/`HEAD` to `https://mcp.atius.com.br/gbrain` and `https://mcp.atius.com.br/obsidian` should return `405` with `Allow: POST, DELETE`.
+- Raw `GET`/`HEAD` to `/gbrain`, `/obsidian`, and `/oci-admin` should return
+  `405` with `Allow: POST, DELETE`.
 - Canonical MCP smoke is not raw `GET`; use authenticated `POST initialize` with:
   - `Authorization: Bearer $ATIUS_MCP_TOKEN`
   - `Content-Type: application/json`
@@ -145,6 +153,8 @@ HTTP contract standard (validated 2026-07-10):
 - Expected live results:
   - `gbrain`: `initialize => 200`, `tools/list => 200`
   - `obsidian`: `initialize => 200`, `notifications/initialized => 202`, `tools/list => 200`
+  - `oci-admin`: anonymous `initialize => 401`; authenticated
+    `initialize => 200`, `serverInfo.name=oci-admin`, `tools/list => 200/9`
 
 ## Rollback
 

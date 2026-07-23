@@ -13,6 +13,15 @@ For more information about GSD agents, run `/gsd-help`.
 - **Domain:** atius.com.br (DNS preserved — production domain)
 - **Host:** 10.11.1.11 primary private/DRG service path, `10.100.100.1` reserve fallback (Oracle Cloud ARM64, Ubuntu 22.04)
 
+## SSH Reachability Fallback
+
+- Falha no caminho privado direto de W11, WSL, S23 ou Horistic deve ser seguida imediatamente pela rota SSH pública nativa, sem dependencia de WireGuard.
+- W11: `ssh muniz@10.100.100.8` -> `ssh -p 8122 muniz@ssh-giovanni-w11-pc.atius.com.br`.
+- WSL: `ssh -p 8022 muniz@10.100.100.8` -> `ssh -p 8222 muniz@ssh-giovanni-wsl-pc.atius.com.br`.
+- S23: `ssh -p 8022 termux@10.100.100.9` -> `ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br`.
+- Horistic: `ssh horistic@10.21.1.21` -> `ssh -p 22 horistic@ssh-horistic-srv.atius.com.br`.
+- Preserve a evidencia de ambos os probes antes de declarar indisponibilidade. `ssh.atius.com.br/ssh-*` e interface de browser, nao hostname OpenSSH.
+
 ## CPU Guardrail
 
 - Builds, rebuilds, compiles, heavy test suites, container builds, bundlers, broad indexers, and any CPU-heavy task must never exceed 20% of total host CPU on `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv`.
@@ -46,7 +55,10 @@ For more information about GSD agents, run `/gsd-help`.
 - Endpoints MCP canonicos do Codex:
   - `gbrain_http`: `https://mcp.atius.com.br/gbrain`
   - `obsidian_http`: `https://mcp.atius.com.br/obsidian`
-- Os dois MCPs usam `Authorization: Bearer $ATIUS_MCP_TOKEN`; carregar `ATIUS_MCP_TOKEN` do profile Vault `atius-mcp` (`kv/atius/atius-mcp/api`).
+  - `oci_admin_http`: `https://mcp.atius.com.br/oci-admin`
+- Os tres MCPs usam `Authorization: Bearer $ATIUS_MCP_TOKEN`; carregar `ATIUS_MCP_TOKEN` do profile Vault `atius-mcp` (`kv/atius/atius-mcp/api`).
+- O nome client-side do OCI Admin e `oci_admin_http`; a identidade MCP continua `serverInfo.name=oci-admin`. O alias client-side `oci_admin` e aposentado.
+- O backend OCI Admin usa OCI/DRG `10.13.1.13:8090`; `10.100.100.3` e somente reserve/fallback.
 - O MCP do Obsidian e sessionful: depois de `initialize`, preservar `Mcp-Session-Id`, enviar `notifications/initialized`, e so entao chamar `tools/list` ou tools.
 - Material de browser-login/access-key fica no Vault path `kv/atius/browser-login/access-keys` e no registro Landscape `atius-browser-login-access-keys`. O Vault armazena e entrega o material; o navegador so reconhece a chave quando o perfil do browser, OS/hardware authenticator, provider/extensao, certificado cliente ou autenticador virtual CDP/Playwright estiver provisionado para o relying party.
 

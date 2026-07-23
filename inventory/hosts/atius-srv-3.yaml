@@ -128,6 +128,27 @@ apps:
     installed_on: "2026-06-25"
     notes:
       - "Phase 29 runtime repair: installed PM2 globally and created oneshot systemd unit with PM2_HOME=/home/ubuntu/.pm2."
+  - id: oci-admin
+    runtime: pm2
+    namespace: oci-admin
+    install_type: source-pm2-managed-runtime
+    install_path: /home/ubuntu/GitHub/oci-admin
+    ecosystem_path: /home/ubuntu/GitHub/oci-admin/deploy/pm2/ecosystem.config.cjs
+    processes:
+      - oci-admin-web
+      - oci-admin-mcp-http
+    healthcheck_url: http://10.13.1.13:8080/healthz
+    mcp_healthcheck_url: http://10.13.1.13:8090/healthz
+    public_url: https://oci.atius.com.br/
+    managed_by: omni-srv-admin
+    watchdog: oci-admin-watchdog.timer
+    resurrect_owner: pm2-ubuntu.service
+    desired_state: active-enabled
+    update_policy: plan-first
+    last_audited: "2026-07-22"
+    notes:
+      - "Frontend Jinja/static e backend FastAPI compartilham o processo oci-admin-web; nao existe frontend Node separado."
+      - "Os env renderers systemd hidratam o Vault antes do PM2; secrets nao entram no ecosystem nem no dump.pm2."
   - id: mt5-fex-podman
     runtime: podman
     install_type: podman-container

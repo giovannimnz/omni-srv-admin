@@ -1,6 +1,6 @@
-# Codex GBrain + Obsidian MCP Contract
+# Codex ATIUS HTTP MCP Contract
 
-Status: active standard as of 2026-07-05.
+Status: active standard as of 2026-07-22.
 
 ## Purpose
 
@@ -8,25 +8,28 @@ Centralize the ATIUS Codex knowledge MCP pattern under one public edge:
 
 - `https://mcp.atius.com.br/gbrain`
 - `https://mcp.atius.com.br/obsidian`
+- `https://mcp.atius.com.br/oci-admin`
 
 This document is the repo handoff for the operational session that moved the
 fleet from older SSH and ad hoc MCP paths to the current HTTP pattern.
 
 ## Canonical Names
 
-Use exactly these two Codex MCP entries:
+Use exactly these three Codex MCP entries:
 
 - `gbrain_http`
 - `obsidian_http`
+- `oci_admin_http`
 
 Do not use retired names such as:
 
 - `http_gbrain`
 - `http_obsidian`
 - `obsidian_rest`
+- `oci_admin`
 - old SSH-backed `gbrain` entries as the fleet default
 
-Both public MCPs use:
+All three public MCPs use:
 
 - `Authorization: Bearer $ATIUS_MCP_TOKEN`
 
@@ -48,6 +51,10 @@ Backend routing:
 
 - `/gbrain` -> local GBrain HTTP MCP on `127.0.0.1:3131`
 - `/obsidian` -> Obsidian Local REST MCP on `10.11.1.11:27124`
+- `/oci-admin` -> OCI Admin MCP on SRV-3 `10.13.1.13:8090`
+
+The service-to-service paths use OCI/DRG as primary. `wg100` remains reserve
+only and must not replace the `10.11.1.11` or `10.13.1.13` backend targets.
 
 Backends remain private/internal. Clients should target only the public URLs
 unless they are doing controlled origin-only diagnostics.
@@ -62,7 +69,7 @@ Expected behavior:
 1. Client sends `POST` JSON-RPC `initialize`.
 2. MCP server returns its negotiated capabilities.
 3. For Obsidian, preserve `Mcp-Session-Id`.
-4. Client sends `notifications/initialized`.
+4. For Obsidian, client sends `notifications/initialized`.
 5. Client calls `tools/list` and later tool methods.
 
 Important distinctions:
@@ -84,6 +91,14 @@ Session behavior:
 - `gbrain_http` validated successfully with normal MCP `initialize` and a
   stateless-feeling follow-up flow in the tested setup, but clients should
   still treat MCP negotiation as required.
+- `oci_admin_http` is Streamable HTTP stateless. Its client registry name uses
+  `_http`, while `serverInfo.name` remains `oci-admin`.
+
+Public edge method/auth contract:
+
+- raw `GET`/`HEAD` returns `405` with `Allow: POST, DELETE`;
+- `POST initialize` without bearer returns `401`;
+- authenticated `POST initialize` returns `200`.
 
 ## Validation Pattern
 
@@ -94,6 +109,7 @@ Validated fleet on 2026-07-05:
 - `atius-srv-3`
 - `horistic-srv`
 - `GIOVANNI-W11-PC`
+- `GIOVANNI-S23` Termux and PRoot Ubuntu
 
 Validation classes used in the rollout:
 
@@ -101,7 +117,8 @@ Validation classes used in the rollout:
 
 - GBrain local backend health on `127.0.0.1:3131/health`
 - public edge reachability on `https://mcp.atius.com.br/gbrain`
-- public MCP initialization against both `/gbrain` and `/obsidian`
+- OCI Admin private health on `10.13.1.13:8090/healthz`
+- public MCP initialization against `/gbrain`, `/obsidian`, and `/oci-admin`
 
 On the public edge, treat `POST initialize` as the canonical health check for
 GBrain MCP. `/gbrain/health` is auxiliary and may not be exposed on every edge
@@ -116,7 +133,8 @@ revision.
 
 - `codex mcp add gbrain_http --url https://mcp.atius.com.br/gbrain --bearer-token-env-var ATIUS_MCP_TOKEN`
 - `codex mcp add obsidian_http --url https://mcp.atius.com.br/obsidian --bearer-token-env-var ATIUS_MCP_TOKEN`
-- `codex mcp list` confirms both entries on each host
+- `codex mcp add oci_admin_http --url https://mcp.atius.com.br/oci-admin --bearer-token-env-var ATIUS_MCP_TOKEN`
+- `codex mcp list` confirms all three entries and no `oci_admin` alias
 
 ### 4. Obsidian session validation
 
@@ -138,6 +156,9 @@ Expected performance profile:
 - Obsidian is usually more sensitive to session and plugin state than raw CPU.
 - GBrain cost depends more on the downstream query/index workload and Postgres
   state than on the MCP transport itself.
+- OCI Admin keeps exactly nine allowlisted tools. It does not expose arbitrary
+  shell or method dispatch; typed confirmation, policy, audit, and anti-drift
+  remain service-level requirements.
 
 Practical consequences:
 
@@ -156,14 +177,18 @@ Most likely breakpoints:
 - public DNS drift versus local `hosts` overrides
 - Obsidian plugin up but session negotiation incomplete
 - backend service active locally but edge proxy misrouted
+- OCI Admin backend routed through `wg100` instead of DRG `10.13.1.13:8090`
+- client key renamed without preserving server identity `oci-admin`
 
 Fast checks:
 
 1. confirm the token source is Vault `kv/atius/atius-mcp/api`
-2. confirm the Codex entry names are `gbrain_http` and `obsidian_http`
+2. confirm the Codex entry names are `gbrain_http`, `obsidian_http`, and `oci_admin_http`
 3. confirm GBrain local health on `127.0.0.1:3131/health`
-4. confirm MCP `initialize` against public `/gbrain` and `/obsidian`
-5. on Obsidian failures, verify `Mcp-Session-Id` handling before deeper debug
+4. confirm OCI Admin private health on `10.13.1.13:8090/healthz`
+5. confirm MCP `initialize` against public `/gbrain`, `/obsidian`, and `/oci-admin`
+6. confirm OCI Admin `tools/list` returns nine tools and `serverInfo.name=oci-admin`
+7. on Obsidian failures, verify `Mcp-Session-Id` handling before deeper debug
 
 ## Related Docs
 

@@ -5,6 +5,8 @@ role: horistic-reverse-proxy
 owner: giovanni
 access:
   ssh: horistic@10.100.100.4
+  casa_wan_ssh: horistic@ssh-horistic-srv.atius.com.br:22
+  casa_browser_ssh: https://ssh.atius.com.br/ssh-horistic-srv
   public_ip: 163.176.232.119
   vpn_ip: 10.100.100.4
   oci_private_ip: 10.21.1.21
@@ -64,6 +66,29 @@ apps:
       - "10.100.100.4:3115 remains reserve fallback only."
       - "The deployment has an explicit toleration for the horistic-srv manual-only taint; generic K3s agents must not schedule on this node."
       - "Public OpenAI-compatible embeddings flow through https://router.atius.com.br/v1 with alias embedding-gte-v1."
+  - id: tei-gte-reranker
+    runtime: k3s
+    namespace: ebeddings-local
+    service: tei-gte-reranker
+    model: Alibaba-NLP/gte-multilingual-reranker-base
+    revision: 8215cf04918ba6f7b6a62bb44238ce2953d8831c
+    dtype: float16
+    listen: 10.21.1.21:31216
+    public_alias: reranker-gte-multilingual-v1
+    router_upstream: http://10.21.1.21:31216
+    replicas_min: 2
+    replicas_max: 4
+    cpu_per_pod: 500m
+    memory_request_per_pod: 2Gi
+    memory_limit_per_pod: 3Gi
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-07-22"
+    installed_on: "2026-07-22"
+    notes:
+      - "TEI 1.9.3 Candle serves the official FP16 GTE multilingual reranker through the private NodePort 31216; there is no direct public ingress."
+      - "HPA keeps 2-4 replicas at 500m each; total reranker CPU allocation is 1000m-2000m."
+      - "The public /v1/rerank contract is converted and governed inside router-ai-atius; the native TEI route remains /rerank with query/texts."
 logs:
   local_dir: /home/horistic/.logs
   retention_days: 15
@@ -93,6 +118,8 @@ notes:
   rename_method: hostnamectl + /etc/hostname + /etc/hosts + tailscale set --hostname
   wireguard_key_preserved: true
   public_ip_preserved: true
+  casa_remote_gateway: "2026-07-19: native SSH uses existing OCI RESERVED public IP 163.176.232.119 on DNS-only ssh-horistic-srv.atius.com.br:22. Browser SSH is ATS-admin-gated at ssh.atius.com.br/ssh-horistic-srv and runs srv-1 loopback 8922 -> OCI/DRG 10.21.1.21:22; no Cloudflare Tunnel or WireGuard in the data path."
+  casa_validation: "2026-07-19: external srv-3 authentication returned horistic-srv; RustGuac browser E2E passed WebSocket 101, command markers, 70-second idle and reconnect. As a client, Horistic passed Casa DNS/transport/host-key checks but lacks a general-purpose private identity, so outbound auth was denied by design."
   apache_vhost_preserved: remote.horistic-srv-1.atius.com.br.conf
 oci:
   last_snapshot_id: "pending-6f7baf00-cf7d-4297-a3eb-9b49fa463c0a"

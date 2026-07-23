@@ -19,18 +19,19 @@ equivalente).
 | **User ID** | `ad7349df756c5077ea311f63a3e76700` |
 | **Account Created** | 2025-05-18 |
 | **Role** | Super Administrator — All Privileges |
-| **Global API Key** | `cfk_Br...` (ver `~/.zshrc` em omni-srv-admin-1) |
+| **Global API Key** | HashiCorp Vault profile `cloudflare`, path `kv/atius/cloudflare/api` |
 | **Auth Method** | `X-Auth-Email` + `X-Auth-Key` headers (NÃO usar Bearer) |
 
-### Credenciais no Ambiente
+### Credenciais e hidratação
 
 ```bash
-# .zshrc — variáveis de ambiente
-export CF_AUTH_EMAIL="giovannimunizds@gmail.com"
-export CF_GLOBAL_API_KEY="cfk_Br...REDACTED"
-export CF_ACCOUNT_ID="cd986c150252827c1df07dcceaa92b4b"
-export CF_ACCOUNT_NAME="Giovanni Account"
+# Fonte autoritativa; não gravar valores no repo, shell history ou docs.
+~/.local/bin/atius-vault-env cloudflare
 ```
+
+O profile hidrata `CF_ACCOUNT_ID`, `CF_ACCOUNT_NAME`, `CF_AUTH_EMAIL`,
+`CF_GLOBAL_API_KEY`, `CF_ZONE_ID_ATIUS` e `CF_ZONE_ID_ZENTRIUS`. `.env`,
+`.zshrc` e environment do processo são somente caches transitórios.
 
 ---
 
@@ -83,7 +84,10 @@ curl -s "https://api.cloudflare.com/client/v4/user/tokens/verify" \
   -H "Authorization: Bearer <token>"
 ```
 
-### Aliases Úteis (disponíveis após carregar .zshrc)
+### Aliases úteis
+
+São conveniências locais e só devem ser usados depois de hidratar o profile
+Vault `cloudflare` no processo atual; a `.zshrc` não é fonte de credencial.
 
 ```bash
 cf-zones          # Lista todas as zonas
@@ -101,10 +105,11 @@ Snapshot operacional principal:
 
 | Hostname | Type | Content | Proxy |
 |----------|------|---------|-------|
+| `casa.atius.com.br` | A | origin público canônico do SRV-1; consultar API/inventory | proxied |
 | `aion.atius.com.br` | A | `137.131.190.161` | proxied |
 | `router.atius.com.br` | A | `137.131.190.161` | proxied |
 | `wayland.atius.com.br` | A/CNAME | edge SRV-1 -> SRV-3 `25725` | proxied |
-| `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> multiplexed MCP edge: GBrain `127.0.0.1:3131` via `/gbrain`, Obsidian `10.11.1.11:27124` via `/obsidian` | proxied |
+| `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> MCPs: GBrain `127.0.0.1:3131` via `/gbrain`, Obsidian `10.11.1.11:27124` via `/obsidian`, OCI Admin `10.13.1.13:8090` via `/oci-admin` | proxied |
 | `landscape.atius.com.br` | A/CNAME | edge SRV-1/SRV-3, validar vhost | proxied |
 | `portainer.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
 | `docker.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
@@ -118,6 +123,43 @@ Snapshot operacional principal:
 | `trade.atius.com.br` | A | `137.131.190.161` | proxied |
 | `n8n.atius.com.br` | A | `137.131.190.161` | proxied |
 | `taiga.atius.com.br` | A | `137.131.190.161` | proxied |
+
+### Casa Remote Gateway — snapshot RustGuac 2026-07-19
+
+| Campo | Estado |
+|---|---|
+| Record | exatamente um `A`; `proxied=true`; `proxiable=true` |
+| TTL | API `1`, isto é, `Automatic` |
+| Zone SSL | `Full (strict)` |
+| WebSockets / TLS 1.3 | habilitados |
+| Minimum TLS | `1.0` no snapshot |
+| Always Use HTTPS | `off`; Apache `*:80` responde `301` |
+| Cloudflare Tunnel | zero ativos; nenhum associado a Casa |
+
+Fluxo confirmado por edge, probe de origin com SNI e access log:
+
+```text
+ssh.atius.com.br DNS-only HTTPS/WSS -> Apache atius-srv-1:443
+  /ssh-* -> ATS gateway 127.0.0.1:8196 -> RustGuac 127.0.0.1:8089 (4/4)
+rdp.atius.com.br proxied HTTPS/WSS -> gateway 127.0.0.1:8197 -> RustGuac
+casa.atius.com.br proxied -> redirects remotos + router origin dinâmico:8888
+```
+
+O quarto endpoint nativo é
+`A ssh-horistic-srv.atius.com.br -> 163.176.232.119`, DNS-only, TTL 300,
+record `4f737eea28e12c5eefc0eb736dfde98e`. O browser Horistic não volta pela
+internet: RustGuac usa relay loopback `8922` e OCI/DRG até `10.21.1.21:22`.
+O RDP já usa RustGuac/guacd e alcança NLA; o desktop aguarda a senha Microsoft
+correta da conta `muniz`, não disponível no Vault.
+
+Não há Spectrum/raw SSH/RDP. O Cloudflare protege somente a superfície web;
+RustGuac converte browser HTTPS/WSS em SSH/RDP no backend. O DNS Casa não
+aponta ao WAN residencial.
+
+Certificado edge: GTS `WE1`, `CN=atius.com.br`, SAN wildcard, válido até
+`2026-10-05`, fingerprint SHA-256
+`56:AD:03:F7:38:CC:F5:78:CF:C9:D9:C3:AF:70:EC:0C:90:FA:C5:69:78:94:1F:89:38:71:3A:C6:6C:3A:D3:E5`.
+O hop origin usa Cloudflare Origin CA wildcard válido até 2041.
 
 ---
 
@@ -157,6 +199,9 @@ Validação 2026-07-12:
   usar esse path como gate principal quando `initialize` ja estiver verde.
 - `mcp.atius.com.br/obsidian` e MCP `initialize` passam quando o bearer
   `ATIUS_MCP_TOKEN` e a sessao MCP estao corretos.
+- `mcp.atius.com.br/oci-admin` usa o backend DRG `10.13.1.13:8090`; GET/HEAD
+  retornam `405`, POST sem bearer retorna `401`, e `initialize` autenticado
+  retorna `200` com `serverInfo.name=oci-admin` e nove tools.
 - `landscape.atius.com.br/` retorna `302`; reconciliar vhost/porta live antes
   de declarar porta `6554` como ativa.
 
@@ -202,6 +247,11 @@ Cloudflare usa **Turnstile CAPTCHA** que bloqueia TODAS tentativas de automaçã
 - **Zone Token (cfut_):** Não tem acesso a endpoints account-level → erro 9109
 - **Dashboard manual:** Requer login em https://dash.cloudflare.com/profile/api-tokens
 - **Global API Key:** Diferente do token criado na aba API Tokens — é o "Global API Key" em profile
+- **Casa redirect:** `Always Use HTTPS` está off; o `301` depende do Apache
+- **Casa origin:** responde diretamente em `443`; manter Origin CA/ACLs e
+  avaliar Authenticated Origin Pulls
+- **Credencial ampla:** migrar de Global API Key para API Token de escopo
+  mínimo quando o fluxo de automação estiver pronto
 - **Docs do router:** `/docs/` esta degradado ate o target `3003` voltar a
   ouvir ou o vhost apontar para a rota atual.
 
@@ -216,5 +266,5 @@ Cloudflare usa **Turnstile CAPTCHA** que bloqueia TODAS tentativas de automaçã
 
 ---
 
-*Última validação: 2026-07-05 — edge principal validado; API key nao foi
-reexposta nem registrada em logs/docs.*
+*Última validação: 2026-07-19 — Casa auditado read-only via API, edge e origin;
+API key não foi reexposta nem registrada em logs/docs.*

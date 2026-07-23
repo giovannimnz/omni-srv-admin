@@ -173,7 +173,6 @@ function Invoke-BaselineSmoke {
       "chrome-devtools",
        "playwright-desktop",
        "playwright-mobile",
-       "obsidian_http",
        "obsidian_rest",
        "ijfw-memory",
        "openaiDeveloperDocs",
@@ -181,11 +180,18 @@ function Invoke-BaselineSmoke {
       "oci-api-",
       "oci-compute-"
     ) | Where-Object { $text -match [regex]::Escape($_) }
+    $required = @("gbrain_http", "obsidian_http", "oci_admin_http")
+    $missingRequired = $required | Where-Object { $text -notmatch "(?m)^\s*$([regex]::Escape($_))(?:\s|$)" }
+    $hasRetiredOciAdmin = $text -match '(?m)^\s*oci_admin(?:\s|$)'
 
-    if ($forbidden.Count -gt 0) {
-      $results.Add((New-SmokeResult "baseline" "codex-mcp-list" "slow-start" "optional MCPs still in default: $($forbidden -join ', ')" "Move optional MCPs out of C:\Users\muniz\.codex\config.toml."))
+    if ($forbidden.Count -gt 0 -or $missingRequired.Count -gt 0 -or $hasRetiredOciAdmin) {
+      $drift = @()
+      if ($forbidden.Count -gt 0) { $drift += "optional=$($forbidden -join ',')" }
+      if ($missingRequired.Count -gt 0) { $drift += "missing=$($missingRequired -join ',')" }
+      if ($hasRetiredOciAdmin) { $drift += "retired=oci_admin" }
+      $results.Add((New-SmokeResult "baseline" "codex-mcp-list" "slow-start" "MCP contract drift: $($drift -join '; ')" "Keep only approved defaults plus gbrain_http, obsidian_http, and oci_admin_http; remove retired aliases."))
     } else {
-      $results.Add((New-SmokeResult "baseline" "codex-mcp-list" "ok" "default list excludes heavy optional MCPs"))
+      $results.Add((New-SmokeResult "baseline" "codex-mcp-list" "ok" "default list contains gbrain_http, obsidian_http, and oci_admin_http; retired alias absent"))
     }
   }
 
@@ -199,14 +205,14 @@ function Invoke-KnowledgeSmoke {
 
   if ($profileResult.status -eq "ok") {
     $profileText = Get-Content -LiteralPath $profileResult.detail -Raw
-    $hasNewNames = $profileText -match '\[mcp_servers\.gbrain_http\]' -and $profileText -match '\[mcp_servers\.obsidian_http\]'
-    $hasRetiredNames = $profileText -match '\[mcp_servers\.obsidian_rest\]' -or $profileText -match '\[mcp_servers\.http_gbrain\]' -or $profileText -match '\[mcp_servers\.http_obsidian\]'
+    $hasNewNames = $profileText -match '\[mcp_servers\.gbrain_http\]' -and $profileText -match '\[mcp_servers\.obsidian_http\]' -and $profileText -match '\[mcp_servers\.oci_admin_http\]'
+    $hasRetiredNames = $profileText -match '\[mcp_servers\.obsidian_rest\]' -or $profileText -match '\[mcp_servers\.http_gbrain\]' -or $profileText -match '\[mcp_servers\.http_obsidian\]' -or $profileText -match '\[mcp_servers\.oci_admin\]'
     $hasHardcodedBearer = $profileText -match 'Authorization\s*=\s*"Bearer\s+'
 
     if ($hasNewNames -and -not $hasRetiredNames -and -not $hasHardcodedBearer) {
-      $results.Add((New-SmokeResult "knowledge-mcp" "profile-contract" "ok" "profile uses gbrain_http/obsidian_http without hardcoded bearer"))
+      $results.Add((New-SmokeResult "knowledge-mcp" "profile-contract" "ok" "profile uses gbrain_http/obsidian_http/oci_admin_http without hardcoded bearer"))
     } else {
-      $results.Add((New-SmokeResult "knowledge-mcp" "profile-contract" "slow-start" "profile drift: expected gbrain_http + obsidian_http via ATIUS_MCP_TOKEN, no hardcoded bearer" "Rewrite C:\\Users\\muniz\\.codex\\knowledge-mcp.config.toml to the current ATIUS MCP standard."))
+      $results.Add((New-SmokeResult "knowledge-mcp" "profile-contract" "slow-start" "profile drift: expected gbrain_http + obsidian_http + oci_admin_http via ATIUS_MCP_TOKEN, no retired alias or hardcoded bearer" "Rewrite C:\\Users\\muniz\\.codex\\knowledge-mcp.config.toml to the current ATIUS MCP standard."))
     }
   }
 
@@ -236,14 +242,23 @@ function Invoke-KnowledgeSmoke {
   }
 
   $initializeBody = '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{},"clientInfo":{"name":"codex-mcp-startup-smoke","version":"1.0"}}}'
+  $toolsListBody = '{"jsonrpc":"2.0","id":2,"method":"tools/list","params":{}}'
+
+  try {
+    $ociUnauth = Invoke-CurlRequest -Method POST -Uri "https://mcp.atius.com.br/oci-admin" -Headers @{ "Accept" = "application/json, text/event-stream" } -Body $initializeBody
+    $ociUnauthStatus = if ($ociUnauth.StatusCode -eq 401) { "ok" } else { "slow-start" }
+    $results.Add((New-SmokeResult "knowledge-mcp" "oci-admin-auth-negative" $ociUnauthStatus "status=$([int]$ociUnauth.StatusCode); expected 401 without bearer"))
+  } catch {
+    $results.Add((New-SmokeResult "knowledge-mcp" "oci-admin-auth-negative" "unreachable" $_.Exception.Message "Check public DNS/edge routing to /oci-admin."))
+  }
 
   try {
     $gbrainHealth = Invoke-CurlRequest -Method GET -Uri "https://mcp.atius.com.br/gbrain/health"
-    if ($gbrainHealth.StatusCode -eq 404) {
-      $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-health" "ok" "status=404; public edge reachable; /health not exposed on current edge"))
+    if ($gbrainHealth.StatusCode -in @(404, 405)) {
+      $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-health" "ok" "status=$([int]$gbrainHealth.StatusCode); public edge reachable; /health not exposed on current edge"))
     } else {
       $healthStatus = if ($gbrainHealth.StatusCode -ge 200 -and $gbrainHealth.StatusCode -lt 300) { "ok" } else { "slow-start" }
-      $healthNext = if ($healthStatus -eq "ok") { "" } else { "Expected 2xx or the known 404-not-exposed behavior from the public GBrain health endpoint." }
+      $healthNext = if ($healthStatus -eq "ok") { "" } else { "Expected 2xx or the known 404/405 not-exposed behavior from the public GBrain health endpoint." }
       $results.Add((New-SmokeResult "knowledge-mcp" "gbrain-health" $healthStatus "status=$([int]$gbrainHealth.StatusCode); public edge reachable" $healthNext))
     }
   } catch {
@@ -281,6 +296,22 @@ function Invoke-KnowledgeSmoke {
     $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-initialize" $obsidianStatus $detail $obsidianNext))
   } catch {
     $results.Add((New-SmokeResult "knowledge-mcp" "obsidian-initialize" "unreachable" $_.Exception.Message "Check ATIUS_MCP_TOKEN, Obsidian plugin state, or MCP session negotiation."))
+  }
+
+  try {
+    $ociInit = Invoke-CurlRequest -Method POST -Uri "https://mcp.atius.com.br/oci-admin" -Headers $headers -Body $initializeBody
+    $ociInitBody = $ociInit.Body | ConvertFrom-Json
+    $ociServerName = $ociInitBody.result.serverInfo.name
+    $ociInitStatus = if ($ociInit.StatusCode -eq 200 -and $ociServerName -eq "oci-admin") { "ok" } else { "slow-start" }
+    $results.Add((New-SmokeResult "knowledge-mcp" "oci-admin-initialize" $ociInitStatus "status=$([int]$ociInit.StatusCode); serverInfo.name=$ociServerName" "Expected 200 and serverInfo.name=oci-admin."))
+
+    $ociTools = Invoke-CurlRequest -Method POST -Uri "https://mcp.atius.com.br/oci-admin" -Headers $headers -Body $toolsListBody
+    $ociToolsBody = $ociTools.Body | ConvertFrom-Json
+    $ociToolCount = @($ociToolsBody.result.tools).Count
+    $ociToolsStatus = if ($ociTools.StatusCode -eq 200 -and $ociToolCount -eq 9) { "ok" } else { "slow-start" }
+    $results.Add((New-SmokeResult "knowledge-mcp" "oci-admin-tools-list" $ociToolsStatus "status=$([int]$ociTools.StatusCode); tools=$ociToolCount" "Expected 200 and exactly 9 allowlisted OCI Admin tools."))
+  } catch {
+    $results.Add((New-SmokeResult "knowledge-mcp" "oci-admin-protocol" "unreachable" $_.Exception.Message "Check ATIUS_MCP_TOKEN, the SRV-3 backend, or the /oci-admin edge route."))
   }
 
   return $results

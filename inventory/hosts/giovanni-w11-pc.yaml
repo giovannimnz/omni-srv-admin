@@ -6,6 +6,14 @@ role: personal-workstation
 owner: giovanni
 access:
   ssh: muniz@10.100.100.8
+  home_lan_ssh: muniz@192.168.1.8:22
+  casa_wan_ssh: muniz@ssh-giovanni-w11-pc.atius.com.br:8122
+  casa_browser_ssh: https://ssh.atius.com.br/ssh-giovanni-w11-pc
+  casa_browser_rdp: https://rdp.atius.com.br/giovanni-w11-pc
+  rdp: muniz@192.168.1.8:3389
+  wsl_ssh_via_windows: muniz@192.168.1.8:8022
+  wsl_casa_wan_ssh: muniz@ssh-giovanni-wsl-pc.atius.com.br:8222
+  wsl_casa_browser_ssh: https://ssh.atius.com.br/ssh-giovanni-wsl-pc
   vpn_ip: 10.100.100.8
   legacy_ssh: muniz@10.100.100.5
   legacy_vpn_ip: 10.100.100.5
@@ -19,6 +27,8 @@ status: active
 modules: []
 constraints:
   - client-wireguard-config-imported-for-10.100.100.8
+  - casa-wan-nat-source-restricted-to-atius-srv-1-public-egress
+  - wsl-runtime-is-subordinate-to-this-windows-host
 logs:
   local_dir: TBD
   retention_days: 15
@@ -84,3 +94,7 @@ notes:
   legacy_wireguard_note: "Previous W11 edge IP 10.100.100.5/32 is historical evidence from the pre-cutover state."
   retired_range_note: "10.1.1.0/24 no longer exists operationally; any older 10.1.1.5 references are historical evidence only."
   home_proxy_pptp: "2026-07-10: BE3 static reservation confirmed for residential PPTP spike: 192.168.1.8 / 44:FA:66:01:6F:AB. This is home LAN only, not OCI/DRG identity."
+  casa_remote_gateway: "2026-07-19: production Casa access uses BE3 TCP NAT source-restricted to atius-srv-1: WAN 8122 -> 192.168.1.8:22 for Windows PowerShell 7, WAN 8222 -> 192.168.1.8:8022 for WSL Ubuntu 24.04, and WAN 3389 -> 192.168.1.8:3389 for RDP/NLA. Browser paths are ATS-admin-gated through Apache/RustGuac; no Cloudflare Tunnel or WireGuard in the data path."
+  windows_ssh_shell: "Windows OpenSSH port 22 uses C:\\Program Files\\PowerShell\\7\\pwsh.exe with command option -c."
+  wsl_runtime: "Ubuntu-24.04 WSL sshd listens on 8022 for user muniz. Windows portproxy 0.0.0.0:8022 follows the dynamic WSL IP through scheduled task Atius-WSL-SSH-PortProxy and firewall rule Atius-WSL-SSH-8022-Private."
+  casa_validation: "2026-07-19: native SSH and RustGuac browser E2E reached Windows PowerShell and WSL Ubuntu on the new ports; final 4/4 browser proof includes two WebSocket 101 handshakes, three command markers, 70-second idle and reconnect per route. RDP reached RustGuac/guacd/NLA and Windows recognized muniz, but desktop remains blocked because the supplied password was wrong and the correct Microsoft Account password is absent from Vault."

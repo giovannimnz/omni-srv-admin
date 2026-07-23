@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.6.2 — 2026-07-13
+> Versão: 1.7.3 — 2026-07-22
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -25,9 +25,9 @@ Os hosts móveis/complementares são documentados para completeness.
 | atius-srv-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
 | atius-srv-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
 | horistic-srv    | proxy reverso / K3s worker / AI Search | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv.yaml`    |
-| GIOVANNI-W11-PC | workstation Windows | Windows 11    | active via VPN | `inventory/hosts/giovanni-w11-pc.yaml` |
+| GIOVANNI-W11-PC | workstation Windows + WSL | Windows 11 / Ubuntu 24.04 WSL | active via VPN e Casa gateway | `inventory/hosts/giovanni-w11-pc.yaml` |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
-| GIOVANNI-S23   | mobile node        | Termux (Android) | active via VPN | `inventory/hosts/giovanni-s23-termux.yaml` |
+| GIOVANNI-S23   | mobile node        | Termux (Android) | active via VPN e Casa gateway | `inventory/hosts/giovanni-s23-termux.yaml` |
 | GIOVANNI-S23-PROOT | mobile ubuntu | Ubuntu (proot) | planned | `inventory/hosts/giovanni-s23-proot.yaml` |
 | atius-mt5-kvm-1 | MT5 execution primary | Ubuntu 24.04 x86_64 | active | `inventory/hosts/atius-mt5-kvm-1.yaml` |
 | atius-mt5-kvm-2 | MT5 execution backup | Ubuntu 24.04 x86_64 | active | `inventory/hosts/atius-mt5-kvm-2.yaml` |
@@ -102,14 +102,107 @@ Camadas:
 | atius-mt5-kvm-1 | atius-mt5-kvm-1 | 137.131.228.103 | 10.100.100.16 | - | 10.0.0.61 |
 | atius-mt5-kvm-2 | atius-mt5-kvm-2 | 147.15.83.218 | 10.100.100.17 | - | 10.0.0.188 |
 
-### Home Edge / Residential PPTP
+### Home Edge / Residential
 
-Esta secao e arquitetura/spike do projeto `home-proxy`, nao plano canonico de servicos ATIUS.
+As reservas LAN abaixo são canônicas. O material PPTP continua apenas como
+spike. No runtime Casa Remote Gateway descrito depois da tabela, SSH nativo e
+browser estão `GO` 4/4; somente o desktop RDP continua parcial/`NO-GO`. O
+caminho SSH público não usa PPTP, WireGuard ou Cloudflare Tunnel no cliente.
 
 | Device | Home LAN reserved IP | MAC | Purpose | Status |
 |--------|----------------------|-----|---------|--------|
 | `GIOVANNI-W11-PC` | `192.168.1.8` | `44:FA:66:01:6F:AB` | PPTP residencial em casa | reserved, spike |
 | `GIOVANNI-S23` | `192.168.1.9` | `8A:DE:15:16:1B:3B` | PPTP residencial em casa | reserved, spike |
+
+#### Casa Remote Gateway — runtime ativo 2026-07-19
+
+```text
+Browser -> Apache atius-srv-1 -> ATS admin gate -> RustGuac/bundled guacd
+        -> relay -> home WAN -> BE3 NAT -> residential LAN
+```
+
+Cloudflare: `casa.atius.com.br` é um único record `A`, proxied, TTL
+Automatic, SSL `Full (strict)`, WebSockets on e zero Tunnels. HTTP `:80`
+chega ao Apache e recebe `301`; HTTPS/WSS usa `:443`. O record aponta ao edge
+público do SRV-1, não ao WAN residencial.
+
+| Regra BE3 | Proto | WAN externa | LAN destino | Interna | Usuário/serviço | Source allowlist |
+|---|---|---:|---|---:|---|---|
+| `atius-w11-ssh` | TCP | 8122 | `192.168.1.8` | 22 | `muniz`, Windows OpenSSH/PowerShell 7 | egress público SRV-1 `137.131.190.161` |
+| `atius-s23-ssh` | TCP | 8322 | `192.168.1.9` | 8022 | `termux`, Termux OpenSSH | egress público SRV-1 `137.131.190.161` |
+| `atius-wsl-ssh` | TCP | 8222 | `192.168.1.8` | 8022 | `muniz`, Windows portproxy -> WSL Ubuntu | egress público SRV-1 `137.131.190.161` |
+| `atius-w11-rdp` | TCP | 3389 | `192.168.1.8` | 3389 | `muniz`, Windows RDP/NLA | egress público SRV-1 `137.131.190.161` |
+
+Proxy interno no SRV-1: ATS `/v1/auth/me` em `127.0.0.1:8015`; gateway Casa
+SSH em `127.0.0.1:8196`; gateway RDP dedicado em `127.0.0.1:8197`; RustGuac em
+`127.0.0.1:8089`; `guacd:4822` bundled. O catch-all do router segue para o
+origin residencial dinâmico `:8888`. `/ssh/*` e `/rdp/*` no Casa são redirects
+de compatibilidade; SSH nativo usa os hostnames DNS-only e portas explícitas.
+
+Source detalhada, fingerprints, Vault fields, serviços, backups e validação:
+`/home/ubuntu/GitHub/vpn-atius/home-proxy/docs/operations/2026-07-19-casa-ssh-rdp-gateway.md`.
+
+O bloco abaixo é histórico e foi superseded pelo rollout as-built de
+2026-07-19. O estado anterior `NO-GO` decorreu de host/path OpenSSH não
+portátil, `nc -w 15` encerrando idle, filtro Apache corrompendo assets públicos
+do Guacamole e RDP `Origin: null`/403. O rollout atual usa relay TCP por IP
+reservado, documentado no runbook do `home-proxy`.
+
+### Casa Remote Gateway — current as-built 2026-07-19
+
+| Alias | Public IP | Cloudflare | Public port | Internal relay | BE3 -> LAN |
+|---|---:|---|---:|---:|---|
+| `ssh-giovanni-w11-pc.atius.com.br` | `137.131.140.20` | DNS-only | 8122 | nft -> 2222 | WAN 8122 -> `192.168.1.8:22` |
+| `ssh-giovanni-wsl-pc.atius.com.br` | `137.131.140.20` | DNS-only | 8222 | nft -> 8822 | WAN 8222 -> `192.168.1.8:8022` |
+| `ssh-giovanni-s23.atius.com.br` | `137.131.140.20` | DNS-only | 8322 | nft -> 8022 | WAN 8322 -> `192.168.1.9:8022` |
+| `ssh-horistic-srv.atius.com.br` | `163.176.232.119` | DNS-only | 22 | public VNIC Horistic | `10.0.0.65:22` |
+| `ssh.atius.com.br/compute/*` | `137.131.140.20` | DNS-only | 443 | Apache -> 8196/8089 | RustGuac -> relay correspondente |
+| `rdp.atius.com.br/giovanni-w11-pc` | `137.131.190.161` | proxied | 443 | Apache -> 8197/8089 | WAN 3389 -> `192.168.1.8:3389` |
+
+#### Ordem operacional de SSH e failover sem VPN
+
+Uma falha de TCP, rota, timeout ou SSH no caminho privado deve sempre disparar
+uma tentativa na rota pública nativa antes de o host ser declarado
+inacessível. As rotas públicas abaixo terminam no edge/relay OCI e não dependem
+de WireGuard no cliente:
+
+| Alvo | Caminho privado direto | Fallback público obrigatório |
+|---|---|---|
+| W11 | `ssh muniz@10.100.100.8` | `ssh -p 8122 muniz@ssh-giovanni-w11-pc.atius.com.br` |
+| WSL | `ssh -p 8022 muniz@10.100.100.8` | `ssh -p 8222 muniz@ssh-giovanni-wsl-pc.atius.com.br` |
+| S23 | `ssh -p 8022 termux@10.100.100.9` | `ssh -p 8322 termux@ssh-giovanni-s23.atius.com.br` |
+| Horistic | `ssh horistic@10.21.1.21` | `ssh -p 22 horistic@ssh-horistic-srv.atius.com.br` |
+
+Em 2026-07-22, os dois caminhos do S23 autenticaram e chegaram ao mesmo Termux.
+Essa validação não remove a regra de failover: disponibilidade de WireGuard é
+estado transitório. Preserve o erro do caminho direto e o resultado do fallback
+no relatório. Os paths `https://ssh.atius.com.br/ssh-*` são exclusivos do
+browser e não são comandos OpenSSH.
+
+Phase 07 consolidou os três aliases Casa no mesmo Public IP
+`137.131.140.20`/private `.238`, com seleção nft pela porta. As reservas
+anteriores de WSL/S23 e `.236/.237` continuam `RESERVED/ASSIGNED` somente para
+rollback; suas portas antigas ficam fechadas no perfil final. Rollback e
+reapply reais passaram sem detach/release, mantendo o service de secondary
+addresses. Os launchers canônicos são `/compute/<slug>`; `/ssh-*` permanece
+alias browser.
+
+The Casa SSH public IPs and the Horistic public IP are OCI `RESERVED`; the W11 IP is also the dedicated
+`dns-casa.atius.com.br` A record on DNS port 53. This sharing is intentional
+and must remain represented as separate port bindings. Native and browser SSH
+are `GO` 4/4. RDP reaches RustGuac/NLA but remains partial until the correct
+Microsoft Account password proves the interactive desktop.
+
+| Native SSH (histórico, superseded) | Porta pública SRV-1 | Backend BE3 | Estado |
+|---|---:|---:|---|
+| W11 / PowerShell | 2222 | 22 | proposta; não live |
+| WSL / Ubuntu | 8822 | 8822 | proposta; não live |
+| S23 / Termux | 8022 | 8022 | proposta; não live |
+
+As portas acima não são a interface pública atual. O contrato as-built usa
+portas públicas `8122/8222/8322` e mantém `2222/8022/8822` apenas como
+hops internos selecionados por nftables. Ver
+`home-proxy/docs/operations/2026-07-19-casa-edge-address-port-map.md`.
 
 PPTP exige TCP `1723` e GRE/protocolo `47`. Nao anunciar `192.168.1.0/24`
 para DRG/wg100 sem uma fase propria de routed-site. A rede canonica de servicos
@@ -174,6 +267,9 @@ Cloudflare:
   `/api/status` retornaram `200` em 2026-07-05.
 - `router.atius.com.br/docs/` → Apache target `127.0.0.1:3003`; drift
   validado 2026-07-05: porta `3003` sem listener e rota pública retorna `503`.
+- `casa.atius.com.br` → record `A` proxied para Apache SRV-1 `:443`; rotas
+  `/ssh` e `/rdp` via ATS/Guacamole, painel BE3 em origin dinâmico `:8888`;
+  sem Tunnel e sem WireGuard no caminho final.
 - `wayland.atius.com.br` → runtime Wayland no SRV-3 `0.0.0.0:25725`;
   `/api/auth/status` local e público retornaram `200` em 2026-07-05.
 - `mcp.atius.com.br/gbrain` → edge público para GBrain HTTP MCP no SRV-1,
@@ -286,6 +382,11 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 6443   | kube-apiserver             | *            | root     | K3s                                |
 | 7070   | anydesk                    | 0.0.0.0      | anydesk  | remote desktop                     |
 | 8015   | atius-api                  | 0.0.0.0      | ubuntu   | PM2 namespace=atius                |
+| 8089   | casa-rustguac              | 127.0.0.1    | rootless podman | backend canônico browser SSH/RDP; guacd bundled `4822` |
+| 8182   | casa-guacamole legado      | 127.0.0.1    | rootless podman | fallback temporário até E2E RDP 1/1 |
+| 8196   | casa-remote-auth-gateway   | 127.0.0.1    | ubuntu/systemd | ATS/ticket gate de `ssh.atius.com.br` |
+| 8197   | casa-rdp-auth-gateway      | 127.0.0.1    | ubuntu/systemd | ATS/CSRF de `rdp.atius.com.br` |
+| 8922   | casa-ssh-relay             | 127.0.0.1    | ubuntu/systemd | RustGuac -> Horistic `10.21.1.21:22` via OCI/DRG |
 | 8050   | horistic-api               | 0.0.0.0      | ubuntu   | PM2 namespace=horistic             |
 | 8099   | horistic-webhook-signals   | 0.0.0.0      | ubuntu   | PM2                                |
 | 8100   | hermes-adapter             | 127.0.0.1    | ubuntu   | node                               |
@@ -357,7 +458,9 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 3350   | xrdp-sesman                | 127.0.0.1    | root     |                                    |
 | 5901   | Xvnc XRDP display :1       | 127.0.0.1/session | user | efêmero durante sessão XRDP; smoke OK 2026-06-16 |
 | 631    | cups                       | 127.0.0.1    | root     | pending ESM upgrade (8 cups pkgs)  |
+| 8080   | OCI Admin web/API          | 10.13.1.13   | ubuntu/PM2 | `oci-admin-web`, namespace `oci-admin`; `/healthz`; OCI/DRG primary |
 | 8088   | Vaultwarden/private gateway | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
+| 8090   | OCI Admin MCP HTTP         | 10.13.1.13   | ubuntu/PM2 | `oci-admin-mcp-http`; public `/oci-admin`; OCI/DRG primary |
 | 8202   | HashiCorp Vault HTTPS      | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
 | 8203   | HashiCorp Vault cluster    | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
 | 2379   | etcd                       | 10.13.1.13 / 10.100.100.3 | root     | K3s; OCI-private preferred |
@@ -431,6 +534,10 @@ Notas:
 | WireGuard       | 51820          | 0.0.0.0       | SRV-2 hub                |
 | SSH             | 22             | 0.0.0.0       | todos                    |
 | RDP             | 3389, 3350     | 3389 WAN      | xrdp                     |
+| Casa gateways   | 8196, 8197     | 127.0.0.1     | Node ATS/ticket/CSRF gates |
+| Casa RustGuac   | 8089; bundled guacd 4822 | 127.0.0.1 / rootless | browser SSH/RDP |
+| Casa residential NAT | 8122, 8222, 8322, 3389 | BE3 WAN, source SRV-1 only | W11/WSL/S23/RDP |
+| Casa native SSH relay | 2222, 8822, 8022 | interno protegido por nft | live; não publicar diretamente |
 | Cloudflare Origin | 9080, 9444   | 127.0.0.1     | Apache2 (Plane 2 mig)   |
 | K3s API         | 6443, 6444     | mixed         | K3s                      |
 | K3s etcd        | 2379, 2380     | 10.11/10.12/10.13/10.21 preferred, `wg100` reserve | K3s |
@@ -440,6 +547,7 @@ Notas:
 | PgBouncer       | 6432           | 10.11.1.11  | central DB               |
 | Obsidian REST/MCP | 27124        | 10.11.1.11  | AiSecondBrain via OCI/DRG |
 | GBrain HTTP MCP | 3131           | 127.0.0.1     | SRV-1 local backend; public edge `mcp.atius.com.br/gbrain` |
+| OCI Admin web/MCP | 8080, 8090   | 10.13.1.13    | SRV-3 PM2 namespace `oci-admin`; public `/` and `/oci-admin` |
 | Router Web/API  | 3000           | 0.0.0.0       | SRV-1 Podman `router-ai-atius` |
 | Router docs target | 3003        | 127.0.0.1     | target esperado; drift atual sem listener |
 | Wayland runtime | 25725          | 0.0.0.0       | SRV-3 `wayland.service` |
@@ -547,7 +655,11 @@ Upgrade gated em janela separada.
 - Repo: `docs/operations/local-ai-embeddings.md` (TEI/GTE `10.100.100.4:3115` + router alias)
 - Repo: `docs/operations/gbrain-embedding-migration.md` (GBrain/Obsidian/Graphify embedding contract)
 - Repo: `docs/operations/codex-mcp-startup-standard.md` (Codex MCP startup profiles and smoke checks)
+- Repo: `docs/operations/oci-admin-pm2-runtime.md` (PM2, Vault, watchdog e recovery do OCI Admin no SRV-3)
 - Repo: `docs/operations/wayland-managed-runtime.md` (Wayland SRV-3 managed runtime)
+- Repo externo: `vpn-atius/home-proxy/docs/operations/2026-07-19-casa-ssh-rdp-gateway.md`
+  (Casa Cloudflare/Apache/ATS/Guacamole/BE3 port map detalhado)
+- Vault: `60-LOGS/2026-07-19-casa-ssh-rdp-gateway.md`
 - Repo: **`modules/fleet/podman-network/`** (standard podman networking 3-SRV — **novo 2026-06-16**)
 - Vault: `99-Referencias/atius-home-server-overview.md` (legado, redirecionar)
 - Vault: `17-DevTools-Workflow/17.08-Obsidian-Local-REST-API-MCP-Setup.md` (RDP :10)
@@ -582,6 +694,23 @@ Validado em 2026-07-05:
 
 ## 10. Changelog
 
+- **1.7.4 (2026-07-22)** — Phase 07 consolidou W11/WSL/S23 no shared IP
+  `137.131.140.20` com portas `8122/8222/8322`; split-IP anterior foi mantido
+  apenas como rollback retained e validado por drill/reapply completos.
+- **1.7.3 (2026-07-22)** — ordem operacional de SSH registrada para W11, WSL,
+  S23 e Horistic: após qualquer falha no caminho privado, testar a rota pública
+  nativa sem WireGuard antes de declarar indisponibilidade. S23 validado em
+  `10.100.100.9:8022` e em
+  `ssh-giovanni-s23.atius.com.br:8322` com usuário `termux`; o estado atual do
+  S23 é `GO`, superseding o `DEGRADED` registrado no delta histórico 1.7.2.
+- **1.7.1 (2026-07-19)** — status Casa corrigido para runtime ativo/release
+  externa `NO-GO`; blockers reproduzidos e portas HAProxy propostas
+  `2222/8022/8822` separadas das portas NAT live. Nenhuma porta raw RDP.
+- **1.7.0 (2026-07-19)** — Casa Remote Gateway promovido a produção no mapa:
+  Cloudflare HTTPS/WSS -> Apache SRV-1 -> ATS/Guacamole -> NAT BE3, com portas
+  internas `8015/8182/8080/8196/4822`, WAN residencial
+  `22/8022/8822/3389`, LAN `192.168.1.8/.9`, usuários e source allowlist do
+  SRV-1. Sem Cloudflare Tunnel e sem WireGuard no caminho final.
 - **1.6.2 (2026-07-13)** — verdade local/remota reconciliada: W11
   `10.100.100.8` e S23 `10.100.100.9` sao os edge IPs live; `.5/.6` ficam
   somente como historico/cleanup, e as reservas LAN BE3 `.8/.9` permanecem

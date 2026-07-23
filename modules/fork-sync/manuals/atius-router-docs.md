@@ -184,7 +184,8 @@ curl -I http://127.0.0.1:3003/pt/
 
 ### Build falha
 - Verificar espaço em disco: `df -h /`
-- Se `no space left on device`: limpar Podman images (`podman system prune -f`) e/ou docker cache
+- Se `no space left on device`: revisar e limpar somente artefatos Podman nao
+  referenciados; nao executar prune no containerd/k3s
 - Bun lock desatualizado: `rm -f bun.lock && bun install`
 
 ## 9. Remote Separado — Decisão de Governança

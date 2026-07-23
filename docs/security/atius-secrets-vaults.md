@@ -237,7 +237,7 @@ Seeded KV paths:
 | `kv/atius/srv1/shell-exports/home-ubuntu-zshrc` | SRV-1 `/home/ubuntu/.zshrc` exports imported on 2026-07-04; values live under `values` |
 | `kv/atius/srv1/shell-exports/home-ubuntu-merged` | Merged SRV-1 shell exports, `.env` then `.zshrc` precedence, imported on 2026-07-04 |
 | `kv/atius/vaultwarden/runtime` | Vaultwarden runtime env mirrored from `/root/vaultwarden-atius/vaultwarden.env` |
-| `kv/atius/atius-mcp/api` | Source of truth for `ATIUS_MCP_TOKEN` used by `https://mcp.atius.com.br/gbrain` and `https://mcp.atius.com.br/obsidian`; runtime env files are hydration caches only |
+| `kv/atius/atius-mcp/api` | Source of truth for `ATIUS_MCP_TOKEN` used by `https://mcp.atius.com.br/gbrain`, `https://mcp.atius.com.br/obsidian`, and `https://mcp.atius.com.br/oci-admin`; runtime env files are hydration caches only |
 | `kv/atius/gsd/web-login` | GSD web login password |
 | `kv/atius/hashicorp-vault/approle/omni-automation` | Omni automation AppRole |
 | `kv/atius/hashicorp-vault/approle/landscape-secrets-bridge` | Landscape bridge AppRole |
