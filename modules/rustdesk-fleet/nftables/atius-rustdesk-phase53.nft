@@ -9,8 +9,8 @@ table inet atius_rustdesk_phase53 {
     chain native_edge_input {
         type filter hook input priority 300; policy accept;
 
-        iifname "__PHASE53_PUBLIC_INTERFACE__" ip6 nexthdr tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop
-        iifname "__PHASE53_PUBLIC_INTERFACE__" ip6 nexthdr udp udp dport 21116 counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" meta nfproto ipv6 meta l4proto tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" meta nfproto ipv6 meta l4proto udp udp dport 21116 counter drop
 
         iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol tcp tcp dport { 21115, 21116, 21117 } counter accept
         iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol udp udp dport 21116 counter accept

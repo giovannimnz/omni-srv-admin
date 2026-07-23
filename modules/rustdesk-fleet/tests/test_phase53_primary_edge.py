@@ -1468,7 +1468,7 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
         ("ATIUS-PHASE53-EDGE", "nft-ownership-marker-invalid"),
         ("priority 300", "nft-priority-invalid"),
         ('iifname "ens3"', "nft-interface-invalid"),
-        ("ip6 nexthdr tcp", "nft-ipv6-deny-invalid"),
+        ("meta nfproto ipv6 meta l4proto tcp", "nft-ipv6-deny-invalid"),
     ],
 )
 def test_nft_ownership_effective_semantics_fail_on_drift(
@@ -1667,7 +1667,7 @@ def test_rollback_restore_cas_blocks_toctou_without_blind_overwrite() -> None:
     )
     backend.race_before_restore = True
     receipt = transaction.rollback_edge()
-    assert receipt["state"] == "CONTAINED_REQUIRES_MANUAL_RECOVERY"
+    assert receipt["state"] == "ROLLBACK_BLOCKED"
     assert backend.contained is True
     assert "restore-if-current" in backend.calls
 
@@ -1694,6 +1694,19 @@ def test_nft_comments_cannot_satisfy_active_semantics(
     candidate = _rendered_nft_candidate(module).replace(active_fragment, "ACTIVE_DRIFT")
     candidate += "\n# " + " ".join([comment_fragment] * 8) + "\n"
     with pytest.raises(module.EdgeBlocked, match=blocker):
+        module.validate_nft_candidate(
+            candidate,
+            contract_digest=module.sha256_file(EDGE_CONTRACT),
+            public_interface="ens3",
+        )
+
+
+def test_nft_native_comment_statement_cannot_bypass_priority_validation() -> None:
+    module = _edge_applier_module()
+    required = "type filter hook input priority 300; policy accept;"
+    candidate = _rendered_nft_candidate(module).replace(required, "ACTIVE_DRIFT")
+    candidate += f'\nadd table inet comment_fixture {{ comment "{required}"; }}\n'
+    with pytest.raises(module.EdgeBlocked, match="nft-priority-invalid"):
         module.validate_nft_candidate(
             candidate,
             contract_digest=module.sha256_file(EDGE_CONTRACT),
