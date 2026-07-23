@@ -1338,8 +1338,20 @@ class _FakeEdgeBackend:
 
 
 def _rendered_nft_candidate(module: Any) -> str:
-    template = EDGE_NFT_POLICY.read_text(encoding="utf-8")
-    return module.render_nft_candidate(template, public_interface="ens3")
+    return module.render_nft_candidate(_nft_template(), public_interface="ens3")
+
+
+def _nft_template() -> str:
+    return EDGE_NFT_POLICY.read_text(encoding="utf-8")
+
+
+def _edge_transaction(module: Any, backend: Any, **kwargs: Any) -> Any:
+    return module.EdgeTransaction(
+        contract=_load_strict(EDGE_CONTRACT),
+        backend=backend,
+        nft_template=_nft_template(),
+        **kwargs,
+    )
 
 
 def test_oci_pagination_audits_full_security_list_and_nsg_union() -> None:
@@ -1446,6 +1458,7 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
         candidate,
         contract_digest=module.sha256_file(EDGE_CONTRACT),
         public_interface="ens3",
+        template=_nft_template(),
     )
     assert result == {
         "family": "inet",
@@ -1481,6 +1494,7 @@ def test_nft_ownership_effective_semantics_fail_on_drift(
             candidate,
             contract_digest=module.sha256_file(EDGE_CONTRACT),
             public_interface="ens3",
+            template=_nft_template(),
         )
 
 
@@ -1496,6 +1510,10 @@ def test_boot_unit_loads_fixed_policy_before_network_pre_and_verifies_readback()
     assert "/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft" in encoded
     assert service["ExecStart"] == "/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft"
     assert "--verify-host-policy" in service["ExecStartPost"]
+    assert (
+        "--template /etc/atius-rustdesk/phase53-edge.template.nft"
+        in service["ExecStartPost"]
+    )
     assert unit["Install"]["WantedBy"] == "network-pre.target"
 
 
@@ -1527,9 +1545,7 @@ def test_cas_stale_revision_blocks_before_any_nft_or_oci_mutation() -> None:
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
     backend.force_stale_revision = True
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     with pytest.raises(module.EdgeBlocked, match="edge-cas-stale"):
         transaction.execute_edge(
             preflight=_phase53_edge_preflight(),
@@ -1546,9 +1562,7 @@ def test_semantic_rollback_restores_exact_prestate_and_is_idempotent() -> None:
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
     original = copy.deepcopy(backend.state)
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     result = transaction.execute_edge(
         preflight=_phase53_edge_preflight(),
         nft_candidate=_rendered_nft_candidate(module),
@@ -1566,9 +1580,7 @@ def test_semantic_rollback_restores_exact_prestate_and_is_idempotent() -> None:
 def test_semantic_rollback_concurrent_drift_contains_without_overwrite() -> None:
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     transaction.execute_edge(
         preflight=_phase53_edge_preflight(),
         nft_candidate=_rendered_nft_candidate(module),
@@ -1592,9 +1604,7 @@ def test_rollback_fault_boundaries_are_terminal_and_preserve_k3s(
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
     original = copy.deepcopy(backend.state)
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend, fault_after=fault_after
-    )
+    transaction = _edge_transaction(module, backend, fault_after=fault_after)
     with pytest.raises(module.EdgeBlocked, match=f"fault-injected-{fault_after}"):
         transaction.execute_edge(
             preflight=_phase53_edge_preflight(),
@@ -1613,9 +1623,7 @@ def test_rollback_recovers_backend_exception_after_partial_write(surface: str) -
     backend = _FakeEdgeBackend()
     original = copy.deepcopy(backend.state)
     setattr(backend, f"raise_after_{surface}_write", True)
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     with pytest.raises(module.EdgeBlocked, match=f"backend-{surface}-apply-failed"):
         transaction.execute_edge(
             preflight=_phase53_edge_preflight(),
@@ -1637,9 +1645,7 @@ def test_rollback_backend_failure_is_explicitly_blocked(
 ) -> None:
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     transaction.execute_edge(
         preflight=_phase53_edge_preflight(),
         nft_candidate=_rendered_nft_candidate(module),
@@ -1656,9 +1662,7 @@ def test_rollback_backend_failure_is_explicitly_blocked(
 def test_rollback_restore_cas_blocks_toctou_without_blind_overwrite() -> None:
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     transaction.execute_edge(
         preflight=_phase53_edge_preflight(),
         nft_candidate=_rendered_nft_candidate(module),
@@ -1698,6 +1702,7 @@ def test_nft_comments_cannot_satisfy_active_semantics(
             candidate,
             contract_digest=module.sha256_file(EDGE_CONTRACT),
             public_interface="ens3",
+            template=_nft_template(),
         )
 
 
@@ -1711,6 +1716,7 @@ def test_nft_native_comment_statement_cannot_bypass_priority_validation() -> Non
             candidate,
             contract_digest=module.sha256_file(EDGE_CONTRACT),
             public_interface="ens3",
+            template=_nft_template(),
         )
 
 
@@ -1724,9 +1730,7 @@ def test_nft_backend_semantic_readback_is_independent_from_candidate_echo() -> N
             super().apply_nft(candidate, forged)
 
     backend = ForgedReadbackBackend()
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     with pytest.raises(module.EdgeBlocked, match="nft-semantic-readback-drift"):
         transaction.execute_edge(
             preflight=_phase53_edge_preflight(),
@@ -1768,6 +1772,7 @@ def test_boot_verifier_is_operational_and_default_cli_is_zero_live(
         candidate.read_text(encoding="utf-8"),
         contract_digest=module.sha256_file(EDGE_CONTRACT),
         public_interface="ens3",
+        template=_nft_template(),
     )
     observed = tmp_path / "observed.json"
     observed.write_text(
@@ -1782,6 +1787,8 @@ def test_boot_verifier_is_operational_and_default_cli_is_zero_live(
             str(candidate),
             "--contract",
             str(EDGE_CONTRACT),
+            "--template",
+            str(EDGE_NFT_POLICY),
             "--public-interface",
             "ens3",
             "--observed-json",
@@ -1799,6 +1806,99 @@ def test_boot_verifier_is_operational_and_default_cli_is_zero_live(
         "status": "PASS",
     }
     assert "--contract" in _load_unit(EDGE_BOOT_SERVICE)["Service"]["ExecStartPost"]
+
+
+def test_nft_library_requires_explicit_template() -> None:
+    module = _edge_applier_module()
+    with pytest.raises(module.EdgeBlocked, match="nft-template-required"):
+        module.validate_nft_candidate(
+            _rendered_nft_candidate(module),
+            contract_digest=module.sha256_file(EDGE_CONTRACT),
+            public_interface="ens3",
+        )
+
+
+@pytest.mark.parametrize(
+    ("template", "blocker"),
+    [
+        (
+            _nft_template().replace("ATIUS-PHASE53-EDGE", "FOREIGN-EDGE", 1),
+            "nft-template-ownership-marker-invalid",
+        ),
+        (
+            _nft_template().replace("contract-sha256=", "contract-sha256=0", 1),
+            "nft-template-contract-digest-invalid",
+        ),
+    ],
+)
+def test_nft_template_ownership_and_contract_digest_are_mandatory(
+    template: str, blocker: str
+) -> None:
+    module = _edge_applier_module()
+    with pytest.raises(module.EdgeBlocked, match=blocker):
+        module.validate_nft_candidate(
+            _rendered_nft_candidate(module),
+            contract_digest=module.sha256_file(EDGE_CONTRACT),
+            public_interface="ens3",
+            template=template,
+        )
+
+
+def test_boot_verifier_missing_template_fails_closed(tmp_path: Path) -> None:
+    module = _edge_applier_module()
+    candidate = tmp_path / "edge.nft"
+    candidate.write_text(_rendered_nft_candidate(module), encoding="utf-8")
+    observed = tmp_path / "observed.json"
+    observed.write_text(
+        json.dumps(
+            {
+                "schema_version": 1,
+                "semantics": {
+                    "family": "inet",
+                    "table": "atius_rustdesk_phase53",
+                    "hook": "input",
+                    "priority": 300,
+                    "public_interface": "ens3",
+                    "ipv4_tcp": [21115, 21116, 21117],
+                    "ipv4_udp": [21116],
+                    "ipv6_denied": [21114, 21115, 21116, 21117, 21118, 21119],
+                },
+            }
+        ),
+        encoding="utf-8",
+    )
+    base_args = [
+        sys.executable,
+        str(EDGE_APPLIER),
+        "--verify-host-policy",
+        "--candidate",
+        str(candidate),
+        "--contract",
+        str(EDGE_CONTRACT),
+        "--public-interface",
+        "ens3",
+        "--observed-json",
+        str(observed),
+    ]
+    missing_argument = subprocess.run(
+        base_args,
+        cwd=REPO,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert missing_argument.returncode == 2
+    assert json.loads(missing_argument.stdout)["blocker"] == "nft-template-required"
+
+    missing_file = subprocess.run(
+        [*base_args, "--template", str(tmp_path / "missing.template.nft")],
+        cwd=REPO,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert missing_file.returncode == 2
+    assert json.loads(missing_file.stdout)["blocker"] == "nft-template-input-invalid"
 
 
 def test_oci_union_uses_only_expanded_attached_security_lists_and_nsgs() -> None:
@@ -1924,6 +2024,34 @@ def _nft_json_rule(
     chain: str = "native_edge_input",
 ) -> dict[str, Any]:
     right: int | dict[str, list[int]] = ports[0] if len(ports) == 1 else {"set": ports}
+    protocol_expressions = (
+        [
+            {
+                "match": {
+                    "op": "==",
+                    "left": {"meta": {"key": "nfproto"}},
+                    "right": "ipv6",
+                }
+            },
+            {
+                "match": {
+                    "op": "==",
+                    "left": {"meta": {"key": "l4proto"}},
+                    "right": protocol,
+                }
+            },
+        ]
+        if family == "ipv6"
+        else [
+            {
+                "match": {
+                    "op": "==",
+                    "left": {"payload": {"protocol": "ip", "field": "protocol"}},
+                    "right": protocol,
+                }
+            }
+        ]
+    )
     return {
         "rule": {
             "family": "inet",
@@ -1937,20 +2065,7 @@ def _nft_json_rule(
                         "right": "ens3",
                     }
                 },
-                {
-                    "match": {
-                        "op": "==",
-                        "left": {"meta": {"key": "nfproto"}},
-                        "right": family,
-                    }
-                },
-                {
-                    "match": {
-                        "op": "==",
-                        "left": {"meta": {"key": "l4proto"}},
-                        "right": protocol,
-                    }
-                },
+                *protocol_expressions,
                 {
                     "match": {
                         "op": "==",
@@ -1963,6 +2078,14 @@ def _nft_json_rule(
             ],
         }
     }
+
+
+def _fabricated_meta_ipv4_rule(
+    protocol: str, ports: list[int], verdict: str
+) -> dict[str, Any]:
+    rule = _nft_json_rule("ipv6", protocol, ports, verdict)
+    rule["rule"]["expr"][1]["match"]["right"] = "ipv4"
+    return rule
 
 
 def _valid_nft_json_readback() -> dict[str, Any]:
@@ -1986,6 +2109,25 @@ def _valid_nft_json_readback() -> dict[str, Any]:
             _nft_json_rule("ipv4", "tcp", [21114, 21118, 21119], "drop"),
         ]
     }
+
+
+def test_nft_json_readback_accepts_canonical_ipv4_payload_ast() -> None:
+    module = _edge_applier_module()
+    result = module.semantics_from_nft_json(_valid_nft_json_readback(), "ens3")
+    assert result["ipv4_tcp"] == [21115, 21116, 21117]
+    assert result["ipv4_udp"] == [21116]
+
+
+def test_nft_json_readback_rejects_fabricated_meta_ipv4_ast() -> None:
+    module = _edge_applier_module()
+    payload = _valid_nft_json_readback()
+    payload["nftables"][4:] = [
+        _fabricated_meta_ipv4_rule("tcp", [21115, 21116, 21117], "accept"),
+        _fabricated_meta_ipv4_rule("udp", [21116], "accept"),
+        _fabricated_meta_ipv4_rule("tcp", [21114, 21118, 21119], "drop"),
+    ]
+    with pytest.raises(module.EdgeBlocked, match="nft-live-semantic-readback-drift"):
+        module.semantics_from_nft_json(payload, "ens3")
 
 
 @pytest.mark.parametrize("mutation", ["wrong-chain", "catch-all", "duplicate"])
@@ -2034,15 +2176,14 @@ def test_nft_candidate_rejects_extra_relevant_chain_or_rule() -> None:
             candidate,
             contract_digest=module.sha256_file(EDGE_CONTRACT),
             public_interface="ens3",
+            template=_nft_template(),
         )
 
 
 def test_rollback_cas_rejects_same_state_with_new_generation() -> None:
     module = _edge_applier_module()
     backend = _FakeEdgeBackend()
-    transaction = module.EdgeTransaction(
-        contract=_load_strict(EDGE_CONTRACT), backend=backend
-    )
+    transaction = _edge_transaction(module, backend)
     transaction.execute_edge(
         preflight=_phase53_edge_preflight(),
         nft_candidate=_rendered_nft_candidate(module),
@@ -2086,6 +2227,7 @@ def test_nft_candidate_rejects_extra_predicate_on_expected_line() -> None:
             candidate,
             contract_digest=module.sha256_file(EDGE_CONTRACT),
             public_interface="ens3",
+            template=_nft_template(),
         )
 
 
