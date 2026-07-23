@@ -4,9 +4,9 @@ milestone: v1.9
 milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: Primary Relay and Public Edge
-status: planning
-stopped_at: Phase 53 context gathered
-last_updated: "2026-07-22T22:51:16.919Z"
+status: ready_to_execute
+stopped_at: Phase 53 planned in 6 serial waves
+last_updated: "2026-07-22T23:55:00-03:00"
 last_activity: 2026-07-22
 last_activity_desc: Plan 52-07 completed the create-only Vault gate, recoverability drill and independent closeout
 progress:
@@ -29,11 +29,11 @@ See: `.planning/PROJECT.md` (updated 2026-07-19)
 ## Current Position
 
 Phase: 53 (Primary Relay and Public Edge) — READY
-Plan: not planned
-Status: Phase 52 closed with 11/11 checks PASS, `horistic-srv` selected and Phase 53 authorized
+Plan: 6 plans across waves 0-5
+Status: Phase 53 research, three-round review and executable planning complete; ready for Wave 0
 Last activity: 2026-07-22 — Plan 52-07 completed the create-only Vault gate, recoverability drill and independent closeout
 
-Milestone progress: [██░░░░░░░░] 25% — 2 of 8 phases complete; Phase 53 planning is next
+Milestone progress: [██░░░░░░░░] 25% — 2 of 8 phases complete; Phase 53 execution is next
 
 ## Performance Metrics
 
@@ -91,6 +91,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-22T22:51:16.906Z
-Stopped at: Phase 53 context gathered
-Resume file: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-CONTEXT.md
+Last session: 2026-07-22T23:55:00-03:00
+Stopped at: Phase 53 planned in 6 serial waves
+Resume file: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-01-PLAN.md
