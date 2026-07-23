@@ -2796,6 +2796,7 @@ def validate_supply_observation(
     *,
     repo: Path | None = None,
     allowed_cache_root: Path | None = None,
+    now: datetime | None = None,
 ) -> CheckResult:
     fail: list[str] = []
     blocked: list[str] = []
@@ -2828,7 +2829,8 @@ def validate_supply_observation(
     if parsed is None:
         fail.append("observation-timestamp")
     else:
-        age = (datetime.now(timezone.utc) - parsed).total_seconds()
+        current = now or datetime.now(timezone.utc)
+        age = (current - parsed).total_seconds()
         if age < -300 or age > contract["policy"]["observation_ttl_seconds"]:
             blocked.append("stale-observation")
 
@@ -3326,7 +3328,7 @@ def _stage_check(
 
 
 def _capacity_report_check(
-    policy: dict[str, Any], full_gate: dict[str, Any]
+    policy: dict[str, Any], full_gate: dict[str, Any], *, now: datetime | None = None
 ) -> CheckResult:
     policy_result = validate_capacity_policy(policy)
     if policy_result.status != "PASS":
@@ -3334,7 +3336,7 @@ def _capacity_report_check(
     result = _stage_check("P52-CAPACITY-001", "capacity", full_gate, require_selected=True)
     attempts = full_gate.get("attempts", []) if isinstance(full_gate, dict) else []
     if any(
-        not _is_current(sample.get("observed_at"), policy["observation_max_age_seconds"])
+        not _is_current(sample.get("observed_at"), policy["observation_max_age_seconds"], now)
         for attempt in attempts
         if isinstance(attempt, dict)
         for sample in attempt.get("stages", {}).get("capacity", {}).get("samples", [])
@@ -3434,6 +3436,12 @@ def _git_head(repo: Path) -> str:
 
 def build_phase52_report(repo: Path, generated_at: str | None = None) -> dict[str, Any]:
     root = repo.resolve()
+    timestamp = generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
+        "+00:00", "Z"
+    )
+    report_now = _parse_utc(timestamp)
+    if report_now is None:
+        raise ValueError("generated_at must be an ISO-8601 UTC timestamp")
     contract = load_json_strict(validate_repo_path(root, root / SUPPLY_CONTRACT))
     observation = load_json_strict(validate_repo_path(root, root / SUPPLY_OBSERVATION))
     policy = load_json_strict(validate_repo_path(root, root / CAPACITY_POLICY))
@@ -3445,9 +3453,9 @@ def build_phase52_report(repo: Path, generated_at: str | None = None) -> dict[st
     supply = (
         contract_result
         if contract_result.status != "PASS"
-        else validate_supply_observation(observation, contract, repo=root)
+        else validate_supply_observation(observation, contract, repo=root, now=report_now)
     )
-    capacity = _capacity_report_check(policy, full_gate)
+    capacity = _capacity_report_check(policy, full_gate, now=report_now)
     placement_result = validate_placement_decision(placement)
     vault_contract = validate_vault_metadata(secret_roles)
     vault = (
@@ -3476,9 +3484,6 @@ def build_phase52_report(repo: Path, generated_at: str | None = None) -> dict[st
     ]
     if tuple(item.id for item in results) != PHASE52_CHECK_ORDER:
         raise ValueError("Phase 52 report check set is incomplete")
-    timestamp = generated_at or datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace(
-        "+00:00", "Z"
-    )
     selected = full_gate.get("selected_candidate")
     overall = derive_overall_status(results)
     topology_status = topology.status if selected is not None else "BLOCKED"
