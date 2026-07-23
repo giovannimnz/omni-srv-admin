@@ -22,7 +22,8 @@ from typing import Any
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_OUTPUT = (
     ROOT
-    / ".planning/phases/28-g18-ubuntu-pro-esm-fleet-gates/28-01-G18-INVENTORY.md"
+    / ".planning/workstreams/runtime-trust-codex-delivery-convergence"
+    / "phases/28-g18-ubuntu-pro-esm-fleet-gates/28-01-G18-INVENTORY.md"
 )
 ALLOWED_HOSTS = ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv")
 TOKEN_PATHS = (

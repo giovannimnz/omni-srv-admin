@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 OMNI_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ATS_ROOT="/home/ubuntu/GitHub/Atius-Capital/ats"
-PHASE_DIR="${OMNI_ROOT}/.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br"
+PHASE_DIR="${OMNI_ROOT}/.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br"
 
 legacy_targets=(
   "${PHASE_DIR}"

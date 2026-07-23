@@ -320,7 +320,11 @@ def _scenario_future_integration() -> ScenarioResult:
     docs = "\n".join(
         [
             (REPO / "docs/fleet/control-plane.md").read_text(),
-            (REPO / ".planning/phases/12-omni-fleet-control-plane/12-CONTEXT.md").read_text(),
+            (
+                REPO
+                / ".planning/workstreams/runtime-trust-codex-delivery-convergence"
+                / "phases/12-omni-fleet-control-plane/12-CONTEXT.md"
+            ).read_text(),
         ]
     )
     evidence = []
