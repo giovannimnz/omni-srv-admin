@@ -1,0 +1,72 @@
+{
+  "authority": {
+    "live_authority": false,
+    "replay_authorized": false,
+    "vault_write_authorized": false
+  },
+  "history": [
+    {
+      "commit": "443305b5059decfd1b2d8bdc1d8700f3e7232fb4",
+      "new_sha256": "06681c7706b934feb22fd781ed45ed12fa684d5d056d3f10e751d1bd60eb69cd",
+      "old_sha256": "fdf9c1fb071d6ea8c72280c165ba9793199420fd7dea7ba3cc039fff8581b047",
+      "path": "modules/rustdesk-fleet/evidence/ledger.json"
+    },
+    {
+      "commit": "257ba51180f67cc748421f68542d7d465cfe1087",
+      "new_sha256": "679150a75e038f06131c01700b91b2661f1e9317e07e97489139eab9f45da6f4",
+      "old_sha256": "e1c5ccf280f86ea0874c96cb60e3410e7db25650fab7545196f561bdd4917454",
+      "path": "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py"
+    },
+    {
+      "commit": "8683e1742b4297217fd56bbca082233260f799b5",
+      "new_sha256": "523f7026d1be334aa53a2b725ebf3560008dbe108cf79dbe50223c6e3f4fed52",
+      "old_sha256": "a58155d77b367289ac021ad5d28d0db47a3b090574cbed4055ba9d94e1c9ef5a",
+      "path": "modules/rustdesk-fleet/tools/validate_phase52.py"
+    }
+  ],
+  "ledger_invariant": {
+    "evidence_catalog_additions": [
+      "RDF-V19-SCP-04",
+      "RDF-V19-SRV-01",
+      "RDF-V19-SRV-05",
+      "RDF-V19-SRV-07"
+    ],
+    "new_last_verified_at": "2026-07-22T22:41:53Z",
+    "new_status": "pass",
+    "old_last_verified_at": null,
+    "old_status": "pending",
+    "promoted_requirement_ids": [
+      "SCP-04",
+      "SRV-01",
+      "SRV-05",
+      "SRV-07"
+    ],
+    "requirement_count": 36
+  },
+  "review_quorum": {
+    "checkout_mode": "read-only",
+    "minimum_reviewers": 2,
+    "require_distinct_reviewer_ids": true,
+    "require_same_hash_set_sha256": true,
+    "required_unresolved_high_count": 0,
+    "required_verdict": "PASS"
+  },
+  "schema_anchor": "phase52_post_live_successor_v1",
+  "schema_version": 1,
+  "source_freeze": {
+    "paths": [
+      "modules/rustdesk-fleet/contracts/phase52-post-live-successor.json",
+      "modules/rustdesk-fleet/tools/verify-phase52-post-live.py",
+      "modules/rustdesk-fleet/tools/validate_phase52.py",
+      "modules/rustdesk-fleet/tests/test_phase52_post_live_successor.py",
+      "modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py",
+      "scripts/sso-secret-hygiene-scan.sh"
+    ],
+    "reviews_must_follow_source_commit": true
+  },
+  "successor_scope": {
+    "phase53_reconciliation_is_read_only": true,
+    "plans_09_10_may_refresh_observations_read_only": true,
+    "protected_history_is_immutable": true
+  }
+}

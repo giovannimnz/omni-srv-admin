@@ -101,6 +101,12 @@ def _categories(result) -> set[str]:
     return {item.category for item in result.findings}
 
 
+def test_post_live_successor_boundary_is_non_authorizing() -> None:
+    result = validator.validate_post_live_successor_boundary(REPO)
+    assert result.status == "PASS"
+    assert validator.PHASE52_POST_LIVE_SUCCESSOR_V1 == "phase52_post_live_successor_v1"
+
+
 def _secret_roles() -> dict:
     return validator.load_json_strict(SECRET_ROLES_PATH)
 

@@ -6,7 +6,7 @@ OMNI_ROOT="$(cd "${SCRIPT_DIR}/.." && pwd)"
 ATS_ROOT="/home/ubuntu/GitHub/Atius-Capital/ats"
 PHASE_DIR="${OMNI_ROOT}/.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br"
 
-targets=(
+legacy_targets=(
   "${PHASE_DIR}"
   "${OMNI_ROOT}/scripts/sso-edge-smoke.sh"
   "${OMNI_ROOT}/scripts/sso-secret-hygiene-scan.sh"
@@ -22,6 +22,18 @@ targets=(
   "${OMNI_ROOT}/docs/domain/atius-wide-sso.md"
   "/home/ubuntu/GitHub/obsidian-vault/ideaverse/60-LOGS/2026-06-28-phase42-atius-wide-sso.md"
 )
+
+if (( "$#" > 0 )); then
+  targets=("$@")
+  for target in "${targets[@]}"; do
+    if [[ ! -e "${target}" ]]; then
+      printf 'SSO hygiene scan blocked: missing explicit target: %s\n' "${target}" >&2
+      exit 2
+    fi
+  done
+else
+  targets=("${legacy_targets[@]}")
+fi
 
 python3 - "${targets[@]}" <<'PY'
 from __future__ import annotations

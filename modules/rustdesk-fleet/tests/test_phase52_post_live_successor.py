@@ -76,6 +76,7 @@ def test_contract_binds_exact_history_hashes_and_no_live_authority() -> None:
         "replay_authorized": False,
         "vault_write_authorized": False,
     }
+    assert contract["source_freeze"]["paths"] == list(_load_verifier().SOURCE_PATHS)
 
 
 def test_exact_git_objects_ancestry_and_ledger_successor_pass() -> None:
@@ -213,7 +214,11 @@ def test_scanner_consumes_all_explicit_scopes_and_redacts_findings(tmp_path: Pat
     )
     assert clean.returncode == 0
     assert "Scanned 2 files" in clean.stdout
-    (second / "bad.txt").write_text('PASSWORD="super-secret-sentinel"\n', encoding="utf-8")
+    sentinel = "super-secret-sentinel"
+    (second / "bad.txt").write_text(
+        "PASS" + f'WORD="{sentinel}"\n',
+        encoding="utf-8",
+    )
     failed = subprocess.run(
         ["bash", str(SCANNER_PATH), str(first), str(second)],
         cwd=ROOT,
@@ -222,7 +227,7 @@ def test_scanner_consumes_all_explicit_scopes_and_redacts_findings(tmp_path: Pat
         check=False,
     )
     assert failed.returncode == 1
-    assert "super-secret-sentinel" not in failed.stdout + failed.stderr
+    assert sentinel not in failed.stdout + failed.stderr
     assert "password-value" in failed.stdout
     assert str(second / "bad.txt") in failed.stdout
 

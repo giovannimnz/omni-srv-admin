@@ -61,6 +61,13 @@ PHASE53_TOPOLOGY_REVIEW = PHASE52_DIR / "52-PHASE53-TOPOLOGY-REVIEW.md"
 PHASE48_BASELINE = Path("modules/rustdesk-fleet/evidence/phase48-baseline.json")
 PHASE51_VALIDATOR = Path("modules/rustdesk-fleet/tools/validate_phase51.py")
 PHASE52_TESTS = Path("modules/rustdesk-fleet/tests/test_phase52_supply_capacity_restore.py")
+PHASE52_POST_LIVE_SUCCESSOR = Path(
+    "modules/rustdesk-fleet/contracts/phase52-post-live-successor.json"
+)
+PHASE52_POST_LIVE_ATTESTATION = Path(
+    "modules/rustdesk-fleet/evidence/phase52/post-live/successor-attestation.json"
+)
+PHASE52_POST_LIVE_SUCCESSOR_V1 = "phase52_post_live_successor_v1"
 LIVE_DRILL_SOURCE = Path("modules/rustdesk-fleet/tools/phase52-horistic-live-drill.py")
 RECOVERY_SOURCE = Path("modules/rustdesk-fleet/tools/phase52_recovery.py")
 LIVE_DRILL_CONTRACT = Path("modules/rustdesk-fleet/contracts/phase52-live-drill-contract.json")
@@ -305,6 +312,31 @@ def load_json_strict(path: Path) -> Any:
         return json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=reject_duplicates)
     except json.JSONDecodeError as exc:
         raise ValueError(f"invalid JSON at {path.name}:{exc.lineno}") from None
+
+
+def validate_post_live_successor_boundary(repo: Path) -> CheckResult:
+    """Validate only the non-authorizing successor boundary; never dispatch live work."""
+    contract_path = validate_repo_path(repo, repo / PHASE52_POST_LIVE_SUCCESSOR)
+    blocked: list[str] = []
+    try:
+        contract = load_json_strict(contract_path)
+    except (OSError, ValueError):
+        contract = {}
+        blocked.append("post-live-successor-contract-invalid")
+    if contract.get("schema_anchor") != PHASE52_POST_LIVE_SUCCESSOR_V1:
+        blocked.append("post-live-successor-anchor-drift")
+    if contract.get("authority") != {
+        "live_authority": False,
+        "replay_authorized": False,
+        "vault_write_authorized": False,
+    }:
+        blocked.append("post-live-successor-authority-drift")
+    return _check_result(
+        "P52-POST-LIVE-SUCCESSOR-001",
+        "PASS" if not blocked else "BLOCKED",
+        blocked,
+        PHASE52_POST_LIVE_SUCCESSOR.as_posix(),
+    )
 
 
 def validate_repo_path(repo: Path, candidate: Path) -> Path:
