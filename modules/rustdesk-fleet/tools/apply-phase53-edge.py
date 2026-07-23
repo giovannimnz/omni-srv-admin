@@ -11,14 +11,17 @@ from __future__ import annotations
 import argparse
 from collections import Counter
 import copy
+from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import ipaddress
 import json
 import os
 from pathlib import Path
 import re
 import subprocess
+import sys
 from typing import Any
 import uuid
 
@@ -33,6 +36,40 @@ MAX_OCI_RULES = 4096
 
 class EdgeBlocked(RuntimeError):
     """A fail-closed edge contract violation."""
+
+    def __init__(self, blocker: str, receipt: dict[str, Any] | None = None) -> None:
+        super().__init__(blocker)
+        self.receipt = receipt
+
+
+def _probe_module() -> Any:
+    module_name = "_atius_phase53_probe"
+    cached = sys.modules.get(module_name)
+    if cached is not None:
+        return cached
+    path = Path(__file__).with_name("probe-phase53-edge.py")
+    spec = importlib.util.spec_from_file_location(module_name, path)
+    if spec is None or spec.loader is None:
+        raise EdgeBlocked("probe-module-unavailable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[module_name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        sys.modules.pop(module_name, None)
+        raise EdgeBlocked("probe-module-unavailable") from exc
+    return module
+
+
+def strict_json_bytes(raw: bytes, *, max_bytes: int = 1_048_576) -> dict[str, Any]:
+    """Delegate raw-byte parsing to the authoritative probe schema module."""
+
+    try:
+        return _probe_module().strict_json_bytes(raw, max_bytes=max_bytes)
+    except Exception as exc:
+        if exc.__class__.__name__ == "ProbeBlocked":
+            raise EdgeBlocked(str(exc), getattr(exc, "receipt", None)) from exc
+        raise
 
 
 def sha256_file(path: Path) -> str:
@@ -444,31 +481,111 @@ def _parse_utc(value: Any, blocker: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
-def validate_edge_preflight(preflight: dict[str, Any]) -> None:
+def _typed_address_observations(
+    raw: Any,
+    *,
+    now: datetime,
+    blocker: str,
+    stale_blocker: str | None = None,
+    source_policy: dict[str, str] | None = None,
+) -> tuple[dict[str, str], tuple[tuple[str, str, str], ...], datetime]:
+    expected_sources = {
+        "oci-vnic-public-ipv4",
+        "horistic-egress-ipv4",
+        "ssh-horistic-srv.atius.com.br-a",
+    }
+    if not isinstance(raw, list) or len(raw) != 3:
+        raise EdgeBlocked(blocker)
+    current = now.astimezone(timezone.utc) if now.tzinfo else None
+    if current is None:
+        raise EdgeBlocked(blocker)
+    consensus: dict[str, str] = {}
+    identities: list[tuple[str, str, str]] = []
+    observed_times: list[datetime] = []
+    for raw_observation in raw:
+        observation = _require_exact_keys(
+            raw_observation,
+            {"source", "ipv4", "observed_at", "topology_id", "record_types"},
+            blocker,
+        )
+        source = observation["source"]
+        try:
+            address = ipaddress.ip_address(observation["ipv4"])
+        except ValueError as exc:
+            raise EdgeBlocked(blocker) from exc
+        observed_at = _parse_utc(observation["observed_at"], blocker)
+        if (
+            source not in expected_sources
+            or source in consensus
+            or not isinstance(address, ipaddress.IPv4Address)
+            or not isinstance(observation["topology_id"], str)
+            or not re.fullmatch(
+                r"[A-Za-z0-9_.:/-]{3,160}", observation["topology_id"]
+            )
+            or (
+                source_policy is not None
+                and observation["topology_id"] != source_policy.get(source)
+            )
+            or observation["record_types"] != ["A"]
+        ):
+            raise EdgeBlocked(blocker)
+        if (
+            observed_at > current
+            or (current - observed_at).total_seconds() > 120
+        ):
+            raise EdgeBlocked(stale_blocker or blocker)
+        consensus[source] = str(address)
+        identities.append(
+            (source, observation["topology_id"], ",".join(observation["record_types"]))
+        )
+        observed_times.append(observed_at)
+    if (
+        set(consensus) != expected_sources
+        or len(set(consensus.values())) != 1
+        or (max(observed_times) - min(observed_times)).total_seconds() > 30
+    ):
+        raise EdgeBlocked(blocker)
+    return consensus, tuple(sorted(identities)), max(observed_times)
+
+
+def validate_edge_preflight(preflight: dict[str, Any], *, now: datetime) -> None:
     if preflight.get("phase52_pass_count") != 11 or preflight.get("phase52_check_count") != 11:
         raise EdgeBlocked("phase52-current-pass-required")
     if preflight.get("selected_primary") != "horistic-srv":
         raise EdgeBlocked("selected-primary-invalid")
-    consensus = preflight.get("address_consensus")
-    if not isinstance(consensus, dict) or set(consensus) != {
-        "oci-vnic-public-ipv4",
-        "horistic-egress-ipv4",
-        "ssh-horistic-srv.atius.com.br-a",
-    }:
+    consensus, _, newest_observed = _typed_address_observations(
+        preflight.get("address_observations"),
+        now=now,
+        blocker="address-consensus-invalid",
+        stale_blocker="address-consensus-stale",
+    )
+    if preflight.get("address_consensus") != consensus:
+        claimed = preflight.get("address_consensus")
+        if isinstance(claimed, dict):
+            try:
+                claimed_addresses = [
+                    ipaddress.ip_address(value) for value in claimed.values()
+                ]
+            except ValueError:
+                claimed_addresses = []
+            if claimed_addresses and any(
+                not isinstance(value, ipaddress.IPv4Address)
+                for value in claimed_addresses
+            ):
+                raise EdgeBlocked("address-consensus-ipv4-invalid")
         raise EdgeBlocked("address-consensus-invalid")
-    if len(set(consensus.values())) != 1 or not next(iter(consensus.values()), None):
-        raise EdgeBlocked("address-consensus-invalid")
-    for value in consensus.values():
-        try:
-            parsed_address = ipaddress.ip_address(value)
-        except ValueError as exc:
-            raise EdgeBlocked("address-consensus-ipv4-invalid") from exc
-        if not isinstance(parsed_address, ipaddress.IPv4Address):
-            raise EdgeBlocked("address-consensus-ipv4-invalid")
     observed_at = _parse_utc(preflight.get("address_observed_at"), "address-consensus-stale")
     authorized_at = _parse_utc(preflight.get("authorization_time"), "address-consensus-stale")
     age = (authorized_at - observed_at).total_seconds()
-    if age < 0 or age > 120:
+    current = now.astimezone(timezone.utc) if now.tzinfo else None
+    if (
+        current is None
+        or age < 0
+        or age > 120
+        or observed_at != newest_observed
+        or authorized_at > current
+        or (current - authorized_at).total_seconds() > 120
+    ):
         raise EdgeBlocked("address-consensus-stale")
     source_head = preflight.get("source_head")
     current_source_head = preflight.get("current_source_head")
@@ -499,10 +616,85 @@ def validate_edge_preflight(preflight: dict[str, Any]) -> None:
     ):
         if preflight.get(key) is not True:
             raise EdgeBlocked(blocker)
+    if preflight.get("native_record_set") != []:
+        raise EdgeBlocked("closed-dns-required")
 
 
-def _validate_preflight(preflight: dict[str, Any]) -> None:
-    validate_edge_preflight(preflight)
+def _validate_preflight(preflight: dict[str, Any], *, now: datetime) -> None:
+    validate_edge_preflight(preflight, now=now)
+
+
+def _require_exact_keys(
+    value: Any, expected: set[str], blocker: str
+) -> dict[str, Any]:
+    if not isinstance(value, dict) or set(value) != expected:
+        raise EdgeBlocked(blocker)
+    return value
+
+
+def validate_external_probe_bytes(
+    raw: bytes,
+    *,
+    policy_raw: bytes,
+    expected_target: str,
+    expected_digest: str,
+    now: datetime,
+) -> Any:
+    try:
+        return _probe_module().validate_external_probe_bytes(
+            raw,
+            policy_raw=policy_raw,
+            expected_target=expected_target,
+            expected_digest=expected_digest,
+            now=now,
+        )
+    except Exception as exc:
+        if exc.__class__.__name__ == "ProbeBlocked":
+            raise EdgeBlocked(str(exc), getattr(exc, "receipt", None)) from exc
+        raise
+
+
+def validate_hostname_probe_bytes(
+    raw: bytes,
+    *,
+    policy_raw: bytes,
+    expected_hostname: str,
+    expected_ipv4: str,
+    now: datetime,
+) -> Any:
+    try:
+        return _probe_module().validate_hostname_probe_bytes(
+            raw,
+            policy_raw=policy_raw,
+            expected_hostname=expected_hostname,
+            expected_ipv4=expected_ipv4,
+            now=now,
+        )
+    except Exception as exc:
+        if exc.__class__.__name__ == "ProbeBlocked":
+            raise EdgeBlocked(str(exc), getattr(exc, "receipt", None)) from exc
+        raise
+
+
+def run_windows_private_first(run_route: Any) -> dict[str, Any]:
+    try:
+        return _probe_module().run_windows_private_first(run_route)
+    except Exception as exc:
+        if exc.__class__.__name__ == "ProbeBlocked":
+            raise EdgeBlocked(str(exc), getattr(exc, "receipt", None)) from exc
+        raise
+
+
+RouteResult = _probe_module().RouteResult
+
+
+@dataclass(frozen=True)
+class AddressBarrier:
+    address: str
+    observed_at: datetime
+    source_head: str
+    contract_digest: str
+    attachment_digest: str
 
 
 class EdgeTransaction:
@@ -514,17 +706,38 @@ class EdgeTransaction:
         contract: dict[str, Any],
         backend: Any,
         nft_template: str,
+        clock: Any,
+        runtime_digest: str,
+        address_source_policy: dict[str, str],
         fault_after: str | None = None,
     ) -> None:
         self.contract = copy.deepcopy(contract)
         self.backend = backend
         self.nft_template = nft_template
+        self.clock = clock
+        if not re.fullmatch(r"sha256:[0-9a-f]{64}", runtime_digest):
+            raise EdgeBlocked("runtime-digest-invalid")
+        self.runtime_digest = runtime_digest
+        if set(address_source_policy) != {
+            "oci-vnic-public-ipv4",
+            "horistic-egress-ipv4",
+            "ssh-horistic-srv.atius.com.br-a",
+        }:
+            raise EdgeBlocked("address-source-policy-invalid")
+        self.address_source_policy = copy.deepcopy(address_source_policy)
         self.fault_after = fault_after
         self.state = "NEW"
         self._prestate: dict[str, Any] | None = None
         self._poststate: dict[str, Any] | None = None
         self._mutated = False
         self._rollback_receipt: dict[str, Any] | None = None
+        self._barrier_a: dict[str, Any] | None = None
+        self._dns_prestate: dict[str, Any] | None = None
+        self._dns_poststate: dict[str, Any] | None = None
+        self._dns_rollback_receipt: dict[str, Any] | None = None
+        self._verified_probe: Any | None = None
+        self._verified_hostname_probe: Any | None = None
+        self._barrier_b_verified: AddressBarrier | None = None
 
     def _fault(self, boundary: str) -> None:
         if self.fault_after == boundary:
@@ -627,7 +840,26 @@ class EdgeTransaction:
     ) -> dict[str, Any]:
         try:
             self.snapshot_edge()
-            _validate_preflight(preflight)
+            now = self.clock()
+            if not isinstance(now, datetime):
+                raise EdgeBlocked("trusted-clock-invalid")
+            _validate_preflight(preflight, now=now)
+            consensus, identities, newest = _typed_address_observations(
+                preflight["address_observations"],
+                now=now,
+                blocker="address-consensus-invalid",
+                source_policy=self.address_source_policy,
+            )
+            self._barrier_a = {
+                "address_consensus": consensus,
+                "source_observations": identities,
+                "observed_at": newest.isoformat(),
+                "source_head": preflight["source_head"],
+                "contract_digests": copy.deepcopy(
+                    preflight["contract_digests"]
+                ),
+                "attachment_digest": _semantic_digest(oci_candidate),
+            }
             self._fault("authorize")
             self.state = "AUTHORIZED"
             host = self.apply_host_policy(nft_candidate, public_interface)
@@ -715,6 +947,318 @@ class EdgeTransaction:
         }
         return copy.deepcopy(self._rollback_receipt)
 
+    def accept_ip_probes(
+        self, raw: bytes, *, policy_raw: bytes
+    ) -> dict[str, Any]:
+        if self.state != "EDGE_POLICY_APPLIED" or self._barrier_a is None:
+            raise EdgeBlocked("edge-policy-required-before-ip-probes")
+        target = next(iter(self._barrier_a["address_consensus"].values()))
+        receipt = validate_external_probe_bytes(
+            raw,
+            policy_raw=policy_raw,
+            expected_target=target,
+            expected_digest=self.runtime_digest,
+            now=self.clock(),
+        )
+        self._verified_probe = receipt
+        self.state = "IP_PROBES_VERIFIED"
+        return receipt.value_free()
+
+    def revalidate_barrier_b(self, raw: bytes) -> AddressBarrier:
+        if self.state != "IP_PROBES_VERIFIED" or self._verified_probe is None:
+            raise EdgeBlocked("ip-probes-required-before-barrier-b")
+        if self._barrier_a is None:
+            raise EdgeBlocked("barrier-a-required")
+        barrier = strict_json_bytes(raw, max_bytes=65_536)
+        _require_exact_keys(
+            barrier,
+            {
+                "schema_version",
+                "barrier",
+                "address_consensus",
+                "address_observations",
+                "address_observed_at",
+                "authorization_time",
+                "source_head",
+                "contract_digests",
+                "attachment_digest",
+                "native_record_set",
+            },
+            "barrier-b-schema-invalid",
+        )
+        if barrier["schema_version"] != 1 or barrier["barrier"] != "B":
+            raise EdgeBlocked("barrier-b-schema-invalid")
+        now = self.clock()
+        consensus, identities, newest = _typed_address_observations(
+            barrier["address_observations"],
+            now=now,
+            blocker="barrier-b-address-drift",
+            stale_blocker="barrier-b-stale",
+            source_policy=self.address_source_policy,
+        )
+        try:
+            current_edge = self.backend.observe()
+        except Exception as exc:
+            raise EdgeBlocked("barrier-b-edge-observe-failed") from exc
+        if (
+            self._poststate is None
+            or not isinstance(current_edge, dict)
+            or current_edge.get("revision") != self._poststate.get("revision")
+            or _semantic_digest(current_edge.get("state", {}).get("oci"))
+            != self._barrier_a["attachment_digest"]
+        ):
+            raise EdgeBlocked("barrier-b-attachment-drift")
+        if (
+            barrier["address_consensus"] != consensus
+            or consensus != self._barrier_a["address_consensus"]
+            or identities != self._barrier_a["source_observations"]
+        ):
+            raise EdgeBlocked("barrier-b-address-drift")
+        observed = _parse_utc(
+            barrier["address_observed_at"], "barrier-b-stale"
+        )
+        authorized = _parse_utc(
+            barrier["authorization_time"], "barrier-b-stale"
+        )
+        current = now.astimezone(timezone.utc) if now.tzinfo else None
+        proof_completed = _parse_utc(
+            self._verified_probe.completed_at, "ip-proof-time-invalid"
+        )
+        if (
+            current is None
+            or observed != newest
+            or observed > authorized
+            or (authorized - observed).total_seconds() > 120
+            or authorized > current
+            or (current - authorized).total_seconds() > 120
+        ):
+            raise EdgeBlocked("barrier-b-stale")
+        if observed < proof_completed:
+            raise EdgeBlocked("barrier-b-before-ip-proof")
+        if barrier["source_head"] != self._barrier_a["source_head"]:
+            raise EdgeBlocked("barrier-b-source-drift")
+        if barrier["contract_digests"] != self._barrier_a["contract_digests"]:
+            raise EdgeBlocked("barrier-b-contract-drift")
+        if barrier["attachment_digest"] != self._barrier_a["attachment_digest"]:
+            raise EdgeBlocked("barrier-b-attachment-drift")
+        if barrier["native_record_set"] != []:
+            raise EdgeBlocked("barrier-b-dns-not-closed")
+        address = next(iter(consensus.values()))
+        frozen = AddressBarrier(
+            address=address,
+            observed_at=observed,
+            source_head=barrier["source_head"],
+            contract_digest=_semantic_digest(barrier["contract_digests"]),
+            attachment_digest=barrier["attachment_digest"],
+        )
+        self._barrier_b_verified = frozen
+        self.state = "BARRIER_B_VERIFIED"
+        return frozen
+
+    def publish_dns_last(
+        self,
+    ) -> dict[str, Any]:
+        """Publish the sole DNS-only A after the independently derived IP proof."""
+
+        if (
+            self.state != "BARRIER_B_VERIFIED"
+            or self._barrier_b_verified is None
+            or self._verified_probe is None
+        ):
+            raise EdgeBlocked("barrier-b-required-before-dns")
+        address = self._barrier_b_verified.address
+        try:
+            snapshot = self.backend.snapshot_dns()
+        except Exception as exc:
+            raise EdgeBlocked("dns-snapshot-failed") from exc
+        if (
+            not isinstance(snapshot, dict)
+            or set(snapshot) != {"revision", "records"}
+            or not isinstance(snapshot["revision"], str)
+            or not isinstance(snapshot["records"], list)
+            or snapshot["records"] != []
+        ):
+            raise EdgeBlocked("dns-snapshot-invalid")
+        self._dns_prestate = copy.deepcopy(snapshot)
+        try:
+            current_revision = self.backend.current_dns_revision()
+        except Exception as exc:
+            raise EdgeBlocked("dns-cas-read-failed") from exc
+        if str(current_revision) != snapshot["revision"]:
+            raise EdgeBlocked("dns-cas-stale")
+        try:
+            current_state = self.backend.observe_dns()
+        except Exception as exc:
+            raise EdgeBlocked("dns-cas-read-failed") from exc
+        if current_state != snapshot:
+            raise EdgeBlocked("dns-cas-semantic-drift")
+        record = {
+            "name": "rustdesk.atius.com.br",
+            "type": "A",
+            "content": address,
+            "proxied": False,
+        }
+        try:
+            self.backend.apply_dns(
+                [record], expected_revision=snapshot["revision"]
+            )
+        except Exception as exc:
+            try:
+                current = self.backend.observe_dns()
+            except Exception:
+                self._try_containment()
+                self._dns_rollback_receipt = {
+                    "state": "DNS_ROLLBACK_BLOCKED",
+                    "blocker": "dns-partial-write-observe-failed",
+                    "manual_recovery_required": True,
+                }
+                raise EdgeBlocked("backend-dns-apply-failed") from exc
+            if current.get("records") != snapshot["records"]:
+                self._dns_poststate = copy.deepcopy(current)
+                self.rollback_dns()
+            raise EdgeBlocked("backend-dns-apply-failed") from exc
+        try:
+            observed = self.backend.observe_dns()
+        except Exception as exc:
+            self._try_containment()
+            self._dns_rollback_receipt = {
+                "state": "DNS_ROLLBACK_BLOCKED",
+                "blocker": "dns-readback-failed",
+                "manual_recovery_required": True,
+            }
+            raise EdgeBlocked("dns-readback-failed") from exc
+        if (
+            not isinstance(observed, dict)
+            or set(observed) != {"revision", "records"}
+            or observed["records"] != [record]
+            or str(observed["revision"]) == snapshot["revision"]
+        ):
+            if isinstance(observed, dict) and set(observed) == {
+                "revision",
+                "records",
+            }:
+                self._dns_poststate = copy.deepcopy(observed)
+                self.rollback_dns()
+            else:
+                self._try_containment()
+            raise EdgeBlocked("dns-semantic-readback-drift")
+        self._dns_poststate = copy.deepcopy(observed)
+        self.state = "DNS_PUBLISHED"
+        return {
+            "state": self.state,
+            "record": record,
+            "origin_count": 2,
+            "secret_material_present": False,
+        }
+
+    def accept_hostname_probes(
+        self, raw: bytes, *, policy_raw: bytes
+    ) -> dict[str, Any]:
+        if self.state != "DNS_PUBLISHED" or self._barrier_b_verified is None:
+            raise EdgeBlocked("dns-required-before-hostname-probes")
+        try:
+            receipt = validate_hostname_probe_bytes(
+                raw,
+                policy_raw=policy_raw,
+                expected_hostname="rustdesk.atius.com.br",
+                expected_ipv4=self._barrier_b_verified.address,
+                now=self.clock(),
+            )
+        except EdgeBlocked:
+            self.rollback_all()
+            raise
+        self._verified_hostname_probe = receipt
+        self.state = "HOSTNAME_PROBES_VERIFIED"
+        return receipt.value_free()
+
+    def rollback_all(self) -> dict[str, Any]:
+        dns = self.rollback_dns()
+        if dns.get("state") != "DNS_ROLLED_BACK":
+            return {
+                "state": dns.get("state"),
+                "dns": dns,
+                "edge": None,
+            }
+        edge = self.rollback_edge()
+        return {
+            "state": edge.get("state"),
+            "dns": dns,
+            "edge": edge,
+        }
+
+    def rollback_dns(self) -> dict[str, Any]:
+        if self._dns_rollback_receipt is not None:
+            return copy.deepcopy(self._dns_rollback_receipt)
+        if self._dns_prestate is None:
+            return {"state": "DNS_NOT_MUTATED"}
+        try:
+            current = self.backend.observe_dns()
+        except Exception:
+            self._try_containment()
+            self._dns_rollback_receipt = {
+                "state": "DNS_ROLLBACK_BLOCKED",
+                "blocker": "dns-rollback-observe-failed",
+                "manual_recovery_required": True,
+            }
+            return copy.deepcopy(self._dns_rollback_receipt)
+        if (
+            self._dns_poststate is None
+            or current.get("revision")
+            != self._dns_poststate.get("revision")
+            or current.get("records") != self._dns_poststate.get("records")
+        ):
+            self._try_containment()
+            self._dns_rollback_receipt = {
+                "state": "CONTAINED_REQUIRES_MANUAL_RECOVERY",
+                "manual_recovery_required": True,
+            }
+            return copy.deepcopy(self._dns_rollback_receipt)
+        if not self._try_containment():
+            self._dns_rollback_receipt = {
+                "state": "DNS_ROLLBACK_BLOCKED",
+                "blocker": "dns-rollback-containment-failed",
+                "manual_recovery_required": True,
+            }
+            return copy.deepcopy(self._dns_rollback_receipt)
+        try:
+            self.backend.restore_dns_if_current(
+                self._dns_prestate,
+                expected_revision=str(current["revision"]),
+            )
+        except Exception:
+            self._try_containment()
+            self._dns_rollback_receipt = {
+                "state": "DNS_ROLLBACK_BLOCKED",
+                "blocker": "dns-rollback-cas-or-restore-failed",
+                "manual_recovery_required": True,
+            }
+            return copy.deepcopy(self._dns_rollback_receipt)
+        try:
+            restored = self.backend.observe_dns()
+        except Exception:
+            self._try_containment()
+            self._dns_rollback_receipt = {
+                "state": "DNS_ROLLBACK_BLOCKED",
+                "blocker": "dns-rollback-readback-failed",
+                "manual_recovery_required": True,
+            }
+            return copy.deepcopy(self._dns_rollback_receipt)
+        if restored.get("records") != self._dns_prestate["records"]:
+            self._try_containment()
+            self._dns_rollback_receipt = {
+                "state": "DNS_ROLLBACK_BLOCKED",
+                "blocker": "dns-rollback-semantic-drift",
+                "manual_recovery_required": True,
+            }
+            return copy.deepcopy(self._dns_rollback_receipt)
+        self.state = "DNS_ROLLED_BACK"
+        self._dns_rollback_receipt = {
+            "state": self.state,
+            "semantic_digest": _semantic_digest(restored["records"]),
+            "manual_recovery_required": False,
+        }
+        return copy.deepcopy(self._dns_rollback_receipt)
+
 
 def snapshot_edge(transaction: EdgeTransaction) -> dict[str, Any]:
     return transaction.snapshot_edge()
@@ -728,6 +1272,18 @@ def apply_host_policy(
 
 def rollback_edge(transaction: EdgeTransaction) -> dict[str, Any]:
     return transaction.rollback_edge()
+
+
+def publish_dns_last(transaction: EdgeTransaction) -> dict[str, Any]:
+    return transaction.publish_dns_last()
+
+
+def rollback_dns(transaction: EdgeTransaction) -> dict[str, Any]:
+    return transaction.rollback_dns()
+
+
+def rollback_all(transaction: EdgeTransaction) -> dict[str, Any]:
+    return transaction.rollback_all()
 
 
 def _right_values(value: Any) -> tuple[int, ...]:
