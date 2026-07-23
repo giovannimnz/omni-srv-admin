@@ -1,6 +1,6 @@
 # Milestone Branch Matrix
 
-**Last updated:** 2026-07-12
+**Last updated:** 2026-07-19
 
 This file is the shared milestone index for `main`, planning branches, and
 cross-session resumes. It should answer three questions quickly:
@@ -13,11 +13,12 @@ cross-session resumes. It should answer three questions quickly:
 
 | Milestone | Phase span | Theme | Canonical artifacts | Status |
 |---|---|---|---|---|
-| v1.8 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/phases/{46,47,48,49,50}-*/` | Current: Phases 46-47 complete; Phase 48 executing |
+| v1.9 | 51-58 | RustDesk Fleet Remote Access | `.planning/workstreams/rustdesk-fleet/` | Current parallel workstream: requirements/roadmap initialization |
+| v1.8 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/{46,47,48,49,50}-*/` | Current parallel workstream: Phases 46-47 complete; Phase 48 executing |
 | v1.7 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
 | v1.6 carry-over | 47 | Internal Service PKI listener/trust closeout | `.planning/phases/47-internal-service-pki-closeout/` | Shipped 2026-07-12 |
-| Codex/Wayland lane | 48-49 | OAuth/ACP convergence then Headroom | `.planning/phases/{48,49}-*/` | Phase 48 executing; Phase 49 blocked until full Phase 48 validation |
-| v1.4 carry-over | 50 | Atius-wide SSO publication closeout | `.planning/phases/50-atius-wide-sso-closeout/` | Queued after Phase 49; continues delivered 42-01/42-02 |
+| Codex/Wayland lane | 48-49 | OAuth/ACP convergence then Headroom | `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/{48,49}-*/` | Phase 48 executing; Phase 49 blocked until full Phase 48 validation |
+| v1.4 carry-over | 50 | Atius-wide SSO publication closeout | `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/50-atius-wide-sso-closeout/` | Queued after Phase 49; continues delivered 42-01/42-02 |
 
 ## Shipped Milestones
 
@@ -88,8 +89,8 @@ cross-session resumes. It should answer three questions quickly:
 
 ## Separation Rules
 
-- `main` carries the operator-facing roadmap, requirements, state, and current
-  milestone index.
+- `main` carries the shared project/milestone index; roadmap, requirements,
+  state and phases are namespaced under `.planning/workstreams/<name>/`.
 - Phase directories remain the canonical source for plan, summary, validation,
   and verification artifacts.
 - A milestone is only "shipped" here when its roadmap status, requirements
@@ -103,3 +104,4 @@ cross-session resumes. It should answer three questions quickly:
 1. Continue Phase 48: close Router evidence plus native/local/remote ACP validation without Headroom.
 2. Execute Phase 49 only after every Phase 48 stop condition is green: isolated Headroom canary, ACP/Wayland promotion and rollback rehearsal.
 3. Execute Phase 50 after Phase 49: close the remaining SSO publication/logout/RBAC gate using completed 42-01/42-02 evidence.
+4. Execute RustDesk Phases 51-58 only through `rustdesk-fleet`; runtime changes on srv-1/srv-3 remain serialized against Phase 48 gates.

@@ -38,6 +38,27 @@ reabrir fases historicas.
 - Phase 49 - Headroom isolated canary and Wayland integration
 - Phase 50 - SSO publication/logout/RBAC closeout (continues 42-03)
 
+## Parallel Workstream: v1.9 RustDesk Fleet Remote Access
+
+**Goal:** entregar acesso remoto self-hosted, reversível e exaustivamente
+validado nos cinco computadores autorizados, com `atius-srv-2` como primary
+`hbbs`/`hbbr` quando o capacity gate passar e `atius-srv-3` como standby apenas
+depois de restore/failover real.
+
+**Target features:**
+
+- RustDesk Server OSS `1.1.15` e clients `1.4.9` pinados por digest/checksum;
+- clients em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e
+  `GIOVANNI-W11-PC`, sem instalar no WSL nem no `GIOVANNI-S23`;
+- direct-first em produção, forced-relay como gate controlado, secrets apenas no
+  Vault e fallbacks RustGuac/XRDP/AnyDesk/NoMachine preservados;
+- 20 pares dirigidos normais, cinco forced-relay por target, negativos,
+  reboot/pre-login/UAC, soak, upgrade, rollback e DR antes do aceite final.
+
+**Canonical planning:**
+`.planning/workstreams/rustdesk-fleet/{REQUIREMENTS,ROADMAP,STATE}.md` e
+`.planning/research/rustdesk-fleet/`.
+
 **Recently shipped out of sequence:**
 
 - v1.3 / Phase 41 - embeddings locais com `embedding-gte-v1`
@@ -54,6 +75,15 @@ reabrir fases historicas.
 - [x] **PLN-01..PLN-05**: ordem historica/ativa e validacao por fase reconciliadas na Phase 46.
 - [ ] **WAC-01..WAC-08**: OAuth Codex, catalogo e local/remote ACP convergem sem Headroom na Phase 48.
 - [ ] **HDR-01..HDR-08**: Headroom passa canario isolado, ACP, Wayland e rollback na Phase 49.
+
+### v1.9 - RustDesk Fleet Remote Access
+
+- [ ] **SCP-01..SCP-05**: escopo, OSS/Pro gate, direct-first, supply chain e isolamento GSD ficam explícitos.
+- [ ] **SRV-01..SRV-07**: primary, edge, key, capacity, persistência, backup e portas mínimas são comprovados.
+- [ ] **CLI-01..CLI-09**: os cinco clients são instalados, configurados, persistentes e compatíveis com os fallbacks atuais.
+- [ ] **VAL-01..VAL-07**: a matriz 20+5, negativos, GUI, reboot e soak produzem evidência íntegra.
+- [ ] **DR-01..DR-04**: standby, failover/failback, upgrade/downgrade e rollback real passam.
+- [ ] **OPS-01..OPS-04**: monitoring, docs, inventory, Obsidian, GBrain, Graphify e UAT convergem com o runtime.
 
 ### v1.4 - Atius-wide SSO / Login
 
@@ -139,6 +169,8 @@ reabrir fases historicas.
 | Codex runtime baseline stays lean | Reduce noisy MCP bootstrap and optional dependency failure | Shipped in Phase 43 |
 | Internal DNS is DRG-first | DRG is faster and hardware-free; WireGuard is fallback only | Shipped in Phase 45 |
 | Phase planning lives in `.planning` | Avoid stale execution order in docs/runbooks | Reconciled in Phase 46 |
+| RustDesk v1.9 starts OSS and direct-first | Five-host single-operator scope does not require Pro control plane; relay remains testable fallback | Pending validation; Pro becomes mandatory if SSO/RBAC/human audit is required |
+| RustDesk uses isolated GSD workstream | Preserve Phase 48 and prevent cross-lane planning mutations | Workstreams migrated with external snapshot on 2026-07-19 |
 
 ## Evolution
 
@@ -150,4 +182,4 @@ Update this file whenever:
 4. a cross-session reconciliation changes what the repo claims is complete.
 
 ---
-*Last updated: 2026-07-12 during Phase 46 planning-surface reconciliation*
+*Last updated: 2026-07-19 during RustDesk v1.9 milestone initialization*
