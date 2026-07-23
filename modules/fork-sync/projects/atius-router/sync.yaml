@@ -46,6 +46,7 @@ protected_paths:
   - relay/compatible_handler.go
   - relay/chat_completions_via_responses.go
   - relay/channel/codex/
+  - relay/channel/advancedcustom/
   - relay/channel/minimax/
   - relay/channel/deepseek/
   - relay/helper/valid_request.go

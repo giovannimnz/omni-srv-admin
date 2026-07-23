@@ -1,0 +1,263 @@
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: local-ai-inference-ceiling
+  namespace: ebeddings-local
+  labels:
+    managed-by: omni-srv-admin
+spec:
+  hard:
+    pods: "5"
+    requests.cpu: 2500m
+    limits.cpu: 2500m
+    requests.memory: 14Gi
+    limits.memory: 24Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: tei-gte-reranker-cache
+  namespace: ebeddings-local
+  labels:
+    app.kubernetes.io/name: tei-gte-reranker
+    app.kubernetes.io/component: reranker-backend
+    app.kubernetes.io/part-of: local-ai-embeddings
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tei-gte-reranker
+  namespace: ebeddings-local
+  labels:
+    app.kubernetes.io/name: tei-gte-reranker
+    app.kubernetes.io/component: reranker-backend
+    app.kubernetes.io/part-of: local-ai-embeddings
+    atius.com/resource-class: inference-runtime
+  annotations:
+    embeddings.atius.com.br/public-alias: reranker-gte-multilingual-v1
+    embeddings.atius.com.br/model-id: Alibaba-NLP/gte-multilingual-reranker-base
+    embeddings.atius.com.br/served-model-name: reranker-gte-multilingual-v1
+    embeddings.atius.com.br/revision: 8215cf04918ba6f7b6a62bb44238ce2953d8831c
+    embeddings.atius.com.br/dtype: float16
+    embeddings.atius.com.br/cpu-request: 500m
+    embeddings.atius.com.br/cpu-limit: 500m
+    embeddings.atius.com.br/memory-request: 2Gi
+    embeddings.atius.com.br/memory-limit: 3Gi
+    embeddings.atius.com.br/tokenization-workers: "1"
+    embeddings.atius.com.br/max-client-batch-size: "20"
+    embeddings.atius.com.br/max-batch-tokens: "2048"
+    embeddings.atius.com.br/autoscaling: hpa-2-4
+    embeddings.atius.com.br/cpu-total-min-replicas: 1000m
+    embeddings.atius.com.br/cpu-total-max-replicas: 2000m
+    embeddings.atius.com.br/memory-total-min-requests: 4Gi
+    embeddings.atius.com.br/memory-total-max-requests: 8Gi
+spec:
+  replicas: 2
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tei-gte-reranker
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tei-gte-reranker
+        app.kubernetes.io/component: reranker-backend
+        app.kubernetes.io/part-of: local-ai-embeddings
+        atius.com/resource-class: inference-runtime
+        atius.com/cpu-unit: pod-500m
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: horistic-srv
+      tolerations:
+        - key: atius.com/manual-only
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      dnsPolicy: None
+      dnsConfig:
+        nameservers:
+          - 1.1.1.1
+          - 8.8.8.8
+        searches:
+          - ebeddings-local.svc.cluster.local
+          - svc.cluster.local
+          - cluster.local
+        options:
+          - name: ndots
+            value: "1"
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: text-embeddings-inference
+          image: ghcr.io/huggingface/text-embeddings-inference@sha256:16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model-id
+            - Alibaba-NLP/gte-multilingual-reranker-base
+            - --revision
+            - 8215cf04918ba6f7b6a62bb44238ce2953d8831c
+            - --tokenization-workers
+            - "1"
+            - --served-model-name
+            - reranker-gte-multilingual-v1
+            - --hostname
+            - 0.0.0.0
+            - --port
+            - "3000"
+            - --prometheus-port
+            - "9000"
+            - --dtype
+            - float16
+            - --huggingface-hub-cache
+            - /data
+            - --max-concurrent-requests
+            - "20"
+            - --max-batch-tokens
+            - "2048"
+            - --max-batch-requests
+            - "20"
+            - --max-client-batch-size
+            - "20"
+            - --auto-truncate
+            - "true"
+            - --payload-limit
+            - "2000000"
+          env:
+            - name: MODEL_ID
+              value: Alibaba-NLP/gte-multilingual-reranker-base
+            - name: SERVED_MODEL_NAME
+              value: reranker-gte-multilingual-v1
+            - name: HUGGINGFACE_HUB_CACHE
+              value: /data
+            - name: OMP_NUM_THREADS
+              value: "1"
+            - name: RAYON_NUM_THREADS
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 3000
+            - name: metrics
+              containerPort: 9000
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: 500m
+              memory: 3Gi
+          volumeMounts:
+            - name: model-cache
+              mountPath: /data
+          startupProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 90
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 3
+            periodSeconds: 10
+            timeoutSeconds: 5
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: http
+            failureThreshold: 6
+            periodSeconds: 20
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: tei-gte-reranker-cache
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tei-gte-reranker
+  namespace: ebeddings-local
+  labels:
+    app.kubernetes.io/name: tei-gte-reranker
+    app.kubernetes.io/component: reranker-backend
+    app.kubernetes.io/part-of: local-ai-embeddings
+  annotations:
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:31216
+spec:
+  type: NodePort
+  externalTrafficPolicy: Local
+  selector:
+    app.kubernetes.io/name: tei-gte-reranker
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      nodePort: 31216
+---
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: tei-gte-reranker
+  namespace: ebeddings-local
+  labels:
+    app.kubernetes.io/name: tei-gte-reranker
+    app.kubernetes.io/component: reranker-backend
+    app.kubernetes.io/part-of: local-ai-embeddings
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: tei-gte-reranker
+  minReplicas: 2
+  maxReplicas: 4
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      selectPolicy: Max
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 30
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      selectPolicy: Min
+      policies:
+        - type: Pods
+          value: 1
+          periodSeconds: 120
+  metrics:
+    - type: Resource
+      resource:
+        name: cpu
+        target:
+          type: Utilization
+          averageUtilization: 70
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tei-gte-reranker
+  namespace: ebeddings-local
+  labels:
+    app.kubernetes.io/name: tei-gte-reranker
+    app.kubernetes.io/component: reranker-backend
+    app.kubernetes.io/part-of: local-ai-embeddings
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tei-gte-reranker

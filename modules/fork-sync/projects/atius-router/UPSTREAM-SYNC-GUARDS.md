@@ -23,6 +23,7 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - Do not reintroduce active split channels named `MiniMax - OpenAI-Compatible`, `MiniMax - Anthropic-Compatible`, `MiniMax - Embeddings`, `DeepSeek - OpenAI-Compatible`, `DeepSeek - Anthropic-Compatible`, `OpenAI - Embeddings`, or `Codex - Embeddings`.
 - Do not add or reactivate a Python/container sidecar as the canonical owner for `/v1/`, detailed models, or Codex embeddings.
 - Local TEI embeddings must remain governed inside the Go router through `service/embeddinggovernor/` and `relay/embedding_handler.go`; do not move this path back to Python/model-detailed or a separate sidecar/container. Default governed model is `embedding-gte-v1`.
+- Local TEI reranking uses public alias `reranker-gte-multilingual-v1`. Preserve the Advanced Custom converter `jina_rerank_to_tei_native`, the `/v1/rerank` to `/rerank` protocol conversion, and acquisition of the same Go-native governor from `relay/rerank_handler.go`. TEI-native `texts`/`score` must remain hidden behind the public `documents`/`results[].relevance_score` contract.
 - Runtime directories must stay excluded from image build context through `.dockerignore`: `/backups`, `/data`, `/logs`, `/runtime`.
 - Router Docs buttons and config must stay same-origin and localized:
   English uses `/en/docs`; Portuguese uses `/pt/docs`. Do not restore
@@ -53,6 +54,7 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `constant/channel.go`
 - `dto/embedding.go`
 - `relay/channel/codex/`
+- `relay/channel/advancedcustom/`
 - `relay/codex_auth_error.go`
 - `relay/responses_handler.go`
 - `relay/compatible_handler.go`

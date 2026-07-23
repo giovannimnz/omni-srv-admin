@@ -14,6 +14,12 @@ The stable public embedding alias is:
 embedding-gte-v1
 ```
 
+The stable public reranker alias is:
+
+```text
+reranker-gte-multilingual-v1
+```
+
 The backend for this phase is TEI running inside k3s:
 
 ```text
@@ -24,6 +30,40 @@ The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served
 
 TEI stays internal. Do not create an Ingress, Apache vhost, Cloudflare record, public NodePort, or any other direct public route to TEI. Our `router-ai-atius` / New API owns authentication, logging, quotas, token accounting, model aliases, and routing.
 
+## GTE Multilingual Reranker
+
+The reranker uses the official `Alibaba-NLP/gte-multilingual-reranker-base`
+weights at revision `8215cf04918ba6f7b6a62bb44238ce2953d8831c`, served as FP16 by
+TEI 1.9.3/Candle on ARM64 CPU. The private backend is
+`http://10.21.1.21:31216/rerank`; clients use the governed public route
+`POST https://router.atius.com.br/v1/rerank` with model
+`reranker-gte-multilingual-v1`.
+
+The Go router converts the public Jina/OpenAI-style contract
+`query`/`documents`/`top_n` into TEI's native `query`/`texts` contract and maps
+`score` back to `results[].relevance_score`. A request is capped at 20
+documents. Embeddings and reranking share the same `embeddinggovernor`; the
+reranker supplies workload, document-count and character-count admission data.
+
+| Setting | Minimum | Maximum |
+|---|---:|---:|
+| Reranker pods | 2 | 4 |
+| CPU per pod | 500m | 500m |
+| Total CPU | 1000m | 2000m |
+| Memory request | 4Gi | 8Gi |
+| Memory limit | 6Gi | 12Gi |
+
+The HPA target is 70% CPU. Scale-up is limited to one pod every 30 seconds and
+scale-down to one pod every 120 seconds, with a 300-second stabilization window.
+The namespace ResourceQuota covers one embedding pod plus four reranker pods:
+5 pods, 2500m CPU, 14Gi memory requests and 24Gi memory limits.
+
+Observed on 2026-07-22 after load: about 805Mi idle RSS per reranker pod. A
+20-document long-text test peaked near 836Mi RSS and completed in about 64.3s
+under the strict 500m limit. Short-text latency was about 0.38s for one
+document, 3.63s for eight and 9.29s for twenty on one pod. These are operational
+measurements, not model guarantees.
+
 ## Router Governor
 
 The embedding governor lives inside the Go router process, not in a Python sidecar or extra container. The protected implementation paths in `router-ai-atius` are:
@@ -31,7 +71,11 @@ The embedding governor lives inside the Go router process, not in a Python sidec
 - `service/embeddinggovernor/`
 - `relay/embedding_handler.go`
 
-The only public governed embedding model is `embedding-gte-v1`. The old `embedding-pt-v1` and `*-batch` aliases are not active. The normal path starts at concurrency `1`, can scale up to `4` only when interactive queue pressure is healthy, and reduces to `1` on TEI errors, slow calls or cooldown. Batch calls use `X-Embedding-Workload: batch` or request-size classification on the same `embedding-gte-v1` model, and are capped separately at `1` so they do not consume all interactive capacity.
+The governed local models are `embedding-gte-v1` and
+`reranker-gte-multilingual-v1`. The old `embedding-pt-v1` and `*-batch` aliases
+are not active. Embeddings use `X-Embedding-Workload`; reranking uses
+`X-Rerank-Workload`. Both paths share the same governor so local inference
+cannot bypass admission control.
 
 Observed GBrain/Obsidian tuning data behind this default:
 
@@ -91,6 +135,7 @@ Versioned manifest:
 
 ```bash
 kubectl apply -f k8s/ebeddings-local/tei-gte.yaml
+kubectl apply -f k8s/ebeddings-local/tei-gte-reranker.yaml
 ```
 
 Read-only checks after apply:
@@ -109,13 +154,17 @@ The Phase 41 manifest uses the official ARM64 CPU TEI image:
 ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest
 ```
 
-The k3s Service remains ClusterIP-only for internal bookkeeping, but the router-facing upstream uses the private worker IP and TEI port:
+The embedding Service remains ClusterIP-only for internal bookkeeping, but the router-facing upstream uses the private worker IP and TEI port:
 
 ```text
 http://10.21.1.21:3115
 ```
 
-The TEI pod runs on `horistic-srv` in namespace `ebeddings-local` with `hostNetwork: true` and binds to `0.0.0.0` so Kubernetes probes work on the node InternalIP while the router-facing internal URL stays `http://10.21.1.21:3115`. `router-ai-atius` runs in Podman on SRV-1 and does not reliably reach k3s PodIP/ClusterIP routes. `10.100.100.4` remains reserve fallback only.
+The embedding TEI pod runs on `horistic-srv` in namespace `ebeddings-local`
+with `hostNetwork: true`. The reranker uses a private NodePort because
+`router-ai-atius` runs on SRV-1 and must reach the worker through the OCI/DRG
+private address rather than the worker PodIP. `10.100.100.4` remains reserve
+fallback only.
 
 `horistic-srv` is tainted as manual-only. This TEI workload has the only explicit `atius.com/manual-only=true:NoSchedule` toleration in its manifest; generic agents must not schedule there.
 
@@ -260,3 +309,4 @@ Historical notes may contain old router/GBrain token material. Treat those notes
 - [Hugging Face TEI CLI arguments](https://huggingface.co/docs/text-embeddings-inference/en/cli_arguments): `--model-id`, `--revision`, `--served-model-name`, `--port`, `--huggingface-hub-cache`.
 - [Hugging Face TEI supported hardware](https://huggingface.co/docs/text-embeddings-inference/en/supported_models): ARM64 CPU is supported; the live registry validation used `ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest`.
 - [`Alibaba-NLP/gte-multilingual-base` model card](https://huggingface.co/Alibaba-NLP/gte-multilingual-base): TEI usage, CLS pooling, normalization, and 768-dimensional embeddings.
+- [`Alibaba-NLP/gte-multilingual-reranker-base` model card](https://huggingface.co/Alibaba-NLP/gte-multilingual-reranker-base): official multilingual reranker, 8192-token model context and TEI usage.

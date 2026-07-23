@@ -1,0 +1,299 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: transformersjs-qwen-q8-server
+  namespace: embeddings-bench
+  labels:
+    app.kubernetes.io/name: transformersjs-qwen-q8
+    app.kubernetes.io/component: embeddings-canary
+data:
+  server.mjs: |
+    import http from "node:http";
+
+    import {
+      env,
+      pipeline,
+    } from "/cache/transformersjs-runtime/node_modules/@huggingface/transformers/dist/transformers.node.mjs";
+
+    const host = process.env.SERVER_HOST ?? "10.21.1.21";
+    const port = Number(process.env.SERVER_PORT ?? "3221");
+    const modelDir = process.env.MODEL_DIR ?? "qwen-onnx-q8";
+    const modelName = process.env.MODEL_NAME ?? "qwen3-embedding-0.6b-transformersjs-q8";
+    const maxBatch = Number(process.env.MAX_BATCH ?? "4");
+
+    env.allowLocalModels = true;
+    env.allowRemoteModels = false;
+    env.localModelPath = "/cache";
+
+    const extractor = await pipeline("feature-extraction", modelDir, {
+      dtype: "q8",
+    });
+    let queue = Promise.resolve();
+
+    function sendJson(response, status, payload) {
+      const body = JSON.stringify(payload);
+      response.writeHead(status, {
+        "content-type": "application/json",
+        "content-length": Buffer.byteLength(body),
+      });
+      response.end(body);
+    }
+
+    async function readJson(request) {
+      const chunks = [];
+      for await (const chunk of request) chunks.push(chunk);
+      return JSON.parse(Buffer.concat(chunks).toString("utf8"));
+    }
+
+    async function embed(values) {
+      const output = await extractor(values, {
+        pooling: "last_token",
+        normalize: true,
+      });
+      return output.tolist();
+    }
+
+    const server = http.createServer(async (request, response) => {
+      if (request.method === "GET" && request.url === "/health") {
+        sendJson(response, 200, { status: "ok" });
+        return;
+      }
+      if (request.method === "GET" && request.url === "/v1/models") {
+        sendJson(response, 200, {
+          object: "list",
+          data: [{ id: modelName, object: "model", owned_by: "atius" }],
+        });
+        return;
+      }
+      if (request.method !== "POST" || request.url !== "/v1/embeddings") {
+        sendJson(response, 404, { error: "not found" });
+        return;
+      }
+      try {
+        const payload = await readJson(request);
+        let values = payload.input;
+        if (typeof values === "string") values = [values];
+        if (
+          !Array.isArray(values) ||
+          values.length === 0 ||
+          values.length > maxBatch ||
+          values.some((item) => typeof item !== "string")
+        ) {
+          throw new Error(`input batch must contain 1..${maxBatch} strings`);
+        }
+        const pending = queue.then(() => embed(values));
+        queue = pending.catch(() => undefined);
+        const vectors = await pending;
+        sendJson(response, 200, {
+          object: "list",
+          model: modelName,
+          data: vectors.map((embedding, index) => ({
+            object: "embedding",
+            index,
+            embedding,
+          })),
+          usage: { prompt_tokens: 0, total_tokens: 0 },
+        });
+      } catch (error) {
+        sendJson(response, 400, {
+          error: { message: error instanceof Error ? error.message : String(error) },
+        });
+      }
+    });
+
+    server.listen(port, host, () => {
+      console.log(JSON.stringify({ event: "model_loaded", host, port, modelDir }));
+    });
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: transformersjs-qwen-q8
+  namespace: embeddings-bench
+  labels:
+    app.kubernetes.io/name: transformersjs-qwen-q8
+    app.kubernetes.io/component: embeddings-canary
+    app.kubernetes.io/part-of: local-ai-embeddings
+  annotations:
+    embeddings.atius.com.br/model-id: onnx-community/Qwen3-Embedding-0.6B-ONNX
+    embeddings.atius.com.br/revision: c25a394dd583836952667c12f008335071b3f43d
+    embeddings.atius.com.br/served-model-name: qwen3-embedding-0.6b-transformersjs-q8
+    embeddings.atius.com.br/dimensions: "1024"
+    embeddings.atius.com.br/quantization: q8-uint8
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: transformersjs-qwen-q8
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: transformersjs-qwen-q8
+        app.kubernetes.io/component: embeddings-canary
+        app.kubernetes.io/part-of: local-ai-embeddings
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: horistic-srv
+      tolerations:
+        - key: atius.com/manual-only
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      hostNetwork: true
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [1.1.1.1, 8.8.8.8]
+        options:
+          - name: ndots
+            value: "1"
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: fetch-model
+          image: curlimages/curl:8.16.0@sha256:463eaf6072688fe96ac64fa623fe73e1dbe25d8ad6c34404a669ad3ce1f104b6
+          imagePullPolicy: IfNotPresent
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              MODEL_DIR=/cache/qwen-onnx-q8
+              REVISION=c25a394dd583836952667c12f008335071b3f43d
+              BASE_URL="https://huggingface.co/onnx-community/Qwen3-Embedding-0.6B-ONNX/resolve/${REVISION}"
+              MODEL_SHA256=87cd124e0ef1fd1f223ebc283efccbaeac386d0b08344701c46975d0657b591f
+              mkdir -p "${MODEL_DIR}/onnx"
+              MODEL_PATH="${MODEL_DIR}/onnx/model_quantized.onnx"
+              if ! ([ -f "${MODEL_PATH}" ] && echo "${MODEL_SHA256}  ${MODEL_PATH}" | sha256sum -c -); then
+                curl --fail --location --retry 4 --output "${MODEL_PATH}.partial" "${BASE_URL}/onnx/model_quantized.onnx?download=true"
+                echo "${MODEL_SHA256}  ${MODEL_PATH}.partial" | sha256sum -c -
+                mv "${MODEL_PATH}.partial" "${MODEL_PATH}"
+              fi
+              for FILE_PATH in added_tokens.json config.json merges.txt special_tokens_map.json tokenizer.json tokenizer_config.json vocab.json; do
+                if [ ! -s "${MODEL_DIR}/${FILE_PATH}" ]; then
+                  curl --fail --location --retry 4 --output "${MODEL_DIR}/${FILE_PATH}.partial" "${BASE_URL}/${FILE_PATH}?download=true"
+                  mv "${MODEL_DIR}/${FILE_PATH}.partial" "${MODEL_DIR}/${FILE_PATH}"
+                fi
+              done
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+        - name: install-runtime
+          image: docker.io/library/node:22-bookworm-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3
+          imagePullPolicy: IfNotPresent
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              RUNTIME_DIR=/cache/transformersjs-runtime
+              MARKER="${RUNTIME_DIR}/.atius-transformersjs-4.2.0"
+              if [ -f "${MARKER}" ]; then
+                exit 0
+              fi
+              mkdir -p "${RUNTIME_DIR}"
+              npm install --prefix "${RUNTIME_DIR}" --omit=dev --no-audit --no-fund \
+                @huggingface/transformers@4.2.0
+              touch "${MARKER}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 1Gi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+      containers:
+        - name: transformersjs
+          image: docker.io/library/node:22-bookworm-slim@sha256:6c74791e557ce11fc957704f6d4fe134a7bc8d6f5ca4403205b2966bd488f6b3
+          imagePullPolicy: IfNotPresent
+          command: [node, /opt/atius/server.mjs]
+          env:
+            - name: SERVER_HOST
+              value: 10.21.1.21
+            - name: SERVER_PORT
+              value: "3221"
+            - name: MODEL_DIR
+              value: qwen-onnx-q8
+            - name: MODEL_NAME
+              value: qwen3-embedding-0.6b-transformersjs-q8
+            - name: MAX_BATCH
+              value: "4"
+            - name: OMP_NUM_THREADS
+              value: "1"
+            - name: ORT_NUM_THREADS
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 3221
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 500m
+              memory: 4Gi
+          startupProbe:
+            httpGet:
+              host: 10.21.1.21
+              path: /health
+              port: http
+            failureThreshold: 180
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              host: 10.21.1.21
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+            - name: server-code
+              mountPath: /opt/atius
+              readOnly: true
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: embeddings-bench-cache
+        - name: server-code
+          configMap:
+            name: transformersjs-qwen-q8-server
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: transformersjs-qwen-q8
+  namespace: embeddings-bench
+  annotations:
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:3221
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: transformersjs-qwen-q8
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

@@ -1,0 +1,174 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tei-qwen-onnx-int8
+  namespace: embeddings-bench
+  labels:
+    app.kubernetes.io/name: tei-qwen-onnx-int8
+    app.kubernetes.io/component: embeddings-canary
+    app.kubernetes.io/part-of: local-ai-embeddings
+  annotations:
+    embeddings.atius.com.br/model-id: onnx-community/Qwen3-Embedding-0.6B-ONNX
+    embeddings.atius.com.br/revision: c25a394dd583836952667c12f008335071b3f43d
+    embeddings.atius.com.br/served-model-name: qwen3-embedding-0.6b-tei-onnx-int8
+    embeddings.atius.com.br/dimensions: "1024"
+    embeddings.atius.com.br/quantization: int8-dynamic
+    embeddings.atius.com.br/max-batch-tokens: "1024"
+    embeddings.atius.com.br/provenance: community-export-from-official-qwen
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tei-qwen-onnx-int8
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: tei-qwen-onnx-int8
+        app.kubernetes.io/component: embeddings-canary
+        app.kubernetes.io/part-of: local-ai-embeddings
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: horistic-srv
+      tolerations:
+        - key: atius.com/manual-only
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      hostNetwork: true
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [1.1.1.1, 8.8.8.8]
+        options:
+          - name: ndots
+            value: "1"
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: fetch-model
+          image: curlimages/curl:8.16.0@sha256:463eaf6072688fe96ac64fa623fe73e1dbe25d8ad6c34404a669ad3ce1f104b6
+          imagePullPolicy: IfNotPresent
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              MODEL_DIR=/cache/qwen-onnx-int8
+              REVISION=c25a394dd583836952667c12f008335071b3f43d
+              BASE_URL="https://huggingface.co/onnx-community/Qwen3-Embedding-0.6B-ONNX/resolve/${REVISION}"
+              MODEL_SHA256=6d0ea863f78b4a84afa3c7fcba1ec341572b5e28121aef77b7092b1dfdf679c7
+              mkdir -p "${MODEL_DIR}/onnx"
+              MODEL_PATH="${MODEL_DIR}/onnx/model.onnx"
+              if ! ([ -f "${MODEL_PATH}" ] && echo "${MODEL_SHA256}  ${MODEL_PATH}" | sha256sum -c -); then
+                curl --fail --location --retry 4 --output "${MODEL_PATH}.partial" "${BASE_URL}/onnx/model_int8.onnx?download=true"
+                echo "${MODEL_SHA256}  ${MODEL_PATH}.partial" | sha256sum -c -
+                mv "${MODEL_PATH}.partial" "${MODEL_PATH}"
+              fi
+              for FILE_PATH in added_tokens.json config.json merges.txt special_tokens_map.json tokenizer.json tokenizer_config.json vocab.json; do
+                if [ ! -s "${MODEL_DIR}/${FILE_PATH}" ]; then
+                  curl --fail --location --retry 4 --output "${MODEL_DIR}/${FILE_PATH}.partial" "${BASE_URL}/${FILE_PATH}?download=true"
+                  mv "${MODEL_DIR}/${FILE_PATH}.partial" "${MODEL_DIR}/${FILE_PATH}"
+                fi
+              done
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+      containers:
+        - name: tei
+          image: ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest@sha256:16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model-id
+            - /cache/qwen-onnx-int8
+            - --served-model-name
+            - qwen3-embedding-0.6b-tei-onnx-int8
+            - --pooling
+            - last-token
+            - --tokenization-workers
+            - "1"
+            - --max-concurrent-requests
+            - "4"
+            - --max-batch-tokens
+            - "1024"
+            - --max-client-batch-size
+            - "4"
+            - --hostname
+            - 10.21.1.21
+            - --port
+            - "3219"
+            - --prometheus-port
+            - "9219"
+          env:
+            - name: OMP_NUM_THREADS
+              value: "1"
+            - name: RAYON_NUM_THREADS
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 3219
+            - name: metrics
+              containerPort: 9219
+          resources:
+            requests:
+              cpu: 500m
+              memory: 2Gi
+            limits:
+              cpu: 500m
+              memory: 8Gi
+          startupProbe:
+            httpGet:
+              host: 10.21.1.21
+              path: /health
+              port: http
+            failureThreshold: 120
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              host: 10.21.1.21
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: embeddings-bench-cache
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tei-qwen-onnx-int8
+  namespace: embeddings-bench
+  annotations:
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:3219
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: tei-qwen-onnx-int8
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+    - name: metrics
+      port: 9219
+      targetPort: metrics

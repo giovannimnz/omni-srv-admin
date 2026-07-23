@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - base.yaml
+  - tei-qwen-fp16.yaml
+  - tei-qwen-fp32.yaml
+  - llama-qwen-q8.yaml
+  - llama-qwen-q8-kv-q8.yaml
+  - ollama-qwen-q8.yaml
+  - tei-qwen-onnx-int8.yaml
+  - ort-qwen-q8.yaml
+  - transformersjs-qwen-q8.yaml

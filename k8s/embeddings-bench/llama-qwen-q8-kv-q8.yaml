@@ -1,0 +1,167 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: llama-qwen-q8-kv-q8
+  namespace: embeddings-bench
+  labels:
+    app.kubernetes.io/name: llama-qwen-q8-kv-q8
+    app.kubernetes.io/component: embeddings-canary
+    app.kubernetes.io/part-of: local-ai-embeddings
+  annotations:
+    embeddings.atius.com.br/model-id: Qwen/Qwen3-Embedding-0.6B-GGUF
+    embeddings.atius.com.br/revision: 370f27d7550e0def9b39c1f16d3fbaa13aa67728
+    embeddings.atius.com.br/served-model-name: qwen3-embedding-0.6b-gguf-q8-kv-q8
+    embeddings.atius.com.br/dimensions: "1024"
+    embeddings.atius.com.br/quantization: Q8_0
+    embeddings.atius.com.br/kv-cache: q8_0
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: llama-qwen-q8-kv-q8
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: llama-qwen-q8-kv-q8
+        app.kubernetes.io/component: embeddings-canary
+        app.kubernetes.io/part-of: local-ai-embeddings
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: horistic-srv
+      tolerations:
+        - key: atius.com/manual-only
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      hostNetwork: true
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [1.1.1.1, 8.8.8.8]
+        options:
+          - name: ndots
+            value: "1"
+      terminationGracePeriodSeconds: 30
+      initContainers:
+        - name: fetch-model
+          image: curlimages/curl:8.16.0@sha256:463eaf6072688fe96ac64fa623fe73e1dbe25d8ad6c34404a669ad3ce1f104b6
+          imagePullPolicy: IfNotPresent
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              MODEL_DIR=/cache/gguf
+              MODEL_PATH="${MODEL_DIR}/Qwen3-Embedding-0.6B-Q8_0.gguf"
+              MODEL_SHA256=06507c7b42688469c4e7298b0a1e16deff06caf291cf0a5b278c308249c3e439
+              mkdir -p "${MODEL_DIR}"
+              if [ -f "${MODEL_PATH}" ] && echo "${MODEL_SHA256}  ${MODEL_PATH}" | sha256sum -c -; then
+                exit 0
+              fi
+              curl --fail --location --retry 4 --output "${MODEL_PATH}.partial" \
+                "https://huggingface.co/Qwen/Qwen3-Embedding-0.6B-GGUF/resolve/370f27d7550e0def9b39c1f16d3fbaa13aa67728/Qwen3-Embedding-0.6B-Q8_0.gguf?download=true"
+              echo "${MODEL_SHA256}  ${MODEL_PATH}.partial" | sha256sum -c -
+              mv "${MODEL_PATH}.partial" "${MODEL_PATH}"
+          resources:
+            requests:
+              cpu: 100m
+              memory: 64Mi
+            limits:
+              cpu: 500m
+              memory: 256Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+      containers:
+        - name: llama-server
+          image: ghcr.io/ggml-org/llama.cpp:server@sha256:e10504c7f5c5bacece7e7e5957760eee53868642d853fe5ecfe8611065929a24
+          imagePullPolicy: IfNotPresent
+          args:
+            - --model
+            - /cache/gguf/Qwen3-Embedding-0.6B-Q8_0.gguf
+            - --host
+            - 10.21.1.21
+            - --port
+            - "3217"
+            - --embedding
+            - --pooling
+            - last
+            - --ctx-size
+            - "8192"
+            - --batch-size
+            - "128"
+            - --ubatch-size
+            - "128"
+            - --threads
+            - "1"
+            - --threads-batch
+            - "1"
+            - --parallel
+            - "1"
+            - --cache-type-k
+            - q8_0
+            - --cache-type-v
+            - q8_0
+            - --metrics
+            - --no-ui
+          env:
+            - name: OMP_NUM_THREADS
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 3217
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 500m
+              memory: 4Gi
+          startupProbe:
+            httpGet:
+              host: 10.21.1.21
+              path: /health
+              port: http
+            failureThreshold: 90
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              host: 10.21.1.21
+              path: /health
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: embeddings-bench-cache
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: llama-qwen-q8-kv-q8
+  namespace: embeddings-bench
+  annotations:
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:3217
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: llama-qwen-q8-kv-q8
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

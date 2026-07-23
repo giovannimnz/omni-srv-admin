@@ -189,7 +189,7 @@ metadata:
     app.kubernetes.io/component: embeddings-backend
     app.kubernetes.io/part-of: local-ai-embeddings
   annotations:
-    embeddings.atius.com.br/internal-base-url: http://10.100.100.4:3115
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:3115
 spec:
   type: ClusterIP
   selector:

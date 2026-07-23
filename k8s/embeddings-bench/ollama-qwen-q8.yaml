@@ -1,0 +1,158 @@
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ollama-qwen-q8-model
+  namespace: embeddings-bench
+  labels:
+    app.kubernetes.io/name: ollama-qwen-q8
+    app.kubernetes.io/component: embeddings-canary
+data:
+  Modelfile: |
+    FROM qwen3-embedding:0.6b-q8_0
+    PARAMETER num_ctx 1024
+    PARAMETER num_thread 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ollama-qwen-q8
+  namespace: embeddings-bench
+  labels:
+    app.kubernetes.io/name: ollama-qwen-q8
+    app.kubernetes.io/component: embeddings-canary
+    app.kubernetes.io/part-of: local-ai-embeddings
+  annotations:
+    embeddings.atius.com.br/model-id: qwen3-embedding:0.6b-q8_0
+    embeddings.atius.com.br/model-digest: ac6da0dfba84a81fdbfbaf330198c33cd77c4cdfc53e8bc50eb581914a15621d
+    embeddings.atius.com.br/served-model-name: qwen3-embedding-atius:0.6b-q8_0
+    embeddings.atius.com.br/dimensions: "1024"
+    embeddings.atius.com.br/quantization: Q8_0
+    embeddings.atius.com.br/kv-cache: q8_0
+    embeddings.atius.com.br/context-limit: "1024"
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  replicas: 0
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: ollama-qwen-q8
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: ollama-qwen-q8
+        app.kubernetes.io/component: embeddings-canary
+        app.kubernetes.io/part-of: local-ai-embeddings
+    spec:
+      nodeSelector:
+        kubernetes.io/hostname: horistic-srv
+      tolerations:
+        - key: atius.com/manual-only
+          operator: Equal
+          value: "true"
+          effect: NoSchedule
+      hostNetwork: true
+      dnsPolicy: None
+      dnsConfig:
+        nameservers: [1.1.1.1, 8.8.8.8]
+        options:
+          - name: ndots
+            value: "1"
+      terminationGracePeriodSeconds: 30
+      containers:
+        - name: ollama
+          image: docker.io/ollama/ollama:latest@sha256:6345fbc18bd73a1e16404be681dbc6fd291a027cab43ed541abe78c4c81051b0
+          imagePullPolicy: IfNotPresent
+          command: [/bin/sh, -ec]
+          args:
+            - |
+              OLLAMA_HOST=10.21.1.21:3218 /bin/ollama serve &
+              SERVER_PID=$!
+              READY=0
+              for ATTEMPT in $(seq 1 120); do
+                if OLLAMA_HOST=10.21.1.21:3218 /bin/ollama list >/dev/null 2>&1; then
+                  READY=1
+                  break
+                fi
+                sleep 1
+              done
+              if [ "${READY}" -ne 1 ]; then
+                kill "${SERVER_PID}" || true
+                exit 1
+              fi
+              OLLAMA_HOST=10.21.1.21:3218 /bin/ollama pull qwen3-embedding:0.6b-q8_0
+              OLLAMA_HOST=10.21.1.21:3218 /bin/ollama create \
+                qwen3-embedding-atius:0.6b-q8_0 -f /opt/atius/Modelfile
+              touch /tmp/model-ready
+              wait "${SERVER_PID}"
+          env:
+            - name: OLLAMA_MODELS
+              value: /cache/ollama
+            - name: OLLAMA_NUM_PARALLEL
+              value: "1"
+            - name: OLLAMA_MAX_LOADED_MODELS
+              value: "1"
+            - name: OLLAMA_KEEP_ALIVE
+              value: "-1"
+            - name: OLLAMA_KV_CACHE_TYPE
+              value: q8_0
+            - name: OLLAMA_CONTEXT_LENGTH
+              value: "1024"
+            - name: OLLAMA_NO_CLOUD
+              value: "1"
+          ports:
+            - name: http
+              containerPort: 3218
+          resources:
+            requests:
+              cpu: 500m
+              memory: 1Gi
+            limits:
+              cpu: 500m
+              memory: 4Gi
+          startupProbe:
+            exec:
+              command: [/bin/sh, -ec, "test -f /tmp/model-ready"]
+            failureThreshold: 120
+            periodSeconds: 10
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command: [/bin/sh, -ec, "test -f /tmp/model-ready"]
+            periodSeconds: 10
+            timeoutSeconds: 5
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: model-cache
+              mountPath: /cache
+            - name: model-config
+              mountPath: /opt/atius
+              readOnly: true
+      volumes:
+        - name: model-cache
+          persistentVolumeClaim:
+            claimName: embeddings-bench-cache
+        - name: model-config
+          configMap:
+            name: ollama-qwen-q8-model
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ollama-qwen-q8
+  namespace: embeddings-bench
+  annotations:
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:3218
+    embeddings.atius.com.br/benchmark-only: "true"
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: ollama-qwen-q8
+  ports:
+    - name: http
+      port: 80
+      targetPort: http

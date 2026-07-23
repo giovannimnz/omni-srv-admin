@@ -1,0 +1,11 @@
+{
+  "name": "atius-qwen-reranker-onnx",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@huggingface/transformers": "4.2.0"
+  }
+}
