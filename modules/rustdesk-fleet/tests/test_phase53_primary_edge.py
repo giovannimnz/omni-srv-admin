@@ -31,6 +31,9 @@ SERVER_LOGROTATE_SERVICE = (
 SERVER_LOGROTATE_TIMER = (
     REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.timer"
 )
+OPS_API_PATH = REPO / "modules/rustdesk-fleet/tools/rustdesk-ops-api.py"
+OPS_API_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-ops-api.service"
+OPS_API_VHOST = REPO / "modules/rustdesk-fleet/apache/rustdesk-ops.atius.com.br.conf"
 
 
 class DuplicateKeyError(ValueError):
@@ -65,6 +68,16 @@ def _load_unit(path: Path) -> configparser.ConfigParser:
 def _server_installer_module() -> Any:
     assert SERVER_INSTALLER.is_file(), SERVER_INSTALLER
     spec = importlib.util.spec_from_file_location("phase53_server_installer", SERVER_INSTALLER)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _ops_api_module() -> Any:
+    assert OPS_API_PATH.is_file(), OPS_API_PATH
+    spec = importlib.util.spec_from_file_location("phase53_ops_api", OPS_API_PATH)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -699,7 +712,6 @@ def test_log_bound_rotation_is_actual_bounded_and_retained(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     ("artifact", "owner_plan"),
     [
-        ("tools/rustdesk-ops-api.py", "53-03"),
         ("tools/apply-phase53-edge.py", "53-04"),
         ("evidence/phase53/deploy-transaction.json", "53-05"),
         ("tools/validate_phase53.py", "53-06"),
@@ -882,6 +894,243 @@ def test_auth_missing_and_malformed_receive_uniform_denial(headers: dict[str, st
         "headers": {"Cache-Control": "no-store"},
     }
     assert "fixture-secret" not in json.dumps(response, sort_keys=True)
+
+
+def _healthy_ops_observations() -> dict[str, Any]:
+    runtime = _load_strict(RUNTIME_CONTRACT)
+    edge = _load_strict(EDGE_CONTRACT)
+    digest = runtime["upstream"]["linux_arm64_digest"]
+    return {
+        "service_active": True,
+        "image_digest": digest,
+        "listeners": {
+            "hbbs": {
+                "tcp": [21115, 21116, 21118],
+                "udp": [21116],
+                "digest": digest,
+            },
+            "hbbr": {"tcp": [21117, 21119], "udp": [], "digest": digest},
+        },
+        "public_fingerprint": "sha256:" + "a" * 64,
+        "expected_public_fingerprint": "sha256:" + "a" * 64,
+        "edge": {
+            "ipv4_tcp": edge["public_ipv4_allowed"]["tcp"],
+            "ipv4_udp": edge["public_ipv4_allowed"]["udp"],
+            "ipv6": [],
+            "forbidden_not_open": edge["public_forbidden"]["tcp"],
+        },
+        "cgroups": {
+            "parent_cpu_percent": 80,
+            "parent_memory_bytes": 1073741824,
+            "ops_cpu_percent": 10,
+            "ops_memory_bytes": 201326592,
+        },
+        "disk_free_bytes": runtime["logs"]["reserve_bytes"],
+        "log_growth_bytes": runtime["logs"]["daily_bytes"],
+        "restart_count": 3,
+        "restart_limit": 3,
+        "cpu_percent": 7,
+        "memory_bytes": 104857600,
+        "disk_bytes": 536870912,
+        "direct_bytes": 1024,
+        "relay_bytes": 2048,
+        "failures": 1,
+    }
+
+
+def test_ops_api_endpoints_auth_redaction_and_unknown_route_denial() -> None:
+    module = _ops_api_module()
+    observations = _healthy_ops_observations()
+    token = "fixture-runtime-token"
+    authorized = {"Authorization": f"Bearer {token}"}
+
+    responses = {
+        path: module.handle_request(
+            "GET", path, authorized, observations=observations, expected_token=token
+        )
+        for path in (
+            "/v1/health",
+            "/v1/readiness",
+            "/v1/status",
+            "/v1/metrics/summary",
+        )
+    }
+    assert all(response["status"] == 200 for response in responses.values())
+    assert responses["/v1/health"]["body"] == {
+        "schema_version": 1,
+        "service": "atius-rustdesk-ops",
+        "healthy": True,
+    }
+    assert responses["/v1/readiness"]["body"]["ready"] is True
+    assert responses["/v1/status"]["body"] == {
+        "schema_version": 1,
+        "service": "atius-rustdesk-ops",
+        "primary_host": "horistic-srv",
+        "service_active": True,
+        "image_digest": observations["image_digest"],
+        "public_fingerprint": observations["public_fingerprint"],
+    }
+
+    denials = [
+        module.handle_request(
+            method,
+            path,
+            headers,
+            observations=observations,
+            expected_token=token,
+        )
+        for method, path, headers in (
+            ("GET", "/v1/health", {}),
+            ("GET", "/v1/health", {"Authorization": "Bearer wrong"}),
+            ("POST", "/v1/health", authorized),
+            ("GET", "/v1/private", authorized),
+        )
+    ]
+    assert denials[0] == denials[1] == {
+        "status": 401,
+        "headers": {"Cache-Control": "no-store", "Content-Type": "application/json"},
+        "body": {"error": "unauthorized"},
+    }
+    assert denials[2] == denials[3] == {
+        "status": 404,
+        "headers": {"Cache-Control": "no-store", "Content-Type": "application/json"},
+        "body": {"error": "not_found"},
+    }
+    encoded = json.dumps({"responses": responses, "denials": denials}, sort_keys=True)
+    assert token not in encoded
+    assert "Authorization" not in encoded
+
+
+@pytest.mark.parametrize(
+    ("mutation", "failed_check"),
+    [
+        ({"image_digest": "sha256:" + "0" * 64}, "immutable-image-digest"),
+        ({"listeners": {}}, "exact-listener-ownership"),
+        ({"public_fingerprint": "sha256:" + "b" * 64}, "public-fingerprint-continuity"),
+        ({"edge": {"ipv4_tcp": [21114]}}, "effective-edge-policy"),
+        ({"cgroups": {"ops_cpu_percent": 11}}, "resource-ceilings"),
+        ({"log_growth_bytes": 134217729}, "disk-and-log-bounds"),
+        ({"restart_count": 4}, "bounded-restart-counters"),
+    ],
+)
+def test_ops_api_readiness_derives_current_inputs_and_fails_on_drift(
+    mutation: dict[str, Any], failed_check: str
+) -> None:
+    module = _ops_api_module()
+    observations = _healthy_ops_observations()
+    baseline = module.derive_readiness(observations)
+    assert baseline["ready"] is True
+    assert set(baseline["checks"]) == set(
+        _load_strict(OPS_API_CONTRACT)["readiness_inputs"]
+    )
+
+    drifted = copy.deepcopy(observations)
+    drifted.update(mutation)
+    result = module.derive_readiness(drifted)
+    assert result["ready"] is False
+    assert result["checks"][failed_check] is False
+
+
+def test_ops_api_metrics_are_allowlisted_observational_and_secret_free() -> None:
+    module = _ops_api_module()
+    observations = _healthy_ops_observations()
+    observations.update(
+        {
+            "Authorization": "Bearer fixture-secret",
+            "client_id": "forbidden-client-id",
+            "private_key": "forbidden-private-key",
+        }
+    )
+    metrics = module.collect_metric_summary(observations)
+    assert set(metrics) == {
+        "listeners",
+        "restarts",
+        "cpu_percent",
+        "memory_bytes",
+        "disk_bytes",
+        "log_growth_bytes",
+        "direct_bytes",
+        "relay_bytes",
+        "failures",
+        "transport_semantics",
+        "session_transport_asserted",
+    }
+    assert metrics["transport_semantics"] == "observational-only"
+    assert metrics["session_transport_asserted"] is False
+    encoded = json.dumps(metrics, sort_keys=True)
+    assert "fixture-secret" not in encoded
+    assert "client" not in encoded.lower()
+    assert "private" not in encoded.lower()
+
+
+def test_ops_api_service_is_private_hardened_and_inside_parent_budget() -> None:
+    assert OPS_API_SERVICE.is_file(), OPS_API_SERVICE
+    unit = _load_unit(OPS_API_SERVICE)
+    service = unit["Service"]
+    encoded = OPS_API_SERVICE.read_text(encoding="utf-8")
+    assert service["Slice"] == "atius-rustdesk-phase53.slice"
+    assert service["CPUQuota"] == "10%"
+    assert service["MemoryMax"] == "192M"
+    assert service["MemorySwapMax"] == "0"
+    assert service["NoNewPrivileges"] == "true"
+    assert "--listen 127.0.0.1" in service["ExecStart"]
+    assert "--port 32113" in service["ExecStart"]
+    assert "--token-file %d/ops-api-token" in service["ExecStart"]
+    assert "LoadCredential=ops-api-token:%t/atius-rustdesk/ops-api-token" in encoded
+    assert "21114" not in encoded
+    assert "0.0.0.0" not in encoded
+    assert "API Server" not in encoded
+
+
+def test_apache_vhost_is_https_only_private_proxy_with_sanitized_logs() -> None:
+    assert OPS_API_VHOST.is_file(), OPS_API_VHOST
+    encoded = OPS_API_VHOST.read_text(encoding="utf-8")
+    assert "Managed-By: omni-srv-admin/rustdesk-fleet/phase53" in encoded
+    assert "<VirtualHost *:443>" in encoded
+    assert "<VirtualHost *:80>" not in encoded
+    assert "ServerName rustdesk-ops.atius.com.br" in encoded
+    assert "ProxyPass / http://127.0.0.1:32113/" in encoded
+    assert "ProxyPassReverse / http://127.0.0.1:32113/" in encoded
+    assert "%{Authorization}i" not in encoded
+    assert "%q" not in encoded
+    assert "%U" in encoded
+    assert "21114" not in encoded
+    assert "API Server" not in encoded
+
+
+@pytest.mark.parametrize("failure", ["configtest", "reload", "regression"])
+def test_apache_transaction_restores_exact_prestate_on_every_failure(
+    tmp_path: Path, failure: str
+) -> None:
+    module = _ops_api_module()
+    destination = tmp_path / "sites-available/rustdesk-ops.conf"
+    destination.parent.mkdir(parents=True)
+    destination.write_bytes(b"preexisting-vhost\n")
+    destination.chmod(0o640)
+    calls: list[tuple[str, ...]] = []
+
+    def runner(argv: list[str]) -> tuple[int, bytes, bytes]:
+        calls.append(tuple(argv))
+        if failure == "configtest" and tuple(argv) == ("apachectl", "configtest"):
+            return 1, b"", b"syntax error"
+        if failure == "reload" and tuple(argv) == ("systemctl", "reload", "apache2"):
+            return 1, b"", b"reload failed"
+        return 0, b"", b""
+
+    transaction = module.ApacheVhostTransaction(
+        candidate=OPS_API_VHOST,
+        destination=destination,
+        command_runner=runner,
+        existing_vhost_probe=lambda: {"legacy": failure != "regression"},
+    )
+    with pytest.raises(module.OpsApiBlocked):
+        transaction.apply_candidate()
+
+    assert destination.read_bytes() == b"preexisting-vhost\n"
+    assert destination.stat().st_mode & 0o777 == 0o640
+    assert calls[0] == ("apachectl", "configtest")
+    transaction.rollback()
+    assert destination.read_bytes() == b"preexisting-vhost\n"
 
 
 def test_unflagged_cli_refuses_without_runtime_evidence(tmp_path: Path) -> None:
