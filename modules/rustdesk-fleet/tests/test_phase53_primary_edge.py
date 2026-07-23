@@ -1507,7 +1507,21 @@ def test_boot_unit_loads_fixed_policy_before_network_pre_and_verifies_readback()
     assert unit["Unit"]["Before"] == "network-pre.target"
     assert unit["Unit"]["Wants"] == "network-pre.target"
     assert service["Type"] == "oneshot"
-    assert "/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft" in encoded
+    assert not any(
+        line.startswith("ConditionPath") for line in encoded.splitlines()
+    )
+    prechecks = [
+        line.split("=", 1)[1]
+        for line in encoded.splitlines()
+        if line.startswith("ExecStartPre=")
+    ]
+    assert prechecks == [
+        "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.nft",
+        "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.template.nft",
+        "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.json",
+        "/usr/bin/test -x /usr/local/libexec/apply-phase53-edge.py",
+        "/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft",
+    ]
     assert service["ExecStart"] == "/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft"
     assert "--verify-host-policy" in service["ExecStartPost"]
     assert (
