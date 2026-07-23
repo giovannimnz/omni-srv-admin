@@ -647,6 +647,8 @@ def test_rollback_restores_units_linger_and_preserves_client_legacy_paths(
     assert legacy.read_text(encoding="utf-8") == "preserve\n"
     assert runner.linger is False
     assert not transaction.identity_dir.exists()
+    assert not transaction.state_dir.exists()
+    assert not transaction.log_dir.exists()
     transaction.rollback_server()
     assert runner.linger is False
 

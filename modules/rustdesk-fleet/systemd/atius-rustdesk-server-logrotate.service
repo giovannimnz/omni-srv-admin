@@ -1,0 +1,20 @@
+[Unit]
+Description=Bound authoritative RustDesk server logs
+After=atius-rustdesk-server-hbbs.service atius-rustdesk-server-hbbr.service
+
+[Service]
+Type=oneshot
+Slice=atius-rustdesk-phase53.slice
+CPUQuota=10%
+MemoryMax=192M
+MemorySwapMax=0
+TasksMax=64
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.local/state/atius-rustdesk/server/logs
+ExecStart=/usr/bin/python3 %h/.local/lib/atius-rustdesk/install-phase53-server.py --rotate-logs --log-dir %h/.local/state/atius-rustdesk/server/logs
+StandardOutput=null
+StandardError=null
+

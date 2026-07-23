@@ -1,0 +1,11 @@
+[Unit]
+Description=Run bounded RustDesk server log rotation
+
+[Timer]
+OnCalendar=hourly
+RandomizedDelaySec=5m
+Persistent=true
+Unit=atius-rustdesk-server-logrotate.service
+
+[Install]
+WantedBy=timers.target
