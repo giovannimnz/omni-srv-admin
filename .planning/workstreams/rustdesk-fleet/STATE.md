@@ -4,17 +4,17 @@ milestone: v1.9
 milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: primary-relay-and-public-edge
-status: executing
-stopped_at: Completed 53-03-PLAN.md
-last_updated: "2026-07-23T01:19:00Z"
+status: blocked
+stopped_at: Plan 53-05 blocked before live mutation; runner stage mismatch and handlers are unimplemented
+last_updated: "2026-07-23T09:26:37-03:00"
 last_activity: 2026-07-23
-last_activity_desc: Plan 53-03 completed the authenticated operations API and reversible Apache candidate
+last_activity_desc: Plan 53-05 narrow contract checkpoint passed 27 tests; stage mismatch and missing live handlers remain; no infrastructure call
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 16
-  completed_plans: 13
-  percent: 81
+  total_plans: 19
+  completed_plans: 17
+  percent: 89
 ---
 
 # Project State
@@ -24,22 +24,22 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-19)
 
 **Core value:** Todos os cinco computadores autorizados podem acessar e controlar os demais por RustDesk self-hosted, com segurança, rollback e evidência completa, sem degradar os acessos existentes.
-**Current focus:** Phase 53 — primary-relay-and-public-edge
+**Current focus:** Phase 53 — primary-relay-and-public-edge (Plan 05 blocked before live mutation)
 
 ## Current Position
 
-Phase: 53 (primary-relay-and-public-edge) — EXECUTING
-Plan: 4 of 6
-Status: Ready to execute Plan 53-04
-Last activity: 2026-07-23 — Plan 53-03 completed the authenticated operations API and reversible Apache candidate
+Phase: 53 (primary-relay-and-public-edge) — IN PROGRESS
+Plan: 05 of 06
+Status: BLOCKED before live mutation: Plan 05 runner accepts no `edge-probes` stage and has no implemented handlers
+Last activity: 2026-07-23 — narrow Plan 53-05 contract checkpoint passed; explicit live command remains stopped at deterministic CLI/runner gate
 
-Milestone progress: [████████░░] 81% — 13 of 16 plans complete; Phase 53 Plan 53-04 is next
+Milestone progress: [█████████░] 89% — 17 of 19 plans complete; Phase 53-05 is next
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 13
+- Total plans completed: 17
 - Average duration: not recomputed because Plan 52-07 spanned sessions
 - Total execution time: 65min measured for Plans 52-01–06; Plan 52-07 cross-session
 
@@ -48,7 +48,7 @@ Milestone progress: [████████░░] 81% — 13 of 16 plans comp
 | Phase | Plans | Total | Avg/Plan |
 |-------|-------|-------|----------|
 | 51 | 3 | - | - |
-| 52 | 7 | 65min + live gate | cross-session |
+| 52 | 10 | 65min + live gate | cross-session |
 | Phase 53 P01 | 12min | 2 tasks | 5 files |
 | Phase 53 P02 | 11min | 2 tasks | 7 files |
 | Phase 53 P03 | 15min | 1 task | 4 files |
@@ -65,6 +65,9 @@ Milestone progress: [████████░░] 81% — 13 of 16 plans comp
 | Phase 52 P05 | 8min | 2 tasks | 7 files |
 | Phase 52 P06 | 12min | 2 tasks | 6 files |
 | Phase 52 P07 | cross-session | 3 tasks | controlled live gate + closeout |
+| Phase 52 P08 | metadata-only | 2 tasks | successor attestation + independent reviews |
+| Phase 52 P09 | 20min | 2 tasks | read-only Phase 53 reconciliation + JUnit lanes |
+| Phase 52 P10 | metadata-only | 3 tasks | closeout, hygiene and Graphify seal |
 
 ### Decisions
 
@@ -85,10 +88,12 @@ Milestone progress: [████████░░] 81% — 13 of 16 plans comp
 - [Phase 53]: Phase 53 live mutation authorization is bound to the exact flag, current Git HEAD, current contract digests, pre-state, unambiguous ownership and rollback readiness. — Prevents stale source or persisted verdict text from authorizing infrastructure changes.
 - [Phase 53]: The server runtime is rootless and digest-pinned; identity is tmpfs-only, linger is conditional, and Plan 02 cannot open public ingress or install a client.
 - [Phase 53]: The ATIUS operations API is loopback-only, backend-authenticated and observational; its HTTPS Apache candidate remains unapplied until Plan 05.
+- [Phase 52]: Post-live closeout is complete, metadata-only and non-authorizing; retained historical 11/11 evidence, current projection inputs and segregated JUnit lanes are bound without replay.
+- [Phase 53]: Plan 53-04 is hermetic-complete; Plans 53-05 and 53-06 remain independently incomplete, and no Phase 53 live execution is implied by the Phase 52 metadata closeout.
 
 ### Pending Todos
 
-None yet.
+- Implement/review Plan 53-05 live handlers and align its stage contract before any live deployment.
 
 ### Blockers/Concerns
 
@@ -97,6 +102,6 @@ None yet.
 
 ## Session Continuity
 
-Last session: 2026-07-23T01:19:00Z
-Stopped at: Completed 53-03-PLAN.md
+Last session: 2026-07-23T12:12:05Z
+Stopped at: Plan 53-05 blocked before live mutation; runner stage mismatch and handlers are unimplemented
 Resume file: None

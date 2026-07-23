@@ -1,0 +1,141 @@
+{
+  "authority": {
+    "live_authority": false,
+    "replay_authorized": false,
+    "vault_write_authorized": false
+  },
+  "first_parent_interval": [
+    {
+      "commit": "63affd2d14547efdcb21c727170e4dcf0e643944",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "50eff43ad6cf2b4dea020d903735cf202c94ae92",
+      "path_count": 3,
+      "paths": [
+        "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft",
+        "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service",
+        "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+      ]
+    },
+    {
+      "commit": "74ee50fcd9485b13bef1d6f9888b36826044a2df",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "2c22471e93ee2c2cd55d5f9761beb35f854e6eac",
+      "path_count": 4,
+      "paths": [
+        "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft",
+        "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service",
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+        "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+      ]
+    },
+    {
+      "commit": "e5795399c2db3f7388437232ed997a9838565e15",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "1c6ce984ffde734974d06853afb3735c8750e93c",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+      ]
+    },
+    {
+      "commit": "67488cdd58b3643f0425aeb087449d94dd6317dd",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "c732b3dfa1e8c3079a88682c6be85504a4a84388",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+      ]
+    },
+    {
+      "commit": "c351ba839b6ffc0002ffab1ef1f62e2443395c6f",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "f4339499803b10b54751273c9184a19dc31be3f2",
+      "path_count": 2,
+      "paths": [
+        "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service",
+        "modules/rustdesk-fleet/tools/apply-phase53-edge.py"
+      ]
+    },
+    {
+      "commit": "8ea691f10f2c3ab26082ebfaf9c6675745b2a0d6",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "e257554a84b0d4e1d6daed1177479a93d9200638",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service"
+      ]
+    },
+    {
+      "commit": "9194ba9ded4cffb06fee9bfaf1014eae6dd54e25",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "aa0c7b53419ade0edc8ddee8f2eea4ba9bcff9b7",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "afceeec4ddb7489dcca2c1d5de9b03529d086592",
+      "path_count": 1,
+      "paths": [
+        "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py"
+      ]
+    },
+    {
+      "commit": "bf3f5062c9abcbacfd4256074d8c7eb59085240b",
+      "path_count": 3,
+      "paths": [
+        "modules/rustdesk-fleet/tools/apply-phase53-edge.py",
+        "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1",
+        "modules/rustdesk-fleet/tools/probe-phase53-edge.py"
+      ]
+    }
+  ],
+  "first_parent_interval_count": 16,
+  "implementation_start": "63affd2d14547efdcb21c727170e4dcf0e643944",
+  "interval_head": "bf3f5062c9abcbacfd4256074d8c7eb59085240b",
+  "later_phase53_path_commits": [],
+  "mutation_performed": false,
+  "new_phase53_execution_count": 0,
+  "phase53_execution_frozen": true,
+  "read_only": true,
+  "schema": "phase52-phase53-interval-audit-v1",
+  "secret_material_present": false,
+  "source_freeze_commit": "6bb2e0abad5cad3eb1ff750bcb92130c06ee0f6c",
+  "status": "PASS"
+}

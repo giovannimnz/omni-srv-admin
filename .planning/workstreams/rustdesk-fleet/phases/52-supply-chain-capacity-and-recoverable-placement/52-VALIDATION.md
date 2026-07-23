@@ -5,7 +5,7 @@ status: passed
 nyquist_compliant: true
 wave_0_complete: true
 created: 2026-07-20
-updated: 2026-07-22T22:37:00Z
+updated: 2026-07-23T10:46:00Z
 ---
 
 # Phase 52 — Validation Strategy
@@ -86,3 +86,17 @@ Every high/critical threat in Plans 01–07 has an automated negative or live as
 - [x] Parsed Graphify JSON ends with `stale=false` and `commit_stale=false` after the final closeout commit.
 
 **Approval source:** Giovanni Muniz, `2026-07-22T00:51:46Z`; exact values remain in `52-OPERATIONAL-DECISIONS.md`, without secrets.
+
+## Post-live closure mappings
+
+| Task ID | Plan/Wave | Requirements | Automated gate | Status |
+|---|---|---|---|---|
+| 52-08-01 | 08/8 | SCP-04, SRV-05, SRV-07 | successor attestation and two-reviewer hash-set | pass |
+| 52-09-01 | 09/9 | SCP-04, SRV-01 | read-only Phase 53 interval and current projection inputs | pass |
+| 52-09-02 | 09/9 | SRV-05 | current JUnit lane plus segregated legacy/timeout lanes | pass |
+| 52-10-01 | 10/10 | SCP-04, SRV-01, SRV-05, SRV-07 | closeout JSON/Markdown parity and canonical metadata | pass |
+| 52-10-02 | 10/10 | SCP-04, SRV-05, SRV-07 | scoped manifest, secret scan and closeout input verification | pass |
+| 52-10-03 | 10/10 | SCP-04 | terminal Graphify freshness and allowlisted semantic query | pass |
+
+The post-live closure is metadata-only. It does not replay Gate B, refresh
+operational capacity, authorize `execute_live`, or close Phase 53 plans.

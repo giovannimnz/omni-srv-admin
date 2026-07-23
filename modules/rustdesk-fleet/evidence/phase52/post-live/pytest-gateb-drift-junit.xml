@@ -1,0 +1,387 @@
+<?xml version="1.0" encoding="utf-8"?><testsuites><testsuite name="pytest" errors="0" failures="9" skipped="0" tests="9" time="1.364" timestamp="2026-07-23T06:27:13.023886" hostname="atius-srv-1.atius.internal"><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_preflight_candidate_binds_gate_a_and_managed_sources" time="0.024"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_preflight_candidate_binds0')
+
+    def test_preflight_candidate_binds_gate_a_and_managed_sources(tmp_path):
+        seal = tmp_path / "seal.json"
+&gt;       result = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:1417: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_finalize_requires_two_distinct_pass_reviews_on_exact_hash_set" time="0.006"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_finalize_requires_two_dis0')
+
+    def test_finalize_requires_two_distinct_pass_reviews_on_exact_hash_set(tmp_path):
+        seal = tmp_path / "seal.json"
+&gt;       candidate = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:1431: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_finalize_requires_exact_offline_check_schema_and_counts[&lt;lambda&gt;0]" time="0.004"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_finalize_requires_exact_o0')
+mutator = &lt;function &lt;lambda&gt; at 0xf0d17a6c00e0&gt;
+
+    @pytest.mark.parametrize(
+        "mutator",
+        [
+            lambda checks: checks.__setitem__("success_write_count", 0),
+            lambda checks: checks.__setitem__("cas_conflict_owned_rollback_count", 0),
+            lambda checks: checks.__setitem__("network_performed", 0),
+            lambda checks: checks.__setitem__("unexpected", False),
+        ],
+    )
+    def test_finalize_requires_exact_offline_check_schema_and_counts(tmp_path, mutator):
+        seal = tmp_path / "seal.json"
+&gt;       candidate = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:1456: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_finalize_requires_exact_offline_check_schema_and_counts[&lt;lambda&gt;1]" time="0.006"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_finalize_requires_exact_o1')
+mutator = &lt;function &lt;lambda&gt; at 0xf0d17a6c0180&gt;
+
+    @pytest.mark.parametrize(
+        "mutator",
+        [
+            lambda checks: checks.__setitem__("success_write_count", 0),
+            lambda checks: checks.__setitem__("cas_conflict_owned_rollback_count", 0),
+            lambda checks: checks.__setitem__("network_performed", 0),
+            lambda checks: checks.__setitem__("unexpected", False),
+        ],
+    )
+    def test_finalize_requires_exact_offline_check_schema_and_counts(tmp_path, mutator):
+        seal = tmp_path / "seal.json"
+&gt;       candidate = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:1456: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_finalize_requires_exact_offline_check_schema_and_counts[&lt;lambda&gt;2]" time="0.007"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_finalize_requires_exact_o2')
+mutator = &lt;function &lt;lambda&gt; at 0xf0d17a6c0220&gt;
+
+    @pytest.mark.parametrize(
+        "mutator",
+        [
+            lambda checks: checks.__setitem__("success_write_count", 0),
+            lambda checks: checks.__setitem__("cas_conflict_owned_rollback_count", 0),
+            lambda checks: checks.__setitem__("network_performed", 0),
+            lambda checks: checks.__setitem__("unexpected", False),
+        ],
+    )
+    def test_finalize_requires_exact_offline_check_schema_and_counts(tmp_path, mutator):
+        seal = tmp_path / "seal.json"
+&gt;       candidate = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:1456: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_finalize_requires_exact_offline_check_schema_and_counts[&lt;lambda&gt;3]" time="0.013"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_finalize_requires_exact_o3')
+mutator = &lt;function &lt;lambda&gt; at 0xf0d17a6c02c0&gt;
+
+    @pytest.mark.parametrize(
+        "mutator",
+        [
+            lambda checks: checks.__setitem__("success_write_count", 0),
+            lambda checks: checks.__setitem__("cas_conflict_owned_rollback_count", 0),
+            lambda checks: checks.__setitem__("network_performed", 0),
+            lambda checks: checks.__setitem__("unexpected", False),
+        ],
+    )
+    def test_finalize_requires_exact_offline_check_schema_and_counts(tmp_path, mutator):
+        seal = tmp_path / "seal.json"
+&gt;       candidate = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:1456: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_finalize_rejects_stale_source_and_execute_live_never_reaches_network" time="0.013"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xf0d17a4a8d40&gt;
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_finalize_rejects_stale_so0')
+
+    def test_finalize_rejects_stale_source_and_execute_live_never_reaches_network(monkeypatch, tmp_path):
+        seal = tmp_path / "seal.json"
+&gt;       candidate = gate.preflight(REPO, seal, run_self_tests=True)
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:2102: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_cli_without_explicit_execute_live_is_local_only" time="0.017"><failure message="AssertionError: assert 2 == 0&#10; +  where 2 = &lt;function main at 0xf0d17a6b94e0&gt;(['preflight', '--repo', '/home/ubuntu/GitHub/omni-srv-admin', '--seal', '/tmp/pytest-of-ubuntu/pytest-509/test_cli_without_explicit_exec0/seal.json', '--skip-self-tests'])&#10; +    where &lt;function main at 0xf0d17a6b94e0&gt; = gate.main">monkeypatch = &lt;_pytest.monkeypatch.MonkeyPatch object at 0xf0d17a4a88c0&gt;
+tmp_path = PosixPath('/tmp/pytest-of-ubuntu/pytest-509/test_cli_without_explicit_exec0')
+
+    def test_cli_without_explicit_execute_live_is_local_only(monkeypatch, tmp_path):
+        called = False
+        def forbidden(*args, **kwargs):
+            nonlocal called
+            called = True
+            raise AssertionError("network attempted")
+        monkeypatch.setattr(subprocess, "Popen", forbidden)
+        seal = tmp_path / "seal.json"
+&gt;       assert gate.main(["preflight", "--repo", str(REPO), "--seal", str(seal), "--skip-self-tests"]) == 0
+E       AssertionError: assert 2 == 0
+E        +  where 2 = &lt;function main at 0xf0d17a6b94e0&gt;(['preflight', '--repo', '/home/ubuntu/GitHub/omni-srv-admin', '--seal', '/tmp/pytest-of-ubuntu/pytest-509/test_cli_without_explicit_exec0/seal.json', '--skip-self-tests'])
+E        +    where &lt;function main at 0xf0d17a6b94e0&gt; = gate.main
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:2206: AssertionError</failure></testcase><testcase classname="modules.rustdesk-fleet.tests.test_phase52_gate_b_transaction" name="test_remote_bootstrap_recomputes_canonical_hash_and_private_digest_ephemerally" time="0.010"><failure message="run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift">def test_remote_bootstrap_recomputes_canonical_hash_and_private_digest_ephemerally():
+        bootstrap = gate.REMOTE_BOOTSTRAP
+        assert '"sealed_sources","gate_a"' in bootstrap
+        assert 'canonical={"sealed_sources":manifest["sealed_sources"],"gate_a":manifest["gate_a"]}' in bootstrap
+        assert "canonical_hash" in bootstrap and "expected_hash" in bootstrap
+        assert "while offset&lt;len(data)" in bootstrap
+        assert "hmac.compare_digest" in bootstrap
+        assert "private_digest" in bootstrap
+        assert "os.execve" not in bootstrap
+        assert "subprocess.Popen" in bootstrap and "child.wait" in bootstrap
+        assert "os.killpg" in bootstrap and "start_new_session=True" in bootstrap
+        assert "signal.SIGTERM" in bootstrap and "signal.SIGKILL" in bootstrap
+        assert "shutil.rmtree(root" in bootstrap
+&gt;       assert "private_digest" not in json.dumps(gate.preflight(REPO, tmp_path := Path("/dev/shm/phase52-no-write-seal.json"), run_self_tests=False))
+
+modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py:2272: 
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:305: in preflight
+    gate_a = _gate_a_projection(repo)
+_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+
+repo = PosixPath('/home/ubuntu/GitHub/omni-srv-admin')
+
+    def _gate_a_projection(repo: Path) -&gt; dict[str, Any]:
+        path = repo / GATE_A_REL
+        payload = load_json(path)
+        if not isinstance(payload, dict) or payload.get("status") != "PASS":
+            raise GateBlocked("gate-a-not-pass")
+        rows = payload.get("managed_sources")
+        if not isinstance(rows, list) or not rows:
+            raise GateBlocked("gate-a-managed-sources-invalid")
+        normalized = []
+        seen = set()
+        for row in rows:
+            if not isinstance(row, dict) or set(row) != {"path", "sha256"}:
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            relative = row["path"]
+            digest = row["sha256"]
+            if not isinstance(relative, str) or relative in seen or not isinstance(digest, str):
+                raise GateBlocked("gate-a-managed-sources-invalid")
+            resolved = (repo / relative).resolve()
+            try:
+                resolved.relative_to(repo.resolve())
+            except ValueError as exc:
+                raise GateBlocked("gate-a-managed-source-outside-repo") from exc
+            if not resolved.is_file() or resolved.is_symlink() or sha256_file(resolved) != digest:
+&gt;               raise GateBlocked("gate-a-managed-source-drift")
+E               run_phase52_gate_b.GateBlocked: gate-a-managed-source-drift
+
+modules/rustdesk-fleet/tools/run-phase52-gate-b.py:161: GateBlocked</failure></testcase></testsuite></testsuites>

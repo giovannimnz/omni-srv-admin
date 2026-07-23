@@ -126,7 +126,7 @@ case "$verb" in
   cat)
     [[ ${FAKE_RCLONE_FAIL_CAT:-0} == 0 ]] || exit 43
     if [[ ${FAKE_RCLONE_REJECT_CAT_LOG_LEVEL:-0} == 1 && " $* " == *" --log-level ERROR "* ]]; then exit 44; fi
-    if [[ ${FAKE_RCLONE_SLEEP_CAT:-0} == 1 ]]; then sleep 3; fi
+    if [[ ${FAKE_RCLONE_SLEEP_CAT:-0} == 1 ]]; then exec sleep 3; fi
     if [[ ${FAKE_RCLONE_CORRUPT:-0} == 1 ]]; then
       printf 'corrupt'
     else

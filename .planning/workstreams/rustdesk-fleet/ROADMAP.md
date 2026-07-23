@@ -19,8 +19,8 @@ O milestone v1.9 entrega RustDesk self-hosted nos cinco computadores autorizados
 ## Phases
 
 - [x] **Phase 51: Contract, Threat Model and Workstream Isolation** - Congelar escopo, decisão OSS/Pro, ameaças, políticas e ownership do workstream antes de qualquer mutação de runtime. (completed 2026-07-20)
-- [x] **Phase 52: Supply Chain, Capacity and Recoverable Placement** - Provar artefatos, capacity, Vault e restore antes de escolher e autorizar o primary. (completed 2026-07-22)
-- [ ] **Phase 53: Primary Relay and Public Edge** - Disponibilizar `hbbs`/`hbbr` hardened, persistentes, observáveis e expostos somente pelas portas aprovadas.
+- [x] **Phase 52: Supply Chain, Capacity and Recoverable Placement** - Provar artefatos, capacity, Vault e restore antes de escolher e autorizar o primary. (completed 2026-07-23)
+- [ ] **Phase 53: Primary Relay and Public Edge** - Disponibilizar `hbbs`/`hbbr` hardened, persistentes, observáveis e expostos somente pelas portas aprovadas. (blocked at Plan 05 before live mutation)
 - [ ] **Phase 54: Heterogeneous Canary — Horistic + Windows** - Provar Linux ARM64 e Windows x86-64, incluindo pre-login, UAC, direct e relay, antes do rollout.
 - [ ] **Phase 55: Serialized Linux Fleet Rollout** - Instalar e validar `atius-srv-2` → `atius-srv-3` → `atius-srv-1`, um host por vez, preservando fallbacks.
 - [ ] **Phase 56: Exhaustive Fleet, Transport and Security Matrix** - Executar 20 pares normais, cinco forced-relay e os negativos de autenticação, trust e permissões.
@@ -69,7 +69,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Backup e restore reais, em ambiente isolado, reproduzem a mesma public-key fingerprint antes de edge ou clients de frota serem autorizados.
   5. **Advance gate:** verificadores automatizados de checksums/digests, capacity/inodes/reservas, secret scan e fingerprint, junto do restore live, devem passar antes da Phase 53; projeção, arquivo de backup ou summary-only sem restore não contam.
 
-**Plans**: 7/7 plans complete — full gate `PASS`; `horistic-srv` selecionado; Phase 53 `READY`
+**Plans**: 10/10 plans complete — metadata-only closeout, hygiene seal and terminal Graphify gate PASS; Phase 53 remains independently gated
 
 **Wave 1**
 
@@ -99,6 +99,18 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 - [x] 52-07-PLAN.md — Gate A, Gate B create-only, full gate live e closeout independente concluídos com PASS.
 
+**Wave 8** *(blocked on Wave 7 completion; post-live source attestation)*
+
+- [x] 52-08-PLAN.md — Attestation sucessora, dois reviews e boundary não-autorizador concluídos.
+
+**Wave 9** *(blocked on Wave 8 completion; read-only currentness lanes)*
+
+- [x] 52-09-PLAN.md — Intervalo Phase 53, projeção current e lanes JUnit segregadas registradas.
+
+**Wave 10** *(completed; metadata-only closeout)*
+
+- [x] 52-10-PLAN.md — Closeout/parity artifacts, value-free hygiene seal and terminal Graphify assertion PASS; no operational replay.
+
 ### Phase 53: Primary Relay and Public Edge
 
 **Goal**: Os clients podem alcançar um primary RustDesk estável, hardened, recuperável e observável apenas pela superfície nativa mínima aprovada.
@@ -113,13 +125,13 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Monitoring e uma API operacional custom da Atius, em hostname/serviço HTTPS separado e autenticado, expõem endpoints versionados/redacted de health, readiness, status e resumo de métricas para listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas. Ela não configura o `API Server` dos clients, não abre TCP 21114 e não reivindica recursos nativos Pro.
   5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência, contrato/autenticação/redaction dos endpoints custom e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
 
-**Plans**: 3/6 plans executed
+**Plans**: 4/6 plans complete; Plan 05 blocked before live mutation
 
 - [x] 53-01-PLAN.md — Strict contracts, hermetic tests and resumable live-runner foundation.
 - [x] 53-02-PLAN.md — Rootless digest-pinned `hbbs`/`hbbr`, persistent identity/state and bounded resources.
 - [x] 53-03-PLAN.md — Separate authenticated/redacted Atius operational API and reversible Apache publication.
-- [ ] 53-04-PLAN.md — Effective host/OCI edge policy, DNS-last transaction and two-origin probe tooling.
-- [ ] 53-05-PLAN.md — Controlled live deployment, public TCP/UDP proof and API/regression gate.
+- [x] 53-04-PLAN.md — Effective host/OCI edge policy, DNS-last transaction and two-origin probe tooling.
+- [ ] 53-05-PLAN.md — BLOCKED: live runner has no implemented handlers and the prescribed `edge-probes` stage is not accepted.
 - [ ] 53-06-PLAN.md — Restart/reboot lifecycle, containment-first rollback, production restore and independent closeout handoff.
 
 ### Phase 54: Heterogeneous Canary — Horistic + Windows
@@ -211,8 +223,8 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
-| 52. Supply Chain, Capacity and Recoverable Placement | 7/7 | Complete | 2026-07-22 |
-| 53. Primary Relay and Public Edge | 3/6 | In Progress|  |
+| 52. Supply Chain, Capacity and Recoverable Placement | 10/10 | Complete | 2026-07-23 |
+| 53. Primary Relay and Public Edge | 4/6 | Blocked at Plan 53-05 | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
 | 56. Exhaustive Fleet, Transport and Security Matrix | 0/TBD | Not started | - |

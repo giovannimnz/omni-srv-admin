@@ -1,0 +1,74 @@
+{
+  "authority": {
+    "live_authority": false,
+    "replay_authorized": false,
+    "vault_write_authorized": false
+  },
+  "backup_timeout_lane": {
+    "consecutive_pass_count": 3,
+    "fixture_delta": {
+      "change": "fake rclone timeout branch uses exec sleep 3",
+      "new_sha256": "33c8ba2627ab28fa0ff58831d1c4b51934663633649c0a91692a7da2a574e6a1",
+      "old_sha256": "54669ede1d8848958e63018907dcd2505479d28f4d8b01298c9fd17843279633",
+      "path": "modules/fleet-backup/tests/test_phase52_backup_b.py",
+      "production_scripts_changed": false
+    },
+    "runs": [
+      {
+        "error_count": 0,
+        "failure_count": 0,
+        "junit": "pytest-backup-timeout-1.xml",
+        "sha256": "719871e70877f5068362b27f671259df1d4981c374691c6109601ddb83f7eea3",
+        "skip_count": 0,
+        "test_count": 1
+      },
+      {
+        "error_count": 0,
+        "failure_count": 0,
+        "junit": "pytest-backup-timeout-2.xml",
+        "sha256": "d46c9d669c1a5dd02022e3213d7c4895a720536ad8e4038c6a2ece164f30edd4",
+        "skip_count": 0,
+        "test_count": 1
+      },
+      {
+        "error_count": 0,
+        "failure_count": 0,
+        "junit": "pytest-backup-timeout-3.xml",
+        "sha256": "99fa4f4179658989caa734ee7b64984e96260462d01dd053d80fbde04d08108d",
+        "skip_count": 0,
+        "test_count": 1
+      }
+    ],
+    "test_nodeid": "modules/fleet-backup/tests/test_phase52_backup_b.py::Phase52BackupBTests::test_cat_failure_and_timeout_block_and_cleanup_snapshots"
+  },
+  "current_lane": {
+    "error_count": 0,
+    "failure_count": 0,
+    "frozen_verifier": "PASS",
+    "junit": "pytest-current-junit.xml",
+    "regular_skip_count": 0,
+    "sha256": "b02c441ac06553aa0a07de27730bb3c31d28958ec232ec3aaef9815757c6272b",
+    "test_count": 797,
+    "xfail_count": 2,
+    "xfail_nodeids": [
+      "modules.rustdesk-fleet.tests.test_phase53_primary_edge::test_future_implementation_symbol_is_red_only_for_owner_plan[evidence/phase53/deploy-transaction.json-53-05]",
+      "modules.rustdesk-fleet.tests.test_phase53_primary_edge::test_future_implementation_symbol_is_red_only_for_owner_plan[tools/validate_phase53.py-53-06]"
+    ]
+  },
+  "legacy_gateb_drift_lane": {
+    "cli_local_only_case_count": 1,
+    "error_count": 0,
+    "expected_failure": true,
+    "failure_count": 9,
+    "gate_a_managed_source_drift_count": 8,
+    "historical_evidence_rewritten": false,
+    "junit": "pytest-gateb-drift-junit.xml",
+    "network_attempted": false,
+    "sha256": "da4ca3db6bf9420ad6ac28f39287b21cd0dcaa3e03f5c0dd0711670e07526afe",
+    "skip_count": 0,
+    "test_count": 9
+  },
+  "schema": "phase52-pytest-lanes-v1",
+  "secret_material_present": false,
+  "status": "PASS"
+}

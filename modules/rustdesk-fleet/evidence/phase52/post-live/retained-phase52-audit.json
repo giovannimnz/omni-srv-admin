@@ -1,0 +1,28 @@
+{
+  "authority": {
+    "listener_created": false,
+    "live_authority": false,
+    "replay_authorized": false,
+    "vault_write_authorized": false
+  },
+  "current_live_authority": false,
+  "current_network_listener_created": false,
+  "current_secret_material_present": false,
+  "fresh_operational_replay": false,
+  "historical_evidence": true,
+  "historical_live_write_performed": true,
+  "mutation_performed": false,
+  "read_only": true,
+  "retained_input_sha256": {
+    "capacity_horistic_srv": "69997872cbe0b9e2f886cc67b8c0379499628a068cc1e9d6996f60b8df39622e",
+    "gate_b_transaction": "d4eeb2da7956c177595d41f6170cdc7ee50a0b6eab3b7bb0054800212d173001",
+    "integrated_gate": "8a70bced3cfa4f0d588707720bc20ebef0ed4e14b0143aca9c5cc154f50eb00a",
+    "supply_observation": "c699e7aa45efe965ac8092c4ddfbd3416e1170d68afcf4eb70d8ed25a44054db"
+  },
+  "retained_integrated_gate_check_count": 11,
+  "retained_integrated_gate_status": "PASS",
+  "schema": "phase52-retained-evidence-audit-v1",
+  "secret_material_present": false,
+  "selected_candidate": "horistic-srv",
+  "status": "PASS"
+}
