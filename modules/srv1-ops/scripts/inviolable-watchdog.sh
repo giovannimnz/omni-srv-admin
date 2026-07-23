@@ -213,10 +213,9 @@ atius_router_containers_ok() {
 
 atius_pm2_stack_ok() {
   pm2_app_online "atius-api" &&
-    pm2_app_online "atius-web" &&
     pm2_app_online "atius-webhook-signals" &&
     pm2_app_online "atius-divap-indicator" &&
-    pm2_app_online "atius-strategy-builder" &&
+    pm2_app_online_or_waiting "atius-strategy-builder" &&
     pm2_app_online_or_waiting "atius-unified-bot-launcher" &&
     nc -z 127.0.0.1 8015 >/dev/null 2>&1 &&
     nc -z 127.0.0.1 8199 >/dev/null 2>&1
@@ -269,7 +268,29 @@ start_atius_web() {
 }
 
 start_atius_stack() {
-  pm2_start_ecosystem "$ATS_ECOSYSTEM"
+  local rc=0
+
+  # The web has its own port-aware recovery path above. Starting the complete
+  # ecosystem here restarts a healthy atius-web whenever an unrelated worker
+  # is degraded, briefly removing port 3015 from Apache. Recover only the
+  # unhealthy member instead.
+  if ! pm2_app_online "atius-api" || ! nc -z 127.0.0.1 8015 >/dev/null 2>&1; then
+    pm2_start_ecosystem_only "$ATS_ECOSYSTEM" "atius-api" || rc=1
+  fi
+  if ! pm2_app_online "atius-webhook-signals" || ! nc -z 127.0.0.1 8199 >/dev/null 2>&1; then
+    pm2_start_ecosystem_only "$ATS_ECOSYSTEM" "atius-webhook-signals" || rc=1
+  fi
+  if ! pm2_app_online "atius-divap-indicator"; then
+    pm2_start_ecosystem_only "$ATS_ECOSYSTEM" "atius-divap-indicator" || rc=1
+  fi
+  if ! pm2_app_online_or_waiting "atius-strategy-builder"; then
+    pm2_start_ecosystem_only "$ATS_ECOSYSTEM" "atius-strategy-builder" || rc=1
+  fi
+  if ! pm2_app_online_or_waiting "atius-unified-bot-launcher"; then
+    pm2_start_ecosystem_only "$ATS_ECOSYSTEM" "atius-unified-bot-launcher" || rc=1
+  fi
+
+  return "$rc"
 }
 
 start_router_containers() {
