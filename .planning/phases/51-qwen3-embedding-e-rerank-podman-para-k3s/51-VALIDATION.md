@@ -22,6 +22,42 @@ four runtime pods plus exactly one 500m tool Job.
 
 The commands below are copied literally from each final `<automated>` element.
 
+## Automatic execution contract
+
+This phase is executed with validation at three mandatory boundaries:
+
+1. **Task boundary — 23/23 tasks:** `execute-plan` runs each task's
+   `<automated>` command and then enforces every `<acceptance_criteria>` before
+   the next task can start. A failed criterion blocks progression and must be
+   repaired or escalated.
+2. **Plan boundary — 9/9 plans:** the executor runs the plan-level
+   `<verification>`, re-runs all task acceptance criteria during the SUMMARY
+   self-check, and must write `## Self-Check: PASSED` before the plan is closed.
+3. **Wave boundary — Waves 0 through 8:** `execute-phase` runs the configured
+   `bash scripts/gsd-wave-regression.sh` post-merge test gate after the last
+   plan in the wave, then dispatches the active `execute:wave:post` gates. The
+   next wave is not released until this gate sequence finishes; `verify.key-links`
+   then checks every prior-wave artifact before dispatch.
+
+The runner is intentionally phase-neutral and regression-oriented: it runs all
+discovered `scripts/embeddings-bench` unittest files and the Qwen reranker Node
+suite once its lockfile exists. The unrelated legacy CLI suite is not part of
+this wave gate because its current host-only baseline has two pre-existing
+environment failures (`/home/ubuntu` runtime paths); those failures must not be
+misclassified as Phase 51 regressions. The runner does not replace the
+task-specific commands above, which remain responsible for live readbacks,
+Kubernetes dry-runs, owner-host Go tests, Qdrant checks, and the 72-hour
+asynchronous soak verification.
+
+Wave 7 has one deliberate deferred state: `external_job_waiting`. In that wave,
+the soak Job's manifest contains the core verification command and original-UID
+reconciliation contract; the next wave remains unavailable until that external
+result is terminal and verified. No re-dispatch is permitted.
+
+`nyquist_compliant` and `wave_0_complete` remain `false` until real execution
+evidence is written; this document is the pre-execution contract, not proof that
+the checks have already passed.
+
 ### 51-01-01
 
 `python3 -m unittest scripts/embeddings-bench/tests/test_qwen_canary_inventory.py -v`
