@@ -4,11 +4,11 @@ milestone: v1.0
 milestone_name: milestone
 current_phase: 54
 current_phase_name: Migração integral de rede OCI/DRG do Horistic para 10.31
-status: executing
-stopped_at: Completed 54-01-PLAN.md
-last_updated: "2026-07-24T13:46:20.613Z"
+status: blocked
+stopped_at: Blocked at 54-02 fail-closed backup gate
+last_updated: "2026-07-24T14:18:28.931Z"
 last_activity: 2026-07-24
-last_activity_desc: Plan 54-01 concluiu runner fail-closed, 23 testes e gate PASS/hash-valid
+last_activity_desc: Plan 54-02 emitiu gate BLOCK por baseline e backups incompletos
 progress:
   total_phases: 1
   completed_phases: 0
@@ -23,8 +23,8 @@ progress:
 
 Phase: 54 (Migração integral de rede OCI/DRG do Horistic para 10.31) — IN PROGRESS
 Plan: 2 of 10
-Status: Ready to execute
-Last activity: 2026-07-24 — Plan 54-01 concluiu runner fail-closed, 23 testes e gate PASS/hash-valid
+Status: Blocked at fail-closed backup gate
+Last activity: 2026-07-24 — Plan 54-02 emitiu gate BLOCK por baseline e backups incompletos
 
 Progress: [█░░░░░░░░░] 10%
 
@@ -36,7 +36,13 @@ Progress: [█░░░░░░░░░] 10%
 
 ## Next action
 
-Executar `assert-gate` do `54-01` via GSD scoped antes de iniciar `54-02`; nenhuma wave pode avançar sem gate anterior `PASS`, fresh e hash-valid.
+Completar, sob autorização backup-only, as regras direcionais OCI, SOA/NS interno, readback/export nativo BE3, backup OCI fresh e os restore drills SRV1/SRV3. Depois reemitir 54-02 com predecessor fresh; nenhuma write de rede ou apply está autorizada.
+
+## Blockers
+
+- 54-02: security list ingress/egress, SOA/NS interno e BE3 live/native export ficaram incompletos.
+- 54-02: backup OCI fresh é uma write OCI e estava explicitamente proibido nesta execução.
+- 54-02: backups nativos/restores completos de SRV1 e SRV3 não foram comprovados; apenas o backup Horistic passou.
 
 ## Performance Metrics
 
@@ -51,6 +57,6 @@ Executar `assert-gate` do `54-01` via GSD scoped antes de iniciar `54-02`; nenhu
 
 ## Session
 
-**Last session:** 2026-07-24T13:46:20.605Z
-**Stopped at:** Completed 54-01-PLAN.md
-**Resume file:** None
+**Last session:** 2026-07-24T14:18:28.873Z
+**Stopped at:** Blocked at 54-02 fail-closed backup gate
+**Resume file:** 54-02-PLAN.md
