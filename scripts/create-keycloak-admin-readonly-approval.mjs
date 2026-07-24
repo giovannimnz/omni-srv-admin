@@ -1,19 +1,38 @@
 #!/usr/bin/env node
-import { realpath, stat } from 'node:fs/promises'
+import path from 'node:path'
 import { fileURLToPath } from 'node:url'
 import {
+  ARTIFACT_PATHS,
   CONTRACT,
+  OPERATION_MODE,
+  assertCanonicalEqual,
+  assertExactArtifactPath,
+  assertPrivateRegularFile,
   atomicWritePrivateJson,
+  sourceManifestForRoot,
+  validateApproval,
   validateCandidate,
 } from './lib/keycloak-admin-readonly-contract.mjs'
 
 function parseArgs(argv) {
+  const allowed = new Set([
+    'candidate',
+    'output',
+    'operation-id',
+    'operation-mode',
+    'approved-by',
+    'ttl-seconds',
+  ])
   const options = {}
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index]
     const value = argv[index + 1]
-    if (!key?.startsWith('--') || value === undefined) throw new Error(`invalid argument near ${key ?? '<end>'}`)
-    options[key.slice(2)] = value
+    const name = key?.slice(2)
+    if (!key?.startsWith('--') || value === undefined || !allowed.has(name)) {
+      throw new Error(`invalid argument near ${key ?? '<end>'}`)
+    }
+    if (options[name] !== undefined) throw new Error(`duplicate --${name}`)
+    options[name] = value
   }
   return options
 }
@@ -22,23 +41,43 @@ const options = parseArgs(process.argv.slice(2))
 for (const required of ['candidate', 'output', 'operation-id', 'approved-by', 'ttl-seconds']) {
   if (!options[required]) throw new Error(`missing --${required}`)
 }
+if ((options['operation-mode'] ?? OPERATION_MODE) !== OPERATION_MODE) {
+  throw new Error(`--operation-mode must be exactly ${OPERATION_MODE}`)
+}
+assertExactArtifactPath(options.candidate, ARTIFACT_PATHS.candidate, 'candidate')
+assertExactArtifactPath(options.output, ARTIFACT_PATHS.approval, 'approval')
 
 const ttlSeconds = Number(options['ttl-seconds'])
 if (!Number.isInteger(ttlSeconds) || ttlSeconds < 1 || ttlSeconds > 900) {
   throw new Error('--ttl-seconds must be an integer from 1 through 900')
 }
 
-const candidatePath = await realpath(options.candidate)
-const candidate = JSON.parse(await BunlessRead(candidatePath))
-validateCandidate(candidate)
-
+await assertPrivateRegularFile(options.candidate, 'candidate')
+const candidate = JSON.parse(await BunlessRead(options.candidate))
 const issuedAt = new Date()
+validateCandidate(candidate, issuedAt)
+if (candidate.approvalReady !== true || candidate.livePreflightStatus !== 'READY') {
+  throw new Error('candidate is not approval-ready; authenticated read-only preflight is required')
+}
+
+const producerPath = fileURLToPath(import.meta.url)
+const repoRoot = path.resolve(path.dirname(producerPath), '..')
+const currentManifest = await sourceManifestForRoot(repoRoot)
+assertCanonicalEqual(
+  currentManifest,
+  candidate.candidate.sourceManifest,
+  'current source manifest at approval production',
+)
+const producerEntry = currentManifest.find(
+  (entry) => entry.path === 'scripts/create-keycloak-admin-readonly-approval.mjs',
+)
+if (!producerEntry) throw new Error('approval producer is absent from source manifest')
+
 const expiresAt = new Date(issuedAt.getTime() + ttlSeconds * 1000)
-const producerPath = await realpath(fileURLToPath(import.meta.url))
 const approval = {
-  schemaVersion: '1',
+  schemaVersion: '2',
   operationId: options['operation-id'],
-  operationMode: options['operation-mode'] ?? 'provision-with-rollback-reapply',
+  operationMode: OPERATION_MODE,
   candidateDigest: candidate.candidate.digest,
   sourceDigest: candidate.candidate.sourceDigest,
   preimageDigest: candidate.candidate.preimageDigest,
@@ -52,12 +91,19 @@ const approval = {
   expiresAt: expiresAt.toISOString(),
   approvedBy: options['approved-by'],
   producerPath,
+  producerSha256: producerEntry.sha256,
 }
 
-await atomicWritePrivateJson(options.output, approval, { exclusive: true })
-const outputStat = await stat(options.output)
-if ((outputStat.mode & 0o777) !== 0o600) throw new Error('approval artifact mode is not 0600')
-process.stdout.write(`${JSON.stringify({ created: true, output: options.output, operationId: approval.operationId })}\n`)
+validateApproval(approval, candidate, issuedAt)
+await atomicWritePrivateJson(options.output, approval)
+process.stdout.write(
+  `${JSON.stringify({
+    created: true,
+    output: options.output,
+    operationId: approval.operationId,
+    operationMode: approval.operationMode,
+  })}\n`,
+)
 
 async function BunlessRead(filePath) {
   const { readFile } = await import('node:fs/promises')

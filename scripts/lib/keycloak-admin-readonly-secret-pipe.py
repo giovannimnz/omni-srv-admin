@@ -10,6 +10,8 @@ from __future__ import annotations
 import argparse
 import base64
 import json
+import pathlib
+import re
 import shlex
 import sys
 import urllib.parse
@@ -25,6 +27,17 @@ EXPECTED_FIELDS = sorted(
     ]
 )
 EXPECTED_ROLES = ["query-clients", "view-clients"]
+SECRET_KEY_RE = re.compile(
+    r"(?:^|_)(?:password|secret|access_token|refresh_token|root_token|private_key)(?:$|_)",
+    re.IGNORECASE,
+)
+RAW_SECRET_RE = re.compile(
+    r"""(?ix)
+    \b(?:client_secret|access_token|refresh_token|password|root_token)\b
+    \s*[:=]\s*
+    ["']?[A-Za-z0-9+/=_-]{16,}
+    """
+)
 
 
 def load_secret() -> str:
@@ -182,6 +195,51 @@ def readonly_client_readback(args: argparse.Namespace) -> None:
     )
 
 
+def scan_json_scalars(value: object, source: pathlib.Path, findings: list[str], prefix: str = "$") -> None:
+    if isinstance(value, dict):
+        for key, child in value.items():
+            child_prefix = f"{prefix}.{key}"
+            if SECRET_KEY_RE.search(key) and child not in (None, False, "", "process-memory-and-pipes-only"):
+                findings.append(f"{source}:{child_prefix}")
+            scan_json_scalars(child, source, findings, child_prefix)
+    elif isinstance(value, list):
+        for index, child in enumerate(value):
+            scan_json_scalars(child, source, findings, f"{prefix}[{index}]")
+
+
+def scan_artifacts(args: argparse.Namespace) -> None:
+    findings: list[str] = []
+    scanned: list[str] = []
+    for raw_path in args.path:
+        target = pathlib.Path(raw_path)
+        candidates = [target]
+        if target.is_dir():
+            candidates = sorted(item for item in target.rglob("*") if item.is_file())
+        for candidate in candidates:
+            metadata = candidate.lstat()
+            if candidate.is_symlink() or not candidate.is_file():
+                raise SystemExit(f"secret scan refuses non-regular artifact: {candidate}")
+            if metadata.st_size > 2 * 1024 * 1024:
+                raise SystemExit(f"secret scan artifact exceeds 2 MiB: {candidate}")
+            text = candidate.read_text(encoding="utf-8", errors="strict")
+            scanned.append(str(candidate))
+            if RAW_SECRET_RE.search(text):
+                findings.append(f"{candidate}:raw-secret-like-assignment")
+            try:
+                payload = json.loads(text)
+            except json.JSONDecodeError:
+                payload = None
+            if payload is not None:
+                scan_json_scalars(payload, candidate, findings)
+    if findings:
+        raise SystemExit("secret-like scalar/material found in emitted evidence")
+    json.dump(
+        {"scannedFiles": sorted(scanned), "findingCount": 0, "secretsRecorded": False},
+        sys.stdout,
+        separators=(",", ":"),
+    )
+
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="mode", required=True)
@@ -195,6 +253,8 @@ def parse_args() -> argparse.Namespace:
     readback = subparsers.add_parser("readonly-client-readback")
     readback.add_argument("--target-client-id", required=True)
     readback.add_argument("--expected-post-logout-uri")
+    scan = subparsers.add_parser("scan-artifacts")
+    scan.add_argument("--path", action="append", required=True)
     return parser.parse_args()
 
 
@@ -206,4 +266,5 @@ if __name__ == "__main__":
         "token-roles": token_roles,
         "verify-exports": verify_exports,
         "readonly-client-readback": readonly_client_readback,
+        "scan-artifacts": scan_artifacts,
     }[options.mode](options)
