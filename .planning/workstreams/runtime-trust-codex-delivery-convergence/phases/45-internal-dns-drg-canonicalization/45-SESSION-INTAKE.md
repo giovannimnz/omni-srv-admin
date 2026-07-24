@@ -17,7 +17,7 @@ Phase 45 replan. It is planning evidence only; execution remains owned by
 |---|---|---|---|
 | `GIOVANNI-W11-PC` | `019f3c32-d2fd-70b0-b2f2-3c44709d2fa0` | `oci-admin` | OCI-primary route and DNS validation context. TEI/router embeddings must use `10.21.1.21:3115`; `10.100.100.4:3115` is reserve only. |
 | `GIOVANNI-W11-PC` | `019f42b7-b699-7c03-965d-0aa081acc204` | `oci-admin` / W11 edge | W11 `wg100` was down and then revalidated. W11 can reach OCI target IPs through the `wg100` bridge; S23 still needs device-side outbound proof. |
-| `atius-srv-1` | `019f42bb-e564-7ca3-87b2-8573f3eb516e` | `vpn-atius/home-proxy` plus remote `omni-srv-admin` docs | Home edge/PPTP is residential fallback only. BE3 reservations are W11 `192.168.1.8` and S23 `192.168.1.9`; do not advertise `192.168.1.0/24` to DRG/wg100. |
+| `atius-srv-1` | `019f42bb-e564-7ca3-87b2-8573f3eb516e` | `vpn-atius/home-proxy` plus remote `omni-srv-admin` docs | Home edge/PPTP is residential fallback only. BE3 reservations are W11 `192.168.1.8`, S20 `192.168.1.9` and S23 `192.168.1.10`; do not advertise `192.168.1.0/24` to DRG/wg100. |
 | `atius-srv-1` | `019f4374-2b77-7361-9474-5a869abc6b33` | `vpn-atius/home-proxy` | BE3 VPN UI looked like client mode, not proven PPTP server. PPTP needs TCP `1723` plus GRE/protocol `47`; no promotion by assumption. |
 | `GIOVANNI-W11-PC` | `019f2ba1-1982-7c03-a17d-3ce28c589ac1` | Wayland on `atius-srv-3` | GSD profiles must be exposed as skills/commands (`$gsd-*` or slash command), not as runtime `acp.customAgents`. This is a parallel runtime dependency, not a DNS blocker. |
 

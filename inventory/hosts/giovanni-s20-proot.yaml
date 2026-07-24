@@ -1,0 +1,31 @@
+id: giovanni-s20-proot
+aliases:
+  - s20-proot
+  - giovanni-s20-ubuntu
+  - galaxy-s20-ubuntu-proot
+role: mobile-ubuntu
+owner: giovanni
+access:
+  ssh: pending-live-proof
+  shared_home_lan_reserved_ip: 192.168.1.9
+  shared_vpn_ip_configured: 10.100.100.9
+  reserved_public_ssh_port: 8522
+  reserved_public_hostname: ssh-giovanni-s20-ubuntu.atius.com.br
+  reserved_browser_path: https://ssh.atius.com.br/compute/ssh-giovanni-s20-ubuntu
+  candidate_internal_ssh_port: pending-live-proof
+platform:
+  provider: android-proot-distro
+  device: samsung-galaxy-s20
+  os: ubuntu-proot
+  arch: arm64
+status: planned
+modules: []
+constraints:
+  - proot-no-real-systemd-by-default
+  - storage-bound-to-android
+  - ssh-user-port-fingerprint-not-yet-proven
+  - public-slot-reserved-not-published
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  addressing: "This logical Ubuntu endpoint shares the S20 handset LAN and WireGuard IP; it receives only a distinct SSH port."
+  publication_gate: "Port 8522 and the hostname/browser slug are reservations only until the PRoot listener, user, fingerprint, authentication, NAT and relay are proven end to end."
