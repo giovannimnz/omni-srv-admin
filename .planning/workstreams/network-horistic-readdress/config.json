@@ -21,5 +21,8 @@
   "graphify": {
     "enabled": true,
     "auto_update": false
+  },
+  "git": {
+    "branching_strategy": "none"
   }
 }
