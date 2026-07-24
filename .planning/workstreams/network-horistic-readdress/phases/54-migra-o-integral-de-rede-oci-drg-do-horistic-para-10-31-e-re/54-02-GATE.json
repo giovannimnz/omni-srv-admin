@@ -1,0 +1,150 @@
+{
+  "checks": [
+    {
+      "expected": "non-empty evidence file",
+      "id": "evidence_exists",
+      "observed": "/mnt/c/Users/muniz/Documents/GitHub/_omni-srv-admin-phase54-replan-20260724/.planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-02-EVIDENCE.json",
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "phase54.evidence.v1",
+      "id": "evidence_machine_readable",
+      "observed": "phase54.evidence.v1",
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "54-02",
+      "id": "plan_id",
+      "observed": "54-02",
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": [
+        "preflight"
+      ],
+      "id": "stage",
+      "observed": null,
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "generated within 900s and unexpired",
+      "id": "freshness",
+      "observed": "2026-07-24T14:10:25Z",
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "legacy BLOCK/BLOCKED/UNKNOWN/PARTIAL absent",
+      "id": "legacy_status",
+      "observed": "BLOCK",
+      "required": true,
+      "result": "BLOCK"
+    },
+    {
+      "expected": "redacted evidence with no secret material",
+      "id": "redaction",
+      "observed": true,
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": [
+        "live_inventory",
+        "backup_restore_staging",
+        "public_ip_baseline",
+        "dns_edge_baseline"
+      ],
+      "id": "required_checks_complete",
+      "observed": [
+        "backup_restore_staging",
+        "dns_edge_baseline",
+        "live_inventory",
+        "public_ip_baseline"
+      ],
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "all required checks are runner-observed PASS",
+      "id": "observed_checks",
+      "observed": {
+        "backup_restore_staging": "BLOCK",
+        "dns_edge_baseline": "BLOCK",
+        "live_inventory": "BLOCK",
+        "public_ip_baseline": "PASS"
+      },
+      "required": true,
+      "result": "BLOCK"
+    },
+    {
+      "expected": "all artifacts exist and SHA-256 hashes match",
+      "id": "artifact_hashes",
+      "observed": 3,
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "immediate predecessor gate is fresh and hash-valid",
+      "id": "previous_gate_lineage",
+      "observed": {
+        "assert_result": "PASS",
+        "asserted_at": "2026-07-24T13:54:55Z",
+        "evidence_path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-01-EVIDENCE.json",
+        "evidence_sha256": "219a096fdb9fbcf0b3268932432c96738201caad123812d94d87cd261ea34cf6",
+        "gate_path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-01-GATE.json",
+        "gate_sha256": "4db460ff88d8d56aa40be91578aa1bbfef1b8f03cc804bd4434eee670829a148",
+        "plan": "54-01"
+      },
+      "required": true,
+      "result": "BLOCK"
+    },
+    {
+      "expected": "operation/input/approval/anti-drift hashes match stage",
+      "id": "operation_lineage",
+      "observed": null,
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "same public/private OCIDs, label and terminal state",
+      "id": "public_ip_identity",
+      "observed": {
+        "address": "163.176.232.119",
+        "baseline_ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa",
+        "baseline_private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
+        "binding": "10.0.0.65",
+        "label": "horistic-srv-1",
+        "lifetime": "RESERVED",
+        "ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa",
+        "operation": "read",
+        "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
+        "scope": "REGION",
+        "state": "ASSIGNED"
+      },
+      "required": true,
+      "result": "PASS"
+    }
+  ],
+  "evidence_sha256": "d2d704e51a9b8c5f36f7035c784bbf283d58b319bba5984b3f20a8bc69390e50",
+  "finished_at": "2026-07-24T14:17:05.715385Z",
+  "mode": "read-only",
+  "mutations_attempted": true,
+  "next_wave_gate": null,
+  "phase": 54,
+  "plan": "54-02",
+  "redacted": true,
+  "required_check_ids": [
+    "live_inventory",
+    "backup_restore_staging",
+    "public_ip_baseline",
+    "dns_edge_baseline"
+  ],
+  "schema": "phase54.gate.v1",
+  "stage": null,
+  "started_at": "2026-07-24T14:17:05.575393Z",
+  "status": "BLOCK"
+}

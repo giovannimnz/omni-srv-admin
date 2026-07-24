@@ -1,0 +1,96 @@
+{
+  "schema": "phase54.rollback-receipt.v1",
+  "plan": "54-02",
+  "status": "BLOCK",
+  "captured_at": "2026-07-24T14:10:25Z",
+  "redacted": true,
+  "production_mutations_attempted": false,
+  "backup_writes_attempted": true,
+  "scope": {
+    "allowed": [
+      "read-only live inventory",
+      "recoverable backup files",
+      "isolated restore staging"
+    ],
+    "forbidden_and_not_attempted": [
+      "OCI mutation",
+      "DNS mutation",
+      "WireGuard mutation",
+      "BE3 mutation",
+      "public IP release, delete, recreate or rebind",
+      "OperationPlan apply",
+      "APPLY:3f197cf6 reuse"
+    ]
+  },
+  "sources": [
+    {
+      "id": "horistic-configs",
+      "owner": "root:root",
+      "backup_path": "/var/backups/omni-srv-admin/phase54/20260724T140756Z-horistic",
+      "archive": "horistic-configs.tar",
+      "archive_sha256": "2ba907816cd26be24d5c27449b6fab0c6887c9051109f64506d0154f3e1d935e",
+      "rehash_sha256": "2ba907816cd26be24d5c27449b6fab0c6887c9051109f64506d0154f3e1d935e",
+      "restore_staging_path": "/var/backups/omni-srv-admin/phase54/20260724T140756Z-horistic/restore-staging",
+      "restore_compare_exit_code": 0,
+      "restored_file_count": 194,
+      "cpu_quota": "20%",
+      "result": "PASS"
+    },
+    {
+      "id": "horistic-configs-first-attempt",
+      "owner": "root:root",
+      "backup_path": "/var/backups/omni-srv-admin/phase54/20260724T140729Z-horistic",
+      "reason": "/etc/rancher/k3s is absent on this agent-only node; the successful retry used the observed systemd agent files",
+      "result": "BLOCK"
+    },
+    {
+      "id": "oci-network-public-binding",
+      "owner": "oci-admin",
+      "source": "oci_admin_http inventory.get mode=all and peering.drg_status",
+      "restore_staging": "not applicable to readback export",
+      "result": "PASS"
+    },
+    {
+      "id": "oci-boot-volume",
+      "owner": "oci-admin",
+      "observed_backup_ocid": "ocid1.bootvolumebackup.oc1.sa-saopaulo-1.abtxeljrzlychdv4jgqdmric6o5uq5lnc3zqbvp3e527tibjxcrcz2ywn36q",
+      "observed_lifecycle_state": "AVAILABLE",
+      "observed_type": "INCREMENTAL",
+      "observed_size_in_gbs": 100,
+      "fresh_phase54_backup": false,
+      "reason": "A fresh OCI backup is a live OCI write and was explicitly prohibited for this execution",
+      "result": "BLOCK"
+    },
+    {
+      "id": "srv1-k3s-coredns-adguard-wireguard",
+      "owner": "ubuntu/root",
+      "reason": "Live readbacks were collected, but a complete timestamped archive plus isolated restore drill was not completed before the fail-closed stop",
+      "result": "BLOCK"
+    },
+    {
+      "id": "srv3-freeipa",
+      "owner": "ubuntu/root",
+      "reason": "No fresh native FreeIPA backup and isolated restore drill were completed",
+      "result": "BLOCK"
+    },
+    {
+      "id": "be3-native-config",
+      "owner": "home-router-be3",
+      "reason": "No authenticated, secret-safe native export channel was available in the scoped execution",
+      "result": "BLOCK"
+    }
+  ],
+  "legacy": {
+    "receipt_path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/legacy-phase52/rollback-receipt.json",
+    "sha256": "bd7fc332c671caf6b01fb871c3fd7615334d1dd4ce402ac4f8696d55d4ca584e",
+    "verdict": "historical_only",
+    "reasons": [
+      "no expiry field",
+      "no current anti-drift binding",
+      "Phase 52 scope and target differ from Phase 54",
+      "Phase 52 Plan 02 gate is BLOCK"
+    ]
+  },
+  "overall_result": "BLOCK",
+  "next_action": "Create fresh native backups and restore staging for every required source under a separately authorized backup-only run; do not perform any network apply"
+}
