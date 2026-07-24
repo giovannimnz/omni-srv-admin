@@ -1,77 +1,83 @@
-# Phase 54 Context — Migração integral OCI/DRG e edge
+---
+phase: 54
+status: ready-for-planning
+updated: 2026-07-24
+---
 
-**Source:** operator clarification in Codex session, 2026-07-23
+# Phase 54 Context — Migração integral Horistic 10.21 para 10.31
 
-## Objective
+<domain>
+## Phase Boundary
 
-Executar um plano reversível para substituir o plano privado do Horistic por
-`10.31.0.0/16` / `10.31.1.0/24` / `10.31.1.31`, preservar a reserva pública
-`163.176.232.119`, migrar os serviços e somente depois retirar a identidade
-antiga `.21`. Em paralelo, renumerar S23 e S20 nos planos WireGuard/BE3 sem
-confundir IP de túnel com reserva LAN.
+Substituir integralmente o plano privado OCI/DRG do Horistic, migrar identidade, rotas, DNS, serviços e edge, preservar o public IP reservado e retirar todo caminho operacional `10.21.*` somente após gates e rollback. O backend `oci-admin` é externo a este repo/worktree: a fase consome receipts/commits validados, mas não o edita aqui.
+</domain>
 
-## Locked decisions
+<decisions>
+## Decisions
 
-- O alvo OCI/DRG do Horistic é exatamente `10.31.1.31` dentro de
-  `10.31.0.0/16` e `10.31.1.0/24`; não substituir por `10.21.1.31`.
-- A rede antiga `10.21.0.0/16`, a subnet `10.21.1.0/24` e o IP `.21` devem
-  permanecer durante a janela de dual-path e ser removidos apenas após a
-  verificação final e a janela de observação.
-- A reserva pública `163.176.232.119` deve ser preservada, com prova de
-  associação antes/depois; nenhum plano pode liberá-la ou trocá-la por IP
-  efêmero.
-- O fallback WireGuard do Horistic passa de `10.100.100.4` para
-  `10.100.100.31`, alinhado ao novo sufixo `.31`; o peer `.4` permanece
-  disponível somente até o handshake do `.31`, os probes SSH/TCP/DNS e o gate
-  final.
-- O S23 passa de WireGuard `10.100.100.9` para `10.100.100.10`. A reserva
-  residencial do S23 continua sendo LAN BE3 `192.168.1.9` até existir uma
-  decisão explícita diferente.
-- `S20-de-Giovanni` passa da reserva DHCP BE3 `192.168.1.10` para
-  `192.168.1.11` e recebe o peer WireGuard `10.100.100.11`. O plano deve
-  validar que `.11` não está em uso e capturar a tela/readback da reserva.
-- A autenticação WireGuard continua criptografada e o fallback público do
-  S23/S20 deve permanecer disponível durante a janela; não usar plaintext.
-- Nenhuma exclusão de VCN/subnet/private IP antiga ocorre na mesma operação que
-  a criação sem readback, rollback e gate humano documentados.
-- Obsidian e GBrain são atualizados somente com valores não secretos e após o
-  estado live ser verificado.
+### D-01 — Target OCI exato
+O único target aceito é VCN `10.31.0.0/16`, subnet `10.31.1.0/24` e private IP `10.31.1.31`. A proposta histórica `10.71.*` é rejeitada. Nenhum target `10.21.*` pode constar no builder final.
 
-## Required evidence
+### D-02 — Migração integral e arquitetura VCN
+Readbacks live decidem entre transformar a VCN atual e criar VCN substituta. Se `10.21.0.0/16` for CIDR primário não removível ou qualquer dependência impedir eliminação integral, usar VCN substituta. A fase não conclui com residual `10.21.*`.
 
-- OCI inventory/OperationPlan para VCN, subnet, route tables, security lists,
-  VNIC/private IP, reserved public IP e DRG routes em todos os profiles.
-- Backups dos hosts, WireGuard, K3s, CoreDNS/FreeIPA/AdGuard, Apache e
-  manifests de serviço antes da janela.
-- Before/after de `ip -br -4`, rotas, `wg show`, K3s nodes, listeners e
-  resoluções A/PTR.
-- Screenshot headless e readback final da lista de reservas estáticas do BE3,
-  mostrando `S20-de-Giovanni -> 192.168.1.11` e preservando as demais reservas.
-- Matriz pós-cutover para SSH, DNS, K3s, Apache/HTTPS, TEI, reranker, Router,
-  PgBouncer, Vault, Obsidian/GBrain, WireGuard handshakes e public edge.
-- Cada plano termina automaticamente com um gate machine-readable `PASS`,
-  `WARN`, `BLOCK` ou `UNKNOWN`; qualquer `BLOCK`/`UNKNOWN` obrigatório impede o
-  próximo plano. O gate registra comandos, exit codes, timestamps, hashes,
-  redaction e receipt de rollback conforme `54-VALIDATION-CONTRACT.md`.
+### D-03 — Builder externo como hard gate
+Nenhum OCI write é autorizado até `peering.address_plan`, do owner `oci-admin`, emitir receipt ligado a commit validado contendo literalmente `10.31.0.0/16`, `10.31.1.0/24`, `10.31.1.31` e zero target `10.21.*`. Não editar esse backend neste worktree.
 
-## Scope fence
+### D-04 — Reserved public IP
+Preservar `163.176.232.119` e o label `horistic-srv-1` por OCID. Sempre reler o binding por `public_ip_ocid`; nunca release/delete/recreate. Estado assíncrono deve chegar a `RESERVED/ASSIGNED` dentro de timeout único; timeout/UNKNOWN bloqueia sem retry cego.
 
-Inclui OCI/DRG, Horistic host/K3s/services, WireGuard S23/S20, DHCP static
-binding BE3, inventories, `oci-admin`, `home-proxy`, AGENTS.md, runbooks,
-Obsidian e GBrain. Não inclui remover a faixa WireGuard inteira, mudar a LAN do
-roteador, trocar a autoridade FreeIPA/CoreDNS ou reabrir a implementação
-Wayland; essas superfícies só recebem updates de endpoint necessários.
+### D-05 — DRG e security bidirecionais
+VCN/subnet/DRG route tables, route rules, attachments, security lists/NSGs e host firewalls devem provar ida e retorno para os quatro servidores ATIUS e Horistic antes de cutover.
 
-## Stop conditions
+### D-06 — OperationPlans e approvals
+Cada write OCI, DNS, BE3/WireGuard ou retirement usa OperationPlan distinto com input hashes, diff, owner, expiry, anti-drift, rollback e typed confirmation exata. Autonomous nunca autoaprova typed confirmation, auth, device action ou checkpoint humano.
 
-- VCNs/rotas com sobreposição, DRG `lpg_ready=false` sem plano de correção,
-  ausência de backup, public IP não reassociável, K3s degraded, falha de SSH
-  fallback, S23/S20 sem importação do perfil ou BE3 sem readback.
-- Qualquer serviço crítico sem duas leituras estáveis após o cutover.
+### D-07 — Approvals históricos
+Approvals/receipts da antiga Phase 52 não são reutilizáveis por padrão. Wave 0 pode apenas reconhecê-los como provenance depois de provar mesmo scope, hashes atuais, expiry válida e ausência de drift; qualquer diferença exige approval nova.
 
-## Rollback contract
+### D-08 — Gate por wave
+Cada plano termina automaticamente com gate machine-readable fail-closed. `BLOCK`, `BLOCKED`, `UNKNOWN`, malformed, missing, stale, tampered ou evidence autoafirmado impede a wave seguinte. O schema canônico usa `BLOCK`; o runner deve normalizar legado `BLOCKED` como falha, nunca como sucesso.
 
-Manter `.21` e `.9/.10` anteriores durante a transição. Em falha, restaurar
-rotas/DNS/K3s/host e peers para o snapshot anterior, preservar a reserva pública
-e só então investigar. A deleção da identidade antiga é uma etapa separada e
-irreversível, liberada somente pelo gate final.
+### D-09 — DNS e Phase 47.1
+FreeIPA permanece autoridade de `atius.internal` e das reverse zones; CoreDNS/AdGuard são resolvers/forwarders. Consumir `47.1-RELEASE-GATE.json` fresh/hash-valid ou executar uma transação autocontida que prove backup, A/PTR/SOA/NS, FQDN, TTL/cache, forwards, NXDOMAIN fail-closed e rollback antes do write.
+
+### D-10 — Baseline edge canônico
+Horistic WireGuard migra `10.100.100.4 -> 10.100.100.31` com dual-path. S23 permanece LAN `192.168.1.10`, WireGuard `10.100.100.10`, MAC `64:1B:2F:C2:DC:A3`; não migrar S23 nem usar `.9` como rollback. S20 MAC `30:AB:6A:3C:96:D1` migra LAN/WG `192.168.1.9` / `10.100.100.9` para `.11`; classificar lease antigo `192.168.1.62`.
+
+### D-11 — SSH Horistic
+Após todo probe SSH privado, executar obrigatoriamente o fallback público nativo `ssh -p 22 horistic@ssh-horistic-srv.atius.com.br` e registrar ambos antes de declarar indisponibilidade.
+
+### D-12 — Backups e rollback
+Antes de writes: backups nativos OCI/host/DNS/WG/BE3/K3s/services, checksums, restore staging e rollback receipt. Public IP permanece reservado durante rollback.
+
+### D-13 — Retirement escalonado
+Retirement é plano separado e destrutivo. Exige duas matrizes estáveis separadas por pelo menos 15 minutos, OperationPlan hash-bound fresh, typed confirmation e reread imediato; remove rotas, VNIC/private IP, subnet/VCN antigos e identidade DNS/serviços sem residual `10.21.*`.
+
+### D-14 — Segredos e evidence
+Vault continua source of truth. Evidência guarda apenas nomes de profiles/vars/paths, comandos redigidos, exit codes, timestamps, hashes e OCIDs necessários; nunca tokens, chaves privadas ou credenciais.
+
+### D-15 — Graphify e knowledge
+Graphify status/query é obrigatório antes de escolher paths e freshness depois de código/docs/planning. Obsidian/GBrain recebem apenas estado live verificado e não secreto.
+
+### D-16 — Review
+`54-REVIEWS.md` registra o ciclo novo como pendente. Nenhuma alegação de zero findings é válida antes de nova revisão independente dos dez planos.
+
+### the agent's Discretion
+- Timeout assíncrono exato, entre 5 e 15 minutos, desde que não haja retry automático.
+- Nome dos artifacts/transactions, preservando schemas, hashes e lineage exigidos.
+- Ordem interna dos probes dentro de cada gate, sem alterar as dependências entre waves.
+
+## Deferred Ideas
+
+- Nenhuma. A proposta `10.71.*` é rejeitada, não deferred.
+</decisions>
+
+<evidence>
+## Live Evidence 2026-07-24
+
+- Horistic: VCN `10.21.0.0/16`, subnet `10.21.1.0/24`, host `10.21.1.21`.
+- Reserved public IP `163.176.232.119`, label `horistic-srv-1`; binding deve ser relido por OCID.
+- DRG central e attachment existem.
+- `peering.address_plan` permanece `10.21.*` e bloqueia writes.
+</evidence>

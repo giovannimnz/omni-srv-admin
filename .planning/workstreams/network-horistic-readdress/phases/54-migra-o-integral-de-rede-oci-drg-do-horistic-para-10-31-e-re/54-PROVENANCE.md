@@ -1,22 +1,25 @@
-# Phase 54 reenumeration provenance
+# Phase 54 provenance and approval lineage
 
-The network migration was originally planned and partially preflighted as local
-Phase 52. It was reenumerated into the isolated
-`network-horistic-readdress` workstream as Phase 54 so the canonical
-`rustdesk-fleet` Phases 51-58 from `atius-srv-1` remain untouched.
+The old local Phase 52 artifacts remain byte-preserved under `legacy-phase52/`. They prove historical work only.
 
-## Approval continuity
+## Non-reuse rule
 
-- `APROVADO: phase52-wave0` maps to the same Phase 54 Wave 0 scope.
-- `APROVADO: phase52-wave1` maps to the same Phase 54 Wave 1 scope.
-- Reenumeration does not broaden either approval and does not authorize a new
-  destructive action outside the original network migration.
-- Existing typed confirmations remain bound to their original OperationPlan
-  hashes. Any changed plan/hash needs a new typed confirmation.
+`APROVADO: phase52-wave0` and `APROVADO: phase52-wave1` do not authorize Phase 54 writes. Plan 02 may cite them only after recording:
 
-## Immutable legacy receipts
+- exact legacy SHA-256;
+- current live input SHA-256;
+- scope comparison;
+- original expiry and typed-confirmation text;
+- anti-drift readback;
+- verdict `historical_only` or `same_scope_fresh`.
 
-The following files are preserved byte for byte under `legacy-phase52/`:
+Any missing field, changed target, expired timestamp or drift yields `historical_only` and requires a new Phase 54 typed confirmation.
+
+## External builder lineage
+
+The `oci-admin` backend is external. Plan 03 requires its owner to provide a commit/receipt that is independently read back and hash-validated. The builder output must include exactly the 10.31 VCN/subnet/private-IP targets and no 10.21 target. Preparing a local document or editing this repo cannot satisfy that gate.
+
+## Immutable legacy hashes
 
 | File | SHA-256 |
 |---|---|
@@ -27,6 +30,3 @@ The following files are preserved byte for byte under `legacy-phase52/`:
 | `52-02-EVIDENCE.md` | `60ef2b509ec809ad20f66e5b6243b8ef01480019cfff7d68055216d16a0c4a5c` |
 | `52-02-GATE.json` | `c34cc179861f9a5b53c60d5e9c5416a5d907ff98230ef2797fd024f100b03041` |
 | `rollback-receipt.json` | `bd7fc332c671caf6b01fb871c3fd7615334d1dd4ce402ac4f8696d55d4ca584e` |
-
-New Phase 54 evidence must reference these receipts and their hashes; it must
-not rewrite them or present old timestamps/readbacks as current live state.

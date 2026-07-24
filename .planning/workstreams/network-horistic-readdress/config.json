@@ -1,0 +1,25 @@
+{
+  "runtime": "codex",
+  "model_profile": "balanced",
+  "commit_docs": true,
+  "granularity": "fine",
+  "parallelization": false,
+  "mode": "yolo",
+  "workflow": {
+    "research": true,
+    "plan_checker": true,
+    "verifier": true,
+    "nyquist_validation": true,
+    "pattern_mapper": true,
+    "security_enforcement": true,
+    "security_asvs_level": 1,
+    "security_block_on": "high",
+    "tdd_mode": false,
+    "auto_advance": false,
+    "use_worktrees": false
+  },
+  "graphify": {
+    "enabled": true,
+    "auto_update": false
+  }
+}

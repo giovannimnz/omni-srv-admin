@@ -1,61 +1,51 @@
-# Fase 54 — contrato de validação automática
+# Phase 54 — Fail-closed validation contract
 
-Cada plano termina com uma tarefa `type="auto"` de validação. Essa tarefa é
-parte do plano, não uma atividade posterior opcional, e deve ser executada antes
-de liberar o plano seguinte.
+## Canonical interface
 
-## Runner comum
+`modules/fleet-control-plane/scripts/phase54_network_gate.py` remains read-only and is the only producer of canonical gate status:
 
-O primeiro plano cria e testa:
+`python3 modules/fleet-control-plane/scripts/phase54_network_gate.py final --plan 54-NN [--stage preflight|stability|preview|approval|apply|sync] --evidence <evidence.json> --gate <gate.json> --redact`
 
-```text
-modules/fleet-control-plane/scripts/phase54_network_gate.py
-```
+Each plan's last task runs this command. The next plan first invokes `assert-gate` (added by Plan 01) to recompute evidence SHA-256, previous-gate lineage, schema, plan ID, freshness and required checks.
 
-Interface:
+Canonical plan IDs are only `54-01..54-10`. Multi-step plans use the explicit stage allowlist above; concatenated pseudo-IDs such as `54-09-preview` are invalid. Unknown or missing required stage yields `BLOCK`.
 
-```text
-python3 modules/fleet-control-plane/scripts/phase54_network_gate.py final \
-  --plan 54-0N \
-  --evidence .planning/workstreams/network-horistic-readdress/phases/54-.../54-0N-EVIDENCE.json \
-  --gate .planning/workstreams/network-horistic-readdress/phases/54-.../54-0N-GATE.json
-```
+Graphify semantic input formally excludes terminal runtime receipts `54-*-EVIDENCE.json`, `54-*-GATE.json` and `54-*-APPROVAL.json`; these are validated by the gate runner, not knowledge-graph sources. Plan 10 writes all semantic docs, SUMMARY and VERIFICATION before the final Graphify build, then writes only allowlisted runtime receipts. A final read-only `graphify status` runs after the terminal gate and must still report fresh.
 
-O runner deve:
+## Status semantics
 
-- executar todos os probes do plano com timeout e sem retry cego;
-- redigir segredos, tokens, chaves e headers;
-- gravar JSON atomicamente, com timestamp, comandos, exit codes, resultados,
-  SHA-256 do evidence e `status: PASS|WARN|BLOCK|UNKNOWN`;
-- sair `0` somente quando todos os checks obrigatórios passarem;
-- sair diferente de zero e gravar `BLOCK` quando um check obrigatório falhar;
-- converter `UNKNOWN` em `BLOCK` para qualquer check obrigatório; `WARN` só é
-  permitido para check advisory com owner/expiry explícitos;
-- nunca executar uma remoção ou liberar IP público como efeito colateral.
+- Canonical output: `PASS`, `WARN`, `BLOCK`, `UNKNOWN`.
+- Required check failure, timeout, absent/malformed artifact, stale/expired approval, drift, secret hit, partial write, asynchronous UNKNOWN or legacy `BLOCKED` input yields output `BLOCK` and non-zero exit.
+- `WARN` is advisory only and requires `owner`, `reason`, `expires_at`; no required check may be WARN.
+- Evidence cannot nominate its own final status. The runner derives status from plan-specific observed checks.
 
-## Gate entre planos
+## Evidence schema
 
-O início de cada plano posterior deve verificar o gate anterior:
+Every required result records `id`, `required`, `adapter/command_id`, redacted arguments, `started_at`, `finished_at`, `timeout_seconds`, `exit_code`, `observed`, `expected`, `result`, and artifact hashes. OCI writes also require `operation_plan_sha256`, `input_hashes`, `approval_typed`, `approval_expires_at`, `anti_drift_readback_sha256`, `opc_request_id`, receipt state and rollback transaction hash.
 
-```text
-test -s 54-0N-GATE.json && jq -e \
-  '.status == "PASS" and .plan == "54-0N" and (.evidence_sha256 | length == 64)' \
-  54-0N-GATE.json
-```
+## OperationPlan rules
 
-Falha no teste bloqueia a wave e mantém o caminho de rollback. Checkpoints
-humanos continuam obrigatórios antes de writes destrutivos; a validação
-automática não substitui aprovação humana. O agregador da fase grava
-`54-VALIDATION-RESULT.json` e só permite atualizar STATE/ROADMAP/requirements
-quando todos os gates requeridos estão em `PASS`.
+- One immutable OperationPlan per write group.
+- Typed confirmation must name the plan ID and full SHA-256; it is never auto-generated or auto-approved. Confirmation is stored in a separate immutable `54-NN-APPROVAL.json`, never inside the approved OperationPlan.
+- Approval expires before apply if live readbacks, input hashes or target set drift.
+- Apply reads the approved artifact from disk; it never reconstructs commands from prose.
+- OCI public-IP operations never contain release/delete. Poll same OCID and label `horistic-srv-1` to terminal `RESERVED/ASSIGNED`; UNKNOWN blocks new mutations. Reverse starts only from an authoritative terminal state.
 
-## Evidência mínima por plano
+## Wave lineage
 
-| Plano | Validação automática obrigatória |
+Plans `54-02..54-10` require the immediate predecessor gate `PASS`, fresh, hash-valid, complete and matching the predecessor evidence. Plans 54-04/05/06/07/09/10 additionally require the relevant immutable OperationPlan and typed-approval receipt. Approved OperationPlans/transactions are immutable; observations always go to separate evidence artifacts.
+
+## Required plan gates
+
+| Plan | Required proof |
 |---|---|
-| 54-01 | inventário dos quatro profiles, CIDRs/rotas/VNICs/public IP, hosts/serviços/portas/WG/DNS/K3s e backup + restore staging |
-| 54-02 | overlap matrix, `lpg_ready`, CIDR/subnet ACTIVE/containment, regras/rotas ida-retorno e attachment VNIC |
-| 54-03 | endereços/rotas/ARP, K3s worker, public-IP OCIDs/estado, origin direto/Cloudflare/TLS/SSH e reversa dry-run |
-| 54-04 | listeners/HTTP/SSH/TEI/reranker/PgBouncer/Router/exporters, FreeIPA A/PTR/SOA/TTL, forwards e classificação `.21` |
-| 54-05 | target map Horistic `.4 -> .31`, S23 `.9 -> .10`, S20 LAN/WG `.11`; BE3 screenshot/readback/lease/collision, peer11, `AllowedIPs`, handshakes, device-side e fallback |
-| 54-06 | duas matrizes completas separadas por ≥15 min, rollback receipt, public-IP reverse dry-run e residual CIDR explícito |
+| 54-01 | workstream config routing; forged/stale/tampered/UNKNOWN/partial evidence rejected by tests |
+| 54-02 | live inventory, all backups, restore staging, public-IP OCID/binding, DNS/edge baseline |
+| 54-03 | external builder commit/receipt exact 10.31 literals; no target 10.21; VCN architecture decision |
+| 54-04 | target VCN/subnet/DRG/routes/security ACTIVE and bidirectional |
+| 54-05 | VNIC/private `.31`, host/K3s dual-path, public IP same OCID/label `horistic-srv-1` in `RESERVED/ASSIGNED`, reverse only from known terminal state |
+| 54-06 | immutable DNS transaction plus separate evidence: FreeIPA A/PTR/FQDN/SOA/NS, resolver forwarding, services and rollback |
+| 54-07 | hash-approved BE3/WG hub target map; S23 unchanged; S20 `.9` rollback retained; no collisions/duplicate AllowedIPs |
+| 54-08 | device receipts, `.11` handshake before `.9` retirement, private then public Horistic SSH and encrypted fallbacks |
+| 54-09 | two stable matrices >=15 minutes; branch-safe retirement targets by OCID; plan hash/expiry/anti-drift and typed confirmation |
+| 54-10 | retirement readback with zero live 10.21; full matrix; all sync receipts; final gate emitted after docs/knowledge/Graphify/notifications |

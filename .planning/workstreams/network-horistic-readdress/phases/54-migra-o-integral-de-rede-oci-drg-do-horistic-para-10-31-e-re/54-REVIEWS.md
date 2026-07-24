@@ -1,47 +1,42 @@
-# Phase 54 Plan Convergence Review — final independent snapshot
+# Phase 54 Plan Convergence Review
 
-Reviewed read-only after the final corrections: `54-CONTEXT.md`,
-`54-RESEARCH.md`, `54-01` through `54-06`, the Phase 54 entries in
-`ROADMAP.md` and `REQUIREMENTS.md`, and the previous `54-REVIEWS.md`.
-No live OCI, host, DNS, K3s, WireGuard or BE3 action was executed. The prior
-cycle is retained as short history: it had 3 HIGH and 13 actionable findings.
+**Cycle:** 2026-07-24 replan
+**Status:** CONVERGED
+**Scope:** `54-CONTEXT.md`, `54-RESEARCH.md`, `54-VALIDATION*.md`, `54-PROVENANCE.md`, workstream config/ROADMAP/REQUIREMENTS/STATE and `54-01..54-10-PLAN.md`
 
-## H1–H6 status
+Independent plan/safety reviews converged after three correction cycles. Execution may start at 54-01; live writes remain blocked by each plan's own gate and typed approval.
 
-All six HIGH concerns are resolved in the plan contract; their receipts and
-readbacks must still be produced during execution.
+## HIGH findings the replan must close
 
-| ID | Resolution |
-|---|---|
-| H1 | `rollback-receipt.json` now records staging restore command, checksum/timestamp, before/after state and result for route, DNS, K3s-agent, host aliases, peers and public-IP preservation (`54-01:51-55`, `54-06:39-45`). |
-| H2 | Public-IP move/reverse now use source/target private-IP OCIDs, target-public-IP absence, retained reservation, before/after readbacks and direct-origin/Cloudflare smokes (`54-03:50-54`). |
-| H3 | Replacement VNIC uses the documented `oci compute instance attach-vnic` with explicit `--private-ip 10.31.1.31`, `--assign-public-ip false`, `--wait`, profile/request-id and `detach-vnic` rollback (`54-02:47-53`). |
-| H4 | Horistic is explicitly a `k3s-agent` worker; unit/env, node-IP, drain/rejoin, CNI/return-route and worker receipt are specified (`54-03:43-47`). |
-| H5 | FreeIPA is the sole authoritative write path; AdGuard/CoreDNS are forwards/reads, with explicit `ipa dnsrecord-mod`, `dnsrecord-show`, SOA/TTL and non-authoritative resolver checks (`54-04:53-57`). |
-| H6 | Historical `peer11` is reconciled by owner/public key, deactivation/readback and inactive-device proof before S20 `.11`; hub before/after, explicit S23 routes and fallback are captured (`54-05:51-56`). |
+1. Phase 52 approvals are historical unless Wave 0 proves current scope/hash/expiry/anti-drift.
+2. Every write has a typed, hash-bound, expiring OperationPlan approval.
+3. Live readbacks choose current VCN versus replacement VCN; no 10.21 residual is accepted.
+4. DRG and security prove both forward and return paths.
+5. Public IP polling reaches `RESERVED/ASSIGNED`; timeout is terminal and never blindly retried.
+6. DNS consumes Phase 47.1 release or executes a safe self-contained authority transaction.
+7. Runner stops trusting self-asserted evidence, normalizes BLOCK/BLOCKED safely and gains adversarial tests.
+8. Retirement is escalated/destructive with separate approval/hash/rollback.
+9. Nyquist `54-VALIDATION.md` maps every plan and negative fixture.
+10. Reverse zone/PTR is executable and verified, not prose-only.
+11. Research questions are resolved into explicit preconditions; Graphify pre/post gates are in plans.
 
-## A1–A13 status
+## Review protocol
 
-All prior actionable concerns are resolved at plan-contract level; live
-validation remains gated by the evidence artifacts and human checkpoints.
+- Run independent plan checker after all ten plan files validate structurally.
+- Record each finding as `BLOCKER`, `WARNING` or `INFO`, with affected plan/task and disposition.
+- Re-run until no BLOCKER/HIGH remains or the operator explicitly stops; do not silently convert a pending review into PASS.
 
-| ID | Resolution |
-|---|---|
-| A1 | `54-06:48-52` distinguishes retiring `.21` private-IP/VNIC/subnet from an OCI-retained primary `10.21.0.0/16` residual. |
-| A2 | `54-02:40-45` persists the overlap/route table with profile, source, destination, CIDR, next-hop, port, direction, return path, rule ID and result for all ATIUS↔Horistic paths. |
-| A3 | `54-02:40-45` defines ordered writes, ACTIVE/AVAILABLE waits, timeout, `UPDATING`/unknown-write blocking and no blind retry. |
-| A4 | `54-05` enumerates the exact Horistic `.4 -> .31`, S23 `.9 -> .10` and S20 `.11` target map, S23 `.10` `AllowedIPs` (`10.11.1.11/32`, `10.12.1.12/32`, `10.13.1.13/32`, `10.31.1.31/32`, `10.100.100.0/24` and approved services), plus host/device/tunnel/fallback checks. |
-| A5 | `54-05:45-49` names `/home/ubuntu/GitHub/vpn-atius/home-proxy`, its headless Playwright/console route and receipt, and blocks when powered-off collision proof is unavailable. |
-| A6 | `54-04:45-57` enumerates the target paths, owners/diff-by-owner checks, S20 inventory creation rule and explicit absent receipt for the remote home-proxy AGENTS path. |
-| A7 | `54-04:55-56` creates `.21-CLASSIFICATION.md` with active/rollback allowlist and historical/benchmark/proposal/NFS/Wayland denylist. |
-| A8 | `54-06:32-37` requires two reads at least 15 minutes apart, DNS TTL/cache and public-edge checks, resetting on failure. |
-| A9 | `ROADMAP.md:677-688` now reports six plans and matches the six-wave execution order. |
-| A10 | `54-03` owns only `NET-04`; `NET-06`/`NET-07` are owned by `54-05`. |
-| A11 | `54-03:43-47` requires effective unit/env, node-IP before/after, drain/rejoin trigger, CNI/return-route probes and worker rollback receipt. |
-| A12 | `54-04:53-56` supplies concrete FreeIPA commands and `dig +norecurse`/SOA/TTL proof that only FreeIPA is authoritative. |
-| A13 | `54-05:54-56` requires peer11 owner/public-key and hub before/after readbacks plus confirmation that the pending profile is inactive on known devices. |
+## Cycle log
 
-Remaining work is execution of the stated commands, evidence capture and
-human gates only; no planning blocker remains.
+| Cycle | Review | High | Actionable | Disposition |
+|---|---|---:|---:|---|
+| 1 | plan checker | 11 | 6 | Replanned into ten sequential waves |
+| 1 | assumptions/safety | 11 | 11 | Rebased live OCI/DNS/edge assumptions |
+| 2 | plan checker | 4 | 2 | Added stage-aware gates, branch-safe retirement and terminal sync |
+| 2 | safety | 5 | 7 | Fixed edge approvals, S20 dual-path, DNS evidence and public-IP UNKNOWN |
+| 3 | plan checker | 1 | 0 | Added separate immutable approval receipts |
+| 3 | safety | 2 | 3 | Fixed terminal ordering, stages and Graphify receipt contract |
+| 4 | plan checker | 0 | 1 | Added missing 54-07 gate ownership |
+| 4 | safety | 0 | 0 | PASS |
 
-CYCLE_SUMMARY: current_high=0 current_actionable=0
+`CYCLE_SUMMARY current_high=0 current_actionable=0`
