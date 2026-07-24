@@ -10,15 +10,26 @@
 **Goal:** Migrar integralmente o `horistic-srv` de `10.21.0.0/16` / `10.21.1.0/24` / `10.21.1.21` para `10.31.0.0/16` / `10.31.1.0/24` / `10.31.1.31`, preservando por OCID a reserva pública `163.176.232.119`; convergir VCN/subnet/DRG/routes/VNIC/private IP, DNS A/PTR/FQDN/resolvers, host/K3s/serviços e documentação; migrar Horistic WireGuard `.4 -> .31`; preservar S23 em LAN `192.168.1.10` e WireGuard `10.100.100.10`; migrar S20 de LAN/WireGuard `.9 -> .11`.
 **Requirements:** NET-01..NET-11
 **Depends on:** Phase 45 como baseline DRG; Phase 47.1 como release gate DNS ou transação DNS autocontida que prove autoridade/rollback
-**Status:** Planned; review converged; nenhum OCI write autorizado antes dos gates
+**Status:** In Progress; 54-01 PASS/hash-valid; nenhum OCI write autorizado antes dos gates posteriores
 **Risk:** VERY HIGH
-**Plans:** 10 plans
+**Plans:** 1/10 plans executed
+
+- [x] 54-01-PLAN.md
+- [ ] 54-02-PLAN.md
+- [ ] 54-03-PLAN.md
+- [ ] 54-04-PLAN.md
+- [ ] 54-05-PLAN.md
+- [ ] 54-06-PLAN.md
+- [ ] 54-07-PLAN.md
+- [ ] 54-08-PLAN.md
+- [ ] 54-09-PLAN.md
+- [ ] 54-10-PLAN.md
 
 ### Execution waves
 
 Todas as waves são sequenciais. Cada plano termina com gate automático fail-closed; somente `PASS` hash-valid e fresh libera o próximo.
 
-- [ ] `54-01-PLAN.md` — Corrigir runtime do workstream e endurecer runner/testes fail-closed.
+- [x] `54-01-PLAN.md` — Corrigir runtime do workstream e endurecer runner/testes fail-closed.
 - [ ] `54-02-PLAN.md` — Recoletar inventário live, backups, rollback e baseline público/DNS/edge.
 - [ ] `54-03-PLAN.md` — Bloquear writes até o builder `oci-admin` publicar address plan 10.31 e decidir VCN atual versus substituta.
 - [ ] `54-04-PLAN.md` — Aplicar VCN/subnet/DRG/routes/security do target com ida/retorno comprovados.
