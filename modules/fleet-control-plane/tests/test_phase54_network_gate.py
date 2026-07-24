@@ -194,7 +194,7 @@ def _write_evidence(
             "operation": "read",
         }
     if plan in {"54-07", "54-08", "54-10"}:
-        evidence["target_map"] = gate.EDGE_TARGET_MAP
+        evidence["target_map"] = json.loads(json.dumps(gate.EDGE_TARGET_MAP))
     if plan == "54-10":
         evidence["operational_10_21"] = []
     Path(args.evidence).write_text(json.dumps(evidence) + "\n", encoding="utf-8")
@@ -282,6 +282,14 @@ def test_tampered_artifact_hash_blocks(tmp_path: Path) -> None:
     _assert_blocked(args, "artifact_hashes")
 
 
+def test_unredacted_secret_material_blocks(tmp_path: Path) -> None:
+    args, evidence = _write_evidence(tmp_path)
+    evidence["checks"][0]["arguments"] = ["Authorization: Bearer leaked-fixture"]
+    Path(args.evidence).write_text(json.dumps(evidence), encoding="utf-8")
+
+    _assert_blocked(args, "redaction")
+
+
 def test_wrong_evidence_plan_blocks(tmp_path: Path) -> None:
     args, evidence = _write_evidence(tmp_path)
     evidence["plan"] = "54-02"
@@ -334,6 +342,14 @@ def test_expired_approval_blocks(tmp_path: Path) -> None:
     args, evidence = _write_evidence(tmp_path, "54-05", "apply")
     evidence["operation"]["approval_expires_at"] = _ts(-1)
     Path(args.evidence).write_text(json.dumps(evidence), encoding="utf-8")
+
+    _assert_blocked(args, "operation_lineage")
+
+
+def test_tampered_operation_input_hash_blocks(tmp_path: Path) -> None:
+    args, evidence = _write_evidence(tmp_path, "54-05", "apply")
+    input_path = next(iter(evidence["operation"]["input_hashes"]))
+    Path(input_path).write_text('{"target":"10.21.1.21"}\n', encoding="utf-8")
 
     _assert_blocked(args, "operation_lineage")
 
