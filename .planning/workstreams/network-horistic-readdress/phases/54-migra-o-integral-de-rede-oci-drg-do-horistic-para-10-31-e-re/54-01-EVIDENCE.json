@@ -1,0 +1,147 @@
+{
+  "schema": "phase54.evidence.v1",
+  "plan": "54-01",
+  "stage": null,
+  "status": "PASS",
+  "generated_at": "2026-07-24T13:41:47Z",
+  "expires_at": "2026-07-24T13:56:47Z",
+  "redacted": true,
+  "mutations_attempted": false,
+  "source_commit": "144a40019cdcd7623ad9ae055dcdbc51d39fcd21",
+  "checks": [
+    {
+      "id": "workstream_config_routing",
+      "required": true,
+      "adapter": "gsd-tools",
+      "command_id": "phase54.workstream_config_routing",
+      "arguments": [
+        "<redacted>"
+      ],
+      "redacted": true,
+      "started_at": "2026-07-24T13:40:02Z",
+      "finished_at": "2026-07-24T13:40:02Z",
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "observed": "PASS",
+      "expected": "PASS",
+      "result": "PASS",
+      "artifact_hashes": {
+        ".planning/workstreams/network-horistic-readdress/config.json": "51a2392176b5821a7da507759449c1df633be0212f2191004801f203e6205d0b"
+      }
+    },
+    {
+      "id": "focused_pytest",
+      "required": true,
+      "adapter": "pytest",
+      "command_id": "phase54.focused_pytest",
+      "arguments": [
+        "<redacted>"
+      ],
+      "redacted": true,
+      "started_at": "2026-07-24T13:39:50Z",
+      "finished_at": "2026-07-24T13:39:51Z",
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "observed": "PASS",
+      "expected": "PASS",
+      "result": "PASS",
+      "artifact_hashes": {
+        "modules/fleet-control-plane/tests/test_phase54_network_gate.py": "36b8ff8cc0d50c2d1ad655460304b63dfb11ff5a1ad2ec98ff0fbdb285416509"
+      }
+    },
+    {
+      "id": "syntax_compile",
+      "required": true,
+      "adapter": "python3",
+      "command_id": "phase54.syntax_compile",
+      "arguments": [
+        "<redacted>"
+      ],
+      "redacted": true,
+      "started_at": "2026-07-24T13:39:51Z",
+      "finished_at": "2026-07-24T13:39:51Z",
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "observed": "PASS",
+      "expected": "PASS",
+      "result": "PASS",
+      "artifact_hashes": {
+        "modules/fleet-control-plane/scripts/phase54_network_gate.py": "09f215f2a417566f9fb11a8f37f35f977925a867dadbb11951701592d40229ba"
+      }
+    },
+    {
+      "id": "adversarial_matrix",
+      "required": true,
+      "adapter": "pytest",
+      "command_id": "phase54.adversarial_matrix",
+      "arguments": [
+        "<redacted>"
+      ],
+      "redacted": true,
+      "started_at": "2026-07-24T13:39:50Z",
+      "finished_at": "2026-07-24T13:39:51Z",
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "observed": "PASS",
+      "expected": "PASS",
+      "result": "PASS",
+      "artifact_hashes": {
+        "modules/fleet-control-plane/tests/test_phase54_network_gate.py": "36b8ff8cc0d50c2d1ad655460304b63dfb11ff5a1ad2ec98ff0fbdb285416509"
+      }
+    },
+    {
+      "id": "secret_scan",
+      "required": true,
+      "adapter": "ripgrep",
+      "command_id": "phase54.secret_scan",
+      "arguments": [
+        "<redacted>"
+      ],
+      "redacted": true,
+      "started_at": "2026-07-24T13:40:13Z",
+      "finished_at": "2026-07-24T13:40:13Z",
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "observed": "PASS",
+      "expected": "PASS",
+      "result": "PASS",
+      "artifact_hashes": {}
+    },
+    {
+      "id": "graphify_preflight",
+      "required": true,
+      "adapter": "gsd-tools",
+      "command_id": "phase54.graphify_preflight",
+      "arguments": [
+        "<redacted>"
+      ],
+      "redacted": true,
+      "started_at": "2026-07-24T13:40:20Z",
+      "finished_at": "2026-07-24T13:40:21Z",
+      "timeout_seconds": 60,
+      "exit_code": 0,
+      "observed": "PASS",
+      "expected": "PASS",
+      "result": "PASS",
+      "artifact_hashes": {}
+    }
+  ],
+  "artifacts": [
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/config.json",
+      "sha256": "51a2392176b5821a7da507759449c1df633be0212f2191004801f203e6205d0b"
+    },
+    {
+      "path": "modules/fleet-control-plane/scripts/phase54_network_gate.py",
+      "sha256": "09f215f2a417566f9fb11a8f37f35f977925a867dadbb11951701592d40229ba"
+    },
+    {
+      "path": "modules/fleet-control-plane/tests/test_phase54_network_gate.py",
+      "sha256": "36b8ff8cc0d50c2d1ad655460304b63dfb11ff5a1ad2ec98ff0fbdb285416509"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-VALIDATION.md",
+      "sha256": "4e4ae7155a112ef07d75dc89a0b977e14e28ab8ca1950e92a729abbcd8aefaac"
+    }
+  ]
+}

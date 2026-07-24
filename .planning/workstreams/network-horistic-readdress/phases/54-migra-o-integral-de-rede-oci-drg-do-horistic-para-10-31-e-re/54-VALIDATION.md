@@ -2,8 +2,8 @@
 phase: 54
 slug: migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re
 status: draft
-nyquist_compliant: false
-wave_0_complete: false
+nyquist_compliant: true
+wave_0_complete: true
 created: 2026-07-24
 ---
 
