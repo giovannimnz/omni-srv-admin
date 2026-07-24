@@ -50,12 +50,29 @@
 **User's choice:** Dois pods Qwen Embedding desde o inicio, dois pipeline slots, namespace separado e igualdade 2+2 no teste integrado.
 **Notes:** O primeiro boot do reranker usa um pod para medir memoria e ranking; depois escala para dois.
 
-## Canary, promocao e rollback
+## Envelope 2–5 pods sem HPA
+
+**User's choice:** Replanejar com 2–5 pods Qwen, priorizando menor consumo de
+processador e deixando o agente definir a combinação.
+
+**Decision:** Quatro pods permanentes (2 embedding + 2 reranker, 2000m), piso
+degradado 1+1 (1000m) e máximo cinco (2500m) somente como um surge serializado
+de rollout após GTE retirement e headroom comprovado. Durante coexistência,
+quota nega o quinto; após retirement, quota nega o sexto. HPA e terceiro
+pipeline permanecem proibidos.
+
+## Histórico: canary, promocao e rollback
+
+> Superseded em 2026-07-23 pela autorização explícita registrada em
+> `59-CONTEXT.md` D-01 e D-21: Qwen torna-se titular automaticamente na Wave 6
+> quando todos os gates passam; GTE permanece rollback-ready até o retirement
+> da Wave 8. A tabela abaixo preserva a conversa anterior, não a arquitetura
+> executável atual.
 
 | Option | Description | Selected |
 |--------|-------------|----------|
 | Promocao imediata | Trocar GTE pelo Qwen apos smoke | |
-| GTE titular com Qwen canary | Promocao somente apos gates e aprovacao | ✓ |
+| GTE titular com Qwen canary | Promocao somente apos gates e aprovacao | ✓ (superseded) |
 | Soak curto | Apenas validacao funcional | |
 | Soak de 72 horas | Estabilidade antes de qualquer promocao | ✓ |
 | Rollback por alias | Retornar para colecoes e aliases GTE | ✓ |
@@ -64,9 +81,13 @@
 **User's choice:** Qwen fica somente em teste até completar qualidade, recursos, pipeline e estabilidade; GTE continua como fallback titular.
 **Notes:** Gates incluem cosine single/batch >= 0.9999, qualidade não inferior ao GTE, CPU-seconds até 5% acima, ausência de OOM/starvation e soak mínimo de 72 horas.
 
+**Decisão vigente:** cutover Qwen automático e transacional após gates; soak
+ocorre com Qwen titular; rollback produtivo Qwen→GTE→Qwen precede a remoção dos
+workloads GTE.
+
 ## the agent's Discretion
 
-- Nomes finais de recursos k3s, portas privadas, jobs de seed, detalhes de PVC e parâmetros HPA dentro dos limites decididos.
+- Nomes finais de recursos k3s, portas privadas, jobs de seed e detalhes de PVC dentro dos limites decididos; HPA não faz parte da Phase 59.
 - Mecanismo compartilhado da pipeline lease se o router tiver múltiplas réplicas.
 - Ajuste de memória após o warmup real do Qwen Reranker.
 

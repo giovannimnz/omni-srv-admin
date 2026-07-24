@@ -71,10 +71,17 @@ o caminho `.21` antes dos gates.
 Esta é a Phase 54 isolada do workstream; a Phase 54 de `rustdesk-fleet`
 permanece intacta.
 
-## Parallel Workstream: Qwen Local AI Canary
+## Parallel Workstream: Qwen Local AI Cutover
 
-**Goal:** validar Qwen3 embedding/rerank ARM64 como canário reversível, com GTE
-titular, collections separadas e promoção somente manual.
+**Goal:** executar o cutover autorizado para Qwen3 embedding/rerank ARM64.
+GTE permanece titular e rollback-ready até Qwen passar os gates de autoridade,
+artefatos, rollback anchor, rollout, router, qualidade/capacidade e cutover.
+Qwen torna-se titular somente no cutover transacional aprovado e permanece sob
+soak/drill; GTE continua disponível como rollback até o gate final de
+retirement comprovar restore/replay e remoção segura dos workloads. O runtime
+Qwen fica permanente em 2 embedding + 2 reranker (`2000m`), aceita 1+1 somente
+como estado degradado e usa um quinto pod (`2500m`) apenas como surge
+serializado pós-GTE; HPA, sexto pod e terceiro pipeline são proibidos.
 
 **Canonical planning:**
 `.planning/workstreams/qwen-local-ai/{REQUIREMENTS,ROADMAP,STATE}.md`.
@@ -114,7 +121,7 @@ A antiga Phase 51 local foi reenumerada como Phase 59 para preservar as Phases
 
 ### Local AI lane - Phase 59
 
-- [ ] **QAI-01..QAI-08**: canário Qwen, collections 1024d, governor, qualidade/capacidade, soak e rollback convergem sem promoção automática.
+- [ ] **QAI-01..QAI-08**: cutover Qwen autorizado e fail-closed; Qwen torna-se titular na Wave 6 somente após os gates, permanece sob soak/drill e GTE fica rollback-ready até o retirement da Wave 8.
 
 ### v1.4 - Atius-wide SSO / Login
 
@@ -206,7 +213,8 @@ A antiga Phase 51 local foi reenumerada como Phase 59 para preservar as Phases
 | RustDesk v1.9 starts OSS and direct-first | Five-host single-operator scope does not require Pro control plane; relay remains testable fallback | Pending validation; Pro becomes mandatory if SSO/RBAC/human audit is required |
 | RustDesk uses isolated GSD workstream | Preserve Phase 48 and prevent cross-lane planning mutations | Workstreams migrated with external snapshot on 2026-07-19 |
 | Network readdress uses isolated Phase 54 | Preserve canonical RustDesk numbering while honoring the operator-selected 52 -> 54 reenumeration | Legacy receipts preserved byte for byte on 2026-07-23 |
-| Qwen canary moved from Phase 51 to 59 | Preserve canonical RustDesk Phases 51-58 from `atius-srv-1` | Reenumerated with path and artifact IDs on 2026-07-23 |
+| Qwen cutover moved from Phase 51 to 59 | Preserve canonical RustDesk Phases 51-58 from `atius-srv-1` | Reenumerated with path and artifact IDs on 2026-07-23 |
+| Phase 59 performs gated Qwen cutover | Qwen can only become titular after all pre-cutover gates; GTE remains the proven rollback target through soak and drill | Retirement occurs only after replay/restore and final zero-workload readback |
 
 ## Evolution
 
