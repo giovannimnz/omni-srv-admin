@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import base64
+import hashlib
 import json
 import pathlib
 import re
@@ -38,6 +39,7 @@ RAW_SECRET_RE = re.compile(
     ["']?[A-Za-z0-9+/=_-]{16,}
     """
 )
+SERVER_OWNED_CLIENT_METADATA = frozenset({"access"})
 
 
 def load_secret() -> str:
@@ -96,6 +98,45 @@ def token_roles(_: argparse.Namespace) -> None:
             "resourceAccessClients": ["realm-management"],
             "realmManagementRoles": roles,
             "exact": True,
+        },
+        sys.stdout,
+        separators=(",", ":"),
+    )
+
+
+def extract_json_field(args: argparse.Namespace) -> None:
+    payload = json.load(sys.stdin)
+    value = payload.get(args.field) if isinstance(payload, dict) else None
+    if value is None and args.optional:
+        return
+    if not isinstance(value, str) or not value:
+        raise SystemExit("requested secret response field is missing")
+    sys.stdout.write(value)
+
+
+def exact_client_projection(args: argparse.Namespace) -> None:
+    expected_path = pathlib.Path(args.expected)
+    expected = json.loads(expected_path.read_text(encoding="utf-8"))
+    actual = json.load(sys.stdin)
+    if not isinstance(expected, dict) or not isinstance(actual, dict):
+        raise SystemExit("client projection requires JSON objects")
+    unexpected = set(actual) - set(expected) - SERVER_OWNED_CLIENT_METADATA
+    missing = set(expected) - set(actual)
+    if unexpected or missing:
+        raise SystemExit("client readback top-level field set is not exact")
+    projected = {key: actual[key] for key in expected}
+    if projected != expected:
+        raise SystemExit("client readback does not match the exact emitted projection")
+    attributes = projected.get("attributes")
+    if not isinstance(attributes, dict) or set(attributes) != set(expected.get("attributes", {})):
+        raise SystemExit("client readback attribute set is not exact")
+    json.dump(
+        {
+            "clientId": projected.get("clientId"),
+            "exactTopLevelFields": sorted(projected),
+            "strippedServerMetadata": sorted(set(actual) & SERVER_OWNED_CLIENT_METADATA),
+            "exact": True,
+            "secretsRecorded": False,
         },
         sys.stdout,
         separators=(",", ":"),
@@ -175,24 +216,27 @@ def readonly_client_readback(args: argparse.Namespace) -> None:
     post_logout = (client.get("attributes") or {}).get("post.logout.redirect.uris")
     if args.expected_post_logout_uri and post_logout != args.expected_post_logout_uri:
         raise SystemExit("read-only target client post-logout URI mismatch")
-    json.dump(
-        {
-            "clientCount": 1,
-            "client": {
-                "id": client.get("id"),
-                "clientId": client.get("clientId"),
-                "enabled": client.get("enabled"),
-                "protocol": client.get("protocol"),
-                "publicClient": client.get("publicClient"),
-                "redirectUris": client.get("redirectUris") or [],
-                "webOrigins": client.get("webOrigins") or [],
-                "postLogoutRedirectUri": post_logout,
-            },
-            "secretsOutput": False,
+    result = {
+        "clientCount": 1,
+        "client": {
+            "id": client.get("id"),
+            "clientId": client.get("clientId"),
+            "enabled": client.get("enabled"),
+            "protocol": client.get("protocol"),
+            "publicClient": client.get("publicClient"),
+            "redirectUris": client.get("redirectUris") or [],
+            "webOrigins": client.get("webOrigins") or [],
+            "postLogoutRedirectUri": post_logout,
         },
-        sys.stdout,
-        separators=(",", ":"),
-    )
+        "secretsOutput": False,
+    }
+    if args.ephemeral_material:
+        ephemeral = [values["KEYCLOAK_READONLY_CLIENT_SECRET"], token]
+        refresh_token = token_response.get("refresh_token") if isinstance(token_response, dict) else None
+        if isinstance(refresh_token, str) and refresh_token:
+            ephemeral.append(refresh_token)
+        result["_ephemeralSecretMaterial"] = ephemeral
+    json.dump(result, sys.stdout, separators=(",", ":"))
 
 
 def scan_json_scalars(value: object, source: pathlib.Path, findings: list[str], prefix: str = "$") -> None:
@@ -207,24 +251,57 @@ def scan_json_scalars(value: object, source: pathlib.Path, findings: list[str], 
             scan_json_scalars(child, source, findings, f"{prefix}[{index}]")
 
 
+def secret_variants(material: bytes) -> set[bytes]:
+    variants = {
+        material,
+        base64.b64encode(material),
+        base64.urlsafe_b64encode(material),
+        base64.urlsafe_b64encode(material).rstrip(b"="),
+        urllib.parse.quote_from_bytes(material, safe="").encode(),
+        urllib.parse.quote_plus(material.decode("utf-8"), safe="").encode(),
+        material.hex().encode(),
+        hashlib.sha256(material).hexdigest().encode(),
+    }
+    return {value for value in variants if value}
+
+
+def secret_materials_from_stdin(enabled: bool) -> list[set[bytes]]:
+    if not enabled:
+        return []
+    payload = sys.stdin.buffer.read()
+    materials = [item for item in payload.split(b"\0") if item]
+    if any(len(item) < 8 for item in materials):
+        raise SystemExit("secret material fingerprint input is unexpectedly short")
+    return [secret_variants(item) for item in materials]
+
+
 def scan_artifacts(args: argparse.Namespace) -> None:
     findings: list[str] = []
     scanned: list[str] = []
+    material_variants = secret_materials_from_stdin(args.secret_material_stdin)
     for raw_path in args.path:
         target = pathlib.Path(raw_path)
         candidates = [target]
         if target.is_dir():
-            candidates = sorted(item for item in target.rglob("*") if item.is_file())
+            candidates = []
+            for item in sorted(target.rglob("*")):
+                if item.is_symlink():
+                    raise SystemExit(f"secret scan refuses symlink artifact under {target}")
+                if item.is_file():
+                    candidates.append(item)
         for candidate in candidates:
             metadata = candidate.lstat()
             if candidate.is_symlink() or not candidate.is_file():
                 raise SystemExit(f"secret scan refuses non-regular artifact: {candidate}")
             if metadata.st_size > 2 * 1024 * 1024:
                 raise SystemExit(f"secret scan artifact exceeds 2 MiB: {candidate}")
-            text = candidate.read_text(encoding="utf-8", errors="strict")
+            raw = candidate.read_bytes()
+            text = raw.decode("utf-8", errors="strict")
             scanned.append(str(candidate))
             if RAW_SECRET_RE.search(text):
                 findings.append(f"{candidate}:raw-secret-like-assignment")
+            if any(variant in raw for variants in material_variants for variant in variants):
+                findings.append(f"{candidate}:known-secret-material-or-fingerprint")
             try:
                 payload = json.loads(text)
             except json.JSONDecodeError:
@@ -253,8 +330,15 @@ def parse_args() -> argparse.Namespace:
     readback = subparsers.add_parser("readonly-client-readback")
     readback.add_argument("--target-client-id", required=True)
     readback.add_argument("--expected-post-logout-uri")
+    readback.add_argument("--ephemeral-material", action="store_true")
+    extract = subparsers.add_parser("extract-json-field")
+    extract.add_argument("--field", required=True)
+    extract.add_argument("--optional", action="store_true")
+    projection = subparsers.add_parser("exact-client-projection")
+    projection.add_argument("--expected", required=True)
     scan = subparsers.add_parser("scan-artifacts")
     scan.add_argument("--path", action="append", required=True)
+    scan.add_argument("--secret-material-stdin", action="store_true")
     return parser.parse_args()
 
 
@@ -264,6 +348,8 @@ if __name__ == "__main__":
         "vault-json": vault_json,
         "token-form": token_form,
         "token-roles": token_roles,
+        "extract-json-field": extract_json_field,
+        "exact-client-projection": exact_client_projection,
         "verify-exports": verify_exports,
         "readonly-client-readback": readonly_client_readback,
         "scan-artifacts": scan_artifacts,

@@ -58,12 +58,45 @@ FORWARD_EVENT_PREFIX="0"
 SCRATCH=""
 KCADM_CONFIG=""
 BACKUP=""
+TEST_HARNESS="${SCRIPT_DIR%/lib}/tests/keycloak-admin-readonly-harness.mjs"
+SECRET_MATERIALS=()
 
 is_test_transaction() {
-  [[ "${MODE}" == "test-transaction" && "${KARO_TEST_CONTEXT:-}" == "candidate" ]]
+  [[ "${MODE}" == "test-transaction" ]]
 }
 
-if ! is_test_transaction; then
+verify_test_harness() {
+  [[ "${KARO_TEST_CONTEXT:-}" == "runner-v1" ]]
+  [[ "${KARO_TEST_PARENT_PID:-}" == "${PPID}" ]]
+  [[ -r "/proc/${PPID}/cmdline" ]]
+  /usr/bin/tr '\0' '\n' < "/proc/${PPID}/cmdline" |
+    /usr/bin/grep -Fxq "${TEST_HARNESS}"
+  local root_info root_real
+  root_real="$(/usr/bin/readlink -f -- "${KARO_TEST_ROOT:?KARO_TEST_ROOT required}")"
+  [[ "${root_real}" == /tmp/karo-harness-* ]]
+  root_info="$(/usr/bin/stat -Lc '%a:%u:%g:%F' "${root_real}")"
+  [[ "${root_info}" == "700:$(id -u):$(id -g):directory" ]]
+}
+
+remember_secret_material() {
+  local value="$1"
+  [[ "${#value}" -ge 8 ]] || {
+    echo "secret material is unexpectedly short" >&2
+    return 1
+  }
+  SECRET_MATERIALS+=("${value}")
+}
+
+if is_test_transaction; then
+  verify_test_harness || {
+    echo "test transaction requires the explicit internally rooted harness" >&2
+    exit 2
+  }
+else
+  if /usr/bin/env | /usr/bin/grep -q '^KARO_TEST_'; then
+    echo "production modes reject KARO_TEST_* environment controls" >&2
+    exit 2
+  fi
   [[ "${EUID}" -eq 0 ]] || { echo "live adapter requires root" >&2; exit 2; }
   [[ "${MODE}" == "apply" || "${MODE}" == "preflight" ]] || {
     echo "only preflight/apply modes are supported" >&2
@@ -375,6 +408,7 @@ PY
   )
   [[ "${#values[@]}" -eq 2 ]]
   local recovery_username="${values[0]}"
+  remember_secret_material "${values[1]}"
   export KC_CLI_PASSWORD="${values[1]}"
   unset 'values[1]'
   "${KCADM}" config credentials \
@@ -433,8 +467,7 @@ write_client_payload() {
 
 maybe_inject_response_loss() {
   local boundary="$1"
-  if [[ "${KARO_TEST_CONTEXT:-}" == "candidate" &&
-        "${KARO_FAIL_AFTER:-}" == "${boundary}" ]]; then
+  if is_test_transaction && [[ "${KARO_FAIL_AFTER:-}" == "${boundary}" ]]; then
     return 1
   fi
 }
@@ -478,18 +511,10 @@ assert_exact_client_and_roles() {
   CURRENT_STEP="exact-token-role-readback"
   "${KCADM}" get "clients/${CLIENT_UUID}" -r "${REALM}" --config "${KCADM_CONFIG}" \
     > "${SCRATCH}/client-readback.json"
-  /usr/bin/jq -e --arg id "${CLIENT_UUID}" '
-    .id==$id and .clientId=="keycloak-admin-readonly" and
-    (.name // "")=="" and (.description // "")=="" and
-    .enabled==true and .protocol=="openid-connect" and
-    .clientAuthenticatorType=="client-secret" and
-    .publicClient==false and .bearerOnly==false and
-    .standardFlowEnabled==false and .directAccessGrantsEnabled==false and
-    .implicitFlowEnabled==false and .serviceAccountsEnabled==true and
-    .fullScopeAllowed==false and
-    (.redirectUris // [])==[] and (.webOrigins // [])==[] and
-    (.attributes // {})=={}
-  ' "${SCRATCH}/client-readback.json" >/dev/null
+  "${SECRET_PIPE}" exact-client-projection \
+    --expected "${SCRATCH}/client.json" \
+    < "${SCRATCH}/client-readback.json" \
+    > "${SCRATCH}/client-projection-readback.json"
 
   "${KCADM}" get "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}" \
     -r "${REALM}" --config "${KCADM_CONFIG}" > "${SCRATCH}/direct-roles.json"
@@ -508,14 +533,27 @@ assert_exact_client_and_roles() {
     ((.clientMappings // {})|keys)==["realm-management"] and
     ([.clientMappings["realm-management"].mappings[].name]|sort)==["query-clients","view-clients"]
   ' "${SCRATCH}/all-scope-mappings.json" >/dev/null
-  "${KCADM}" get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
-    --config "${KCADM_CONFIG}" |
+  local secret_response client_secret token_response access_token refresh_token
+  secret_response="$("${KCADM}" get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
+    --config "${KCADM_CONFIG}")"
+  client_secret="$(printf '%s' "${secret_response}" |
+    "${SECRET_PIPE}" extract-json-field --field value)"
+  remember_secret_material "${client_secret}"
+  token_response="$(printf '%s' "${secret_response}" |
     "${SECRET_PIPE}" token-form --base-url "${BASE_URL}" --realm "${REALM}" \
       --client-id "${CLIENT_ID}" |
     /usr/bin/curl --fail --silent --show-error \
       -H 'Content-Type: application/x-www-form-urlencoded' --data-binary @- \
-      "${BASE_URL}/realms/${REALM}/protocol/openid-connect/token" |
+      "${BASE_URL}/realms/${REALM}/protocol/openid-connect/token")"
+  access_token="$(printf '%s' "${token_response}" |
+    "${SECRET_PIPE}" extract-json-field --field access_token)"
+  remember_secret_material "${access_token}"
+  refresh_token="$(printf '%s' "${token_response}" |
+    "${SECRET_PIPE}" extract-json-field --field refresh_token --optional)"
+  if [[ -n "${refresh_token}" ]]; then remember_secret_material "${refresh_token}"; fi
+  printf '%s' "${token_response}" |
     "${SECRET_PIPE}" token-roles > "${SCRATCH}/token-role-readback.json"
+  unset secret_response client_secret token_response access_token refresh_token
 }
 
 create_client_and_roles() {
@@ -548,13 +586,19 @@ write_vault_secret() {
   VAULT_ARMED="true"
   local helper_b64
   helper_b64="$(/usr/bin/base64 -w0 "${VAULT_CAS_HELPER}")"
-  "${KCADM}" get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
-    --config "${KCADM_CONFIG}" |
+  local secret_response client_secret
+  secret_response="$("${KCADM}" get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
+    --config "${KCADM_CONFIG}")"
+  client_secret="$(printf '%s' "${secret_response}" |
+    "${SECRET_PIPE}" extract-json-field --field value)"
+  remember_secret_material "${client_secret}"
+  printf '%s' "${secret_response}" |
     "${SECRET_PIPE}" vault-json --base-url "${BASE_URL}" --realm "${REALM}" \
       --client-id "${CLIENT_ID}" |
     /usr/bin/ssh -T -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
       "sudo /usr/bin/python3 -c \"import base64;exec(base64.b64decode('${helper_b64}'))\" '${VAULT_PATH}' '${cas}' '${expected_version}'" \
       > "${SCRATCH}/vault-write-result.json"
+  unset secret_response client_secret
   maybe_inject_response_loss "vault-secret-write-v${expected_version}"
   /usr/bin/jq -e --argjson expected "${expected_version}" '.version==$expected' \
     "${SCRATCH}/vault-write-result.json" >/dev/null
@@ -595,13 +639,23 @@ apply_exporter_transform() {
 }
 
 assert_profile_hydration_and_inventory() {
+  local inventory_with_material material_count material_index material
   "${LOCAL_VAULT_ENV}" keycloak-admin-readonly |
     "${SECRET_PIPE}" verify-exports > "${SCRATCH}/hydration-readback.json"
-  "${LOCAL_VAULT_ENV}" keycloak-admin-readonly |
+  inventory_with_material="$("${LOCAL_VAULT_ENV}" keycloak-admin-readonly |
     "${SECRET_PIPE}" readonly-client-readback \
       --target-client-id sso.atius.com.br \
       --expected-post-logout-uri 'https://sso.atius.com.br/login?logout=complete' \
-      > "${SCRATCH}/sso-client-readback.json"
+      --ephemeral-material)"
+  material_count="$(/usr/bin/jq -r '._ephemeralSecretMaterial|length' <<<"${inventory_with_material}")"
+  for ((material_index=0; material_index<material_count; material_index++)); do
+    material="$(/usr/bin/jq -r --argjson index "${material_index}" \
+      '._ephemeralSecretMaterial[$index]' <<<"${inventory_with_material}")"
+    remember_secret_material "${material}"
+  done
+  /usr/bin/jq 'del(._ephemeralSecretMaterial)' <<<"${inventory_with_material}" \
+    > "${SCRATCH}/sso-client-readback.json"
+  unset inventory_with_material material_count material_index material
   /usr/bin/jq -e \
     '.clientCount==1 and .client.clientId=="sso.atius.com.br" and .secretsOutput==false' \
     "${SCRATCH}/sso-client-readback.json" >/dev/null
@@ -741,6 +795,7 @@ assert_profile_hydration_and_inventory
 assert_exact_client_and_roles
 
 CURRENT_STEP="live-secret-scan"
+/usr/bin/rm -f -- "${KCADM_CONFIG}"
 /usr/bin/jq -n \
   --arg operationId "${OPERATION_ID}" \
   --arg firstClientUuid "${FIRST_CLIENT_UUID}" \
@@ -816,14 +871,13 @@ CURRENT_STEP="live-secret-scan"
   '{path:$path,mode:"600",owner:"root",group:"root",sha256:$sha256,secretsRecorded:false}' \
   > "${SCRATCH}/backup-metadata.json"
 
-"${SECRET_PIPE}" scan-artifacts \
-  --path "${SCRATCH}/report-draft.json" \
-  --path "${STATE_DIR}" \
-  --path "${SCRATCH}/backup-metadata.json" \
-  --path "${SCRATCH}/hydration-readback.json" \
-  --path "${SCRATCH}/sso-client-readback.json" \
-  --path "${SCRATCH}/token-role-readback.json" \
-  > "${SCRATCH}/secret-scan.json"
+printf '%s\0' "${SECRET_MATERIALS[@]}" |
+  "${SECRET_PIPE}" scan-artifacts \
+    --secret-material-stdin \
+    --path "${SCRATCH}" \
+    --path "${STATE_DIR}" \
+    --path "${BACKUP}" \
+    > "${SCRATCH}/secret-scan.json"
 /usr/bin/jq --slurpfile scan "${SCRATCH}/secret-scan.json" \
   '.secretScan=$scan[0]' "${SCRATCH}/report-draft.json" |
   write_private_exclusive "${RESULT_PATH}"

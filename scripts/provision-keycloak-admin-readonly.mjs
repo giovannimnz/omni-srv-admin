@@ -19,11 +19,13 @@ import {
   buildTargetScope,
   inspectMetadata,
   operationStatePath,
+  rejectTestEnvironment,
   recomputeCandidateDigests,
   retainedBackupPath,
   sourceManifestForRoot,
   validateApproval,
   validateCandidate,
+  validateCurrentRecoveryMetadata,
   validateTopology,
 } from './lib/keycloak-admin-readonly-contract.mjs'
 
@@ -209,7 +211,7 @@ export async function buildCandidate(options) {
   const testRun = spawnSync(process.execPath, ['--test', TEST_PATH], {
     cwd: REPO_ROOT,
     encoding: 'utf8',
-    env: { ...process.env, KARO_TEST_CONTEXT: 'candidate' },
+    env: process.env,
     maxBuffer: 4 * 1024 * 1024,
   })
   if (testRun.status !== 0) {
@@ -240,7 +242,10 @@ export async function buildCandidate(options) {
     },
   }
   const targetScope = buildTargetScope()
-  const generatedAtMs = Math.max(Date.now(), new Date(topology.observedAt).getTime())
+  const generatedAtMs = Math.max(
+    Date.now(),
+    ...collectCandidateObservationTimes({ topology, livePreflight }),
+  )
   const report = {
     schemaVersion: '2',
     mode: 'candidate',
@@ -315,7 +320,7 @@ export async function buildCandidate(options) {
   if (sourceCommitRun.status !== 0) throw new Error('cannot determine owner source commit')
   report.candidate.sourceCommit = sourceCommitRun.stdout.trim()
   Object.assign(report.candidate, recomputeCandidateDigests(report))
-  validateCandidate(report, new Date(generatedAtMs))
+  validateCandidate(report)
   secretHygieneScan(sourceTexts, [report])
   await atomicWritePrivateJson(options.report, report)
   return report
@@ -448,15 +453,7 @@ async function applyLive(options) {
   }
   const topology = candidate.preimage.topology
   validateTopology(topology)
-  const recoveryMetadata = await inspectMetadata(CONTRACT.recoveryEnvPath)
-  if (
-    recoveryMetadata.mode !== '600' ||
-    recoveryMetadata.uid !== 0 ||
-    recoveryMetadata.gid !== 0 ||
-    recoveryMetadata.size !== topology.recoveryEnv.size
-  ) {
-    throw new Error('recovery env metadata drift before operation claim')
-  }
+  await validateCurrentRecoveryMetadata(candidate)
 
   const clientUuid = randomUUID()
   const { claim, stateDirectory } = await createOperationClaim(
@@ -555,10 +552,20 @@ async function applyLive(options) {
 }
 
 export async function main(argv = process.argv.slice(2)) {
+  rejectTestEnvironment()
   const options = parseArgs(argv)
   if (options.mode === 'candidate') return buildCandidate(options)
   if (options.mode === 'preflight') return runReadOnlyPreflight(options)
   return applyLive(options)
+}
+
+function collectCandidateObservationTimes({ topology, livePreflight }) {
+  const values = [topology?.observedAt, livePreflight?.observedAt].filter(Boolean)
+  return values.map((value) => {
+    const timestamp = new Date(value).getTime()
+    if (!Number.isFinite(timestamp)) throw new Error('candidate observation timestamp is invalid')
+    return timestamp
+  })
 }
 
 if (import.meta.url === pathToFileURL(process.argv[1]).href) {

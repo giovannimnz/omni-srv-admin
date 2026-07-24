@@ -9,9 +9,11 @@ import {
   assertExactArtifactPath,
   assertPrivateRegularFile,
   atomicWritePrivateJson,
+  rejectTestEnvironment,
   sourceManifestForRoot,
   validateApproval,
   validateCandidate,
+  validateCurrentRecoveryMetadata,
 } from './lib/keycloak-admin-readonly-contract.mjs'
 
 function parseArgs(argv) {
@@ -37,6 +39,7 @@ function parseArgs(argv) {
   return options
 }
 
+rejectTestEnvironment()
 const options = parseArgs(process.argv.slice(2))
 for (const required of ['candidate', 'output', 'operation-id', 'approved-by', 'ttl-seconds']) {
   if (!options[required]) throw new Error(`missing --${required}`)
@@ -56,6 +59,7 @@ await assertPrivateRegularFile(options.candidate, 'candidate')
 const candidate = JSON.parse(await BunlessRead(options.candidate))
 const issuedAt = new Date()
 validateCandidate(candidate, issuedAt)
+await validateCurrentRecoveryMetadata(candidate)
 if (candidate.approvalReady !== true || candidate.livePreflightStatus !== 'READY') {
   throw new Error('candidate is not approval-ready; authenticated read-only preflight is required')
 }

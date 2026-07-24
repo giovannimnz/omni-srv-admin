@@ -22,7 +22,10 @@ It does not emit `name`, `description`, root/base/admin URLs, device grant
 attributes, or CIBA attributes. Readback requires the exact emitted projection,
 empty redirect/web-origin arrays, and an empty `attributes` map. This follows
 the Keycloak 26.x `ClientRepresentation` schema and Admin REST client endpoints;
-server-managed response fields such as the internal ID are checked separately:
+the precomputed internal ID remains part of the exact comparison and only the
+frozen server-owned `access` authorization-metadata object is stripped.
+Unexpected fields such as `secret`, `rootUrl`, base/admin URLs, flow bindings,
+attributes, redirect URIs, or web origins fail closed:
 
 - <https://www.keycloak.org/docs-api/latest/rest-api/index.html>
 - <https://github.com/keycloak/keycloak/blob/main/core/src/main/java/org/keycloak/representations/idm/ClientRepresentation.java>
@@ -46,7 +49,11 @@ A broad Vault leaf search is not absence evidence. The offline topology does
 not authenticate to Keycloak and therefore records the target client as
 `UNKNOWN_AUTH`; it must not claim client absence. Candidate `generatedAt` must
 be at or after every `observedAt`, and no timestamp may exceed the current
-clock by more than the documented 30-second skew.
+clock by more than the documented 30-second skew. Every direct metadata
+observation, including the topology, exact Vault absence, and authenticated
+preflight, expires after 120 seconds. Approval production revalidates those
+timestamps and re-reads the exact recovery-file metadata; apply repeats that
+check and then performs a new authenticated target preflight before mutation.
 
 ## Offline candidate
 
@@ -65,6 +72,13 @@ The candidate has exactly eight PASS gates. Its `GO` means the offline harness,
 canonical digests, path scope, mocks, secret scan, rollback ownership, and
 approval boundary are reproducible. While it says `approvalReady:false`, the
 approval producer must reject it.
+
+`KARO_TEST_*` variables are rejected by candidate, preflight, apply, and the
+approval producer. Sandbox transactions are reachable only through
+`scripts/tests/keycloak-admin-readonly-harness.mjs`, which creates a private
+ephemeral root internally and whose process identity/ancestry is verified by
+the live adapter and Python helpers. Caller-selected test roots are not an
+alternate artifact scope.
 
 ## Human authorization and read-only preflight
 
@@ -143,11 +157,14 @@ restored only after exact readback; ambiguous recovery remains
 
 ## Evidence secret scan and stop conditions
 
-The live scan reads the draft report, append-only state/journal, emitted
-step/readback JSON, backup metadata, and emitted evidence. It fails on
-secret-like scalar/material. Recovery values, client secrets, access tokens,
-Vault root tokens, and private keys may not appear in report, state, logs,
-backup metadata, or step files.
+The live scan recursively reads the complete private scratch tree, the complete
+append-only operation state/journal tree, and the retained exporter backup.
+Besides key-name and assignment heuristics, the live process supplies the
+actual recovery password, generated client secrets, and available access or
+refresh tokens to the scanner only through a pipe. The scanner rejects exact
+material, base64/base64url/URL/hex encodings, and SHA-256 fingerprints even
+under innocuous keys. The source material list is never written and diagnostics
+never include the material.
 
 Stop before mutation on any:
 

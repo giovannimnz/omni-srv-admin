@@ -14,21 +14,53 @@ import tempfile
 
 
 LIVE_ROOT = pathlib.Path("/var/lib/atius-keycloak-admin-readonly/operations")
+TEST_HARNESS = pathlib.Path(__file__).resolve().parents[1] / "tests/keycloak-admin-readonly-harness.mjs"
 OPERATION_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{7,127}$")
 EVENT_RE = re.compile(r"^[0-9]{3}-[a-z0-9-]{3,64}\.json$")
 
 
+def verified_harness_root() -> pathlib.Path:
+    if os.environ.get("KARO_TEST_CONTEXT") != "runner-v1":
+        raise SystemExit("test journal requires the explicit harness")
+    try:
+        harness_pid = int(os.environ["KARO_TEST_PARENT_PID"])
+    except (KeyError, ValueError):
+        raise SystemExit("test harness pid is invalid") from None
+    ancestors = {os.getppid()}
+    status = pathlib.Path(f"/proc/{os.getppid()}/status").read_text()
+    match = re.search(r"^PPid:\s+(\d+)$", status, re.MULTILINE)
+    if match:
+        ancestors.add(int(match.group(1)))
+    if harness_pid not in ancestors:
+        raise SystemExit("test harness is not a direct execution ancestor")
+    command = pathlib.Path(f"/proc/{harness_pid}/cmdline").read_bytes().split(b"\0")
+    if str(TEST_HARNESS).encode() not in command:
+        raise SystemExit("test harness executable identity mismatch")
+    root = pathlib.Path(os.environ.get("KARO_TEST_ROOT", "")).resolve(strict=True)
+    info = root.lstat()
+    if (
+        not str(root).startswith("/tmp/karo-harness-")
+        or not stat.S_ISDIR(info.st_mode)
+        or stat.S_IMODE(info.st_mode) != 0o700
+        or info.st_uid != os.getuid()
+        or info.st_gid != os.getgid()
+    ):
+        raise SystemExit("test root was not minted by the explicit harness")
+    return root
+
+
 def root_path() -> pathlib.Path:
-    if os.environ.get("KARO_TEST_CONTEXT") == "candidate":
+    if os.environ.get("KARO_TEST_CONTEXT"):
+        harness_root = verified_harness_root()
         raw = os.environ.get("KARO_TEST_OPERATION_ROOT")
         if not raw:
-            raise SystemExit("KARO_TEST_OPERATION_ROOT is required in candidate tests")
+            raise SystemExit("KARO_TEST_OPERATION_ROOT is required in harness tests")
         root = pathlib.Path(raw).resolve()
-        if root == pathlib.Path("/") or not root.is_dir():
-            raise SystemExit("invalid candidate operation root")
+        if root.parent != harness_root or not root.is_dir():
+            raise SystemExit("invalid harness operation root")
         info = root.lstat()
         if not stat.S_ISDIR(info.st_mode) or stat.S_IMODE(info.st_mode) != 0o700:
-            raise SystemExit("candidate operation root must be a 0700 directory")
+            raise SystemExit("harness operation root must be a 0700 directory")
         return root
     if os.geteuid() != 0:
         raise SystemExit("live operation journal requires root")

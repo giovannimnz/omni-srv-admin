@@ -14,6 +14,7 @@ import tempfile
 
 LIVE_TARGET = pathlib.Path("/usr/local/sbin/atius-vault-export-env")
 LIVE_BACKUP_PREFIX = "/var/backups/atius-vault-export-env.keycloak-admin-readonly."
+TEST_HARNESS = pathlib.Path(__file__).resolve().parents[1] / "tests/keycloak-admin-readonly-harness.mjs"
 MARKER_BEGIN = "# BEGIN ATIUS MANAGED PROFILE: keycloak-admin-readonly"
 MARKER_END = "# END ATIUS MANAGED PROFILE: keycloak-admin-readonly"
 PROFILE_BLOCK = r'''
@@ -43,19 +44,38 @@ def expected_owner(args: argparse.Namespace) -> tuple[int, int]:
     return (os.getuid(), os.getgid()) if args.sandbox else (0, 0)
 
 
+def verified_harness_root() -> pathlib.Path:
+    if os.environ.get("KARO_TEST_CONTEXT") != "runner-v1":
+        raise SystemExit("exporter sandbox requires the explicit harness")
+    try:
+        harness_pid = int(os.environ["KARO_TEST_PARENT_PID"])
+    except (KeyError, ValueError):
+        raise SystemExit("test harness pid is invalid") from None
+    if harness_pid != os.getppid():
+        raise SystemExit("test harness is not the direct parent")
+    command = pathlib.Path(f"/proc/{harness_pid}/cmdline").read_bytes().split(b"\0")
+    if str(TEST_HARNESS).encode() not in command:
+        raise SystemExit("test harness executable identity mismatch")
+    root = pathlib.Path(os.environ.get("KARO_TEST_ROOT", "")).resolve(strict=True)
+    info = root.lstat()
+    if (
+        not str(root).startswith("/tmp/karo-harness-")
+        or not stat.S_ISDIR(info.st_mode)
+        or stat.S_IMODE(info.st_mode) != 0o700
+        or info.st_uid != os.getuid()
+        or info.st_gid != os.getgid()
+    ):
+        raise SystemExit("test root was not minted by the explicit harness")
+    return root
+
+
 def validate_paths(args: argparse.Namespace) -> tuple[pathlib.Path, pathlib.Path]:
     target = pathlib.Path(args.file)
     backup = pathlib.Path(args.backup)
     if args.sandbox:
         if os.geteuid() == 0:
             raise SystemExit("root may not use exporter sandbox mode")
-        raw_root = os.environ.get("KARO_TEST_ROOT")
-        if not raw_root:
-            raise SystemExit("KARO_TEST_ROOT is required")
-        root = pathlib.Path(raw_root).resolve(strict=True)
-        root_info = root.lstat()
-        if not stat.S_ISDIR(root_info.st_mode) or stat.S_IMODE(root_info.st_mode) != 0o700:
-            raise SystemExit("sandbox root must be a 0700 directory")
+        root = verified_harness_root()
         for item in (target, backup):
             resolved_parent = item.parent.resolve(strict=True)
             if resolved_parent != root:
@@ -297,8 +317,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--expected-installed-sha256")
     parser.add_argument("--sandbox", action="store_true")
     args = parser.parse_args()
-    if args.sandbox and os.environ.get("KARO_TEST_CONTEXT") != "candidate":
-        parser.error("--sandbox is restricted to KARO_TEST_CONTEXT=candidate")
+    if args.sandbox and os.environ.get("KARO_TEST_CONTEXT") != "runner-v1":
+        parser.error("--sandbox is restricted to the explicit test harness")
     if args.mode in ("apply", "reapply", "verify", "restore") and not args.expected_installed_sha256:
         parser.error("--expected-installed-sha256 is required")
     return args

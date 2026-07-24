@@ -14,6 +14,7 @@ import path from 'node:path'
 
 export const ALLOWED_CLOCK_SKEW_MS = 30_000
 export const MAX_APPROVAL_TTL_MS = 900_000
+export const MAX_DIRECT_METADATA_AGE_MS = 120_000
 export const MAX_LIVE_PREFLIGHT_AGE_MS = 120_000
 export const OPERATION_MODE = 'provision-and-drill'
 
@@ -81,6 +82,7 @@ export const SOURCE_FILES = Object.freeze([
   'scripts/lib/keycloak-admin-readonly-secret-pipe.py',
   'scripts/lib/keycloak-admin-readonly-vault-cas-put.py',
   'scripts/tests/keycloak-admin-readonly.test.mjs',
+  'scripts/tests/keycloak-admin-readonly-harness.mjs',
   'scripts/fixtures/keycloak-admin-readonly/topology-no-secret.json',
   'docs/security/keycloak-admin-readonly-provisioning.md',
 ])
@@ -205,6 +207,24 @@ export async function inspectMetadata(filePath) {
   }
 }
 
+export async function validateCurrentRecoveryMetadata(candidate) {
+  const topology = candidate.preimage?.topology
+  const expected = candidate.preimage?.recoveryMetadata
+  const current = await inspectMetadata(CONTRACT.recoveryEnvPath)
+  assertCanonicalEqual(current, expected, 'current recovery metadata')
+  if (
+    current.path !== CONTRACT.recoveryEnvPath ||
+    current.type !== 'regular-file' ||
+    current.mode !== topology?.recoveryEnv?.mode ||
+    current.uid !== 0 ||
+    current.gid !== 0 ||
+    current.size !== topology?.recoveryEnv?.size
+  ) {
+    throw new Error('current recovery env metadata drifted from fresh direct observation')
+  }
+  return current
+}
+
 export function assertExactSet(actual, expected, label) {
   const left = [...actual].sort()
   const right = [...expected].sort()
@@ -241,13 +261,32 @@ function collectObservedAt(value, label = '$', results = []) {
 }
 
 export function assertExactArtifactPath(actualPath, expectedPath, label) {
-  if (process.env.KARO_TEST_CONTEXT === 'candidate') {
-    const testRoot = process.env.KARO_TEST_ROOT
-    if (testRoot && path.resolve(actualPath).startsWith(`${path.resolve(testRoot)}${path.sep}`)) return
-  }
   if (path.resolve(actualPath) !== expectedPath) {
     throw new Error(`${label} path must be exactly ${expectedPath}`)
   }
+}
+
+export function rejectTestEnvironment(env = process.env) {
+  const injected = Object.keys(env).filter((name) => name.startsWith('KARO_TEST_'))
+  if (injected.length) {
+    throw new Error('production entrypoints reject KARO_TEST_* environment controls')
+  }
+}
+
+function parseFreshTimestamp(
+  value,
+  label,
+  now,
+  {
+    futureSkewMs = ALLOWED_CLOCK_SKEW_MS,
+    maxAgeMs = MAX_DIRECT_METADATA_AGE_MS,
+  } = {},
+) {
+  const timestamp = parseTimestamp(value, label, now, { futureSkewMs })
+  if (now.getTime() - timestamp.getTime() > maxAgeMs) {
+    throw new Error(`${label} is older than ${maxAgeMs / 1000} seconds`)
+  }
+  return timestamp
 }
 
 export function operationStatePath(operationId) {
@@ -297,7 +336,7 @@ export function buildTargetScope() {
 export function validateTopology(topology, now = new Date()) {
   const failures = []
   if (topology.schemaVersion !== '2') failures.push('topology schemaVersion')
-  parseTimestamp(topology.observedAt, 'topology observedAt', now)
+  parseFreshTimestamp(topology.observedAt, 'topology observedAt', now)
   if (topology.observationClass !== 'direct-current-metadata-no-secret') {
     failures.push('observation class')
   }
@@ -404,11 +443,13 @@ function validateLivePreflight(candidate, generatedAt, now) {
   if (candidate.approvalReady !== true || candidate.livePreflightStatus !== 'READY') {
     throw new Error('candidate approval readiness is invalid')
   }
-  const observedAt = parseTimestamp(preflight?.observedAt, 'live preflight observedAt', now)
+  const observedAt = parseFreshTimestamp(
+    preflight?.observedAt,
+    'live preflight observedAt',
+    now,
+    { maxAgeMs: MAX_LIVE_PREFLIGHT_AGE_MS },
+  )
   if (generatedAt < observedAt) throw new Error('candidate generatedAt predates live preflight')
-  if (now.getTime() - observedAt.getTime() > MAX_LIVE_PREFLIGHT_AGE_MS) {
-    throw new Error('live preflight is older than 120 seconds')
-  }
   if (
     preflight.authenticated === true &&
     preflight.client?.clientId === CONTRACT.clientId &&
@@ -445,7 +486,7 @@ export function validateCandidate(candidate, now = new Date()) {
   const observedTimestamps = collectObservedAt(candidate)
   if (observedTimestamps.length === 0) throw new Error('candidate has no direct observations')
   for (const observation of observedTimestamps) {
-    const observedAt = parseTimestamp(observation.value, observation.label, now)
+    const observedAt = parseFreshTimestamp(observation.value, observation.label, now)
     if (generatedAt < observedAt) {
       throw new Error(`candidate generatedAt predates ${observation.label}`)
     }

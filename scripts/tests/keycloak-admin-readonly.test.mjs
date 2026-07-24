@@ -27,7 +27,6 @@ import {
   buildTargetScope,
   canonicalJson,
   recomputeCandidateDigests,
-  sourceManifestForRoot,
   validateApproval,
   validateCandidate,
 } from '../lib/keycloak-admin-readonly-contract.mjs'
@@ -40,10 +39,7 @@ const STATE_HELPER = path.join(REPO_ROOT, 'scripts/lib/keycloak-admin-readonly-o
 const LIVE_ADAPTER = path.join(REPO_ROOT, 'scripts/lib/keycloak-admin-readonly-live.sh')
 const RUNNER = path.join(REPO_ROOT, 'scripts/provision-keycloak-admin-readonly.mjs')
 const APPROVAL_PRODUCER = path.join(REPO_ROOT, 'scripts/create-keycloak-admin-readonly-approval.mjs')
-
-function sha256(text) {
-  return createHash('sha256').update(text).digest('hex')
-}
+const TEST_HARNESS = path.join(REPO_ROOT, 'scripts/tests/keycloak-admin-readonly-harness.mjs')
 
 function topology(observedAt = '2026-07-24T03:00:00.000Z') {
   return {
@@ -306,6 +302,26 @@ test('chronology rejects future observations and generatedAt before observedAt',
   )
 })
 
+test('all direct observations reject recomputed stale metadata beyond 120 seconds', () => {
+  const value = candidate({
+    generatedAt: '2026-07-24T03:00:01.000Z',
+    observedAt: '2020-01-01T00:00:00.000Z',
+  })
+  Object.assign(value.candidate, recomputeCandidateDigests(value))
+  assert.throws(
+    () => validateCandidate(value, new Date('2026-07-24T03:00:01.000Z')),
+    /older than 120 seconds/,
+  )
+
+  const nested = candidate()
+  nested.preimage.vaultPath.observedAt = '2026-07-24T02:57:59.999Z'
+  Object.assign(nested.candidate, recomputeCandidateDigests(nested))
+  assert.throws(
+    () => validateCandidate(nested, new Date('2026-07-24T03:00:00.000Z')),
+    /older than 120 seconds/,
+  )
+})
+
 test('tampering topology or exporter SHA with stale digests fails', () => {
   for (const mutate of [
     (value) => {
@@ -407,20 +423,12 @@ test('private writer uses O_EXCL and refuses preexisting/symlink targets', async
   }
 })
 
-test('external producer creates one exact 0600 approval and refuses overwrite', async () => {
+test('external producer rejects forged test context and attacker-selected paths', async () => {
   const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-approval-'))
   await chmod(directory, 0o700)
   const candidatePath = path.join(directory, 'candidate.json')
   const approvalPath = path.join(directory, 'approval.json')
-  const sourceManifest = await sourceManifestForRoot(REPO_ROOT)
-  const generatedAt = new Date()
-  const observedAt = new Date(generatedAt.getTime() - 1_000)
-  const value = candidate({
-    ready: true,
-    sourceManifest,
-    generatedAt: generatedAt.toISOString(),
-    observedAt: observedAt.toISOString(),
-  })
+  const value = candidate({ ready: true })
   await writeFile(candidatePath, `${JSON.stringify(value)}\n`, { mode: 0o600 })
   const args = [
     APPROVAL_PRODUCER,
@@ -437,66 +445,28 @@ test('external producer creates one exact 0600 approval and refuses overwrite', 
   ]
   const env = { ...process.env, KARO_TEST_CONTEXT: 'candidate', KARO_TEST_ROOT: directory }
   try {
-    const first = spawnSync(process.execPath, args, { encoding: 'utf8', env })
-    assert.equal(first.status, 0, first.stderr)
-    assert.equal((await stat(approvalPath)).mode & 0o777, 0o600)
-    assert.equal(JSON.parse(await readFile(approvalPath)).operationMode, OPERATION_MODE)
-    const second = spawnSync(process.execPath, args, { encoding: 'utf8', env })
-    assert.notEqual(second.status, 0)
+    const result = spawnSync(process.execPath, args, { encoding: 'utf8', env })
+    assert.notEqual(result.status, 0)
+    assert.match(result.stderr, /reject KARO_TEST|path must be exactly/)
+    await assert.rejects(stat(approvalPath), /ENOENT/)
   } finally {
     await rm(directory, { recursive: true, force: true })
   }
 })
 
-test('approval producer refuses an offline BLOCKED_AUTH candidate', async () => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-blocked-'))
-  await chmod(directory, 0o700)
-  const candidatePath = path.join(directory, 'candidate.json')
-  const approvalPath = path.join(directory, 'approval.json')
-  const generatedAt = new Date()
-  await writeFile(
-    candidatePath,
-    `${JSON.stringify(
-      candidate({
-        generatedAt: generatedAt.toISOString(),
-        observedAt: new Date(generatedAt.getTime() - 1_000).toISOString(),
-      }),
-    )}\n`,
-    { mode: 0o600 },
+test('approval validation refuses an offline BLOCKED_AUTH candidate', () => {
+  const value = candidate()
+  assert.throws(
+    () => validateApproval(approvalFor(value), value, new Date('2026-07-24T03:00:01.000Z')),
+    /not approval-ready/,
   )
-  const result = spawnSync(
-    process.execPath,
-    [
-      APPROVAL_PRODUCER,
-      '--candidate',
-      candidatePath,
-      '--output',
-      approvalPath,
-      '--operation-id',
-      'readonly-20260724-blocked',
-      '--approved-by',
-      'sandbox',
-      '--ttl-seconds',
-      '900',
-    ],
-    {
-      encoding: 'utf8',
-      env: { ...process.env, KARO_TEST_CONTEXT: 'candidate', KARO_TEST_ROOT: directory },
-    },
-  )
-  try {
-    assert.notEqual(result.status, 0)
-    assert.match(result.stderr, /not approval-ready/)
-  } finally {
-    await rm(directory, { recursive: true, force: true })
-  }
 })
 
 test('governed entrypoints reject arbitrary report and approval paths before writes', () => {
   const candidateAttempt = spawnSync(
     process.execPath,
     [RUNNER, 'candidate', '--report', '/tmp/forbidden-keycloak-candidate.json'],
-    { encoding: 'utf8', env: { ...process.env, KARO_TEST_CONTEXT: '' } },
+    { encoding: 'utf8' },
   )
   assert.notEqual(candidateAttempt.status, 0)
   assert.match(candidateAttempt.stderr, /path must be exactly/)
@@ -515,51 +485,16 @@ test('governed entrypoints reject arbitrary report and approval paths before wri
       '--ttl-seconds',
       '900',
     ],
-    { encoding: 'utf8', env: { ...process.env, KARO_TEST_CONTEXT: '' } },
+    { encoding: 'utf8' },
   )
   assert.notEqual(approvalAttempt.status, 0)
   assert.match(approvalAttempt.stderr, /path must be exactly/)
 })
 
-test('exporter preview/apply/verify/restore/reapply is deterministic and retained', async () => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-transform-'))
-  await chmod(directory, 0o700)
-  const exporter = path.join(directory, 'atius-vault-export-env')
-  const backup = path.join(directory, 'exporter.backup')
-  const original = '#!/usr/bin/env bash\nset -euo pipefail\nprintf \"%s\\\\n\" \"existing-profile\"\n'
-  await writeFile(exporter, original, { mode: 0o700 })
-  await chmod(exporter, 0o700)
-  const beforeSha = sha256(original)
-  const env = {
-    ...process.env,
-    KARO_TEST_CONTEXT: 'candidate',
-    KARO_TEST_ROOT: directory,
-  }
-  const common = [
-    '--file',
-    exporter,
-    '--backup',
-    backup,
-    '--expected-before-sha256',
-    beforeSha,
-    '--sandbox',
-  ]
-  try {
-    const preview = spawnSync('python3', [TRANSFORM, 'preview', ...common], { encoding: 'utf8', env })
-    assert.equal(preview.status, 0, preview.stderr)
-    const installedSha = JSON.parse(preview.stdout).installedSha256
-    const withInstalled = [...common, '--expected-installed-sha256', installedSha]
-    for (const mode of ['apply', 'verify', 'restore', 'reapply', 'verify']) {
-      const result = spawnSync('python3', [TRANSFORM, mode, ...withInstalled], {
-        encoding: 'utf8',
-        env,
-      })
-      assert.equal(result.status, 0, `${mode}: ${result.stderr}`)
-    }
-    assert.equal((await stat(backup)).mode & 0o777, 0o600)
-  } finally {
-    await rm(directory, { recursive: true, force: true })
-  }
+test('explicit harness mints the exporter sandbox root internally', () => {
+  const result = spawnSync(process.execPath, [TEST_HARNESS, 'exporter'], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+  assert.equal(JSON.parse(result.stdout).backupMode, 0o600)
 })
 
 test('artifact secret scan catches synthetic leaked scalar and accepts clean evidence', async () => {
@@ -583,37 +518,202 @@ test('artifact secret scan catches synthetic leaked scalar and accepts clean evi
   }
 })
 
-test('append-only journal refuses duplicate event and symlink operation directory', async () => {
-  const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-journal-'))
+test('exact client projection strips only frozen access metadata and rejects configuration extras', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-client-projection-'))
+  const expectedPath = path.join(directory, 'expected.json')
+  const expected = {
+    id: '11111111-1111-4111-8111-111111111111',
+    ...JSON.parse(JSON.stringify(CONTRACT.client)),
+  }
+  await writeFile(expectedPath, JSON.stringify(expected))
+  try {
+    const valid = spawnSync(
+      'python3',
+      [SECRET_PIPE, 'exact-client-projection', '--expected', expectedPath],
+      {
+        input: JSON.stringify({ ...expected, access: { view: true, manage: true } }),
+        encoding: 'utf8',
+      },
+    )
+    assert.equal(valid.status, 0, valid.stderr)
+    assert.deepEqual(JSON.parse(valid.stdout).strippedServerMetadata, ['access'])
+
+    for (const mutate of [
+      (value) => {
+        value.rootUrl = 'https://forbidden.example'
+      },
+      (value) => {
+        value.secret = 'opaque-secret-must-not-be-returned'
+      },
+      (value) => {
+        value.authenticationFlowBindingOverrides = {}
+      },
+      (value) => {
+        value.attributes.unexpected = 'true'
+      },
+      (value) => {
+        value.redirectUris = ['https://forbidden.example/callback']
+      },
+      (value) => {
+        value.webOrigins = ['https://forbidden.example']
+      },
+    ]) {
+      const actual = JSON.parse(JSON.stringify(expected))
+      mutate(actual)
+      const rejected = spawnSync(
+        'python3',
+        [SECRET_PIPE, 'exact-client-projection', '--expected', expectedPath],
+        { input: JSON.stringify(actual), encoding: 'utf8' },
+      )
+      assert.notEqual(rejected.status, 0)
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})
+
+test('recursive secret scan catches opaque material, encodings, and fingerprint under innocuous keys', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-material-scan-'))
+  const nested = path.join(directory, 'scratch', 'journal', 'readback')
+  await mkdir(nested, { recursive: true })
+  const material = 'opaque-value-without-secret-key-9f7c'
+  const variants = [
+    material,
+    Buffer.from(material).toString('base64'),
+    Buffer.from(material).toString('base64url'),
+    encodeURIComponent(material),
+    Buffer.from(material).toString('hex'),
+    createHash('sha256').update(material).digest('hex'),
+  ]
+  try {
+    const cleanPath = path.join(nested, 'clean.json')
+    await writeFile(cleanPath, JSON.stringify({ payload: 'unrelated-opaque-value' }))
+    const clean = spawnSync(
+      'python3',
+      [SECRET_PIPE, 'scan-artifacts', '--secret-material-stdin', '--path', directory],
+      { input: Buffer.from(`${material}\0`) },
+    )
+    assert.equal(clean.status, 0, clean.stderr.toString())
+    assert.ok(JSON.parse(clean.stdout.toString()).scannedFiles.includes(cleanPath))
+
+    for (const [index, variant] of variants.entries()) {
+      const leakedPath = path.join(nested, `opaque-${index}.json`)
+      await writeFile(leakedPath, JSON.stringify({ payload: variant }))
+      const leaked = spawnSync(
+        'python3',
+        [SECRET_PIPE, 'scan-artifacts', '--secret-material-stdin', '--path', directory],
+        { input: Buffer.from(`${material}\0`) },
+      )
+      assert.notEqual(leaked.status, 0)
+      assert.doesNotMatch(leaked.stderr.toString(), new RegExp(material))
+      await rm(leakedPath)
+    }
+  } finally {
+    await rm(directory, { recursive: true, force: true })
+  }
+})
+
+test('forged KARO test environment cannot reach production or sandbox paths', async () => {
+  const directory = await mkdtemp(path.join(os.tmpdir(), 'karo-forged-root-'))
   await chmod(directory, 0o700)
   const operations = path.join(directory, 'operations')
-  const operationId = 'readonly-20260724-journal'
+  const operationId = 'readonly-forgedroot-0001'
   const operationDirectory = path.join(operations, operationId)
   await mkdir(operationDirectory, { recursive: true, mode: 0o700 })
   await chmod(operations, 0o700)
   await chmod(operationDirectory, 0o700)
-  const payload = JSON.stringify({ operationId, status: 'armed', secretsRecorded: false })
   const env = {
     ...process.env,
-    KARO_TEST_CONTEXT: 'candidate',
+    KARO_TEST_CONTEXT: 'runner-v1',
+    KARO_TEST_PARENT_PID: String(process.pid),
+    KARO_TEST_ROOT: directory,
     KARO_TEST_OPERATION_ROOT: operations,
   }
   try {
-    const first = spawnSync(
-      'python3',
-      [STATE_HELPER, 'event', '--operation-id', operationId, '--event-file', '001-client-armed.json'],
-      { input: payload, encoding: 'utf8', env },
+    const runner = spawnSync(
+      process.execPath,
+      [RUNNER, 'candidate', '--report', path.join(directory, 'candidate.json')],
+      { encoding: 'utf8', env },
     )
-    assert.equal(first.status, 0, first.stderr)
-    const second = spawnSync(
-      'python3',
-      [STATE_HELPER, 'event', '--operation-id', operationId, '--event-file', '001-client-armed.json'],
-      { input: payload, encoding: 'utf8', env },
+    assert.notEqual(runner.status, 0)
+    assert.match(runner.stderr, /reject KARO_TEST/)
+
+    const live = spawnSync(
+      'bash',
+      [
+        LIVE_ADAPTER,
+        '--mode',
+        'test-transaction',
+        '--operation-id',
+        operationId,
+        '--client-uuid',
+        '11111111-1111-4111-8111-111111111111',
+        '--state-dir',
+        operationDirectory,
+        '--expected-exporter-sha256',
+        '1'.repeat(64),
+        '--expected-put-helper-sha256',
+        '2'.repeat(64),
+        '--result',
+        path.join(directory, 'result.json'),
+      ],
+      { encoding: 'utf8', env },
     )
-    assert.notEqual(second.status, 0)
+    assert.notEqual(live.status, 0)
+    assert.match(live.stderr, /explicit internally rooted harness|identity mismatch/)
+
+    const exporter = path.join(directory, 'exporter')
+    const backup = path.join(directory, 'backup')
+    await writeFile(exporter, '#!/usr/bin/env bash\n', { mode: 0o700 })
+    const transform = spawnSync(
+      'python3',
+      [
+        TRANSFORM,
+        'preview',
+        '--file',
+        exporter,
+        '--backup',
+        backup,
+        '--expected-before-sha256',
+        '0'.repeat(64),
+        '--sandbox',
+      ],
+      { encoding: 'utf8', env },
+    )
+    assert.notEqual(transform.status, 0)
+    assert.match(transform.stderr, /direct parent|identity mismatch/)
+
+    const journal = spawnSync(
+      'python3',
+      [
+        STATE_HELPER,
+        'event',
+        '--operation-id',
+        operationId,
+        '--event-file',
+        '001-client-armed.json',
+      ],
+      {
+        input: JSON.stringify({ operationId, status: 'armed', secretsRecorded: false }),
+        encoding: 'utf8',
+        env,
+      },
+    )
+    assert.notEqual(journal.status, 0)
+    assert.match(journal.stderr, /identity mismatch/)
   } finally {
     await rm(directory, { recursive: true, force: true })
   }
+})
+
+test('explicit harness journal refuses duplicate append-only events', () => {
+  const result = spawnSync(process.execPath, [TEST_HARNESS, 'journal'], { encoding: 'utf8' })
+  assert.equal(result.status, 0, result.stderr)
+  assert.deepEqual(JSON.parse(result.stdout), {
+    scenario: 'journal',
+    firstStatus: 0,
+    secondStatus: 1,
+  })
 })
 
 test('failure injection arms ownership before each side effect and rolls back in reverse order', async () => {
@@ -625,53 +725,14 @@ test('failure injection arms ownership before each side effect and rolls back in
     ['exporter-apply', ['exporter', 'vault', 'keycloak']],
   ]
   for (const [boundary, expectedOrder] of cases) {
-    const directory = await mkdtemp(path.join(os.tmpdir(), `karo-failure-${boundary}-`))
-    await chmod(directory, 0o700)
-    const operations = path.join(directory, 'operations')
-    const operationId = `readonly-${boundary.replaceAll('-', '')}-0001`
-    const operationDirectory = path.join(operations, operationId)
-    await mkdir(operationDirectory, { recursive: true, mode: 0o700 })
-    await chmod(operations, 0o700)
-    await chmod(operationDirectory, 0o700)
-    const env = {
-      ...process.env,
-      KARO_TEST_CONTEXT: 'candidate',
-      KARO_TEST_ROOT: directory,
-      KARO_TEST_OPERATION_ROOT: operations,
-      KARO_FAIL_AFTER: boundary,
-    }
-    try {
-      const result = spawnSync(
-        'bash',
-        [
-          LIVE_ADAPTER,
-          '--mode',
-          'test-transaction',
-          '--operation-id',
-          operationId,
-          '--client-uuid',
-          '11111111-1111-4111-8111-111111111111',
-          '--state-dir',
-          operationDirectory,
-          '--expected-exporter-sha256',
-          '1'.repeat(64),
-          '--expected-put-helper-sha256',
-          '2'.repeat(64),
-          '--result',
-          path.join(directory, 'result.json'),
-        ],
-        { encoding: 'utf8', env },
-      )
-      assert.notEqual(result.status, 0)
-      const order = (await readFile(path.join(directory, 'rollback-order.log'), 'utf8'))
-        .trim()
-        .split('\n')
-      assert.deepEqual(order, expectedOrder)
-      const failure = JSON.parse(await readFile(path.join(directory, 'result.json'), 'utf8'))
-      assert.equal(failure.automaticRollback.succeeded, true)
-    } finally {
-      await rm(directory, { recursive: true, force: true })
-    }
+    const result = spawnSync(process.execPath, [TEST_HARNESS, 'failure', boundary], {
+      encoding: 'utf8',
+    })
+    assert.equal(result.status, 0, result.stderr)
+    const failure = JSON.parse(result.stdout)
+    assert.notEqual(failure.status, 0)
+    assert.deepEqual(failure.order, expectedOrder)
+    assert.equal(failure.rollbackSucceeded, true)
   }
 })
 
@@ -696,8 +757,27 @@ test('runner binds but cannot import or execute the approval producer', async ()
   assert.match(source, /producerSha256/)
 })
 
+test('approval and apply re-read fresh metadata before claim or mutation', async () => {
+  const runner = await readFile(RUNNER, 'utf8')
+  const producer = await readFile(APPROVAL_PRODUCER, 'utf8')
+  const live = await readFile(LIVE_ADAPTER, 'utf8')
+  assert.match(producer, /validateCurrentRecoveryMetadata\(candidate\)/)
+  assert.ok(
+    runner.indexOf('await validateCurrentRecoveryMetadata(candidate)') <
+      runner.indexOf('await createOperationClaim('),
+  )
+  assert.ok(
+    live.indexOf('assert_recovery_metadata') <
+      live.indexOf('create_client_and_roles'),
+  )
+  assert.ok(
+    live.indexOf('assert_vault_metadata_absent') <
+      live.indexOf('create_client_and_roles'),
+  )
+})
+
 test('shell, Node, and Python helpers pass syntax checks', () => {
-  for (const script of [RUNNER, APPROVAL_PRODUCER]) {
+  for (const script of [RUNNER, APPROVAL_PRODUCER, TEST_HARNESS]) {
     const result = spawnSync(process.execPath, ['--check', script], { encoding: 'utf8' })
     assert.equal(result.status, 0, result.stderr)
   }
