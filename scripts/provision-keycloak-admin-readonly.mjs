@@ -77,6 +77,18 @@ function assertCpuQuota80(cpuMaxText) {
   return { cpuMax: `${quotaText} ${periodText}`, cpuQuota: '80%', maxCpu: quota / period }
 }
 
+async function readCurrentCpuMax() {
+  const cgroup = await readFile('/proc/self/cgroup', 'utf8')
+  const unified = cgroup
+    .trim()
+    .split('\n')
+    .map((line) => line.split(':'))
+    .find((parts) => parts[0] === '0' && parts[1] === '')
+  if (!unified?.[2]?.startsWith('/')) throw new Error('cannot resolve current cgroup v2 path')
+  const cpuMaxPath = path.join('/sys/fs/cgroup', unified[2], 'cpu.max')
+  return readFile(cpuMaxPath, 'utf8')
+}
+
 function secretHygieneScan(textByFile) {
   const findings = []
   const suspiciousValue =
@@ -116,7 +128,7 @@ export async function buildCandidate(options) {
     throw new Error('preapproval evidence does not prove the exact absent credential prerequisite')
   }
 
-  const cpuContainment = assertCpuQuota80(await readFile('/sys/fs/cgroup/cpu.max', 'utf8'))
+  const cpuContainment = assertCpuQuota80(await readCurrentCpuMax())
   const sourceManifest = await currentSourceManifest()
   const sourceTexts = new Map()
   for (const item of sourceManifest) {
