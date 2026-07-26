@@ -4,9 +4,9 @@
   "status": "PASS",
   "planner_identity": "/root/phase54_current_contract_check",
   "reviewer_identity": "/root/phase54_final_review_gate",
-  "started_at": "2026-07-26T09:07:12Z",
-  "finished_at": "2026-07-26T09:07:12Z",
-  "expires_at": "2026-07-26T09:21:12Z",
+  "started_at": "2026-07-26T09:26:14Z",
+  "finished_at": "2026-07-26T09:26:14Z",
+  "expires_at": "2026-07-26T09:40:14Z",
   "scope": [
     {
       "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-CONTEXT.md",
