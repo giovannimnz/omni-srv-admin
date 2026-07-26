@@ -1,16 +1,16 @@
 # Graph Report - _omni-srv-admin-phase54-replan-20260724  (2026-07-26)
 
 ## Corpus Check
-- 1006 files · ~1,901,023 words
+- 1006 files · ~1,903,131 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 12629 nodes · 17628 edges · 1080 communities (931 shown, 149 thin omitted)
+- 12638 nodes · 17656 edges · 1081 communities (931 shown, 150 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 181 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `846d2d81`
+- Built from commit: `0391309e`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -893,6 +893,7 @@
 - [[_COMMUNITY_Community 894|Community 894]]
 - [[_COMMUNITY_Community 895|Community 895]]
 - [[_COMMUNITY_Community 896|Community 896]]
+- [[_COMMUNITY_Community 897|Community 897]]
 - [[_COMMUNITY_Community 898|Community 898]]
 - [[_COMMUNITY_Community 899|Community 899]]
 - [[_COMMUNITY_Community 900|Community 900]]
@@ -1065,7 +1066,6 @@
 - [[_COMMUNITY_Community 1069|Community 1069]]
 - [[_COMMUNITY_Community 1070|Community 1070]]
 - [[_COMMUNITY_Community 1071|Community 1071]]
-- [[_COMMUNITY_Community 1073|Community 1073]]
 - [[_COMMUNITY_Community 1074|Community 1074]]
 - [[_COMMUNITY_Community 1075|Community 1075]]
 - [[_COMMUNITY_Community 1076|Community 1076]]
@@ -1073,10 +1073,11 @@
 - [[_COMMUNITY_Community 1078|Community 1078]]
 - [[_COMMUNITY_Community 1079|Community 1079]]
 - [[_COMMUNITY_Community 1081|Community 1081]]
+- [[_COMMUNITY_Community 1083|Community 1083]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (1080 total, 149 thin omitted)` - 910 edges
-2. `_write_evidence()` - 63 edges
+1. `Communities (1083 total, 150 thin omitted)` - 912 edges
+2. `_write_evidence()` - 66 edges
 3. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 55 edges
 4. `Blocked` - 53 edges
 5. `contract()` - 52 edges
@@ -1095,8 +1096,8 @@
   cli/omni/fleet_versioning.py → modules/rustdesk-fleet/tools/install-phase53-server.py
 - `apply_omni_self_update()` --calls--> `_write()`  [INFERRED]
   cli/omni/fleet_versioning.py → modules/fork-sync/cli/tests/test_release_preflight.py
-- `test_collect_programs_normalizes_read_only_outputs()` --calls--> `collect_programs()`  [EXTRACTED]
-  modules/fleet-control-plane/tests/test_m031_collectors.py → cli/omni/fleet_collectors.py
+- `test_double_metadata_read_drift_blocks()` --calls--> `drift()`  [INFERRED]
+  modules/rustdesk-fleet/tests/test_phase52_gate_b_transaction.py → cli/omni/podman_network.py
 
 ## Import Cycles
 - 1-file cycle: `cli/omni/fleet.py -> cli/omni/fleet.py`
@@ -1108,19 +1109,19 @@
 - 1-file cycle: `modules/rustdesk-fleet/tools/validate_phase52.py -> modules/rustdesk-fleet/tools/validate_phase52.py`
 - 1-file cycle: `modules/srv1-ops/scripts/production_guard.py -> modules/srv1-ops/scripts/production_guard.py`
 
-## Communities (1080 total, 149 thin omitted)
+## Communities (1081 total, 150 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.00
-Nodes (910): Communities (1080 total, 149 thin omitted), Community 0 - "Community 0", Community 1001 - "Community 1001", Community 1002 - "Community 1002", Community 1003 - "Community 1003", Community 1004 - "Community 1004", Community 1005 - "Community 1005", Community 1006 - "Community 1006" (+902 more)
+Nodes (912): Communities (1083 total, 150 thin omitted), Community 0 - "Community 0", Community 1001 - "Community 1001", Community 1002 - "Community 1002", Community 1003 - "Community 1003", Community 1004 - "Community 1004", Community 1005 - "Community 1005", Community 1006 - "Community 1006" (+904 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
 Nodes (41): Apt sources, Apt sources, Apt sources, Apt sources, atius-srv-1, atius-srv-2, atius-srv-3, Backup and snapshot manifest (+33 more)
 
 ### Community 2 - "Community 2"
-Cohesion: 0.04
-Nodes (67): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover() (+59 more)
+Cohesion: 0.05
+Nodes (59): project_exists(), containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover(), discover_check(), discover_heal() (+51 more)
 
 ### Community 3 - "Community 3"
 Cohesion: 0.11
@@ -1179,8 +1180,8 @@ Cohesion: 0.06
 Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.16
-Nodes (32): _ahead_behind(), _as_bool(), _auto_push_enabled(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote() (+24 more)
+Cohesion: 0.17
+Nodes (30): _ahead_behind(), _as_bool(), _auto_push_enabled(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote() (+22 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.06
@@ -1267,8 +1268,8 @@ Cohesion: 0.09
 Nodes (21): Antes, 🔧 Correção 1: Tipo de `offset_date` em divap_backtest.py, 🔧 Correção 2: SQL Table Name em index.js, ✨ Correções Anteriores (já aplicadas), Correções Aplicadas - Phase 1, Depois, 📝 Documentação Gerada, ✅ get_signals_from_telegram() - Iteração Contínua (+13 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.08
-Nodes (25): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+17 more)
+Cohesion: 0.06
+Nodes (37): admin(), admin_health(), admin_processes(), admin_status(), backup(), backup_create(), backup_list(), backup_restore() (+29 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.07
@@ -1551,8 +1552,8 @@ Cohesion: 0.31
 Nodes (17): Path, effective_cpu_quota(), load_config(), main(), normalize_latest_perf(), print_direct_cgroups(), print_hot_build_escapes(), print_hygiene_health() (+9 more)
 
 ### Community 110 - "Community 110"
-Cohesion: 0.16
-Nodes (14): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+6 more)
+Cohesion: 0.18
+Nodes (13): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+5 more)
 
 ### Community 111 - "Community 111"
 Cohesion: 0.34
@@ -2071,8 +2072,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 240 - "Community 240"
-Cohesion: 0.18
-Nodes (12): admin_health(), admin_processes(), admin_status(), Health checks básicos: ping, portas, serviços chave., Lista serviços systemd. Se NAME passado, mostra status + logs., Top-like: processos por uso de CPU ou memória., Executa deploy de um projeto (wrapping fork-sync deploy)., Retorna env com LC_ALL=C para parsing consistente. (+4 more)
+Cohesion: 0.16
+Nodes (16): Path, _collect_telemetry(), _diskstats(), _host_path(), _meminfo(), _pki_linux_runner_execute(), _pki_run_script(), _pki_script() (+8 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.29
@@ -2387,8 +2388,8 @@ Cohesion: 0.50
 Nodes (4): modules/fleet-backup/scripts/rclone-fleet-queue.sh, ast_hash, mtime, semantic_hash
 
 ### Community 319 - "Community 319"
-Cohesion: 0.10
-Nodes (52): Any, CompletedProcess, Path, _apt_policy(), _apt_program_status(), _apt_sources_text(), _config_status(), config_verify() (+44 more)
+Cohesion: 0.09
+Nodes (56): Any, CompletedProcess, Path, _apt_policy(), _apt_program_status(), _apt_sources_text(), _config_status(), config_verify() (+48 more)
 
 ### Community 320 - "Community 320"
 Cohesion: 0.50
@@ -2975,12 +2976,12 @@ Cohesion: 0.50
 Nodes (4): scripts/verify-m004-fleet-control-plane.sh, ast_hash, mtime, semantic_hash
 
 ### Community 524 - "Community 524"
-Cohesion: 0.13
-Nodes (33): Path, agent_collect_programs(), agent_collect_version(), agent_cycle(), agent_heartbeat(), agent_loop(), agent_once(), agent_self_update_runner() (+25 more)
+Cohesion: 0.12
+Nodes (32): agent_cycle(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event(), audit(), _claim_next_plan(), _default_host_id() (+24 more)
 
 ### Community 525 - "Community 525"
-Cohesion: 0.08
-Nodes (48): Any, _app_payload(), _fork_payload(), heartbeat(), _heartbeat_payload(), _host_apps(), _host_database_contract(), _host_forks() (+40 more)
+Cohesion: 0.10
+Nodes (44): Any, _cert_sans_from_file(), heartbeat(), _heartbeat_payload(), _host_aliases(), _host_id(), _host_inventory_payload(), _inet_or_none() (+36 more)
 
 ### Community 526 - "Community 526"
 Cohesion: 0.05
@@ -2999,16 +3000,16 @@ Cohesion: 0.29
 Nodes (6): Brave Browser, Chromium / Bitwarden SidePanel decision, Chromium Google defaults, GitKraken ARM64 Deb, Managed Apps Operations, Obsidian ARM64 AppImage
 
 ### Community 536 - "Community 536"
-Cohesion: 0.05
-Nodes (109): Path, Any, Path, Any, CompletedProcess, datetime, Namespace, Path (+101 more)
+Cohesion: 0.12
+Nodes (36): Any, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso() (+28 more)
 
 ### Community 537 - "Community 537"
-Cohesion: 0.10
-Nodes (43): _db_env(), _emit(), landscape_parity(), _load_pki_host(), _now(), _pki_inventory_host_ids(), _pki_render_host(), profiles_managed_apps() (+35 more)
+Cohesion: 0.08
+Nodes (52): agent_collect_programs(), agent_collect_version(), _db_env(), _emit(), landscape_parity(), _load_pki_host(), _normal_sans(), _now() (+44 more)
 
 ### Community 538 - "Community 538"
-Cohesion: 0.22
-Nodes (17): Any, CollectorRunner, Path, Path, apply_omni_self_update(), collect_omni_version(), _default_backup_root(), load_omni_version_matrix() (+9 more)
+Cohesion: 0.19
+Nodes (19): Any, CollectorRunner, Path, Path, agent_self_update_runner(), Runner local allowlisted que aplica update do repo omni-srv-admin., apply_omni_self_update(), collect_omni_version() (+11 more)
 
 ### Community 539 - "Community 539"
 Cohesion: 0.10
@@ -3304,7 +3305,7 @@ Nodes (7): Backups/evidence, Implementation, Network change, Outcome, Phase 29 e
 
 ### Community 616 - "Community 616"
 Cohesion: 0.07
-Nodes (56): security(), agent(), audit(), _cert_sans_from_file(), Entry point: python -m omni.fleet_entry, fleet(), _host_aliases(), _host_inventory_payload() (+48 more)
+Nodes (56): Path, security(), default_fleet_db_env(), load_env_file(), psql_available(), Shared fleet DB runtime helpers., run_sql(), agent() (+48 more)
 
 ### Community 617 - "Community 617"
 Cohesion: 0.29
@@ -3647,8 +3648,8 @@ Cohesion: 0.13
 Nodes (14): Accomplishments, Auth Gates, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness (+6 more)
 
 ### Community 736 - "Community 736"
-Cohesion: 0.23
-Nodes (20): _command_template(), _finish_plan_db(), _json_literal(), _load_db_host(), _psql(), _psql_json(), queue_self_update(), queue_update() (+12 more)
+Cohesion: 0.22
+Nodes (10): load_project(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., Detecta novo release., run_detect(), _fork_repo_slug(), Resolve o slug do repo do fork.      Ordem:     1) cfg.fork_repo (se existir), Atualiza uma release existente no GitHub com notas em PT-BR geradas.      Use pa, Atalho: gera release notes com defaults e mostra (sem salvar). (+2 more)
 
 ### Community 737 - "Community 737"
 Cohesion: 0.25
@@ -4052,11 +4053,11 @@ Nodes (41): Any, ArgumentParser, Path, atomic_json(), canonical_existing(), capt
 
 ### Community 866 - "Community 866"
 Cohesion: 0.07
-Nodes (17): Path, _load(), reviewed_bootstrap_fixture(), test_bounded_helpers_serialize_subreaper_and_restore_process_state(), test_executor_entrypoint_cleans_reviewed_tmpfs_when_context_load_fails(), test_executor_entrypoint_cleanup_failure_is_fail_closed_and_sanitized(), test_generator_cleans_ambiguous_create_side_effect(), test_generator_uses_isolated_hbbs_keypair_and_cleans_container() (+9 more)
+Nodes (15): Path, _load(), reviewed_bootstrap_fixture(), test_bounded_helpers_serialize_subreaper_and_restore_process_state(), test_executor_entrypoint_cleans_reviewed_tmpfs_when_context_load_fails(), test_executor_entrypoint_cleanup_failure_is_fail_closed_and_sanitized(), test_internal_timeout_terminates_descendant_process_tree(), test_live_root_must_equal_contract_root() (+7 more)
 
 ### Community 867 - "Community 867"
-Cohesion: 0.08
-Nodes (46): _assert_keys(), _current_preflight(), DuplicateKeyError, _fabricated_meta_ipv4_rule(), _healthy_ops_observations(), _live_gate_module(), _load_strict(), _nft_json_rule() (+38 more)
+Cohesion: 0.10
+Nodes (35): _assert_keys(), _current_preflight(), _healthy_ops_observations(), _live_gate_module(), _load_strict(), _oci_rule(), _ops_api_module(), test_apache_transaction_restores_exact_prestate_on_every_failure() (+27 more)
 
 ### Community 868 - "Community 868"
 Cohesion: 0.12
@@ -4116,7 +4117,7 @@ Nodes (25): Architecture Approach, Confidence Assessment, Critical Pitfalls, Exe
 
 ### Community 882 - "Community 882"
 Cohesion: 0.08
-Nodes (26): contract(), test_approved_fingerprint_is_external_and_observed_must_match(), test_backup_failure_never_persists_arbitrary_blocked_detail(), test_backup_failure_persists_sanitized_pre_backup_blocker_and_state(), test_both_route_probes_failed_is_confirmed_pre_send_block_not_outcome_ambiguity(), test_contract_is_exact_value_free_and_create_only(), test_direct_first_route_uses_fallback_only_after_direct_probe_failure(), test_initial_install_failure_persists_terminal_evidence_after_restore() (+18 more)
+Nodes (27): contract(), test_approved_fingerprint_is_external_and_observed_must_match(), test_backup_failure_never_persists_arbitrary_blocked_detail(), test_backup_failure_persists_sanitized_pre_backup_blocker_and_state(), test_both_route_probes_failed_is_confirmed_pre_send_block_not_outcome_ambiguity(), test_contract_is_exact_value_free_and_create_only(), test_direct_first_route_uses_fallback_only_after_direct_probe_failure(), test_double_metadata_read_drift_blocks() (+19 more)
 
 ### Community 883 - "Community 883"
 Cohesion: 0.08
@@ -4163,8 +4164,8 @@ Cohesion: 0.11
 Nodes (18): Acceptance Roadmap, Add After Validation, Anti-Features, Dependency Notes, Differentiators, Evidence Boundaries, Feature Dependencies, Feature Landscape (+10 more)
 
 ### Community 894 - "Community 894"
-Cohesion: 0.18
-Nodes (8): Any, _barrier_b(), _FakeDnsEdgeBackend, _FakeWindowsRouteRunner, _raw(), _set_barrier_observed(), test_barrier_b_drift_staleness_and_order_block_before_dns(), test_windows_private_first_fallback_is_only_for_ssh_rc255()
+Cohesion: 0.15
+Nodes (11): Any, _barrier_b(), DuplicateKeyError, _FakeDnsEdgeBackend, _FakeWindowsRouteRunner, Raised when a JSON object contains a repeated member name., _raw(), _reject_duplicate_keys() (+3 more)
 
 ### Community 895 - "Community 895"
 Cohesion: 0.12
@@ -4173,6 +4174,10 @@ Nodes (16): Commands, Comparison Questions, Correctness and rejected paths, Curr
 ### Community 896 - "Community 896"
 Cohesion: 0.12
 Nodes (16): 1. Copywriting - 3/4, 2. Visuals / Imagery - 4/4, 3. Color - 4/4, 4. Typography - 4/4, 5. Spacing / Layout - 4/4, 6. Registry Safety - 4/4, BLOCKER / WARNING, Detailed Audit (+8 more)
+
+### Community 897 - "Community 897"
+Cohesion: 0.06
+Nodes (86): _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), Any, Path, Any (+78 more)
 
 ### Community 898 - "Community 898"
 Cohesion: 0.12
@@ -4392,7 +4397,7 @@ Nodes (5): oci-admin-mcp-fleet-smoke.sh script, json_record(), probe_local(), pr
 
 ### Community 952 - "Community 952"
 Cohesion: 0.09
-Nodes (79): MonkeyPatch, Namespace, Path, ProbeContext, ProbeSpec, _args(), _assert_blocked(), _check() (+71 more)
+Nodes (84): MonkeyPatch, Namespace, Path, ProbeContext, ProbeSpec, _args(), _assert_blocked(), _check() (+76 more)
 
 ### Community 953 - "Community 953"
 Cohesion: 0.13
@@ -4401,10 +4406,6 @@ Nodes (36): _allowed_oci_pages(), _edge_applier_module(), _edge_transaction(), _
 ### Community 954 - "Community 954"
 Cohesion: 0.25
 Nodes (7): dependencies, @huggingface/transformers, engines, node, name, private, type
-
-### Community 955 - "Community 955"
-Cohesion: 0.36
-Nodes (7): _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), Any, Path
 
 ### Community 956 - "Community 956"
 Cohesion: 0.29
@@ -4555,8 +4556,8 @@ Cohesion: 0.40
 Nodes (5): Primary authoritative upstream (MEDIUM confidence per research seam), Primary (HIGH confidence for local locked/runtime facts), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
 
 ### Community 993 - "Community 993"
-Cohesion: 0.20
-Nodes (9): Canonical interface, Evidence schema, Independent review schemas, Independent verifier ownership, OperationPlan rules, Phase 54 — Fail-closed validation contract, Required plan gates, Status semantics (+1 more)
+Cohesion: 0.18
+Nodes (10): Canonical interface, DNS baseline versus convergence, Evidence schema, Independent review schemas, Independent verifier ownership, OperationPlan rules, Phase 54 — Fail-closed validation contract, Required plan gates (+2 more)
 
 ### Community 994 - "Community 994"
 Cohesion: 0.40
@@ -4572,7 +4573,7 @@ Nodes (4): Done condition, Execution waves, Phase 54: Migração integral de red
 
 ### Community 997 - "Community 997"
 Cohesion: 0.12
-Nodes (24): AdapterSpec, Path, _be3_payload(), _dig(), _dns_outputs(), _evidence(), _install_matrix_mocks(), _spec() (+16 more)
+Nodes (25): AdapterSpec, Path, _be3_payload(), _dig(), _dns_outputs(), _evidence(), _install_matrix_mocks(), _spec() (+17 more)
 
 ### Community 998 - "Community 998"
 Cohesion: 0.40
@@ -4734,10 +4735,6 @@ Nodes (3): Authoritative state set, Real restore acceptance sequence, Recoverabl
 Cohesion: 0.50
 Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
 
-### Community 1073 - "Community 1073"
-Cohesion: 0.24
-Nodes (12): Any, Path, ApacheVhostTransaction, _atomic_write(), authenticate_request(), collect_metric_summary(), derive_readiness(), handle_request() (+4 more)
-
 ### Community 1074 - "Community 1074"
 Cohesion: 0.29
 Nodes (6): Bounded local matrix, Fixture matrix required in Wave 0, Per-plan Nyquist map, Phase 54 — Validation Strategy, Sign-off, Test infrastructure
@@ -4746,25 +4743,29 @@ Nodes (6): Bounded local matrix, Fixture matrix required in Wave 0, Per-plan Nyq
 Cohesion: 0.15
 Nodes (12): Auto-fixed Issues, Blocking Gaps, Commits, Deviations from Plan, Evidence Captured, Known Stubs, Outcome, Phase 54 Plan 02: Live Baseline and Rollback Readiness Summary (+4 more)
 
+### Community 1083 - "Community 1083"
+Cohesion: 0.29
+Nodes (8): _fabricated_meta_ipv4_rule(), _nft_json_rule(), test_nft_json_readback_accepts_canonical_ipv4_payload_ast(), test_nft_json_readback_rejects_additional_owned_table_chain(), test_nft_json_readback_rejects_extra_predicate_inside_expected_rule(), test_nft_json_readback_rejects_fabricated_meta_ipv4_ast(), test_nft_json_readback_requires_exact_owned_chain_rules(), _valid_nft_json_readback()
+
 ## Knowledge Gaps
-- **6998 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+6993 more)
+- **7001 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+6996 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **149 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **150 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `release_update()` connect `Community 2` to `Community 536`, `Community 28`, `Community 22`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `Blocked` connect `Community 41` to `Community 536`?**
-  _High betweenness centrality (0.007) - this node is a cross-community bridge._
-- **Why does `isolated_restore_proof()` connect `Community 41` to `Community 800`, `Community 868`?**
-  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `release_update()` connect `Community 736` to `Community 897`, `Community 2`, `Community 28`, `Community 22`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `Blocked` connect `Community 41` to `Community 897`?**
+  _High betweenness centrality (0.005) - this node is a cross-community bridge._
+- **Why does `drift()` connect `Community 110` to `Community 882`?**
+  _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **Are the 85 inferred relationships involving `ValueError` (e.g. with `update_manual_section()` and `parse_cpu_time()`) actually correct?**
   _`ValueError` has 85 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _7421 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _7424 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.002197802197802198 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0021929824561403508 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._

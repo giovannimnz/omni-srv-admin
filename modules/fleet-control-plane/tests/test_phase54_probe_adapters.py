@@ -260,6 +260,45 @@ def test_inventory_and_drg_normalizers_require_real_current_and_routes() -> None
     )
 
 
+def test_public_ip_baseline_uses_primary_10_0_binding_not_secondary_drg() -> None:
+    semantic = {
+        "reserved_public_ips": [
+            {
+                "public_ip_ocid": "ocid1.publicip.baseline",
+                "label": "horistic-srv-1",
+                "address": adapters.PUBLIC_IP,
+                "private_ip_ocid": "ocid1.privateip.primary",
+                "lifecycle_state": "ASSIGNED",
+                "lifetime": "RESERVED",
+            }
+        ],
+        "private_ips": [
+            {
+                "private_ip_ocid": "ocid1.privateip.primary",
+                "address": adapters.BASELINE_PUBLIC_BINDING,
+                "vnic_ocid": "ocid1.vnic.primary",
+                "subnet_ocid": "ocid1.subnet.primary",
+            },
+            {
+                "private_ip_ocid": "ocid1.privateip.secondary",
+                "address": adapters.CURRENT_HOST,
+                "vnic_ocid": "ocid1.vnic.secondary",
+                "subnet_ocid": "ocid1.subnet.secondary",
+            },
+        ],
+    }
+    normalized = {"operation": "inventory.get", "semantic": semantic}
+    spec = _spec("54-02", "preflight", "public_ip_baseline")
+    assert adapters._oci_probe_passes(spec, normalized)
+
+    wrong = json.loads(json.dumps(semantic))
+    wrong["private_ips"][0]["address"] = adapters.CURRENT_HOST
+    assert not adapters._oci_probe_passes(
+        spec,
+        {"operation": "inventory.get", "semantic": wrong},
+    )
+
+
 def test_security_normalization_is_directional_and_rejects_missing_rules() -> None:
     security_id = "ocid1.securitylist.oc1.test"
     semantic = adapters._normalize_security(
@@ -302,19 +341,40 @@ def _dig(marker: str, status: str, answer: str = "", *, aa: bool = False) -> str
     )
 
 
-def _dns_outputs(address: str, reverse: str) -> tuple[bytes, bytes]:
+def _dns_outputs(
+    address: str,
+    reverse: str,
+    *,
+    baseline_gap: bool = False,
+) -> tuple[bytes, bytes]:
     fqdn = adapters.DNS_NAME
+    auth_a = (
+        _dig("__AUTH_A__", "NXDOMAIN", aa=False)
+        if baseline_gap
+        else _dig("__AUTH_A__", "NOERROR", f"{fqdn}. 300 IN A {address}", aa=True)
+    )
+    auth_ptr = (
+        _dig(
+            "__AUTH_PTR_CURRENT__"
+            if reverse == adapters.DNS_REVERSE_CURRENT
+            else "__AUTH_PTR_TARGET__",
+            "NXDOMAIN",
+            aa=False,
+        )
+        if baseline_gap
+        else _dig(
+            "__AUTH_PTR_CURRENT__"
+            if reverse == adapters.DNS_REVERSE_CURRENT
+            else "__AUTH_PTR_TARGET__",
+            "NOERROR",
+            f"{reverse}. 300 IN PTR {fqdn}.",
+            aa=True,
+        )
+    )
     auth = "".join(
         [
-            _dig("__AUTH_A__", "NOERROR", f"{fqdn}. 300 IN A {address}", aa=True),
-            _dig(
-                "__AUTH_PTR_CURRENT__"
-                if reverse == adapters.DNS_REVERSE_CURRENT
-                else "__AUTH_PTR_TARGET__",
-                "NOERROR",
-                f"{reverse}. 300 IN PTR {fqdn}.",
-                aa=True,
-            ),
+            auth_a,
+            auth_ptr,
             _dig(
                 "__AUTH_SOA__",
                 "NOERROR",
@@ -342,10 +402,14 @@ def _dns_outputs(address: str, reverse: str) -> tuple[bytes, bytes]:
         resolver += _dig(
             f"{prefix}{ptr}", "NOERROR", f"{reverse}. 300 IN PTR {fqdn}."
         )
-        resolver += _dig(
-            f"{prefix}SOA__",
-            "NOERROR",
-            "atius.internal. 300 IN SOA ipa.atius.internal. hostmaster.atius.internal. 1 2 3 4 5",
+        resolver += (
+            _dig(f"{prefix}SOA__", "SERVFAIL")
+            if baseline_gap and server == adapters.DNS_ADGUARD
+            else _dig(
+                f"{prefix}SOA__",
+                "NOERROR",
+                "atius.internal. 300 IN SOA ipa.atius.internal. hostmaster.atius.internal. 1 2 3 4 5",
+            )
         )
         resolver += _dig(
             f"{prefix}NS__",
@@ -359,7 +423,11 @@ def _dns_outputs(address: str, reverse: str) -> tuple[bytes, bytes]:
 def test_dns_is_owner_specific_and_checks_aa_a_ptr_soa_ns_ttl_nxdomain(
     monkeypatch,
 ) -> None:
-    auth, resolvers = _dns_outputs("10.21.1.21", adapters.DNS_REVERSE_CURRENT)
+    auth, resolvers = _dns_outputs(
+        "10.21.1.21",
+        adapters.DNS_REVERSE_CURRENT,
+        baseline_gap=True,
+    )
 
     def fake_ssh(owner, command):
         if owner == "srv3":
@@ -371,18 +439,70 @@ def test_dns_is_owner_specific_and_checks_aa_a_ptr_soa_ns_ttl_nxdomain(
         _spec("54-02", "preflight", "dns_edge_baseline"), "a" * 64
     )
     assert ok
-    assert normalized["authority"]["aa"] is True
+    assert normalized["authority"]["aa"] is False
+    assert normalized["authority"]["a_address"] is None
+    assert normalized["authority"]["ptr_owner"] is None
+    assert normalized["resolvers"]["a_ptr_complete"] is True
+    assert normalized["resolvers"]["a_address"] == "10.21.1.21"
+    assert normalized["baseline_gap"]["authority_missing"] == ["A", "PTR"]
+    assert normalized["baseline_gap"]["resolver_missing"]["127.0.0.2"] == ["SOA"]
     assert normalized["resolvers"]["nxdomain_count"] == 2
     assert normalized["ttl_min"] == 300
 
-    broken = auth.replace(b"flags: qr aa", b"flags: qr", 1)
+    converged_auth, converged_resolvers = _dns_outputs(
+        "10.21.1.21",
+        adapters.DNS_REVERSE_CURRENT,
+    )
     monkeypatch.setattr(
         adapters,
         "_ssh",
-        lambda owner, command: (True, broken if owner == "srv3" else resolvers, owner),
+        lambda owner, command: (
+            True,
+            converged_auth if owner == "srv3" else converged_resolvers,
+            owner,
+        ),
     )
     assert not adapters._dns_read(
         _spec("54-02", "preflight", "dns_edge_baseline"), "a" * 64
+    )[0]
+
+    tampered = resolvers.replace(b"10.21.1.21", b"10.21.1.99", 1)
+    monkeypatch.setattr(
+        adapters,
+        "_ssh",
+        lambda owner, command: (
+            True,
+            auth if owner == "srv3" else tampered,
+            owner,
+        ),
+    )
+    assert not adapters._dns_read(
+        _spec("54-02", "preflight", "dns_edge_baseline"), "a" * 64
+    )[0]
+
+    monkeypatch.setattr(
+        adapters,
+        "_ssh",
+        lambda owner, command: (
+            True,
+            converged_auth if owner == "srv3" else converged_resolvers,
+            owner,
+        ),
+    )
+    assert adapters._dns_read(
+        _spec("54-06", "preview", "freeipa_authority"), "a" * 64
+    )[0]
+    monkeypatch.setattr(
+        adapters,
+        "_ssh",
+        lambda owner, command: (
+            True,
+            auth if owner == "srv3" else resolvers,
+            owner,
+        ),
+    )
+    assert not adapters._dns_read(
+        _spec("54-06", "preview", "freeipa_authority"), "a" * 64
     )[0]
 
 
@@ -691,16 +811,22 @@ def _matrix_oci_payload(check_id: str, residual: str | None = None) -> dict:
                 {
                     "private_ip_ocid": "ocid1.privateip.target",
                     "address": "10.31.1.31",
+                    "vnic_ocid": "ocid1.vnic.target",
+                    "subnet_ocid": "ocid1.subnet.target",
                 },
                 {
                     "private_ip_ocid": "ocid1.privateip.residual",
                     "address": private_ip,
+                    "vnic_ocid": "ocid1.vnic.residual",
+                    "subnet_ocid": "ocid1.subnet.target",
                 },
             ],
             "reserved_public_ips": [
                 {
                     "public_ip_ocid": "ocid1.publicip.target",
                     "address": "163.176.232.119",
+                    "label": "horistic-srv-1",
+                    "lifecycle_state": "ASSIGNED",
                     "private_ip_ocid": "ocid1.privateip.target",
                     "lifetime": "RESERVED",
                 }

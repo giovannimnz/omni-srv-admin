@@ -140,6 +140,7 @@ SENSITIVE_VALUE_PATTERNS = (
 )
 HEX_64_PATTERN = re.compile(r"^[0-9a-f]{64}$")
 HEX_40_PATTERN = re.compile(r"^[0-9a-f]{40}$")
+BASELINE_PUBLIC_BINDING = "10.0.0.65"
 REPO_ROOT = pathlib.Path(__file__).resolve().parents[3]
 PHASE_DIR = (
     REPO_ROOT
@@ -156,8 +157,7 @@ REVIEW_SCOPE_NAMES = (
     *(f"54-{number:02d}-PLAN.md" for number in range(1, 11)),
 )
 REVIEW_SCOPE_PATHS = tuple(
-    (PHASE_DIR / name).relative_to(REPO_ROOT).as_posix()
-    for name in REVIEW_SCOPE_NAMES
+    (PHASE_DIR / name).relative_to(REPO_ROOT).as_posix() for name in REVIEW_SCOPE_NAMES
 )
 ADAPTER_PATH = (
     REPO_ROOT / "modules/fleet-control-plane/scripts/phase54_probe_adapters.py"
@@ -298,9 +298,12 @@ def _normalized_public_ip_valid(
     evidence: dict[str, Any],
     *,
     require_target: bool,
+    baseline_mode: bool,
 ) -> bool:
     semantic = normalized.get("semantic")
-    public_rows = semantic.get("reserved_public_ips") if isinstance(semantic, dict) else None
+    public_rows = (
+        semantic.get("reserved_public_ips") if isinstance(semantic, dict) else None
+    )
     public_evidence = evidence.get("public_ip")
     if not isinstance(public_rows, list) or not isinstance(public_evidence, dict):
         return False
@@ -315,25 +318,74 @@ def _normalized_public_ip_valid(
     )
     if not isinstance(observed, dict):
         return False
-    expected_binding = "10.31.1.31" if require_target else public_evidence.get("binding")
+    expected_binding = (
+        "10.31.1.31"
+        if require_target
+        else BASELINE_PUBLIC_BINDING
+        if baseline_mode
+        else public_evidence.get("binding")
+    )
     private_rows = semantic.get("private_ips")
-    private_match = next(
-        (
-            item
-            for item in private_rows
-            if isinstance(item, dict)
-            and item.get("private_ip_ocid") == observed.get("private_ip_ocid")
-        ),
-        None,
-    ) if isinstance(private_rows, list) else None
+    private_match = (
+        next(
+            (
+                item
+                for item in private_rows
+                if isinstance(item, dict)
+                and item.get("private_ip_ocid") == observed.get("private_ip_ocid")
+            ),
+            None,
+        )
+        if isinstance(private_rows, list)
+        else None
+    )
+    binding = {
+        "public_ip_ocid": observed.get("public_ip_ocid"),
+        "address": observed.get("address"),
+        "private_ip_address": private_match.get("address")
+        if isinstance(private_match, dict)
+        else None,
+        "private_ip_ocid": observed.get("private_ip_ocid"),
+        "vnic_ocid": private_match.get("vnic_ocid")
+        if isinstance(private_match, dict)
+        else None,
+        "subnet_ocid": private_match.get("subnet_ocid")
+        if isinstance(private_match, dict)
+        else None,
+    }
+    secondary_current = (
+        next(
+            (
+                item
+                for item in private_rows
+                if isinstance(item, dict) and item.get("address") == "10.21.1.21"
+            ),
+            None,
+        )
+        if isinstance(private_rows, list)
+        else None
+    )
     return bool(
         observed.get("address") == "163.176.232.119"
+        and observed.get("public_ip_ocid") == public_evidence.get("ocid")
         and observed.get("label") == "horistic-srv-1"
         and observed.get("lifetime") == "RESERVED"
         and observed.get("lifecycle_state") in {"RESERVED", "ASSIGNED"}
         and isinstance(private_match, dict)
         and private_match.get("address") == expected_binding
         and observed.get("private_ip_ocid") == public_evidence.get("private_ip_ocid")
+        and private_match.get("vnic_ocid") == public_evidence.get("vnic_ocid")
+        and private_match.get("subnet_ocid") == public_evidence.get("subnet_ocid")
+        and (
+            not baseline_mode
+            or (
+                public_evidence.get("current_binding_sha256") == sha256_json(binding)
+                and isinstance(secondary_current, dict)
+                and secondary_current.get("private_ip_ocid")
+                != observed.get("private_ip_ocid")
+                and secondary_current.get("vnic_ocid") != private_match.get("vnic_ocid")
+            )
+        )
     )
 
 
@@ -345,7 +397,10 @@ def _normalized_drg_valid(
     attachments = semantic.get("attachments")
     routes = semantic.get("route_tables")
     distributions = semantic.get("route_distributions")
-    if not all(isinstance(value, list) and value for value in (attachments, routes, distributions)):
+    if not all(
+        isinstance(value, list) and value
+        for value in (attachments, routes, distributions)
+    ):
         return False
     profiles = {"atius1", "atius2", "atius3", "horistic"}
     attached = {
@@ -362,9 +417,7 @@ def _normalized_drg_valid(
         if not isinstance(item, dict) or item.get("blocked") is not False:
             continue
         route_map.setdefault(str(item.get("profile_name")), set()).update(
-            value
-            for value in item.get("target_cidrs", [])
-            if isinstance(value, str)
+            value for value in item.get("target_cidrs", []) if isinstance(value, str)
         )
     forward = all(
         target_cidr in route_map.get(profile, set())
@@ -448,7 +501,6 @@ def _normalized_probe_valid(
     ):
         return False
     semantic = normalized.get("semantic")
-    strings = _value_strings(normalized)
     check_id = spec.check_id
     if check_id == "live_inventory":
         return bool(
@@ -460,7 +512,12 @@ def _normalized_probe_valid(
             and {"10.31.0.0/16", "10.31.1.0/24", "10.31.1.31"}
             <= _value_strings(evidence)
         )
-    if check_id in {"builder_receipt", "builder_targets", "vcn_architecture", "target_network"}:
+    if check_id in {
+        "builder_receipt",
+        "builder_targets",
+        "vcn_architecture",
+        "target_network",
+    }:
         target = semantic.get("target") if isinstance(semantic, dict) else None
         return bool(
             normalized.get("operation") == "peering.address_plan"
@@ -497,6 +554,7 @@ def _normalized_probe_valid(
                     context.plan in {"54-10"}
                     or (context.plan == "54-05" and context.stage == "apply")
                 ),
+                baseline_mode=context.plan == "54-02",
             )
             and _public_ip_valid(evidence, context.plan, context.evidence_dir)
         )
@@ -516,11 +574,11 @@ def _normalized_probe_valid(
                 "866adbef8a1434622f0b4028ddaf5b5bd76afaeafc246e7a576b675c889cb781",
             ),
         }
-        observed = {
-            item.get("owner"): item
-            for item in backups
-            if isinstance(item, dict)
-        } if isinstance(backups, list) else {}
+        observed = (
+            {item.get("owner"): item for item in backups if isinstance(item, dict)}
+            if isinstance(backups, list)
+            else {}
+        )
         return bool(
             set(observed) == set(expected)
             and all(
@@ -547,19 +605,130 @@ def _normalized_probe_valid(
         )
         authority = normalized.get("authority")
         resolvers = normalized.get("resolvers")
+        resolver_servers = ["10.11.1.11", "127.0.0.2"]
+        resolver_fields = ("a", "ptr", "soa", "ns", "nxdomain")
+        resolver_matrix = (
+            resolvers.get("matrix") if isinstance(resolvers, dict) else None
+        )
+        resolver_matrix_valid = bool(
+            isinstance(resolver_matrix, dict)
+            and set(resolver_matrix) == set(resolver_servers)
+            and all(
+                isinstance(item, dict)
+                and set(item) == set(resolver_fields)
+                and all(isinstance(item[field], bool) for field in resolver_fields)
+                for item in resolver_matrix.values()
+            )
+        )
+        resolver_missing_expected = (
+            {
+                server: sorted(
+                    field.upper()
+                    for field in ("soa", "ns", "nxdomain")
+                    if not resolver_matrix[server][field]
+                )
+                for server in resolver_servers
+            }
+            if resolver_matrix_valid
+            else None
+        )
+        resolver_summary_valid = bool(
+            resolver_matrix_valid
+            and resolvers.get("servers") == resolver_servers
+            and resolvers.get("nxdomain_count")
+            == sum(resolver_matrix[server]["nxdomain"] for server in resolver_servers)
+            and resolvers.get("soa_count")
+            == sum(resolver_matrix[server]["soa"] for server in resolver_servers)
+            and resolvers.get("ns_count")
+            == sum(resolver_matrix[server]["ns"] for server in resolver_servers)
+            and resolvers.get("a_ptr_complete")
+            is all(
+                resolver_matrix[server]["a"] and resolver_matrix[server]["ptr"]
+                for server in resolver_servers
+            )
+            and resolvers.get("soa")
+            is all(resolver_matrix[server]["soa"] for server in resolver_servers)
+            and resolvers.get("ns")
+            is all(resolver_matrix[server]["ns"] for server in resolver_servers)
+        )
+        if check_id == "dns_edge_baseline":
+            baseline_gap = normalized.get("baseline_gap")
+            gap_material = {
+                "expected_address": normalized.get("expected_address"),
+                "expected_reverse": normalized.get("expected_reverse"),
+                "authority": authority,
+                "resolvers": resolvers,
+            }
+            return bool(
+                normalized.get("expected_address") == "10.21.1.21"
+                and normalized.get("expected_reverse") == "21.1.21.10.in-addr.arpa"
+                and isinstance(authority, dict)
+                and authority.get("server") == "10.89.53.10"
+                and authority.get("a_aa") is False
+                and authority.get("ptr_aa") is False
+                and authority.get("soa_aa") is True
+                and authority.get("ns_aa") is True
+                and authority.get("aa") is False
+                and authority.get("nxdomain") is True
+                and authority.get("soa") is True
+                and authority.get("ns") is True
+                and authority.get("a_address") is None
+                and authority.get("ptr_owner") is None
+                and isinstance(resolvers, dict)
+                and resolver_summary_valid
+                and resolvers.get("a_ptr_complete") is True
+                and resolvers.get("a_address") == "10.21.1.21"
+                and resolvers.get("ptr_owner") == "21.1.21.10.in-addr.arpa"
+                and all(
+                    resolver_matrix[server]["a"] and resolver_matrix[server]["ptr"]
+                    for server in resolver_servers
+                )
+                and isinstance(resolver_missing_expected, dict)
+                and any(
+                    resolver_missing_expected[server] for server in resolver_servers
+                )
+                and isinstance(baseline_gap, dict)
+                and baseline_gap.get("schema") == "phase54.dns-baseline-gap.v1"
+                and baseline_gap.get("authority_missing") == ["A", "PTR"]
+                and baseline_gap.get("resolver_missing") == resolver_missing_expected
+                and baseline_gap.get("observed_sha256") == sha256_json(gap_material)
+                and isinstance(normalized.get("ttl_min"), int)
+                and normalized["ttl_min"] > 0
+            )
         return bool(
             normalized.get("expected_address") == expected_address
+            and normalized.get("expected_reverse")
+            == (
+                "31.1.31.10.in-addr.arpa"
+                if expected_address == "10.31.1.31"
+                else "21.1.21.10.in-addr.arpa"
+            )
             and isinstance(authority, dict)
             and authority.get("server") == "10.89.53.10"
+            and authority.get("a_aa") is True
+            and authority.get("ptr_aa") is True
+            and authority.get("soa_aa") is True
+            and authority.get("ns_aa") is True
             and authority.get("aa") is True
             and authority.get("nxdomain") is True
             and authority.get("soa") is True
             and authority.get("ns") is True
             and authority.get("a_address") == expected_address
+            and authority.get("ptr_owner") == normalized.get("expected_reverse")
             and isinstance(resolvers, dict)
-            and resolvers.get("servers") == ["10.11.1.11", "127.0.0.2"]
-            and resolvers.get("nxdomain_count", 0) >= 2
+            and resolver_summary_valid
+            and resolvers.get("nxdomain_count") == 2
+            and resolvers.get("soa_count") == 2
+            and resolvers.get("ns_count") == 2
+            and resolvers.get("a_ptr_complete") is True
             and resolvers.get("a_address") == expected_address
+            and resolvers.get("ptr_owner") == normalized.get("expected_reverse")
+            and resolvers.get("soa") is True
+            and resolvers.get("ns") is True
+            and all(
+                all(resolver_matrix[server][field] for field in resolver_fields)
+                for server in resolver_servers
+            )
             and isinstance(normalized.get("ttl_min"), int)
             and normalized["ttl_min"] > 0
         )
@@ -574,8 +743,7 @@ def _normalized_probe_valid(
         )
         return bool(
             isinstance(be3, dict)
-            and be3.get("source_commit")
-            == "24f2562af086625b0678c4573f1c03a77270fc22"
+            and be3.get("source_commit") == "24f2562af086625b0678c4573f1c03a77270fc22"
             and be3.get("headless") is True
             and be3.get("authenticated") is True
             and be3.get("applies_changes") is False
@@ -619,17 +787,14 @@ def _normalized_probe_valid(
                 or (
                     isinstance(residuals, list)
                     and all(
-                        isinstance(item, str) and "10.21" in item
-                        for item in residuals
+                        isinstance(item, str) and "10.21" in item for item in residuals
                     )
                     and isinstance(residual_live, dict)
                     and residual_live.get("present") is bool(residuals)
                     and residual_live.get("count") == len(residuals)
                     and residual_live.get("sha256") == sha256_json(residuals)
                     and isinstance(normalized.get("live_readback_sha256"), str)
-                    and HEX_64_PATTERN.fullmatch(
-                        normalized["live_readback_sha256"]
-                    )
+                    and HEX_64_PATTERN.fullmatch(normalized["live_readback_sha256"])
                 )
             )
         )
@@ -686,7 +851,9 @@ def run_fixed_argv(spec: ProbeSpec, context: ProbeContext) -> dict[str, Any]:
         )
         stdout = completed.stdout[: 1024 * 1024]
         stderr = completed.stderr[: 1024 * 1024]
-        truncated = len(completed.stdout) > len(stdout) or len(completed.stderr) > len(stderr)
+        truncated = len(completed.stdout) > len(stdout) or len(completed.stderr) > len(
+            stderr
+        )
         payload: dict[str, Any] | None = None
         if spec.expects_json:
             try:
@@ -823,7 +990,9 @@ def required_check_ids(plan: str, stage: str | None) -> tuple[str, ...]:
 PROBE_REGISTRY = _build_probe_registry()
 
 
-def result_check(check_id: str, expected: Any, observed: Any, passed: bool) -> dict[str, Any]:
+def result_check(
+    check_id: str, expected: Any, observed: Any, passed: bool
+) -> dict[str, Any]:
     return {
         "id": check_id,
         "required": True,
@@ -833,7 +1002,9 @@ def result_check(check_id: str, expected: Any, observed: Any, passed: bool) -> d
     }
 
 
-def _path_from_evidence(raw_path: Any, evidence_dir: pathlib.Path) -> pathlib.Path | None:
+def _path_from_evidence(
+    raw_path: Any, evidence_dir: pathlib.Path
+) -> pathlib.Path | None:
     if not isinstance(raw_path, str) or not raw_path:
         return None
     candidate = pathlib.Path(raw_path)
@@ -1034,7 +1205,9 @@ def _contains_secret(value: Any, key: str | None = None) -> bool:
     if key and key.lower() in SENSITIVE_KEYS:
         return True
     if isinstance(value, dict):
-        return any(_contains_secret(item, str(item_key)) for item_key, item in value.items())
+        return any(
+            _contains_secret(item, str(item_key)) for item_key, item in value.items()
+        )
     if isinstance(value, list):
         return any(_contains_secret(item) for item in value)
     if isinstance(value, str):
@@ -1092,7 +1265,9 @@ def _previous_gate_valid(
     expected_plan = f"54-{int(plan[-2:]) - 1:02d}"
     expected_stage = TERMINAL_STAGE_BY_PLAN[expected_plan]
     gate_path = _path_from_evidence(lineage.get("gate_path"), evidence_dir)
-    prior_evidence_path = _path_from_evidence(lineage.get("evidence_path"), evidence_dir)
+    prior_evidence_path = _path_from_evidence(
+        lineage.get("evidence_path"), evidence_dir
+    )
     if gate_path is None or prior_evidence_path is None:
         return False
     gate_path = gate_path.resolve()
@@ -1164,7 +1339,10 @@ def _previous_gate_valid(
         and all(item.get("result") == "PASS" for item in prior_gate["checks"])
         and isinstance(prior_gate.get("runner_sha256"), str)
         and HEX_64_PATTERN.fullmatch(prior_gate["runner_sha256"])
-        and (not immediate or _freshness(prior_gate.get("finished_at"), None, max_age_seconds))
+        and (
+            not immediate
+            or _freshness(prior_gate.get("finished_at"), None, max_age_seconds)
+        )
         and commit_pinned
     )
     if not structurally_valid or expected_plan == "54-01":
@@ -1191,7 +1369,9 @@ def _git_pin_valid(
     if lineage.get("pin_state") != "commit-pinned":
         return False
     source_commit = lineage.get("source_commit")
-    if not isinstance(source_commit, str) or not HEX_40_PATTERN.fullmatch(source_commit):
+    if not isinstance(source_commit, str) or not HEX_40_PATTERN.fullmatch(
+        source_commit
+    ):
         return False
     git = _fixed_executable("git")
     try:
@@ -1247,14 +1427,15 @@ def _operation_lineage_valid(
     contract = OPERATION_CONTRACTS.get(plan)
     if contract is None:
         return False
-    operation_path = _path_from_evidence(operation.get("operation_plan_path"), evidence_dir)
+    operation_path = _path_from_evidence(
+        operation.get("operation_plan_path"), evidence_dir
+    )
     operation_hash = sha256_file(operation_path) if operation_path else None
     if (
         operation_path is None
         or operation_path.resolve().parent != evidence_dir.resolve()
         or operation_path.name != contract["filename"]
-        or
-        operation_hash is None
+        or operation_hash is None
         or operation_hash != operation.get("operation_plan_sha256")
         or not HEX_64_PATTERN.fullmatch(operation_hash)
     ):
@@ -1262,8 +1443,12 @@ def _operation_lineage_valid(
     operation_json = read_json(operation_path)
     input_hashes = operation.get("input_hashes")
     operations = operation_json.get("operations") if operation_json else None
-    created_at = parse_timestamp(operation_json.get("created_at")) if operation_json else None
-    expires_at = parse_timestamp(operation_json.get("expires_at")) if operation_json else None
+    created_at = (
+        parse_timestamp(operation_json.get("created_at")) if operation_json else None
+    )
+    expires_at = (
+        parse_timestamp(operation_json.get("expires_at")) if operation_json else None
+    )
     rollback_path = _path_from_evidence(
         operation_json.get("rollback_receipt_path") if operation_json else None,
         evidence_dir,
@@ -1288,7 +1473,11 @@ def _operation_lineage_valid(
         or created_at is None
         or expires_at is None
         or expires_at <= created_at
-        or not _freshness(operation_json.get("created_at"), operation_json.get("expires_at"), DEFAULT_MAX_AGE_SECONDS)
+        or not _freshness(
+            operation_json.get("created_at"),
+            operation_json.get("expires_at"),
+            DEFAULT_MAX_AGE_SECONDS,
+        )
         or rollback_path is None
         or rollback_path.resolve().parent != evidence_dir.resolve()
         or rollback_path.name != contract["rollback"]
@@ -1310,15 +1499,14 @@ def _operation_lineage_valid(
     approval = read_json(approval_path) if approval_path else None
     typed = f"APPROVE {plan} {operation_hash}"
     approved_at = parse_timestamp(approval.get("approved_at")) if approval else None
-    approval_expires_at = parse_timestamp(
-        approval.get("approval_expires_at")
-    ) if approval else None
+    approval_expires_at = (
+        parse_timestamp(approval.get("approval_expires_at")) if approval else None
+    )
     if (
         approval_path is None
         or approval_path.resolve().parent != evidence_dir.resolve()
         or approval_path.name != f"{plan}-APPROVAL.json"
-        or
-        approval is None
+        or approval is None
         or approval_hash != operation.get("approval_sha256")
         or approval.get("schema") != SCHEMA_APPROVAL
         or approval.get("owner") != "human-approval"
@@ -1353,12 +1541,12 @@ def _operation_lineage_valid(
     apply_path = _path_from_evidence(operation.get("apply_receipt_path"), evidence_dir)
     apply_hash = sha256_file(apply_path) if apply_path else None
     apply_receipt = read_json(apply_path) if apply_path else None
-    apply_started = parse_timestamp(
-        apply_receipt.get("started_at")
-    ) if apply_receipt else None
-    apply_finished = parse_timestamp(
-        apply_receipt.get("finished_at")
-    ) if apply_receipt else None
+    apply_started = (
+        parse_timestamp(apply_receipt.get("started_at")) if apply_receipt else None
+    )
+    apply_finished = (
+        parse_timestamp(apply_receipt.get("finished_at")) if apply_receipt else None
+    )
     return bool(
         anti_drift_path is not None
         and anti_drift_path.resolve().parent == evidence_dir.resolve()
@@ -1399,7 +1587,10 @@ def _backup_evidence_valid(
     evidence_dir: pathlib.Path,
 ) -> bool:
     backups = evidence_json.get("backups")
-    if not isinstance(backups, dict) or backups.get("retroactive_approval") is not False:
+    if (
+        not isinstance(backups, dict)
+        or backups.get("retroactive_approval") is not False
+    ):
         return False
     pre_existing = backups.get("pre_existing")
     pending_writes = backups.get("pending_writes")
@@ -1494,12 +1685,16 @@ def _builder_valid(
     ):
         return False
     serialized_targets = json.dumps(targets, sort_keys=True)
-    return bool("10.21" not in serialized_targets and receipt == {
-        "owner": builder["owner"],
-        "validated": builder["validated"],
-        "commit": builder["commit"],
-        "targets": targets,
-    })
+    return bool(
+        "10.21" not in serialized_targets
+        and receipt
+        == {
+            "owner": builder["owner"],
+            "validated": builder["validated"],
+            "commit": builder["commit"],
+            "targets": targets,
+        }
+    )
 
 
 def _public_ip_valid(
@@ -1522,11 +1717,23 @@ def _public_ip_valid(
     if not common_valid:
         return False
     if plan == "54-02":
+        binding = {
+            "public_ip_ocid": public_ip.get("ocid"),
+            "address": public_ip.get("address"),
+            "private_ip_address": public_ip.get("private_ip_address"),
+            "private_ip_ocid": public_ip.get("private_ip_ocid"),
+            "vnic_ocid": public_ip.get("vnic_ocid"),
+            "subnet_ocid": public_ip.get("subnet_ocid"),
+        }
         return bool(
-            isinstance(public_ip.get("private_ip_ocid"), str)
-            and public_ip.get("private_ip_ocid")
-            and isinstance(public_ip.get("private_ip_address"), str)
-            and public_ip.get("private_ip_address")
+            public_ip.get("binding") == BASELINE_PUBLIC_BINDING
+            and public_ip.get("private_ip_address") == BASELINE_PUBLIC_BINDING
+            and public_ip.get("baseline_private_ip_ocid")
+            == public_ip.get("private_ip_ocid")
+            and public_ip.get("lifetime") == "RESERVED"
+            and public_ip.get("scope") == "REGION"
+            and all(isinstance(value, str) and value for value in binding.values())
+            and public_ip.get("current_binding_sha256") == sha256_json(binding)
             and public_ip.get("operation") == "read"
         )
     if plan not in {"54-05", "54-10"}:
@@ -1540,9 +1747,8 @@ def _public_ip_valid(
         "subnet_ocid": public_ip.get("subnet_ocid"),
         "vcn_ocid": public_ip.get("vcn_ocid"),
     }
-    if (
-        binding["private_ip_address"] != "10.31.1.31"
-        or not all(isinstance(value, str) and value for value in binding.values())
+    if binding["private_ip_address"] != "10.31.1.31" or not all(
+        isinstance(value, str) and value for value in binding.values()
     ):
         return False
     operation_path = _path_from_evidence(
@@ -1717,8 +1923,7 @@ def _knowledge_freeze_valid(
         or graphify.get("stale") is not False
         or graphify.get("commit_stale") is not False
         or graphify.get("relevant_nodes") is not True
-        or graphify.get("query")
-        != "phase54_network_gate"
+        or graphify.get("query") != "phase54_network_gate"
         or not isinstance(artifact_hashes, dict)
         or not artifact_hashes
         or not isinstance(receipts, dict)
@@ -1816,8 +2021,7 @@ def _runner_contract_probe(
             )
             passed = bool(
                 _knowledge_freeze_valid(evidence, context.evidence_dir)
-                and
-                evidence.get("mutations_attempted") is False
+                and evidence.get("mutations_attempted") is False
                 and evidence.get("production_mutations_attempted", False) is False
                 and all(evidence.get(key) in (None, [], {}) for key in forbidden)
             )
@@ -1835,9 +2039,7 @@ def _runner_contract_probe(
         "secret_material_present": False,
         "request_id": f"runner-contract-{context.plan}-{context.stage or 'none'}",
         "observed_sha256": sha256_file(context.evidence),
-        "artifact_hashes": {
-            "canonical-evidence": sha256_file(context.evidence) or ""
-        },
+        "artifact_hashes": {"canonical-evidence": sha256_file(context.evidence) or ""},
     }
 
 
@@ -1916,7 +2118,9 @@ def evaluate_evidence(
         )
     )
     expected_ids = required_check_ids(plan, stage)
-    plan_valid = plan in PLAN_IDS and bool(evidence_json and evidence_json.get("plan") == plan)
+    plan_valid = plan in PLAN_IDS and bool(
+        evidence_json and evidence_json.get("plan") == plan
+    )
     checks.append(
         result_check(
             "plan_id",
@@ -2003,9 +2207,7 @@ def evaluate_evidence(
                 duplicates = True
             observed_by_id[check_id] = item
     complete = bool(
-        expected_ids
-        and not duplicates
-        and set(expected_ids) == set(observed_by_id)
+        expected_ids and not duplicates and set(expected_ids) == set(observed_by_id)
     )
     checks.append(
         result_check(
@@ -2058,7 +2260,9 @@ def evaluate_evidence(
             observed_valid,
         )
     )
-    artifact_valid = bool(evidence_json and _artifacts_valid(evidence_json, evidence_dir))
+    artifact_valid = bool(
+        evidence_json and _artifacts_valid(evidence_json, evidence_dir)
+    )
     checks.append(
         result_check(
             "artifact_hashes",
@@ -2089,7 +2293,8 @@ def evaluate_evidence(
         )
     )
     operation_valid = bool(
-        evidence_json and _operation_lineage_valid(evidence_json, plan, stage, evidence_dir)
+        evidence_json
+        and _operation_lineage_valid(evidence_json, plan, stage, evidence_dir)
     )
     checks.append(
         result_check(
@@ -2112,12 +2317,16 @@ def evaluate_evidence(
             )
         )
     if plan == "54-03":
-        builder_valid = bool(evidence_json and _builder_valid(evidence_json, evidence_dir))
+        builder_valid = bool(
+            evidence_json and _builder_valid(evidence_json, evidence_dir)
+        )
         checks.append(
             result_check(
                 "builder_targets",
                 EXPECTED_BUILDER_TARGETS,
-                evidence_json.get("builder", {}).get("targets") if evidence_json else None,
+                evidence_json.get("builder", {}).get("targets")
+                if evidence_json
+                else None,
                 builder_valid,
             )
         )
@@ -2167,14 +2376,10 @@ def evaluate_evidence(
             None,
         )
         residuals = (
-            full_matrix["normalized"].get("operational_10_21")
-            if full_matrix
-            else None
+            full_matrix["normalized"].get("operational_10_21") if full_matrix else None
         )
         residual_live = (
-            full_matrix["normalized"].get("residual_live")
-            if full_matrix
-            else None
+            full_matrix["normalized"].get("residual_live") if full_matrix else None
         )
         checks.append(
             result_check(
@@ -2276,9 +2481,7 @@ def run(args: argparse.Namespace) -> int:
         "evidence_sha256": evidence_hash,
         "runner_sha256": sha256_file(pathlib.Path(__file__).resolve()),
         "next_wave_gate": f"PASS:{args.plan}" if status == "PASS" else None,
-        "mutations_attempted": bool(
-            evidence_json.get("mutations_attempted", False)
-        )
+        "mutations_attempted": bool(evidence_json.get("mutations_attempted", False))
         if evidence_json
         else False,
         "redacted": bool(getattr(args, "redact", False)),
@@ -2326,7 +2529,8 @@ def assert_gate(args: argparse.Namespace) -> int:
         and gate_json.get("stage") == stage
         and gate_json.get("status") == "PASS"
         and gate_json.get("evidence_sha256") == evidence_hash
-        and gate_json.get("required_check_ids") == list(required_check_ids(args.plan, stage))
+        and gate_json.get("required_check_ids")
+        == list(required_check_ids(args.plan, stage))
         and isinstance(gate_json.get("checks"), list)
         and gate_json["checks"]
         and all(item.get("result") == "PASS" for item in gate_json["checks"])
@@ -2353,9 +2557,7 @@ def assert_gate(args: argparse.Namespace) -> int:
 def assert_review_gate(args: argparse.Namespace) -> int:
     evidence = pathlib.Path(args.evidence).resolve()
     gate_path = pathlib.Path(args.gate).resolve()
-    max_age_seconds = int(
-        getattr(args, "max_age_seconds", DEFAULT_MAX_AGE_SECONDS)
-    )
+    max_age_seconds = int(getattr(args, "max_age_seconds", DEFAULT_MAX_AGE_SECONDS))
     scope_root = pathlib.Path(getattr(args, "scope_root", REPO_ROOT)).resolve()
     valid = _review_gate_valid(
         evidence,
@@ -2428,7 +2630,9 @@ def _run_local_command(
 
 
 def _workstream_routing_probe(wrapper_path: pathlib.Path) -> bool:
-    config_path = REPO_ROOT / ".planning/workstreams/network-horistic-readdress/config.json"
+    config_path = (
+        REPO_ROOT / ".planning/workstreams/network-horistic-readdress/config.json"
+    )
     config = read_json(config_path)
     workflow = config.get("workflow") if config else None
     graphify = config.get("graphify") if config else None
@@ -2512,7 +2716,13 @@ def _graphify_probe(wrapper_path: pathlib.Path) -> bool:
             "phase54_network_gate",
         ]
     )
-    if not status or status[0] != 0 or not query or query[0] != 0 or not query[1].strip():
+    if (
+        not status
+        or status[0] != 0
+        or not query
+        or query[0] != 0
+        or not query[1].strip()
+    ):
         return False
     query_text = query[1].decode("utf-8", "replace")
     try:
@@ -2522,7 +2732,9 @@ def _graphify_probe(wrapper_path: pathlib.Path) -> bool:
     query_terms = " ".join(_value_strings(query_value)).lower()
     relevant_query = bool(
         "phase54" in re.sub(r"[^a-z0-9]+", "", query_terms)
-        and any(term in query_terms for term in ("adapter", "network gate", "workstream"))
+        and any(
+            term in query_terms for term in ("adapter", "network gate", "workstream")
+        )
     )
     if not relevant_query:
         return False
@@ -2533,8 +2745,7 @@ def _graphify_probe(wrapper_path: pathlib.Path) -> bool:
         normalized = re.sub(r"\s+", "", status_text.lower())
         graph_fresh = "stale:false" in normalized or "stale=false" in normalized
         commit_fresh = (
-            "commit_stale:false" in normalized
-            or "commit_stale=false" in normalized
+            "commit_stale:false" in normalized or "commit_stale=false" in normalized
         )
         return graph_fresh and commit_fresh
 
@@ -2556,7 +2767,9 @@ def _graphify_probe(wrapper_path: pathlib.Path) -> bool:
 
 def run_local_probe(probe_id: str) -> int:
     runner_path = pathlib.Path(__file__).resolve()
-    test_path = REPO_ROOT / "modules/fleet-control-plane/tests/test_phase54_network_gate.py"
+    test_path = (
+        REPO_ROOT / "modules/fleet-control-plane/tests/test_phase54_network_gate.py"
+    )
     wrapper_path = REPO_ROOT / "scripts/graphify-sync.sh"
     passed = False
     if probe_id == "workstream_config_routing":

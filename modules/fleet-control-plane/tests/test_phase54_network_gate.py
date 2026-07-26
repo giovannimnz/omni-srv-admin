@@ -35,9 +35,7 @@ def _fixture_remote_transport(
         "exit_code": 0,
         "result": "PASS",
         "artifact_hashes": {
-            "transport-observation": hashlib.sha256(
-                spec.check_id.encode()
-            ).hexdigest()
+            "transport-observation": hashlib.sha256(spec.check_id.encode()).hexdigest()
         },
     }
     if spec.check_id == "full_matrix":
@@ -79,7 +77,9 @@ def _sha(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def _args(root: Path, plan: str = "54-01", stage: str | None = None) -> argparse.Namespace:
+def _args(
+    root: Path, plan: str = "54-01", stage: str | None = None
+) -> argparse.Namespace:
     return argparse.Namespace(
         mode="final",
         plan=plan,
@@ -373,15 +373,30 @@ def _write_public_ip(
     operation_lineage: dict[str, object] | None,
 ) -> dict[str, object]:
     if plan == "54-02":
+        binding = {
+            "public_ip_ocid": "ocid1.publicip.fixture",
+            "address": "163.176.232.119",
+            "private_ip_address": gate.BASELINE_PUBLIC_BINDING,
+            "private_ip_ocid": "ocid1.privateip.primary",
+            "vnic_ocid": "ocid1.vnic.primary",
+            "subnet_ocid": "ocid1.subnet.primary",
+        }
         return {
             "address": "163.176.232.119",
-            "ocid": "ocid1.publicip.fixture",
-            "baseline_ocid": "ocid1.publicip.fixture",
-            "private_ip_address": "10.21.1.21",
-            "private_ip_ocid": "ocid1.privateip.old",
+            "ocid": binding["public_ip_ocid"],
+            "baseline_ocid": binding["public_ip_ocid"],
+            "binding": binding["private_ip_address"],
+            "private_ip_address": binding["private_ip_address"],
+            "private_ip_ocid": binding["private_ip_ocid"],
+            "baseline_private_ip_ocid": binding["private_ip_ocid"],
+            "vnic_ocid": binding["vnic_ocid"],
+            "subnet_ocid": binding["subnet_ocid"],
             "label": "horistic-srv-1",
             "state": "ASSIGNED",
+            "lifetime": "RESERVED",
+            "scope": "REGION",
             "operation": "read",
+            "current_binding_sha256": gate.sha256_json(binding),
         }
     if operation_lineage is None:
         canonical_evidence = json.loads(
@@ -553,9 +568,7 @@ def _write_evidence(
         "artifacts": [{"path": str(artifact), "sha256": _sha(artifact)}],
     }
     stability_gate = (
-        _write_stability_gate(root)
-        if plan == "54-09" and stage == "preview"
-        else None
+        _write_stability_gate(root) if plan == "54-09" and stage == "preview" else None
     )
     if plan != "54-01":
         evidence["previous_gate"] = _write_previous_gate(root, plan)
@@ -724,9 +737,7 @@ def test_assert_review_gate_rejects_adversarial_review_artifacts(
     elif mutation == "missing-scope":
         review_evidence["scope"].pop()
     else:
-        review_evidence["scope"].append(
-            {"path": "unknown.md", "sha256": "0" * 64}
-        )
+        review_evidence["scope"].append({"path": "unknown.md", "sha256": "0" * 64})
     evidence_path.write_text(
         json.dumps(review_evidence, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -761,7 +772,9 @@ def test_54_02_final_requires_independent_review_gate(tmp_path: Path) -> None:
     _assert_blocked(args, "observed_checks")
 
 
-def test_probe_registry_covers_every_required_tuple_with_physical_or_derived_specs() -> None:
+def test_probe_registry_covers_every_required_tuple_with_physical_or_derived_specs() -> (
+    None
+):
     expected = {
         (plan, stage, check_id)
         for plan, stages in gate.STAGES_BY_PLAN.items()
@@ -896,7 +909,9 @@ def test_run_fixed_argv_uses_exact_safe_subprocess_contract(
     monkeypatch.setenv("HOME", "/fixture/home")
     monkeypatch.setenv("CODEX_HOME", "/fixture/codex")
     spec = gate.ProbeSpec("54-01", None, "fixed", "local", ("/usr/bin/fixed", "probe"))
-    context = gate.ProbeContext("54-01", None, tmp_path / "evidence.json", tmp_path, 900)
+    context = gate.ProbeContext(
+        "54-01", None, tmp_path / "evidence.json", tmp_path, 900
+    )
     assert gate.run_fixed_argv(spec, context)["result"] == "PASS"
     argv, kwargs = calls[0]
     assert argv == ["/usr/bin/fixed", "probe"]
@@ -941,7 +956,9 @@ def test_run_fixed_argv_rejects_incomplete_read_only_observation(
 
     monkeypatch.setattr(gate.subprocess, "run", lambda *args, **kwargs: Completed())
     spec = gate.ProbeSpec("54-01", None, "fixed", "local", ("/usr/bin/fixed",))
-    context = gate.ProbeContext("54-01", None, tmp_path / "evidence.json", tmp_path, 900)
+    context = gate.ProbeContext(
+        "54-01", None, tmp_path / "evidence.json", tmp_path, 900
+    )
     assert gate.run_fixed_argv(spec, context)["result"] == "BLOCK"
 
 
@@ -1180,11 +1197,23 @@ def test_plan_contract_uses_canonical_evidence_and_literal_tokens() -> None:
         )[0]
         assert files_section.count("\n  - ") <= 9
         if plan == "54-01":
-            assert "modules/fleet-control-plane/scripts/phase54_probe_adapters.py" in files_section
-            assert "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py" in files_section
+            assert (
+                "modules/fleet-control-plane/scripts/phase54_probe_adapters.py"
+                in files_section
+            )
+            assert (
+                "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py"
+                in files_section
+            )
         else:
-            assert "modules/fleet-control-plane/scripts/phase54_probe_adapters.py" not in files_section
-            assert "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py" not in files_section
+            assert (
+                "modules/fleet-control-plane/scripts/phase54_probe_adapters.py"
+                not in files_section
+            )
+            assert (
+                "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py"
+                not in files_section
+            )
     plan02 = (phase_dir / "54-02-PLAN.md").read_text(encoding="utf-8")
     plan02_frontmatter = plan02.split("---", 2)[1]
     plan02_files = plan02_frontmatter.split("files_modified:", 1)[1].split(
@@ -1232,13 +1261,10 @@ def test_plan_contract_uses_canonical_evidence_and_literal_tokens() -> None:
     }
     for plan, (predecessor, terminal_stage) in predecessor_contracts.items():
         text = (phase_dir / f"{plan}-PLAN.md").read_text(encoding="utf-8")
-        first_verify = text.split("<verify><automated>", 1)[1].split(
-            "</automated>", 1
-        )[0]
-        commands = [
-            item.strip()
-            for item in first_verify.split("&amp;&amp;")
+        first_verify = text.split("<verify><automated>", 1)[1].split("</automated>", 1)[
+            0
         ]
+        commands = [item.strip() for item in first_verify.split("&amp;&amp;")]
         if plan == "54-02":
             assert "phase54_network_gate.py assert-review-gate " in commands[0]
             assert gate.REVIEW_EVIDENCE_NAME in commands[0]
@@ -1247,8 +1273,7 @@ def test_plan_contract_uses_canonical_evidence_and_literal_tokens() -> None:
         else:
             first_command = commands[0]
         assert (
-            "phase54_network_gate.py assert-gate "
-            f"--plan {predecessor} "
+            f"phase54_network_gate.py assert-gate --plan {predecessor} "
         ) in first_command
         assert f"{predecessor}-EVIDENCE.json" in first_command
         assert f"{predecessor}-GATE.json" in first_command
@@ -1495,6 +1520,296 @@ def test_public_ip_ocid_drift_blocks(tmp_path: Path) -> None:
     _assert_blocked(args, "public_ip_identity")
 
 
+@pytest.mark.parametrize("mutation", ("public-ocid", "binding"))
+def test_public_ip_54_02_normalized_baseline_is_exact(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    args, evidence = _write_evidence(tmp_path, "54-02", "preflight")
+    public = evidence["public_ip"]
+    semantic = {
+        "reserved_public_ips": [
+            {
+                "public_ip_ocid": public["ocid"],
+                "label": "horistic-srv-1",
+                "address": "163.176.232.119",
+                "private_ip_ocid": public["private_ip_ocid"],
+                "lifecycle_state": "ASSIGNED",
+                "lifetime": "RESERVED",
+            }
+        ],
+        "private_ips": [
+            {
+                "private_ip_ocid": public["private_ip_ocid"],
+                "address": gate.BASELINE_PUBLIC_BINDING,
+                "vnic_ocid": public["vnic_ocid"],
+                "subnet_ocid": public["subnet_ocid"],
+            },
+            {
+                "private_ip_ocid": "ocid1.privateip.secondary",
+                "address": "10.21.1.21",
+                "vnic_ocid": "ocid1.vnic.secondary",
+                "subnet_ocid": "ocid1.subnet.secondary",
+            },
+        ],
+    }
+    evidence_sha = _sha(Path(args.evidence))
+    normalized = {
+        "evidence_sha256": evidence_sha,
+        "operation": "inventory.get",
+        "semantic": semantic,
+    }
+    payload = {
+        "evidence_sha256": evidence_sha,
+        "normalized": normalized,
+    }
+    spec = gate.ProbeSpec(
+        "54-02",
+        "preflight",
+        "public_ip_baseline",
+        "remote-owner",
+        (),
+    )
+    context = gate.ProbeContext(
+        "54-02",
+        "preflight",
+        Path(args.evidence),
+        tmp_path,
+        900,
+    )
+    assert gate._normalized_probe_valid(spec, context, payload)
+    if mutation == "public-ocid":
+        semantic["reserved_public_ips"][0]["public_ip_ocid"] = "ocid1.publicip.wrong"
+    else:
+        semantic["private_ips"][0]["address"] = "10.21.1.21"
+    assert not gate._normalized_probe_valid(spec, context, payload)
+
+
+def _dns_baseline_normalized(evidence_sha: str) -> dict[str, object]:
+    authority = {
+        "server": "10.89.53.10",
+        "a_aa": False,
+        "ptr_aa": False,
+        "soa_aa": True,
+        "ns_aa": True,
+        "aa": False,
+        "nxdomain": True,
+        "a_address": None,
+        "ptr_owner": None,
+        "soa": True,
+        "ns": True,
+    }
+    resolver_matrix = {
+        "10.11.1.11": {
+            "a": True,
+            "ptr": True,
+            "soa": True,
+            "ns": True,
+            "nxdomain": True,
+        },
+        "127.0.0.2": {
+            "a": True,
+            "ptr": True,
+            "soa": False,
+            "ns": False,
+            "nxdomain": False,
+        },
+    }
+    resolvers = {
+        "servers": ["10.11.1.11", "127.0.0.2"],
+        "nxdomain_count": 1,
+        "soa_count": 1,
+        "ns_count": 1,
+        "a_ptr_complete": True,
+        "a_address": "10.21.1.21",
+        "ptr_owner": "21.1.21.10.in-addr.arpa",
+        "soa": False,
+        "ns": False,
+        "matrix": resolver_matrix,
+    }
+    material = {
+        "expected_address": "10.21.1.21",
+        "expected_reverse": "21.1.21.10.in-addr.arpa",
+        "authority": authority,
+        "resolvers": resolvers,
+    }
+    return {
+        "evidence_sha256": evidence_sha,
+        **material,
+        "ttl_min": 300,
+        "baseline_gap": {
+            "schema": "phase54.dns-baseline-gap.v1",
+            "authority_missing": ["A", "PTR"],
+            "resolver_missing": {
+                "10.11.1.11": [],
+                "127.0.0.2": ["NS", "NXDOMAIN", "SOA"],
+            },
+            "observed_sha256": gate.sha256_json(material),
+        },
+    }
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    ("missing-gap", "tampered-a", "resolver-missing-mismatch"),
+)
+def test_dns_54_02_requires_explicit_hash_bound_baseline_gap(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    args, _ = _write_evidence(tmp_path, "54-02", "preflight")
+    evidence_sha = _sha(Path(args.evidence))
+    normalized = _dns_baseline_normalized(evidence_sha)
+    payload = {"evidence_sha256": evidence_sha, "normalized": normalized}
+    context = gate.ProbeContext(
+        "54-02",
+        "preflight",
+        Path(args.evidence),
+        tmp_path,
+        900,
+    )
+    spec = gate.ProbeSpec(
+        "54-02",
+        "preflight",
+        "dns_edge_baseline",
+        "remote-owner",
+        (),
+    )
+    assert gate._normalized_probe_valid(spec, context, payload)
+    if mutation == "missing-gap":
+        normalized.pop("baseline_gap")
+    elif mutation == "tampered-a":
+        normalized["resolvers"]["a_address"] = "10.21.1.99"
+    else:
+        normalized["baseline_gap"]["resolver_missing"]["127.0.0.2"] = [
+            "SOA",
+            "NS",
+            "NXDOMAIN",
+        ]
+    assert not gate._normalized_probe_valid(spec, context, payload)
+
+    strict_spec = gate.ProbeSpec(
+        "54-06",
+        "preview",
+        "freeipa_authority",
+        "remote-owner",
+        (),
+    )
+    assert not gate._normalized_probe_valid(
+        strict_spec,
+        gate.ProbeContext(
+            "54-06",
+            "preview",
+            Path(args.evidence),
+            tmp_path,
+            900,
+        ),
+        payload,
+    )
+
+
+def _dns_strict_normalized(evidence_sha: str) -> dict[str, object]:
+    expected_address = "10.21.1.21"
+    expected_reverse = "21.1.21.10.in-addr.arpa"
+    authority = {
+        "server": "10.89.53.10",
+        "a_aa": True,
+        "ptr_aa": True,
+        "soa_aa": True,
+        "ns_aa": True,
+        "aa": True,
+        "nxdomain": True,
+        "a_address": expected_address,
+        "ptr_owner": expected_reverse,
+        "soa": True,
+        "ns": True,
+    }
+    matrix = {
+        server: {
+            "a": True,
+            "ptr": True,
+            "soa": True,
+            "ns": True,
+            "nxdomain": True,
+        }
+        for server in ("10.11.1.11", "127.0.0.2")
+    }
+    resolvers = {
+        "servers": ["10.11.1.11", "127.0.0.2"],
+        "nxdomain_count": 2,
+        "soa_count": 2,
+        "ns_count": 2,
+        "a_ptr_complete": True,
+        "a_address": expected_address,
+        "ptr_owner": expected_reverse,
+        "soa": True,
+        "ns": True,
+        "matrix": matrix,
+    }
+    return {
+        "evidence_sha256": evidence_sha,
+        "expected_address": expected_address,
+        "expected_reverse": expected_reverse,
+        "authority": authority,
+        "resolvers": resolvers,
+        "ttl_min": 300,
+    }
+
+
+@pytest.mark.parametrize(
+    "mutation",
+    (
+        "authority-ptr-owner",
+        "authority-ptr-aa",
+        "resolver-ptr-owner",
+        "resolver-soa-summary",
+        "resolver-ns-count",
+        "resolver-matrix-cell",
+        "resolver-matrix-shape",
+    ),
+)
+def test_dns_54_06_strict_normalized_contract_rejects_tampering(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    args, _ = _write_evidence(tmp_path, "54-02", "preflight")
+    evidence_sha = _sha(Path(args.evidence))
+    normalized = _dns_strict_normalized(evidence_sha)
+    payload = {"evidence_sha256": evidence_sha, "normalized": normalized}
+    context = gate.ProbeContext(
+        "54-06",
+        "preview",
+        Path(args.evidence),
+        tmp_path,
+        900,
+    )
+    spec = gate.ProbeSpec(
+        "54-06",
+        "preview",
+        "freeipa_authority",
+        "remote-owner",
+        (),
+    )
+    assert gate._normalized_probe_valid(spec, context, payload)
+
+    if mutation == "authority-ptr-owner":
+        normalized["authority"]["ptr_owner"] = "wrong.in-addr.arpa"
+    elif mutation == "authority-ptr-aa":
+        normalized["authority"]["ptr_aa"] = False
+    elif mutation == "resolver-ptr-owner":
+        normalized["resolvers"]["ptr_owner"] = "wrong.in-addr.arpa"
+    elif mutation == "resolver-soa-summary":
+        normalized["resolvers"]["soa"] = False
+    elif mutation == "resolver-ns-count":
+        normalized["resolvers"]["ns_count"] = 1
+    elif mutation == "resolver-matrix-cell":
+        normalized["resolvers"]["matrix"]["127.0.0.2"]["ns"] = False
+    else:
+        normalized["resolvers"]["matrix"]["127.0.0.2"].pop("nxdomain")
+
+    assert not gate._normalized_probe_valid(spec, context, payload)
+
+
 def test_public_ip_target_cannot_reuse_old_private_binding(tmp_path: Path) -> None:
     args, evidence = _write_evidence(tmp_path, "54-05", "apply")
     evidence["public_ip"]["private_ip_address"] = "10.21.1.21"
@@ -1557,9 +1872,7 @@ def test_final_operational_10_21_residual_blocks(tmp_path: Path) -> None:
     ) -> dict[str, object]:
         result = _fixture_remote_transport(spec, context)
         if spec.check_id == "full_matrix":
-            result["normalized"]["operational_10_21"] = [
-                "route 10.21.0.0/16"
-            ]
+            result["normalized"]["operational_10_21"] = ["route 10.21.0.0/16"]
             result["normalized"]["residual_live"] = {
                 "present": True,
                 "count": 1,

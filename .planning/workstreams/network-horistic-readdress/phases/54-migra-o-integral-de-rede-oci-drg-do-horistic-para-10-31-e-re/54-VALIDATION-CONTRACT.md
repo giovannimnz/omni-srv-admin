@@ -41,7 +41,14 @@ Evidence contains exact `check_inputs` IDs only; adapter, argv, command, host, t
 - The only accepted typed confirmation is the literal `APPROVE <plan> <sha256-completo>`; `APROVAR`, `APPROVE BACKUP`, `APPROVE RETIREMENT` and any other variant block. Confirmation is never auto-generated or auto-approved and is stored in a separate immutable `54-NN-APPROVAL.json`, never inside the approved OperationPlan.
 - Approval expires before apply if live readbacks, input hashes or target set drift.
 - Apply reads the approved artifact from disk; it never reconstructs commands from prose.
-- OCI public-IP operations never contain release/delete. Baseline 54-02 may record the old private binding. Plans 54-05/10 require same public OCID/address plus target `10.31.1.31`, private-IP/VNIC/subnet/VCN OCIDs from the approved 54-05 OperationPlan, and a matching `phase54.public-ip-readback.v1`; equality with the old private OCID is invalid.
+- OCI public-IP operations never contain release/delete/recreate. Baseline 54-02 must record the actual primary binding `10.0.0.65`, exact public-IP/private-IP/VNIC/subnet OCIDs and `current_binding_sha256`, while separately proving the live secondary DRG address `10.21.1.21` has different private-IP/VNIC identity. It must not infer the public binding from the secondary path. Plans 54-05/10 require same public OCID/address plus target `10.31.1.31`, private-IP/VNIC/subnet/VCN OCIDs from the approved 54-05 OperationPlan, and a matching `phase54.public-ip-readback.v1`; equality with the old private OCID is invalid.
+
+## DNS baseline versus convergence
+
+- `dns_edge_baseline` in 54-02 is an exact read-only snapshot, not a convergence claim. It requires a `phase54.dns-baseline-gap.v1` object whose digest covers expected A/PTR, the complete authority matrix and both resolver matrices.
+- The accepted current gap is explicit: FreeIPA authority `10.89.53.10` proves SOA/NS/NX but lacks authoritative Horistic A/PTR; CoreDNS `10.11.1.11` and AdGuard `127.0.0.2` must both prove current A `10.21.1.21` and PTR `21.1.21.10.in-addr.arpa`, while every missing SOA/NS/NX cell is listed in `resolver_missing`.
+- Missing/silent gap, a fully converged claim at baseline, tampered A/PTR, incomplete owner read or gap digest drift blocks 54-02.
+- `freeipa_authority` and `resolver_forwarding` in 54-06 and later remain strict: authoritative A/PTR/SOA/NS/NX plus complete resolver A/PTR/SOA/NS/NX are required; a 54-02 `baseline_gap` never satisfies them.
 
 ## Wave lineage
 
@@ -54,7 +61,7 @@ Plans `54-02..54-10` require the immediate predecessor gate `PASS`, fresh, hash-
 | Plan | Required proof |
 |---|---|
 | 54-01 | workstream config routing; forged/stale/tampered/UNKNOWN/partial evidence rejected by tests |
-| 54-02 | fresh reissued 54-01 gate; independent review gate; baseline public binding; exact local SRV1/SRV3/BE3 `phase54.backup-receipt.v1` receipts explicitly non-authorizing; approval only for OCI boot or named refreshes |
+| 54-02 | fresh reissued 54-01 gate; independent review gate; exact primary public binding `10.0.0.65` plus distinct secondary `10.21.1.21`; explicit hash-bound DNS baseline gap; exact local SRV1/SRV3/BE3 `phase54.backup-receipt.v1` receipts explicitly non-authorizing; approval only for OCI boot or named refreshes |
 | 54-03 | external builder commit/receipt exact 10.31 literals; no target 10.21; VCN architecture decision |
 | 54-04 | target VCN/subnet/DRG/routes/security ACTIVE and bidirectional |
 | 54-05 | target `10.31.1.31` plus private-IP/VNIC/subnet/VCN OCIDs matching approved OperationPlan and readback; same public OCID/address/label |

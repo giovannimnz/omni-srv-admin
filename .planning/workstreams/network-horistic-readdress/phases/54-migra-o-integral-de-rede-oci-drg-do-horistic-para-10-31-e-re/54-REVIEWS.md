@@ -23,9 +23,10 @@ Os ciclos abaixo são histórico de revisão e não autorizam writes. A conclus�
 - Operation/approval/apply/rollback schemas and exact paths are validated by content; invented rollback hash/receipt-state claims block.
 - 54-10 uses a direct exact five-artifact 54-05 cutover anchor plus live binding digest.
 - Portable `scripts/graphify-sync.sh` owns Linux node versus node.exe+wslpath and guarded foreground update.
-- Nyquist commands use `/var/tmp`; the final runner suite passed 75 tests in 12.59 seconds and the physical adapter suite passed 8 tests in 2.43 seconds.
+- Nyquist commands use `/var/tmp`; the current full runner suite passed 107 tests in 27.36 seconds and the physical adapter suite passed 29 tests in 3.26 seconds.
 - A live read-only 54-02 capability smoke passed OCI MCP, strict srv1/srv3 SSH fallback, DNS owner probes and BE3 commit/CLI pin without mutation or secret output.
-- Public-IP validation is stage-aware: 54-02 accepts the old baseline binding, while 54-05/10 require target `10.31.1.31` and private-IP/VNIC/subnet/VCN IDs bound to the approved 54-05 OperationPlan and readback.
+- Public-IP validation is stage-aware: 54-02 hash-binds the observed primary `10.0.0.65` public binding and its public/private/VNIC/subnet OCIDs, distinct from the secondary DRG `10.21.1.21`; 54-05/10 still require target `10.31.1.31` and private-IP/VNIC/subnet/VCN IDs bound to the approved 54-05 OperationPlan and readback.
+- DNS validation is stage-aware: 54-02 requires an explicit hash-bound current divergence (`phase54.dns-baseline-gap.v1`) with resolver A/PTR intact; 54-06+ still require fully converged authority and resolver matrices.
 - Pre-existing SRV1/SRV3 backups have exact local receipt names/schema and cannot become pending writes or retroactive approval.
 - 54-08 sync requires receipt-level absence of both S20 `.9` peer and AllowedIP; `decision=defer` blocks completion.
 - 54-10 completes knowledge writes in preflight, freezes their hashes, and the separately fresh sync blocks every mutation, write receipt/operation or apply indicator.

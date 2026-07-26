@@ -30,7 +30,7 @@ runner and adapter suites completed as follows:
 
 | Selector | Result | Elapsed |
 |---|---:|---:|
-| complete runner + adapter suites | 123 passed (95 + 28) | 330.49 s |
+| complete runner + adapter suites | 136 passed (107 + 29) | 30.62 s |
 | `probe_registry or physical_owner_adapter or adapter_coverage or real_local_probe or run_fixed_argv or bootstrap_uses_content_pin or successors_require` | 12 passed | 2.67 s |
 | `check_inputs or injection_payloads or manually_fabricated` | 14 passed | 0.58 s |
 | `predecessor_wrong or predecessor_depth or assert_gate` | 10 passed | 20.12 s |
@@ -48,7 +48,7 @@ runner and adapter suites completed as follows:
 | Plan | Requirement focus | Automated proof |
 |---|---|---|
 | 54-01 | NET-11 | focused pytest rejects forged PASS, missing check, partial write, BLOCKED/UNKNOWN, stale approval and tampered hash |
-| 54-02 | NET-01,03 | first command validates independent fresh zero-finding review of the exact current 14-file planning scope; then gate validates fresh commit-pinned 54-01 without rewriting it, three exact individual backup receipts, pending-write OperationPlan/approval/anti-drift/rollback/apply, OCID binding and baseline |
+| 54-02 | NET-01,03 | first command validates independent fresh zero-finding review of the exact current 14-file planning scope; then gate validates fresh commit-pinned 54-01, exact public binding `10.0.0.65` with OCID chain distinct from secondary `10.21.1.21`, required hash-bound DNS baseline gap, three exact individual backup receipts and pending-write lineage |
 | 54-03 | NET-02,04,09 | gate validates external builder commit/receipt and deterministic VCN branch |
 | 54-04 | NET-02,05 | gate validates target network plus route/security ida/retorno |
 | 54-05 | NET-03,04 | gate validates target 10.31.1.31 and private-IP/VNIC/subnet/VCN OCIDs against approved OperationPlan/readback |
@@ -77,6 +77,9 @@ runner and adapter suites completed as follows:
 - any `final` call using raw OperationPlan/approval/stability/device receipt instead of `54-NN-EVIDENCE.json` -> BLOCK;
 - any token other than literal `APPROVE <plan> <sha256-completo>` -> BLOCK;
 - 54-02 baseline old private binding -> allowed; 54-05/10 old private binding, missing target IDs or OperationPlan/readback mismatch -> BLOCK;
+- 54-02 public baseline must bind `163.176.232.119` to primary `10.0.0.65` plus exact public/private/VNIC/subnet OCIDs; wrong public OCID, wrong binding or reuse of the secondary `10.21.1.21` identity -> BLOCK;
+- 54-02 DNS baseline must include `phase54.dns-baseline-gap.v1` with authority SOA/NS/NX, absent authority A/PTR, intact resolver A/PTR `10.21.1.21` and explicit partial resolver matrix; silent/missing gap, digest drift or tampered A/PTR -> BLOCK;
+- 54-06+ authority/resolver probes remain strict and reject the 54-02 baseline gap;
 - builder includes any target `10.21.*`, misses a 10.31 literal or lacks validated commit -> BLOCK;
 - any S23 write/import/activation, S23 address other than LAN `192.168.1.10` / WG `10.100.100.10`, S23 MAC other than `64:1B:2F:C2:DC:A3`, or S20 old target after approved retirement -> BLOCK;
 - missing/stale/hash-drifted predecessor commit pin, any bootstrap/null-source lineage, backup-only approval, per-plan anti-drift/rollback/apply receipt, exact 54-09 stability evidence/gate hash, 54-08 retirement approval, or 54-08 sync without hash-bound apply receipt -> BLOCK;

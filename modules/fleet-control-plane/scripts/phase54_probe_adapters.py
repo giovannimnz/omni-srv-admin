@@ -96,6 +96,7 @@ DNS_AUTHORITY = "10.89.53.10"
 DNS_COREDNS = "10.11.1.11"
 DNS_ADGUARD = "127.0.0.2"
 PUBLIC_IP = "163.176.232.119"
+BASELINE_PUBLIC_BINDING = "10.0.0.65"
 CURRENT_VCN = "10.21.0.0/16"
 CURRENT_SUBNET = "10.21.1.0/24"
 CURRENT_HOST = "10.21.1.21"
@@ -1120,20 +1121,45 @@ def _dns_read(
         else "__AUTH_PTR_CURRENT__"
     )
     auth_ptr = auth_sections.get(auth_ptr_key, "")
+    auth_soa = auth_sections.get("__AUTH_SOA__", "")
+    auth_ns = auth_sections.get("__AUTH_NS__", "")
+    auth_nx = auth_sections.get("__AUTH_NX__", "")
     authority_matrix = {
         "server": DNS_AUTHORITY,
+        "a_aa": "aa" in _dig_flags(auth_a),
+        "ptr_aa": "aa" in _dig_flags(auth_ptr),
+        "soa_aa": "aa" in _dig_flags(auth_soa),
+        "ns_aa": "aa" in _dig_flags(auth_ns),
         "aa": all(
             "aa" in _dig_flags(auth_sections.get(key, ""))
             for key in ("__AUTH_A__", auth_ptr_key, "__AUTH_SOA__", "__AUTH_NS__")
         ),
-        "nxdomain": _dig_status(auth_sections.get("__AUTH_NX__", "")) == "NXDOMAIN",
-        "a_address": expected_address if expected_address in auth_a else None,
-        "ptr_owner": expected_reverse if expected_reverse in auth_ptr else None,
-        "soa": bool(re.search(r"\sSOA\s", auth_sections.get("__AUTH_SOA__", ""))),
-        "ns": bool(re.search(r"\sNS\s", auth_sections.get("__AUTH_NS__", ""))),
+        "nxdomain": _dig_status(auth_nx) == "NXDOMAIN",
+        "a_address": (
+            expected_address
+            if _dig_status(auth_a) == "NOERROR" and expected_address in auth_a
+            else None
+        ),
+        "ptr_owner": (
+            expected_reverse
+            if _dig_status(auth_ptr) == "NOERROR" and DNS_NAME in auth_ptr
+            else None
+        ),
+        "soa": bool(
+            _dig_status(auth_soa) == "NOERROR"
+            and re.search(r"\sSOA\s", auth_soa)
+        ),
+        "ns": bool(
+            _dig_status(auth_ns) == "NOERROR"
+            and re.search(r"\sNS\s", auth_ns)
+        ),
     }
-    resolver_ok = True
+    resolver_a_ptr_ok = True
+    resolver_strict_ok = True
     resolver_nxdomain = 0
+    resolver_soa = 0
+    resolver_ns = 0
+    resolver_details: dict[str, dict[str, bool]] = {}
     ttl_values = _answer_ttls(auth_a) + _answer_ttls(auth_ptr)
     for server in (DNS_COREDNS, DNS_ADGUARD):
         prefix = f"__RESOLVER_{server}_"
@@ -1143,28 +1169,44 @@ def _dns_read(
         soa_section = resolver_sections.get(f"{prefix}SOA__", "")
         ns_section = resolver_sections.get(f"{prefix}NS__", "")
         nx_section = resolver_sections.get(f"{prefix}NX__", "")
-        resolver_ok = bool(
-            resolver_ok
-            and _dig_status(a_section) == "NOERROR"
-            and expected_address in a_section
-            and _dig_status(ptr_section) == "NOERROR"
-            and expected_reverse in ptr_section
-            and _dig_status(soa_section) == "NOERROR"
-            and re.search(r"\sSOA\s", soa_section)
-            and _dig_status(ns_section) == "NOERROR"
-            and re.search(r"\sNS\s", ns_section)
-            and _dig_status(nx_section) == "NXDOMAIN"
-        )
-        resolver_nxdomain += int(_dig_status(nx_section) == "NXDOMAIN")
+        details = {
+            "a": bool(
+                _dig_status(a_section) == "NOERROR"
+                and expected_address in a_section
+            ),
+            "ptr": bool(
+                _dig_status(ptr_section) == "NOERROR"
+                and DNS_NAME in ptr_section
+            ),
+            "soa": bool(
+                _dig_status(soa_section) == "NOERROR"
+                and re.search(r"\sSOA\s", soa_section)
+            ),
+            "ns": bool(
+                _dig_status(ns_section) == "NOERROR"
+                and re.search(r"\sNS\s", ns_section)
+            ),
+            "nxdomain": _dig_status(nx_section) == "NXDOMAIN",
+        }
+        resolver_details[server] = details
+        resolver_a_ptr_ok = resolver_a_ptr_ok and details["a"] and details["ptr"]
+        resolver_strict_ok = resolver_strict_ok and all(details.values())
+        resolver_nxdomain += int(details["nxdomain"])
+        resolver_soa += int(details["soa"])
+        resolver_ns += int(details["ns"])
         ttl_values.extend(_answer_ttls(a_section))
         ttl_values.extend(_answer_ttls(ptr_section))
     resolver_matrix = {
         "servers": [DNS_COREDNS, DNS_ADGUARD],
         "nxdomain_count": resolver_nxdomain,
-        "a_address": expected_address if resolver_ok else None,
-        "ptr_owner": expected_reverse if resolver_ok else None,
-        "soa": resolver_ok,
-        "ns": resolver_ok,
+        "soa_count": resolver_soa,
+        "ns_count": resolver_ns,
+        "a_ptr_complete": resolver_a_ptr_ok,
+        "a_address": expected_address if resolver_a_ptr_ok else None,
+        "ptr_owner": expected_reverse if resolver_a_ptr_ok else None,
+        "soa": resolver_soa == 2,
+        "ns": resolver_ns == 2,
+        "matrix": resolver_details,
     }
     legacy_records: list[str] = []
     if CURRENT_HOST in auth_a:
@@ -1192,7 +1234,7 @@ def _dns_read(
             legacy_records.append(
                 f"{server}:PTR:{DNS_REVERSE_CURRENT}:{DNS_NAME}"
             )
-    passed = bool(
+    strict_passed = bool(
         authority[0]
         and resolvers[0]
         and authority_matrix["aa"]
@@ -1201,22 +1243,74 @@ def _dns_read(
         and authority_matrix["ptr_owner"] == expected_reverse
         and authority_matrix["soa"]
         and authority_matrix["ns"]
-        and resolver_ok
+        and resolver_strict_ok
         and resolver_nxdomain == 2
         and ttl_values
         and min(ttl_values) > 0
     )
+    gap_material = {
+        "expected_address": expected_address,
+        "expected_reverse": expected_reverse,
+        "authority": authority_matrix,
+        "resolvers": resolver_matrix,
+    }
+    authority_missing = sorted(
+        name
+        for name, present in (
+            ("A", authority_matrix["a_address"] == expected_address),
+            ("PTR", authority_matrix["ptr_owner"] == expected_reverse),
+        )
+        if not present
+    )
+    resolver_missing = {
+        server: sorted(
+            name.upper() if name != "nxdomain" else "NXDOMAIN"
+            for name in ("soa", "ns", "nxdomain")
+            if not details[name]
+        )
+        for server, details in resolver_details.items()
+    }
+    baseline_gap = {
+        "schema": "phase54.dns-baseline-gap.v1",
+        "authority_missing": authority_missing,
+        "resolver_missing": resolver_missing,
+        "observed_sha256": hashlib.sha256(
+            json.dumps(
+                gap_material,
+                sort_keys=True,
+                separators=(",", ":"),
+            ).encode()
+        ).hexdigest(),
+    }
+    baseline_passed = bool(
+        spec.check_id == "dns_edge_baseline"
+        and authority[0]
+        and resolvers[0]
+        and authority_missing == ["A", "PTR"]
+        and authority_matrix["aa"] is False
+        and authority_matrix["nxdomain"]
+        and authority_matrix["soa"]
+        and authority_matrix["ns"]
+        and resolver_a_ptr_ok
+        and any(resolver_missing.values())
+        and ttl_values
+        and min(ttl_values) > 0
+    )
+    passed = baseline_passed if spec.check_id == "dns_edge_baseline" else strict_passed
+    normalized = {
+        "evidence_sha256": evidence_sha256,
+        "expected_address": expected_address,
+        "expected_reverse": expected_reverse,
+        "authority": authority_matrix,
+        "resolvers": resolver_matrix,
+        "ttl_min": min(ttl_values) if ttl_values else None,
+        "operational_10_21": sorted(set(legacy_records)),
+    }
+    if spec.check_id == "dns_edge_baseline":
+        normalized["baseline_gap"] = baseline_gap
     return (
         passed,
-        {
-            "evidence_sha256": evidence_sha256,
-            "expected_address": expected_address,
-            "expected_reverse": expected_reverse,
-            "authority": authority_matrix,
-            "resolvers": resolver_matrix,
-            "ttl_min": min(ttl_values) if ttl_values else None,
-            "operational_10_21": sorted(set(legacy_records)),
-        },
+        normalized,
         f"{authority[2]}+{resolvers[2]}",
         authority[1] + resolvers[1] if passed else b"",
     )
@@ -1692,26 +1786,61 @@ def _oci_probe_passes(spec: AdapterSpec, normalized: dict[str, Any]) -> bool:
             )
         )
     if spec.check_id in {"public_ip_baseline", "public_ip_binding", "vnic_private_ip"}:
-        expected = TARGET_HOST if _target_host_required(spec) else CURRENT_HOST
+        expected = (
+            BASELINE_PUBLIC_BINDING
+            if spec.check_id == "public_ip_baseline"
+            else TARGET_HOST
+            if _target_host_required(spec)
+            else CURRENT_HOST
+        )
         public = semantic.get("reserved_public_ips")
         private = semantic.get("private_ips")
-        binding_ids = {
-            item.get("private_ip_ocid")
+        binding_rows = [
+            item
             for item in public
             if isinstance(item, dict)
             and item.get("address") == PUBLIC_IP
+            and item.get("label") == "horistic-srv-1"
             and item.get("lifetime") == "RESERVED"
-        } if isinstance(public, list) else set()
+            and item.get("lifecycle_state") in {"RESERVED", "ASSIGNED"}
+        ] if isinstance(public, list) else []
+        binding_ids = {
+            item.get("private_ip_ocid") for item in binding_rows
+        }
+        bound_private = [
+            item
+            for item in private
+            if isinstance(item, dict)
+            and item.get("private_ip_ocid") in binding_ids
+            and item.get("address") == expected
+            and isinstance(item.get("vnic_ocid"), str)
+            and item.get("vnic_ocid")
+            and isinstance(item.get("subnet_ocid"), str)
+            and item.get("subnet_ocid")
+        ] if isinstance(private, list) else []
+        secondary_current = [
+            item
+            for item in private
+            if isinstance(item, dict) and item.get("address") == CURRENT_HOST
+        ] if isinstance(private, list) else []
         return bool(
             normalized.get("operation") == "inventory.get"
-            and binding_ids
-            and any(
-                isinstance(item, dict)
-                and item.get("private_ip_ocid") in binding_ids
-                and item.get("address") == expected
-                for item in private
+            and len(binding_rows) == 1
+            and len(bound_private) == 1
+            and (
+                spec.check_id != "public_ip_baseline"
+                or (
+                    secondary_current
+                    and all(
+                        item.get("private_ip_ocid")
+                        != bound_private[0].get("private_ip_ocid")
+                        and item.get("vnic_ocid")
+                        != bound_private[0].get("vnic_ocid")
+                        for item in secondary_current
+                    )
+                )
             )
-        ) if isinstance(private, list) else False
+        )
     return False
 
 
