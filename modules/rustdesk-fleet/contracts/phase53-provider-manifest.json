@@ -1,8 +1,18 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "phase": 53,
   "workstream": "rustdesk-fleet",
   "manifest_id": "phase53-production-providers-v1",
+  "execution_target": "10.21.1.21",
+  "edge_contract": "modules/rustdesk-fleet/contracts/phase53-edge.json",
+  "capability_profiles": {
+    "read_only": ["read", "preview"],
+    "apply": ["read", "preview", "mutate", "contain", "rollback", "restore"]
+  },
+  "backends": {
+    "read_only": "phase53-read-only-v1",
+    "apply": "phase53-apply-v1"
+  },
   "routes": {
     "ssh": {
       "private_first": [
@@ -36,7 +46,11 @@
     "cloudflare": {
       "provider": "cloudflare-api",
       "operation": "dns-snapshot-apply-restore",
-      "records": ["rustdesk.atius.com.br", "rustdesk-ops.atius.com.br"]
+      "records": [
+        "rustdesk.atius.com.br",
+        "rustdesk-id.atius.com.br",
+        "rustdesk-relay.atius.com.br"
+      ]
     },
     "apache": {
       "operation": "configtest-reload-rollback",

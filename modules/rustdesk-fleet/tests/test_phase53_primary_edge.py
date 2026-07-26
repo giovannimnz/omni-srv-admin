@@ -45,6 +45,7 @@ EDGE_PROBE = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.py"
 EDGE_PROBE_PS1 = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1"
 EDGE_NFT_POLICY = REPO / "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft"
 EDGE_BOOT_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service"
+LIVE_BACKEND = REPO / "modules/rustdesk-fleet/tools/phase53-live-backend.py"
 
 
 class DuplicateKeyError(ValueError):
@@ -99,6 +100,26 @@ def _ops_api_module() -> Any:
 def _edge_applier_module() -> Any:
     assert EDGE_APPLIER.is_file(), EDGE_APPLIER
     spec = importlib.util.spec_from_file_location("phase53_edge_applier", EDGE_APPLIER)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _edge_probe_module() -> Any:
+    assert EDGE_PROBE.is_file(), EDGE_PROBE
+    spec = importlib.util.spec_from_file_location("phase53_edge_probe", EDGE_PROBE)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _live_backend_module() -> Any:
+    assert LIVE_BACKEND.is_file(), LIVE_BACKEND
+    spec = importlib.util.spec_from_file_location("phase53_live_backend", LIVE_BACKEND)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -275,7 +296,11 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "schema_version",
             "workstream",
             "primary_host",
+            "target",
             "hostnames",
+            "dns_records",
+            "translations",
+            "internal_native_listeners",
             "address_consensus",
             "effective_ingress",
             "public_ipv4_allowed",
@@ -287,16 +312,74 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "rollback_order",
         },
     )
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["primary_host"] == "horistic-srv"
+    assert payload["target"] == {
+        "private_ipv4": "10.21.1.21",
+        "reserved_public_ipv4": "137.131.140.20",
+    }
     assert payload["hostnames"] == {
-        "native": "rustdesk.atius.com.br",
+        "general": "rustdesk.atius.com.br",
+        "id": "rustdesk-id.atius.com.br",
+        "relay": "rustdesk-relay.atius.com.br",
         "operations": "rustdesk-ops.atius.com.br",
     }
-    assert payload["public_ipv4_allowed"] == {"tcp": [21115, 21116, 21117], "udp": [21116]}
+    assert payload["dns_records"] == [
+        {
+            "name": "rustdesk.atius.com.br",
+            "role": "general",
+            "type": "A",
+            "content": "137.131.140.20",
+            "proxied": False,
+        },
+        {
+            "name": "rustdesk-id.atius.com.br",
+            "role": "id",
+            "type": "A",
+            "content": "137.131.140.20",
+            "proxied": False,
+        },
+        {
+            "name": "rustdesk-relay.atius.com.br",
+            "role": "relay",
+            "type": "A",
+            "content": "137.131.140.20",
+            "proxied": False,
+        },
+    ]
+    assert payload["translations"] == [
+        {"role": "id", "protocol": "tcp", "external_port": 34099, "internal_port": 21115},
+        {
+            "role": "rendezvous",
+            "protocol": "tcp",
+            "external_port": 34100,
+            "internal_port": 21116,
+        },
+        {
+            "role": "rendezvous",
+            "protocol": "udp",
+            "external_port": 34100,
+            "internal_port": 21116,
+        },
+        {
+            "role": "relay",
+            "protocol": "tcp",
+            "external_port": 34101,
+            "internal_port": 21117,
+        },
+    ]
+    assert payload["internal_native_listeners"] == {
+        "tcp": [21115, 21116, 21117],
+        "udp": [21116],
+    }
+    assert payload["public_ipv4_allowed"] == {
+        "tcp": [34099, 34100, 34101],
+        "udp": [34100],
+    }
     assert payload["public_forbidden"] == {
-        "tcp": [21114, 21118, 21119],
-        "unexpected": "all-other-phase53-exposure",
+        "tcp": [21114, 21115, 21116, 21117, 21118, 21119],
+        "udp": [21116],
+        "unexpected": "all-other-direct-public-listeners",
     }
     assert payload["ipv6_policy"] == {"rustdesk": "deny-all", "aaaa_record": False}
 
@@ -331,9 +414,14 @@ def _validate_edge(payload: dict[str, Any]) -> None:
     assert len(probes["origins"]) == 2
     assert probes["same_host_allowed"] is False
     assert probes["tcp"] == {
-        "positive": [21115, 21116, 21117],
-        "negative": [21114, 21118, 21119],
-        "targets": ["public-ipv4", "native-hostname"],
+        "positive": [34099, 34100, 34101],
+        "negative": [21114, 21115, 21116, 21117, 21118, 21119],
+        "targets": [
+            "public-ipv4",
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ],
     }
     assert probes["udp_correlation"] == [
         "disposable-nonce-not-persisted",
@@ -675,6 +763,88 @@ def test_edge_contract_schema_and_dns_last_order() -> None:
     _validate_edge(_load_strict(EDGE_CONTRACT))
 
 
+def test_translated_edge_contract_is_single_consumer_authority(tmp_path: Path) -> None:
+    expected = _load_strict(EDGE_CONTRACT)
+    probe = _edge_probe_module()
+    apply = _edge_applier_module()
+
+    assert probe.load_edge_contract(EDGE_CONTRACT) == expected
+    assert apply.load_edge_contract(EDGE_CONTRACT) == expected
+
+    duplicate = tmp_path / "duplicate.json"
+    duplicate.write_text(
+        EDGE_CONTRACT.read_text(encoding="utf-8").replace(
+            '"schema_version": 2,',
+            '"schema_version": 2, "schema_version": 2,',
+            1,
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(probe.ProbeBlocked, match="edge-contract-invalid"):
+        probe.load_edge_contract(duplicate)
+    with pytest.raises(apply.EdgeBlocked, match="edge-contract-invalid"):
+        apply.load_edge_contract(duplicate)
+
+    stale = copy.deepcopy(expected)
+    stale["translations"][3]["external_port"] = 21117
+    stale_path = tmp_path / "stale.json"
+    stale_path.write_text(json.dumps(stale), encoding="utf-8")
+    with pytest.raises(probe.ProbeBlocked, match="edge-contract-invalid"):
+        probe.load_edge_contract(stale_path)
+    with pytest.raises(apply.EdgeBlocked, match="edge-contract-invalid"):
+        apply.load_edge_contract(stale_path)
+
+
+def test_hbbs_relay_announcement_is_derived_from_translated_edge_contract() -> None:
+    edge = _load_strict(EDGE_CONTRACT)
+    relay_record = next(item for item in edge["dns_records"] if item["role"] == "relay")
+    relay_mapping = next(
+        item
+        for item in edge["translations"]
+        if item["role"] == "relay" and item["protocol"] == "tcp"
+    )
+    expected = f"{relay_record['name']}:{relay_mapping['external_port']}"
+    unit = _load_unit(HBBS_QUADLET)
+    assert unit["Container"]["Exec"] == f"hbbs -r {expected}"
+    assert expected == "rustdesk-relay.atius.com.br:34101"
+
+
+def test_phase53_server_installer_rejects_source_and_runtime_hbbs_tamper(
+    tmp_path: Path,
+) -> None:
+    module = _server_installer_module()
+    runner = _FakeServerRunner()
+    repo = tmp_path / "repo"
+    shutil.copytree(
+        REPO / "modules/rustdesk-fleet",
+        repo / "modules/rustdesk-fleet",
+    )
+    sandbox = tmp_path / "sandbox"
+    sandbox.mkdir()
+    transaction = _new_server_transaction(module, sandbox, runner, repo=repo)
+    transaction._validate_sources()
+
+    source = transaction.repo / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
+    source.write_text(
+        source.read_text(encoding="utf-8").replace(":34101", ":21117"),
+        encoding="utf-8",
+    )
+    with pytest.raises(module.Phase53ServerBlocked, match="hbbs-relay-endpoint-invalid"):
+        transaction._validate_sources()
+    shutil.copy2(HBBS_QUADLET, source)
+
+    transaction.snapshot_prestate()
+    transaction.render_and_verify_units()
+    installed = transaction.quadlet_dir / source.name
+    transaction._validate_installed_hbbs()
+    installed.write_text(
+        installed.read_text(encoding="utf-8").replace(":34101", ":21117"),
+        encoding="utf-8",
+    )
+    with pytest.raises(module.Phase53ServerBlocked, match="installed-hbbs-command-invalid"):
+        transaction._validate_installed_hbbs()
+
+
 def test_ops_api_contract_schema_auth_and_readiness() -> None:
     _validate_ops_api(_load_strict(OPS_API_CONTRACT))
 
@@ -849,13 +1019,14 @@ def _new_server_transaction(
     runner: _FakeServerRunner,
     *,
     fault_after: str | None = None,
+    repo: Path = REPO,
 ) -> Any:
     home = tmp_path / "home"
     runtime = tmp_path / "run-user-1000"
     home.mkdir()
     runtime.mkdir()
     return module.Phase53ServerTransaction(
-        repo=REPO,
+        repo=repo,
         home=home,
         runtime_dir=runtime,
         uid=1000,

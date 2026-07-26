@@ -72,6 +72,19 @@ def strict_json_bytes(raw: bytes, *, max_bytes: int = 1_048_576) -> dict[str, An
         raise
 
 
+def load_edge_contract(
+    path: Path = Path(__file__).resolve().parents[1] / "contracts/phase53-edge.json",
+) -> dict[str, Any]:
+    """Load the translated edge authority through the shared strict validator."""
+
+    try:
+        return _probe_module().load_edge_contract(path)
+    except Exception as exc:
+        if exc.__class__.__name__ == "ProbeBlocked":
+            raise EdgeBlocked("edge-contract-invalid") from exc
+        raise
+
+
 def sha256_file(path: Path) -> str:
     return hashlib.sha256(path.read_bytes()).hexdigest()
 

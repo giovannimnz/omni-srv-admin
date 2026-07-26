@@ -14,6 +14,7 @@ from datetime import datetime, timezone
 import hashlib
 import ipaddress
 import json
+from pathlib import Path
 import re
 import sys
 from typing import Any, Callable
@@ -25,6 +26,9 @@ class ProbeBlocked(RuntimeError):
     def __init__(self, blocker: str, receipt: dict[str, Any] | None = None) -> None:
         super().__init__(blocker)
         self.receipt = receipt
+
+
+EDGE_CONTRACT_PATH = Path(__file__).resolve().parents[1] / "contracts/phase53-edge.json"
 
 
 def _duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -81,6 +85,131 @@ def strict_json_bytes(raw: bytes, *, max_bytes: int = 1_048_576) -> dict[str, An
         raise ProbeBlocked("json-input-invalid")
     _shape_limits(payload)
     return payload
+
+
+def load_edge_contract(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
+    """Load the sole strict authority for translated public edge semantics."""
+
+    try:
+        payload = strict_json_bytes(path.read_bytes(), max_bytes=65_536)
+        required = {
+            "schema_version",
+            "workstream",
+            "primary_host",
+            "target",
+            "hostnames",
+            "dns_records",
+            "translations",
+            "internal_native_listeners",
+            "address_consensus",
+            "effective_ingress",
+            "public_ipv4_allowed",
+            "public_forbidden",
+            "ipv6_policy",
+            "dns_last",
+            "external_probes",
+            "transaction_order",
+            "rollback_order",
+        }
+        if set(payload) != required:
+            raise ProbeBlocked("edge-contract-invalid")
+        if (
+            payload["schema_version"] != 2
+            or payload["workstream"] != "rustdesk-fleet"
+            or payload["primary_host"] != "horistic-srv"
+            or payload["target"]
+            != {
+                "private_ipv4": "10.21.1.21",
+                "reserved_public_ipv4": "137.131.140.20",
+            }
+            or payload["hostnames"]
+            != {
+                "general": "rustdesk.atius.com.br",
+                "id": "rustdesk-id.atius.com.br",
+                "relay": "rustdesk-relay.atius.com.br",
+                "operations": "rustdesk-ops.atius.com.br",
+            }
+            or payload["internal_native_listeners"]
+            != {"tcp": [21115, 21116, 21117], "udp": [21116]}
+            or payload["public_ipv4_allowed"]
+            != {"tcp": [34099, 34100, 34101], "udp": [34100]}
+            or payload["public_forbidden"]
+            != {
+                "tcp": [21114, 21115, 21116, 21117, 21118, 21119],
+                "udp": [21116],
+                "unexpected": "all-other-direct-public-listeners",
+            }
+        ):
+            raise ProbeBlocked("edge-contract-invalid")
+        expected_records = [
+            {
+                "name": payload["hostnames"][role],
+                "role": role,
+                "type": "A",
+                "content": payload["target"]["reserved_public_ipv4"],
+                "proxied": False,
+            }
+            for role in ("general", "id", "relay")
+        ]
+        expected_translations = [
+            {"role": "id", "protocol": "tcp", "external_port": 34099, "internal_port": 21115},
+            {
+                "role": "rendezvous",
+                "protocol": "tcp",
+                "external_port": 34100,
+                "internal_port": 21116,
+            },
+            {
+                "role": "rendezvous",
+                "protocol": "udp",
+                "external_port": 34100,
+                "internal_port": 21116,
+            },
+            {
+                "role": "relay",
+                "protocol": "tcp",
+                "external_port": 34101,
+                "internal_port": 21117,
+            },
+        ]
+        if (
+            payload["dns_records"] != expected_records
+            or payload["translations"] != expected_translations
+            or payload["dns_last"].get("type") != "A"
+            or payload["dns_last"].get("proxied") is not False
+            or payload["dns_last"].get("aaaa") is not False
+            or payload["dns_last"].get("concurrent_cname") is not False
+            or payload["ipv6_policy"] != {"rustdesk": "deny-all", "aaaa_record": False}
+            or payload["external_probes"].get("tcp")
+            != {
+                "positive": [34099, 34100, 34101],
+                "negative": [21114, 21115, 21116, 21117, 21118, 21119],
+                "targets": [
+                    "public-ipv4",
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+            }
+        ):
+            raise ProbeBlocked("edge-contract-invalid")
+    except ProbeBlocked as exc:
+        if str(exc) == "edge-contract-invalid":
+            raise
+        raise ProbeBlocked("edge-contract-invalid") from exc
+    except (OSError, KeyError, TypeError, ValueError) as exc:
+        raise ProbeBlocked("edge-contract-invalid") from exc
+    return payload
+
+
+def edge_probe_projection(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
+    contract = load_edge_contract(path)
+    return {
+        "tcp_positive_ports": list(contract["public_ipv4_allowed"]["tcp"]),
+        "tcp_negative_ports": list(contract["public_forbidden"]["tcp"]),
+        "udp_port": contract["public_ipv4_allowed"]["udp"][0],
+        "dns_records": [dict(item) for item in contract["dns_records"]],
+    }
 
 
 def _exact(value: Any, keys: set[str], blocker: str) -> dict[str, Any]:
