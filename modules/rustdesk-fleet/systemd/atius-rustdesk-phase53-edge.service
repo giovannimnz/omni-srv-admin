@@ -11,14 +11,16 @@ ExecStartPre=/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.nft
 ExecStartPre=/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.template.nft
 ExecStartPre=/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.json
 ExecStartPre=/usr/bin/test -x /usr/local/libexec/apply-phase53-edge.py
-ExecStartPre=/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft
-ExecStart=/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft
-ExecStartPost=/usr/local/libexec/apply-phase53-edge.py --verify-host-policy --candidate /etc/atius-rustdesk/phase53-edge.nft --contract /etc/atius-rustdesk/phase53-edge.json --template /etc/atius-rustdesk/phase53-edge.template.nft
+ExecStart=/usr/local/libexec/apply-phase53-edge.py --apply-host-policy-transaction --candidate /etc/atius-rustdesk/phase53-edge.nft --contract /etc/atius-rustdesk/phase53-edge.json --template /etc/atius-rustdesk/phase53-edge.template.nft --snapshot /run/atius-rustdesk-phase53-edge/nft-prestate.json
+ExecStop=/usr/local/libexec/apply-phase53-edge.py --restore-host-policy-snapshot --snapshot /run/atius-rustdesk-phase53-edge/nft-prestate.json
 RemainAfterExit=yes
+RuntimeDirectory=atius-rustdesk-phase53-edge
+RuntimeDirectoryMode=0700
 NoNewPrivileges=yes
 ProtectSystem=strict
 ProtectHome=yes
 PrivateTmp=yes
+RestrictAddressFamilies=AF_UNIX AF_NETLINK
 
 [Install]
 WantedBy=network-pre.target

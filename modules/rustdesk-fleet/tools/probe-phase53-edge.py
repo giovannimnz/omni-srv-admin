@@ -96,6 +96,8 @@ def load_edge_contract(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
             "schema_version",
             "workstream",
             "primary_host",
+            "public_edge",
+            "backend",
             "target",
             "hostnames",
             "dns_records",
@@ -114,9 +116,27 @@ def load_edge_contract(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
         if set(payload) != required:
             raise ProbeBlocked("edge-contract-invalid")
         if (
-            payload["schema_version"] != 2
+            payload["schema_version"] != 3
             or payload["workstream"] != "rustdesk-fleet"
             or payload["primary_host"] != "horistic-srv"
+            or payload["public_edge"]
+            != {
+                "host": "atius-srv-1",
+                "public_ipv4": "137.131.140.20",
+                "public_vnic_private_ipv4": "10.0.0.238",
+                "route_vnic_private_ipv4": "10.11.1.11",
+                "route_interface": "enp1s0",
+            }
+            or payload["backend"]
+            != {
+                "host": "horistic-srv",
+                "private_ipv4": "10.21.1.21",
+                "native_ingress_source_ipv4": "10.11.1.11",
+                "native_listeners": {
+                    "tcp": [21115, 21116, 21117],
+                    "udp": [21116],
+                },
+            }
             or payload["target"]
             != {
                 "private_ipv4": "10.21.1.21",
@@ -191,6 +211,17 @@ def load_edge_contract(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
                     "rustdesk-relay.atius.com.br",
                 ],
             }
+            or payload["external_probes"].get("udp")
+            != {
+                "external_port": 34100,
+                "backend_port": 21116,
+                "targets": [
+                    "public-ipv4",
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+            }
         ):
             raise ProbeBlocked("edge-contract-invalid")
     except ProbeBlocked as exc:
@@ -208,6 +239,8 @@ def edge_probe_projection(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
         "tcp_positive_ports": list(contract["public_ipv4_allowed"]["tcp"]),
         "tcp_negative_ports": list(contract["public_forbidden"]["tcp"]),
         "udp_port": contract["public_ipv4_allowed"]["udp"][0],
+        "udp_backend_port": contract["external_probes"]["udp"]["backend_port"],
+        "targets": list(contract["external_probes"]["tcp"]["targets"]),
         "dns_records": [dict(item) for item in contract["dns_records"]],
     }
 
@@ -302,9 +335,16 @@ class VerifiedProbeReceipt:
                 }
                 for origin, selected, routes in self.transport_routes
             ],
-            "tcp_positive_ports": [21115, 21116, 21117],
-            "tcp_negative_ports": [21114, 21118, 21119],
-            "udp_port": 21116,
+            "tcp_positive_ports": [34099, 34100, 34101],
+            "tcp_negative_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+            "udp_port": 34100,
+            "udp_backend_port": 21116,
+            "targets": [
+                "public-ipv4",
+                "rustdesk.atius.com.br",
+                "rustdesk-id.atius.com.br",
+                "rustdesk-relay.atius.com.br",
+            ],
             "udp_attempt_ids": list(self.udp_attempt_ids),
             "secret_material_present": False,
         }
@@ -313,7 +353,7 @@ class VerifiedProbeReceipt:
 @dataclass(frozen=True)
 class VerifiedHostnameReceipt:
     transaction_id: str
-    hostname: str
+    hostnames: tuple[str, str, str]
     expected_ipv4: str
     completed_at: str
     origin_ids: tuple[str, str]
@@ -321,15 +361,18 @@ class VerifiedHostnameReceipt:
     def value_free(self) -> dict[str, Any]:
         return {
             "schema_version": 1,
-            "scope": "public-hostname",
+            "scope": "public-hostnames",
             "transaction_id": self.transaction_id,
-            "hostname": self.hostname,
+            "hostnames": list(self.hostnames),
+            "hostname_count": 3,
             "expected_ipv4": self.expected_ipv4,
             "completed_at": self.completed_at,
             "origin_ids": list(self.origin_ids),
             "origin_count": 2,
-            "tcp_positive_ports": [21115, 21116, 21117],
-            "tcp_negative_ports": [21114, 21118, 21119],
+            "tcp_positive_ports": [34099, 34100, 34101],
+            "tcp_negative_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+            "udp_port": 34100,
+            "udp_backend_port": 21116,
             "secret_material_present": False,
         }
 
@@ -558,7 +601,11 @@ def _tcp(raw: Any, *, digest: str, started: datetime, ended: datetime) -> None:
         <= ended
     ):
         raise ProbeBlocked("probe-tcp-positive-control-failed")
-    owners = {21115: "hbbs", 21116: "hbbs", 21117: "hbbr"}
+    owners = {
+        34099: ("hbbs", 21115),
+        34100: ("hbbs", 21116),
+        34101: ("hbbr", 21117),
+    }
     positive = value["positive"]
     if not isinstance(positive, list) or len(positive) != 3:
         raise ProbeBlocked("probe-tcp-correlation-invalid")
@@ -594,11 +641,11 @@ def _tcp(raw: Any, *, digest: str, started: datetime, ended: datetime) -> None:
             or not isinstance(item["attempt_id"], str)
             or not re.fullmatch(r"[A-Za-z0-9_.:-]{8,96}", item["attempt_id"])
             or item["connected"] is not True
-            or item["owner"] != owners[port]
-            or item["container"] != f"atius-rustdesk-server-{owners[port]}"
+            or item["owner"] != owners[port][0]
+            or item["container"] != f"atius-rustdesk-server-{owners[port][0]}"
             or item["cgroup"] != "atius-rustdesk-phase53.slice"
             or item["image_digest"] != digest
-            or item["socket_port"] != port
+            or item["socket_port"] != owners[port][1]
             or type(item["counter_before"]) is not int
             or type(item["counter_after"]) is not int
             or item["counter_after"] - item["counter_before"] != 1
@@ -609,8 +656,8 @@ def _tcp(raw: Any, *, digest: str, started: datetime, ended: datetime) -> None:
     if seen != set(owners):
         raise ProbeBlocked("probe-tcp-correlation-invalid")
     negative = value["negative"]
-    expected_negative = {21114, 21118, 21119}
-    if not isinstance(negative, list) or len(negative) != 3:
+    expected_negative = {21114, 21115, 21116, 21117, 21118, 21119}
+    if not isinstance(negative, list) or len(negative) != 6:
         raise ProbeBlocked("probe-tcp-forbidden-open")
     seen_negative: set[int] = set()
     for raw_item in negative:
@@ -699,7 +746,7 @@ def _udp(
         or str(source) == target
         or type(item["source_port"]) is not int
         or not 1 <= item["source_port"] <= 65535
-        or item["destination_port"] != 21116
+        or item["destination_port"] != 34100
     ):
         raise ProbeBlocked("probe-udp-tuple-invalid")
     capture = _exact(
@@ -719,8 +766,8 @@ def _udp(
     if (
         capture["source_ip"] != item["source_ip"]
         or capture["source_port"] != item["source_port"]
-        or capture["destination_ip"] != item["destination_ip"]
-        or capture["destination_port"] != item["destination_port"]
+        or capture["destination_ip"] != "10.21.1.21"
+        or capture["destination_port"] != 21116
     ):
         raise ProbeBlocked("probe-udp-tuple-invalid")
     if (
@@ -757,7 +804,7 @@ def _udp(
         raise ProbeBlocked("probe-udp-owner-invalid")
     return (
         attempt_id,
-        (str(source), item["source_port"], str(destination), 21116),
+        (str(source), item["source_port"], str(destination), 34100),
         (window_start, window_end),
     )
 
@@ -925,11 +972,11 @@ def validate_hostname_probe_bytes(
     raw: bytes,
     *,
     policy_raw: bytes,
-    expected_hostname: str,
+    expected_hostnames: list[str],
     expected_ipv4: str,
     now: datetime,
 ) -> VerifiedHostnameReceipt:
-    """Validate post-publication hostname resolution from the same pinned origins."""
+    """Validate all three post-publication names from both pinned origins."""
 
     payload = strict_json_bytes(raw, max_bytes=262_144)
     if _contains_sensitive(payload):
@@ -940,10 +987,9 @@ def validate_hostname_probe_bytes(
         {
             "schema_version",
             "transaction_id",
-            "hostname",
             "expected_ipv4",
             "completed_at",
-            "origins",
+            "targets",
         },
         "hostname-probe-schema-invalid",
     )
@@ -956,90 +1002,117 @@ def validate_hostname_probe_bytes(
     if (
         root["schema_version"] != 1
         or root["transaction_id"] != transaction_id
-        or root["hostname"] != expected_hostname
         or root["expected_ipv4"] != expected_ipv4
+        or expected_hostnames
+        != [
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ]
         or not isinstance(expected, ipaddress.IPv4Address)
         or current is None
         or completed > current
         or (current - completed).total_seconds() > max_age
-        or not isinstance(root["origins"], list)
-        or len(root["origins"]) != 2
+        or not isinstance(root["targets"], list)
+        or len(root["targets"]) != 3
     ):
         raise ProbeBlocked("hostname-probe-target-invalid")
-    origin_ids: list[str] = []
-    egresses: list[str] = []
-    identities: list[str] = []
-    for raw_origin in root["origins"]:
-        origin = _exact(
-            raw_origin,
-            {
-                "origin_id",
-                "attestation",
-                "resolved_addresses",
-                "record_types",
-                "checked_at",
-                "tcp_positive_ports",
-                "tcp_negative_ports",
-            },
+    seen_targets: list[str] = []
+    canonical_origins: tuple[str, str] | None = None
+    for raw_target in root["targets"]:
+        target = _exact(
+            raw_target,
+            {"hostname", "origins"},
             "hostname-probe-schema-invalid",
         )
-        policy = policies.get(origin["origin_id"])
-        attestation = _exact(
-            origin["attestation"],
-            {
-                "transaction_id",
-                "target",
-                "origin_id",
-                "origin_class",
-                "host_identity_sha256",
-                "executor_digest",
-                "egress_ipv4",
-                "issued_at",
-            },
-            "hostname-probe-unattested",
-        )
-        if policy is None:
-            raise ProbeBlocked("hostname-probe-unattested")
-        checked = _utc(origin["checked_at"], "hostname-probe-window-invalid")
-        issued = _utc(attestation["issued_at"], "hostname-probe-unattested")
-        try:
-            egress = ipaddress.ip_address(attestation["egress_ipv4"])
-        except ValueError as exc:
-            raise ProbeBlocked("hostname-probe-unattested") from exc
+        hostname = target["hostname"]
+        if hostname not in expected_hostnames or hostname in seen_targets:
+            raise ProbeBlocked("hostname-probe-target-invalid")
+        if not isinstance(target["origins"], list) or len(target["origins"]) != 2:
+            raise ProbeBlocked("hostname-probe-origin-not-distinct")
+        origin_ids: list[str] = []
+        egresses: list[str] = []
+        identities: list[str] = []
+        for raw_origin in target["origins"]:
+            origin = _exact(
+                raw_origin,
+                {
+                    "origin_id",
+                    "attestation",
+                    "resolved_addresses",
+                    "record_types",
+                    "checked_at",
+                    "tcp_positive_ports",
+                    "tcp_negative_ports",
+                    "udp_external_port",
+                    "udp_backend_port",
+                },
+                "hostname-probe-schema-invalid",
+            )
+            policy = policies.get(origin["origin_id"])
+            attestation = _exact(
+                origin["attestation"],
+                {
+                    "transaction_id",
+                    "target",
+                    "origin_id",
+                    "origin_class",
+                    "host_identity_sha256",
+                    "executor_digest",
+                    "egress_ipv4",
+                    "issued_at",
+                },
+                "hostname-probe-unattested",
+            )
+            if policy is None:
+                raise ProbeBlocked("hostname-probe-unattested")
+            checked = _utc(origin["checked_at"], "hostname-probe-window-invalid")
+            issued = _utc(attestation["issued_at"], "hostname-probe-unattested")
+            try:
+                egress = ipaddress.ip_address(attestation["egress_ipv4"])
+            except ValueError as exc:
+                raise ProbeBlocked("hostname-probe-unattested") from exc
+            if (
+                attestation["transaction_id"] != transaction_id
+                or attestation["target"] != hostname
+                or attestation["origin_id"] != origin["origin_id"]
+                or attestation["origin_class"] != policy["origin_class"]
+                or attestation["host_identity_sha256"] != policy["host_identity_sha256"]
+                or attestation["executor_digest"] != policy["executor_digest"]
+                or not isinstance(egress, ipaddress.IPv4Address)
+                or origin["resolved_addresses"] != [expected_ipv4]
+                or origin["record_types"] != ["A"]
+                or origin["tcp_positive_ports"] != [34099, 34100, 34101]
+                or origin["tcp_negative_ports"]
+                != [21114, 21115, 21116, 21117, 21118, 21119]
+                or origin["udp_external_port"] != 34100
+                or origin["udp_backend_port"] != 21116
+                or issued > checked
+                or checked > completed
+                or (completed - checked).total_seconds() > max_age
+            ):
+                raise ProbeBlocked("hostname-probe-invalid")
+            origin_ids.append(origin["origin_id"])
+            egresses.append(str(egress))
+            identities.append(attestation["host_identity_sha256"])
+        ordered = tuple(sorted(origin_ids))
         if (
-            attestation["transaction_id"] != transaction_id
-            or attestation["target"] != expected_hostname
-            or attestation["origin_id"] != origin["origin_id"]
-            or attestation["origin_class"] != policy["origin_class"]
-            or attestation["host_identity_sha256"]
-            != policy["host_identity_sha256"]
-            or attestation["executor_digest"] != policy["executor_digest"]
-            or not isinstance(egress, ipaddress.IPv4Address)
-            or origin["resolved_addresses"] != [expected_ipv4]
-            or origin["record_types"] != ["A"]
-            or origin["tcp_positive_ports"] != [21115, 21116, 21117]
-            or origin["tcp_negative_ports"] != [21114, 21118, 21119]
-            or issued > checked
-            or checked > completed
-            or (completed - checked).total_seconds() > max_age
+            set(origin_ids) != set(policies)
+            or len(set(egresses)) != 2
+            or len(set(identities)) != 2
+            or (canonical_origins is not None and ordered != canonical_origins)
         ):
-            raise ProbeBlocked("hostname-probe-invalid")
-        origin_ids.append(origin["origin_id"])
-        egresses.append(str(egress))
-        identities.append(attestation["host_identity_sha256"])
-    if (
-        set(origin_ids) != set(policies)
-        or len(set(egresses)) != 2
-        or len(set(identities)) != 2
-    ):
-        raise ProbeBlocked("hostname-probe-origin-not-distinct")
-    ordered = tuple(sorted(origin_ids))
+            raise ProbeBlocked("hostname-probe-origin-not-distinct")
+        canonical_origins = (ordered[0], ordered[1])
+        seen_targets.append(hostname)
+    if seen_targets != expected_hostnames or canonical_origins is None:
+        raise ProbeBlocked("hostname-probe-target-invalid")
     return VerifiedHostnameReceipt(
         transaction_id=transaction_id,
-        hostname=expected_hostname,
+        hostnames=(expected_hostnames[0], expected_hostnames[1], expected_hostnames[2]),
         expected_ipv4=expected_ipv4,
         completed_at=root["completed_at"],
-        origin_ids=(ordered[0], ordered[1]),
+        origin_ids=canonical_origins,
     )
 
 

@@ -41,7 +41,19 @@
       "provider": "oci-admin-http",
       "client_name": "oci_admin_http",
       "read_write_cas": true,
-      "target_scope": "rustdesk-phase53-owned-ingress"
+      "target_scope": "rustdesk-phase53-owned-ingress",
+      "execution_targets": {
+        "public_edge": {
+          "host": "atius-srv-1",
+          "private_ipv4": "10.0.0.238",
+          "capabilities": ["nft-dnat", "nft-forward", "nft-snat", "oci-edge-ingress"]
+        },
+        "backend": {
+          "host": "horistic-srv",
+          "private_ipv4": "10.21.1.21",
+          "capabilities": ["rustdesk-server", "native-ingress-source-restriction"]
+        }
+      }
     },
     "cloudflare": {
       "provider": "cloudflare-api",

@@ -296,6 +296,8 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "schema_version",
             "workstream",
             "primary_host",
+            "public_edge",
+            "backend",
             "target",
             "hostnames",
             "dns_records",
@@ -312,11 +314,27 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "rollback_order",
         },
     )
-    assert payload["schema_version"] == 2
+    assert payload["schema_version"] == 3
     assert payload["primary_host"] == "horistic-srv"
     assert payload["target"] == {
         "private_ipv4": "10.21.1.21",
         "reserved_public_ipv4": "137.131.140.20",
+    }
+    assert payload["public_edge"] == {
+        "host": "atius-srv-1",
+        "public_ipv4": "137.131.140.20",
+        "public_vnic_private_ipv4": "10.0.0.238",
+        "route_vnic_private_ipv4": "10.11.1.11",
+        "route_interface": "enp1s0",
+    }
+    assert payload["backend"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.21.1.21",
+        "native_ingress_source_ipv4": "10.11.1.11",
+        "native_listeners": {
+            "tcp": [21115, 21116, 21117],
+            "udp": [21116],
+        },
     }
     assert payload["hostnames"] == {
         "general": "rustdesk.atius.com.br",
@@ -386,16 +404,28 @@ def _validate_edge(payload: dict[str, Any]) -> None:
     consensus = payload["address_consensus"]
     _assert_keys(consensus, {"required_equal_sources", "mismatch_action"})
     assert consensus["required_equal_sources"] == [
-        "oci-vnic-public-ipv4",
-        "horistic-egress-ipv4",
-        "ssh-horistic-srv.atius.com.br-a",
+        "oci-edge-vnic-public-ipv4",
+        "edge-vnic-public-ipv4",
+        "reserved-public-ipv4",
     ]
     assert consensus["mismatch_action"] == "block-before-write"
 
     ingress = payload["effective_ingress"]
-    _assert_keys(ingress, {"host_policy", "oci_policy", "union_audit_required", "broad_allow_action"})
-    assert ingress["host_policy"] == "owned-nftables-scope"
-    assert ingress["oci_policy"] == "security-lists-plus-attached-nsgs"
+    _assert_keys(
+        ingress,
+        {
+            "host_policy",
+            "oci_policy",
+            "backend_policy",
+            "backend_source_ipv4",
+            "union_audit_required",
+            "broad_allow_action",
+        },
+    )
+    assert ingress["host_policy"] == "owned-cross-host-dnat-forward-snat"
+    assert ingress["oci_policy"] == "edge-public-vnic-security-lists-plus-attached-nsgs"
+    assert ingress["backend_policy"] == "native-listeners-from-deterministic-edge-identity-only"
+    assert ingress["backend_source_ipv4"] == "10.11.1.11"
     assert ingress["union_audit_required"] is True
     assert ingress["broad_allow_action"] == "block"
 
@@ -409,13 +439,23 @@ def _validate_edge(payload: dict[str, Any]) -> None:
     assert dns["rollback_exact"] is True
 
     probes = payload["external_probes"]
-    _assert_keys(probes, {"origins", "tcp", "udp_correlation", "same_host_allowed"})
+    _assert_keys(probes, {"origins", "tcp", "udp", "udp_correlation", "same_host_allowed"})
     assert probes["origins"][0] == "GIOVANNI-W11-PC-private-first"
     assert len(probes["origins"]) == 2
     assert probes["same_host_allowed"] is False
     assert probes["tcp"] == {
         "positive": [34099, 34100, 34101],
         "negative": [21114, 21115, 21116, 21117, 21118, 21119],
+        "targets": [
+            "public-ipv4",
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ],
+    }
+    assert probes["udp"] == {
+        "external_port": 34100,
+        "backend_port": 21116,
         "targets": [
             "public-ipv4",
             "rustdesk.atius.com.br",
@@ -641,9 +681,34 @@ def test_evidence_validator_supports_current_admitted_pre_mutation_state(monkeyp
     )
     originals["edge-probes.json"].update(
         {
-            "state": "CURRENT",
-            "probes_completed": True,
-            "udp_reflection_negative": True,
+                "state": "CURRENT",
+                "probes_completed": True,
+                "udp_reflection_negative": True,
+                "positive_tcp_ports": [34099, 34100, 34101],
+                "negative_tcp_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+                "targets": [
+                    "public-ipv4",
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+                "udp_targets": [
+                    "public-ipv4",
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+                "udp_external_port": 34100,
+                "udp_backend_port": 21116,
+                "dns_records": [
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+                "public_edge_host": "atius-srv-1",
+                "backend_host": "horistic-srv",
+                "backend_ingress_source_ipv4": "10.11.1.11",
+                "native_public_positive": False,
         }
     )
     originals["ops-api-probes.json"].update(
@@ -783,7 +848,7 @@ def test_d06_cross_host_contract_and_provider_roles_are_exact() -> None:
             "udp": [21116],
         },
     }
-    assert provider["execution_targets"] == {
+    assert provider["routes"]["oci"]["execution_targets"] == {
         "public_edge": {
             "host": "atius-srv-1",
             "private_ipv4": "10.0.0.238",
@@ -834,8 +899,8 @@ def test_translated_edge_contract_is_single_consumer_authority(tmp_path: Path) -
     duplicate = tmp_path / "duplicate.json"
     duplicate.write_text(
         EDGE_CONTRACT.read_text(encoding="utf-8").replace(
-            '"schema_version": 2,',
-            '"schema_version": 2, "schema_version": 2,',
+                '"schema_version": 3,',
+                '"schema_version": 3, "schema_version": 3,',
             1,
         ),
         encoding="utf-8",
@@ -1578,11 +1643,15 @@ def _healthy_ops_observations() -> dict[str, Any]:
         },
         "public_fingerprint": "sha256:" + "a" * 64,
         "expected_public_fingerprint": "sha256:" + "a" * 64,
-        "edge": {
-            "ipv4_tcp": edge["public_ipv4_allowed"]["tcp"],
-            "ipv4_udp": edge["public_ipv4_allowed"]["udp"],
-            "ipv6": [],
-            "forbidden_not_open": edge["public_forbidden"]["tcp"],
+        "edge_forwarder": {
+            "host": "atius-srv-1",
+            "public_ipv4": edge["public_edge"]["public_ipv4"],
+            "external_tcp": edge["public_ipv4_allowed"]["tcp"],
+            "external_udp": edge["public_ipv4_allowed"]["udp"],
+            "native_public_closed_tcp": edge["public_forbidden"]["tcp"],
+            "native_public_closed_udp": edge["public_forbidden"]["udp"],
+            "backend_ipv4": edge["backend"]["private_ipv4"],
+            "snat_source_ipv4": edge["backend"]["native_ingress_source_ipv4"],
         },
         "cgroups": {
             "parent_cpu_percent": 80,
@@ -1631,6 +1700,8 @@ def test_ops_api_endpoints_auth_redaction_and_unknown_route_denial() -> None:
         "schema_version": 1,
         "service": "atius-rustdesk-ops",
         "primary_host": "horistic-srv",
+        "public_edge": observations["edge_forwarder"],
+        "backend_listeners": observations["listeners"],
         "service_active": True,
         "image_digest": observations["image_digest"],
         "public_fingerprint": observations["public_fingerprint"],
@@ -1672,7 +1743,7 @@ def test_ops_api_endpoints_auth_redaction_and_unknown_route_denial() -> None:
         ({"image_digest": "sha256:" + "0" * 64}, "immutable-image-digest"),
         ({"listeners": {}}, "exact-listener-ownership"),
         ({"public_fingerprint": "sha256:" + "b" * 64}, "public-fingerprint-continuity"),
-        ({"edge": {"ipv4_tcp": [21114]}}, "effective-edge-policy"),
+        ({"edge_forwarder": {"external_tcp": [21114]}}, "effective-edge-policy"),
         ({"cgroups": {"ops_cpu_percent": 11}}, "resource-ceilings"),
         ({"log_growth_bytes": 134217729}, "disk-and-log-bounds"),
         ({"restart_count": 4}, "bounded-restart-counters"),
@@ -2412,7 +2483,7 @@ def _allowed_oci_pages() -> dict[str, Any]:
                 "security_lists": [
                     {
                         "id": "sl-primary",
-                        "ingress_rules": [_oci_rule("tcp", 21115, 21117)],
+                        "ingress_rules": [_oci_rule("tcp", 34099, 34101)],
                     }
                 ],
                 "network_security_groups": [],
@@ -2431,7 +2502,7 @@ def _allowed_oci_pages() -> dict[str, Any]:
                 "network_security_groups": [
                     {
                         "id": "nsg-edge",
-                        "ingress_rules": [_oci_rule("udp", 21116, 21116)],
+                        "ingress_rules": [_oci_rule("udp", 34100, 34100)],
                     }
                 ],
                 "attachments": [],
@@ -2450,30 +2521,30 @@ def _phase53_edge_preflight() -> dict[str, Any]:
         "phase52_check_count": 11,
         "selected_primary": "horistic-srv",
         "address_consensus": {
-            "oci-vnic-public-ipv4": "203.0.113.8",
-            "horistic-egress-ipv4": "203.0.113.8",
-            "ssh-horistic-srv.atius.com.br-a": "203.0.113.8",
+            "oci-edge-vnic-public-ipv4": "203.0.113.8",
+            "edge-vnic-public-ipv4": "203.0.113.8",
+            "reserved-public-ipv4": "203.0.113.8",
         },
         "address_observations": [
             {
-                "source": "oci-vnic-public-ipv4",
+                "source": "oci-edge-vnic-public-ipv4",
                 "ipv4": "203.0.113.8",
                 "observed_at": "2026-07-23T02:00:00Z",
-                "topology_id": "vnic:ocid1.vnic.phase53",
+                "topology_id": "vnic:atius-srv-1-public",
                 "record_types": ["A"],
             },
             {
-                "source": "horistic-egress-ipv4",
+                "source": "edge-vnic-public-ipv4",
                 "ipv4": "203.0.113.8",
                 "observed_at": "2026-07-23T02:00:00Z",
-                "topology_id": "host:horistic-srv",
+                "topology_id": "host:atius-srv-1:10.0.0.238",
                 "record_types": ["A"],
             },
             {
-                "source": "ssh-horistic-srv.atius.com.br-a",
+                "source": "reserved-public-ipv4",
                 "ipv4": "203.0.113.8",
                 "observed_at": "2026-07-23T02:00:00Z",
-                "topology_id": "dns:ssh-horistic-srv.atius.com.br",
+                "topology_id": "reservation:137.131.140.20",
                 "record_types": ["A"],
             },
         ],
@@ -2601,11 +2672,9 @@ def _edge_transaction(module: Any, backend: Any, **kwargs: Any) -> Any:
     kwargs.setdefault(
         "address_source_policy",
         {
-            "oci-vnic-public-ipv4": "vnic:ocid1.vnic.phase53",
-            "horistic-egress-ipv4": "host:horistic-srv",
-            "ssh-horistic-srv.atius.com.br-a": (
-                "dns:ssh-horistic-srv.atius.com.br"
-            ),
+            "oci-edge-vnic-public-ipv4": "vnic:atius-srv-1-public",
+            "edge-vnic-public-ipv4": "host:atius-srv-1:10.0.0.238",
+            "reserved-public-ipv4": "reservation:137.131.140.20",
         },
     )
     return module.EdgeTransaction(
@@ -2626,8 +2695,8 @@ def test_oci_pagination_audits_full_security_list_and_nsg_union() -> None:
         "security_list_ids": ["sl-primary"],
         "network_security_group_ids": ["nsg-edge"],
         "attachment_ids": ["vnic-primary"],
-        "ipv4_tcp": [21115, 21116, 21117],
-        "ipv4_udp": [21116],
+        "ipv4_tcp": [34099, 34100, 34101],
+        "ipv4_udp": [34100],
         "ipv6": [],
     }
 
@@ -2722,15 +2791,20 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
         public_interface="ens3",
         template=_nft_template(),
     )
-    assert result == {
-        "family": "inet",
-        "table": "atius_rustdesk_phase53",
-        "hook": "input",
-        "priority": 300,
-        "public_interface": "ens3",
-        "ipv4_tcp": [21115, 21116, 21117],
-        "ipv4_udp": [21116],
-        "ipv6_denied": [21114, 21115, 21116, 21117, 21118, 21119],
+    assert result["public_edge"]["host"] == "atius-srv-1"
+    assert result["backend"]["host"] == "horistic-srv"
+    assert result["backend"]["native_ingress_source_ipv4"] == "10.11.1.11"
+    assert result["translations"] == [
+        {"protocol": "tcp", "external_port": 34099, "backend_port": 21115},
+        {"protocol": "tcp", "external_port": 34100, "backend_port": 21116},
+        {"protocol": "udp", "external_port": 34100, "backend_port": 21116},
+        {"protocol": "tcp", "external_port": 34101, "backend_port": 21117},
+    ]
+    assert result["hooks"] == {
+        "edge_prerouting": ("prerouting", "dstnat"),
+        "edge_forward": ("forward", "filter"),
+        "edge_postrouting": ("postrouting", "srcnat"),
+        "direct_native_input": ("input", "filter"),
     }
     lowered = candidate.lower()
     assert "flush ruleset" not in lowered
@@ -2741,7 +2815,7 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
     ("replacement", "blocker"),
     [
         ("ATIUS-PHASE53-EDGE", "nft-ownership-marker-invalid"),
-        ("priority 300", "nft-priority-invalid"),
+        ("priority dstnat", "nft-priority-invalid"),
         ('iifname "ens3"', "nft-interface-invalid"),
         ("meta nfproto ipv6 meta l4proto tcp", "nft-ipv6-deny-invalid"),
     ],
@@ -2782,14 +2856,13 @@ def test_boot_unit_loads_fixed_policy_before_network_pre_and_verifies_readback()
         "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.template.nft",
         "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.json",
         "/usr/bin/test -x /usr/local/libexec/apply-phase53-edge.py",
-        "/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft",
     ]
-    assert service["ExecStart"] == "/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft"
-    assert "--verify-host-policy" in service["ExecStartPost"]
-    assert (
-        "--template /etc/atius-rustdesk/phase53-edge.template.nft"
-        in service["ExecStartPost"]
-    )
+    assert "--apply-host-policy-transaction" in service["ExecStart"]
+    assert "--snapshot /run/atius-rustdesk-phase53-edge/nft-prestate.json" in service["ExecStart"]
+    assert "--restore-host-policy-snapshot" in service["ExecStop"]
+    assert "ExecStartPost" not in service
+    assert service["RuntimeDirectory"] == "atius-rustdesk-phase53-edge"
+    assert service["RuntimeDirectoryMode"] == "0700"
     assert unit["Install"]["WantedBy"] == "network-pre.target"
 
 
@@ -2956,8 +3029,8 @@ def test_rollback_restore_cas_blocks_toctou_without_blind_overwrite() -> None:
     ("active_fragment", "comment_fragment", "blocker"),
     [
         (
-            "type filter hook input priority 300; policy accept;",
-            "type filter hook input priority 300; policy accept;",
+            "type nat hook prerouting priority dstnat; policy accept;",
+            "type nat hook prerouting priority dstnat; policy accept;",
             "nft-priority-invalid",
         ),
         (
@@ -2984,7 +3057,7 @@ def test_nft_comments_cannot_satisfy_active_semantics(
 
 def test_nft_native_comment_statement_cannot_bypass_priority_validation() -> None:
     module = _edge_applier_module()
-    required = "type filter hook input priority 300; policy accept;"
+    required = "type nat hook prerouting priority dstnat; policy accept;"
     candidate = _rendered_nft_candidate(module).replace(required, "ACTIVE_DRIFT")
     candidate += f'\nadd table inet comment_fixture {{ comment "{required}"; }}\n'
     with pytest.raises(module.EdgeBlocked, match="nft-priority-invalid"):
@@ -3002,7 +3075,7 @@ def test_nft_backend_semantic_readback_is_independent_from_candidate_echo() -> N
     class ForgedReadbackBackend(_FakeEdgeBackend):
         def apply_nft(self, candidate: str, semantics: dict[str, Any]) -> None:
             forged = copy.deepcopy(semantics)
-            forged["priority"] = 0
+            forged["public_edge"]["host"] = "forged-edge"
             super().apply_nft(candidate, forged)
 
     backend = ForgedReadbackBackend()
@@ -3232,9 +3305,9 @@ def test_oci_rule_count_is_bounded_and_ranges_are_not_expanded() -> None:
         (
             {
                 "address_consensus": {
-                    "oci-vnic-public-ipv4": "2001:db8::8",
-                    "horistic-egress-ipv4": "2001:db8::8",
-                    "ssh-horistic-srv.atius.com.br-a": "2001:db8::8",
+                    "oci-edge-vnic-public-ipv4": "2001:db8::8",
+                    "edge-vnic-public-ipv4": "2001:db8::8",
+                    "reserved-public-ipv4": "2001:db8::8",
                 }
             },
             "address-consensus-ipv4-invalid",
@@ -3573,6 +3646,7 @@ def _phase53_digest() -> str:
 
 
 def _tcp_positive(port: int, owner: str, origin_id: str) -> dict[str, Any]:
+    backend_port = {34099: 21115, 34100: 21116, 34101: 21117}[port]
     return {
         "attempt_id": f"tcp-{origin_id}-{port}",
         "port": port,
@@ -3583,7 +3657,7 @@ def _tcp_positive(port: int, owner: str, origin_id: str) -> dict[str, Any]:
         "container": f"atius-rustdesk-server-{owner}",
         "cgroup": "atius-rustdesk-phase53.slice",
         "image_digest": _phase53_digest(),
-        "socket_port": port,
+        "socket_port": backend_port,
         "counter_before": 10,
         "counter_after": 11,
         "owner_observed_at": "2026-07-23T02:00:38Z",
@@ -3637,38 +3711,23 @@ def _probe_origin(
                 "ended_at": "2026-07-23T02:00:34Z",
             },
             "positive": [
-                _tcp_positive(21115, "hbbs", origin_id),
-                _tcp_positive(21116, "hbbs", origin_id),
-                _tcp_positive(21117, "hbbr", origin_id),
+                _tcp_positive(34099, "hbbs", origin_id),
+                _tcp_positive(34100, "hbbs", origin_id),
+                _tcp_positive(34101, "hbbr", origin_id),
             ],
             "negative": [
+                *[
                 {
-                    "attempt_id": f"tcp-{origin_id}-21114",
-                    "port": 21114,
+                    "attempt_id": f"tcp-{origin_id}-{port}",
+                    "port": port,
                     "connected": False,
                     "started_at": "2026-07-23T02:00:41Z",
                     "ended_at": "2026-07-23T02:00:42Z",
                     "drop_counter_before": 30,
                     "drop_counter_after": 31,
-                },
-                {
-                    "attempt_id": f"tcp-{origin_id}-21118",
-                    "port": 21118,
-                    "connected": False,
-                    "started_at": "2026-07-23T02:00:42Z",
-                    "ended_at": "2026-07-23T02:00:43Z",
-                    "drop_counter_before": 31,
-                    "drop_counter_after": 32,
-                },
-                {
-                    "attempt_id": f"tcp-{origin_id}-21119",
-                    "port": 21119,
-                    "connected": False,
-                    "started_at": "2026-07-23T02:00:43Z",
-                    "ended_at": "2026-07-23T02:00:44Z",
-                    "drop_counter_before": 32,
-                    "drop_counter_after": 33,
-                },
+                }
+                for port in (21114, 21115, 21116, 21117, 21118, 21119)
+                ],
             ],
         },
         "udp": {
@@ -3678,7 +3737,7 @@ def _probe_origin(
             "source_ip": source_ip,
             "source_port": source_port,
             "destination_ip": "203.0.113.8",
-            "destination_port": 21116,
+            "destination_port": 34100,
             "counter_before": 20,
             "counter_after": 21,
             "capture": {
@@ -3686,7 +3745,7 @@ def _probe_origin(
                 "packet_count": 1,
                 "source_ip": source_ip,
                 "source_port": source_port,
-                "destination_ip": "203.0.113.8",
+                "destination_ip": "10.21.1.21",
                 "destination_port": 21116,
                 "captured_at": udp_captured,
             },
@@ -3763,39 +3822,47 @@ def _origin_policy() -> dict[str, Any]:
 
 
 def _hostname_probe_bundle() -> dict[str, Any]:
-    origins: list[dict[str, Any]] = []
-    for policy, egress in zip(
-        _origin_policy()["origins"],
-        ("198.51.100.10", "198.51.100.20"),
-        strict=True,
+    targets: list[dict[str, Any]] = []
+    for hostname in (
+        "rustdesk.atius.com.br",
+        "rustdesk-id.atius.com.br",
+        "rustdesk-relay.atius.com.br",
     ):
-        origins.append(
-            {
-                "origin_id": policy["origin_id"],
-                "attestation": {
-                    "transaction_id": "phase53-probe-transaction-0001",
-                    "target": "rustdesk.atius.com.br",
+        origins: list[dict[str, Any]] = []
+        for policy, egress in zip(
+            _origin_policy()["origins"],
+            ("198.51.100.10", "198.51.100.20"),
+            strict=True,
+        ):
+            origins.append(
+                {
                     "origin_id": policy["origin_id"],
-                    "origin_class": policy["origin_class"],
-                    "host_identity_sha256": policy["host_identity_sha256"],
-                    "executor_digest": policy["executor_digest"],
-                    "egress_ipv4": egress,
-                    "issued_at": "2026-07-23T02:04:00Z",
-                },
-                "resolved_addresses": ["203.0.113.8"],
-                "record_types": ["A"],
-                "checked_at": "2026-07-23T02:04:10Z",
-                "tcp_positive_ports": [21115, 21116, 21117],
-                "tcp_negative_ports": [21114, 21118, 21119],
-            }
-        )
+                    "attestation": {
+                        "transaction_id": "phase53-probe-transaction-0001",
+                        "target": hostname,
+                        "origin_id": policy["origin_id"],
+                        "origin_class": policy["origin_class"],
+                        "host_identity_sha256": policy["host_identity_sha256"],
+                        "executor_digest": policy["executor_digest"],
+                        "egress_ipv4": egress,
+                        "issued_at": "2026-07-23T02:04:00Z",
+                    },
+                    "resolved_addresses": ["203.0.113.8"],
+                    "record_types": ["A"],
+                    "checked_at": "2026-07-23T02:04:10Z",
+                    "tcp_positive_ports": [34099, 34100, 34101],
+                    "tcp_negative_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+                    "udp_external_port": 34100,
+                    "udp_backend_port": 21116,
+                }
+            )
+        targets.append({"hostname": hostname, "origins": origins})
     return {
         "schema_version": 1,
         "transaction_id": "phase53-probe-transaction-0001",
-        "hostname": "rustdesk.atius.com.br",
         "expected_ipv4": "203.0.113.8",
         "completed_at": "2026-07-23T02:04:20Z",
-        "origins": origins,
+        "targets": targets,
     }
 
 
@@ -4000,9 +4067,16 @@ def test_external_probe_receipt_is_two_origin_value_free_and_exact() -> None:
                 "attempted_routes": ["direct"],
             },
         ],
-        "tcp_positive_ports": [21115, 21116, 21117],
-        "tcp_negative_ports": [21114, 21118, 21119],
-        "udp_port": 21116,
+        "tcp_positive_ports": [34099, 34100, 34101],
+        "tcp_negative_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+        "udp_port": 34100,
+        "udp_backend_port": 21116,
+        "targets": [
+            "public-ipv4",
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ],
         "udp_attempt_ids": ["udp-independent-0001", "udp-w11-0001"],
         "secret_material_present": False,
     }
@@ -4230,7 +4304,7 @@ def test_barrier_b_is_post_ip_fresh_and_equal_to_barrier_a() -> None:
     [
         (
             lambda barrier: barrier["address_consensus"].update(
-                {"horistic-egress-ipv4": "203.0.113.9"}
+                {"edge-vnic-public-ipv4": "203.0.113.9"}
             ),
             "barrier-b-address-drift",
         ),
@@ -4357,7 +4431,8 @@ def test_hostname_proof_is_internal_state_and_failure_rolls_back_all() -> None:
         _raw(_hostname_probe_bundle()),
         policy_raw=_raw(_origin_policy()),
     )
-    assert receipt["scope"] == "public-hostname"
+    assert receipt["scope"] == "public-hostnames"
+    assert receipt["hostname_count"] == 3
     assert transaction.state == "HOSTNAME_PROBES_VERIFIED"
 
     transaction, backend, _ = _edge_with_ip_proof(module)
@@ -4366,7 +4441,7 @@ def test_hostname_proof_is_internal_state_and_failure_rolls_back_all() -> None:
         2026, 7, 23, 2, 4, 30, tzinfo=timezone.utc
     )
     invalid = _hostname_probe_bundle()
-    invalid["origins"][0]["record_types"] = ["A", "AAAA"]
+    invalid["targets"][0]["origins"][0]["record_types"] = ["A", "AAAA"]
     with pytest.raises(module.EdgeBlocked, match="hostname-probe-invalid"):
         transaction.accept_hostname_probes(
             _raw(invalid),
