@@ -8,7 +8,7 @@
 
 ### Scope and Architecture
 
-- [x] **SCP-01**: O operador instala RustDesk exatamente em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e `GIOVANNI-W11-PC`, excluindo WSL e `GIOVANNI-S23`.
+- [ ] **SCP-01**: O operador instala RustDesk exatamente em `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` e `GIOVANNI-W11-PC`, excluindo WSL e `GIOVANNI-S23`.
 - [x] **SCP-02**: O operador usa RustDesk Server OSS enquanto o escopo permanecer single-operator sem SSO, RBAC, MFA, API nativa central do RustDesk ou auditoria humana central; qualquer requisito desses promove um gate explícito para Pro. Uma API operacional custom da Atius, separada e sem se anunciar como `API Server` do client, não altera essa decisão.
 - [x] **SCP-03**: O tráfego usa policy direct-first em produção e forced-relay somente em testes controlados ou fallback comprovado.
 - [x] **SCP-04**: Server `1.1.15` e clients `1.4.9` ficam pinados por tag, commit, digest/checksum e arquitetura, sem `latest` ou build nos hosts.
@@ -18,8 +18,8 @@
 
 - [x] **SRV-01**: O primary só é selecionado após usar no máximo 78% antes do deploy, no máximo 80% depois, inodes no máximo 80% e headroom em bytes suficiente para imagem, dois backups e 30 dias de logs; `horistic-srv` passou esse gate após `atius-srv-2/3` ficarem `NO-GO`.
 - [ ] **SRV-02**: `hbbs` e `hbbr` rodam em Quadlets Podman rootless hardened, `Network=host`, sem privilege/socket amplo e com limite combinado de no máximo 0,8 CPU e 1 GiB RAM.
-- [ ] **SRV-03**: O primary expõe somente TCP 21115-21117 e UDP 21116; TCP 21114/21118/21119 e qualquer listener não aprovado permanecem fechados em IPv4/IPv6 conforme a política definida.
-- [ ] **SRV-04**: `rustdesk.atius.com.br` usa DNS-only e ingress OCI/host deny-first; probes realmente externos comprovam TCP e UDP antes do rollout.
+- [ ] **SRV-03**: A superfície pública externa é exatamente `34099/TCP`, `34100/TCP+UDP` e `34101/TCP`, com tradução interna nativa `34099->21115`, `34100->21116` e `34101->21117`; os processos RustDesk mantêm `21115/TCP`, `21116/TCP+UDP` e `21117/TCP` somente no target/path interno, enquanto `21114`, `21115`, `21116`, `21117`, `21118`, `21119` e qualquer outro listener permanecem diretamente fechados no edge público em IPv4/IPv6.
+- [ ] **SRV-04**: `rustdesk.atius.com.br`, `rustdesk-id.atius.com.br` e `rustdesk-relay.atius.com.br` são A records DNS-only para `137.131.140.20`, sem proxy, AAAA ou CNAME; ingress OCI/host é deny-first e probes realmente externos comprovam o public IP e os três hostnames no mapping traduzido TCP+UDP, com DNS publicado por último.
 - [x] **SRV-05**: A private server key e os cinco permanent passwords existem somente no Vault/runtime efêmero; clients recebem uma única public key pinada e artefatos guardam apenas fingerprints/hashes.
 - [ ] **SRV-06**: Três restarts e um boot preservam a fingerprint, a identidade, os dados e os listeners do primary sem crescimento de logs ou recursos fora do contrato.
 - [x] **SRV-07**: Backup e restore reais do estado do server preservam a mesma public key antes de publicar o edge e antes de instalar clients de frota.
@@ -75,7 +75,7 @@
 | RustDesk no `GIOVANNI-S23` | Exclusão explícita por enquanto. |
 | Remover RustGuac, XRDP, AnyDesk, NoMachine ou noVNC | São fallbacks de recuperação; retirement exige decisão e milestone separados. |
 | Active-active `hbbs` | O baseline usa primary mais cold standby para evitar split-brain de identidade. |
-| Web client, console/API nativas do RustDesk e portas 21114/21118/21119 | Não pertencem ao baseline OSS native-only; endpoints operacionais custom da Atius usam serviço, autenticação e hostname separados. |
+| Web client, console/API nativas do RustDesk e exposição pública direta de 21114-21119 | Não pertencem ao baseline OSS; o protocolo nativo 21115-21117/UDP 21116 permanece interno atrás da tradução 34099-34101, e endpoints operacionais custom da Atius usam serviço, autenticação e hostname separados. |
 | Trocar LightDM por GDM, habilitar autologin ou criar virtual seat | Mudança disruptiva fora do canary; falha headless vira blocker ou fase separada. |
 | Pro/custom client sem gate de licença | Só entra se os requisitos Pro forem declarados obrigatórios e autorizados. |
 
@@ -85,7 +85,7 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCP-01 | Phase 51 | Complete |
+| SCP-01 | Phases 54-55 | Pending |
 | SCP-02 | Phase 51 | Complete |
 | SCP-03 | Phase 51 | Complete |
 | SCP-04 | Phase 52 | Complete |

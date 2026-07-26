@@ -5,16 +5,16 @@ milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: primary-relay-and-public-edge
 status: blocked
-stopped_at: Plan 53-05 blocked before live mutation; runner stage mismatch and handlers are unimplemented
-last_updated: "2026-07-23T09:26:37-03:00"
-last_activity: 2026-07-23
-last_activity_desc: Plan 53-05 narrow contract checkpoint passed 27 tests; stage mismatch and missing live handlers remain; no infrastructure call
+stopped_at: Phase 53 remains blocked/in progress before 53-05D Wave 0; no authority or live mutation has run
+last_updated: "2026-07-25T00:00:00-03:00"
+last_activity: 2026-07-25
+last_activity_desc: Split the remaining hermetic work into 05D edge/backend and 05D2 CLI/binding; Phase 53 remains NOT_ADMITTED/BLOCKED and no infrastructure call occurred
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 19
-  completed_plans: 17
-  percent: 89
+  total_plans: 22
+  completed_plans: 18
+  percent: 82
 ---
 
 # Project State
@@ -24,16 +24,16 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-19)
 
 **Core value:** Todos os cinco computadores autorizados podem acessar e controlar os demais por RustDesk self-hosted, com segurança, rollback e evidência completa, sem degradar os acessos existentes.
-**Current focus:** Phase 53 — primary-relay-and-public-edge (Plan 05 blocked before live mutation)
+**Current focus:** Phase 53 — primary-relay-and-public-edge (`05D(w7) → 05D2(w8) → 05E(w9) → 05F(w10) → 06(w11)`; Phase 54 remains blocked)
 
 ## Current Position
 
 Phase: 53 (primary-relay-and-public-edge) — IN PROGRESS
-Plan: 05 of 06
-Status: BLOCKED before live mutation: Plan 05 runner accepts no `edge-probes` stage and has no implemented handlers
-Last activity: 2026-07-23 — narrow Plan 53-05 contract checkpoint passed; explicit live command remains stopped at deterministic CLI/runner gate
+Plan: 05D of the serial remainder
+Status: BLOCKED/IN PROGRESS before live mutation: 05D and 05D2 Wave 0 artifacts are pending; owner-bound authority begins only in 05E after the final source binding
+Last activity: 2026-07-25 — planning-only split established `05D(w7) → 05D2(w8) → 05E(w9) → 05F(w10) → 06(w11)`; no Graphify, test, build or infrastructure call occurred
 
-Milestone progress: [█████████░] 89% — 17 of 19 plans complete; Phase 53-05 is next
+Milestone progress: [████████░░] 82% — 18 of 22 plans complete; Phase 53-05D Wave 0 is next
 
 ## Performance Metrics
 
@@ -89,11 +89,14 @@ Milestone progress: [█████████░] 89% — 17 of 19 plans comp
 - [Phase 53]: The server runtime is rootless and digest-pinned; identity is tmpfs-only, linger is conditional, and Plan 02 cannot open public ingress or install a client.
 - [Phase 53]: The ATIUS operations API is loopback-only, backend-authenticated and observational; its HTTPS Apache candidate remains unapplied until Plan 05.
 - [Phase 52]: Post-live closeout is complete, metadata-only and non-authorizing; retained historical 11/11 evidence, current projection inputs and segregated JUnit lanes are bound without replay.
-- [Phase 53]: Plan 53-04 is hermetic-complete; Plans 53-05 and 53-06 remain independently incomplete, and no Phase 53 live execution is implied by the Phase 52 metadata closeout.
+- [Phase 53]: The remaining chain is fixed as `05D(w7) → 05D2(w8) → 05E(w9 checkpoint) → 05F(w10 live) → 06(w11 read-only)`; 05D owns edge/backend, 05D2 owns final source binding, and 06 cannot run directly after 05C.
+- [Phase 54]: Plan 54-01 contract/fixture slice is complete with 15 governed tests; its initial evidence is BLOCKED/PENDING and no client mutation is authorized until Phase 53 independently passes.
 
 ### Pending Todos
 
-- Implement/review Plan 53-05 live handlers and align its stage contract before any live deployment.
+- Execute 53-05D Wave 0 first, then 53-05D2; only its final `execution_source_commit` can enter the read-only owner-bound 05E authority gate.
+- Phase 54 has five serial plans; Plan 54-01 is contract-complete, Plans 54-02, 54-03-01 and 54-04-01 have code-only safety slices (`code-only-blocked`), and Plan 54-03-02/54-04-02/Plans 54-05 remain non-executable until Phase 53 has an independent current PASS.
+- [Phase 53]: Preserve the strict serial chain `05D(w7) → 05D2(w8) → 05E(w9 checkpoint) → 05F(w10 live) → 06(w11 read-only)`; 06 depends only on 05F and remains blocked until independent 05F `status: passed`.
 
 ### Blockers/Concerns
 
@@ -102,6 +105,6 @@ Milestone progress: [█████████░] 89% — 17 of 19 plans comp
 
 ## Session Continuity
 
-Last session: 2026-07-23T12:12:05Z
-Stopped at: Plan 53-05 blocked before live mutation; runner stage mismatch and handlers are unimplemented
+Last session: 2026-07-25T03:00:00Z
+Stopped at: Planning-only split complete; Phase 53 remains blocked/in progress before 53-05D Wave 0 and no live mutation is authorized
 Resume file: None

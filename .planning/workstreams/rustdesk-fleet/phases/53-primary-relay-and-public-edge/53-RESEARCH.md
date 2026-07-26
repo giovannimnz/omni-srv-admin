@@ -6,6 +6,14 @@
 **Requirements:** `SRV-02`, `SRV-03`, `SRV-04`, `SRV-06`, `OPS-01`
 **Status:** Ready for planning
 **Unresolved blockers:** 0
+**Authority update (2026-07-25):** public native values `21115-21117`
+and the single-hostname edge described in the historical research below are
+superseded by CONTEXT D-05/D-06. Current external authority is
+`34099/TCP`, `34100/TCP+UDP`, `34101/TCP` across the three DNS-only A records
+`rustdesk.atius.com.br`, `rustdesk-id.atius.com.br` and
+`rustdesk-relay.atius.com.br`; internal native listeners remain unchanged.
+Downstream execution must use `53-CONTEXT.md`, `REQUIREMENTS.md` and, after
+53-05D, `modules/rustdesk-fleet/contracts/phase53-edge.json`.
 
 ## Executive result
 
@@ -71,6 +79,12 @@ after a real reboot without interactive login, and disable it on rollback only
 when the transaction changed the prior state.
 
 ## Normative transport contract
+
+> **Superseded public-edge note (2026-07-25):** this section preserves the
+> upstream/local-listener research and the historical public-edge conclusion.
+> CONTEXT D-05/D-06 now govern execution: external `34099/34100/34101`,
+> three DNS-only hostnames and unchanged internal native listeners. After
+> 53-05D, `phase53-edge.json` is the sole machine-readable authority.
 
 ### Exact local runtime sockets
 
@@ -150,6 +164,11 @@ path and prove actual rotation/size rather than relying only on global
 journald settings.
 
 ## Edge and publication transaction
+
+> **Superseded transaction constants (2026-07-25):** steps below mentioning one
+> hostname or public native `21115-21117` are historical research, not current
+> executor inputs. Apply/probe tooling must derive the three-hostname translated
+> edge from CONTEXT D-05/D-06, REQUIREMENTS and `phase53-edge.json` after 05D.
 
 The order is fail-closed and must not be reordered:
 

@@ -23,8 +23,8 @@ Phase 53 deploys the production RustDesk Server OSS primary on the selected `hor
 
 ### Native edge and external proof
 
-- **D-05:** `rustdesk.atius.com.br` is the sole native client endpoint and remains Cloudflare DNS-only. It must resolve to the validated current public address of the selected Horistic edge; planning must revalidate the address instead of trusting an older inventory value.
-- **D-06:** The allowlist is exactly TCP `21115-21117` plus UDP `21116`. TCP `21114`, `21118`, `21119`, other unexpected IPv4 listeners and any unintended IPv6 exposure fail closed.
+- **D-05:** `rustdesk.atius.com.br`, `rustdesk-id.atius.com.br` and `rustdesk-relay.atius.com.br` are Cloudflare DNS-only A records for the reserved public address `137.131.140.20`; `rustdesk.atius.com.br` remains the general client endpoint, while `rustdesk-id.atius.com.br` and `rustdesk-relay.atius.com.br` are the explicit ID and relay endpoints. Proxying, AAAA and CNAME records are forbidden. This decision supersedes D-05 gathered on 2026-07-22 by explicit Giovanni instruction on 2026-07-25.
+- **D-06:** The exact public external surface is `34099/TCP`, `34100/TCP+UDP` and `34101/TCP`, translated only on the target/internal path as `34099->21115`, `34100->21116` and `34101->21117`. Native RustDesk process listeners `21115/TCP`, `21116/TCP+UDP` and `21117/TCP` remain unchanged and internal-only; public `21114`, `21115`, `21116`, `21117`, `21118`, `21119` and every other direct listener stay closed. This decision supersedes D-06 gathered on 2026-07-22 by explicit Giovanni instruction on 2026-07-25 while preserving the native internal protocol.
 - **D-07:** External proof originates outside `horistic-srv`; use `GIOVANNI-W11-PC` via private SSH first as the primary TCP/UDP probe source, with a second independent external probe when practical. Localhost or same-host scans never satisfy the gate.
 - **D-08:** Edge publication is ordered and reversible: preflight/backup, host+OCI/Cloudflare change, external positive and negative probes, then commit. Any failed probe restores the previous DNS/firewall/ingress state and keeps Phase 54 blocked.
 
@@ -71,6 +71,7 @@ Phase 53 deploys the production RustDesk Server OSS primary on the selected `hor
 - `.planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-RESEARCH.md` — official image digest, Quadlet restrictions, ports and identity-handling research.
 - `modules/rustdesk-fleet/contracts/supply-chain.json` — immutable server image identity.
 - `modules/rustdesk-fleet/contracts/secret-roles.json` — approved Vault authority and public/private boundary.
+- `modules/rustdesk-fleet/contracts/phase53-edge.json` — single machine-readable authority for the three DNS-only hostnames, reserved public address, translated external ports, internal native listeners and exhaustive public negatives.
 - `modules/rustdesk-fleet/evidence/phase52/full-gate-summary.json` — selected-candidate stage vector and mutation accounting.
 - `modules/rustdesk-fleet/evidence/phase52/gate-b-transaction.json` — value-free exact create-only transaction proof.
 
@@ -95,7 +96,7 @@ Phase 53 deploys the production RustDesk Server OSS primary on the selected `hor
 ### Integration Points
 
 - New production server contracts, installers, validators and evidence live under `modules/rustdesk-fleet/`.
-- DNS/Cloudflare credentials are hydrated only from the Vault `cloudflare` profile; live edge changes must preserve previous records for rollback.
+- DNS/Cloudflare credentials are hydrated only from the Vault `cloudflare` profile; live edge changes must preserve previous records for rollback and consume `phase53-edge.json` instead of maintaining a second port/hostname authority.
 - External Windows probes use the existing private-first SSH route and record only connectivity outcomes/timestamps.
 
 </code_context>
@@ -122,4 +123,3 @@ Phase 53 deploys the production RustDesk Server OSS primary on the selected `hor
 
 *Phase: 53-primary-relay-and-public-edge*
 *Context gathered: 2026-07-22*
-
