@@ -1,7 +1,8 @@
 # Phase 53 Plan 05B — Production-bound live adapter closure
 
-**Gathered:** 2026-07-23  
-**Status:** Ready for planning  
+**Gathered:** 2026-07-23
+
+**Status:** Ready for planning
 **Scope:** gap closure for the blocked Plan 53-05; no runtime mutation is
 authorized by this context alone.
 
@@ -90,5 +91,6 @@ Client installation/canary proof, WSL/S23 access, serialized client rollout,
 full direct/relay matrix, standby/failover, and Phase 48 changes remain in
 their roadmap phases and must not appear as implementation tasks here.
 
-*Phase: 53-primary-relay-and-public-edge*  
-*Context: 53-05B* 
+*Phase: 53-primary-relay-and-public-edge*
+
+*Context: 53-05B*

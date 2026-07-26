@@ -1,6 +1,6 @@
 # Phase 53 Plan 05B — Research and implementation findings
 
-**Researched:** 2026-07-23  
+**Researched:** 2026-07-23
 **Mode:** gap closure; existing repository patterns and Phase 53-05A seam
 were inspected, with no new package dependency.
 
@@ -109,5 +109,5 @@ The closure uses Python standard-library code and existing repo tools. No
 package-manager install or target build is planned; all CPU-heavy commands use
 the repository `builds` governor and preserve the Phase 48/52 frozen artifacts.
 
-*Phase: 53-primary-relay-and-public-edge*  
+*Phase: 53-primary-relay-and-public-edge*
 *Research: 53-05B*
