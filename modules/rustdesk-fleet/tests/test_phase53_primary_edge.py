@@ -1306,6 +1306,280 @@ def test_apply_cli_negative_authority_has_zero_side_effect(
     assert sorted(item.relative_to(tmp_path) for item in tmp_path.rglob("*")) == before
 
 
+def _git_fixture(repo: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return completed.stdout.strip()
+
+
+def _phase53_binding_chain_fixture(tmp_path: Path) -> dict[str, Any]:
+    repo = tmp_path / "binding-repo"
+    repo.mkdir()
+    _git_fixture(repo, "init", "-q")
+    _git_fixture(repo, "config", "user.name", "Phase53 Test")
+    _git_fixture(repo, "config", "user.email", "phase53@example.invalid")
+
+    source_path = "source/runner.py"
+    source = repo / source_path
+    source.parent.mkdir(parents=True)
+    source.write_text("EXECUTION_TARGET = '10.21.1.21'\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", source_path)
+    _git_fixture(repo, "commit", "-qm", "source")
+    source_commit = _git_fixture(repo, "rev-parse", "HEAD")
+    source_oid = _git_fixture(repo, "rev-parse", f"{source_commit}:{source_path}")
+    source_tree = hashlib.sha256(
+        f"{source_path}\0{source_oid}\n".encode()
+    ).hexdigest()
+
+    evidence_root = repo / "modules/rustdesk-fleet/evidence/phase53"
+    evidence_root.mkdir(parents=True)
+    plan_digest = "a" * 64
+    apply_id = "1" * 32
+    rollback_id = "2" * 32
+    restore_id = "3" * 32
+    seal = "b" * 64
+    common = {
+        "schema_version": 1,
+        "execution_source_commit": source_commit,
+        "execution_source_tree_sha256": source_tree,
+        "operation_plan_sha256": plan_digest,
+        "secret_material_present": False,
+    }
+    authority_payloads = {
+        "preflight.json": {**common, "source_scope_clean": True},
+        "edge-forwarder-operation-plan.json": {
+            **common,
+            "target": "10.21.1.21",
+            "expires_at": "2099-01-01T00:00:00Z",
+        },
+        "edge-forwarder-owner-approval.json": {
+            **common,
+            "owner": "Giovanni Muniz",
+            "decision": "approve",
+            "expires_at": "2099-01-01T00:00:00Z",
+        },
+    }
+    authority_paths: dict[str, Path] = {}
+    for name, payload in authority_payloads.items():
+        file_path = evidence_root / name
+        file_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        authority_paths[name] = file_path
+    _git_fixture(
+        repo,
+        "add",
+        "--",
+        *[str(item.relative_to(repo)) for item in authority_paths.values()],
+    )
+    _git_fixture(repo, "commit", "-qm", "authority")
+
+    evidence_payloads = {
+        "deploy-transaction.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+        },
+        "edge-probes.json": {**common, "apply_transaction_id": apply_id},
+        "ops-api-probes.json": {**common, "apply_transaction_id": apply_id},
+        "lifecycle.json": {**common, "apply_transaction_id": apply_id},
+        "rollback-drill.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+            "rollback_transaction_id": rollback_id,
+            "rollback_seal_sha256": seal,
+        },
+        "restore-production-transaction.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+            "rollback_transaction_id": rollback_id,
+            "restore_production_transaction_id": restore_id,
+            "rollback_seal_sha256": seal,
+        },
+        "direct-relay-metrics.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+            "restore_production_transaction_id": restore_id,
+        },
+    }
+    evidence_paths: dict[str, Path] = {}
+    for name, payload in evidence_payloads.items():
+        file_path = evidence_root / name
+        file_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        evidence_paths[name] = file_path
+    _git_fixture(
+        repo,
+        "add",
+        "--",
+        *[str(item.relative_to(repo)) for item in evidence_paths.values()],
+    )
+    _git_fixture(repo, "commit", "-qm", "evidence only")
+    live_commit = _git_fixture(repo, "rev-parse", "HEAD")
+    manifest_digests = {
+        str(file_path.relative_to(repo)): hashlib.sha256(
+            _git_fixture(
+                repo, "show", f"{live_commit}:{file_path.relative_to(repo)}"
+            ).encode()
+        ).hexdigest()
+        for file_path in evidence_paths.values()
+    }
+
+    phase_root = (
+        repo
+        / ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge"
+    )
+    phase_root.mkdir(parents=True)
+    summary = phase_root / "53-05F-SUMMARY.md"
+    table = "\n".join(
+        f"| {name} | {digest} |" for name, digest in manifest_digests.items()
+    )
+    summary.write_text(
+        "---\n"
+        f"live_executor_commit: {live_commit}\n"
+        f"execution_source_commit: {source_commit}\n"
+        f"execution_source_tree_sha256: {source_tree}\n"
+        f"operation_plan_sha256: {plan_digest}\n"
+        "---\n"
+        "# 53-05F Summary\n\n"
+        "| path | sha256 |\n|---|---|\n"
+        f"{table}\n",
+        encoding="utf-8",
+    )
+    _git_fixture(repo, "add", "--", str(summary.relative_to(repo)))
+    _git_fixture(repo, "commit", "-qm", "summary only")
+    summary_commit = _git_fixture(repo, "rev-parse", "HEAD")
+
+    verification = phase_root / "53-05F-VERIFICATION.md"
+    verification.write_text(
+        "---\n"
+        "status: passed\n"
+        f"live_executor_commit: {live_commit}\n"
+        f"05F_summary_commit: {summary_commit}\n"
+        f"execution_source_commit: {source_commit}\n"
+        f"execution_source_tree_sha256: {source_tree}\n"
+        "---\n# Independent verification\n",
+        encoding="utf-8",
+    )
+    _git_fixture(repo, "add", "--", str(verification.relative_to(repo)))
+    _git_fixture(repo, "commit", "-qm", "independent verification")
+
+    return {
+        "repo": repo,
+        "source_path": source,
+        "source_relative": source_path,
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "live_commit": live_commit,
+        "summary_commit": summary_commit,
+        "summary": summary,
+        "verification": verification,
+        "authority": authority_paths,
+        "evidence": evidence_paths,
+    }
+
+
+def _validate_binding_fixture(module: Any, fixture: dict[str, Any]) -> dict[str, Any]:
+    authority = fixture["authority"]
+    evidence = fixture["evidence"]
+    return module.validate_phase53_binding_chain(
+        repo=fixture["repo"],
+        preflight=authority["preflight.json"],
+        operation_plan=authority["edge-forwarder-operation-plan.json"],
+        owner_approval=authority["edge-forwarder-owner-approval.json"],
+        deploy=evidence["deploy-transaction.json"],
+        edge_probes=evidence["edge-probes.json"],
+        ops_api_probes=evidence["ops-api-probes.json"],
+        lifecycle=evidence["lifecycle.json"],
+        rollback=evidence["rollback-drill.json"],
+        restore_production=evidence["restore-production-transaction.json"],
+        direct_relay_metrics=evidence["direct-relay-metrics.json"],
+        summary=fixture["summary"],
+        verification=fixture["verification"],
+        execution_source_paths=[fixture["source_relative"]],
+        strict_validator=lambda _repo: {
+            "state": "PASS",
+            "requirements": ["SRV-02", "SRV-03", "SRV-04", "SRV-06", "OPS-01"],
+        },
+    )
+
+
+def test_binding_chain_proves_evidence_only_summary_only_and_ancestry(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    computed = module.compute_execution_source_binding(
+        repo=fixture["repo"],
+        execution_source_commit=fixture["source_commit"],
+        manifest_paths=[fixture["source_relative"]],
+    )
+    assert computed["execution_source_tree_sha256"] == fixture["source_tree"]
+    result = _validate_binding_fixture(module, fixture)
+    assert result["status"] == "PASS"
+    assert result["live_executor_commit"] == fixture["live_commit"]
+    assert result["05F_summary_commit"] == fixture["summary_commit"]
+    assert result["mutation_performed"] is False
+    assert result["provider_constructed"] is False
+
+
+def test_binding_chain_rejects_self_hash_ancestry_and_duplicate_inputs(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    deploy = fixture["evidence"]["deploy-transaction.json"]
+    payload = _load_strict(deploy)
+    payload["self_sha256"] = "f" * 64
+    deploy.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(module.BindingChainInvalid, match="self-hash-forbidden"):
+        _validate_binding_fixture(module, fixture)
+    _git_fixture(
+        fixture["repo"],
+        "checkout",
+        "--",
+        str(deploy.relative_to(fixture["repo"])),
+    )
+
+    verification = fixture["verification"]
+    text = verification.read_text(encoding="utf-8").replace(
+        fixture["summary_commit"], fixture["source_commit"]
+    )
+    verification.write_text(text, encoding="utf-8")
+    with pytest.raises(module.BindingChainInvalid, match="summary-commit-mismatch"):
+        _validate_binding_fixture(module, fixture)
+
+    with pytest.raises(module.BindingChainInvalid, match="explicit-path-duplicate"):
+        module.compute_execution_source_binding(
+            repo=fixture["repo"],
+            execution_source_commit=fixture["source_commit"],
+            manifest_paths=[
+                fixture["source_relative"],
+                fixture["source_relative"],
+            ],
+        )
+
+
+def test_binding_chain_rejects_dirty_scope_without_writes(tmp_path: Path) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    fixture["source_path"].write_text("DIRTY = True\n", encoding="utf-8")
+    before = {
+        item.relative_to(fixture["repo"]): item.read_bytes()
+        for item in fixture["repo"].rglob("*")
+        if item.is_file() and ".git" not in item.parts
+    }
+    with pytest.raises(module.BindingChainInvalid, match="execution-source-dirty"):
+        _validate_binding_fixture(module, fixture)
+    after = {
+        item.relative_to(fixture["repo"]): item.read_bytes()
+        for item in fixture["repo"].rglob("*")
+        if item.is_file() and ".git" not in item.parts
+    }
+    assert after == before
+
+
 def test_ops_api_contract_schema_auth_and_readiness() -> None:
     _validate_ops_api(_load_strict(OPS_API_CONTRACT))
 
