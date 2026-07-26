@@ -85,7 +85,7 @@ Cada requisito v1.9 mapeia para exatamente uma Phase 51-58. O status permanece P
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| SCP-01 | Phases 54-55 | Pending |
+| SCP-01 | Phase 55 | Pending |
 | SCP-02 | Phase 51 | Complete |
 | SCP-03 | Phase 51 | Complete |
 | SCP-04 | Phase 52 | Complete |

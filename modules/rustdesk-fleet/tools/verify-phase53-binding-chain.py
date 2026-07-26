@@ -24,6 +24,62 @@ REQUIREMENTS = ["SRV-02", "SRV-03", "SRV-04", "SRV-06", "OPS-01"]
 SOURCE_SCOPE_PATH = Path(
     "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json"
 )
+EXECUTION_SOURCE_SCOPE_KEYS = {
+    "schema_version",
+    "scope_id",
+    "phase",
+    "aggregate",
+    "paths",
+}
+REQUIRED_EXECUTION_SOURCE_PATHS = (
+    "modules/rustdesk-fleet/apache/rustdesk-ops.atius.com.br.conf",
+    "modules/rustdesk-fleet/contracts/phase53-candidate-admission.json",
+    "modules/rustdesk-fleet/contracts/phase53-edge.json",
+    "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+    "modules/rustdesk-fleet/contracts/phase53-horistic-migration-handoff.json",
+    "modules/rustdesk-fleet/contracts/phase53-ops-api.json",
+    "modules/rustdesk-fleet/contracts/phase53-provider-manifest.json",
+    "modules/rustdesk-fleet/contracts/phase53-runtime-candidate.json",
+    "modules/rustdesk-fleet/contracts/phase53-runtime.json",
+    "modules/rustdesk-fleet/contracts/phase53-topology.json",
+    "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft",
+    "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container",
+    "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-ops-api.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53.slice",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.timer",
+    "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tests/test_phase53_topology.py",
+    "modules/rustdesk-fleet/tools/apply-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/discover-phase53-topology.py",
+    "modules/rustdesk-fleet/tools/install-phase53-server.py",
+    "modules/rustdesk-fleet/tools/phase53-live-adapters.py",
+    "modules/rustdesk-fleet/tools/phase53-live-backend.py",
+    "modules/rustdesk-fleet/tools/phase53-production-adapters.py",
+    "modules/rustdesk-fleet/tools/phase53_production_adapters.py",
+    "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1",
+    "modules/rustdesk-fleet/tools/probe-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/run-phase53-live-gate.py",
+    "modules/rustdesk-fleet/tools/rustdesk-ops-api.py",
+    "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
+    "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+)
+EXECUTION_SOURCE_COMMIT_PATHS = (
+    ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
+    "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+    "modules/rustdesk-fleet/evidence/ledger.json",
+    "modules/rustdesk-fleet/tests/test_phase51_contracts.py",
+    "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+)
+FORBIDDEN_SOURCE_PATH_MARKERS = (
+    "/evidence/",
+    "/.planning/",
+    "approval",
+    "operation-plan",
+)
 CANONICAL_INPUTS = {
     "preflight": Path("modules/rustdesk-fleet/evidence/phase53/preflight.json"),
     "operation_plan": Path(
@@ -183,6 +239,94 @@ def _validate_explicit_paths(
     return resolved
 
 
+def _canonical_manifest_path(value: Any) -> str:
+    if not isinstance(value, str) or not value or "\0" in value or "\n" in value:
+        raise BindingChainInvalid("explicit-path-list-invalid")
+    candidate = Path(value)
+    if (
+        candidate.is_absolute()
+        or value != candidate.as_posix()
+        or any(part in {"", ".", ".."} for part in candidate.parts)
+    ):
+        raise BindingChainInvalid("explicit-path-noncanonical")
+    return value
+
+
+def validate_execution_source_scope_payload(payload: Mapping[str, Any]) -> list[str]:
+    """Require the reviewed, closed Phase 53 execution-source inventory."""
+
+    if not isinstance(payload, Mapping) or set(payload) != EXECUTION_SOURCE_SCOPE_KEYS:
+        raise BindingChainInvalid("source-scope-schema-invalid")
+    aggregate = payload.get("aggregate")
+    if (
+        payload.get("schema_version") != 1
+        or payload.get("scope_id") != "phase53-execution-source-v1"
+        or payload.get("phase") != "53-primary-relay-and-public-edge"
+        or not isinstance(aggregate, Mapping)
+        or set(aggregate) != {"algorithm", "object_source", "order", "record"}
+        or aggregate.get("algorithm") != "sha256"
+        or aggregate.get("object_source") != "git-blob-oid"
+        or aggregate.get("order") != "path-bytewise-ascending"
+        or aggregate.get("record") != "path NUL Git-blob-OID LF"
+    ):
+        raise BindingChainInvalid("source-scope-schema-invalid")
+    candidates = payload.get("paths")
+    if (
+        not isinstance(candidates, list)
+        or not candidates
+        or not all(isinstance(item, str) and item for item in candidates)
+    ):
+        raise BindingChainInvalid("source-scope-invalid")
+    if len(candidates) != len(set(candidates)):
+        raise BindingChainInvalid("source-scope-duplicate")
+    if candidates != sorted(candidates):
+        raise BindingChainInvalid("source-scope-order-invalid")
+    for candidate in candidates:
+        _canonical_manifest_path(candidate)
+        if any(marker in candidate for marker in FORBIDDEN_SOURCE_PATH_MARKERS):
+            raise BindingChainInvalid("source-scope-forbidden")
+    required = set(REQUIRED_EXECUTION_SOURCE_PATHS)
+    actual = set(candidates)
+    if required - actual:
+        raise BindingChainInvalid("source-scope-missing")
+    if actual - required:
+        raise BindingChainInvalid("source-scope-extra")
+    return list(candidates)
+
+
+def _git_blob_oid(repo: Path, commit: str, relative: str) -> str:
+    raw = _git(
+        repo,
+        "ls-tree",
+        "-z",
+        commit,
+        "--",
+        relative,
+        text=False,
+    )
+    assert isinstance(raw, bytes)
+    records = [item for item in raw.split(b"\0") if item]
+    if not records:
+        raise BindingChainInvalid("git-object-missing")
+    if len(records) != 1:
+        raise BindingChainInvalid("git-object-ambiguous")
+    try:
+        header, encoded_path = records[0].split(b"\t", 1)
+        mode, object_type, oid = header.decode("ascii").split(" ", 2)
+        object_path = encoded_path.decode("utf-8")
+    except (UnicodeError, ValueError) as exc:
+        raise BindingChainInvalid("git-object-invalid") from exc
+    if object_path != relative:
+        raise BindingChainInvalid("git-object-invalid")
+    if mode == "120000":
+        raise BindingChainInvalid("git-object-symlink")
+    if object_type != "blob" or mode not in {"100644", "100755"}:
+        raise BindingChainInvalid("git-object-invalid")
+    if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", oid):
+        raise BindingChainInvalid("git-blob-oid-invalid")
+    return oid
+
+
 def compute_execution_source_binding(
     *,
     repo: Path,
@@ -202,7 +346,7 @@ def compute_execution_source_binding(
     relative_paths: list[str] = []
     seen: set[str] = set()
     for supplied in manifest_paths:
-        _absolute, relative = _explicit_relative(root, supplied)
+        relative = _canonical_manifest_path(supplied)
         if relative in seen:
             raise BindingChainInvalid("explicit-path-duplicate")
         seen.add(relative)
@@ -213,9 +357,7 @@ def compute_execution_source_binding(
     records: list[bytes] = []
     blobs: dict[str, dict[str, str]] = {}
     for relative in relative_paths:
-        oid = str(_git(root, "rev-parse", f"{source_commit}:{relative}")).strip()
-        if not re.fullmatch(r"[0-9a-f]{40}|[0-9a-f]{64}", oid):
-            raise BindingChainInvalid("git-blob-oid-invalid")
+        oid = _git_blob_oid(root, source_commit, relative)
         content = _git(root, "show", f"{source_commit}:{relative}", text=False)
         assert isinstance(content, bytes)
         records.append(relative.encode("utf-8") + b"\0" + oid.encode("ascii") + b"\n")
@@ -284,6 +426,18 @@ def _exact_commit_paths(repo: Path, commit: str) -> list[str]:
     return sorted(item for item in output.splitlines() if item)
 
 
+def validate_execution_source_commit_paths(repo: Path, commit: str) -> list[str]:
+    """Require the six-path 05D2C seal commit without broad staging."""
+
+    root = repo.resolve(strict=True)
+    source_commit = _commit(root, commit, "execution-source-invalid")
+    paths = _exact_commit_paths(root, source_commit)
+    expected = list(EXECUTION_SOURCE_COMMIT_PATHS)
+    if paths != expected:
+        raise BindingChainInvalid("execution-source-commit-paths-invalid")
+    return paths
+
+
 def _latest_path_commit(repo: Path, relative: str) -> str:
     value = str(_git(repo, "log", "-n", "1", "--format=%H", "--", relative)).strip()
     return _commit(repo, value, "path-commit-invalid")
@@ -291,35 +445,37 @@ def _latest_path_commit(repo: Path, relative: str) -> str:
 
 def _read_source_scope(repo: Path) -> list[str]:
     payload = _strict_json(repo / SOURCE_SCOPE_PATH)
-    candidates = payload.get("paths", payload.get("allowlist"))
-    if not isinstance(candidates, list) or not candidates:
-        raise BindingChainInvalid("source-scope-invalid")
-    if (
-        not all(isinstance(item, str) and item for item in candidates)
-        or candidates != sorted(candidates)
-        or len(candidates) != len(set(candidates))
-    ):
-        raise BindingChainInvalid("source-scope-invalid")
-    return candidates
+    return validate_execution_source_scope_payload(payload)
 
 
-def _require_clean_source(
+def require_clean_execution_source(
+    *,
     repo: Path,
-    source_commit: str,
-    source_paths: Sequence[Path | str],
+    execution_source_commit: str,
+    manifest_paths: Sequence[Path | str],
     expected_tree: str,
 ) -> dict[str, Any]:
+    """Bind Git objects and reject any missing, symlinked, dirty or later source."""
+
+    root = repo.resolve(strict=True)
+    relative_paths: list[str] = []
+    for supplied in manifest_paths:
+        relative = _canonical_manifest_path(supplied)
+        _absolute, worktree_relative = _explicit_relative(root, relative)
+        if worktree_relative != relative:
+            raise BindingChainInvalid("explicit-path-noncanonical")
+        relative_paths.append(relative)
     binding = compute_execution_source_binding(
-        repo=repo,
-        execution_source_commit=source_commit,
-        manifest_paths=source_paths,
+        repo=root,
+        execution_source_commit=execution_source_commit,
+        manifest_paths=relative_paths,
     )
     if binding["execution_source_tree_sha256"] != expected_tree:
         raise BindingChainInvalid("execution-source-tree-drift")
-    relative_paths = binding["manifest_paths"]
     status = str(
         _git(
-            repo,
+            root,
+            "--literal-pathspecs",
             "status",
             "--porcelain=v1",
             "--untracked-files=all",
@@ -329,9 +485,9 @@ def _require_clean_source(
     )
     if status.strip():
         raise BindingChainInvalid("execution-source-dirty")
-    head = str(_git(repo, "rev-parse", "HEAD")).strip()
+    head = str(_git(root, "rev-parse", "HEAD")).strip()
     head_binding = compute_execution_source_binding(
-        repo=repo,
+        repo=root,
         execution_source_commit=head,
         manifest_paths=relative_paths,
     )
@@ -342,6 +498,20 @@ def _require_clean_source(
     ):
         raise BindingChainInvalid("execution-source-changed")
     return binding
+
+
+def _require_clean_source(
+    repo: Path,
+    source_commit: str,
+    source_paths: Sequence[Path | str],
+    expected_tree: str,
+) -> dict[str, Any]:
+    return require_clean_execution_source(
+        repo=repo,
+        execution_source_commit=source_commit,
+        manifest_paths=source_paths,
+        expected_tree=expected_tree,
+    )
 
 
 def _default_strict_validator(repo: Path) -> Mapping[str, Any]:
@@ -565,6 +735,11 @@ def validate_phase53_binding_chain(
         if execution_source_paths is not None
         else _read_source_scope(root)
     )
+    source_commit_paths: list[str] | None = None
+    if execution_source_paths is None:
+        source_commit_paths = validate_execution_source_commit_paths(
+            root, source_commit
+        )
     binding = _require_clean_source(root, source_commit, source_paths, source_tree)
     validator = strict_validator or _default_strict_validator
     strict_result = validator(root)
@@ -589,6 +764,7 @@ def validate_phase53_binding_chain(
         "rollback_seal_sha256": rollback_seal,
         "manifest_digests": manifest_digests,
         "source_binding": binding,
+        "execution_source_commit_paths": source_commit_paths,
         "requirements": REQUIREMENTS,
         "strict_validator_state": "PASS",
         "provider_constructed": False,

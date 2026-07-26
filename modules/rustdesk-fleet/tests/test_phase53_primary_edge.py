@@ -53,6 +53,52 @@ MIGRATION_HANDOFF = (
 BINDING_CHECKER = (
     REPO / "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py"
 )
+EXECUTION_SOURCE_SCOPE = (
+    CONTRACT_DIR / "phase53-execution-source-scope.json"
+)
+EXPECTED_EXECUTION_SOURCE_PATHS = (
+    "modules/rustdesk-fleet/apache/rustdesk-ops.atius.com.br.conf",
+    "modules/rustdesk-fleet/contracts/phase53-candidate-admission.json",
+    "modules/rustdesk-fleet/contracts/phase53-edge.json",
+    "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+    "modules/rustdesk-fleet/contracts/phase53-horistic-migration-handoff.json",
+    "modules/rustdesk-fleet/contracts/phase53-ops-api.json",
+    "modules/rustdesk-fleet/contracts/phase53-provider-manifest.json",
+    "modules/rustdesk-fleet/contracts/phase53-runtime-candidate.json",
+    "modules/rustdesk-fleet/contracts/phase53-runtime.json",
+    "modules/rustdesk-fleet/contracts/phase53-topology.json",
+    "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft",
+    "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container",
+    "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-ops-api.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53.slice",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.timer",
+    "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tests/test_phase53_topology.py",
+    "modules/rustdesk-fleet/tools/apply-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/discover-phase53-topology.py",
+    "modules/rustdesk-fleet/tools/install-phase53-server.py",
+    "modules/rustdesk-fleet/tools/phase53-live-adapters.py",
+    "modules/rustdesk-fleet/tools/phase53-live-backend.py",
+    "modules/rustdesk-fleet/tools/phase53-production-adapters.py",
+    "modules/rustdesk-fleet/tools/phase53_production_adapters.py",
+    "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1",
+    "modules/rustdesk-fleet/tools/probe-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/run-phase53-live-gate.py",
+    "modules/rustdesk-fleet/tools/rustdesk-ops-api.py",
+    "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
+    "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+)
+EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS = (
+    ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
+    "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+    "modules/rustdesk-fleet/evidence/ledger.json",
+    "modules/rustdesk-fleet/tests/test_phase51_contracts.py",
+    "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+)
 
 
 class DuplicateKeyError(ValueError):
@@ -1578,6 +1624,182 @@ def test_binding_chain_rejects_dirty_scope_without_writes(tmp_path: Path) -> Non
         if item.is_file() and ".git" not in item.parts
     }
     assert after == before
+
+
+def test_execution_source_scope_is_closed_sorted_and_excludes_mutable_authority() -> None:
+    module = _binding_checker_module()
+    payload = _load_strict(EXECUTION_SOURCE_SCOPE)
+    paths = module.validate_execution_source_scope_payload(payload)
+
+    assert tuple(paths) == EXPECTED_EXECUTION_SOURCE_PATHS
+    assert paths == sorted(paths)
+    assert len(paths) == len(set(paths)) == 33
+    assert all((REPO / item).is_file() for item in paths)
+    assert not any((REPO / item).is_symlink() for item in paths)
+    assert not any(
+        marker in item
+        for item in paths
+        for marker in ("/evidence/", "/.planning/", "approval", "operation-plan")
+    )
+    assert not set(EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS[:1] + EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS[2:4]).intersection(paths)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "blocker"),
+    [
+        ("unknown-field", "source-scope-schema-invalid"),
+        ("missing", "source-scope-missing"),
+        ("extra", "source-scope-extra"),
+        ("duplicate", "source-scope-duplicate"),
+        ("unsorted", "source-scope-order-invalid"),
+        ("evidence", "source-scope-forbidden"),
+    ],
+)
+def test_execution_source_scope_rejects_unknown_missing_extra_and_mutable_paths(
+    mutation: str,
+    blocker: str,
+) -> None:
+    module = _binding_checker_module()
+    payload = _load_strict(EXECUTION_SOURCE_SCOPE)
+    if mutation == "unknown-field":
+        payload["stored_verdict"] = "PASS"
+    elif mutation == "missing":
+        payload["paths"].remove(EXPECTED_EXECUTION_SOURCE_PATHS[0])
+    elif mutation == "extra":
+        payload["paths"].append(
+            "modules/rustdesk-fleet/tools/phase53-unknown-live-consumer.py"
+        )
+        payload["paths"].sort()
+    elif mutation == "duplicate":
+        payload["paths"].append(payload["paths"][-1])
+    elif mutation == "unsorted":
+        payload["paths"] = list(reversed(payload["paths"]))
+    else:
+        payload["paths"].append(
+            "modules/rustdesk-fleet/evidence/phase53/preflight.json"
+        )
+        payload["paths"].sort()
+
+    with pytest.raises(module.BindingChainInvalid, match=blocker):
+        module.validate_execution_source_scope_payload(payload)
+
+
+def test_source_tree_digest_uses_only_sorted_git_blob_records(tmp_path: Path) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    second_relative = "source/validator.py"
+    second_path = fixture["repo"] / second_relative
+    second_path.write_text("STRICT = True\n", encoding="utf-8")
+    _git_fixture(fixture["repo"], "add", "--", second_relative)
+    _git_fixture(fixture["repo"], "commit", "-qm", "second source")
+    source_commit = _git_fixture(fixture["repo"], "rev-parse", "HEAD")
+    paths = sorted([fixture["source_relative"], second_relative])
+    records = b""
+    for relative in paths:
+        oid = _git_fixture(
+            fixture["repo"], "rev-parse", f"{source_commit}:{relative}"
+        )
+        records += relative.encode() + b"\0" + oid.encode() + b"\n"
+
+    binding = module.compute_execution_source_binding(
+        repo=fixture["repo"],
+        execution_source_commit=source_commit,
+        manifest_paths=paths,
+    )
+    assert binding["execution_source_tree_sha256"] == hashlib.sha256(records).hexdigest()
+    assert binding["manifest_paths"] == paths
+
+
+def test_execution_source_commit_accepts_exact_six_paths_and_rejects_seventh(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    repo = tmp_path / "source-commit-repo"
+    repo.mkdir()
+    _git_fixture(repo, "init", "-q")
+    _git_fixture(repo, "config", "user.name", "Phase53 Test")
+    _git_fixture(repo, "config", "user.email", "phase53@example.invalid")
+    (repo / "base.txt").write_text("base\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", "base.txt")
+    _git_fixture(repo, "commit", "-qm", "base")
+    for relative in EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS:
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{relative}\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", *EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS)
+    _git_fixture(repo, "commit", "-qm", "exact source seal")
+    source_commit = _git_fixture(repo, "rev-parse", "HEAD")
+
+    assert module.validate_execution_source_commit_paths(repo, source_commit) == list(
+        EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS
+    )
+
+    seventh = "modules/rustdesk-fleet/tools/unreviewed-seventh.py"
+    seventh_path = repo / seventh
+    seventh_path.write_text("UNREVIEWED = True\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", seventh)
+    _git_fixture(repo, "commit", "--amend", "--no-edit", "-q")
+    with pytest.raises(
+        module.BindingChainInvalid,
+        match="execution-source-commit-paths-invalid",
+    ):
+        module.validate_execution_source_commit_paths(
+            repo, _git_fixture(repo, "rev-parse", "HEAD")
+        )
+
+
+def test_execution_source_git_objects_reject_missing_and_symlink_entries(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    with pytest.raises(module.BindingChainInvalid, match="git-object-missing"):
+        module.compute_execution_source_binding(
+            repo=fixture["repo"],
+            execution_source_commit=fixture["source_commit"],
+            manifest_paths=["source/missing.py"],
+        )
+
+    link = fixture["repo"] / "source/link.py"
+    link.symlink_to("runner.py")
+    _git_fixture(fixture["repo"], "add", "--", "source/link.py")
+    _git_fixture(fixture["repo"], "commit", "-qm", "symlink source")
+    link_commit = _git_fixture(fixture["repo"], "rev-parse", "HEAD")
+    with pytest.raises(module.BindingChainInvalid, match="git-object-symlink"):
+        module.compute_execution_source_binding(
+            repo=fixture["repo"],
+            execution_source_commit=link_commit,
+            manifest_paths=["source/link.py"],
+        )
+
+
+@pytest.mark.parametrize("mutation", ["missing", "symlink", "modified-commit"])
+def test_execution_source_worktree_rejects_missing_symlink_and_modified_entries(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    if mutation == "missing":
+        fixture["source_path"].unlink()
+        blocker = "explicit-path-missing"
+    elif mutation == "symlink":
+        fixture["source_path"].unlink()
+        fixture["source_path"].symlink_to("../source/runner.py")
+        blocker = "explicit-path-invalid"
+    else:
+        fixture["source_path"].write_text("CHANGED = True\n", encoding="utf-8")
+        _git_fixture(fixture["repo"], "add", "--", fixture["source_relative"])
+        _git_fixture(fixture["repo"], "commit", "-qm", "changed source")
+        blocker = "execution-source-changed"
+
+    with pytest.raises(module.BindingChainInvalid, match=blocker):
+        module.require_clean_execution_source(
+            repo=fixture["repo"],
+            execution_source_commit=fixture["source_commit"],
+            manifest_paths=[fixture["source_relative"]],
+            expected_tree=fixture["source_tree"],
+        )
 
 
 def test_ops_api_contract_schema_auth_and_readiness() -> None:
