@@ -20,6 +20,11 @@ updated: 2026-07-26
 > canonical nine legacy Gate-B refusals. 05D2C therefore requires a closed
 > current lane plus an independently classified exact-nine legacy lane; it
 > never treats the raw result as green or rewrites historical Gate A evidence.
+> Runtime discovery produced `902 passed, 9 deselected, 1 xfailed`, rc 0. The
+> frozen Phase 52 two-xfail current-lane set is not current Phase 53
+> authority because the deploy-transaction xfail was legitimately closed;
+> current JUnit is instead bound to the sole remaining validate_phase53.py
+> owner xfail.
 
 ## Test Infrastructure
 
@@ -34,7 +39,7 @@ updated: 2026-07-26
 | **05D2C planning-ancestor prerequisite** | Task 53-05D2C-01 requires ROADMAP clean in index/worktree, reads only `git show HEAD:.../ROADMAP.md`, captures its last path commit and proves Phase 51 omits SCP-01 while Phase 55 owns it; the executor does not modify `ROADMAP.md` |
 | **05D2C Phase 51 ledger prerequisite** | `omni srv1-ops resources run builds -- env PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q modules/rustdesk-fleet/tests/test_phase51_contracts.py -k 'requirement_ledger' --disable-warnings` |
 | **05D2C execution-source selector** | `omni srv1-ops resources run builds -- env PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'execution_source or source_scope or dirty_scope or source_tree_digest' --disable-warnings` |
-| **05D2C current broad lane** | Literal governed command in Task 53-05D2C-03 runs all RustDesk tests with exactly nine explicit `--deselect` nodeids and temporary JUnit/output; pytest rc is 0, read-only `lane_current()` validates zero failures/errors/regular skips plus exact EXPECTED_XFAILS/count and `frozen_verifier: PASS`, and terminal count is exactly `9 deselected` |
+| **05D2C current broad lane** | Observed `902 passed, 9 deselected, 1 xfailed`, rc 0. The literal governed command in Task 53-05D2C-03 uses temporary JUnit/output, exactly nine explicit `--deselect` nodeids, inline parsing for zero failures/errors and a complete skipped list of exactly one `pytest.xfail` at `modules.rustdesk-fleet.tests.test_phase53_primary_edge::test_future_implementation_symbol_is_red_only_for_owner_plan[tools/validate_phase53.py-53-06]`, plus terminal count exactly `9 deselected` |
 | **05D2C legacy exact-nine lane** | Literal governed command in Task 53-05D2C-03 runs exactly the same nine nodeids into `/tmp` JUnit, requires pytest rc 1 and calls read-only `lane_legacy()` to prove nine failures, eight managed-source drift and one local-only/no-network CLI case |
 | **05D2C post-seal Git-object structure** | Task 53-05D2C-03 derives SOURCE=`HEAD^` and SUMMARY=`HEAD`, uses unfiltered `git diff-tree` for the exact six-path/summary-only sets, proves direct parentage, recalculates ROADMAP's last path commit and checks it plus 05D/05D2T/05D2A/05D2B ancestry with `git merge-base --is-ancestor` |
 | **05D2C post-seal binding recomputation** | Task 53-05D2C-03 passes the JSON payload through `validate_execution_source_scope_payload`, then recomputes `compute_execution_source_binding` at SOURCE and HEAD over the returned exact 33 paths, compares digest/blobs/paths and calls `require_clean_execution_source` |
@@ -55,13 +60,15 @@ updated: 2026-07-26
   ledger contracts and the 05D2C execution-source selector. Then run the
   current broad lane with exactly nine explicit deselections and the legacy
   exact-nine lane with expected rc 1 plus read-only `lane_legacy()` JUnit
-  classification. Read-only `lane_current()` must prove zero
-  failures/errors/regular skips, exact EXPECTED_XFAILS/count and
-  `frozen_verifier: PASS`, while the terminal output proves exactly nine and
-  no other deselections. The legacy lane must contain only the canonical eight
-  drift refusals plus one local-only/no-network CLI refusal. All commands run
-  under the `builds` governor before the clean closed source scope and six
-  explicit pathspecs may be sealed.
+  classification. Inline current-JUnit parsing must prove zero
+  failures/errors and that the complete skipped-case list is exactly the sole
+  current validate_phase53.py `pytest.xfail`; the terminal output proves
+  exactly nine and no other deselections. Do not call the frozen Phase 52
+  two-xfail current-lane helper here: its removed deploy-transaction xfail describes the
+  earlier frozen source, not current Phase 53. The legacy lane must contain
+  only the canonical eight drift refusals plus one local-only/no-network CLI
+  refusal. All commands run under the `builds` governor before the clean
+  closed source scope and six explicit pathspecs may be sealed.
 - **After 05D2C seal:** use unfiltered Git-object checks over `HEAD^` and
   `HEAD`, not path-filtered worktree diffs: prove exact six-path source and
   summary-only commit sets, direct parentage, ROADMAP plus predecessor
@@ -99,7 +106,7 @@ updated: 2026-07-26
 | 53-05D2T-01/02 | 05D2T | 8 | SRV-03, SRV-04 | T53T-SPOOF, T53T-ROUTE, T53T-REPLAY | Exact read-only VNIC/edge/backend/DRG/return-path proof; stale OperationPlan rejected | unit/read-only | Topology selector plus literal discovery command in 05D2T | ❌ W0 | ⬜ pending |
 | 53-05D2A-01/02 | 05D2A | 9 | SRV-02, SRV-03, SRV-04, OPS-01 | T53A-DIRECT, T53A-NAT, T53A-DNS, T53A-API | DNAT/forward/backend/DNS/probe/ops/validator semantic reconciliation | unit/integration | Complete `test_phase53_primary_edge.py` command above | ❌ W0 | ⬜ pending |
 | 53-05D2B-01/02 | 05D2B | 10 | SRV-03, SRV-04, SRV-06, OPS-01 | T53B-CAP, T53B-ROLL, T53B-BIND, T53B-MIG | Full runner, distinct journals, binding checker and non-executable migration | unit/CLI/adversarial | Transaction/binding selector above | ❌ W0 | ⬜ pending |
-| 53-05D2C-01/02/03 | 05D2C | 11 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SCP01, T53C-LANES, T53C-OMIT, T53C-DIRT, T53C-SEAL | Planning-ancestor ownership, SCP-01 Phase 55/pending convergence, exact 33-path allowlist, focused/selector gates, closed current plus exact-nine legacy lanes, unfiltered Git-object proof of exact six-path seal and summary-only descendant | contract/integration/structural | Planning-ancestor assertion, Phase 51 ledger prerequisite, execution-source selector, current broad lane, temporary legacy lane_legacy classification, then post-seal Git-object/binding commands in 05D2C | ✅ | ⚠ selector 13 passed; ledger and dual-lane seal gates pending |
+| 53-05D2C-01/02/03 | 05D2C | 11 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SCP01, T53C-LANES, T53C-OMIT, T53C-DIRT, T53C-SEAL | Planning-ancestor ownership, SCP-01 Phase 55/pending convergence, exact 33-path allowlist, focused/selector gates, current inline one-xfail JUnit plus exact-nine legacy lane, unfiltered Git-object proof of exact six-path seal and summary-only descendant | contract/integration/structural | Planning-ancestor assertion, Phase 51 ledger prerequisite, execution-source selector, current inline JUnit lane, temporary legacy lane_legacy classification, then post-seal Git-object/binding commands in 05D2C | ✅ | ⚠ current observed 902/9/1 rc0; ledger, lane contract and seal pending |
 | 53-05E-01/02/03 | 05E | 12 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53E-SOURCE, T53E-READONLY, T53E-APPROVAL | New OperationPlan from current source/topology and exact owner-hash checkpoint | read-only/checkpoint | Literal plan command plus approval selectors in 53-05E | ❌ W0 | ⬜ pending |
 | 53-05F-01/02 | 05F | 13 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53F-REPLAY, T53F-EDGE, T53F-ROLLBACK | One exact cross-host live transaction and immutable evidence handoff | live/structural | Literal apply, validator and broad commands in 53-05F | ❌ W0 | ⬜ pending |
 | 53-06-PREFLIGHT | 06 | 14 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SOURCE | Sole explicit-path checker proves independent PASS and the complete 05F binding chain | structural/checkpoint | Literal `python3 modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py ... --json` command in 53-06 | ❌ W0 | ⬜ pending |
@@ -148,9 +155,11 @@ updated: 2026-07-26
   paths share the exact six-path source-seal commit.
 - [ ] 05D2C: after the focused Phase 51 ledger gate and 05D2C selector, the
   current broad lane runs with exactly the canonical nine explicit
-  deselections and exits zero; read-only `lane_current()` proves zero
-  failures/errors/regular skips, exact EXPECTED_XFAILS/count and
-  `frozen_verifier: PASS`, while terminal parsing proves no other deselections.
+  deselections and exits zero; inline JUnit parsing proves zero
+  failures/errors and a complete skipped list containing exactly the sole
+  validate_phase53.py owner `pytest.xfail`, while terminal parsing proves no
+  other deselections. The discovered baseline is 902 passed/9 deselected/1
+  xfailed, rc 0.
 - [ ] 05D2C: the legacy lane runs exactly those nine nodeids under the
   governor, writes JUnit only to `mktemp` storage beneath `/tmp`, exits one,
   and read-only `lane_legacy()` proves eight `gate-a-managed-source-drift`
@@ -202,14 +211,16 @@ authorizes no live action.
 - [x] Heavy commands use the 20% governed `builds` profile.
 - [x] Broad verification separates only the closed exact-nine legacy set;
   current-lane extra deselections and every non-canonical failure/error/skip
-  or xfail drift remain hard blockers via `lane_current()`, with temporary
-  JUnit outside the repository.
+  or xfail drift remain hard blockers via inline complete-JUnit parsing, with
+  temporary JUnit outside the repository. The frozen Phase 52 current-lane helper
+  remains unchanged and does not override current Phase 53 xfail truth.
 - [x] Post-seal checks derive SOURCE=`HEAD^` and SUMMARY=`HEAD`, inspect both
   commits unfiltered, prove direct/predecessor ancestry and recompute the exact
   33-path binding at both commits before accepting the summary descendant.
 - [x] `nyquist_compliant: true` describes planned coverage while `wave_0_complete: false` records the missing fixtures.
 
-**Approval:** revised for planning 2026-07-26; the 13-pass 05D2C selector is
-preserved, Wave 0 remains incomplete at the truthful SCP-01 ledger and
-closed current/legacy lane gates, and Phase 53 remains blocked/in progress
-before authority or live mutation.
+**Approval:** revised for planning 2026-07-26; the 13-pass 05D2C selector and
+observed 902/9/1 current lane are preserved, Wave 0 remains incomplete at the
+truthful SCP-01 ledger, strict inline current-JUnit and exact-nine legacy
+gates, and Phase 53 remains blocked/in progress before authority or live
+mutation.
