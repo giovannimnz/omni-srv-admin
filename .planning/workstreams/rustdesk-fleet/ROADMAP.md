@@ -125,7 +125,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Monitoring e uma API operacional custom da Atius, em hostname/serviço HTTPS separado e autenticado, expõem endpoints versionados/redacted de health, readiness, status e resumo de métricas para listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas. Ela não configura o `API Server` dos clients, não abre TCP 21114 e não reivindica recursos nativos Pro.
   5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência, contrato/autenticação/redaction dos endpoints custom e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
 
-**Plans**: 12/16 plans executed
+**Plans**: 13/16 plans executed
 
 - [x] 53-01-PLAN.md — Strict contracts, hermetic tests and resumable live-runner foundation.
 - [x] 53-02-PLAN.md — Rootless digest-pinned `hbbs`/`hbbr`, persistent identity/state and bounded resources.
@@ -139,7 +139,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 - [x] 53-05D2T-PLAN.md — Wave 8, depends on 05D: prova read-only PASS da topologia dual-VNIC `atius-srv-1` edge/forwarder → `horistic-srv` backend, com `10.31.1.31` não executável, OperationPlan stale rejeitado e `authorizes_live=false`.
 - [x] 53-05D2A-PLAN.md — Wave 9, depends on 05D2T: reconciliação semântica cross-host de DNAT/forward, backend, OCI, DNS 3/3, probes externos, API operacional e validator; gate raiz `198 passed, 1 xfailed`.
 - [x] 53-05D2B-PLAN.md — Wave 10, depends on 05D2A: runner completo, capability split, journals separados, migration handoff não executável e checker público de binding; gate raiz `205 passed, 1 xfailed` e apply negativo `exit 3` sem side effects.
-- [ ] 53-05D2C-PLAN.md — Wave 11, depends on 05D2B: allowlist fechada, broad suite verde e captura final de `execution_source_commit` por pathspec explícito.
+- [x] 53-05D2C-PLAN.md — Wave 11, depends on 05D2B: SCP-01 convergiu para Phase 55/Pending; allowlist exata de 33 paths, current lane `902 passed, 9 deselected, 1 xfailed`, legacy lane `8 drift + 1 CLI/no-network` e seal final em `execution_source_commit=3ea1e581e62b8f0122ba69d11ebd86bacd61fa70`.
 - [ ] 53-05E-PLAN.md — Wave 12, depends on 05D2C: authority read-only, successor attestation, current prestate/typed previews, novo OperationPlan e checkpoint `AWAITING_OWNER_HASH_APPROVAL`; não autoexecuta 05F.
 - [ ] 53-05F-PLAN.md — Wave 13, depends on 05E: nova execução live, revalidação owner/source, uma transação full, rollback imutável, restore-production separado, commit evidence-only, descendant summary-only e handoff ao verifier independente.
 - [ ] 53-06-PLAN.md — BLOCKED, wave 14, depends on 53-05F; preflight único pelo checker 05D2 e closeout exclusivamente read-only, seguido de verifier/finalizer independentes.
@@ -234,7 +234,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
 | 52. Supply Chain, Capacity and Recoverable Placement | 10/10 | Complete | 2026-07-23 |
-| 53. Primary Relay and Public Edge | 12/16 | Blocked/in progress before 53-05D2C source seal; no live mutation | - |
+| 53. Primary Relay and Public Edge | 13/16 | Blocked/in progress before 53-05E owner-hash checkpoint; source sealed, no live mutation | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
 | 56. Exhaustive Fleet, Transport and Security Matrix | 0/TBD | Not started | - |
