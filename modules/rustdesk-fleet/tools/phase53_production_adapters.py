@@ -67,6 +67,8 @@ FORBIDDEN_COMMANDS = {
     "ambient-ssh-config",
     "raw-secret-output",
 }
+CURRENT_EXECUTION_TARGET = "10.21.1.21"
+FUTURE_EXECUTION_TARGET = "10.31.1.31"
 
 
 def _utc_now() -> str:
@@ -117,6 +119,10 @@ def validate_provider_manifest(manifest: Mapping[str, Any]) -> None:
     limits = manifest.get("limits")
     if not isinstance(routes, Mapping) or set(routes) != REQUIRED_ROUTE_KEYS:
         raise AdapterBlocked("provider-manifest-routes-invalid")
+    if manifest.get("execution_target") == FUTURE_EXECUTION_TARGET:
+        raise AdapterBlocked("provider-manifest-target-invalid")
+    if manifest.get("execution_target") != CURRENT_EXECUTION_TARGET:
+        raise AdapterBlocked("provider-manifest-target-invalid")
     if not isinstance(classes, Mapping):
         raise AdapterBlocked("provider-manifest-command-classes-invalid")
     allowlisted = classes.get("allowlisted")
@@ -160,6 +166,15 @@ def validate_provider_manifest(manifest: Mapping[str, Any]) -> None:
         or vault.get("value_free_output") is not True
     ):
         raise AdapterBlocked("provider-manifest-vault-route-invalid")
+    oci = routes["oci"]
+    targets = oci.get("execution_targets") if isinstance(oci, Mapping) else None
+    backend = targets.get("backend") if isinstance(targets, Mapping) else None
+    if (
+        not isinstance(backend, Mapping)
+        or backend.get("private_ipv4") == FUTURE_EXECUTION_TARGET
+        or backend.get("private_ipv4") != CURRENT_EXECUTION_TARGET
+    ):
+        raise AdapterBlocked("provider-manifest-target-invalid")
 
 
 def select_ssh_route(private_rc: int) -> str:

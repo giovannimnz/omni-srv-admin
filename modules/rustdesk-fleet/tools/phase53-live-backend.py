@@ -45,6 +45,8 @@ EXPECTED_MANIFEST_KEYS = {
     "secret_material_present",
 }
 EXPECTED_EDGE_CONTRACT = "modules/rustdesk-fleet/contracts/phase53-edge.json"
+CURRENT_EXECUTION_TARGET = "10.21.1.21"
+FUTURE_EXECUTION_TARGET = "10.31.1.31"
 HEX_40 = re.compile(r"[0-9a-f]{40}")
 HEX_64 = re.compile(r"[0-9a-f]{64}")
 
@@ -119,7 +121,9 @@ def validate_provider_manifest(manifest: Mapping[str, Any], *, repo: Path) -> No
         or manifest.get("secret_material_present") is not False
     ):
         raise BackendBlocked("provider-manifest-invalid")
-    if manifest.get("execution_target") != "10.21.1.21":
+    if manifest.get("execution_target") == FUTURE_EXECUTION_TARGET:
+        raise BackendBlocked("provider-manifest-target-invalid")
+    if manifest.get("execution_target") != CURRENT_EXECUTION_TARGET:
         raise BackendBlocked("provider-manifest-target-invalid")
     if manifest.get("edge_contract") != EXPECTED_EDGE_CONTRACT:
         raise BackendBlocked("provider-manifest-edge-contract-invalid")

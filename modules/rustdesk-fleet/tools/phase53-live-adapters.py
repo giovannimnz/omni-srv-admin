@@ -20,6 +20,8 @@ from typing import Any, Callable, Mapping
 
 LIVE_FLAG = "ATIUS_RUN_RUSTDESK_PHASE53_LIVE"
 ADMISSION_FLAG = "ADMITTED_PHASE53"
+CURRENT_EXECUTION_TARGET = "10.21.1.21"
+FUTURE_EXECUTION_TARGET = "10.31.1.31"
 CONTRACT_NAMES = (
     "phase53-runtime.json",
     "phase53-edge.json",
@@ -324,6 +326,11 @@ def _validate_production_authority(context: "AdapterContext") -> tuple[dict[str,
     if payloads["phase53-candidate-admission.json"].get("candidate_status") != "ADMITTED_PHASE53":
         raise AdapterBlocked("candidate-contract-state-invalid")
     manifest = payloads["phase53-provider-manifest.json"]
+    execution_target = manifest.get("execution_target")
+    if execution_target == FUTURE_EXECUTION_TARGET:
+        raise AdapterBlocked("provider-manifest-target-invalid")
+    if execution_target != CURRENT_EXECUTION_TARGET:
+        raise AdapterBlocked("provider-manifest-target-invalid")
     routes = manifest.get("routes")
     command_classes = manifest.get("command_classes")
     limits = manifest.get("limits")

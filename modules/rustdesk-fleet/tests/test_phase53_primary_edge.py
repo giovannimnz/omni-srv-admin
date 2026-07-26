@@ -1245,7 +1245,9 @@ def test_migration_handoff_is_non_executable_and_future_target_is_rejected(
         tree_sha256="b" * 64,
         blobs={"modules/rustdesk-fleet/contracts/phase53-edge.json": "c" * 64},
     )
-    with pytest.raises(backend.BackendBlocked, match="future-target-forbidden"):
+    with pytest.raises(
+        backend.BackendBlocked, match="provider-manifest-target-invalid"
+    ):
         backend.build_phase53_read_only_backend(
             repo=REPO,
             manifest_path=candidate,
@@ -1254,7 +1256,9 @@ def test_migration_handoff_is_non_executable_and_future_target_is_rejected(
         )
 
     production = _production_adapters_module()
-    with pytest.raises(production.AdapterBlocked, match="future-target-forbidden"):
+    with pytest.raises(
+        production.AdapterBlocked, match="provider-manifest-target-invalid"
+    ):
         production.validate_provider_manifest(manifest)
 
 
