@@ -1,16 +1,16 @@
-# Graph Report - omni-srv-admin  (2026-07-13)
+# Graph Report - omni-srv-admin  (2026-07-26)
 
 ## Corpus Check
-- 732 files · ~1,383,913 words
+- 1066 files · ~1,960,502 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 9358 nodes · 11252 edges · 861 communities (746 shown, 115 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 84 edges (avg confidence: 0.8)
+- 13136 nodes · 18485 edges · 1130 communities (981 shown, 149 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 243 edges (avg confidence: 0.76)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e9dda08f`
+- Built from commit: `1c4cb73a`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -833,6 +833,7 @@
 - [[_COMMUNITY_Community 829|Community 829]]
 - [[_COMMUNITY_Community 830|Community 830]]
 - [[_COMMUNITY_Community 831|Community 831]]
+- [[_COMMUNITY_Community 832|Community 832]]
 - [[_COMMUNITY_Community 833|Community 833]]
 - [[_COMMUNITY_Community 834|Community 834]]
 - [[_COMMUNITY_Community 835|Community 835]]
@@ -848,6 +849,7 @@
 - [[_COMMUNITY_Community 845|Community 845]]
 - [[_COMMUNITY_Community 846|Community 846]]
 - [[_COMMUNITY_Community 847|Community 847]]
+- [[_COMMUNITY_Community 848|Community 848]]
 - [[_COMMUNITY_Community 849|Community 849]]
 - [[_COMMUNITY_Community 850|Community 850]]
 - [[_COMMUNITY_Community 851|Community 851]]
@@ -857,40 +859,302 @@
 - [[_COMMUNITY_Community 855|Community 855]]
 - [[_COMMUNITY_Community 856|Community 856]]
 - [[_COMMUNITY_Community 857|Community 857]]
+- [[_COMMUNITY_Community 863|Community 863]]
+- [[_COMMUNITY_Community 864|Community 864]]
+- [[_COMMUNITY_Community 865|Community 865]]
+- [[_COMMUNITY_Community 866|Community 866]]
+- [[_COMMUNITY_Community 867|Community 867]]
+- [[_COMMUNITY_Community 868|Community 868]]
+- [[_COMMUNITY_Community 869|Community 869]]
+- [[_COMMUNITY_Community 870|Community 870]]
+- [[_COMMUNITY_Community 871|Community 871]]
+- [[_COMMUNITY_Community 872|Community 872]]
+- [[_COMMUNITY_Community 873|Community 873]]
+- [[_COMMUNITY_Community 874|Community 874]]
+- [[_COMMUNITY_Community 875|Community 875]]
+- [[_COMMUNITY_Community 876|Community 876]]
+- [[_COMMUNITY_Community 877|Community 877]]
+- [[_COMMUNITY_Community 878|Community 878]]
+- [[_COMMUNITY_Community 879|Community 879]]
+- [[_COMMUNITY_Community 880|Community 880]]
+- [[_COMMUNITY_Community 881|Community 881]]
+- [[_COMMUNITY_Community 882|Community 882]]
+- [[_COMMUNITY_Community 883|Community 883]]
+- [[_COMMUNITY_Community 884|Community 884]]
+- [[_COMMUNITY_Community 885|Community 885]]
+- [[_COMMUNITY_Community 886|Community 886]]
+- [[_COMMUNITY_Community 887|Community 887]]
+- [[_COMMUNITY_Community 888|Community 888]]
+- [[_COMMUNITY_Community 889|Community 889]]
+- [[_COMMUNITY_Community 890|Community 890]]
+- [[_COMMUNITY_Community 891|Community 891]]
+- [[_COMMUNITY_Community 892|Community 892]]
+- [[_COMMUNITY_Community 893|Community 893]]
+- [[_COMMUNITY_Community 894|Community 894]]
+- [[_COMMUNITY_Community 895|Community 895]]
+- [[_COMMUNITY_Community 896|Community 896]]
+- [[_COMMUNITY_Community 897|Community 897]]
+- [[_COMMUNITY_Community 898|Community 898]]
+- [[_COMMUNITY_Community 899|Community 899]]
+- [[_COMMUNITY_Community 900|Community 900]]
+- [[_COMMUNITY_Community 901|Community 901]]
+- [[_COMMUNITY_Community 902|Community 902]]
+- [[_COMMUNITY_Community 903|Community 903]]
+- [[_COMMUNITY_Community 904|Community 904]]
+- [[_COMMUNITY_Community 905|Community 905]]
+- [[_COMMUNITY_Community 906|Community 906]]
+- [[_COMMUNITY_Community 907|Community 907]]
+- [[_COMMUNITY_Community 908|Community 908]]
+- [[_COMMUNITY_Community 909|Community 909]]
+- [[_COMMUNITY_Community 910|Community 910]]
+- [[_COMMUNITY_Community 911|Community 911]]
+- [[_COMMUNITY_Community 912|Community 912]]
+- [[_COMMUNITY_Community 913|Community 913]]
+- [[_COMMUNITY_Community 914|Community 914]]
+- [[_COMMUNITY_Community 915|Community 915]]
+- [[_COMMUNITY_Community 916|Community 916]]
+- [[_COMMUNITY_Community 917|Community 917]]
+- [[_COMMUNITY_Community 918|Community 918]]
+- [[_COMMUNITY_Community 919|Community 919]]
+- [[_COMMUNITY_Community 920|Community 920]]
+- [[_COMMUNITY_Community 921|Community 921]]
+- [[_COMMUNITY_Community 922|Community 922]]
+- [[_COMMUNITY_Community 923|Community 923]]
+- [[_COMMUNITY_Community 924|Community 924]]
+- [[_COMMUNITY_Community 925|Community 925]]
+- [[_COMMUNITY_Community 926|Community 926]]
+- [[_COMMUNITY_Community 927|Community 927]]
+- [[_COMMUNITY_Community 928|Community 928]]
+- [[_COMMUNITY_Community 929|Community 929]]
+- [[_COMMUNITY_Community 930|Community 930]]
+- [[_COMMUNITY_Community 931|Community 931]]
+- [[_COMMUNITY_Community 932|Community 932]]
+- [[_COMMUNITY_Community 933|Community 933]]
+- [[_COMMUNITY_Community 934|Community 934]]
+- [[_COMMUNITY_Community 935|Community 935]]
+- [[_COMMUNITY_Community 936|Community 936]]
+- [[_COMMUNITY_Community 937|Community 937]]
+- [[_COMMUNITY_Community 938|Community 938]]
+- [[_COMMUNITY_Community 939|Community 939]]
+- [[_COMMUNITY_Community 940|Community 940]]
+- [[_COMMUNITY_Community 941|Community 941]]
+- [[_COMMUNITY_Community 942|Community 942]]
+- [[_COMMUNITY_Community 943|Community 943]]
+- [[_COMMUNITY_Community 944|Community 944]]
+- [[_COMMUNITY_Community 945|Community 945]]
+- [[_COMMUNITY_Community 946|Community 946]]
+- [[_COMMUNITY_Community 947|Community 947]]
+- [[_COMMUNITY_Community 948|Community 948]]
+- [[_COMMUNITY_Community 949|Community 949]]
+- [[_COMMUNITY_Community 950|Community 950]]
+- [[_COMMUNITY_Community 951|Community 951]]
+- [[_COMMUNITY_Community 952|Community 952]]
+- [[_COMMUNITY_Community 953|Community 953]]
+- [[_COMMUNITY_Community 954|Community 954]]
+- [[_COMMUNITY_Community 955|Community 955]]
+- [[_COMMUNITY_Community 956|Community 956]]
+- [[_COMMUNITY_Community 957|Community 957]]
+- [[_COMMUNITY_Community 958|Community 958]]
+- [[_COMMUNITY_Community 959|Community 959]]
+- [[_COMMUNITY_Community 960|Community 960]]
+- [[_COMMUNITY_Community 961|Community 961]]
+- [[_COMMUNITY_Community 962|Community 962]]
+- [[_COMMUNITY_Community 963|Community 963]]
+- [[_COMMUNITY_Community 964|Community 964]]
+- [[_COMMUNITY_Community 965|Community 965]]
+- [[_COMMUNITY_Community 966|Community 966]]
+- [[_COMMUNITY_Community 967|Community 967]]
+- [[_COMMUNITY_Community 968|Community 968]]
+- [[_COMMUNITY_Community 969|Community 969]]
+- [[_COMMUNITY_Community 970|Community 970]]
+- [[_COMMUNITY_Community 971|Community 971]]
+- [[_COMMUNITY_Community 972|Community 972]]
+- [[_COMMUNITY_Community 973|Community 973]]
+- [[_COMMUNITY_Community 974|Community 974]]
+- [[_COMMUNITY_Community 975|Community 975]]
+- [[_COMMUNITY_Community 976|Community 976]]
+- [[_COMMUNITY_Community 977|Community 977]]
+- [[_COMMUNITY_Community 978|Community 978]]
+- [[_COMMUNITY_Community 979|Community 979]]
+- [[_COMMUNITY_Community 980|Community 980]]
+- [[_COMMUNITY_Community 981|Community 981]]
+- [[_COMMUNITY_Community 982|Community 982]]
+- [[_COMMUNITY_Community 983|Community 983]]
+- [[_COMMUNITY_Community 984|Community 984]]
+- [[_COMMUNITY_Community 985|Community 985]]
+- [[_COMMUNITY_Community 986|Community 986]]
+- [[_COMMUNITY_Community 987|Community 987]]
+- [[_COMMUNITY_Community 988|Community 988]]
+- [[_COMMUNITY_Community 989|Community 989]]
+- [[_COMMUNITY_Community 990|Community 990]]
+- [[_COMMUNITY_Community 991|Community 991]]
+- [[_COMMUNITY_Community 992|Community 992]]
+- [[_COMMUNITY_Community 993|Community 993]]
+- [[_COMMUNITY_Community 994|Community 994]]
+- [[_COMMUNITY_Community 995|Community 995]]
+- [[_COMMUNITY_Community 996|Community 996]]
+- [[_COMMUNITY_Community 997|Community 997]]
+- [[_COMMUNITY_Community 998|Community 998]]
+- [[_COMMUNITY_Community 999|Community 999]]
+- [[_COMMUNITY_Community 1000|Community 1000]]
+- [[_COMMUNITY_Community 1001|Community 1001]]
+- [[_COMMUNITY_Community 1002|Community 1002]]
+- [[_COMMUNITY_Community 1003|Community 1003]]
+- [[_COMMUNITY_Community 1004|Community 1004]]
+- [[_COMMUNITY_Community 1005|Community 1005]]
+- [[_COMMUNITY_Community 1006|Community 1006]]
+- [[_COMMUNITY_Community 1007|Community 1007]]
+- [[_COMMUNITY_Community 1008|Community 1008]]
+- [[_COMMUNITY_Community 1009|Community 1009]]
+- [[_COMMUNITY_Community 1010|Community 1010]]
+- [[_COMMUNITY_Community 1011|Community 1011]]
+- [[_COMMUNITY_Community 1012|Community 1012]]
+- [[_COMMUNITY_Community 1013|Community 1013]]
+- [[_COMMUNITY_Community 1014|Community 1014]]
+- [[_COMMUNITY_Community 1015|Community 1015]]
+- [[_COMMUNITY_Community 1016|Community 1016]]
+- [[_COMMUNITY_Community 1017|Community 1017]]
+- [[_COMMUNITY_Community 1018|Community 1018]]
+- [[_COMMUNITY_Community 1019|Community 1019]]
+- [[_COMMUNITY_Community 1020|Community 1020]]
+- [[_COMMUNITY_Community 1021|Community 1021]]
+- [[_COMMUNITY_Community 1022|Community 1022]]
+- [[_COMMUNITY_Community 1023|Community 1023]]
+- [[_COMMUNITY_Community 1024|Community 1024]]
+- [[_COMMUNITY_Community 1025|Community 1025]]
+- [[_COMMUNITY_Community 1026|Community 1026]]
+- [[_COMMUNITY_Community 1027|Community 1027]]
+- [[_COMMUNITY_Community 1028|Community 1028]]
+- [[_COMMUNITY_Community 1029|Community 1029]]
+- [[_COMMUNITY_Community 1030|Community 1030]]
+- [[_COMMUNITY_Community 1031|Community 1031]]
+- [[_COMMUNITY_Community 1032|Community 1032]]
+- [[_COMMUNITY_Community 1033|Community 1033]]
+- [[_COMMUNITY_Community 1034|Community 1034]]
+- [[_COMMUNITY_Community 1035|Community 1035]]
+- [[_COMMUNITY_Community 1036|Community 1036]]
+- [[_COMMUNITY_Community 1037|Community 1037]]
+- [[_COMMUNITY_Community 1038|Community 1038]]
+- [[_COMMUNITY_Community 1039|Community 1039]]
+- [[_COMMUNITY_Community 1040|Community 1040]]
+- [[_COMMUNITY_Community 1041|Community 1041]]
+- [[_COMMUNITY_Community 1042|Community 1042]]
+- [[_COMMUNITY_Community 1043|Community 1043]]
+- [[_COMMUNITY_Community 1044|Community 1044]]
+- [[_COMMUNITY_Community 1045|Community 1045]]
+- [[_COMMUNITY_Community 1046|Community 1046]]
+- [[_COMMUNITY_Community 1047|Community 1047]]
+- [[_COMMUNITY_Community 1048|Community 1048]]
+- [[_COMMUNITY_Community 1049|Community 1049]]
+- [[_COMMUNITY_Community 1050|Community 1050]]
+- [[_COMMUNITY_Community 1051|Community 1051]]
+- [[_COMMUNITY_Community 1052|Community 1052]]
+- [[_COMMUNITY_Community 1053|Community 1053]]
+- [[_COMMUNITY_Community 1054|Community 1054]]
+- [[_COMMUNITY_Community 1055|Community 1055]]
+- [[_COMMUNITY_Community 1056|Community 1056]]
+- [[_COMMUNITY_Community 1057|Community 1057]]
+- [[_COMMUNITY_Community 1058|Community 1058]]
+- [[_COMMUNITY_Community 1059|Community 1059]]
+- [[_COMMUNITY_Community 1060|Community 1060]]
+- [[_COMMUNITY_Community 1061|Community 1061]]
+- [[_COMMUNITY_Community 1062|Community 1062]]
+- [[_COMMUNITY_Community 1063|Community 1063]]
+- [[_COMMUNITY_Community 1073|Community 1073]]
+- [[_COMMUNITY_Community 1074|Community 1074]]
+- [[_COMMUNITY_Community 1075|Community 1075]]
+- [[_COMMUNITY_Community 1076|Community 1076]]
+- [[_COMMUNITY_Community 1077|Community 1077]]
+- [[_COMMUNITY_Community 1078|Community 1078]]
+- [[_COMMUNITY_Community 1079|Community 1079]]
+- [[_COMMUNITY_Community 1080|Community 1080]]
+- [[_COMMUNITY_Community 1081|Community 1081]]
+- [[_COMMUNITY_Community 1082|Community 1082]]
+- [[_COMMUNITY_Community 1083|Community 1083]]
+- [[_COMMUNITY_Community 1084|Community 1084]]
+- [[_COMMUNITY_Community 1085|Community 1085]]
+- [[_COMMUNITY_Community 1086|Community 1086]]
+- [[_COMMUNITY_Community 1087|Community 1087]]
+- [[_COMMUNITY_Community 1088|Community 1088]]
+- [[_COMMUNITY_Community 1089|Community 1089]]
+- [[_COMMUNITY_Community 1090|Community 1090]]
+- [[_COMMUNITY_Community 1091|Community 1091]]
+- [[_COMMUNITY_Community 1092|Community 1092]]
+- [[_COMMUNITY_Community 1093|Community 1093]]
+- [[_COMMUNITY_Community 1094|Community 1094]]
+- [[_COMMUNITY_Community 1095|Community 1095]]
+- [[_COMMUNITY_Community 1096|Community 1096]]
+- [[_COMMUNITY_Community 1097|Community 1097]]
+- [[_COMMUNITY_Community 1098|Community 1098]]
+- [[_COMMUNITY_Community 1099|Community 1099]]
+- [[_COMMUNITY_Community 1100|Community 1100]]
+- [[_COMMUNITY_Community 1101|Community 1101]]
+- [[_COMMUNITY_Community 1102|Community 1102]]
+- [[_COMMUNITY_Community 1103|Community 1103]]
+- [[_COMMUNITY_Community 1104|Community 1104]]
+- [[_COMMUNITY_Community 1105|Community 1105]]
+- [[_COMMUNITY_Community 1106|Community 1106]]
+- [[_COMMUNITY_Community 1107|Community 1107]]
+- [[_COMMUNITY_Community 1108|Community 1108]]
+- [[_COMMUNITY_Community 1109|Community 1109]]
+- [[_COMMUNITY_Community 1110|Community 1110]]
+- [[_COMMUNITY_Community 1111|Community 1111]]
+- [[_COMMUNITY_Community 1113|Community 1113]]
+- [[_COMMUNITY_Community 1114|Community 1114]]
+- [[_COMMUNITY_Community 1115|Community 1115]]
+- [[_COMMUNITY_Community 1116|Community 1116]]
+- [[_COMMUNITY_Community 1117|Community 1117]]
+- [[_COMMUNITY_Community 1118|Community 1118]]
+- [[_COMMUNITY_Community 1119|Community 1119]]
+- [[_COMMUNITY_Community 1120|Community 1120]]
+- [[_COMMUNITY_Community 1121|Community 1121]]
+- [[_COMMUNITY_Community 1122|Community 1122]]
+- [[_COMMUNITY_Community 1123|Community 1123]]
+- [[_COMMUNITY_Community 1125|Community 1125]]
+- [[_COMMUNITY_Community 1126|Community 1126]]
+- [[_COMMUNITY_Community 1127|Community 1127]]
+- [[_COMMUNITY_Community 1128|Community 1128]]
+- [[_COMMUNITY_Community 1129|Community 1129]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (856 total, 115 thin omitted)` - 723 edges
+1. `Communities (1128 total, 148 thin omitted)` - 951 edges
 2. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 55 edges
-3. `State: Omni Srv Admin (omni-srv-admin)` - 41 edges
-4. `run_preflight()` - 40 edges
-5. `_emit()` - 34 edges
-6. `_now()` - 26 edges
-7. `_db_env()` - 26 edges
-8. `Phase 23: Omni Fleet Governance com Landscape complementar - Research` - 25 edges
-9. `Fork Sync — Gestão Unificada de Forks` - 25 edges
-10. `ok()` - 24 edges
+3. `Blocked` - 53 edges
+4. `contract()` - 52 edges
+5. `_edge_applier_module()` - 52 edges
+6. `Phase52BackupBTests` - 46 edges
+7. `State: Omni Srv Admin (omni-srv-admin)` - 41 edges
+8. `run_preflight()` - 40 edges
+9. `MonkeyPatch` - 37 edges
+10. `run_transaction()` - 37 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `deploy_list()` --calls--> `list_projects()`  [INFERRED]
   cli/omni/cli.py → modules/fork-sync/cli/fork_sync/core/registry.py
+- `_call()` --calls--> `Runner`  [INFERRED]
+  cli/omni/fleet_collectors.py → modules/rustdesk-fleet/tools/install-phase53-server.py
+- `_safe_git()` --calls--> `Runner`  [INFERRED]
+  cli/omni/fleet_versioning.py → modules/rustdesk-fleet/tools/install-phase53-server.py
 - `apply_omni_self_update()` --calls--> `_write()`  [INFERRED]
   cli/omni/fleet_versioning.py → modules/fork-sync/cli/tests/test_release_preflight.py
 - `test_collect_programs_normalizes_read_only_outputs()` --calls--> `collect_programs()`  [EXTRACTED]
   modules/fleet-control-plane/tests/test_m031_collectors.py → cli/omni/fleet_collectors.py
-- `test_security_report_collects_pro_json_without_mutation()` --calls--> `collect_security_report()`  [EXTRACTED]
-  modules/fleet-control-plane/tests/test_m032_security.py → cli/omni/fleet_security.py
-- `test_collect_omni_version_reads_repo_state()` --calls--> `collect_omni_version()`  [EXTRACTED]
-  modules/fleet-control-plane/tests/test_m033_omni_versioning.py → cli/omni/fleet_versioning.py
 
 ## Import Cycles
-- 1-file cycle: `modules/srv1-ops/scripts/production_guard.py -> modules/srv1-ops/scripts/production_guard.py`
 - 1-file cycle: `cli/omni/fleet.py -> cli/omni/fleet.py`
+- 1-file cycle: `modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -> modules/rustdesk-fleet/tests/test_phase53_primary_edge.py`
+- 1-file cycle: `modules/rustdesk-fleet/tools/apply-phase53-edge.py -> modules/rustdesk-fleet/tools/apply-phase53-edge.py`
+- 1-file cycle: `modules/rustdesk-fleet/tools/install-phase53-server.py -> modules/rustdesk-fleet/tools/install-phase53-server.py`
+- 1-file cycle: `modules/rustdesk-fleet/tools/probe-phase53-edge.py -> modules/rustdesk-fleet/tools/probe-phase53-edge.py`
+- 1-file cycle: `modules/rustdesk-fleet/tools/validate_phase52.py -> modules/rustdesk-fleet/tools/validate_phase52.py`
+- 1-file cycle: `modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py -> modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py`
+- 1-file cycle: `modules/srv1-ops/scripts/production_guard.py -> modules/srv1-ops/scripts/production_guard.py`
 
-## Communities (861 total, 115 thin omitted)
+## Communities (1130 total, 149 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.00
-Nodes (723): Communities (856 total, 115 thin omitted), Community 0 - "Community 0", Community 100 - "Community 100", Community 101 - "Community 101", Community 102 - "Community 102", Community 103 - "Community 103", Community 104 - "Community 104", Community 105 - "Community 105" (+715 more)
+Nodes (951): Communities (1128 total, 148 thin omitted), Community 0 - "Community 0", Community 1000 - "Community 1000", Community 1001 - "Community 1001", Community 1002 - "Community 1002", Community 1003 - "Community 1003", Community 1004 - "Community 1004", Community 1005 - "Community 1005" (+943 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
@@ -901,8 +1165,8 @@ Cohesion: 0.04
 Nodes (65): project_exists(), containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover(), discover_check(), discover_heal() (+57 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.10
-Nodes (36): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+28 more)
+Cohesion: 0.11
+Nodes (32): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+24 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.12
@@ -977,8 +1241,8 @@ Cohesion: 0.12
 Nodes (45): Any, Path, invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values() (+37 more)
 
 ### Community 22 - "Community 22"
-Cohesion: 0.04
-Nodes (52): Historical Phase Registry (01-27), Milestone v1.2 Carry-over, Milestone v1.3: Local AI Embeddings and Semantic Retrieval, Milestone v1.4: Atius-wide SSO and Login, Milestone v1.5: Codex Runtime and MCP Bootstrap Reliability, Milestone v1.6: Internal Service PKI and Fleet HTTPS, Milestone v1.7: Internal DNS and DRG Canonicalization, Milestone v1.8: Runtime Trust and Codex Delivery Convergence (+44 more)
+Cohesion: 0.18
+Nodes (41): Any, ArgumentParser, Path, extract_executable_gsd_commands(), Extract shell commands without treating surrounding prose as executable., build_full_gate_readiness_command(), collect_full_gate_readiness(), enforce_candidate_write() (+33 more)
 
 ### Community 23 - "Community 23"
 Cohesion: 0.06
@@ -986,7 +1250,7 @@ Nodes (30): 1. Linux Client Login Flow (Machine Authentication), 2. SSSD → Key
 
 ### Community 24 - "Community 24"
 Cohesion: 0.06
-Nodes (33): Audit pesado diário, Cenário atual do host — live probes, CLI, Docker build, Docker run, Docker vs Podman vs compiladores, Doctor preventivo e admission gate, Fase 1 — já implementado no repo (+25 more)
+Nodes (33): Audit pesado diário, Cenário atual do host — live probes, CLI, Docker legado, Doctor preventivo e admission gate, Fase 1 — já implementado no repo, Fase 1 — já implementado no repo, Fase 2 — habilitar live no host (+25 more)
 
 ### Community 25 - "Community 25"
 Cohesion: 0.07
@@ -1049,12 +1313,12 @@ Cohesion: 0.06
 Nodes (37): admin(), admin_health(), admin_processes(), admin_status(), backup(), backup_create(), backup_list(), backup_restore() (+29 more)
 
 ### Community 40 - "Community 40"
-Cohesion: 0.08
-Nodes (25): 10. Changelog, 1. Identidade dos Hosts, 2. Topologia de Rede, 3. Mapa de IPs (canônico), 4. Convenção de Displays / VNC / noVNC, 5. Inventário de Portas (canônico, estado 2026-07-05), 6. Portas Reservadas (ranges por categoria), 7.1 Adicionar slot camofox (ex: slot 2 no display :16) (+17 more)
+Cohesion: 0.07
+Nodes (28): 10. Changelog, 1. Identidade dos Hosts, 2. Topologia de Rede, 3. Mapa de IPs (canônico), 4. Convenção de Displays / VNC / noVNC, 5. Inventário de Portas (canônico, estado 2026-07-05), 6. Portas Reservadas (ranges por categoria), 7.1 Adicionar slot camofox (ex: slot 2 no display :16) (+20 more)
 
 ### Community 41 - "Community 41"
-Cohesion: 0.08
-Nodes (23): Atius-wide SSO / Login, Codex OAuth and Wayland ACP Convergence, Codex Runtime / MCP Bootstrap Reliability, Domain Infrastructure, Future Requirements, G18 — Ubuntu Pro / ESM / Landscape SaaS, Internal DNS / DRG Canonicalization, Internal Service PKI / Fleet HTTPS (+15 more)
+Cohesion: 0.07
+Nodes (82): ABC, BaseException, Any, Path, Popen, _acquire_lock(), atomic_json(), Blocked (+74 more)
 
 ### Community 42 - "Community 42"
 Cohesion: 0.09
@@ -1161,12 +1425,12 @@ Cohesion: 0.11
 Nodes (17): 0.x (legado), 1.0.0 (2026-06-04), 1.1.0 (2026-06-04), 1.2.0 (2026-06-04), 1.3.0 (2026-06-14), Adicionado, Adicionado, Adicionado (+9 more)
 
 ### Community 68 - "Community 68"
-Cohesion: 0.11
-Nodes (18): Constraints, Context, Core Value, Current Delivery Track, Evolution, Fleet and Internal Network, Identity and Auth, Key Decisions (+10 more)
+Cohesion: 0.08
+Nodes (24): Constraints, Context, Core Value, Current Delivery Track, Evolution, Fleet and Internal Network, Identity and Auth, Key Decisions (+16 more)
 
 ### Community 69 - "Community 69"
-Cohesion: 0.05
-Nodes (44): Accumulated Context, Active Branch Results, Backup GDrive, Cloudflare DNS for Landscape self-hosted - 2026-06-25T03:21:29Z, Completed Phases, Current Position, Decisions, Landscape and Vaultwarden legacy-upstream incident - 2026-07-11 (+36 more)
+Cohesion: 0.09
+Nodes (55): Any, datetime, Namespace, Path, _active_nft_source(), AddressBarrier, apply_host_policy(), audit_effective_oci_ingress() (+47 more)
 
 ### Community 70 - "Community 70"
 Cohesion: 0.11
@@ -1193,8 +1457,8 @@ Cohesion: 0.22
 Nodes (14): check_disk_usage(), cleanup_old_logs(), compress_old_logs(), get_log_files(), parse_log_name(), logrotate — rotação, compressão e retenção automática de logs.  Problema: sync g, Reporta uso de disco dos logs., Pipeline completo: comprimir antigos + limpar velhos. (+6 more)
 
 ### Community 76 - "Community 76"
-Cohesion: 0.12
-Nodes (16): Account, Aliases Úteis (disponíveis após carregar .zshrc), Anti-Bot / Turnstile, API Access, Authentication — Critical Distinction, Cloudflare Configuration — omni-srv-admin, Cloudflare Origin Rules (Phase 02), Credenciais no Ambiente (+8 more)
+Cohesion: 0.11
+Nodes (17): Account, Aliases úteis, Anti-Bot / Turnstile, API Access, Authentication — Critical Distinction, Casa Remote Gateway — snapshot RustGuac 2026-07-19, Cloudflare Configuration — omni-srv-admin, Cloudflare Origin Rules (Phase 02) (+9 more)
 
 ### Community 77 - "Community 77"
 Cohesion: 0.10
@@ -1329,8 +1593,8 @@ Cohesion: 0.31
 Nodes (17): Path, effective_cpu_quota(), load_config(), main(), normalize_latest_perf(), print_direct_cgroups(), print_hot_build_escapes(), print_hygiene_health() (+9 more)
 
 ### Community 110 - "Community 110"
-Cohesion: 0.18
-Nodes (13): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+5 more)
+Cohesion: 0.16
+Nodes (14): apply(), drift(), podman_network(), podman-network — fleet-wide podman networking standard CLI.  Subcommands:   drif, Run a script from the module's scripts/ dir., Fleet-wide podman networking standard (containers.conf + netavark + aardvark)., Show podman networking drift across all 3 SRVs (comparison table)., Apply the podman networking standard to one SRV (N=1, 2, or 3).      Idempotent. (+6 more)
 
 ### Community 111 - "Community 111"
 Cohesion: 0.34
@@ -1510,7 +1774,7 @@ Nodes (10): Adicionar comando CLI, Adicionar novo fork (projeto), Adicionar temp
 
 ### Community 155 - "Community 155"
 Cohesion: 0.18
-Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-07-13), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
+Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-07-25), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 156 - "Community 156"
 Cohesion: 0.18
@@ -1717,8 +1981,8 @@ Cohesion: 0.25
 Nodes (7): Multi-host rollout plan, Phase 1 — inventory, Phase 2 — read-only probes, Phase 3 — module compatibility matrix, Phase 4 — remote execution, Phase 5 — support mode, Validation
 
 ### Community 207 - "Community 207"
-Cohesion: 0.25
-Nodes (7): Componentes, Comportamento, fleet-backup — Backup serial multi-server para GDrive, History, Instalação, Uso, Variáveis
+Cohesion: 0.22
+Nodes (8): Componentes, Comportamento, fleet-backup — Backup serial multi-server para GDrive, History, Horistic, Phase 52 somente, Instalação, Uso, Variáveis
 
 ### Community 208 - "Community 208"
 Cohesion: 0.20
@@ -1750,7 +2014,7 @@ Nodes (8): Example 1: Debouncing User Input in JavaScript, Example 2: Efficient 
 
 ### Community 215 - "Community 215"
 Cohesion: 0.25
-Nodes (7): 2026-06-13 Snapshot, Commands, Fleet Autoclean, Jobs, Pending Manual Decisions, What It Cleans, What It Does Not Delete Automatically
+Nodes (7): 2026-06-13 Snapshot historico, Commands, Fleet Autoclean, Jobs, Pending Manual Decisions, What It Cleans, What It Does Not Delete Automatically
 
 ### Community 216 - "Community 216"
 Cohesion: 0.25
@@ -1849,8 +2113,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 240 - "Community 240"
-Cohesion: 0.10
-Nodes (42): Path, Any, Path, default_fleet_db_env(), load_env_file(), psql_available(), Shared fleet DB runtime helpers., run_sql() (+34 more)
+Cohesion: 0.06
+Nodes (89): _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), Any, Path, Path (+81 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.29
@@ -2165,8 +2429,8 @@ Cohesion: 0.50
 Nodes (4): modules/fleet-backup/scripts/rclone-fleet-queue.sh, ast_hash, mtime, semantic_hash
 
 ### Community 319 - "Community 319"
-Cohesion: 0.09
-Nodes (56): Any, CompletedProcess, Path, _apt_policy(), _apt_program_status(), _apt_sources_text(), _config_status(), config_verify() (+48 more)
+Cohesion: 0.10
+Nodes (52): Any, CompletedProcess, Path, _apt_policy(), _apt_program_status(), _apt_sources_text(), _config_status(), config_verify() (+44 more)
 
 ### Community 320 - "Community 320"
 Cohesion: 0.50
@@ -2277,8 +2541,8 @@ Cohesion: 0.50
 Nodes (4): modules/fork-sync/projects/atius-router-docs/post-merge.sh, ast_hash, mtime, semantic_hash
 
 ### Community 347 - "Community 347"
-Cohesion: 0.05
-Nodes (38): 1. App web protegido por SSO com backend próprio, 2. App/proxy de recurso interno protegido por cookie ATS, 3. Host ATS nativo, App integrado, Atius SSO - Application Playbook, Central ATS, Chain HTTP, Checklist de inclusão (+30 more)
+Cohesion: 0.18
+Nodes (10): AdGuard boundary, Atius SSO - Application Playbook, Contract capsule, Include an app, Integration types, Minimal app facade, Purpose and status, Remove an app (+2 more)
 
 ### Community 348 - "Community 348"
 Cohesion: 0.50
@@ -2617,8 +2881,8 @@ Cohesion: 0.67
 Nodes (3): 15.1 Critério de fechamento atingido, 15.2 Escopo remanescente da Phase 18, 15. Encerramento — ajuste XRDP concluído
 
 ### Community 432 - "Community 432"
-Cohesion: 0.29
-Nodes (6): CPU Guardrail, GSD Agents, K3s Resource Unit, Paralelismo e automacao de browser, Project Identity, Segredos ATIUS e MCP
+Cohesion: 0.25
+Nodes (7): CPU Guardrail, GSD Agents, K3s Resource Unit, Paralelismo e automacao de browser, Project Identity, Segredos ATIUS e MCP, SSH Reachability Fallback
 
 ### Community 453 - "Community 453"
 Cohesion: 0.83
@@ -2631,6 +2895,10 @@ Nodes (15): 22-01 — Plano separado (este doc), 22-02 — Subagente no host `ho
 ### Community 465 - "Community 465"
 Cohesion: 0.67
 Nodes (3): 1. Visão Geral, Boundary with installed programs, `notebooklm-py` e bridge Obsidian
+
+### Community 466 - "Community 466"
+Cohesion: 0.32
+Nodes (6): install-fleet-backup.sh script, HOME_DIR, install_phase52_horistic(), PHASE52_STATE_HELPER, PHASE52_STATE_ROOT, usage()
 
 ### Community 489 - "Community 489"
 Cohesion: 0.29
@@ -2749,12 +3017,12 @@ Cohesion: 0.50
 Nodes (4): scripts/verify-m004-fleet-control-plane.sh, ast_hash, mtime, semantic_hash
 
 ### Community 524 - "Community 524"
-Cohesion: 0.17
-Nodes (23): agent_collect_programs(), agent_cycle(), agent_heartbeat(), agent_loop(), agent_once(), _append_audit_event(), audit(), _claim_next_plan() (+15 more)
+Cohesion: 0.13
+Nodes (33): Path, agent_collect_programs(), agent_collect_version(), agent_cycle(), agent_heartbeat(), agent_loop(), agent_once(), agent_self_update_runner() (+25 more)
 
 ### Community 525 - "Community 525"
-Cohesion: 0.06
-Nodes (60): security(), agent(), Entry point: python -m omni.fleet_entry, fleet(), heartbeat(), _heartbeat_payload(), _host_id(), _host_path() (+52 more)
+Cohesion: 0.08
+Nodes (48): Any, _app_payload(), _fork_payload(), heartbeat(), _heartbeat_payload(), _host_apps(), _host_database_contract(), _host_forks() (+40 more)
 
 ### Community 526 - "Community 526"
 Cohesion: 0.05
@@ -2773,16 +3041,16 @@ Cohesion: 0.29
 Nodes (6): Brave Browser, Chromium / Bitwarden SidePanel decision, Chromium Google defaults, GitKraken ARM64 Deb, Managed Apps Operations, Obsidian ARM64 AppImage
 
 ### Community 536 - "Community 536"
-Cohesion: 0.16
-Nodes (30): Namespace, Path, _action_to_dict(), _append_audit_event(), _build_repair_report(), _candidate_status(), _check_ecosystems(), _command_preview() (+22 more)
+Cohesion: 0.10
+Nodes (42): Path, Any, Path, default_fleet_db_env(), load_env_file(), psql_available(), Shared fleet DB runtime helpers., run_sql() (+34 more)
 
 ### Community 537 - "Community 537"
-Cohesion: 0.11
-Nodes (34): _db_env(), _emit(), landscape_parity(), _normal_sans(), _now(), _observed_sans_from_inputs(), _parse_san_json(), _pki_san_drift() (+26 more)
+Cohesion: 0.10
+Nodes (43): _db_env(), _emit(), landscape_parity(), _load_pki_host(), _now(), _pki_inventory_host_ids(), _pki_render_host(), profiles_managed_apps() (+35 more)
 
 ### Community 538 - "Community 538"
-Cohesion: 0.17
-Nodes (21): Any, CollectorRunner, Path, Path, agent_collect_version(), agent_self_update_runner(), Coleta estado local do repo omni-srv-admin sem mutação., Runner local allowlisted que aplica update do repo omni-srv-admin. (+13 more)
+Cohesion: 0.22
+Nodes (17): Any, CollectorRunner, Path, Path, apply_omni_self_update(), collect_omni_version(), _default_backup_root(), load_omni_version_matrix() (+9 more)
 
 ### Community 539 - "Community 539"
 Cohesion: 0.10
@@ -2909,8 +3177,8 @@ Cohesion: 0.33
 Nodes (5): Arquivos criados/atualizados, Phase 26 Plan 26-01 - SUMMARY, Regras de segurança atendidas, Status: COMPLETE, Validação executada
 
 ### Community 574 - "Community 574"
-Cohesion: 0.08
-Nodes (49): Any, _access_key(), activities_group(), activities_recent(), activities_show(), api(), _canonical_query(), computers() (+41 more)
+Cohesion: 0.11
+Nodes (38): Any, activities_group(), activities_recent(), activities_show(), api(), _canonical_query(), computers(), _echo_json() (+30 more)
 
 ### Community 575 - "Community 575"
 Cohesion: 0.40
@@ -2929,8 +3197,8 @@ Cohesion: 0.14
 Nodes (13): Alternative models considered, Context, Hermes/Codex skills + slash commands fleet sharing study — 2026-07-04, Hermes profile export/import, Obsidian/GBrain as source of truth, Private Hermes skill tap / skills registry, Proposed next implementation phase, Recommended automatic sharing model (+5 more)
 
 ### Community 579 - "Community 579"
-Cohesion: 0.17
-Nodes (33): blockers_for_host(), clean_scalar(), collect_host(), extract_services_from_pro(), find_key(), has_key_fragment(), load_host_inventory(), main() (+25 more)
+Cohesion: 0.08
+Nodes (56): Any, Path, blockers_for_host(), clean_scalar(), collect_host(), extract_services_from_pro(), find_key(), has_key_fragment() (+48 more)
 
 ### Community 580 - "Community 580"
 Cohesion: 0.06
@@ -3077,8 +3345,8 @@ Cohesion: 0.25
 Nodes (7): Backups/evidence, Implementation, Network change, Outcome, Phase 29 evidence - OCI ingress for Landscape TCP 6554, Residual notes, Validation
 
 ### Community 616 - "Community 616"
-Cohesion: 0.17
-Nodes (21): _cert_sans_from_file(), _host_aliases(), _inet_or_none(), _parse_openssl_san_text(), _pki_access(), _pki_host_identity(), _pki_host_paths(), _pki_inventory_host_data() (+13 more)
+Cohesion: 0.07
+Nodes (56): security(), agent(), audit(), _cert_sans_from_file(), Entry point: python -m omni.fleet_entry, fleet(), _host_aliases(), _host_inventory_payload() (+48 more)
 
 ### Community 617 - "Community 617"
 Cohesion: 0.29
@@ -3161,8 +3429,8 @@ Cohesion: 0.20
 Nodes (9): Dimension 1: Public API contract, Dimension 2: Internal routing, Dimension 3: Backend runtime, Dimension 4: Model immutability, Dimension 5: Client migration safety, Dimension 6: Secret hygiene, Phase 41 Validation Strategy, Result (+1 more)
 
 ### Community 653 - "Community 653"
-Cohesion: 0.17
-Nodes (11): Contract, External Smoke, Graphify Bridge, Internal Smoke, Local AI Embeddings, New API Channel, Python Client, References (+3 more)
+Cohesion: 0.15
+Nodes (12): Contract, External Smoke, Graphify Bridge, GTE Multilingual Reranker, Internal Smoke, Local AI Embeddings, New API Channel, Python Client (+4 more)
 
 ### Community 654 - "Community 654"
 Cohesion: 0.20
@@ -3305,8 +3573,8 @@ Cohesion: 0.50
 Nodes (3): Passed Checks, Phase 40 Verification, Scope Notes
 
 ### Community 707 - "Community 707"
-Cohesion: 0.13
-Nodes (14): Accessibility And Interaction, Checker Sign-Off, Color, Component Inventory, Copywriting Contract, Design System, Layout Contract, Phase 42 — UI Design Contract (+6 more)
+Cohesion: 0.12
+Nodes (15): Accessibility And Interaction, Checker Sign-Off, Color, Component Inventory, Copywriting Contract, Design System, Layout Contract, Logo Sizing Contract (+7 more)
 
 ### Community 708 - "Community 708"
 Cohesion: 0.18
@@ -3421,8 +3689,8 @@ Cohesion: 0.13
 Nodes (14): Accomplishments, Auth Gates, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness (+6 more)
 
 ### Community 736 - "Community 736"
-Cohesion: 0.18
-Nodes (31): Any, _app_payload(), _command_template(), _finish_plan_db(), _fork_payload(), _host_apps(), _host_database_contract(), _host_forks() (+23 more)
+Cohesion: 0.23
+Nodes (20): _command_template(), _finish_plan_db(), _json_literal(), _load_db_host(), _psql(), _psql_json(), queue_self_update(), queue_update() (+12 more)
 
 ### Community 737 - "Community 737"
 Cohesion: 0.25
@@ -3453,8 +3721,8 @@ Cohesion: 0.09
 Nodes (38): buildLoginRedirect(), buildReturnTo(), forwardedFor(), fs, handleRequest(), handleUpgrade(), HOP_BY_HOP_HEADERS, http (+30 more)
 
 ### Community 745 - "Community 745"
-Cohesion: 0.10
-Nodes (19): Artefatos e scripts, Atius-wide SSO em `sso.atius.com.br`, Como funciona entre sistemas, Contrato Apache, Contrato de login ATS SSO, Contrato Keycloak, Cookie e logout global, Env OIDC opcional no ATS (+11 more)
+Cohesion: 0.17
+Nodes (11): AdGuard/Phase 11 boundary, App facade template, Atius-wide SSO at `sso.atius.com.br`, Central ATS and Keycloak, Central logout, Contract capsule, Evidence, history, and secrets, Publication sequence (+3 more)
 
 ### Community 746 - "Community 746"
 Cohesion: 0.14
@@ -3561,24 +3829,24 @@ Cohesion: 0.50
 Nodes (4): .planning/STATE.md, ast_hash, mtime, semantic_hash
 
 ### Community 787 - "Community 787"
-Cohesion: 0.12
-Nodes (16): 1. Como o SSO funciona, 2. Como montar/publicar o host SSO, 3. Como incluir um app novo, 4. Como remover um app do SSO, Artefatos de apoio, Atius SSO - Manual Index, Entender, Incluir (+8 more)
+Cohesion: 0.15
+Nodes (12): Actual planning evidence, Atius SSO - Manual Index, Contract capsule, Include or remove an application, Mount or publish the central host, Ownership, Purpose and status, Reading routes (+4 more)
 
 ### Community 788 - "Community 788"
 Cohesion: 0.07
 Nodes (28): `atius.internal` Should Be The Private Naming Contract, Cloudflare Owns Public DNS, Not Machine Identity, Decisions, DRG / DNS Session Learnings, Dual-Bind Then Demote, `gbrain sync --full --no-embed` Is The Reliable Capture Path, Horistic TEI Was Already Right On OCI While Docs Lagged, Inventory Must Prefer `oci_private_ip` (+20 more)
 
 ### Community 789 - "Community 789"
-Cohesion: 0.08
-Nodes (25): Address Preference Order, `atius.com.br`, `atius.internal`, ATIUS Internal DNS And Cloudflare Manual, Avoid, Canonical Model, Cloudflare Governance Rule, Current Edge Exceptions (+17 more)
+Cohesion: 0.07
+Nodes (26): Address Preference Order, `atius.com.br`, `atius.internal`, ATIUS Internal DNS And Cloudflare Manual, Avoid, Canonical Model, Cloudflare Governance Rule, Current Edge Exceptions (+18 more)
 
 ### Community 790 - "Community 790"
 Cohesion: 0.09
 Nodes (21): ATIUS Internal DNS Canonicalization Plan, Current State, Execution Waves, Finish Criteria, Internal, Internal DNS, Objective, Planning Assumptions (+13 more)
 
 ### Community 791 - "Community 791"
-Cohesion: 0.17
-Nodes (16): Path, _collect_telemetry(), _diskstats(), _host_inventory_payload(), _inventory_hash(), _load_env_file(), _meminfo(), _pki_linux_runner_execute() (+8 more)
+Cohesion: 0.10
+Nodes (58): Any, Path, Any, Path, Popen, Path, TarInfo, atomic_json() (+50 more)
 
 ### Community 792 - "Community 792"
 Cohesion: 0.37
@@ -3586,7 +3854,7 @@ Nodes (12): omni-fleet-pki-host.sh script, backup_path(), ensure_key_csr(), inst
 
 ### Community 793 - "Community 793"
 Cohesion: 0.14
-Nodes (13): 1. Edge and backend health, 2. Auth validation, 3. Codex client validation, 4. Obsidian session validation, Canonical Names, Codex GBrain + Obsidian MCP Contract, Failure Modes, Production Expectations (+5 more)
+Nodes (13): 1. Edge and backend health, 2. Auth validation, 3. Codex client validation, 4. Obsidian session validation, Canonical Names, Codex ATIUS HTTP MCP Contract, Failure Modes, Production Expectations (+5 more)
 
 ### Community 794 - "Community 794"
 Cohesion: 0.36
@@ -3621,8 +3889,8 @@ Cohesion: 0.14
 Nodes (10): load_script_module(), Regression tests for the resource-governor execution environment., test_audit_has_nonblocking_singleton_lock(), test_audit_treats_optional_container_cli_as_unavailable(), test_doctor_computes_host_total_cpu_quota(), test_doctor_detects_structural_quota_drift(), test_doctor_ignores_its_own_launcher_chain(), test_hygiene_queue_coalesces_without_moving_deadlines() (+2 more)
 
 ### Community 803 - "Community 803"
-Cohesion: 0.17
-Nodes (11): Atius SSO - Operations Manual, Como funciona, Contrato curto, Evidência permitida, Incluir app novo em SSO já existente, Montar SSO do zero em um app, Objetivo, Publicar ou alterar o host SSO (+3 more)
+Cohesion: 0.18
+Nodes (10): AdGuard boundary, Atius SSO - Operations Manual, Change record template, Contract capsule, Evidence and secrets, Minimal reverse-proxy pattern, Mount/include procedure, Purpose and status (+2 more)
 
 ### Community 804 - "Community 804"
 Cohesion: 0.22
@@ -3649,8 +3917,8 @@ Cohesion: 0.33
 Nodes (5): Current Focus, Eliminated, Evidence, Resolution, Symptoms
 
 ### Community 811 - "Community 811"
-Cohesion: 0.10
-Nodes (42): Any, CompletedProcess, Path, Path, build_cgroup(), collect(), cpu_psi_avg10(), expected_cpu_max() (+34 more)
+Cohesion: 0.21
+Nodes (25): Any, CompletedProcess, Path, build_cgroup(), collect(), cpu_psi_avg10(), expected_cpu_max(), expected_cpu_units() (+17 more)
 
 ### Community 812 - "Community 812"
 Cohesion: 0.05
@@ -3665,12 +3933,8 @@ Cohesion: 0.67
 Nodes (3): orphan-mcp-reaper.sh script, log(), MCP_PIDS
 
 ### Community 816 - "Community 816"
-Cohesion: 0.24
-Nodes (23): Any, _alias_variants(), _build_report(), _build_summary(), _check_containers(), _check_endpoints(), _check_launchers(), _check_local_ports() (+15 more)
-
-### Community 817 - "Community 817"
-Cohesion: 0.19
-Nodes (9): Any, datetime, _call(), collect_security_report(), _now(), Read-only Ubuntu Pro security collectors for Omni Fleet., Collect local Pro security status and CVE view without applying fixes., SecurityRunner (+1 more)
+Cohesion: 0.05
+Nodes (24): MonkeyPatch, Path, _canonical_scope(), _git(), _review_source_repo(), _statuses(), test_complete_fixture_bundle_materializes_all_contracts(), test_json_markdown_parity_and_atomic_outputs() (+16 more)
 
 ### Community 818 - "Community 818"
 Cohesion: 0.22
@@ -3689,12 +3953,12 @@ Cohesion: 0.14
 Nodes (13): Catalog, UI and Validation, Deferred Ideas, Established Patterns, Existing Code Insights, Implementation Decisions, Integration Points, Native Codex OAuth, Phase 48: Codex OAuth and Wayland Remote ACP Convergence - Context (+5 more)
 
 ### Community 822 - "Community 822"
-Cohesion: 0.23
-Nodes (11): _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), Any, Path, RuntimeError (+3 more)
+Cohesion: 0.04
+Nodes (9): _approved_values(), _gate_a_exact_tar_end(), _gate_a_rechecksum_tar_header(), _gate_a_tenth_metadata_tar(), _gate_a_tenth_tar_bytes(), _secret_roles(), test_vault_metadata_accepts_only_the_six_approved_references(), test_versioned_vault_provider_exact_protocol_and_safe_self_check() (+1 more)
 
 ### Community 823 - "Community 823"
-Cohesion: 0.28
-Nodes (9): CompletedProcess, _check_systemd_entities(), _list_containers(), _run(), _run_remote(), _systemctl_is_active(), _systemctl_list_jobs(), _systemctl_list_timers() (+1 more)
+Cohesion: 0.14
+Nodes (53): Any, ArgumentParser, Path, _blocked_result(), build_parser(), build_report(), build_review_input_manifest(), _canonical_digest() (+45 more)
 
 ### Community 824 - "Community 824"
 Cohesion: 0.18
@@ -3728,9 +3992,13 @@ Nodes (6): Backups, Impact, Incident: Landscape and Vaultwarden 503 after legacy
 Cohesion: 0.29
 Nodes (6): 45 Review Convergence, Current Actionable Non-HIGH Concerns, Current HIGH Concerns, Cycle 1 Findings, Cycle Summary, Source-Grounding Coverage
 
+### Community 832 - "Community 832"
+Cohesion: 0.04
+Nodes (53): Historical Phase Registry (01-27), Milestone v1.2 Carry-over, Milestone v1.3: Local AI Embeddings and Semantic Retrieval, Milestone v1.4: Atius-wide SSO and Login, Milestone v1.5: Codex Runtime and MCP Bootstrap Reliability, Milestone v1.6: Internal Service PKI and Fleet HTTPS, Milestone v1.7: Internal DNS and DRG Canonicalization, Milestone v1.8: Runtime Trust and Codex Delivery Convergence (+45 more)
+
 ### Community 833 - "Community 833"
-Cohesion: 0.29
-Nodes (7): install(), install_node(), _install_plan(), install_server(), Planos seguros de instalação server/node do control plane., Gera plano idempotente para instalar o modo server., Gera plano idempotente para instalar o modo node.
+Cohesion: 0.04
+Nodes (48): Alias-only rollback without recorded alias state, Applicable ASVS Categories, Architectural Responsibility Map, Architecture Patterns, Assumptions Log, Common Pitfalls, Concrete Manifest Guidance, Core (+40 more)
 
 ### Community 834 - "Community 834"
 Cohesion: 0.33
@@ -3784,6 +4052,10 @@ Nodes (4): 45 S23 Edge Validation, Evidence Captured, Remaining Blocker, Result
 Cohesion: 0.40
 Nodes (4): 45 Session Intake, Canonical Conclusions, Checkout State Observed, Sessions Reviewed
 
+### Community 848 - "Community 848"
+Cohesion: 0.07
+Nodes (3): CompletedProcess, Path, Phase52BackupBTests
+
 ### Community 849 - "Community 849"
 Cohesion: 0.50
 Nodes (3): Classified Residuals, Must-Haves, Phase 45 Verification
@@ -3796,25 +4068,913 @@ Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundari
 Cohesion: 0.50
 Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
 
+### Community 856 - "Community 856"
+Cohesion: 0.04
+Nodes (45): Accumulated Context, Active Branch Results, Backup GDrive, Cloudflare DNS for Landscape self-hosted - 2026-06-25T03:21:29Z, Completed Phases, Current Position, Decisions, Landscape and Vaultwarden legacy-upstream incident - 2026-07-11 (+37 more)
+
+### Community 857 - "Community 857"
+Cohesion: 0.15
+Nodes (33): Any, Path, _ambiguous_projection(), atomic_json(), _checks_are_exact(), execute_live(), finalize_seal(), _gate_a_projection() (+25 more)
+
+### Community 863 - "Community 863"
+Cohesion: 0.06
+Nodes (44): CompletedProcess, Path, _create_sqlite_source(), _phase52_control_fixture(), _run_control_install(), _run_vault_helper(), test_backup_excludes_identity_and_requires_quiesced_source(), test_backup_independence_contract_requires_distinct_generation_and_destination() (+36 more)
+
+### Community 864 - "Community 864"
+Cohesion: 0.12
+Nodes (29): Any, datetime, Path, Popen, _atomic_json(), _atomic_write(), bounded_process(), enforce_log_bounds() (+21 more)
+
+### Community 865 - "Community 865"
+Cohesion: 0.21
+Nodes (41): Any, ArgumentParser, Path, atomic_json(), canonical_existing(), capture(), compensate_install(), copy_exclusive() (+33 more)
+
+### Community 866 - "Community 866"
+Cohesion: 0.07
+Nodes (17): Path, _load(), reviewed_bootstrap_fixture(), test_bounded_helpers_serialize_subreaper_and_restore_process_state(), test_executor_entrypoint_cleans_reviewed_tmpfs_when_context_load_fails(), test_executor_entrypoint_cleanup_failure_is_fail_closed_and_sanitized(), test_generator_cleans_ambiguous_create_side_effect(), test_generator_uses_isolated_hbbs_keypair_and_cleans_container() (+9 more)
+
+### Community 867 - "Community 867"
+Cohesion: 0.12
+Nodes (24): delta(), extract_vectors(), KubernetesMetrics, main(), make_text(), marked_inputs(), parse_prometheus(), percentile() (+16 more)
+
+### Community 868 - "Community 868"
+Cohesion: 0.09
+Nodes (36): _apply_catalog_mutation(), _candidate(), _capacity_policy(), _categories(), _contract(), _placement(), _raw_sample(), test_capacity_accepts_reserved_filesystem_blocks() (+28 more)
+
+### Community 869 - "Community 869"
+Cohesion: 0.09
+Nodes (43): ConfigParser, MonkeyPatch, _assert_keys(), _healthy_ops_observations(), _load_strict(), _load_unit(), _ops_api_module(), _production_adapters_module() (+35 more)
+
+### Community 870 - "Community 870"
+Cohesion: 0.05
+Nodes (74): Any, Path, StageAdapter, Any, Any, ArgumentParser, Path, StageAdapter (+66 more)
+
+### Community 871 - "Community 871"
+Cohesion: 0.06
+Nodes (33): Anti-Patterns, Architectural Patterns, Architecture Research, Blind active-active, Component Responsibilities, Data Flow, Evidence Boundaries, External Services (+25 more)
+
+### Community 872 - "Community 872"
+Cohesion: 0.19
+Nodes (28): Any, datetime, _contains_sensitive(), _digest(), _duplicate_keys(), _emit(), _exact(), _invalid_constant() (+20 more)
+
+### Community 873 - "Community 873"
+Cohesion: 0.07
+Nodes (29): Architectural Responsibility Map, Assumptions Log, Current Drift, D-01 — Canonical host identity, D-02 — Authority split, D-03 — Private FreeIPA DNS endpoint, D-04 — Migration and validation, D-05 — FreeIPA/SSSD and fleet identity (+21 more)
+
+### Community 874 - "Community 874"
+Cohesion: 0.07
+Nodes (29): Anti-Patterns and Conflicts, Benchmark, smoke, quality and soak scripts, Coverage, `docs/operations/local-ai-embeddings.md`, Error handling and evidence hygiene, File Classification, `inventory/hosts/horistic-srv.yaml`, `k8s/qwen-canary/kustomization.yaml` (+21 more)
+
+### Community 875 - "Community 875"
+Cohesion: 0.07
+Nodes (29): 59-01-01, 59-01-02, 59-02-01, 59-02-02, 59-03-01, 59-03-02, 59-03-03, 59-04-01 (+21 more)
+
+### Community 876 - "Community 876"
+Cohesion: 0.16
+Nodes (30): MonkeyPatch, _gate_a_block_remote_fetch(), _gate_a_malicious_tar(), _gate_a_replace_retained_pair(), _gate_a_restore_fetch_must_not_run(), _gate_a_seventh_rollback_fixture(), test_gate_a_eighth_cycle_backup_pair_invariants_are_strict(), test_gate_a_eighth_cycle_integer_schema_rejects_bool() (+22 more)
+
+### Community 877 - "Community 877"
+Cohesion: 0.36
+Nodes (7): _access_key(), _endpoint(), _jwt(), _mask(), Mostra configuracao local da integracao Landscape., _secret_key(), status()
+
+### Community 878 - "Community 878"
+Cohesion: 0.08
+Nodes (26): contract(), test_approved_fingerprint_is_external_and_observed_must_match(), test_backup_failure_never_persists_arbitrary_blocked_detail(), test_backup_failure_persists_sanitized_pre_backup_blocker_and_state(), test_both_route_probes_failed_is_confirmed_pre_send_block_not_outcome_ambiguity(), test_contract_is_exact_value_free_and_create_only(), test_direct_first_route_uses_fallback_only_after_direct_probe_failure(), test_initial_install_failure_persists_terminal_evidence_after_restore() (+18 more)
+
+### Community 879 - "Community 879"
+Cohesion: 0.07
+Nodes (20): FakeBackend, test_ambiguous_ownership_restore_failure_is_restore_only_retryable(), test_any_unacknowledged_intent_with_prior_acks_is_ambiguous_and_never_deletes(), test_backup_root_symlink_and_symlink_ancestor_are_rejected(), test_cas_conflict_restores_control_plane_and_soft_deletes_only_owned_versions(), test_corrupt_backup_blocks_control_plane_install_and_put(), test_fault_injection_every_create_is_fail_closed_and_value_free(), test_interrupted_rollback_retries_only_exact_owned_versions_then_is_terminal() (+12 more)
+
+### Community 880 - "Community 880"
+Cohesion: 0.08
+Nodes (25): `51-OPERATIONAL-REVIEW.md` (human gate, approval), `51-SECURITY.md` (security governance, review/evidence), Contract JSON family (config/model, file-I/O), `contracts/permission-profiles.json`, `contracts/product-decision.json`, `contracts/scope.json`, `contracts/secret-roles.json`, `contracts/threat-model.json` (+17 more)
+
+### Community 881 - "Community 881"
+Cohesion: 0.08
+Nodes (25): Architecture Approach, Confidence Assessment, Critical Pitfalls, Executive Summary, Expected Features, Gaps to Address, Implications for Roadmap, Key Findings (+17 more)
+
+### Community 882 - "Community 882"
+Cohesion: 0.08
+Nodes (24): Atius-wide SSO / Login, Codex OAuth and Wayland ACP Convergence, Codex Runtime / MCP Bootstrap Reliability, Domain Infrastructure, Future Requirements, G18 — Ubuntu Pro / ESM / Landscape SaaS, Internal DNS Authority and FreeIPA Convergence, Internal DNS / DRG Canonicalization (+16 more)
+
+### Community 883 - "Community 883"
+Cohesion: 0.08
+Nodes (23): Critical Pitfalls, Evidence Boundaries, Integration Gotchas, "Looks Done But Isn't" Checklist, NO-GO Conditions, Performance Traps, Pitfall 10: Mutating the wrong GSD workstream after migration, Pitfall 1: Deploying at the disk watchdog boundary (+15 more)
+
+### Community 884 - "Community 884"
+Cohesion: 0.09
+Nodes (22): Advance gate, ATIUS operational API, Candidate implementation artifacts, Edge and publication transaction, Evidence invariants, Exact local runtime sockets, Exact public edge, Executive result (+14 more)
+
+### Community 885 - "Community 885"
+Cohesion: 0.17
+Nodes (19): Path, _FakeServerRunner, _live_adapters_module(), _new_server_transaction(), _server_installer_module(), test_candidate_runtime_rendering_is_owner_admission_bound(), test_explicit_cli_uses_requested_evidence_dir_and_stays_fail_closed(), test_identity_hydration_is_tmpfs_only_and_evidence_is_value_free() (+11 more)
+
+### Community 886 - "Community 886"
+Cohesion: 0.28
+Nodes (20): install-rustdesk-vault-provider.sh script, assert_dir(), assert_file(), capture_target(), ensure_backup(), ensure_dir(), fail(), install_one() (+12 more)
+
+### Community 887 - "Community 887"
+Cohesion: 0.18
+Nodes (17): Path, append_log(), apply_cgroup_limits(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+9 more)
+
+### Community 888 - "Community 888"
+Cohesion: 0.14
+Nodes (17): rclone-copy-verified-phase52.sh script, APPROVED_REMOTE, copy_exclusive_bounded(), DEFAULT_BWLIMIT, DEFAULT_TIMEOUT_SECONDS, DESTINATION_PREFIX, die(), emit_error() (+9 more)
+
+### Community 889 - "Community 889"
+Cohesion: 0.11
+Nodes (18): Canonical References, Deferred Ideas, Established Patterns, Existing Code Insights, Implementation Decisions, Integration Points, Native edge and external proof, Operational API and monitoring (+10 more)
+
+### Community 890 - "Community 890"
+Cohesion: 0.11
+Nodes (18): Canonical References, Deferred Ideas, Dimensao, indices e dados, Established Patterns, Existing Code Insights, Existing GTE contract and k3s, Gates, promocao e rollback, Implementation Decisions (+10 more)
+
+### Community 891 - "Community 891"
+Cohesion: 0.11
+Nodes (19): CaptureFixture, _load_phase52_live_drill(), test_gate_a_eleventh_cycle_declared_local_mutation_requires_retained_root(), test_gate_a_eleventh_cycle_non_directory_retained_root_is_fail_closed(), test_gate_a_fifth_cycle_container_absence_is_exact_and_cleanup_is_idempotent(), test_gate_a_fifth_cycle_dry_run_uses_live_action_schemas(), test_gate_a_fifth_cycle_managed_pins_include_installed_executables(), test_gate_a_fifth_cycle_mutation_semantics_reject_false_types_and_empty_classes() (+11 more)
+
+### Community 892 - "Community 892"
+Cohesion: 0.07
+Nodes (53): Any, CaptureFixture, MonkeyPatch, Path, _load_contracts(), _negative_case_is_closed(), Pure fake validator used by the fixtures; no host or network access., Load a value-free contract and reject duplicate JSON keys. (+45 more)
+
+### Community 893 - "Community 893"
+Cohesion: 0.11
+Nodes (18): Acceptance Roadmap, Add After Validation, Anti-Features, Dependency Notes, Differentiators, Evidence Boundaries, Feature Dependencies, Feature Landscape (+10 more)
+
+### Community 894 - "Community 894"
+Cohesion: 0.19
+Nodes (32): _allowed_oci_pages(), _edge_applier_module(), _edge_transaction(), _nft_template(), _phase53_edge_preflight(), _rendered_nft_candidate(), test_barrier_a_typed_sources_are_fresh_a_only_and_topology_bound(), test_boot_verifier_is_operational_and_default_cli_is_zero_live() (+24 more)
+
+### Community 895 - "Community 895"
+Cohesion: 0.13
+Nodes (25): datetime, _barrier_b(), _edge_with_ip_proof(), _external_probe_bundle(), _FakeClock, _hostname_probe_bundle(), _origin_policy(), _phase53_digest() (+17 more)
+
+### Community 896 - "Community 896"
+Cohesion: 0.12
+Nodes (16): Commands, Comparison Questions, Correctness and rejected paths, Current TEI 1.9.3 non-GGUF follow-up, Decision, Decision Rule, Kubernetes Isolation Contract, Live constraints (+8 more)
+
+### Community 897 - "Community 897"
+Cohesion: 0.12
+Nodes (16): 1. Copywriting - 3/4, 2. Visuals / Imagery - 4/4, 3. Color - 4/4, 4. Typography - 4/4, 5. Spacing / Layout - 4/4, 6. Registry Safety - 4/4, BLOCKER / WARNING, Detailed Audit (+8 more)
+
+### Community 898 - "Community 898"
+Cohesion: 0.20
+Nodes (16): Any, Path, ApacheVhostTransaction, _atomic_write(), authenticate_request(), collect_metric_summary(), derive_readiness(), expected_listener_contract() (+8 more)
+
+### Community 899 - "Community 899"
+Cohesion: 0.12
+Nodes (16): Alternatives Considered, Artifact Integrity, Capacity formula and gates, Core Technologies, Deployment Profile, Evidence Boundaries, Local live evidence and policy, Managed Client Configuration (+8 more)
+
+### Community 900 - "Community 900"
+Cohesion: 0.15
+Nodes (12): fake_vault_snapshot_bridge(), SensitiveStageFailureBackend, test_control_plane_tree_backup_restores_exact_state_and_absence(), test_control_plane_tree_restore_rejects_symlink_without_deleting(), test_every_wal_blocker_producer_maps_regex_valid_sensitive_detail_to_fixed_token(), test_executor_entrypoint_never_emits_sensitive_stage_exception_detail(), test_raft_snapshot_bridge_failure_is_sanitized_and_removes_host_partial(), test_raft_snapshot_bridge_publish_race_never_overwrites_competitor() (+4 more)
+
+### Community 901 - "Community 901"
+Cohesion: 0.12
+Nodes (15): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Issues Encountered, Known Stubs, Live Evidence, Next Phase Readiness (+7 more)
+
+### Community 902 - "Community 902"
+Cohesion: 0.12
+Nodes (15): Accomplishments, Auto-fixed Issues, Canonical Gate Result, Decisions Made, Deviations from Plan, Issues Encountered, Known Stubs, Next Phase Readiness (+7 more)
+
+### Community 903 - "Community 903"
+Cohesion: 0.12
+Nodes (15): Exact currentness and parity, File Classification, Group 1 — Phase 51 contracts and deterministic placement decisions, Group 2 — Phase 51 validator, reports, tests, and Phase 48 isolation, Group 3 — Serialized backup, verify-before-delete, and disposable restore drill, Group 4 — Resource-governor admission and guarded execution, Group 5 — Vault reference-only validation and non-disclosing findings, Metadata (+7 more)
+
+### Community 904 - "Community 904"
+Cohesion: 0.27
+Nodes (14): Path, _load_verifier(), _strict_json(), test_cli_exposes_only_offline_read_only_surfaces(), test_contract_binds_exact_history_hashes_and_no_live_authority(), test_exact_git_objects_ancestry_and_ledger_successor_pass(), test_history_mutations_are_rejected(), test_independent_review_quorum_requires_distinct_identity_and_same_hash() (+6 more)
+
+### Community 905 - "Community 905"
+Cohesion: 0.12
+Nodes (15): Dependency Chain, Milestone Contract, Overview, Phase 51: Contract, Threat Model and Workstream Isolation, Phase 52: Supply Chain, Capacity and Recoverable Placement, Phase 53: Primary Relay and Public Edge, Phase 54: Heterogeneous Canary — Horistic + Windows, Phase 55: Serialized Linux Fleet Rollout (+7 more)
+
+### Community 906 - "Community 906"
+Cohesion: 0.13
+Nodes (14): D-01 — Canonical host identity, D-02 — Authority split, D-03 — Private FreeIPA DNS endpoint, D-04 — Migration and validation, D-05 — FreeIPA/SSSD and fleet identity, D-06 — Availability and phase boundary, D-07 — Safety and concurrent ownership, Deferred Ideas (+6 more)
+
+### Community 907 - "Community 907"
+Cohesion: 0.13
+Nodes (14): Canonical Owner Identity Matrix, Evidence, Implementation Tasks, Phase 48-03: Wayland Owner-Local Transport Convergence - Research, Planning Recommendation, Scope, Security and Rollback, Sources (+6 more)
+
+### Community 908 - "Community 908"
+Cohesion: 0.13
+Nodes (14): Canonical References, Decisions, Deferred Ideas, Fleet and coexistence, GSD isolation and proof, Phase 51: Contract, Threat Model and Workstream Isolation - Context, Phase Boundary, Product and transport boundary (+6 more)
+
+### Community 909 - "Community 909"
+Cohesion: 0.13
+Nodes (14): Accomplishments, Authentication Gates, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs (+6 more)
+
+### Community 910 - "Community 910"
+Cohesion: 0.14
+Nodes (13): Accomplishments, Auto-fixed Issues, Automated Evidence, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness (+5 more)
+
+### Community 911 - "Community 911"
+Cohesion: 0.14
+Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Issues Encountered, Known Stubs, Next Phase Readiness, Performance (+5 more)
+
+### Community 912 - "Community 912"
+Cohesion: 0.14
+Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Issues Encountered, Known Stubs, Next Phase Readiness, Performance (+5 more)
+
+### Community 913 - "Community 913"
+Cohesion: 0.14
+Nodes (13): Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness, Performance (+5 more)
+
+### Community 914 - "Community 914"
+Cohesion: 0.14
+Nodes (13): 1. Current verifier does not implement the Task 52-09-01 acceptance contract, 2. Governed JUnit gate failed, Accomplishments, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs / Missing Artifacts (+5 more)
+
+### Community 915 - "Community 915"
+Cohesion: 0.14
+Nodes (13): Architectural Responsibility Map, Assumptions Log, Don't Hand-Roll, Environment Availability, Metadata, Open Questions (RESOLVED), Package Legitimacy Audit, Phase 52: Supply Chain, Capacity and Recoverable Placement - Research (+5 more)
+
+### Community 916 - "Community 916"
+Cohesion: 0.14
+Nodes (13): Accomplishments, Authentication Gates, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Known Stubs, Next Phase Readiness (+5 more)
+
+### Community 917 - "Community 917"
+Cohesion: 0.16
+Nodes (9): BATCH_SIZE, MAX_DOCUMENTS, MAX_LENGTH, PORT, probability(), queue, rerank(), scoreBatch() (+1 more)
+
+### Community 918 - "Community 918"
+Cohesion: 0.15
+Nodes (12): Accomplishments, Automated Evidence, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
+
+### Community 919 - "Community 919"
+Cohesion: 0.15
+Nodes (12): Accomplishments, Automated Evidence, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+4 more)
+
+### Community 920 - "Community 920"
+Cohesion: 0.15
+Nodes (12): 1. Ledger evidence currentness — CLOSED, 2. Security projection final sign-off — CLOSED, Behavioral Spot-Checks, Deferred obrigatório — cliente Windows, Gap Closure, Gaps Summary, Goal Achievement, Observable Truths (+4 more)
+
+### Community 921 - "Community 921"
+Cohesion: 0.15
+Nodes (12): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Issues Encountered, Next Phase Readiness, Performance, Phase 52 Plan 01: Immutable Supply Chain Summary (+4 more)
+
+### Community 922 - "Community 922"
+Cohesion: 0.15
+Nodes (12): Accomplishments, Auto-fixed Issues, Deviations from Plan, Frozen Source Hashes, Issues Encountered, Next Phase Readiness, Performance, Phase 52 Plan 08: Post-Live Successor Source Freeze Summary (+4 more)
+
+### Community 923 - "Community 923"
+Cohesion: 0.44
+Nodes (12): Element, Path, cases(), git(), interval_audit(), is_phase53_execution_path(), lane_current(), lane_legacy() (+4 more)
+
+### Community 924 - "Community 924"
+Cohesion: 0.26
+Nodes (10): oci-admin-watchdog.sh script, check_app(), health_ok(), log(), PATH, pm2_app_exists(), pm2_app_online(), PM2_HOME (+2 more)
+
+### Community 925 - "Community 925"
+Cohesion: 0.15
+Nodes (12): Central Management, Exhaustive Validation, Future Requirements, Managed Clients, Operations and Closeout, Out of Scope, Requirements: RustDesk Fleet Remote Access, Resilience and Recovery (+4 more)
+
+### Community 926 - "Community 926"
+Cohesion: 0.17
+Nodes (11): Architectural Responsibility Map, Assumptions Log, Don't Hand-Roll, Environment Availability, Metadata, Phase 51: Contract, Threat Model and Workstream Isolation - Research, Phase Requirements, Project Constraints (from AGENTS.md) (+3 more)
+
+### Community 927 - "Community 927"
+Cohesion: 0.24
+Nodes (9): BaseTransport, Any, EdgePolicy, _HealthServer, main(), Return ``(status, error)``; valid Streamable HTTP requests return ``(0, None)``., _serve(), validate_request() (+1 more)
+
+### Community 928 - "Community 928"
+Cohesion: 0.18
+Nodes (11): Anti-Patterns to Avoid, Architecture Patterns, Pattern 1: Immutable expectation + fresh observation, Pattern 2: Integer-only capacity math, Pattern 3: Split persistent state from secret identity, Pattern 4: Restore into a fresh isolated target, Pattern 5: Explicit placement state machine, Pattern 6: Separate evidence domains on a colocated primary/client (+3 more)
+
+### Community 929 - "Community 929"
+Cohesion: 0.20
+Nodes (9): Arquitetura alvo, Critério de promoção, Embedding, Estado e correções já verificadas, Fases de implementação, Objetivo, Plano: Qwen3 RAG em Podman na OCI, Reranker (+1 more)
+
+### Community 930 - "Community 930"
+Cohesion: 0.20
+Nodes (9): Accomplishments, Deviations from Plan, Next Phase Readiness, Performance, Phase 53 Plan 03: Authenticated Operations API Summary, Security Boundary, Self-Check: PASSED, Task Commits (+1 more)
+
+### Community 931 - "Community 931"
+Cohesion: 0.20
+Nodes (9): Converged gates, Edge, Operations API, Participants, Phase 53 Research Debate, Round 1 — Arguments, Round 2 — Replies, Round 3 — Rejoinders (+1 more)
+
+### Community 932 - "Community 932"
+Cohesion: 0.40
+Nodes (9): Any, Namespace, Path, check(), main(), read_json(), run(), sha256_file() (+1 more)
+
+### Community 933 - "Community 933"
+Cohesion: 0.20
+Nodes (9): Accumulated Context, Blockers/Concerns, Current Position, Decisions, Pending Todos, Performance Metrics, Project Reference, Project State (+1 more)
+
+### Community 934 - "Community 934"
+Cohesion: 0.22
+Nodes (8): Accepted Risks Log, ASVS Mapping, Audit Notes, Permission Profiles and OSS Boundary, Phase 51 Security Contract, Sign-Off, Threat Register, Trust Boundaries
+
+### Community 935 - "Community 935"
+Cohesion: 0.22
+Nodes (8): Canonical References, Deferred Ideas, Implementation Decisions, Operational approval record, Phase 52: Supply Chain, Capacity and Recoverable Placement - Context, Phase Boundary, Specific Ideas, the agent's Discretion
+
+### Community 936 - "Community 936"
+Cohesion: 0.22
+Nodes (9): Common Pitfalls, Pitfall 1: Accepting the rounded `df` number, Pitfall 2: Counting only the compressed registry image, Pitfall 3: Automatically changing expected digests, Pitfall 4: Leaking secrets through a validation command, Pitfall 5: Backing up the private key outside Vault, Pitfall 6: Calling `srv-3` a standby too early, Pitfall 7: Installing the Windows client during supply verification (+1 more)
+
+### Community 937 - "Community 937"
+Cohesion: 0.22
+Nodes (8): Final Sign-Off Gate, Per-Task Verification Map, Phase 52 — Validation Strategy, Post-live closure mappings, Required Negative Coverage, Requirement and Threat Closure, Test Infrastructure, Wave 0 Requirements
+
+### Community 938 - "Community 938"
+Cohesion: 0.22
+Nodes (8): Current Closeout Attempt — 2026-07-23T10:46:00Z, Gaps Summary, Goal Achievement, Histórico da tentativa anterior (superado pelo closeout atual), Phase 52: Supply Chain, Capacity and Recoverable Placement — Verification, Previous re-verification attempt (verbatim), Required Closure, Safety Boundary
+
+### Community 939 - "Community 939"
+Cohesion: 0.22
+Nodes (8): Colocated server isolation, Deferred Ideas, External probes, Native edge, Operational API, Persistence and rollback, Phase 53: Primary Relay and Public Edge - Discussion Log, the agent's Discretion
+
+### Community 940 - "Community 940"
+Cohesion: 0.20
+Nodes (9): Acceptance Contract, Additional read-only gate, Autonomous Goal, Blockers, Current Cycle, Evidence, Objective, Remaining (+1 more)
+
+### Community 941 - "Community 941"
+Cohesion: 0.25
+Nodes (7): Autorizações ainda necessárias, Gate atual, Quick 260722-1p9 — Horistic Vault e Backup B, Resultado, Runtime instalado, Segurança e implementação, Validação
+
+### Community 942 - "Community 942"
+Cohesion: 0.25
+Nodes (7): Blocking Human Gates, Per-Task Verification Map, Phase 47.1 — Validation Strategy, Sampling Rate, Test Infrastructure, Validation Sign-Off, Wave 0 Requirements
+
+### Community 943 - "Community 943"
+Cohesion: 0.25
+Nodes (7): Acceptance, Objective, Out of Scope, Phase 51 PRD: Contract, Threat Model and Workstream Isolation, Required Deliverables, Requirements, Security Contract
+
+### Community 944 - "Community 944"
+Cohesion: 0.25
+Nodes (8): Deferred Ideas (OUT OF SCOPE), Fleet and coexistence, GSD isolation and proof, Locked Decisions, Product and transport boundary, Secrets, identity, and permissions, the agent's Discretion, User Constraints (from CONTEXT.md)
+
+### Community 945 - "Community 945"
+Cohesion: 0.25
+Nodes (8): Phase requirements to test map, Report schema and `51-CONTRACT-VALIDATION.md` generation, Required fixtures, Sampling rate, Test framework, Validation Architecture, Validator check IDs, Wave 0 gaps
+
+### Community 946 - "Community 946"
+Cohesion: 0.25
+Nodes (7): Manual-Only Verifications, Per-Task Verification Map, Phase 51 — Validation Strategy, Sampling Rate, Test Infrastructure, Validation Sign-Off, Wave 0 Requirements
+
+### Community 947 - "Community 947"
+Cohesion: 0.25
+Nodes (7): Approved capacity constants, Backup placement and retention, Candidate mutation authority, Horistic full gate, Phase 52 — Operational Decisions, Scope boundary, Temporal topology review contract
+
+### Community 948 - "Community 948"
+Cohesion: 0.22
+Nodes (8): Checkpoint, Deterministic blocker, Next Phase Readiness, Phase 53 Plan 05: Controlled live deployment and public proof, Post-checkpoint continuation, Required closure, Safe verification, Supersession
+
+### Community 949 - "Community 949"
+Cohesion: 0.25
+Nodes (7): Manual-Only Verifications, Per-Task Verification Map, Phase 53 — Validation Strategy, Sampling Rate, Test Infrastructure, Validation Sign-Off, Wave 0 Requirements
+
+### Community 950 - "Community 950"
+Cohesion: 0.25
+Nodes (7): Locked decisions, Objective, Phase 54 Context — Migração integral OCI/DRG e edge, Required evidence, Rollback contract, Scope fence, Stop conditions
+
+### Community 951 - "Community 951"
+Cohesion: 0.25
+Nodes (7): Canary, promocao e rollback, Contratos de modelos e runtimes, Deferred Ideas, Dimensao e migracao dos indices, Phase 59: Qwen3 Embedding e Rerank Podman para k3s - Discussion Log, the agent's Discretion, Topologia k3s, recursos e governor
+
+### Community 952 - "Community 952"
+Cohesion: 0.46
+Nodes (5): oci-admin-mcp-fleet-smoke.sh script, json_record(), probe_local(), probe_remote(), usage()
+
+### Community 953 - "Community 953"
+Cohesion: 0.61
+Nodes (7): Namespace, Path, _args(), test_edge_gate_blocks_when_horistic_wireguard_target_is_missing(), test_edge_gate_requires_exact_horistic_s23_s20_target_map(), test_non_edge_plan_does_not_require_edge_target_map(), _write_inputs()
+
+### Community 954 - "Community 954"
+Cohesion: 0.25
+Nodes (7): dependencies, @huggingface/transformers, engines, node, name, private, type
+
+### Community 955 - "Community 955"
+Cohesion: 0.29
+Nodes (8): _fabricated_meta_ipv4_rule(), _nft_json_rule(), test_nft_json_readback_accepts_canonical_ipv4_payload_ast(), test_nft_json_readback_rejects_additional_owned_table_chain(), test_nft_json_readback_rejects_extra_predicate_inside_expected_rule(), test_nft_json_readback_rejects_fabricated_meta_ipv4_ast(), test_nft_json_readback_requires_exact_owned_chain_rules(), _valid_nft_json_readback()
+
+### Community 956 - "Community 956"
+Cohesion: 0.29
+Nodes (6): Check Matrix, Input Digests, Operational Review, Overall Status, Phase 51 Contract Validation, Report Identity
+
+### Community 957 - "Community 957"
+Cohesion: 0.29
+Nodes (7): Common Pitfalls, False-empty Phase 48 baseline, Lifecycle scanner accepts descriptive or stale text, Password distinctness proved by reading values, Pro absence overstated, Secret scanner becomes a disclosure oracle, Summary-only gate
+
+### Community 958 - "Community 958"
+Cohesion: 0.29
+Nodes (6): Phase 52 Plan 10: Metadata-only closeout summary, Phase 53 boundary, Retained evidence boundary, Scanner incident and resolution, Self-Check: PASSED, Verification
+
+### Community 959 - "Community 959"
+Cohesion: 0.29
+Nodes (6): Candidate Attempts, Check Matrix, Overall Status, Phase 52 Supply Chain, Capacity and Recoverable Placement Gate, Report Identity, Temporal Boundaries
+
+### Community 960 - "Community 960"
+Cohesion: 0.29
+Nodes (6): Findings, Implications, Official OCI constraints, Open questions / execution gates, Phase 54 Research — OCI/DRG and edge renumbering, Validation architecture
+
+### Community 961 - "Community 961"
+Cohesion: 0.29
+Nodes (6): Current Focus, Eliminated, Evidence, Phase 52 PRE_BACKUP Recovery, Resolution, Symptoms
+
+### Community 962 - "Community 962"
+Cohesion: 0.33
+Nodes (5): rclone-fetch-verified-phase52.sh script, blocked(), DEFAULT_TIMEOUT_SECONDS, DESTINATION_PREFIX, MAX_ARCHIVE_BYTES
+
+### Community 963 - "Community 963"
+Cohesion: 0.10
+Nodes (12): Any, DuplicateKeyError, _FakeDnsEdgeBackend, _FakeEdgeBackend, _FakeWindowsRouteRunner, _oci_rule(), Raised when a JSON object contains a repeated member name., _reject_duplicate_keys() (+4 more)
+
+### Community 964 - "Community 964"
+Cohesion: 0.29
+Nodes (6): Contrato, Gates, MCP, OCI Admin PM2 runtime, Recovery, Secrets
+
+### Community 965 - "Community 965"
+Cohesion: 0.33
+Nodes (5): Investigation Trail, Research, Results, Spike 002: FreeIPA FQDN SSH Multiplexing, What This Validates
+
+### Community 966 - "Community 966"
+Cohesion: 0.33
+Nodes (5): Investigation Trail, Research, Results, Spike 003: Wayland NFS Versus Owner-Local Development, What This Validates
+
+### Community 967 - "Community 967"
+Cohesion: 0.33
+Nodes (5): Investigation Trail, Research, Results, Spike 004: Plaintext Transport Negative Gate, What This Validates
+
+### Community 968 - "Community 968"
+Cohesion: 0.33
+Nodes (5): Must haves, Quick Plan 260722-1p9, Task 1 — Corrigir readiness e versionar o canal Vault dedicado, Task 2 — Implementar Backup B state-only/copy-only gerenciado, Task 3 — Aplicar o escopo autorizado e repetir o full gate
+
+### Community 969 - "Community 969"
+Cohesion: 0.33
+Nodes (5): Design boundaries, Live facts, Outcome, Quick 260722-1p9 Research, Verification
+
+### Community 970 - "Community 970"
+Cohesion: 0.33
+Nodes (6): Architecture Patterns, Pattern 1: Exact-set scope, never substring discovery, Pattern 2: Deterministic OSS/Pro state machine, Pattern 3: Stable evidence addressing, Pattern 4: Filesystem-and-Git integrity bridge, Pattern 5: Redacted fail-closed findings
+
+### Community 971 - "Community 971"
+Cohesion: 0.33
+Nodes (5): Assertions, Boundary, Commands, Final freshness, Phase 52 Plan 07 — Independent Review
+
+### Community 972 - "Community 972"
+Cohesion: 0.33
+Nodes (5): Mutação e retenção, Phase 52 Plan 07: Live Gate and Closeout Summary, Próximo passo, Resultado, Verificação
+
+### Community 973 - "Community 973"
+Cohesion: 0.33
+Nodes (5): Memory readback, Phase 52 Plan 10 — Metadata-only Closeout, Phase 53 boundary, Result, Safety
+
+### Community 974 - "Community 974"
+Cohesion: 0.33
+Nodes (5): Current decision, Deferred selected-host contract, Phase 52 — Phase 53 Topology Review, Temporal reviews, Windows boundary
+
+### Community 975 - "Community 975"
+Cohesion: 0.33
+Nodes (6): Phase Requirements → Test Map, Required Negative Fixtures, Sampling Rate, Test Framework, Validation Architecture, Wave 0 Gaps
+
+### Community 976 - "Community 976"
+Cohesion: 0.33
+Nodes (5): Next Phase Readiness, Phase 53 Plan 04: Effective edge policy and DNS-last probe harness, Safety boundary, Self-Check: PASSED, Verification
+
+### Community 977 - "Community 977"
+Cohesion: 0.33
+Nodes (5): Current Focus, Eliminated, Evidence, Resolution, Symptoms
+
+### Community 978 - "Community 978"
+Cohesion: 0.67
+Nodes (5): is_known_deployment(), kctl(), scale_all_to_zero(), usage(), canary-control.sh script
+
+### Community 979 - "Community 979"
+Cohesion: 0.33
+Nodes (5): Benchmark GTE x Qwen3-Embedding-0.6B INT8, Correção, Decisão desta medição, Desempenho pareado, Stress longo e disponibilidade
+
+### Community 980 - "Community 980"
+Cohesion: 0.33
+Nodes (5): FixtureRequest, MonkeyPatch, _pin_immutable_phase52_report_observation_window(), Deterministic compatibility fixtures for immutable Phase 52 evidence tests., Keep static report semantics independent from expiry of committed live samples.
+
+### Community 981 - "Community 981"
+Cohesion: 0.33
+Nodes (5): Human gate and access, OCI/DRG inventory, Phase 52-01 preflight evidence, Verified host backups, Wave 0 release
+
+### Community 982 - "Community 982"
+Cohesion: 0.33
+Nodes (5): Human checkpoint, OperationPlan state, Phase 52-02 pre-write checkpoint, Previous gate, Read-only address matrix
+
+### Community 983 - "Community 983"
+Cohesion: 0.60
+Nodes (5): Any, Path, graphify_rebuild(), main(), run_json()
+
+### Community 984 - "Community 984"
+Cohesion: 0.33
+Nodes (5): Current Focus, Eliminated, Evidence, Resolution, Symptoms
+
+### Community 985 - "Community 985"
+Cohesion: 0.33
+Nodes (5): Embedding Runtime Benchmarks, Fleet Identity And Transport, Remote Development Benchmarks, Spike Conventions, Wayland Workspace Boundary
+
+### Community 986 - "Community 986"
+Cohesion: 0.40
+Nodes (5): Applicable ASVS 5.0.0 controls, Assets and trust boundaries, Permission profiles, Security Domain and Threat Model, STRIDE register
+
+### Community 987 - "Community 987"
+Cohesion: 0.40
+Nodes (4): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register, Trust Boundaries
+
+### Community 988 - "Community 988"
+Cohesion: 0.40
+Nodes (4): Approved rclone binding, Approved RustDesk Vault paths, Authorized srv3 control-plane scope, Phase 52-07 Authorization Record
+
+### Community 989 - "Community 989"
+Cohesion: 0.40
+Nodes (4): Current impact decision, Downstream gates, Phase 52 — Horistic Topology Impact Review, Required separations
+
+### Community 990 - "Community 990"
+Cohesion: 0.40
+Nodes (5): Capacity Measurement and Decision Procedure, Current snapshot and minimum remediation before reservations, Decision sequence, Exact gates, Required raw observations
+
+### Community 991 - "Community 991"
+Cohesion: 0.40
+Nodes (5): Code Examples, Exact capacity comparison, Govern CPU-heavy verification/acquisition, Image pin shape, Public fingerprint without public-key output
+
+### Community 992 - "Community 992"
+Cohesion: 0.40
+Nodes (5): Primary authoritative upstream (MEDIUM confidence per research seam), Primary (HIGH confidence for local locked/runtime facts), Secondary (MEDIUM confidence), Sources, Tertiary (LOW confidence)
+
+### Community 993 - "Community 993"
+Cohesion: 0.40
+Nodes (4): Evidência mínima por plano, Fase 54 — contrato de validação automática, Gate entre planos, Runner comum
+
+### Community 994 - "Community 994"
+Cohesion: 0.40
+Nodes (4): Artifacts this phase produces, Multi-Source Coverage Audit, STRIDE Threat Register, Trust Boundaries
+
+### Community 995 - "Community 995"
+Cohesion: 0.40
+Nodes (4): Done condition, Execution waves, Phase 54: Migração integral de rede OCI/DRG do Horistic para 10.31 e renumeração BE3/WireGuard, Roadmap: Horistic OCI/DRG and Edge Readdress
+
+### Community 996 - "Community 996"
+Cohesion: 0.22
+Nodes (14): _current_preflight(), _live_gate_module(), test_auth_missing_and_malformed_receive_uniform_denial(), test_cli_checks_admission_and_provider_before_opening_journal(), test_edge_probes_dispatches_ordered_injected_adapters(), test_live_flag_is_exact_and_required_before_first_mutation(), test_live_flag_preflight_and_rollback_gate_fail_closed(), test_live_gate_rejects_terminal_rollback_journal() (+6 more)
+
+### Community 997 - "Community 997"
+Cohesion: 0.40
+Nodes (4): Boundaries, Requirements, Requirements: Qwen Local AI Canary, Traceability
+
+### Community 998 - "Community 998"
+Cohesion: 0.40
+Nodes (4): Execution waves, Phase 59: Qwen3 Embedding e Rerank Podman para k3s, Roadmap: Qwen Local AI Canary, Success criteria
+
+### Community 1000 - "Community 1000"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1001 - "Community 1001"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1002 - "Community 1002"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1003 - "Community 1003"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1004 - "Community 1004"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1005 - "Community 1005"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1006 - "Community 1006"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1007 - "Community 1007"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, Phase-wide Source Coverage Audit, STRIDE Threat Register — ASVS L1, block on high
+
+### Community 1008 - "Community 1008"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1009 - "Community 1009"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1010 - "Community 1010"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1011 - "Community 1011"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1012 - "Community 1012"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1013 - "Community 1013"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1014 - "Community 1014"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1015 - "Community 1015"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1016 - "Community 1016"
+Cohesion: 0.50
+Nodes (4): Alternatives Considered, Core, Standard Stack, Supporting
+
+### Community 1017 - "Community 1017"
+Cohesion: 0.50
+Nodes (3): Approval continuity, Immutable legacy receipts, Phase 54 reenumeration provenance
+
+### Community 1018 - "Community 1018"
+Cohesion: 0.50
+Nodes (3): A1–A13 status, H1–H6 status, Phase 54 Plan Convergence Review — final independent snapshot
+
+### Community 1019 - "Community 1019"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1020 - "Community 1020"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1021 - "Community 1021"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1022 - "Community 1022"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1023 - "Community 1023"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1024 - "Community 1024"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1025 - "Community 1025"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1026 - "Community 1026"
+Cohesion: 0.50
+Nodes (3): Artifacts this phase produces, STRIDE Threat Register, Trust Boundaries
+
+### Community 1027 - "Community 1027"
+Cohesion: 0.83
+Nodes (3): Path, main(), run()
+
+### Community 1028 - "Community 1028"
+Cohesion: 0.50
+Nodes (3): Current position, Next action, State: Horistic OCI/DRG and Edge Readdress
+
+### Community 1029 - "Community 1029"
+Cohesion: 0.50
+Nodes (3): Current position, Next action, State: Qwen Local AI Canary
+
+### Community 1030 - "Community 1030"
+Cohesion: 0.67
+Nodes (3): main(), parse_args(), Namespace
+
+### Community 1031 - "Community 1031"
+Cohesion: 0.50
+Nodes (3): test_metadata_exact_kv_v2_absence_is_pristine_and_other_stderr_is_ambiguous(), test_metadata_success_requires_explicit_kv_schema_and_fields(), test_successful_empty_metadata_json_is_not_pristine()
+
+### Community 1033 - "Community 1033"
+Cohesion: 0.67
+Nodes (3): Core, Package Legitimacy Audit, Standard Stack
+
+### Community 1034 - "Community 1034"
+Cohesion: 0.67
+Nodes (3): Primary and local authoritative, Reused repository patterns, Sources
+
+### Community 1036 - "Community 1036"
+Cohesion: 0.67
+Nodes (3): Applicable ASVS Categories, Known Threat Patterns for Phase 52, Security Domain
+
+### Community 1037 - "Community 1037"
+Cohesion: 0.67
+Nodes (3): Approved references only, Hydration contract, Vault Boundary
+
+### Community 1038 - "Community 1038"
+Cohesion: 0.67
+Nodes (3): Authoritative state set, Real restore acceptance sequence, Recoverable Placement and Backup/Restore Plan Inputs
+
+### Community 1045 - "Community 1045"
+Cohesion: 0.29
+Nodes (6): Empirical risks, Missing implementation, Official RustDesk OSS cross-check (2026-07-23), Phase 54 Research, Pinned supply and topology, Reusable repository assets
+
+### Community 1056 - "Community 1056"
+Cohesion: 0.50
+Nodes (3): Multi-Source Coverage Audit, Read-only input boundary, Small commit protocol
+
+### Community 1073 - "Community 1073"
+Cohesion: 0.14
+Nodes (13): Deferred Ideas, Established Patterns, Existing Code Insights, Implementation Decisions, Integration Points, Phase 53: Candidate Pin and Live Adapter Closure - Context, Phase Boundary, Placement e autoridade (+5 more)
+
+### Community 1074 - "Community 1074"
+Cohesion: 0.33
+Nodes (5): Final disposition, Gates, Goal-backward result, Independent checks, Plan 53-05B Verification
+
+### Community 1075 - "Community 1075"
+Cohesion: 0.22
+Nodes (8): Current blocker, Live gate invariant, No new dependency, Phase 53 Plan 05B — Research and implementation findings, Provider boundary design, Required state and ordering, Reusable implementation surfaces, Validation approach
+
+### Community 1076 - "Community 1076"
+Cohesion: 0.33
+Nodes (5): Final disposition, Gates, Goal-backward result, Independent checks, Plan 53-05C Verification
+
+### Community 1077 - "Community 1077"
+Cohesion: 0.29
+Nodes (6): Boundary, Converged review result, Deferred and excluded, Existing contracts that remain locked, Locked decisions for this closure, Phase 53 Plan 05B — Production-bound live adapter closure
+
+### Community 1078 - "Community 1078"
+Cohesion: 0.40
+Nodes (4): Findings, Phase 53-05A Research — Candidate Pin and Live Adapter Closure, Sources, Validation Strategy
+
+### Community 1079 - "Community 1079"
+Cohesion: 0.40
+Nodes (4): Implementation, Phase 53 Plan 05A: Candidate and live-runner safety closure, Remaining gate, Verification
+
+### Community 1082 - "Community 1082"
+Cohesion: 0.33
+Nodes (5): Disposition, Gates, Goal-backward result, Independent checks, Phase 54 Plan 01 Verification
+
+### Community 1083 - "Community 1083"
+Cohesion: 0.40
+Nodes (4): Delivered, Plan 53-05B Summary, Remaining blocker, Verification
+
+### Community 1084 - "Community 1084"
+Cohesion: 0.40
+Nodes (4): Evidence routing, Negative controls, Ordering, Plan 53-05C Research
+
+### Community 1085 - "Community 1085"
+Cohesion: 0.33
+Nodes (5): Atomic checkpoint, Follow-up audit — hardening complete, currentness still blocked, Plan 53-05C Summary, Remaining blocker, Verification
+
+### Community 1086 - "Community 1086"
+Cohesion: 0.40
+Nodes (4): Delivered, Phase 54 Plan 01 Summary, Remaining blocker, Verification
+
+### Community 1087 - "Community 1087"
+Cohesion: 0.40
+Nodes (4): Deliberately not executed, Delivered (hermetic only), Phase 54 Plan 02 Summary, Verification
+
+### Community 1088 - "Community 1088"
+Cohesion: 0.40
+Nodes (4): Phase 54 Context, Prerequisite gate, Prohibitions, Scope
+
+### Community 1089 - "Community 1089"
+Cohesion: 0.50
+Nodes (3): Current blockers, Plan 53-05C Context, Scope
+
+### Community 1090 - "Community 1090"
+Cohesion: 0.50
+Nodes (3): Disposition, Goal-backward result, Phase 54 Plan 02 Verification
+
+### Community 1091 - "Community 1091"
+Cohesion: 0.06
+Nodes (75): ARTIFACT_PATHS, assertCanonicalEqual(), assertExactArtifactPath(), assertExactSet(), assertPrivateRegularFile(), atomicReplacePrivateJson(), atomicWritePrivateJson(), buildTargetScope() (+67 more)
+
+### Community 1098 - "Community 1098"
+Cohesion: 0.50
+Nodes (5): Popen, _kill_process_group(), _run_bounded_text_command(), run_live_drill_action(), _validate_live_action_contract()
+
+### Community 1099 - "Community 1099"
+Cohesion: 0.13
+Nodes (22): Any, Path, Protocol, assert_windows_path(), DryRunBackend, load_contracts(), main(), Phase54WindowsBlocked (+14 more)
+
+### Community 1100 - "Community 1100"
+Cohesion: 0.07
+Nodes (27): 10. Isolated backup and restore, 11. Rollback and fallback safety, 12. Full candidate fail-closed chain, 13. Live placement blocker, 14. Bounded write authority, 15. Canonical blocked report, 16. Ledger non-promotion, 17. Phase 53 topology boundary (+19 more)
+
+### Community 1101 - "Community 1101"
+Cohesion: 0.24
+Nodes (19): Any, Path, _bool(), _denial_marker(), evaluate_permission_matrix(), load_permission_contract(), main(), _observation_marker() (+11 more)
+
+### Community 1102 - "Community 1102"
+Cohesion: 0.20
+Nodes (29): Any, Path, _canonical_path(), _current(), _digest_json(), _head(), _load_phase52_report_validator(), _load_phase53_validator() (+21 more)
+
+### Community 1103 - "Community 1103"
+Cohesion: 0.32
+Nodes (18): Any, datetime, Path, _consumer_path(), EvidenceInvalid, _future_utc(), _head(), _iso_utc() (+10 more)
+
+### Community 1104 - "Community 1104"
+Cohesion: 0.17
+Nodes (19): CONTRACT_CHECKS, DOCUMENT_CHECKS, evaluateContract(), EXPECTED_DECISION_IDS, EXPECTED_STAGE_IDS, EXPECTED_SURFACES, extractResolvableReferences(), fail() (+11 more)
+
+### Community 1105 - "Community 1105"
+Cohesion: 0.35
+Nodes (16): Any, Path, _check_direct(), _check_relay(), evaluate_transport_matrix(), load_transport_contract(), main(), _marker() (+8 more)
+
+### Community 1106 - "Community 1106"
+Cohesion: 0.33
+Nodes (15): Any, Path, _canonical_marker_map(), evaluate_checkpoint_matrix(), expected_checkpoints(), _expected_markers(), _fixed_status(), main() (+7 more)
+
+### Community 1107 - "Community 1107"
+Cohesion: 0.14
+Nodes (13): Apache/internal proxy template, Atius SSO - Canonical Lifecycle Matrix, Destination positive matrix, Exact app-local API surface, Exact neutral state, Exact surfaces and ownership, Five-stage lifecycle, Mandatory negative matrix (+5 more)
+
+### Community 1108 - "Community 1108"
+Cohesion: 0.33
+Nodes (5): Final disposition, Gates, Goal-backward result, Independent checks, Plan 54-03 Verification
+
+### Community 1109 - "Community 1109"
+Cohesion: 0.33
+Nodes (5): Final disposition, Gates, Goal-backward result, Independent checks, Plan 54-04 Verification
+
+### Community 1110 - "Community 1110"
+Cohesion: 0.40
+Nodes (4): Atomic checkpoint, Plan 54-03 Summary, Remaining blocker, Verification
+
+### Community 1111 - "Community 1111"
+Cohesion: 0.40
+Nodes (4): Atomic checkpoint, Deliberately not executed, Plan 54-04 Summary, Verification
+
+### Community 1113 - "Community 1113"
+Cohesion: 0.25
+Nodes (31): Any, Path, _artifact_path(), _blocked(), _canonical_admission(), _canonical_predecessor(), _contract_digests(), _digest() (+23 more)
+
+### Community 1114 - "Community 1114"
+Cohesion: 0.20
+Nodes (19): datetime, _bounded_int(), build_capacity_probe_command(), checked_add_bytes(), collect_capacity_sample(), derive_candidate_capacity(), enforce_zero_cleanup(), _is_current() (+11 more)
+
+### Community 1115 - "Community 1115"
+Cohesion: 0.09
+Nodes (95): Any, ArgumentParser, Path, _apply_capacity_chain_to_placement(), approved_vault_references(), _backup_report_check(), build_live_drill_command(), build_parser() (+87 more)
+
+### Community 1116 - "Community 1116"
+Cohesion: 0.26
+Nodes (12): cleanEnvironment(), exporterScenario(), failureScenario(), journalScenario(), LIVE_ADAPTER, main(), REPO_ROOT, run() (+4 more)
+
+### Community 1117 - "Community 1117"
+Cohesion: 0.13
+Nodes (41): keycloak-admin-readonly-live.sh script, apply_exporter_transform(), assert_client_absent(), assert_exact_client_and_roles(), assert_profile_hydration_and_inventory(), assert_recovery_metadata(), assert_rollback_readback(), assert_vault_metadata_absent() (+33 more)
+
+### Community 1118 - "Community 1118"
+Cohesion: 0.42
+Nodes (19): apply_transform(), atomic_replace(), emit(), expected_owner(), fsync_directory(), parse_args(), preview(), read_backup() (+11 more)
+
+### Community 1119 - "Community 1119"
+Cohesion: 0.22
+Nodes (17): exact_client_projection(), extract_json_field(), load_secret(), parse_args(), parse_exports(), readonly_client_readback(), request_json(), scan_artifacts() (+9 more)
+
+### Community 1120 - "Community 1120"
+Cohesion: 0.40
+Nodes (9): Any, Path, _blocked(), closeout(), main(), _parity_current(), _parity_path(), Return a closeout verdict without writing any artifact. (+1 more)
+
+### Community 1121 - "Community 1121"
+Cohesion: 0.22
+Nodes (8): Approval, Direct metadata and chronology, Evidence secret scan and stop conditions, Exact target and source contract, Governed apply, Human authorization and read-only preflight, Keycloak Admin Read-only Provisioning, Offline candidate
+
+### Community 1122 - "Community 1122"
+Cohesion: 0.50
+Nodes (3): Artifacts, Multi-Source Coverage Audit, Small commit protocol
+
+### Community 1123 - "Community 1123"
+Cohesion: 0.54
+Nodes (7): main(), operation_dir(), read_payload(), root_path(), verified_harness_root(), write_exclusive(), Path
+
+### Community 1125 - "Community 1125"
+Cohesion: 0.33
+Nodes (4): landscape(), Integra Omni ao Landscape self-hosted para inventario e execucao em lote., Gerencia scripts versionados Omni/Landscape., scripts_group()
+
+### Community 1127 - "Community 1127"
+Cohesion: 0.40
+Nodes (4): Extrai um scalar simples de YAML sem depender de PyYAML., Retorna alvos SSH em ordem: inventario, VPN, publico ou publico primeiro via env, _ssh_candidates(), _yaml_scalar()
+
+### Community 1128 - "Community 1128"
+Cohesion: 0.19
+Nodes (9): Any, _call(), collect_security_report(), _now(), Read-only Ubuntu Pro security collectors for Omni Fleet., Collect local Pro security status and CVE view without applying fixes., Runner, SecurityRunner (+1 more)
+
 ## Knowledge Gaps
-- **5718 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+5713 more)
+- **7136 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+7131 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **115 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **149 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `datetime` connect `Community 817` to `Community 136`, `Community 137`, `Community 138`, `Community 525`, `Community 14`, `Community 536`, `Community 538`, `Community 28`, `Community 29`, `Community 800`, `Community 39`, `Community 811`, `Community 818`, `Community 825`, `Community 574`, `Community 66`, `Community 579`, `Community 581`, `Community 71`, `Community 75`, `Community 111`, `Community 240`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `Communities (856 total, 115 thin omitted)` connect `Community 0` to `Community 155`?**
-  _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `apply_omni_self_update()` connect `Community 538` to `Community 296`, `Community 525`?**
-  _High betweenness centrality (0.002) - this node is a cross-community bridge._
+- **Why does `release_update()` connect `Community 2` to `Community 240`, `Community 17`, `Community 28`, `Community 22`?**
+  _High betweenness centrality (0.012) - this node is a cross-community bridge._
+- **Why does `DuplicateKeyError` connect `Community 963` to `Community 869`, `Community 22`?**
+  _High betweenness centrality (0.008) - this node is a cross-community bridge._
+- **Why does `Communities (1128 total, 148 thin omitted)` connect `Community 0` to `Community 155`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Are the 90 inferred relationships involving `ValueError` (e.g. with `update_manual_section()` and `parse_cpu_time()`) actually correct?**
+  _`ValueError` has 90 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _6080 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _7622 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.0027662517289073307 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.002103049421661409 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._
-- **Should `Community 2` be split into smaller, more focused modules?**
-  _Cohesion score 0.04477611940298507 - nodes in this community are weakly interconnected._
