@@ -1588,7 +1588,7 @@ def test_public_ip_54_02_normalized_baseline_is_exact(
 def _dns_baseline_normalized(evidence_sha: str) -> dict[str, object]:
     authority = {
         "server": "10.89.53.10",
-        "a_aa": False,
+        "a_aa": True,
         "ptr_aa": False,
         "soa_aa": True,
         "ns_aa": True,

@@ -664,7 +664,7 @@ def _normalized_probe_valid(
                 and normalized.get("expected_reverse") == "21.1.21.10.in-addr.arpa"
                 and isinstance(authority, dict)
                 and authority.get("server") == "10.89.53.10"
-                and authority.get("a_aa") is False
+                and authority.get("a_aa") is True
                 and authority.get("ptr_aa") is False
                 and authority.get("soa_aa") is True
                 and authority.get("ns_aa") is True
