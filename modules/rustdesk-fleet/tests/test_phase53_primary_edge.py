@@ -763,6 +763,66 @@ def test_edge_contract_schema_and_dns_last_order() -> None:
     _validate_edge(_load_strict(EDGE_CONTRACT))
 
 
+def test_d06_cross_host_contract_and_provider_roles_are_exact() -> None:
+    edge = _load_strict(EDGE_CONTRACT)
+    provider = _load_strict(PROVIDER_CONTRACT)
+
+    assert edge["public_edge"] == {
+        "host": "atius-srv-1",
+        "public_ipv4": "137.131.140.20",
+        "public_vnic_private_ipv4": "10.0.0.238",
+        "route_vnic_private_ipv4": "10.11.1.11",
+        "route_interface": "enp1s0",
+    }
+    assert edge["backend"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.21.1.21",
+        "native_ingress_source_ipv4": "10.11.1.11",
+        "native_listeners": {
+            "tcp": [21115, 21116, 21117],
+            "udp": [21116],
+        },
+    }
+    assert provider["execution_targets"] == {
+        "public_edge": {
+            "host": "atius-srv-1",
+            "private_ipv4": "10.0.0.238",
+            "capabilities": ["nft-dnat", "nft-forward", "nft-snat", "oci-edge-ingress"],
+        },
+        "backend": {
+            "host": "horistic-srv",
+            "private_ipv4": "10.21.1.21",
+            "capabilities": ["rustdesk-server", "native-ingress-source-restriction"],
+        },
+    }
+
+
+def test_d06_nft_and_boot_unit_are_transactional_cross_host_policy() -> None:
+    nft = EDGE_NFT_POLICY.read_text(encoding="utf-8")
+    for required in (
+        "type nat hook prerouting priority dstnat; policy accept;",
+        "ct status dnat",
+        "ct original proto-dst 34099",
+        "ct original proto-dst 34100",
+        "ct original proto-dst 34101",
+        "dnat ip to 10.21.1.21:21115",
+        "dnat ip to 10.21.1.21:21116",
+        "dnat ip to 10.21.1.21:21117",
+        "type filter hook forward priority filter; policy accept;",
+        "type nat hook postrouting priority srcnat; policy accept;",
+        "snat ip to 10.11.1.11",
+    ):
+        assert required in nft
+    assert "redirect to" not in nft
+
+    service = _load_unit(EDGE_BOOT_SERVICE)["Service"]
+    assert service["ExecStart"].startswith(
+        "/usr/local/libexec/apply-phase53-edge.py --apply-host-policy-transaction "
+    )
+    assert "/usr/sbin/nft --file" not in service["ExecStart"]
+    assert "ExecStartPost" not in service
+
+
 def test_translated_edge_contract_is_single_consumer_authority(tmp_path: Path) -> None:
     expected = _load_strict(EDGE_CONTRACT)
     probe = _edge_probe_module()
