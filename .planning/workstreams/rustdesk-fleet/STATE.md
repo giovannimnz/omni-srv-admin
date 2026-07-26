@@ -4,17 +4,17 @@ milestone: v1.9
 milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: primary-relay-and-public-edge
-status: blocked
-stopped_at: Phase 53 Plan 05D2C complete; 53-05E read-only OperationPlan and owner-hash checkpoint are next
-last_updated: "2026-07-26T03:57:00-03:00"
+status: in_progress
+stopped_at: Phase 53 Plan 05D2C complete; 53-05D2D authority-producer gap closure and superseding source seal are next
+last_updated: "2026-07-26T04:50:59-03:00"
 last_activity: 2026-07-26
-last_activity_desc: Sealed exact six-path Phase 53 execution source at 3ea1e581e with a 33-path Git-object aggregate; current and legacy lanes plus post-seal ancestry/binding gates passed without live mutation
+last_activity_desc: Replanned 05D2D as authority-producer plus strict-validator closure/current 34-path seal and inserted 05D2H recoverable stale-output housekeeping; no live mutation
 progress:
   total_phases: 8
   completed_phases: 2
-  total_plans: 29
+  total_plans: 31
   completed_plans: 26
-  percent: 90
+  percent: 84
 ---
 
 # Project State
@@ -24,22 +24,22 @@ progress:
 See: `.planning/PROJECT.md` (updated 2026-07-19)
 
 **Core value:** Todos os cinco computadores autorizados podem acessar e controlar os demais por RustDesk self-hosted, com segurança, rollback e evidência completa, sem degradar os acessos existentes.
-**Current focus:** Phase 53 — primary-relay-and-public-edge (`05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11) → 05E(w12) → 05F(w13) → 06(w14)`; Phase 54 remains blocked)
+**Current focus:** Phase 53 — primary-relay-and-public-edge (`05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11) → 05D2D(w12) → 05D2H(w13) → 05E(w14) → 05F(w15) → 06(w16)`; Phase 54 remains blocked)
 
 ## Current Position
 
 Phase: 53 (primary-relay-and-public-edge) — IN PROGRESS
-Plan: 05E of the serial remainder
-Status: BLOCKED/IN PROGRESS before authority: 05D2C is sealed; 05E may generate only a new read-only OperationPlan and must stop at `AWAITING_OWNER_HASH_APPROVAL`
-Last activity: 2026-07-26 — root passed ledger `10`, selector `14`, current `902 passed/9 deselected/1 xfailed`, legacy exact-nine and post-seal 33-path Git-object gates; no provider, host or infrastructure mutation occurred
+Plan: 05D2D of the serial remainder
+Status: IN PROGRESS before authority: 05D2C is historically sealed; 05D2D must close producer/strict-validator gaps and reseal, then 05D2H must recoverably quarantine stale canonical outputs before authority artifacts
+Last activity: 2026-07-26 — 05E audit reproduced mappingproxy rc1, zero artifact production, incomplete read-only bundle and empty selector; no provider, host or infrastructure mutation occurred
 
-Milestone progress: [█████████░] 90% — 26 of 29 currently planned units complete; Phase 53 is 13/16 and 53-05E is next
+Milestone progress: [████████░░] 84% — 26 of 31 currently planned units complete; Phase 53 is 13/18 and 53-05D2D is next
 
 ## Performance Metrics
 
 **Velocity:**
 
-- Total plans completed: 17
+- Total plans completed: 26
 - Average duration: not recomputed because Plan 52-07 spanned sessions
 - Total execution time: 65min measured for Plans 52-01–06; Plan 52-07 cross-session
 
@@ -86,22 +86,22 @@ Milestone progress: [█████████░] 90% — 26 of 29 currently 
 - [Phase 52]: Restore cleanup is allowed only for a marked disposable target after restore, no-listener and stopped/disabled checks pass; verified backups are retained on failure.
 - [Phase 52]: Horistic uses the reviewed restricted Vault dispatcher and managed GDrive backup path; no alternate secret or backup path was improvised.
 - [Phase 52]: The canonical report has exactly eleven PASS checks; SCP-04, SRV-01, SRV-05 and SRV-07 are promoted and Phase 53 topology is READY.
-- [Phase 53]: Phase 53 live mutation authorization is bound to the exact flag, current Git HEAD, current contract digests, pre-state, unambiguous ownership and rollback readiness. — Prevents stale source or persisted verdict text from authorizing infrastructure changes.
+- [Phase 53]: Live mutation authority binds the exact flag and owner decision to the immutable 05D2D execution-source ancestor plus exact 34-blob equality/current-clean proof, current prestates and rollback readiness. — Prevents descendant planning/evidence tips or stored verdict text from redefining executable source.
 - [Phase 53]: The server runtime is rootless and digest-pinned; identity is tmpfs-only, linger is conditional, and Plan 02 cannot open public ingress or install a client.
 - [Phase 53]: The ATIUS operations API is loopback-only, backend-authenticated and observational; its HTTPS Apache candidate remains unapplied until Plan 05.
 - [Phase 52]: Post-live closeout is complete, metadata-only and non-authorizing; retained historical 11/11 evidence, current projection inputs and segregated JUnit lanes are bound without replay.
-- [Phase 53]: The remaining chain is fixed as `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11) → 05E(w12 checkpoint) → 05F(w13 live) → 06(w14 read-only)`; topology, semantics, transaction/binding and source sealing are separate gates.
+- [Phase 53]: The remaining chain is fixed as `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11 historical seal) → 05D2D(w12 producer/validator closure/current seal) → 05D2H(w13 recoverable housekeeping) → 05E(w14 checkpoint) → 05F(w15 live) → 06(w16 read-only)`; topology, semantics, source, housekeeping, authority, transaction and closeout are separate gates.
 - [Phase 53]: Current topology authority is `atius-srv-1` as public edge/forwarder for reserved `137.131.140.20` on `10.0.0.238`, with `horistic-srv` backend at `10.21.1.21`; the future `10.31.1.31` handoff remains non-executable.
 - [Phase 53]: The edge uses distinct public and route identities: `10.0.0.238` owns the reserved public IP, while the DRG path and deterministic SNAT/return identity are `10.11.1.11`; the 05D2T receipt proves this topology but authorizes no live action.
 - [Phase 53]: SCP-01 has one final owner, Phase 55, and remains pending until all five in-scope clients are installed; Phase 54 is a partial prerequisite, not a second owner.
-- [Phase 53]: Final execution source is sealed at `3ea1e581e62b8f0122ba69d11ebd86bacd61fa70` over an exact 33-path Git-object aggregate `28fecbe468b5b49b91fd56af7f1fe40ce4f06aefb724d1d965a37304fb089fe1`; its direct summary-only descendant is non-authorizing.
+- [Phase 53]: Historical predecessor source is sealed at `3ea1e581e62b8f0122ba69d11ebd86bacd61fa70` over 33 Git-object paths; it is non-authorizing after the 05E audit exposed the missing authority producer and stale strict validator. 05D2D must create the current 34-path seal before any OperationPlan.
 - [Phase 54]: Plan 54-01 contract/fixture slice is complete with 15 governed tests; its initial evidence is BLOCKED/PENDING and no client mutation is authorized until Phase 53 independently passes.
 
 ### Pending Todos
 
-- Execute 53-05E read-only against `execution_source_commit=3ea1e581e62b8f0122ba69d11ebd86bacd61fa70`, generate a brand-new OperationPlan from current topology/prestate, then stop at `AWAITING_OWNER_HASH_APPROVAL`; 05F remains non-executable without Giovanni Muniz's exact hash/expiry approval.
+- Execute 53-05D2D to implement the explicit read-only authority producer, current strict validator and superseding 34-path source seal; execute 53-05D2H recoverable housekeeping next; only then may 53-05E generate a brand-new OperationPlan and stop at `AWAITING_OWNER_HASH_APPROVAL`.
 - Phase 54 has five serial plans; Plan 54-01 is contract-complete, Plans 54-02, 54-03-01 and 54-04-01 have code-only safety slices (`code-only-blocked`), and Plan 54-03-02/54-04-02/Plans 54-05 remain non-executable until Phase 53 has an independent current PASS.
-- [Phase 53]: Preserve the strict serial chain `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11) → 05E(w12 checkpoint) → 05F(w13 live) → 06(w14 read-only)`; 06 depends only on 05F and remains blocked until independent 05F `status: passed`.
+- [Phase 53]: Preserve the strict serial chain `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11) → 05D2D(w12) → 05D2H(w13) → 05E(w14 checkpoint) → 05F(w15 live) → 06(w16 read-only)`; 06 depends only on 05F and remains blocked until independent 05F `status: passed`.
 
 ### Blockers/Concerns
 
@@ -111,5 +111,5 @@ Milestone progress: [█████████░] 90% — 26 of 29 currently 
 ## Session Continuity
 
 Last session: 2026-07-26T06:57:00Z
-Stopped at: 53-05D2C complete; 53-05E read-only OperationPlan is next and no live mutation is authorized
+Stopped at: 53-05D2C complete; 53-05D2D authority-producer closure/current source seal is next and no live mutation is authorized
 Resume file: None
