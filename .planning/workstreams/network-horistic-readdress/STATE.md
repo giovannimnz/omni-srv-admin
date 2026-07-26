@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 54
 current_phase_name: Migração integral de rede OCI/DRG do Horistic para 10.31
 status: blocked
-stopped_at: Blocked at 54-02 fail-closed backup gate
-last_updated: "2026-07-24T14:18:28.931Z"
-last_activity: 2026-07-24
-last_activity_desc: Plan 54-02 emitiu gate BLOCK por baseline e backups incompletos
+stopped_at: Blocked pending independent plan review and 54-02 backup-only approval
+last_updated: "2026-07-26T01:25:05-03:00"
+last_activity: 2026-07-26
+last_activity_desc: Phase 54 contract revised; independent review gate and backup-only approval are required
 progress:
   total_phases: 1
   completed_phases: 0
@@ -23,26 +23,28 @@ progress:
 
 Phase: 54 (Migração integral de rede OCI/DRG do Horistic para 10.31) — IN PROGRESS
 Plan: 2 of 10
-Status: Blocked at fail-closed backup gate
-Last activity: 2026-07-24 — Plan 54-02 emitiu gate BLOCK por baseline e backups incompletos
+Status: Blocked pending independent plan review and backup-only approval
+Last activity: 2026-07-26 — Phase 54 contract revised; no new live write was authorized
 
 Progress: [█░░░░░░░░░] 10%
 
 - Phase 54 foi replanejada a partir de live evidence de 2026-07-24; nenhum OCI write está autorizado.
-- `peering.address_plan` ainda retorna `10.21.*`; Plan 03 bloqueia qualquer write até o owner externo `oci-admin` publicar receipt/commit validado contendo literalmente `10.31.0.0/16`, `10.31.1.0/24`, `10.31.1.31` e nenhum target `10.21`.
+- Os builder receipts de produção `fa604ea`/`700947` já retornam literalmente `10.31.0.0/16`, `10.31.1.0/24`, `10.31.1.31` e zero target `10.21`; Plan 03 os revalida read-only por commit/output hash, sem converter evidence em write authorization.
 - Approvals Phase 52 são provenance histórica e só podem ser referenciados depois de Wave 0 provar mesmo scope, hashes, expiry e ausência de drift; não autorizam writes novos.
 - Baseline: S23 `192.168.1.10` / `10.100.100.10` permanece; S20 `192.168.1.9` / `10.100.100.9` vai para `.11`; Horistic WG `.4` vai para `.31`.
-- Review convergence atingiu `current_high=0` e `current_actionable=0`; execução começa obrigatoriamente em 54-01.
+- O review anterior é audit trail histórico, não runtime authorization. A retomada exige 54-01 fresh e commit atômico antes de 54-02.
 
 ## Next action
 
-Completar, sob autorização backup-only, as regras direcionais OCI, SOA/NS interno, readback/export nativo BE3, backup OCI fresh e os restore drills SRV1/SRV3. Depois reemitir 54-02 com predecessor fresh; nenhuma write de rede ou apply está autorizada.
+Materializar e commit-pinar como evidence preexistente os receipts individuais exatos `54-02-SRV1-BACKUP-RECEIPT.json`, `54-02-SRV3-BACKUP-RECEIPT.json` e `54-02-BE3-BACKUP-RECEIPT.json`, todos schema `phase54.backup-receipt.v1`; então reexecutar 54-01 fresh, emitir evidence/gate finais e criar commit atômico antes de iniciar 54-02. O 54-02 deve primeiro executar o `assert-gate` completo do predecessor commit-pinned, consumir e validar os três receipts sem criá-los ou modificá-los, e obter token literal para o `54-02-BACKUP-OPERATION-PLAN.json` somente para writes ainda pendentes. Nenhuma write de rede ou migration apply está autorizada.
 
 ## Blockers
 
 - 54-02: security list ingress/egress, SOA/NS interno e BE3 live/native export ficaram incompletos.
 - 54-02: backup OCI fresh é uma write OCI e estava explicitamente proibido nesta execução.
-- 54-02: backups nativos/restores completos de SRV1 e SRV3 não foram comprovados; apenas o backup Horistic passou.
+- 54-02: receipts SRV1/SRV3 já criados precisam ser validados localmente e classificados `pre-existing-evidence`; qualquer refresh exige operação nova explícita e aprovada.
+- Revision Gate: concluído no PLAN contract; o review audit trail não é runtime authorization.
+- Backup-only authorization: `54-02-BACKUP-OPERATION-PLAN.json` e `54-02-APPROVAL.json` ainda não existem.
 
 ## Performance Metrics
 
@@ -58,5 +60,5 @@ Completar, sob autorização backup-only, as regras direcionais OCI, SOA/NS inte
 ## Session
 
 **Last session:** 2026-07-24T14:18:28.873Z
-**Stopped at:** Blocked at 54-02 fail-closed backup gate
+**Stopped at:** Blocked pending independent review and 54-02 backup-only approval
 **Resume file:** 54-02-PLAN.md

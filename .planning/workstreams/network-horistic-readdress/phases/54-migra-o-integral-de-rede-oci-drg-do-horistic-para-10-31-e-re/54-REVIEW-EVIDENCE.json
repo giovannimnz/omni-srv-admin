@@ -1,0 +1,71 @@
+{
+  "schema": "phase54.review-evidence.v1",
+  "phase": 54,
+  "status": "PASS",
+  "planner_identity": "/root/phase54_current_contract_check",
+  "reviewer_identity": "/root/phase54_final_review_gate",
+  "started_at": "2026-07-26T09:07:12Z",
+  "finished_at": "2026-07-26T09:07:12Z",
+  "expires_at": "2026-07-26T09:21:12Z",
+  "scope": [
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-CONTEXT.md",
+      "sha256": "2c305c828883911728984f18d414ae3c0821460222175eb7dbc5e825b48113aa"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-RESEARCH.md",
+      "sha256": "d8f4cd950a6110b7c73a54c9566b410a720ea47c2e672788f85a8b4b2570887d"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-VALIDATION.md",
+      "sha256": "ace6eb8ac1166a09d0907e79bbe2eb2d66d15e8c4c9b3e329c0cebe14723c118"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-VALIDATION-CONTRACT.md",
+      "sha256": "8aa646d6ec29dcd58b83782b2442cda8b8928d76a574c03f90251fd75c13bd60"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-01-PLAN.md",
+      "sha256": "5272245a795221297f67909fcb29b2de054e8a778d9f0ba9012655033d285474"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-02-PLAN.md",
+      "sha256": "62e443e863e6f60e55a181e67c068c5e13b852d000542b2f95bd91d3ee79ef83"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-03-PLAN.md",
+      "sha256": "9b33e3e50e844c736db68c3dd5520981499edf99950bdd18c6c673884fbc8067"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-04-PLAN.md",
+      "sha256": "dd31352550d261f0f1ea7211378d55120e5ca62867230e41c30c93f8a7136d03"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-05-PLAN.md",
+      "sha256": "af03476a5e3aa7c66cfcad5c79dde1cff6679b8c56786253b960f7de1da1314f"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-06-PLAN.md",
+      "sha256": "88a108025729a1ab7c4fbab19aec52a7864621bba400e3dcc96796b96bf49749"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-07-PLAN.md",
+      "sha256": "4e8adec83a92f3f07c1addbb9da866a07d23e39ec9ff3eb3d84f261177b4a31e"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-08-PLAN.md",
+      "sha256": "e8169a16ec6b6240ea5946e923906f95a82e24344213d88d94fb8f1b5899156e"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-09-PLAN.md",
+      "sha256": "0558f8a11b856e7886eed0ebeb760b989c5bdcb08f6b8e9945a188dd60c04efb"
+    },
+    {
+      "path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-10-PLAN.md",
+      "sha256": "a88c67e257dbfbd78fc5bb53ff0f15311b9b2ee28f5c9d7953be53fce8a40129"
+    }
+  ],
+  "blockers": [],
+  "warnings": [],
+  "redacted": true
+}

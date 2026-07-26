@@ -9,7 +9,7 @@
 - [ ] **NET-03**: Preservar `163.176.232.119` pelo `public_ip_ocid`, relendo binding/status até `RESERVED/ASSIGNED`; nunca release/delete/recreate, nunca retry cego em estado assíncrono desconhecido.
 - [ ] **NET-04**: Migrar integralmente VCN/subnet/VNIC/private IP, host, K3s e serviços; decidir VCN atual versus VCN substituta por readback live e não concluir com qualquer residual `10.21.*`.
 - [ ] **NET-05**: Provar DRG, route tables, security lists/NSGs e firewalls em ida e retorno entre os quatro servidores ATIUS e Horistic no novo CIDR.
-- [x] **NET-06**: Migrar Horistic WireGuard `10.100.100.4 -> 10.100.100.31`; preservar S23 em LAN `192.168.1.10` e WireGuard `10.100.100.10`; não usar `.9` como rollback do S23.
+- [x] **NET-06**: Migrar Horistic WireGuard `10.100.100.4 -> 10.100.100.31`; preservar S23 estritamente read-only em LAN `192.168.1.10`, WireGuard `10.100.100.10` e MAC `64:1B:2F:C2:DC:A3`; não importar/ativar perfil, alterar reserva/peer nem usar `.9` como rollback do S23.
 - [x] **NET-07**: Migrar S20 MAC `30:AB:6A:3C:96:D1` de LAN/WireGuard `192.168.1.9` / `10.100.100.9` para `.11`; classificar lease antigo `192.168.1.62` e capturar readback/screenshot BE3.
 - [ ] **NET-08**: Migrar DNS A/PTR/FQDN e resolvers preservando FreeIPA como autoridade e validar ICMP/TCP, SSH privado seguido obrigatoriamente pelo fallback público Horistic, K3s, Apache/HTTPS, TEI, reranker, PgBouncer, Vault, MCPs, Router e monitoring.
 - [ ] **NET-09**: Convergir `omni-srv-admin`, `oci-admin`, `home-proxy`, inventários, AGENTS/runbooks, Obsidian, GBrain e Graphify sem segredos e sem editar backend externo no repo errado.

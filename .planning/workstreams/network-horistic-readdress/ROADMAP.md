@@ -10,7 +10,7 @@
 **Goal:** Migrar integralmente o `horistic-srv` de `10.21.0.0/16` / `10.21.1.0/24` / `10.21.1.21` para `10.31.0.0/16` / `10.31.1.0/24` / `10.31.1.31`, preservando por OCID a reserva pública `163.176.232.119`; convergir VCN/subnet/DRG/routes/VNIC/private IP, DNS A/PTR/FQDN/resolvers, host/K3s/serviços e documentação; migrar Horistic WireGuard `.4 -> .31`; preservar S23 em LAN `192.168.1.10` e WireGuard `10.100.100.10`; migrar S20 de LAN/WireGuard `.9 -> .11`.
 **Requirements:** NET-01..NET-11
 **Depends on:** Phase 45 como baseline DRG; Phase 47.1 como release gate DNS ou transação DNS autocontida que prove autoridade/rollback
-**Status:** In Progress; 54-01 PASS/hash-valid; nenhum OCI write autorizado antes dos gates posteriores
+**Status:** Blocked; 54-01 PASS histórico precisa ser reemitido fresh após drift semântico, 54-02 BLOCK; reexecução exige `54-REVIEW-GATE.json` independente e approval literal para pending backup writes
 **Risk:** VERY HIGH
 **Plans:** 1/10 plans executed
 
@@ -30,15 +30,15 @@
 Todas as waves são sequenciais. Cada plano termina com gate automático fail-closed; somente `PASS` hash-valid e fresh libera o próximo.
 
 - [x] `54-01-PLAN.md` — Corrigir runtime do workstream e endurecer runner/testes fail-closed.
-- [ ] `54-02-PLAN.md` — Recoletar inventário live, backups, rollback e baseline público/DNS/edge.
+- [ ] `54-02-PLAN.md` — Validar review independente, recoletar inventário live e executar backups/restore somente sob OperationPlan backup-only aprovado.
 - [ ] `54-03-PLAN.md` — Bloquear writes até o builder `oci-admin` publicar address plan 10.31 e decidir VCN atual versus substituta.
 - [ ] `54-04-PLAN.md` — Aplicar VCN/subnet/DRG/routes/security do target com ida/retorno comprovados.
 - [ ] `54-05-PLAN.md` — Anexar VNIC/private IP, configurar dual-path host/K3s e reassociar a reserva pública sem release.
 - [ ] `54-06-PLAN.md` — Migrar DNS A/PTR/FQDN/resolvers e serviços sob release gate ou transação autocontida.
 - [ ] `54-07-PLAN.md` — Atualizar BE3 e peers hub para Horistic `.31` e S20 `.11`, preservando S23 `.10`.
-- [ ] `54-08-PLAN.md` — Executar imports/receipts de dispositivo e provar handshakes/fallbacks dual-path.
-- [ ] `54-09-PLAN.md` — Executar duas leituras estáveis e aprovar OperationPlan destrutivo de retirement por hash.
-- [ ] `54-10-PLAN.md` — Aposentar todo 10.21, validar integralmente e fechar docs/Graphify/Obsidian/GBrain.
+- [ ] `54-08-PLAN.md` — Executar imports/receipts e retirement S20 `.9` sob OperationPlan staged próprio, provando handshakes/fallbacks e S23 read-only.
+- [ ] `54-09-PLAN.md` — Executar duas leituras estáveis, aprovar e aplicar no mesmo plan o OperationPlan destrutivo de retirement por hash.
+- [ ] `54-10-PLAN.md` — Validar read-only zero 10.21 e fechar docs/Graphify/Obsidian/GBrain sem autoridade de write.
 
 ### Done condition
 

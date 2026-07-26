@@ -1,10 +1,35 @@
 # Phase 54 Plan Convergence Review
 
 **Cycle:** 2026-07-24 replan
-**Status:** CONVERGED
-**Scope:** `54-CONTEXT.md`, `54-RESEARCH.md`, `54-VALIDATION*.md`, `54-PROVENANCE.md`, workstream config/ROADMAP/REQUIREMENTS/STATE and `54-01..54-10-PLAN.md`
+**Status:** PENDING INDEPENDENT RE-REVIEW
+**Scope:** exactly `54-CONTEXT.md`, `54-RESEARCH.md`, `54-VALIDATION.md`, `54-VALIDATION-CONTRACT.md` and `54-01..54-10-PLAN.md` (14 files)
 
-Independent plan/safety reviews converged after three correction cycles. Execution may start at 54-01; live writes remain blocked by each plan's own gate and typed approval.
+Os ciclos abaixo são histórico de revisão e não autorizam writes. A conclusão atual do Revision Gate precisa ser materializada pelo reviewer independente em `54-REVIEW-EVIDENCE.json` e `54-REVIEW-GATE.json`; esses artefatos são somente precondition evidence e nunca substituem approval de operação. Como os contratos mudaram, a retomada começa pela re-revisão independente do escopo exato atual, depois reexecuta 54-01 fresh e cria commit atômico; somente então 54-02 consome o review gate, o predecessor commit-pinned e a approval backup-only própria.
+
+## Current independent review gate
+
+- Required artifacts: `54-REVIEW-EVIDENCE.json` with schema `phase54.review-evidence.v1` and `54-REVIEW-GATE.json` with schema `phase54.review-gate.v1`.
+- Evidence has exact top-level keys `schema`, `phase`, `status`, `planner_identity`, `reviewer_identity`, `started_at`, `finished_at`, `expires_at`, `scope`, `blockers`, `warnings`, `redacted`. `scope` has exactly 14 ordered `{path, sha256}` entries and no extra/unknown path.
+- Gate has exact top-level keys `schema`, `phase`, `status`, `planner_identity`, `reviewer_identity`, `started_at`, `finished_at`, `expires_at`, `evidence_path`, `evidence_sha256`, `scope_sha256`, `blockers`, `warnings`, `redacted`.
+- Both artifacts require `status=PASS`, `blockers=[]`, `warnings=[]`, distinct non-empty planner/reviewer identities, valid ordered timestamps, unexpired freshness and `redacted=true`.
+- `evidence_path` resolves to the exact colocated `54-REVIEW-EVIDENCE.json`; `evidence_sha256` and `scope_sha256` are recomputed. Every scoped file hash is recomputed from the current repo.
+- `python3 modules/fleet-control-plane/scripts/phase54_network_gate.py assert-review-gate --evidence <54-REVIEW-EVIDENCE.json> --gate <54-REVIEW-GATE.json>` is fail-closed. Drift, malformed/extra fields, stale/expired timestamps, self-review, findings, missing or extra scope and any non-`PASS` state block 54-02.
+- The current gate remains absent until the independent re-review runs; prose or unchecked counts never satisfy it.
+
+## Current revision incorporation (pending independent verdict)
+
+- D-08/HIGH #7 now uses runner-owned `ProbeContext`, immutable typed registry and `check_inputs` only; local 54-01 probes execute real fixed commands, physical owner adapters cover 54-02..10, and stage contracts are derived by the runner rather than asserted by adapters.
+- Plan 54-01 is rerun fresh and atomically committed before 54-02; every predecessor/ancestor, including 54-01→54-02, uses verified commit/blob pins.
+- Operation/approval/apply/rollback schemas and exact paths are validated by content; invented rollback hash/receipt-state claims block.
+- 54-10 uses a direct exact five-artifact 54-05 cutover anchor plus live binding digest.
+- Portable `scripts/graphify-sync.sh` owns Linux node versus node.exe+wslpath and guarded foreground update.
+- Nyquist commands use `/var/tmp`; the final runner suite passed 75 tests in 12.59 seconds and the physical adapter suite passed 8 tests in 2.43 seconds.
+- A live read-only 54-02 capability smoke passed OCI MCP, strict srv1/srv3 SSH fallback, DNS owner probes and BE3 commit/CLI pin without mutation or secret output.
+- Public-IP validation is stage-aware: 54-02 accepts the old baseline binding, while 54-05/10 require target `10.31.1.31` and private-IP/VNIC/subnet/VCN IDs bound to the approved 54-05 OperationPlan and readback.
+- Pre-existing SRV1/SRV3 backups have exact local receipt names/schema and cannot become pending writes or retroactive approval.
+- 54-08 sync requires receipt-level absence of both S20 `.9` peer and AllowedIP; `decision=defer` blocks completion.
+- 54-10 completes knowledge writes in preflight, freezes their hashes, and the separately fresh sync blocks every mutation, write receipt/operation or apply indicator.
+- Plans 54-02, 54-08 and 54-09 each contain three tasks; approval checkpoints and literal tokens remain.
 
 ## HIGH findings the replan must close
 
@@ -36,7 +61,7 @@ Independent plan/safety reviews converged after three correction cycles. Executi
 | 2 | safety | 5 | 7 | Fixed edge approvals, S20 dual-path, DNS evidence and public-IP UNKNOWN |
 | 3 | plan checker | 1 | 0 | Added separate immutable approval receipts |
 | 3 | safety | 2 | 3 | Fixed terminal ordering, stages and Graphify receipt contract |
-| 4 | plan checker | 0 | 1 | Added missing 54-07 gate ownership |
-| 4 | safety | 0 | 0 | PASS |
+| 4 | plan checker | 0 | 1 | Historical: added missing 54-07 gate ownership |
+| 4 | safety | 0 | 0 | Historical PASS; invalidated by later contract edits |
 
-`CYCLE_SUMMARY current_high=0 current_actionable=0`
+Current disposition: `PENDING INDEPENDENT RE-REVIEW`; no zero-finding claim is current.
