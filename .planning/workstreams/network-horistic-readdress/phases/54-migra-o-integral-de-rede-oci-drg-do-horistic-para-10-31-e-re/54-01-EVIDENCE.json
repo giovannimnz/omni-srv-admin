@@ -3,12 +3,12 @@
   "plan": "54-01",
   "stage": null,
   "status": "PASS",
-  "generated_at": "2026-07-26T10:15:20Z",
-  "expires_at": "2026-07-26T10:30:20Z",
+  "generated_at": "2026-07-26T10:34:02Z",
+  "expires_at": "2026-07-26T10:49:02Z",
   "redacted": true,
   "mutations_attempted": false,
   "production_mutations_attempted": false,
-  "source_commit": "a614faa2c6057f6a7f99afdd13a603b4ea5df720",
+  "source_commit": "8ef7deabdf16f63ba00c8104e7c2decbc672f199",
   "check_inputs": {
     "workstream_config_routing": {
       "artifact_hashes": {
@@ -18,25 +18,25 @@
     },
     "focused_pytest": {
       "artifact_hashes": {
-        "modules/fleet-control-plane/tests/test_phase54_network_gate.py": "5b91b4dda82a78913c49e3671443753617e08e348b99afef7f641a41beb34d53",
+        "modules/fleet-control-plane/tests/test_phase54_network_gate.py": "3a44f48e00a3d78df0d639967c9b3acc1be2fcdb77a95a341892d14f5701d34e",
         "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py": "657f24a90f7fc76d53bff2ed5bec08716a8acada4f6f6ceb1e69ae6297d02e2f"
       }
     },
     "syntax_compile": {
       "artifact_hashes": {
-        "modules/fleet-control-plane/scripts/phase54_network_gate.py": "12be451fbe033fd9c1cec0b92b0bf56a9844b8738660a22c729ee97b711770c8",
+        "modules/fleet-control-plane/scripts/phase54_network_gate.py": "5c1112b57c566bfe4739b706c1b1ac186f8006d1b4e61dc1ab9506ce965ec62c",
         "modules/fleet-control-plane/scripts/phase54_probe_adapters.py": "8b634516bc2f1caefa523c010f531e74656fe3247da7cc6dc00de84913f52abf"
       }
     },
     "adversarial_matrix": {
       "artifact_hashes": {
-        "modules/fleet-control-plane/tests/test_phase54_network_gate.py": "5b91b4dda82a78913c49e3671443753617e08e348b99afef7f641a41beb34d53",
+        "modules/fleet-control-plane/tests/test_phase54_network_gate.py": "3a44f48e00a3d78df0d639967c9b3acc1be2fcdb77a95a341892d14f5701d34e",
         "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py": "657f24a90f7fc76d53bff2ed5bec08716a8acada4f6f6ceb1e69ae6297d02e2f"
       }
     },
     "secret_scan": {
       "artifact_hashes": {
-        "modules/fleet-control-plane/scripts/phase54_network_gate.py": "12be451fbe033fd9c1cec0b92b0bf56a9844b8738660a22c729ee97b711770c8",
+        "modules/fleet-control-plane/scripts/phase54_network_gate.py": "5c1112b57c566bfe4739b706c1b1ac186f8006d1b4e61dc1ab9506ce965ec62c",
         "modules/fleet-control-plane/scripts/phase54_probe_adapters.py": "8b634516bc2f1caefa523c010f531e74656fe3247da7cc6dc00de84913f52abf",
         "scripts/graphify-sync.sh": "2bebaee2c1c70280e257e5261cfe53d8610a142626d7bae5939d33da8b75b170"
       }
@@ -56,7 +56,7 @@
     },
     {
       "path": "modules/fleet-control-plane/scripts/phase54_network_gate.py",
-      "sha256": "12be451fbe033fd9c1cec0b92b0bf56a9844b8738660a22c729ee97b711770c8"
+      "sha256": "5c1112b57c566bfe4739b706c1b1ac186f8006d1b4e61dc1ab9506ce965ec62c"
     },
     {
       "path": "modules/fleet-control-plane/scripts/phase54_probe_adapters.py",
@@ -64,7 +64,7 @@
     },
     {
       "path": "modules/fleet-control-plane/tests/test_phase54_network_gate.py",
-      "sha256": "5b91b4dda82a78913c49e3671443753617e08e348b99afef7f641a41beb34d53"
+      "sha256": "3a44f48e00a3d78df0d639967c9b3acc1be2fcdb77a95a341892d14f5701d34e"
     },
     {
       "path": "modules/fleet-control-plane/tests/test_phase54_probe_adapters.py",
