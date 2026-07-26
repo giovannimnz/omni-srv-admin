@@ -6,7 +6,7 @@ current_phase: 54
 current_phase_name: Migração integral de rede OCI/DRG do Horistic para 10.31
 status: in_progress
 stopped_at: 54-01 fresh PASS; entering 54-02 backup-only preview
-last_updated: "2026-07-26T06:17:00-03:00"
+last_updated: "2026-07-26T07:15:00-03:00"
 last_activity: 2026-07-26
 last_activity_desc: Independent review 0/0 and fresh 54-01 gate completed
 progress:
@@ -33,14 +33,14 @@ Progress: [█░░░░░░░░░] 10%
 - Approvals Phase 52 são provenance histórica e só podem ser referenciados depois de Wave 0 provar mesmo scope, hashes, expiry e ausência de drift; não autorizam writes novos.
 - Baseline: S23 `192.168.1.10` / `10.100.100.10` permanece; S20 `192.168.1.9` / `10.100.100.9` vai para `.11`; Horistic WG `.4` vai para `.31`.
 - O review independente atual cobre os 14 arquivos canônicos com 0 blockers/0 warnings; 54-01 foi reemitido fresh e passou `assert-gate`.
+- O baseline live foi corrigido e provado read-only: a reserva pública está no primary `10.0.0.65`, distinta do secondary DRG `10.21.1.21`; o gap FreeIPA/CoreDNS/AdGuard está explícito e hash-bound sem afrouxar o gate estrito 54-06+.
 
 ## Next action
 
-Commit-pinar o evidence/gate fresh de 54-01. Em 54-02, validar primeiro o review gate e o predecessor commit-pinned, consumir sem alteração os três receipts tracked SRV1/SRV3/BE3, recoletar baseline read-only e emitir um novo `54-02-BACKUP-OPERATION-PLAN.json`. Qualquer pending backup write exige approval literal novo e vinculado ao hash exato; nenhuma migration apply está autorizada.
+Commit-pinar o evidence/gate fresh de 54-01. Em 54-02, validar primeiro o review gate e o predecessor commit-pinned, consumir sem alteração os três receipts tracked SRV1/SRV3/BE3 e emitir um novo `54-02-BACKUP-OPERATION-PLAN.json`. Qualquer pending backup write exige approval literal novo e vinculado ao hash exato; nenhuma migration apply está autorizada.
 
 ## Blockers
 
-- 54-02: recoletar security list, SOA/NS e baseline live pelos adapters atuais antes do preview.
 - 54-02: backup OCI fresh é uma write OCI e estava explicitamente proibido nesta execução.
 - 54-02: receipts SRV1/SRV3/BE3 estão tracked, hash-valid e classificados `pre-existing-evidence`; qualquer refresh exige operação nova explícita e aprovada.
 - Revision Gate: PASS independente, 0 blockers/0 warnings; renovar somente se expirar ou houver drift nos 14 arquivos cobertos.
@@ -59,6 +59,6 @@ Commit-pinar o evidence/gate fresh de 54-01. Em 54-02, validar primeiro o review
 
 ## Session
 
-**Last session:** 2026-07-26T09:17:00Z
+**Last session:** 2026-07-26T10:15:00Z
 **Stopped at:** 54-01 fresh PASS; entering 54-02 backup-only preview
 **Resume file:** 54-02-PLAN.md

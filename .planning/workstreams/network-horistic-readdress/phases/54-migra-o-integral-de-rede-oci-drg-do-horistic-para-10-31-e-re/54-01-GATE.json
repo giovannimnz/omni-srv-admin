@@ -33,7 +33,7 @@
     {
       "expected": "generated within 900s and unexpired",
       "id": "freshness",
-      "observed": "2026-07-26T09:16:37Z",
+      "observed": "2026-07-26T10:15:20Z",
       "required": true,
       "result": "PASS"
     },
@@ -90,12 +90,12 @@
           },
           "command_id": "phase54.workstream_config_routing",
           "exit_code": 0,
-          "finished_at": "2026-07-26T09:21:28.065575Z",
+          "finished_at": "2026-07-26T10:16:01.596731Z",
           "id": "workstream_config_routing",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T09:21:27.315981Z"
+          "started_at": "2026-07-26T10:16:00.797951Z"
         },
         {
           "adapter": "local",
@@ -104,12 +104,12 @@
           },
           "command_id": "phase54.focused_pytest",
           "exit_code": 0,
-          "finished_at": "2026-07-26T09:21:29.173715Z",
+          "finished_at": "2026-07-26T10:16:02.518438Z",
           "id": "focused_pytest",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T09:21:28.065607Z"
+          "started_at": "2026-07-26T10:16:01.596762Z"
         },
         {
           "adapter": "local",
@@ -118,12 +118,12 @@
           },
           "command_id": "phase54.syntax_compile",
           "exit_code": 0,
-          "finished_at": "2026-07-26T09:21:29.476033Z",
+          "finished_at": "2026-07-26T10:16:02.776485Z",
           "id": "syntax_compile",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T09:21:29.173755Z"
+          "started_at": "2026-07-26T10:16:02.518469Z"
         },
         {
           "adapter": "local",
@@ -132,12 +132,12 @@
           },
           "command_id": "phase54.adversarial_matrix",
           "exit_code": 0,
-          "finished_at": "2026-07-26T09:21:30.967361Z",
+          "finished_at": "2026-07-26T10:16:04.343380Z",
           "id": "adversarial_matrix",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T09:21:29.476067Z"
+          "started_at": "2026-07-26T10:16:02.776518Z"
         },
         {
           "adapter": "local",
@@ -146,12 +146,12 @@
           },
           "command_id": "phase54.secret_scan",
           "exit_code": 0,
-          "finished_at": "2026-07-26T09:21:31.180081Z",
+          "finished_at": "2026-07-26T10:16:04.603323Z",
           "id": "secret_scan",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T09:21:30.967387Z"
+          "started_at": "2026-07-26T10:16:04.343412Z"
         },
         {
           "adapter": "local",
@@ -160,12 +160,12 @@
           },
           "command_id": "phase54.graphify_preflight",
           "exit_code": 0,
-          "finished_at": "2026-07-26T09:21:32.531680Z",
+          "finished_at": "2026-07-26T10:16:06.087354Z",
           "id": "graphify_preflight",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T09:21:31.180114Z"
+          "started_at": "2026-07-26T10:16:04.603355Z"
         }
       ],
       "required": true,
@@ -193,8 +193,8 @@
       "result": "PASS"
     }
   ],
-  "evidence_sha256": "16c56ccc0976ef3364a71e80b2b4c84b33bf0fbd0c448da6dfe26524223c317a",
-  "finished_at": "2026-07-26T09:21:32.574305Z",
+  "evidence_sha256": "52d9962a7545467d31b25fdefbafa49e3fc974d256dbb4b7e4d8061e83cc387c",
+  "finished_at": "2026-07-26T10:16:06.161045Z",
   "mode": "read-only",
   "mutations_attempted": false,
   "next_wave_gate": "PASS:54-01",
@@ -209,9 +209,9 @@
     "secret_scan",
     "graphify_preflight"
   ],
-  "runner_sha256": "ed452edfe72734c829974522014242cb71693dd061f0798f096c4c14e78445fe",
+  "runner_sha256": "12be451fbe033fd9c1cec0b92b0bf56a9844b8738660a22c729ee97b711770c8",
   "schema": "phase54.gate.v1",
   "stage": null,
-  "started_at": "2026-07-26T09:21:27.265283Z",
+  "started_at": "2026-07-26T10:16:00.762520Z",
   "status": "PASS"
 }
