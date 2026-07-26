@@ -1,0 +1,83 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "contract_id": "phase53-topology-d06-d16-d17-v1",
+  "decisions": [
+    "D-06",
+    "D-16",
+    "D-17"
+  ],
+  "edge": {
+    "host": "atius-srv-1",
+    "profile": "atius1",
+    "public_ip": {
+      "address": "137.131.140.20",
+      "allocation": "RESERVED",
+      "state": "ASSIGNED"
+    },
+    "public_vnic": {
+      "private_ipv4": "10.0.0.238",
+      "owner_host": "atius-srv-1"
+    },
+    "route_vnic": {
+      "private_ipv4": "10.11.1.11",
+      "owner_host": "atius-srv-1"
+    }
+  },
+  "backend": {
+    "host": "horistic-srv",
+    "profile": "horistic",
+    "private_ipv4": "10.21.1.21",
+    "public_ip_on_private_address": null,
+    "separate_public_vnic": {
+      "private_ipv4": "10.0.0.65",
+      "public_ipv4": "163.176.232.119",
+      "owner_host": "horistic-srv"
+    }
+  },
+  "drg": {
+    "edge_attachment_state": "attached_to_central",
+    "backend_attachment_state": "attached_to_central",
+    "edge_route": {
+      "destination_cidr": "10.21.0.0/16",
+      "target": "central-drg"
+    },
+    "backend_route": {
+      "destination_cidr": "10.11.0.0/16",
+      "target": "central-drg"
+    }
+  },
+  "return_path": {
+    "edge_to_backend": {
+      "destination": "10.21.1.21",
+      "via": "10.11.1.1",
+      "device": "enp1s0",
+      "source": "10.11.1.11"
+    },
+    "backend_to_edge": {
+      "destination": "10.11.1.11",
+      "via": "10.21.1.1",
+      "device": "enp1s0",
+      "source": "10.21.1.21"
+    },
+    "snat_source": "10.11.1.11",
+    "backend_ingress_source": "10.11.1.11"
+  },
+  "stale_operation_plan": {
+    "path": "modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json",
+    "accepted_as_authority": false,
+    "hash_reuse_allowed": false
+  },
+  "future_handoff": {
+    "private_ipv4": "10.31.1.31",
+    "executable": false
+  },
+  "receipt_policy": {
+    "authorizes_live": false,
+    "committed_authority": false,
+    "mutation_performed": false,
+    "secret_material_present": false,
+    "raw_provider_identifiers_allowed": false,
+    "operation_plan_material_allowed": false
+  }
+}
