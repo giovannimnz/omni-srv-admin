@@ -1,0 +1,24 @@
+{
+  "schema": "phase54.backup-receipt.v1",
+  "owner": "srv3",
+  "classification": "pre-existing-evidence",
+  "approval_claimed": false,
+  "mode": "read-only-proof",
+  "captured_at": "2026-07-26T04:15:46Z",
+  "local_path": "/var/backups/omni-srv-admin/phase54/20260726T041546Z-srv3",
+  "remote_host": "atius-srv-1",
+  "remote_path": "/var/backups/omni-srv-admin/phase54/off-host/srv3/20260726T041546Z-srv3/20260726T041546Z-srv3.tar",
+  "remote_sha256": "0de8b8391a4770dd8a13342b660cea56ba049b736228a3ab8de0f7301e97cfb1",
+  "artifacts": [
+    {
+      "name": "freeipa-header",
+      "sha256": "39b0086198b9ee4da73dc535e683792241430133582573854559b951c22cfcb5"
+    },
+    {
+      "name": "freeipa-full",
+      "sha256": "e537660506a2ec39ef5686389415530bbb6305f6449919f9217c1a3f8393a18d"
+    }
+  ],
+  "restore_staging": "PASS",
+  "apply": "NOT RUN"
+}

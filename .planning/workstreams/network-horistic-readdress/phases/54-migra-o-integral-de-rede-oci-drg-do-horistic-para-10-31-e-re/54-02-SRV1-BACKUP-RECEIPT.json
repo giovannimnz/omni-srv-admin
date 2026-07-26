@@ -1,0 +1,36 @@
+{
+  "schema": "phase54.backup-receipt.v1",
+  "owner": "srv1",
+  "classification": "pre-existing-evidence",
+  "approval_claimed": false,
+  "mode": "read-only-proof",
+  "captured_at": "2026-07-26T04:12:49Z",
+  "local_path": "/var/backups/omni-srv-admin/phase54/20260726T041249Z-srv1",
+  "remote_host": "atius-srv-3",
+  "remote_path": "/var/backups/omni-srv-admin/phase54/off-host/srv1/20260726T041249Z-srv1/20260726T041249Z-srv1.tar",
+  "remote_sha256": "2f120b50be4c6f63f432753f4a30d4b7895f98632f7547467606f985f7d8869f",
+  "artifacts": [
+    {
+      "name": "k3s-snapshot",
+      "sha256": "718d5e18589b399bdfcfdf2fa43523af37504ba35facbc8e1e1d95d978be1849"
+    },
+    {
+      "name": "restore-staging",
+      "sha256": "0d4d84ca87779270111e799714865032886913646113beb83b26ad619dd40a40"
+    },
+    {
+      "name": "coredns",
+      "sha256": "5bcf57ce94354bb8d8cd189454a30ba84063406132936acbec0c5672015d87c3"
+    },
+    {
+      "name": "adguard",
+      "sha256": "e0679794fb8b89eb50918a6fe484db84bf0144ad0e0a2e3c53b3c8e437e04678"
+    },
+    {
+      "name": "wireguard",
+      "sha256": "4b0c22a2aedaa7661a3738d2a1af31dbc57680e0c386f6f9345acc6d23d2726c"
+    }
+  ],
+  "restore_staging": "PASS",
+  "apply": "NOT RUN"
+}

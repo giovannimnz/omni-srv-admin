@@ -1,0 +1,22 @@
+{
+  "schema": "phase54.backup-receipt.v1",
+  "owner": "be3",
+  "classification": "pre-existing-evidence",
+  "approval_claimed": false,
+  "mode": "read-only-proof",
+  "captured_at": "2026-07-26T05:24:04Z",
+  "source_branch": "codex/phase54-be3-readonly-evidence-20260726",
+  "source_commit": "24f2562af086625b0678c4573f1c03a77270fc22",
+  "source_evidence_path": "modules/home-router-be3/evidence/phase54/be3-lan-readonly-20260726-final-v13.json",
+  "source_evidence_sha256": "dbb8311dd341a8f9dd71f0da1ea13760aa53cae711525faa170c7d54d15de00c",
+  "metadata_path": "modules/home-router-be3/evidence/phase54/be3-native-export-20260726-final-v11.json",
+  "metadata_sha256": "5d93a2d45323249f4bf4ddc0530f5a03d5c054640ec53a909d8d5d09d02a9aa3",
+  "remote_path": "/home/ubuntu/.local/state/home-router-be3/backups/phase54/be3-native-20260726T052404Z.bin",
+  "remote_sha256": "866adbef8a1434622f0b4028ddaf5b5bd76afaeafc246e7a576b675c889cb781",
+  "size": 32864,
+  "file_mode": "0600",
+  "magic": "010000001af00f1a",
+  "restore_staging": "NOT RUN",
+  "apply": "NOT RUN",
+  "restore": "NOT RUN"
+}
