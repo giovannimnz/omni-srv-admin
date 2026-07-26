@@ -845,6 +845,150 @@ def test_phase53_server_installer_rejects_source_and_runtime_hbbs_tamper(
         transaction._validate_installed_hbbs()
 
 
+def test_provider_manifest_is_exact_and_rejects_mutable_or_unbounded_backends(
+    tmp_path: Path,
+) -> None:
+    backend = _live_backend_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    backend.validate_provider_manifest(manifest, repo=REPO)
+
+    mutations = [
+        ("provider-manifest-target-invalid", lambda item: item.update({"execution_target": "10.31.1.31"})),
+        (
+            "provider-manifest-edge-contract-invalid",
+            lambda item: item.update({"edge_contract": "/tmp/phase53-edge.json"}),
+        ),
+        (
+            "provider-manifest-backend-invalid",
+            lambda item: item["backends"].update({"apply": "shell"}),
+        ),
+        (
+            "provider-manifest-limit-invalid",
+            lambda item: item["limits"].update({"command_timeout_seconds": 0}),
+        ),
+    ]
+    for blocker, mutate in mutations:
+        candidate = copy.deepcopy(manifest)
+        mutate(candidate)
+        with pytest.raises(backend.BackendBlocked, match=f"^{blocker}$"):
+            backend.validate_provider_manifest(candidate, repo=REPO)
+
+    candidate_path = tmp_path / "manifest.json"
+    candidate_path.write_text(json.dumps(manifest), encoding="utf-8")
+    binding = backend.ExecutionSourceBinding(
+        commit="a" * 40,
+        tree_sha256="b" * 64,
+        blobs={"modules/rustdesk-fleet/contracts/phase53-edge.json": "c" * 64},
+    )
+    read_only = backend.build_phase53_read_only_backend(
+        repo=REPO,
+        manifest_path=candidate_path,
+        source_binding=binding,
+        clock=lambda: datetime(2026, 7, 25, tzinfo=timezone.utc),
+    )
+    assert read_only.capabilities == frozenset({"read", "preview"})
+    assert not any(
+        hasattr(read_only, name)
+        for name in ("runtime", "providers", "mutate", "containment", "rollback", "restore")
+    )
+    for callback in (
+        read_only.read_prestate,
+        read_only.preview_oci,
+        read_only.preview_cloudflare,
+        read_only.preview_apache,
+    ):
+        result = callback()
+        assert result["mutation_performed"] is False
+        assert result["secret_material_present"] is False
+
+
+def test_apply_backend_is_owner_hash_and_expiry_bound() -> None:
+    backend = _live_backend_module()
+    now = datetime(2026, 7, 25, tzinfo=timezone.utc)
+    noop = lambda: {"mutation_performed": False}
+    edge_stages = {stage: noop for stage in backend.RUNTIME_EDGE_STAGES}
+    runtime = backend.RuntimeProvider(
+        transaction_id="d" * 32,
+        snapshot_prestate=noop,
+        install_closed=noop,
+        rollback_server=noop,
+        edge_stages=edge_stages,
+        containment=noop,
+    )
+    providers = runtime.to_bundle()
+    plan = {
+        "schema_version": 1,
+        "target": "10.21.1.21",
+        "operation_plan_sha256": "a" * 64,
+        "expires_at": "2026-07-25T01:00:00Z",
+        "runtime": runtime,
+        "providers": providers,
+    }
+    approval = {
+        "schema_version": 1,
+        "owner": "Giovanni Muniz",
+        "operation_plan_sha256": "a" * 64,
+        "approval_sha256": "b" * 64,
+        "expires_at": "2026-07-25T01:00:00Z",
+    }
+    with pytest.raises(backend.BackendBlocked, match="^live-flag-required$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=approval,
+            live_enabled=False,
+            admitted=True,
+            clock=lambda: now,
+        )
+    with pytest.raises(backend.BackendBlocked, match="^admission-required$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=approval,
+            live_enabled=True,
+            admitted=False,
+            clock=lambda: now,
+        )
+    drifted = dict(approval, operation_plan_sha256="f" * 64)
+    with pytest.raises(backend.BackendBlocked, match="^owner-approval-invalid$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=drifted,
+            live_enabled=True,
+            admitted=True,
+            clock=lambda: now,
+        )
+    result = backend.build_phase53_apply_backend(
+        repo=REPO,
+        manifest_path=PROVIDER_CONTRACT,
+        operation_plan=plan,
+        owner_approval=approval,
+        live_enabled=True,
+        admitted=True,
+        clock=lambda: now,
+    )
+    assert result.runtime is runtime
+    assert result.providers is providers
+    assert result.operation_plan_sha256 == "a" * 64
+    assert result.approval_sha256 == "b" * 64
+
+    expired = dict(approval, expires_at="2026-07-24T23:59:59Z")
+    with pytest.raises(backend.BackendBlocked, match="^owner-approval-expired$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=expired,
+            live_enabled=True,
+            admitted=True,
+            clock=lambda: now,
+        )
+
+
 def test_ops_api_contract_schema_auth_and_readiness() -> None:
     _validate_ops_api(_load_strict(OPS_API_CONTRACT))
 
