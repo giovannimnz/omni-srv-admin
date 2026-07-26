@@ -2,7 +2,7 @@
 phase: 53-primary-relay-and-public-edge
 plan: 05F
 type: execute
-wave: 10
+wave: 13
 depends_on: [53-05E]
 gap_closure: true
 execution_owner: 53-05F
@@ -20,7 +20,7 @@ requirements: [SRV-02, SRV-03, SRV-04, SRV-06, OPS-01]
 must_haves:
   truths:
     - "05F starts in a new process and reconstructs no authority from memory; it revalidates owner identity/decision/hash/expiry, typed confirmations, prestates, source ancestry/tree and admission immediately before the first write."
-    - "D-05D-04/D-05D-05: one approved full transaction deploys Horistic 10.21.1.21 behind 137.131.140.20 with exact 34099-34101 translation and DNS-only A records for rustdesk.atius.com.br, rustdesk-id.atius.com.br and rustdesk-relay.atius.com.br."
+    - "Per D-06, one approved full transaction configures atius-srv-1/10.0.0.238 DNAT/forward/return path to Horistic 10.21.1.21 and backend source restriction."
     - "D-05D-10: two external origins prove IP-before-DNS and hostname-after-DNS TCP+UDP, separate API auth/redaction, three restarts plus reboot, resource/log/identity invariants and metrics."
     - "Containment-first rollback is sealed immutable; restore-production is a new transaction with a distinct ID and journal after rollback, never an append/rewrite of the rollback proof."
     - "srv2/srv3, Phase 52, Phase 54, reserved IP ownership, legacy fallbacks and 10.31.1.31 remain unmodified."
@@ -80,7 +80,7 @@ Output: apply/edge/API/lifecycle/rollback/restore/metrics evidence-only live com
 @.planning/workstreams/rustdesk-fleet/ROADMAP.md
 @.planning/workstreams/rustdesk-fleet/REQUIREMENTS.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-CONTEXT.md
-@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2-SUMMARY.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2C-SUMMARY.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05E-SUMMARY.md
 @modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json
 @modules/rustdesk-fleet/contracts/phase53-provider-manifest.json
@@ -112,7 +112,8 @@ Output: apply/edge/API/lifecycle/rollback/restore/metrics evidence-only live com
 <task type="auto">
   <name>Task 53-05F-01: Revalidar authority e executar uma única transação full</name>
   <read_first>
-    @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2-SUMMARY.md
+    @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2C-SUMMARY.md
+    @modules/rustdesk-fleet/contracts/phase53-topology.json
     @modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json
     @modules/rustdesk-fleet/contracts/phase53-provider-manifest.json
     @modules/rustdesk-fleet/evidence/phase53/preflight.json
@@ -124,7 +125,7 @@ Output: apply/edge/API/lifecycle/rollback/restore/metrics evidence-only live com
   <action>
 Iniciar um processo novo, sem objetos/callbacks herdados do 05E. Antes de journal/provider construction, revalidar: `execution_source_commit` ancestor do tip, todos os allowlisted code/contracts blobs idênticos e scope clean; OperationPlan canonical hash; owner exato Giovanni Muniz, decision approve e expiry futura; typed confirmation IDs/hashes/expiry; admission/capacity/current prestates/revisions; backup/rollback readiness; live flag; `ADMITTED_PHASE53=1`. Qualquer falha retorna exit 3/BLOCKED com zero journals/provider calls/actions.
 
-Executar literalmente sob o governor: `ATIUS_RUN_RUSTDESK_PHASE53_LIVE=1 ADMITTED_PHASE53=1 ... run-phase53-live-gate.py --repo . --live-backend phase53-production --mode apply --stage full --operation-plan ... --owner-approval ...`. `build_phase53_apply_backend(...)` deve ser o único factory apply. Executar exatamente uma vez e na ordem contratada: per D-01/D-02/D-03/D-04, deploy rootless digest-bound, isolado, bounded e Vault-hydrated em Horistic 10.21.1.21 com ingress fechado; per D-09/D-10/D-11/D-12, ops API separada/Apache configtest/auth/redaction/readiness/metrics; host+OCI CAS; public IP 137.131.140.20; per D-05/D-06/D-07/D-08, two-origin IP TCP 34099/34100/34101 e UDP 34100, negar diretamente public 21114-21119 e todo outro listener, manter native 21115-21117/UDP 21116 somente no target/internal path, depois DNS-last A DNS-only sem proxy/AAAA/CNAME para `rustdesk.atius.com.br`, `rustdesk-id.atius.com.br` e `rustdesk-relay.atius.com.br`, então hostname TCP+UDP. Per D-13, executar three restarts e real reboot; per D-14/D-15, preservar fallbacks/client domains e não reivindicar standby/DR.
+Executar literalmente sob o governor: `ATIUS_RUN_RUSTDESK_PHASE53_LIVE=1 ADMITTED_PHASE53=1 ... run-phase53-live-gate.py --repo . --live-backend phase53-production --mode apply --stage full --operation-plan ... --owner-approval ...`. `build_phase53_apply_backend(...)` é a única factory apply. Executar uma vez: deploy backend rootless em Horistic; API separada; CAS de host/OCI; nft DNAT/forward/return-path em atius-srv-1; backend aceita 21115/21116/21117 somente da identidade de retorno 10.0.0.238; dois origins provam public IP e cada um dos três hostnames em TCP 34099/34100/34101, UDP 34100->21116 e negativos diretos 21114-21119; publicar por último e sob uma única CAS os três A records; depois lifecycle, regressions, containment rollback e restore-production distinto per D-13/D-14. Per D-16, não tocar 10.31.1.31.
 
 Depois, executar containment-first rollback: fechar/restore host+OCI ingress, DNS CAS restore, remover somente runtime/API owned state, restore Apache/nft/linger if-current, provar public closed, fallbacks/backups/IP preserved e 10.31.1.31 untouched. Selar `rollback-drill.json` e seu digest antes de qualquer restore. Criar `restore-production-transaction.json` com novo transaction ID/journal, revalidar currentness, reaplicar desired state, repetir runtime/IP/DNS/hostname/API, um restart e regressions. Falha de restore preserva o rollback seal, contém ingress e termina exit 4/BLOCKED; nunca reescreve o rollback receipt.
   </action>

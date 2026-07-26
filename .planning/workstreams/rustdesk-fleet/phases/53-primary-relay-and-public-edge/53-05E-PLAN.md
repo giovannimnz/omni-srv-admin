@@ -2,11 +2,12 @@
 phase: 53-primary-relay-and-public-edge
 plan: 05E
 type: execute
-wave: 9
-depends_on: [53-05D2]
+wave: 12
+depends_on: [53-05D2C]
 gap_closure: true
 execution_owner: 53-05E
 files_modified:
+  - modules/rustdesk-fleet/evidence/phase53/topology-discovery.json
   - modules/rustdesk-fleet/evidence/phase53/phase52-successor-attestation.json
   - modules/rustdesk-fleet/evidence/phase53/candidate-admission.json
   - modules/rustdesk-fleet/evidence/phase53/capacity-current.json
@@ -18,7 +19,8 @@ autonomous: false
 requirements: [SRV-02, SRV-03, SRV-04, SRV-06, OPS-01]
 must_haves:
   truths:
-    - "D-05D2-01: all authority artifacts bind the immutable 05D2 execution_source_commit, which includes 05D as an ancestor; the current authority tip must contain that source commit as ancestor and preserve every allowlisted blob."
+    - "Per D-17, authority is regenerated from the immutable 05D2C execution_source_commit; the stale OperationPlan and every old hash/confirmation are rejected."
+    - "Per D-06, current readback still proves atius-srv-1/137.131.140.20/10.0.0.238 as edge and horistic-srv/10.21.1.21 as backend."
     - "D-05D-02: Phase 52 remains byte-frozen and a new Phase 53 successor attestation is read-only, non-authorizing and digest-bound."
     - "D-05D-03/D-05D-08: supply, admission, prestate and previews are collected only with ReadOnlyProviderBundle, which has zero provider write capabilities."
     - "Absence of owner approval ends normally at AWAITING_OWNER_HASH_APPROVAL with OperationPlan persisted, zero apply journal/provider calls/live mutations and an explicit blocking checkpoint."
@@ -34,7 +36,7 @@ must_haves:
     - path: modules/rustdesk-fleet/evidence/phase53/edge-forwarder-owner-approval.json
       provides: "Owner record created only after the explicit checkpoint response; absent while awaiting."
   key_links:
-    - from: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2-SUMMARY.md
+    - from: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2C-SUMMARY.md
       to: modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json
       via: "immutable execution_source_commit plus allowlisted code/contracts aggregate"
       pattern: "execution_source_commit|execution_source_tree_sha256"
@@ -70,7 +72,8 @@ Output: successor attestation, current admission/capacity/prestate, typed previe
 @.planning/workstreams/rustdesk-fleet/ROADMAP.md
 @.planning/workstreams/rustdesk-fleet/REQUIREMENTS.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-CONTEXT.md
-@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2-SUMMARY.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2C-SUMMARY.md
+@modules/rustdesk-fleet/contracts/phase53-topology.json
 @.planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-UAT.md
 @modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json
 @modules/rustdesk-fleet/contracts/phase53-provider-manifest.json
@@ -82,7 +85,7 @@ Output: successor attestation, current admission/capacity/prestate, typed previe
 
 - `phase52-successor-attestation.json` records frozen Phase 52 input digests, `historical_replay=false`, `historical_rebaseline=false` and `authorizes_live=false`.
 - `preflight.json` records the current descendant tip, immutable `execution_source_commit`, allowlisted `execution_source_tree_sha256`, clean source scope, exact selected host/public edge, value-free fingerprint, rollback readiness and provider prestates.
-- `edge-forwarder-operation-plan.json` contains canonical input, exact port/DNS mapping, source binding, admission/capacity, typed OCI/Cloudflare/Apache previews, confirmations, risks, one apply transaction, immutable rollback seal and a distinct restore-production transaction.
+- `edge-forwarder-operation-plan.json` is regenerated from scratch from current topology/source/prestate; the pre-existing file is forbidden input and no old hash is reused.
 - `edge-forwarder-owner-approval.json` does not exist while awaiting. After an explicit checkpoint response, it records owner identity, decision, current OperationPlan hash, expiry, risk/rollback acknowledgement and response digest without storing unrelated chat text.
 
 <tasks>
@@ -90,20 +93,22 @@ Output: successor attestation, current admission/capacity/prestate, typed previe
 <task type="auto">
   <name>Task 53-05E-01: Gerar successor attestation, prestate e OperationPlan somente read-only</name>
   <read_first>
-    @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2-SUMMARY.md
+    @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2C-SUMMARY.md
+    @modules/rustdesk-fleet/contracts/phase53-topology.json
+    @modules/rustdesk-fleet/evidence/phase53/topology-discovery.json
     @.planning/workstreams/rustdesk-fleet/phases/52-supply-chain-capacity-and-recoverable-placement/52-UAT.md
     @modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json
     @modules/rustdesk-fleet/contracts/phase53-provider-manifest.json
     @modules/rustdesk-fleet/tools/phase53-live-backend.py
     @modules/rustdesk-fleet/tools/run-phase53-live-gate.py
   </read_first>
-  <files>modules/rustdesk-fleet/evidence/phase53/phase52-successor-attestation.json, modules/rustdesk-fleet/evidence/phase53/candidate-admission.json, modules/rustdesk-fleet/evidence/phase53/capacity-current.json, modules/rustdesk-fleet/evidence/phase53/preflight.json, modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json</files>
+  <files>modules/rustdesk-fleet/evidence/phase53/topology-discovery.json, modules/rustdesk-fleet/evidence/phase53/phase52-successor-attestation.json, modules/rustdesk-fleet/evidence/phase53/candidate-admission.json, modules/rustdesk-fleet/evidence/phase53/capacity-current.json, modules/rustdesk-fleet/evidence/phase53/preflight.json, modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json</files>
   <action>
-Iniciar um processo novo. Ler `execution_source_commit` do 05D2 summary, provar que ele contém 05D como ancestor, que ele próprio é ancestor do tip e que todos os blobs allowlisted de code/contracts/Quadlet são idênticos; rejeitar source-scope dirt. Gravar commit e aggregate no successor/preflight/OperationPlan sem exigir tip equality. Verificar os bytes Phase 52 somente por leitura e gravar a nova attestation Phase 53; jamais executar generator Phase 52.
+Iniciar um processo novo. Ler `execution_source_commit` do 05D2C summary, provar ancestry e igualdade de todos os blobs allowlisted e rejeitar source-scope dirt. Reexecutar a discovery read-only de 05D2T e exigir a topologia D-06 idêntica; drift bloqueia sem novo checkpoint. Verificar Phase 52 somente por leitura e gravar a nova attestation Phase 53.
 
 Executar o comando literal `--live-backend phase53-production --mode plan --stage full --operation-plan ...` sem live env e sem owner approval. O runner deve construir exclusivamente `ReadOnlyProviderBundle`, provar `capabilities={"read","preview"}` e zero apply/restore/containment callbacks, e coletar: supply/admission current, duas amostras por candidato na ordem srv2→srv3→Horistic, srv2/srv3 NO-GO zero-cleanup, Horistic capacity-finalize, backups/restore, Vault public fingerprint reference, host/OCI/Cloudflare/Apache prestates, ownership/revisions, typed previews/confirmations e rollback readiness.
 
-Gerar novo canonical OperationPlan per D-05D-04/D-05D-05/D-05D-08/D-05D-10 com target `10.21.1.21`, IP `137.131.140.20`, mappings 34099-34101, A records DNS-only `rustdesk.atius.com.br`/`rustdesk-id.atius.com.br`/`rustdesk-relay.atius.com.br`, IP-before-DNS/two-origin probes, custom API boundary, three restarts/reboot, immutable rollback e distinct restore-production. Persistir status `AWAITING_OWNER_HASH_APPROVAL`, retornar exit 0, não criar owner approval/apply journal e provar zero provider mutations. Nenhum tip/evidence hash posterior entra no source tree.
+Per D-17, tratar o OperationPlan existente como input proibido e gerar bytes canônicos novos sem reutilizar hash, confirmation ou approval. Per D-06, separar edge `atius-srv-1`/`10.0.0.238` do backend `10.21.1.21`, incluir DNAT/forward/return path/backend restriction, mappings 34099-34101, três A records DNS-only, dois origins contra IP mais três hostnames, native negatives, API, lifecycle, rollback imutável e restore-production distinto. Persistir `AWAITING_OWNER_HASH_APPROVAL`, exit 0 e zero provider mutations.
   </action>
   <verify>
     <automated>omni srv1-ops resources run builds -- env PYTHONDONTWRITEBYTECODE=1 python3 modules/rustdesk-fleet/tools/run-phase53-live-gate.py --repo . --live-backend phase53-production --mode plan --stage full --operation-plan modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json</automated>
