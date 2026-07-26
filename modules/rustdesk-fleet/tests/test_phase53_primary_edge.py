@@ -4,6 +4,7 @@ import copy
 import configparser
 import base64
 from datetime import datetime, timezone
+import hashlib
 import importlib.util
 import inspect
 import json
@@ -46,6 +47,12 @@ EDGE_PROBE_PS1 = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1"
 EDGE_NFT_POLICY = REPO / "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft"
 EDGE_BOOT_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service"
 LIVE_BACKEND = REPO / "modules/rustdesk-fleet/tools/phase53-live-backend.py"
+MIGRATION_HANDOFF = (
+    REPO / "modules/rustdesk-fleet/contracts/phase53-horistic-migration-handoff.json"
+)
+BINDING_CHECKER = (
+    REPO / "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py"
+)
 
 
 class DuplicateKeyError(ValueError):
@@ -120,6 +127,18 @@ def _edge_probe_module() -> Any:
 def _live_backend_module() -> Any:
     assert LIVE_BACKEND.is_file(), LIVE_BACKEND
     spec = importlib.util.spec_from_file_location("phase53_live_backend", LIVE_BACKEND)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _binding_checker_module() -> Any:
+    assert BINDING_CHECKER.is_file(), BINDING_CHECKER
+    spec = importlib.util.spec_from_file_location(
+        "phase53_binding_checker", BINDING_CHECKER
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -1112,6 +1131,175 @@ def test_apply_backend_is_owner_hash_and_expiry_bound() -> None:
             admitted=True,
             clock=lambda: now,
         )
+
+
+def test_cli_mode_and_stage_matrix_are_literal() -> None:
+    module = _live_gate_module()
+    parser = module.build_parser()
+    parsed = parser.parse_args(
+        [
+            "--repo",
+            str(REPO),
+            "--live-backend",
+            "phase53-production",
+            "--mode",
+            "plan",
+            "--stage",
+            "full",
+            "--operation-plan",
+            "operation-plan.json",
+        ]
+    )
+    assert parsed.live_backend == "phase53-production"
+    assert parsed.mode == "plan"
+    assert parsed.stage == "full"
+    assert parsed.owner_approval is None
+    assert set(module.EXECUTION_STAGES) == {
+        "full",
+        "edge-probes",
+        "ops-api",
+        "lifecycle",
+        "rollback",
+        "restore-production",
+    }
+    assert module.EXIT_USAGE == 2
+    assert module.EXIT_AUTHORITY == 3
+    assert module.EXIT_APPLY_FAILED == 4
+
+
+def test_stage_full_uses_distinct_journals_and_immutable_rollback(
+    tmp_path: Path,
+) -> None:
+    module = _live_gate_module()
+    calls: list[str] = []
+
+    def callback(stage: str) -> Any:
+        def invoke() -> dict[str, Any]:
+            calls.append(stage)
+            return {
+                "stage": stage,
+                "mutation_performed": stage
+                not in {"preflight", "ip-probes", "hostname-probes", "lifecycle"},
+                "secret_material_present": False,
+            }
+
+        return invoke
+
+    adapters = {
+        stage: callback(stage) for stage in module.FULL_TRANSACTION_SEQUENCE
+    }
+    result = module.execute_apply_transaction(
+        journal_dir=tmp_path,
+        operation_plan_sha256="a" * 64,
+        approval_sha256="b" * 64,
+        execution_source_commit="c" * 40,
+        execution_source_tree_sha256="d" * 64,
+        adapters=adapters,
+    )
+    assert calls == list(module.FULL_TRANSACTION_SEQUENCE)
+    assert len(
+        {
+            result["apply_transaction_id"],
+            result["rollback_transaction_id"],
+            result["restore_production_transaction_id"],
+        }
+    ) == 3
+    assert result["apply_journal"] == "deploy-transaction.json"
+    assert result["rollback_journal"] == "rollback-drill.json"
+    assert result["restore_production_journal"] == "restore-production-transaction.json"
+    rollback = tmp_path / result["rollback_journal"]
+    before = rollback.read_bytes()
+    assert hashlib.sha256(before).hexdigest() == result["rollback_seal_sha256"]
+    assert rollback.stat().st_mode & 0o222 == 0
+    assert rollback.read_bytes() == before
+
+
+def test_migration_handoff_is_non_executable_and_future_target_is_rejected(
+    tmp_path: Path,
+) -> None:
+    handoff = _load_strict(MIGRATION_HANDOFF)
+    assert handoff["current"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.21.1.21",
+    }
+    assert handoff["future"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.31.1.31",
+        "executable": False,
+        "phase53_provider_allowed": False,
+    }
+    assert handoff["preserve"] == {
+        "server_identity": True,
+        "state_database": True,
+        "public_edge_contract": True,
+        "rollback_boundary": True,
+    }
+
+    backend = _live_backend_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    manifest["execution_target"] = "10.31.1.31"
+    candidate = tmp_path / "provider.json"
+    candidate.write_text(json.dumps(manifest), encoding="utf-8")
+    binding = backend.ExecutionSourceBinding(
+        commit="a" * 40,
+        tree_sha256="b" * 64,
+        blobs={"modules/rustdesk-fleet/contracts/phase53-edge.json": "c" * 64},
+    )
+    with pytest.raises(backend.BackendBlocked, match="future-target-forbidden"):
+        backend.build_phase53_read_only_backend(
+            repo=REPO,
+            manifest_path=candidate,
+            source_binding=binding,
+            clock=lambda: datetime(2026, 7, 25, tzinfo=timezone.utc),
+        )
+
+    production = _production_adapters_module()
+    with pytest.raises(production.AdapterBlocked, match="future-target-forbidden"):
+        production.validate_provider_manifest(manifest)
+
+
+def test_apply_cli_negative_authority_has_zero_side_effect(
+    tmp_path: Path,
+) -> None:
+    env = {
+        "PATH": os.environ["PATH"],
+        "HOME": str(tmp_path),
+        "ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1",
+        "ADMITTED_PHASE53": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    before = sorted(item.relative_to(tmp_path) for item in tmp_path.rglob("*"))
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(LIVE_GATE_PATH),
+            "--repo",
+            str(REPO),
+            "--live-backend",
+            "phase53-production",
+            "--mode",
+            "apply",
+            "--stage",
+            "full",
+            "--operation-plan",
+            str(tmp_path / "missing-plan.json"),
+            "--owner-approval",
+            str(tmp_path / "missing-approval.json"),
+        ],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 3
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "BLOCKED"
+    assert payload["mutation_performed"] is False
+    assert payload["journal_created"] is False
+    assert payload["provider_constructed"] is False
+    assert sorted(item.relative_to(tmp_path) for item in tmp_path.rglob("*")) == before
 
 
 def test_ops_api_contract_schema_auth_and_readiness() -> None:
