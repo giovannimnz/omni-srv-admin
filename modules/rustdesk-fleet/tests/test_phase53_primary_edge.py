@@ -314,7 +314,7 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "rollback_order",
         },
     )
-    assert payload["schema_version"] == 3
+    assert payload["schema_version"] == 2
     assert payload["primary_host"] == "horistic-srv"
     assert payload["target"] == {
         "private_ipv4": "10.21.1.21",
@@ -899,8 +899,8 @@ def test_translated_edge_contract_is_single_consumer_authority(tmp_path: Path) -
     duplicate = tmp_path / "duplicate.json"
     duplicate.write_text(
         EDGE_CONTRACT.read_text(encoding="utf-8").replace(
-                '"schema_version": 3,',
-                '"schema_version": 3, "schema_version": 3,',
+                '"schema_version": 2,',
+                '"schema_version": 2, "schema_version": 2,',
             1,
         ),
         encoding="utf-8",
@@ -2801,10 +2801,10 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
         {"protocol": "tcp", "external_port": 34101, "backend_port": 21117},
     ]
     assert result["hooks"] == {
-        "edge_prerouting": ("prerouting", "dstnat"),
-        "edge_forward": ("forward", "filter"),
-        "edge_postrouting": ("postrouting", "srcnat"),
-        "direct_native_input": ("input", "filter"),
+        "edge_prerouting": ["prerouting", "dstnat"],
+        "edge_forward": ["forward", "filter"],
+        "edge_postrouting": ["postrouting", "srcnat"],
+        "direct_native_input": ["input", "filter"],
     }
     lowered = candidate.lower()
     assert "flush ruleset" not in lowered
@@ -3154,7 +3154,10 @@ def test_boot_verifier_is_operational_and_default_cli_is_zero_live(
         "semantic_readback_verified": True,
         "status": "PASS",
     }
-    assert "--contract" in _load_unit(EDGE_BOOT_SERVICE)["Service"]["ExecStartPost"]
+    service = _load_unit(EDGE_BOOT_SERVICE)["Service"]
+    assert "--apply-host-policy-transaction" in service["ExecStart"]
+    assert "--contract" in service["ExecStart"]
+    assert "ExecStartPost" not in service
 
 
 def test_nft_library_requires_explicit_template() -> None:
@@ -4289,13 +4292,20 @@ def test_barrier_b_is_post_ip_fresh_and_equal_to_barrier_a() -> None:
     transaction, backend, receipt = _edge_with_ip_proof(module)
     result = transaction.publish_dns_last()
     assert result["state"] == "DNS_PUBLISHED"
-    assert result["record"] == {
-        "name": "rustdesk.atius.com.br",
-        "type": "A",
-        "content": "203.0.113.8",
-        "proxied": False,
-    }
-    assert backend.dns_records == [result["record"]]
+    assert result["records"] == [
+        {
+            "name": hostname,
+            "type": "A",
+            "content": "203.0.113.8",
+            "proxied": False,
+        }
+        for hostname in (
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        )
+    ]
+    assert backend.dns_records == result["records"]
     assert backend.calls.index("dns-apply") > backend.calls.index("oci-apply")
 
 

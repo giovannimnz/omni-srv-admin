@@ -20,12 +20,6 @@ EXPECTED_LISTENERS = {
     "hbbs": {"tcp": [21115, 21116, 21118], "udp": [21116], "digest": EXPECTED_DIGEST},
     "hbbr": {"tcp": [21117, 21119], "udp": [], "digest": EXPECTED_DIGEST},
 }
-EXPECTED_EDGE = {
-    "ipv4_tcp": [21115, 21116, 21117],
-    "ipv4_udp": [21116],
-    "ipv6": [],
-    "forbidden_not_open": [21114, 21118, 21119],
-}
 READINESS_INPUTS = (
     "immutable-image-digest",
     "exact-listener-ownership",
@@ -41,6 +35,54 @@ ENDPOINTS = {"/v1/health", "/v1/readiness", "/v1/status", "/v1/metrics/summary"}
 
 class OpsApiBlocked(RuntimeError):
     pass
+
+
+def _duplicate_keys(items: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in items:
+        if key in result:
+            raise OpsApiBlocked("contract-invalid")
+        result[key] = value
+    return result
+
+
+def load_operational_contracts(repo: Path | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
+    root = (repo or Path(__file__).resolve().parents[3]).resolve(strict=True)
+    contract_dir = root / "modules/rustdesk-fleet/contracts"
+    payloads: list[dict[str, Any]] = []
+    for name in ("phase53-edge.json", "phase53-ops-api.json"):
+        try:
+            payload = json.loads(
+                (contract_dir / name).read_text(encoding="utf-8"),
+                object_pairs_hook=_duplicate_keys,
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+            raise OpsApiBlocked("contract-invalid") from exc
+        if not isinstance(payload, dict):
+            raise OpsApiBlocked("contract-invalid")
+        payloads.append(payload)
+    edge, ops = payloads
+    if (
+        edge.get("schema_version") != 2
+        or edge.get("public_edge", {}).get("host") != "atius-srv-1"
+        or edge.get("backend", {}).get("host") != "horistic-srv"
+        or ops.get("readiness_inputs") != list(READINESS_INPUTS)
+    ):
+        raise OpsApiBlocked("contract-invalid")
+    return edge, ops
+
+
+def expected_edge_forwarder_contract(edge: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "host": edge["public_edge"]["host"],
+        "public_ipv4": edge["public_edge"]["public_ipv4"],
+        "external_tcp": list(edge["public_ipv4_allowed"]["tcp"]),
+        "external_udp": list(edge["public_ipv4_allowed"]["udp"]),
+        "native_public_closed_tcp": list(edge["public_forbidden"]["tcp"]),
+        "native_public_closed_udp": list(edge["public_forbidden"]["udp"]),
+        "backend_ipv4": edge["backend"]["private_ipv4"],
+        "snat_source_ipv4": edge["backend"]["native_ingress_source_ipv4"],
+    }
 
 
 def expected_listener_contract(digest: str) -> dict[str, dict[str, Any]]:
@@ -95,7 +137,7 @@ def authenticate_request(headers: dict[str, str], expected_token: str) -> bool:
 
 def derive_readiness(observations: dict[str, Any]) -> dict[str, Any]:
     cgroups = observations.get("cgroups", {})
-    edge = observations.get("edge", {})
+    edge, _ops = load_operational_contracts()
     fingerprint = observations.get("public_fingerprint")
     expected_fingerprint = observations.get("expected_public_fingerprint")
     runtime_digest = observations.get("runtime_contract_digest", EXPECTED_DIGEST)
@@ -109,7 +151,8 @@ def derive_readiness(observations: dict[str, Any]) -> dict[str, Any]:
             and fingerprint.startswith("sha256:")
             and len(fingerprint) == 71
         ),
-        "effective-edge-policy": edge == EXPECTED_EDGE,
+        "effective-edge-policy": observations.get("edge_forwarder")
+        == expected_edge_forwarder_contract(edge),
         "resource-ceilings": cgroups == {
             "parent_cpu_percent": 80,
             "parent_memory_bytes": 1073741824,
@@ -129,7 +172,13 @@ def derive_readiness(observations: dict[str, Any]) -> dict[str, Any]:
         ),
     }
     assert tuple(checks) == READINESS_INPUTS
-    return {"schema_version": 1, "ready": all(checks.values()), "checks": checks}
+    return {
+        "schema_version": 1,
+        "ready": all(checks.values()),
+        "checks": checks,
+        "edge_forwarder": copy.deepcopy(observations.get("edge_forwarder")),
+        "backend_listeners": copy.deepcopy(observations.get("listeners")),
+    }
 
 
 def collect_metric_summary(observations: dict[str, Any]) -> dict[str, Any]:
@@ -169,6 +218,8 @@ def handle_request(
             "schema_version": 1,
             "service": "atius-rustdesk-ops",
             "primary_host": "horistic-srv",
+            "public_edge": copy.deepcopy(observations.get("edge_forwarder")),
+            "backend_listeners": copy.deepcopy(observations.get("listeners")),
             "service_active": observations.get("service_active") is True,
             "image_digest": observations.get("image_digest"),
             "public_fingerprint": observations.get("public_fingerprint"),

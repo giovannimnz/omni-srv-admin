@@ -454,7 +454,10 @@ def _expected_nft_semantics(public_interface: str) -> dict[str, Any]:
             "tcp": [21115, 21116, 21117],
             "udp": [21116],
         },
-        "hooks": copy.deepcopy(EXPECTED_HOOKS),
+        "hooks": {
+            chain: list(hook)
+            for chain, hook in EXPECTED_HOOKS.items()
+        },
         "translations": [
             {
                 "protocol": protocol,

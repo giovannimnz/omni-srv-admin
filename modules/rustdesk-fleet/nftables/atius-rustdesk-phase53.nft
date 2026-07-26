@@ -2,7 +2,7 @@
 
 # ATIUS-PHASE53-EDGE
 # Managed-By: omni-srv-admin/rustdesk-fleet/phase53
-# contract-sha256=5ee115358d8283b58b95851ba1161808f4900d4159c759e9954d9a900891fe87
+# contract-sha256=1dc2ec69c33ba8722ec9e609abf6e3ab328710823da1c4215b4d84da6dc86c40
 # __PHASE53_PUBLIC_INTERFACE__ is rendered from the revalidated live interface.
 
 table inet atius_rustdesk_phase53 {

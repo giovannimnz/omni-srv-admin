@@ -116,7 +116,7 @@ def load_edge_contract(path: Path = EDGE_CONTRACT_PATH) -> dict[str, Any]:
         if set(payload) != required:
             raise ProbeBlocked("edge-contract-invalid")
         if (
-            payload["schema_version"] != 3
+            payload["schema_version"] != 2
             or payload["workstream"] != "rustdesk-fleet"
             or payload["primary_host"] != "horistic-srv"
             or payload["public_edge"]

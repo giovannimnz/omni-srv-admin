@@ -341,7 +341,16 @@ def _validate_admitted_semantics(
     edge = evidence["edge-probes.json"]
     external = edge_contract.get("external_probes") if isinstance(edge_contract, Mapping) else None
     external_tcp = external.get("tcp") if isinstance(external, Mapping) else None
-    if not isinstance(external, Mapping) or not isinstance(external_tcp, Mapping):
+    external_udp = external.get("udp") if isinstance(external, Mapping) else None
+    public_edge = edge_contract.get("public_edge")
+    backend = edge_contract.get("backend")
+    if (
+        not isinstance(external, Mapping)
+        or not isinstance(external_tcp, Mapping)
+        or not isinstance(external_udp, Mapping)
+        or not isinstance(public_edge, Mapping)
+        or not isinstance(backend, Mapping)
+    ):
         raise EvidenceInvalid("edge-contract-shape-invalid")
     if (
         edge.get("state") != "CURRENT"
@@ -351,7 +360,18 @@ def _validate_admitted_semantics(
         or edge.get("origins_required") != external.get("origins")
         or edge.get("positive_tcp_ports") != external_tcp.get("positive")
         or edge.get("negative_tcp_ports") != external_tcp.get("negative")
-        or edge.get("udp_port") != 21116
+        or edge.get("targets") != external_tcp.get("targets")
+        or edge.get("udp_targets") != external_udp.get("targets")
+        or edge.get("udp_external_port") != external_udp.get("external_port")
+        or edge.get("udp_backend_port") != external_udp.get("backend_port")
+        or edge.get("dns_records") != [
+            item["name"] for item in edge_contract.get("dns_records", [])
+        ]
+        or edge.get("public_edge_host") != public_edge.get("host")
+        or edge.get("backend_host") != backend.get("host")
+        or edge.get("backend_ingress_source_ipv4")
+        != backend.get("native_ingress_source_ipv4")
+        or edge.get("native_public_positive") is not False
     ):
         raise EvidenceInvalid("edge-probes-not-current")
 
@@ -384,6 +404,7 @@ def _validate_admitted_semantics(
         raise EvidenceInvalid("provider-manifest-shape-invalid")
     ssh = routes.get("ssh")
     vault = routes.get("vault")
+    oci = routes.get("oci")
     allowlisted = commands.get("allowlisted")
     forbidden = commands.get("forbidden")
     required_allowlisted = {
@@ -398,6 +419,28 @@ def _validate_admitted_semantics(
         or not isinstance(vault, Mapping)
         or vault.get("provider") != "hashicorp-vault"
         or vault.get("value_free_output") is not True
+        or not isinstance(oci, Mapping)
+        or oci.get("execution_targets")
+        != {
+            "public_edge": {
+                "host": "atius-srv-1",
+                "private_ipv4": "10.0.0.238",
+                "capabilities": [
+                    "nft-dnat",
+                    "nft-forward",
+                    "nft-snat",
+                    "oci-edge-ingress",
+                ],
+            },
+            "backend": {
+                "host": "horistic-srv",
+                "private_ipv4": "10.21.1.21",
+                "capabilities": [
+                    "rustdesk-server",
+                    "native-ingress-source-restriction",
+                ],
+            },
+        }
         or not isinstance(allowlisted, list)
         or not isinstance(forbidden, list)
         or not required_allowlisted.issubset(set(allowlisted))

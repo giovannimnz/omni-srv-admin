@@ -1,5 +1,5 @@
 {
-  "schema_version": 3,
+  "schema_version": 2,
   "workstream": "rustdesk-fleet",
   "primary_host": "horistic-srv",
   "public_edge": {
