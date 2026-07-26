@@ -43,6 +43,47 @@ class OpsApiBlocked(RuntimeError):
     pass
 
 
+def expected_listener_contract(digest: str) -> dict[str, dict[str, Any]]:
+    """Bind listener observations to the selected immutable runtime digest."""
+
+    if not isinstance(digest, str) or not digest.startswith("sha256:"):
+        raise OpsApiBlocked("runtime-digest-invalid")
+    return {
+        "hbbs": {"tcp": [21115, 21116, 21118], "udp": [21116], "digest": digest},
+        "hbbr": {"tcp": [21117, 21119], "udp": [], "digest": digest},
+    }
+
+
+def select_runtime_digest(repo: Path | None = None, environ: dict[str, str] | None = None) -> str:
+    """Select baseline or an admitted successor without ambient promotion."""
+
+    environment = os.environ if environ is None else environ
+    if environment.get("ADMITTED_PHASE53") != "1":
+        return EXPECTED_DIGEST
+    root = (repo or Path(__file__).resolve().parents[3]).resolve(strict=True)
+    candidate_path = root / "modules/rustdesk-fleet/contracts/phase53-runtime-candidate.json"
+    evidence_path = root / "modules/rustdesk-fleet/evidence/phase53/candidate-admission.json"
+    try:
+        candidate = json.loads(candidate_path.read_text(encoding="utf-8"))
+        evidence = json.loads(evidence_path.read_text(encoding="utf-8"))
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise OpsApiBlocked("candidate-runtime-unavailable") from exc
+    if (
+        not isinstance(candidate, dict)
+        or candidate.get("candidate_status_required") != "ADMITTED_PHASE53"
+        or not isinstance(evidence, dict)
+        or evidence.get("candidate_status") != "ADMITTED_PHASE53"
+        or evidence.get("admission_performed") is not True
+        or evidence.get("live_mutation_performed") is not False
+    ):
+        raise OpsApiBlocked("candidate-admission-required")
+    upstream = candidate.get("upstream")
+    digest = upstream.get("linux_arm64_digest") if isinstance(upstream, dict) else None
+    if not isinstance(digest, str) or not digest.startswith("sha256:"):
+        raise OpsApiBlocked("candidate-runtime-digest-invalid")
+    return digest
+
+
 def authenticate_request(headers: dict[str, str], expected_token: str) -> bool:
     authorization = headers.get("Authorization", "")
     prefix = "Bearer "
@@ -57,9 +98,11 @@ def derive_readiness(observations: dict[str, Any]) -> dict[str, Any]:
     edge = observations.get("edge", {})
     fingerprint = observations.get("public_fingerprint")
     expected_fingerprint = observations.get("expected_public_fingerprint")
+    runtime_digest = observations.get("runtime_contract_digest", EXPECTED_DIGEST)
+    listeners = expected_listener_contract(runtime_digest)
     checks = {
-        "immutable-image-digest": observations.get("image_digest") == EXPECTED_DIGEST,
-        "exact-listener-ownership": observations.get("listeners") == EXPECTED_LISTENERS,
+        "immutable-image-digest": observations.get("image_digest") == runtime_digest,
+        "exact-listener-ownership": observations.get("listeners") == listeners,
         "public-fingerprint-continuity": (
             isinstance(fingerprint, str)
             and fingerprint == expected_fingerprint
@@ -229,6 +272,10 @@ def main() -> int:
         token = _load_secure(args.token_file)
         observations = json.loads(args.observations_file.read_text(encoding="utf-8"))
         if not isinstance(observations, dict):
+            return 2
+        selected_digest = select_runtime_digest()
+        observed_digest = observations.get("runtime_contract_digest", EXPECTED_DIGEST)
+        if observed_digest != selected_digest:
             return 2
     except (OSError, OpsApiBlocked, json.JSONDecodeError):
         return 2

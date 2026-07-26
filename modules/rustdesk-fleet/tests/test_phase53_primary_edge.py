@@ -23,6 +23,9 @@ CONTRACT_DIR = REPO / "modules/rustdesk-fleet/contracts"
 RUNTIME_CONTRACT = CONTRACT_DIR / "phase53-runtime.json"
 EDGE_CONTRACT = CONTRACT_DIR / "phase53-edge.json"
 OPS_API_CONTRACT = CONTRACT_DIR / "phase53-ops-api.json"
+ADMISSION_CONTRACT = CONTRACT_DIR / "phase53-candidate-admission.json"
+PROVIDER_CONTRACT = CONTRACT_DIR / "phase53-provider-manifest.json"
+CANDIDATE_RUNTIME_CONTRACT = CONTRACT_DIR / "phase53-runtime-candidate.json"
 LIVE_GATE_PATH = REPO / "modules/rustdesk-fleet/tools/run-phase53-live-gate.py"
 HBBS_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
 HBBR_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container"
@@ -398,9 +401,263 @@ def _validate_ops_api(payload: dict[str, Any]) -> None:
 
 
 def test_contract_schema_files_parse_strictly() -> None:
-    for path in (RUNTIME_CONTRACT, EDGE_CONTRACT, OPS_API_CONTRACT):
+    for path in (
+        RUNTIME_CONTRACT,
+        EDGE_CONTRACT,
+        OPS_API_CONTRACT,
+        ADMISSION_CONTRACT,
+        PROVIDER_CONTRACT,
+        CANDIDATE_RUNTIME_CONTRACT,
+    ):
         assert path.is_file(), path
         _load_strict(path)
+
+
+def test_successor_admission_and_evidence_validator_are_fail_closed() -> None:
+    admission = _load_strict(ADMISSION_CONTRACT)
+    candidate = _load_strict(CANDIDATE_RUNTIME_CONTRACT)
+    evidence = _load_strict(
+        REPO / "modules/rustdesk-fleet/evidence/phase53/candidate-admission.json"
+    )
+    assert admission["candidate_status"] == "NOT_ADMITTED"
+    assert admission["provenance"]["signature_verified"] is False
+    assert candidate["upstream"]["version"] == "1.1.16"
+    assert evidence["candidate_status"] == "NOT_ADMITTED"
+    assert evidence["admission_performed"] is False
+    assert evidence["live_mutation_performed"] is False
+    validator_path = REPO / "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py"
+    spec = importlib.util.spec_from_file_location("phase53_evidence_validator", validator_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    with pytest.raises(module.EvidenceInvalid, match="^source-head-drift$"):
+        module.validate(REPO)
+
+
+def test_evidence_validator_supports_current_admitted_pre_mutation_state(monkeypatch: Any) -> None:
+    validator_path = REPO / "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py"
+    spec = importlib.util.spec_from_file_location("phase53_evidence_validator_admitted", validator_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+    originals = {
+        name: copy.deepcopy(
+            _load_strict(REPO / "modules/rustdesk-fleet/evidence/phase53" / name)
+        )
+        for name in module.EVIDENCE_NAMES
+    }
+    contract_originals = {
+        name: copy.deepcopy(_load_strict(CONTRACT_DIR / name))
+        for name in module.CONTRACT_NAMES
+    }
+    for payload in originals.values():
+        payload["source_head"] = "head"
+    originals["candidate-admission.json"].update(
+        {
+            "candidate_status": "ADMITTED_PHASE53",
+            "state": "ADMITTED_PHASE53",
+            "admission_performed": True,
+            "provenance": {
+                "signature_verified": False,
+                "disposition": "OWNER_EXCEPTION_APPROVED",
+            },
+            "owner_approval": {
+                "owner": "Giovanni Muniz",
+                "approval_ref": "review-53-05C",
+                "expires_at": "2099-01-01T00:00:00Z",
+                "risk_disposition": "accepted-for-test",
+                "hash_binding": True,
+            },
+            "required_gates": {
+                "fresh_supply": "PASS",
+                "compatibility_matrix": "PASS",
+                "contract_parity": "CURRENT",
+                "pre_state": "PASS",
+                "rollback_ready": "PASS",
+                "capacity_finalize": "PASS",
+            },
+        }
+    )
+    originals["server-1.1.16-evaluation.json"].update(
+        {"candidate_status": "ADMITTED_PHASE53", "admission_performed": True}
+    )
+    originals["contract-parity.json"].update(
+        {
+            "state": "CURRENT",
+            "current_contract_digests": {
+                name: "a" * 64 for name in module.CONTRACT_NAMES
+            },
+            "consumer_digests": {
+                "atius-rustdesk-server-hbbs.container": "a" * 64,
+                "atius-rustdesk-server-hbbr.container": "a" * 64,
+                "install-phase53-server.py": "a" * 64,
+                "rustdesk-ops-api.py": "a" * 64,
+            },
+        }
+    )
+    required_vectors = contract_originals["phase53-candidate-admission.json"][
+        "client_compatibility"
+    ]["required_matrix"]
+    compatibility = originals["compatibility-pending.json"]
+    compatibility.update(
+        {
+            "state": "CURRENT",
+            "vectors_tested": list(required_vectors),
+        }
+    )
+    for item in compatibility["matrix"].values():
+        item["tested"] = True
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    samples = []
+    for host in ("atius-srv-2", "atius-srv-3"):
+        for _ in range(2):
+            samples.append(
+                {
+                    "host": host,
+                    "observed_at": now,
+                    "placement_state": "NO-GO",
+                    "zero_cleanup_performed": False,
+                }
+            )
+    for _ in range(2):
+        samples.append(
+            {
+                "host": "horistic-srv",
+                "observed_at": now,
+                "placement_state": "GO",
+                "raw_capacity_state": "CURRENT",
+                "capacity_finalize_state": "CURRENT",
+                "zero_cleanup_performed": False,
+            }
+        )
+    originals["capacity-current.json"].update(
+        {
+            "state": "CURRENT",
+            "finalize_ttl_seconds": 3600,
+            "selected_primary": "horistic-srv",
+            "samples": samples,
+        }
+    )
+    originals["deploy-transaction.json"].update(
+        {
+            "state": "READY_BEFORE_MUTATION",
+            "rollback_ready": True,
+            "pre_state_digest": "b" * 64,
+            "transaction_id": None,
+            "mutation_performed": False,
+            "journal_created": False,
+        }
+    )
+    originals["edge-probes.json"].update(
+        {
+            "state": "CURRENT",
+            "probes_completed": True,
+            "udp_reflection_negative": True,
+        }
+    )
+    originals["ops-api-probes.json"].update(
+        {
+            "state": "CURRENT",
+            "probes_completed": True,
+            "mutation_performed": False,
+            "final_receipt_present": True,
+        }
+    )
+
+    monkeypatch.setattr(module, "_head", lambda repo: "head")
+    monkeypatch.setattr(
+        module,
+        "_strict",
+        lambda path: originals[path.name]
+        if path.name in originals
+        else contract_originals[path.name],
+    )
+    monkeypatch.setattr(module, "_sha256", lambda path: "a" * 64)
+    result = module.validate(REPO)
+    assert result["state"] == "ADMITTED_PHASE53"
+    assert result["candidate_status"] == "ADMITTED_PHASE53"
+    assert result["mutation_performed"] is False
+
+    samples = originals["capacity-current.json"]["samples"]
+    samples[1], samples[2] = samples[2], samples[1]
+    with pytest.raises(module.EvidenceInvalid, match="capacity-sample-order-invalid"):
+        module.validate(REPO)
+    samples[1], samples[2] = samples[2], samples[1]
+
+    bad_digest = "sha256:" + "g" * 64
+    digest_targets = (
+        (
+            originals["candidate-admission.json"]["candidate_contract"],
+            "image_linux_arm64_digest",
+            "candidate-image-digest-invalid",
+        ),
+        (
+            contract_originals["phase53-runtime-candidate.json"]["upstream"],
+            "linux_arm64_digest",
+            "runtime-image-digest-invalid",
+        ),
+        (
+            originals["server-1.1.16-evaluation.json"]["server"]["image"],
+            "linux_arm64_digest",
+            "evaluation-image-digest-invalid",
+        ),
+    )
+    for target, key, error in digest_targets:
+        original_value = target[key]
+        target[key] = bad_digest
+        with pytest.raises(module.EvidenceInvalid, match=error):
+            module.validate(REPO)
+        target[key] = original_value
+    immutable_upstream = contract_originals["phase53-runtime-candidate.json"]["upstream"]
+    original_reference = immutable_upstream["immutable_reference"]
+    immutable_upstream["immutable_reference"] = "docker.io/rustdesk/rustdesk-server@" + bad_digest
+    with pytest.raises(module.EvidenceInvalid, match="candidate-immutable-reference-digest-invalid"):
+        module.validate(REPO)
+    immutable_upstream["immutable_reference"] = original_reference
+
+    originals["capacity-current.json"]["secret_material_present"] = True
+    with pytest.raises(module.EvidenceInvalid, match="secret-surface:capacity-current.json.secret_material_present"):
+        module.validate(REPO)
+    originals["capacity-current.json"].pop("secret_material_present")
+
+    provider_payload = contract_originals["phase53-provider-manifest.json"]
+    original_routes = provider_payload["routes"]
+    provider_payload["routes"] = []
+    with pytest.raises(module.EvidenceInvalid, match="provider-manifest-shape-invalid"):
+        module.validate(REPO)
+    provider_payload["routes"] = original_routes
+
+    edge_payload = contract_originals["phase53-edge.json"]
+    original_external = edge_payload["external_probes"]
+    edge_payload["external_probes"] = []
+    with pytest.raises(module.EvidenceInvalid, match="edge-contract-shape-invalid"):
+        module.validate(REPO)
+    edge_payload["external_probes"] = original_external
+
+    originals["capacity-current.json"]["state"] = "BLOCKED_STALE"
+    with pytest.raises(module.EvidenceInvalid, match="capacity-finalize-not-current"):
+        module.validate(REPO)
+    originals["capacity-current.json"]["state"] = "CURRENT"
+
+    originals["compatibility-pending.json"]["state"] = "PENDING"
+    with pytest.raises(module.EvidenceInvalid, match="compatibility-not-current"):
+        module.validate(REPO)
+    originals["compatibility-pending.json"]["state"] = "CURRENT"
+
+    contract_originals["phase53-provider-manifest.json"]["routes"]["ssh"]["batch_mode"] = False
+    with pytest.raises(module.EvidenceInvalid, match="provider-manifest-semantics-invalid"):
+        module.validate(REPO)
+    contract_originals["phase53-provider-manifest.json"]["routes"]["ssh"]["batch_mode"] = True
+
+    contract_originals["phase53-runtime-candidate.json"]["upstream"]["version"] = "drift"
+    with pytest.raises(module.EvidenceInvalid, match="candidate-runtime-hash-drift"):
+        module.validate(REPO)
+    originals["candidate-admission.json"]["required_gates"].pop("capacity_finalize")
+    with pytest.raises(module.EvidenceInvalid, match="admission-authority-incomplete"):
+        module.validate(REPO)
 
 
 def test_contract_schema_rejects_duplicate_json_keys(tmp_path: Path) -> None:
@@ -633,6 +890,23 @@ def test_identity_hydration_is_tmpfs_only_and_evidence_is_value_free(
     assert not list(transaction.home.rglob("id_ed25519*"))
 
 
+def test_candidate_runtime_rendering_is_owner_admission_bound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = _server_installer_module()
+    monkeypatch.delenv("ADMITTED_PHASE53", raising=False)
+    assert module.select_runtime_candidate(REPO) is None
+    monkeypatch.setenv("ADMITTED_PHASE53", "1")
+    with pytest.raises(module.Phase53ServerBlocked, match="candidate-admission-required"):
+        module.select_runtime_candidate(REPO)
+
+    monkeypatch.delenv("ADMITTED_PHASE53", raising=False)
+    transaction = _new_server_transaction(module, tmp_path, _FakeServerRunner())
+    source = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
+    baseline = transaction._source_bytes(source)
+    assert baseline == source.read_bytes()
+
+
 def test_sqlite_state_digest_and_integrity_are_preserved_by_install_and_rollback(
     tmp_path: Path,
 ) -> None:
@@ -730,7 +1004,6 @@ def test_log_bound_rotation_is_actual_bounded_and_retained(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     ("artifact", "owner_plan"),
     [
-        ("evidence/phase53/deploy-transaction.json", "53-05"),
         ("tools/validate_phase53.py", "53-06"),
     ],
 )
@@ -1048,6 +1321,15 @@ def test_ops_api_readiness_derives_current_inputs_and_fails_on_drift(
     assert result["checks"][failed_check] is False
 
 
+def test_ops_api_successor_digest_requires_admission(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _ops_api_module()
+    monkeypatch.delenv("ADMITTED_PHASE53", raising=False)
+    assert module.select_runtime_digest(environ={}) == module.EXPECTED_DIGEST
+    monkeypatch.setenv("ADMITTED_PHASE53", "1")
+    with pytest.raises(module.OpsApiBlocked, match="candidate-admission-required"):
+        module.select_runtime_digest(repo=REPO)
+
+
 def test_ops_api_metrics_are_allowlisted_observational_and_secret_free() -> None:
     module = _ops_api_module()
     observations = _healthy_ops_observations()
@@ -1170,6 +1452,560 @@ def test_unflagged_cli_refuses_without_runtime_evidence(tmp_path: Path) -> None:
         "status": "BLOCKED",
     }
     assert list(tmp_path.iterdir()) == []
+
+
+def test_explicit_cli_uses_requested_evidence_dir_and_stays_fail_closed(
+    tmp_path: Path,
+) -> None:
+    env = {
+        "PATH": os.environ["PATH"],
+        "ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1",
+    }
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(LIVE_GATE_PATH),
+            "--repo",
+            str(REPO),
+            "--evidence-dir",
+            str(tmp_path),
+            "--stage",
+            "edge-probes",
+        ],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload == {
+        "blocker": "preflight-input-required",
+        "mutation_performed": False,
+        "secret_material_present": False,
+        "status": "BLOCKED",
+    }
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_cli_checks_admission_and_provider_before_opening_journal(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    preflight = _current_preflight(module)
+    preflight.update(
+        {
+            "candidate_admission_performed": True,
+            "candidate_contract_digest": preflight["contract_digests"][
+                "phase53-runtime-candidate.json"
+            ],
+            "provider_manifest_digest": preflight["contract_digests"][
+                "phase53-provider-manifest.json"
+            ],
+        }
+    )
+    (tmp_path / "preflight.json").write_text(json.dumps(preflight), encoding="utf-8")
+    env = {
+        "PATH": os.environ["PATH"],
+        "ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1",
+        "ADMITTED_PHASE53": "1",
+    }
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(LIVE_GATE_PATH),
+            "--repo",
+            str(REPO),
+            "--evidence-dir",
+            str(tmp_path),
+            "--stage",
+            "edge-probes",
+        ],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "BLOCKED"
+    assert payload["blocker"] == "candidate-evidence-not-admitted"
+    assert not (tmp_path / "phase53-journal.json").exists()
+
+
+def test_edge_probes_dispatches_ordered_injected_adapters() -> None:
+    module = _live_gate_module()
+    transaction_id = "1" * 32
+    calls: list[str] = []
+    adapters: dict[str, Any] = {}
+
+    for stage in module.EDGE_PROBES_SEQUENCE:
+        def adapter(stage: str = stage) -> Any:
+            calls.append(stage)
+            return module.StageReceipt.create(
+                transaction_id=transaction_id,
+                stage=stage,
+                input_digest="2" * 64,
+                observations={"raw_observation_digest": "3" * 64},
+                mutation={
+                    "performed": False,
+                    "classes": [],
+                    "cleanup_pending": [],
+                },
+                rollback_state="ready",
+            )
+
+        adapters[stage] = adapter
+
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        stage_adapters=adapters,
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+
+    result = gate.run_stage("edge-probes")
+
+    assert calls == list(module.EDGE_PROBES_SEQUENCE)
+    assert result["stage"] == "edge-probes"
+    assert result["receipt_count"] == len(module.EDGE_PROBES_SEQUENCE)
+    assert [receipt["stage"] for receipt in result["receipts"]] == calls
+    assert result["secret_material_present"] is False
+
+
+def test_stage_dispatch_requires_explicit_adapter() -> None:
+    module = _live_gate_module()
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+
+    with pytest.raises(module.GateBlocked, match="stage-adapter-required:preflight"):
+        gate.run_stage("preflight")
+
+
+def test_stage_failure_requests_containment_and_writes_rollback_journal(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    calls: list[str] = []
+    transaction_id = "9" * 32
+
+    def preflight() -> Any:
+        return module.StageReceipt.create(
+            transaction_id=transaction_id,
+            stage="preflight",
+            input_digest="a" * 64,
+            observations={"raw_observation_digest": "b" * 64},
+            mutation={"performed": False, "classes": [], "cleanup_pending": []},
+            rollback_state="ready",
+        )
+
+    def runtime() -> Any:
+        raise RuntimeError("provider failure")
+
+    def contain_on_failure() -> dict[str, Any]:
+        calls.append("contain")
+        return {"status": "ignored", "token": "never-recorded"}
+
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        stage_adapters={
+            "preflight": preflight,
+            "runtime": runtime,
+            "contain_on_failure": contain_on_failure,
+        },
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+    gate.journal = module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id)
+    gate.run_stage("preflight")
+
+    with pytest.raises(module.GateBlocked, match="stage-adapter-failed:runtime"):
+        gate.run_stage("runtime")
+
+    assert calls == ["contain"]
+    payload = _load_strict(tmp_path / "journal.json")
+    assert payload["last_stage"] == "rollback"
+    serialized = json.dumps(payload)
+    assert "provider failure" not in serialized
+    assert "never-recorded" not in serialized
+
+
+def _live_adapters_module() -> Any:
+    path = REPO / "modules/rustdesk-fleet/tools/phase53-live-adapters.py"
+    spec = importlib.util.spec_from_file_location("phase53_live_adapters_test", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _production_adapters_module() -> Any:
+    path = REPO / "modules/rustdesk-fleet/tools/phase53_production_adapters.py"
+    spec = importlib.util.spec_from_file_location("phase53_production_adapters_test", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_live_adapter_factory_requires_admitted_candidate(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", "a" * 32)
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": False, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        transaction_id="a" * 32,
+        journal=journal,
+    )
+    with pytest.raises(module.AdapterBlocked, match="candidate-not-admitted"):
+        module.build_live_adapters(context, injected={stage: lambda: {} for stage in module.EDGE_SEQUENCE})
+
+    admitted = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": True, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        transaction_id="a" * 32,
+        journal=journal,
+    )
+    with pytest.raises(module.AdapterBlocked, match="live-backend-containment-missing"):
+        module.build_live_adapters(admitted, injected={stage: lambda: {} for stage in module.EDGE_SEQUENCE})
+
+
+def test_production_adapter_factory_requires_current_candidate_and_provider_digests(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", "c" * 32)
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": False, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1", "ADMITTED_PHASE53": "1"},
+        transaction_id="c" * 32,
+        journal=None,
+    )
+    with pytest.raises(module.AdapterBlocked, match="candidate-not-admitted"):
+        module.build_production_adapters(context)
+
+    admitted = copy.deepcopy(context.preflight)
+    admitted["candidate_admission_performed"] = True
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=context.evidence_dir,
+        preflight=admitted,
+        environ=context.environ,
+        transaction_id=context.transaction_id,
+        journal=journal,
+    )
+    with pytest.raises(module.AdapterBlocked, match="candidate-evidence-not-admitted"):
+        module.build_production_adapters(context)
+
+
+def test_production_bundle_factory_is_not_constructed_before_authority(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    calls: list[str] = []
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": False, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1", "ADMITTED_PHASE53": "1"},
+        transaction_id="4" * 32,
+        journal=None,
+    )
+
+    def factory() -> Any:
+        calls.append("constructed")
+        return object()
+
+    with pytest.raises(module.AdapterBlocked, match="candidate-not-admitted"):
+        module.build_production_adapters(context, provider_bundle_factory=factory)
+    assert calls == []
+
+
+def test_production_provider_seam_is_explicit_and_route_policy_is_fail_closed() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    module.validate_provider_manifest(manifest)
+    assert module.select_ssh_route(0) == "private"
+    assert module.select_ssh_route(255) == "public-native-fallback"
+    with pytest.raises(module.AdapterBlocked, match="ssh-private-probe-failed"):
+        module.select_ssh_route(1)
+    with pytest.raises(module.AdapterBlocked, match="provider-shell-eval-forbidden"):
+        module.validate_command_argv(["ssh", "-o", "ProxyCommand=$(id)"])
+
+
+def test_production_provider_bundle_requires_authority_before_callbacks() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    calls: list[str] = []
+
+    def callback() -> dict[str, Any]:
+        calls.append("provider")
+        return {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+
+    stages = {stage: callback for stage in module.EDGE_SEQUENCE}
+    bundle = module.ProviderBundle(stages=stages, containment=callback, transaction_id="d" * 32)
+    with pytest.raises(module.AdapterBlocked, match="provider-authority-required"):
+        module.bind_provider_bundle(manifest, bundle, authorized=False)
+    assert calls == []
+
+    backend = module.bind_provider_bundle(manifest, bundle, authorized=True)
+    receipt = backend.stages["preflight"]()
+    assert receipt["stage"] == "preflight"
+    assert receipt["secret_material_present"] is False
+    assert receipt["mutation"] == {
+        "performed": False,
+        "classes": [],
+        "cleanup_pending": [],
+    }
+    assert calls == ["provider"]
+
+
+def test_production_provider_bundle_rejects_transaction_drift_before_callbacks() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    calls: list[str] = []
+
+    def callback() -> dict[str, Any]:
+        calls.append("provider")
+        return {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+
+    bundle = module.ProviderBundle(
+        stages={stage: callback for stage in module.EDGE_SEQUENCE},
+        containment=callback,
+        transaction_id="f" * 32,
+    )
+    with pytest.raises(module.AdapterBlocked, match="provider-transaction-drift"):
+        module.bind_provider_bundle(
+            manifest, bundle, authorized=True, expected_transaction_id="0" * 32
+        )
+    assert calls == []
+
+
+def test_production_provider_bundle_validates_all_callbacks_before_binding() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    callback = lambda: {
+        "mutation_performed": False,
+        "mutation_classes": [],
+        "cleanup_pending": [],
+    }
+    stages = {stage: callback for stage in module.EDGE_SEQUENCE}
+    stages["runtime"] = object()
+    bundle = module.ProviderBundle(
+        stages=stages, containment=callback, transaction_id="1" * 32
+    )
+    with pytest.raises(module.AdapterBlocked, match="provider-callback-invalid:runtime"):
+        module.bind_provider_bundle(manifest, bundle, authorized=True)
+
+
+def test_runtime_provider_builds_explicit_bundle_without_invoking_callbacks() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def callback(name: str) -> Any:
+        def run() -> dict[str, Any]:
+            calls.append(name)
+            return {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+
+        return run
+
+    provider = module.RuntimeProvider(
+        transaction_id="a" * 32,
+        snapshot_prestate=callback("prestate"),
+        install_closed=callback("install"),
+        rollback_server=callback("rollback"),
+        edge_stages={stage: callback(stage) for stage in module.EDGE_SEQUENCE if stage != "runtime"},
+        containment=callback("containment"),
+    )
+    bundle = provider.to_bundle()
+    assert isinstance(bundle, module.ProviderBundle)
+    assert calls == []
+
+
+def test_runtime_provider_orders_prestate_before_install_and_is_value_free() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def prestate() -> dict[str, Any]:
+        calls.append("prestate")
+        return {"pre_state_digest": "a" * 64}
+
+    def install() -> dict[str, Any]:
+        calls.append("install")
+        return {"managed_units": 3}
+
+    provider = module.RuntimeProvider(
+        transaction_id="b" * 32,
+        snapshot_prestate=prestate,
+        install_closed=install,
+        rollback_server=lambda: {"rollback": "ready"},
+        edge_stages={
+            stage: lambda: {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+            for stage in module.EDGE_SEQUENCE
+            if stage != "runtime"
+        },
+        containment=lambda: {"contained": True},
+    )
+    bundle = provider.to_bundle()
+    backend = module.bind_provider_bundle(
+        _load_strict(PROVIDER_CONTRACT), bundle, authorized=True, expected_transaction_id="b" * 32
+    )
+    receipt = backend.stages["runtime"]()
+    assert calls == ["prestate", "install"]
+    serialized = json.dumps(receipt, sort_keys=True)
+    assert "argv" not in serialized
+    assert "stdout" not in serialized
+    assert "fixture-secret" not in serialized.lower()
+    assert receipt["mutation"]["performed"] is True
+
+
+def test_runtime_provider_rolls_back_on_install_fault_without_leaking_error() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def install() -> dict[str, Any]:
+        calls.append("install")
+        raise RuntimeError("fixture secret and argv must not escape")
+
+    def rollback() -> dict[str, Any]:
+        calls.append("rollback")
+        return {"state": "restored"}
+
+    provider = module.RuntimeProvider(
+        transaction_id="c" * 32,
+        snapshot_prestate=lambda: {"pre_state_digest": "d" * 64},
+        install_closed=install,
+        rollback_server=rollback,
+        edge_stages={
+            stage: lambda: {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+            for stage in module.EDGE_SEQUENCE
+            if stage != "runtime"
+        },
+        containment=lambda: {"contained": True},
+    )
+    backend = module.bind_provider_bundle(
+        _load_strict(PROVIDER_CONTRACT), provider.to_bundle(), authorized=True
+    )
+    with pytest.raises(module.AdapterBlocked, match="runtime-provider-install-failed") as error:
+        backend.stages["runtime"]()
+    assert calls == ["install", "rollback"]
+    assert "fixture secret" not in str(error.value)
+
+
+def test_runtime_provider_rolls_back_when_install_output_contains_secret() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def install() -> dict[str, Any]:
+        calls.append("install")
+        return {"password": "fixture-secret"}
+
+    def rollback() -> dict[str, Any]:
+        calls.append("rollback")
+        return {"state": "restored"}
+
+    provider = module.RuntimeProvider(
+        transaction_id="d" * 32,
+        snapshot_prestate=lambda: {"pre_state_digest": "e" * 64},
+        install_closed=install,
+        rollback_server=rollback,
+        edge_stages={
+            stage: lambda: {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+            for stage in module.EDGE_SEQUENCE
+            if stage != "runtime"
+        },
+        containment=lambda: {"contained": True},
+    )
+    backend = module.bind_provider_bundle(
+        _load_strict(PROVIDER_CONTRACT), provider.to_bundle(), authorized=True
+    )
+    with pytest.raises(module.AdapterBlocked, match="runtime-provider-install-output-invalid"):
+        backend.stages["runtime"]()
+    assert calls == ["install", "rollback"]
+
+
+def test_live_gate_resumes_only_after_completed_journal_prefix(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    transaction_id = "2" * 32
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id)
+    journal.append("preflight", {"metadata_digest": "a" * 64})
+
+    calls: list[str] = []
+
+    def runtime() -> Any:
+        calls.append("runtime")
+        return module.StageReceipt.create(
+            transaction_id=transaction_id,
+            stage="runtime",
+            input_digest="b" * 64,
+            observations={"raw_observation_digest": "c" * 64},
+            mutation={"performed": False, "classes": [], "cleanup_pending": []},
+            rollback_state="ready",
+        )
+
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        stage_adapters={"runtime": runtime},
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+    gate.hydrate_journal(module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id))
+    with pytest.raises(module.GateBlocked, match="journal-stage-already-complete"):
+        gate.run_stage("preflight")
+    gate.run_stage("runtime")
+    assert calls == ["runtime"]
+
+
+def test_live_gate_rejects_terminal_rollback_journal(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    transaction_id = "3" * 32
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id)
+    journal.append("rollback", {"containment_requested": True, "blocker_digest": "a" * 64})
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+    )
+    with pytest.raises(module.GateBlocked, match="journal-terminal-rollback"):
+        gate.hydrate_journal(module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id))
+
+
+def test_production_provider_bundle_rejects_secret_output_before_receipt() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+
+    def secret_callback() -> dict[str, Any]:
+        return {
+            "mutation_performed": False,
+            "mutation_classes": [],
+            "cleanup_pending": [],
+            "password": "fixture-secret",
+        }
+
+    stages = {stage: secret_callback for stage in module.EDGE_SEQUENCE}
+    bundle = module.ProviderBundle(
+        stages=stages, containment=secret_callback, transaction_id="e" * 32
+    )
+    backend = module.bind_provider_bundle(manifest, bundle, authorized=True)
+    with pytest.raises(module.AdapterBlocked, match="provider-secret-output:runtime"):
+        backend.stages["runtime"]()
+
+
+def test_value_free_journal_redacts_and_rejects_verdicts(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", "b" * 32)
+    journal.append("preflight", {"observations": {"token": "[REDACTED]", "digest": "c" * 64}})
+    payload = _load_strict(tmp_path / "journal.json")
+    assert payload["secret_material_present"] is False
+    assert payload["last_stage"] == "preflight"
+    assert "fixture-secret" not in json.dumps(payload).lower()
+    with pytest.raises(module.AdapterBlocked, match="journal-receipt-invalid"):
+        journal.append("runtime", {"status": "PASS"})
 
 
 def _oci_rule(

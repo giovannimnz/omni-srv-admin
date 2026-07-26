@@ -20,12 +20,39 @@ import subprocess
 import sys
 from typing import Any, Callable, Mapping
 
+try:
+    from phase53_live_adapters import (
+        AdapterBlocked,
+        AdapterContext,
+        ValueFreeJournal,
+        build_live_adapters,
+        build_production_adapters,
+    )
+except ModuleNotFoundError:  # imported from a test loader rather than as a script
+    import importlib.util
+
+    _ADAPTERS_PATH = Path(__file__).resolve().with_name("phase53-live-adapters.py")
+    _ADAPTERS_SPEC = importlib.util.spec_from_file_location("phase53_live_adapters", _ADAPTERS_PATH)
+    if _ADAPTERS_SPEC is None or _ADAPTERS_SPEC.loader is None:
+        raise
+    _ADAPTERS_MODULE = importlib.util.module_from_spec(_ADAPTERS_SPEC)
+    sys.modules[_ADAPTERS_SPEC.name] = _ADAPTERS_MODULE
+    _ADAPTERS_SPEC.loader.exec_module(_ADAPTERS_MODULE)
+    AdapterBlocked = _ADAPTERS_MODULE.AdapterBlocked
+    AdapterContext = _ADAPTERS_MODULE.AdapterContext
+    ValueFreeJournal = _ADAPTERS_MODULE.ValueFreeJournal
+    build_live_adapters = _ADAPTERS_MODULE.build_live_adapters
+    build_production_adapters = _ADAPTERS_MODULE.build_production_adapters
+
 
 LIVE_FLAG = "ATIUS_RUN_RUSTDESK_PHASE53_LIVE"
 CONTRACT_NAMES = (
     "phase53-runtime.json",
     "phase53-edge.json",
     "phase53-ops-api.json",
+    "phase53-candidate-admission.json",
+    "phase53-provider-manifest.json",
+    "phase53-runtime-candidate.json",
 )
 STAGES = (
     "preflight",
@@ -350,8 +377,10 @@ class Phase53LiveGate:
         self.contracts = load_current_contracts(self.repo)
         self.stage_adapters = dict(stage_adapters or {})
         self.receipts: list[StageReceipt] = []
+        self._completed_stages: list[str] = []
         self.transaction_id: str | None = None
         self._mutation_authorized = False
+        self.journal: ValueFreeJournal | None = None
 
     def require_explicit_live_flag(self) -> None:
         if self.environ.get(LIVE_FLAG) != "1":
@@ -373,6 +402,18 @@ class Phase53LiveGate:
             raise GateBlocked("preflight-evidence-invalid")
         self._mutation_authorized = True
 
+    def hydrate_journal(self, journal: ValueFreeJournal) -> None:
+        """Resume only a valid ordered prefix; never replay completed stages."""
+
+        stages = [row["stage"] for row in journal.receipts]
+        if "rollback" in stages:
+            raise GateBlocked("journal-terminal-rollback")
+        if stages != list(STAGES[: len(stages)]):
+            raise GateBlocked("journal-stage-order-invalid")
+        self.journal = journal
+        self.transaction_id = journal.transaction_id
+        self._completed_stages = stages
+
     def load_preflight(self) -> dict[str, Any]:
         """Load one current, value-free preflight descriptor from the evidence dir."""
         for filename in PREFLIGHT_FILENAMES:
@@ -385,16 +426,20 @@ class Phase53LiveGate:
     def accept_receipt(self, receipt: StageReceipt) -> None:
         if not self._mutation_authorized:
             raise GateBlocked("mutation-not-authorized")
-        if any(existing.stage == receipt.stage for existing in self.receipts):
+        if receipt.stage in self._completed_stages or any(
+            existing.stage == receipt.stage for existing in self.receipts
+        ):
             raise GateBlocked("duplicate-stage-receipt")
         if self.transaction_id is None:
             self.transaction_id = receipt.transaction_id
         elif receipt.transaction_id != self.transaction_id:
             raise GateBlocked("receipt-transaction-drift")
-        expected_stage = STAGES[len(self.receipts)]
+        expected_stage = STAGES[len(self._completed_stages) + len(self.receipts)]
         if receipt.stage != expected_stage:
             raise GateBlocked("ambiguous-stage-resume")
         self.receipts.append(receipt)
+        if self.journal is not None:
+            self.journal.append(receipt.stage, receipt.to_mapping())
 
     def _run_adapter(self, stage: str) -> dict[str, Any]:
         adapter = self.stage_adapters.get(stage)
@@ -420,14 +465,52 @@ class Phase53LiveGate:
         self.accept_receipt(receipt)
         return receipt.to_mapping()
 
+    def _contain_on_failure(self, *, failed_stage: str, blocker: str) -> None:
+        """Request containment without allowing adapter output into evidence."""
+
+        callback = self.stage_adapters.get("contain_on_failure")
+        callback_completed = False
+        if callback is not None:
+            try:
+                callback()
+            except Exception:
+                callback_completed = False
+            else:
+                callback_completed = True
+        if self.journal is not None:
+            self.journal.append(
+                "rollback",
+                {
+                    "containment_requested": True,
+                    "callback_configured": callback is not None,
+                    "callback_completed": callback_completed,
+                    "failed_stage": failed_stage,
+                    "blocker_digest": hashlib.sha256(blocker.encode("utf-8")).hexdigest(),
+                },
+            )
+
     def run_stage(self, stage: str) -> dict[str, Any]:
         self.require_explicit_live_flag()
         if not self._mutation_authorized:
             raise GateBlocked("mutation-not-authorized")
         if stage not in CLI_STAGES:
             raise GateBlocked("stage-not-allowed")
-        sequence = EDGE_PROBES_SEQUENCE if stage == "edge-probes" else (stage,)
-        receipts = [self._run_adapter(item) for item in sequence]
+        if stage != "edge-probes" and stage in self._completed_stages:
+            raise GateBlocked("journal-stage-already-complete")
+        sequence = (
+            tuple(item for item in EDGE_PROBES_SEQUENCE if item not in self._completed_stages)
+            if stage == "edge-probes"
+            else (stage,)
+        )
+        if not sequence:
+            raise GateBlocked("journal-stage-already-complete")
+        receipts: list[dict[str, Any]] = []
+        for item in sequence:
+            try:
+                receipts.append(self._run_adapter(item))
+            except GateBlocked as exc:
+                self._contain_on_failure(failed_stage=item, blocker=str(exc))
+                raise
         return {
             "stage": stage,
             "receipt_count": len(receipts),
@@ -449,6 +532,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser()
     parser.add_argument("--repo", type=Path, default=Path(__file__).resolve().parents[3])
     parser.add_argument("--evidence-dir", type=Path)
+    parser.add_argument("--journal", type=Path)
     parser.add_argument("--stage", choices=CLI_STAGES)
     return parser
 
@@ -456,16 +540,37 @@ def build_parser() -> argparse.ArgumentParser:
 def main() -> int:
     args = build_parser().parse_args()
     try:
-        gate = Phase53LiveGate(repo=args.repo)
+        gate = Phase53LiveGate(repo=args.repo, evidence_dir=args.evidence_dir)
         gate.require_explicit_live_flag()
         preflight = gate.load_preflight()
         gate.authorize_first_mutation(preflight)
+        transaction_id = hashlib.sha256(
+            json.dumps(preflight, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()[:32]
+        journal_path = args.journal or gate.evidence_dir / "phase53-journal.json"
+        # Provider/admission checks happen before journal creation.  A blocked
+        # invocation must leave no resumable journal or provider side effect.
+        gate.stage_adapters = build_production_adapters(
+            AdapterContext(
+                repo=gate.repo,
+                evidence_dir=gate.evidence_dir,
+                preflight=preflight,
+                environ=gate.environ,
+                transaction_id=transaction_id,
+                journal=None,
+            )
+        )
+        gate.hydrate_journal(ValueFreeJournal.open(journal_path, transaction_id))
         stage = args.stage or "preflight"
         result = gate.run_stage(stage)
         sys.stdout.write(json.dumps(result, sort_keys=True, separators=(",", ":")) + "\n")
         return 0
-    except (GateBlocked, OSError, ValueError) as exc:
-        blocker = str(exc) if isinstance(exc, GateBlocked) else "gate-initialization-failed"
+    except (GateBlocked, AdapterBlocked, OSError, ValueError) as exc:
+        blocker = (
+            str(exc)
+            if isinstance(exc, (GateBlocked, AdapterBlocked))
+            else "gate-initialization-failed"
+        )
         sys.stdout.write(json.dumps(_blocked_payload(blocker), sort_keys=True, separators=(",", ":")) + "\n")
         return 2
 

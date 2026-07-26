@@ -1,0 +1,66 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "workstream": "rustdesk-fleet",
+  "manifest_id": "phase53-production-providers-v1",
+  "routes": {
+    "ssh": {
+      "private_first": [
+        "ssh muniz@10.100.100.8",
+        "ssh -p 8122 muniz@ssh-giovanni-w11-pc.atius.com.br"
+      ],
+      "fallback_only_on": ["tcp-or-banner-or-ssh-rc255"],
+      "batch_mode": true,
+      "stdin_safe": true,
+      "known_hosts_required": true
+    },
+    "vault": {
+      "provider": "hashicorp-vault",
+      "profile": "rustdesk",
+      "path_refs": [
+        "kv/atius/rustdesk/server",
+        "kv/atius/rustdesk/targets/atius-srv-1",
+        "kv/atius/rustdesk/targets/atius-srv-2",
+        "kv/atius/rustdesk/targets/atius-srv-3",
+        "kv/atius/rustdesk/targets/horistic-srv",
+        "kv/atius/rustdesk/targets/giovanni-w11-pc"
+      ],
+      "value_free_output": true
+    },
+    "oci": {
+      "provider": "oci-admin-http",
+      "client_name": "oci_admin_http",
+      "read_write_cas": true,
+      "target_scope": "rustdesk-phase53-owned-ingress"
+    },
+    "cloudflare": {
+      "provider": "cloudflare-api",
+      "operation": "dns-snapshot-apply-restore",
+      "records": ["rustdesk.atius.com.br", "rustdesk-ops.atius.com.br"]
+    },
+    "apache": {
+      "operation": "configtest-reload-rollback",
+      "vhost": "rustdesk-ops.atius.com.br"
+    }
+  },
+  "command_classes": {
+    "allowlisted": [
+      "ssh-batch-safe",
+      "vault-profile-dispatch",
+      "oci-cas-read-write",
+      "cloudflare-dns-cas",
+      "apache-configtest-reload",
+      "rustdesk-server-transaction",
+      "rustdesk-edge-transaction",
+      "two-origin-probes"
+    ],
+    "forbidden": ["shell-eval", "ambient-path-search", "ambient-ssh-config", "raw-secret-output"]
+  },
+  "limits": {
+    "command_timeout_seconds": 30,
+    "max_stdout_bytes": 131072,
+    "max_stderr_bytes": 8192,
+    "journal_mode": "value-free-0600"
+  },
+  "secret_material_present": false
+}
