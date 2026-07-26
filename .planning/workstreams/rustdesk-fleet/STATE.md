@@ -5,16 +5,16 @@ milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: primary-relay-and-public-edge
 status: blocked
-stopped_at: Phase 53 Plan 05D2T complete; 53-05D2A semantic reconciliation is the next executable plan
-last_updated: "2026-07-26T01:49:00-03:00"
+stopped_at: Phase 53 Plan 05D2A complete; 53-05D2B transaction/binding is the next executable plan
+last_updated: "2026-07-26T02:17:00-03:00"
 last_activity: 2026-07-26
-last_activity_desc: Completed 53-05D2T with 18 governed tests and a current non-authorizing topology PASS for the atius-srv-1 dual-VNIC edge and Horistic private backend
+last_activity_desc: Completed 53-05D2A cross-host edge semantic reconciliation; root gate passed 198 tests with one expected xfail and no live/provider mutation
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 25
-  completed_plans: 20
-  percent: 80
+  completed_plans: 21
+  percent: 84
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: `.planning/PROJECT.md` (updated 2026-07-19)
 ## Current Position
 
 Phase: 53 (primary-relay-and-public-edge) — IN PROGRESS
-Plan: 05D2A of the serial remainder
-Status: BLOCKED/IN PROGRESS before authority: 05D2T proved current topology read-only; 05D2A must reconcile the 51 broad-suite edge/API/validator failures without live mutation
-Last activity: 2026-07-26 — 05D2T emitted a value-free topology PASS with `authorizes_live=false`, `committed_authority=false` and `mutation_performed=false`
+Plan: 05D2B of the serial remainder
+Status: BLOCKED/IN PROGRESS before authority: 05D2A closed all 51 broad-suite failures; 05D2B must complete the runner, disjoint journals, migration rejection and public binding checker
+Last activity: 2026-07-26 — root reproduced `198 passed, 1 xfailed` under the 20% total CPU governor; no live/provider mutation occurred
 
-Milestone progress: [████████░░] 80% — 20 of 25 planned units complete; Phase 53-05D2A semantic reconciliation is next
+Milestone progress: [████████░░] 84% — 21 of 25 planned units complete; Phase 53-05D2B transaction/binding is next
 
 ## Performance Metrics
 
@@ -96,7 +96,7 @@ Milestone progress: [████████░░] 80% — 20 of 25 planned un
 
 ### Pending Todos
 
-- Reconcile the 51 broad-suite historical-edge failures in 53-05D2A/B before 53-05D2C captures the final `execution_source_commit`; only that sealed commit can enter the owner-bound 05E authority gate.
+- Complete the 53-05D2B runner/journal/binding adversarial gate before 53-05D2C captures the final `execution_source_commit`; only that sealed commit can enter the owner-bound 05E authority gate.
 - Phase 54 has five serial plans; Plan 54-01 is contract-complete, Plans 54-02, 54-03-01 and 54-04-01 have code-only safety slices (`code-only-blocked`), and Plan 54-03-02/54-04-02/Plans 54-05 remain non-executable until Phase 53 has an independent current PASS.
 - [Phase 53]: Preserve the strict serial chain `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11) → 05E(w12 checkpoint) → 05F(w13 live) → 06(w14 read-only)`; 06 depends only on 05F and remains blocked until independent 05F `status: passed`.
 
@@ -108,5 +108,5 @@ Milestone progress: [████████░░] 80% — 20 of 25 planned un
 ## Session Continuity
 
 Last session: 2026-07-25T03:00:00Z
-Stopped at: 53-05D2T complete; 53-05D2A semantic reconciliation is next and no live mutation is authorized
+Stopped at: 53-05D2A complete; 53-05D2B transaction/binding is next and no live mutation is authorized
 Resume file: None
