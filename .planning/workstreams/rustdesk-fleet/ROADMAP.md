@@ -39,7 +39,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 **Goal**: O operador possui um contrato testável e sem ambiguidade para escopo, edição GSD, OSS/Pro, direct/relay, secrets, permissions e preservação dos acessos existentes.
 **Depends on**: Nothing (first phase in v1.9)
-**Requirements**: SCP-01, SCP-02, SCP-03, SCP-05
+**Requirements**: SCP-02, SCP-03, SCP-05
 **Risks**: Reivindicar recursos Pro no OSS; instalar em host excluído; mutar o workstream da Phase 48; expor secret em evidência; transformar forced-relay em default.
 **Success Criteria** (what must be TRUE):
 
@@ -165,7 +165,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 **Goal**: Os cinco hosts ficam registrados como clients estáveis depois de um rollout Linux atribuído host a host, sem remover nenhuma rota de recuperação.
 **Depends on**: Phase 54
-**Requirements**: CLI-03, CLI-05, CLI-08, CLI-09
+**Requirements**: SCP-01, CLI-03, CLI-05, CLI-08, CLI-09
 **Risks**: Instalação paralela esconder causa; ID duplicado; secret em processo/log; pre-login falhar em um servidor; RustDesk alterar LightDM ou fallback; instalar no WSL por engano.
 **Success Criteria** (what must be TRUE):
 
