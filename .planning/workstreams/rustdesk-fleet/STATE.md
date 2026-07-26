@@ -5,16 +5,16 @@ milestone_name: RustDesk Fleet Remote Access
 current_phase: 53
 current_phase_name: primary-relay-and-public-edge
 status: blocked
-stopped_at: Phase 53 remains blocked/in progress before 53-05D Wave 0; no authority or live mutation has run
-last_updated: "2026-07-25T00:00:00-03:00"
-last_activity: 2026-07-25
-last_activity_desc: Split the remaining hermetic work into 05D edge/backend and 05D2 CLI/binding; Phase 53 remains NOT_ADMITTED/BLOCKED and no infrastructure call occurred
+stopped_at: Phase 53 Plan 05D complete; 53-05D2 source sealing blocked on broad-suite edge compatibility reconciliation
+last_updated: "2026-07-26T00:46:00-03:00"
+last_activity: 2026-07-26
+last_activity_desc: Completed 05D translated edge/backend hermetic slice; no authority or live mutation occurred, and 51 broad-suite compatibility failures remain explicit before 05D2 sealing
 progress:
   total_phases: 8
   completed_phases: 2
   total_plans: 22
-  completed_plans: 18
-  percent: 82
+  completed_plans: 19
+  percent: 86
 ---
 
 # Project State
@@ -29,11 +29,11 @@ See: `.planning/PROJECT.md` (updated 2026-07-19)
 ## Current Position
 
 Phase: 53 (primary-relay-and-public-edge) — IN PROGRESS
-Plan: 05D of the serial remainder
-Status: BLOCKED/IN PROGRESS before live mutation: 05D and 05D2 Wave 0 artifacts are pending; owner-bound authority begins only in 05E after the final source binding
-Last activity: 2026-07-25 — planning-only split established `05D(w7) → 05D2(w8) → 05E(w9) → 05F(w10) → 06(w11)`; no Graphify, test, build or infrastructure call occurred
+Plan: 05D2 of the serial remainder
+Status: BLOCKED/IN PROGRESS before source sealing: 05D is complete, but 05D2 cannot capture `execution_source_commit` until the 51 broad-suite compatibility failures are reconciled
+Last activity: 2026-07-26 — 05D fixed the translated edge authority, hbbs relay announcement, installer validation and capability split; no authority or infrastructure call occurred
 
-Milestone progress: [████████░░] 82% — 18 of 22 plans complete; Phase 53-05D Wave 0 is next
+Milestone progress: [█████████░] 86% — 19 of 22 plans complete; Phase 53-05D2 hermetic reconciliation is next
 
 ## Performance Metrics
 
@@ -94,7 +94,7 @@ Milestone progress: [████████░░] 82% — 18 of 22 plans comp
 
 ### Pending Todos
 
-- Execute 53-05D Wave 0 first, then 53-05D2; only its final `execution_source_commit` can enter the read-only owner-bound 05E authority gate.
+- Reconcile the 51 broad-suite historical-edge failures in 53-05D2 before capturing its final `execution_source_commit`; only that sealed commit can enter the read-only owner-bound 05E authority gate.
 - Phase 54 has five serial plans; Plan 54-01 is contract-complete, Plans 54-02, 54-03-01 and 54-04-01 have code-only safety slices (`code-only-blocked`), and Plan 54-03-02/54-04-02/Plans 54-05 remain non-executable until Phase 53 has an independent current PASS.
 - [Phase 53]: Preserve the strict serial chain `05D(w7) → 05D2(w8) → 05E(w9 checkpoint) → 05F(w10 live) → 06(w11 read-only)`; 06 depends only on 05F and remains blocked until independent 05F `status: passed`.
 
@@ -106,5 +106,5 @@ Milestone progress: [████████░░] 82% — 18 of 22 plans comp
 ## Session Continuity
 
 Last session: 2026-07-25T03:00:00Z
-Stopped at: Planning-only split complete; Phase 53 remains blocked/in progress before 53-05D Wave 0 and no live mutation is authorized
+Stopped at: 53-05D complete; 53-05D2 source sealing blocked on broad-suite compatibility reconciliation and no live mutation is authorized
 Resume file: None

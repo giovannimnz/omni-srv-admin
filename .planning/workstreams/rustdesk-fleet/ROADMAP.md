@@ -125,7 +125,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Monitoring e uma API operacional custom da Atius, em hostname/serviço HTTPS separado e autenticado, expõem endpoints versionados/redacted de health, readiness, status e resumo de métricas para listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas. Ela não configura o `API Server` dos clients, não abre TCP 21114 e não reivindica recursos nativos Pro.
   5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência, contrato/autenticação/redaction dos endpoints custom e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
 
-**Plans**: 5/13 plans complete; Wave 0 remains pending at 05D/05D2, and the serial chain 05E/05F/06 remains blocked before live mutation
+**Plans**: 9/13 plans executed
 
 - [x] 53-01-PLAN.md — Strict contracts, hermetic tests and resumable live-runner foundation.
 - [x] 53-02-PLAN.md — Rootless digest-pinned `hbbs`/`hbbr`, persistent identity/state and bounded resources.
@@ -133,10 +133,10 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 - [x] 53-04-PLAN.md — Effective host/OCI edge policy, DNS-last transaction and two-origin probe tooling.
 - [x] 53-05A-PLAN.md — Candidate 1.1.16 provenance, fail-closed adapter factory, value-free journal and containment seam.
 - [↪] 53-05-PLAN.md — Superseded by 53-05B; retained as the historical blocked contract.
-- [ ] 53-05B-PLAN.md — Canonical gap closure: hermetic production-bound adapters/contracts/evidence are closed; successor admission, fresh capacity and one ordered live transaction remain blocked.
-- [ ] 53-05C-PLAN.md — Explicit continuation for current admission/capacity-finalize, typed provider binding and one live-gated transaction; hermetic RuntimeProvider checkpoint is verified, while live execution remains blocked until owner-bound authority exists.
-- [ ] 53-05D-PLAN.md — Wave 7, depends on 05C: edge/backend hermético em nove arquivos, authority única traduzida, hbbs anunciando `rustdesk-relay.atius.com.br:34101`, installer canônico validando/materializando a forma runtime e capability split.
-- [ ] 53-05D2-PLAN.md — Wave 8, depends on 05D: CLI/binding hermético, migration handoff não executável com provider rejection, checker público, adversarial tests, execution-source scope incluindo Quadlet/installer/ops API read-only e captura final de `execution_source_commit`.
+- [x] 53-05B-PLAN.md — Canonical gap closure: hermetic production-bound adapters/contracts/evidence are closed; successor admission, fresh capacity and one ordered live transaction remain blocked.
+- [x] 53-05C-PLAN.md — Explicit continuation for current admission/capacity-finalize, typed provider binding and one live-gated transaction; hermetic RuntimeProvider checkpoint is verified, while live execution remains blocked until owner-bound authority exists.
+- [x] 53-05D-PLAN.md — Wave 7, depends on 05C: edge/backend hermético em nove arquivos, authority única traduzida, hbbs anunciando `rustdesk-relay.atius.com.br:34101`, installer canônico validando/materializando a forma runtime e capability split.
+- [ ] 53-05D2-PLAN.md — Wave 8, depends on 05D: CLI/binding hermético, migration handoff não executável com provider rejection, checker público, adversarial tests, execution-source scope incluindo Quadlet/installer/ops API read-only e captura final de `execution_source_commit`; bloqueado para sealing enquanto a suíte ampla retiver regressões do edge histórico.
 - [ ] 53-05E-PLAN.md — Wave 9, depends on 05D2: authority read-only, successor attestation, current prestate/typed previews, OperationPlan e checkpoint `AWAITING_OWNER_HASH_APPROVAL`; não autoexecuta 05F.
 - [ ] 53-05F-PLAN.md — Wave 10, depends on 05E: nova execução live, revalidação owner/source, uma transação full, rollback imutável, restore-production separado, commit evidence-only, descendant summary-only e handoff ao verifier independente.
 - [ ] 53-06-PLAN.md — BLOCKED, wave 11, depends on 53-05F; preflight único pelo checker 05D2 e closeout exclusivamente read-only, seguido de verifier/finalizer independentes.
@@ -231,7 +231,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
 | 52. Supply Chain, Capacity and Recoverable Placement | 10/10 | Complete | 2026-07-23 |
-| 53. Primary Relay and Public Edge | 5/13 | Blocked/in progress at 53-05D Wave 0; no live mutation | - |
+| 53. Primary Relay and Public Edge | 9/13 | Blocked/in progress before 53-05D2 source sealing; no live mutation | - |
 | 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
 | 56. Exhaustive Fleet, Transport and Security Matrix | 0/TBD | Not started | - |
