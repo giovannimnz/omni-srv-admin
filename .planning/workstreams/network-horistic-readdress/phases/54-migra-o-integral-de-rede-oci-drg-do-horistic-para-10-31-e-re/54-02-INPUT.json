@@ -1,0 +1,27 @@
+{
+  "schema": "phase54.backup-input.v1",
+  "plan": "54-02",
+  "operation": "oci_boot_backup",
+  "profile": "horistic",
+  "instance_ocid": "ocid1.instance.oc1.sa-saopaulo-1.antxeljr7sd6shicgl23j3ehxmlke6thpuwgxzeielh7sfkzoiv42urflweq",
+  "current_public_ip": {
+    "address": "163.176.232.119",
+    "public_ip_ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa",
+    "private_ip_address": "10.0.0.65",
+    "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
+    "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljr35eiopnnntf4k75ah5c5cervipcgxlv5zwrhxen2zfrrhdttdwxq",
+    "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaasjqrmf7qkevsjhtg7hncenonhodqhrxzuq7rrfazlka32u24de6q"
+  },
+  "secondary_drg": {
+    "address": "10.21.1.21",
+    "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljrz4ni76rrhnwmz2wcnfbjgmig2zngdhylp3ore2wbsxeifigtn5aq",
+    "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljrlqsujws6hvfmshcsdhcthp4cviyfl3vknh52tmmyds3cyjsxnz5q",
+    "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaaf25anda6wqnydwdpjdnvv5da4y7tlt7fn2vap2sqa63cjdgskdha"
+  },
+  "target": {
+    "vcn": "10.31.0.0/16",
+    "subnet": "10.31.1.0/24",
+    "private_ip": "10.31.1.31"
+  },
+  "mutation_authorized": false
+}

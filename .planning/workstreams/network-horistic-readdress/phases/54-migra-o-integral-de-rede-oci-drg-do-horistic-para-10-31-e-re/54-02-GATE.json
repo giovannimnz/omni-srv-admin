@@ -23,26 +23,29 @@
     },
     {
       "expected": [
-        "preflight"
+        "apply",
+        "approval",
+        "preflight",
+        "preview"
       ],
       "id": "stage",
-      "observed": null,
+      "observed": "preview",
       "required": true,
       "result": "PASS"
     },
     {
       "expected": "generated within 900s and unexpired",
       "id": "freshness",
-      "observed": "2026-07-24T14:10:25Z",
+      "observed": "2026-07-26T10:28:41Z",
       "required": true,
       "result": "PASS"
     },
     {
       "expected": "legacy BLOCK/BLOCKED/UNKNOWN/PARTIAL absent",
       "id": "legacy_status",
-      "observed": "BLOCK",
+      "observed": "PASS",
       "required": true,
-      "result": "BLOCK"
+      "result": "PASS"
     },
     {
       "expected": "redacted evidence with no secret material",
@@ -53,37 +56,337 @@
     },
     {
       "expected": [
+        "independent_review_gate",
         "live_inventory",
         "backup_restore_staging",
         "public_ip_baseline",
-        "dns_edge_baseline"
+        "dns_edge_baseline",
+        "operation_plan_preview"
       ],
       "id": "required_checks_complete",
       "observed": [
         "backup_restore_staging",
         "dns_edge_baseline",
+        "independent_review_gate",
         "live_inventory",
+        "operation_plan_preview",
         "public_ip_baseline"
       ],
       "required": true,
       "result": "PASS"
     },
     {
-      "expected": "all required checks are runner-observed PASS",
-      "id": "observed_checks",
-      "observed": {
-        "backup_restore_staging": "BLOCK",
-        "dns_edge_baseline": "BLOCK",
-        "live_inventory": "BLOCK",
-        "public_ip_baseline": "PASS"
-      },
+      "expected": "owner adapter registry exactly covers every required plan/stage/check tuple",
+      "id": "adapter_coverage",
+      "observed": "54-02",
       "required": true,
-      "result": "BLOCK"
+      "result": "PASS"
+    },
+    {
+      "expected": "all required checks executed from runner-owned fixed adapters",
+      "id": "observed_checks",
+      "observed": [
+        {
+          "adapter": "runner-contract",
+          "artifact_hashes": {
+            "canonical-evidence": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5"
+          },
+          "command_id": "phase54.independent_review_gate",
+          "exit_code": 0,
+          "id": "independent_review_gate",
+          "mutation_performed": false,
+          "observed_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5",
+          "read_only": true,
+          "request_id": "runner-contract-54-02-preview",
+          "required": true,
+          "result": "PASS",
+          "secret_material_present": false
+        },
+        {
+          "adapter": "remote-owner",
+          "artifact_hashes": {
+            "captured-output": "4db03be982e589e55bf9f9fb8b29bc1848bdad41d9192790d980d55f551a1c59"
+          },
+          "command_id": "phase54.live_inventory",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T10:36:04.696085Z",
+          "id": "live_inventory",
+          "normalized": {
+            "arguments_sha256": "e10808d43975dc400731053386849f864f297e6c4f7519c380f3dbaf7067a840",
+            "evidence_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5",
+            "operation": "peering.inventory",
+            "semantic": {
+              "blocked": true,
+              "current_host_ips": [
+                "10.0.0.65",
+                "10.21.1.21"
+              ],
+              "profile_name": "horistic",
+              "reserved_public_labels": [
+                "horistic-srv-1"
+              ],
+              "subnet_cidrs": [
+                "10.0.0.0/24",
+                "10.21.1.0/24"
+              ],
+              "subnet_ocids": [
+                "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaaf25anda6wqnydwdpjdnvv5da4y7tlt7fn2vap2sqa63cjdgskdha",
+                "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaasjqrmf7qkevsjhtg7hncenonhodqhrxzuq7rrfazlka32u24de6q"
+              ],
+              "vcn_cidrs": [
+                "10.0.0.0/16",
+                "10.21.0.0/16"
+              ],
+              "vcn_ocids": [
+                "ocid1.vcn.oc1.sa-saopaulo-1.amaaaaaa7sd6shia5352cfmof724pcrxbgveabdazrf446ee6ys5m4c7riia",
+                "ocid1.vcn.oc1.sa-saopaulo-1.amaaaaaa7sd6shiazv6injxprixxows3gbq4qhhta4w5lcxca4y25zgwcfmq"
+              ]
+            }
+          },
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T10:35:42.176389Z"
+        },
+        {
+          "adapter": "remote-owner",
+          "artifact_hashes": {
+            "captured-output": "ebc5fede2e9fb4db8361a97183151ca6fdd716eeec4d71d4ce20f235ee904462"
+          },
+          "command_id": "phase54.backup_restore_staging",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T10:36:32.193621Z",
+          "id": "backup_restore_staging",
+          "normalized": {
+            "backups": [
+              {
+                "archive": "/var/backups/omni-srv-admin/phase54/20260726T041249Z-srv1/coredns/coredns.tar",
+                "archive_sha256": "5bcf242294a97636f41ebc00780fb1b7b32246bb2c408cd4cc9409fb3542b9be",
+                "isolated_restore_staging": true,
+                "manifest_verified": true,
+                "mode": "600",
+                "offhost_archive": "/var/backups/omni-srv-admin/phase54/off-host/srv1/20260726T041249Z-srv1/20260726T041249Z-srv1.tar",
+                "offhost_sha256": "2f120b50be4c6f63f432753f4a30d4b7895f98632f7547467606f985f7d8869f",
+                "offhost_verified": true,
+                "owner": "srv1",
+                "root": "/var/backups/omni-srv-admin/phase54/20260726T041249Z-srv1",
+                "tar_list_verified": true
+              },
+              {
+                "archive": "/var/backups/omni-srv-admin/phase54/20260726T041546Z-srv3/freeipa-native/ipa-full-2026-07-26-04-17-35/ipa-full.tar",
+                "archive_sha256": "e537458856b9aeee9f0f86030717d2c0e54fbf953adbc391f44351f18cdeeef1",
+                "isolated_restore_staging": true,
+                "manifest_verified": true,
+                "mode": "600",
+                "offhost_archive": "/var/backups/omni-srv-admin/phase54/off-host/srv3/20260726T041546Z-srv3/20260726T041546Z-srv3.tar",
+                "offhost_sha256": "0de8b8391a4770dd8a13342b660cea56ba049b736228a3ab8de0f7301e97cfb1",
+                "offhost_verified": true,
+                "owner": "srv3",
+                "root": "/var/backups/omni-srv-admin/phase54/20260726T041546Z-srv3",
+                "tar_list_verified": true
+              },
+              {
+                "archive": "/home/ubuntu/.local/state/home-router-be3/backups/phase54/be3-native-20260726T052404Z.bin",
+                "archive_sha256": "866adbef8a1434622f0b4028ddaf5b5bd76afaeafc246e7a576b675c889cb781",
+                "isolated_restore_staging": false,
+                "manifest_verified": false,
+                "mode": "600",
+                "offhost_archive": null,
+                "offhost_sha256": null,
+                "offhost_verified": true,
+                "owner": "offhost",
+                "root": "/home/ubuntu/.local/state/home-router-be3/backups/phase54",
+                "tar_list_verified": false
+              }
+            ],
+            "evidence_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5"
+          },
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T10:36:04.708971Z"
+        },
+        {
+          "adapter": "remote-owner",
+          "artifact_hashes": {
+            "captured-output": "0a6d26104756cb9c7f837ead572f069d054664c03819af670765adc042d6e00a"
+          },
+          "command_id": "phase54.public_ip_baseline",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T10:36:48.773074Z",
+          "id": "public_ip_baseline",
+          "normalized": {
+            "arguments_sha256": "49a9d97edbd4cceea175b92196a41a16ed89ea50328675d38f40199f509f259f",
+            "evidence_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5",
+            "operation": "inventory.get",
+            "semantic": {
+              "operational_10_21": [
+                "10.21.0.0/16",
+                "10.21.1.0/24",
+                "10.21.1.21"
+              ],
+              "private_ips": [
+                {
+                  "address": "10.0.0.65",
+                  "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
+                  "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaasjqrmf7qkevsjhtg7hncenonhodqhrxzuq7rrfazlka32u24de6q",
+                  "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljr35eiopnnntf4k75ah5c5cervipcgxlv5zwrhxen2zfrrhdttdwxq"
+                },
+                {
+                  "address": "10.21.1.21",
+                  "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljrz4ni76rrhnwmz2wcnfbjgmig2zngdhylp3ore2wbsxeifigtn5aq",
+                  "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaaf25anda6wqnydwdpjdnvv5da4y7tlt7fn2vap2sqa63cjdgskdha",
+                  "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljrlqsujws6hvfmshcsdhcthp4cviyfl3vknh52tmmyds3cyjsxnz5q"
+                }
+              ],
+              "profile_name": "horistic",
+              "reserved_public_ips": [
+                {
+                  "address": "163.176.232.119",
+                  "label": "horistic-srv-1",
+                  "lifecycle_state": "ASSIGNED",
+                  "lifetime": "RESERVED",
+                  "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
+                  "public_ip_ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa"
+                }
+              ],
+              "subnet_cidrs": [
+                "10.0.0.0/24",
+                "10.21.1.0/24"
+              ],
+              "vcn_cidrs": [
+                "10.0.0.0/16",
+                "10.21.0.0/16"
+              ],
+              "vnics": [
+                {
+                  "private_ip": "10.0.0.65",
+                  "public_ip": "163.176.232.119",
+                  "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaasjqrmf7qkevsjhtg7hncenonhodqhrxzuq7rrfazlka32u24de6q",
+                  "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljr35eiopnnntf4k75ah5c5cervipcgxlv5zwrhxen2zfrrhdttdwxq"
+                },
+                {
+                  "private_ip": "10.21.1.21",
+                  "public_ip": null,
+                  "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaaf25anda6wqnydwdpjdnvv5da4y7tlt7fn2vap2sqa63cjdgskdha",
+                  "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljrlqsujws6hvfmshcsdhcthp4cviyfl3vknh52tmmyds3cyjsxnz5q"
+                }
+              ]
+            }
+          },
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T10:36:32.202790Z"
+        },
+        {
+          "adapter": "remote-owner",
+          "artifact_hashes": {
+            "captured-output": "37d09b14d6aafdbe5a524402b0375422affedecc26577298d9d4550054fd9602"
+          },
+          "command_id": "phase54.dns_edge_baseline",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T10:37:06.899913Z",
+          "id": "dns_edge_baseline",
+          "normalized": {
+            "authority": {
+              "a_aa": true,
+              "a_address": null,
+              "aa": false,
+              "ns": true,
+              "ns_aa": true,
+              "nxdomain": true,
+              "ptr_aa": false,
+              "ptr_owner": null,
+              "server": "10.89.53.10",
+              "soa": true,
+              "soa_aa": true
+            },
+            "baseline_gap": {
+              "authority_missing": [
+                "A",
+                "PTR"
+              ],
+              "observed_sha256": "2c0ab4383b53b1a8b70a901aad83e2c0050590ea788bb6ccb1c3e6142cf7e653",
+              "resolver_missing": {
+                "10.11.1.11": [
+                  "NS",
+                  "NXDOMAIN",
+                  "SOA"
+                ],
+                "127.0.0.2": [
+                  "NS",
+                  "SOA"
+                ]
+              },
+              "schema": "phase54.dns-baseline-gap.v1"
+            },
+            "evidence_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5",
+            "expected_address": "10.21.1.21",
+            "expected_reverse": "21.1.21.10.in-addr.arpa",
+            "operational_10_21": [
+              "10.11.1.11:A:horistic-srv.atius.internal:10.21.1.21",
+              "10.11.1.11:PTR:21.1.21.10.in-addr.arpa:horistic-srv.atius.internal",
+              "127.0.0.2:A:horistic-srv.atius.internal:10.21.1.21",
+              "127.0.0.2:PTR:21.1.21.10.in-addr.arpa:horistic-srv.atius.internal"
+            ],
+            "resolvers": {
+              "a_address": "10.21.1.21",
+              "a_ptr_complete": true,
+              "matrix": {
+                "10.11.1.11": {
+                  "a": true,
+                  "ns": false,
+                  "nxdomain": false,
+                  "ptr": true,
+                  "soa": false
+                },
+                "127.0.0.2": {
+                  "a": true,
+                  "ns": false,
+                  "nxdomain": true,
+                  "ptr": true,
+                  "soa": false
+                }
+              },
+              "ns": false,
+              "ns_count": 0,
+              "nxdomain_count": 1,
+              "ptr_owner": "21.1.21.10.in-addr.arpa",
+              "servers": [
+                "10.11.1.11",
+                "127.0.0.2"
+              ],
+              "soa": false,
+              "soa_count": 0
+            },
+            "ttl_min": 10
+          },
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T10:36:48.815145Z"
+        },
+        {
+          "adapter": "runner-contract",
+          "artifact_hashes": {
+            "canonical-evidence": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5"
+          },
+          "command_id": "phase54.operation_plan_preview",
+          "exit_code": 0,
+          "id": "operation_plan_preview",
+          "mutation_performed": false,
+          "observed_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5",
+          "read_only": true,
+          "request_id": "runner-contract-54-02-preview",
+          "required": true,
+          "result": "PASS",
+          "secret_material_present": false
+        }
+      ],
+      "required": true,
+      "result": "PASS"
     },
     {
       "expected": "all artifacts exist and SHA-256 hashes match",
       "id": "artifact_hashes",
-      "observed": 3,
+      "observed": 6,
       "required": true,
       "result": "PASS"
     },
@@ -91,21 +394,56 @@
       "expected": "immediate predecessor gate is fresh and hash-valid",
       "id": "previous_gate_lineage",
       "observed": {
-        "assert_result": "PASS",
-        "asserted_at": "2026-07-24T13:54:55Z",
-        "evidence_path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-01-EVIDENCE.json",
-        "evidence_sha256": "219a096fdb9fbcf0b3268932432c96738201caad123812d94d87cd261ea34cf6",
-        "gate_path": ".planning/workstreams/network-horistic-readdress/phases/54-migra-o-integral-de-rede-oci-drg-do-horistic-para-10-31-e-re/54-01-GATE.json",
-        "gate_sha256": "4db460ff88d8d56aa40be91578aa1bbfef1b8f03cc804bd4434eee670829a148",
-        "plan": "54-01"
+        "atomic_commit_required": false,
+        "chain_sha256": "6698192aa4bf399fab2cc892e2062a7c8b5da19a66fa11b32ca7d647464a911a",
+        "evidence_path": "54-01-EVIDENCE.json",
+        "evidence_sha256": "254739646c86cbd5c0a7381032e9f7a0efeb4ef5ea6655c1bd421a39db365845",
+        "gate_path": "54-01-GATE.json",
+        "gate_sha256": "bb4dd8f69b38d6aeec42b2944ff3a00e4c5e7ad46413acc2064d9f4ceb62fe7f",
+        "pin_state": "commit-pinned",
+        "plan": "54-01",
+        "source_commit": "edcba71b4a80af29a7cc63c4ac23564b852eacd9",
+        "stage": null
       },
       "required": true,
-      "result": "BLOCK"
+      "result": "PASS"
     },
     {
       "expected": "operation/input/approval/anti-drift hashes match stage",
       "id": "operation_lineage",
-      "observed": null,
+      "observed": "preview",
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "pre-existing backups are non-authorizing hash-bound evidence; pending writes are new",
+      "id": "backup_evidence_classification",
+      "observed": {
+        "pending_writes": [
+          "oci_boot_backup"
+        ],
+        "pre_existing": [
+          {
+            "approval_claimed": false,
+            "classification": "pre-existing-evidence",
+            "receipt_path": "54-02-SRV1-BACKUP-RECEIPT.json",
+            "receipt_sha256": "d707280bc7e3604d458d2f06f7943a710b5dc5906b347a40a97a041ec088de32"
+          },
+          {
+            "approval_claimed": false,
+            "classification": "pre-existing-evidence",
+            "receipt_path": "54-02-SRV3-BACKUP-RECEIPT.json",
+            "receipt_sha256": "63202f09efae52973f9499bc1868c642c3a41c38246213ba555b4fbeb3eb04e9"
+          },
+          {
+            "approval_claimed": false,
+            "classification": "pre-existing-evidence",
+            "receipt_path": "54-02-BE3-BACKUP-RECEIPT.json",
+            "receipt_sha256": "2434091623ecbb75bf3421c245a900afd4d4e40ab08c034be99928245657e344"
+          }
+        ],
+        "retroactive_approval": false
+      },
       "required": true,
       "result": "PASS"
     },
@@ -117,34 +455,41 @@
         "baseline_ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa",
         "baseline_private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
         "binding": "10.0.0.65",
+        "current_binding_sha256": "2bdd4b7f069821e865a14dfbf044f91a604cee2db5aadb3491e08f6cbe59ebd6",
         "label": "horistic-srv-1",
         "lifetime": "RESERVED",
         "ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7sd6shia6m45bvej3y3kppgz25tbrvfy4niola7lau5pgpzfkkxa",
         "operation": "read",
+        "private_ip_address": "10.0.0.65",
         "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.abtxeljre62rb2i4k7s6cwgklhr43gw5o5cvwdgzc66bs6ytsmdjm2ggmuna",
         "scope": "REGION",
-        "state": "ASSIGNED"
+        "state": "ASSIGNED",
+        "subnet_ocid": "ocid1.subnet.oc1.sa-saopaulo-1.aaaaaaaasjqrmf7qkevsjhtg7hncenonhodqhrxzuq7rrfazlka32u24de6q",
+        "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljr35eiopnnntf4k75ah5c5cervipcgxlv5zwrhxen2zfrrhdttdwxq"
       },
       "required": true,
       "result": "PASS"
     }
   ],
-  "evidence_sha256": "d2d704e51a9b8c5f36f7035c784bbf283d58b319bba5984b3f20a8bc69390e50",
-  "finished_at": "2026-07-24T14:17:05.715385Z",
+  "evidence_sha256": "b4d300ab6f9b6dffe35da16e271d32c32d01a8257e526f9ac9c25cd178c618d5",
+  "finished_at": "2026-07-26T10:37:07.386710Z",
   "mode": "read-only",
-  "mutations_attempted": true,
-  "next_wave_gate": null,
+  "mutations_attempted": false,
+  "next_wave_gate": "PASS:54-02",
   "phase": 54,
   "plan": "54-02",
   "redacted": true,
   "required_check_ids": [
+    "independent_review_gate",
     "live_inventory",
     "backup_restore_staging",
     "public_ip_baseline",
-    "dns_edge_baseline"
+    "dns_edge_baseline",
+    "operation_plan_preview"
   ],
+  "runner_sha256": "5c1112b57c566bfe4739b706c1b1ac186f8006d1b4e61dc1ab9506ce965ec62c",
   "schema": "phase54.gate.v1",
-  "stage": null,
-  "started_at": "2026-07-24T14:17:05.575393Z",
-  "status": "BLOCK"
+  "stage": "preview",
+  "started_at": "2026-07-26T10:35:41.793690Z",
+  "status": "PASS"
 }

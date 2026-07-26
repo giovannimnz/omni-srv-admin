@@ -1,0 +1,41 @@
+{
+  "schema": "phase54.operation-plan.v1",
+  "owner": "phase54-backup-executor",
+  "plan": "54-02",
+  "stage": "preview",
+  "operations": [
+    "oci_boot_backup"
+  ],
+  "input_hashes": {
+    "54-02-INPUT.json": "72fc766d3c0a84a5c13ea86dd9c93cb6b4ee9ce06d4394998f888d4853148a3c"
+  },
+  "created_at": "2026-07-26T10:28:41Z",
+  "expires_at": "2026-07-26T10:43:41Z",
+  "rollback_receipt_path": "54-02-ROLLBACK-RECEIPT.json",
+  "rollback_receipt_sha256": "6e324a680e1d280678d5a26930f36276bdca8feb6141be41325db6303f195c89",
+  "profile": "horistic",
+  "instance_ocid": "ocid1.instance.oc1.sa-saopaulo-1.antxeljr7sd6shicgl23j3ehxmlke6thpuwgxzeielh7sfkzoiv42urflweq",
+  "oci_operation_plan": {
+    "operation_id": "f4f8e72a-c40d-4524-adf8-80e808aad745",
+    "plan_hash": "sha256:c354bb79022d850480a192b01861ca5afd5b8fdfabf33c011a0abcda1a385180",
+    "status": "previewed",
+    "expires_at": "2026-07-26T10:58:41Z",
+    "policy_version": "policy-22-v2",
+    "drift_required": [
+      "material"
+    ],
+    "expected_confirmation": "APPLY:08aad745"
+  },
+  "prohibited_operations": [
+    "public_ip.release",
+    "public_ip.delete",
+    "public_ip.recreate",
+    "network.apply",
+    "dns.apply",
+    "wireguard.apply",
+    "be3.apply"
+  ],
+  "approval_required": true,
+  "approval_present": false,
+  "mutation_authorized": false
+}

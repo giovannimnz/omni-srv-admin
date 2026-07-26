@@ -1,0 +1,16 @@
+{
+  "schema": "phase54.rollback-receipt.v1",
+  "owner": "phase54-backup-executor",
+  "plan": "54-02",
+  "stage": "preview",
+  "status": "READY",
+  "operations": [
+    "oci_boot_backup"
+  ],
+  "input_hashes": {
+    "54-02-INPUT.json": "72fc766d3c0a84a5c13ea86dd9c93cb6b4ee9ce06d4394998f888d4853148a3c"
+  },
+  "created_at": "2026-07-26T10:28:41Z",
+  "strategy": "No network state changes in this plan. If backup creation is partial or fails, preserve the OCI receipt for reconciliation and do not delete, release, rebind or migrate any resource.",
+  "mutation_authorized": false
+}

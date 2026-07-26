@@ -31,11 +31,11 @@ Fresh Wave 1 validation is complete and no production mutation was attempted.
 - Workstream init: PASS for `network-horistic-readdress`, Phase 54.
 - Runner + adapter suites: 136 passed (107 + 29) in 30.62 s.
 - Gate-local focused checks, syntax, adversarial matrix and secret scan: PASS.
-- Graphify: fresh at source commit `a614faa`, 12636 nodes / 17654 edges.
+- Graphify: fresh at source commit `8ef7dea`, 12639 nodes / 17657 edges.
 - `final --plan 54-01`: PASS.
 - `assert-gate --plan 54-01`: PASS.
-- Evidence SHA-256: `52d9962a7545467d31b25fdefbafa49e3fc974d256dbb4b7e4d8061e83cc387c`.
-- Gate SHA-256: `71d218cf8b59a15c8b0605186dc0ac07e14084122200ac87cc08d333c9bf798f`.
+- Evidence SHA-256: `254739646c86cbd5c0a7381032e9f7a0efeb4ef5ea6655c1bd421a39db365845`.
+- Gate SHA-256: `bb4dd8f69b38d6aeec42b2944ff3a00e4c5e7ad46413acc2064d9f4ceb62fe7f`.
 
 ## Safety
 

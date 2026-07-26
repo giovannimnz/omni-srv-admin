@@ -5,10 +5,10 @@ milestone_name: milestone
 current_phase: 54
 current_phase_name: Migração integral de rede OCI/DRG do Horistic para 10.31
 status: in_progress
-stopped_at: 54-01 fresh PASS; entering 54-02 backup-only preview
-last_updated: "2026-07-26T07:15:00-03:00"
+stopped_at: 54-02 backup-only preview PASS; awaiting fresh typed approval
+last_updated: "2026-07-26T07:37:00-03:00"
 last_activity: 2026-07-26
-last_activity_desc: Independent review 0/0 and fresh 54-01 gate completed
+last_activity_desc: 54-02 live preview and OCI boot-backup OperationPlan completed without apply
 progress:
   total_phases: 1
   completed_phases: 0
@@ -23,8 +23,8 @@ progress:
 
 Phase: 54 (Migração integral de rede OCI/DRG do Horistic para 10.31) — IN PROGRESS
 Plan: 2 of 10
-Status: In progress; 54-02 backup-only preview is next
-Last activity: 2026-07-26 — independent review 0/0 and fresh 54-01 PASS; no live write was authorized
+Status: In progress; 54-02 preview PASS awaits fresh typed approval
+Last activity: 2026-07-26 — local Phase54 preview PASS and OCI boot-backup OperationPlan `f4f8e72a-c40d-4524-adf8-80e808aad745` previewed; no OCI apply ran
 
 Progress: [█░░░░░░░░░] 10%
 
@@ -37,14 +37,14 @@ Progress: [█░░░░░░░░░] 10%
 
 ## Next action
 
-Commit-pinar o evidence/gate fresh de 54-01. Em 54-02, validar primeiro o review gate e o predecessor commit-pinned, consumir sem alteração os três receipts tracked SRV1/SRV3/BE3 e emitir um novo `54-02-BACKUP-OPERATION-PLAN.json`. Qualquer pending backup write exige approval literal novo e vinculado ao hash exato; nenhuma migration apply está autorizada.
+Obter a aprovação literal nova vinculada ao hash exato do `54-02-BACKUP-OPERATION-PLAN.json` e a confirmação OCI do OperationPlan `f4f8e72a-c40d-4524-adf8-80e808aad745`. Somente então gerar approval/anti-drift, executar exclusivamente o boot backup e validar o receipt/readback. Nenhuma migration apply está autorizada.
 
 ## Blockers
 
-- 54-02: backup OCI fresh é uma write OCI e estava explicitamente proibido nesta execução.
+- 54-02: backup OCI fresh é write OCI; preview local e OCI passaram, mas apply permanece bloqueado até as duas confirmações literais fresh.
 - 54-02: receipts SRV1/SRV3/BE3 estão tracked, hash-valid e classificados `pre-existing-evidence`; qualquer refresh exige operação nova explícita e aprovada.
 - Revision Gate: PASS independente, 0 blockers/0 warnings; renovar somente se expirar ou houver drift nos 14 arquivos cobertos.
-- Backup-only authorization: `54-02-BACKUP-OPERATION-PLAN.json` e `54-02-APPROVAL.json` ainda não existem.
+- Backup-only authorization: `54-02-BACKUP-OPERATION-PLAN.json` existe e passou preview; `54-02-APPROVAL.json`, anti-drift e apply receipt ainda não existem.
 
 ## Performance Metrics
 
@@ -59,6 +59,6 @@ Commit-pinar o evidence/gate fresh de 54-01. Em 54-02, validar primeiro o review
 
 ## Session
 
-**Last session:** 2026-07-26T10:15:00Z
-**Stopped at:** 54-01 fresh PASS; entering 54-02 backup-only preview
+**Last session:** 2026-07-26T10:37:00Z
+**Stopped at:** 54-02 preview PASS; awaiting fresh typed approval
 **Resume file:** 54-02-PLAN.md
