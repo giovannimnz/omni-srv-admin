@@ -1,16 +1,16 @@
 # Graph Report - _omni-srv-admin-phase54-replan-20260724  (2026-07-26)
 
 ## Corpus Check
-- 1006 files · ~1,901,941 words
+- 1006 files · ~1,901,023 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 12641 nodes · 17640 edges · 1082 communities (932 shown, 150 thin omitted)
+- 12629 nodes · 17628 edges · 1080 communities (931 shown, 149 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 181 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `63c0c40d`
+- Built from commit: `846d2d81`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -1072,12 +1072,10 @@
 - [[_COMMUNITY_Community 1077|Community 1077]]
 - [[_COMMUNITY_Community 1078|Community 1078]]
 - [[_COMMUNITY_Community 1079|Community 1079]]
-- [[_COMMUNITY_Community 1080|Community 1080]]
 - [[_COMMUNITY_Community 1081|Community 1081]]
-- [[_COMMUNITY_Community 1084|Community 1084]]
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (1085 total, 150 thin omitted)` - 914 edges
+1. `Communities (1080 total, 149 thin omitted)` - 910 edges
 2. `_write_evidence()` - 63 edges
 3. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 55 edges
 4. `Blocked` - 53 edges
@@ -1110,11 +1108,11 @@
 - 1-file cycle: `modules/rustdesk-fleet/tools/validate_phase52.py -> modules/rustdesk-fleet/tools/validate_phase52.py`
 - 1-file cycle: `modules/srv1-ops/scripts/production_guard.py -> modules/srv1-ops/scripts/production_guard.py`
 
-## Communities (1082 total, 150 thin omitted)
+## Communities (1080 total, 149 thin omitted)
 
 ### Community 0 - "Community 0"
 Cohesion: 0.00
-Nodes (914): Communities (1085 total, 150 thin omitted), Community 0 - "Community 0", Community 1001 - "Community 1001", Community 1002 - "Community 1002", Community 1003 - "Community 1003", Community 1004 - "Community 1004", Community 1005 - "Community 1005", Community 1006 - "Community 1006" (+906 more)
+Nodes (910): Communities (1080 total, 149 thin omitted), Community 0 - "Community 0", Community 1001 - "Community 1001", Community 1002 - "Community 1002", Community 1003 - "Community 1003", Community 1004 - "Community 1004", Community 1005 - "Community 1005", Community 1006 - "Community 1006" (+902 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.05
@@ -1122,11 +1120,11 @@ Nodes (41): Apt sources, Apt sources, Apt sources, Apt sources, atius-srv-1, ati
 
 ### Community 2 - "Community 2"
 Cohesion: 0.04
-Nodes (65): project_exists(), containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover(), discover_check(), discover_heal() (+57 more)
+Nodes (67): load_project(), project_exists(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), discover() (+59 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.10
-Nodes (34): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+26 more)
+Cohesion: 0.11
+Nodes (32): CompletedProcess, Path, autoclean(), _autoclean_script(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers() (+24 more)
 
 ### Community 4 - "Community 4"
 Cohesion: 0.12
@@ -1181,8 +1179,8 @@ Cohesion: 0.06
 Nodes (31): ⚡ ACT MODE, 🔧 ANALYZER MODE, 💾 CHECKPOINT MODE, Completion Criteria, Core Identity, Core Workflow Framework, Critical Operating Rules, 🔍 DEEP RESEARCH MODE (+23 more)
 
 ### Community 17 - "Community 17"
-Cohesion: 0.14
-Nodes (34): load_project(), Carrega sync.yaml + deploy.yaml (se existir) de um projeto., _ahead_behind(), _as_bool(), _auto_push_enabled(), _branch(), _changed_since(), _configured_enabled() (+26 more)
+Cohesion: 0.16
+Nodes (32): _ahead_behind(), _as_bool(), _auto_push_enabled(), _branch(), _changed_since(), _configured_enabled(), _dirty_files(), _ensure_upstream_remote() (+24 more)
 
 ### Community 18 - "Community 18"
 Cohesion: 0.06
@@ -1269,8 +1267,8 @@ Cohesion: 0.09
 Nodes (21): Antes, 🔧 Correção 1: Tipo de `offset_date` em divap_backtest.py, 🔧 Correção 2: SQL Table Name em index.js, ✨ Correções Anteriores (já aplicadas), Correções Aplicadas - Phase 1, Depois, 📝 Documentação Gerada, ✅ get_signals_from_telegram() - Iteração Contínua (+13 more)
 
 ### Community 39 - "Community 39"
-Cohesion: 0.06
-Nodes (37): admin(), admin_health(), admin_processes(), admin_status(), backup(), backup_create(), backup_list(), backup_restore() (+29 more)
+Cohesion: 0.08
+Nodes (25): admin(), backup(), backup_create(), backup_list(), backup_restore(), backup_status(), cli(), deploy() (+17 more)
 
 ### Community 40 - "Community 40"
 Cohesion: 0.07
@@ -2073,8 +2071,8 @@ Cohesion: 0.29
 Nodes (7): 8.1 Security, 8.2 Architecture, 8.3 Database, 8.4 Deployment, 8.5 Code Quality, 8.6 Testing, 8. Concerns & Technical Debt
 
 ### Community 240 - "Community 240"
-Cohesion: 0.13
-Nodes (34): Any, Path, _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso() (+26 more)
+Cohesion: 0.18
+Nodes (12): admin_health(), admin_processes(), admin_status(), Health checks básicos: ping, portas, serviços chave., Lista serviços systemd. Se NAME passado, mostra status + logs., Top-like: processos por uso de CPU ou memória., Executa deploy de um projeto (wrapping fork-sync deploy)., Retorna env com LC_ALL=C para parsing consistente. (+4 more)
 
 ### Community 241 - "Community 241"
 Cohesion: 0.29
@@ -3001,8 +2999,8 @@ Cohesion: 0.29
 Nodes (6): Brave Browser, Chromium / Bitwarden SidePanel decision, Chromium Google defaults, GitKraken ARM64 Deb, Managed Apps Operations, Obsidian ARM64 AppImage
 
 ### Community 536 - "Community 536"
-Cohesion: 0.14
-Nodes (40): Any, datetime, Namespace, Path, _action_to_dict(), _append_audit_event(), _build_repair_report(), _build_summary() (+32 more)
+Cohesion: 0.05
+Nodes (109): Path, Any, Path, Any, CompletedProcess, datetime, Namespace, Path (+101 more)
 
 ### Community 537 - "Community 537"
 Cohesion: 0.10
@@ -4098,7 +4096,11 @@ Nodes (30): MonkeyPatch, _gate_a_block_remote_fetch(), _gate_a_malicious_tar(), 
 
 ### Community 877 - "Community 877"
 Cohesion: 0.19
-Nodes (17): datetime, _external_probe_bundle(), _FakeClock, _hostname_probe_bundle(), _origin_policy(), _phase53_digest(), _probe_origin(), _raw() (+9 more)
+Nodes (16): datetime, _external_probe_bundle(), _FakeClock, _hostname_probe_bundle(), _origin_policy(), _phase53_digest(), _probe_origin(), _tcp_positive() (+8 more)
+
+### Community 878 - "Community 878"
+Cohesion: 0.40
+Nodes (4): Extrai um scalar simples de YAML sem depender de PyYAML., Retorna alvos SSH em ordem: inventario, VPN, publico ou publico primeiro via env, _ssh_candidates(), _yaml_scalar()
 
 ### Community 879 - "Community 879"
 Cohesion: 0.07
@@ -4161,8 +4163,8 @@ Cohesion: 0.11
 Nodes (18): Acceptance Roadmap, Add After Validation, Anti-Features, Dependency Notes, Differentiators, Evidence Boundaries, Feature Dependencies, Feature Landscape (+10 more)
 
 ### Community 894 - "Community 894"
-Cohesion: 0.12
-Nodes (7): Any, _FakeDnsEdgeBackend, _FakeEdgeBackend, _FakeWindowsRouteRunner, _set_barrier_observed(), test_rollback_recovers_backend_exception_after_partial_write(), test_windows_private_first_fallback_is_only_for_ssh_rc255()
+Cohesion: 0.18
+Nodes (8): Any, _barrier_b(), _FakeDnsEdgeBackend, _FakeWindowsRouteRunner, _raw(), _set_barrier_observed(), test_barrier_b_drift_staleness_and_order_block_before_dns(), test_windows_private_first_fallback_is_only_for_ssh_rc255()
 
 ### Community 895 - "Community 895"
 Cohesion: 0.12
@@ -4393,16 +4395,16 @@ Cohesion: 0.09
 Nodes (79): MonkeyPatch, Namespace, Path, ProbeContext, ProbeSpec, _args(), _assert_blocked(), _check() (+71 more)
 
 ### Community 953 - "Community 953"
-Cohesion: 0.16
-Nodes (36): _allowed_oci_pages(), _barrier_b(), _edge_applier_module(), _edge_transaction(), _edge_with_ip_proof(), _nft_template(), _phase53_edge_preflight(), _rendered_nft_candidate() (+28 more)
+Cohesion: 0.13
+Nodes (36): _allowed_oci_pages(), _edge_applier_module(), _edge_transaction(), _edge_with_ip_proof(), _FakeEdgeBackend, _nft_template(), _phase53_edge_preflight(), _rendered_nft_candidate() (+28 more)
 
 ### Community 954 - "Community 954"
 Cohesion: 0.25
 Nodes (7): dependencies, @huggingface/transformers, engines, node, name, private, type
 
 ### Community 955 - "Community 955"
-Cohesion: 0.17
-Nodes (16): Path, _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), Any, Path (+8 more)
+Cohesion: 0.36
+Nodes (7): _default_env_file(), _load_env(), Read-only access to DbOmniFleet customization registry., registry_rows_for_project(), _run_sql(), Any, Path
 
 ### Community 956 - "Community 956"
 Cohesion: 0.29
@@ -4513,8 +4515,8 @@ Cohesion: 0.60
 Nodes (5): Any, Path, graphify_rebuild(), main(), run_json()
 
 ### Community 983 - "Community 983"
-Cohesion: 0.14
-Nodes (13): Accomplishments, Auto-fixed Issues, Decisions Made, Deviations from Plan, Files Created/Modified, Issues Encountered, Next Phase Readiness, Performance (+5 more)
+Cohesion: 0.33
+Nodes (5): Delivered, Next, Phase 54 Plan 01 Summary, Safety, Verification
 
 ### Community 984 - "Community 984"
 Cohesion: 0.33
@@ -4744,33 +4746,25 @@ Nodes (6): Bounded local matrix, Fixture matrix required in Wave 0, Per-plan Nyq
 Cohesion: 0.15
 Nodes (12): Auto-fixed Issues, Blocking Gaps, Commits, Deviations from Plan, Evidence Captured, Known Stubs, Outcome, Phase 54 Plan 02: Live Baseline and Rollback Readiness Summary (+4 more)
 
-### Community 1080 - "Community 1080"
-Cohesion: 0.25
-Nodes (17): _alias_variants(), _build_report(), _check_containers(), _check_endpoints(), _check_launchers(), _check_local_ports(), _check_pm2_boot_contract(), _check_remote_horistic_apache() (+9 more)
-
-### Community 1084 - "Community 1084"
-Cohesion: 0.28
-Nodes (9): CompletedProcess, _check_systemd_entities(), _list_containers(), _run(), _run_remote(), _systemctl_is_active(), _systemctl_list_jobs(), _systemctl_list_timers() (+1 more)
-
 ## Knowledge Gaps
-- **7009 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+7004 more)
+- **6998 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+6993 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **150 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **149 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `release_update()` connect `Community 2` to `Community 17`, `Community 955`, `Community 28`, `Community 22`?**
+- **Why does `release_update()` connect `Community 2` to `Community 536`, `Community 28`, `Community 22`?**
   _High betweenness centrality (0.009) - this node is a cross-community bridge._
-- **Why does `Blocked` connect `Community 41` to `Community 955`?**
+- **Why does `Blocked` connect `Community 41` to `Community 536`?**
   _High betweenness centrality (0.007) - this node is a cross-community bridge._
 - **Why does `isolated_restore_proof()` connect `Community 41` to `Community 800`, `Community 868`?**
   _High betweenness centrality (0.004) - this node is a cross-community bridge._
 - **Are the 85 inferred relationships involving `ValueError` (e.g. with `update_manual_section()` and `parse_cpu_time()`) actually correct?**
   _`ValueError` has 85 INFERRED edges - model-reasoned connections that need verification._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _7432 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _7421 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.002188183807439825 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.002197802197802198 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.047619047619047616 - nodes in this community are weakly interconnected._

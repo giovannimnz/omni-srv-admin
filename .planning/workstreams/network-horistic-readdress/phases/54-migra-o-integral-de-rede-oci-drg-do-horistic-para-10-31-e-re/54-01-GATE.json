@@ -33,7 +33,7 @@
     {
       "expected": "generated within 900s and unexpired",
       "id": "freshness",
-      "observed": "2026-07-24T13:41:47Z",
+      "observed": "2026-07-26T09:16:37Z",
       "required": true,
       "result": "PASS"
     },
@@ -73,23 +73,108 @@
       "result": "PASS"
     },
     {
-      "expected": "all required checks are runner-observed PASS",
+      "expected": "owner adapter registry exactly covers every required plan/stage/check tuple",
+      "id": "adapter_coverage",
+      "observed": "54-01",
+      "required": true,
+      "result": "PASS"
+    },
+    {
+      "expected": "all required checks executed from runner-owned fixed adapters",
       "id": "observed_checks",
-      "observed": {
-        "adversarial_matrix": "PASS",
-        "focused_pytest": "PASS",
-        "graphify_preflight": "PASS",
-        "secret_scan": "PASS",
-        "syntax_compile": "PASS",
-        "workstream_config_routing": "PASS"
-      },
+      "observed": [
+        {
+          "adapter": "local",
+          "artifact_hashes": {
+            "captured-output": "902a8bb1deb5cb19e881e0bf3eba036be8cec1d0b473a7fa4c53f3efc4c2b402"
+          },
+          "command_id": "phase54.workstream_config_routing",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T09:21:28.065575Z",
+          "id": "workstream_config_routing",
+          "normalized": null,
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T09:21:27.315981Z"
+        },
+        {
+          "adapter": "local",
+          "artifact_hashes": {
+            "captured-output": "4c9e960d6dba6559386365e7bc402ff10abe441ef4bcb77405fc8e945832aade"
+          },
+          "command_id": "phase54.focused_pytest",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T09:21:29.173715Z",
+          "id": "focused_pytest",
+          "normalized": null,
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T09:21:28.065607Z"
+        },
+        {
+          "adapter": "local",
+          "artifact_hashes": {
+            "captured-output": "9a2b91996d6d3694350ed91b46f7427c2282e8250bab8e287d50bf0f152ebd30"
+          },
+          "command_id": "phase54.syntax_compile",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T09:21:29.476033Z",
+          "id": "syntax_compile",
+          "normalized": null,
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T09:21:29.173755Z"
+        },
+        {
+          "adapter": "local",
+          "artifact_hashes": {
+            "captured-output": "2f5efa72476c8f89a8ccd7b0c1aaec6b0cb9f3122d3869ce3e513c1f3777ceb5"
+          },
+          "command_id": "phase54.adversarial_matrix",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T09:21:30.967361Z",
+          "id": "adversarial_matrix",
+          "normalized": null,
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T09:21:29.476067Z"
+        },
+        {
+          "adapter": "local",
+          "artifact_hashes": {
+            "captured-output": "ffe7b054dd7c2e810f97e3bcacec14afd0132048acf8c543ae5943c2be1297fc"
+          },
+          "command_id": "phase54.secret_scan",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T09:21:31.180081Z",
+          "id": "secret_scan",
+          "normalized": null,
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T09:21:30.967387Z"
+        },
+        {
+          "adapter": "local",
+          "artifact_hashes": {
+            "captured-output": "96b4190c387e6797bbcbc059d51936312622f2f0f1632d2d92247b620f20a3b2"
+          },
+          "command_id": "phase54.graphify_preflight",
+          "exit_code": 0,
+          "finished_at": "2026-07-26T09:21:32.531680Z",
+          "id": "graphify_preflight",
+          "normalized": null,
+          "required": true,
+          "result": "PASS",
+          "started_at": "2026-07-26T09:21:31.180114Z"
+        }
+      ],
       "required": true,
       "result": "PASS"
     },
     {
       "expected": "all artifacts exist and SHA-256 hashes match",
       "id": "artifact_hashes",
-      "observed": 4,
+      "observed": 7,
       "required": true,
       "result": "PASS"
     },
@@ -108,8 +193,8 @@
       "result": "PASS"
     }
   ],
-  "evidence_sha256": "219a096fdb9fbcf0b3268932432c96738201caad123812d94d87cd261ea34cf6",
-  "finished_at": "2026-07-24T13:42:11.896858Z",
+  "evidence_sha256": "16c56ccc0976ef3364a71e80b2b4c84b33bf0fbd0c448da6dfe26524223c317a",
+  "finished_at": "2026-07-26T09:21:32.574305Z",
   "mode": "read-only",
   "mutations_attempted": false,
   "next_wave_gate": "PASS:54-01",
@@ -124,8 +209,9 @@
     "secret_scan",
     "graphify_preflight"
   ],
+  "runner_sha256": "ed452edfe72734c829974522014242cb71693dd061f0798f096c4c14e78445fe",
   "schema": "phase54.gate.v1",
   "stage": null,
-  "started_at": "2026-07-24T13:42:11.786873Z",
+  "started_at": "2026-07-26T09:21:27.265283Z",
   "status": "PASS"
 }

@@ -10,7 +10,7 @@
 **Goal:** Migrar integralmente o `horistic-srv` de `10.21.0.0/16` / `10.21.1.0/24` / `10.21.1.21` para `10.31.0.0/16` / `10.31.1.0/24` / `10.31.1.31`, preservando por OCID a reserva pública `163.176.232.119`; convergir VCN/subnet/DRG/routes/VNIC/private IP, DNS A/PTR/FQDN/resolvers, host/K3s/serviços e documentação; migrar Horistic WireGuard `.4 -> .31`; preservar S23 em LAN `192.168.1.10` e WireGuard `10.100.100.10`; migrar S20 de LAN/WireGuard `.9 -> .11`.
 **Requirements:** NET-01..NET-11
 **Depends on:** Phase 45 como baseline DRG; Phase 47.1 como release gate DNS ou transação DNS autocontida que prove autoridade/rollback
-**Status:** Blocked; 54-01 PASS histórico precisa ser reemitido fresh após drift semântico, 54-02 BLOCK; reexecução exige `54-REVIEW-GATE.json` independente e approval literal para pending backup writes
+**Status:** In progress; revisão independente 0/0 e 54-01 fresh PASS concluídos; 54-02 deve emitir um novo OperationPlan backup-only e obter approval literal antes de qualquer pending backup write
 **Risk:** VERY HIGH
 **Plans:** 1/10 plans executed
 
