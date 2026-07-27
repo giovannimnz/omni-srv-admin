@@ -1,10 +1,11 @@
 ---
 workstream: gbrain-mcp-reliability
-reviewed_at: 2026-07-27T09:34:14-03:00
+reviewed_at: 2026-07-27T09:59:09-03:00
 reviewer: MiniMax-M3 delegated read-only researchers
 status: incorporated-with-corrections
 source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_082934_393487.txt
 second_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083002_653159.txt
+third_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083020_033739.txt
 ---
 
 # Revisão assíncrona — grafo, contextual retrieval e embeddings
@@ -103,3 +104,46 @@ Parecer parcialmente útil. Mudanças incorporadas somente após confronto com M
 - `64-VALIDATION.md`
 - `65-01-PLAN.md`
 - `65-VALIDATION.md`
+
+# Terceira revisão assíncrona — backup, restore, fila rclone e secret hygiene
+
+## Veredito
+
+Parecer útil, mas insuficiente para execução direta. Findings foram confrontados com repo, units/processos live read-only, remote Drive, source GBrain e PostgreSQL. Nenhum PID foi sinalizado; nenhum dump, restore, upload, purge, chmod, restart ou token rotation foi executado.
+
+## Aceito
+
+- O banco GBrain tem 113 MB, 61 tabelas public e PostgreSQL 17.10; não existe dump/restore smoke GBrain nos paths pesquisados.
+- `backup-srv1-daily.service` está `activating/start` desde 2026-07-23 com shell+rclone vivos e remote snapshot parcial.
+- O script SRV-1 chama rclone diretamente e copia `~/.gbrain/`; remote é `type=drive` sem `crypt`.
+- Unit de backup não tem deadline de start/runtime; rclone também não tem timeout de rede/subprocesso suficiente.
+- Queue live e repo divergem por SHA. A live anuncia execução paralela entre servidores; o contrato permanente exige serialização global.
+- Queue requer testes de exit code SSH/rclone/check, snapshot identity, remote target e checksum.
+- MCP unit usa append, `UMask=0002` e não usa `--suppress-bootstrap-token`; o log `0664` contém três banners multiline de bootstrap token.
+
+## Corrigido
+
+| Finding delegado | Correção |
+|---|---|
+| `pg_dump` falha via PgBouncer transaction mode | Não é regra universal. Preferir direct PostgreSQL após identity checks e testar o path real. |
+| `TimeoutStopSec=7200` deveria matar o backup | `TimeoutStopSec` só limita stop. Deadline normal exige `RuntimeMaxSec`/`TimeoutStartSec` e timeout do subprocesso/rede. |
+| Retries existentes evitam hang | Retries não limitam espera silenciosa; o processo está vivo há mais de três dias. |
+| Fila canônica já resolve serialização | A unit usa script live divergente e paralelo; repo/live/remote precisam convergir por SHA para o contrato global serial. |
+| “3 admin tokens” não comprovados | Source e estrutura multiline confirmaram três banners; scanner single-line dá falso zero. Valores continuam redigidos. |
+| Backup de `~/.gbrain` atende BKP-05 | Enviar config com API keys a Drive não-crypt viola o gate; usar allowlist secret-stripped ou encryption client-side testada. |
+
+## Rejeitado
+
+- Sinalizar o PID travado antes de snapshot/backup, gate, teste de cancelamento e rollback.
+- Rodar `pg_dump`, `createdb`, `pg_restore` ou `dropdb` direto durante planning.
+- Rotacionar/revogar token ou reiniciar MCP sem scanner multiline, suppression, prestate e checkpoint.
+- Tratar string sem `ERROR` como verify PASS.
+- Fazer purge do remote parcial durante recovery.
+
+## PLANs atualizados
+
+- `60-01-PLAN.md`
+- `60-02-PLAN.md`
+- `60-03-PLAN.md`
+- `60-RESEARCH.md`
+- `60-VALIDATION.md`

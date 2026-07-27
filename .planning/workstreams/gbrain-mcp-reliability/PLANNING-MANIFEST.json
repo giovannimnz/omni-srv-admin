@@ -1,29 +1,29 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-27T09:34:14-03:00",
+  "generated_at": "2026-07-27T09:59:09-03:00",
   "workstream": "gbrain-mcp-reliability",
   "counts": {
     "requirements": 33,
     "phases": 6,
     "plans": 19,
     "implementation_tasks": 57,
-    "live_checkpoints": 11,
-    "task_nodes": 68
+    "live_checkpoints": 13,
+    "task_nodes": 70
   },
   "plans": [
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-01-PLAN.md",
-      "sha256": "53b4924fbf7a6c2af609e0de478f1146ac82e64321880ac073947fd29fa7e0d3",
+      "sha256": "c0914089c06d36631621d3e5f8bd00ec96d4adb1c41833e527ad6ef773600df9",
       "requirements": "BKP-01, BKP-02, BKP-05"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-02-PLAN.md",
-      "sha256": "0c13317673619d2999e0f4fcb42424d2b62e7e21a651eab2c3bf0b74d4be59c5",
+      "sha256": "7cdd353483d02164ec40642707bd9dc83ce68498049d2dde250ab510f7a0b637",
       "requirements": "BKP-03, BKP-04, BKP-05"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-03-PLAN.md",
-      "sha256": "a54adf1b23467c16b514215979b0cdf5d55137b9fff08e3d6b0ea69176a544dd",
+      "sha256": "1fb6b1e860110faf4d0b05c2939992dec04337082c2f58a4665b6107a950c22e",
       "requirements": "SEC-01, SEC-02, SEC-03"
     },
     {
