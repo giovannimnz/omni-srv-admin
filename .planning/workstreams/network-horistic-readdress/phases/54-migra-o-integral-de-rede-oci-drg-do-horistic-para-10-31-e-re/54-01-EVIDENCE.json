@@ -3,12 +3,12 @@
   "plan": "54-01",
   "stage": null,
   "status": "PASS",
-  "generated_at": "2026-07-27T00:06:57Z",
-  "expires_at": "2026-07-27T00:21:57Z",
+  "generated_at": "2026-07-27T00:27:30Z",
+  "expires_at": "2026-07-27T00:42:30Z",
   "redacted": true,
   "mutations_attempted": false,
   "production_mutations_attempted": false,
-  "source_commit": "8ef7deabdf16f63ba00c8104e7c2decbc672f199",
+  "source_commit": "8822d0aa053cff3a8b334040ab85b19c0f197f43",
   "check_inputs": {
     "workstream_config_routing": {
       "artifact_hashes": {
