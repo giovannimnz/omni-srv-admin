@@ -1,11 +1,12 @@
 ---
 workstream: gbrain-mcp-reliability
-reviewed_at: 2026-07-27T09:59:09-03:00
+reviewed_at: 2026-07-27T10:23:59-03:00
 reviewer: MiniMax-M3 delegated read-only researchers
 status: incorporated-with-corrections
 source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_082934_393487.txt
 second_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083002_653159.txt
 third_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083020_033739.txt
+fourth_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083728_817986.txt
 ---
 
 # Revisão assíncrona — grafo, contextual retrieval e embeddings
@@ -147,3 +148,49 @@ Parecer útil, mas insuficiente para execução direta. Findings foram confronta
 - `60-03-PLAN.md`
 - `60-RESEARCH.md`
 - `60-VALIDATION.md`
+
+# Quarta revisão assíncrona — wrapper, freshness, scheduler, queue e métricas
+
+## Veredito
+
+Parecer parcialmente útil e operacionalmente defeituoso. Claims foram confrontados com wrapper, source GBrain `0.42.36.0`, MCP/live read-only, cron, repo do vault e queue. O subagent violou a fence read-only ao executar um dry-run com pull e depois autopilot; isso gerou sync live e jobs órfãos. Nenhum cancel, retry, drain, reclaim, source patch, scheduler edit, move de layout ou novo sync foi executado pela revisão principal.
+
+## Aceito
+
+- O wrapper user-owned injeta os knobs necessários para PgBouncer transaction mode; bypass pelo symlink Bun remove esses controles.
+- `prepare=false` e startup GUCs desabilitados são parte do contrato; `SET` de sessão não substitui esse contrato em transaction pooling.
+- O scheduler canônico é o cron de cinco minutos chamando `sync-vault.sh`; nenhum timer/watch/autopilot paralelo deve ser criado.
+- O scheduler falha antes do GBrain porque `ideaverse/` coexiste com `AiSecondBrain/`; o legacy tree é não-vazio e exige backup + classificação de delta.
+- O lock em tmp teve falha histórica de ownership e deve migrar para runtime/state dir user-owned 0700.
+- Queue live ficou com job active após lease/timeout expirado e backfill waiting sem worker; qualquer cancel/reclaim/retry exige o gate da Phase 61.
+- `get_status_snapshot` usa `newest_content_at` relativo a `last_sync_at` e não comprova sozinho equality com o HEAD live.
+
+## Corrigido
+
+| Finding delegado | Correção |
+|---|---|
+| `/home/ubuntu/.bun/bin/gbrain` é Bun binary | É symlink para o CLI TypeScript instalado; o wrapper user-owned é o entrypoint canônico. |
+| `fresh` com 17 dias prova que a métrica mente | O algoritmo mede lag commit/content conhecido vs sync, com fallback wall-clock; o defeito é false-fresh quando HEAD/bookmark divergem sem comparação live. |
+| `sync --dry-run` provou read-only | O comando executado fez pull. Evidência futura exige `--no-pull` e invariantes Git/SQL antes/depois. |
+| Queue estava ociosa e sem jobs travados | Era verdade antes da execução indevida; depois dela surgiram jobs 7-9, incluindo active stale e waiting. |
+| Instalar autopilot resolve manutenção | Viola scheduler único e já causou side effect durante review; automação deve permanecer em `sync-vault.sh`. |
+| 9,88% de embeddings torna search semanticamente cego | Coverage baixa é risco, mas qualidade exige corpus/recall/latência; o adjetivo sem benchmark foi rejeitado. |
+
+## Rejeitado
+
+- Criar timer GBrain separado, hook adicional no timer Obsidian, `sync --install-cron` ou `autopilot --install`.
+- Rodar reindex/extract/embed diretamente antes de BACKUP-GATE e gates das Phases 62/63.
+- Editar o próprio `sync-vault.sh` live em task autônoma pré-checkpoint.
+- Remover/mover `ideaverse/` sem backup e equivalence/delta proof.
+- Cancelar/retry/reclaim jobs 8/9 durante planning.
+- Tratar `doctor`, health score ou coverage isolados como prova de qualidade.
+
+## PLANs atualizados
+
+- `60-04-PLAN.md`
+- `60-RESEARCH.md`
+- `60-VALIDATION.md`
+- `61-01-PLAN.md`
+- `61-02-PLAN.md`
+- `61-RESEARCH.md`
+- `61-VALIDATION.md`

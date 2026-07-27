@@ -9,6 +9,13 @@ Owned requirements: BKP-01, BKP-02, BKP-03, BKP-04, BKP-05, SEC-01, SEC-02, SEC-
 
 The executor must re-read live state before mutation; this research is planning evidence, not live authority. Use repo-managed scripts and tests first. If installed GBrain source must change, require exact version/hash and preserve a byte-identical backup outside Git.
 
+## Fourth adversarial review evidence
+
+- The canonical CLI is the user-owned wrapper at `/home/ubuntu/.local/bin/gbrain`; `/home/ubuntu/.bun/bin/gbrain` is a symlink to installed TypeScript `src/cli.ts`, not an independent binary.
+- The wrapper currently disables unsupported startup GUCs with `GBRAIN_STATEMENT_TIMEOUT=0` and `GBRAIN_IDLE_TX_TIMEOUT=0`, keeps embed limits and executes the Bun symlink. Direct invocation bypasses these controls.
+- GBrain 0.42.36.0 sends non-disabled timeouts in the PostgreSQL startup packet. Session `SET` is explicitly documented in source as unreliable under PgBouncer transaction mode.
+- A sync dry-run is accepted as read-only evidence only with `--no-pull` and before/after Git + SQL invariants. The fourth delegated review ran a dry-run that performed git pull and later invoked autopilot; those operations are incident evidence, not validation evidence.
+
 ## Third adversarial review baseline — 2026-07-27
 
 Read-only probes confirmed:

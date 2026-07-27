@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-27T09:59:09-03:00",
+  "generated_at": "2026-07-27T10:23:59-03:00",
   "workstream": "gbrain-mcp-reliability",
   "counts": {
     "requirements": 33,
@@ -28,17 +28,17 @@
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-04-PLAN.md",
-      "sha256": "5f2778f18af725eb91f969752fb75fc8f9a038aa47bf341c9912b051af8643c8",
+      "sha256": "6a937088c6c6af2ed92df07866836e26b895af08bc40de9f73fe724f3caa1e16",
       "requirements": "SYNC-01, CTL-05"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/61-source-truth-and-sync/61-01-PLAN.md",
-      "sha256": "ca4943e8a4621538ab8558f2891ea1e19b092e0ac0052e714b22a02dacde5f68",
+      "sha256": "037b141a46a2ef8804050ecd9a76d8f6f950d70dd6a90e6324f089acf6908533",
       "requirements": "SYNC-02, SYNC-04, SYNC-06"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/61-source-truth-and-sync/61-02-PLAN.md",
-      "sha256": "fda40f63c5f1e17958e5cdf1f2e67a24c95c6cb9bacf4544a3280896d7a14c02",
+      "sha256": "22698e4825bd82b2798ad68e998c6ffbf2bb6a88d30768a0820241e5b30bd00a",
       "requirements": "SYNC-03, SYNC-05"
     },
     {

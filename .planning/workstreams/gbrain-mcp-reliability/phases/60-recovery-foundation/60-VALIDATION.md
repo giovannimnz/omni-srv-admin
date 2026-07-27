@@ -29,7 +29,9 @@ nyquist: required
 - Backup/restore gate not PASS.
 - Live PostgreSQL source/target identity or pg tool major unresolved.
 - Restore target lacks harness marker or cleanup proof.
-- Backup process/remote partial snapshot not preserved before cancel.
+- Backup process/remote partial snapshot not preserved before cancel and not reconciled.
+- Managed CLI entrypoint bypasses the user-owned wrapper or source hashes/version drift.
+- Sync dry-run lacks `--no-pull` or changes Git/SQL prestate.
 - Queue repo/live/remote SHA drift or cross-server parallel mode.
 - SSH/rclone/check exit code, snapshot identity or checksum unproven.
 - Plaintext secret-bearing config selected for plain Drive remote.

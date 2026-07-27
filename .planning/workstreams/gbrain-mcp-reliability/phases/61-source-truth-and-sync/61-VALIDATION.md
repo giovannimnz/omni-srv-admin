@@ -19,6 +19,12 @@ nyquist: required
 
 - Backup/restore gate not PASS.
 - Source HEAD/generation drift.
+- Live scheduler script would be edited before the explicit gate.
+- `ideaverse/Ideaverse` exists without verified backup and equivalence/delta classification.
+- Scheduler lock ownership/path is unsafe or inaccessible.
+- Queue has active jobs with expired lease/timeout, waiting backfill without owner, or an unapproved reclaim/cancel/retry plan.
+- Dry-run lacks `--no-pull` or changes Git/SQL prestate.
+- A duplicate cron, timer, watcher, worker or autopilot service would be introduced.
 - Secret detected in output/artifact.
 - Unknown/malformed evidence.
 - Active/deleted denominator ambiguity.
