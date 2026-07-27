@@ -1,14 +1,14 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-27T09:14:27-03:00",
+  "generated_at": "2026-07-27T09:34:14-03:00",
   "workstream": "gbrain-mcp-reliability",
   "counts": {
     "requirements": 33,
     "phases": 6,
     "plans": 19,
     "implementation_tasks": 57,
-    "live_checkpoints": 10,
-    "task_nodes": 67
+    "live_checkpoints": 11,
+    "task_nodes": 68
   },
   "plans": [
     {
@@ -73,27 +73,27 @@
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-01-PLAN.md",
-      "sha256": "fe2c6255a3aacc5d49683c8ef62fdeb01dcc168ce22d87933869aa18fc83334a",
+      "sha256": "1185657f8df9e9aca39527276aaf8621fcfbb23983e727f8405e216ea5b730e5",
       "requirements": "CTL-01, CTL-02"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-02-PLAN.md",
-      "sha256": "8a0046ba48aa8d6c8858eb6c7fe3af3cd8102b6ba047ddac06796e7073e38b1b",
+      "sha256": "40de560f4aeae9a42fb15249b87767d27769ffa01fce96fbc556be49f59b62f4",
       "requirements": "CTL-03, CTL-04"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-03-PLAN.md",
-      "sha256": "4489a5052f5f8d8707e2eed8f434f7cc44eaed1d77fd45c8220f4562db462f27",
+      "sha256": "48765e79e5256f9c66cb6b3e28d8349e0020f7c5cf83bc4bfb8103bba677aa8e",
       "requirements": "CTL-05, OBS-01"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-04-PLAN.md",
-      "sha256": "cc939f31d03daa9686293fc5e2f7ba36e5ddd09128dcb9d0d6ef77a0fad4e45c",
+      "sha256": "5512af0233a7a1a78c146c7cbe52e02f87d56b8d6f70659fac9f03c1d4a22211",
       "requirements": "CTL-06, SEC-03"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-01-PLAN.md",
-      "sha256": "56cc97c063808e64f5fdcc3357d2f9959b21808718dd0d72c4f94d9c61a4f2fe",
+      "sha256": "1b81ab6ecc570373e0d0d70971e8069caac1083d03e3743c7f74741af007714b",
       "requirements": "OBS-02"
     },
     {

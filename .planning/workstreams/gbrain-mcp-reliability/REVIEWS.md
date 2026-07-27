@@ -1,9 +1,10 @@
 ---
 workstream: gbrain-mcp-reliability
-reviewed_at: 2026-07-27T09:16:00-03:00
-reviewer: MiniMax-M3 delegated read-only researcher
+reviewed_at: 2026-07-27T09:34:14-03:00
+reviewer: MiniMax-M3 delegated read-only researchers
 status: incorporated-with-corrections
 source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_082934_393487.txt
+second_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083002_653159.txt
 ---
 
 # Revisão assíncrona — grafo, contextual retrieval e embeddings
@@ -55,3 +56,50 @@ Parecer útil, incorporado após confronto com a CLI e o source instalados do GB
 - `63-01-PLAN.md`
 - `63-03-PLAN.md`
 - `63-VALIDATION.md`
+
+# Segunda revisão assíncrona — MCP skills, schema, config, PostgreSQL e observabilidade
+
+## Veredito
+
+Parecer parcialmente útil. Mudanças incorporadas somente após confronto com MCP live, source do GBrain `0.42.36.0`, filesystem e PostgreSQL read-only. Nenhuma config, role, policy, collation, bind, serviço ou timer foi mutado.
+
+## Aceito
+
+- `mcp.skills_dir` tem precedência DB-plane → file-plane e `gbrain config set` é comando suportado.
+- `list_skills` está bloqueado sem root remoto explícito; `mcp.publish_skills=true` sozinho gera banner otimista.
+- Pack ativo é `home-config`; lint implícito retorna 59 warnings e schema graph retorna 15 nodes/0 edges.
+- Configs file-plane atuais são byte-idênticas, mas continuam duas superfícies operacionais.
+- Role `gbrain` é superuser+bypassrls; 61 tabelas têm RLS, zero policies; collation diverge 2.35/2.39.
+- PgBouncer está em transaction mode e escuta loopback mais redes privadas; requer matriz de consumidores antes de hardening.
+- Log MCP está `0664` e contém seis linhas com keywords sensíveis; hardening permanece na Phase 60.
+- Métricas de disconnect/reranker precisam de classificação e baseline antes de SLO/alerta.
+
+## Corrigido
+
+| Finding delegado | Correção |
+|---|---|
+| Publicar direto do tree global Bun | Criar root user-owned, estável e versionável; bundled tree não é Git-tracked e muda em upgrade. |
+| `schema_lint(pack='gbrain-base-v2')` gera 59 warnings | Essa chamada retorna `pack_not_found`; o lint do active pack usa `pack=''`. |
+| 100% schema coverage prova convergência | Catch-all torna coverage cosmética; exigir mapa e amostragem canônica. |
+| `REFRESH COLLATION VERSION` resolve mismatch | Ensaiar `REINDEX` e testes de ordering/search antes de refresh. |
+| Revogar BYPASSRLS diretamente | Com 61 tabelas RLS e zero policies, criar estratégia/policies e role runtime antes. |
+| Restringir PgBouncer a loopback | Inventariar consumidores de todos os binds antes de qualquer remoção. |
+| 124/24h e 518/7d como thresholds | São baselines de investigação; thresholds vêm depois da classificação. |
+
+## Rejeitado
+
+- Restart do MCP sem gate explícito e rollback.
+- Symlink cego entre as duas config homes.
+- Quatro timers separados de sync/extract/reindex/embed; contradiz scheduler único da Phase 61.
+- Alegação de “3 admin tokens em claro”: scanner redigido confirmou keywords sensíveis, não valores/tipos suficientes para essa conclusão.
+- Alterar RLS, roles, collation ou binds durante planejamento.
+
+## PLANs atualizados
+
+- `64-01-PLAN.md`
+- `64-02-PLAN.md`
+- `64-03-PLAN.md`
+- `64-04-PLAN.md`
+- `64-VALIDATION.md`
+- `65-01-PLAN.md`
+- `65-VALIDATION.md`

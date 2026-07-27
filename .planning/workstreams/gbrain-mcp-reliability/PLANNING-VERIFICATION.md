@@ -1,6 +1,6 @@
 ---
 workstream: gbrain-mcp-reliability
-verified_at: 2026-07-27T09:14:27-03:00
+verified_at: 2026-07-27T09:34:14-03:00
 status: pass
 schema_version: 1
 ---
@@ -16,8 +16,8 @@ PASS. The milestone is executable as planning input. No live GBrain, PostgreSQL,
 - 6 phases: 60 through 65.
 - 19 PLAN files.
 - 57 agent-owned implementation tasks.
-- 10 blocking human-verify checkpoints for explicit live authorization.
-- 67 total task/checkpoint nodes.
+- 11 blocking human-verify checkpoints for explicit live authorization.
+- 68 total task/checkpoint nodes.
 - 33 requirements; 33 covered; zero missing; zero unknown.
 - 19/19 `verify plan-structure` PASS.
 - 19/19 `verify references` PASS.
@@ -29,11 +29,12 @@ PASS. The milestone is executable as planning input. No live GBrain, PostgreSQL,
 
 ## Adversarial review incorporated
 
-- Read-only delegated review: MiniMax-M3, completed after the initial planning seal.
-- CLI/source cross-check confirmed real dry-run syntax and provider-prefix stripping.
-- Accepted gates were added to Phases 62 and 63; incorrect `missing_embeddings=557`, universal score `>0.7`, and absolute orphan target `<200` were rejected.
+- Two read-only delegated reviews: MiniMax-M3, completed after the initial planning seal.
+- First review: CLI/source cross-check confirmed real dry-run syntax and provider-prefix stripping; accepted gates entered Phases 62/63 and incorrect `missing_embeddings=557`, universal score `>0.7`, and absolute orphan target `<200` were rejected.
+- Second review: MCP/source/filesystem/PostgreSQL cross-check added a gated user-owned skills root, active-vs-named schema lint fixtures, config-plane fences, safe RLS/collation ordering, PgBouncer consumer inventory and classified observability baselines to Phases 64/65.
+- Rejected from the second review: direct publication from bundled Bun tree, ungated restart, blind config symlink, duplicate timers, direct BYPASSRLS revoke, isolated collation refresh and unproven token-count claims.
 - Full classification and evidence: `REVIEWS.md`.
-- Post-review verification: 19/19 structure PASS, 19/19 references PASS, 33/33 requirements covered, manifest hashes PASS.
+- Post-review verification: 19/19 structure PASS, 19/19 references PASS, 33/33 requirements covered, manifest hashes PASS, 11 live gates and zero cycles.
 
 ## Safety gates
 

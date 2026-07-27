@@ -15,6 +15,14 @@ nyquist: required
 5. Rollback rehearsal before broad apply.
 6. Phase verification maps every owned requirement to evidence.
 
+## Gates comprovados da segunda revisão assíncrona
+
+- Métricas de failure são agrupadas por operation, error class e janela antes de definir alert thresholds.
+- Os valores históricos 124/24h e 518/7d são baselines de investigação, não SLOs nem thresholds aceitos.
+- Disconnect esperado, race e reranker provider/model/parser têm budgets separados; agregá-los mascara causa raiz.
+- Alertas precisam provar redaction, cardinalidade limitada, ausência de storm no canary e entrega real ao operador.
+- Não criar timers paralelos para sync/extract/reindex/embed; o scheduler único e seu lock continuam governados pela Phase 61.
+
 ## Stop conditions
 
 - Backup/restore gate not PASS.
