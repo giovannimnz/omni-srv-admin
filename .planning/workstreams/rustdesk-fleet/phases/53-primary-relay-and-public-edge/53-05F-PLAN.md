@@ -2,7 +2,7 @@
 phase: 53-primary-relay-and-public-edge
 plan: 05F
 type: execute
-wave: 15
+wave: 20
 depends_on: [53-05E]
 gap_closure: true
 execution_owner: 53-05F
@@ -19,9 +19,13 @@ autonomous: true
 requirements: [SRV-02, SRV-03, SRV-04, SRV-06, OPS-01]
 must_haves:
   truths:
-    - "05F starts in a new process and reconstructs no authority from memory; it revalidates owner identity/decision/hash/expiry, typed confirmations, prestates, source ancestry/tree and admission immediately before the first write."
+    - "Per D-20/D-22, 05F starts through the actual `omni`→`systemd-run`→`/usr/bin/flock`→R launcher→gate chain. Before apply import/factory/journal/write, the gate recomputes OperationPlan/generation/dependencies/expiry/source/H/W continuity/current receipts/manifests/owner confirmations."
+    - "Immediately before import/factory/journal, 05F recollects current topology, supply, capacity, Vault metadata/derived-output, host, OCI, Cloudflare and Apache. It accepts W continuity only as STRICT_EQUIVALENCE_PROVEN; mismatch/unproven, NO_GO or any override is non-authorizing."
+    - "Per D-24, all three Cloudflare current prestates must still select the owner-approved branch. Create binds POST returned ID/readback and delete-if-current rollback; update binds revision/ETag CAS/readback and restore-if-current rollback; duplicate, branch or revision drift requires a new plan and approval."
+    - "Any revalidation drift blocks with zero journal/provider calls and requires 05E to produce a new OperationPlan plus a new exact Giovanni approval; no approval response is reused."
     - "Per D-06, one approved full transaction preserves atius-srv-1 public-VNIC ownership at 10.0.0.238, configures DNAT/forward plus deterministic DRG/SNAT return identity 10.11.1.11 to Horistic 10.21.1.21, and restricts backend ingress to 10.11.1.11."
-    - "D-05D-10: two external origins prove IP-before-DNS and hostname-after-DNS TCP+UDP, separate API auth/redaction, three restarts plus reboot, resource/log/identity invariants and metrics."
+    - "Per D-07, D-09, D-11, D-12 and D-13, two external origins prove IP-before-DNS and hostname-after-DNS TCP+UDP; the separate API proves auth/redaction and readiness bases; three restarts plus boot preserve invariants; counters remain observability only and never prove a direct/relay session."
+    - "The direct/relay metric artifact captures pre-apply, post-publication, restart 1/2/3, boot, pre/post rollback and post-restore samples. Each sample binds counter source, epoch/reset, timestamp, transaction/observation ID and raw direct bytes, relay bytes and failures; deltas are valid only within one epoch, and reboot/reset starts a new base."
     - "Containment-first rollback is sealed immutable; restore-production is a new transaction with a distinct ID and journal after rollback, never an append/rewrite of the rollback proof."
     - "srv2/srv3, Phase 52, Phase 54, reserved IP ownership, legacy fallbacks and 10.31.1.31 remain unmodified."
     - "The live_executor_commit contains only the seven sealed 05F evidence manifests and no summary; no pre-commit evidence contains live_executor_commit or any verified executor SHA."
@@ -44,8 +48,12 @@ must_haves:
   key_links:
     - from: modules/rustdesk-fleet/evidence/phase53/edge-forwarder-owner-approval.json
       to: modules/rustdesk-fleet/evidence/phase53/deploy-transaction.json
-      via: "new-process preflight validates exact plan/source/prestate/confirmation hash and expiry before journal creation"
+      via: "new launcher process recollects receipts and validates exact plan/source/Vault/Cloudflare branch/confirmation hash and expiry before journal creation"
       pattern: "operation_plan_sha256|execution_source_commit|expires_at"
+    - from: modules/rustdesk-fleet/tools/phase53-credential-launcher.py
+      to: modules/rustdesk-fleet/tools/run-phase53-live-gate.py
+      via: "systemd-run creates the governed scope, flock remains the launcher/gate parent and lock holder, and the launcher recreates exact FDs before execve"
+      pattern: "resources run builds|reader-command-manifest|apply-command-manifest"
     - from: modules/rustdesk-fleet/evidence/phase53/rollback-drill.json
       to: modules/rustdesk-fleet/evidence/phase53/restore-production-transaction.json
       via: "sealed rollback digest is an immutable input to a distinct restore transaction"
@@ -82,13 +90,28 @@ Output: apply/edge/API/lifecycle/rollback/restore/metrics evidence-only live com
 @.planning/workstreams/rustdesk-fleet/ROADMAP.md
 @.planning/workstreams/rustdesk-fleet/REQUIREMENTS.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-CONTEXT.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2R-SUMMARY.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2V-SUMMARY.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2S-SUMMARY.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2D-SUMMARY.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2W-SUMMARY.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2H-SUMMARY.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05E-SUMMARY.md
+@modules/rustdesk-fleet/contracts/phase53-provider-readers.json
+@modules/rustdesk-fleet/contracts/phase53-reader-command-manifest.json
+@modules/rustdesk-fleet/contracts/phase53-apply-command-manifest.json
 @modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json
 @modules/rustdesk-fleet/contracts/phase53-provider-manifest.json
 @modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json
 @modules/rustdesk-fleet/evidence/phase53/edge-forwarder-owner-approval.json
+@modules/rustdesk-fleet/evidence/phase53/vault-continuity-route-receipt.json
+@modules/rustdesk-fleet/evidence/phase53/vault-continuity-current-observation.json
+@modules/rustdesk-fleet/evidence/phase53/vault-continuity-decision.json
+@modules/rustdesk-fleet/tools/phase53-credential-launcher.py
+@modules/rustdesk-fleet/tools/phase53-streamable-http.py
+@modules/rustdesk-fleet/tools/phase53-remote-worker.py
 @modules/rustdesk-fleet/tools/phase53-live-backend.py
+@modules/rustdesk-fleet/tools/phase53_production_apply.py
 @modules/rustdesk-fleet/tools/run-phase53-live-gate.py
 </context>
 
@@ -125,15 +148,21 @@ Output: apply/edge/API/lifecycle/rollback/restore/metrics evidence-only live com
   </read_first>
   <files>modules/rustdesk-fleet/evidence/phase53/deploy-transaction.json, modules/rustdesk-fleet/evidence/phase53/edge-probes.json, modules/rustdesk-fleet/evidence/phase53/ops-api-probes.json, modules/rustdesk-fleet/evidence/phase53/lifecycle.json, modules/rustdesk-fleet/evidence/phase53/rollback-drill.json, modules/rustdesk-fleet/evidence/phase53/restore-production-transaction.json, modules/rustdesk-fleet/evidence/phase53/direct-relay-metrics.json</files>
   <action>
-Iniciar um processo novo, sem objetos/callbacks herdados do 05E. Antes de journal/provider construction, exigir que os sete destinos declarados em `<files>` estejam ausentes e que isso corresponda ao exact owner-approved OperationPlan prestate `absent`; qualquer tracked, untracked ou stale byte retorna exit 3/BLOCKED sem overwrite/resume/append/normalize. A remoção/quarentena, se necessária, pertence ao 05D2H e fica fora da authority lane com inventário/digests, seguida por um novo OperationPlan e nova aprovação—nunca ajuste silencioso do prestate aprovado. Revalidar pelo mesmo sealed receipt verifier: `05D2H_summary_commit`, pointer/manifest digest, generation ID e canonical-seven absent digest idênticos aos bindings do preflight/OperationPlan, com `lstat`/lexists/confinement ainda current. Revalidar também `execution_source_commit` ancestor do tip, todos os allowlisted code/contracts blobs idênticos e scope clean; OperationPlan canonical hash; owner exato Giovanni Muniz, decision approve e expiry futura; typed confirmation IDs/hashes/expiry; admission/capacity/current prestates/revisions; tuple D-06 exata `(public_owner=10.0.0.238, route_snat_backend_source=10.11.1.11, backend=10.21.1.21)`; backup/rollback readiness; live flag; `ADMITTED_PHASE53=1`. Qualquer falha retorna exit 3/BLOCKED com zero journals/provider calls/actions.
+Iniciar um processo novo, sem objetos/callbacks herdados do 05E. O comando literal deve ser `omni srv1-ops resources run builds -- /absolute/phase53-credential-launcher.py --reader-policy <reader> --apply-policy <sealed-source-policy> -- /usr/bin/python3 /absolute/run-phase53-live-gate.py ...`; nenhum FD aberto pelo parent shell é utilizado. O launcher reidrata somente os profiles/nomes aprovados e execve o gate com `--reader-command-manifest`, source-sealed `--apply-command-manifest` e promoted-current `--apply-instance`. Per D-20/D-22, concluir toda a revalidação antes de importar o módulo apply ou construir factory. Recomputar OperationPlan SHA; validar generation/dependency/receipt-set digests, TTL/expiry, reader/apply source and instance digests, W decision, launcher/shared-MCP/remote-worker source digests, apply-preflight receipt e OperationPlan-last; provar source ancestry/blob equality/clean scope e revalidar H.
 
-Executar literalmente sob o governor: `ATIUS_RUN_RUSTDESK_PHASE53_LIVE=1 ADMITTED_PHASE53=1 ... run-phase53-live-gate.py --repo . --live-backend phase53-production --mode apply --stage full --operation-plan ... --owner-approval ...`. `build_phase53_apply_backend(...)` é a única factory apply. Executar uma vez: deploy backend rootless em Horistic; API separada; CAS de host/OCI; nft DNAT/forward/return-path em atius-srv-1 preservando o public owner/VNIC `10.0.0.238`; backend aceita 21115/21116/21117 somente da identidade DRG/SNAT de retorno `10.11.1.11`; dois origins provam public IP e cada um dos três hostnames em TCP 34099/34100/34101, UDP 34100->21116 e negativos diretos 21114-21119; publicar por último e sob uma única CAS os três A records; depois lifecycle, regressions, containment rollback e restore-production distinto per D-13/D-14. Per D-16, não tocar 10.31.1.31.
+Imediatamente antes de import/factory/journal, recoletar pelo D2R manifest as revisões/prestates correntes de topology, supply, capacity, Vault metadata e `data-read-derived-output`, host, OCI, Cloudflare e Apache, exigindo unique receipt IDs e common capacity-policy digest. Revalidar o route receipt/current observation/decision de W e aceitar somente `STRICT_EQUIVALENCE_PROVEN` com owner/hash/expiry bindings e fingerprint atual igual ao frozen. Missing, NO_GO, mismatch/unproven, override, destroyed/deleted/recreated/version drift bloqueiam antes de import/factory/journal. Para cada Cloudflare hostname, rederivar absent/present/duplicate e exigir a mesma branch owner-approved: absent→POST/create/returned-ID/readback/delete-if-current; present→revision/ETag CAS update/readback/restore-if-current. Duplicate, state/branch/revision drift exige novo OperationPlan e nova aprovação.
+
+Ainda antes da factory, exigir que os sete destinos declarados em `<files>` estejam ausentes e que isso corresponda ao exact owner-approved OperationPlan prestate `absent`; qualquer tracked, untracked ou stale byte retorna exit 3/BLOCKED sem overwrite/resume/append/normalize. Validar owner exato Giovanni Muniz, decision approve, current OperationPlan hash, expiry futura, response digest e typed confirmation IDs/hashes/expiry; admission/capacity/current prestates/revisions; tuple D-06 exata `(public_owner=10.0.0.238, route_snat_backend_source=10.11.1.11, backend=10.21.1.21)`; backup/rollback readiness; live flag; `ADMITTED_PHASE53=1`. Qualquer diferença de source, generation, H receipt/absence, dependency, expiry, revision, prestate, confirmation ou owner approval retorna exit 3/BLOCKED com zero journal/provider construction/calls/actions, invalida o handoff e exige que 05E gere um novo OperationPlan e obtenha uma nova aprovação exata de Giovanni. A remoção/quarentena, se necessária, pertence ao 05D2H, seguida sempre por novo plan/approval.
+
+Somente após a revalidação completa, criar `RevalidatedAuthorityToken`, importar o source-sealed D2S factory e executar uma vez. OCI usa o shared MCP lifecycle completo e somente os owner-bound `oci_plan`/`oci_plan_control`. Host/nft, Apache e runtime usam o source-sealed worker enviado por stdin em cada chamada ao comando fixo `/usr/bin/sudo -n /usr/bin/python3 -I -`, com template/payload/rendered digests e sem scp/helper instalado. Executar: deploy backend rootless em Horistic; API separada per D-09; CAS de host/OCI; nft DNAT/forward/return-path em atius-srv-1 preservando o public owner/VNIC `10.0.0.238`; backend aceita 21115/21116/21117 somente da identidade DRG/SNAT de retorno `10.11.1.11`; dois origins per D-07 provam public IP e cada hostname em TCP 34099/34100/34101, UDP 34100→21116 e negativos diretos 21114-21119; publicar DNS por último; provar readiness bases per D-11; depois lifecycle, regressions, containment rollback e restore-production distinto per D-13/D-14. Per D-16, não tocar 10.31.1.31.
+
+Para `direct-relay-metrics.json`, coletar bases em pre-apply, post-publication, restart-1, restart-2, restart-3, boot, pre-rollback, post-rollback e post-restore. Cada linha contém source/counter identity, epoch/reset marker, timestamp, transaction_id, observation_id e raw direct_bytes/relay_bytes/failures. Calcular delta somente entre amostras do mesmo epoch; reboot/reset inicia nova base e não permite subtração cross-epoch. Per D-12, tests e evidence declaram `session_transport_claimed=false`: counters/deltas não provam sessão direct/relay.
 
 Depois, executar containment-first rollback: fechar/restore host+OCI ingress, DNS CAS restore, remover somente runtime/API owned state, restore Apache/nft/linger if-current, provar public closed, fallbacks/backups/IP preserved e 10.31.1.31 untouched. Selar `rollback-drill.json` e seu digest antes de qualquer restore. Criar `restore-production-transaction.json` com novo transaction ID/journal, revalidar currentness, reaplicar desired state, repetir runtime/IP/DNS/hostname/API, um restart e regressions. Falha de restore preserva o rollback seal, contém ingress e termina exit 4/BLOCKED; nunca reescreve o rollback receipt.
   </action>
   <verify>
-    <automated>ATIUS_RUN_RUSTDESK_PHASE53_LIVE=1 ADMITTED_PHASE53=1 omni srv1-ops resources run builds -- python3 modules/rustdesk-fleet/tools/run-phase53-live-gate.py --repo . --live-backend phase53-production --mode apply --stage full --operation-plan modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json --owner-approval modules/rustdesk-fleet/evidence/phase53/edge-forwarder-owner-approval.json</automated>
-    <automated>omni srv1-ops resources run builds -- env PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q modules/rustdesk-fleet/tests/test_phase53_primary_edge.py::test_05f_new_process_revalidates_authority_before_journal modules/rustdesk-fleet/tests/test_phase53_primary_edge.py::test_05f_full_sequence_is_single_transaction modules/rustdesk-fleet/tests/test_phase53_primary_edge.py::test_05f_lifecycle_and_two_origin_probes_are_bound modules/rustdesk-fleet/tests/test_phase53_primary_edge.py::test_05f_immutable_rollback_and_distinct_restore_transaction modules/rustdesk-fleet/tests/test_phase53_primary_edge.py::test_05f_zero_cleanup_migration_and_stale_output_prestate_remain_untouched --disable-warnings</automated>
+    <automated>bash -euo pipefail -c 'ROOT=$(git rev-parse --show-toplevel); LAUNCHER="$ROOT/modules/rustdesk-fleet/tools/phase53-credential-launcher.py"; READER="$ROOT/modules/rustdesk-fleet/contracts/phase53-reader-command-manifest.json"; APPLY_POLICY="$ROOT/modules/rustdesk-fleet/contracts/phase53-apply-command-manifest.json"; APPLY_INSTANCE="$ROOT/modules/rustdesk-fleet/evidence/phase53/preflight.json"; test -f "$READER" -a -f "$APPLY_POLICY" -a -f "$APPLY_INSTANCE"; ATIUS_RUN_RUSTDESK_PHASE53_LIVE=1 ADMITTED_PHASE53=1 omni srv1-ops resources run builds -- "$LAUNCHER" --reader-policy "$READER" --apply-policy "$APPLY_POLICY" -- /usr/bin/python3 "$ROOT/modules/rustdesk-fleet/tools/run-phase53-live-gate.py" --repo "$ROOT" --reader-command-manifest "$READER" --apply-command-manifest "$APPLY_POLICY" --apply-instance "$APPLY_INSTANCE" --live-backend phase53-production --mode apply --stage full --operation-plan "$ROOT/modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json" --owner-approval "$ROOT/modules/rustdesk-fleet/evidence/phase53/edge-forwarder-owner-approval.json"'</automated>
+    <automated>omni srv1-ops resources run builds -- env PYTHONDONTWRITEBYTECODE=1 python3 -m pytest -q modules/rustdesk-fleet/tests/test_phase53_provider_readers.py modules/rustdesk-fleet/tests/test_phase53_provider_apply.py modules/rustdesk-fleet/tests/test_phase53_primary_edge.py -k 'new_process or governor_launcher or vault_metadata or destroyed or deleted or recreated or cloudflare_branch or revision_drift or production_apply_factory or remote_worker or full_sequence or lifecycle_and_two_origin or immutable_rollback' --disable-warnings</automated>
   </verify>
   <acceptance_criteria>Uma única transaction current prova placement/edge/DNS/API/lifecycle; rollback é containment-first e imutável; restore-production tem novo ID/journal e desired-state proof; qualquer gate/failure bloqueia sem unsafe continuation; todos os exclusions permanecem intactos.</acceptance_criteria>
   <done>Live evidence completa ou um BLOCKED terminal value-free existe; nenhuma verification foi escrita pelo executor.</done>
@@ -187,7 +216,9 @@ Criar um direct descendant cuja única diferença para `live_executor_commit` se
 | T53F-REPLAY | Spoofing/Repudiation | approval/confirmations | critical | mitigate | New-process revalidation of exact owner/plan/source/prestate hashes and future expiry before journal creation. |
 | T53F-SOURCE | Tampering | live source and two-commit binding | critical | mitigate | Source ancestry, exact allowlisted blobs/clean scope, evidence-only live parent, summary-only descendant and git-show manifest digests; no commit self-hash. |
 | T53F-EDGE | Tampering/DoS | host/OCI/DNS publication | critical | mitigate | Exact approved mapping, CAS/readback, DNS-last, two-origin proof and containment-first failure path. |
-| T53F-SECRET | Information Disclosure | Vault/API/provider receipts | critical | mitigate | Runtime-only hydration, fingerprint/value-free receipts, redaction and strict secret scan. |
+| T53F-SECRET | Information Disclosure | launcher/Vault/API/provider receipts | critical | mitigate | Inside-governor launcher, runtime-only hydration, full Vault metadata equivalence, value-free receipts, redaction and strict secret scan. |
+| T53F-CF | Tampering | Cloudflare mixed record states | critical | mitigate | Owner-bound per-record create/update branch, returned ID or revision CAS readback and delete/restore-if-current rollback. |
+| T53F-WORKER | Elevation/Tampering | host/Apache/runtime | critical | mitigate | Source/payload/rendered digest-bound stdin worker, fixed operation allowlist and no installed helper/scp. |
 | T53F-ROLLBACK | Tampering/DoS | rollback/restore | critical | mitigate | Sealed immutable rollback receipt and distinct restore transaction ID/journal after rollback. |
 | T53F-RESOURCE | Denial of Service | host/runtime/tests | high | mitigate | 20% host CPU governor, Phase 53 cgroup caps and bounded output/log/lifecycle checks. |
 | T53F-VERIFIER | Spoofing/Repudiation | independent release gate | high | mitigate | Executor cannot write verification; verifier binds exact executor/source commits and writes explicit passed/gaps_found frontmatter. |
@@ -204,14 +235,14 @@ Criar um direct descendant cuja única diferença para `live_executor_commit` se
 | REQ | SRV-06 | Three restarts and one boot preserve invariants | 05D2/05F/06 | COVERED | Full state machine and current live cycles. |
 | REQ | OPS-01 | Separate authenticated/redacted API and metrics | 05D/05D2/05F | COVERED | No Pro/API Server semantics or TCP 21114. |
 | RESEARCH | Runtime/edge/API/rollback | Exact sockets, cgroups, DNS-last, two origins, rollback | 05D/05D2/05E/05F | COVERED | No researched in-scope feature omitted; current external mapping comes from D-05/D-06. |
-| CONTEXT | D-01..D-15 | Rootless, isolation, edge, API, lifecycle and rollback decisions | 05D/05D2/05E/05F/06 | COVERED | Each locked decision is implemented without scope reduction. |
+| CONTEXT | D-01, D-02, D-03, D-04, D-05, D-06, D-07, D-08, D-09, D-10, D-11, D-12, D-13, D-14, D-15, D-16, D-17, D-18, D-19, D-20, D-21, D-22, D-23, D-24 | Rootless, isolation, edge, probes, API, readiness, metrics, lifecycle, rollback, source, launcher/MCP, Vault and Cloudflare decisions | 05D/05D2/05E/05F/06 | COVERED | Each locked decision is cited explicitly and implemented without scope reduction. |
 | CONTEXT | Deferred | Client install, standby/DR and fleet rollout | excluded | EXCLUDED | Explicitly assigned to later phases. |
 | REVISION | D-05D/05D2 | Edge/backend split, source binding, authority/apply, placement, approval, proof | 05D/05D2/05E/05F | COVERED | Every checker blocker/warning has a serial owner. |
 
 No source item is missing.
 
 <verification>
-- Apply uses the exact literal command and only a new process can construct the apply backend.
+- Apply uses the exact governor→launcher→gate command; the new process recollects receipts and validates both manifests before importing the apply backend.
 - The full evidence set proves source/authority/currentness, public edge/API/lifecycle, immutable rollback and distinct restore.
 - Independent verifier ownership, evidence-only live commit, summary-only descendant and 53-06 hard gate prevent executor self-release or circular commit identity.
 </verification>

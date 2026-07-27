@@ -44,11 +44,33 @@ updated: 2026-07-26
 | **05D2C post-seal Git-object structure** | Task 53-05D2C-03 derives SOURCE=`HEAD^` and SUMMARY=`HEAD`, uses unfiltered `git diff-tree` for the exact six-path/summary-only sets, proves direct parentage, recalculates ROADMAP's last path commit and checks it plus 05D/05D2T/05D2A/05D2B ancestry with `git merge-base --is-ancestor` |
 | **05D2C post-seal binding recomputation** | Task 53-05D2C-03 passes the JSON payload through `validate_execution_source_scope_payload`, then recomputes `compute_execution_source_binding` at SOURCE and HEAD over the returned exact 33 paths, compares digest/blobs/paths and calls `require_clean_execution_source` |
 | **05D2D exact source selector** | Sixteen exact nodeids: eight authority/strict-validator/housekeeping-receipt generation, three owner-decision and five 05F pre-write/transaction/exclusion contracts; missing nodeids cannot collapse to rc5 |
-| **05D2D current/legacy and seal gates** | Governed broad lane retains only the exact nine historical deselections and sole validate_phase53.py xfail; legacy remains exact eight drift plus one local-only; source commit is exact seven paths, summary descendant one path, aggregate exactly 34 paths |
-| **05D2H recoverable housekeeping** | Exact seven-path inventory; prepared/per-move/completed mode-0600 manifest below mode-0700 `/var/tmp/omni-rustdesk-phase53-quarantine`; stable digest pointer written last; every canonical path absent before 05E; zero provider/live writes |
-| **Read-only authority command** | `build-phase53-authority-plan.py collect-observation --repo . --output "$AUTHORITY_OBSERVATION"` to a `/tmp` file, then governed `run-phase53-live-gate.py --repo . --authority-observation "$AUTHORITY_OBSERVATION" --housekeeping-receipt .../53-05D2H-SUMMARY.md --quarantine-pointer /var/tmp/omni-rustdesk-phase53-quarantine/current-phase53.json --live-backend phase53-production --mode plan --stage full --operation-plan .../edge-forwarder-operation-plan.json` |
-| **Live apply command** | `ATIUS_RUN_RUSTDESK_PHASE53_LIVE=1 ADMITTED_PHASE53=1 omni srv1-ops resources run builds -- python3 modules/rustdesk-fleet/tools/run-phase53-live-gate.py --repo . --live-backend phase53-production --mode apply --stage full --operation-plan modules/rustdesk-fleet/evidence/phase53/edge-forwarder-operation-plan.json --owner-approval modules/rustdesk-fleet/evidence/phase53/edge-forwarder-owner-approval.json` |
+| **05D2Q complete baseline gate** | `validate-phase53-dirty-baseline.py` and `test_phase53_dirty_baseline.py` recompute tracked/untracked, exact porcelain-v1 `-z` XY, confined regular lstat type/mode/size, O_NOFOLLOW 1 MiB streaming SHA-256, two-pass TOCTOU, RFC3339/captured HEAD, duplicate-key closed schema, self digest and create-only 0600/fsync/no-replace. `exact` governs capture/pre-source; `ancestor` governs R/V/S and D entry. Q source is validator+test+baseline, then direct summary child |
+| **05D2R generic reader gates** | Standalone `test_phase53_provider_readers.py --literal-governor-smoke` invokes the wrapper exactly once and proves `omni→systemd-run→flock→launcher/target`, launcher PID retention, flock parent/lock lifetime, shared `omni-builds.slice` and allowlisted FD survival. Ordinary pytest then runs once inside the governor without nested semaphore acquisition |
+| **05D2V source-only Vault route gates** | Hermetic `test_phase53_vault_continuity.py` covers exact Phase 52 key/fingerprint reuse, byte-preserving authorized_keys prefix transform, exact runtime modes/sudoers/forced-command protocols, no key/AppRole/token/ACL creation, closed metadata versus derived output, ordered future install/readback/rollback and strict-or-NO_GO validation. V performs zero install/live call |
+| **05D2S provider-apply gates** | Literal tests reuse the shared MCP client and launcher; one-shot SSH sends a source-sealed worker and closed JSON payload over stdin to fixed `/usr/bin/sudo -n /usr/bin/python3 -I -`, with no scp/install/ambient shell. Template/payload/rendered digests, sudo inert preflight and atomic apply/rollback are checked. Cloudflare absent records use POST/create/readback/delete-if-current; present records use revision/ETag CAS update/readback/restore-if-current; mixed states, duplicates and drift fail closed. Source commit is exactly six paths and its child exactly one summary |
+| **05D2D current/legacy and seal gates** | Run Q `ancestor` first, integrate R/V/S, implement `collect-and-plan`, `validate-generation` and `promote-generation`, prove Q/R/V/S direct chains and seal exactly seven D paths. One canonical helper derives the exact summary-bound Q/R/V/S plus D set; builder, live validator and both tests contain no hardcoded 34 assumption, and a non-34 fixture passes |
+| **05D2W governed continuity gate** | Frozen-only assessment exits 0 eligibility/3 insufficient/2 invalid/1 internal and never claims currentness. Route OperationPlan/checkpoint precedes the only future writer; it binds Phase 52 key continuity and exact install/rollback order. Current fingerprint uses `data-read-derived-output`. Decision is only strict or NO_GO |
+| **05D2H recoverable housekeeping** | Runs only after authorizing W decision. Exact seven-output inventory; recoverable quarantine/pointer; flags are `housekeeping_filesystem_mutation=true`, `recoverable=true`, provider/network/live-runtime false |
+| **05E private authority generation** | Task 1 writes a private non-repo generation plus exclusive private orchestration state. Exact rc0 = valid current/admissible W/complete bundle; rc3 = valid current but mismatch/unproven and non-authorizing attestation; route unavailable/frozen-only missing is never rc3. Task 2 is rc0-only and leaves generation/canonical paths read-only while atomically binding the reviewed hash and private owner response in state. Task 3 loads only state-bound values and is sole canonical/summary writer; OperationPlan last for rc0, rc3 only attestation+blocked marker+summary |
+| **Live apply command** | Task 53-05F-01 uses separate source-sealed apply policy and promoted current instance: `... phase53-credential-launcher.py --reader-policy .../phase53-reader-command-manifest.json --apply-policy .../phase53-apply-command-manifest.json -- .../run-phase53-live-gate.py --reader-command-manifest ... --apply-command-manifest .../phase53-apply-command-manifest.json --apply-instance .../preflight.json ...`. It recollects topology/supply/capacity/Vault/host/OCI/Cloudflare/Apache and W continuity immediately before import/factory/journal |
 | **Estimated runtime** | task selectors below 30 seconds; current/legacy governed lanes replace the raw broad gate; live 05F is separately bounded; 06 is read-only |
+
+## Revision 5 Blocker Gates
+
+These gates separate planning structure from operational completion and exercise positive plus negative behavior without network, secret output or swallowed errors.
+
+| Blocker | Positive gate | Negative gate |
+|---|---|---|
+| Metrics basis | `node "$HOME/.codex/gsd-core/bin/gsd-tools.cjs" query roadmap.analyze .planning/workstreams/rustdesk-fleet/ROADMAP.md` is reported only as structural projection; `python3 -c 'from pathlib import Path; ps=list(Path(".planning/workstreams/rustdesk-fleet").glob("phases/**/*-PLAN.md")); assert len(ps)==41'` proves physical inventory. Semantic claims are separately asserted as 40 current, 26 complete, 65%; Phase 53 22 current/12 complete + retained 53-05; Phase 54 1/5 | `python3 -c 'from pathlib import Path; t=Path(".planning/workstreams/rustdesk-fleet/STATE.md").read_text(); assert "30 summaries/41 = 73% is structural only" in t; assert "26 of 40 current plan units" in t'` rejects analyzer projection as completion |
+| Q legal H→S→C sequence | Dedicated dirty-baseline suite captures H, runs exact only at H, creates one-parent S with the literal validator/test/baseline diff, validates source ancestor, creates one-parent summary C and validates paired summary ancestor from descendants | Same suite rejects exact after S, wrong/merge parents, extra diffs, stale ancestry, unpaired summary arguments and every dirty-field mismatch while ancestor does not require current HEAD=H |
+| R real governed chain | Standalone `--literal-governor-smoke` invokes the wrapper exactly once and proves target PID=launcher PID, parent exe flock, systemd-run ancestor, shared `omni-builds.slice`, one launcher FD surviving and lock conflict/release | Governed pytest never invokes the wrapper recursively; ambient/unrelated FDs fail, missing ancestry/cgroup equality or premature lock release fails, and no governor/no-fork change is accepted |
+| V exact Phase 52 continuity | Hermetic V suite proves exact authorized_keys prefix-only transform/current idempotence, suffix/unrelated-byte equality, runtime owner/mode/nlink, exact sudoers+visudo, forced protocols and ordered rollback | Same suite rejects every other prestate, key/AppRole/token/ACL creation, argv/stdin/command violations, symlink/hardlink/mode drift, readback mismatch and rollback drift; decision is strict or NO_GO only |
+| Dynamic execution source | `derive_expected_execution_source_paths(...)` derives summary-bound Q/R/V/S source paths union exact seven D paths; builder/live validator consume the validated set and a non-34 valid fixture passes | Exact search proves all four numeric assumptions are removed; missing/extra/duplicate/crossed-summary paths fail |
+| D/E rc contracts | Focused selectors `collect_and_plan`, `validate_generation`, `promote_generation`, `rc3`, `manifest_count_derived`, `vault_route_receipt`, `housekeeping_receipt`, `operation_plan_is_last` prove exact rc0/rc3 private and canonical sets | Missing/schema/route/W/H/stale-current inputs are rc2/rc1, rc3 has no OperationPlan/approval/apply instance/provider action, exclusive promotion never overwrites and cleans only invocation-created paths |
+| E shell rc preservation | Literal collection and promotion wrappers use `set +e`, capture rc, restore `set -e`, then case on 0/3/other; orchestration state binds generation path, branch rc and reviewed SHA | Structural check rejects any promotion path that can abort before rc capture or loses rc3; exact branch validators reject forbidden/extra files |
+| 53-06 checkpoint reachability | `node "$HOME/.codex/gsd-core/bin/gsd-tools.cjs" query verify.plan-structure .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-06-PLAN.md` must return `task_count: 4`; the first task is `checkpoint:human-verify`, runs the automated checker before `<human-check>`, and has resume signal exactly `approved` | `python3 -c 'from pathlib import Path; t=Path(".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-06-PLAN.md").read_text(); assert "<preflight_gate" not in t; assert t.index("<task type=\"checkpoint:human-verify\"") < t.index("<task type=\"auto\"")'` rejects the old out-of-tasks gate |
+
+Decision coverage must report all D-01 through D-24 explicitly. Ranges such as `D-01..D-24` and pseudo-IDs are forbidden. Final planning validation also requires `git diff --check` with no watch mode and no `|| true`.
 
 ## Sampling Rate
 
@@ -78,13 +100,38 @@ updated: 2026-07-26
   ancestry, validated-scope identical 33-path bindings at SOURCE/HEAD and a
   clean execution source. This seal is now a historical predecessor, not
   current authority.
-- **Before/after 05D2D seal:** require a planning-only commit first. Add the
-  explicit collector/producer/strict-validator/housekeeping-receipt/approval/05F nodeids and run all sixteen exact
-  nodeids under the governor; then run the same governed current and exact-nine
-  legacy lanes. Commit exactly manifest/checker/backend/builder/runner/validator/test,
-  create a summary-only descendant and prove identical clean 34-path bindings
-  at SOURCE/HEAD. No evidence/owner/live write occurs.
-- **Before 05E collection:** execute 05D2H only after 05D2D. Inventory the exact
+- **Before 05D2Q seal:** create and pass the reusable validator/dedicated test,
+  capture the exact seven-path full baseline, commit validator+test+baseline
+  and then the direct summary child.
+- **Before 05D2R seal:** prove Q `ancestor` before and after the suite. The tests
+  invoke the literal governor→launcher chain and exercise descriptor creation
+  inside the governor, FD cleanup, full MCP lifecycle, Cloudflare GET-only,
+  strict SSH and generic route denial. R does not implement Vault continuity.
+  Commit exactly eight source paths followed by a direct summary-only child.
+- **Before 05D2V seal:** prove Q `ancestor`; run the hermetic continuity route
+  suite covering metadata versus derived-output, restricted bridge/policy,
+  installer/readback/rollback and decision branches. Commit exactly eight
+  source paths then a direct summary child; zero live/install call.
+- **Before 05D2S seal:** prove Q equality before and after the literal shared
+  MCP/one-shot worker/apply-manifest suite and inert `preflight-only`. Cover
+  absent/present/mixed Cloudflare branches and atomic rollback. Commit exactly
+  six source paths followed by a direct summary-only child; preflight records
+  zero provider construction/calls/writes.
+- **Before/after 05D2D seal:** require Q `ancestor` as the literal first action,
+  intentionally consume the seven partial dirty source paths. Integrate R/S
+  plus V manifests/transports, add strict
+  receipt/policy and pre-import revalidation nodes, prove exact direct
+  Q/R/V/S source-summary chains, run focused suites plus governed current
+  baseline `918 passed, 9 deselected, 1 xfailed` and exact-nine legacy lane.
+  Commit exactly the preserved seven source paths, create a direct summary-only
+  descendant and prove identical clean bindings at SOURCE/HEAD over the actual
+  sorted Git path set. No evidence/owner/live write occurs.
+- **Before 05D2W:** run the frozen-only assessment first. Known state is
+  insufficient. Any route install/current observation requires the separate
+  W OperationPlan and exact future approval. Only strict equivalence can
+  authorize downstream; every other result is NO_GO.
+- **Before 05E collection:** execute 05D2H only after W authorizes continuity.
+  Inventory the exact
   seven canonical 05F outputs, persist a recoverable prepared/per-move/complete
   manifest and stable digest pointer outside Git, quarantine every existing
   regular byte without parsing it as authority, prove all seven destinations
@@ -92,19 +139,26 @@ updated: 2026-07-26
 - **After each code-producing wave:** use focused selectors first and, where a
   broad gate is required, the closed current/legacy lane contract through the
   `builds` profile; never interpret a raw broad suite as green.
-- **Before 05E authority:** require the current 05D2D
-  `execution_source_commit`, prove it includes 05D2C/05D as ancestors, require
-  the exact 34-path execution-source allowlist plus completed 05D2H absent-state
-  receipt, collect an explicit current read-only observation and reject
-  source-scope/observation dirt.
-- **Before 05F mutation:** require a new process plus current source tree,
-  admission, prestate, typed confirmations and unexpired owner approval.
+- **Before 05E authority:** Task 1 generates only in private non-repo storage
+  and enforces exact rc0/rc3/rc2/rc1 semantics. Task 2 is rc0-only, leaves the
+  generation and canonical paths read-only, and atomically binds the reviewed
+  hash plus private owner response in orchestration state. Task 3 alone promotes canonical artifacts/summary; rc0 writes the
+  OperationPlan last before owner record/summary, while rc3 promotes only the
+  non-authorizing successor attestation, blocked marker and summary.
+- **Before 05F mutation:** require a new process carrying reader manifest,
+  source-sealed apply policy and promoted current apply instance.
+  Before apply-module import, provider-factory construction or journal I/O,
+  recompute OperationPlan/generation/dependencies/manifests/preflight/source/H,
+  recollect topology/supply/capacity/Vault/host/OCI/Cloudflare/Apache and W
+  continuity immediately before import; validate owner confirmations. Drift
+  blocks with zero import/factory/journal/provider side effect and requires a
+  new OperationPlan plus new exact Giovanni approval.
 - **Before 06 writes:** invoke only the strict explicit-path
   `verify-phase53-binding-chain.py` preflight. It requires independent
   `status: passed`, proves the evidence-only live parent, direct summary-only
   descendant and later verification ancestry, checks `git show` manifest
   bytes, and recomputes the allowlisted Git aggregate at source/live/current.
-- **Wave chain:** `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11 historical) → 05D2D(w12 current seal) → 05D2H(w13 recoverable housekeeping) → 05E(w14 checkpoint) → 05F(w15 live) → 06(w16 read-only)`.
+- **Wave chain:** `05D2Q(w12) → 05D2R(w13) → 05D2V(w14) → 05D2S(w15) → 05D2D(w16) → 05D2W(w17) → 05D2H(w18) → 05E(w19) → 05F(w20) → 06(w21)`.
 
 ## Per-Task Verification Map
 
@@ -123,14 +177,16 @@ updated: 2026-07-26
 | 53-05D2A-01/02 | 05D2A | 9 | SRV-02, SRV-03, SRV-04, OPS-01 | T53A-DIRECT, T53A-NAT, T53A-DNS, T53A-API | DNAT/forward/backend/DNS/probe/ops/validator semantic reconciliation | unit/integration | Complete `test_phase53_primary_edge.py` command above | ❌ W0 | ⬜ pending |
 | 53-05D2B-01/02 | 05D2B | 10 | SRV-03, SRV-04, SRV-06, OPS-01 | T53B-CAP, T53B-ROLL, T53B-BIND, T53B-MIG | Full runner, distinct journals, binding checker and non-executable migration | unit/CLI/adversarial | Transaction/binding selector above | ❌ W0 | ⬜ pending |
 | 53-05D2C-01/02/03 | 05D2C | 11 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SCP01, T53C-LANES, T53C-OMIT, T53C-DIRT, T53C-SEAL | Planning-ancestor ownership, SCP-01 Phase 55/pending convergence, exact 33-path allowlist, focused/selector gates, current inline one-xfail JUnit plus exact-nine legacy lane, unfiltered Git-object proof of exact six-path seal and summary-only descendant | contract/integration/structural | Ledger 10 pass; source selector 14 pass; current 902 pass/9 deselected/1 xfail; legacy exact-nine; post-seal structural/binding PASS | ✅ | ✅ historical seal complete at 3ea1e58; superseded for current authority only by planned 05D2D |
-| 53-05D2D-01/02/03 | 05D2D | 12 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53D2D-SYNTH, T53D2D-SOURCE, T53D2D-REPLAY, T53D2D-CAP, T53D2D-PARTIAL | Explicit read-only collector/seam, frozen Phase52 successor, six ordered capacity samples, current strict validator, symlink-safe explicit 05D2H receipt binding, last-written OperationPlan marker and superseding 34-path source seal | unit/security/integration/structural | Sixteen exact nodeids (8 authority/validator/receipt + 3 approval + 5 apply), governed current/legacy lanes and post-seal Git-object checks in 53-05D2D | ❌ RED | ⬜ planned |
-| 53-05D2H-01/02 | 05D2H | 13 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53H-LOSS, T53H-LAUNDER, T53H-SCOPE, T53H-REPLAY | Exact recoverable quarantine transaction and seven-path absent proof before authority | local/recovery/structural | Literal pointer/manifest/hash/absence validator plus summary-only Git structural check in 53-05D2H | ✅ plan | ⬜ pending |
-| 53-05E-01/02/03 | 05E | 14 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53E-SOURCE, T53E-READONLY, T53E-APPROVAL | New OperationPlan from explicit current read-only observation plus sealed H receipt binding and exact owner-hash checkpoint | read-only/checkpoint | Literal collector+plan command with receipt/pointer, eight exact generation/validator/receipt nodeids and three exact approval nodeids in 53-05E | ❌ W0 | ⬜ pending |
-| 53-05F-01/02 | 05F | 15 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53F-REPLAY, T53F-EDGE, T53F-ROLLBACK | One exact cross-host live transaction and immutable evidence handoff | live/structural | Literal apply, validator and broad commands in 53-05F | ❌ W0 | ⬜ pending |
-| 53-06-PREFLIGHT | 06 | 16 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SOURCE | Sole explicit-path checker proves independent PASS and the complete 05F binding chain | structural/checkpoint | Literal `python3 modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py ... --json` command in 53-06 | ❌ W0 | ⬜ pending |
-| 53-06-01 | 06 | 16 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SOURCE, T53C-RECEIPT, T53C-CAPABILITY | Freeze exact sealed input outside live consumption | contract/read-only | Same literal binding-chain checker plus metadata assertion in 53-06 | ❌ W0 | ⬜ pending |
-| 53-06-02 | 06 | 16 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-REPORT, T53C-SECRET | Current validator result drives report parity and exactly five ledger rows | contract/read-only | `python3 -c 'import json; from pathlib import Path; root=Path(".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge"); j=json.loads((root/"53-GATE-REPORT.json").read_text()); assert j["status"]=="PASS" and j["requirements"]==["SRV-02","SRV-03","SRV-04","SRV-06","OPS-01"]'` | ❌ W0 | ⬜ pending |
-| 53-06-03 | 06 | 16 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-RECEIPT, T53C-FRESHNESS | Five-path closeout parent and summary-only descendant with locally initialized SHAs | structural/read-only | Literal checker plus SHA initialization, exact parent/summary diff assertions and `git diff --check` in 53-06 | ❌ W0 | ⬜ pending |
+| 53-05D2Q-01/02 | 05D2Q | 12 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53Q-DIRT, T53Q-TOCTOU | Reusable complete seven-path validator/test, baseline and direct summary child | structural/unit | `test_phase53_dirty_baseline.py`, literal exact/ancestor and exact three-source/one-summary checks | ❌ RED | ⬜ planned |
+| 53-05D2R-01/02/03 | 05D2R | 13 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53R-FD, T53R-MCP, T53R-ROUTE | Generic direct governed launcher, full MCP lifecycle and bounded readers without invented Vault route | unit/security/integration | Literal `test_phase53_provider_readers.py`, exact eight-source/one-summary | ❌ RED | ⬜ planned |
+| 53-05D2V-01/02/03 | 05D2V | 14 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53V-DATA, T53V-ROUTE, T53V-INSTALL | Source-only restricted Vault route/policy/bridge/installer/validator | unit/security/structural | `test_phase53_vault_continuity.py`, zero live/install counters, exact eight-source/one-summary | ❌ RED | ⬜ planned |
+| 53-05D2S-01/02/03 | 05D2S | 15 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53S-EARLY, T53S-ROUTE, T53S-OCI, T53S-ROLLBACK | Shared MCP, stdin worker and branch-complete Cloudflare apply | unit/security/integration | `test_phase53_provider_apply.py`, inert preflight, exact six-source/one-summary | ❌ RED | ⬜ planned |
+| 53-05D2D-01/02/03 | 05D2D | 16 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53D2D-SOURCE, T53D2D-RECEIPT, T53D2D-TOCTOU | Q-first entry, collect-and-plan exits, Q/R/V/S chains and Git-derived aggregate | unit/security/structural | R/V/S suites, focused selectors, current/legacy lanes and exact-seven seal | ❌ RED | ⬜ partial source, zero commits |
+| 53-05D2W-01/02/03/04 | 05D2W | 17 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53W-HISTORY, T53W-WRITE, T53W-GAP | Frozen assessment, route checkpoint/writer, current observation and strict-or-NO_GO decision | checkpoint/live-conditional | Closed exit tests, exact plan/approval/readback/rollback and decision validator | ❌ W0 | ⬜ known NO_GO |
+| 53-05D2H-01/02 | 05D2H | 18 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53H-LOSS, T53H-LAUNDER, T53H-SCOPE | W-gated recoverable quarantine with honest flags | local/recovery | W eligibility plus pointer/manifest/hash/absence validator | ✅ plan | ⬜ pending |
+| 53-05E-01/02/03 | 05E | 19 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53E-RC, T53E-PARTIAL, T53E-APPROVAL | Private generation, rc0-only checkpoint and single canonical writer | read-only/checkpoint | result-table/single-writer tests and literal generation promotion | ❌ W0 | ⬜ pending |
+| 53-05F-01/02 | 05F | 20 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53F-REPLAY, T53F-EDGE, T53F-ROLLBACK, T53F-TOCTOU | Fresh all-surface recollection, exact W branch, metrics bases and one transaction | live/structural | Literal apply, drift/order/metrics nodes, validator and broad commands | ❌ W0 | ⬜ pending |
+| 53-06-00/01/02/03 | 06 | 21 | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | T53C-SOURCE, T53C-REPORT | First in-tasks checkpoint then read-only closeout | checkpoint/read-only | task_count 4, full Q/R/V/S/D/W/H/E/F checker, reports and diff checks | ❌ W0 | ⬜ pending |
 
 *Status: ⬜ pending · ✅ green · ❌ W0 missing/unimplemented · ⚠️ flaky*
 
@@ -193,30 +249,76 @@ updated: 2026-07-26
   passes `validate_execution_source_scope_payload` before SOURCE/HEAD
   recomputation over its exact 33 returned paths proves identical
   digest/blobs/paths and passes `require_clean_execution_source`.
-- [ ] 05D2D planning prerequisite: one planning-only commit contains the
-  superseding 05D2D and 05D2H plans plus aligned
-  CONTEXT/ROADMAP/STATE/05E/05F/06 and validation bytes, while neither
-  historical Phase 52 nor unrelated dirty Phase 53 paths are staged.
-- [ ] 05D2D exact groups: eight authority/strict-validator/housekeeping-receipt nodeids, three
-  owner-approval nodeids and five 05F nodeids all exist and pass; the authority
+- [ ] 05D2Q creates validator/test, captures exactly the seven dirty D2D paths
+  without content, commits validator+test+baseline and a direct summary child,
+  and exposes complete exact/ancestor policies reused by R/V/S/D.
+- [ ] 05D2R literal group: the tests invoke the real
+  governor→credential-launcher chain. The direct governed launcher hydrates
+  only allowlisted profiles, creates memfd/pipe/unlinked-known-host FDs itself,
+  passes only the required descriptors to its target and proves cleanup on
+  success, timeout and signal. The shared Streamable HTTP client proves
+  initialize/session/initialized/tools-list/tool-call/close against the exact
+  OCI Admin and Atius MCP identities; Cloudflare is GET-only and SSH uses an
+  explicit identity/UserKnownHostsFile/fingerprint.
+- [ ] 05D2R remains generic and rejects absent provider-specific routes. It
+  does not implement, invoke or attest Vault continuity.
+- [ ] 05D2V defines source-only the exact restricted server-side metadata and
+  `data-read-derived-output` route. Tests prove no raw value output,
+  exact Phase 52 key reuse, transactional install/readback/rollback and
+  honest frozen/current/decision schemas with zero live/install calls.
+- [ ] 05D2R receipt schema requires one unique observation ID, a distinct
+  receipt ID per receipt, one common capacity-policy digest, raw counters plus
+  derived result, revision/ETag/operation/timestamps/TTL/payload/semantic
+  digests, and rejects unknown/raw stdout/stderr/secret fields.
+- [ ] 05D2R seal commits exactly eight source paths followed by a direct
+  summary-only descendant; it writes no authority/evidence/runtime/provider
+  state and does not disturb the seven partial 05D2D paths.
+- [ ] 05D2V seal commits exactly eight source paths followed by a direct
+  summary-only descendant; route_installed/current_metadata/provider calls
+  remain false/zero and Q still passes ancestor.
+- [ ] 05D2S literal apply group provides apply-manifest builder, no-write
+  `preflight-only`, shared MCP client and a one-shot remote worker delivered
+  with a closed JSON payload over SSH stdin to fixed
+  `/usr/bin/sudo -n /usr/bin/python3 -I -`; no scp, install or ambient shell is
+  allowed. Exact template/payload/rendered digests, inert sudo preflight,
+  atomic apply/rollback and distinct operation IDs/journals are required.
+- [ ] 05D2S Cloudflare tests cover absent→POST/create/readback/delete-if-current
+  and present→revision/ETag CAS update/readback/restore-if-current for each of
+  three records, including mixed states, duplicates and revision drift.
+- [ ] 05D2S seal commits exactly six source paths followed by a direct
+  summary-only descendant; hermetic production CLI tests pass while
+  provider_constructed/provider_calls/provider_writes remain zero.
+- [ ] 05D2D checkpoint baseline is preserved: seven exact dirty source paths,
+  zero commits, sixteen exact nodes green, current lane 918 passed/9
+  deselected/1 xfailed and legacy exact-nine expected. These facts do not
+  constitute the D2D source seal.
+- [ ] 05D2D exact groups preserve the carry-forward nodes and add literal
+  reader/apply manifest input, unique receipt/policy validation, H
+  before/after collection, OperationPlan-last, pre-import/factory/journal
+  revalidation and revision drift requiring new approval; the authority
   OperationPlan adversarially rejects conflating public-VNIC owner
   `10.0.0.238` with DRG/SNAT/backend source `10.11.1.11`.
 - [ ] 05D2D explicit collector writes only one value-free current observation
-  beneath `/tmp`; no plan path may infer ambient readback or construct a
-  write-capable provider.
+  beneath `/tmp`; 05F receives the same sealed reader manifest plus apply
+  manifest, recollects current revisions/prestates and imports/constructs the
+  write provider only after every D-20 check passes.
 - [ ] 05D2D verifies frozen Phase 52 only through the exact Git-object ancestry
   `6bb2e0a → e552c87 → 11fa627 → current`, preserving all historical bytes and
   both distinct review digests.
-- [ ] 05D2D promotes five exact dependencies first and the OperationPlan last
-  as the sole generation marker; fault injection after every boundary proves
-  consumers reject all partial generations.
-- [ ] 05D2D runs the literal governed current lane plus exact-nine legacy lane,
-  then commits exactly seven source paths, a direct summary-only descendant and
-  recomputes identical clean 34-path bindings at SOURCE/HEAD.
+- [ ] 05D2D implements and tests `collect-and-plan` but does not execute it.
+  E Task 1 generates only in private storage; Task 3 alone promotes canonical
+  outputs. OperationPlan is the last rc0 generation marker.
+- [ ] 05D2D verifies exact Q, R, V and S source path sets, trees/digests, direct
+  summary-only children and source→summary→D2D ancestry; requires Q equality
+  at entry and binds the Q baseline into the final source aggregate; then runs current and
+  legacy lanes, commits exactly seven preserved source paths, creates a direct
+  summary-only descendant and recomputes identical clean bindings at
+  SOURCE/HEAD for the actual sorted Git path set.
 - [ ] 05D2H inventaria os sete paths canônicos com hash/size, persiste
   manifest recoverable antes/depois de cada move, escreve stable pointer por
   último, prova os sete ausentes e comita somente summary value-free; não há
-  provider/live/authority write.
+  provider/network/live-runtime write, mas o receipt declara honestamente
+  `housekeeping_filesystem_mutation=true` e `recoverable=true`.
 - [ ] 05D2D/05E/05F usam o mesmo sealed receipt verifier: summary commit,
   pointer/manifest digest, generation ID e canonical-seven absent digest são
   parâmetros explícitos e bindings do preflight/OperationPlan; lstat/lexists,
@@ -230,8 +332,20 @@ updated: 2026-07-26
   explicitly and rejects stale/missing/extra/mismatched manifests,
   source/tree/plan/transaction drift, self-hash, executor SHA in evidence,
   extra summary diff, ancestry/tree drift and dirty scope.
-- [ ] 05E: OperationPlan/approval tests cover current
-  hash/source/prestate/typed-confirmation/expiry and explicit owner response.
+- [ ] 05D2W known frozen-only result is insufficient/non-authorizing.
+  Route action requires its own exact OperationPlan/approval. Only a mechanically
+  proven `STRICT_EQUIVALENCE_PROVEN` decision may reach H; every other state is
+  `NO_GO`, with no alternate continuity-acceptance path.
+- [ ] 05E result-table tests prove rc0/rc3 exactness and single summary writer.
+  Route unavailable/frozen-only missing never maps to rc3. rc3 has only
+  non-authorizing attestation, blocked marker and summary; rc0 alone reaches
+  checkpoint and OperationPlan-last promotion.
+- [ ] 05F: before importing the apply module, constructing any provider factory
+  or writing evidence/journal, validate both sealed manifests and apply
+  preflight, recompute OperationPlan/generation/dependencies/expiry/source/H,
+  recollect current revisions/prestates via D2R and check owner confirmations;
+  drift returns to 05E for a new plan and exact Giovanni approval with zero
+  import/factory/journal/provider side effect.
 - [ ] 05F: full sequence covers apply journal, immutable rollback receipt and
   separate restore-production transaction ID/journal.
 - [ ] 05F/06: commit fixtures cover seven-path evidence-only live parent,
@@ -253,8 +367,11 @@ authorizes no live action.
 ## Validation Sign-Off
 
 - [x] Every revised task has an automated command or explicit pending Wave 0 dependency.
-- [x] The incomplete tail is split into topology, semantic reconciliation, transaction/binding and source-seal plans; 05D2C owns exactly seven paths including its summary, below the nine-path ceiling.
-- [x] Waves and dependencies are `05D(w7) → 05D2T(w8) → 05D2A(w9) → 05D2B(w10) → 05D2C(w11 historical) → 05D2D(w12 current seal) → 05D2H(w13 recoverable housekeeping) → 05E(w14 checkpoint) → 05F(w15 live) → 06(w16 read-only)`.
+- [x] The incomplete tail is Q baseline, R generic transport, V source-only
+  Vault route, S apply transport, D current seal, W governed route/decision,
+  H housekeeping, E authority, F live and 06 closeout. Ownership is Q4, R9,
+  V9, S7, D8, W7, H8, E8, F8 and 06-6; every plan is <=9 paths.
+- [x] Waves/dependencies are exactly `Q(w12) → R(w13) → V(w14) → S(w15) → D(w16) → W(w17) → H(w18) → E(w19) → F(w20) → 06(w21)`.
 - [x] Heavy commands use the 20% governed `builds` profile.
 - [x] Broad verification separates only the closed exact-nine legacy set;
   current-lane extra deselections and every non-canonical failure/error/skip
@@ -265,11 +382,13 @@ authorizes no live action.
   SUMMARY=`HEAD`, inspect both commits unfiltered and preserve the exact
   33-path predecessor binding; current authority remains blocked until 05D2D
   repeats the same structural proof over its exact seven-path source commit,
-  summary-only direct descendant and superseding clean 34-path binding.
+  summary-only direct descendant and superseding clean binding derived from
+  the actual sealed manifest.
 - [x] `nyquist_compliant: true` describes planned coverage while `wave_0_complete: false` records the missing fixtures.
 
-**Approval:** revised for planning 2026-07-26; the historical 14-pass 05D2C
-selector and observed 902/9/1 current lane are preserved. The 05D2D Wave 12
-producer/strict-validator 34-path seal and 05D2H Wave 13 recoverable
-housekeeping are still pending, so Phase 53 remains blocked/in progress before
-any authority or live mutation.
+**Approval:** fifth planning revision authorized 2026-07-26 only to correct
+the seven named blockers across Q→R→V→S→D→W→H→E→F→06. Historical D2D test truth
+and seven dirty paths/zero commits are preserved. The known frozen assessment
+is insufficient; no route write, continuity override, OperationPlan approval
+or live mutation is authorized by this
+revision. Without strict anchors, W remains NO_GO and H/E/F/06 are unreachable.

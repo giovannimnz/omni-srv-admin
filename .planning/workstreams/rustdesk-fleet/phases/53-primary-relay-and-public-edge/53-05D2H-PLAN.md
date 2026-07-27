@@ -2,8 +2,8 @@
 phase: 53-primary-relay-and-public-edge
 plan: 05D2H
 type: execute
-wave: 13
-depends_on: [53-05D2D]
+wave: 18
+depends_on: [53-05D2W]
 gap_closure: true
 execution_owner: 53-05D2H
 files_modified:
@@ -19,32 +19,32 @@ autonomous: true
 requirements: [SRV-02, SRV-03, SRV-04, SRV-06, OPS-01]
 must_haves:
   truths:
-    - "Before any new authority observation, the exact seven canonical 05F destinations are inventoried and proven absent."
-    - "Every pre-existing regular file is moved to a mode-0700 recoverable quarantine under /var/tmp; its original path, size and SHA-256 are recorded in a mode-0600 atomic manifest."
-    - "Symlinks, directories, special files, unexpected paths, hash mismatch, existing conflicting pointer or partial recovery state block without provider/live mutation."
-    - "A prepared manifest is persisted before the first move and atomically updated after each exact os.replace, so interruption remains recoverable rather than destructive."
-    - "The stable pointer /var/tmp/omni-rustdesk-phase53-quarantine/current-phase53.json is written last and binds the completed manifest digest; it is never silently overwritten."
-    - "Housekeeping performs no host, OCI, Cloudflare, DNS, Vault, RustDesk runtime, provider or network write and creates no authority/owner/journal artifact."
-    - "Only 53-05D2H-SUMMARY.md is committed; quarantine bytes stay outside Git and contain no newly fetched secret."
+    - "The exact seven canonical 05F destinations are inventoried and then absent before any new authority collection."
+    - "Every existing regular file is moved by exact path to a mode-0700 recoverable quarantine; a mode-0600 prepared manifest is fsynced before the first move and updated atomically after each move."
+    - "Symlink, directory, special file, conflicting pointer, unexpected path, hash mismatch or partial state blocks; no broad glob/find/rm/mv, stash, revert or clean is allowed."
+    - "The stable pointer is written last and binds the complete manifest/generation/digests; every backup remains byte-verifiable and restorable to its exact original path."
+    - "Per D-19/D-24, ledger semantics are honest: provider_mutation=false, network_mutation=false, live_runtime_mutation=false, housekeeping_filesystem_mutation=true, recoverable=true, synthetic=false and secret_material_present=false."
+    - "H creates no OperationPlan, owner approval, provider journal or live runtime action; quarantine writes are local recoverable housekeeping and are not mislabeled read-only."
+    - "H is structurally ineligible when W is NO_GO. Its first check requires a current W summary/decision whose branch is exactly STRICT_EQUIVALENCE_PROVEN; source presence, frozen assessment, mismatch/unproven continuity or any override is insufficient."
+    - "Only 53-05D2H-SUMMARY.md enters Git; quarantine bytes remain outside Git and payload content is never copied into the summary."
   artifacts:
     - path: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2H-SUMMARY.md
-      provides: "Value-free recoverable-quarantine receipt and seven-path absent proof."
+      provides: "Value-free receipt for an honest recoverable housekeeping filesystem mutation and exact-seven absent prestate."
   key_links:
     - from: /var/tmp/omni-rustdesk-phase53-quarantine/current-phase53.json
       to: .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2H-SUMMARY.md
-      via: "exact completed manifest SHA-256, moved count and seven canonical paths"
-      pattern: "quarantine_manifest_sha256|canonical_paths_absent"
+      via: "manifest SHA-256, generation/operation IDs, seven paths, scoped flags and absent proof"
+      pattern: "housekeeping_filesystem_mutation|recoverable|canonical_paths_absent"
   prohibitions:
-    - "Do not delete, truncate, overwrite, normalize, parse as authority or commit any stale evidence byte."
-    - "Do not use globs, broad rm/mv/find targets, unresolved environment paths or repository cleanup commands."
-    - "Do not generate an OperationPlan or owner approval in this plan; 05E must collect fresh read-only observation afterward."
+    - "Do not delete, truncate, overwrite, parse as authority or commit any stale evidence byte."
+    - "Do not contact host/OCI/Cloudflare/DNS/Vault/RustDesk runtime or create authority."
 ---
 
 <objective>
-Quarantine the already-present stale 05F outputs through an exact, recoverable, value-free local housekeeping transaction and prove all seven canonical destinations absent before 05E observes authority prestate.
+Recoverably quarantine the seven stale 05F destinations and publish an honest value-free housekeeping receipt.
 
-Purpose: make the fail-closed `absent` precondition executable without laundering stale evidence or performing a live/provider write.
-Output: recoverable `/var/tmp` manifest/pointer plus a summary-only Git receipt; no authority or infrastructure mutation.
+Purpose: produce an exact absent precondition for fresh 05E authority without laundering stale evidence or claiming that local filesystem mutation was read-only.
+Output: recoverable private quarantine plus one summary-only Git commit.
 </objective>
 
 <execution_context>
@@ -57,55 +57,71 @@ Output: recoverable `/var/tmp` manifest/pointer plus a summary-only Git receipt;
 @.planning/workstreams/rustdesk-fleet/ROADMAP.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-CONTEXT.md
 @.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2D-SUMMARY.md
-@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05E-PLAN.md
+@.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2W-SUMMARY.md
+@modules/rustdesk-fleet/evidence/phase53/vault-continuity-decision.json
 </context>
 
 <tasks>
 
 <task type="auto">
-  <name>Task 53-05D2H-01: Inventory and recoverably quarantine exact stale outputs</name>
+  <name>Task 53-05D2H-01: Execute exact recoverable local housekeeping with scoped mutation flags</name>
   <files>modules/rustdesk-fleet/evidence/phase53/deploy-transaction.json, modules/rustdesk-fleet/evidence/phase53/edge-probes.json, modules/rustdesk-fleet/evidence/phase53/ops-api-probes.json, modules/rustdesk-fleet/evidence/phase53/lifecycle.json, modules/rustdesk-fleet/evidence/phase53/rollback-drill.json, modules/rustdesk-fleet/evidence/phase53/restore-production-transaction.json, modules/rustdesk-fleet/evidence/phase53/direct-relay-metrics.json</files>
   <action>
-Use one local Python housekeeping transaction over the seven literal repository-relative paths above—never a glob. Resolve each beneath the repository root with `lstat`; accept only absent or regular non-symlink files. Compute size/SHA-256 for every existing file and derive a generation ID from the sorted canonical inventory. Create `/var/tmp/omni-rustdesk-phase53-quarantine/<generation-id>` mode 0700 and atomically persist a mode-0600 `manifest.json` with `status=prepared`, exact source/backup mappings, hashes and an initially empty moved set. Refuse an existing generation unless every recorded byte and state matches exactly.
+Before any filesystem mutation, validate W's exact current decision and summary bindings. Accept only `STRICT_EQUIVALENCE_PROVEN`; if W is missing, NO_GO, mismatch/unproven, stale or overridden, stop with zero housekeeping. Then use one local Python transaction over the seven literal paths in `<files>`. Resolve each below repo root with lstat and accept only absent or regular non-symlink files. Compute original size/SHA-256 and derive a generation ID from the sorted inventory. Create `/var/tmp/omni-rustdesk-phase53-quarantine/<generation-id>` mode 0700; atomically write/fsync mode-0600 `manifest.json` with status prepared, source/backup mappings, hashes, empty moved set, unique operation ID, D2D source/tree, W decision/hash/branch, chronology/expiry and exact scoped flags `provider_mutation=false`, `network_mutation=false`, `live_runtime_mutation=false`, `housekeeping_filesystem_mutation=true`, `recoverable=true`, `synthetic=false`, `secret_material_present=false`.
 
-Move each existing file with exact `os.replace` into its generation directory, chmod the backup to 0600, fsync both directories, atomically update/fsync the manifest after each move and re-read the backup hash through `O_NOFOLLOW`. On interruption or mismatch, stop with the manifest showing the exact recoverable partial state; do not proceed to 05E. After all moves, prove every backup hash and all seven original paths lexically absent via `os.path.lexists`, set `status=complete`, then atomically create the stable mode-0600 pointer `/var/tmp/omni-rustdesk-phase53-quarantine/current-phase53.json` containing only manifest path, digest and generation ID. If a pointer already exists, accept it only when it binds the exact same completed generation and absent state; otherwise block. Do not inspect payloads beyond byte hashing, contact a provider or create any authority artifact.
+Move each existing file with exact `os.replace`, chmod backup 0600, fsync source/destination directories, update/fsync the manifest after each move and re-read each backup through O_NOFOLLOW. On interruption, preserve the exact partial manifest and block. After all moves, prove backup hashes and lexical absence of all seven originals, finalize status/semantic digest, then atomically create the mode-0600 stable pointer with the same scoped flags. Existing pointer/generation is accepted only if every byte/state/digest matches; otherwise block. Never interpret payloads beyond hashing.
   </action>
   <verify>
-    <automated>env REPO_ROOT="$(git rev-parse --show-toplevel)" python3 -c 'import hashlib,json,os,re,stat; from pathlib import Path; repo=Path(os.environ["REPO_ROOT"]).resolve(); uid=os.getuid(); rels=["modules/rustdesk-fleet/evidence/phase53/deploy-transaction.json","modules/rustdesk-fleet/evidence/phase53/edge-probes.json","modules/rustdesk-fleet/evidence/phase53/ops-api-probes.json","modules/rustdesk-fleet/evidence/phase53/lifecycle.json","modules/rustdesk-fleet/evidence/phase53/rollback-drill.json","modules/rustdesk-fleet/evidence/phase53/restore-production-transaction.json","modules/rustdesk-fleet/evidence/phase53/direct-relay-metrics.json"]; assert len(rels)==len(set(rels))==7; root=Path("/var/tmp/omni-rustdesk-phase53-quarantine"); rst=root.lstat(); assert stat.S_ISDIR(rst.st_mode) and not root.is_symlink() and rst.st_uid==uid and stat.S_IMODE(rst.st_mode)&amp;0o077==0; pointer=root/"current-phase53.json"; pst=pointer.lstat(); assert stat.S_ISREG(pst.st_mode) and not pointer.is_symlink() and pst.st_uid==uid and stat.S_IMODE(pst.st_mode)&amp;0o077==0; pfd=os.open(pointer,os.O_RDONLY|os.O_NOFOLLOW); praw=os.read(pfd,1048576); os.close(pfd); p=json.loads(praw); assert set(p)=={"manifest_path","manifest_sha256","generation_id"} and re.fullmatch(r"[0-9a-f]{64}",p["generation_id"]); generation=root/p["generation_id"]; gst=generation.lstat(); assert stat.S_ISDIR(gst.st_mode) and not generation.is_symlink() and gst.st_uid==uid and stat.S_IMODE(gst.st_mode)&amp;0o077==0; manifest=Path(p["manifest_path"]); assert manifest.is_absolute() and manifest.parent==generation and manifest.name=="manifest.json"; mst=manifest.lstat(); assert stat.S_ISREG(mst.st_mode) and not manifest.is_symlink() and mst.st_uid==uid and stat.S_IMODE(mst.st_mode)&amp;0o077==0; mfd=os.open(manifest,os.O_RDONLY|os.O_NOFOLLOW); raw=os.read(mfd,8388608); os.close(mfd); assert hashlib.sha256(raw).hexdigest()==p["manifest_sha256"]; doc=json.loads(raw); assert doc["status"]=="complete" and doc["generation_id"]==p["generation_id"] and doc["inventory_sha256"]==p["generation_id"]; assert len(doc["canonical_paths"])==len(set(doc["canonical_paths"]))==7 and sorted(doc["canonical_paths"])==sorted(rels); assert all(not os.path.lexists(repo/r) for r in rels); moved=doc["moved_paths"]; rows=doc["files"]; assert len(moved)==len(set(moved))==len(rows); assert set(moved).issubset(rels) and {row["source"] for row in rows}==set(moved) and len({row["source"] for row in rows})==len(rows); backups=[Path(row["backup"]) for row in rows]; assert len(backups)==len(set(backups)); assert all(path.is_absolute() and path.parent==generation for path in backups); assert all(stat.S_ISREG(path.lstat().st_mode) and not path.is_symlink() and path.lstat().st_uid==uid and stat.S_IMODE(path.lstat().st_mode)&amp;0o077==0 for path in backups); assert all(hashlib.sha256(os.fdopen(os.open(path,os.O_RDONLY|os.O_NOFOLLOW),"rb").read()).hexdigest()==row["sha256"] and path.lstat().st_size==row["size"] for path,row in zip(backups,rows))'</automated>
+    <automated>env REPO_ROOT="$(git rev-parse --show-toplevel)" python3 -c 'import hashlib,json,os; from pathlib import Path; repo=Path(os.environ["REPO_ROOT"]).resolve(); rels=["modules/rustdesk-fleet/evidence/phase53/deploy-transaction.json","modules/rustdesk-fleet/evidence/phase53/edge-probes.json","modules/rustdesk-fleet/evidence/phase53/ops-api-probes.json","modules/rustdesk-fleet/evidence/phase53/lifecycle.json","modules/rustdesk-fleet/evidence/phase53/rollback-drill.json","modules/rustdesk-fleet/evidence/phase53/restore-production-transaction.json","modules/rustdesk-fleet/evidence/phase53/direct-relay-metrics.json"]; p=json.loads(Path("/var/tmp/omni-rustdesk-phase53-quarantine/current-phase53.json").read_text()); flags={"provider_mutation":False,"network_mutation":False,"live_runtime_mutation":False,"housekeeping_filesystem_mutation":True,"recoverable":True,"synthetic":False,"secret_material_present":False}; assert all(p.get(k) is v for k,v in flags.items()); mpath=Path(p["manifest_path"]); raw=mpath.read_bytes(); assert hashlib.sha256(raw).hexdigest()==p["manifest_sha256"]; d=json.loads(raw); assert d["status"]=="complete" and all(d.get(k) is v for k,v in flags.items()); assert sorted(d["canonical_paths"])==sorted(rels) and all(not os.path.lexists(repo/r) for r in rels); assert all(Path(x["backup"]).is_file() and hashlib.sha256(Path(x["backup"]).read_bytes()).hexdigest()==x["sha256"] for x in d["files"])'</automated>
   </verify>
-  <done>A completed recoverable manifest binds every moved byte and all seven canonical destinations are absent.</done>
+  <done>The exact stale bytes are recoverable, all seven destinations are absent and the receipt honestly records local housekeeping mutation only.</done>
 </task>
 
 <task type="auto">
-  <name>Task 53-05D2H-02: Commit a value-free summary-only housekeeping receipt</name>
+  <name>Task 53-05D2H-02: Commit only the value-free housekeeping summary</name>
   <files>.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2H-SUMMARY.md</files>
   <action>
-Create `53-05D2H-SUMMARY.md` with the 05D2D source/summary ancestors, stable pointer path, completed manifest SHA-256, generation ID, moved count, exact seven canonical paths, `canonical_paths_absent=true`, `provider_writes=0`, `live_mutations=0`, rollback instructions that restore only the exact manifest mappings before any 05E authority exists, and the governed verify result. Do not copy stale payload content. Commit exactly this summary with a literal pathspec and prove its commit changes only the summary.
+Create `53-05D2H-SUMMARY.md` with D2D source/summary ancestors, stable pointer path, manifest/generation/operation IDs and digests, start/completion/expiry, exact seven paths, moved count, `canonical_paths_absent=true`, all scoped flags from Task 1, and exact rollback instructions using only manifest mappings. Include no stale payload content. Commit exactly the summary with a literal pathspec. Prove its commit changes only the summary and repeats no generic read-only/mutation-performed claim.
   </action>
   <verify>
-    <automated>bash -euo pipefail -c 'SUMMARY=.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2H-SUMMARY.md; test -f "$SUMMARY"; test "$(git diff-tree --root --no-commit-id --name-only -r HEAD)" = "$SUMMARY"; git merge-base --is-ancestor "$(git log -n1 --format=%H -- .planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2D-SUMMARY.md)" HEAD; git diff --check'</automated>
+    <automated>bash -euo pipefail -c 'SUMMARY=.planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge/53-05D2H-SUMMARY.md; test "$(git diff-tree --root --no-commit-id --name-only -r HEAD)" = "$SUMMARY"; rg -q "housekeeping_filesystem_mutation=true" "$SUMMARY"; rg -q "recoverable=true" "$SUMMARY"; ! rg -q "^(read_only|mutation_performed)=" "$SUMMARY"; git diff --check'</automated>
   </verify>
-  <done>The committed summary proves recoverable local housekeeping and hands an exact absent prestate to a fresh 05E process.</done>
+  <done>The sole Git change is an honest value-free summary that hands exact absent state to a new 05E process.</done>
 </task>
 
 </tasks>
 
 <threat_model>
-| Threat ID | Category | Severity | Mitigation |
-|---|---|---|---|
-| T53H-LOSS | Integrity/Availability | critical | Prepared per-file manifest, exact os.replace, fsync, post-move hash and recovery mapping. |
-| T53H-LAUNDER | Tampering | critical | Payload bytes are never interpreted as current authority and are moved outside canonical paths. |
-| T53H-SCOPE | Tampering | high | Seven literal paths, lstat regular-file checks and no globs/broad cleanup. |
-| T53H-REPLAY | Repudiation | high | Stable pointer is write-once/CAS and binds completed manifest digest. |
-| T53H-SECRET | Information Disclosure | high | Mode 0700/0600, no payload copy to Git/chat/logs and no secret fetch. |
+| Threat ID | Category | Component | Severity | Disposition | Mitigation Plan |
+|---|---|---|---|---|---|
+| T53H-LOSS | Tampering/Availability | stale bytes | critical | mitigate | Prepared per-file manifest, atomic moves, fsync, post-move hashes and exact restore mappings. |
+| T53H-LAUNDER | Tampering/Repudiation | housekeeping receipt | critical | mitigate | Payload never interpreted; scoped flags truthfully identify filesystem mutation and no provider/runtime mutation. |
+| T53H-SCOPE | Elevation | filesystem targets | high | mitigate | Seven literal paths, lstat/O_NOFOLLOW and no broad/destructive command. |
+| T53H-SECRET | Information Disclosure | quarantine | high | mitigate | 0700/0600, no payload copy to Git/log and no secret fetch. |
 </threat_model>
 
+## Multi-Source Coverage Audit
+
+| Source | ID | Feature / requirement | Plan | Status | Notes |
+|---|---|---|---|---|---|
+| GOAL | Phase 53 | Recoverable current authority preparation | 05D2H | COVERED | Exact stale destinations are recoverably cleared. |
+| REQ | SRV-02, SRV-03, SRV-04, SRV-06, OPS-01 | Protect all future evidence destinations | 05D2H | COVERED | Absence and recovery protect every lane. |
+| RESEARCH | Recoverable housekeeping | 05D2H | COVERED | No provider/runtime action occurs. |
+| CONTEXT | D-17, D-19, D-23, D-24 | W eligibility, stale quarantine, provenance and scoped flags | 05D2H | COVERED | NO-GO cannot reach housekeeping; flags remain honest. |
+| CONTEXT | Deferred Ideas | Clients, migration, standby | excluded | EXCLUDED | No deferred scope is introduced. |
+
+No source item is missing.
+
+<verification>
+- Pointer/manifest validator proves exact recovery bytes, seven-path absence and scoped flags.
+- Summary-only Git check proves no evidence byte is committed.
+</verification>
+
 <success_criteria>
-1. Every existing stale canonical byte is hash-bound and recoverable outside Git.
-2. All seven canonical 05F destinations are absent before 05E collection.
-3. Conflicting, partial, symlinked or unexpected state blocks.
-4. No authority, provider, network or infrastructure write occurs.
-5. The only Git change made by execution is the summary-only receipt.
+1. Every stale byte is recoverable and every canonical destination is absent.
+2. Local housekeeping filesystem mutation is explicitly true; provider/network/live-runtime mutation is explicitly false.
+3. No authority/provider/network action occurs.
+4. Only the value-free summary enters Git.
 </success_criteria>
 
-<output>Create and commit `53-05D2H-SUMMARY.md`, then stop. 05E starts in a new process and collects fresh prestate.</output>
+<output>Create and commit only `53-05D2H-SUMMARY.md`, then stop. 05E begins in a new process.</output>

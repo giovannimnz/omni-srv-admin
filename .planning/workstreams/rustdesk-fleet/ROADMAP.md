@@ -125,7 +125,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Monitoring e uma API operacional custom da Atius, em hostname/serviço HTTPS separado e autenticado, expõem endpoints versionados/redacted de health, readiness, status e resumo de métricas para listeners, restarts, CPU, RAM, disk, log growth, direct/relay bytes e falhas. Ela não configura o `API Server` dos clients, não abre TCP 21114 e não reivindica recursos nativos Pro.
   5. **Advance gate:** testes automatizados de Quadlet/hardening/persistência, contrato/autenticação/redaction dos endpoints custom e probes live externos TCP+UDP, reboot e métricas devem passar antes da Phase 54; unit active, localhost scan ou summary-only não contam.
 
-**Plans**: 13/18 plans executed
+**Plans**: 12/22 current plan units complete (55%) + 1 retained superseded historical plan; 13 historical summaries remain. Physical inventory after this revision is 23 Phase 53 PLAN files, of which 22 are current.
 
 - [x] 53-01-PLAN.md — Strict contracts, hermetic tests and resumable live-runner foundation.
 - [x] 53-02-PLAN.md — Rootless digest-pinned `hbbs`/`hbbr`, persistent identity/state and bounded resources.
@@ -140,11 +140,16 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 - [x] 53-05D2A-PLAN.md — Wave 9, depends on 05D2T: reconciliação semântica cross-host de DNAT/forward, backend, OCI, DNS 3/3, probes externos, API operacional e validator; gate raiz `198 passed, 1 xfailed`.
 - [x] 53-05D2B-PLAN.md — Wave 10, depends on 05D2A: runner completo, capability split, journals separados, migration handoff não executável e checker público de binding; gate raiz `205 passed, 1 xfailed` e apply negativo `exit 3` sem side effects.
 - [x] 53-05D2C-PLAN.md — Wave 11, depends on 05D2B: SCP-01 convergiu para Phase 55/Pending; allowlist exata de 33 paths, current lane `902 passed, 9 deselected, 1 xfailed`, legacy lane `8 drift + 1 CLI/no-network` e seal final em `execution_source_commit=3ea1e581e62b8f0122ba69d11ebd86bacd61fa70`.
-- [ ] 53-05D2D-PLAN.md — Wave 12, depends on 05D2C: corrige producer e strict validator ausentes/antigos, exige observação explicitamente read-only, testa seis artefatos/Phase52 frozen/capacity current e cria novo seal de 34 paths em exact-seven source commit.
-- [ ] 53-05D2H-PLAN.md — Wave 13, depends on 05D2D: inventaria e move os stale outputs canônicos para quarantine local recuperável, prova sete destinations absent e comita somente receipt value-free.
-- [ ] 53-05E-PLAN.md — Wave 14, depends on 05D2H: authority read-only sobre o novo seal/absent prestate, successor attestation, current previews, novo OperationPlan e checkpoint `AWAITING_OWNER_HASH_APPROVAL`; não autoexecuta 05F.
-- [ ] 53-05F-PLAN.md — Wave 15, depends on 05E: nova execução live, revalidação owner/source, uma transação full, rollback imutável, restore-production separado, commit evidence-only, descendant summary-only e handoff ao verifier independente.
-- [ ] 53-06-PLAN.md — BLOCKED, wave 16, depends on 53-05F; preflight único pelo checker 05D2 e closeout exclusivamente read-only, seguido de verifier/finalizer independentes.
+- [ ] 53-05D2Q-PLAN.md — Wave 12, depends on 05D2C: cria validator/teste reutilizáveis e sela o baseline value-free completo dos sete paths D2D sem registrar conteúdo nem alterá-los; source commit de três paths e direct summary child.
+- [ ] 53-05D2R-PLAN.md — Wave 13, depends on 05D2Q: prova em smoke standalone a cadeia real `omni→systemd-run→flock→launcher/target`, o mesmo `omni-builds.slice`, a fronteira de FDs e o lifetime do lock; executa readers MCP/HTTPS/SSH bounded sem governor recursivo.
+- [ ] 53-05D2V-PLAN.md — Wave 14, depends on 05D2R: produz source-only o contrato/policy fechado e a continuidade exata da chave/fingerprint Phase 52, prefix-transform byte-preserving de authorized_keys, forced dispatcher, reader derived, installer/rollback, validator strict-or-NO_GO e testes; zero install ou call live.
+- [ ] 53-05D2S-PLAN.md — Wave 15, depends on 05D2V: produz apply manifest/factory, shared MCP e remote worker source-sealed enviado one-shot por stdin a `/usr/bin/sudo -n /usr/bin/python3 -I -`; cobre Cloudflare absent/create/delete-if-current e present/CAS/restore-if-current, mixed states e drift; exact-six source paths, inert antes de authority.
+- [ ] 53-05D2D-PLAN.md — Wave 16, depends on 05D2S: exige igualdade do baseline Q como primeira ação, integra R/V/S, fecha `collect-and-plan`/`validate-generation`/`promote-generation`, deriva a allowlist exata dos summaries Q/R/V/S mais sete paths D e remove as quatro suposições numéricas.
+- [ ] 53-05D2W-PLAN.md — Wave 17, depends on 05D2D: avalia anchors frozen, planeja a instalação ordenada/readback/rollback da rota Phase 52-continuity, coleta observação current value-free e decide somente `STRICT_EQUIVALENCE_PROVEN` ou `NO_GO`; sem equivalência estrita, nenhum downstream é executável.
+- [ ] 53-05D2H-PLAN.md — Wave 18, depends on 05D2W e executável somente após decisão W autorizante: move somente os sete stale outputs canônicos para quarantine recuperável e declara flags honestas (`housekeeping_filesystem_mutation=true`, provider/network/live-runtime false).
+- [ ] 53-05E-PLAN.md — Wave 19, depends on 05D2H: gera a bundle privada com todos os flags W/H, preserva rc3 em collection/promotion, aceita somente rc0 para checkpoint hash-bound e promove canonicamente em writer único; rc3 nunca pede approval/authority/provider e OperationPlan é o último marker rc0.
+- [ ] 53-05F-PLAN.md — Wave 20, depends on 05E: em novo processo governor→launcher recolhe current topology/supply/capacity/Vault/host/OCI/Cloudflare/Apache e continuidade W, revalida plan/source/H/manifests/owner antes de import/factory/journal e então executa uma transação full com rollback/restore separados; drift exige novo plan+approval.
+- [ ] 53-06-PLAN.md — BLOCKED, Wave 21, depends on 53-05F; a primeira task é o checkpoint preflight cujo checker rederiva bindings Q/R/V/S/D/W/H/E/F e fecha read-only com verifier/finalizer independentes.
 
 ### Phase 54: Heterogeneous Canary — Horistic + Windows
 
@@ -160,7 +165,7 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
   4. Os permission profiles least-privilege são aplicados e testados para keyboard/mouse, clipboard, file transfer, audio, terminal, TCP tunnel, restart, privacy mode e recording; direct-first e um forced-relay correlacionado por UI/log/bytes passam entre os canários, e os fallbacks existentes continuam acessíveis.
   5. **Advance gate:** suites automatizadas de package/config/service/security e os gates live headless de imagem, input, LightDM pre-login, UAC, direct/relay, reboot e fallback regression devem passar antes da Phase 55; ID/service state ou summary-only não contam.
 
-**Plans**: 1/5 complete; Plans 54-02, 54-03-01 and 54-04-01 have code-only safety checkpoints but remain blocked/incomplete, and all live execution remains blocked until Phase 53 independent PASS
+**Plans**: 1/5 current plan units complete; summaries for 54-02, 54-03 and 54-04 are code-only-blocked and do not close those plans. All live execution remains blocked until Phase 53 independent PASS.
 **UI hint**: yes
 
 ### Phase 55: Serialized Linux Fleet Rollout
@@ -236,8 +241,8 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 |-------|----------------|--------|-----------|
 | 51. Contract, Threat Model and Workstream Isolation | 3/3 | Complete    | 2026-07-20 |
 | 52. Supply Chain, Capacity and Recoverable Placement | 10/10 | Complete | 2026-07-23 |
-| 53. Primary Relay and Public Edge | 13/18 | Blocked/in progress before 53-05D2D authority/validator closure and 53-05D2H recoverable housekeeping; historical source sealed, no live mutation | - |
-| 54. Heterogeneous Canary — Horistic + Windows | 0/TBD | Not started | - |
+| 53. Primary Relay and Public Edge | 12/22 current + 1 retained historical | Blocked/in progress before Q→R→V→S→D→W→H→E→F→06; the known frozen-anchor state is insufficient, only strict equivalence can authorize W, and no live mutation is authorized | - |
+| 54. Heterogeneous Canary — Horistic + Windows | 1/5 current | Blocked by Phase 53; 54-02/03/04 summaries are code-only-blocked, not completion | - |
 | 55. Serialized Linux Fleet Rollout | 0/TBD | Not started | - |
 | 56. Exhaustive Fleet, Transport and Security Matrix | 0/TBD | Not started | - |
 | 57. Standby, Resilience, Upgrade and Rollback | 0/TBD | Not started | - |
@@ -245,3 +250,12 @@ Cada dependência é um stop gate: uma phase em `BLOCKED`, `NO-GO` ou sem evidê
 
 ---
 *Roadmap created: 2026-07-19 from the approved three-round RustDesk research convergence*
+
+## Planning Metrics Basis
+
+- Physical inventory after adding 53-05D2V and 53-05D2W: 41 PLAN files.
+- Current semantic denominator: 40 current plan units; `53-05-PLAN.md` is one retained superseded historical plan outside that denominator.
+- Current semantic completion: 26/40 = 65%.
+- Structural analyzer projection at revision time: 30 summaries / 41 physical PLAN files = 73%; this is inventory coverage, not operational completion.
+- Phase 53 basis: 22 current plan units + 1 retained historical, with 12/22 current-complete and 13 historical summaries retained.
+- Phase 54 basis: 1/5 current-complete; code-only-blocked summaries do not complete plans.
