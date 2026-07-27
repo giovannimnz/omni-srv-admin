@@ -1,0 +1,110 @@
+{
+  "schema_version": 1,
+  "generated_at": "2026-07-27T08:45:57-03:00",
+  "workstream": "gbrain-mcp-reliability",
+  "counts": {
+    "requirements": 33,
+    "phases": 6,
+    "plans": 19,
+    "implementation_tasks": 57,
+    "live_checkpoints": 10,
+    "task_nodes": 67
+  },
+  "plans": [
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-01-PLAN.md",
+      "sha256": "53b4924fbf7a6c2af609e0de478f1146ac82e64321880ac073947fd29fa7e0d3",
+      "requirements": "BKP-01, BKP-02, BKP-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-02-PLAN.md",
+      "sha256": "0c13317673619d2999e0f4fcb42424d2b62e7e21a651eab2c3bf0b74d4be59c5",
+      "requirements": "BKP-03, BKP-04, BKP-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-03-PLAN.md",
+      "sha256": "a54adf1b23467c16b514215979b0cdf5d55137b9fff08e3d6b0ea69176a544dd",
+      "requirements": "SEC-01, SEC-02, SEC-03"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-04-PLAN.md",
+      "sha256": "5f2778f18af725eb91f969752fb75fc8f9a038aa47bf341c9912b051af8643c8",
+      "requirements": "SYNC-01, CTL-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/61-source-truth-and-sync/61-01-PLAN.md",
+      "sha256": "ca4943e8a4621538ab8558f2891ea1e19b092e0ac0052e714b22a02dacde5f68",
+      "requirements": "SYNC-02, SYNC-04, SYNC-06"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/61-source-truth-and-sync/61-02-PLAN.md",
+      "sha256": "fda40f63c5f1e17958e5cdf1f2e67a24c95c6cb9bacf4544a3280896d7a14c02",
+      "requirements": "SYNC-03, SYNC-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-01-PLAN.md",
+      "sha256": "ab278d296aa20cb885d7d4ea5f9025d960cf678903c2cc8e168179b0afc89823",
+      "requirements": "GRAPH-01, GRAPH-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-02-PLAN.md",
+      "sha256": "34dda2476ccf0a8e21a3c24fa2045c9f49ced85ca1235ceab84f2ba3f63133d7",
+      "requirements": "GRAPH-01, GRAPH-02, GRAPH-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-03-PLAN.md",
+      "sha256": "e2497a4b1f1776bd502ef36d7eb7092d687fdc39589551376d892643be8d48f2",
+      "requirements": "GRAPH-03, GRAPH-04"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-01-PLAN.md",
+      "sha256": "c1e03b7fcb78e2300b6cf0dc8200addd52eb008950c78ad4a977cacb923d3f0e",
+      "requirements": "EMB-01, EMB-02, EMB-04"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-02-PLAN.md",
+      "sha256": "1a22773659b5b63bfe39bfb356aa53b284a4582582378a1d4a5b370818d0ee34",
+      "requirements": "EMB-02, EMB-04"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-03-PLAN.md",
+      "sha256": "4e809bb104f3bf7603f370459243574f0f6c205a0f251ec8b3bde60b02a275ef",
+      "requirements": "EMB-03, EMB-04, EMB-05"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-01-PLAN.md",
+      "sha256": "fe2c6255a3aacc5d49683c8ef62fdeb01dcc168ce22d87933869aa18fc83334a",
+      "requirements": "CTL-01, CTL-02"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-02-PLAN.md",
+      "sha256": "8a0046ba48aa8d6c8858eb6c7fe3af3cd8102b6ba047ddac06796e7073e38b1b",
+      "requirements": "CTL-03, CTL-04"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-03-PLAN.md",
+      "sha256": "4489a5052f5f8d8707e2eed8f434f7cc44eaed1d77fd45c8220f4562db462f27",
+      "requirements": "CTL-05, OBS-01"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-04-PLAN.md",
+      "sha256": "cc939f31d03daa9686293fc5e2f7ba36e5ddd09128dcb9d0d6ef77a0fad4e45c",
+      "requirements": "CTL-06, SEC-03"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-01-PLAN.md",
+      "sha256": "56cc97c063808e64f5fdcc3357d2f9959b21808718dd0d72c4f94d9c61a4f2fe",
+      "requirements": "OBS-02"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-02-PLAN.md",
+      "sha256": "be167e5f9be23316473baa4eb3724e1e32939bb0f0bb63a1a8c4a21c5625430c",
+      "requirements": "OBS-01, OBS-02"
+    },
+    {
+      "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-03-PLAN.md",
+      "sha256": "6eac9ab9c6b3c8add72aebf0147e606f8adaf674e26b56dd88f0c764ca0eec25",
+      "requirements": "OBS-03"
+    }
+  ]
+}

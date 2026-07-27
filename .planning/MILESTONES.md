@@ -1,6 +1,6 @@
 # Milestone Branch Matrix
 
-**Last updated:** 2026-07-23
+**Last updated:** 2026-07-27
 
 This file is the shared milestone index for `main`, planning branches, and
 cross-session resumes. It should answer three questions quickly:
@@ -17,6 +17,7 @@ cross-session resumes. It should answer three questions quickly:
 | v1.8 | 46-50 | Runtime Trust and Codex Delivery Convergence | `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/{46,47,48,49,50}-*/` | Current parallel workstream: Phases 46-47 complete; Phase 48 executing |
 | Network lane | 54 | Horistic OCI/DRG readdress and BE3/WireGuard renumbering | `.planning/workstreams/network-horistic-readdress/` | Executing from preserved preflight; live migration remains gated |
 | Local AI lane | 59 | Qwen3 embedding/rerank canary | `.planning/workstreams/qwen-local-ai/` | Planned; GTE remains titular |
+| GBrain reliability lane | 60-65 | GBrain HTTP MCP recovery and hardening | `.planning/workstreams/gbrain-mcp-reliability/` | Fully planned; Phase 60 recovery foundation is next; all live changes remain gated |
 | v1.7 | 45 | Internal DNS and DRG Canonicalization | `.planning/phases/45-internal-dns-drg-canonicalization/` | Shipped 2026-07-10 |
 | v1.6 carry-over | 47 | Internal Service PKI listener/trust closeout | `.planning/phases/47-internal-service-pki-closeout/` | Shipped 2026-07-12 |
 | Codex/Wayland lane | 48-49 | OAuth/ACP convergence then Headroom | `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/{48,49}-*/` | Phase 48 executing; Phase 49 blocked until full Phase 48 validation |
@@ -109,3 +110,4 @@ cross-session resumes. It should answer three questions quickly:
 4. Execute RustDesk Phases 51-58 only through `rustdesk-fleet`; runtime changes on srv-1/srv-3 remain serialized against Phase 48 gates.
 5. Continue the reenumerated network Phase 54 only through `network-horistic-readdress`, preserving the legacy Phase 52 receipts and their approval/hash scope.
 6. Execute Qwen Phase 59 only through `qwen-local-ai`, after the authoritative network inventory is stable; GTE remains titular until every canary gate passes.
+7. Execute GBrain Phases 60-65 only through `gbrain-mcp-reliability`; Phase 60 backup/restore PASS is prerequisite to every corpus, embedding, schema or PostgreSQL mutation.
