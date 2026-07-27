@@ -1,0 +1,72 @@
+{
+  "baseline_sha256": "32b64c371639b63a571fc654cab442a116a3c57313249f402e740a57bcb20ad6",
+  "captured_at": "2026-07-27T01:29:09Z",
+  "captured_head": "917b7ae676e614f3d0d185bf27265ee9a729e09a",
+  "path_count": 7,
+  "paths": [
+    {
+      "file_type": "regular",
+      "mode": 384,
+      "path": "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+      "sha256": "dad67d1deebbed4d6a256be68645f89a6c538ee9a2e6a83e217225a490f9d9c3",
+      "size": 2571,
+      "tracked": true,
+      "xy": " M"
+    },
+    {
+      "file_type": "regular",
+      "mode": 384,
+      "path": "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+      "sha256": "c0671e0767166524027d2a58472c563d642b895ac4e72f7cad2870cba53babb1",
+      "size": 214206,
+      "tracked": true,
+      "xy": " M"
+    },
+    {
+      "file_type": "regular",
+      "mode": 384,
+      "path": "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py",
+      "sha256": "754fa3d94d0609a7efac63f6b03809225d685a07928379df2c7619ed2136f5e7",
+      "size": 47594,
+      "tracked": false,
+      "xy": "??"
+    },
+    {
+      "file_type": "regular",
+      "mode": 384,
+      "path": "modules/rustdesk-fleet/tools/phase53-live-backend.py",
+      "sha256": "33d66bee03d332537cad8e2d3a8559c802e78ab91ff5ef700c3d258f7497621e",
+      "size": 14896,
+      "tracked": true,
+      "xy": " M"
+    },
+    {
+      "file_type": "regular",
+      "mode": 493,
+      "path": "modules/rustdesk-fleet/tools/run-phase53-live-gate.py",
+      "sha256": "0d2f941492476d2c4729299456dd4f9c83108011c99107644a6b780fa5c17cb6",
+      "size": 43294,
+      "tracked": true,
+      "xy": " M"
+    },
+    {
+      "file_type": "regular",
+      "mode": 384,
+      "path": "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
+      "sha256": "3a45f23f3093f09aa2bbcab3733a17babeede2b5dd9d650cf7e7cffc9f06ebb3",
+      "size": 32771,
+      "tracked": true,
+      "xy": " M"
+    },
+    {
+      "file_type": "regular",
+      "mode": 384,
+      "path": "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+      "sha256": "46d38fd82b0ee88c2ac0ff416ed862bf02ae92213235f9d135a197481842fce4",
+      "size": 30700,
+      "tracked": true,
+      "xy": " M"
+    }
+  ],
+  "schema_version": 1
+}
