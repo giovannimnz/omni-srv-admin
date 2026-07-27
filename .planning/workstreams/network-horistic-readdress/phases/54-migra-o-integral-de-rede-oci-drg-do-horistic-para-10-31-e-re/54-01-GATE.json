@@ -33,7 +33,7 @@
     {
       "expected": "generated within 900s and unexpired",
       "id": "freshness",
-      "observed": "2026-07-26T23:33:18Z",
+      "observed": "2026-07-27T00:06:57Z",
       "required": true,
       "result": "PASS"
     },
@@ -90,12 +90,12 @@
           },
           "command_id": "phase54.workstream_config_routing",
           "exit_code": 0,
-          "finished_at": "2026-07-26T23:33:37.183070Z",
+          "finished_at": "2026-07-27T00:07:17.560745Z",
           "id": "workstream_config_routing",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T23:33:33.204316Z"
+          "started_at": "2026-07-27T00:07:14.804937Z"
         },
         {
           "adapter": "local",
@@ -104,12 +104,12 @@
           },
           "command_id": "phase54.focused_pytest",
           "exit_code": 0,
-          "finished_at": "2026-07-26T23:33:38.504292Z",
+          "finished_at": "2026-07-27T00:07:19.297633Z",
           "id": "focused_pytest",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T23:33:37.183130Z"
+          "started_at": "2026-07-27T00:07:17.560799Z"
         },
         {
           "adapter": "local",
@@ -118,12 +118,12 @@
           },
           "command_id": "phase54.syntax_compile",
           "exit_code": 0,
-          "finished_at": "2026-07-26T23:33:38.883579Z",
+          "finished_at": "2026-07-27T00:07:19.715389Z",
           "id": "syntax_compile",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T23:33:38.504330Z"
+          "started_at": "2026-07-27T00:07:19.297670Z"
         },
         {
           "adapter": "local",
@@ -132,12 +132,12 @@
           },
           "command_id": "phase54.adversarial_matrix",
           "exit_code": 0,
-          "finished_at": "2026-07-26T23:33:41.361187Z",
+          "finished_at": "2026-07-27T00:07:22.965873Z",
           "id": "adversarial_matrix",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T23:33:38.883629Z"
+          "started_at": "2026-07-27T00:07:19.715442Z"
         },
         {
           "adapter": "local",
@@ -146,12 +146,12 @@
           },
           "command_id": "phase54.secret_scan",
           "exit_code": 0,
-          "finished_at": "2026-07-26T23:33:41.653423Z",
+          "finished_at": "2026-07-27T00:07:23.753518Z",
           "id": "secret_scan",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T23:33:41.361226Z"
+          "started_at": "2026-07-27T00:07:22.965919Z"
         },
         {
           "adapter": "local",
@@ -160,12 +160,12 @@
           },
           "command_id": "phase54.graphify_preflight",
           "exit_code": 0,
-          "finished_at": "2026-07-26T23:33:47.887350Z",
+          "finished_at": "2026-07-27T00:07:34.103036Z",
           "id": "graphify_preflight",
           "normalized": null,
           "required": true,
           "result": "PASS",
-          "started_at": "2026-07-26T23:33:41.653457Z"
+          "started_at": "2026-07-27T00:07:23.753565Z"
         }
       ],
       "required": true,
@@ -193,8 +193,8 @@
       "result": "PASS"
     }
   ],
-  "evidence_sha256": "f9c164d824a0e8c1382ec265141263c704057fadaacfe442e9100f7b68abbf44",
-  "finished_at": "2026-07-26T23:33:47.930707Z",
+  "evidence_sha256": "873ca49ccd054c184d61703dbee62fc3a5d65f70ef00991c38957e6aed97a26e",
+  "finished_at": "2026-07-27T00:07:34.152514Z",
   "mode": "read-only",
   "mutations_attempted": false,
   "next_wave_gate": "PASS:54-01",
@@ -212,6 +212,6 @@
   "runner_sha256": "5c1112b57c566bfe4739b706c1b1ac186f8006d1b4e61dc1ab9506ce965ec62c",
   "schema": "phase54.gate.v1",
   "stage": null,
-  "started_at": "2026-07-26T23:33:33.149113Z",
+  "started_at": "2026-07-27T00:07:14.734405Z",
   "status": "PASS"
 }
