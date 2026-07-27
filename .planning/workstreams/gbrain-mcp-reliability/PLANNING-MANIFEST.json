@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-27T10:23:59-03:00",
+  "generated_at": "2026-07-27T10:44:33-03:00",
   "workstream": "gbrain-mcp-reliability",
   "counts": {
     "requirements": 33,
@@ -13,98 +13,121 @@
   "plans": [
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-01-PLAN.md",
-      "sha256": "c0914089c06d36631621d3e5f8bd00ec96d4adb1c41833e527ad6ef773600df9",
-      "requirements": "BKP-01, BKP-02, BKP-05"
+      "phase": "60-recovery-foundation",
+      "plan": "01",
+      "sha256": "c0914089c06d36631621d3e5f8bd00ec96d4adb1c41833e527ad6ef773600df9"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-02-PLAN.md",
-      "sha256": "7cdd353483d02164ec40642707bd9dc83ce68498049d2dde250ab510f7a0b637",
-      "requirements": "BKP-03, BKP-04, BKP-05"
+      "phase": "60-recovery-foundation",
+      "plan": "02",
+      "sha256": "f0a503f6abf4046487f6144f795209945e3b3117c470d8c43a04c334b897c64d"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-03-PLAN.md",
-      "sha256": "1fb6b1e860110faf4d0b05c2939992dec04337082c2f58a4665b6107a950c22e",
-      "requirements": "SEC-01, SEC-02, SEC-03"
+      "phase": "60-recovery-foundation",
+      "plan": "03",
+      "sha256": "1fb6b1e860110faf4d0b05c2939992dec04337082c2f58a4665b6107a950c22e"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/60-recovery-foundation/60-04-PLAN.md",
-      "sha256": "6a937088c6c6af2ed92df07866836e26b895af08bc40de9f73fe724f3caa1e16",
-      "requirements": "SYNC-01, CTL-05"
+      "phase": "60-recovery-foundation",
+      "plan": "04",
+      "sha256": "bdb0d73078d1f6655fa61985da1eb80886ffc78fd8df49d00e0ac9851f6f26ef"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/61-source-truth-and-sync/61-01-PLAN.md",
-      "sha256": "037b141a46a2ef8804050ecd9a76d8f6f950d70dd6a90e6324f089acf6908533",
-      "requirements": "SYNC-02, SYNC-04, SYNC-06"
+      "phase": "61-source-truth-and-sync",
+      "plan": "01",
+      "sha256": "037b141a46a2ef8804050ecd9a76d8f6f950d70dd6a90e6324f089acf6908533"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/61-source-truth-and-sync/61-02-PLAN.md",
-      "sha256": "22698e4825bd82b2798ad68e998c6ffbf2bb6a88d30768a0820241e5b30bd00a",
-      "requirements": "SYNC-03, SYNC-05"
+      "phase": "61-source-truth-and-sync",
+      "plan": "02",
+      "sha256": "22698e4825bd82b2798ad68e998c6ffbf2bb6a88d30768a0820241e5b30bd00a"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-01-PLAN.md",
-      "sha256": "ab278d296aa20cb885d7d4ea5f9025d960cf678903c2cc8e168179b0afc89823",
-      "requirements": "GRAPH-01, GRAPH-05"
+      "phase": "62-graph-and-context-recovery",
+      "plan": "01",
+      "sha256": "ab278d296aa20cb885d7d4ea5f9025d960cf678903c2cc8e168179b0afc89823"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-02-PLAN.md",
-      "sha256": "379789ef4abbc0b6fc4be0e7e1f9250543794109924a846a7644db43bfbbce84",
-      "requirements": "GRAPH-01, GRAPH-02, GRAPH-05"
+      "phase": "62-graph-and-context-recovery",
+      "plan": "02",
+      "sha256": "379789ef4abbc0b6fc4be0e7e1f9250543794109924a846a7644db43bfbbce84"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-03-PLAN.md",
-      "sha256": "6e24a8ed11d18795773c014c7ef340197f2130655499c2a1dff0c839ff2f1ee4",
-      "requirements": "GRAPH-03, GRAPH-04"
+      "phase": "62-graph-and-context-recovery",
+      "plan": "03",
+      "sha256": "bd5297b22ec78c738256756a55f0c9c17848ffaafe68e6005671472c990fe6bc"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-01-PLAN.md",
-      "sha256": "f9b3ff12b0dd534c6fddedba4a5c136cffbab475754ca967743aabf0a2e3557f",
-      "requirements": "EMB-01, EMB-02, EMB-04"
+      "phase": "63-embedding-integrity-and-catch-up",
+      "plan": "01",
+      "sha256": "f9b3ff12b0dd534c6fddedba4a5c136cffbab475754ca967743aabf0a2e3557f"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-02-PLAN.md",
-      "sha256": "1a22773659b5b63bfe39bfb356aa53b284a4582582378a1d4a5b370818d0ee34",
-      "requirements": "EMB-02, EMB-04"
+      "phase": "63-embedding-integrity-and-catch-up",
+      "plan": "02",
+      "sha256": "1a22773659b5b63bfe39bfb356aa53b284a4582582378a1d4a5b370818d0ee34"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-03-PLAN.md",
-      "sha256": "3263e4de04ed6ef0ec982f1fd2ecfff3b7c2b2836994b5fb0becd67954287826",
-      "requirements": "EMB-03, EMB-04, EMB-05"
+      "phase": "63-embedding-integrity-and-catch-up",
+      "plan": "03",
+      "sha256": "3263e4de04ed6ef0ec982f1fd2ecfff3b7c2b2836994b5fb0becd67954287826"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-01-PLAN.md",
-      "sha256": "1185657f8df9e9aca39527276aaf8621fcfbb23983e727f8405e216ea5b730e5",
-      "requirements": "CTL-01, CTL-02"
+      "phase": "64-control-plane-schema-and-postgres",
+      "plan": "01",
+      "sha256": "1185657f8df9e9aca39527276aaf8621fcfbb23983e727f8405e216ea5b730e5"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-02-PLAN.md",
-      "sha256": "40de560f4aeae9a42fb15249b87767d27769ffa01fce96fbc556be49f59b62f4",
-      "requirements": "CTL-03, CTL-04"
+      "phase": "64-control-plane-schema-and-postgres",
+      "plan": "02",
+      "sha256": "40de560f4aeae9a42fb15249b87767d27769ffa01fce96fbc556be49f59b62f4"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-03-PLAN.md",
-      "sha256": "48765e79e5256f9c66cb6b3e28d8349e0020f7c5cf83bc4bfb8103bba677aa8e",
-      "requirements": "CTL-05, OBS-01"
+      "phase": "64-control-plane-schema-and-postgres",
+      "plan": "03",
+      "sha256": "220e5f7bd8dcc666afb3cafa117e310c20fa4179da2033bbbe7995d82102d72e"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/64-control-plane-schema-and-postgres/64-04-PLAN.md",
-      "sha256": "5512af0233a7a1a78c146c7cbe52e02f87d56b8d6f70659fac9f03c1d4a22211",
-      "requirements": "CTL-06, SEC-03"
+      "phase": "64-control-plane-schema-and-postgres",
+      "plan": "04",
+      "sha256": "5512af0233a7a1a78c146c7cbe52e02f87d56b8d6f70659fac9f03c1d4a22211"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-01-PLAN.md",
-      "sha256": "1b81ab6ecc570373e0d0d70971e8069caac1083d03e3743c7f74741af007714b",
-      "requirements": "OBS-02"
+      "phase": "65-observability-docs-and-closeout",
+      "plan": "01",
+      "sha256": "1b81ab6ecc570373e0d0d70971e8069caac1083d03e3743c7f74741af007714b"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-02-PLAN.md",
-      "sha256": "be167e5f9be23316473baa4eb3724e1e32939bb0f0bb63a1a8c4a21c5625430c",
-      "requirements": "OBS-01, OBS-02"
+      "phase": "65-observability-docs-and-closeout",
+      "plan": "02",
+      "sha256": "c844e1b1fd6df5def69890110e27e220d89f2c5391c9c3b8614c146f9fd389d7"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/65-observability-docs-and-closeout/65-03-PLAN.md",
-      "sha256": "6eac9ab9c6b3c8add72aebf0147e606f8adaf674e26b56dd88f0c764ca0eec25",
-      "requirements": "OBS-03"
+      "phase": "65-observability-docs-and-closeout",
+      "plan": "03",
+      "sha256": "6eac9ab9c6b3c8add72aebf0147e606f8adaf674e26b56dd88f0c764ca0eec25"
     }
-  ]
+  ],
+  "plan_count": 19,
+  "implementation_task_count": 57,
+  "checkpoint_count": 13,
+  "total_node_count": 70
 }

@@ -1,12 +1,13 @@
 ---
 workstream: gbrain-mcp-reliability
-reviewed_at: 2026-07-27T10:23:59-03:00
+reviewed_at: 2026-07-27T10:44:33-03:00
 reviewer: MiniMax-M3 delegated read-only researchers
 status: incorporated-with-corrections
 source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_082934_393487.txt
 second_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083002_653159.txt
 third_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083020_033739.txt
 fourth_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_083728_817986.txt
+fifth_review_source: /home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260727_084209_073986.txt
 ---
 
 # Revisão assíncrona — grafo, contextual retrieval e embeddings
@@ -194,3 +195,39 @@ Parecer parcialmente útil e operacionalmente defeituoso. Claims foram confronta
 - `61-02-PLAN.md`
 - `61-RESEARCH.md`
 - `61-VALIDATION.md`
+
+# Quinta revisão assíncrona — ownership, gate ordering e budget
+
+## Veredito
+
+Parecer produzido parcialmente contra estado stale, mas revelou dois gaps reais e um gap adjacente. Claims foram confrontados com o HEAD `01015d4`, traceability, ROADMAP e cinco PLANs. Nenhuma operação live foi executada.
+
+## Aceito
+
+- `CTL-05` tem owner único na Phase 64; `60-04` só pode produzir prerequisite evidence não-closing.
+- O gate de contextual retrieval precisa apresentar envelope numérico derivado do provider/preflight, com hard caps aprovados antes do custo live.
+- Arquivo compartilhado por 64-01/65-02 exige releitura/hash imediatamente antes do edit para impedir overwrite stale.
+- Em `60-02`, toda candidate offline precisa existir antes do checkpoint; Task 3 deve conter somente ações live pós-aprovação.
+
+## Corrigido
+
+| Finding delegado | Correção |
+|---|---|
+| `60-02 autonomous:true` | Stale: HEAD já tinha `autonomous:false`, `checkpoint:human-verify` e gate antes da Task 3. |
+| Preferir `checkpoint:human-action` | Rejeitado pelo contrato: owner só aprova; o agente executa CLI/API. Zero `human-action`. |
+| Fixar `$20` ou `5000 calls` | Não inventar cap. O preflight resolve preço/moeda/cardinalidade e deriva `estimated_cost` + `hard_cost_cap`; unknown bloqueia. |
+| CTL-05 fechado em 60-04 | 60-04 gera snapshot prerequisite; 64-03 revalida e emite o único PASS/receipt. |
+
+## Rejeitado/deferred
+
+- Reescrever 57 `acceptance_criteria` só por repetição textual: cada task já tem action/verify/done específicos. A uniformidade fica registrada como debt de qualidade, não blocker de executabilidade.
+- Alegação de `60-03 checkpoint:human-action`: falsa no HEAD atual; há `checkpoint:human-verify` e zero ocorrências de human-action.
+- Tratar referências pós-owner `SEC-03` em 64-04 e `OBS-01` em 65-02 como ownership conflict: são regressão permitida pelo coverage contract.
+
+## PLANs atualizados
+
+- `60-02-PLAN.md`
+- `60-04-PLAN.md`
+- `62-03-PLAN.md`
+- `64-03-PLAN.md`
+- `65-02-PLAN.md`
