@@ -1,6 +1,6 @@
 ---
 workstream: gbrain-mcp-reliability
-verified_at: 2026-07-27T08:45:57-03:00
+verified_at: 2026-07-27T09:14:27-03:00
 status: pass
 schema_version: 1
 ---
@@ -27,6 +27,14 @@ PASS. The milestone is executable as planning input. No live GBrain, PostgreSQL,
 - `git diff --check` PASS.
 - Secret-literal scan PASS for bearer, DB URL, GitHub token and API-key patterns.
 
+## Adversarial review incorporated
+
+- Read-only delegated review: MiniMax-M3, completed after the initial planning seal.
+- CLI/source cross-check confirmed real dry-run syntax and provider-prefix stripping.
+- Accepted gates were added to Phases 62 and 63; incorrect `missing_embeddings=557`, universal score `>0.7`, and absolute orphan target `<200` were rejected.
+- Full classification and evidence: `REVIEWS.md`.
+- Post-review verification: 19/19 structure PASS, 19/19 references PASS, 33/33 requirements covered, manifest hashes PASS.
+
 ## Safety gates
 
 1. Phase 60 backup/restore PASS blocks every later data-plane mutation.
@@ -34,7 +42,7 @@ PASS. The milestone is executable as planning input. No live GBrain, PostgreSQL,
 3. Existing `sync-vault.sh` remains the single scheduler; no duplicate GBrain timer is planned.
 4. Every live mutation has exact prestate, stop conditions, independent readback and tested rollback.
 5. Runtime source patches are version/hash-bound and fail closed after upgrades.
-6. Obsidian remains canonical; GBrain indexing is deferred until Phase 60 establishes a restorable PostgreSQL backup.
+6. O Obsidian permanece canônico; um mirror aditivo e dedicado foi escrito no GBrain sem acionar sync/reindex/embed, com readback e busca exata validados.
 
 ## Backup evidence
 
@@ -46,7 +54,7 @@ PASS. The milestone is executable as planning input. No live GBrain, PostgreSQL,
 
 - No current PostgreSQL restore-smoke PASS exists.
 - Token rotation and all live service/data mutations require explicit approval at their plan checkpoint.
-- Direct GBrain documentation write is intentionally blocked until Phase 60; the Obsidian note is queued for normal controlled sync afterward.
+- O mirror dedicado `projects/gbrain-mcp-reliability-recovery-plan` foi escrito de forma aditiva e validado por readback/busca, sem sync/reindex/embed; a descoberta automática do vault continua bloqueada até o Gate 60.
 
 ## Next executable unit
 

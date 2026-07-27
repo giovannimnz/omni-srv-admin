@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "generated_at": "2026-07-27T08:45:57-03:00",
+  "generated_at": "2026-07-27T09:14:27-03:00",
   "workstream": "gbrain-mcp-reliability",
   "counts": {
     "requirements": 33,
@@ -48,17 +48,17 @@
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-02-PLAN.md",
-      "sha256": "34dda2476ccf0a8e21a3c24fa2045c9f49ced85ca1235ceab84f2ba3f63133d7",
+      "sha256": "379789ef4abbc0b6fc4be0e7e1f9250543794109924a846a7644db43bfbbce84",
       "requirements": "GRAPH-01, GRAPH-02, GRAPH-05"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/62-graph-and-context-recovery/62-03-PLAN.md",
-      "sha256": "e2497a4b1f1776bd502ef36d7eb7092d687fdc39589551376d892643be8d48f2",
+      "sha256": "6e24a8ed11d18795773c014c7ef340197f2130655499c2a1dff0c839ff2f1ee4",
       "requirements": "GRAPH-03, GRAPH-04"
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-01-PLAN.md",
-      "sha256": "c1e03b7fcb78e2300b6cf0dc8200addd52eb008950c78ad4a977cacb923d3f0e",
+      "sha256": "f9b3ff12b0dd534c6fddedba4a5c136cffbab475754ca967743aabf0a2e3557f",
       "requirements": "EMB-01, EMB-02, EMB-04"
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "path": ".planning/workstreams/gbrain-mcp-reliability/phases/63-embedding-integrity-and-catch-up/63-03-PLAN.md",
-      "sha256": "4e809bb104f3bf7603f370459243574f0f6c205a0f251ec8b3bde60b02a275ef",
+      "sha256": "3263e4de04ed6ef0ec982f1fd2ecfff3b7c2b2836994b5fb0becd67954287826",
       "requirements": "EMB-03, EMB-04, EMB-05"
     },
     {
