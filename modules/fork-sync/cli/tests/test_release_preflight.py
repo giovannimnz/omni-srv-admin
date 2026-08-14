@@ -274,6 +274,19 @@ def test_classic_locale_uses_source_key_placeholders_when_base_value_is_empty() 
     assert violations == []
 
 
+def test_locale_does_not_use_key_placeholders_when_base_value_is_nonempty() -> None:
+    key = "Source key {{name}}"
+
+    violations = _locale_pair_violations(
+        {key: "Rendered without interpolation"},
+        {key: "Renderizado sem interpolação"},
+        pt_path=Path("web/classic/src/i18n/locales/pt.json"),
+        locale_name="frontend JSON",
+    )
+
+    assert violations == []
+
+
 def test_preflight_blocks_secret_like_values_in_tracked_files(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     _init_git_repo(repo)

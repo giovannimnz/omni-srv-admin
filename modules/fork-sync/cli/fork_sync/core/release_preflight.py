@@ -405,7 +405,11 @@ def _locale_pair_violations(
             break
         # Classic i18next stores untranslated base values as an empty string;
         # in that format the source key itself is the effective base message.
-        base_placeholders = _placeholders(base_value) or _placeholders(key)
+        base_placeholders = (
+            _placeholders(key)
+            if isinstance(base_value, str) and not base_value.strip()
+            else _placeholders(base_value)
+        )
         if base_placeholders != _placeholders(pt_value):
             violations.append((pt_path, f"placeholder drift for key: {key}"))
             break
