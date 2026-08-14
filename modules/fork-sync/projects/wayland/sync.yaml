@@ -48,6 +48,7 @@ protected_paths:
   - src/process/extensions/resolvers/ChannelPluginResolver.ts
   - src/process/utils/initStorage.ts
   - src/process/utils/shellEnv.ts
+  - src/process/webserver/auth/middleware/AuthMiddleware.ts
   - src/process/webserver/routes/apiRoutes.ts
   - src/process/webserver/config/constants.ts
   - src/process/webserver/websocket/WebSocketManager.ts

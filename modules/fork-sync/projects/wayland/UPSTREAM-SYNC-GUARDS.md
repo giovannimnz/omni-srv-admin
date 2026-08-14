@@ -16,6 +16,10 @@ must not be selected as the primary path while OCI/DRG is available.
 - `wayland.service` on `atius-srv-3` runs the source checkout directly through
   `/home/ubuntu/GitHub/wayland/dist-server/server.mjs`, not the packaged app
   binary.
+- The WebUI root must remain embeddable only by
+  `https://router.atius.com.br`: keep `frame-ancestors 'self' https://router.atius.com.br`
+  in CSP and do not reintroduce `X-Frame-Options: DENY` on the top-level app
+  responses, otherwise the Router preset `Atius Wayland` breaks.
 - The post-install/update contract lives in the source repo scripts
   `scripts/atius-*.sh` plus the patch file
   `patches/atius-webui-workspace-visible.patch`.
@@ -109,6 +113,7 @@ must not be selected as the primary path while OCI/DRG is available.
 - `src/process/extensions/resolvers/ChannelPluginResolver.ts`
 - `src/process/utils/initStorage.ts`
 - `src/process/utils/shellEnv.ts`
+- `src/process/webserver/auth/middleware/AuthMiddleware.ts`
 - `src/process/webserver/routes/apiRoutes.ts`
 - `src/process/webserver/config/constants.ts`
 - `src/process/webserver/websocket/WebSocketManager.ts`

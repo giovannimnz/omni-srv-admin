@@ -41,9 +41,9 @@ Correção canônica:
   `omni-builds.slice`; o audit possui ainda um lock non-blocking próprio
 - o patcher migra processos descobertos para as slices systemd, não para
   cgroups plain paralelos
-- o sweep automático `gsd-graphify-auto-update.service` nasce diretamente na
-  `omni-builds.slice` e adquire o mesmo semaphore; o patcher deixa de ser a
-  primeira linha de defesa para esse broad indexer
+- o antigo sweep automático `gsd-graphify-auto-update.service` foi removido do
+  agendamento canônico; broad sweeps de Graphify não devem mais disputar o
+  semaphore de builds automaticamente
 
 Migração segura (dry-run por padrão):
 

@@ -65,7 +65,6 @@ RESOURCE_DEFAULTS = {
 }
 
 RESOURCE_UNIT_NAMES = [
-    "gsd-graphify-auto-update.service",
     "omni-builds.slice",
     "omni-interactive.slice",
     "omni-transfers.slice",

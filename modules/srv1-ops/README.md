@@ -74,7 +74,7 @@ omni srv1-ops run offload-dotbackups
   scanner per-PID e consolida cgroups plain antigos nas slices systemd.
 - Watchdog contínuo: `resource-governor-watchdog.timer` roda a cada 2 min, aplica override conservador e dispara cleanup/audit quando o host entra em estado crítico.
 - Doctor preventivo: `resource-governor-doctor.timer` roda a cada 2 min; o mesmo veredito estrutural bloqueia fail-closed a admissão de novos builds.
-- Graphify automático: a unit versionada `gsd-graphify-auto-update.service` nasce em `omni-builds.slice` e usa o semaphore comum.
+- Graphify automático saiu do agendamento canônico. Rebuild broad sweep agora só roda manualmente/quando explicitamente aprovado.
 - PM2 boot canônico: `pm2-ubuntu.service` restaura `/home/ubuntu/.pm2/dump.pm2` com os namespaces `atius` e `horistic`. Os user units legados `ats-pm2.service` e `horistic-pm2.service` ficam desabilitados para não competir com o restore.
 
 ## GDrive layout

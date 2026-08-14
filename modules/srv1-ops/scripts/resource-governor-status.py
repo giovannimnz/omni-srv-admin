@@ -19,7 +19,6 @@ DEFAULT_HYGIENE_STATE = Path.home() / '.local' / 'state' / 'omni' / 'resource-go
 DEFAULT_HYGIENE_METRICS = Path.home() / '.local' / 'state' / 'omni' / 'textfile-collector' / 'resource-governor.prom'
 DEFAULT_BUILD_LOCK = Path.home() / '.local' / 'state' / 'omni' / 'resource-governor-builds.lock'
 RESOURCE_UNITS = [
-    'gsd-graphify-auto-update.service',
     'omni-builds.slice',
     'omni-interactive.slice',
     'omni-transfers.slice',
