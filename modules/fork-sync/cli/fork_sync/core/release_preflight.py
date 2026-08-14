@@ -95,6 +95,48 @@ ATIUS_ROUTER_USER_QUOTA_SCOPED_FUNCTIONS = {
     # permitted post-accounting notification code that reads UserQuota.
     "service/quota.go": ["PreWssConsumeQuota"],
 }
+ATIUS_ROUTER_RERANK_REQUIRED_FILES = [
+    "dto/channel_settings.go",
+    "dto/channel_settings_tei_rerank_test.go",
+    "k8s/router-ai-atius/configmap.yaml",
+    "relay/channel/advancedcustom/adaptor.go",
+    "relay/channel/advancedcustom/tei_rerank.go",
+    "relay/channel/advancedcustom/tei_rerank_test.go",
+    "relay/embedding_handler_test.go",
+    "relay/rerank_handler.go",
+    "service/embeddinggovernor/governor.go",
+    "service/embeddinggovernor/governor_test.go",
+]
+ATIUS_ROUTER_RERANK_PROTECTED_PATHS = [
+    "dto/channel_settings.go",
+    "dto/channel_settings_tei_rerank_test.go",
+    "k8s/router-ai-atius/configmap.yaml",
+    "relay/channel/advancedcustom/",
+    "relay/embedding_handler_test.go",
+    "relay/rerank_handler.go",
+    "service/embeddinggovernor/",
+]
+ATIUS_ROUTER_RERANK_REQUIRED_MARKERS = {
+    "dto/channel_settings.go": [
+        "AdvancedCustomConverterJinaRerankToTEINative",
+        '"jina_rerank_to_tei_native"',
+    ],
+    "k8s/router-ai-atius/configmap.yaml": [
+        "EMBEDDING_GOVERNOR_MODELS",
+        "embedding-gte-v1,reranker-gte-multilingual-v1",
+    ],
+    "relay/channel/advancedcustom/tei_rerank.go": [
+        "newTEIRerankRequest",
+        "doTEIRerankResponse",
+    ],
+    "relay/rerank_handler.go": [
+        "acquireRerankGovernor",
+        "maxGovernedTEIRerankDocuments",
+    ],
+    "service/embeddinggovernor/governor.go": [
+        "embedding-gte-v1,reranker-gte-multilingual-v1",
+    ],
+}
 SECRET_VALUE_PATTERNS = [
     re.compile(
         r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----\s+"
@@ -500,6 +542,23 @@ def _atius_router_user_quota_violations(repo: Path) -> list[tuple[Path, str]]:
     return violations
 
 
+def _atius_router_rerank_violations(repo: Path) -> list[tuple[Path, str]]:
+    """Fail closed when a sync drops the governed local reranker contract."""
+    violations: list[tuple[Path, str]] = []
+    for rel in ATIUS_ROUTER_RERANK_REQUIRED_FILES:
+        path = repo / rel
+        if not path.is_file():
+            violations.append((Path(rel), "required governed reranker file is missing"))
+            continue
+        text = _read_text(path)
+        for marker in ATIUS_ROUTER_RERANK_REQUIRED_MARKERS.get(rel, []):
+            if marker not in text:
+                violations.append(
+                    (Path(rel), f"governed reranker contract marker is missing: {marker}")
+                )
+    return violations
+
+
 def _go_function_body(text: str, function_name: str) -> str | None:
     declaration = re.search(
         rf"\bfunc\s+(?:\([^)]*\)\s*)?{re.escape(function_name)}\s*\(",
@@ -706,6 +765,14 @@ def run_preflight(
         if not user_quota_violations:
             checks.append(
                 {"check": "atius-router-user-quota-invariant", "status": "complete"}
+            )
+
+        rerank_violations = _atius_router_rerank_violations(repo_path)
+        for path, message in rerank_violations:
+            _add_issue(issues, "atius-router-rerank-regression", message, path)
+        if not rerank_violations:
+            checks.append(
+                {"check": "atius-router-governed-rerank", "status": "complete"}
             )
 
     if secret_names is None:
