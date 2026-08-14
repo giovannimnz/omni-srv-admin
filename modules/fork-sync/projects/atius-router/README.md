@@ -71,11 +71,32 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 - `controller/model.go`, `controller/model_list_test.go` — public `/v1/models` contract and regression tests
 - `service/modelcatalog/` — deterministic model catalog projection and ordering
 - `relay/common/relay_utils.go`, `relay/common/relay_utils_test.go` — base URL normalization, including trailing `/v1`
-- `relay/embedding_handler.go`, `service/embeddinggovernor/` — local TEI embeddings governor inside the Go router, with no Python sidecar
+- `relay/embedding_handler.go`, `relay/rerank_handler.go`, `relay/channel/advancedcustom/`, `service/embeddinggovernor/` — local TEI embeddings and reranking inside the same Go-native governor, with no Python sidecar
+- `k8s/router-ai-atius/configmap.yaml` — preserves both governed aliases in `EMBEDDING_GOVERNOR_MODELS`
 - `relay/channel/codex/`, `service/codex_*.go` — Codex OAuth chat/responses/embeddings, sharing the same OAuth credential
 - `common/endpoint_type.go`, `dto/embedding.go`, `relay/channel/minimax/`, `relay/channel/deepseek/` — single-channel MiniMax/DeepSeek routing across OpenAI/Anthropic/embeddings where supported
 - `constant/channel.go`, frontend channel constants and i18n locale files — canonical label `OpenAI - Codex`
 - `tools/clianything.py`, `tests/test_clianything.py` — legacy `phase19-apply` now consolidates channels and `clone-keyed` blocks split-channel recreation by default
+
+### Personal user-quota invariant
+
+- Local request admission never reads account/user wallet balance and never
+  emits `insufficient_user_quota`; a negative wallet remains valid accounting
+  state.
+- Missing/exhausted subscriptions always fall back to wallet accounting,
+  regardless of `allow_wallet_overflow`. Finite token limits and upstream
+  provider errors are not bypassed.
+- `scripts/atius-user-quota-guard.sh` is the canonical Router audit/repair
+  entrypoint; `patches/atius-user-quota-unlimited.patch` is the reproducible
+  recovery artifact; `docs/ATIUS-USER-QUOTA-INVARIANT.md` is the runbook.
+- Fork-sync runs `scripts/atius-user-quota-guard.sh repair` before auto-push.
+  Repair is idempotent, creates a backup, requires `git apply --check`, and
+  ends in fail-closed audit. The Omni release preflight also performs an
+  independent static scan before any build/deploy.
+- Fork-sync then runs the focused governed-reranker Go tests through
+  `scripts/podman-admin.sh profile-run`; failure blocks auto-push. The release
+  preflight independently requires the converter, handler, governor tests and
+  ConfigMap value `embedding-gte-v1,reranker-gte-multilingual-v1`.
 
 See `UPSTREAM-SYNC-GUARDS.md` before any upstream merge.
 
@@ -98,8 +119,9 @@ See `UPSTREAM-SYNC-GUARDS.md` before any upstream merge.
 3. snapshot protected files from the fork branch
 4. git merge --no-commit -X theirs upstream/main
 5. restore protected files from the local snapshot
-6. abort if any conflict remains outside protected paths
-7. git commit the merge once the tree is clean
+6. run `scripts/atius-user-quota-guard.sh repair` and all other `post_sync` checks
+7. abort if any conflict or invariant regression remains
+8. git commit/push only after the checks pass
 ```
 
 ## Versioning Scheme

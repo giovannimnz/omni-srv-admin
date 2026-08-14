@@ -70,6 +70,73 @@ ATIUS_ROUTER_PT_BR_REQUIRED_FILES = [
     "web/classic/src/components/settings/personal/cards/PreferencesSettings.jsx",
     "scripts/smoke-pt-br-i18n.sh",
 ]
+ATIUS_ROUTER_USER_QUOTA_ADMISSION_FILES = [
+    "service/pre_consume_quota.go",
+    "service/billing_session.go",
+    "service/quota.go",
+    "relay/mjproxy_handler.go",
+]
+ATIUS_ROUTER_USER_QUOTA_REQUIRED_FILES = [
+    *ATIUS_ROUTER_USER_QUOTA_ADMISSION_FILES,
+    "service/billing_session_wallet_overdraft_test.go",
+    "scripts/atius-user-quota-guard.sh",
+    "patches/atius-user-quota-unlimited.patch",
+    "docs/ATIUS-USER-QUOTA-INVARIANT.md",
+]
+ATIUS_ROUTER_USER_QUOTA_FORBIDDEN_MARKERS = [
+    "model.GetUserQuota(",
+    "ErrorCodeInsufficientUserQuota",
+    '"insufficient_user_quota"',
+    '"quota_not_enough"',
+    "UserActiveSubscriptionsAllowWalletOverflow(",
+]
+ATIUS_ROUTER_USER_QUOTA_SCOPED_FUNCTIONS = {
+    # Other admission files are scanned in full. quota.go also contains
+    # permitted post-accounting notification code that reads UserQuota.
+    "service/quota.go": ["PreWssConsumeQuota"],
+}
+ATIUS_ROUTER_RERANK_REQUIRED_FILES = [
+    "dto/channel_settings.go",
+    "dto/channel_settings_tei_rerank_test.go",
+    "k8s/router-ai-atius/configmap.yaml",
+    "relay/channel/advancedcustom/adaptor.go",
+    "relay/channel/advancedcustom/tei_rerank.go",
+    "relay/channel/advancedcustom/tei_rerank_test.go",
+    "relay/embedding_handler_test.go",
+    "relay/rerank_handler.go",
+    "service/embeddinggovernor/governor.go",
+    "service/embeddinggovernor/governor_test.go",
+]
+ATIUS_ROUTER_RERANK_PROTECTED_PATHS = [
+    "dto/channel_settings.go",
+    "dto/channel_settings_tei_rerank_test.go",
+    "k8s/router-ai-atius/configmap.yaml",
+    "relay/channel/advancedcustom/",
+    "relay/embedding_handler_test.go",
+    "relay/rerank_handler.go",
+    "service/embeddinggovernor/",
+]
+ATIUS_ROUTER_RERANK_REQUIRED_MARKERS = {
+    "dto/channel_settings.go": [
+        "AdvancedCustomConverterJinaRerankToTEINative",
+        '"jina_rerank_to_tei_native"',
+    ],
+    "k8s/router-ai-atius/configmap.yaml": [
+        "EMBEDDING_GOVERNOR_MODELS",
+        "embedding-gte-v1,reranker-gte-multilingual-v1",
+    ],
+    "relay/channel/advancedcustom/tei_rerank.go": [
+        "newTEIRerankRequest",
+        "doTEIRerankResponse",
+    ],
+    "relay/rerank_handler.go": [
+        "acquireRerankGovernor",
+        "maxGovernedTEIRerankDocuments",
+    ],
+    "service/embeddinggovernor/governor.go": [
+        "embedding-gte-v1,reranker-gte-multilingual-v1",
+    ],
+}
 SECRET_VALUE_PATTERNS = [
     re.compile(
         r"-----BEGIN (?:RSA |DSA |EC |OPENSSH |PRIVATE )?PRIVATE KEY-----\s+"
@@ -164,6 +231,8 @@ def _git_tracked_files(repo: Path) -> list[str]:
 def _is_sensitive_path(path: str) -> bool:
     lowered = path.replace("\\", "/").lower()
     name = Path(lowered).name
+    if name in {".gitkeep", ".keep"}:
+        return False
     if any(marker in name for marker in ("example", "sample", "template", "dist")):
         return False
     if name in {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "auth.json", "credentials.json"}:
@@ -334,7 +403,14 @@ def _locale_pair_violations(
         ):
             violations.append((pt_path, f"empty PT-BR value for key: {key}"))
             break
-        if _placeholders(base_value) != _placeholders(pt_value):
+        # Classic i18next stores untranslated base values as an empty string;
+        # in that format the source key itself is the effective base message.
+        base_placeholders = (
+            _placeholders(key)
+            if isinstance(base_value, str) and not base_value.strip()
+            else _placeholders(base_value)
+        )
+        if base_placeholders != _placeholders(pt_value):
             violations.append((pt_path, f"placeholder drift for key: {key}"))
             break
     return violations
@@ -412,6 +488,202 @@ def _atius_router_pt_br_violations(repo: Path) -> list[tuple[Path, str]]:
         )
 
     return violations
+
+
+def _atius_router_user_quota_violations(repo: Path) -> list[tuple[Path, str]]:
+    """Reject local request-admission decisions based on account balance.
+
+    Accounting may still decrease or increase a wallet after a request is
+    accepted.  These admission surfaces, however, must never query user quota,
+    emit ``insufficient_user_quota``, or condition wallet fallback on a
+    subscription overflow flag.  The Router-owned audit/repair artifacts are
+    required as a second, repository-local line of defense.
+    """
+    violations: list[tuple[Path, str]] = []
+    for rel in ATIUS_ROUTER_USER_QUOTA_REQUIRED_FILES:
+        if not (repo / rel).is_file():
+            violations.append(
+                (Path(rel), "required user-quota invariant file is missing")
+            )
+
+    guard = repo / "scripts/atius-user-quota-guard.sh"
+    if guard.is_file() and not os.access(guard, os.X_OK):
+        violations.append(
+            (
+                Path("scripts/atius-user-quota-guard.sh"),
+                "user-quota guard is not executable",
+            )
+        )
+
+    for rel in ATIUS_ROUTER_USER_QUOTA_ADMISSION_FILES:
+        path = repo / rel
+        if not path.is_file():
+            continue
+        text = _read_text(path)
+        for marker in ATIUS_ROUTER_USER_QUOTA_FORBIDDEN_MARKERS:
+            if marker in text:
+                violations.append(
+                    (
+                        Path(rel),
+                        f"local request admission still depends on user/subscription quota: {marker}",
+                    )
+                )
+
+        scoped_functions = ATIUS_ROUTER_USER_QUOTA_SCOPED_FUNCTIONS.get(rel)
+        scopes: list[tuple[str, str]] = []
+        if scoped_functions:
+            for function_name in scoped_functions:
+                body = _go_function_body(text, function_name)
+                if body is not None:
+                    scopes.append((function_name, body))
+        else:
+            scopes.append(("admission file", text))
+
+        for scope_name, scope_text in scopes:
+            code = _strip_go_comments_and_literals(scope_text)
+            if re.search(r"\b(?:userQuota|UserQuota)\b", code):
+                violations.append(
+                    (
+                        Path(rel),
+                        f"local request admission reads user quota directly in {scope_name}",
+                    )
+                )
+    return violations
+
+
+def _atius_router_rerank_violations(repo: Path) -> list[tuple[Path, str]]:
+    """Fail closed when a sync drops the governed local reranker contract."""
+    violations: list[tuple[Path, str]] = []
+    for rel in ATIUS_ROUTER_RERANK_REQUIRED_FILES:
+        path = repo / rel
+        if not path.is_file():
+            violations.append((Path(rel), "required governed reranker file is missing"))
+            continue
+        text = _read_text(path)
+        for marker in ATIUS_ROUTER_RERANK_REQUIRED_MARKERS.get(rel, []):
+            if marker not in text:
+                violations.append(
+                    (Path(rel), f"governed reranker contract marker is missing: {marker}")
+                )
+    return violations
+
+
+def _go_function_body(text: str, function_name: str) -> str | None:
+    declaration = re.search(
+        rf"\bfunc\s+(?:\([^)]*\)\s*)?{re.escape(function_name)}\s*\(",
+        text,
+    )
+    if declaration is None:
+        return None
+    brace = text.find("{", declaration.end())
+    if brace < 0:
+        return None
+
+    depth = 0
+    state = "code"
+    index = brace
+    while index < len(text):
+        char = text[index]
+        nxt = text[index + 1] if index + 1 < len(text) else ""
+        if state == "code":
+            if char == "/" and nxt == "/":
+                state = "line-comment"
+                index += 2
+                continue
+            if char == "/" and nxt == "*":
+                state = "block-comment"
+                index += 2
+                continue
+            if char == '"':
+                state = "string"
+            elif char == "'":
+                state = "rune"
+            elif char == "`":
+                state = "raw-string"
+            elif char == "{":
+                depth += 1
+            elif char == "}":
+                depth -= 1
+                if depth == 0:
+                    return text[brace + 1 : index]
+        elif state == "line-comment":
+            if char == "\n":
+                state = "code"
+        elif state == "block-comment":
+            if char == "*" and nxt == "/":
+                state = "code"
+                index += 2
+                continue
+        elif state in {"string", "rune"}:
+            if char == "\\":
+                index += 2
+                continue
+            terminator = '"' if state == "string" else "'"
+            if char == terminator:
+                state = "code"
+        elif state == "raw-string" and char == "`":
+            state = "code"
+        index += 1
+    return None
+
+
+def _strip_go_comments_and_literals(text: str) -> str:
+    """Keep Go code tokens while blanking comments and string/rune literals."""
+    output: list[str] = []
+    state = "code"
+    index = 0
+    while index < len(text):
+        char = text[index]
+        nxt = text[index + 1] if index + 1 < len(text) else ""
+        if state == "code":
+            if char == "/" and nxt == "/":
+                output.extend("  ")
+                state = "line-comment"
+                index += 2
+                continue
+            if char == "/" and nxt == "*":
+                output.extend("  ")
+                state = "block-comment"
+                index += 2
+                continue
+            if char == '"':
+                output.append(" ")
+                state = "string"
+            elif char == "'":
+                output.append(" ")
+                state = "rune"
+            elif char == "`":
+                output.append(" ")
+                state = "raw-string"
+            else:
+                output.append(char)
+        elif state == "line-comment":
+            output.append("\n" if char == "\n" else " ")
+            if char == "\n":
+                state = "code"
+        elif state == "block-comment":
+            output.append(" ")
+            if char == "*" and nxt == "/":
+                output.append(" ")
+                state = "code"
+                index += 2
+                continue
+        elif state in {"string", "rune"}:
+            output.append("\n" if char == "\n" else " ")
+            if char == "\\":
+                if index + 1 < len(text):
+                    output.append(" ")
+                index += 2
+                continue
+            terminator = '"' if state == "string" else "'"
+            if char == terminator:
+                state = "code"
+        else:
+            output.append("\n" if char == "\n" else " ")
+            if char == "`":
+                state = "code"
+        index += 1
+    return "".join(output)
 
 
 def _add_issue(issues: list[dict[str, str]], code: str, message: str, path: Path | None = None) -> None:
@@ -495,6 +767,22 @@ def run_preflight(
             _add_issue(issues, "atius-router-pt-br-regression", message, path)
         if not pt_br_violations:
             checks.append({"check": "atius-router-pt-br", "status": "complete"})
+
+        user_quota_violations = _atius_router_user_quota_violations(repo_path)
+        for path, message in user_quota_violations:
+            _add_issue(issues, "atius-router-user-quota-regression", message, path)
+        if not user_quota_violations:
+            checks.append(
+                {"check": "atius-router-user-quota-invariant", "status": "complete"}
+            )
+
+        rerank_violations = _atius_router_rerank_violations(repo_path)
+        for path, message in rerank_violations:
+            _add_issue(issues, "atius-router-rerank-regression", message, path)
+        if not rerank_violations:
+            checks.append(
+                {"check": "atius-router-governed-rerank", "status": "complete"}
+            )
 
     if secret_names is None:
         secret_names, secret_warning = _secret_names(github_repo)
