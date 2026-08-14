@@ -13,6 +13,7 @@ from fork_sync.core.release_preflight import (
     ATIUS_ROUTER_RERANK_PROTECTED_PATHS,
     ATIUS_ROUTER_RERANK_REQUIRED_FILES,
     ATIUS_ROUTER_USER_QUOTA_REQUIRED_FILES,
+    _locale_pair_violations,
     _load_yaml,
     run_preflight,
 )
@@ -245,6 +246,32 @@ def test_preflight_blocks_tracked_sensitive_files(tmp_path: Path) -> None:
 
     assert result["status"] == "error"
     assert "tracked-sensitive-files" in {item["code"] for item in result["errors"]}
+
+
+def test_preflight_allows_gitkeep_inside_secrets_directory(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+    _write(repo / "podman" / "secrets" / ".gitkeep", "")
+    _commit_all(repo)
+
+    result = run_preflight(repo, secret_names=set())
+
+    assert "tracked-sensitive-files" not in {
+        item["code"] for item in result["errors"]
+    }
+
+
+def test_classic_locale_uses_source_key_placeholders_when_base_value_is_empty() -> None:
+    key = "（共 {{total}} 个，省略 {{omit}} 个）"
+
+    violations = _locale_pair_violations(
+        {key: ""},
+        {key: "(Total: {{total}}; {{omit}} omitidos)"},
+        pt_path=Path("web/classic/src/i18n/locales/pt.json"),
+        locale_name="frontend JSON",
+    )
+
+    assert violations == []
 
 
 def test_preflight_blocks_secret_like_values_in_tracked_files(tmp_path: Path) -> None:

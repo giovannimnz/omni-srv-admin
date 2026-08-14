@@ -231,6 +231,8 @@ def _git_tracked_files(repo: Path) -> list[str]:
 def _is_sensitive_path(path: str) -> bool:
     lowered = path.replace("\\", "/").lower()
     name = Path(lowered).name
+    if name in {".gitkeep", ".keep"}:
+        return False
     if any(marker in name for marker in ("example", "sample", "template", "dist")):
         return False
     if name in {"id_rsa", "id_dsa", "id_ecdsa", "id_ed25519", "auth.json", "credentials.json"}:
@@ -401,7 +403,10 @@ def _locale_pair_violations(
         ):
             violations.append((pt_path, f"empty PT-BR value for key: {key}"))
             break
-        if _placeholders(base_value) != _placeholders(pt_value):
+        # Classic i18next stores untranslated base values as an empty string;
+        # in that format the source key itself is the effective base message.
+        base_placeholders = _placeholders(base_value) or _placeholders(key)
+        if base_placeholders != _placeholders(pt_value):
             violations.append((pt_path, f"placeholder drift for key: {key}"))
             break
     return violations
