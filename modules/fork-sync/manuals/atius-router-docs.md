@@ -1,8 +1,8 @@
 ---
 project: atius-router-docs
-version: 3
+version: 4
 created: 2026-06-04
-last_updated: 2026-07-05
+last_updated: 2026-08-14
 generator: fork-sync manuals generate
 ---
 
@@ -18,6 +18,9 @@ generator: fork-sync manuals generate
 - **Estratégia de merge:** `theirs`
 - **Deploy:** systemd user (não container)
 - **Runtime:** `atius-router-docs.service` na porta 3003
+- **Persistência:** unit versionada em
+  `projects/atius-router-docs/runtime/atius-router-docs.service`, habilitada em
+  `default.target` pelo `scripts/install-runtime.sh`
 
 ### Phase 09 — Mudanças Estruturais
 
@@ -140,9 +143,8 @@ bun run build
 ### Deploy
 
 ```bash
-# Restart service
-systemctl --user daemon-reload
-systemctl --user restart atius-router-docs.service
+# Reconcile unit, enable autostart and start service
+/home/ubuntu/GitHub/omni-srv-admin/modules/fork-sync/projects/atius-router-docs/scripts/install-runtime.sh
 
 # Check status
 systemctl --user status --no-pager atius-router-docs.service
@@ -150,6 +152,11 @@ systemctl --user status --no-pager atius-router-docs.service
 # Health check
 curl -I http://127.0.0.1:3003/pt/
 ```
+
+O wrapper de sync executa o instalador em toda chamada, inclusive quando não
+há release upstream nova. Isso repara automaticamente unit ausente/divergente,
+autostart desabilitado e serviço parado. O instalador salva a unit anterior em
+`~/backups/atius-router-docs-systemd/` antes de substituí-la.
 
 ### Rollback
 
@@ -176,6 +183,8 @@ curl -I http://127.0.0.1:3003/pt/
 - Verificar se o worktree canônico existe: `ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/package.json`
 - Verificar se `node_modules` existe: `ls /home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs/node_modules/.bin/next`
 - Logs: `journalctl --user -u atius-router-docs.service -n 50 --no-pager`
+- Validar persistência: `systemctl --user is-enabled atius-router-docs.service`
+- Reaplicar unit canônica: `projects/atius-router-docs/scripts/install-runtime.sh`
 
 ### Logo SVG não carrega
 - Verificar `/var/www/atius/atius-logo.svg` (Apache serve assets locais)
