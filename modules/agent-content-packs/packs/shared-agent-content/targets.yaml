@@ -1,0 +1,119 @@
+version: 1
+targets:
+  windows-hermes-default:
+    product: hermes
+    runtime: windows
+    profile: default
+    home: C:/Users/muniz/AppData/Local/hermes
+    skills_root: C:/Users/muniz/AppData/Local/hermes/skills
+    validate:
+      command:
+      - C:/Users/muniz/AppData/Local/hermes/hermes-agent/venv/Scripts/hermes.exe
+      - skills
+      - list
+  wsl-hermes-default:
+    product: hermes
+    runtime: wsl
+    distro: Ubuntu-24.04
+    user: muniz
+    home: /home/muniz/.hermes
+    skills_root: /home/muniz/.hermes/skills
+    validate:
+      command:
+      - /home/muniz/.local/bin/hermes
+      - skills
+      - list
+  windows-codex-default:
+    product: codex
+    runtime: windows
+    profile: default
+    home: C:/Users/muniz/.codex
+    skills_root: C:/Users/muniz/.codex/skills
+    slash_commands_root: C:/Users/muniz/.codex/slash-commands
+    validate:
+      command:
+      - /c/Users/muniz/AppData/Local/Programs/OpenAI/Codex/bin/codex.exe
+      - --version
+  wsl-codex-default:
+    product: codex
+    runtime: wsl
+    distro: Ubuntu-24.04
+    user: muniz
+    home: /home/muniz/.codex
+    skills_root: /home/muniz/.codex/skills
+    slash_commands_root: /home/muniz/.codex/slash-commands
+    validate:
+      command:
+      - /home/muniz/.local/bin/codex
+      - --version
+  srv1-hermes-default:
+    product: hermes
+    runtime: ssh-linux
+    host: atius-srv-1
+    user: ubuntu
+    home: /home/ubuntu/.hermes
+    skills_root: /home/ubuntu/.hermes/skills
+    validate:
+      command:
+      - /home/ubuntu/.local/bin/hermes
+      - skills
+      - list
+  srv1-codex-default:
+    product: codex
+    runtime: ssh-linux
+    host: atius-srv-1
+    user: ubuntu
+    home: /home/ubuntu/.codex
+    skills_root: /home/ubuntu/.codex/skills
+    slash_commands_root: /home/ubuntu/.codex/slash-commands
+    validate:
+      command:
+      - codex
+      - --version
+  srv2-hermes-default:
+    product: hermes
+    runtime: ssh-linux
+    host: atius-srv-2
+    user: ubuntu
+    home: /home/ubuntu/.hermes
+    skills_root: /home/ubuntu/.hermes/skills
+    validate:
+      command:
+      - /home/ubuntu/.local/bin/hermes
+      - skills
+      - list
+  srv2-codex-default:
+    product: codex
+    runtime: ssh-linux
+    host: atius-srv-2
+    user: ubuntu
+    home: /home/ubuntu/.codex/codex
+    skills_root: /home/ubuntu/.codex/codex/skills
+    slash_commands_root: /home/ubuntu/.codex/codex/slash-commands
+    validate:
+      command:
+      - codex
+      - --version
+  srv3-hermes-default:
+    product: hermes
+    runtime: ssh-linux
+    host: atius-srv-3
+    user: ubuntu
+    home: /home/ubuntu/.hermes
+    skills_root: /home/ubuntu/.hermes/skills
+    validate:
+      command:
+      - /home/ubuntu/.local/bin/hermes
+      - skills
+      - list
+  srv3-codex-default:
+    product: codex
+    runtime: ssh-linux
+    host: atius-srv-3
+    user: ubuntu
+    home: /home/ubuntu/.codex
+    skills_root: /home/ubuntu/.codex/skills
+    validate:
+      command:
+      - codex
+      - --version

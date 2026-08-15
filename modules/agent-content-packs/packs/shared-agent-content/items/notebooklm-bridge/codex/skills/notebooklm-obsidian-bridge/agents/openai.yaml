@@ -1,0 +1,4 @@
+interface:
+  display_name: "NotebookLM Obsidian Bridge"
+  short_description: "Workflows seguros para NotebookLM e Obsidian"
+  default_prompt: "Utilize a skill $notebooklm-obsidian-bridge para checar auth, export seguro e validação NotebookLM."

@@ -1,0 +1,134 @@
+version: 1
+pack: hermes-skills
+updated_at: 2026-08-15T05:03:23-0300
+items:
+- name: hermes-wslinterop-restore
+  kind: skill
+  products: &id001
+  - hermes
+  platforms:
+  - windows
+  - linux
+  source_path: items/hermes-wslinterop-restore
+  hash: 3e91525cd1e6df870d3d1a404aa30c998cc2c9ca158f5aba8048051346041448
+  required_files:
+  - SKILL.md
+  files:
+  - path: references/catalog-links.md
+    sha256: 028f293a09b67fd97d600b9cdb8f949c0df587dd3377b12bfc78f39693e3bd23
+    bytes: 1007
+  - path: references/related-docs.md
+    sha256: 40b29e5a3bb9a34a25c0054bdd8f03b6e6140581997ed5b6b54fb17649e384a1
+    bytes: 903
+  - path: SKILL.md
+    sha256: a88977175ab2b3c15f42762ba4dfc4650eeb3bf7890829d6121e7964b9640abe
+    bytes: 5780
+  category: devops
+  install:
+    hermes:
+      rel_path: skills/devops/hermes-wslinterop-restore
+- name: hermes-windows-wsl
+  kind: skill
+  products: *id001
+  platforms:
+  - windows
+  - linux
+  source_path: items/hermes-windows-wsl
+  hash: 738670d08162746e33d6b0f8723a4e3989fb13ff9364de04bbe3b2f5fb707a34
+  required_files:
+  - SKILL.md
+  files:
+  - path: references/computer-use-wsl-win32-manifest.md
+    sha256: 0142d799ea28c21ee75ce6d479ce4ed21b67238274c2f38024a0fe3ccad962ed
+    bytes: 3746
+  - path: references/gateway-cross-runtime-send.md
+    sha256: 572ff209f0a85eaec8c236a037e4433c695a05cc74ee9c3d64214c70ff5e3ad2
+    bytes: 2978
+  - path: references/gateway-sigterm-loop-diag.md
+    sha256: 31f0cba4cfe06a83753c9e0ff43612e321e36ce0f51fda4bc74f978b68cf06ec
+    bytes: 5656
+  - path: references/runtime-home-isolation-and-mcp-shutdown.md
+    sha256: e20cd7e79919d333e74165a6010bc29df90782ef14d0fc005e82054dcb3b95a2
+    bytes: 7243
+  - path: references/wsl-gateway-setup-session.md
+    sha256: cdf6f5be594a2e2f82ac57f268bda10979afce78745a585bce2e28a0d66bc92e
+    bytes: 4250
+  - path: SKILL.md
+    sha256: d87ec3c409d26a6ca762feb0323d6ac7ff42954046b66a9114d776be586c79d0
+    bytes: 27270
+  category: devops
+  install:
+    hermes:
+      rel_path: skills/devops/hermes-windows-wsl
+- name: hermes-cross-runtime-bridge
+  kind: skill
+  products: *id001
+  platforms:
+  - windows
+  - linux
+  source_path: items/hermes-cross-runtime-bridge
+  hash: 3714250887955b70739cdeba7f0996359cd314b1dc9c38991b169b20c03669a7
+  required_files:
+  - SKILL.md
+  files:
+  - path: references/approval-mode-yaml-bool-audit.md
+    sha256: f17a818e266e5a26159710eb87b72d2e34d0a65b116d0201b9236c2a7388ddab
+    bytes: 2137
+  - path: references/default-model-provider-sync.md
+    sha256: 96fe9641699baeacc1d2cbd98cf459e63975d38221096efbad792fd5ea8c90e5
+    bytes: 4376
+  - path: references/verified-topology-and-probes.md
+    sha256: 7b139ef78f43a8631a21d0f711d39f00f510848444a383bad000faf97402e1b8
+    bytes: 3850
+  - path: SKILL.md
+    sha256: 62e1d66154ef815bddc2f091ca89feb66ea06324f2929f874f90b54cba6753a6
+    bytes: 28682
+  category: devops
+  install:
+    hermes:
+      rel_path: skills/devops/hermes-cross-runtime-bridge
+- name: hermes-yolo-three-env
+  kind: skill
+  products: *id001
+  platforms:
+  - windows
+  - linux
+  source_path: items/hermes-yolo-three-env
+  hash: 63ab9a7db45a81eafa3e1fc3a8c4befb0dcc944e114c094661eace3b0e65b3e0
+  required_files:
+  - SKILL.md
+  files:
+  - path: SKILL.md
+    sha256: 45d4b3268667841fd9d93a941d25436e888294d0ada6bb1880b0c59979f3d801
+    bytes: 3673
+  category: devops
+  install:
+    hermes:
+      rel_path: skills/devops/hermes-yolo-three-env
+- name: gbrain-mcp-operations
+  kind: skill
+  products: *id001
+  platforms:
+  - windows
+  - linux
+  source_path: items/gbrain-mcp-operations
+  hash: bfc4dd996367628cc702284ab34b64a6de06e81de9ce5517d82573672fab54ad
+  required_files:
+  - SKILL.md
+  files:
+  - path: references/giovanni-gbrain-mcp-audit-2026-07-03.md
+    sha256: 6234db1e3e1bcb76f2ba5fd551496c82c0aa4929a452844e3cf09fd9af753352
+    bytes: 3351
+  - path: references/http-mcp-troubleshooting.md
+    sha256: 824059dde1cd89b8c1286bdf03a3a3b6173cd7b629dc239bbc744643b1a660b2
+    bytes: 4146
+  - path: references/write-fallback-embedding-governor.md
+    sha256: 902caf5541a30d8b7e5c9b98d2dd1d16c47d441ea1955653d8d8c5bf1c058327
+    bytes: 2708
+  - path: SKILL.md
+    sha256: 00057625d33e54686636fd168b649c5ba4f238b4a700334be4b0de6562799746
+    bytes: 9697
+  category: devops
+  install:
+    hermes:
+      rel_path: skills/devops/gbrain-mcp-operations
