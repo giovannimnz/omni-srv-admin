@@ -1,0 +1,12 @@
+[Unit]
+Description=Run the CoreDNS TCP telemetry canary every 30 seconds
+
+[Timer]
+OnBootSec=20s
+OnUnitActiveSec=30s
+AccuracySec=5s
+Persistent=true
+Unit=coredns-tcp-canary.service
+
+[Install]
+WantedBy=timers.target
