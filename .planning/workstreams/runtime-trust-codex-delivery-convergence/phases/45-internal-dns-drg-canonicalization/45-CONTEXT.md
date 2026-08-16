@@ -23,9 +23,9 @@ requirements: [DNS-01, DNS-02, DNS-03, DNS-04, DNS-05, DNS-06, DNS-07, DNS-08]
 - `GIOVANNI-W11-PC` is an edge client: it may reach DRG targets through the
   approved `wg100` bridge/fallback path, but that does not make `wg100` the
   canonical server-to-server plane.
-- `GIOVANNI-S23` is already live on `10.100.100.9/32`, but remains blocked for
-  final edge validation until outbound proof is captured from inside the
-  handset/Termux session.
+- `GIOVANNI-S20` is assigned `10.100.100.9/32` and `GIOVANNI-S23` is assigned
+  `10.100.100.10/32`; both remain blocked for final edge validation until
+  handset/Termux handshake and outbound proof are captured.
 - Public `atius.com.br` records are Cloudflare-managed; internal hostnames and private IP identity are managed by internal DNS/inventory.
 
 ## Current Evidence
@@ -39,9 +39,9 @@ requirements: [DNS-01, DNS-02, DNS-03, DNS-04, DNS-05, DNS-06, DNS-07, DNS-08]
 - PgBouncer, Obsidian REST/MCP, Vault and TEI docs/configs are being canonicalized to `10.11.1.11`, `10.13.1.13`, and `10.21.1.21`.
 - W11 WireGuard is now live on `10.100.100.8/32`; SSH and local interface proof
   were revalidated from the new IP.
-- S23 WireGuard is now live on `10.100.100.9/32`; handshake, ICMP and TCP 8022
-  are green from the bridge path, while authenticated handset-side outbound
-  proof remains pending.
+- The current edge mapping is S20 `10.100.100.9/32` and S23
+  `10.100.100.10/32`; the 2026-07-23 readback still showed no handset
+  handshake, ICMP or TCP proof for either peer.
 - The remote `atius-srv-1` checkout has uncommitted home-proxy/PPTP docs and
   inventory changes; they are valid planning input but not yet a pullable Git
   source of truth.

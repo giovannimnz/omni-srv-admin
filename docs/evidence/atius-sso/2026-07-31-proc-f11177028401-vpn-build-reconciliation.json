@@ -1,0 +1,263 @@
+{
+  "schemaVersion": 1,
+  "recordType": "async_build_process_reconciliation",
+  "generatedAt": "2026-07-31T15:12:38-03:00",
+  "process": {
+    "id": "proc_f11177028401",
+    "status": "exited",
+    "exitCode": 0,
+    "completionReason": "exited",
+    "classification": "SUCCESSFUL_VPN_BUILD_PROMOTED_AND_RUNTIME_VALIDATED_THEN_SUPERSEDED_BY_LATER_SUCCESSFUL_SOURCE_PARITY_BUILD_RUNTIME_AND_VISUAL_V2"
+  },
+  "provenance": {
+    "primarySession": "@session:default/20260730_034546_71412d",
+    "dispatchMessageId": 126293,
+    "completionMessageId": 126297,
+    "promotionValidationMessageId": 126299,
+    "supersedingBuildDispatchMessageId": 126324,
+    "supersedingBuildCompletionMessageId": 126333,
+    "supersedingPromotionValidationMessageId": 126335,
+    "supersedingAsyncProcessId": "proc_8c81b41b836e",
+    "supersedingLateCompletionSignal": "The full original command and output for proc_8c81b41b836e were delivered on 2026-07-31. They directly confirm the already-recorded parity unit, invocation, result and resource metrics; this is primary evidence, not reconstruction.",
+    "visualLifecycleAsyncProcessId": "proc_9badcb5bf73d",
+    "visualLifecycleLateCompletionSignal": "The full original command and output for proc_9badcb5bf73d were delivered on 2026-07-31. They directly identify the already-authoritative visual-v2 lifecycle run by unit, invocation, governed metrics and evidence directory; this is primary evidence, not reconstruction.",
+    "lateCompletionSignal": "The full command and output for proc_f11177028401 were delivered in the current Hermes session on 2026-07-31. This supersedes the earlier partial notification and permits direct reconciliation.",
+    "reconstruction": false,
+    "inventedOutput": false
+  },
+  "command": {
+    "workingDirectory": "/home/ubuntu/GitHub/omni-srv-admin",
+    "repository": "/home/ubuntu/GitHub/vpn-atius/web/frontend",
+    "evidenceDirectory": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2",
+    "buildLog": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2/vpn-build-final.log",
+    "unit": "atius-vpn-sso-visual-build-v2-final.service",
+    "slice": "omni-builds.slice",
+    "lock": "/home/ubuntu/.local/state/omni/resource-governor-builds.lock",
+    "cpuQuota": "80%",
+    "memoryHigh": "6G",
+    "memoryMax": "8G",
+    "memorySwapMax": "1G",
+    "tasksMax": 8192
+  },
+  "firstBuild": {
+    "startedAt": "2026-07-31T09:29:48.593-03:00",
+    "finishedAt": "2026-07-31T09:30:24.535-03:00",
+    "unitInvocationId": "adb667ff581045d59aaa3cd4ea3ebe2e",
+    "result": "success",
+    "execMainStatus": 0,
+    "serviceRuntime": "34.903s",
+    "cpuTime": "26.394s",
+    "memoryPeak": "818.5M",
+    "memorySwapPeak": "0B",
+    "log": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/vpn-build-final.log",
+      "bytes": 942,
+      "sha256": "bfdbac00cd84034ca3b144b7268e44885fa0302a9f1f84150ffcba3922a19f79",
+      "compiledSuccessfully": true,
+      "typescriptRan": true,
+      "staticPagesGenerated": "11/11",
+      "loginRoutePresent": true,
+      "explicitBuildErrors": 0
+    },
+    "promotedAndRuntimeValidatedAt": "2026-07-31T09:30:43.281-03:00",
+    "promotedBuildId": "5i44myr1IPLzVZISp62Km",
+    "promotionValidation": {
+      "service": "vpn-frontend.service",
+      "serviceActive": true,
+      "apiHealthHttpStatus": 200,
+      "localFrontendHttpStatus": 307,
+      "publicRootHttpStatus": 307,
+      "apiListen": "127.0.0.1:8000",
+      "frontendListen": "127.0.0.1:3100",
+      "atiusAssetByteExact": true,
+      "rollbackExecuted": false
+    },
+    "visualStatus": {
+      "finalVisualAuthority": false,
+      "reason": "A later computed-style smoke found a real remaining VPN drift: button typography inherited 400/21px, the card was 16px shorter and label-to-control spacing differed. The build and runtime succeeded, but this artifact was not accepted as the final visual artifact."
+    }
+  },
+  "rollbackSnapshot": {
+    "path": "/home/ubuntu/GitHub/vpn-atius/web/frontend/.next.rollback-sso-visual-v2-20260731-092307",
+    "sourceBuildId": "wRHd_fNEJck2D1TsdEsPq",
+    "files": 469,
+    "bytes": 9747096,
+    "treeManifestSha256": "200496df307866585ee5746defb9a5fb02e5e8e6a7f6e04c7cba27af7c0b4a20",
+    "restoreReadiness": "STRUCTURALLY_VALID_NOT_RESTORED"
+  },
+  "supersessionCause": {
+    "detectedBy": "Post-promotion headless computed-style comparison against the canonical Grafana/SSH contract.",
+    "sourcePatchAt": "2026-07-31T09:33:42.994299-03:00",
+    "sourceFile": "/home/ubuntu/GitHub/vpn-atius/web/frontend/src/app/login/page.tsx",
+    "sourceFileCurrentSha256": "366da0aed25c2492fc803ac882da7a611a742aa66349e7afc96d79f4e5eddeb8",
+    "changes": [
+      "Added an 8px margin between each label and input control.",
+      "Pinned input typography to 14px/400/20px.",
+      "Pinned submit-button typography to 14px/500/20px.",
+      "Made the visual harness accept the full-screen gradient from body or main without changing product behavior."
+    ],
+    "prebuildGates": {
+      "vpnContract": "PASS",
+      "typescript": "PASS",
+      "lint": "PASS",
+      "diffCheck": "PASS",
+      "harnessSyntax": "PASS"
+    },
+    "reasonFirstBuildWasReplaced": "LATER_SOURCE_PARITY_FIX_NOT_BUILD_FAILURE"
+  },
+  "supersedingBuild": {
+    "startedAt": "2026-07-31T09:34:48.869-03:00",
+    "finishedAt": "2026-07-31T09:35:24.419-03:00",
+    "asyncProcessId": "proc_8c81b41b836e",
+    "unit": "atius-vpn-sso-visual-build-v2-parity.service",
+    "unitInvocationId": "7aadef3753084c6baa24e2ce527a4886",
+    "result": "success",
+    "execMainStatus": 0,
+    "serviceRuntime": "34.413s",
+    "cpuTime": "26.505s",
+    "memoryPeak": "829.5M",
+    "memorySwapPeak": "0B",
+    "cpuThrottlingObserved": true,
+    "log": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/vpn-build-parity.log",
+      "bytes": 942,
+      "sha256": "978d9bf470977601460341d0abf5b0694257c3bc538c536dd4f0bb8b1664a44c",
+      "compiledSuccessfully": true,
+      "typescriptRan": true,
+      "staticPagesGenerated": "11/11",
+      "loginRoutePresent": true,
+      "explicitBuildErrors": 0
+    },
+    "promotedAndRuntimeValidatedAt": "2026-07-31T09:35:35.364-03:00",
+    "buildId": "TyT674tPqvnHnsQM1RTQ_",
+    "runtimeValidation": {
+      "service": "vpn-frontend.service",
+      "serviceActive": true,
+      "apiHealthHttpStatus": 200,
+      "localFrontendHttpStatus": 307,
+      "publicRootHttpStatus": 307,
+      "apiListen": "127.0.0.1:8000",
+      "frontendListen": "127.0.0.1:3100"
+    },
+    "computedStyleSmoke": {
+      "status": "PASS",
+      "sites": "5/5",
+      "vpnCard": "448x454.25",
+      "vpnLogo": "44x44",
+      "destinationLabel": "11px/400/16.5px",
+      "destinationHost": "14px/400/20px",
+      "labels": "14px/500/20px",
+      "inputs": "44px; 14px/400/20px",
+      "button": "44px; 14px/500/20px",
+      "faviconAtius": true,
+      "emoji": false
+    }
+  },
+  "visualV2Authority": {
+    "finishedAt": "2026-07-31T09:41:50.723-03:00",
+    "asyncProcessId": "proc_9badcb5bf73d",
+    "unit": "atius-sso-visual-v2-lifecycle.service",
+    "unitInvocationId": "ca41da73483d46149d8e3aeed8f316a2",
+    "result": "success",
+    "execMainStatus": 0,
+    "serviceRuntime": "5min 23.511s",
+    "cpuTime": "42.228s",
+    "memoryPeak": "488.3M",
+    "memorySwapPeak": "0B",
+    "governor": {
+      "slice": "omni-builds.slice",
+      "lock": "/home/ubuntu/.local/state/omni/resource-governor-builds.lock",
+      "cpuQuota": "80%",
+      "memoryHigh": "4G",
+      "memoryMax": "6G",
+      "memorySwapMax": "1G",
+      "tasksMax": 4096
+    },
+    "evidenceDirectory": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627",
+    "latestPointer": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/latest-lifecycle-path.txt",
+      "sha256": "d851816a7ad0b7bea60c975cf1ce559dd824ff45a5fee8daf15575fc909479f8"
+    },
+    "runLog": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627/run.log",
+      "bytes": 655,
+      "sha256": "36d51696af8d06e8cf484090f1772e71b0d8e31393c2991074f7dc8c7db80a7e"
+    },
+    "report": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627/report.json",
+    "reportSha256": "e1940214d684af276d91412c4a69087d6d0d076f15397fe44b6e56aa61c3208b",
+    "reportBytes": 32145,
+    "runner": "playwright-headless",
+    "evidenceScope": "full",
+    "completeFleetEvidence": true,
+    "evidenceFiles": 43,
+    "evidenceBytes": 4821998,
+    "evidenceTreeManifestSha256": "d5243a352eab3039cfd4fd15eb9e6ff11d43859e0d6392c23ae21c556d9853b0",
+    "secretsRecorded": false,
+    "finalVerdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false,
+    "fleetSites": "5/5",
+    "fleetCycles": "10/10",
+    "fleetScreenshots": "40/40",
+    "vpn": {
+      "status": "PASS",
+      "cycles": "2/2",
+      "screenshots": "8/8",
+      "authCookieIssuedAndCleared": true,
+      "visibleLogoutControl": true
+    },
+    "rule": "This report is the only operational visual authority. proc_f11177028401 is historical build/runtime provenance and does not create a competing visual verdict."
+  },
+  "currentOperationalReadback": {
+    "checkedAt": "2026-07-31T14:56:40-03:00",
+    "service": "vpn-frontend.service",
+    "activeState": "active",
+    "result": "success",
+    "execMainStatus": 0,
+    "pid": 472739,
+    "activeSince": "2026-07-31T09:35:34-03:00",
+    "buildId": "TyT674tPqvnHnsQM1RTQ_",
+    "artifact": {
+      "files": 471,
+      "bytes": 9755473,
+      "treeManifestSha256": "705ed37ba4e523b2d85ce387145968ab5f809f4794368e733959cc979a4d4936"
+    },
+    "publicLoginHttpStatus": 200,
+    "publicBuildManifestHttpStatus": 200
+  },
+  "closeout": {
+    "preCloseoutBackup": {
+      "path": "/home/ubuntu/backups/proc-f11177028401-closeout-20260731-145027",
+      "files": 9,
+      "bytes": 189575,
+      "manifestSha256": "5725987d6dc6e24aaba9590c0500bccfa34c6407cfefaa0947f9ee35e4be14f6",
+      "checksumValidation": "PASS"
+    },
+    "graphify": {
+      "executed": false,
+      "reason": "DEFERRED_DISKPRESSURE"
+    },
+    "rebuildExecutedDuringCloseout": false,
+    "restartExecutedDuringCloseout": false,
+    "restoreExecutedDuringCloseout": false,
+    "commitExecutedDuringCloseout": false,
+    "pushExecutedDuringCloseout": false
+  },
+  "conclusion": {
+    "firstBuildSucceeded": true,
+    "firstBuildWasPromoted": true,
+    "firstBuildRuntimePassed": true,
+    "firstBuildIsVisualAuthority": false,
+    "firstBuildWasSuperseded": true,
+    "supersessionReason": "LATER_SOURCE_PARITY_FIX",
+    "supersedingBuildSucceeded": true,
+    "supersedingBuildWasPromoted": true,
+    "supersedingBuildRuntimePassed": true,
+    "supersedingBuildVisualV2Passed": true,
+    "buildFailure": false,
+    "runtimeFailure": false,
+    "rebuildRequiredNow": false,
+    "restartRequiredNow": false,
+    "rollbackRequiredNow": false
+  }
+}

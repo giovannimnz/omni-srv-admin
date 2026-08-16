@@ -1,0 +1,1822 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-01T02:56:42.486Z",
+  "finalVerdict": "PASS",
+  "runner": "playwright-headless",
+  "evidenceScope": "full",
+  "selectedTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": true,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "sso",
+      "origin": "https://sso.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://sso.atius.com.br/",
+          "loginUrl": "https://sso.atius.com.br/login",
+          "authenticatedUrl": "https://sso.atius.com.br/login",
+          "logoutUrl": "https://sso.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "button:has-text(\"Encerrar sessão\"), button:has-text(\"Sair\"), [data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://sso.atius.com.br/",
+          "loginUrl": "https://sso.atius.com.br/login",
+          "authenticatedUrl": "https://sso.atius.com.br/login",
+          "logoutUrl": "https://sso.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "button:has-text(\"Encerrar sessão\"), button:has-text(\"Sair\"), [data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-1-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-1-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-1-03-authenticated.png",
+          "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-1-04-logged-out.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-2-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-2-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-2-03-authenticated.png",
+          "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/sso/cycle-2-04-logged-out.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "ssh",
+      "origin": "https://ssh.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://ssh.atius.com.br/",
+          "loginUrl": "https://ssh.atius.com.br/login",
+          "authenticatedUrl": "https://ssh.atius.com.br/compute",
+          "logoutUrl": "https://ssh.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 308,
+              "url": "https://ssh.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://ssh.atius.com.br/compute"
+            },
+            {
+              "status": 200,
+              "url": "https://ssh.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://ssh.atius.com.br/compute"
+            },
+            {
+              "status": 303,
+              "url": "https://ssh.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://ssh.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://ssh.atius.com.br/",
+          "loginUrl": "https://ssh.atius.com.br/login",
+          "authenticatedUrl": "https://ssh.atius.com.br/compute",
+          "logoutUrl": "https://ssh.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 308,
+              "url": "https://ssh.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://ssh.atius.com.br/compute"
+            },
+            {
+              "status": 200,
+              "url": "https://ssh.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://ssh.atius.com.br/compute"
+            },
+            {
+              "status": 303,
+              "url": "https://ssh.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://ssh.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-1-01-access.png",
+          "sha256": "8f90b16b7044683cb7bc6acc5d275ecbae8f9c80740af994acf90625ab25229e",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-1-02-login.png",
+          "sha256": "8f90b16b7044683cb7bc6acc5d275ecbae8f9c80740af994acf90625ab25229e",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-1-03-authenticated.png",
+          "sha256": "cb72d4987406e1ffc0abf00d0cf8a4711ca3ea5b8ad85f347b153ead79af1813",
+          "url": "https://ssh.atius.com.br/compute"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-1-04-logged-out.png",
+          "sha256": "8f90b16b7044683cb7bc6acc5d275ecbae8f9c80740af994acf90625ab25229e",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-2-01-access.png",
+          "sha256": "8f90b16b7044683cb7bc6acc5d275ecbae8f9c80740af994acf90625ab25229e",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-2-02-login.png",
+          "sha256": "8f90b16b7044683cb7bc6acc5d275ecbae8f9c80740af994acf90625ab25229e",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-2-03-authenticated.png",
+          "sha256": "ec0abd6857cef3d5b076ae40b3b08e4d0be66d05928fa6293bf6bc035d3d3068",
+          "url": "https://ssh.atius.com.br/compute"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/ssh/cycle-2-04-logged-out.png",
+          "sha256": "8f90b16b7044683cb7bc6acc5d275ecbae8f9c80740af994acf90625ab25229e",
+          "url": "https://ssh.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/compute",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/compute",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "rdp",
+      "origin": "https://rdp.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://rdp.atius.com.br/",
+          "loginUrl": "https://rdp.atius.com.br/login",
+          "authenticatedUrl": "https://rdp.atius.com.br/giovanni-w11-pc",
+          "logoutUrl": "https://rdp.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout[href=\"/logout\"], a[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 303,
+              "url": "https://rdp.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://rdp.atius.com.br/",
+          "loginUrl": "https://rdp.atius.com.br/login",
+          "authenticatedUrl": "https://rdp.atius.com.br/giovanni-w11-pc",
+          "logoutUrl": "https://rdp.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout[href=\"/logout\"], a[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 303,
+              "url": "https://rdp.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-1-01-access.png",
+          "sha256": "f9b680750d2770f23dcbe007db7f8123338c7282d79773d0d3ba9bd00f01946a",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-1-02-login.png",
+          "sha256": "f9b680750d2770f23dcbe007db7f8123338c7282d79773d0d3ba9bd00f01946a",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-1-03-authenticated.png",
+          "sha256": "cdfd15ff0e15bdb26903e0a436d87cc89ef104eed00e22ec5d24962bcbb2051a",
+          "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-1-04-logged-out.png",
+          "sha256": "f9b680750d2770f23dcbe007db7f8123338c7282d79773d0d3ba9bd00f01946a",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-2-01-access.png",
+          "sha256": "f9b680750d2770f23dcbe007db7f8123338c7282d79773d0d3ba9bd00f01946a",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-2-02-login.png",
+          "sha256": "f9b680750d2770f23dcbe007db7f8123338c7282d79773d0d3ba9bd00f01946a",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-2-03-authenticated.png",
+          "sha256": "cdfd15ff0e15bdb26903e0a436d87cc89ef104eed00e22ec5d24962bcbb2051a",
+          "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/rdp/cycle-2-04-logged-out.png",
+          "sha256": "f9b680750d2770f23dcbe007db7f8123338c7282d79773d0d3ba9bd00f01946a",
+          "url": "https://rdp.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/giovanni-w11-pc",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/giovanni-w11-pc",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "oci",
+      "origin": "https://oci.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://oci.atius.com.br/",
+          "loginUrl": "https://oci.atius.com.br/login",
+          "authenticatedUrl": "https://oci.atius.com.br/",
+          "logoutUrl": "https://oci.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "a[href=\"/logout\"], button:has-text(\"Sair\"), [data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 303,
+              "url": "https://oci.atius.com.br/"
+            },
+            {
+              "status": 308,
+              "url": "https://oci.atius.com.br/sso"
+            },
+            {
+              "status": 200,
+              "url": "https://oci.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://oci.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://oci.atius.com.br/auth/logout"
+            },
+            {
+              "status": 308,
+              "url": "https://oci.atius.com.br/sso"
+            },
+            {
+              "status": 200,
+              "url": "https://oci.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://oci.atius.com.br/",
+          "loginUrl": "https://oci.atius.com.br/login",
+          "authenticatedUrl": "https://oci.atius.com.br/",
+          "logoutUrl": "https://oci.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "a[href=\"/logout\"], button:has-text(\"Sair\"), [data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 303,
+              "url": "https://oci.atius.com.br/"
+            },
+            {
+              "status": 308,
+              "url": "https://oci.atius.com.br/sso"
+            },
+            {
+              "status": 200,
+              "url": "https://oci.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://oci.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://oci.atius.com.br/auth/logout"
+            },
+            {
+              "status": 308,
+              "url": "https://oci.atius.com.br/sso"
+            },
+            {
+              "status": 200,
+              "url": "https://oci.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-1-01-access.png",
+          "sha256": "a8bf59cb6f3ad69dbd53ca1949d269de53e64b33f6df1a0dfaaf2e45947a0e6e",
+          "url": "https://oci.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-1-02-login.png",
+          "sha256": "a8bf59cb6f3ad69dbd53ca1949d269de53e64b33f6df1a0dfaaf2e45947a0e6e",
+          "url": "https://oci.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-1-03-authenticated.png",
+          "sha256": "2a8481e7dda821e2fb83be53395b65019e70af3c252a842ae9cf7bebae3ec85c",
+          "url": "https://oci.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-1-04-logged-out.png",
+          "sha256": "a8bf59cb6f3ad69dbd53ca1949d269de53e64b33f6df1a0dfaaf2e45947a0e6e",
+          "url": "https://oci.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-2-01-access.png",
+          "sha256": "a8bf59cb6f3ad69dbd53ca1949d269de53e64b33f6df1a0dfaaf2e45947a0e6e",
+          "url": "https://oci.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-2-02-login.png",
+          "sha256": "a8bf59cb6f3ad69dbd53ca1949d269de53e64b33f6df1a0dfaaf2e45947a0e6e",
+          "url": "https://oci.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-2-03-authenticated.png",
+          "sha256": "7fe7b01c9529cad3f73f888899c0b82919ff83463951c67b4113b3ce5ff75555",
+          "url": "https://oci.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/oci/cycle-2-04-logged-out.png",
+          "sha256": "a8bf59cb6f3ad69dbd53ca1949d269de53e64b33f6df1a0dfaaf2e45947a0e6e",
+          "url": "https://oci.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/",
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/",
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "talk",
+      "origin": "https://talk.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://talk.atius.com.br/",
+          "loginUrl": "https://talk.atius.com.br/login",
+          "authenticatedUrl": "https://talk.atius.com.br/",
+          "logoutUrl": "https://talk.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "form[action=\"/logout\"] button, form[action=\"/logout\"] input[type=\"submit\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://talk.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://talk.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://talk.atius.com.br/",
+          "loginUrl": "https://talk.atius.com.br/login",
+          "authenticatedUrl": "https://talk.atius.com.br/",
+          "logoutUrl": "https://talk.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "form[action=\"/logout\"] button, form[action=\"/logout\"] input[type=\"submit\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://talk.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://talk.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-1-01-access.png",
+          "sha256": "e81e948b058c3c18f072b8898c35f17f235d4ec37cc4224af6433760eca825ff",
+          "url": "https://talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-1-02-login.png",
+          "sha256": "e81e948b058c3c18f072b8898c35f17f235d4ec37cc4224af6433760eca825ff",
+          "url": "https://talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-1-03-authenticated.png",
+          "sha256": "a4be6d669cb9ceb1cc252b28e1ed743cb008b9f19f7fe3b48fbfa5e9898a0a69",
+          "url": "https://talk.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-1-04-logged-out.png",
+          "sha256": "e81e948b058c3c18f072b8898c35f17f235d4ec37cc4224af6433760eca825ff",
+          "url": "https://talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-2-01-access.png",
+          "sha256": "e81e948b058c3c18f072b8898c35f17f235d4ec37cc4224af6433760eca825ff",
+          "url": "https://talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-2-02-login.png",
+          "sha256": "e81e948b058c3c18f072b8898c35f17f235d4ec37cc4224af6433760eca825ff",
+          "url": "https://talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-2-03-authenticated.png",
+          "sha256": "1f1ac17209609baf7bcc4a54598f16ed72010d644990b700c892a3829e16d032",
+          "url": "https://talk.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/talk/cycle-2-04-logged-out.png",
+          "sha256": "e81e948b058c3c18f072b8898c35f17f235d4ec37cc4224af6433760eca825ff",
+          "url": "https://talk.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/",
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/",
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "admin-talk",
+      "origin": "https://admin.talk.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://admin.talk.atius.com.br/",
+          "loginUrl": "https://admin.talk.atius.com.br/login",
+          "authenticatedUrl": "https://admin.talk.atius.com.br/",
+          "logoutUrl": "https://admin.talk.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "form[action=\"/logout\"] button, form[action=\"/logout\"] input[type=\"submit\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://admin.talk.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://admin.talk.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://admin.talk.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://admin.talk.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://admin.talk.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://admin.talk.atius.com.br/",
+          "loginUrl": "https://admin.talk.atius.com.br/login",
+          "authenticatedUrl": "https://admin.talk.atius.com.br/",
+          "logoutUrl": "https://admin.talk.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "form[action=\"/logout\"] button, form[action=\"/logout\"] input[type=\"submit\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://admin.talk.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://admin.talk.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://admin.talk.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://admin.talk.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://admin.talk.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-1-01-access.png",
+          "sha256": "1e17d2b3a50f8aced0af8f81aadc9e5c76435dcadbab157ba8b7d17d8e949e90",
+          "url": "https://admin.talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-1-02-login.png",
+          "sha256": "1e17d2b3a50f8aced0af8f81aadc9e5c76435dcadbab157ba8b7d17d8e949e90",
+          "url": "https://admin.talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-1-03-authenticated.png",
+          "sha256": "90075f9dabb1be573f2e1633b3bf0546469677ea2dcd02a24ed53448b92b1cae",
+          "url": "https://admin.talk.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-1-04-logged-out.png",
+          "sha256": "1e17d2b3a50f8aced0af8f81aadc9e5c76435dcadbab157ba8b7d17d8e949e90",
+          "url": "https://admin.talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-2-01-access.png",
+          "sha256": "1e17d2b3a50f8aced0af8f81aadc9e5c76435dcadbab157ba8b7d17d8e949e90",
+          "url": "https://admin.talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-2-02-login.png",
+          "sha256": "1e17d2b3a50f8aced0af8f81aadc9e5c76435dcadbab157ba8b7d17d8e949e90",
+          "url": "https://admin.talk.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-2-03-authenticated.png",
+          "sha256": "e7bcce3c7898f08bf5efab311d0d3186f427d9e1f1798eaa7ab747747737aae9",
+          "url": "https://admin.talk.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/admin-talk/cycle-2-04-logged-out.png",
+          "sha256": "1e17d2b3a50f8aced0af8f81aadc9e5c76435dcadbab157ba8b7d17d8e949e90",
+          "url": "https://admin.talk.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/",
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/",
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "remote",
+      "origin": "https://remote.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://remote.atius.com.br/",
+          "loginUrl": "https://remote.atius.com.br/login",
+          "authenticatedUrl": "https://remote.atius.com.br/mt5/1/",
+          "logoutUrl": "https://remote.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://remote.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://remote.atius.com.br/mt5/1/"
+            },
+            {
+              "status": 200,
+              "url": "https://remote.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://remote.atius.com.br/mt5/1/"
+            },
+            {
+              "status": 302,
+              "url": "https://remote.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://remote.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://remote.atius.com.br/",
+          "loginUrl": "https://remote.atius.com.br/login",
+          "authenticatedUrl": "https://remote.atius.com.br/mt5/1/",
+          "logoutUrl": "https://remote.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://remote.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://remote.atius.com.br/mt5/1/"
+            },
+            {
+              "status": 200,
+              "url": "https://remote.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://remote.atius.com.br/mt5/1/"
+            },
+            {
+              "status": 302,
+              "url": "https://remote.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://remote.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-1-01-access.png",
+          "sha256": "45b5abbb6d487342d0fa0a1b681a69dd3fa0b295dba2506233b1aea3942b85f9",
+          "url": "https://remote.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-1-02-login.png",
+          "sha256": "45b5abbb6d487342d0fa0a1b681a69dd3fa0b295dba2506233b1aea3942b85f9",
+          "url": "https://remote.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-1-03-authenticated.png",
+          "sha256": "56838dd82bf664ccf71b9ba7f21fcf2e96ad49a58c6c40361fa51f1e535e0ec7",
+          "url": "https://remote.atius.com.br/mt5/1/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-1-04-logged-out.png",
+          "sha256": "45b5abbb6d487342d0fa0a1b681a69dd3fa0b295dba2506233b1aea3942b85f9",
+          "url": "https://remote.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-2-01-access.png",
+          "sha256": "45b5abbb6d487342d0fa0a1b681a69dd3fa0b295dba2506233b1aea3942b85f9",
+          "url": "https://remote.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-2-02-login.png",
+          "sha256": "45b5abbb6d487342d0fa0a1b681a69dd3fa0b295dba2506233b1aea3942b85f9",
+          "url": "https://remote.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-2-03-authenticated.png",
+          "sha256": "6c76555e34014031042960a1dd67e1e5f43f9f29b7e9599fb8273be7bf247e50",
+          "url": "https://remote.atius.com.br/mt5/1/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/remote/cycle-2-04-logged-out.png",
+          "sha256": "45b5abbb6d487342d0fa0a1b681a69dd3fa0b295dba2506233b1aea3942b85f9",
+          "url": "https://remote.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/mt5/1/",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/mt5/1/",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "grafana",
+      "origin": "https://grafana.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://grafana.atius.com.br/",
+          "loginUrl": "https://grafana.atius.com.br/login",
+          "authenticatedUrl": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+          "logoutUrl": "https://grafana.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://grafana.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://grafana.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+            },
+            {
+              "status": 302,
+              "url": "https://grafana.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://grafana.atius.com.br/",
+          "loginUrl": "https://grafana.atius.com.br/login",
+          "authenticatedUrl": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+          "logoutUrl": "https://grafana.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://grafana.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://grafana.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+            },
+            {
+              "status": 302,
+              "url": "https://grafana.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://grafana.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-1-01-access.png",
+          "sha256": "876e59f634e3356aed1073aec372c134de7e27fd50b5c5002dbdcc442b19e965",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-1-02-login.png",
+          "sha256": "876e59f634e3356aed1073aec372c134de7e27fd50b5c5002dbdcc442b19e965",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-1-03-authenticated.png",
+          "sha256": "1aab3c1c183f2ec11f65471545bab315b9eb8a16aba4c1158ef1587374fc39b0",
+          "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-1-04-logged-out.png",
+          "sha256": "eeef17bd21464504f8786c60002c481b0323f81dfdb36166396f412d762fc6e5",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-2-01-access.png",
+          "sha256": "eeef17bd21464504f8786c60002c481b0323f81dfdb36166396f412d762fc6e5",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-2-02-login.png",
+          "sha256": "eeef17bd21464504f8786c60002c481b0323f81dfdb36166396f412d762fc6e5",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-2-03-authenticated.png",
+          "sha256": "3255951a9e5b9133b38065a195f78c82b908fa81f250f98e689bac91437b2831",
+          "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/grafana/cycle-2-04-logged-out.png",
+          "sha256": "eeef17bd21464504f8786c60002c481b0323f81dfdb36166396f412d762fc6e5",
+          "url": "https://grafana.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://grafana.atius.com.br/login",
+        "https://grafana.atius.com.br/",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/login",
+        "https://grafana.atius.com.br/login",
+        "https://grafana.atius.com.br/",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "portainer",
+      "origin": "https://portainer.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://portainer.atius.com.br/",
+          "loginUrl": "https://portainer.atius.com.br/login",
+          "authenticatedUrl": "https://portainer.atius.com.br/",
+          "logoutUrl": "https://portainer.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://portainer.atius.com.br/",
+          "loginUrl": "https://portainer.atius.com.br/login",
+          "authenticatedUrl": "https://portainer.atius.com.br/",
+          "logoutUrl": "https://portainer.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-1-01-access.png",
+          "sha256": "e414931f0dac9cdf77674a31aa301636f37c76036777070140d7d778e9ab3887",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-1-02-login.png",
+          "sha256": "e414931f0dac9cdf77674a31aa301636f37c76036777070140d7d778e9ab3887",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-1-03-authenticated.png",
+          "sha256": "fdf9666f8f2a23f8bab597ad5e72b9f3d7d1cff7956fe315cfd07916df5f45e7",
+          "url": "https://portainer.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-1-04-logged-out.png",
+          "sha256": "e414931f0dac9cdf77674a31aa301636f37c76036777070140d7d778e9ab3887",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-2-01-access.png",
+          "sha256": "e414931f0dac9cdf77674a31aa301636f37c76036777070140d7d778e9ab3887",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-2-02-login.png",
+          "sha256": "e414931f0dac9cdf77674a31aa301636f37c76036777070140d7d778e9ab3887",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-2-03-authenticated.png",
+          "sha256": "12f0bfc04995e55057969867c7313d237359dc7d295d4703bd3f06b8ce9aacd1",
+          "url": "https://portainer.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/portainer/cycle-2-04-logged-out.png",
+          "sha256": "e414931f0dac9cdf77674a31aa301636f37c76036777070140d7d778e9ab3887",
+          "url": "https://portainer.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://portainer.atius.com.br/login",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/login",
+        "https://portainer.atius.com.br/login",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "docker",
+      "origin": "https://docker.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://docker.atius.com.br/",
+          "loginUrl": "https://docker.atius.com.br/login",
+          "authenticatedUrl": "https://docker.atius.com.br/",
+          "logoutUrl": "https://docker.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://docker.atius.com.br/",
+          "loginUrl": "https://docker.atius.com.br/login",
+          "authenticatedUrl": "https://docker.atius.com.br/",
+          "logoutUrl": "https://docker.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-1-01-access.png",
+          "sha256": "3fb5f77b3823807db43588c95dfea9a848eb64c972fdc648f9e93e584fcebed8",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-1-02-login.png",
+          "sha256": "3fb5f77b3823807db43588c95dfea9a848eb64c972fdc648f9e93e584fcebed8",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-1-03-authenticated.png",
+          "sha256": "1a8753119cb8e31231c2ef6d4641184019f2e04c20c84eeb24da3d4f091b6e30",
+          "url": "https://docker.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-1-04-logged-out.png",
+          "sha256": "3fb5f77b3823807db43588c95dfea9a848eb64c972fdc648f9e93e584fcebed8",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-2-01-access.png",
+          "sha256": "3fb5f77b3823807db43588c95dfea9a848eb64c972fdc648f9e93e584fcebed8",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-2-02-login.png",
+          "sha256": "3fb5f77b3823807db43588c95dfea9a848eb64c972fdc648f9e93e584fcebed8",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-2-03-authenticated.png",
+          "sha256": "ab9a4eb326ec55942ee854c01d46b0a624356dcf8380c961d124c42d9e8c802a",
+          "url": "https://docker.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/docker/cycle-2-04-logged-out.png",
+          "sha256": "3fb5f77b3823807db43588c95dfea9a848eb64c972fdc648f9e93e584fcebed8",
+          "url": "https://docker.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://docker.atius.com.br/login",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/login",
+        "https://docker.atius.com.br/login",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "vpn",
+      "origin": "https://vpn.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://vpn.atius.com.br/",
+          "loginUrl": "https://vpn.atius.com.br/login",
+          "authenticatedUrl": "https://vpn.atius.com.br/",
+          "logoutUrl": "https://vpn.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout-link[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/api/auth/login"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://vpn.atius.com.br/",
+          "loginUrl": "https://vpn.atius.com.br/login",
+          "authenticatedUrl": "https://vpn.atius.com.br/",
+          "logoutUrl": "https://vpn.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout-link[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/api/auth/login"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-1-01-access.png",
+          "sha256": "c84c76ca69876968a04269aaffb73f7b5f5d34b3dbf3c7e1bf8e14ee59d389c1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-1-02-login.png",
+          "sha256": "c84c76ca69876968a04269aaffb73f7b5f5d34b3dbf3c7e1bf8e14ee59d389c1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-1-03-authenticated.png",
+          "sha256": "40c29e73a5c63b082443451b70b686f81c355ca265f0203ee7bd882c73ae97c0",
+          "url": "https://vpn.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-1-04-logged-out.png",
+          "sha256": "c84c76ca69876968a04269aaffb73f7b5f5d34b3dbf3c7e1bf8e14ee59d389c1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-2-01-access.png",
+          "sha256": "c84c76ca69876968a04269aaffb73f7b5f5d34b3dbf3c7e1bf8e14ee59d389c1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-2-02-login.png",
+          "sha256": "c84c76ca69876968a04269aaffb73f7b5f5d34b3dbf3c7e1bf8e14ee59d389c1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-2-03-authenticated.png",
+          "sha256": "5ab3c170adca0ee11edae3a509568fd70939ffb98a79e4fff710e25bb5174f58",
+          "url": "https://vpn.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/vpn/cycle-2-04-logged-out.png",
+          "sha256": "c84c76ca69876968a04269aaffb73f7b5f5d34b3dbf3c7e1bf8e14ee59d389c1",
+          "url": "https://vpn.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "adguard",
+      "origin": "https://adguard.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://adguard.atius.com.br/",
+          "loginUrl": "https://adguard.atius.com.br/login",
+          "authenticatedUrl": "https://adguard.atius.com.br/",
+          "logoutUrl": "https://adguard.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "a[href=\"control/logout\"], a[href=\"/control/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://adguard.atius.com.br/control/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://adguard.atius.com.br/",
+          "loginUrl": "https://adguard.atius.com.br/login",
+          "authenticatedUrl": "https://adguard.atius.com.br/",
+          "logoutUrl": "https://adguard.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "a[href=\"control/logout\"], a[href=\"/control/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://adguard.atius.com.br/control/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-1-01-access.png",
+          "sha256": "e9133d2fcf04c4f1988fa23615ad6dbb6f5c73e1a6bf6166e4f4e32b2081bd31",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-1-02-login.png",
+          "sha256": "e9133d2fcf04c4f1988fa23615ad6dbb6f5c73e1a6bf6166e4f4e32b2081bd31",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-1-03-authenticated.png",
+          "sha256": "d3e3ad58a11083ec61cbeebec225aac628d8a440d7b0dbf1d9dd452910dba12a",
+          "url": "https://adguard.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-1-04-logged-out.png",
+          "sha256": "e9133d2fcf04c4f1988fa23615ad6dbb6f5c73e1a6bf6166e4f4e32b2081bd31",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-2-01-access.png",
+          "sha256": "e9133d2fcf04c4f1988fa23615ad6dbb6f5c73e1a6bf6166e4f4e32b2081bd31",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-2-02-login.png",
+          "sha256": "e9133d2fcf04c4f1988fa23615ad6dbb6f5c73e1a6bf6166e4f4e32b2081bd31",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-2-03-authenticated.png",
+          "sha256": "b3164959b9ebe255316965132ee241ff00cf914594f4d10ea9a86dd6d678b092",
+          "url": "https://adguard.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-08-01-full-fleet-live-20260731-235410/adguard/cycle-2-04-logged-out.png",
+          "sha256": "e9133d2fcf04c4f1988fa23615ad6dbb6f5c73e1a6bf6166e4f4e32b2081bd31",
+          "url": "https://adguard.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://adguard.atius.com.br/login",
+        "https://adguard.atius.com.br/",
+        "https://adguard.atius.com.br/logout",
+        "https://adguard.atius.com.br/login",
+        "https://adguard.atius.com.br/login",
+        "https://adguard.atius.com.br/",
+        "https://adguard.atius.com.br/logout",
+        "https://adguard.atius.com.br/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 12,
+    "cycles": 24,
+    "screenshots": 96
+  },
+  "secretsRecorded": false
+}

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T11:44:36-03:00",
+  "process": {
+    "id": "proc_3c0b08ba1c60",
+    "command": "node /tmp/atius-sso-app-readiness-diagnostic.mjs",
+    "exitCode": 0,
+    "collectionWindow": {
+      "summaryMtime": "2026-07-31T05:38:15-03:00",
+      "timezone": "America/Sao_Paulo"
+    }
+  },
+  "classification": {
+    "status": "HISTORICAL_AUTHENTICATED_DIAGNOSTIC_WITH_FINDINGS",
+    "collectorCompleted": true,
+    "unconditionalProductPass": false,
+    "authoritativeVisualPack": false,
+    "reason": "The script exits zero after writing JSON and has no assertions over failures[], consoleErrors[], Grafana panel errors, Portainer spinners, or locale fallback failures."
+  },
+  "harnessContract": {
+    "targets": ["grafana", "docker"],
+    "authenticatedReadinessSelectors": {
+      "grafana": "[aria-label=Perfil]",
+      "docker": "[data-cy=userMenu-button]"
+    },
+    "samplesSeconds": [5, 15, 30],
+    "capturesHttpFailures": true,
+    "capturesConsoleWarningsAndErrors": true,
+    "assertsCapturedFailures": false,
+    "assertsConsoleErrors": false,
+    "assertsPanelData": false,
+    "assertsSpinnerCleared": false
+  },
+  "historicalResults": {
+    "grafana": {
+      "authenticatedShellReady": true,
+      "panelCountAt5s": 12,
+      "panelCountAt15s": 12,
+      "panelCountAt30s": 12,
+      "visiblePanelErrorsAt15s": 1,
+      "visiblePanelErrorsAt30s": 0,
+      "datasourceFailuresRecordedByHarness": 2,
+      "datasource500AccessLogCountAt0537": 3,
+      "websocket403AccessLogCountAt0537": 8,
+      "visualAssessment": "Dashboard shell rendered, but panels were blank/no-data and one plugin error was visible at 15 seconds."
+    },
+    "docker": {
+      "authenticatedAppReady": true,
+      "environmentCardsAt15s": 1,
+      "spinnersAt5s": 2,
+      "spinnersAt15s": 0,
+      "spinnersAt30s": 0,
+      "localeFallback404": "https://docker.atius.com.br/locales/en-US/translation.json",
+      "visualImpactObserved": false
+    }
+  },
+  "laterReconciliation": {
+    "websocket101CountAfter0723": 10,
+    "websocketFindingStatus": "RESOLVED_BEFORE_VISUAL_V2_CERTIFICATION",
+    "authoritativeVisualVerdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "authoritativeVisualPack": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627",
+    "centralOidcFlowProven": false
+  },
+  "currentSeparateIncident": {
+    "id": "srv1-diskpressure-monitoring-pending",
+    "diskPressureTransition": "2026-07-31T10:13:14-03:00",
+    "notCauseOfHistorical0537Failures": true,
+    "rootFilesystemUsagePercent": 90,
+    "rootFilesystemFreeBytes": 21482262528,
+    "prometheusPhase": "Pending",
+    "lokiPhase": "Pending"
+  },
+  "backup": {
+    "path": "/home/ubuntu/backups/atius-sso-readiness-run-0537-20260731-114025",
+    "files": 16,
+    "bytes": 773530,
+    "checksum": "PASS"
+  },
+  "knowledgeIndex": {
+    "gbrainSlug": "atius-sso-readiness-diagnostic-0537-2026-07-31/index",
+    "gbrainImportMode": "no-embed",
+    "gbrainReadback": "PASS",
+    "graphifyRebuild": "DEFERRED_DISKPRESSURE"
+  },
+  "git": {
+    "commitOrPushPerformed": false
+  }
+}

@@ -1,0 +1,78 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T22:12:33.444Z",
+  "finalVerdict": "FAIL",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "sso"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "sso",
+      "origin": "https://sso.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-promote-20260731-191200/sso/cycle-1-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-promote-20260731-191200/sso/cycle-1-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-promote-20260731-191200/sso/cycle-1-03-authenticated.png",
+          "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+          "url": "https://sso.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-promote-20260731-191200/sso/cycle-1-99-failure.png",
+        "sha256": "927fc85b00370dba92e8ee14ea0da84ac332576e1320faf627c1aa794a1c212c",
+        "url": "https://sso.atius.com.br/login"
+      },
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByPlaceholder('Digite seu email ou username').first() to be visible\u001b[22m\n\u001b[2m    - waiting for\" https://sso.atius.com.br/login\" navigation to finish...\u001b[22m\n\u001b[2m    - navigated to \"https://sso.atius.com.br/login\"\u001b[22m\n"
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 0,
+    "screenshots": 3
+  },
+  "secretsRecorded": false
+}

@@ -1,0 +1,157 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T13:43:10-03:00",
+  "classification": "HISTORICAL_PRE_FIX_UI_REVIEW_RECONSTRUCTED_POST_TIMEOUT_SUPERSEDED_BY_VISUAL_V2",
+  "delegation": {
+    "id": "deleg_115bbf83",
+    "role": "gsd-ui-review leaf reviewer",
+    "requestedMode": "read-only product review",
+    "dispatchedAt": "2026-07-31T07:35:59-03:00",
+    "finishedAt": "2026-07-31T07:45:59-03:00",
+    "durationSeconds": 600.01,
+    "reportedApiCalls": 37,
+    "transcriptToolCalls": 58,
+    "status": "timeout",
+    "summaryProduced": false,
+    "lastSuccessfulToolResultAt": "2026-07-31T07:45:56-03:00",
+    "timeoutInterpretation": "BUDGET_EXHAUSTED_DURING_FINAL_SYNTHESIS_AFTER_SUCCESSFUL_CAPTURE_AND_ANALYSIS",
+    "transcript": {
+      "path": "/home/ubuntu/.hermes/cache/delegation/live/deleg_115bbf83/task-0.log",
+      "bytes": 30649,
+      "sha256": "d9a5329c62f41fb5760f133a778ba3366f99d1ae0704d0415eca415f9e34e260",
+      "copiedIntoRepo": false,
+      "copyPolicy": "Original transcript contains a credential-like historical string returned by a broad search. Keep only path, size, hash, and redacted conclusions in versionable evidence."
+    }
+  },
+  "mutationAudit": {
+    "productRuntimeMutations": 0,
+    "repoMutations": 0,
+    "serviceRestarts": 0,
+    "ephemeralWrites": [
+      {
+        "at": "2026-07-31T07:38:42-03:00",
+        "path": "/tmp/atius-login-ui-review-capture.mjs",
+        "purpose": "headless six-site capture and computed-style collector"
+      },
+      {
+        "at": "2026-07-31T07:40:20-03:00",
+        "path": "/tmp/atius-login-text-probe.mjs",
+        "purpose": "semantic text and style probe"
+      },
+      {
+        "at": "2026-07-31T07:41:17-03:00",
+        "path": "/tmp/atius-login-host-term-probe.mjs",
+        "purpose": "destination hostname probe"
+      }
+    ],
+    "readOnlyProductReview": true
+  },
+  "capture": {
+    "from": "2026-07-31T07:38:49-03:00",
+    "to": "2026-07-31T07:39:01-03:00",
+    "capturedBy": "deleg_115bbf83",
+    "proofOfAttribution": [
+      "write_file and terminal tool calls in the delegation transcript",
+      "matching output path /tmp/atius-login-ui-review-20260731",
+      "capturedAt and filesystem timestamps inside the delegation window",
+      "matching SHA-256 values in all-results.json and preserved screenshots"
+    ],
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "deviceScaleFactor": 1
+    },
+    "sites": [
+      "sso-reference",
+      "grafana",
+      "portainer",
+      "docker",
+      "vpn",
+      "adguard"
+    ],
+    "httpStatus": "200 for all six /login pages",
+    "rawFiles": 22,
+    "collectorScripts": 3
+  },
+  "pipelineFailures": [
+    {
+      "at": "2026-07-31T07:44:48-03:00",
+      "component": "vision_analyze",
+      "status": 503,
+      "classification": "AUXILIARY_VISION_PROVIDER_UNAVAILABLE",
+      "productImpact": false
+    },
+    {
+      "at": "2026-07-31T07:44:59-03:00",
+      "component": "browser_navigate file URL through Camofox",
+      "status": 400,
+      "classification": "AUXILIARY_LOCAL_FILE_NAVIGATION_UNAVAILABLE",
+      "productImpact": false
+    }
+  ],
+  "preservedEvidence": {
+    "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/ui-review-deleg-115bbf83",
+    "rawDirectory": "raw",
+    "scriptsDirectory": "scripts",
+    "contactSheet": {
+      "path": "raw/contact-sheet.png",
+      "bytes": 72626,
+      "sha256": "9023821eaf846438e6811a5dd25d3392da15188252bdb23d597dd2340fddfc4e"
+    },
+    "allResults": {
+      "path": "raw/all-results.json",
+      "bytes": 487474,
+      "sha256": "44c95139ff22098536548d345681945b55fb89f166f3c158477b5dcd0784cb1c"
+    },
+    "textProbe": {
+      "path": "raw/text-probe.json",
+      "bytes": 160749,
+      "sha256": "d31eba3823969aed8a74e1035c33700d17fbd778de6f00d71b18f8644188a034"
+    },
+    "hostTermProbe": {
+      "path": "raw/host-term-probe.json",
+      "bytes": 25152,
+      "sha256": "e1d254219b955c56543fd8c9dd37296358513e7583a4916ebfc96839f3998ccf"
+    },
+    "pixelMetrics": {
+      "path": "raw/pixel-diff-metrics.json",
+      "bytes": 1652,
+      "sha256": "7a7c31d292d71c62d7b6d679c5dcef1b1b8f7a804479e3f16288f10e2cdbf727"
+    }
+  },
+  "historicalReview": {
+    "origin": "RECONSTRUCTED_POST_TIMEOUT",
+    "attributedToSubagent": false,
+    "reason": "The subagent completed capture and analysis but emitted no final score or summary before timeout.",
+    "baseline": "live central SSO reference plus GSD six-pillar abstract standards",
+    "score": {
+      "copywriting": 4,
+      "visuals": 2,
+      "color": 3,
+      "typography": 2,
+      "spacing": 2,
+      "experienceDesign": 3,
+      "total": 16,
+      "maximum": 24
+    },
+    "verdict": "NEEDS_WORK_PRE_FIX_WITHOUT_TASK_BLOCKING_FAILURE",
+    "topFindings": [
+      "Typography drift was systematic: app-local destination title, hostname, labels, and CTA weights/line-heights did not match the canonical 400/500 contract.",
+      "Admin-edge/AdGuard cards were 482px high versus 454.25px canonical, with 72px versus 44px logo and a shifted vertical rhythm.",
+      "Colors and copy were substantially aligned, but exact card/input/button tokens and icon treatment differed.",
+      "The static /login task flow remained understandable and all six pages returned HTTP 200; interaction, focus, mobile, and central OIDC were outside this historical capture."
+    ]
+  },
+  "supersession": {
+    "status": "SUPERSEDED_BY_VISUAL_V2",
+    "authoritativeComputedStyles": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/computed-style-final.json",
+    "authoritativeLifecycleReport": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627/report.json",
+    "finalVerdict": "PASS",
+    "externalVerdictLabel": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "proofScope": {
+      "hostLocalLifecycle": true,
+      "centralOidcFlow": false
+    }
+  },
+  "secretsRecorded": false
+}

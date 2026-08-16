@@ -1,0 +1,52 @@
+[
+  {
+    "target": "grafana",
+    "full_mismatch_pct_gt3": 78.7,
+    "full_mean_abs_channel": 5.252,
+    "full_rmse": 17.109,
+    "card_crop_mismatch_pct_gt3": 38.172,
+    "card_crop_mean_abs_channel": 12.067,
+    "card_crop_rmse": 38.825,
+    "diff_card_path": "/tmp/atius-login-ui-review-20260731/diff-ref-grafana-card.png"
+  },
+  {
+    "target": "portainer",
+    "full_mismatch_pct_gt3": 78.711,
+    "full_mean_abs_channel": 5.262,
+    "full_rmse": 17.165,
+    "card_crop_mismatch_pct_gt3": 38.229,
+    "card_crop_mean_abs_channel": 12.122,
+    "card_crop_rmse": 38.957,
+    "diff_card_path": "/tmp/atius-login-ui-review-20260731/diff-ref-portainer-card.png"
+  },
+  {
+    "target": "docker",
+    "full_mismatch_pct_gt3": 78.693,
+    "full_mean_abs_channel": 5.24,
+    "full_rmse": 17.036,
+    "card_crop_mismatch_pct_gt3": 38.131,
+    "card_crop_mean_abs_channel": 11.999,
+    "card_crop_rmse": 38.651,
+    "diff_card_path": "/tmp/atius-login-ui-review-20260731/diff-ref-docker-card.png"
+  },
+  {
+    "target": "vpn",
+    "full_mismatch_pct_gt3": 79.532,
+    "full_mean_abs_channel": 5.829,
+    "full_rmse": 19.568,
+    "card_crop_mismatch_pct_gt3": 42.663,
+    "card_crop_mean_abs_channel": 15.182,
+    "card_crop_rmse": 44.659,
+    "diff_card_path": "/tmp/atius-login-ui-review-20260731/diff-ref-vpn-card.png"
+  },
+  {
+    "target": "adguard",
+    "full_mismatch_pct_gt3": 78.705,
+    "full_mean_abs_channel": 5.26,
+    "full_rmse": 17.156,
+    "card_crop_mismatch_pct_gt3": 38.199,
+    "card_crop_mean_abs_channel": 12.109,
+    "card_crop_rmse": 38.935,
+    "diff_card_path": "/tmp/atius-login-ui-review-20260731/diff-ref-adguard-card.png"
+  }
+]

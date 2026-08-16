@@ -1,0 +1,316 @@
+[
+  {
+    "site": "ssh-reference",
+    "url": "https://ssh.atius.com.br/sso?return_to=https%3A%2F%2Fssh.atius.com.br%2Fcompute",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://ssh.atius.com.br/mono-atius-horizontal.svg",
+      "https://ssh.atius.com.br/mono-atius-horizontal.svg",
+      "https://ssh.atius.com.br/mono-atius-horizontal.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26), rgb(31, 31, 31) 50%, rgb(26, 26, 26))"
+  },
+  {
+    "site": "central",
+    "url": "https://sso.atius.com.br/login",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://sso.atius.com.br/mono-atius-horizontal.svg",
+      "https://sso.atius.com.br/mono-atius-horizontal.svg",
+      "https://sso.atius.com.br/mono-atius-horizontal.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26), rgb(31, 31, 31) 50%, rgb(26, 26, 26))"
+  },
+  {
+    "site": "grafana",
+    "url": "https://grafana.atius.com.br/login",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://grafana.atius.com.br/_atius/favicon.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26) 0%, rgb(31, 31, 31) 50%, rgb(26, 26, 26) 100%)"
+  },
+  {
+    "site": "portainer",
+    "url": "https://portainer.atius.com.br/login",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://portainer.atius.com.br/_atius/favicon.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26) 0%, rgb(31, 31, 31) 50%, rgb(26, 26, 26) 100%)"
+  },
+  {
+    "site": "docker",
+    "url": "https://docker.atius.com.br/login",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://docker.atius.com.br/_atius/favicon.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26) 0%, rgb(31, 31, 31) 50%, rgb(26, 26, 26) 100%)"
+  },
+  {
+    "site": "vpn",
+    "url": "https://vpn.atius.com.br/login",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://vpn.atius.com.br/atius-mark.svg",
+      "https://vpn.atius.com.br/atius-mark.svg",
+      "https://vpn.atius.com.br/atius-mark.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26) 0%, rgb(31, 31, 31) 50%, rgb(26, 26, 26) 100%)"
+  },
+  {
+    "site": "adguard",
+    "url": "https://adguard.atius.com.br/login",
+    "card": {
+      "w": 448,
+      "h": 454.25,
+      "radius": "12px"
+    },
+    "logo": {
+      "w": 44,
+      "h": 44
+    },
+    "button": {
+      "text": "Entrar com Atius SSO",
+      "disabled": false,
+      "spinner": 0,
+      "h": 44,
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "radius": "10px"
+    },
+    "inputs": [
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      },
+      {
+        "h": 44,
+        "radius": "10px",
+        "fontSize": "14px",
+        "fontWeight": "400",
+        "lineHeight": "20px"
+      }
+    ],
+    "favicon": [
+      "https://adguard.atius.com.br/_atius/favicon.svg"
+    ],
+    "emoji": false,
+    "background": "linear-gradient(135deg, rgb(26, 26, 26) 0%, rgb(31, 31, 31) 50%, rgb(26, 26, 26) 100%)"
+  }
+]

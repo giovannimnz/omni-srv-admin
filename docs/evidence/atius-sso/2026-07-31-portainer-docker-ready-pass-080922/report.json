@@ -1,0 +1,329 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T11:10:23.172Z",
+  "finalVerdict": "PASS_SUBSET",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "portainer",
+    "docker"
+  ],
+  "requiredFleetTargetIds": [
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "portainer",
+      "origin": "https://portainer.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://portainer.atius.com.br/",
+          "loginUrl": "https://portainer.atius.com.br/login",
+          "authenticatedUrl": "https://portainer.atius.com.br/",
+          "logoutUrl": "https://portainer.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://portainer.atius.com.br/",
+          "loginUrl": "https://portainer.atius.com.br/login",
+          "authenticatedUrl": "https://portainer.atius.com.br/",
+          "logoutUrl": "https://portainer.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://portainer.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://portainer.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-1-01-access.png",
+          "sha256": "3d3d5abb35d9c2ab85f6e92fbbd81dd2a849671cc696497bfa707a6749c39ec9",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-1-02-login.png",
+          "sha256": "3d3d5abb35d9c2ab85f6e92fbbd81dd2a849671cc696497bfa707a6749c39ec9",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-1-03-authenticated.png",
+          "sha256": "1712220ec9b10350c75de9cd67eb12df541b597bcdc42aa02a34c383c692cd36",
+          "url": "https://portainer.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-1-04-logged-out.png",
+          "sha256": "3d3d5abb35d9c2ab85f6e92fbbd81dd2a849671cc696497bfa707a6749c39ec9",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-2-01-access.png",
+          "sha256": "3d3d5abb35d9c2ab85f6e92fbbd81dd2a849671cc696497bfa707a6749c39ec9",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-2-02-login.png",
+          "sha256": "3d3d5abb35d9c2ab85f6e92fbbd81dd2a849671cc696497bfa707a6749c39ec9",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-2-03-authenticated.png",
+          "sha256": "44f1ca7280469566c9076934e1e1c66da7088d488984d3f339d71e879c1507d5",
+          "url": "https://portainer.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/portainer/cycle-2-04-logged-out.png",
+          "sha256": "3d3d5abb35d9c2ab85f6e92fbbd81dd2a849671cc696497bfa707a6749c39ec9",
+          "url": "https://portainer.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://portainer.atius.com.br/login",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/login",
+        "https://portainer.atius.com.br/login",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/",
+        "https://portainer.atius.com.br/login"
+      ]
+    },
+    {
+      "id": "docker",
+      "origin": "https://docker.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://docker.atius.com.br/",
+          "loginUrl": "https://docker.atius.com.br/login",
+          "authenticatedUrl": "https://docker.atius.com.br/",
+          "logoutUrl": "https://docker.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://docker.atius.com.br/",
+          "loginUrl": "https://docker.atius.com.br/login",
+          "authenticatedUrl": "https://docker.atius.com.br/",
+          "logoutUrl": "https://docker.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "[data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://docker.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://docker.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-1-01-access.png",
+          "sha256": "c102b57bc0990e3e5750b516d447a9a0a4b0d6cf2ba6d85365ddf332487dbb1d",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-1-02-login.png",
+          "sha256": "c102b57bc0990e3e5750b516d447a9a0a4b0d6cf2ba6d85365ddf332487dbb1d",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-1-03-authenticated.png",
+          "sha256": "cf6c006f9b9701e51b6c2d741807fa710414ca94e6a6e9498e153d42f85348dd",
+          "url": "https://docker.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-1-04-logged-out.png",
+          "sha256": "c102b57bc0990e3e5750b516d447a9a0a4b0d6cf2ba6d85365ddf332487dbb1d",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-2-01-access.png",
+          "sha256": "c102b57bc0990e3e5750b516d447a9a0a4b0d6cf2ba6d85365ddf332487dbb1d",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-2-02-login.png",
+          "sha256": "c102b57bc0990e3e5750b516d447a9a0a4b0d6cf2ba6d85365ddf332487dbb1d",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-2-03-authenticated.png",
+          "sha256": "94c642d84572a474712b7778e32edb53a3b6d5796d0be18756dc23423815b8c9",
+          "url": "https://docker.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-docker-ready-pass-080922/docker/cycle-2-04-logged-out.png",
+          "sha256": "c102b57bc0990e3e5750b516d447a9a0a4b0d6cf2ba6d85365ddf332487dbb1d",
+          "url": "https://docker.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://docker.atius.com.br/login",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/login",
+        "https://docker.atius.com.br/login",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/",
+        "https://docker.atius.com.br/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 2,
+    "cycles": 4,
+    "screenshots": 16
+  },
+  "secretsRecorded": false
+}

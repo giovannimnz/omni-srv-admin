@@ -1,0 +1,382 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T13:46:09-03:00",
+  "classification": "HISTORICAL_PRE_FIX_READ_ONLY_DIAGNOSIS_SUPERSEDED_BY_VISUAL_V2",
+  "delegation": {
+    "id": "deleg_fcbee331",
+    "role": "gsd-debugger",
+    "requestedMode": "read-only",
+    "dispatchedAt": "2026-07-31T07:35:58-03:00",
+    "finishedAt": "2026-07-31T07:45:58-03:00",
+    "durationSeconds": 600.01,
+    "reportedApiCalls": 29,
+    "transcriptToolInvocations": 101,
+    "status": "timeout",
+    "summaryProduced": false,
+    "lastSuccessfulProbeAt": "2026-07-31T07:45:52-03:00",
+    "timeoutInterpretation": "BUDGET_EXHAUSTED_AFTER_SUCCESSFUL_READ_ONLY_DIAGNOSIS",
+    "notEvidenceOf": [
+      "browser failure",
+      "API failure",
+      "product regression",
+      "failed CSS fix"
+    ],
+    "transcript": {
+      "path": "/home/ubuntu/.hermes/cache/delegation/live/deleg_fcbee331/task-0.log",
+      "bytes": 53141,
+      "sha256": "c9e4ba40e7461250c31b746bdc80e0715989c232c9822e0832eaf0f2e2514916"
+    },
+    "mutationAudit": {
+      "mutatingToolCalls": 0,
+      "readOnly": true,
+      "note": "The only literal cp -a match was a search_files query term, not an executed copy command."
+    }
+  },
+  "uiReviewDelegation": {
+    "id": "deleg_115bbf83",
+    "role": "gsd-ui-review leaf reviewer",
+    "requestedMode": "read-only product review",
+    "dispatchedAt": "2026-07-31T07:35:59-03:00",
+    "finishedAt": "2026-07-31T07:45:59-03:00",
+    "durationSeconds": 600.01,
+    "reportedApiCalls": 37,
+    "transcriptToolCalls": 58,
+    "status": "timeout",
+    "summaryProduced": false,
+    "lastSuccessfulToolResultAt": "2026-07-31T07:45:56-03:00",
+    "timeoutInterpretation": "BUDGET_EXHAUSTED_DURING_FINAL_SYNTHESIS_AFTER_SUCCESSFUL_CAPTURE_AND_ANALYSIS",
+    "transcript": {
+      "path": "/home/ubuntu/.hermes/cache/delegation/live/deleg_115bbf83/task-0.log",
+      "bytes": 30649,
+      "sha256": "d9a5329c62f41fb5760f133a778ba3366f99d1ae0704d0415eca415f9e34e260",
+      "copiedIntoRepo": false,
+      "copyPolicy": "The original contains a credential-like historical string returned by broad search; versionable evidence stores only redacted metadata and SHA-256."
+    },
+    "mutationAudit": {
+      "productRuntimeMutations": 0,
+      "repoMutations": 0,
+      "ephemeralTmpScriptWrites": 3,
+      "readOnlyProductReview": true
+    },
+    "pipelineFailures": [
+      {
+        "component": "vision_analyze",
+        "status": 503,
+        "productImpact": false
+      },
+      {
+        "component": "browser_navigate file URL through Camofox",
+        "status": 400,
+        "productImpact": false
+      }
+    ],
+    "historicalReview": {
+      "origin": "RECONSTRUCTED_POST_TIMEOUT",
+      "attributedToSubagent": false,
+      "score": {
+        "copywriting": 4,
+        "visuals": 2,
+        "color": 3,
+        "typography": 2,
+        "spacing": 2,
+        "experienceDesign": 3,
+        "total": 16,
+        "maximum": 24
+      },
+      "verdict": "NEEDS_WORK_PRE_FIX_WITHOUT_TASK_BLOCKING_FAILURE",
+      "supersededBy": "PASS_HOST_LOCAL_SSO_VISUAL"
+    }
+  },
+  "temporalReconciliation": [
+    {
+      "at": "2026-07-31T07:35:58-03:00",
+      "event": "deleg_fcbee331 started read-only diagnosis"
+    },
+    {
+      "at": "2026-07-31T07:37:17-03:00",
+      "event": "durable pre-fix computed-style pack was materialized by a concurrent collector",
+      "attribution": "corroborating collector in the same incident window; not attributed to the subagent transcript"
+    },
+    {
+      "from": "2026-07-31T07:38:49-03:00",
+      "to": "2026-07-31T07:39:01-03:00",
+      "event": "deleg_115bbf83 captured six login pages, computed styles and screenshots in /tmp",
+      "attribution": "attributed to deleg_115bbf83 by transcript tool calls, output paths, timestamps and SHA-256"
+    },
+    {
+      "from": "2026-07-31T07:40:20-03:00",
+      "to": "2026-07-31T07:41:32-03:00",
+      "event": "deleg_115bbf83 generated semantic text and hostname probes in /tmp",
+      "attribution": "attributed to deleg_115bbf83"
+    },
+    {
+      "at": "2026-07-31T07:45:52-03:00",
+      "event": "subagent completed its last successful read-only live/source probe"
+    },
+    {
+      "at": "2026-07-31T07:45:58-03:00",
+      "event": "delegation budget expired before a final summary was emitted"
+    },
+    {
+      "at": "2026-07-31T08:01:50-03:00",
+      "event": "post-fix computed-style evidence was materialized"
+    },
+    {
+      "at": "2026-07-31T09:26:32-03:00",
+      "event": "current admin-edge runtime entered active state"
+    },
+    {
+      "at": "2026-07-31T09:26:34-03:00",
+      "event": "current AdGuard gateway runtime entered active state"
+    },
+    {
+      "at": "2026-07-31T09:35:34-03:00",
+      "event": "current VPN frontend runtime entered active state"
+    },
+    {
+      "at": "2026-07-31T09:41:50-03:00",
+      "event": "authoritative visual-v2 lifecycle report completed with PASS"
+    }
+  ],
+  "preFixEvidence": {
+    "durablePack": {
+      "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix",
+      "materializedAt": "2026-07-31T07:37:17-03:00",
+      "attribution": "concurrent collector; not attributed to deleg_fcbee331",
+      "computedStyles": {
+        "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/computed-styles.json",
+        "bytes": 28423,
+        "sha256": "4e6ebd689ea524c8a3320a9e88003ff6a282121c0c18c15e0a8628143998f458"
+      },
+      "screenshots": 6,
+      "manifest": {
+        "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/SHA256SUMS",
+        "sha256": "2570419d5f89b30ac14f19371477f4073599589a16d0acfb1b907bd9d9fde685",
+        "entries": 7,
+        "sealedAfterCapture": true,
+        "validation": "PASS"
+      }
+    },
+    "uiReviewCollector": {
+      "delegationId": "deleg_115bbf83",
+      "attribution": "proven by complete transcript, timestamps, paths and hashes",
+      "preservedPack": {
+        "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/ui-review-deleg-115bbf83",
+        "manifestSha256": "6fce23696aa936883a1329cbd16b9136eb00e705d593ba140942bb8afe593cd6",
+        "manifestEntries": 27,
+        "coveredBytes": 1681231,
+        "validation": "PASS",
+        "secretScan": "PASS",
+        "transcriptCopied": false
+      },
+      "outputs": [
+      {
+        "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/ui-review-deleg-115bbf83/raw/all-results.json",
+        "capturedAt": "2026-07-31T07:39:01-03:00",
+        "bytes": 487474,
+        "sha256": "44c95139ff22098536548d345681945b55fb89f166f3c158477b5dcd0784cb1c"
+      },
+      {
+        "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/ui-review-deleg-115bbf83/raw/text-probe.json",
+        "capturedAt": "2026-07-31T07:40:35-03:00",
+        "bytes": 160749,
+        "sha256": "d31eba3823969aed8a74e1035c33700d17fbd778de6f00d71b18f8644188a034"
+      },
+      {
+        "path": "docs/evidence/atius-sso/2026-07-31-login-typography-before-fix/ui-review-deleg-115bbf83/raw/host-term-probe.json",
+        "capturedAt": "2026-07-31T07:41:32-03:00",
+        "bytes": 25152,
+        "sha256": "e1d254219b955c56543fd8c9dd37296358513e7583a4916ebfc96839f3998ccf"
+      }
+      ]
+    },
+    "computedStyleMatrix": {
+      "canonicalSso": {
+        "destinationTitle": "11px / 400 / 16.5px / normal tracking",
+        "hostname": "14px / 400 / 20px",
+        "labels": "14px / 500 / 20px"
+      },
+      "grafanaPortainerDockerAdguard": {
+        "destinationTitle": "10px / 400 / normal line-height / 0.8px tracking",
+        "hostname": "16px / 600 / normal line-height",
+        "labels": "14px / 650 / normal line-height"
+      },
+      "vpn": {
+        "destinationTitle": "10px / 400 / 15px / 0.8px tracking",
+        "hostname": "14px / 600 / 21px",
+        "labels": "14px / 600 / 20px"
+      }
+    }
+  },
+  "rootCause": {
+    "summary": "The app-local login pages were separate renderers with hard-coded typography that had drifted from the canonical SSO reference.",
+    "classes": [
+      "admin-edge and AdGuard inline CSS used 10px title, 16px/600 hostname, and 14px/650 labels",
+      "VPN Next markup used text-[10px] and font-semibold for hostname and labels",
+      "canonical ATS/SSO used 11px/400 title, 14px/400 hostname, and 14px/500 labels"
+    ],
+    "notCausedBy": [
+      "Cloudflare cache",
+      "browser font fallback alone",
+      "K3s networking",
+      "the delegation timeout"
+    ]
+  },
+  "fixReconciliation": {
+    "status": "ALREADY_APPLIED_AFTER_THE_DIAGNOSTIC_WINDOW",
+    "canonicalContract": {
+      "destinationTitle": "11px / 400 / 16.5px / normal tracking",
+      "hostname": "14px / 400 / 20px",
+      "labels": "14px / 500 / 20px"
+    },
+    "owners": [
+      "modules/atius-admin-edge-sso/scripts/atius-admin-edge-gateway.js",
+      "modules/atius-admin-edge-sso/scripts/atius-admin-edge-gateway.test.mjs",
+      "/home/ubuntu/GitHub/vpn-atius/home-proxy/modules/home-router-be3/scripts/adguard-portal-gateway.cjs",
+      "/home/ubuntu/GitHub/vpn-atius/home-proxy/modules/home-router-be3/test/dns-casa/adguard-portal-gateway.test.mjs",
+      "/home/ubuntu/GitHub/vpn-atius/web/frontend/src/app/login/page.tsx",
+      "/home/ubuntu/GitHub/vpn-atius/web/frontend/tests/phase09-sso-contract.mjs",
+      "/home/ubuntu/GitHub/atius-sso/gateways/admin-edge/src/atius-admin-edge-gateway.cjs",
+      "/home/ubuntu/GitHub/atius-sso/gateways/admin-edge/test/atius-admin-edge-gateway.test.mjs",
+      "/home/ubuntu/GitHub/atius-sso/gateways/adguard/src/adguard-portal-gateway.cjs",
+      "/home/ubuntu/GitHub/atius-sso/gateways/adguard/test/adguard-portal-gateway.test.mjs",
+      "/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/app/sso/login/page.tsx",
+      "/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/components/ui/label.tsx"
+    ]
+  },
+  "currentRuntimeReadback": {
+    "adminEdge": {
+      "service": "atius-admin-edge-gateway.service",
+      "state": "active/running",
+      "activeSince": "2026-07-31T09:26:32-03:00",
+      "sourceSha256": "da122770f8cf5c83a6798acdcdbcd768eaff35288da39ef90bca9ddd02c269d1",
+      "runtimeSha256": "da122770f8cf5c83a6798acdcdbcd768eaff35288da39ef90bca9ddd02c269d1",
+      "byteExact": true
+    },
+    "adguard": {
+      "service": "adguard-portal-gateway.service",
+      "state": "active/running",
+      "activeSince": "2026-07-31T09:26:34-03:00",
+      "sourceSha256": "aeaf8380b969327c397d605524cf143e21e748cd0d37cb0cf87c69d7beae80a0",
+      "runtimeSha256": "aeaf8380b969327c397d605524cf143e21e748cd0d37cb0cf87c69d7beae80a0",
+      "byteExact": true
+    },
+    "vpn": {
+      "service": "vpn-frontend.service",
+      "state": "active/running",
+      "activeSince": "2026-07-31T09:35:34-03:00",
+      "sourcePageSha256": "366da0aed25c2492fc803ac882da7a611a742aa66349e7afc96d79f4e5eddeb8",
+      "buildId": "TyT674tPqvnHnsQM1RTQ_"
+    }
+  },
+  "verification": {
+    "focusedTests": [
+      {
+        "scope": "omni admin-edge",
+        "runner": "node --test",
+        "pass": 8,
+        "fail": 0
+      },
+      {
+        "scope": "VPN SSO contract",
+        "runner": "node --test",
+        "pass": 1,
+        "fail": 0
+      },
+      {
+        "scope": "VPN repo AdGuard gateway",
+        "runner": "node --test",
+        "pass": 25,
+        "fail": 0
+      },
+      {
+        "scope": "standalone admin-edge and AdGuard",
+        "runner": "bun test",
+        "pass": 34,
+        "fail": 0
+      }
+    ],
+    "postFixComputedEvidence": {
+      "path": "docs/evidence/atius-sso/2026-07-31-login-typography-live-after-gateways/computed-styles.json",
+      "sha256": "53ec97ef88df5561590491786facc3fb2557366d8e7d852a9ae986571f32e04a"
+    },
+    "authoritativeVisualV2": {
+      "computedStylesPath": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/computed-style-final.json",
+      "computedStylesSha256": "512bc9cec3b2f41d2116695d08d1bcd6659cb9034d36f5a82e565bb5a4f5d256",
+      "lifecycleReportPath": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627/report.json",
+      "lifecycleReportSha256": "e1940214d684af276d91412c4a69087d6d0d076f15397fe44b6e56aa61c3208b",
+      "finalVerdict": "PASS",
+      "sites": 5,
+      "cycles": 10,
+      "screenshots": 40,
+      "proofScope": {
+        "hostLocalLifecycle": true,
+        "centralOidcFlow": false
+      },
+      "externalVerdictLabel": "PASS_HOST_LOCAL_SSO_VISUAL"
+    }
+  },
+  "persistenceRisk": {
+    "status": "OPEN",
+    "findings": [
+      "Omni typography source/tests and visual evidence directories are untracked.",
+      "VPN login page and SSO contract test are untracked.",
+      "Standalone gateway source/tests are staged additions.",
+      "ATS canonical login page remains modified.",
+      "A live restart or rebuild from stale source can reintroduce runtime divergence until the owners are committed and deployed together."
+    ],
+    "cacheControls": [
+      "HTML responses were observed with no-store/private no-cache semantics.",
+      "Next.js VPN requires a governed rebuild and BUILD_ID verification after source changes.",
+      "Gateway deploys require source/runtime SHA-256 equality after restart."
+    ]
+  },
+  "graphify": {
+    "status": "DEFERRED_DISKPRESSURE",
+    "diskPressure": true,
+    "nodeReady": true,
+    "activeRunners": 0,
+    "rootUsage": "90%",
+    "rootAvailable": "20G"
+  },
+  "gbrain": {
+    "slug": "atius-sso-typography-timeout-pre-fix-reconciliation-2026-07-31/index",
+    "importMode": "--no-embed",
+    "pagesImported": 1,
+    "chunksCreated": 2,
+    "readback": "PASS",
+    "readbackField": "compiled_truth",
+    "readbackBytes": 5680,
+    "readbackSha256": "702a70d7173deef9af19c7e31ec24b9685e96b40dfe5db09710765bffb6896ea",
+    "contentHash": "5a661b381622590f934f5efbbd6c89b910f834edae171111d810ae8cceb34f89"
+  },
+  "documentationBackup": {
+    "path": "/home/ubuntu/backups/deleg-fcbee331-closeout-20260731-130848",
+    "files": 8,
+    "bytes": 156474,
+    "checksum": "PASS"
+  },
+  "uiReviewDocumentationBackup": {
+    "path": "/home/ubuntu/backups/deleg-115bbf83-closeout-20260731-133613",
+    "files": 8,
+    "bytes": 160441,
+    "manifestSha256": "718483879f65a620df2730393eceb5311155c6af2f2de54edc75c2a99e234a3b",
+    "checksum": "PASS"
+  },
+  "uiReviewEvidenceBackup": {
+    "path": "/home/ubuntu/backups/deleg-115bbf83-evidence-20260731-1352",
+    "entries": 28,
+    "bytes": 1686013,
+    "manifestSha256": "6defa6e5f3cfc47384beda74a35e1ea210c7e6ac9351cbf4bce937e51fe0636a",
+    "checksum": "PASS"
+  },
+  "mutationsDuringReconciliation": {
+    "productRuntime": false,
+    "serviceRestart": false,
+    "browserRerun": false,
+    "graphifyRebuild": false,
+    "commit": false,
+    "push": false
+  },
+  "secretsRecorded": false
+}

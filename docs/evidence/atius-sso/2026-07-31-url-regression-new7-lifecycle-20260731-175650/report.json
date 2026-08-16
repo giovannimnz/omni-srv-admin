@@ -1,0 +1,168 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T20:57:05.378Z",
+  "finalVerdict": "FAIL",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "sso",
+      "origin": "https://sso.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/sso/cycle-1-99-failure.png",
+        "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+        "url": "https://sso.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://sso.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://sso.atius.com.br/mono-atius-horizontal.svg\",\"https://sso.atius.com.br/mono-atius-horizontal.svg\",\"https://sso.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    },
+    {
+      "id": "ssh",
+      "origin": "https://ssh.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/ssh/cycle-1-99-failure.png",
+        "sha256": "8df3ee00cf7be9755ce264368246c30f90046d9d86c8caf3bb2b2f49a737896c",
+        "url": "https://ssh.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://ssh.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://ssh.atius.com.br/mono-atius-horizontal.svg\",\"https://ssh.atius.com.br/mono-atius-horizontal.svg\",\"https://ssh.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    },
+    {
+      "id": "rdp",
+      "origin": "https://rdp.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://rdp.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/rdp/cycle-1-99-failure.png",
+        "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+        "url": "https://rdp.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://rdp.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://rdp.atius.com.br/mono-atius-horizontal.svg\",\"https://rdp.atius.com.br/mono-atius-horizontal.svg\",\"https://rdp.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    },
+    {
+      "id": "oci",
+      "origin": "https://oci.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://oci.atius.com.br/login",
+        "https://oci.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/oci/cycle-1-99-failure.png",
+        "sha256": "813091b33757f8ddeca7b0c6ce6e646e869c1ecced7a71ab12e7f80b1d8d0b7d",
+        "url": "https://oci.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://oci.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://oci.atius.com.br/mono-atius-horizontal.svg\",\"https://oci.atius.com.br/mono-atius-horizontal.svg\",\"https://oci.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    },
+    {
+      "id": "talk",
+      "origin": "https://talk.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://talk.atius.com.br/login",
+        "https://talk.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/talk/cycle-1-99-failure.png",
+        "sha256": "19a47842db6fe32019eed3a7de7d2ae1bed74042d5275f49d7e5ae9df94409c1",
+        "url": "https://talk.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://talk.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://talk.atius.com.br/mono-atius-horizontal.svg\",\"https://talk.atius.com.br/mono-atius-horizontal.svg\",\"https://talk.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    },
+    {
+      "id": "admin-talk",
+      "origin": "https://admin.talk.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://admin.talk.atius.com.br/login",
+        "https://admin.talk.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/admin-talk/cycle-1-99-failure.png",
+        "sha256": "b8974b94441d1f4ee517added2b5e6f4aec002b0226f60cf54bd3946ed2640f3",
+        "url": "https://admin.talk.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://admin.talk.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://admin.talk.atius.com.br/mono-atius-horizontal.svg\",\"https://admin.talk.atius.com.br/mono-atius-horizontal.svg\",\"https://admin.talk.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    },
+    {
+      "id": "remote",
+      "origin": "https://remote.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [],
+      "mainFrameUrls": [
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-new7-lifecycle-20260731-175650/remote/cycle-1-99-failure.png",
+        "sha256": "f6403eabec36ed9dbc5639b15079f3154ccc8de87afda7bef34f48515921c3c0",
+        "url": "https://remote.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://remote.atius.com.br/login: {\"card\":null,\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":null,\"destinationHost\":null,\"labels\":[{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"},{\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\"}],\"inputs\":[{\"height\":44,\"radius\":\"10px\"},{\"height\":44,\"radius\":\"10px\"}],\"button\":{\"height\":44,\"fontSize\":\"14px\",\"fontWeight\":\"500\",\"lineHeight\":\"20px\",\"radius\":\"10px\"},\"iconLinks\":[\"https://remote.atius.com.br/mono-atius-horizontal.svg\",\"https://remote.atius.com.br/mono-atius-horizontal.svg\",\"https://remote.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"none\"}"
+    }
+  ],
+  "totals": {
+    "sites": 7,
+    "cycles": 0,
+    "screenshots": 0
+  },
+  "secretsRecorded": false
+}

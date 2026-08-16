@@ -1,0 +1,178 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T22:22:22.127Z",
+  "finalVerdict": "PASS_SUBSET",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "sso"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "sso",
+      "origin": "https://sso.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://sso.atius.com.br/",
+          "loginUrl": "https://sso.atius.com.br/login",
+          "authenticatedUrl": "https://sso.atius.com.br/login",
+          "logoutUrl": "https://sso.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "button:has-text(\"Encerrar sessão\"), button:has-text(\"Sair\"), [data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://sso.atius.com.br/",
+          "loginUrl": "https://sso.atius.com.br/login",
+          "authenticatedUrl": "https://sso.atius.com.br/login",
+          "logoutUrl": "https://sso.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "button:has-text(\"Encerrar sessão\"), button:has-text(\"Sair\"), [data-atius-sso-logout=\"true\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 307,
+              "url": "https://sso.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://sso.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-1-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-1-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-1-03-authenticated.png",
+          "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-1-04-logged-out.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-2-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-2-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-2-03-authenticated.png",
+          "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-central-post-logout-form-20260731-192215/sso/cycle-2-04-logged-out.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 2,
+    "screenshots": 8
+  },
+  "secretsRecorded": false
+}

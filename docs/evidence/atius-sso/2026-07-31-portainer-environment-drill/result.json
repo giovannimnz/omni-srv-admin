@@ -1,0 +1,42 @@
+[
+  {
+    "host": "portainer.atius.com.br",
+    "status": "PASS",
+    "url": "https://portainer.atius.com.br/#!/1/kubernetes/dashboard",
+    "link": {
+      "tag": "SPAN",
+      "href": "#!/1/kubernetes/dashboard",
+      "text": "atius-k3s"
+    },
+    "bodyMarkers": {
+      "hasDashboard": true,
+      "hasError": false,
+      "sample": "Upgrade to Business Edition\nHome\natius-k3s\nkubectl shell\nDashboard\nCustom Templates\nNamespaces\nApplications\nNetworking\nConfigMaps & Secrets\nVolumes\nMore Resources\nCluster\nAdministration\nUser-related\nEnvironment-related\nRegistries\nLogs\nNotifications\nSettings\n©\nPortainer Community Edition\n2.39.5 LTS\nEnvironment summary\nDashboard\nadmin\nEnvironment info\nEnvironment\tatius-k3s\nURL\tkubernetes.default.svc\nTags\t-\nRefreshing total\nLoading total\n10\nNamespaces\nRefreshing total\nLoading total\n26\nApplications\nRefreshing total\nLoading total\n34\nServices\nRefreshing total\nLoading total\n0\nIngresses\nRefreshing total\nLoading total\n51\nConfigMaps\nRefreshing total\nLoading total\n34\nSecrets\nRefreshing total\nLoading total\n10\nVolumes\nSair do Atius SSO"
+    },
+    "apiSummary": {
+      "count": 34,
+      "errors": []
+    },
+    "screenshot": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-environment-drill/portainer-environment-open.png"
+  },
+  {
+    "host": "docker.atius.com.br",
+    "status": "PASS",
+    "url": "https://docker.atius.com.br/#!/1/kubernetes/dashboard",
+    "link": {
+      "tag": "SPAN",
+      "href": "#!/1/kubernetes/dashboard",
+      "text": "atius-k3s"
+    },
+    "bodyMarkers": {
+      "hasDashboard": true,
+      "hasError": false,
+      "sample": "Upgrade to Business Edition\nHome\natius-k3s\nkubectl shell\nDashboard\nCustom Templates\nNamespaces\nApplications\nNetworking\nConfigMaps & Secrets\nVolumes\nMore Resources\nCluster\nAdministration\nUser-related\nEnvironment-related\nRegistries\nLogs\nNotifications\nSettings\n©\nPortainer Community Edition\n2.39.5 LTS\nEnvironment summary\nDashboard\nadmin\nEnvironment info\nEnvironment\tatius-k3s\nURL\tkubernetes.default.svc\nTags\t-\nRefreshing total\nLoading total\n10\nNamespaces\nRefreshing total\nLoading total\n26\nApplications\nRefreshing total\nLoading total\n34\nServices\nRefreshing total\nLoading total\n0\nIngresses\nRefreshing total\nLoading total\n51\nConfigMaps\nRefreshing total\nLoading total\n34\nSecrets\nRefreshing total\nLoading total\n10\nVolumes\nSair do Atius SSO"
+    },
+    "apiSummary": {
+      "count": 34,
+      "errors": []
+    },
+    "screenshot": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-portainer-environment-drill/docker-environment-open.png"
+  }
+]

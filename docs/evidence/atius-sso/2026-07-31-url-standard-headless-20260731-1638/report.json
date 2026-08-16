@@ -1,0 +1,560 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T19:42:54.432Z",
+  "startedAt": "2026-07-31T19:42:37.553Z",
+  "runner": "playwright-headless",
+  "finalVerdict": "FAIL",
+  "publicCanonicalUrl": "https://<app>.atius.com.br/login",
+  "compatibilityContract": {
+    "queryFreeSso": "308-compatible redirect to clean /login, browser final URL has no query",
+    "legacyReturnTo": "validated transient cookie for ATS-owned facades, clean /login final URL",
+    "redirectOnlyApps": "clean /login final URL without return_to cookie"
+  },
+  "totals": {
+    "sites": 12,
+    "screenshots": 17
+  },
+  "sites": [
+    {
+      "id": "central",
+      "host": "sso.atius.com.br",
+      "legacyTarget": "https://ssh.atius.com.br/compute",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://sso.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://sso.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://sso.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://sso.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/central/01-login.png",
+          "sha256": "6dcef4f12688401f289fc9b41fd4e88208a94c3fbc16b663349ef0b679788b96",
+          "url": "https://sso.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for sso.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/central/99-failure.png",
+        "sha256": "2f54b996dbf037676dad6eef065b1d57cb7a2ade4a1fb06757eb6fccaaab5011",
+        "url": "https://sso.atius.com.br/login"
+      }
+    },
+    {
+      "id": "ssh",
+      "host": "ssh.atius.com.br",
+      "legacyTarget": "https://ssh.atius.com.br/compute",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://ssh.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://ssh.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://ssh.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://ssh.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/ssh/01-login.png",
+          "sha256": "578536cd4012e9a840300158ded50766efd64c271d9139b56eb98e6e73887151",
+          "url": "https://ssh.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for ssh.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/ssh/99-failure.png",
+        "sha256": "578536cd4012e9a840300158ded50766efd64c271d9139b56eb98e6e73887151",
+        "url": "https://ssh.atius.com.br/login"
+      }
+    },
+    {
+      "id": "rdp",
+      "host": "rdp.atius.com.br",
+      "legacyTarget": "https://rdp.atius.com.br/giovanni-w11-pc",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://rdp.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://rdp.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://rdp.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://rdp.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/rdp/01-login.png",
+          "sha256": "833d42c54a8a1503908b02bf3b86936fad8401ae656a99ce32f732c59b5fba95",
+          "url": "https://rdp.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for rdp.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/rdp/99-failure.png",
+        "sha256": "833d42c54a8a1503908b02bf3b86936fad8401ae656a99ce32f732c59b5fba95",
+        "url": "https://rdp.atius.com.br/login"
+      }
+    },
+    {
+      "id": "oci",
+      "host": "oci.atius.com.br",
+      "legacyTarget": "https://oci.atius.com.br/",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://oci.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://oci.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://oci.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://oci.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/oci/01-login.png",
+          "sha256": "c026a25fcb102e065d1cf466a4b8211f553bafa9d4a415557da582c15a5e644d",
+          "url": "https://oci.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for oci.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/oci/99-failure.png",
+        "sha256": "c026a25fcb102e065d1cf466a4b8211f553bafa9d4a415557da582c15a5e644d",
+        "url": "https://oci.atius.com.br/login"
+      }
+    },
+    {
+      "id": "talk",
+      "host": "talk.atius.com.br",
+      "legacyTarget": "https://talk.atius.com.br/",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://talk.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://talk.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://talk.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://talk.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/talk/01-login.png",
+          "sha256": "d81786e548b2d27b0fb22cf0f3b861fcabd74839051c9c49ec9c65470251caaf",
+          "url": "https://talk.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for talk.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/talk/99-failure.png",
+        "sha256": "d81786e548b2d27b0fb22cf0f3b861fcabd74839051c9c49ec9c65470251caaf",
+        "url": "https://talk.atius.com.br/login"
+      }
+    },
+    {
+      "id": "admin-talk",
+      "host": "admin.talk.atius.com.br",
+      "legacyTarget": "https://admin.talk.atius.com.br/",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://admin.talk.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://admin.talk.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://admin.talk.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://admin.talk.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/admin-talk/01-login.png",
+          "sha256": "e316d47474847652d7f8fae164b9dc7ba2c2c83527b70141dfaeda06ecdfc439",
+          "url": "https://admin.talk.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for admin.talk.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/admin-talk/99-failure.png",
+        "sha256": "e316d47474847652d7f8fae164b9dc7ba2c2c83527b70141dfaeda06ecdfc439",
+        "url": "https://admin.talk.atius.com.br/login"
+      }
+    },
+    {
+      "id": "remote",
+      "host": "remote.atius.com.br",
+      "legacyTarget": "https://remote.atius.com.br/mt5/1/",
+      "expectsCookie": true,
+      "status": "FAIL",
+      "checks": {
+        "login": {
+          "finalUrl": "https://remote.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://remote.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://remote.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://remote.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/remote/01-login.png",
+          "sha256": "1ed30d8dc36a88cc69f92599e722478c795a04a32ef6a43b83704a0948d7f2c3",
+          "url": "https://remote.atius.com.br/login"
+        }
+      ],
+      "error": "legacy return_to cookie contract failed for remote.atius.com.br",
+      "failure": {
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/remote/99-failure.png",
+        "sha256": "1ed30d8dc36a88cc69f92599e722478c795a04a32ef6a43b83704a0948d7f2c3",
+        "url": "https://remote.atius.com.br/login"
+      }
+    },
+    {
+      "id": "grafana",
+      "host": "grafana.atius.com.br",
+      "legacyTarget": "https://grafana.atius.com.br/",
+      "expectsCookie": false,
+      "status": "PASS",
+      "checks": {
+        "login": {
+          "finalUrl": "https://grafana.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://grafana.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://grafana.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://grafana.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "legacy": {
+          "requested": "https://grafana.atius.com.br/sso",
+          "finalUrl": "https://grafana.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://grafana.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          },
+          "returnCookie": {
+            "present": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/grafana/01-login.png",
+          "sha256": "1c124b51f90fa9396329ea4541b7cc38c1509343e7a0ba6176e90e670cae3035",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/grafana/02-legacy-clean-login.png",
+          "sha256": "1c124b51f90fa9396329ea4541b7cc38c1509343e7a0ba6176e90e670cae3035",
+          "url": "https://grafana.atius.com.br/login"
+        }
+      ]
+    },
+    {
+      "id": "portainer",
+      "host": "portainer.atius.com.br",
+      "legacyTarget": "https://portainer.atius.com.br/",
+      "expectsCookie": false,
+      "status": "PASS",
+      "checks": {
+        "login": {
+          "finalUrl": "https://portainer.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://portainer.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://portainer.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://portainer.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "legacy": {
+          "requested": "https://portainer.atius.com.br/sso",
+          "finalUrl": "https://portainer.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://portainer.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          },
+          "returnCookie": {
+            "present": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/portainer/01-login.png",
+          "sha256": "51e9a6a380f741d9aa0f6ade2b396a799fe2c3f2bcd9c7e0797cd95d0d44421b",
+          "url": "https://portainer.atius.com.br/login"
+        },
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/portainer/02-legacy-clean-login.png",
+          "sha256": "51e9a6a380f741d9aa0f6ade2b396a799fe2c3f2bcd9c7e0797cd95d0d44421b",
+          "url": "https://portainer.atius.com.br/login"
+        }
+      ]
+    },
+    {
+      "id": "docker",
+      "host": "docker.atius.com.br",
+      "legacyTarget": "https://docker.atius.com.br/",
+      "expectsCookie": false,
+      "status": "PASS",
+      "checks": {
+        "login": {
+          "finalUrl": "https://docker.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://docker.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://docker.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://docker.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "legacy": {
+          "requested": "https://docker.atius.com.br/sso",
+          "finalUrl": "https://docker.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://docker.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          },
+          "returnCookie": {
+            "present": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/docker/01-login.png",
+          "sha256": "a2fc2f42b3eddf8e2ab132397a173ba89ef58c0ce782a3e9fe1cfda2188766e5",
+          "url": "https://docker.atius.com.br/login"
+        },
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/docker/02-legacy-clean-login.png",
+          "sha256": "a2fc2f42b3eddf8e2ab132397a173ba89ef58c0ce782a3e9fe1cfda2188766e5",
+          "url": "https://docker.atius.com.br/login"
+        }
+      ]
+    },
+    {
+      "id": "vpn",
+      "host": "vpn.atius.com.br",
+      "legacyTarget": "https://vpn.atius.com.br/",
+      "expectsCookie": false,
+      "status": "PASS",
+      "checks": {
+        "login": {
+          "finalUrl": "https://vpn.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://vpn.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://vpn.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://vpn.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "legacy": {
+          "requested": "https://vpn.atius.com.br/sso",
+          "finalUrl": "https://vpn.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://vpn.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          },
+          "returnCookie": {
+            "present": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/vpn/01-login.png",
+          "sha256": "5e573062a23ccefd54d75fc168b3910cb3a632d103d887bc86193288c89f5939",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/vpn/02-legacy-clean-login.png",
+          "sha256": "5e573062a23ccefd54d75fc168b3910cb3a632d103d887bc86193288c89f5939",
+          "url": "https://vpn.atius.com.br/login"
+        }
+      ]
+    },
+    {
+      "id": "adguard",
+      "host": "adguard.atius.com.br",
+      "legacyTarget": "https://adguard.atius.com.br/",
+      "expectsCookie": false,
+      "status": "PASS",
+      "checks": {
+        "login": {
+          "finalUrl": "https://adguard.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://adguard.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "ssoNoQuery": {
+          "finalUrl": "https://adguard.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://adguard.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          }
+        },
+        "legacy": {
+          "requested": "https://adguard.atius.com.br/sso",
+          "finalUrl": "https://adguard.atius.com.br/login",
+          "response": {
+            "status": 200,
+            "url": "https://adguard.atius.com.br/login",
+            "location": null,
+            "setCookiePresent": false
+          },
+          "returnCookie": {
+            "present": false
+          }
+        }
+      },
+      "screenshots": [
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/adguard/01-login.png",
+          "sha256": "a6e369de1422a32ee6b08dbec226d9183c1983205c46366a84cb81e8d5cb2725",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1638/adguard/02-legacy-clean-login.png",
+          "sha256": "a6e369de1422a32ee6b08dbec226d9183c1983205c46366a84cb81e8d5cb2725",
+          "url": "https://adguard.atius.com.br/login"
+        }
+      ]
+    }
+  ],
+  "secretsRecorded": false
+}

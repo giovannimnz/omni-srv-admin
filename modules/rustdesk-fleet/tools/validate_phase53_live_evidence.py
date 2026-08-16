@@ -13,6 +13,7 @@ import argparse
 from collections.abc import Mapping
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import json
 from pathlib import Path
 import subprocess
@@ -30,6 +31,25 @@ EVIDENCE_NAMES = (
     "edge-probes.json",
     "ops-api-probes.json",
 )
+AUTHORITY_NAMES = (
+    "topology-discovery.json",
+    "phase52-successor-attestation.json",
+    "candidate-admission.json",
+    "capacity-current.json",
+    "preflight.json",
+    "edge-forwarder-operation-plan.json",
+    "edge-forwarder-owner-approval.json",
+)
+LIVE_NAMES = (
+    "deploy-transaction.json",
+    "edge-probes.json",
+    "ops-api-probes.json",
+    "lifecycle.json",
+    "rollback-drill.json",
+    "restore-production-transaction.json",
+    "direct-relay-metrics.json",
+)
+REQUIREMENTS = ["SRV-02", "SRV-03", "SRV-04", "SRV-06", "OPS-01"]
 CONTRACT_NAMES = (
     "phase53-runtime.json",
     "phase53-edge.json",
@@ -453,7 +473,7 @@ def _validate_admitted_semantics(
         raise EvidenceInvalid("provider-manifest-semantics-invalid")
 
 
-def validate(repo: Path) -> dict[str, Any]:
+def validate_legacy_05b(repo: Path) -> dict[str, Any]:
     repo = repo.resolve(strict=True)
     evidence_dir = repo / "modules/rustdesk-fleet/evidence/phase53"
     contract_dir = repo / "modules/rustdesk-fleet/contracts"
@@ -557,6 +577,188 @@ def validate(repo: Path) -> dict[str, Any]:
             if admitted
             else {}
         ),
+    }
+
+
+def _load_module(path: Path, name: str) -> Any:
+    spec = importlib.util.spec_from_file_location(name, path)
+    if spec is None or spec.loader is None:
+        raise EvidenceInvalid("sealed-validator-unavailable")
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    try:
+        spec.loader.exec_module(module)
+    except Exception as exc:
+        sys.modules.pop(spec.name, None)
+        raise EvidenceInvalid("sealed-validator-unavailable") from exc
+    return module
+
+
+def _common_binding(
+    payloads: Mapping[str, Mapping[str, Any]]
+) -> tuple[str, str, str, str]:
+    plan = payloads["edge-forwarder-operation-plan.json"]
+    source_commit = plan.get("execution_source_commit")
+    source_tree = plan.get("execution_source_tree_sha256")
+    plan_digest = plan.get("operation_plan_sha256")
+    generation = plan.get("generation_id")
+    for value, field, length in (
+        (source_commit, "execution-source", 40),
+        (source_tree, "execution-source-tree", 64),
+        (plan_digest, "operation-plan", 64),
+        (generation, "authority-generation", 64),
+    ):
+        if length == 64:
+            _sha256_value(value, field=field)
+        elif not (
+            isinstance(value, str)
+            and len(value) == 40
+            and all(character in "0123456789abcdef" for character in value)
+        ):
+            raise EvidenceInvalid(f"{field}-invalid")
+    for name, payload in payloads.items():
+        if (
+            payload.get("execution_source_commit") != source_commit
+            or payload.get("execution_source_tree_sha256") != source_tree
+            or payload.get("operation_plan_sha256") != plan_digest
+            or payload.get("generation_id") != generation
+            or payload.get("secret_material_present") is not False
+        ):
+            raise EvidenceInvalid(f"binding-field-mismatch:{name}")
+    return str(source_commit), str(source_tree), str(plan_digest), str(generation)
+
+
+def validate(repo: Path) -> dict[str, Any]:
+    """Validate only the current authority generation plus all seven 05F outputs."""
+
+    root = repo.resolve(strict=True)
+    evidence_dir = root / "modules/rustdesk-fleet/evidence/phase53"
+    missing = [
+        name
+        for name in AUTHORITY_NAMES + LIVE_NAMES
+        if not (evidence_dir / name).is_file() or (evidence_dir / name).is_symlink()
+    ]
+    if missing:
+        if all((evidence_dir / name).is_file() for name in EVIDENCE_NAMES):
+            raise EvidenceInvalid("obsolete-05b-authority-set")
+        raise EvidenceInvalid(f"evidence-missing:{missing[0]}")
+    payloads: dict[str, dict[str, Any]] = {}
+    for name in AUTHORITY_NAMES + LIVE_NAMES:
+        payloads[name] = _strict(evidence_dir / name)
+        _scan(payloads[name], path=name)
+    source_commit, source_tree, plan_digest, generation = _common_binding(payloads)
+    operation_plan = payloads["edge-forwarder-operation-plan.json"]
+    owner = payloads["edge-forwarder-owner-approval.json"]
+    if (
+        operation_plan.get("status")
+        not in {"AWAITING_OWNER_HASH_APPROVAL", "OWNER_HASH_APPROVED"}
+        or operation_plan.get("target") != "10.21.1.21"
+        or operation_plan.get("public_edge", {}).get(
+            "backend_ingress_source_ipv4"
+        )
+        != "10.11.1.11"
+        or operation_plan.get("public_edge", {}).get(
+            "public_vnic_private_ipv4"
+        )
+        != "10.0.0.238"
+        or owner.get("owner") != "Giovanni Muniz"
+        or owner.get("decision") != "approve"
+        or owner.get("operation_plan_sha256") != plan_digest
+        or not _future_utc(owner.get("expires_at"))
+    ):
+        raise EvidenceInvalid("authority-binding-invalid")
+    apply_id = payloads["deploy-transaction.json"].get("apply_transaction_id")
+    rollback_id = payloads["rollback-drill.json"].get(
+        "rollback_transaction_id"
+    )
+    restore_id = payloads["restore-production-transaction.json"].get(
+        "restore_production_transaction_id"
+    )
+    if (
+        not all(
+            isinstance(item, str)
+            and len(item) == 32
+            and all(character in "0123456789abcdef" for character in item)
+            for item in (apply_id, rollback_id, restore_id)
+        )
+        or len({apply_id, rollback_id, restore_id}) != 3
+    ):
+        raise EvidenceInvalid("transaction-identity-invalid")
+    for name in (
+        "edge-probes.json",
+        "ops-api-probes.json",
+        "lifecycle.json",
+        "rollback-drill.json",
+        "restore-production-transaction.json",
+        "direct-relay-metrics.json",
+    ):
+        if payloads[name].get("apply_transaction_id") != apply_id:
+            raise EvidenceInvalid("apply-transaction-drift")
+    rollback_seal = payloads["rollback-drill.json"].get("rollback_seal_sha256")
+    if (
+        not isinstance(rollback_seal, str)
+        or len(rollback_seal) != 64
+        or payloads["restore-production-transaction.json"].get(
+            "rollback_transaction_id"
+        )
+        != rollback_id
+        or payloads["restore-production-transaction.json"].get(
+            "restore_production_transaction_id"
+        )
+        != restore_id
+        or payloads["restore-production-transaction.json"].get(
+            "rollback_seal_sha256"
+        )
+        != rollback_seal
+        or payloads["direct-relay-metrics.json"].get(
+            "restore_production_transaction_id"
+        )
+        != restore_id
+    ):
+        raise EvidenceInvalid("rollback-restore-binding-invalid")
+    lifecycle = payloads["lifecycle.json"]
+    probes = payloads["edge-probes.json"]
+    if (
+        lifecycle.get("controlled_restart_count") != 3
+        or lifecycle.get("boot_count") != 1
+        or probes.get("origin_count") != 2
+        or probes.get("two_origin_bound") is not True
+    ):
+        raise EvidenceInvalid("lifecycle-probe-binding-invalid")
+    checker = _load_module(
+        root / "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+        "_phase53_strict_binding_checker",
+    )
+    scope_payload = _strict(
+        root / "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json"
+    )
+    paths = checker.validate_execution_source_scope_payload(scope_payload)
+    if len(paths) != 34:
+        raise EvidenceInvalid("execution-source-scope-invalid")
+    checker.validate_execution_source_commit_paths(root, source_commit)
+    try:
+        checker.require_clean_execution_source(
+            repo=root,
+            execution_source_commit=source_commit,
+            manifest_paths=paths,
+            expected_tree=source_tree,
+        )
+    except Exception as exc:
+        raise EvidenceInvalid("execution-source-binding-invalid") from exc
+    return {
+        "schema_version": 2,
+        "phase": 53,
+        "state": "PASS",
+        "requirements": REQUIREMENTS,
+        "execution_source_commit": source_commit,
+        "execution_source_tree_sha256": source_tree,
+        "operation_plan_sha256": plan_digest,
+        "generation_id": generation,
+        "authority_files": list(AUTHORITY_NAMES),
+        "live_files": list(LIVE_NAMES),
+        "provider_constructed": False,
+        "mutation_performed": False,
+        "secret_material_present": False,
     }
 
 

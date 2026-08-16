@@ -1,0 +1,303 @@
+{
+  "sso": {
+    "url": "https://sso.atius.com.br/login",
+    "title": {
+      "text": "Destino seguro",
+      "tag": "P",
+      "cls": "text-[11px] font-normal uppercase text-gray-400",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "textTransform": "uppercase",
+      "width": 372,
+      "height": 16.5
+    },
+    "destination": {
+      "text": "ssh.atius.com.br/",
+      "tag": "SPAN",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 120.2,
+      "height": 20
+    },
+    "loginLabel": {
+      "text": "Email ou username",
+      "tag": "LABEL",
+      "cls": "font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm text-white",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 135.19,
+      "height": 16
+    },
+    "passwordLabel": {
+      "text": "Senha",
+      "tag": "LABEL",
+      "cls": "font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70 text-sm text-white",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 43.83,
+      "height": 16
+    },
+    "body": "Atius SSO Entrar na Atius DESTINO SEGURO ssh.atius.com.br/ Email ou username Senha Entrar com Atius SSO"
+  },
+  "grafana": {
+    "url": "https://grafana.atius.com.br/login",
+    "title": {
+      "text": "DESTINO SEGURO",
+      "tag": "SMALL",
+      "cls": "",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "textTransform": "uppercase",
+      "width": 364,
+      "height": 16.5
+    },
+    "destination": {
+      "text": "grafana.atius.com.br",
+      "tag": "SPAN",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 146.2,
+      "height": 20
+    },
+    "loginLabel": {
+      "text": "Email ou username",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "passwordLabel": {
+      "text": "Senha",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "body": "Atius SSO DESTINO SEGURO grafana.atius.com.br Email ou username 👤 Senha 🔒 👁 Entrar com Atius SSO"
+  },
+  "portainer": {
+    "url": "https://portainer.atius.com.br/login",
+    "title": {
+      "text": "DESTINO SEGURO",
+      "tag": "SMALL",
+      "cls": "",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "textTransform": "uppercase",
+      "width": 364,
+      "height": 16.5
+    },
+    "destination": {
+      "text": "portainer.atius.com.br",
+      "tag": "SPAN",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 155.16,
+      "height": 20
+    },
+    "loginLabel": {
+      "text": "Email ou username",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "passwordLabel": {
+      "text": "Senha",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "body": "Atius SSO DESTINO SEGURO portainer.atius.com.br Email ou username 👤 Senha 🔒 👁 Entrar com Atius SSO"
+  },
+  "docker": {
+    "url": "https://docker.atius.com.br/login",
+    "title": {
+      "text": "DESTINO SEGURO",
+      "tag": "SMALL",
+      "cls": "",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "textTransform": "uppercase",
+      "width": 364,
+      "height": 16.5
+    },
+    "destination": {
+      "text": "docker.atius.com.br",
+      "tag": "SPAN",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 137.88,
+      "height": 20
+    },
+    "loginLabel": {
+      "text": "Email ou username",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "passwordLabel": {
+      "text": "Senha",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "body": "Atius SSO DESTINO SEGURO docker.atius.com.br Email ou username 👤 Senha 🔒 👁 Entrar com Atius SSO"
+  },
+  "vpn": {
+    "url": "https://vpn.atius.com.br/login",
+    "title": {
+      "text": "DESTINO SEGURO",
+      "tag": "SMALL",
+      "cls": "mb-2 block text-[11px] font-normal uppercase leading-[16.5px] tracking-normal text-[#a7b0aa]",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "textTransform": "uppercase",
+      "width": 364,
+      "height": 16.5
+    },
+    "destination": null,
+    "loginLabel": {
+      "text": "Email ou username",
+      "tag": "SPAN",
+      "cls": "text-sm font-medium leading-5 text-white",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "passwordLabel": {
+      "text": "Senha",
+      "tag": "SPAN",
+      "cls": "text-sm font-medium leading-5 text-white",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "body": "Atius SSO DESTINO SEGURO vpn.atius.com.br Email ou username 👤 Senha 🔒 👁 Entrar com Atius SSO"
+  },
+  "adguard": {
+    "url": "https://adguard.atius.com.br/login",
+    "title": {
+      "text": "DESTINO SEGURO",
+      "tag": "SMALL",
+      "cls": "",
+      "fontSize": "11px",
+      "fontWeight": "400",
+      "lineHeight": "16.5px",
+      "letterSpacing": "normal",
+      "textTransform": "uppercase",
+      "width": 364,
+      "height": 16.5
+    },
+    "destination": {
+      "text": "adguard.atius.com.br",
+      "tag": "SPAN",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "400",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 150.23,
+      "height": 20
+    },
+    "loginLabel": {
+      "text": "Email ou username",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "passwordLabel": {
+      "text": "Senha",
+      "tag": "LABEL",
+      "cls": "",
+      "fontSize": "14px",
+      "fontWeight": "500",
+      "lineHeight": "20px",
+      "letterSpacing": "normal",
+      "textTransform": "none",
+      "width": 398,
+      "height": 20
+    },
+    "body": "Atius SSO DESTINO SEGURO adguard.atius.com.br Email ou username 👤 Senha 🔒 👁 Entrar com Atius SSO"
+  }
+}

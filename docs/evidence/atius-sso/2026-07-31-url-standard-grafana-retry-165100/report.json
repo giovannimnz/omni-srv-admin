@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T19:51:40.419Z",
+  "finalVerdict": "FAIL",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "grafana"
+  ],
+  "requiredFleetTargetIds": [
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "grafana",
+      "origin": "https://grafana.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-grafana-retry-165100/grafana/cycle-1-01-access.png",
+          "sha256": "876e59f634e3356aed1073aec372c134de7e27fd50b5c5002dbdcc442b19e965",
+          "url": "https://grafana.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-grafana-retry-165100/grafana/cycle-1-02-login.png",
+          "sha256": "876e59f634e3356aed1073aec372c134de7e27fd50b5c5002dbdcc442b19e965",
+          "url": "https://grafana.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://grafana.atius.com.br/login",
+        "https://grafana.atius.com.br/",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+        "https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-grafana-retry-165100/grafana/cycle-1-99-failure.png",
+        "sha256": "db1196b9bbc3c403965d353b4c235d9237278b453c591013c37d9d20c2132b3a",
+        "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+      },
+      "error": "grafana dashboard lacks useful visible panels at https://grafana.atius.com.br/d/vkQ0UHxik/coredns"
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 0,
+    "screenshots": 2
+  },
+  "secretsRecorded": false
+}

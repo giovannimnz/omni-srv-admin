@@ -156,6 +156,10 @@ secrets/cloudflare-service-token.json
 **/secrets/cloudflare-service-token.json
 
 # Graphify: keep published map artifacts, ignore volatile build/cache state
+# Published graph artifacts must not feed Graphify's own input corpus. They
+# remain versioned, but indexing them creates a self-referential rebuild loop:
+# every regenerated GRAPH_REPORT.md changes the next graph topology.
+.planning/graphs/
 .planning/graphs/.last-build-*.json
 .planning/graphs/.rebuild.lock
 graphify-out/.rebuild.lock
@@ -178,3 +182,20 @@ graphify-out/manifest.json
 .codex-work/
 .tmp-wayland-edit/
 .tmp-wayland-codex-acp.patch
+
+# --- Wayland (managed): skill symlinks & knowledge, safe to keep ---
+.claude/
+.codebuddy/
+.codex/
+.cursor/
+.factory/
+.gemini/
+.goose/
+.grok/
+.kimi/
+.opencode/
+.qwen/
+.vibe/
+.wayland-core/
+.wayland/
+# --- end Wayland ---

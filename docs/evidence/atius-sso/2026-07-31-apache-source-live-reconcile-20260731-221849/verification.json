@@ -1,0 +1,227 @@
+{
+  "verdict": "PASS_SUBSET",
+  "scope": "apache-source-live-reconciliation",
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "totals": {
+    "sites": 4,
+    "cycles": 8,
+    "screenshots": 32
+  },
+  "selectedTargetIds": [
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn"
+  ],
+  "sitesPass": 4,
+  "cyclesPass": 8,
+  "authCookieIssued": 8,
+  "authCookieCleared": 8,
+  "visibleLogout": 8,
+  "visualReview": {
+    "sites": 4,
+    "pass": 4,
+    "fail": 0
+  },
+  "apache": {
+    "generated_at": "2026-07-31T22:24:00-03:00",
+    "scope": "apache-source-live-reconciliation",
+    "apache_configtest": "PASS",
+    "reload_mode": "graceful",
+    "files": [
+      {
+        "name": "grafana.atius.com.br.conf",
+        "repo_source": "/home/ubuntu/GitHub/omni-srv-admin/modules/atius-admin-edge-sso/configs/apache/grafana.atius.com.br.conf",
+        "sites_available": "/etc/apache2/sites-available/grafana.atius.com.br.conf",
+        "sites_enabled": "/etc/apache2/sites-enabled/grafana.atius.com.br.conf",
+        "sha256": "238237390cefd56c4c7452f9ada93a1efdbd5b47e9a1d5ced32429c6f2c01f43",
+        "source_available_byte_exact": true,
+        "enabled_is_symlink": true,
+        "enabled_target": "../sites-available/grafana.atius.com.br.conf",
+        "available_enabled_byte_exact": true
+      },
+      {
+        "name": "portainer.atius.com.br.conf",
+        "repo_source": "/home/ubuntu/GitHub/omni-srv-admin/modules/atius-admin-edge-sso/configs/apache/portainer.atius.com.br.conf",
+        "sites_available": "/etc/apache2/sites-available/portainer.atius.com.br.conf",
+        "sites_enabled": "/etc/apache2/sites-enabled/portainer.atius.com.br.conf",
+        "sha256": "14e725476a1bb7e260fb96a1e94f94352d6a818d4c251ae203d71eba2153e4b8",
+        "source_available_byte_exact": true,
+        "enabled_is_symlink": true,
+        "enabled_target": "../sites-available/portainer.atius.com.br.conf",
+        "available_enabled_byte_exact": true
+      },
+      {
+        "name": "docker.atius.com.br.conf",
+        "repo_source": "/home/ubuntu/GitHub/omni-srv-admin/modules/atius-admin-edge-sso/configs/apache/docker.atius.com.br.conf",
+        "sites_available": "/etc/apache2/sites-available/docker.atius.com.br.conf",
+        "sites_enabled": "/etc/apache2/sites-enabled/docker.atius.com.br.conf",
+        "sha256": "7000a00f6f6b08eb3cec61c7d0bdae861c3043150c96651586c37236e09ecebe",
+        "source_available_byte_exact": true,
+        "enabled_is_symlink": true,
+        "enabled_target": "../sites-available/docker.atius.com.br.conf",
+        "available_enabled_byte_exact": true
+      },
+      {
+        "name": "docker.atius.com.br-le-ssl.conf",
+        "repo_source": "/home/ubuntu/GitHub/omni-srv-admin/modules/atius-admin-edge-sso/configs/apache/docker.atius.com.br-le-ssl.conf",
+        "sites_available": "/etc/apache2/sites-available/docker.atius.com.br-le-ssl.conf",
+        "sites_enabled": "/etc/apache2/sites-enabled/docker.atius.com.br-le-ssl.conf",
+        "sha256": "61fa5a9b7f18daff949e634f6098bab6597f9496d322d6466afbe773b476ab9e",
+        "source_available_byte_exact": true,
+        "enabled_is_symlink": true,
+        "enabled_target": "../sites-available/docker.atius.com.br-le-ssl.conf",
+        "available_enabled_byte_exact": true
+      },
+      {
+        "name": "vpn.atius.com.br.conf",
+        "repo_source": "/home/ubuntu/GitHub/vpn-atius/web/configs/apache/vpn.atius.com.br.conf",
+        "sites_available": "/etc/apache2/sites-available/vpn.atius.com.br.conf",
+        "sites_enabled": "/etc/apache2/sites-enabled/vpn.atius.com.br.conf",
+        "sha256": "35cef48082937f21be4f6dae60245fd3ff06af8675deb8205abfa3758dc271de",
+        "source_available_byte_exact": true,
+        "enabled_is_symlink": true,
+        "enabled_target": "../sites-available/vpn.atius.com.br.conf",
+        "available_enabled_byte_exact": true
+      }
+    ],
+    "all_source_available_byte_exact": true,
+    "all_enabled_symlinks": true,
+    "all_available_enabled_byte_exact": true
+  },
+  "secretsRecorded": false,
+  "commitPush": false,
+  "graphify": {
+    "governor": {
+      "slice": "omni-builds.slice",
+      "cpuQuota": "80% on 4 CPUs = 20% total host CPU",
+      "lock": "/home/ubuntu/.local/state/omni/resource-governor-builds.lock",
+      "diskPressure": false
+    },
+    "omni": {
+      "unit": "atius-sso-apache-drift-omni-graphify.service",
+      "invocation": "ae785a0516c94b0f8420a893dc2f670e",
+      "result": "success",
+      "exitStatus": 0,
+      "runtime": "1min 10.009s",
+      "cpuTime": "55.741s",
+      "swapPeak": "0B",
+      "nodes": 12638,
+      "edges": 18691,
+      "stale": false,
+      "commitStale": false,
+      "query": {
+        "term": "verify-apache-drift",
+        "nodes": 2,
+        "edges": 1
+      },
+      "initialBuild": {
+        "unit": "atius-sso-apache-drift-omni-graphify.service",
+        "invocation": "ae785a0516c94b0f8420a893dc2f670e",
+        "nodes": 12637,
+        "edges": 18690
+      },
+      "settleBuild": {
+        "unit": "atius-sso-apache-drift-omni-graphify-settle.service",
+        "invocation": "fd218ddf232c427fb6f887cf434f3e73",
+        "result": "success",
+        "exitStatus": 0,
+        "runtime": "1min 10.015s",
+        "cpuTime": "55.708s",
+        "swapPeak": "0B",
+        "nodes": 12638,
+        "edges": 18691,
+        "query": {
+          "term": "Ownership Apache e gate anti-drift",
+          "nodes": 11,
+          "edges": 10
+        }
+      }
+    },
+    "vpn": {
+      "unit": "atius-sso-apache-drift-vpn-graphify.service",
+      "invocation": "1f1fc71d4a96453eb51de6020cd19c71",
+      "result": "success",
+      "exitStatus": 0,
+      "runtime": "47.297s",
+      "cpuTime": "36.638s",
+      "swapPeak": "0B",
+      "nodes": 16457,
+      "edges": 19069,
+      "stale": false,
+      "commitStale": false,
+      "query": {
+        "term": "verify-apache-drift",
+        "nodes": 2,
+        "edges": 1
+      }
+    },
+    "vault": {
+      "unit": "atius-sso-apache-drift-vault-graphify.service",
+      "invocation": "d0aeabab34214f83994c8687481d2871",
+      "result": "success",
+      "exitStatus": 0,
+      "runtime": "3min 14.893s",
+      "cpuTime": "2min 27.329s",
+      "swapPeak": "0B",
+      "nodes": 35688,
+      "edges": 61340,
+      "stale": false,
+      "commitStale": false,
+      "query": {
+        "term": "Drift Apache SSO eliminado",
+        "nodes": 28,
+        "edges": 27
+      },
+      "initialBuild": {
+        "unit": "atius-sso-apache-drift-vault-graphify.service",
+        "invocation": "d0aeabab34214f83994c8687481d2871",
+        "nodes": 37690,
+        "edges": 63341
+      },
+      "sealBuild": {
+        "unit": "atius-sso-apache-drift-vault-graphify-seal.service",
+        "invocation": "2cb97d87daed4afbaac2d81d8d828df5",
+        "result": "success",
+        "exitStatus": 0,
+        "runtime": "3min 8.754s",
+        "cpuTime": "2min 28.402s",
+        "swapPeak": "0B",
+        "nodes": 37698,
+        "edges": 63349
+      },
+      "selfReferenceCleanup": {
+        "ignoreFile": "/home/ubuntu/GitHub/obsidian-vault/.graphifyignore",
+        "ignoreSha256": "baadeab50b0f9d61086c294f48c68b576f84a90a71d5379279c2271d5ccb7b93",
+        "candidateUnit": "atius-sso-apache-drift-vault-graphify-selfref-clean.service",
+        "candidateInvocation": "50406d95ccbd420cad97252fdbc79b4a",
+        "candidateResult": "success",
+        "candidateExitStatus": 0,
+        "candidateSwapPeak": "0B",
+        "removedNodes": 2010,
+        "removedRealNodes": 0,
+        "removedSources": [
+          ".planning/graphs/GRAPH_REPORT.md"
+        ],
+        "detectedRealFiles": 17904,
+        "detectedDerivedFiles": 0,
+        "derivedNodesRemaining": 0,
+        "finalNodes": 35688,
+        "finalEdges": 61340,
+        "graphSha256": "813be7ec7e308aa49f13ad6e9cbfb2cfbec506594164f8fb765ce4a82965760d",
+        "determinismUnit": "atius-sso-apache-drift-vault-graphify-post-ignore-determinism.service",
+        "determinismInvocation": "77258e63971049b2b12d1e58eb2105c3",
+        "determinismResult": "success",
+        "determinismExitStatus": 0,
+        "determinismRuntime": "2min 41.852s",
+        "determinismCpuTime": "2min 2.445s",
+        "determinismSwapPeak": "0B",
+        "determinismMessage": "No code-graph topology changes detected"
+      }
+    }
+  }
+}

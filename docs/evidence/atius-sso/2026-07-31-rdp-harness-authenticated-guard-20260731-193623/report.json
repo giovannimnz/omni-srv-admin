@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T22:36:32.544Z",
+  "finalVerdict": "PASS_SUBSET",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "rdp"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "rdp",
+      "origin": "https://rdp.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://rdp.atius.com.br/",
+          "loginUrl": "https://rdp.atius.com.br/login",
+          "authenticatedUrl": "https://rdp.atius.com.br/giovanni-w11-pc",
+          "logoutUrl": "https://rdp.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout[href=\"/logout\"], a[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 303,
+              "url": "https://rdp.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://rdp.atius.com.br/",
+          "loginUrl": "https://rdp.atius.com.br/login",
+          "authenticatedUrl": "https://rdp.atius.com.br/giovanni-w11-pc",
+          "logoutUrl": "https://rdp.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": ".logout[href=\"/logout\"], a[href=\"/logout\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/"
+            },
+            {
+              "status": 302,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+            },
+            {
+              "status": 303,
+              "url": "https://rdp.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://rdp.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-1-01-access.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-1-02-login.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-1-03-authenticated.png",
+          "sha256": "cdfd15ff0e15bdb26903e0a436d87cc89ef104eed00e22ec5d24962bcbb2051a",
+          "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-1-04-logged-out.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-2-01-access.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-2-02-login.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-2-03-authenticated.png",
+          "sha256": "cdfd15ff0e15bdb26903e0a436d87cc89ef104eed00e22ec5d24962bcbb2051a",
+          "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-rdp-harness-authenticated-guard-20260731-193623/rdp/cycle-2-04-logged-out.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/giovanni-w11-pc",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/giovanni-w11-pc",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 2,
+    "screenshots": 8
+  },
+  "secretsRecorded": false
+}

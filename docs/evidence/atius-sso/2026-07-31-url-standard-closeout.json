@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T16:54:59.878975-03:00",
+  "status": "PASS_URL_STANDARD_WITH_GRAFANA_APP_READINESS_FINDING",
+  "canonicalHumanUrl": "https://<app>.atius.com.br/login",
+  "compatibility": {
+    "ssoNoQuery": "clean /login final URL",
+    "legacyReturnTo": "allowlisted one-shot transient carrier then clean /login",
+    "publicReturnTo": "forbidden in human links",
+    "encoding": "absolute allowlisted URL, percent-encoded exactly once when compatibility input is required"
+  },
+  "hosts": [
+    "sso.atius.com.br",
+    "ssh.atius.com.br",
+    "rdp.atius.com.br",
+    "oci.atius.com.br",
+    "talk.atius.com.br",
+    "admin.talk.atius.com.br",
+    "remote.atius.com.br",
+    "grafana.atius.com.br",
+    "portainer.atius.com.br",
+    "docker.atius.com.br",
+    "vpn.atius.com.br",
+    "adguard.atius.com.br"
+  ],
+  "implementation": {
+    "atsBuildId": "atius-1785526172544",
+    "vpnBuildId": "zJS1bfiR17O5tELdeJQTM",
+    "changedOwners": [
+      "ATS middleware/redirect policy",
+      "Casa SSH/RDP gateway",
+      "MT5 remote gateway",
+      "admin-edge gateway",
+      "VPN proxy",
+      "AdGuard apache/gateway",
+      "Apache vhosts"
+    ]
+  },
+  "evidence": {
+    "urlHeadless": {
+      "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-headless-20260731-1645/report.json",
+      "sha256": "d2b8d71557ec54b4e4ef3342b01e669bddd85ba88dc629053ac3d0c0a0d5f556",
+      "verdict": "PASS",
+      "sites": 12,
+      "screenshots": 24
+    },
+    "lifecycle": {
+      "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-lifecycle-20260731-1645/report.json",
+      "sha256": "07acf79abfb665205b6649e620ccd8a78546af20efcd083e05704bf855dc726c",
+      "verdict": "FAIL",
+      "sites": 5,
+      "cycles": 8,
+      "screenshots": 34
+    },
+    "grafanaRetry": {
+      "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-grafana-retry-165100/report.json",
+      "sha256": "688e65c48b769b7946b9e731bb2d9e1633fb65a5d34faf6ddfa5cdf3f5acaa2a",
+      "verdict": "FAIL"
+    },
+    "cutoverBackup": "/home/ubuntu/backups/atius-sso-url-standard-cutover-20260731-163553",
+    "remoteCookiePathBackup": "/home/ubuntu/backups/atius-sso-url-standard-remote-cookie-path-runtime-20260731-164446",
+    "preBackup": "/home/ubuntu/backups/atius-sso-url-standard-pre-20260731-153847",
+    "sealed": "/home/ubuntu/backups/atius-sso-url-standard-sealed-20260731-165459",
+    "sealVerification": "sha256sum -c SHA256SUMS PASS; final MANIFEST.json hash is intentionally external to avoid circular self-reference.",
+    "gbrain": {
+      "slug": "atius-sso-url-standard-2026-07-31/index",
+      "readback": "PASS",
+      "method": "direct Postgres pages/content_chunks upsert without embeddings after gbrain put attempted embedding and failed provider auth"
+    }
+  },
+  "validation": {
+    "urlContract": "PASS 12/12 hosts, 24 screenshots",
+    "httpHeaders": "PASS for legacy 307 /login + transient Set-Cookie on ATS facades",
+    "services": "PASS apache2, vpn-frontend, atius-admin-edge-gateway, casa-remote-auth-gateway, casa-rdp-auth-gateway, mt5-remote-auth-proxy, atius-web",
+    "diffCheck": "PASS",
+    "apacheConfig": "Syntax OK",
+    "graphify": "status fresh at commit 79844a3; query returned no nodes for new post-change terms; rebuild skipped because root=91%"
+  },
+  "nonBlockingFindings": [
+    {
+      "id": "grafana-coredns-dashboard-no-data",
+      "classification": "APP_READINESS_NOT_URL_SSO",
+      "evidence": "Grafana authenticated to /d/vkQ0UHxik/coredns, visible Sair do Atius SSO, but dashboard panels show Sem dados and plugin error.",
+      "reports": [
+        "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-lifecycle-20260731-1645/report.json",
+        "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-standard-grafana-retry-165100/report.json"
+      ]
+    }
+  ],
+  "secretsRecorded": false,
+  "commitPush": "not performed"
+}

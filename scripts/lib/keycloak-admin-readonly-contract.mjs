@@ -144,7 +144,7 @@ export const INTENDED_MUTATIONS = Object.freeze([
     resource: 'Vault kv/atius/keycloak/admin-readonly',
     identifier: 'CAS=0 expected KV v2 version 1',
     action: 'create-only through secret-safe stdin helper',
-    rollback: 'soft-delete only expected version 1; metadata deletion forbidden',
+    rollback: 'soft-delete during drill; terminal-failure cleanup deletes exact metadata to restore retryable absence',
   },
   {
     order: 4,
@@ -321,7 +321,7 @@ export function buildTargetScope() {
       cas: 0,
       expectedReapplyVersion: 2,
       reapplyCas: 1,
-      metadataDeleteAllowed: false,
+      metadataDeleteAllowed: true,
     },
     exporter: {
       host: 'atius-srv-3',

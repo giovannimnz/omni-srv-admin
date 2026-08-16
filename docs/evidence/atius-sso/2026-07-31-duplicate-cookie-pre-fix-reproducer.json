@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T11:58:00-03:00",
+  "process": {
+    "id": "proc_3a60256f5a48",
+    "command": "node /tmp/atius-sso-duplicate-cookie-proof.mjs",
+    "exitCode": 0,
+    "classification": "HISTORICAL_PRE_FIX_DUPLICATE_COOKIE_REPRODUCER"
+  },
+  "collection": {
+    "scriptMtime": "2026-07-31T05:50:10.835824171-03:00",
+    "resultMtime": "2026-07-31T05:50:46.183720972-03:00",
+    "screenshotMtime": "2026-07-31T05:50:45.952721646-03:00",
+    "scriptSha256": "bb2a5ba2f4818ff1852cacf3165e5276f27895dd571f11992706ac84545e09d3",
+    "resultSha256": "89467ab43d564428749f1de44f6d7b332f4a634fd4b779ed49b28d41656a7353",
+    "screenshotSha256": "982a96cd22612981a27062a78fdbc1490a829a4f25eac00f2c7af8439024b7c8"
+  },
+  "reproducer": {
+    "initialLogin": {
+      "authenticatedPath": "/d/vkQ0UHxik/coredns",
+      "canonicalCookieDomain": ".atius.com.br",
+      "cookiePath": "/",
+      "cookieHttpOnly": true,
+      "cookieSecure": true,
+      "cookieSameSite": "Lax",
+      "cookieValueRecorded": false
+    },
+    "injectedCollision": {
+      "cookieName": "auth-token",
+      "cookieDomain": "grafana.atius.com.br",
+      "cookiePath": "/",
+      "valueClassification": "intentionally-invalid-test-value",
+      "valueRecorded": false
+    },
+    "rootWithCollision": {
+      "finalUrl": "https://grafana.atius.com.br/login",
+      "loginVisible": true,
+      "classification": "BUG_REPRODUCED"
+    },
+    "reloginWithCollision": {
+      "finalUrl": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+      "profileVisible": true,
+      "loginVisible": false,
+      "domainAndHostOnlyCookiesStillCoexisted": true
+    }
+  },
+  "historicalAccessLogCorroboration": {
+    "window": "2026-07-31T05:49:00-03:00/2026-07-31T05:52:59-03:00",
+    "initialPostLogin": 302,
+    "initialRoot": 200,
+    "rootAfterCollision": 302,
+    "loginAfterCollision": 200,
+    "reloginPost": 302,
+    "reloginRoot": 200,
+    "secretsRecorded": false
+  },
+  "temporalReconciliation": {
+    "firstHardeningRestart": "2026-07-31T06:20:36-03:00",
+    "currentRuntimeStart": "2026-07-31T09:26:32-03:00",
+    "authoritativeVisualV2ReportMtime": "2026-07-31T09:41:50.723320770-03:00",
+    "conclusion": "The process is a causal pre-fix reproducer. It predates the first duplicate-cookie hardening deploy by about 30 minutes and the authoritative visual-v2 report by almost four hours. It is not evidence of a current regression."
+  },
+  "currentHardeningReadOnlyProof": {
+    "repoSource": "modules/atius-admin-edge-sso/scripts/atius-admin-edge-gateway.js",
+    "liveSource": "/opt/atius/atius-admin-edge-gateway.js",
+    "repoLiveSha256": "da122770f8cf5c83a6798acdcdbcd768eaff35288da39ef90bca9ddd02c269d1",
+    "repoLiveByteExact": true,
+    "candidateLimit": 4,
+    "behavior": "Enumerates distinct auth-token candidates and returns success when any candidate validates; preserves auth_unavailable and forbidden precedence when none validate.",
+    "reloginCleanup": "The current POST /login path appends an expiring host-only auth-token Set-Cookie after the canonical upstream session cookie, removing the legacy collision on a successful relogin.",
+    "focusedTests": {
+      "command": "node --test modules/atius-admin-edge-sso/scripts/atius-admin-edge-gateway.test.mjs",
+      "tests": 8,
+      "passed": 8,
+      "failed": 0,
+      "duplicateCookieOrderingsCovered": [
+        "valid-domain-token then stale-host-token",
+        "stale-host-token then valid-domain-token"
+      ]
+    },
+    "gatewayActive": true,
+    "gatewayHealth": "ok",
+    "fiveLoginEndpoints": "5/5 HTTP 200"
+  },
+  "visualReadback": {
+    "artifact": "/tmp/atius-sso-duplicate-cookie-proof/relogin-with-duplicate-cookie.png",
+    "authenticatedShellVisible": true,
+    "profileVisible": true,
+    "logoutControlVisible": true,
+    "panelDataVisible": false,
+    "loadingVisible": true,
+    "visibleErrorMessage": false,
+    "scope": "Historical screenshot after relogin; not a post-fix readiness certification."
+  },
+  "authority": {
+    "currentVerdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "authoritativeVisualPack": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627",
+    "centralOidcFlowProven": false,
+    "currentDuplicateCookieBrowserRerun": "NOT_RUN",
+    "rerunReason": "Posterior source/live parity, two-order unit coverage and visual-v2 lifecycle already exist; the node is currently under DiskPressure and no stale process output justifies adding browser or indexing load."
+  },
+  "backup": {
+    "path": "/home/ubuntu/backups/atius-sso-duplicate-cookie-proof-20260731-115612",
+    "files": 8,
+    "bytes": 192521,
+    "checksum": "PASS",
+    "restoreCheck": "PASS"
+  },
+  "relatedEvidence": [
+    "docs/evidence/atius-sso/2026-07-31-live-total-regression-final-closeout.md",
+    "docs/evidence/atius-sso/2026-07-31-async-audit-reconciliation.md",
+    "docs/evidence/atius-sso/2026-07-31-readiness-diagnostic-0537-reconciliation.json",
+    "docs/evidence/atius-sso/2026-07-31-srv1-diskpressure-monitoring-incident.json"
+  ],
+  "knowledgeIndex": {
+    "gbrainSlug": "atius-sso-duplicate-cookie-pre-fix-reproducer-2026-07-31/index",
+    "gbrainImportMode": "no-embed",
+    "gbrainReadback": "PASS",
+    "graphifyRebuild": "DEFERRED_DISKPRESSURE"
+  },
+  "git": {
+    "commitOrPushPerformed": false
+  }
+}

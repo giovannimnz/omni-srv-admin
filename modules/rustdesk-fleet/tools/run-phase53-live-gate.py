@@ -13,6 +13,7 @@ import argparse
 from dataclasses import dataclass
 from datetime import datetime, timezone
 import hashlib
+import importlib.util
 import json
 import os
 from pathlib import Path
@@ -20,6 +21,7 @@ import secrets
 import subprocess
 import sys
 import tempfile
+from collections.abc import Sequence
 from typing import Any, Callable, Mapping
 
 try:
@@ -560,9 +562,34 @@ class Phase53LiveGate:
         }
 
 
+def _canonical_projection(value: Any) -> Any:
+    if value is None or type(value) in {bool, int, float, str}:
+        return value
+    if isinstance(value, (bytes, bytearray, memoryview)):
+        raise GateBlocked("canonical-bytes-forbidden")
+    if isinstance(value, Mapping):
+        projected: dict[str, Any] = {}
+        for key, child in value.items():
+            if not isinstance(key, str) or not key:
+                raise GateBlocked("canonical-key-invalid")
+            lowered = key.lower()
+            if lowered in SECRET_KEYS:
+                raise GateBlocked("canonical-secret-forbidden")
+            if lowered in STORED_VERDICT_KEYS:
+                raise GateBlocked("canonical-stored-verdict-forbidden")
+            projected[key] = _canonical_projection(child)
+        return {key: projected[key] for key in sorted(projected)}
+    if isinstance(value, Sequence) and not isinstance(value, (str, bytes, bytearray)):
+        return [_canonical_projection(child) for child in value]
+    raise GateBlocked("canonical-value-unsupported")
+
+
 def _canonical_bytes(payload: Mapping[str, Any]) -> bytes:
     return json.dumps(
-        payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True
+        _canonical_projection(payload),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=True,
     ).encode("utf-8")
 
 
@@ -797,6 +824,38 @@ def execute_apply_transaction(
     }
 
 
+def execute_revalidated_apply_transaction(
+    *,
+    authority_validator: Callable[[], Mapping[str, Any] | bool],
+    journal_dir: Path,
+    provider_factory: Callable[[], Mapping[str, StageAdapter] | Any],
+    transaction_kwargs: Mapping[str, Any] | None = None,
+) -> dict[str, Any]:
+    """Revalidate sealed authority before provider construction or journal I/O."""
+
+    try:
+        validation = authority_validator()
+    except Exception as exc:
+        raise GateBlocked("authority-revalidation-failed") from exc
+    if validation is False or (
+        isinstance(validation, Mapping)
+        and validation.get("state", validation.get("status")) not in {"PASS", "passed"}
+    ):
+        raise GateBlocked("authority-revalidation-failed")
+    if journal_dir.exists():
+        raise GateBlocked("journal-prestate-not-absent")
+    providers = provider_factory()
+    if transaction_kwargs is None:
+        raise GateBlocked("transaction-arguments-required")
+    if not isinstance(providers, Mapping):
+        raise GateBlocked("provider-backend-invalid")
+    return execute_apply_transaction(
+        journal_dir=journal_dir,
+        adapters=providers,
+        **dict(transaction_kwargs),
+    )
+
+
 def _blocked_payload(
     blocker: str,
     *,
@@ -828,6 +887,9 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("--operation-plan", type=Path)
     parser.add_argument("--owner-approval", type=Path)
+    parser.add_argument("--authority-observation", type=Path)
+    parser.add_argument("--housekeeping-receipt", type=Path)
+    parser.add_argument("--quarantine-pointer", type=Path)
     return parser
 
 
@@ -850,9 +912,10 @@ def _load_backend_module() -> Any:
 
 def _plan_mode(args: argparse.Namespace) -> dict[str, Any]:
     repo = args.repo.resolve(strict=True)
-    manifest_path = repo / "modules/rustdesk-fleet/contracts/phase53-provider-manifest.json"
-    manifest = _strict_json(manifest_path)
-    if manifest.get("execution_target") == FUTURE_EXECUTION_TARGET:
+    manifest = _strict_json(
+        repo / "modules/rustdesk-fleet/contracts/phase53-provider-manifest.json"
+    )
+    if manifest.get("execution_target") != CURRENT_EXECUTION_TARGET:
         raise GateBlocked("future-target-forbidden")
     handoff = _strict_json(
         repo / "modules/rustdesk-fleet/contracts/phase53-horistic-migration-handoff.json"
@@ -864,47 +927,51 @@ def _plan_mode(args: argparse.Namespace) -> dict[str, Any]:
         or handoff.get("future", {}).get("phase53_provider_allowed") is not False
     ):
         raise GateBlocked("migration-handoff-invalid")
-    backend = _load_backend_module()
-    contracts = load_current_contracts(repo)
-    source_head = current_source_head(repo)
-    source_binding = backend.ExecutionSourceBinding(
-        commit=source_head,
-        tree_sha256=hashlib.sha256(
-            _canonical_bytes({"contracts": contracts.digests})
-        ).hexdigest(),
-        blobs={
-            f"modules/rustdesk-fleet/contracts/{name}": digest
-            for name, digest in contracts.digests.items()
-        },
+    builder_path = Path(__file__).resolve().with_name(
+        "build-phase53-authority-plan.py"
     )
-    read_only = backend.build_phase53_read_only_backend(
-        repo=repo,
-        manifest_path=manifest_path,
-        source_binding=source_binding,
-        clock=lambda: datetime.now(timezone.utc),
+    spec = importlib.util.spec_from_file_location(
+        "_phase53_authority_plan_builder", builder_path
     )
-    previews = [
-        read_only.read_prestate(),
-        read_only.preview_oci(),
-        read_only.preview_cloudflare(),
-        read_only.preview_apache(),
-    ]
-    if read_only.capabilities != frozenset({"read", "preview"}):
-        raise GateBlocked("read-only-capability-drift")
-    return {
-        "status": "PLAN_READY",
-        "mode": "plan",
-        "stage": args.stage,
-        "target": CURRENT_EXECUTION_TARGET,
-        "execution_source_commit": source_head,
-        "preview_sha256": hashlib.sha256(
-            _canonical_bytes({"previews": previews})
-        ).hexdigest(),
-        "journal_created": False,
-        "provider_constructed": False,
-        "mutation_performed": False,
-        "secret_material_present": False,
-    }
+    if spec is None or spec.loader is None:
+        raise GateBlocked("authority-builder-unavailable")
+    builder = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = builder
+    try:
+        spec.loader.exec_module(builder)
+        observation = builder._strict_json_file(
+            args.authority_observation, blocker="observation-file-invalid"
+        )
+        source_binding = builder._source_binding_from_summary(repo)
+        d2d_commit = str(
+            builder._git(
+                repo,
+                "log",
+                "-n",
+                "1",
+                "--format=%H",
+                "--",
+                builder.D2D_SUMMARY_PATH.as_posix(),
+            )
+        ).strip()
+        receipt = builder.validate_housekeeping_receipt(
+            repo=repo,
+            summary_path=args.housekeeping_receipt,
+            quarantine_pointer=args.quarantine_pointer,
+            expected_05d2d_summary_commit=d2d_commit,
+        )
+        payloads = builder.build_authority_payloads(
+            observation=observation,
+            source_binding=source_binding,
+            phase52=builder.validate_frozen_phase52(repo),
+            housekeeping_receipt=receipt,
+        )
+        marker = builder.promote_authority_generation(
+            args.operation_plan.parent, payloads
+        )
+        return builder.awaiting_owner_result(marker)
+    except builder.AuthorityPlanBlocked as exc:
+        raise GateBlocked(str(exc)) from exc
 
 
 def _git_is_ancestor(repo: Path, ancestor: str) -> bool:
@@ -982,6 +1049,14 @@ def _transaction_mode(args: argparse.Namespace) -> int:
         or args.operation_plan is None
         or (args.mode == "apply" and args.owner_approval is None)
         or (args.mode == "plan" and args.owner_approval is not None)
+        or (
+            args.mode == "plan"
+            and (
+                args.authority_observation is None
+                or args.housekeeping_receipt is None
+                or args.quarantine_pointer is None
+            )
+        )
     ):
         sys.stdout.write(
             json.dumps(

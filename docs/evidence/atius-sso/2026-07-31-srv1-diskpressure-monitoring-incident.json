@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T11:44:36-03:00",
+  "incident": {
+    "id": "srv1-diskpressure-monitoring-pending",
+    "status": "OPEN",
+    "severity": "HIGH",
+    "remediation": "BLOCKED_ON_DESTRUCTIVE_CLEANUP_GATE"
+  },
+  "node": {
+    "name": "atius-srv-1",
+    "ready": true,
+    "diskPressure": true,
+    "diskPressureTransition": "2026-07-31T10:13:14-03:00",
+    "taint": "node.kubernetes.io/disk-pressure:NoSchedule",
+    "rootFilesystem": {
+      "totalBytes": 207907635200,
+      "usedBytes": 186408595456,
+      "availableBytes": 21482262528,
+      "usePercent": 90
+    },
+    "kubeletThresholds": {
+      "imageFsHighPercent": 85,
+      "imageFsLowPercent": 80,
+      "estimatedBytesToFree": 20067581952
+    }
+  },
+  "workloads": {
+    "prometheus-omni-monitoring-prometheus-0": {
+      "phase": "Pending",
+      "createdAt": "2026-07-31T10:13:24-03:00",
+      "nodeSelector": "atius-srv-1",
+      "localPersistentVolumeNodeAffinity": "atius-srv-1"
+    },
+    "loki-0": {
+      "phase": "Pending",
+      "createdAt": "2026-07-31T10:13:19-03:00",
+      "nodeSelector": "atius-srv-1",
+      "localPersistentVolumeNodeAffinity": "atius-srv-1"
+    },
+    "grafana": {
+      "phase": "Running",
+      "health": "ok",
+      "shellReachable": true,
+      "prometheusDatasourceAvailable": false
+    }
+  },
+  "edges": {
+    "grafanaOwner": {
+      "host": "atius-srv-3",
+      "service": "k3s-grafana-portforward.service",
+      "listener": "0.0.0.0:3005",
+      "healthStatus": 200
+    },
+    "portainerOwner": {
+      "endpoint": "10.12.1.12:9443",
+      "status": 200
+    },
+    "centralApiHealth": "healthy",
+    "loginEndpointsStatus": 200
+  },
+  "causality": {
+    "historicalDiagnosticAt0537CausedByCurrentDiskPressure": false,
+    "reason": "The authenticated diagnostic completed at 05:38 BRT. DiskPressure began at 10:13 BRT, over four hours later.",
+    "currentMonitoringOutageCause": "DiskPressure taint plus hard nodeSelector and local PV affinity to atius-srv-1"
+  },
+  "spaceCandidatesReadOnly": {
+    "homeBackupsHuman": "6.2G",
+    "graphifyApi8015BackupBytes": 577214476,
+    "graphifyHarnessBackupBytes": 580408744,
+    "graphifyBackupsCreatedAfterDiskPressure": true,
+    "graphifyBackupsInitialCause": false,
+    "homeHermesHuman": "7.2G",
+    "homeCodexHuman": "7.0G",
+    "homeLocalHuman": "30G",
+    "homeGitHubHuman": "30G",
+    "k3sHuman": "4.6G"
+  },
+  "safety": {
+    "cleanupPerformed": false,
+    "deletePerformed": false,
+    "prunePerformed": false,
+    "restartPerformed": false,
+    "productionConfigChanged": false,
+    "gateRequired": true,
+    "persistentVolumesOutOfScope": true
+  },
+  "documentation": {
+    "incidentNote": "/home/ubuntu/GitHub/obsidian-vault/AiSecondBrain/61-Incidents/2026-07-31-srv1-diskpressure-prometheus-loki-pending.md",
+    "historicalRunEvidence": "docs/evidence/atius-sso/2026-07-31-readiness-diagnostic-0537-reconciliation.json",
+    "authoritativeVisualPack": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627"
+  },
+  "knowledgeIndex": {
+    "gbrainSlug": "srv1-diskpressure-monitoring-pending-2026-07-31/index",
+    "gbrainImportMode": "no-embed",
+    "gbrainReadback": "PASS",
+    "graphifyRebuild": "DEFERRED_DISKPRESSURE",
+    "graphifyReason": "Avoid broad indexing I/O while the owner node is under DiskPressure and kubelet eviction pressure."
+  },
+  "git": {
+    "commitOrPushPerformed": false
+  }
+}

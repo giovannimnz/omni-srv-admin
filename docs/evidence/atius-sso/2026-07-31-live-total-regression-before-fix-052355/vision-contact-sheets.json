@@ -1,0 +1,67 @@
+{
+  "grafana": {
+    "sheet": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-live-total-regression-before-fix-052355/vision-contact-sheets/grafana-8-states.png",
+    "files": [
+      "cycle-1-01-access.png",
+      "cycle-1-02-login.png",
+      "cycle-1-03-authenticated.png",
+      "cycle-1-04-logged-out.png",
+      "cycle-2-01-access.png",
+      "cycle-2-02-login.png",
+      "cycle-2-03-authenticated.png",
+      "cycle-2-04-logged-out.png"
+    ]
+  },
+  "portainer": {
+    "sheet": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-live-total-regression-before-fix-052355/vision-contact-sheets/portainer-8-states.png",
+    "files": [
+      "cycle-1-01-access.png",
+      "cycle-1-02-login.png",
+      "cycle-1-03-authenticated.png",
+      "cycle-1-04-logged-out.png",
+      "cycle-2-01-access.png",
+      "cycle-2-02-login.png",
+      "cycle-2-03-authenticated.png",
+      "cycle-2-04-logged-out.png"
+    ]
+  },
+  "docker": {
+    "sheet": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-live-total-regression-before-fix-052355/vision-contact-sheets/docker-8-states.png",
+    "files": [
+      "cycle-1-01-access.png",
+      "cycle-1-02-login.png",
+      "cycle-1-03-authenticated.png",
+      "cycle-1-04-logged-out.png",
+      "cycle-2-01-access.png",
+      "cycle-2-02-login.png",
+      "cycle-2-03-authenticated.png",
+      "cycle-2-04-logged-out.png"
+    ]
+  },
+  "vpn": {
+    "sheet": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-live-total-regression-before-fix-052355/vision-contact-sheets/vpn-8-states.png",
+    "files": [
+      "cycle-1-01-access.png",
+      "cycle-1-02-login.png",
+      "cycle-1-03-authenticated.png",
+      "cycle-1-04-logged-out.png",
+      "cycle-2-01-access.png",
+      "cycle-2-02-login.png",
+      "cycle-2-03-authenticated.png",
+      "cycle-2-04-logged-out.png"
+    ]
+  },
+  "adguard": {
+    "sheet": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-live-total-regression-before-fix-052355/vision-contact-sheets/adguard-8-states.png",
+    "files": [
+      "cycle-1-01-access.png",
+      "cycle-1-02-login.png",
+      "cycle-1-03-authenticated.png",
+      "cycle-1-04-logged-out.png",
+      "cycle-2-01-access.png",
+      "cycle-2-02-login.png",
+      "cycle-2-03-authenticated.png",
+      "cycle-2-04-logged-out.png"
+    ]
+  }
+}

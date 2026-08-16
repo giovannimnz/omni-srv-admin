@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T14:09:51-03:00",
+  "classification": "POST_WORKLOAD_ZSH_HARNESS_FAILURE_BUILD_SUCCEEDED_SUPERSEDED_BY_LATER_SUCCESSFUL_BUILD_AND_RUNTIME",
+  "process": {
+    "id": "proc_7af4368e4884",
+    "reportedExitCode": 1,
+    "primarySource": {
+      "session": "@session:default/20260730_034546_71412d",
+      "note": "The complete command and output were recovered from the Hermes session database after the process registry entry had expired."
+    },
+    "registryReadback": {
+      "status": "not_found",
+      "interpretation": "Expected for an expired background-process registry entry; not evidence about the workload result."
+    },
+    "reportedOutput": {
+      "governedUnit": "atius-vpn-sso-visual-build-v2.service",
+      "invocationId": "8b9a5db7667d4d049033a0afffb67d67",
+      "unitResult": "success",
+      "unitExecMainStatus": 0,
+      "unitRuntimeSeconds": 34.135,
+      "cpuTimeSeconds": 26.199,
+      "memoryPeakMiB": 771.4,
+      "memorySwapPeakBytes": 0,
+      "terminalError": "zsh:17: read-only variable: status"
+    }
+  },
+  "rootCause": {
+    "component": "parent shell post-build reporting harness",
+    "shell": "zsh",
+    "failure": "The wrapper assigned the systemd ExecMainStatus readback to a variable named status after systemd-run had already returned success.",
+    "languageSemantics": "status is a read-only special parameter in zsh.",
+    "effect": "The parent wrapper exited 1 before printing its final summary line.",
+    "didNotFail": [
+      "Next.js production build",
+      "systemd transient build unit",
+      "materialized .next artifact",
+      "VPN runtime",
+      "public /login endpoint",
+      "authoritative visual-v2 lifecycle"
+    ],
+    "minimalReproduction": {
+      "zshStatusAssignmentExitCode": 1,
+      "zshExecStatusAssignmentExitCode": 0,
+      "bashStatusAssignmentExitCode": 0
+    },
+    "safeVariableNames": [
+      "exec_status",
+      "unit_status"
+    ]
+  },
+  "resourceGovernance": {
+    "systemdSlice": "omni-builds.slice",
+    "cpuQuota": "80%",
+    "hostLogicalCpus": 4,
+    "effectiveMaximumHostCpuPercent": 20.0,
+    "compliesWithHost20PercentGuardrail": true,
+    "memoryHigh": "6G",
+    "memoryMax": "8G",
+    "memorySwapMax": "1G",
+    "observedSwapPeakBytes": 0,
+    "serializedBy": "/home/ubuntu/.local/state/omni/resource-governor-builds.lock"
+  },
+  "historicalBuild": {
+    "startedAt": "2026-07-31T09:23:07.787130-03:00",
+    "finishedAt": "2026-07-31T09:23:41.923193-03:00",
+    "log": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/vpn-build.log",
+      "bytes": 942,
+      "sha256": "90a3c5e3c37d29fb4a2f47bcb266bf3002b554fff7b7c122bfa69435c2521e53",
+      "mtime": "2026-07-31T09:23:41.454625884-03:00",
+      "compiledSuccessfully": true,
+      "typescriptCompleted": true,
+      "staticPagesGenerated": "11/11",
+      "loginRoutePresent": true
+    },
+    "artifactBuildId": null,
+    "artifactBuildIdReason": "The 09:23 artifact was later overwritten by a second successful build at 09:35; no contemporaneous BUILD_ID readback for the 09:23 artifact was preserved.",
+    "verdict": "BUILD_SUCCEEDED"
+  },
+  "rollbackSnapshot": {
+    "path": "/home/ubuntu/GitHub/vpn-atius/web/frontend/.next.rollback-sso-visual-v2-20260731-092307",
+    "pathRecord": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/vpn-next-backup-path.txt",
+      "bytes": 88,
+      "sha256": "ddfc8ca1eb6778750a0ae5db175c6ce817894c0832f6cad21a6de92949ed68f4",
+      "mtime": "2026-07-31T09:23:07.766813586-03:00"
+    },
+    "files": 469,
+    "bytes": 9747096,
+    "treeSha256": "e90c2f99643d4c2c2569ed24798d37a22c325590bc0eb76e3a7af078b4efe983",
+    "buildId": "wRHd_fNEJck2D1TsdEsPq",
+    "buildIdSha256": "bfd3572acc7127c19a5aaa5f54f534db3882031950dbb0fcb3fd899b493c15ad",
+    "requiredManifests": {
+      "build-manifest.json": "PASS",
+      "routes-manifest.json": "PASS",
+      "server/app-paths-manifest.json": "PASS"
+    },
+    "restoreReadiness": "PASS"
+  },
+  "supersedingBuildAndRuntime": {
+    "currentArtifact": {
+      "buildId": "TyT674tPqvnHnsQM1RTQ_",
+      "buildIdMtime": "2026-07-31T09:35:23.247051044-03:00",
+      "buildIdSha256": "db61de4b112f2aa65d75101067e62012038b6b7703001be48f09cfe8a98b668c",
+      "files": 471,
+      "bytes": 9755473,
+      "treeSha256": "432d6e1141e5a05e86bf00e06c23d089b5b370f349ab3b3629215cfe31a5f518",
+      "requiredManifests": {
+        "build-manifest.json": "PASS",
+        "routes-manifest.json": "PASS",
+        "server/app-paths-manifest.json": "PASS"
+      }
+    },
+    "runtime": {
+      "serviceManager": "system",
+      "service": "vpn-frontend.service",
+      "fragmentPath": "/etc/systemd/system/vpn-frontend.service",
+      "activeSince": "2026-07-31T09:35:34-03:00",
+      "activeState": "active",
+      "subState": "running",
+      "result": "success",
+      "execMainStatus": 0,
+      "mainPidAtCloseout": 472739,
+      "process": "next-server v16.1.6",
+      "workingDirectory": "/home/ubuntu/GitHub/vpn-atius/web/frontend",
+      "cgroup": "/system.slice/vpn-frontend.service"
+    },
+    "publicReadback": {
+      "loginUrl": "https://vpn.atius.com.br/login",
+      "loginHttpStatus": 200,
+      "loginResponseBytes": 15596,
+      "loginResponseSha256": "4968a6098385dd6279f8f75b2c625f1adb01852e4799b981b241e153b436950f",
+      "buildManifestHttpStatus": 200,
+      "buildManifestSha256": "a2970789632599d910787e2e123e7fba49225601007b3a9f05727f9f0185dc90"
+    }
+  },
+  "authoritativeVisualV2": {
+    "reportPath": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627/report.json",
+    "reportSha256": "e1940214d684af276d91412c4a69087d6d0d076f15397fe44b6e56aa61c3208b",
+    "generatedAt": "2026-07-31T09:41:50.722-03:00",
+    "finalVerdict": "PASS",
+    "externalVerdictLabel": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "sites": 5,
+    "cycles": 10,
+    "screenshots": 40,
+    "vpn": {
+      "status": "PASS",
+      "cycles": 2,
+      "screenshots": 8,
+      "authCookieIssuedAndCleared": true
+    },
+    "proofScope": {
+      "hostLocalLifecycle": true,
+      "centralOidcFlow": false
+    },
+    "computedStylePath": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/computed-style-final.json",
+    "computedStyleSha256": "512bc9cec3b2f41d2116695d08d1bcd6659cb9034d36f5a82e565bb5a4f5d256",
+    "authorityChangedByThisReconciliation": false
+  },
+  "closeout": {
+    "productRegression": false,
+    "buildFailure": false,
+    "runtimeFailure": false,
+    "harnessFailure": true,
+    "rebuildExecutedDuringReconciliation": false,
+    "restartExecutedDuringReconciliation": false,
+    "rollbackExecutedDuringReconciliation": false,
+    "commitOrPushExecuted": false,
+    "actionRequired": "No live corrective action. Future wrappers must avoid the zsh read-only parameter name status.",
+    "documentationBackup": {
+      "path": "/home/ubuntu/backups/proc-7af4368e4884-closeout-20260731-140611",
+      "files": 9,
+      "coveredBytes": 172523,
+      "manifestSha256": "5216c2edef37afd5eb50a772b4e2f1af46ba4f5163e60854d60649c3bb2aad48",
+      "includesSkillPreimage": true,
+      "skillPreimageSha256": "0ba52df8454e82a23aae58d955c838ab54ea0e0e7d5a802cbe931f39a8c5272c",
+      "validation": "PASS"
+    },
+    "postCloseoutBackup": {
+      "path": "/home/ubuntu/backups/proc-7af4368e4884-final-20260731-141806",
+      "files": 14,
+      "coveredBytes": 192318,
+      "manifestSha256": "bca231dbfa743fe2cbc3e582ca2c2babdda609adb9aa8e1eb2cace7e4a2c7b91",
+      "validation": "PASS",
+      "scopeNote": "Snapshot contains the final evidence, docs, Vault notes, skill and GBrain source before adding this self-reference."
+    },
+    "skillMaintenance": {
+      "skill": "resource-governed-verification",
+      "path": "/home/ubuntu/.hermes/skills/devops/resource-governed-verification/SKILL.md",
+      "postPatchSha256": "355c639a985bbd7268be58c94899e1ce9d10c50cfbc704241658a3e1c8ac3f29",
+      "change": "Use exec_status instead of zsh read-only status and require workload-result validation before classifying wrapper exit 1."
+    },
+    "gbrain": {
+      "slug": "atius-sso-typography-timeout-pre-fix-reconciliation-2026-07-31/index",
+      "importedPages": 1,
+      "chunks": 2,
+      "readbackField": "compiled_truth",
+      "readbackBytes": 6754,
+      "readbackSha256": "0b082e038002b9d9d0bd790dbde577d86b16306a2d7e1d7d0c86ee38bd7a15f6",
+      "validation": "PASS"
+    },
+    "graphify": {
+      "status": "DEFERRED_DISKPRESSURE",
+      "diskPressure": true,
+      "nodeReady": true,
+      "rootUsePercent": 90,
+      "rootAvailable": "20G",
+      "runners": 0
+    }
+  }
+}

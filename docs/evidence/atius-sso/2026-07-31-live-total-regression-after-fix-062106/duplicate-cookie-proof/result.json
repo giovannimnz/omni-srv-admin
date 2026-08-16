@@ -1,0 +1,35 @@
+{
+  "initialLogin": {
+    "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+    "profileVisible": true,
+    "loginVisible": false,
+    "cookies": [
+      {
+        "domain": ".atius.com.br",
+        "path": "/",
+        "httpOnly": true,
+        "secure": true,
+        "sameSite": "Lax",
+        "nonEmpty": true
+      }
+    ]
+  },
+  "afterCollision": [
+    {
+      "domain": ".atius.com.br",
+      "path": "/",
+      "nonEmpty": true
+    },
+    {
+      "domain": "grafana.atius.com.br",
+      "path": "/",
+      "nonEmpty": true
+    }
+  ],
+  "rootWithCollision": {
+    "url": "https://grafana.atius.com.br/d/vkQ0UHxik/coredns",
+    "profileVisible": true,
+    "loginVisible": false
+  },
+  "verdict": "PASS_DUPLICATE_COOKIE_HARDENED"
+}

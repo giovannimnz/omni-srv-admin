@@ -218,11 +218,29 @@ class ExecutionSourceBinding:
 
 @dataclass(frozen=True)
 class ReadOnlyProviderBundle:
-    read_prestate: Callable[[], Mapping[str, Any]]
-    preview_oci: Callable[[], Mapping[str, Any]]
-    preview_cloudflare: Callable[[], Mapping[str, Any]]
-    preview_apache: Callable[[], Mapping[str, Any]]
+    read_topology: Callable[[], Mapping[str, Any]]
+    read_supply: Callable[[], Mapping[str, Any]]
+    read_capacity: Callable[[], Mapping[str, Any]]
+    read_vault_public_fingerprint: Callable[[], Mapping[str, Any]]
+    read_provider_prestates: Callable[[], Mapping[str, Any]]
+    preview_provider_changes: Callable[[], Mapping[str, Any]]
     capabilities: frozenset[str] = frozenset({"read", "preview"})
+
+    @property
+    def read_prestate(self) -> Callable[[], Mapping[str, Any]]:
+        return self.read_provider_prestates
+
+    @property
+    def preview_oci(self) -> Callable[[], Mapping[str, Any]]:
+        return lambda: self.preview_provider_changes()["oci"]
+
+    @property
+    def preview_cloudflare(self) -> Callable[[], Mapping[str, Any]]:
+        return lambda: self.preview_provider_changes()["cloudflare"]
+
+    @property
+    def preview_apache(self) -> Callable[[], Mapping[str, Any]]:
+        return lambda: self.preview_provider_changes()["apache"]
 
 
 @dataclass(frozen=True)
@@ -270,6 +288,7 @@ def build_phase53_read_only_backend(
     manifest_path: Path,
     source_binding: ExecutionSourceBinding,
     clock: Callable[[], datetime],
+    callbacks: Mapping[str, Callable[[], Mapping[str, Any]]] | None = None,
 ) -> ReadOnlyProviderBundle:
     manifest = _load_manifest(manifest_path)
     validate_provider_manifest(manifest, repo=repo)
@@ -280,12 +299,36 @@ def build_phase53_read_only_backend(
         "source_binding": source_binding,
         "observed_at": observed_at,
     }
-    return ReadOnlyProviderBundle(
-        read_prestate=lambda: _preview("prestate", **common),
-        preview_oci=lambda: _preview("oci", **common),
-        preview_cloudflare=lambda: _preview("cloudflare", **common),
-        preview_apache=lambda: _preview("apache", **common),
-    )
+    expected_callbacks = {
+        "read_topology",
+        "read_supply",
+        "read_capacity",
+        "read_vault_public_fingerprint",
+        "read_provider_prestates",
+        "preview_provider_changes",
+    }
+    if callbacks is not None:
+        if set(callbacks) != expected_callbacks or not all(
+            callable(callbacks[name]) for name in expected_callbacks
+        ):
+            raise BackendBlocked("read-only-callback-set-invalid")
+        selected = dict(callbacks)
+    else:
+        previews = {
+            surface: _preview(surface, **common)
+            for surface in ("host", "oci", "cloudflare", "apache")
+        }
+        selected = {
+            "read_topology": lambda: _preview("topology", **common),
+            "read_supply": lambda: _preview("supply", **common),
+            "read_capacity": lambda: _preview("capacity", **common),
+            "read_vault_public_fingerprint": lambda: _preview(
+                "vault-public-fingerprint", **common
+            ),
+            "read_provider_prestates": lambda: _preview("prestate", **common),
+            "preview_provider_changes": lambda: MappingProxyType(previews),
+        }
+    return ReadOnlyProviderBundle(**selected)
 
 
 def _future(value: Any, now: datetime, blocker: str) -> datetime:

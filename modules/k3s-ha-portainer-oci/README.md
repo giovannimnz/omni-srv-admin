@@ -31,6 +31,8 @@ production-ready, but it is not active in these templates.
 | `k8s/cpu-20-defaults.yaml` | Namespace `LimitRange` defaulting managed containers to `500m` CPU |
 | `k8s/pod-500m-strict.yaml` | Workload namespace `LimitRange` enforcing pod CPU max `500m` |
 | `logrotate/docker-json-containers` | Docker JSON log rotation installed during preflight on SRV-2/SRV-3 |
+| `monitoring/scripts/coredns-tcp-canary.sh` | Real DNS-over-TCP probe that keeps the CoreDNS TCP telemetry path observable |
+| `systemd/coredns-tcp-canary.{service,timer}` | Native 30-second scheduler for the CoreDNS TCP canary |
 
 ## Resource Unit
 
@@ -70,6 +72,23 @@ Prometheus/Grafana are planned through `kube-prometheus-stack` in namespace
 published only through Cloudflare Access. Prometheus and Alertmanager remain
 internal. Alertmanager should signal Omni Fleet; it must not execute host
 commands directly.
+
+The CoreDNS dashboard includes separate UDP and TCP request-size panels. Normal
+cluster traffic can be UDP-only, which leaves the TCP telemetry path untested
+and the TCP panel without samples. Install the native canary on SRV-1 to issue a
+real DNS-over-TCP request every 30 seconds:
+
+```bash
+sudo install -m 0755 monitoring/scripts/coredns-tcp-canary.sh /usr/local/bin/
+sudo install -m 0644 systemd/coredns-tcp-canary.service systemd/coredns-tcp-canary.timer /etc/systemd/system/
+sudo systemctl daemon-reload
+sudo systemctl enable --now coredns-tcp-canary.timer
+sudo systemctl start coredns-tcp-canary.service
+```
+
+This is a transport canary, not synthetic Prometheus data: CoreDNS receives and
+records the TCP query itself. A failed query makes the oneshot unit fail and is
+visible through `systemctl status` and the journal.
 
 ## Non-secret Install Shape
 

@@ -1,0 +1,64 @@
+[
+  {
+    "name": "00-ssh-reference",
+    "url": "https://ssh.atius.com.br/sso?return_to=https%3A%2F%2Fssh.atius.com.br%2Fcompute",
+    "title": "Atius SSO",
+    "favicon": [
+      "https://ssh.atius.com.br/mono-atius-horizontal.svg",
+      "https://ssh.atius.com.br/mono-atius-horizontal.svg",
+      "https://ssh.atius.com.br/mono-atius-horizontal.svg"
+    ]
+  },
+  {
+    "name": "00b-central-login",
+    "url": "https://sso.atius.com.br/login",
+    "title": "Atius SSO",
+    "favicon": [
+      "https://sso.atius.com.br/mono-atius-horizontal.svg",
+      "https://sso.atius.com.br/mono-atius-horizontal.svg",
+      "https://sso.atius.com.br/mono-atius-horizontal.svg"
+    ]
+  },
+  {
+    "name": "01-grafana",
+    "url": "https://grafana.atius.com.br/login",
+    "title": "Atius SSO",
+    "favicon": [
+      "https://grafana.atius.com.br/_atius/favicon.svg"
+    ]
+  },
+  {
+    "name": "02-portainer",
+    "url": "https://portainer.atius.com.br/login",
+    "title": "Atius SSO",
+    "favicon": [
+      "https://portainer.atius.com.br/_atius/favicon.svg"
+    ]
+  },
+  {
+    "name": "03-docker",
+    "url": "https://docker.atius.com.br/login",
+    "title": "Atius SSO",
+    "favicon": [
+      "https://docker.atius.com.br/_atius/favicon.svg"
+    ]
+  },
+  {
+    "name": "04-vpn",
+    "url": "https://vpn.atius.com.br/login",
+    "title": "Atius VPN",
+    "favicon": [
+      "https://vpn.atius.com.br/atius-mark.svg",
+      "https://vpn.atius.com.br/atius-mark.svg",
+      "https://vpn.atius.com.br/atius-mark.svg"
+    ]
+  },
+  {
+    "name": "05-adguard",
+    "url": "https://adguard.atius.com.br/login",
+    "title": "Atius SSO",
+    "favicon": [
+      "https://adguard.atius.com.br/_atius/favicon.svg"
+    ]
+  }
+]

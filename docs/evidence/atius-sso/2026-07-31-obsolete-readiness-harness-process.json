@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T11:16:51-03:00",
+  "process": {
+    "id": "proc_397b5f569f20",
+    "command": "node /tmp/atius-sso-app-readiness-diagnostic.mjs",
+    "exitCode": 1,
+    "errorCode": "MODULE_NOT_FOUND",
+    "missingPathAtExecution": "/tmp/atius-sso-app-readiness-diagnostic.mjs"
+  },
+  "classification": {
+    "status": "OBSOLETE_HARNESS_PROCESS_FAILURE",
+    "productRegression": false,
+    "reopenVisualCertification": false,
+    "rerunObsoleteHarness": false,
+    "reason": "The Node.js process failed before executing product probes because its ephemeral /tmp module did not exist at process execution time. A later authenticated visual-v2 certification is authoritative."
+  },
+  "temporalReconciliation": {
+    "currentTempScriptExists": true,
+    "currentTempScriptMtime": "2026-07-31T05:37:02-03:00",
+    "currentTempScriptSha256": "3e41f0c216659d9d854bc570e01cf59f3a2b10da0491aa70200a4ac33cf3a8fc",
+    "currentTempScriptSyntax": "PASS",
+    "note": "The current file is a later materialization and does not convert the earlier MODULE_NOT_FOUND event into a product failure. It was executed by a separate later process, proc_3c0b08ba1c60, whose authenticated findings are recorded independently."
+  },
+  "laterSeparateProcess": {
+    "id": "proc_3c0b08ba1c60",
+    "exitCode": 0,
+    "classification": "HISTORICAL_AUTHENTICATED_DIAGNOSTIC_WITH_FINDINGS",
+    "collectorCompleted": true,
+    "unconditionalProductPass": false,
+    "evidence": "docs/evidence/atius-sso/2026-07-31-readiness-diagnostic-0537-reconciliation.json"
+  },
+  "currentReadOnlyChecks": {
+    "loginEndpoints": {
+      "grafana.atius.com.br": 200,
+      "portainer.atius.com.br": 200,
+      "docker.atius.com.br": 200,
+      "vpn.atius.com.br": 200,
+      "adguard.atius.com.br": 200
+    },
+    "centralApiHealth": "healthy",
+    "diagnosticRunnerCount": 0,
+    "lifecycleRunnerCount": 0
+  },
+  "authoritativeCertification": {
+    "verdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "centralOidcFlow": false,
+    "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627",
+    "packExists": true,
+    "packFileCount": 43
+  },
+  "separateOpenFinding": {
+    "id": "atius-api-public-8015",
+    "status": "OPEN/HIGH",
+    "affectedByThisHarnessFailure": false
+  },
+  "git": {
+    "commitOrPushPerformed": false
+  }
+}

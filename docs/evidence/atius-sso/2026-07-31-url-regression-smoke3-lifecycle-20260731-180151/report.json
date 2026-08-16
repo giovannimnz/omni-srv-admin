@@ -1,0 +1,147 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T21:04:06.152Z",
+  "finalVerdict": "FAIL",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "sso",
+    "ssh",
+    "remote"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "sso",
+      "origin": "https://sso.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/sso/cycle-1-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/sso/cycle-1-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/sso/cycle-1-99-failure.png",
+        "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+        "url": "https://sso.atius.com.br/login"
+      },
+      "error": "canonical login visual contract failed at https://sso.atius.com.br/login: {\"card\":{\"width\":448,\"radius\":\"12px\",\"padding\":\"24px\"},\"logo\":{\"width\":44,\"height\":44},\"destinationLabel\":{\"fontSize\":\"11px\",\"fontWeight\":\"400\",\"lineHeight\":\"16.5px\",\"letterSpacing\":\"normal\"},\"destinationHost\":{\"fontSize\":\"14px\",\"fontWeight\":\"400\",\"lineHeight\":\"20px\"},\"labels\":[],\"inputs\":[],\"button\":null,\"iconLinks\":[\"https://sso.atius.com.br/mono-atius-horizontal.svg\",\"https://sso.atius.com.br/mono-atius-horizontal.svg\",\"https://sso.atius.com.br/mono-atius-horizontal.svg\"],\"emoji\":false,\"background\":\"linear-gradient(135deg, rgb(26, 26, 26), rgb(31, 31, 31) 50%, rgb(26, 26, 26))\"}"
+    },
+    {
+      "id": "ssh",
+      "origin": "https://ssh.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/ssh/cycle-1-01-access.png",
+          "sha256": "8df3ee00cf7be9755ce264368246c30f90046d9d86c8caf3bb2b2f49a737896c",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/ssh/cycle-1-02-login.png",
+          "sha256": "8df3ee00cf7be9755ce264368246c30f90046d9d86c8caf3bb2b2f49a737896c",
+          "url": "https://ssh.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/ssh/cycle-1-03-authenticated.png",
+          "sha256": "ec128c9d5fc655cc97876c428aee0d41c086bf7ed769da80b1da6c6f965d7d6a",
+          "url": "https://ssh.atius.com.br/compute"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/login",
+        "https://ssh.atius.com.br/compute",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/ssh/cycle-1-99-failure.png",
+        "sha256": "734ef34b2f943eaee5fd6256ba43a952f6d644dda49b9ba9f4341a77a755b223",
+        "url": "https://sso.atius.com.br/login"
+      },
+      "error": "URL predicate timed out at https://sso.atius.com.br/login"
+    },
+    {
+      "id": "remote",
+      "origin": "https://remote.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/remote/cycle-1-01-access.png",
+          "sha256": "f6403eabec36ed9dbc5639b15079f3154ccc8de87afda7bef34f48515921c3c0",
+          "url": "https://remote.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/remote/cycle-1-02-login.png",
+          "sha256": "f6403eabec36ed9dbc5639b15079f3154ccc8de87afda7bef34f48515921c3c0",
+          "url": "https://remote.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login",
+        "https://remote.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-url-regression-smoke3-lifecycle-20260731-180151/remote/cycle-1-99-failure.png",
+        "sha256": "38d646519b9adb0d031bf826e2c7dde62b0f900daf6f4ebf509cb8e1dbe8d24b",
+        "url": "https://remote.atius.com.br/login"
+      },
+      "error": "login attempt 2 stayed on /login with visible auth error"
+    }
+  ],
+  "totals": {
+    "sites": 3,
+    "cycles": 0,
+    "screenshots": 7
+  },
+  "secretsRecorded": false
+}

@@ -1,0 +1,170 @@
+{
+  "schemaVersion": 1,
+  "recordType": "async_build_process_reconciliation",
+  "generatedAt": "2026-07-31T15:18:32-03:00",
+  "process": {
+    "id": "proc_e8fd6e44b09b",
+    "status": "exited",
+    "exitCode": 0,
+    "completionReason": "exited",
+    "classification": "SUCCESSFUL_ATS_BUILD_PROMOTED_AND_VALIDATED_THEN_SUPERSEDED_BY_LATER_SUCCESSFUL_SOURCE_CHANGE_BUILD_AND_RUNTIME"
+  },
+  "provenance": {
+    "primarySession": "@session:default/20260730_034546_71412d",
+    "dispatchMessageId": 126278,
+    "completionMessageId": 126287,
+    "promotionMessageId": 126289,
+    "supersedingAsyncProcessId": "proc_125b2c12a64b",
+    "supersedingLateCompletionSignal": "The full original command and output for proc_125b2c12a64b were delivered on 2026-07-31. They directly confirm the already-recorded bootstrap-fix unit, invocation, result and resource metrics; this is primary provenance enrichment, not reconstruction or a new workload.",
+    "lateCompletionSignal": "Full command and output delivered in the current Hermes session on 2026-07-31; this supersedes the earlier partial-output limitation.",
+    "reconstruction": false,
+    "inventedOutput": false
+  },
+  "command": {
+    "workingDirectory": "/home/ubuntu/GitHub/omni-srv-admin",
+    "repository": "/home/ubuntu/GitHub/Atius-Capital/ats/frontend",
+    "evidenceDirectory": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2",
+    "buildLog": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2/ats-build.log",
+    "unit": "atius-central-sso-visual-build-v2.service",
+    "slice": "omni-builds.slice",
+    "lock": "/home/ubuntu/.local/state/omni/resource-governor-builds.lock",
+    "cpuQuota": "80%",
+    "memoryHigh": "6G",
+    "memoryMax": "8G",
+    "memorySwapMax": "1G",
+    "tasksMax": 8192
+  },
+  "firstBuild": {
+    "startedAt": "2026-07-31T09:27:06.689-03:00",
+    "finishedAt": "2026-07-31T09:28:34.116-03:00",
+    "unitInvocationId": "b1d1ae24a8ac4304b428b1359b483442",
+    "result": "success",
+    "execMainStatus": 0,
+    "serviceRuntime": "1min 26.304s",
+    "cpuTime": "1min 8.341s",
+    "memoryPeak": "546.3M",
+    "memorySwapPeak": "0B",
+    "log": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/ats-build.log",
+      "bytes": 9984,
+      "sha256": "180e69a28cc7cd0f316123c6144b0db90f6891d255b72daf2a6a3618122c4066",
+      "compiledSuccessfully": true,
+      "explicitBuildErrors": 0,
+      "routeEntries": 23,
+      "warningsAreNonBlocking": true
+    },
+    "promotedAt": "2026-07-31T09:28:50.919-03:00",
+    "promotedBuildId": "atius-1785500828844",
+    "promotionValidation": {
+      "pm2Process": "atius-web",
+      "pm2Status": "online",
+      "centralSsoHttpStatus": 200,
+      "faviconByteExact": true,
+      "rollbackExecuted": false
+    }
+  },
+  "rollbackSnapshot": {
+    "path": "/home/ubuntu/GitHub/Atius-Capital/ats/frontend/.next.rollback-sso-visual-v2-20260731-092707",
+    "sourceBuildId": "atius-1785038139458",
+    "files": 198,
+    "bytes": 5389961,
+    "treeManifestSha256": "69d97881f90e3f8cac18d42c725b5ef288149d6e844b859924af6adaa2e7981b",
+    "requiredFilesPresent": true,
+    "restoreReadiness": "STRUCTURALLY_VALID_NOT_RESTORED",
+    "pathPointer": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/ats-next-backup-path.txt",
+      "bytes": 92,
+      "sha256": "ec6042da6072a1e5f40fc1ebb902cf5a3af002029c9d3ffea5d8533aad7d4747"
+    }
+  },
+  "historicalValidation": {
+    "lifecycleAfterFirstPromotion": {
+      "finishedAt": "2026-07-31T09:41:50.723-03:00",
+      "report": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627/report.json",
+      "sha256": "e1940214d684af276d91412c4a69087d6d0d076f15397fe44b6e56aa61c3208b",
+      "finalVerdict": "PASS",
+      "sites": 5,
+      "cycles": 10,
+      "screenshots": 40
+    },
+    "meaning": "The first build was not merely compiled: it was promoted, served, smoke-tested and then covered by the later host-local lifecycle PASS before any subsequent source patch."
+  },
+  "supersedingBuild": {
+    "cause": "A later source change removed the visual bootstrap loading flash from src/app/sso/login/page.tsx and added a regression test. The first build was not replaced because it failed.",
+    "sourcePatchAt": "2026-07-31T09:46:55.502-03:00",
+    "sourceFile": "/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/app/sso/login/page.tsx",
+    "sourceFileMaterializedAt": "2026-07-31T09:47:11.100256955-03:00",
+    "sourceFileCurrentSha256": "c5f4c0eb16702b5cbc3bfc70a26f5041132d55f8677d8065134fc8e26b3a9ed0",
+    "startedAt": "2026-07-31T09:48:00.377-03:00",
+    "finishedAt": "2026-07-31T09:48:45.147-03:00",
+    "asyncProcessId": "proc_125b2c12a64b",
+    "unit": "atius-central-sso-bootstrap-visual-fix.service",
+    "unitInvocationId": "c97a77f5169f482095680f2fe16aa601",
+    "result": "success",
+    "execMainStatus": 0,
+    "serviceRuntime": "43.700s",
+    "cpuTime": "33.527s",
+    "memoryPeak": "784.8M",
+    "memorySwapPeak": "0B",
+    "log": {
+      "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/ats-build-bootstrap-fix.log",
+      "bytes": 9813,
+      "sha256": "34e73808eefbde7152ecf172229bdd139cd4e260142f5dce79e086e73e6e090a",
+      "compiledSuccessfully": true,
+      "explicitBuildErrors": 0,
+      "routeEntries": 23
+    },
+    "promotedAt": "2026-07-31T09:49:01.461-03:00",
+    "buildId": "atius-1785502082536"
+  },
+  "currentOperationalReadback": {
+    "checkedAt": "2026-07-31T14:35:35-03:00",
+    "pm2Process": "atius-web",
+    "pm2Status": "online",
+    "pid": 507465,
+    "startedAt": "2026-07-31T09:48:58-03:00",
+    "workingDirectory": "/home/ubuntu/GitHub/Atius-Capital/ats/frontend",
+    "buildId": "atius-1785502082536",
+    "publicLogin": {
+      "url": "https://sso.atius.com.br/login",
+      "httpStatus": 200
+    },
+    "publicBuildManifest": {
+      "url": "https://sso.atius.com.br/_next/static/atius-1785502082536/_buildManifest.js",
+      "httpStatus": 200
+    },
+    "postSupersessionVisualEvidence": {
+      "centralScreenshot": {
+        "capturedAt": "2026-07-31T09:51:59.816-03:00",
+        "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/00b-central-login-final.png",
+        "bytes": 70204,
+        "sha256": "1d2e023b1e45d66d596f5260fcfe8b6bee6475567259511121bf96a754b54f39"
+      },
+      "computedStyles": {
+        "capturedAt": "2026-07-31T09:55:23.698-03:00",
+        "path": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2/computed-style-final.json",
+        "entries": 7,
+        "bytes": 7056,
+        "sha256": "512bc9cec3b2f41d2116695d08d1bcd6659cb9034d36f5a82e565bb5a4f5d256"
+      }
+    }
+  },
+  "authority": {
+    "operationalVisualVerdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false,
+    "rule": "This reconciliation preserves build history and does not create a competing visual authority."
+  },
+  "conclusion": {
+    "firstBuildSucceeded": true,
+    "firstBuildWasServed": true,
+    "firstBuildWasValidated": true,
+    "firstBuildWasSuperseded": true,
+    "supersessionReason": "LATER_SOURCE_CHANGE",
+    "productFailure": false,
+    "runtimeFailure": false,
+    "rebuildRequiredNow": false,
+    "restartRequiredNow": false,
+    "rollbackRequiredNow": false
+  }
+}

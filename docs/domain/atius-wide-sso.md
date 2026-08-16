@@ -9,15 +9,22 @@ Canonical reusable contract:
 
 - `docs/domain/atius-sso-lifecycle-matrix.md`
 
-Runtime status: **planned until 10-04/10-05 evidence**. Source/doc completion is
-not runtime promotion.
+Runtime status: **live for the 2026-07-30 host-local SSO recovery scope**:
+`grafana.atius.com.br`, `portainer.atius.com.br`, `docker.atius.com.br`,
+`vpn.atius.com.br`, and `adguard.atius.com.br` passed two browser login/logout
+cycles each. Evidence:
+`docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/`.
 
 ## Contract capsule
 
 - Apps expose canonical human `/login` backed by internal rewrite/minimal
   proxy; the address bar stays on `/login`.
-- `/sso` is internal or controlled compatibility, never the human canonical
-  route and never the public destination of `/login`.
+- `/sso` is compatibility only: query-free entry returns `308 /login`; a
+  legacy allowlisted `return_to` is captured once in the transient cookie and
+  returns `307 /login`. It is never a human canonical route.
+- `return_to` never remains in the browser-facing login URL. A validated deep
+  link is carried in a host-only, HttpOnly, Secure, SameSite=Lax cookie with a
+  ten-minute TTL and consumed once by `/login`.
 - Validated destination survives entry, login, logout-complete, re-entry, and
   return. State is `valid | missing | rejected`; neutral state never defaults
   to Trade.
@@ -27,6 +34,23 @@ not runtime promotion.
 - App-local logout exposes one exact/minimal operation and never proxies the
   general ATS API.
 - Completion URI is fixed at `https://sso.atius.com.br/login`.
+
+| Site | Human URL | Default destination |
+|---|---|---|
+| SSH | `https://ssh.atius.com.br/login` | `https://ssh.atius.com.br/compute` |
+| RDP | `https://rdp.atius.com.br/login` | `https://rdp.atius.com.br/giovanni-w11-pc` |
+| OCI | `https://oci.atius.com.br/login` | `https://oci.atius.com.br/` |
+| Grafana | `https://grafana.atius.com.br/login` | `https://grafana.atius.com.br/` |
+| Portainer | `https://portainer.atius.com.br/login` | `https://portainer.atius.com.br/` |
+| Docker | `https://docker.atius.com.br/login` | `https://docker.atius.com.br/` |
+| VPN | `https://vpn.atius.com.br/login` | `https://vpn.atius.com.br/` |
+| AdGuard | `https://adguard.atius.com.br/login` | `https://adguard.atius.com.br/` |
+| Remote MT5 | `https://remote.atius.com.br/login` | `https://remote.atius.com.br/mt5/1/` |
+| Talk | `https://talk.atius.com.br/login` | `https://talk.atius.com.br/` |
+| Admin Talk | `https://admin.talk.atius.com.br/login` | `https://admin.talk.atius.com.br/` |
+
+Any new human-facing `/sso?return_to=...` or persistent
+`/login?return_to=...` URL is outside the contract.
 
 Exact neutral state:
 

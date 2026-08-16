@@ -1,0 +1,109 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-07-31T21:55:24.951Z",
+  "finalVerdict": "FAIL",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "sso",
+    "rdp"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "sso",
+      "origin": "https://sso.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/sso/cycle-1-01-access.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/sso/cycle-1-02-login.png",
+          "sha256": "0510c35de904211553b164e6d3ce465e9d22dc60c2726fa2a0e9c1edcf5267c4",
+          "url": "https://sso.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login",
+        "https://sso.atius.com.br/login"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/sso/cycle-1-99-failure.png",
+        "sha256": "2cc070c2aafe56a1666853ee7c5f98ad40fe365b9665592d08612482644fa8e8",
+        "url": "https://sso.atius.com.br/login"
+      },
+      "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n\u001b[2m  - waiting for getByPlaceholder('Digite seu email ou username').first() to be visible\u001b[22m\n"
+    },
+    {
+      "id": "rdp",
+      "origin": "https://rdp.atius.com.br",
+      "status": "FAIL",
+      "cycles": [],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/rdp/cycle-1-01-access.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/rdp/cycle-1-02-login.png",
+          "sha256": "4ffa4aa06879572f24c7f4d8c347387a646ed9c7d3c04f91528d12e7eb5026ef",
+          "url": "https://rdp.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/rdp/cycle-1-03-authenticated.png",
+          "sha256": "08491f238bab173f0d7b7f76d2616caa912de7b3755e088f7d6763870f5308dd",
+          "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/login",
+        "https://rdp.atius.com.br/giovanni-w11-pc"
+      ],
+      "failure": {
+        "name": "cycle-1-99-failure.png",
+        "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-sso-rdp-hydrated-20260731-185325/rdp/cycle-1-99-failure.png",
+        "sha256": "08491f238bab173f0d7b7f76d2616caa912de7b3755e088f7d6763870f5308dd",
+        "url": "https://rdp.atius.com.br/giovanni-w11-pc"
+      },
+      "error": "locator.waitFor: Timeout 20000ms exceeded.\nCall log:\n\u001b[2m  - waiting for locator('.logout[href=\"/logout\"], a[href=\"/logout\"]').first()\u001b[22m\n"
+    }
+  ],
+  "totals": {
+    "sites": 2,
+    "cycles": 0,
+    "screenshots": 5
+  },
+  "secretsRecorded": false
+}

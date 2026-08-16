@@ -7,10 +7,19 @@
   `/home/ubuntu/GitHub/Atius-Capital/ats/tests/frontend/fixtures/sso-lifecycle-contract.json`
 - Skill acceptance:
   `/home/ubuntu/.codex/skills/atius-sso/references/lifecycle-acceptance.md`
-- Runtime status: **planned until 10-04/10-05 evidence**
-- Phase 11 boundary: the allowlisted AdGuard root is eligible for central
-  handoff, but the AdGuard facade is not approved until Phase 11 implements and
-  validates its app-local contract.
+- Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
+  `sso`, `ssh`, `rdp`, `oci`, `talk`, `admin-talk`, `remote`, `grafana`,
+  `portainer`, `docker`, `vpn`, and `adguard` passed two complete browser
+  login/logout cycles each. Canonical evidence:
+  `docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636/`.
+- Canonical result: `12/12` sites, `24/24` cycles, `96` screenshots,
+  `completeFleetEvidence=true`, independent visual review `12/12 PASS`.
+- Plans `10-04` and `10-05` have runtime promotion and browser/visual evidence;
+  this seal supersedes the earlier pending-promotion wording without removing
+  the historical artifacts.
+- Phase 11 boundary: the AdGuard app-local facade is approved for the recovery
+  scope above; future AdGuard feature expansion still needs its own lifecycle
+  evidence.
 
 This file is the single owner-side lifecycle contract. The manual index,
 operations manual, platform manual, and application playbook reference it
@@ -52,6 +61,14 @@ instead of redefining route or logout semantics.
 Neutral state must not render `Entrar novamente`, `Voltar para`, an application
 link, or any substitute application navigation control. `Encerrar sessão` may
 remain as the explicit non-application action.
+
+For every valid application destination, the visible `Destino seguro` value is
+the bare hostname only. It never includes `http://`, `https://`, a port, a
+trailing slash, path, query, or fragment. Example:
+`https://ssh.atius.com.br/compute/giovanni-w11-pc` is displayed as
+`ssh.atius.com.br`. The full validated URL remains the navigation target; this
+rule changes display text only. The direct central neutral state remains
+`Nenhum destino selecionado`.
 
 ## Five-stage lifecycle
 
@@ -221,6 +238,16 @@ and cover:
 10. public URL without persistent bootstrap query.
 
 A redirect-only smoke is insufficient.
+
+The fleet harness must also reject visually empty authenticated shells:
+
+- Grafana fails when any visible panel reports `Sem dados`, `No data`, loading,
+  datasource error, or query error. A bounded operational time window may be
+  used for the E2E view, but its series must come from the real datasource.
+- Remote fails until the visible noVNC region has a non-blank framebuffer.
+  Authenticate-plus-black-canvas is not operational readiness.
+- A login input detached by a same-origin navigation is accepted only after
+  the destination URL and the app-specific authenticated marker both pass.
 
 ## Onboarding and removal
 

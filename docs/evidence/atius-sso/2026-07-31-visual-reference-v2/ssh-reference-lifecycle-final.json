@@ -1,0 +1,16 @@
+{
+  "status": "PASS",
+  "authenticatedUrl": "https://ssh.atius.com.br/compute",
+  "logoutUrl": "https://sso.atius.com.br/login",
+  "logoutControl": {
+    "tag": "A",
+    "href": "/logout",
+    "text": "Sair"
+  },
+  "sessionProbeAfterLogout": {
+    "status": 401,
+    "ok": false
+  },
+  "authCookieCountAfterLogout": 0,
+  "classification": "central logout completed; prior immediate cookie read was a probe race"
+}

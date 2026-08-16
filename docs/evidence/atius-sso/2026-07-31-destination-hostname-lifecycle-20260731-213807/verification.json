@@ -1,0 +1,63 @@
+{
+  "generatedAt": "2026-08-01T00:47:41.507846+00:00",
+  "verdict": "PASS",
+  "runtimeBuild": "atius-1785544475988",
+  "runtimePid": 2089505,
+  "displayContract": "bare-hostname-only",
+  "navigationContract": "full-validated-url-preserved",
+  "anonymousScan": {
+    "sites": 12,
+    "screenshots": 12,
+    "verdict": "PASS",
+    "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-destination-hostname-only-20260731-213651"
+  },
+  "lifecycle": {
+    "sites": 12,
+    "cycles": 24,
+    "screenshots": 96,
+    "verdict": "PASS",
+    "completeFleetEvidence": true
+  },
+  "visualReview": {
+    "sites": 12,
+    "passed": 12,
+    "failed": 0,
+    "verdict": "PASS"
+  },
+  "contractAudit": {
+    "surfaces": 8,
+    "checks": 20,
+    "verdict": "PASS"
+  },
+  "sourceVerification": {
+    "atsTargetTests": 18,
+    "reusableCoreTests": 15,
+    "typechecks": "PASS",
+    "distRebuild": "PASS",
+    "sourceManifestFiles": 29,
+    "legacyDisplayPattern": "ABSENT"
+  },
+  "knowledge": {
+    "gbrain": "PASS",
+    "gbrainSlug": "aisecondbrain/30-recursos/atius/sso-atius-guia-canonico",
+    "graphifyReusable": {
+      "nodes": 1009,
+      "edges": 1116,
+      "stale": false
+    },
+    "graphifyAts": {
+      "nodes": 32050,
+      "edges": 48520,
+      "stale": false
+    },
+    "graphifyOmni": {
+      "nodes": 12626,
+      "edges": 18682,
+      "stale": false,
+      "commitStale": false
+    }
+  },
+  "failures": 0,
+  "backup": "/home/ubuntu/backups/atius-sso-destination-hostname-pre-20260731-212540",
+  "restoreDrill": "PASS"
+}

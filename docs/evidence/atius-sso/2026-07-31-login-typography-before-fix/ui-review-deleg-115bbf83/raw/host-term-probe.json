@@ -1,0 +1,650 @@
+{
+  "sso-reference": {
+    "url": "https://sso.atius.com.br/login",
+    "term": "Nenhum destino selecionado",
+    "candidates": [
+      {
+        "tag": "span",
+        "path": "body.font-sans > div.min-h-screen.bg-dark-gradient.flex.items-center > div.w-full.max-w-md.rounded-xl.border > div.space-y-4:nth-of-type(2) > div.rounded-lg.border.border-gray-700/40.bg-gray-800/40:nth-of-type(1) > div.mt-2.flex.items-start.gap-2 > span",
+        "class": "",
+        "text": "Nenhum destino selecionado",
+        "rect": {
+          "x": 558,
+          "y": 383.125,
+          "w": 203.328,
+          "h": 20,
+          "top": 383.125,
+          "bottom": 403.125,
+          "left": 558,
+          "right": 761.328
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(229, 231, 235)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "203.328px",
+          "height": "20px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<span>Nenhum destino selecionado</span>"
+      },
+      {
+        "tag": "div",
+        "path": "html.dark > body.font-sans > div.min-h-screen.bg-dark-gradient.flex.items-center > div.w-full.max-w-md.rounded-xl.border > div.space-y-4:nth-of-type(2) > div.rounded-lg.border.border-gray-700/40.bg-gray-800/40:nth-of-type(1) > div.mt-2.flex.items-start.gap-2",
+        "class": "mt-2 flex items-start gap-2 text-sm text-gray-200",
+        "text": "Nenhum destino selecionado",
+        "rect": {
+          "x": 534,
+          "y": 383.125,
+          "w": 372,
+          "h": 20,
+          "top": 383.125,
+          "bottom": 403.125,
+          "left": 534,
+          "right": 906
+        },
+        "style": {
+          "display": "flex",
+          "fontFamily": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "20px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(229, 231, 235)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "8px",
+          "marginBottom": "0px",
+          "width": "372px",
+          "height": "20px",
+          "textAlign": "start",
+          "gap": "8px",
+          "alignItems": "flex-start",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"mt-2 flex items-start gap-2 text-sm text-gray-200\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-check mt-0.5 h-4 w-4 shrink-0 text-orange-500\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z\"></path><"
+      },
+      {
+        "tag": "div",
+        "path": "html.dark > body.font-sans > div.min-h-screen.bg-dark-gradient.flex.items-center > div.w-full.max-w-md.rounded-xl.border > div.space-y-4:nth-of-type(2) > div.rounded-lg.border.border-gray-700/40.bg-gray-800/40:nth-of-type(1)",
+        "class": "rounded-lg border border-gray-700/40 bg-gray-800/40 p-3",
+        "text": "DESTINO SEGURO Nenhum destino selecionado",
+        "rect": {
+          "x": 521,
+          "y": 345.625,
+          "w": 398,
+          "h": 70.5,
+          "top": 345.625,
+          "bottom": 416.125,
+          "left": 521,
+          "right": 919
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "24px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(250, 250, 250)",
+          "backgroundColor": "rgba(31, 41, 55, 0.4)",
+          "marginTop": "16px",
+          "marginBottom": "0px",
+          "width": "398px",
+          "height": "70.5px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"rounded-lg border border-gray-700/40 bg-gray-800/40 p-3\"><p class=\"text-[11px] font-normal uppercase text-gray-400\">Destino seguro</p><div class=\"mt-2 flex items-start gap-2 text-sm text-gray-200\"><svg xmlns=\"http://www.w3.org/2000/svg\" width=\"24\" height=\"24\" viewBox=\"0 0 24 24\" fill=\"none\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linecap=\"round\" stroke-linejoin=\"round\" class=\"lucide lucide-shield-check mt-0.5 h-4 w-4 shrink-0 text-orange-500\"><path d=\"M20 13c0 5-3.5 7.5-7.66 8."
+      }
+    ]
+  },
+  "grafana": {
+    "url": "https://grafana.atius.com.br/login",
+    "term": "grafana.atius.com.br",
+    "candidates": [
+      {
+        "tag": "span",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row > span",
+        "class": "",
+        "text": "grafana.atius.com.br",
+        "rect": {
+          "x": 566,
+          "y": 392,
+          "w": 189.656,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 566,
+          "right": 755.656
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "189.656px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<span>grafana.atius.com.br</span>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row",
+        "class": "dest-row",
+        "text": "grafana.atius.com.br",
+        "rect": {
+          "x": 538,
+          "y": 392,
+          "w": 364,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 538,
+          "right": 902
+        },
+        "style": {
+          "display": "flex",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "364px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "10px",
+          "alignItems": "center",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>grafana.atius.com.br</span></div>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2)",
+        "class": "dest",
+        "text": "DESTINO SEGURO grafana.atius.com.br",
+        "rect": {
+          "x": 521,
+          "y": 358,
+          "w": 398,
+          "h": 68,
+          "top": 358,
+          "bottom": 426,
+          "left": 521,
+          "right": 919
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(248, 250, 252)",
+          "backgroundColor": "rgb(27, 34, 44)",
+          "marginTop": "28px",
+          "marginBottom": "0px",
+          "width": "398px",
+          "height": "68px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest\"><small>DESTINO SEGURO</small><div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>grafana.atius.com.br</span></div></div>"
+      }
+    ]
+  },
+  "portainer": {
+    "url": "https://portainer.atius.com.br/login",
+    "term": "portainer.atius.com.br",
+    "candidates": [
+      {
+        "tag": "span",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row > span",
+        "class": "",
+        "text": "portainer.atius.com.br",
+        "rect": {
+          "x": 566,
+          "y": 392,
+          "w": 201.688,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 566,
+          "right": 767.688
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "201.688px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<span>portainer.atius.com.br</span>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row",
+        "class": "dest-row",
+        "text": "portainer.atius.com.br",
+        "rect": {
+          "x": 538,
+          "y": 392,
+          "w": 364,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 538,
+          "right": 902
+        },
+        "style": {
+          "display": "flex",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "364px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "10px",
+          "alignItems": "center",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>portainer.atius.com.br</span></div>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2)",
+        "class": "dest",
+        "text": "DESTINO SEGURO portainer.atius.com.br",
+        "rect": {
+          "x": 521,
+          "y": 358,
+          "w": 398,
+          "h": 68,
+          "top": 358,
+          "bottom": 426,
+          "left": 521,
+          "right": 919
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(248, 250, 252)",
+          "backgroundColor": "rgb(27, 34, 44)",
+          "marginTop": "28px",
+          "marginBottom": "0px",
+          "width": "398px",
+          "height": "68px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest\"><small>DESTINO SEGURO</small><div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>portainer.atius.com.br</span></div></div>"
+      }
+    ]
+  },
+  "docker": {
+    "url": "https://docker.atius.com.br/login",
+    "term": "docker.atius.com.br",
+    "candidates": [
+      {
+        "tag": "span",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row > span",
+        "class": "",
+        "text": "docker.atius.com.br",
+        "rect": {
+          "x": 566,
+          "y": 392,
+          "w": 178.172,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 566,
+          "right": 744.172
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "178.172px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<span>docker.atius.com.br</span>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row",
+        "class": "dest-row",
+        "text": "docker.atius.com.br",
+        "rect": {
+          "x": 538,
+          "y": 392,
+          "w": 364,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 538,
+          "right": 902
+        },
+        "style": {
+          "display": "flex",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "364px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "10px",
+          "alignItems": "center",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>docker.atius.com.br</span></div>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2)",
+        "class": "dest",
+        "text": "DESTINO SEGURO docker.atius.com.br",
+        "rect": {
+          "x": 521,
+          "y": 358,
+          "w": 398,
+          "h": 68,
+          "top": 358,
+          "bottom": 426,
+          "left": 521,
+          "right": 919
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(248, 250, 252)",
+          "backgroundColor": "rgb(27, 34, 44)",
+          "marginTop": "28px",
+          "marginBottom": "0px",
+          "width": "398px",
+          "height": "68px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest\"><small>DESTINO SEGURO</small><div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>docker.atius.com.br</span></div></div>"
+      }
+    ]
+  },
+  "vpn": {
+    "url": "https://vpn.atius.com.br/login",
+    "term": "vpn.atius.com.br",
+    "candidates": [
+      {
+        "tag": "span",
+        "path": "html > body.public_sans_e198fb38-module__mP0ICq__variable > main.flex.min-h-screen.items-center.justify-center > section.w-full.max-w-[448px].rounded-xl.border > div.mt-7.rounded-xl.border.border-[#25303d]:nth-of-type(2) > span.flex.items-center.gap-2.5.font-semibold",
+        "class": "flex items-center gap-2.5 font-semibold text-white",
+        "text": "vpn.atius.com.br",
+        "rect": {
+          "x": 538,
+          "y": 390,
+          "w": 364,
+          "h": 21,
+          "top": 390,
+          "bottom": 411,
+          "left": 538,
+          "right": 902
+        },
+        "style": {
+          "display": "flex",
+          "fontFamily": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "fontSize": "14px",
+          "fontWeight": "600",
+          "lineHeight": "21px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "364px",
+          "height": "21px",
+          "textAlign": "start",
+          "gap": "10px",
+          "alignItems": "center",
+          "justifyContent": "normal"
+        },
+        "html": "<span class=\"flex items-center gap-2.5 font-semibold text-white\"><svg aria-hidden=\"true\" class=\"h-[18px] w-[18px] flex-none text-[#ff7112]\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg>vpn.atius.com.br</span>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body.public_sans_e198fb38-module__mP0ICq__variable > main.flex.min-h-screen.items-center.justify-center > section.w-full.max-w-[448px].rounded-xl.border > div.mt-7.rounded-xl.border.border-[#25303d]:nth-of-type(2)",
+        "class": "mt-7 rounded-xl border border-[#25303d] bg-[#1b222c] px-4 py-3.5",
+        "text": "DESTINO SEGURO vpn.atius.com.br",
+        "rect": {
+          "x": 521,
+          "y": 352,
+          "w": 398,
+          "h": 74,
+          "top": 352,
+          "bottom": 426,
+          "left": 521,
+          "right": 919
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "ui-sans-serif, system-ui, sans-serif, \"Apple Color Emoji\", \"Segoe UI Emoji\", \"Segoe UI Symbol\", \"Noto Color Emoji\"",
+          "fontSize": "14px",
+          "fontWeight": "400",
+          "lineHeight": "21px",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "lab(98.1434 -0.369519 -1.05966)",
+          "backgroundColor": "rgb(27, 34, 44)",
+          "marginTop": "28px",
+          "marginBottom": "0px",
+          "width": "398px",
+          "height": "74px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"mt-7 rounded-xl border border-[#25303d] bg-[#1b222c] px-4 py-3.5\"><small class=\"mb-2 block text-[10px] uppercase tracking-[0.08em] text-[#a7b0aa]\">DESTINO SEGURO</small><span class=\"flex items-center gap-2.5 font-semibold text-white\"><svg aria-hidden=\"true\" class=\"h-[18px] w-[18px] flex-none text-[#ff7112]\" viewBox=\"0 0 24 24\" fill=\"none\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg>vpn"
+      }
+    ]
+  },
+  "adguard": {
+    "url": "https://adguard.atius.com.br/login",
+    "term": "adguard.atius.com.br",
+    "candidates": [
+      {
+        "tag": "span",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row > span",
+        "class": "",
+        "text": "adguard.atius.com.br",
+        "rect": {
+          "x": 566,
+          "y": 392,
+          "w": 194.813,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 566,
+          "right": 760.813
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "194.812px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<span>adguard.atius.com.br</span>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2) > div.dest-row",
+        "class": "dest-row",
+        "text": "adguard.atius.com.br",
+        "rect": {
+          "x": 538,
+          "y": 392,
+          "w": 364,
+          "h": 19,
+          "top": 392,
+          "bottom": 411,
+          "left": 538,
+          "right": 902
+        },
+        "style": {
+          "display": "flex",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "600",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(255, 255, 255)",
+          "backgroundColor": "rgba(0, 0, 0, 0)",
+          "marginTop": "0px",
+          "marginBottom": "0px",
+          "width": "364px",
+          "height": "19px",
+          "textAlign": "start",
+          "gap": "10px",
+          "alignItems": "center",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>adguard.atius.com.br</span></div>"
+      },
+      {
+        "tag": "div",
+        "path": "html > body > main.card > div.dest:nth-of-type(2)",
+        "class": "dest",
+        "text": "DESTINO SEGURO adguard.atius.com.br",
+        "rect": {
+          "x": 521,
+          "y": 358,
+          "w": 398,
+          "h": 68,
+          "top": 358,
+          "bottom": 426,
+          "left": 521,
+          "right": 919
+        },
+        "style": {
+          "display": "block",
+          "fontFamily": "Inter, system-ui, -apple-system, \"Segoe UI\", Roboto, sans-serif",
+          "fontSize": "16px",
+          "fontWeight": "400",
+          "lineHeight": "normal",
+          "letterSpacing": "normal",
+          "textTransform": "none",
+          "color": "rgb(248, 250, 252)",
+          "backgroundColor": "rgb(27, 34, 44)",
+          "marginTop": "28px",
+          "marginBottom": "0px",
+          "width": "398px",
+          "height": "68px",
+          "textAlign": "start",
+          "gap": "normal",
+          "alignItems": "normal",
+          "justifyContent": "normal"
+        },
+        "html": "<div class=\"dest\"><small>DESTINO SEGURO</small><div class=\"dest-row\"><svg class=\"shield\" viewBox=\"0 0 24 24\" fill=\"none\" aria-hidden=\"true\"><path d=\"M12 3 19 6v5c0 4.7-2.8 8.1-7 10-4.2-1.9-7-5.3-7-10V6l7-3Z\" stroke=\"currentColor\" stroke-width=\"2\" stroke-linejoin=\"round\"></path></svg><span>adguard.atius.com.br</span></div></div>"
+      }
+    ]
+  }
+}

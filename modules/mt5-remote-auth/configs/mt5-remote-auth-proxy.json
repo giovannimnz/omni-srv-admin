@@ -2,14 +2,15 @@
   "listenHost": "127.0.0.1",
   "listenPort": 8095,
   "publicOrigin": "https://remote.atius.com.br",
-  "ssoLoginUrl": "https://sso.atius.com.br/login",
+  "ssoLoginUrl": "https://remote.atius.com.br/login",
   "authCheckUrl": "http://127.0.0.1:8015/v1/auth/me",
   "authCookieName": "auth-token",
+  "defaultRouteId": "1",
   "staticRoot": "/var/www/remote-mt5",
   "routes": {
     "1": {
       "basePath": "/mt5/1",
-      "upstream": "http://10.100.100.3:6081",
+      "upstream": "http://10.21.1.21:6080",
       "requiredPermission": "can_access_trade",
       "staticRoot": "/var/www/remote-mt5"
     }

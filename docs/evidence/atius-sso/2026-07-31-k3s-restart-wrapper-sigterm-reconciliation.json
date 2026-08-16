@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T12:19:17-03:00",
+  "process": {
+    "id": "proc_604529af8f88",
+    "commandPurpose": "Back up the SRV-1 K3s config, unit and manifests, restart K3s, then verify node and monitoring readiness.",
+    "background": true,
+    "configuredTimeoutSeconds": 900,
+    "pid": 4057728,
+    "startedAt": "2026-07-31T05:53:19-03:00",
+    "lastObservedRunningAt": "2026-07-31T06:00:22-03:00",
+    "terminatedAt": "2026-07-31T06:03:39-03:00",
+    "exitCodeReportedByNotification": 143,
+    "signal": "SIGTERM",
+    "completionReason": "killed",
+    "terminationSource": "process.kill",
+    "classification": "INTERRUPTED_WRAPPER_AFTER_VERIFIED_BACKUP_WITH_LIVE_RECOVERY",
+    "notExecutorTimeout": true,
+    "notOom": true,
+    "notBackupCorruption": true
+  },
+  "sessionEvidence": {
+    "sessionId": "20260730_034546_71412d",
+    "startMessageId": 121868,
+    "firstPollMessageId": 121872,
+    "killRequestMessageId": 122165,
+    "killResultMessageId": 122166,
+    "killResult": {
+      "status": "killed",
+      "completionReason": "killed",
+      "terminationSource": "process.kill",
+      "output": "k3s_config_backup=PASS"
+    },
+    "reasonForKill": "The wrapper remained blocked in synchronous systemctl restart k3s while K3s was still activating. It was explicitly terminated so firewall and etcd reachability investigation could continue without duplicating the restart.",
+    "commandsAfterRestartReached": false,
+    "missingOriginalMarkers": [
+      "attempt=... state=... ready=...",
+      "k3s_restart_verify=PASS"
+    ],
+    "interpretation": "The missing markers mean the original wrapper did not complete its own post-restart verification. They do not mean the backup or K3s service was corrupted. Independent verification is required and recorded below."
+  },
+  "backup": {
+    "pointerFile": "/tmp/atius-sso-current-backup-path",
+    "root": "/home/ubuntu/backups/atius-sso-live-total-regression-20260731-052218",
+    "payload": "/home/ubuntu/backups/atius-sso-live-total-regression-20260731-052218/k3s-srv1",
+    "checksumManifest": "/home/ubuntu/backups/atius-sso-live-total-regression-20260731-052218/k3s-srv1-SHA256SUMS",
+    "checksumManifestSha256": "173f210009e865b05d4de41e63d81b8143cc875b964587c3695e986c80091252",
+    "completedBeforeRestart": true,
+    "originalMarker": "k3s_config_backup=PASS",
+    "files": 14,
+    "bytes": 19318,
+    "zeroByteFiles": 0,
+    "partialOrTemporaryFiles": 0,
+    "checksumVerification": "PASS",
+    "readabilityVerification": "PASS",
+    "currentParity": {
+      "configYaml": "BYTE_EXACT",
+      "systemdUnit": "BYTE_EXACT",
+      "serverManifests": "BYTE_EXACT"
+    },
+    "scope": [
+      "/etc/rancher/k3s/config.yaml",
+      "/etc/systemd/system/k3s.service",
+      "/var/lib/rancher/k3s/server/manifests"
+    ],
+    "scopeLimit": "This is a configuration/unit/manifests backup. It is not a K3s datastore or etcd snapshot and must not be described as a full-cluster restore backup.",
+    "restoreReadiness": "PASS_FOR_RECORDED_SCOPE",
+    "restoreWasNotExecuted": true
+  },
+  "restartTimeline": [
+    {
+      "at": "2026-07-31T05:53:20-03:00",
+      "event": "systemd stopped the previous K3s unit and began the requested restart"
+    },
+    {
+      "at": "2026-07-31T05:54:16-03:00",
+      "event": "K3s started another activation attempt and remained activating"
+    },
+    {
+      "at": "2026-07-31T06:03:39-03:00",
+      "event": "The Hermes wrapper was explicitly terminated through process.kill"
+    },
+    {
+      "at": "2026-07-31T06:04:41-03:00",
+      "event": "The private K3s iptables allowlist patch completed and peer probes to 2379, 2380 and 6443 passed"
+    },
+    {
+      "at": "2026-07-31T06:04:48-03:00",
+      "event": "K3s briefly reached started state and exited with status 1"
+    },
+    {
+      "at": "2026-07-31T06:05:09-03:00",
+      "event": "A subsequent K3s attempt exited with status 1"
+    },
+    {
+      "at": "2026-07-31T06:05:34-03:00",
+      "event": "Another K3s attempt exited with status 1"
+    },
+    {
+      "at": "2026-07-31T06:05:52-03:00",
+      "event": "The current successful K3s process began"
+    },
+    {
+      "at": "2026-07-31T06:06:10-03:00",
+      "event": "K3s entered active/running state"
+    }
+  ],
+  "causality": {
+    "wrapperTerminationCausedServiceRecovery": false,
+    "recoveryRequiredPrivateFirewallCorrection": true,
+    "systemdContinuedServiceLifecycleAfterWrapperTermination": true,
+    "restartWasEffective": true,
+    "restartAloneResolvedMonitoringIncident": false
+  },
+  "independentReadback": {
+    "collectedAt": "2026-07-31T12:17:30-03:00",
+    "k3s": {
+      "activeState": "active",
+      "subState": "running",
+      "result": "success",
+      "execMainStatus": 0,
+      "execMainStartTimestamp": "2026-07-31T06:05:52-03:00",
+      "activeEnterTimestamp": "2026-07-31T06:06:10-03:00"
+    },
+    "node": {
+      "name": "atius-srv-1",
+      "ready": true,
+      "diskPressure": true,
+      "taint": "node.kubernetes.io/disk-pressure:NoSchedule",
+      "taintAddedAt": "2026-07-31T10:13:14-03:00"
+    },
+    "monitoringNamespace": {
+      "runningPods": 8,
+      "pendingPods": 2,
+      "evictedPods": 2,
+      "prometheusEndpointAddresses": 0,
+      "prometheus": "Pending",
+      "loki": "Pending"
+    },
+    "filesystem": {
+      "rootUsagePercent": 90,
+      "rootFreeHuman": "20G"
+    },
+    "conclusion": "The K3s control plane recovered and the node is Ready. The later DiskPressure incident remains OPEN/HIGH and independently keeps Prometheus and Loki unavailable. Repeating the K3s restart would not address the current storage cause."
+  },
+  "actionsNotTakenDuringReconciliation": [
+    "No second K3s restart",
+    "No cleanup or deletion",
+    "No volume or PV mutation",
+    "No firewall mutation",
+    "No commit or push",
+    "No Graphify rebuild while DiskPressure is true"
+  ],
+  "relatedEvidence": [
+    "docs/evidence/atius-sso/2026-07-31-srv1-diskpressure-monitoring-incident.json",
+    "docs/evidence/atius-sso/2026-07-31-live-total-regression-final-closeout.md",
+    "AiSecondBrain/61-Incidents/2026-07-31-srv1-diskpressure-prometheus-loki-pending.md"
+  ],
+  "indexing": {
+    "gbrainSlug": "atius-sso-k3s-restart-wrapper-sigterm-2026-07-31/index",
+    "gbrainMethod": "import --no-embed",
+    "gbrainImport": "PASS",
+    "gbrainReadback": "PASS",
+    "directPutPage": "FAILED_BEFORE_WRITE_DUE_TO_EMBEDDING_TOKEN",
+    "graphify": "DEFERRED_DISKPRESSURE",
+    "graphifyRunners": 0
+  },
+  "verdict": {
+    "backup": "PASS_FOR_RECORDED_SCOPE",
+    "wrapper": "INTERRUPTED_BY_EXPLICIT_PROCESS_KILL",
+    "restart": "EFFECTIVE_AFTER_FIREWALL_CORRECTION",
+    "k3sCurrent": "ACTIVE_READY",
+    "monitoringCurrent": "DEGRADED_BY_INDEPENDENT_DISKPRESSURE",
+    "damage": "NO_DAMAGE_FOUND"
+  }
+}

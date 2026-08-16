@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T11:06:27-03:00",
+  "incident": {
+    "id": "atius-api-public-8015",
+    "status": "OPEN",
+    "severity": "HIGH",
+    "scope": "ATS API network exposure outside visual SSO certification",
+    "productionMutationApplied": false,
+    "blockedOn": "explicit production gate"
+  },
+  "runtime": {
+    "service": "atius-api",
+    "supervisor": "PM2",
+    "pid": 4181983,
+    "listener": "0.0.0.0:8015",
+    "localHealth": "healthy",
+    "publicHttpsHealth": "healthy"
+  },
+  "externalReachability": {
+    "probeHost": "horistic-srv",
+    "publicTarget": "137.131.190.161:8015",
+    "publicReachable": true,
+    "privateTarget": "10.11.1.11:8015",
+    "privateReachable": true
+  },
+  "logForensics": {
+    "parsedRequests": 19810,
+    "publicDirect8015Requests": 189,
+    "methods": {
+      "GET": 187,
+      "OPTIONS": 1,
+      "POST": 1
+    },
+    "scannerOrTraversalPathsObserved": true,
+    "legitimatePrivateNonLoopbackTrafficFound": false
+  },
+  "visualCertification": {
+    "verdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "centralOidcFlow": false,
+    "authoritativeLifecyclePack": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627",
+    "invalidatedByIncident": false
+  },
+  "proposedRemediation": {
+    "apiHost": "127.0.0.1",
+    "restartScope": "atius-api only",
+    "requiredGates": [
+      "loopback health",
+      "public HTTPS health",
+      "Apache proxy health",
+      "external public port blocked",
+      "external private port blocked unless explicitly required",
+      "SSO browser regression"
+    ]
+  },
+  "backups": [
+    {
+      "path": "/home/ubuntu/backups/atius-api-public-8015-incident-20260731-104527",
+      "checksum": "PASS"
+    },
+    {
+      "path": "/home/ubuntu/backups/atius-api-8015-docs-20260731-104954",
+      "checksum": "PASS"
+    },
+    {
+      "path": "/home/ubuntu/backups/atius-api-8015-graphify-preseal-20260731-105825",
+      "checksum": "PASS",
+      "files": 41717,
+      "bytes": 570002487
+    },
+    {
+      "path": "/home/ubuntu/backups/atius-api-8015-final-closeout-docs-20260731-110627",
+      "checksum": "PASS",
+      "files": 7
+    }
+  ],
+  "firstGraphifySeal": {
+    "unit": "atius-api-8015-graphify-seal.service",
+    "result": "success",
+    "exitStatus": 0,
+    "runtimeSeconds": 257,
+    "cpuQuotaPercentOfHost": 20,
+    "memoryPeak": "1.7G",
+    "memorySwapPeak": "0B",
+    "nrThrottledObserved": 770,
+    "log": "/home/ubuntu/.logs/graphify/atius-api-8015-final-seal-20260731.log",
+    "logSha256": "1de8e6b3c79a8398944564e9429431e37ac88abfbbc53ea62d3e621397a19bad",
+    "omni": {
+      "nodes": 14011,
+      "edges": 20042,
+      "stale": false,
+      "commitStale": false
+    },
+    "vault": {
+      "nodes": 37565,
+      "edges": 63222,
+      "stale": false,
+      "commitStale": false,
+      "incidentQueryNodes": 14,
+      "incidentQueryEdges": 13
+    }
+  },
+  "gbrain": {
+    "slug": "atius-api-public-8015-incident-2026-07-31/index",
+    "importMode": "--no-embed",
+    "readback": "PASS",
+    "genericIndexRemoved": true
+  },
+  "git": {
+    "commitOrPushPerformed": false,
+    "omniHead": "79844a369816db6283dbfd11c3d101bc3e0037aa",
+    "vaultHead": "1921614ee81dca6b602c65ca3b59d815dd179d93",
+    "atsHead": "734a3ef9d92f1b2d5effa3c2f5b25c52be07c309"
+  }
+}

@@ -23,7 +23,7 @@ status: blocked
 
 # Phase 53 Plan 05: Controlled live deployment and public proof
 
-**Blocked before mutation.** The contract tests pass, but the live runner is
+**Superseded before mutation.** The contract tests pass, but the live runner is
 still the Phase 53-01 fail-closed interface and cannot execute this plan.
 
 ## Deterministic blocker
@@ -66,6 +66,13 @@ continues to fail closed with `preflight-input-required` or
 `stage-adapter-required:<stage>`. No provider, SSH, Vault, DNS, OCI, firewall,
 Apache, listener or RustDesk live operation ran. Plan 53-05 therefore remains
 blocked and the partial runner contract is preserved for the next session.
+
+## Supersession
+
+Canonical closure is now tracked by `53-05B-PLAN.md`, which owns the concrete
+adapter implementation, successor candidate admission, fresh capacity chain and
+single ordered transaction. This historical summary remains immutable evidence
+of the original blocker and must not be counted as live proof.
 
 ## Required closure
 

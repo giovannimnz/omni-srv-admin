@@ -1,0 +1,22 @@
+[Unit]
+Description=CoreDNS TCP telemetry canary
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/modules/k3s-ha-portainer-oci/README.md
+After=network-online.target k3s.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=ubuntu
+Group=ubuntu
+ExecStart=/usr/local/bin/coredns-tcp-canary.sh
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6
+LockPersonality=true
+MemoryDenyWriteExecute=true

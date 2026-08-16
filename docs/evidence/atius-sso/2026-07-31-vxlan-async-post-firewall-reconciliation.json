@@ -1,0 +1,267 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T12:34:55-03:00",
+  "delegation": {
+    "id": "deleg_68a11ed4",
+    "taskCount": 1,
+    "requestedMode": "read-only",
+    "startedAt": "2026-07-31T07:01:49-03:00",
+    "completedAt": "2026-07-31T07:09:25-03:00",
+    "observerMutationFound": false,
+    "transcript": "/home/ubuntu/.hermes/cache/delegation/live/deleg_68a11ed4/task-0.log",
+    "summary": "/home/ubuntu/.hermes/cache/delegation/subagent-summary-0-20260731_070925_601572.txt"
+  },
+  "classification": "READ_ONLY_OBSERVER_POST_CONCURRENT_FIREWALL_ROLLOUT_WITH_CURRENT_VXLAN_HEALTH_AND_LATER_STORAGE_DEGRADATION",
+  "authoritativeVisualVerdict": {
+    "verdict": "PASS_HOST_LOCAL_SSO_VISUAL",
+    "centralOidcFlow": false,
+    "pack": "docs/evidence/atius-sso/2026-07-31-visual-reference-v2-lifecycle-20260731-093627",
+    "affectedByThisReconciliation": false
+  },
+  "timeline": [
+    {
+      "at": "before 2026-07-31T07:05:04-03:00",
+      "event": "Grafana pod 10.42.2.5 could not use cross-node CoreDNS or reach Prometheus through the K3s fabric",
+      "classification": "pre-rollout failure"
+    },
+    {
+      "at": "2026-07-31T07:01:49-03:00",
+      "event": "deleg_68a11ed4 read-only diagnosis started",
+      "classification": "observer start"
+    },
+    {
+      "at": "2026-07-31T07:05:04-03:00/2026-07-31T07:05:13-03:00",
+      "event": "The parent session independently backed up, installed, enabled and restarted atius-k3s-firewall.service on SRV-2, SRV-3 and horistic-srv",
+      "classification": "concurrent production rollout outside the subagent"
+    },
+    {
+      "at": "approximately 2026-07-31T07:07:25-03:00",
+      "event": "The read-only observer proved Grafana-to-CoreDNS and Grafana-to-Prometheus connectivity after the concurrent rollout",
+      "classification": "post-rollout connectivity proof"
+    },
+    {
+      "at": "2026-07-31T07:09:25-03:00",
+      "event": "deleg_68a11ed4 completed",
+      "classification": "observer completion"
+    },
+    {
+      "at": "2026-07-31T10:13:14-03:00",
+      "event": "SRV-1 entered DiskPressure=True and received node.kubernetes.io/disk-pressure:NoSchedule",
+      "classification": "later independent storage incident"
+    },
+    {
+      "at": "2026-07-31T12:34:55-03:00",
+      "event": "Current read-only reconciliation confirmed healthy cross-node dataplane for existing workloads while Prometheus and Loki remained unscheduled",
+      "classification": "current split-state readback"
+    }
+  ],
+  "concurrentRollout": {
+    "owner": "parent Hermes session, not deleg_68a11ed4",
+    "session": "@session:default/20260730_034546_71412d",
+    "k3sRestartPerformed": false,
+    "nodes": [
+      {
+        "name": "atius-srv-2",
+        "target": "ubuntu@10.12.1.12",
+        "backup": "/home/ubuntu/backups/atius-k3s-firewall-20260731-070504",
+        "backupFilesObserved": {
+          "iptables-save.before": 51002,
+          "atius-k3s-firewall.sh.before": 1117,
+          "atius-k3s-firewall.service.before": 256
+        },
+        "serviceRestartAt": "2026-07-31T07:05:06-03:00"
+      },
+      {
+        "name": "atius-srv-3",
+        "target": "ubuntu@10.13.1.13",
+        "backup": "/home/ubuntu/backups/atius-k3s-firewall-20260731-070504",
+        "backupFilesObserved": {
+          "iptables-save.before": 53076,
+          "atius-k3s-firewall.sh.before": 1117,
+          "atius-k3s-firewall.service.before": 256
+        },
+        "serviceRestartAt": "2026-07-31T07:05:09-03:00"
+      },
+      {
+        "name": "horistic-srv",
+        "target": "horistic@10.21.1.21",
+        "backup": "/home/horistic/backups/atius-k3s-firewall-20260731-070504",
+        "backupFilesObserved": {
+          "iptables-save.before": 32319
+        },
+        "note": "The guard script and unit were absent before the rollout, so only the iptables snapshot exists in this backup",
+        "serviceRestartAt": "2026-07-31T07:05:13-03:00"
+      }
+    ],
+    "backupIntegrityClaim": "FILES_PRESENT_AND_READABLE_ONLY",
+    "backupIntegrityLimit": "No SHA256SUMS manifests were found in the three host-local rollout backups; do not retroactively claim checksum PASS"
+  },
+  "postRolloutAsyncProof": {
+    "grafanaPod": "10.42.2.5 on atius-srv-3",
+    "dnsService": "10.43.0.10",
+    "coreDnsPod": "10.42.1.4 on atius-srv-2",
+    "prometheusService": "10.43.122.246:9090",
+    "prometheusPod": "10.42.0.24:9090 on atius-srv-1",
+    "dnsResult": "PASS",
+    "prometheusServiceReady": "PASS",
+    "prometheusPodReady": "PASS",
+    "resultScope": "The probes prove the dataplane was healthy after the concurrent firewall rollout. They do not prove it was healthy before that rollout and do not prove current Prometheus availability."
+  },
+  "currentReadback": {
+    "nodesReady": {
+      "atius-srv-1": true,
+      "atius-srv-2": true,
+      "atius-srv-3": true,
+      "horistic-srv": true
+    },
+    "flannel": {
+      "backend": "vxlan",
+      "routesAndFdb": "PASS on all four nodes",
+      "podCidrs": {
+        "atius-srv-1": "10.42.0.0/24",
+        "atius-srv-2": "10.42.1.0/24",
+        "atius-srv-3": "10.42.2.0/24",
+        "horistic-srv": "10.42.3.0/24"
+      }
+    },
+    "firewall": {
+      "scriptSha256": "b4f01c1c6e4bbd52f5d565aad7ae6e49fa9a2ca622b09fa81b885fd58abac2aa",
+      "unitSha256": "67f4e9c1f853daed57611b34c465bf46bdccc92432794bcb26e7f5f762ea3ffe",
+      "liveMatchesWorkspaceOnAllFourNodes": true,
+      "serviceActiveAndEnabledOnAllFourNodes": true,
+      "privateCidrsAccepted": [
+        "10.11.0.0/16",
+        "10.12.0.0/16",
+        "10.13.0.0/16",
+        "10.21.0.0/16"
+      ],
+      "udpPort": 8472,
+      "tcpPorts": [6443, 2379, 2380, 10250, 10257, 10259],
+      "publicDenyGuardPreserved": true,
+      "acceptBeforeDropVerified": true,
+      "ruleOrderReadback": {
+        "atius-srv-1": {
+          "udpPrivateAcceptRules": 7,
+          "udpDropRulePosition": 30,
+          "udpOrderPass": true,
+          "tcpPrivateAcceptRules": 7,
+          "tcpDropRulePosition": 29,
+          "tcpOrderPass": true
+        },
+        "atius-srv-2": {
+          "udpPrivateAcceptRules": 11,
+          "udpDropRulePosition": 36,
+          "udpOrderPass": true,
+          "tcpPrivateAcceptRules": 11,
+          "tcpDropRulePosition": 35,
+          "tcpOrderPass": true
+        },
+        "atius-srv-3": {
+          "udpPrivateAcceptRules": 7,
+          "udpDropRulePosition": 26,
+          "udpOrderPass": true,
+          "tcpPrivateAcceptRules": 7,
+          "tcpDropRulePosition": 25,
+          "tcpOrderPass": true
+        },
+        "horistic-srv": {
+          "udpPrivateAcceptRules": 11,
+          "udpDropRulePosition": 31,
+          "udpOrderPass": true,
+          "tcpPrivateAcceptRules": 7,
+          "tcpDropRulePosition": 30,
+          "tcpOrderPass": true
+        }
+      },
+      "duplicateRuleInterpretation": "Duplicate private ACCEPT rules remain on SRV-2 and horistic-srv. Ordering is safe; cleanup is deferred to explicit maintenance."
+    },
+    "grafanaPod": "10.42.2.9 on atius-srv-3",
+    "existingCrossNodeProbes": {
+      "grafanaToCoreDnsService10.43.0.10": "PASS",
+      "grafanaToCoreDnsPod10.42.1.4": "PASS",
+      "grafanaToAlertmanagerPod10.42.1.34": "PASS"
+    },
+    "observabilityWorkloads": {
+      "prometheus": "Pending",
+      "loki": "Pending",
+      "prometheusReadyEndpointCount": 0,
+      "lokiReadyEndpointCount": 0,
+      "alertmanagerReadyEndpointCount": 1,
+      "coreDnsReadyEndpointCount": 1
+    },
+    "storageIncident": {
+      "srv1Ready": true,
+      "srv1DiskPressure": true,
+      "srv1Taint": "node.kubernetes.io/disk-pressure:NoSchedule",
+      "rootUsage": "90%",
+      "rootFree": "approximately 20 GB",
+      "prometheusNodeSelector": "atius-srv-1",
+      "lokiNodeSelector": "atius-srv-1",
+      "prometheusPv": "local-path with required node affinity atius-srv-1",
+      "lokiPv": "local-path with required node affinity atius-srv-1"
+    },
+    "interpretation": "The current cross-node VXLAN/DNS dataplane is healthy for existing endpoints. Prometheus and Loki cannot be probed because no ready pods/endpoints exist; their present outage is scheduling/storage degradation, not demonstrated VXLAN regression."
+  },
+  "governanceGaps": [
+    {
+      "id": "FIREWALL_ARTIFACTS_UNTRACKED",
+      "status": "OPEN",
+      "detail": "modules/k3s-ha-portainer-oci/scripts/atius-k3s-firewall.sh and modules/k3s-ha-portainer-oci/systemd/atius-k3s-firewall.service are present but untracked in the current workspace"
+    },
+    {
+      "id": "WATCHDOG_REMOTE_FIREWALL_COVERAGE_MISSING",
+      "status": "OPEN",
+      "detail": "The tracked atius-k3s-watchdog.sh checks atius-k3s-firewall.service locally but has no remote firewall guard checks for SRV-2, SRV-3 or horistic-srv"
+    },
+    {
+      "id": "ROLLOUT_BACKUPS_WITHOUT_MANIFEST",
+      "status": "OPEN",
+      "detail": "The host-local 07:05 rollout backups are present and readable but contain no SHA256SUMS manifest"
+    }
+  ],
+  "supersededRecommendations": [
+    "Install and enable atius-k3s-firewall.service on all K3s nodes: already completed on all four nodes during the concurrent parent-session rollout"
+  ],
+  "stillOpenRecommendations": [
+    "Track the firewall script and unit in the repo",
+    "Extend deploy/watchdog verification to remote nodes including horistic-srv",
+    "Recover SRV-1 DiskPressure under an explicit destructive cleanup/storage gate",
+    "Validate Prometheus/Loki and Grafana datasource only after ready endpoints return"
+  ],
+  "actionsDuringThisReconciliation": {
+    "liveMutation": false,
+    "restart": false,
+    "cleanup": false,
+    "delete": false,
+    "commit": false,
+    "push": false,
+    "graphify": "DEFERRED_DISKPRESSURE"
+  },
+  "knowledgeIndex": {
+    "gbrainSlug": "atius-sso-vxlan-async-post-firewall-reconciliation-2026-07-31/index",
+    "importMode": "--no-embed",
+    "readback": "PASS",
+    "graphify": "DEFERRED_DISKPRESSURE",
+    "graphifyReason": "SRV-1 remains DiskPressure=True and no graphify runner is active"
+  },
+  "documentationBackups": [
+    {
+      "path": "/home/ubuntu/backups/deleg-68a11ed4-closeout-20260731-123605",
+      "files": 7,
+      "bytes": 136266,
+      "checksum": "PASS",
+      "scope": "repo, vault and skill files patched for this reconciliation"
+    },
+    {
+      "path": "/home/ubuntu/backups/k3s-proc-604529-closeout-20260731-121903",
+      "checksum": "PASS",
+      "scope": "contains the pre-patch DiskPressure incident note subsequently amended by this reconciliation"
+    }
+  ],
+  "relatedEvidence": [
+    "docs/evidence/atius-sso/2026-07-31-live-total-regression-final-closeout.md",
+    "docs/evidence/atius-sso/2026-07-31-async-audit-reconciliation.md",
+    "docs/evidence/atius-sso/2026-07-31-srv1-diskpressure-monitoring-incident.json",
+    "AiSecondBrain/61-Incidents/2026-07-31-srv1-diskpressure-prometheus-loki-pending.md"
+  ]
+}
