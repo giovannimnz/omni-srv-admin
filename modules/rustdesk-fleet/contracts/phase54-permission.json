@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "workstream": "rustdesk-fleet",
+  "source_profile": "modules/rustdesk-fleet/contracts/permission-profiles.json",
+  "enforcement_model": "observed-effective-capability-or-blocked",
+  "unsupported_native_controls": "BLOCKED",
+  "capabilities": [
+    "screen_view",
+    "keyboard_mouse",
+    "clipboard",
+    "file_transfer",
+    "audio",
+    "terminal",
+    "tcp_tunnel",
+    "remote_restart",
+    "privacy_mode",
+    "recording",
+    "remote_config_modification"
+  ],
+  "profiles": {
+    "admin-maintenance": {
+      "screen_view": "allow",
+      "keyboard_mouse": "allow",
+      "clipboard": "allow",
+      "file_transfer": "deny",
+      "audio": "deny",
+      "terminal": "allow",
+      "tcp_tunnel": "deny",
+      "remote_restart": "allow",
+      "privacy_mode": "deny",
+      "recording": "deny",
+      "remote_config_modification": "deny"
+    },
+    "support-observe": {
+      "screen_view": "allow",
+      "keyboard_mouse": "deny",
+      "clipboard": "deny",
+      "file_transfer": "deny",
+      "audio": "deny",
+      "terminal": "deny",
+      "tcp_tunnel": "deny",
+      "remote_restart": "deny",
+      "privacy_mode": "deny",
+      "recording": "deny",
+      "remote_config_modification": "deny"
+    }
+  },
+  "negative_matrix": [
+    {
+      "profile": "admin-maintenance",
+      "capability": "file_transfer",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "admin-maintenance",
+      "capability": "audio",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "admin-maintenance",
+      "capability": "tcp_tunnel",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "admin-maintenance",
+      "capability": "privacy_mode",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "admin-maintenance",
+      "capability": "recording",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "support-observe",
+      "capability": "keyboard_mouse",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "support-observe",
+      "capability": "clipboard",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "support-observe",
+      "capability": "terminal",
+      "expected": "BLOCKED"
+    },
+    {
+      "profile": "support-observe",
+      "capability": "remote_restart",
+      "expected": "BLOCKED"
+    }
+  ],
+  "evidence_policy": {
+    "requested_policy_is_not_effective_proof": true,
+    "positive_requires_observed_marker": true,
+    "negative_requires_observed_denial": true,
+    "unsupported_requires_blocked_verdict": true,
+    "raw_gui_payload_forbidden": true
+  }
+}

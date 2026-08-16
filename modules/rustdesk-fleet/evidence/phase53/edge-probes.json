@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "state": "BLOCKED_NOT_RUN",
+  "origins_required": ["GIOVANNI-W11-PC-private-first", "independent-public-origin"],
+  "positive_tcp_ports": [21115, 21116, 21117],
+  "negative_tcp_ports": [21114, 21118, 21119],
+  "udp_port": 21116,
+  "dns_published": false,
+  "mutation_performed": false,
+  "secret_material_present": false
+}

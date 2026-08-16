@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "candidate_version": "1.1.16",
+  "client_version": "1.4.9",
+  "state": "PENDING",
+  "install_performed": false,
+  "matrix": {
+    "linux_arm64": {
+      "artifact_sha256": "ce62c996f14d33f3bbe3a330e953644a44bace7f05885a7953f7395d69fb49c0",
+      "tested": false
+    },
+    "windows_x86_64": {
+      "artifact_sha256": "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa",
+      "tested": false
+    }
+  },
+  "required_vectors": [
+    "direct-first",
+    "forced-relay",
+    "reconnect",
+    "same-public-key-and-db",
+    "udp-21116-reflection-negative",
+    "negative-ports-21114-21118-21119",
+    "client-api-server-forbidden"
+  ],
+  "secret_material_present": false
+}

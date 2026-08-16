@@ -1,0 +1,32 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "state": "PENDING",
+  "source_head": "63bbb637bfacddb10db35554bc8faa7c73d0e67b",
+  "historical_baseline": {
+    "phase52_runtime_version": "1.1.15",
+    "rewrite_forbidden": true
+  },
+  "successor_consumers": [
+    "phase53-runtime-candidate.json",
+    "atius-rustdesk-server-hbbs.container",
+    "atius-rustdesk-server-hbbr.container",
+    "install-phase53-server.py",
+    "rustdesk-ops-api.py"
+  ],
+  "current_contract_digests": {
+    "phase53-runtime.json": "1d52cf7f4ae2803cb971c8891dc42aa9b861ea1ef48c3b9a5b32a8253e96b9ac",
+    "phase53-edge.json": "1708fda3e0d9bcbfee05a3bf354deae56e2922dc743405514f4efb0cf6fac3d8",
+    "phase53-ops-api.json": "d338ec442689aa9013c51ca1c884c8793981ce111de456ea4bf074163119a97c8",
+    "phase53-candidate-admission.json": "a85b777c5781148c22dc4cdbd1c366a951fe934493912d423f027408893317b6",
+    "phase53-provider-manifest.json": "8347187867e7a2684ae606c28aa7a05034f72c2d928223c3b672858cd02b218c",
+    "phase53-runtime-candidate.json": "08227fe7dbc6f1903a8a1f1726bb178318db0addcee2315e43914dca872f3d3f"
+  },
+  "consumer_digests": {
+    "atius-rustdesk-server-hbbs.container": "46f64ae19d715ada12d877c34b13577bfda07193e25cbacaab0150f45a720cdb",
+    "atius-rustdesk-server-hbbr.container": "a474d798da8bb9f5be3f4a41b310115da96ecfe37729307de683ee0424b1f89f",
+    "install-phase53-server.py": "34fb1050f99155f9f89b99d1945319a38603efb2f0e145eb555d228818b765e6",
+    "rustdesk-ops-api.py": "aea0c0b75564f917e39f31df4b595f9d874c796c09a4c01ad0416f813bacdf99"
+  },
+  "secret_material_present": false
+}

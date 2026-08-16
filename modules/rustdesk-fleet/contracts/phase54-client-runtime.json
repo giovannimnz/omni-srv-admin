@@ -1,0 +1,130 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "workstream": "rustdesk-fleet",
+  "status": "CONTRACT_ONLY",
+  "server_client_boundary": {
+    "server_mutation_allowed": false,
+    "server_identity_mutation_allowed": false,
+    "server_state_mutation_allowed": false,
+    "server_port_mutation_allowed": false,
+    "server_ops_api_mutation_allowed": false,
+    "client_paths_only": true
+  },
+  "native_service": {
+    "rendezvous_host": "rustdesk.atius.com.br",
+    "client_api_server_configured": false,
+    "operations_hostname_forbidden": "rustdesk-ops.atius.com.br",
+    "public_rustdesk_servers_forbidden": true
+  },
+  "targets": {
+    "horistic-srv": {
+      "platform": "linux",
+      "architecture": "arm64",
+      "asset": {
+        "version": "1.4.9",
+        "asset_name": "rustdesk-1.4.9-aarch64.deb",
+        "package_type": "deb",
+        "sha256": "ce62c996f14d33f3bbe3a330e953644a44bace7f05885a7953f7395d69fb49c0"
+      },
+      "service": {
+        "unit": "rustdesk.service",
+        "startup": "enabled",
+        "recovery": "bounded-restart-with-rollback"
+      },
+      "paths": {
+        "config": "/home/horistic/.config/rustdesk",
+        "state": "/home/horistic/.local/share/rustdesk",
+        "rollback": "/home/horistic/.local/share/rustdesk/rollback/<transaction-id>"
+      },
+      "identity": {
+        "id_evidence": "redacted-fingerprint-only",
+        "public_key_ref": {
+          "vault_path": "kv/atius/rustdesk/server",
+          "field": "public_key"
+        }
+      },
+      "password_ref": {
+        "vault_path": "kv/atius/rustdesk/targets/horistic-srv",
+        "field": "permanent_password",
+        "delivery": "ephemeral-fd-pipe-or-tmpfs",
+        "durable_value": false
+      },
+      "rollback": {
+        "client_only": true,
+        "retain_artifacts": true,
+        "server_paths_untouched": true
+      }
+    },
+    "GIOVANNI-W11-PC": {
+      "platform": "windows",
+      "architecture": "x86_64",
+      "asset": {
+        "version": "1.4.9",
+        "asset_name": "rustdesk-1.4.9-x86_64.msi",
+        "package_type": "msi",
+        "sha256": "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa"
+      },
+      "service": {
+        "unit": "RustDesk",
+        "startup": "automatic",
+        "recovery": "bounded-restart-with-rollback"
+      },
+      "paths": {
+        "config": "%PROGRAMDATA%\\RustDesk",
+        "state": "%PROGRAMDATA%\\RustDesk",
+        "rollback": "%PROGRAMDATA%\\RustDesk\\rollback\\<transaction-id>"
+      },
+      "identity": {
+        "id_evidence": "redacted-fingerprint-only",
+        "public_key_ref": {
+          "vault_path": "kv/atius/rustdesk/server",
+          "field": "public_key"
+        }
+      },
+      "password_ref": {
+        "vault_path": "kv/atius/rustdesk/targets/giovanni-w11-pc",
+        "field": "permanent_password",
+        "delivery": "ephemeral-fd-pipe-or-tmpfs",
+        "durable_value": false
+      },
+      "rollback": {
+        "client_only": true,
+        "retain_artifacts": true,
+        "server_paths_untouched": true
+      },
+      "credential_gates": {
+        "microsoft_account_rdp": "HUMAN_CHECKPOINT_OR_BLOCKED",
+        "uac_secure_desktop": "HUMAN_CHECKPOINT_OR_BLOCKED"
+      }
+    }
+  },
+  "forbidden_secret_surfaces": [
+    "argv",
+    "environment_dump",
+    "shell_history",
+    "powershell_transcript",
+    "stdout",
+    "stderr",
+    "journal",
+    "git",
+    "evidence",
+    "documentation"
+  ],
+  "required_observations": [
+    "package_hash",
+    "package_architecture",
+    "service_state",
+    "config_fingerprint",
+    "public_key_fingerprint",
+    "redacted_client_id",
+    "rollback_artifact"
+  ],
+  "prohibitions": [
+    "install-before-phase53-independent-pass",
+    "server-quadlet-state-identity-port-or-ops-api-write",
+    "password-or-private-key-value-in-evidence",
+    "raw-client-id-in-evidence",
+    "public-rustdesk-server-contact"
+  ]
+}

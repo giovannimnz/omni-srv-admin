@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "observed_at": "2026-07-23T19:46:00Z",
+  "state": "BLOCKED",
+  "read_only": true,
+  "mutation_performed": false,
+  "placement_order": ["atius-srv-2", "atius-srv-3", "horistic-srv"],
+  "samples": [
+    {
+      "host": "atius-srv-2",
+      "route": "public-fallback",
+      "private_probe": "UNKNOWN",
+      "disk_used_pct": 85.19,
+      "projected_disk_used_pct": 93.33,
+      "inode_used_pct": 10.31,
+      "disk_free_bytes": 30780000000,
+      "placement_state": "NO-GO",
+      "zero_cleanup_performed": true
+    },
+    {
+      "host": "atius-srv-3",
+      "route": "public-fallback",
+      "private_probe": "UNKNOWN",
+      "disk_used_pct": 85.08,
+      "projected_disk_used_pct": 93.22,
+      "inode_used_pct": 8.44,
+      "disk_free_bytes": 31000000000,
+      "placement_state": "NO-GO",
+      "zero_cleanup_performed": true
+    },
+    {
+      "host": "horistic-srv",
+      "route": "private-and-public",
+      "private_probe": "reachable",
+      "disk_used_pct": 60.26,
+      "projected_disk_used_pct": 76.56,
+      "inode_used_pct": 5.48,
+      "disk_free_bytes": 41280000000,
+      "raw_capacity_state": "PRELIMINARY_ONLY",
+      "capacity_finalize_state": "BLOCKED_STALE",
+      "finalize_ttl_seconds": 3600
+    }
+  ],
+  "predecessor_receipts_persisted": ["atius-srv-2:NO-GO", "atius-srv-3:NO-GO"],
+  "selected_primary": null,
+  "secret_material_present": false
+}

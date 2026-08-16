@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "workstream": "rustdesk-fleet",
+  "native_endpoint": {
+    "rendezvous_host": "rustdesk.atius.com.br",
+    "relay_host": "rustdesk.atius.com.br",
+    "public_key_source": {
+      "vault_path": "kv/atius/rustdesk/server",
+      "field": "public_key"
+    },
+    "operations_api_server_field": false
+  },
+  "policy": {
+    "production": "direct-first",
+    "forced_relay_default": false,
+    "forced_relay_allowed": true,
+    "forced_relay_purposes": [
+      "controlled-validation",
+      "proven-fallback"
+    ],
+    "public_rustdesk_servers": "FORBIDDEN",
+    "wan_retry_to_convert_failure": "FORBIDDEN"
+  },
+  "direct_observation": {
+    "required": true,
+    "fields": [
+      "session_identity",
+      "pairing_evidence",
+      "transport_observed",
+      "ui_marker"
+    ],
+    "natural_transport_must_be_recorded": true
+  },
+  "forced_relay_observation": {
+    "required_for_canary": true,
+    "correlator": [
+      "session_identity",
+      "pairing_evidence",
+      "ui_marker",
+      "hbbr_bytes_before",
+      "hbbr_bytes_after",
+      "hbbr_positive_byte_delta"
+    ],
+    "must_be_controlled": true,
+    "must_not_change_default_policy": true
+  },
+  "prohibitions": [
+    "public-rustdesk-server-contact",
+    "client-api-server-set-to-operations-host",
+    "forced-relay-as-production-default",
+    "relay-pass-without-byte-correlation",
+    "summary-only-transport-pass"
+  ]
+}
