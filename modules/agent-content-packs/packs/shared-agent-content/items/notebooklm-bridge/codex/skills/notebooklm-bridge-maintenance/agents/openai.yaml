@@ -1,0 +1,4 @@
+interface:
+  display_name: "Manutenção NotebookLM Bridge"
+  short_description: "Rode checks seguros de manutenção do NotebookLM Obsidian bridge."
+  default_prompt: "Utilize a skill $notebooklm-bridge-maintenance para checar manutenção sem upload real."
