@@ -1,32 +1,90 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
   "workstream": "rustdesk-fleet",
   "primary_host": "horistic-srv",
+  "public_edge": {
+    "host": "atius-srv-1",
+    "public_ipv4": "137.131.140.20",
+    "public_vnic_private_ipv4": "10.0.0.238",
+    "route_vnic_private_ipv4": "10.11.1.11",
+    "route_interface": "enp1s0"
+  },
+  "backend": {
+    "host": "horistic-srv",
+    "private_ipv4": "10.21.1.21",
+    "native_ingress_source_ipv4": "10.11.1.11",
+    "native_listeners": {
+      "tcp": [21115, 21116, 21117],
+      "udp": [21116]
+    }
+  },
+  "target": {
+    "private_ipv4": "10.21.1.21",
+    "reserved_public_ipv4": "137.131.140.20"
+  },
   "hostnames": {
-    "native": "rustdesk.atius.com.br",
+    "general": "rustdesk.atius.com.br",
+    "id": "rustdesk-id.atius.com.br",
+    "relay": "rustdesk-relay.atius.com.br",
     "operations": "rustdesk-ops.atius.com.br"
+  },
+  "dns_records": [
+    {
+      "name": "rustdesk.atius.com.br",
+      "role": "general",
+      "type": "A",
+      "content": "137.131.140.20",
+      "proxied": false
+    },
+    {
+      "name": "rustdesk-id.atius.com.br",
+      "role": "id",
+      "type": "A",
+      "content": "137.131.140.20",
+      "proxied": false
+    },
+    {
+      "name": "rustdesk-relay.atius.com.br",
+      "role": "relay",
+      "type": "A",
+      "content": "137.131.140.20",
+      "proxied": false
+    }
+  ],
+  "translations": [
+    {"role": "id", "protocol": "tcp", "external_port": 34099, "internal_port": 21115},
+    {"role": "rendezvous", "protocol": "tcp", "external_port": 34100, "internal_port": 21116},
+    {"role": "rendezvous", "protocol": "udp", "external_port": 34100, "internal_port": 21116},
+    {"role": "relay", "protocol": "tcp", "external_port": 34101, "internal_port": 21117}
+  ],
+  "internal_native_listeners": {
+    "tcp": [21115, 21116, 21117],
+    "udp": [21116]
   },
   "address_consensus": {
     "required_equal_sources": [
-      "oci-vnic-public-ipv4",
-      "horistic-egress-ipv4",
-      "ssh-horistic-srv.atius.com.br-a"
+      "oci-edge-vnic-public-ipv4",
+      "edge-vnic-public-ipv4",
+      "reserved-public-ipv4"
     ],
     "mismatch_action": "block-before-write"
   },
   "effective_ingress": {
-    "host_policy": "owned-nftables-scope",
-    "oci_policy": "security-lists-plus-attached-nsgs",
+    "host_policy": "owned-cross-host-dnat-forward-snat",
+    "oci_policy": "edge-public-vnic-security-lists-plus-attached-nsgs",
+    "backend_policy": "native-listeners-from-deterministic-edge-identity-only",
+    "backend_source_ipv4": "10.11.1.11",
     "union_audit_required": true,
     "broad_allow_action": "block"
   },
   "public_ipv4_allowed": {
-    "tcp": [21115, 21116, 21117],
-    "udp": [21116]
+    "tcp": [34099, 34100, 34101],
+    "udp": [34100]
   },
   "public_forbidden": {
-    "tcp": [21114, 21118, 21119],
-    "unexpected": "all-other-phase53-exposure"
+    "tcp": [21114, 21115, 21116, 21117, 21118, 21119],
+    "udp": [21116],
+    "unexpected": "all-other-direct-public-listeners"
   },
   "ipv6_policy": {
     "rustdesk": "deny-all",
@@ -43,9 +101,24 @@
   "external_probes": {
     "origins": ["GIOVANNI-W11-PC-private-first", "independent-public-origin"],
     "tcp": {
-      "positive": [21115, 21116, 21117],
-      "negative": [21114, 21118, 21119],
-      "targets": ["public-ipv4", "native-hostname"]
+      "positive": [34099, 34100, 34101],
+      "negative": [21114, 21115, 21116, 21117, 21118, 21119],
+      "targets": [
+        "public-ipv4",
+        "rustdesk.atius.com.br",
+        "rustdesk-id.atius.com.br",
+        "rustdesk-relay.atius.com.br"
+      ]
+    },
+    "udp": {
+      "external_port": 34100,
+      "backend_port": 21116,
+      "targets": [
+        "public-ipv4",
+        "rustdesk.atius.com.br",
+        "rustdesk-id.atius.com.br",
+        "rustdesk-relay.atius.com.br"
+      ]
     },
     "udp_correlation": [
       "disposable-nonce-not-persisted",

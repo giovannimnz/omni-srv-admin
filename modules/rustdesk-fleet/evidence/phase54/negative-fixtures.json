@@ -1,0 +1,149 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "fixture_set": "phase54-contract-negative-v1",
+  "value_free": true,
+  "secret_material_present": false,
+  "cases": [
+    {
+      "id": "excluded-target",
+      "input": {
+        "target": "atius-srv-1"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "excluded-wsl",
+      "input": {
+        "target": "WSL"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "excluded-s23",
+      "input": {
+        "target": "GIOVANNI-S23"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "server-path-write",
+      "input": {
+        "path_class": "phase53-server-state"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "hash-drift",
+      "input": {
+        "package_hash": "UNVERIFIED"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "secret-argv",
+      "input": {
+        "secret_surface": "argv"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "public-server",
+      "input": {
+        "endpoint_class": "public-rustdesk-server"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "forced-relay-default",
+      "input": {
+        "forced_relay_default": true
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "unsupported-permission",
+      "input": {
+        "capability": "unsupported-native-control"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "phase52-currentness-missing",
+      "input": {
+        "phase52_gate": "BLOCKED"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "phase53-source-head-drift",
+      "input": {
+        "phase53_source_head": "stale"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "stored-pass",
+      "input": {
+        "state": "PASS"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "relay-without-byte-delta",
+      "input": {
+        "hbbr_positive_byte_delta": false
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "rollback-server-path",
+      "input": {
+        "server_paths_untouched": false
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "phase52-receipt-digest-drift",
+      "input": {
+        "source_set_digest": "arbitrary"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "evidence-path-escape",
+      "input": {
+        "path": "../outside/live-evidence.json"
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "transport-attempts-missing",
+      "input": {
+        "attempts": []
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "permission-profile-missing",
+      "input": {
+        "profiles": ["admin-maintenance"]
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "checkpoint-type-invalid",
+      "input": {
+        "checkpoint": {}
+      },
+      "expected": "BLOCKED"
+    },
+    {
+      "id": "raw-session-id",
+      "input": {
+        "session_id": "raw-value"
+      },
+      "expected": "BLOCKED"
+    }
+  ]
+}

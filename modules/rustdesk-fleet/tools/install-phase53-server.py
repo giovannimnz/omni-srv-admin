@@ -15,6 +15,7 @@ import os
 from pathlib import Path
 import re
 import selectors
+import shlex
 import signal
 import sqlite3
 import stat
@@ -55,6 +56,101 @@ SERVICE_UNITS = (
 )
 ARCHIVE_RE = re.compile(r"^(hbbs|hbbr)-(\d{8})\.log$")
 os.umask(0o077)
+
+
+def _strict_json_file(path: Path) -> dict[str, Any]:
+    """Read a candidate contract without accepting duplicate keys or links."""
+
+    def pairs(items: list[tuple[str, Any]]) -> dict[str, Any]:
+        payload: dict[str, Any] = {}
+        for key, value in items:
+            if key in payload:
+                raise Phase53ServerBlocked("candidate-contract-duplicate-key")
+            payload[key] = value
+        return payload
+
+    try:
+        info = path.lstat()
+        if path.is_symlink() or not path.is_file() or not 0 < info.st_size <= 1_048_576:
+            raise Phase53ServerBlocked("candidate-contract-invalid")
+        payload = json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=pairs)
+    except Phase53ServerBlocked:
+        raise
+    except (OSError, UnicodeError, json.JSONDecodeError) as exc:
+        raise Phase53ServerBlocked("candidate-contract-invalid") from exc
+    if not isinstance(payload, dict):
+        raise Phase53ServerBlocked("candidate-contract-invalid")
+    return payload
+
+
+def select_runtime_candidate(repo: Path, environ: dict[str, str] | None = None) -> dict[str, Any] | None:
+    """Return the successor runtime only with explicit owner-bound admission."""
+
+    environment = os.environ if environ is None else environ
+    if environment.get("ADMITTED_PHASE53") != "1":
+        return None
+    root = repo.resolve(strict=True) / "modules/rustdesk-fleet"
+    candidate = _strict_json_file(root / "contracts/phase53-runtime-candidate.json")
+    admission = _strict_json_file(root / "evidence/phase53/candidate-admission.json")
+    if candidate.get("candidate_status_required") != "ADMITTED_PHASE53":
+        raise Phase53ServerBlocked("candidate-contract-state-invalid")
+    if admission.get("candidate_status") != "ADMITTED_PHASE53" or admission.get("admission_performed") is not True:
+        raise Phase53ServerBlocked("candidate-admission-required")
+    if admission.get("live_mutation_performed") is not False:
+        raise Phase53ServerBlocked("candidate-live-state-invalid")
+    upstream = candidate.get("upstream")
+    if not isinstance(upstream, dict) or not isinstance(upstream.get("immutable_reference"), str):
+        raise Phase53ServerBlocked("candidate-upstream-invalid")
+    return candidate
+
+
+def relay_endpoint_from_edge_contract(repo: Path) -> str:
+    """Derive the public hbbr announcement from the sole edge contract."""
+
+    root = repo.resolve(strict=True) / "modules/rustdesk-fleet"
+    edge = _strict_json_file(root / "contracts/phase53-edge.json")
+    try:
+        records = [
+            item
+            for item in edge["dns_records"]
+            if isinstance(item, dict) and item.get("role") == "relay"
+        ]
+        mappings = [
+            item
+            for item in edge["translations"]
+            if isinstance(item, dict)
+            and item.get("role") == "relay"
+            and item.get("protocol") == "tcp"
+        ]
+        if (
+            edge.get("schema_version") != 2
+            or edge.get("target")
+            != {
+                "private_ipv4": "10.21.1.21",
+                "reserved_public_ipv4": "137.131.140.20",
+            }
+            or len(records) != 1
+            or len(mappings) != 1
+            or records[0]
+            != {
+                "name": "rustdesk-relay.atius.com.br",
+                "role": "relay",
+                "type": "A",
+                "content": "137.131.140.20",
+                "proxied": False,
+            }
+            or mappings[0]
+            != {
+                "role": "relay",
+                "protocol": "tcp",
+                "external_port": 34101,
+                "internal_port": 21117,
+            }
+        ):
+            raise Phase53ServerBlocked("edge-contract-invalid")
+        return f"{records[0]['name']}:{mappings[0]['external_port']}"
+    except (KeyError, TypeError) as exc:
+        raise Phase53ServerBlocked("edge-contract-invalid") from exc
 
 
 class Phase53ServerBlocked(RuntimeError):
@@ -326,6 +422,8 @@ class Phase53ServerTransaction:
         self._linger_enabled_by_transaction = False
         self._installed = False
         self._rolled_back = False
+        self.runtime_candidate = select_runtime_candidate(self.repo)
+        self.relay_endpoint = relay_endpoint_from_edge_contract(self.repo)
 
     @property
     def _sources(self) -> dict[Path, Path]:
@@ -520,6 +618,59 @@ class Phase53ServerTransaction:
             raise Phase53ServerBlocked("quadlet-hardening-invalid")
         if any("PublishPort=" in quadlet or "21114" in quadlet for quadlet in quadlets):
             raise Phase53ServerBlocked("closed-ingress-contract-invalid")
+        hbbs_commands = [
+            line.removeprefix("Exec=")
+            for line in quadlets[0].splitlines()
+            if line.startswith("Exec=")
+        ]
+        if hbbs_commands != [f"hbbs -r {self.relay_endpoint}"]:
+            raise Phase53ServerBlocked("hbbs-relay-endpoint-invalid")
+
+    @staticmethod
+    def _effective_exec(path: Path) -> tuple[str, ...]:
+        try:
+            commands = [
+                line.removeprefix("Exec=")
+                for line in path.read_text(encoding="utf-8").splitlines()
+                if line.startswith("Exec=")
+            ]
+            if len(commands) != 1:
+                raise ValueError
+            argv = tuple(shlex.split(commands[0], posix=True))
+        except (OSError, UnicodeError, ValueError) as exc:
+            raise Phase53ServerBlocked("installed-hbbs-command-invalid") from exc
+        if not argv or any(not item for item in argv):
+            raise Phase53ServerBlocked("installed-hbbs-command-invalid")
+        return argv
+
+    def _validate_installed_hbbs(self) -> None:
+        source = self.repo / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
+        installed = self.quadlet_dir / source.name
+        expected = ("hbbs", "-r", self.relay_endpoint)
+        if self._effective_exec(source) != expected or self._effective_exec(installed) != expected:
+            raise Phase53ServerBlocked("installed-hbbs-command-invalid")
+
+    def _source_bytes(self, source: Path) -> bytes:
+        """Render candidate image references only after admission is selected."""
+
+        data = source.read_bytes()
+        if self.runtime_candidate is None or source.name not in {
+            "atius-rustdesk-server-hbbs.container",
+            "atius-rustdesk-server-hbbr.container",
+        }:
+            return data
+        try:
+            text = data.decode("utf-8")
+            image = self.runtime_candidate["upstream"]["immutable_reference"]
+        except (KeyError, TypeError, UnicodeError) as exc:
+            raise Phase53ServerBlocked("candidate-upstream-invalid") from exc
+        lines = text.splitlines(keepends=True)
+        image_lines = [index for index, line in enumerate(lines) if line.startswith("Image=")]
+        if len(image_lines) != 1:
+            raise Phase53ServerBlocked("quadlet-image-line-invalid")
+        newline = "\n" if lines[image_lines[0]].endswith("\n") else ""
+        lines[image_lines[0]] = f"Image={image}{newline}"
+        return "".join(lines).encode("utf-8")
 
     def render_and_verify_units(self) -> dict[str, Any]:
         if self._prestate is None:
@@ -529,7 +680,8 @@ class Phase53ServerTransaction:
         self.log_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         for source, destination in self._sources.items():
             mode = 0o700 if destination == self.library_target else 0o600
-            _atomic_write(destination, source.read_bytes(), mode)
+            _atomic_write(destination, self._source_bytes(source), mode)
+        self._validate_installed_hbbs()
         self._run(
             [
                 "systemd-analyze",

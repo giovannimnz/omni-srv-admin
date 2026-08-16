@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "state": "BLOCKED_BEFORE_MUTATION",
+  "transaction_id": null,
+  "mutation_performed": false,
+  "journal_created": false,
+  "blocker": "candidate-not-admitted-or-provider-backend-not-configured",
+  "rollback_state": "ready",
+  "secret_material_present": false
+}

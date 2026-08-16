@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "workstream": "rustdesk-fleet",
+  "phase": 53,
+  "decision": "D-16",
+  "current": {
+    "host": "horistic-srv",
+    "private_ipv4": "10.21.1.21"
+  },
+  "future": {
+    "host": "horistic-srv",
+    "private_ipv4": "10.31.1.31",
+    "executable": false,
+    "phase53_provider_allowed": false
+  },
+  "preserve": {
+    "server_identity": true,
+    "state_database": true,
+    "public_edge_contract": true,
+    "rollback_boundary": true
+  },
+  "activation_requirements": [
+    "phase54-horistic-migration-complete",
+    "current-topology-authority",
+    "new-operation-plan",
+    "new-owner-approval"
+  ],
+  "authorizes_live": false,
+  "mutation_performed": false,
+  "secret_material_present": false
+}

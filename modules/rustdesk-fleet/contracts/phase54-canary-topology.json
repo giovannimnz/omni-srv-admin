@@ -1,0 +1,64 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "workstream": "rustdesk-fleet",
+  "allowed_targets": [
+    "horistic-srv",
+    "GIOVANNI-W11-PC"
+  ],
+  "excluded_targets": [
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "WSL",
+    "GIOVANNI-S23"
+  ],
+  "serial_order": [
+    "horistic-srv",
+    "GIOVANNI-W11-PC"
+  ],
+  "domains": {
+    "server": {
+      "identity_domain": "rustdesk-server-horistic-srv",
+      "state_domain": "rustdesk-server-state",
+      "resource_domain": "phase53-server-budget",
+      "rollback_domain": "phase53-server-rollback",
+      "mutable": false
+    },
+    "clients": {
+      "horistic-srv": {
+        "identity_domain": "rustdesk-client-horistic-srv",
+        "resource_domain": "phase54-client-horistic",
+        "rollback_domain": "phase54-client-rollback-horistic",
+        "platform": "linux-arm64"
+      },
+      "GIOVANNI-W11-PC": {
+        "identity_domain": "rustdesk-client-giovanni-w11-pc",
+        "resource_domain": "phase54-client-windows",
+        "rollback_domain": "phase54-client-rollback-windows",
+        "platform": "windows-x86_64"
+      }
+    }
+  },
+  "server_path_policy": {
+    "mutation_allowed": false,
+    "forbidden_prefixes": [
+      "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-",
+      "modules/rustdesk-fleet/contracts/phase53-",
+      "/home/horistic/.config/containers/systemd/atius-rustdesk-server-",
+      "/home/horistic/.local/share/atius-rustdesk/server",
+      "/run/user/<uid>/atius-rustdesk/server-identity",
+      "rustdesk-ops-api"
+    ],
+    "violation_action": "BLOCKED_AND_ROLLBACK"
+  },
+  "invariants": {
+    "one_client_transaction_at_a_time": true,
+    "client_server_identity_distinct": true,
+    "client_server_rollback_distinct": true,
+    "server_quadlets_untouched": true,
+    "phase53_state_untouched": true,
+    "phase53_ports_untouched": true,
+    "phase53_ops_api_untouched": true
+  }
+}
