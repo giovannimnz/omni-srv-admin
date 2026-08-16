@@ -38,6 +38,8 @@ DEFAULTS = {
     'RG_WATCHDOG_POLL_INTERVAL_SEC': '5',
     'RG_WATCHDOG_PERF_WRITE_INTERVAL_SEC': '60',
     'RG_WATCHDOG_PERF_WINDOW_SIZE': '300',
+    'RG_WATCHDOG_PERF_MAX_BYTES': str(64 * 1024 * 1024),
+    'RG_WATCHDOG_PERF_ROTATIONS': '2',
     'RG_WATCHDOG_RECOVERY_HYSTERESIS_CYCLES': '5',
 }
 
@@ -158,6 +160,24 @@ def append_log(path: Path, message: str) -> None:
     line = f"[{datetime.now().astimezone().isoformat()}] {message}\n"
     with path.open('a') as fh:
         fh.write(line)
+
+
+def rotate_file(path: Path, max_bytes: int, rotations: int) -> bool:
+    if max_bytes <= 0 or rotations < 1 or not path.exists():
+        return False
+    try:
+        if path.stat().st_size < max_bytes:
+            return False
+        oldest = path.with_name(f'{path.name}.{rotations}')
+        oldest.unlink(missing_ok=True)
+        for index in range(rotations - 1, 0, -1):
+            source = path.with_name(f'{path.name}.{index}')
+            if source.exists():
+                source.replace(path.with_name(f'{path.name}.{index + 1}'))
+        path.replace(path.with_name(f'{path.name}.1'))
+        return True
+    except OSError:
+        return False
 
 class PerfWindow:
     def __init__(self, maxlen: int = 300):
@@ -294,6 +314,8 @@ def main() -> int:
     poll_interval = float(config.get('RG_WATCHDOG_POLL_INTERVAL_SEC', '1'))
     write_interval = float(config.get('RG_WATCHDOG_PERF_WRITE_INTERVAL_SEC', '30'))
     window_size = int(config.get('RG_WATCHDOG_PERF_WINDOW_SIZE', '300'))
+    perf_max_bytes = int(config.get('RG_WATCHDOG_PERF_MAX_BYTES', str(64 * 1024 * 1024)))
+    perf_rotations = int(config.get('RG_WATCHDOG_PERF_ROTATIONS', '2'))
 
     log_dir = Path(os.path.expanduser(config['RG_LOG_DIR']))
     log_dir.mkdir(parents=True, exist_ok=True)
@@ -483,9 +505,9 @@ def main() -> int:
                 'process_summaries': window_summaries,
             }
 
-            fh = perf_file.open('a')
-            fh.write(json.dumps(perf_entry, ensure_ascii=False) + '\n')
-            fh.close()
+            rotate_file(perf_file, perf_max_bytes, perf_rotations)
+            with perf_file.open('a') as fh:
+                fh.write(json.dumps(perf_entry, ensure_ascii=False) + '\n')
 
             # Keep latest.json current
             latest_json = log_dir / 'latest.json'
