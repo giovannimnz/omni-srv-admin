@@ -207,20 +207,18 @@ cleanup_podman() {
 cleanup_logs() {
     log "FASE 4 — ~/.logs trim + retenção 15d"
 
-    # Trim arquivos .log > 1MB com 3 rotações
-    for f in "$HOME"/.logs/*.log; do
-        [[ ! -f "$f" ]] && continue
+    # Trim logs recursivos > 64MB. O resource governor escreve em subdiretório;
+    # limitar apenas ~/.logs/*.log deixou perf.jsonl crescer sem limite.
+    while IFS= read -r -d '' f; do
         local size=$(stat -c %s "$f" 2>/dev/null)
-        # 1MB = 1048576 bytes
-        if (( size > 1048576 )); then
+        if (( size > 67108864 )); then
             log "  TRIM $(du -h "$f" | cut -f1)  $f"
             if [[ "$DRY_RUN" = "0" ]]; then
                 mv "$f" "$f.1" 2>/dev/null
-                # Append latest 100KB to keep tail
                 tail -c 102400 "$f.1" > "$f" 2>/dev/null || true
             fi
         fi
-    done
+    done < <(find "$HOME/.logs" -type f \( -name '*.log' -o -name '*.jsonl' \) -print0 2>/dev/null)
 
     # Retenção local: arquivos de log antigos (>15d) saem do host.
     # O backup diário já copia ~/.logs para GDrive. Aqui só remove local antigo.

@@ -7,6 +7,10 @@ grafana:
   enabled: true
   defaultDashboardsEnabled: true
   defaultDashboardsTimezone: America/Sao_Paulo
+  grafana.ini:
+    server:
+      domain: grafana.atius.com.br
+      root_url: https://grafana.atius.com.br/
   resources:
     requests:
       cpu: 300m
@@ -34,6 +38,9 @@ grafana:
       enabled: true
     datasources:
       enabled: true
+      url: http://omni-monitoring-prometheus.monitoring:9090/
+      alertmanager:
+        url: http://omni-monitoring-alertmanager.monitoring:9093/
   service:
     type: ClusterIP
   ingress:
