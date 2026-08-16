@@ -142,6 +142,7 @@ apps:
     notes:
       - "Atius AI Router on SRV-1; published via Cloudflare + Apache"
       - "2026-07-05: root and /api/status returned 200 through public router.atius.com.br and local 127.0.0.1:3000."
+      - "2026-08-14: personal-use invariant forbids local request admission by account/user/subscription balance; fork-sync post_sync and release preflight block regressions before push/deploy."
   - id: rclone-gdrive-mount
     runtime: systemd-user
     unit: rclone-gdrive-mount.service

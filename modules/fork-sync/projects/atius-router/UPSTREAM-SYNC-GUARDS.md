@@ -1,6 +1,6 @@
 # Atius Router upstream sync guards
 
-Updated: 2026-07-12
+Updated: 2026-08-14
 
 This file is the operational warning for upstream sync maintainers. The Atius Router fork has production-only behavior that must survive merges from `QuantumNous/new-api`.
 
@@ -36,6 +36,22 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
   is not sufficient by itself: `scripts/smoke-pt-br-i18n.sh` must pass after
   every sync and the release preflight must reject missing registrations,
   locale key drift or placeholder drift.
+- The personal Atius Router must never accept or reject a local request based
+  on account, user-wallet or subscription balance. Negative wallet balance is
+  valid accounting state. Subscription absence/exhaustion must fall back to
+  wallet accounting even when `allow_wallet_overflow=false`. Finite token
+  quota and upstream-provider quota/auth errors remain separate contracts.
+- `scripts/atius-user-quota-guard.sh repair` is mandatory after every sync. It
+  is idempotent, creates a backup, applies the recovery patch only after
+  `git apply --check`, and finishes with the same fail-closed audit. The
+  `omni-srv-admin` release preflight independently scans the admission paths
+  and blocks deploy if `GetUserQuota`, `insufficient_user_quota`,
+  `quota_not_enough`, subscription-overflow authorization, or direct
+  `userQuota`/`.UserQuota` admission access returns there. Post-accounting
+  balance notifications outside `PreWssConsumeQuota` remain allowed.
+- `patches/atius-user-quota-unlimited.patch` is the recovery artifact. Run the
+  Router guard in `repair` mode only from a reviewed checkout, then rerun the
+  default audit and focused tests before build/deploy.
 
 ## Protected paths that carry this behavior
 
@@ -48,7 +64,17 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `relay/common/relay_utils.go`
 - `relay/common/relay_utils_test.go`
 - `relay/embedding_handler.go`
+- `relay/embedding_handler_test.go`
+- `relay/rerank_handler.go`
 - `service/embeddinggovernor/`
+- `service/pre_consume_quota.go`
+- `service/billing_session.go`
+- `service/quota.go`
+- `relay/mjproxy_handler.go`
+- `service/billing_session_wallet_overdraft_test.go`
+- `scripts/atius-user-quota-guard.sh`
+- `patches/atius-user-quota-unlimited.patch`
+- `docs/ATIUS-USER-QUOTA-INVARIANT.md`
 - `common/endpoint_type.go`
 - `common/endpoint_type_test.go`
 - `constant/channel.go`
@@ -66,6 +92,8 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `router/channel-router.go`
 - `types/error.go`
 - `dto/channel_settings.go`
+- `dto/channel_settings_tei_rerank_test.go`
+- `k8s/router-ai-atius/configmap.yaml`
 - `web/default/src/features/channels/`
 - `setting/console_setting/`
 - `web/default/src/features/pricing/components/model-details-api.tsx`
@@ -125,6 +153,7 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 Run from `/home/ubuntu/GitHub/containers/router-ai-atius` after any upstream sync:
 
 ```bash
+scripts/atius-user-quota-guard.sh repair
 scripts/smoke-pt-br-i18n.sh
 go test ./common ./controller ./service/modelcatalog ./relay/common ./relay/channel/minimax ./relay/channel/deepseek ./relay/channel/codex ./service ./service/embeddinggovernor ./relay -count=1
 python3 -m py_compile tools/clianything.py scripts/smoke-provider-consolidation.py scripts/smoke-embeddings.py
@@ -133,6 +162,15 @@ bin/clianything status --strict
 bin/clianything providers --all
 scripts/smoke-docs-links.sh
 ```
+
+The first command automatically repairs a recognized upstream regression and
+then audits the resulting tree. It remains fail-closed: do not push, build or
+deploy a sync that it cannot repair and validate. The separate
+`omni-srv-admin` release preflight repeats the static admission-path audit
+before `fork-sync` starts the production build. The configured `post_sync`
+also runs the focused governed-reranker tests through the Router resource
+wrapper, and the release preflight requires both governed aliases in the
+ConfigMap before deployment.
 
 With an operational token in the environment, also verify:
 

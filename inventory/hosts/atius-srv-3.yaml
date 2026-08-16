@@ -58,7 +58,7 @@ apps:
     public_healthcheck_url: https://wayland.atius.com.br/api/auth/status
     listen: 0.0.0.0:25725
     managed_by: "omni-srv-admin"
-    update_policy: "source-rebuild-postinstall"
+    update_policy: "manual"
     customization_entrypoint: /home/ubuntu/GitHub/omni-srv-admin/modules/fleet/scripts/wayland-srv3-update.sh
     last_audited: "2026-07-12"
     notes:

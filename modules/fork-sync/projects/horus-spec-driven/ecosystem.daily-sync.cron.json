@@ -1,12 +1,13 @@
 {
-  "name": "horus-spec-driven-daily-sync",
+  "name": "horus-spec-driven-daily-sync-disabled-osd-core",
   "script": "/home/ubuntu/GitHub/horus-spec-driven/bin/install.js",
   "args": ["sync", "--all", "--global"],
-  "cron_restart": "0 8 * * *",
+  "cron_restart": null,
   "cwd": "/home/ubuntu/GitHub/horus-spec-driven",
   "interpreter": "node",
   "watch": false,
   "autorestart": false,
+  "disabled": true,
   "env": {
     "SPEC_HORUS_DEBUG": "0",
     "HERMES_HOME": "/home/ubuntu/.hermes",
