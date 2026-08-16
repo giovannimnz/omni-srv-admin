@@ -3,10 +3,16 @@ project: horus-spec-driven
 version: v2.1.0
 upstream: https://github.com/open-gsd/gsd-core
 created: 2026-06-05
-last_updated: 2026-06-05
+last_updated: 2026-07-27
+status: superseded
 ---
 
 # horus-spec-driven — Manual de Atualização
+
+> **Superseded em 2026-07-27.** Não executar install/sync deste manual no Hermes.
+> Runtime canônico: `~/.hermes/osd-core/`.
+> Manual atual: `modules/fork-sync/manuals/omni-spec-driven.md`.
+> O deploy legacy está disabled em `projects/horus-spec-driven/sync.yaml`.
 
 ## Visão Geral
 
