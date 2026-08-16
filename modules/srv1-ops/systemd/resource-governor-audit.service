@@ -9,10 +9,10 @@ Type=oneshot
 Slice=omni-builds.slice
 Environment=OMNI_BUILD_CPU_GUARD_ACTIVE=1
 Environment=OMNI_RESOURCE_HYGIENE_ACTIVE=1
-ExecStartPre=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-cgroup-init.sh
-ExecStart=/usr/bin/flock --wait=7200 /home/ubuntu/.local/state/omni/resource-governor-builds.lock /usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-audit.py
-ExecStartPost=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py complete audit
-WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+ExecStartPre=%h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-cgroup-init.sh
+ExecStart=/usr/bin/flock --wait=7200 %h/.local/state/omni/resource-governor-builds.lock /usr/bin/python3 %h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-audit.py
+ExecStartPost=/usr/bin/python3 %h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py complete audit
+WorkingDirectory=%h/GitHub/omni-srv-admin
 Nice=15
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7

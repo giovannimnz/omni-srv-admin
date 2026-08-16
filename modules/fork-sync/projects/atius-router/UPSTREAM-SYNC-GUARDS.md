@@ -64,6 +64,8 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `relay/common/relay_utils.go`
 - `relay/common/relay_utils_test.go`
 - `relay/embedding_handler.go`
+- `relay/embedding_handler_test.go`
+- `relay/rerank_handler.go`
 - `service/embeddinggovernor/`
 - `service/pre_consume_quota.go`
 - `service/billing_session.go`
@@ -90,6 +92,8 @@ This file is the operational warning for upstream sync maintainers. The Atius Ro
 - `router/channel-router.go`
 - `types/error.go`
 - `dto/channel_settings.go`
+- `dto/channel_settings_tei_rerank_test.go`
+- `k8s/router-ai-atius/configmap.yaml`
 - `web/default/src/features/channels/`
 - `setting/console_setting/`
 - `web/default/src/features/pricing/components/model-details-api.tsx`
@@ -163,7 +167,10 @@ The first command automatically repairs a recognized upstream regression and
 then audits the resulting tree. It remains fail-closed: do not push, build or
 deploy a sync that it cannot repair and validate. The separate
 `omni-srv-admin` release preflight repeats the static admission-path audit
-before `fork-sync` starts the production build.
+before `fork-sync` starts the production build. The configured `post_sync`
+also runs the focused governed-reranker tests through the Router resource
+wrapper, and the release preflight requires both governed aliases in the
+ConfigMap before deployment.
 
 With an operational token in the environment, also verify:
 

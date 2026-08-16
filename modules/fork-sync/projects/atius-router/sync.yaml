@@ -53,8 +53,12 @@ protected_paths:
   - relay/common/relay_utils.go
   - relay/common/relay_utils_test.go
   - relay/embedding_handler.go
+  - relay/embedding_handler_test.go
+  - relay/rerank_handler.go
   - service/openaicompat/policy.go
   - service/embeddinggovernor/
+  - dto/channel_settings_tei_rerank_test.go
+  - k8s/router-ai-atius/configmap.yaml
   # Feature: personal Router never gates requests on account/user/subscription balance
   - service/pre_consume_quota.go
   - service/billing_session.go
@@ -133,6 +137,25 @@ protected_paths:
 
 post_sync:
   - scripts/atius-user-quota-guard.sh repair
+  - name: governed reranker regression
+    command:
+      - scripts/podman-admin.sh
+      - profile-run
+      - --
+      - env
+      - GOMAXPROCS=1
+      - CC=/usr/bin/gcc
+      - /usr/local/go/bin/go
+      - test
+      - ./dto
+      - ./relay/channel/advancedcustom
+      - ./relay
+      - ./service/embeddinggovernor
+      - -run
+      - TestAdvancedCustomValidateTEIRerank|TestTEIRerank|TestRerankHelper|TestLoadConfigUsesAdaptiveAutoscalingDefaults|TestIsGovernedModelMatchesDefaultScope
+      - -count=1
+      - -p
+      - "1"
   - scripts/smoke-pt-br-i18n.sh
   - scripts/smoke-docs-links.sh
 

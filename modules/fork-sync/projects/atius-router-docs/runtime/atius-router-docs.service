@@ -1,0 +1,20 @@
+[Unit]
+Description=Atius Router Docs (Next.js on :3003) — INVIOLABLE
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/home/ubuntu/GitHub/containers/router-ai-atius/docs/atius-router-docs
+Environment=NODE_ENV=production
+Environment=PORT=3003
+Environment=HOSTNAME=127.0.0.1
+ExecStart=/home/ubuntu/.bun/bin/bun run start -- -p 3003 -H 127.0.0.1
+Restart=always
+RestartSec=5
+OOMScoreAdjust=-1000
+OOMPolicy=continue
+Nice=-10
+
+[Install]
+WantedBy=default.target

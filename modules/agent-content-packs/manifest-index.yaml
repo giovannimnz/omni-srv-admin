@@ -1,0 +1,9 @@
+version: 1
+updated_at: 2026-08-15T05:03:23-0300
+packs:
+  - name: hermes-skills
+    manifest: modules/agent-content-packs/packs/hermes-skills/manifest.yaml
+  - name: codex-skills
+    manifest: modules/agent-content-packs/packs/codex-skills/manifest.yaml
+  - name: shared-agent-content
+    manifest: modules/agent-content-packs/packs/shared-agent-content/manifest.yaml

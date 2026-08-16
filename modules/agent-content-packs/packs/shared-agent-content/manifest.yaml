@@ -1,0 +1,114 @@
+version: 1
+pack: shared-agent-content
+updated_at: 2026-08-15T05:03:23-0300
+items:
+- name: notebooklm-bridge
+  kind: skill-pack
+  products:
+  - hermes
+  - codex
+  platforms:
+  - windows
+  - linux
+  source_path: items/notebooklm-bridge
+  hash: 70eefe647da2afb81699bf571c4096174161a12ac64871ea93a1842e09a6f4fc
+  required_files:
+  - SKILL.md
+  files:
+  - path: codex/skills/notebooklm-bridge-auto-login/SKILL.md
+    sha256: 9b2d0a41c9b6943a88cc4e5faa2d39fe184e0da649375a7e02c5fa318e644e6c
+    bytes: 2720
+  - path: codex/skills/notebooklm-bridge-camofox-display/SKILL.md
+    sha256: 814663bdd3e3698d102e5d19d2182fefc79b2f7e2f38df8f8920ae892311415c
+    bytes: 1523
+  - path: codex/skills/notebooklm-bridge-camofox-install/SKILL.md
+    sha256: 693d9e1d10ff29c98c835a5424b166b43cbb97a850897ec0c09f5059314bb271
+    bytes: 5498
+  - path: codex/skills/notebooklm-bridge-camofox-refresh/SKILL.md
+    sha256: 7579d018ad629abffee2b77d7b36316703091b03ba3b4cb8347bc61b0694474b
+    bytes: 1046
+  - path: codex/skills/notebooklm-bridge-e2e/SKILL.md
+    sha256: 06473fa3a3e578da4cbd56adef9d1ae4a76f87ac52f9ce09d898841c72458035
+    bytes: 758
+  - path: codex/skills/notebooklm-bridge-maintenance/agents/openai.yaml
+    sha256: af9ac448a25f384f25a5146c39ee955e4da5f2dab022fea3dabb68b5a7bf4a5c
+    bytes: 259
+  - path: codex/skills/notebooklm-bridge-maintenance/SKILL.md
+    sha256: dcaffc5994d0a8be789c7a4fc25eeea5039c6f08c56b1fff1d91092b38a2f044
+    bytes: 1556
+  - path: codex/skills/notebooklm-bridge-safe-export/SKILL.md
+    sha256: 03eb7fb95ecab6b53df54a905bbdbcacc07d0281beab0474a31e896657839ae6
+    bytes: 570
+  - path: codex/skills/notebooklm-bridge-smoke/SKILL.md
+    sha256: 5bafb6f2532128a08a58a26ba120040e3d2eca2343244831b82c7def0a6668aa
+    bytes: 903
+  - path: codex/skills/notebooklm-bridge-status/SKILL.md
+    sha256: 8e8bfe0f02fb22113c5aaa0b2ecc76be2aff2c7ea5ae49e5c44f00daace2a6f5
+    bytes: 872
+  - path: codex/skills/notebooklm-obsidian-bridge/agents/openai.yaml
+    sha256: fa6fa1c4d2e1eeb29d7500c3139a7c520f2d90de4138a3b7b3521b99ecfc6e01
+    bytes: 246
+  - path: codex/skills/notebooklm-obsidian-bridge/SKILL.md
+    sha256: 41d1fef092e0cd868b3923701598c2b884f868019c8d4d32eb894c0d1301d0be
+    bytes: 2037
+  - path: codex/slash-commands/notebooklm-bridge-auto-login.md
+    sha256: 7670a7c30e5db8c856ccac90017c6062143c4677af722a64dd87b47bf95b629e
+    bytes: 1616
+  - path: codex/slash-commands/notebooklm-bridge-camofox-display.md
+    sha256: 41ffabf2eb07aa9274efb0824aa085549ce5d9e2b49942441f08c4a87b21112f
+    bytes: 871
+  - path: codex/slash-commands/notebooklm-bridge-camofox-refresh.md
+    sha256: 3ca87862ec6beb0acc638ef00f6f31e488819eaa7b5b43a74d5beeab1121f34e
+    bytes: 775
+  - path: codex/slash-commands/notebooklm-bridge-e2e.md
+    sha256: 09a503129d6503b0f7d0feac1e92e9b5a9e969f213e042e549c21c7e536540f0
+    bytes: 585
+  - path: codex/slash-commands/notebooklm-bridge-maintenance.md
+    sha256: 0ad03936fa714f4dd25777141f7d7eb852abe9d418a00dd26b63f37c2419c11d
+    bytes: 695
+  - path: codex/slash-commands/notebooklm-bridge-safe-export.md
+    sha256: f962c0f6a30e4a1a644d4e63cc9bc0cde5a5f3806a70b87ec8bafc9b36a59bd1
+    bytes: 484
+  - path: codex/slash-commands/notebooklm-bridge-smoke.md
+    sha256: ce05c808722a560e53a96fbc432dcae05612b4cc6c78eb8bf9296a9e03b5c843
+    bytes: 799
+  - path: codex/slash-commands/notebooklm-bridge-status.md
+    sha256: fbc2bccc550b99a437a85fc1e81caa33b0039b53fd00cae1b0bb35d848affe98
+    bytes: 609
+  - path: hermes/skills/notebooklm-bridge-auto-login/SKILL.md
+    sha256: a318bbf7acab7e166d99576e59af46186531b39f2ff8da4fde40acc89fcd68f0
+    bytes: 2338
+  - path: hermes/skills/notebooklm-bridge-camofox-display/SKILL.md
+    sha256: bcc34c93431dc3d277087e95c7e8ee8eb0c5b872f28efe688dd217c35a44d4d5
+    bytes: 1130
+  - path: hermes/skills/notebooklm-bridge-camofox-install/SKILL.md
+    sha256: acf8f554217699dac5aeb2639ec166c9af24c42f10dfaa38b889f5f329919c9d
+    bytes: 5492
+  - path: hermes/skills/notebooklm-bridge-camofox-refresh/SKILL.md
+    sha256: 20641cc21c32be3cb566d5498dc87b4104d225eeb879c3e00ec34b7f46f1039f
+    bytes: 993
+  - path: hermes/skills/notebooklm-bridge-e2e/SKILL.md
+    sha256: c211aa67ca61f556b5fe5163f0dc6eeaaf1b9ba67e20baeb5b2d86ca30103583
+    bytes: 640
+  - path: hermes/skills/notebooklm-bridge-maintenance/SKILL.md
+    sha256: e8aa0c7aa6b74d8fef7914d32dd6350b02becadee310108d0f393ecde3485f5f
+    bytes: 934
+  - path: hermes/skills/notebooklm-bridge-safe-export/SKILL.md
+    sha256: ed6938c34e3c1dc157a79cf8dec1c1e828bd11f264be98715544db9f19c48705
+    bytes: 443
+  - path: hermes/skills/notebooklm-bridge-smoke/SKILL.md
+    sha256: a5e3bc190de2da46ea0addcc6f718e2bcdfadb1e57bd08047fc281c29810d085
+    bytes: 689
+  - path: hermes/skills/notebooklm-bridge-status/SKILL.md
+    sha256: f00e4c4a413f20599be32eb977ff0ee0846659657ba3efa8dde41c5d2ca64073
+    bytes: 826
+  - path: hermes/skills/notebooklm-obsidian-bridge/SKILL.md
+    sha256: 0597ac09910d267a5d69365a5ed69488a7ebb2cae5e2df47c3794d2ad92d04da
+    bytes: 1815
+  install:
+    hermes:
+      rel_path: skills/notebooklm-bridge
+    codex_skills:
+      rel_path: skills/notebooklm-bridge
+    codex_slash:
+      rel_path: slash-commands
