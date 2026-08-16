@@ -1,21 +1,27 @@
 # Phase 59: Qwen3 Embedding e Rerank Podman para k3s - Context
 
 **Gathered:** 2026-07-23
+**Reconciled:** 2026-07-23
 **Status:** Ready for planning
 
 <domain>
 ## Phase Boundary
 
-Migrar a trilha Qwen3 de canary do Podman para o k3s, mantendo o GTE como
-titular: Qwen3 Embedding INT8 via TEI/ONNX Runtime em 1024 dimensoes, Qwen3
-Reranker INT8 via servico ONNX dedicado, governor com fila de ciclo completo,
-colecoes Qdrant isoladas, testes funcionais/de qualidade/capacidade e
-procedimentos de promocao e rollback.
+Substituir a trilha GTE por Qwen3 no k3s ARM64, com Qwen3 Embedding 0.6B
+INT8 via TEI/ONNX Runtime em 1024 dimensoes e Qwen3 Reranker 0.6B INT8 via
+servico ONNX dedicado. A fase inclui os artefatos reproduziveis, o pipeline
+persistente no governor, collections e aliases Qdrant, reindexacao, avaliacao,
+cutover, soak, rollback drill e retirada controlada dos workloads GTE.
 
-Esta fase nao promove Qwen a titular, nao altera os aliases GTE existentes,
-nao mistura vetores 768d e 1024d e nao executa reindexacao produtiva sem os
-gates aprovados.
+O cutover foi autorizado pelo operador em 2026-07-23. GTE permanece ativo
+somente como incumbent e ancora de rollback ate Qwen passar readiness, smokes,
+qualidade, capacidade, cutover, soak e drill. Vetores GTE 768d e Qwen 1024d
+nunca compartilham collection nem alias de modelo.
 
+A fase nao presume onde Qdrant roda, nao trata metricas ausentes como PASS e
+nao executa build, compile ou suite pesada fora do profile `builds` limitado a
+20% da CPU do host. O teto de 20% se aplica a build/compile/teste pesado, nao
+aos quatro pods de runtime previamente orcados.
 </domain>
 
 <decisions>
@@ -23,47 +29,52 @@ gates aprovados.
 
 ### Modelo e runtime
 
-- **D-01:** GTE continua titular em producao durante todo o canary. Qwen sera acessado por aliases versionados e isolados.
-- **D-02:** Qwen Embedding usara `janni-t/qwen3-embedding-0.6b-int8-tei-onnx` no TEI com OrtBackend/ONNX Runtime. A quantizacao INT8 esta incorporada no `model.onnx`; nao sera criado runtime ONNX direto paralelo para embedding.
-- **D-03:** Qwen Embedding tera pooling `mean`, dimensao 1024 e alias `embedding-qwen3-0.6b-int8-1024-v1`.
-- **D-04:** Qwen Reranker usara `onnx-community/Qwen3-Reranker-0.6B-ONNX` em servico HTTP dedicado ONNX INT8, com endpoint privado `/rerank` e contrato publico convertido pelo router em `/v1/rerank`.
-- **D-05:** O alias do reranker sera `reranker-qwen3-0.6b-int8-v1`; os aliases `embedding-gte-v1` e `reranker-gte-multilingual-v1` permanecem titulares.
-- **D-06:** Revisoes dos modelos, digest das imagens e demais componentes de runtime deverao ser pinados antes do canary repetivel.
+- **D-01:** Qwen sera o titular ao final da fase. GTE permanece disponivel e imutavel como rollback ate o gate final de retirement.
+- **D-02:** Qwen Embedding usara `janni-t/qwen3-embedding-0.6b-int8-tei-onnx`, revision `8fe0c238c7c48016d28e750413ca492024be3ddf`, no TEI com OrtBackend/ONNX Runtime. O INT8 esta incorporado no `model.onnx`.
+- **D-03:** O contrato de pooling sera decidido por gate A/B entre `last-token` e `mean`, comparado ao oracle oficial FP16 `Qwen/Qwen3-Embedding-0.6B`. `last-token` e a preferencia normativa do modelo oficial; nenhum candidato sera promovido sem equivalencia funcional, instruction-aware e de ranking. A saida de producao sera 1024d normalizada.
+- **D-04:** Qwen Reranker usara `onnx-community/Qwen3-Reranker-0.6B-ONNX`, revision `9995c50e2310679108a55f5ccd16ba8be9f17c20`, em servico HTTP ONNX dedicado. TEI nao sera usado para o reranker enquanto nao houver suporte oficial ao CausalLM yes/no.
+- **D-05:** Os aliases de modelo serao `embedding-qwen3-0.6b-int8-1024-v1` e `reranker-qwen3-0.6b-int8-v1`. `embedding-gte-v1` e `reranker-gte-multilingual-v1` nunca serao silenciosamente remapeados para Qwen.
+- **D-06:** Imagens, modelos, lockfiles e bases de build devem ser pinados por revision/digest e validados para `linux/arm64`; tags `latest` e revisions `main` bloqueiam promocao. Uma imagem Podman local não conta como entregue: registry autenticada ou import explícito no containerd do runner, seguido de pull/inspect independente pelo digest exato, é obrigatório.
 
 ### Pipeline, governor e recursos
 
-- **D-07:** O governor tera dois pipeline slots centralizados. Cada ciclo segue `Embedding -> Vector DB -> Reranker`, com apenas um estagio de inferencia ativo por ciclo; um terceiro ciclo aguarda a conclusao completa de um dos dois primeiros.
-- **D-08:** O ciclo usara uma pipeline lease identificada por `pipeline_id`, com liberacao por sucesso, falha, cancelamento ou TTL. Rerank pendente tera prioridade sobre novo embedding. Chamadas somente de embedding continuam usando admission por chamada.
-- **D-09:** Cada pod permanece em `500m`; o Qwen Embedding inicia com dois pods fixos, total `1000m`.
-- **D-10:** O Qwen Reranker fara warmup inicial com um pod para medir RSS, startup e ranking; depois sera escalado para dois pods no teste integrado, com alvo futuro HPA de 2-4.
-- **D-11:** O Qwen sera isolado no namespace `qwen-canary`, com quota propria. O GTE permanece em `ebeddings-local` e sua quota titular nao sera consumida pelo canary.
-- **D-12:** Qwen Embedding nao usara `hostNetwork` com replicas; usara rede normal de pods e Service/NodePort privado para o router acessar o worker.
-- **D-13:** O governor e a quota k3s sao controles complementares: a fila limita inferencia ativa; requests/limits e quotas continuam determinando scheduling e headroom.
+- **D-07:** O governor implementara no Redis existente uma maquina de estados persistente `QUEUED -> EMBEDDING -> VECTOR_SEARCH -> RERANK -> COMPLETED`, com terminais `FAILED`, `CANCELLED` e `EXPIRED`.
+- **D-08:** Havera no maximo dois pipelines completos simultaneos. A lease permanece ocupada durante todo o ciclo, continuacoes tem prioridade sobre novos ciclos, e liberacao por sucesso, erro, cancelamento, TTL ou restart e idempotente. Chamadas standalone de embedding usam classe de admission separada.
+- **D-09:** O estado permanente tera dois pods de embedding e dois pods de reranker. Cada pod normal tera `requests.cpu=500m` e `limits.cpu=500m`; quatro pods totalizam `2000m`.
+- **D-10:** O rollout do reranker sera progressivo: um pod, warmup/sizing, depois dois pods. O estado permanente e fixo em 2+2; HPA fica fora desta fase porque adicionaria CPU sem respeitar a fila central de dois pipelines.
+- **D-11:** Qwen usara namespace dedicado, sem `hostNetwork`, com ResourceQuota, LimitRange, Pod Security, NetworkPolicy e PDB `minAvailable: 1` por serviço comprovadamente aplicados. Services/NodePorts serão acessíveis apenas pela rede privada do router.
+- **D-12:** Wave 0 registra o HPA GTE observado em 2–4 sem mutar; Wave 2 altera source/live/recovery para 2–2, faz readback independente e só então gera o rollback anchor. Assim GTE permanece em 1 embedding + 2 reranker = `1500m`, permitindo coexistência com Qwen `2000m` em `3500m`. Jobs de build, reindex, oracle e soak não serão agendados no Horistic se consumirem o quinto slot; devem rodar em outro node ou runner externo, cada um limitado a `500m`.
+- **D-13:** O governor e o Kubernetes sao controles complementares: a fila limita ciclos ativos; requests/limits, quota e memory requests determinam scheduling. Metrica ausente no Metrics API exige Prometheus/cgroup/container metrics, nunca bypass.
+- **D-25:** Estado de segurança no Redis exige Redis Open Source `>=7.2`, AOF no primary e em pelo menos uma replica em failure domain independente. Cada escrita que libera admission, backend, alias mutation, slot ou avanço do soak deve ser seguida na mesma conexão por `WAITAOF 1 1 TIMEOUT`, com ambos os contadores confirmados antes do efeito externo. `WAIT`, `appendfsync everysec`, acknowledgement em memória ou `WAITAOF` dentro de Lua/MULTI não satisfazem o gate.
 
 ### Dimensao, indices e dados
 
-- **D-14:** Qwen usara 1024 dimensoes para o corpus tecnico. Vetores GTE 768d nunca serao misturados ou preenchidos para simular 1024d.
-- **D-15:** Qdrant sera usado no canary com colecoes 1024d separadas por corpus, incluindo `gbrain_qwen3_1024_v1`, `obsidian_qwen3_1024_v1` e `graphify_qwen3_1024_v1`.
-- **D-16:** Os indices GTE 768d permanecem intactos. Corpus, chunking e IDs logicos equivalentes permitirao comparacao pareada e rollback por alias.
-- **D-17:** Documentos novos poderao receber dual-index controlado durante o canary; promocao exige reindexacao Qwen completa e aprovacao manual.
+- **D-14:** Qwen usara 1024 dimensoes para documentacao tecnica. GTE permanece 768d; padding, truncamento ou mistura entre os espacos vetoriais e proibido.
+- **D-15:** A Wave 0 deve resolver a autoridade live do Qdrant, endpoint, versao, auth, storage, backups, aliases e collections antes de qualquer mutacao. `UNKNOWN` bloqueia.
+- **D-16:** As collections fisicas Qwen serao `gbrain_qwen3_1024_v1`, `obsidian_qwen3_1024_v1` e `graphify_qwen3_1024_v1`, `Cosine`, com aliases estaveis por corpus. Collections GTE 768d permanecem imutaveis e recuperaveis.
+- **D-17:** GTE e Qwen serao indexados a partir do mesmo corpus-fonte congelado, com chunking, logical IDs, high-water marks e checksums reproduziveis. Paridade e medida contra o corpus-fonte, nao contra a cobertura parcial existente.
+- **D-26:** Qdrant separa control plane e data plane. Somente o alias arbiter possui credential/egress de aliases. Como o RBAC nativo do Qdrant não expressa todas as negações por operação, um data broker L7 separado, sem passthrough genérico, é o único portador da credential e do egress Qdrant de data management; Jobs/clients nunca têm acesso direto. Um issuer independente sem Qdrant access TokenReviews o projected ServiceAccount token e lê a cadeia live Pod UID→ownerReference→Job UID/resourceVersion→runner/image/nonce antes de assinar o certificado efêmero. O bootstrap inicial usa server-auth TLS com CA+SPKI pinados, nonce one-shot e CSR proof-of-possession; plaintext, replay, wrong-cert e token logging são negados. O broker revalida token/certificado/attestation e expõe somente API privada mTLS de operações fixas. Firewall/NetworkPolicy ficam restritos ao runner congelado. Provisionamento, reindex, snapshot e replay usam credentials distintas nas três collections Qwen exatas; aliases/delete/GTE/admin são negados. O replay da Wave 8 roda em um Job digest-pinned de 500m fora de Horistic. Como Kubernetes RBAC não restringe `delete` por label/UID, o finalizer não recebe kubeconfig/token nem egress ao API server. Namespace/admission exclusivos impedem workloads alheios e restringem a authority fixa. A audience de Kubernetes API é descoberta/fixada da configuração live do k3s na Wave 0. A Wave 5 congela um cleanup-authority Job digest-pinned de 500m, e a Wave 8 o executa fora de Horistic e num failure domain independente de srv1; seu projected token é renovado pelo kubelet após restart/outage maior que TTL, sem bootstrap/admin kubeconfig. O authority faz deletes UID/resourceVersion-preconditioned, journal terminal e self-revoke da própria RoleBinding antes de sair/TTL cleanup. Assim journal AOF-confirmed, issuer revoke, authority-mediated UID/resourceVersion deletion e probes negativos continuam crash-durable sem dar autoridade Kubernetes direta ao finalizer.
 
-### Gates, promocao e rollback
+### Gates, cutover e rollback
 
-- **D-18:** Gates funcionais incluem health, batch 1/4, dimensao 1024, normalizacao, `/rerank`, fila, timeout e TTL.
-- **D-19:** Gates de qualidade incluem Recall@20 e nDCG@10 nao inferiores ao GTE, com avaliacao especifica para portugues tecnico e codigo.
-- **D-20:** Consistencia single/batch devera ter cosine de pelo menos `0.9999`.
-- **D-21:** Gates de recursos exigem pods em `500m`, sem OOM, CPU-seconds no maximo 5% acima do GTE e ausencia de starvation nos dois pipeline slots.
-- **D-22:** O canary devera passar soak de no minimo 72 horas sem impacto mensuravel no GTE titular.
-- **D-23:** Promocao somente ocorrera apos reindexacao completa e aprovacao manual explicita.
-- **D-24:** Rollback sera feito pela troca dos aliases e colecoes de volta para GTE, sem reindexacao emergencial; Qwen permanecera isolado para investigacao.
+- **D-18:** O reranker deve corrigir left padding, preservacao do suffix, truncation budget, fila limitada, TTL, cancelamento, redaction, shutdown e score single/batch antes do rollout. O envelope inicial e batch interno 1, contexto 512 e ate 20 documentos sequenciais.
+- **D-19:** O gate de embedding cobre instruction somente na query, documentos sem instruction, 1024d, normalizacao, batch 1/4, cosine single/batch `>=0.9999`, oracle FP16 e ranking. Thresholds INT8-versus-FP16 sao congelados na Wave 0 antes de observar resultados.
+- **D-20:** Qualidade usa corpus/qrels PT-BR tecnico e codigo congelados antes da execucao: Recall@20 e nDCG@10 do Qwen nao podem ser inferiores ao GTE alem da tolerancia predeclarada. Capacidade usa pelo menos cinco rounds warm-cache e CPU-seconds `<=1.05x` GTE.
+- **D-21:** O cutover usa drain de admission, zero leases, pausa de writers, journal, CAS no banco do router e aliases Qdrant, readback independente e rollback compensatorio automatico em qualquer falha.
+- **D-22:** O soak ocorre por no minimo 72 horas continuas com Qwen titular e GTE rollback-ready. Hard failures executam rollback automatico; a espera retorna `external_job_waiting` e reata ao UID original sem redispatch.
+- **D-23:** A retirada do GTE exige soak PASS e drill produtivo Qwen -> GTE -> Qwen, com smokes em ambos, restore/replay, zero perda/duplicacao e snapshots retidos. So entao GTE e escalado a zero/removido.
+- **D-24:** Cada wave termina em `59-WAVE-N-GATE.json` fail-closed. O gate exige hashes, prestate/poststate por readback, invariantes `PASS|FAIL`, receipts, aliases, leases, rollback target e `next_wave_allowed`; `UNKNOWN`, evidencia ausente ou metrica indisponivel nunca viram PASS.
+- **D-27:** Graphify terá uma única autoridade de mutação: um publisher UDS root-owned de operações fixas (`publish-qwen`, `restore-gte`, `restore-qwen`, `heartbeat-current`) que valida peer, journal, source realpath/hash e destinos exatos. Publish/restore executam temp-write/fsync/rename/parent-fsync/readback; `heartbeat-current` verifica hashes e executa somente `utimensat` no alvo fixo. O timer no-argv é apenas um client sem qualquer write permission ou `ReadWritePaths` sobre os arquivos servidos. Nenhum componente oferece path/argv arbitrário; usuário normal, executor, heartbeat client, hooks, sweeps e watchdog falham provas de byte-write.
+- **D-28:** O reranker só pode ser construído a partir do lock graph transitivo integralmente auditado e instalado com `npm ci --ignore-scripts`. Origem mutável, integrity ausente, lifecycle child observado ou runtime CPU/offline incapaz de iniciar sem install scripts bloqueia e exige replanejamento.
+- **D-29:** Heartbeat stale durante indisponibilidade do alias arbiter tenta apenas restart bounded da mesma identidade ativa e replay durável. Cold handoff exige journal replicado sem `INFLIGHT` ambíguo, alias-map exato e esta ordem: revogar a geração antiga, bloquear egress/socket/token do host antigo, provar negative probe, só então emitir nova geração e iniciar standby. Partition heal/rejoin do active antigo deve continuar negado. Estado limpo compensa automaticamente para GTE; ambiguidade mantém admission/writers drenados em `BLOCK`.
+- **D-30:** O envelope Qwen é `2–5` pods de modelo, mas não é autoscaling: desejado permanente `2 embedding + 2 reranker = 4 pods/2000m`; piso degradado `1+1 = 2 pods/1000m` somente durante falha, manutenção ou recuperação; máximo `5 pods/2500m` somente como surge serializado de rollout. Enquanto GTE coexistir, ResourceQuota Qwen limita `pods=4`, `requests.cpu=2000m` e `limits.cpu=2000m`, e ambos Deployments usam `maxSurge=0,maxUnavailable=1`. Após retirement GTE, somente se o readback provar pelo menos `500m` de CPU allocatable adicional, a memória medida do maior pod e a reserva congelada do sistema, o gate final troca atomicamente a quota para `pods=5`/`2500m` e os Deployments para `maxSurge=1,maxUnavailable=0`. O controlador executa rollout de embedding e reranker em série; a quota nega o sexto pod e um fault test tenta rollouts simultâneos. O quinto pod nunca aumenta os dois slots do governor, nunca é steady state e deve desaparecer ao final de cada rollout. Jobs de build/oracle/reindex/soak/replay continuam em namespace/runner separado e não contam nesse envelope.
 
 ### the agent's Discretion
 
-- Definir nomes finais dos Deployments, Services, PVCs, Jobs de seed e portas privadas, preservando os contratos acima.
-- Escolher o mecanismo de estado da pipeline lease de acordo com a topologia real do router; se houver mais de uma replica, demonstrar consistencia ou usar armazenamento compartilhado.
-- Ajustar memory requests/limits do Qwen Reranker depois do warmup real, sem ultrapassar a unidade de `500m` por pod.
-- Fixar revisoes e digests concretos somente depois de validar que os artefatos e imagens correspondem ao ARM64 do alvo.
-
+- Definir nomes finais de Deployments, Services, PVCs, Jobs e portas, preservando os aliases e collections locked.
+- Escolher o limite de memoria final depois do warmup, sem alterar os `500m` de CPU ou admitir quatro rerankers.
+- Escolher a implementacao exata do endpoint orquestrador no router, desde que a lease Redis cubra o ciclo completo e chamadas standalone permaneçam separadas.
+- Manter nomes legados de scripts `qwen-canary-*` apenas se o nome nao alterar a semantica de cutover; novos manifests e namespace devem refletir producao.
 </decisions>
 
 <canonical_refs>
@@ -71,30 +82,28 @@ gates aprovados.
 
 **Downstream agents MUST read these before planning or implementing.**
 
-### Existing GTE contract and k3s
+### Existing runtime and live authority
 
-- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/41-local-ai-embeddings-gateway-horistic-srv/41-CONTEXT.md` — alias GTE, 768d, TEI privado, router sem self-loop e regra de reindexacao.
-- `k8s/ebeddings-local/tei-gte.yaml` — Deployment, Service, quota unit e limites atuais do GTE Embedding.
-- `k8s/ebeddings-local/tei-gte-reranker.yaml` — TEI GTE Reranker FP16, HPA 2-4, NodePort privado e PDB.
-- `inventory/hosts/horistic-srv.yaml` — host ARM64, node k3s, IP privado e contratos operacionais atuais.
-- `docs/operations/local-ai-embeddings.md` — contrato publico, conversao `/v1/rerank`, governor compartilhado, quotas e runbooks.
-
-### Qwen evidence and prototype
-
-- `.planning/spikes/006-qwen-podman-rag/README.md` — resultado do spike, artefato Qwen INT8, pooling mean, canary e arquitetura de fallback.
-- `scripts/embeddings-bench/results-2026-07-22-gte-qwen.md` — benchmark pareado GTE/Qwen em ARM64 com 768d e 1024d.
-- `services/qwen-reranker-onnx/server.mjs` — prototipo do servidor Qwen Reranker, prompt yes/no, limite de 20 documentos e fila local.
-- `services/qwen-reranker-onnx/package.json` — runtime Transformers.js usado pelo prototipo ONNX.
-- `modules/fork-sync/projects/atius-router/UPSTREAM-SYNC-GUARDS.md` — caminhos protegidos do governor Go, contratos GTE e conversao publica/TEI.
-- `modules/srv1-ops/configs/resource-governor.env` — limites globais do governor e separacao entre runtime e build.
+- `AGENTS.md` — CPU guardrail, unidade k3s e politica de SSH.
+- `.planning/config.json` — Graphify ainda aponta para GTE/768 e deve ser migrado somente no gate final.
+- `k8s/ebeddings-local/tei-gte.yaml` e `k8s/ebeddings-local/tei-gte-reranker.yaml` — incumbent e rollback atual.
+- `inventory/hosts/horistic-srv.yaml` — host ARM64 e branch de rede.
+- `docs/operations/local-ai-embeddings.md` — contrato publico e runbook.
+- `services/qwen-reranker-onnx/server.mjs` e `package.json` — prototipo a endurecer.
+- `scripts/embeddings-bench/results-2026-07-22-gte-qwen.md` — evidencia preliminar, nao gate de qualidade.
+- `modules/fork-sync/projects/atius-router/UPSTREAM-SYNC-GUARDS.md` — paths protegidos do router/governor.
+- `modules/srv1-ops/configs/resource-governor.env` — profile de build a 20%.
 
 ### Official runtime/model references
 
-- `https://huggingface.co/janni-t/qwen3-embedding-0.6b-int8-tei-onnx/tree/main` — artefato ONNX INT8 do embedding.
-- `https://huggingface.co/Qwen/Qwen3-Reranker-0.6B` — arquitetura e contrato oficial do reranker Qwen.
-- `https://huggingface.co/docs/text-embeddings-inference/main/en/index` — TEI, batching, health, metrics e runtimes.
-- `https://onnxruntime.ai/docs/performance/tune-performance/threading.html` — controle de threads e spinning do ONNX Runtime.
-
+- `https://huggingface.co/Qwen/Qwen3-Embedding-0.6B` — 1024d, instruction e last-token oficiais.
+- `https://huggingface.co/Qwen/Qwen3-Reranker-0.6B` — prompt/suffix e score yes/no oficiais.
+- `https://huggingface.co/janni-t/qwen3-embedding-0.6b-int8-tei-onnx` — artefato embedding INT8.
+- `https://huggingface.co/onnx-community/Qwen3-Reranker-0.6B-ONNX` — artefato reranker INT8.
+- `https://github.com/huggingface/text-embeddings-inference` — TEI ARM64/ONNX/Qwen3.
+- `https://github.com/huggingface/text-embeddings-inference/issues/643` — ausencia de suporte TEI ao Qwen3 Reranker.
+- `https://onnxruntime.ai/docs/get-started/with-javascript/node.html` — ONNX Runtime Node ARM64.
+- `https://qdrant.tech/documentation/concepts/collections/` — collections e aliases.
 </canonical_refs>
 
 <code_context>
@@ -102,50 +111,41 @@ gates aprovados.
 
 ### Reusable Assets
 
-- `services/qwen-reranker-onnx/server.mjs` ja implementa tokenizer, score yes/no, limite de 20 documentos, fila local e `/health`; deve ser endurecido e adaptado para o contrato k3s.
-- `scripts/embeddings-bench/compare-embeddings.py` e o resultado de 2026-07-22 fornecem o corpus e a metodologia de comparacao inicial.
-- `k8s/ebeddings-local/tei-gte-reranker.yaml` fornece o padrao de probes, NodePort privado, HPA e PDB.
+- O harness Python existente ja mede embedding, CPU, RSS e consistencia, mas precisa de instruction-aware/oracle, qrels e gate fail-closed.
+- O servidor reranker ja implementa o score yes/no, mas ainda tem padding/truncation, queue, observability e lifecycle incompletos.
+- O router ja possui Redis e governor por request; a fase estende isso para lease de pipeline persistente.
+- Os manifests GTE fornecem probes e topologia, mas usam pins mutaveis e nao constituem rollback imutavel sem freeze/export.
 
-### Established Patterns
+### Known live constraints
 
-- O router Go possui `service/embeddinggovernor/` compartilhado por embedding e reranking, com filas separadas por workload e leases por chamada.
-- `relay/embedding_handler.go` e `relay/rerank_handler.go` fazem `Acquire` separado e liberam a lease ao final de cada request; a pipeline lease e uma extensao arquitetural desta fase.
-- O namespace titular usa `1 pod = 500m`, nodeSelector para `horistic-srv` e protecao de acesso privado.
-- O router acessa o worker pelo IP OCI privado; ClusterIP nao e suficiente para o router Podman em SRV-1.
-
-### Integration Points
-
-- New API/router model catalog e allowlist dos aliases Qwen.
-- `embeddinggovernor` para pipeline slots, prioridade de continuacao e metricas de espera/TTL.
-- Qdrant ingestion/retrieval para colecoes Qwen 1024d e comparacao GTE/Qwen.
-- Governor headers, `/v1/embeddings`, `/v1/rerank` e adaptador nativo TEI/ONNX.
-- K3s manifests, PVC/cache, probes, NodePort privado, quota e HPA.
-
+- Horistic possui 4 CPU allocatable. GTE usa atualmente 1500m; quatro pods Qwen adicionam 2000m. Durante coexistência não há quinto pod Qwen. Após retirement, o surge de 500m depende de readback de CPU, memória e reserva do sistema; nenhum Job adicional disputa esse envelope.
+- O Metrics API nao esta disponivel; gates de recursos precisam de fonte alternativa.
+- O banco de canais do router e autoridade de routing e exige backup, CAS, readback e rollback.
+- A localizacao/autoridade Qdrant nao esta confirmada e deve ser descoberta na Wave 0.
+- O checkout owner do router e dirty; execucao exige worktree/checkout limpo e prova de nao sobreposicao.
 </code_context>
 
 <specifics>
 ## Specific Ideas
 
-- A prioridade operacional e menor consumo de processador, mas a fila nao deve esconder limites de scheduling, memoria ou quota do Kubernetes.
-- O teste inicial deve ter dois Qwen Embedding pods de `500m` e dois pipeline slots.
-- O ciclo validado e sequencial: Qwen Embedding, busca vetorial top-K, Qwen Reranker top-N.
-- GTE continua ativo e titular para fallback e comparacao durante todo o período de teste.
-- Documentacao tecnica crescente e o motivo para fixar 1024d no Qwen, sem alterar o contrato GTE 768d.
-
+- A prioridade e menor consumo de CPU sem sacrificar verdade funcional: INT8 so vence se passar o oracle FP16 e os qrels.
+- O estado permanente e exatamente 2 pods de embedding + 2 pods de reranker, todos a 500m; `2–5` significa piso degradado 1+1 e pico transitório de um único surge, não HPA.
+- O pipeline titular e sequencial: Embedding -> Qdrant top-K -> Reranker top-N.
+- O cutover nao renomeia GTE para Qwen; aliases de modelo e collections permanecem explicitamente distintos.
+- Graphify, GBrain e Obsidian devem migrar para 1024d com collections e high-water marks proprios.
 </specifics>
 
 <deferred>
 ## Deferred Ideas
 
-- Promover Qwen a titular antes do soak, da reindexacao completa e da aprovacao manual.
-- Usar ONNX Runtime direto como runtime permanente do Qwen Embedding.
-- Forcar Qwen Reranker dentro do TEI sem compatibilidade oficial e validacao real.
-- Misturar colecoes GTE 768d e Qwen 1024d ou trocar o alias GTE durante o canary.
-- Criar uma fila externa Redis/NATS antes de demonstrar a necessidade pela topologia de replicas do router.
-
+- HPA para Qwen Embedding/Reranker; a Phase 59 usa envelope fixo e surge serializado.
+- Qwen Reranker FP16 como fallback automatico.
+- Qwen Reranker dentro do TEI sem suporte oficial.
+- Contexto operacional de 32K ou batch interno maior que 1 antes de sizing.
+- Remocao de snapshots/collections GTE no mesmo momento do retirement dos pods.
 </deferred>
 
 ---
 
 *Phase: 59-qwen3-embedding-e-rerank-podman-para-k3s*
-*Context gathered: 2026-07-23*
+*Context reconciled: 2026-07-23*
