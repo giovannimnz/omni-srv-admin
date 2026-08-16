@@ -1,0 +1,37 @@
+{
+  "listenHost": "127.0.0.1",
+  "listenPort": 8210,
+  "authCheckUrl": "http://127.0.0.1:8015/v1/auth/me",
+  "authCookieName": "auth-token",
+  "centralLoginUrl": "https://sso.atius.com.br/login",
+  "sites": {
+    "grafana.atius.com.br": {
+      "publicOrigin": "https://grafana.atius.com.br",
+      "appName": "Grafana",
+      "authMode": "basic",
+      "upstream": "http://10.13.1.13:3005",
+      "upstreamUsernameEnv": "ATIUS_ADMIN_EDGE_GRAFANA_USER",
+      "upstreamPasswordEnv": "ATIUS_ADMIN_EDGE_GRAFANA_PASS",
+      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "requireAdmin": true
+    },
+    "portainer.atius.com.br": {
+      "publicOrigin": "https://portainer.atius.com.br",
+      "appName": "Portainer",
+      "authMode": "portainer-jwt",
+      "upstream": "https://10.12.1.12:9443",
+      "upstreamAuthUrl": "/api/auth",
+      "upstreamUsernameEnv": "ATIUS_ADMIN_EDGE_PORTAINER_USER",
+      "upstreamPasswordEnv": "ATIUS_ADMIN_EDGE_PORTAINER_PASS",
+      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "requireAdmin": true
+    },
+    "docker.atius.com.br": {
+      "aliasOf": "portainer.atius.com.br",
+      "publicOrigin": "https://docker.atius.com.br",
+      "appName": "Docker",
+      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "requireAdmin": true
+    }
+  }
+}

@@ -1,0 +1,155 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-30T23:37:40.411Z",
+  "finalVerdict": "PASS",
+  "runner": "playwright-headless",
+  "sites": [
+    {
+      "id": "adguard",
+      "origin": "https://adguard.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://adguard.atius.com.br/",
+          "loginUrl": "https://adguard.atius.com.br/login",
+          "authenticatedUrl": "https://adguard.atius.com.br/",
+          "logoutUrl": "https://adguard.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://adguard.atius.com.br/",
+          "loginUrl": "https://adguard.atius.com.br/login",
+          "authenticatedUrl": "https://adguard.atius.com.br/",
+          "logoutUrl": "https://adguard.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 302,
+              "url": "https://adguard.atius.com.br/login"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://adguard.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-1-01-access.png",
+          "sha256": "3847dc5d6c2eed12d6b3de91ad56fe493136918e6b41d2b0940fe07fe7f6ac86",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-1-02-login.png",
+          "sha256": "3847dc5d6c2eed12d6b3de91ad56fe493136918e6b41d2b0940fe07fe7f6ac86",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-1-03-authenticated.png",
+          "sha256": "ba61ab57bab66bafed46ccdd1a5399d297fc681feadf7823a8082edebc64e445",
+          "url": "https://adguard.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-1-04-logged-out.png",
+          "sha256": "3847dc5d6c2eed12d6b3de91ad56fe493136918e6b41d2b0940fe07fe7f6ac86",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-2-01-access.png",
+          "sha256": "3847dc5d6c2eed12d6b3de91ad56fe493136918e6b41d2b0940fe07fe7f6ac86",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-2-02-login.png",
+          "sha256": "3847dc5d6c2eed12d6b3de91ad56fe493136918e6b41d2b0940fe07fe7f6ac86",
+          "url": "https://adguard.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-2-03-authenticated.png",
+          "sha256": "65daa5b4fc1b7766319720a302e2eeb4e8089a00953b88d7d0b2e7c648e01dd2",
+          "url": "https://adguard.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/adguard-pass/adguard/cycle-2-04-logged-out.png",
+          "sha256": "3847dc5d6c2eed12d6b3de91ad56fe493136918e6b41d2b0940fe07fe7f6ac86",
+          "url": "https://adguard.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://adguard.atius.com.br/login",
+        "https://adguard.atius.com.br/",
+        "https://adguard.atius.com.br/logout",
+        "https://adguard.atius.com.br/login",
+        "https://adguard.atius.com.br/login",
+        "https://adguard.atius.com.br/",
+        "https://adguard.atius.com.br/logout",
+        "https://adguard.atius.com.br/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 2,
+    "screenshots": 8
+  },
+  "secretsRecorded": false
+}

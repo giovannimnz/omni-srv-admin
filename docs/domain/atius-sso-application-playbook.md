@@ -9,17 +9,24 @@ Canonical matrix:
 
 - `docs/domain/atius-sso-lifecycle-matrix.md`
 
-Runtime status: **planned until 10-04/10-05 evidence**. Application deployment
-must not be inferred from this playbook.
+Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
+The 12 public hosts passed `24/24` complete browser cycles and visual review
+`12/12`. Evidence:
+`docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636/`.
+Plans `10-04` and `10-05` have runtime promotion and final browser/visual
+evidence; older pending language is historical only.
 
 ## Contract capsule
 
 - Human entry is app-local `/login`; internal rewrite/minimal proxy keeps it
   visible.
-- `/sso` is internal or controlled compatibility. Never redirect `/login`
-  publicly into `/sso`.
-- A legacy bootstrap destination is validated same-origin, stored transiently,
-  and removed from the clean public URL.
+- `/sso` is compatibility only: query-free entry returns `308 /login`; a
+  legacy allowlisted `return_to` is captured once and returns `307 /login`.
+  Never redirect public `/login` into `/sso`.
+- A legacy deep link is allowlisted, stored in a host-only, HttpOnly, Secure,
+  SameSite=Lax cookie for at most ten minutes, consumed once, and removed from
+  the clean public URL.
+- Human URLs containing persistent `return_to` are prohibited.
 - Destination is `valid | missing | rejected` through entry, login,
   logout-complete, re-entry, and return. Missing/rejected is neutral, not Trade.
 - Central logout is POST-only `/api/sso/logout` with the real browser
@@ -29,6 +36,10 @@ must not be inferred from this playbook.
   fail closed before mutation.
 - Local logout owns one exact/minimal operation and never publishes a general
   ATS API proxy.
+- The visible `Destino seguro` value is the destination's bare hostname only.
+  Do not expose scheme, port, slash, path, query, or fragment in that field.
+  Keep the complete validated URL for redirects and authorization; display
+  normalization must not weaken destination validation.
 
 Exact neutral state:
 

@@ -9,8 +9,12 @@ Canonical reusable contract:
 
 - `docs/domain/atius-sso-lifecycle-matrix.md`
 
-Runtime status: **planned until 10-04/10-05 evidence**. These manuals describe
-the accepted contract but do not claim it is promoted live.
+Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
+The 12 public hosts passed `24/24` complete browser cycles and visual review
+`12/12`. Evidence:
+`docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636/`.
+Plans `10-04` and `10-05` have runtime promotion and final browser/visual
+evidence; older pending language is historical only.
 
 ## Contract capsule
 
@@ -75,9 +79,9 @@ headless evidence, and rollback/readback. A first redirect is not acceptance.
 | `atius-sso` skill | executable agent procedure |
 | Obsidian/GBrain | governed knowledge mirror after runtime proof |
 
-Allowlisting `https://adguard.atius.com.br/` approves only central handoff
-eligibility. The Phase 11 app-local facade remains unapproved until its own
-implementation and evidence.
+`adguard.atius.com.br` now has its app-local facade validated for the recovery
+scope above; future AdGuard feature expansion still needs its own lifecycle
+evidence.
 
 ## Actual planning evidence
 

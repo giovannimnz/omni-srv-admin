@@ -1,6 +1,6 @@
 # Edge Auth — Cloudflare Access + Apache Basic Auth (Phase 16 / M005)
 
-**Status:** ready (Phase 16 PLAN executed 2026-06-17 — Access not yet enabled in Cloudflare account; see "Current State" below)
+**Status:** historical fallback / superseded as primary user-facing auth for Giovanni on 2026-07-30. For the final shared-SSO state, use `docs/operations/atius-admin-edge-sso.md`.
 
 **Scope:** `portainer.atius.com.br` and `docker.atius.com.br`.
 
@@ -24,6 +24,19 @@ fallback in case Cloudflare Access is unavailable.
   enabled in the dashboard).
 - `omni-cli` already has a Cloudflare-Access-aware client module
   (`cli/omni/edge.py`) that auto-falls-back to Basic Auth.
+
+---
+
+## Historical note
+
+As of 2026-07-30, Giovanni's required final state moved away from Apache Basic Auth and away from Cloudflare Access as the primary human login for these admin edges. The live user-facing path is now the shared Atius login plane documented in `docs/operations/atius-admin-edge-sso.md`.
+
+Keep this document as:
+- historical implementation path,
+- fallback / rollback context,
+- reference for Cloudflare Access if the org wants a second auth layer later.
+
+---
 
 ## Why Cloudflare Access
 

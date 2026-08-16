@@ -309,7 +309,10 @@ def scan_artifacts(args: argparse.Namespace) -> None:
             if payload is not None:
                 scan_json_scalars(payload, candidate, findings)
     if findings:
-        raise SystemExit("secret-like scalar/material found in emitted evidence")
+        raise SystemExit(
+            "secret-like scalar/material found in emitted evidence: "
+            + ", ".join(sorted(findings))
+        )
     json.dump(
         {"scannedFiles": sorted(scanned), "findingCount": 0, "secretsRecorded": False},
         sys.stdout,

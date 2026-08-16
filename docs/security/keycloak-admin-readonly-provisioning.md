@@ -151,9 +151,13 @@ The write-ahead journal arms ownership before every side effect:
 
 Response/readback loss therefore leaves enough durable identifiers to
 reconcile and roll back. Rollback order is always reverse:
-`exporter -> Vault exact version -> Keycloak exact UUID`. A resource is marked
-restored only after exact readback; ambiguous recovery remains
-`rollback-incomplete-manual-recovery-required`.
+`exporter -> Vault exact version -> Keycloak exact UUID`. During the drill,
+the Vault leg soft-deletes only the operation-owned version so the same run can
+exercise `CAS=1` / version `2` on reapply. If the overall live operation later
+fails and performs its terminal rollback, an extra exact metadata delete prunes
+the dedicated path so the next preflight can prove true absence again. A
+resource is marked restored only after exact readback; ambiguous recovery
+remains `rollback-incomplete-manual-recovery-required`.
 
 ## Evidence secret scan and stop conditions
 

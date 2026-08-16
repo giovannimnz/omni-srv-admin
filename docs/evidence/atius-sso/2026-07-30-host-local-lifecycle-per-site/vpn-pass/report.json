@@ -1,0 +1,159 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-30T23:33:27.909Z",
+  "finalVerdict": "PASS",
+  "runner": "playwright-headless",
+  "sites": [
+    {
+      "id": "vpn",
+      "origin": "https://vpn.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://vpn.atius.com.br/",
+          "loginUrl": "https://vpn.atius.com.br/login",
+          "authenticatedUrl": "https://vpn.atius.com.br/",
+          "logoutUrl": "https://vpn.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/api/auth/login"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://vpn.atius.com.br/",
+          "loginUrl": "https://vpn.atius.com.br/login",
+          "authenticatedUrl": "https://vpn.atius.com.br/",
+          "logoutUrl": "https://vpn.atius.com.br/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 307,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/api/auth/login"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/"
+            },
+            {
+              "status": 303,
+              "url": "https://vpn.atius.com.br/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://vpn.atius.com.br/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-1-01-access.png",
+          "sha256": "43f9f86065205c196cab58adb526504e30a7f4a07fe968ac181d07daf044c54e",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-1-02-login.png",
+          "sha256": "43f9f86065205c196cab58adb526504e30a7f4a07fe968ac181d07daf044c54e",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-1-03-authenticated.png",
+          "sha256": "04cfe507fbecedc8b8ec3457f93440a73702abfc3bc160f4b16a9bbc4a5fb599",
+          "url": "https://vpn.atius.com.br/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-1-04-logged-out.png",
+          "sha256": "0229155ee23bc348d52ff6c190d8b9dfb6bf0563eb9296790c6dfeb6a81b167c",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-2-01-access.png",
+          "sha256": "919b5812319b161507d0fa96cf4a0c4d0b751e58327bc168252b5a5c5424dfd1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-2-02-login.png",
+          "sha256": "919b5812319b161507d0fa96cf4a0c4d0b751e58327bc168252b5a5c5424dfd1",
+          "url": "https://vpn.atius.com.br/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-2-03-authenticated.png",
+          "sha256": "b8f4519fccb5d9811c77b9de5ca8e8b65689c9656030b3fa73e1c535aec9957a",
+          "url": "https://vpn.atius.com.br/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle-per-site/vpn-pass/vpn/cycle-2-04-logged-out.png",
+          "sha256": "9f3446988d5dbaf02405bd323a4a89792d6f1c4fced96889eed53f15c4b6ff25",
+          "url": "https://vpn.atius.com.br/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/",
+        "https://vpn.atius.com.br/login",
+        "https://vpn.atius.com.br/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 2,
+    "screenshots": 8
+  },
+  "secretsRecorded": false
+}
