@@ -1,0 +1,23 @@
+[Unit]
+Description=WebSocket proxy for the Horistic remote desktop
+After=network-online.target xrdp.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/websockify --web /usr/share/novnc/ 10.21.1.21:6080 localhost:5901
+Restart=on-failure
+RestartSec=2
+CPUQuota=20%
+MemoryMax=256M
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+
+[Install]
+WantedBy=multi-user.target

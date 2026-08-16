@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "generatedAt": "2026-07-31T20:38:00-03:00",
+  "canonicalEvidence": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636",
+  "fleet": {
+    "sites": 12,
+    "cycles": 24,
+    "screenshots": 96,
+    "finalVerdict": "PASS",
+    "completeFleetEvidence": true
+  },
+  "visual": {
+    "sitesPassed": 12,
+    "sitesTotal": 12,
+    "verdict": "PASS"
+  },
+  "runtime": {
+    "apacheConfigtest": "PASS",
+    "corednsTcpCanaryTimer": "active/enabled",
+    "corednsTcpCanaryResult": "success",
+    "remoteFramebuffers": [
+      {
+        "cycle": 1,
+        "uniqueColors": 421,
+        "nonBlackRatio": 0.0431
+      },
+      {
+        "cycle": 2,
+        "uniqueColors": 421,
+        "nonBlackRatio": 0.0431
+      }
+    ],
+    "nodeReady": true,
+    "diskPressure": false,
+    "grafanaReady": "3/3",
+    "prometheusReady": "2/2"
+  },
+  "tests": {
+    "targetedSuites": "PASS",
+    "contract": "PASS 20/20",
+    "evidenceOutputEnvironment": "PASS"
+  },
+  "security": {
+    "secretScanFindings": 0,
+    "valuesRecorded": false
+  },
+  "commitPush": "none",
+  "knowledge": {
+    "gbrain": {
+      "slug": "aisecondbrain/30-recursos/atius/sso-atius-guia-canonico",
+      "importNoEmbed": "PASS",
+      "readback": "PASS"
+    },
+    "graphify": {
+      "nodes": 14148,
+      "edges": 20204,
+      "hyperedges": 0,
+      "stale": false,
+      "commitStale": false,
+      "governedBuild": "user-owned success/status=0",
+      "memoryPeakMiB": 98.2,
+      "swapPeakBytes": 0
+    }
+  },
+  "postSealReconciliation": {
+    "process": "proc_9db50fade3fc",
+    "classification": "orphaned rollback smoke",
+    "orphanPort": 3200,
+    "productionPort": 3100,
+    "productionService": "vpn-frontend.service",
+    "productionRestarted": false,
+    "orphanStoppedGracefully": true,
+    "deletedCwdProcessesAfterCleanup": 0,
+    "vpnCycles": 2,
+    "vpnScreenshots": 8,
+    "vpnVerdict": "PASS_SUBSET",
+    "visualVerdict": "PASS",
+    "gbrainReadback": "PASS",
+    "graphifyNodes": 14148,
+    "graphifyEdges": 20204,
+    "graphifyRootOwnedFiles": 0,
+    "graphifyForceReason": "intentional removal of one contaminated untracked default evidence node",
+    "evidence": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-31-vpn-post-orphan-cleanup-20260731-205753"
+  }
+}
