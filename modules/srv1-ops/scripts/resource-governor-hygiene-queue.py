@@ -6,6 +6,7 @@ import argparse
 import fcntl
 import json
 import os
+import sys
 import subprocess
 import time
 from datetime import datetime
@@ -98,11 +99,30 @@ def queued_pending_map(state: dict[str, Any]) -> dict[str, bool]:
     return {stage: bool(saved.get(stage, False)) for stage in STAGE_TIMERS}
 
 
+def warn_metrics_path(path: Path, exc: OSError) -> None:
+    print(
+        f"WARN hygiene_metrics_unwritable path={path} error={exc.__class__.__name__}: {exc}",
+        file=sys.stderr,
+    )
+
+
+def prepare_metrics_dir(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        path.chmod(0o755)
+        return True
+    except PermissionError as exc:
+        warn_metrics_path(path, exc)
+    except OSError as exc:
+        warn_metrics_path(path, exc)
+    return False
+
+
 def write_metrics(state: dict[str, Any], pending: dict[str, bool]) -> None:
-    METRICS_FILE.parent.mkdir(parents=True, exist_ok=True)
+    if not prepare_metrics_dir(METRICS_FILE.parent):
+        return
     # node-exporter runs as nobody (65534) and mounts this directory read-only.
     # Metrics contain no secrets; keep the directory traversable/readable.
-    METRICS_FILE.parent.chmod(0o755)
     lines = [
         "# HELP omni_resource_governor_hygiene_requests_total Post-build hygiene requests.",
         "# TYPE omni_resource_governor_hygiene_requests_total counter",
@@ -134,9 +154,14 @@ def write_metrics(state: dict[str, Any], pending: dict[str, bool]) -> None:
         ]
     )
     tmp = METRICS_FILE.with_suffix(".tmp")
-    tmp.write_text("\n".join(lines) + "\n")
-    tmp.chmod(0o644)
-    tmp.replace(METRICS_FILE)
+    try:
+        tmp.write_text("\n".join(lines) + "\n")
+        tmp.chmod(0o644)
+        tmp.replace(METRICS_FILE)
+    except PermissionError as exc:
+        warn_metrics_path(METRICS_FILE, exc)
+    except OSError as exc:
+        warn_metrics_path(METRICS_FILE, exc)
 
 
 def locked_state() -> tuple[Any, dict[str, Any]]:
