@@ -10,19 +10,19 @@ items:
   - windows
   - linux
   source_path: items/hermes-wslinterop-restore
-  hash: 3e91525cd1e6df870d3d1a404aa30c998cc2c9ca158f5aba8048051346041448
+  hash: 3f9420d461ebabcf06587a6c36c0b81f18d7b78f7d7ade9b1474121fe79435b9
   required_files:
   - SKILL.md
   files:
   - path: references/catalog-links.md
-    sha256: 028f293a09b67fd97d600b9cdb8f949c0df587dd3377b12bfc78f39693e3bd23
-    bytes: 1007
+    sha256: ea94c03865cc379c4f4aa0e7823e894ae7f20210b1f9eb0ba6656b4af7ef53fa
+    bytes: 985
   - path: references/related-docs.md
-    sha256: 40b29e5a3bb9a34a25c0054bdd8f03b6e6140581997ed5b6b54fb17649e384a1
-    bytes: 903
+    sha256: 3e5c29215bf032c1a957099f4ce6b92ad59bf0ad29eec42282befd49a3b9d5eb
+    bytes: 882
   - path: SKILL.md
-    sha256: a88977175ab2b3c15f42762ba4dfc4650eeb3bf7890829d6121e7964b9640abe
-    bytes: 5780
+    sha256: f323eecd6bb16c9ee7a85ce87dbee96d0d78930808f40f96712cabed8be74409
+    bytes: 5595
   category: devops
   install:
     hermes:
@@ -34,7 +34,7 @@ items:
   - windows
   - linux
   source_path: items/hermes-windows-wsl
-  hash: 738670d08162746e33d6b0f8723a4e3989fb13ff9364de04bbe3b2f5fb707a34
+  hash: 4fb0c2455ef7061460ea183cf6950cbe3f0ddc7c9fc065224d40f6d4b4242a5a
   required_files:
   - SKILL.md
   files:
@@ -42,20 +42,20 @@ items:
     sha256: 0142d799ea28c21ee75ce6d479ce4ed21b67238274c2f38024a0fe3ccad962ed
     bytes: 3746
   - path: references/gateway-cross-runtime-send.md
-    sha256: 572ff209f0a85eaec8c236a037e4433c695a05cc74ee9c3d64214c70ff5e3ad2
-    bytes: 2978
+    sha256: 4400e05e74b3a61ea92c9c1a7ac92fb2b1d1337e86a86faa704df22dac3cffb3
+    bytes: 2901
   - path: references/gateway-sigterm-loop-diag.md
     sha256: 31f0cba4cfe06a83753c9e0ff43612e321e36ce0f51fda4bc74f978b68cf06ec
     bytes: 5656
   - path: references/runtime-home-isolation-and-mcp-shutdown.md
-    sha256: e20cd7e79919d333e74165a6010bc29df90782ef14d0fc005e82054dcb3b95a2
-    bytes: 7243
+    sha256: 2f3f6a4b7a55534b56e0d3f6464c5582d06b3cbb2d5869e084ca4bb2b2826c13
+    bytes: 7038
   - path: references/wsl-gateway-setup-session.md
-    sha256: cdf6f5be594a2e2f82ac57f268bda10979afce78745a585bce2e28a0d66bc92e
-    bytes: 4250
+    sha256: d5097bb998bf951d8aeaf8a2db213b29e498da3a8806c821a0f669a849347a1b
+    bytes: 4134
   - path: SKILL.md
-    sha256: d87ec3c409d26a6ca762feb0323d6ac7ff42954046b66a9114d776be586c79d0
-    bytes: 27270
+    sha256: 97bedb8f9d9e4350e5eb041710285784a1facfdf35fc2a0e09c54baf98a7330c
+    bytes: 26685
   category: devops
   install:
     hermes:
@@ -67,13 +67,13 @@ items:
   - windows
   - linux
   source_path: items/hermes-cross-runtime-bridge
-  hash: 3714250887955b70739cdeba7f0996359cd314b1dc9c38991b169b20c03669a7
+  hash: f687ba0cc3d61b2806dcf9c88d1aad4a5ec6a459ea0d1b7dc47d54cf802778ce
   required_files:
   - SKILL.md
   files:
   - path: references/approval-mode-yaml-bool-audit.md
-    sha256: f17a818e266e5a26159710eb87b72d2e34d0a65b116d0201b9236c2a7388ddab
-    bytes: 2137
+    sha256: 0102d6e48ba6ac79252d33554a6df6114d107511199f356d6cd8bb8609f9717f
+    bytes: 2086
   - path: references/default-model-provider-sync.md
     sha256: 96fe9641699baeacc1d2cbd98cf459e63975d38221096efbad792fd5ea8c90e5
     bytes: 4376
@@ -81,8 +81,8 @@ items:
     sha256: 7b139ef78f43a8631a21d0f711d39f00f510848444a383bad000faf97402e1b8
     bytes: 3850
   - path: SKILL.md
-    sha256: 62e1d66154ef815bddc2f091ca89feb66ea06324f2929f874f90b54cba6753a6
-    bytes: 28682
+    sha256: dd9fa8c89ee0ceb821e1cada3fff6c3d85f36705c8519679f76ae120e36ffd4e
+    bytes: 27985
   category: devops
   install:
     hermes:
@@ -94,13 +94,13 @@ items:
   - windows
   - linux
   source_path: items/hermes-yolo-three-env
-  hash: 63ab9a7db45a81eafa3e1fc3a8c4befb0dcc944e114c094661eace3b0e65b3e0
+  hash: a82901131676f125ff8880f04acaca6e3e8afea05330f402a8515ebab1c5ba44
   required_files:
   - SKILL.md
   files:
   - path: SKILL.md
-    sha256: 45d4b3268667841fd9d93a941d25436e888294d0ada6bb1880b0c59979f3d801
-    bytes: 3673
+    sha256: 81cb598947e7c5aee1c873fade2f92c9e1bcb2e1b19339c2ee69e3caae67773c
+    bytes: 3556
   category: devops
   install:
     hermes:
@@ -112,22 +112,22 @@ items:
   - windows
   - linux
   source_path: items/gbrain-mcp-operations
-  hash: bfc4dd996367628cc702284ab34b64a6de06e81de9ce5517d82573672fab54ad
+  hash: f34a7122671daed8305d3a5d5ea43dfabee6fb8b096e3bb197e4473a4599677d
   required_files:
   - SKILL.md
   files:
   - path: references/giovanni-gbrain-mcp-audit-2026-07-03.md
-    sha256: 6234db1e3e1bcb76f2ba5fd551496c82c0aa4929a452844e3cf09fd9af753352
-    bytes: 3351
+    sha256: 0429878a7c5fcd978aff9a2261bae47b8deb1dea9f2157cbc8445d768bc7d782
+    bytes: 3272
   - path: references/http-mcp-troubleshooting.md
-    sha256: 824059dde1cd89b8c1286bdf03a3a3b6173cd7b629dc239bbc744643b1a660b2
-    bytes: 4146
+    sha256: aa23ee7746789f8e664f81e1efc71ab74c45cc665675efd503655c82a44b7947
+    bytes: 4024
   - path: references/write-fallback-embedding-governor.md
-    sha256: 902caf5541a30d8b7e5c9b98d2dd1d16c47d441ea1955653d8d8c5bf1c058327
-    bytes: 2708
+    sha256: 06ffae858cfe6ed1e2ae156bd83bfa0371a27eb66a674746c3bf1db0c0a1f49e
+    bytes: 2645
   - path: SKILL.md
-    sha256: 00057625d33e54686636fd168b649c5ba4f238b4a700334be4b0de6562799746
-    bytes: 9697
+    sha256: c023a83353a458722567c9a4d9cdb20684466760b042fb6c6603635af5aa1365
+    bytes: 9505
   category: devops
   install:
     hermes:

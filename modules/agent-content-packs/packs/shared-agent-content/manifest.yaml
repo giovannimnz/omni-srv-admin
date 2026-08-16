@@ -11,7 +11,7 @@ items:
   - windows
   - linux
   source_path: items/notebooklm-bridge
-  hash: 06a2cdd43f8d6f7ab8545acc2efdcfe8bc5b188591b419531ab4e1e420a53f7e
+  hash: 70eefe647da2afb81699bf571c4096174161a12ac64871ea93a1842e09a6f4fc
   required_files:
   - SKILL.md
   files:
@@ -82,8 +82,8 @@ items:
     sha256: bcc34c93431dc3d277087e95c7e8ee8eb0c5b872f28efe688dd217c35a44d4d5
     bytes: 1130
   - path: hermes/skills/notebooklm-bridge-camofox-install/SKILL.md
-    sha256: 3f4a2f2ca24a6da581f9bd2a1cacb81304be964622eae8db58b5a17a7b3ded5c
-    bytes: 5673
+    sha256: acf8f554217699dac5aeb2639ec166c9af24c42f10dfaa38b889f5f329919c9d
+    bytes: 5492
   - path: hermes/skills/notebooklm-bridge-camofox-refresh/SKILL.md
     sha256: 20641cc21c32be3cb566d5498dc87b4104d225eeb879c3e00ec34b7f46f1039f
     bytes: 993
@@ -103,8 +103,8 @@ items:
     sha256: f00e4c4a413f20599be32eb977ff0ee0846659657ba3efa8dde41c5d2ca64073
     bytes: 826
   - path: hermes/skills/notebooklm-obsidian-bridge/SKILL.md
-    sha256: b3c5e7a24ed1b26f791a86f05446d59753b60b2850938ea7a60f8ca43f98712f
-    bytes: 1867
+    sha256: 0597ac09910d267a5d69365a5ed69488a7ebb2cae5e2df47c3794d2ad92d04da
+    bytes: 1815
   install:
     hermes:
       rel_path: skills/notebooklm-bridge
