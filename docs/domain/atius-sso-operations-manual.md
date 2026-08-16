@@ -1,231 +1,186 @@
 # Atius SSO - Operations Manual
 
-## Objetivo
+## Purpose and status
 
-Manual operacional para entender, montar, incluir, validar e remover SSO entre
-os sistemas Atius. Use este documento quando a tarefa for prática e precisar de
-sequência executável, não apenas contexto arquitetural.
+Executable owner procedure for `understand | mount | include | validate |
+operate | remove`.
 
-Fontes canônicas complementares:
+Canonical matrix:
 
-- `docs/domain/atius-sso-manual-index.md`
-- `docs/domain/atius-wide-sso.md`
-- `docs/domain/atius-sso-application-playbook.md`
-- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
-- `~/.codex/skills/atius-sso/SKILL.md`
+- `docs/domain/atius-sso-lifecycle-matrix.md`
 
-## Contrato curto
+Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
+The 12 public hosts passed `24/24` complete browser cycles and independent
+visual review `12/12`. Canonical evidence:
+`docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636/`.
+Runtime promotion evidence from `10-04` and browser/visual closeout evidence
+from `10-05` are materialized; earlier pending wording is historical only.
 
-- Login humano canônico por app: `https://<app>.atius.com.br/sso`
-- Alias de compatibilidade: `https://<app>.atius.com.br/login` -> `/sso` com `308`
-- Control plane/fallback central: `https://sso.atius.com.br/login`
-- Logout global: `https://sso.atius.com.br/api/sso/logout`
-- IdP/OIDC: `https://auth.atius.com.br/realms/atius`
-- Validação de sessão: `GET https://api.atius.com.br/v1/auth/me`
-- Cookie compartilhado: `auth-token`
-- Fonte de segredo: HashiCorp Vault
+## Contract capsule
 
-O app integrado deve validar a sessão server-side e nunca expor credencial
-interna do backend no browser.
+- App-local `/login` is the canonical human URL and stays visible through
+  internal rewrite/minimal proxy.
+- `/sso` is compatibility only: query-free entry returns `308 /login`; a
+  legacy allowlisted `return_to` is captured once and returns `307 /login`.
+  Never redirect public `/login` into `/sso`.
+- A validated deep link is carried in a host-only, HttpOnly, Secure,
+  SameSite=Lax cookie for at most ten minutes and consumed once by `/login`.
+- Do not publish, share, log, or document human login URLs containing
+  `return_to`.
+- Destination state is `valid | missing | rejected` across entry, login,
+  logout-complete, re-entry, and return; missing/rejected is neutral.
+- Central logout is POST-only `/api/sso/logout` with real browser `Origin`,
+  `Content-Type: application/json`, and session-bound one-time
+  `X-CSRF-Token`.
+- GET, wrong/missing Origin, wrong content type, missing/invalid/replayed CSRF
+  fail closed before mutation.
+- Local logout exposes one exact operation, not a general ATS API proxy.
+- Central completion remains `https://sso.atius.com.br/login`.
 
-## Como funciona
+Exact neutral state:
 
-```text
-browser
-  -> app.atius.com.br/path
-  -> app detecta falta de auth-token
-  -> redirect para app.atius.com.br/sso?return_to=<app-url>
-  -> facade local exige return_to same-origin e usa o shell ATS
-  -> auth-token emitido para .atius.com.br
-  -> app consulta api.atius.com.br/v1/auth/me
-  -> app libera página/proxy server-side
+- heading `Sessão Atius ativa`
+- body `Você entrou com sucesso. Nenhum aplicativo de destino foi informado. Você pode fechar esta aba.`
+- label/value `Destino seguro` / `Nenhum destino selecionado`
+- URL `https://sso.atius.com.br/login`
+- no application controls
+
+For an app-local `/login`, `Destino seguro` displays only the bare hostname.
+Never render the scheme, port, trailing slash, path, query, or fragment. The
+validated full URL is still used internally for return navigation and
+allowlist enforcement. Example: `https://ssh.atius.com.br/compute` renders as
+`ssh.atius.com.br`.
+
+## Mount/include procedure
+
+1. Define exact public host, protected paths, public exceptions, and owner.
+2. Classify the app as ATS-native, own-backend, or internal-resource proxy.
+3. Define local authorization and the private backend/credential identifier.
+4. Capture hashes, a recoverable backup, and runtime before-state.
+5. Update the exact central policy in
+   `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/lib/sso/redirects.ts`.
+6. Implement:
+   - canonical `/login` internal facade;
+   - controlled `/sso` bootstrap landing on clean `/login`;
+   - fixed forwarded host/proto/port and exact CORS;
+   - server-side session validation through `/v1/auth/me`;
+   - private backend proxy with server-side credential;
+   - exact local POST logout forwarding the real incoming Origin and
+     one-time CSRF operation only.
+7. Run the matrix in `docs/domain/atius-sso-lifecycle-matrix.md`.
+8. Prove rollback and reapply before promotion.
+9. Update owner docs; schedule Obsidian/GBrain/Graphify closeout after runtime
+   and browser proof.
+
+## Minimal reverse-proxy pattern
+
+Keep `/login` visible:
+
+```apache
+ProxyPreserveHost On
+ProxyPassMatch "^/login$" "http://127.0.0.1:3015/sso/login"
+ProxyPassReverse "/login" "http://127.0.0.1:3015/sso/login"
+
+<LocationMatch "^/login$">
+    RequestHeader set X-Forwarded-Host "<app>.atius.com.br"
+    RequestHeader set X-Forwarded-Proto "https"
+    RequestHeader set X-Forwarded-Port "443"
+</LocationMatch>
 ```
 
-Papéis:
+The gateway validates legacy `/sso` context and redirects only to clean
+`/login`; an unconditional Apache compatibility redirect is insufficient.
+Proxy only the shell, immutable assets, and exact auth/session/refresh/logout
+operations. Never proxy ATS APIs generally.
 
-- `sso.atius.com.br`: control plane/fallback central, logout e contrato global.
-- `/sso` no app: endereço humano do login, com proxy mínimo do shell/assets e
-  endpoints exatos de autenticação ATS.
-- `auth.atius.com.br`: IdP/OIDC/Keycloak quando o fluxo usar bridge OIDC.
-- `api.atius.com.br`: autoridade de sessão ATS reaproveitável.
-- App de destino: gate local, autorização local quando existir, proxy interno e
-  exceções públicas.
+## Validate
 
-## Montar SSO do zero em um app
-
-Use quando o app ainda não tem integração com SSO Atius.
-
-1. Definir o host público exato.
-2. Classificar o app:
-   - host ATS nativo;
-   - app com backend próprio;
-   - proxy para recurso interno.
-3. Listar paths protegidos e paths públicos.
-4. Definir backend interno e nome da credencial server-side.
-5. Adicionar host/path na allowlist central:
-   `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/lib/sso/redirects.ts`
-6. Implementar no app:
-   - facade `/sso` e alias `/login` com `308`;
-   - `X-Forwarded-Host/Proto/Port` exatos e Origin no CORS ATS;
-   - `return_to` restrito ao origin do próprio app;
-   - middleware/gate de redirect;
-   - endpoint local de sessão;
-   - proxy server-side para backend interno;
-   - logout local.
-7. Validar:
-   - teste de allowlist;
-   - chain HTTP;
-   - login fake retorna `401`, não `500`;
-   - browser não recebe token interno;
-   - logout limpa cookie host-only e `.atius.com.br`.
-8. Documentar no repo do app, `omni-srv-admin`, Obsidian e GBrain.
-
-## Incluir app novo em SSO já existente
-
-Use quando o SSO central já existe e o app só precisa entrar no fluxo.
-
-Checklist:
-
-1. Confirmar host e paths finais.
-2. Confirmar se existe rota pública que precisa continuar anônima.
-3. Atualizar a allowlist central em `redirects.ts`.
-4. Implementar ou adaptar middleware/proxy local.
-5. Validar sessão com `GET /v1/auth/me`.
-6. Garantir que secrets internos ficam só no servidor.
-7. Rodar testes e smokes.
-8. Atualizar docs e memória operacional.
-
-Teste central:
+Run the deterministic contract:
 
 ```bash
-cd /home/ubuntu/GitHub/Atius-Capital/ats
-npx jest --config jest.backend.config.js tests/backend/auth/test_sso_redirect_allowlist.test.js --runInBand
+node scripts/validate-atius-sso-lifecycle-contract.mjs \
+  --contract /home/ubuntu/GitHub/Atius-Capital/ats/tests/frontend/fixtures/sso-lifecycle-contract.json \
+  --report /path/to/private/report.json
 ```
 
-Smokes mínimos:
+Run ATS unit/integration tests under the CPU governor, then headless browser
+validation from fresh `valid`, `missing`, and `rejected` contexts. Prove:
 
-```bash
-curl -Iks "https://<app>.atius.com.br/"
-curl -Iks "https://<app>.atius.com.br/sso?return_to=https%3A%2F%2F<app>.atius.com.br%2F"
-curl -Iks "https://<app>.atius.com.br/login"
-curl -Iks "https://sso.atius.com.br/api/sso/login?return_to=https%3A%2F%2F<app>.atius.com.br%2F"
-```
+1. anonymous entry reaches clean app `/login`;
+2. address bar stays on `/login`;
+3. login returns to the same validated target;
+4. POST logout uses browser-generated Origin, JSON, and one-time CSRF;
+5. logout-complete shows the same destination or exact neutral tuple;
+6. `Entrar novamente` and `Voltar para` use the same target;
+7. destination and logout negatives fail closed;
+8. app/backend secrets never reach browser or evidence;
+9. rollback/reapply returns the same hashes and behavior.
 
-Login fake:
+Authenticated readiness is content-specific:
 
-```bash
-curl -isS -X POST 'https://<app>.atius.com.br/v1/token/generate' \
-  -H 'Origin: https://<app>.atius.com.br' \
-  -H 'Content-Type: application/json' \
-  --data '{"email":"fake@example.com","senha":"senha-falsa"}'
-```
+- Grafana: every visible panel has real datasource content; `Sem dados`,
+  `No data`, loading, datasource errors, and query errors fail the cycle.
+- Remote: the visible noVNC area must contain a non-blank framebuffer. The SSO
+  shell and logout control alone do not prove the remote desktop works.
+- RDP and other fast same-origin adapters may navigate while the login input is
+  being filled. Treat the detached input as success only after the app-specific
+  authenticated UI passes; never accept the navigation event alone.
 
-Esperado: `401 Credenciais inválidas.`
+Do not put an allowed Origin header into JavaScript or copy/paste positive
+`curl` examples. The browser supplies it. Negative tests may deliberately send
+an invalid Origin to prove rejection.
 
-## Validar integração existente
+## Remove
 
-Validação mínima:
+1. Inventory allowlist, `/login`, controlled `/sso`, session, logout, proxy,
+   runtime, and docs; create backup.
+2. Remove the exact central host/path.
+3. Remove or adapt local facade, middleware, session, logout, and private proxy.
+4. Prove no remaining dependency on `auth-token`, `/v1/auth/me`, central
+   login/logout, or ATS-authenticated proxy.
+5. Run survivor positives plus removed-app negatives through the full
+   lifecycle.
+6. For rollback, restore the owned backup, rerun contract/lifecycle/headless
+   checks, and verify hashes/readback.
 
-1. `curl -Iks` na raiz do app sem cookie.
-2. `curl -Iks` no login SSO com `return_to`.
-3. `curl -Iks` em `/api/sso/login`.
-4. Teste de allowlist se o host depende do ATS central.
-5. Browser/DevTools para confirmar destino visual real.
-6. Logout global para confirmar limpeza de cookies.
+## AdGuard boundary
 
-Critérios de aceite:
+`https://adguard.atius.com.br/` is an allowlisted root destination for central
+handoff. That does not approve the Phase 11 app-local facade, Apache/gateway
+apply, or live AdGuard lifecycle.
 
-- sem fallback indevido para `trade.atius.com.br`;
-- browser permanece em `https://<app>.atius.com.br/sso` durante o login;
-- `/login` responde `308` para `/sso`;
-- `return_to` cross-origin é rejeitado ou normalizado para a raiz do app;
-- sem open redirect;
-- sem token interno no bundle ou network do browser;
-- `auth-token` validado server-side;
-- logout não entra em loop de auto-login;
-- evidência sem segredo.
+## Evidence and secrets
 
-## Remover app do SSO
+Evidence may record timestamps, hosts, commands, status, hashes, backup paths,
+Vault profile/path/field names, and sanitized URLs. It must not contain
+passwords, cookie/token/CSRF values, client secrets, or Vault values.
 
-Use quando um app deixa de participar do fluxo central.
+Canonical identifiers:
 
-1. Remover host/path de `redirects.ts`.
-2. Remover ou adaptar middleware local de redirect.
-3. Remover endpoint local de sessão/logout se não houver mais dependência.
-4. Remover proxy server-side somente se o app não depender dele para proteger
-   backend interno.
-5. Rerodar teste de allowlist.
-6. Rodar smokes para garantir que o app não chama mais `sso.atius.com.br` por
-   engano.
-7. Atualizar docs no repo do app, `omni-srv-admin`, Obsidian e GBrain.
+- Vault profile `browser-login`
+- Vault path `kv/atius/browser-login/access-keys`
+- fields `username`, `password`, `totp_secret`
+- GBrain slug `aisecondbrain/30-recursos/atius/sso-atius-guia-canonico`
+- Phase 42:
+  `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
 
-Não considere removido se o app ainda depende de:
-
-- `auth-token`;
-- `/v1/auth/me`;
-- `sso.atius.com.br/login`;
-- `sso.atius.com.br/api/sso/logout`;
-- proxy interno autenticado com sessão ATS.
-
-## Publicar ou alterar o host SSO
-
-Quando a mudança for no host `sso.atius.com.br`, não use apenas este manual.
-Siga `docs/domain/atius-wide-sso.md`.
-
-Antes de mutação live:
-
-```bash
-bash scripts/sso-edge-smoke.sh --dry-run --assert-status --assert-headers
-bash scripts/keycloak-sso-client-check.sh inventory --realm atius --client-id sso.atius.com.br
-bash scripts/sso-secret-hygiene-scan.sh
-```
-
-O gate live precisa confirmar:
-
-- before-state Cloudflare/DNS/TLS;
-- backup Apache;
-- client Keycloak sem imprimir secret;
-- rollback testado;
-- env live de smoke carregada pelo operador.
-
-## Evidência permitida
-
-Pode registrar:
-
-- timestamp;
-- host;
-- comando;
-- status;
-- caminho de backup;
-- nome da variável de ambiente;
-- path do Vault.
-
-Não registrar:
-
-- valor de cookie;
-- senha;
-- token;
-- client secret;
-- JWT;
-- screenshot com segredo;
-- shell history com credencial.
-
-## Template de registro de mudança
+## Change record template
 
 ```markdown
 ## SSO change - <app>
 
-- Data:
-- App/host:
-- Tipo: mount | include | validate | remove
-- Paths protegidos:
-- Paths públicos:
-- Allowlist alterada: sim/nao
-- Proxy server-side: sim/nao
-- Backend interno:
-- Credencial interna: <nome da variavel ou path Vault, sem valor>
-- Testes:
-- Smokes:
-- Rollback:
-- Docs atualizados:
+- Type:
+- Exact host/paths:
+- Public exceptions:
+- Owner:
+- Before hashes/backup:
+- Central policy:
+- Local `/login` facade:
+- Controlled `/sso` behavior:
+- Session/logout/private proxy:
+- Lifecycle positives/negatives:
+- Headless evidence:
+- Rollback/reapply:
+- Runtime status:
+- Knowledge readback:
 ```

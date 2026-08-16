@@ -1,126 +1,105 @@
 # Atius SSO - Manual Index
 
-## Objetivo
+## Purpose and status
 
-Roteador canônico para entender, montar, validar, incluir e remover SSO entre
-os sistemas Atius sem depender de contexto oral ou de uma fase específica.
+This is the routing index for understanding, mounting, including, validating,
+operating, and removing Atius SSO integrations.
 
-## O que ler primeiro
+Canonical reusable contract:
 
-### 1. Como o SSO funciona
+- `docs/domain/atius-sso-lifecycle-matrix.md`
+
+Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
+The 12 public hosts passed `24/24` complete browser cycles and visual review
+`12/12`. Evidence:
+`docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636/`.
+Plans `10-04` and `10-05` have runtime promotion and final browser/visual
+evidence; older pending language is historical only.
+
+## Contract capsule
+
+- Canonical human app URL: `https://<app>.atius.com.br/login`.
+- `/login` stays visible through internal rewrite/minimal proxy.
+- `/sso` is internal or controlled compatibility; public redirection from
+  `/login` into `/sso` is forbidden.
+- Destination lifecycle is `valid | missing | rejected` through entry, login,
+  logout-complete, re-entry, and return.
+- Missing/rejected state is neutral and never implies Trade.
+- Central logout is POST-only `/api/sso/logout` with real browser `Origin`,
+  `Content-Type: application/json`, and session-bound one-time
+  `X-CSRF-Token`; negatives fail closed before mutation.
+- App-local logout is one exact/minimal operation, never a general ATS API
+  proxy.
+- Backup, lifecycle tests, rollback, reapply, and readback are mandatory.
+
+Exact neutral state is:
+
+- `Sessão Atius ativa`
+- `Você entrou com sucesso. Nenhum aplicativo de destino foi informado. Você pode fechar esta aba.`
+- `Destino seguro`
+- `Nenhum destino selecionado`
+- URL `https://sso.atius.com.br/login`
+- no application controls
+
+## Reading routes
+
+### Understand the architecture
 
 - `docs/domain/atius-sso-learnings.md`
 - `docs/domain/atius-wide-sso.md`
-- `docs/domain/atius-sso-operations-manual.md`
+- `docs/domain/atius-sso-lifecycle-matrix.md`
 
-### 2. Como montar/publicar o host SSO
+### Mount or publish the central host
 
 - `docs/domain/atius-wide-sso.md`
+- `docs/domain/atius-sso-lifecycle-matrix.md`
 
-Foco:
+This covers ATS, Keycloak/OIDC, Apache, Cloudflare, TLS, release gates, and
+rollback.
 
-- `sso.atius.com.br` como host canônico
-- ATS facade
-- Keycloak como OIDC controlado
-- Apache, Cloudflare, TLS, rollback, gate manual
-
-### 3. Como incluir um app novo
+### Include or remove an application
 
 - `docs/domain/atius-sso-operations-manual.md`
 - `docs/domain/atius-sso-application-playbook.md`
+- `docs/domain/atius-sso-lifecycle-matrix.md`
 
-Foco:
+### Validate
 
-- allowlist de `return_to`
-- middleware/proxy local
-- validação server-side da sessão
-- preservação de rotas públicas
+Approval requires the full entry/login/logout-complete/re-entry/return matrix,
+positive and negative destination/logout checks, exact neutral copy, sanitized
+headless evidence, and rollback/readback. A first redirect is not acceptance.
 
-### 4. Como remover um app do SSO
+## Ownership
 
-- `docs/domain/atius-sso-operations-manual.md`
-- `docs/domain/atius-sso-application-playbook.md`
+| Owner | Responsibility |
+|---|---|
+| ATS | central allowlist, login/logout policy, neutral completion |
+| App/gateway | visible `/login`, controlled `/sso`, session, exact logout, local authorization |
+| `omni-srv-admin` | owner manuals and lifecycle matrix |
+| `atius-sso` skill | executable agent procedure |
+| Obsidian/GBrain | governed knowledge mirror after runtime proof |
 
-Foco:
+`adguard.atius.com.br` now has its app-local facade validated for the recovery
+scope above; future AdGuard feature expansion still needs its own lifecycle
+evidence.
 
-- remoção da allowlist central
-- limpeza de middleware/proxy/logout local
-- rerun de testes e atualização de docs
+## Actual planning evidence
 
-## Modelos de trabalho
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/36-keycloak-sso-and-coexistence/36-01-SUMMARY.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
+- `.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-PATTERNS.md`
 
-### Entender
+## Skill and knowledge readback
 
-Perguntas que este pacote responde:
+- Skill: `/home/ubuntu/.codex/skills/atius-sso/SKILL.md`
+- Obsidian:
+  `/home/ubuntu/GitHub/obsidian-vault/AiSecondBrain/30-RECURSOS/atius/SSO-Atius-Guia-Canonico.md`
+- GBrain:
+  `aisecondbrain/30-recursos/atius/sso-atius-guia-canonico`
 
-- quem autentica
-- quem emite o cookie compartilhado
-- quem decide RBAC
-- como o `return_to` é protegido
-- como o logout global funciona
+Do not create a second SSO skill or duplicate knowledge page.
 
-### Montar
+## Secret rule
 
-Use quando o trabalho for de host/plataforma:
-
-- publicar `sso.atius.com.br`
-- preparar vhost Apache
-- validar headers `X-Forwarded-*`
-- inventariar Keycloak client
-- confirmar rollback antes de mutação live
-
-### Incluir
-
-Use quando o trabalho for onboarding de app:
-
-- `vpn.atius.com.br`
-- `remote.atius.com.br`
-- qualquer novo host/subdomínio Atius
-
-### Validar
-
-Use quando o objetivo for responder:
-
-- o redirect está correto
-- a página mostra o destino certo
-- o login falha como `401`, não `500`
-- o logout limpa os cookies certos
-
-### Remover
-
-Use quando um app deixa de participar do fluxo central de SSO.
-
-## Artefatos de apoio
-
-- manual operacional por tarefa:
-  - `docs/domain/atius-sso-operations-manual.md`
-- learnings da fundação Keycloak:
-  - `.planning/phases/36-keycloak-sso-and-coexistence/36-01-SUMMARY.md`
-- learnings da fachada Ats-wide:
-  - `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
-- pattern map:
-  - `.planning/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-PATTERNS.md`
-
-## Skill operacional
-
-- `~/.codex/skills/atius-sso/SKILL.md`
-
-Uso esperado:
-
-```text
-$atius-sso
-```
-
-## Regra de segredo
-
-Fonte de verdade:
-
-- HashiCorp Vault
-
-Nunca usar como autoridade:
-
-- `.env`
-- shell history
-- chat
-- Obsidian
-- GBrain
+HashiCorp Vault is authoritative. Manuals and evidence may contain only profile,
+path, and field identifiers, never values.
