@@ -30,6 +30,7 @@
     "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
     "modules/rustdesk-fleet/tests/test_phase53_topology.py",
     "modules/rustdesk-fleet/tools/apply-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py",
     "modules/rustdesk-fleet/tools/discover-phase53-topology.py",
     "modules/rustdesk-fleet/tools/install-phase53-server.py",
     "modules/rustdesk-fleet/tools/phase53-live-adapters.py",

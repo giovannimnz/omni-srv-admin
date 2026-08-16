@@ -89,3 +89,11 @@ For more information about GSD agents, run `/gsd-help`.
 - Preservar evidencia headless adequada, como output de comandos, traces, screenshots, snapshots ou artefatos de teste.
 
 <!-- codex-policy:parallel-headless:end -->
+
+<!-- IJFW-MEMORY-START -->
+Project memory at .ijfw/memory/. Call `ijfw_memory_prelude` for full context.
+<!-- IJFW-MEMORY-END -->
+
+<!-- IJFW-AGENTS-START -->
+No project agents yet. Run `ijfw team` to set them up.
+<!-- IJFW-AGENTS-END -->

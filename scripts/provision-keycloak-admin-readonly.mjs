@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto'
 import { spawnSync } from 'node:child_process'
-import { chmod, lstat, mkdir, readFile, realpath, rm } from 'node:fs/promises'
+import { chmod, chown, lstat, mkdir, readFile, realpath, rm } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import {
@@ -374,6 +374,12 @@ async function runReadOnlyPreflight(options) {
   if (live.status !== 0) throw new Error(`authenticated preflight failed: ${live.stderr.trim()}`)
   validateLivePreflightArtifact(report)
   await atomicWritePrivateJson(options.report, report)
+  const sudoUid = Number(process.env.SUDO_UID ?? Number.NaN)
+  const sudoGid = Number(process.env.SUDO_GID ?? Number.NaN)
+  if (Number.isInteger(sudoUid) && sudoUid >= 0 && Number.isInteger(sudoGid) && sudoGid >= 0) {
+    await chown(options.report, sudoUid, sudoGid)
+    await chmod(options.report, 0o600)
+  }
   return report
 }
 
@@ -503,6 +509,10 @@ async function applyLive(options) {
   }
   const report = {
     ...liveReport,
+    failureDetail:
+      live.status !== 0 && typeof live.stderr === 'string' && live.stderr.trim()
+        ? live.stderr.trim()
+        : undefined,
     candidate: recomputeCandidateDigests(candidate),
     approval: {
       operationId: approval.operationId,
@@ -546,7 +556,8 @@ async function applyLive(options) {
     throw new Error(`failed to persist immutable operation terminal: ${terminalRun.stderr.trim()}`)
   }
   if (live.status !== 0 || report.finalVerdict !== 'GO') {
-    throw new Error(`live operation failed closed at ${report.failedStep ?? 'unknown step'} (${status})`)
+    const detail = report.failureDetail ? `: ${report.failureDetail}` : ''
+    throw new Error(`live operation failed closed at ${report.failedStep ?? 'unknown step'} (${status})${detail}`)
   }
   return report
 }

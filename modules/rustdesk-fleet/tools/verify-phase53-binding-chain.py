@@ -53,6 +53,7 @@ REQUIRED_EXECUTION_SOURCE_PATHS = (
     "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
     "modules/rustdesk-fleet/tests/test_phase53_topology.py",
     "modules/rustdesk-fleet/tools/apply-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py",
     "modules/rustdesk-fleet/tools/discover-phase53-topology.py",
     "modules/rustdesk-fleet/tools/install-phase53-server.py",
     "modules/rustdesk-fleet/tools/phase53-live-adapters.py",
@@ -67,11 +68,12 @@ REQUIRED_EXECUTION_SOURCE_PATHS = (
     "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
 )
 EXECUTION_SOURCE_COMMIT_PATHS = (
-    ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
     "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
-    "modules/rustdesk-fleet/evidence/ledger.json",
-    "modules/rustdesk-fleet/tests/test_phase51_contracts.py",
     "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py",
+    "modules/rustdesk-fleet/tools/phase53-live-backend.py",
+    "modules/rustdesk-fleet/tools/run-phase53-live-gate.py",
+    "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
     "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
 )
 FORBIDDEN_SOURCE_PATH_MARKERS = (
@@ -427,7 +429,7 @@ def _exact_commit_paths(repo: Path, commit: str) -> list[str]:
 
 
 def validate_execution_source_commit_paths(repo: Path, commit: str) -> list[str]:
-    """Require the six-path 05D2C seal commit without broad staging."""
+    """Require the exact seven-path 05D2D source seal without broad staging."""
 
     root = repo.resolve(strict=True)
     source_commit = _commit(root, commit, "execution-source-invalid")

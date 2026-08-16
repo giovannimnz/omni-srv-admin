@@ -32,6 +32,7 @@ REALM="atius"
 CLIENT_ID="keycloak-admin-readonly"
 RECOVERY_ENV="/etc/keycloak/recovery-admin.env"
 KCADM="/opt/keycloak/bin/kcadm.sh"
+KCADM_TIMEOUT_SECONDS="30"
 VAULT_TARGET="ubuntu@10.13.1.13"
 VAULT_PATH="kv/atius/keycloak/admin-readonly"
 EXPORTER="/usr/local/sbin/atius-vault-export-env"
@@ -168,6 +169,7 @@ fi
 }
 mkdir -m 0700 "${SCRATCH:-/run/keycloak-admin-readonly.preflight.$$}"
 SCRATCH="${SCRATCH:-/run/keycloak-admin-readonly.preflight.$$}"
+BACKUP="${BACKUP:-/var/backups/atius-vault-export-env.keycloak-admin-readonly.preflight.${PPID}.bak}"
 KCADM_CONFIG="${SCRATCH}/kcadm.config"
 
 write_private_exclusive() {
@@ -218,15 +220,27 @@ cleanup() {
   if [[ -n "${SCRATCH}" ]]; then /usr/bin/rm -rf -- "${SCRATCH}" 2>/dev/null || true; fi
 }
 
+vault_ssh() {
+  /usr/bin/sudo -u ubuntu /usr/bin/ssh -o BatchMode=yes -o ConnectTimeout=10 "$@"
+}
+
+local_vault_env() {
+  /usr/bin/sudo -u ubuntu "${LOCAL_VAULT_ENV}" "$@"
+}
+
+kcadm_exec() {
+  /usr/bin/timeout "${KCADM_TIMEOUT_SECONDS}s" "${KCADM}" "$@"
+}
+
 remote_vault_metadata_json() {
-  /usr/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+  vault_ssh -n "${VAULT_TARGET}" \
     "sudo ${REMOTE_VAULT} kv metadata get -format=json ${VAULT_PATH}"
 }
 
 assert_vault_metadata_absent() {
   local status
   status="$(
-    /usr/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+    vault_ssh -n "${VAULT_TARGET}" \
       "set +e; out=\$(sudo ${REMOTE_VAULT} kv metadata get -format=json ${VAULT_PATH} 2>&1); rc=\$?; if [ \$rc -eq 0 ]; then printf PRESENT; elif printf '%s' \"\$out\" | /usr/bin/grep -qi 'No value found'; then printf ABSENT; else exit \$rc; fi"
   )"
   [[ "${status}" == "ABSENT" ]]
@@ -235,20 +249,25 @@ assert_vault_metadata_absent() {
 remote_vault_soft_delete() {
   local version="$1"
   [[ "${version}" =~ ^[12]$ ]] || return 1
-  /usr/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+  vault_ssh -n "${VAULT_TARGET}" \
     "sudo ${REMOTE_VAULT} kv delete -versions=${version} ${VAULT_PATH} >/dev/null"
+}
+
+remote_vault_metadata_delete() {
+  vault_ssh -n "${VAULT_TARGET}" \
+    "sudo ${REMOTE_VAULT} kv metadata delete ${VAULT_PATH} >/dev/null"
 }
 
 remote_exporter_transform() {
   local transform_mode="$1"
   shift
-  /usr/bin/ssh -T -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+  vault_ssh -T "${VAULT_TARGET}" \
     "sudo /usr/bin/python3 - ${transform_mode} --file ${EXPORTER} --backup ${BACKUP} --expected-before-sha256 ${EXPECTED_EXPORTER_SHA} $*" \
     < "${TRANSFORM}"
 }
 
 remote_exporter_hash() {
-  /usr/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+  vault_ssh -n "${VAULT_TARGET}" \
     "sudo /usr/bin/sha256sum ${EXPORTER} | /usr/bin/awk '{print \$1}'"
 }
 
@@ -292,15 +311,16 @@ rollback_vault() {
 
 rollback_keycloak() {
   [[ "${CLIENT_ARMED}" == "true" ]] || return 0
+  [[ -f "${KCADM_CONFIG}" ]] || return 1
   local readback
-  if readback="$("${KCADM}" get "clients/${CLIENT_UUID}" -r "${REALM}" \
+  if readback="$(kcadm_exec get "clients/${CLIENT_UUID}" -r "${REALM}" \
       --config "${KCADM_CONFIG}" --fields id,clientId 2>/dev/null)"; then
     /usr/bin/jq -e --arg id "${CLIENT_UUID}" --arg clientId "${CLIENT_ID}" \
       '.id==$id and .clientId==$clientId' <<<"${readback}" >/dev/null
-    "${KCADM}" delete "clients/${CLIENT_UUID}" -r "${REALM}" \
+    kcadm_exec delete "clients/${CLIENT_UUID}" -r "${REALM}" \
       --config "${KCADM_CONFIG}" >/dev/null
   fi
-  if "${KCADM}" get "clients/${CLIENT_UUID}" -r "${REALM}" \
+  if kcadm_exec get "clients/${CLIENT_UUID}" -r "${REALM}" \
     --config "${KCADM_CONFIG}" >/dev/null 2>&1; then
     return 1
   fi
@@ -324,6 +344,21 @@ rollback_owned_resources() {
   fi
   set -e
   return "${rollback_rc}"
+}
+
+restore_retryable_vault_absence_after_failure() {
+  local metadata=""
+  if ! metadata="$(remote_vault_metadata_json 2>/dev/null)"; then
+    assert_vault_metadata_absent
+    return 0
+  fi
+  /usr/bin/jq -e --arg version "${VAULT_EXPECTED_VERSION}" \
+    '.data.versions[$version] != null and (.data.versions[$version].deletion_time|length)>0' \
+    <<<"${metadata}" >/dev/null
+  remote_vault_metadata_delete >/dev/null
+  assert_vault_metadata_absent
+  journal_event "${ROLLBACK_EVENT_PREFIX}4-vault-metadata-pruned.json" \
+    "vault" "metadata-absent-readback" "${VAULT_EXPECTED_VERSION}"
 }
 
 write_failure_result() {
@@ -350,6 +385,7 @@ on_error() {
   local exit_code=$?
   trap - ERR INT TERM HUP
   rollback_owned_resources || true
+  restore_retryable_vault_absence_after_failure || true
   write_failure_result "${exit_code}"
   cleanup
   exit "${exit_code}"
@@ -411,18 +447,18 @@ PY
   remember_secret_material "${values[1]}"
   export KC_CLI_PASSWORD="${values[1]}"
   unset 'values[1]'
-  "${KCADM}" config credentials \
+  kcadm_exec config credentials \
     --config "${KCADM_CONFIG}" \
     --server "${BASE_URL}" \
     --realm master \
     --user "${recovery_username}" >/dev/null
   unset KC_CLI_PASSWORD recovery_username values
-  "${KCADM}" get "realms/${REALM}" --config "${KCADM_CONFIG}" --fields realm |
+  kcadm_exec get "realms/${REALM}" --config "${KCADM_CONFIG}" --fields realm |
     /usr/bin/jq -e --arg realm "${REALM}" '.realm==$realm' >/dev/null
 }
 
 assert_client_absent() {
-  "${KCADM}" get clients -r "${REALM}" --config "${KCADM_CONFIG}" \
+  kcadm_exec get clients -r "${REALM}" --config "${KCADM_CONFIG}" \
     -q "clientId=${CLIENT_ID}" --fields id,clientId |
     /usr/bin/jq -e 'length==0' >/dev/null
 }
@@ -430,7 +466,7 @@ assert_client_absent() {
 capture_remote_preimage() {
   local metadata
   metadata="$(
-    /usr/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+    vault_ssh -n "${VAULT_TARGET}" \
       "sudo /usr/bin/stat -Lc '%a %U %G' ${EXPORTER}; sudo /usr/bin/sha256sum ${EXPORTER}; sudo /usr/bin/stat -Lc '%a %U %G' ${VAULT_PUT_HELPER}; sudo /usr/bin/sha256sum ${VAULT_PUT_HELPER}"
   )"
   [[ "$(sed -n '1p' <<<"${metadata}")" == "700 root root" ]]
@@ -473,20 +509,20 @@ maybe_inject_response_loss() {
 }
 
 configure_exact_roles() {
-  "${KCADM}" get "clients/${CLIENT_UUID}/service-account-user" -r "${REALM}" \
+  kcadm_exec get "clients/${CLIENT_UUID}/service-account-user" -r "${REALM}" \
     --config "${KCADM_CONFIG}" --fields id,username > "${SCRATCH}/service-account.json"
   SERVICE_ACCOUNT_UUID="$(/usr/bin/jq -r '.id // empty' "${SCRATCH}/service-account.json")"
   [[ "${SERVICE_ACCOUNT_UUID}" =~ ^[0-9a-fA-F-]{16,64}$ ]]
-  "${KCADM}" get clients -r "${REALM}" --config "${KCADM_CONFIG}" \
+  kcadm_exec get clients -r "${REALM}" --config "${KCADM_CONFIG}" \
     -q clientId=realm-management --fields id,clientId > "${SCRATCH}/realm-management-client.json"
   REALM_MANAGEMENT_UUID="$(
     /usr/bin/jq -r 'if length==1 and .[0].clientId=="realm-management" then .[0].id else empty end' \
       "${SCRATCH}/realm-management-client.json"
   )"
   [[ "${REALM_MANAGEMENT_UUID}" =~ ^[0-9a-fA-F-]{16,64}$ ]]
-  "${KCADM}" get "clients/${REALM_MANAGEMENT_UUID}/roles/query-clients" -r "${REALM}" \
+  kcadm_exec get "clients/${REALM_MANAGEMENT_UUID}/roles/query-clients" -r "${REALM}" \
     --config "${KCADM_CONFIG}" > "${SCRATCH}/query-clients.json"
-  "${KCADM}" get "clients/${REALM_MANAGEMENT_UUID}/roles/view-clients" -r "${REALM}" \
+  kcadm_exec get "clients/${REALM_MANAGEMENT_UUID}/roles/view-clients" -r "${REALM}" \
     --config "${KCADM_CONFIG}" > "${SCRATCH}/view-clients.json"
   /usr/bin/jq -s 'sort_by(.name)' "${SCRATCH}/query-clients.json" \
     "${SCRATCH}/view-clients.json" > "${SCRATCH}/roles.json"
@@ -496,37 +532,37 @@ configure_exact_roles() {
   CURRENT_STEP="assign-service-account-roles"
   journal_event "${FORWARD_EVENT_PREFIX}20-roles-armed.json" \
     "service-account-roles" "armed" "${CLIENT_UUID}"
-  "${KCADM}" create "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}" \
+  kcadm_exec create "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}" \
     -r "${REALM}" --config "${KCADM_CONFIG}" -f "${SCRATCH}/roles.json" >/dev/null
   maybe_inject_response_loss "assign-service-account-roles"
   CURRENT_STEP="constrain-dedicated-client-scope"
   journal_event "${FORWARD_EVENT_PREFIX}30-scope-armed.json" \
     "dedicated-client-scope" "armed" "${CLIENT_UUID}"
-  "${KCADM}" create "clients/${CLIENT_UUID}/scope-mappings/clients/${REALM_MANAGEMENT_UUID}" \
+  kcadm_exec create "clients/${CLIENT_UUID}/scope-mappings/clients/${REALM_MANAGEMENT_UUID}" \
     -r "${REALM}" --config "${KCADM_CONFIG}" -f "${SCRATCH}/roles.json" >/dev/null
   maybe_inject_response_loss "constrain-dedicated-client-scope"
 }
 
-assert_exact_client_and_roles() {
-  CURRENT_STEP="exact-token-role-readback"
-  "${KCADM}" get "clients/${CLIENT_UUID}" -r "${REALM}" --config "${KCADM_CONFIG}" \
+run_exact_role_readback_once() {
+  kcadm_exec get "clients/${CLIENT_UUID}" -r "${REALM}" --config "${KCADM_CONFIG}" \
     > "${SCRATCH}/client-readback.json"
   "${SECRET_PIPE}" exact-client-projection \
     --expected "${SCRATCH}/client.json" \
     < "${SCRATCH}/client-readback.json" \
     > "${SCRATCH}/client-projection-readback.json"
+  /usr/bin/rm -f -- "${SCRATCH}/client-readback.json"
 
-  "${KCADM}" get "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}" \
+  kcadm_exec get "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}" \
     -r "${REALM}" --config "${KCADM_CONFIG}" > "${SCRATCH}/direct-roles.json"
-  "${KCADM}" get "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}/composite" \
+  kcadm_exec get "users/${SERVICE_ACCOUNT_UUID}/role-mappings/clients/${REALM_MANAGEMENT_UUID}/composite" \
     -r "${REALM}" --config "${KCADM_CONFIG}" > "${SCRATCH}/effective-roles.json"
-  "${KCADM}" get "clients/${CLIENT_UUID}/scope-mappings/clients/${REALM_MANAGEMENT_UUID}" \
+  kcadm_exec get "clients/${CLIENT_UUID}/scope-mappings/clients/${REALM_MANAGEMENT_UUID}" \
     -r "${REALM}" --config "${KCADM_CONFIG}" > "${SCRATCH}/scope-roles.json"
   for role_file in direct-roles effective-roles scope-roles; do
     /usr/bin/jq -e '[.[].name]|sort==["query-clients","view-clients"]' \
       "${SCRATCH}/${role_file}.json" >/dev/null
   done
-  "${KCADM}" get "clients/${CLIENT_UUID}/scope-mappings" -r "${REALM}" \
+  kcadm_exec get "clients/${CLIENT_UUID}/scope-mappings" -r "${REALM}" \
     --config "${KCADM_CONFIG}" > "${SCRATCH}/all-scope-mappings.json"
   /usr/bin/jq -e '
     ((.realmMappings // [])|length)==0 and
@@ -534,7 +570,7 @@ assert_exact_client_and_roles() {
     ([.clientMappings["realm-management"].mappings[].name]|sort)==["query-clients","view-clients"]
   ' "${SCRATCH}/all-scope-mappings.json" >/dev/null
   local secret_response client_secret token_response access_token refresh_token
-  secret_response="$("${KCADM}" get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
+  secret_response="$(kcadm_exec get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
     --config "${KCADM_CONFIG}")"
   client_secret="$(printf '%s' "${secret_response}" |
     "${SECRET_PIPE}" extract-json-field --field value)"
@@ -556,16 +592,28 @@ assert_exact_client_and_roles() {
   unset secret_response client_secret token_response access_token refresh_token
 }
 
+assert_exact_client_and_roles() {
+  local attempt
+  CURRENT_STEP="exact-token-role-readback"
+  for attempt in 1 2 3 4 5; do
+    if run_exact_role_readback_once; then
+      return 0
+    fi
+    [[ "${attempt}" -eq 5 ]] && return 1
+    /usr/bin/sleep 1
+  done
+}
+
 create_client_and_roles() {
   write_client_payload
   CURRENT_STEP="create-client"
   journal_event "${FORWARD_EVENT_PREFIX}10-client-armed.json" \
     "keycloak-client" "armed" "${CLIENT_UUID}"
   CLIENT_ARMED="true"
-  "${KCADM}" create clients -r "${REALM}" --config "${KCADM_CONFIG}" \
+  kcadm_exec create clients -r "${REALM}" --config "${KCADM_CONFIG}" \
     -f "${SCRATCH}/client.json" >/dev/null
   maybe_inject_response_loss "create-client"
-  "${KCADM}" get "clients/${CLIENT_UUID}" -r "${REALM}" --config "${KCADM_CONFIG}" \
+  kcadm_exec get "clients/${CLIENT_UUID}" -r "${REALM}" --config "${KCADM_CONFIG}" \
     --fields id,clientId |
     /usr/bin/jq -e --arg id "${CLIENT_UUID}" --arg clientId "${CLIENT_ID}" \
       '.id==$id and .clientId==$clientId' >/dev/null
@@ -587,7 +635,7 @@ write_vault_secret() {
   local helper_b64
   helper_b64="$(/usr/bin/base64 -w0 "${VAULT_CAS_HELPER}")"
   local secret_response client_secret
-  secret_response="$("${KCADM}" get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
+  secret_response="$(kcadm_exec get "clients/${CLIENT_UUID}/client-secret" -r "${REALM}" \
     --config "${KCADM_CONFIG}")"
   client_secret="$(printf '%s' "${secret_response}" |
     "${SECRET_PIPE}" extract-json-field --field value)"
@@ -595,7 +643,7 @@ write_vault_secret() {
   printf '%s' "${secret_response}" |
     "${SECRET_PIPE}" vault-json --base-url "${BASE_URL}" --realm "${REALM}" \
       --client-id "${CLIENT_ID}" |
-    /usr/bin/ssh -T -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+    vault_ssh -T "${VAULT_TARGET}" \
       "sudo /usr/bin/python3 -c \"import base64;exec(base64.b64decode('${helper_b64}'))\" '${VAULT_PATH}' '${cas}' '${expected_version}'" \
       > "${SCRATCH}/vault-write-result.json"
   unset secret_response client_secret
@@ -604,7 +652,7 @@ write_vault_secret() {
     "${SCRATCH}/vault-write-result.json" >/dev/null
   local readback
   readback="$(
-    /usr/bin/ssh -n -o BatchMode=yes -o ConnectTimeout=10 "${VAULT_TARGET}" \
+    vault_ssh -n "${VAULT_TARGET}" \
       "sudo ${REMOTE_VAULT} kv get -format=json ${VAULT_PATH} | /usr/bin/jq -c '{version:.data.metadata.version,fieldNames:(.data.data|keys|sort)}'"
   )"
   /usr/bin/jq -e --argjson expected "${expected_version}" '
@@ -638,15 +686,40 @@ apply_exporter_transform() {
     "installed-readback" "${EXPECTED_INSTALLED_EXPORTER_SHA}"
 }
 
-assert_profile_hydration_and_inventory() {
+run_profile_hydration_and_inventory_once() {
   local inventory_with_material material_count material_index material
-  "${LOCAL_VAULT_ENV}" keycloak-admin-readonly |
-    "${SECRET_PIPE}" verify-exports > "${SCRATCH}/hydration-readback.json"
-  inventory_with_material="$("${LOCAL_VAULT_ENV}" keycloak-admin-readonly |
+  if ! local_vault_env keycloak-admin-readonly \
+    2>"${SCRATCH}/hydration-helper.stderr" |
+    "${SECRET_PIPE}" verify-exports \
+      > "${SCRATCH}/hydration-readback.json" \
+      2>"${SCRATCH}/hydration-verify.stderr"; then
+    if [[ -s "${SCRATCH}/hydration-helper.stderr" ]]; then
+      printf 'profile-hydration helper stderr: %s\n' \
+        "$(<"${SCRATCH}/hydration-helper.stderr")" >&2
+    fi
+    if [[ -s "${SCRATCH}/hydration-verify.stderr" ]]; then
+      printf 'profile-hydration verify stderr: %s\n' \
+        "$(<"${SCRATCH}/hydration-verify.stderr")" >&2
+    fi
+    return 1
+  fi
+  if ! inventory_with_material="$(local_vault_env keycloak-admin-readonly \
+    2>"${SCRATCH}/inventory-helper.stderr" |
     "${SECRET_PIPE}" readonly-client-readback \
       --target-client-id sso.atius.com.br \
       --expected-post-logout-uri 'https://sso.atius.com.br/login?logout=complete' \
-      --ephemeral-material)"
+      --ephemeral-material \
+      2>"${SCRATCH}/inventory-readback.stderr")"; then
+    if [[ -s "${SCRATCH}/inventory-helper.stderr" ]]; then
+      printf 'profile-hydration inventory helper stderr: %s\n' \
+        "$(<"${SCRATCH}/inventory-helper.stderr")" >&2
+    fi
+    if [[ -s "${SCRATCH}/inventory-readback.stderr" ]]; then
+      printf 'profile-hydration readonly-client-readback stderr: %s\n' \
+        "$(<"${SCRATCH}/inventory-readback.stderr")" >&2
+    fi
+    return 1
+  fi
   material_count="$(/usr/bin/jq -r '._ephemeralSecretMaterial|length' <<<"${inventory_with_material}")"
   for ((material_index=0; material_index<material_count; material_index++)); do
     material="$(/usr/bin/jq -r --argjson index "${material_index}" \
@@ -661,6 +734,17 @@ assert_profile_hydration_and_inventory() {
     "${SCRATCH}/sso-client-readback.json" >/dev/null
 }
 
+assert_profile_hydration_and_inventory() {
+  local attempt
+  for attempt in 1 2 3 4 5; do
+    if run_profile_hydration_and_inventory_once; then
+      return 0
+    fi
+    [[ "${attempt}" -eq 5 ]] && return 1
+    /usr/bin/sleep 1
+  done
+}
+
 assert_rollback_readback() {
   assert_client_absent
   local metadata
@@ -668,7 +752,7 @@ assert_rollback_readback() {
   /usr/bin/jq -e --arg version "${VAULT_EXPECTED_VERSION}" \
     '.data.versions[$version] != null and (.data.versions[$version].deletion_time|length)>0' \
     <<<"${metadata}" >/dev/null
-  if "${LOCAL_VAULT_ENV}" keycloak-admin-readonly 2>/dev/null |
+  if local_vault_env keycloak-admin-readonly 2>/dev/null |
     "${SECRET_PIPE}" verify-exports >/dev/null 2>&1; then
     echo "hydration helper did not fail closed after soft delete" >&2
     return 1
@@ -795,7 +879,6 @@ assert_profile_hydration_and_inventory
 assert_exact_client_and_roles
 
 CURRENT_STEP="live-secret-scan"
-/usr/bin/rm -f -- "${KCADM_CONFIG}"
 /usr/bin/jq -n \
   --arg operationId "${OPERATION_ID}" \
   --arg firstClientUuid "${FIRST_CLIENT_UUID}" \
@@ -871,12 +954,23 @@ CURRENT_STEP="live-secret-scan"
   '{path:$path,mode:"600",owner:"root",group:"root",sha256:$sha256,secretsRecorded:false}' \
   > "${SCRATCH}/backup-metadata.json"
 
+REMOTE_BACKUP_COPY="${SCRATCH}/retained-exporter-backup"
+vault_ssh -n "${VAULT_TARGET}" "sudo /usr/bin/cat ${BACKUP}" > "${REMOTE_BACKUP_COPY}"
+/usr/bin/chmod 600 "${REMOTE_BACKUP_COPY}"
+
+SCAN_ROOT="${SCRATCH}/scan-root"
+/usr/bin/mkdir -m 700 "${SCAN_ROOT}"
+/usr/bin/find "${SCRATCH}" -maxdepth 1 -type f ! -name "$(basename "${KCADM_CONFIG}")" -print0 |
+  while IFS= read -r -d '' candidate; do
+    /usr/bin/cp --preserve=mode,timestamps "${candidate}" "${SCAN_ROOT}/"
+  done
+
 printf '%s\0' "${SECRET_MATERIALS[@]}" |
   "${SECRET_PIPE}" scan-artifacts \
     --secret-material-stdin \
-    --path "${SCRATCH}" \
+    --path "${SCAN_ROOT}" \
     --path "${STATE_DIR}" \
-    --path "${BACKUP}" \
+    --path "${REMOTE_BACKUP_COPY}" \
     > "${SCRATCH}/secret-scan.json"
 /usr/bin/jq --slurpfile scan "${SCRATCH}/secret-scan.json" \
   '.secretScan=$scan[0]' "${SCRATCH}/report-draft.json" |

@@ -9,17 +9,24 @@ Canonical matrix:
 
 - `docs/domain/atius-sso-lifecycle-matrix.md`
 
-Runtime status: **planned until 10-04/10-05 evidence**. Do not infer deployment
-from these instructions.
+Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
+The 12 public hosts passed `24/24` complete browser cycles and independent
+visual review `12/12`. Canonical evidence:
+`docs/evidence/atius-sso/2026-07-31-full-fleet-final-strict-20260731-202636/`.
+Runtime promotion evidence from `10-04` and browser/visual closeout evidence
+from `10-05` are materialized; earlier pending wording is historical only.
 
 ## Contract capsule
 
 - App-local `/login` is the canonical human URL and stays visible through
   internal rewrite/minimal proxy.
-- `/sso` is internal or controlled compatibility; never redirect the public
-  `/login` route into `/sso`.
-- A bootstrap query is transient, same-origin, and removed before the clean
-  public URL.
+- `/sso` is compatibility only: query-free entry returns `308 /login`; a
+  legacy allowlisted `return_to` is captured once and returns `307 /login`.
+  Never redirect public `/login` into `/sso`.
+- A validated deep link is carried in a host-only, HttpOnly, Secure,
+  SameSite=Lax cookie for at most ten minutes and consumed once by `/login`.
+- Do not publish, share, log, or document human login URLs containing
+  `return_to`.
 - Destination state is `valid | missing | rejected` across entry, login,
   logout-complete, re-entry, and return; missing/rejected is neutral.
 - Central logout is POST-only `/api/sso/logout` with real browser `Origin`,
@@ -37,6 +44,12 @@ Exact neutral state:
 - label/value `Destino seguro` / `Nenhum destino selecionado`
 - URL `https://sso.atius.com.br/login`
 - no application controls
+
+For an app-local `/login`, `Destino seguro` displays only the bare hostname.
+Never render the scheme, port, trailing slash, path, query, or fragment. The
+validated full URL is still used internally for return navigation and
+allowlist enforcement. Example: `https://ssh.atius.com.br/compute` renders as
+`ssh.atius.com.br`.
 
 ## Mount/include procedure
 
@@ -102,6 +115,16 @@ validation from fresh `valid`, `missing`, and `rejected` contexts. Prove:
 7. destination and logout negatives fail closed;
 8. app/backend secrets never reach browser or evidence;
 9. rollback/reapply returns the same hashes and behavior.
+
+Authenticated readiness is content-specific:
+
+- Grafana: every visible panel has real datasource content; `Sem dados`,
+  `No data`, loading, datasource errors, and query errors fail the cycle.
+- Remote: the visible noVNC area must contain a non-blank framebuffer. The SSO
+  shell and logout control alone do not prove the remote desktop works.
+- RDP and other fast same-origin adapters may navigate while the login input is
+  being filled. Treat the detached input as success only after the app-specific
+  authenticated UI passes; never accept the navigation event alone.
 
 Do not put an allowed Origin header into JavaScript or copy/paste positive
 `curl` examples. The browser supplies it. Negative tests may deliberately send

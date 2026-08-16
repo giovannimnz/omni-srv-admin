@@ -2,6 +2,7 @@
 'use strict';
 
 const fs = require('fs');
+const { createHash } = require('crypto');
 const http = require('http');
 const https = require('https');
 const net = require('net');
@@ -11,6 +12,11 @@ const tls = require('tls');
 const DEFAULT_CONFIG_PATH = '/etc/atius/mt5-remote-auth-proxy.json';
 const DEFAULT_STATIC_ROOT = '/var/www/remote-mt5';
 const MAX_AUTH_RESPONSE_BYTES = 64 * 1024;
+const MAX_PROXY_HTML_BYTES = 8 * 1024 * 1024;
+const SESSION_CACHE_TTL_MS = Number(process.env.MT5_REMOTE_AUTH_SESSION_CACHE_TTL_MS || 30_000);
+const SESSION_CACHE_MAX_ENTRIES = Number(process.env.MT5_REMOTE_AUTH_SESSION_CACHE_MAX_ENTRIES || 512);
+const SSO_LOGIN_RETURN_TO_COOKIE = 'atius_sso_login_return_to';
+const SSO_LOGIN_RETURN_TO_MAX_AGE_SECONDS = 10 * 60;
 const STATIC_PREFIXES = new Set(['app', 'core', 'include', 'utils', 'vendor']);
 const STATIC_FILES = new Set(['auth.html', 'index.html', 'vnc.html', 'vnc_lite.html']);
 const HOP_BY_HOP_HEADERS = new Set([
@@ -43,6 +49,9 @@ const MIME_TYPES = new Map([
   ['.woff2', 'font/woff2'],
 ]);
 
+const sessionCache = new Map();
+const sessionRequests = new Map();
+
 function readConfig() {
   const configPath = process.env.MT5_REMOTE_AUTH_PROXY_CONFIG || process.argv[2] || DEFAULT_CONFIG_PATH;
   const rawConfig = fs.readFileSync(configPath, 'utf8');
@@ -54,6 +63,11 @@ function readConfig() {
 
   if (!config.routes || typeof config.routes !== 'object' || Array.isArray(config.routes)) {
     throw new Error('config requires routes object keyed by MT5 id');
+  }
+
+  const defaultRouteId = String(config.defaultRouteId || '');
+  if (!defaultRouteId || !config.routes[defaultRouteId]) {
+    throw new Error('config defaultRouteId must reference an existing route');
   }
 
   const routes = {};
@@ -73,14 +87,21 @@ function readConfig() {
     };
   }
 
+  const publicOrigin = stripTrailingSlash(config.publicOrigin);
+  const ssoLoginUrl = new URL(config.ssoLoginUrl);
+  if (ssoLoginUrl.toString() !== `${publicOrigin}/login`) {
+    throw new Error('ssoLoginUrl must be the clean app-local /login URL');
+  }
+
   return {
     authCheckUrl: new URL(config.authCheckUrl),
     authCookieName: config.authCookieName || 'auth-token',
+    defaultRouteId,
     listenHost: config.listenHost || '127.0.0.1',
     listenPort: Number(config.listenPort || 8095),
-    publicOrigin: stripTrailingSlash(config.publicOrigin),
+    publicOrigin,
     routes,
-    ssoLoginUrl: new URL(config.ssoLoginUrl),
+    ssoLoginUrl,
   };
 }
 
@@ -149,19 +170,40 @@ function buildReturnTo(config, req) {
   return `${config.publicOrigin}${safeUrl}`;
 }
 
-function buildLoginRedirect(config, req) {
-  const loginUrl = new URL(config.ssoLoginUrl.toString());
-  loginUrl.searchParams.set('return_to', buildReturnTo(config, req));
-  return loginUrl.toString();
-}
-
 function redirectToSso(config, req, res) {
-  const location = buildLoginRedirect(config, req);
+  const returnTo = buildReturnTo(config, req);
   res.writeHead(302, {
     'Cache-Control': 'no-store',
-    Location: location,
+    Location: '/login',
+    'Set-Cookie': `${SSO_LOGIN_RETURN_TO_COOKIE}=${encodeURIComponent(returnTo)}; Path=/; Max-Age=${SSO_LOGIN_RETURN_TO_MAX_AGE_SECONDS}; Secure; HttpOnly; SameSite=Lax`,
   });
   res.end();
+}
+
+function clearAtiusCookies() {
+  return [
+    'auth-token=; Path=/; Domain=.atius.com.br; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
+    'auth-token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
+  ];
+}
+
+function logoutBridgeScript() {
+  return `(() => {
+  if (document.querySelector('[data-atius-sso-logout="true"]')) return;
+  const link = document.createElement('a');
+  link.href = '/logout';
+  link.textContent = 'Sair do Atius SSO';
+  link.setAttribute('data-atius-sso-logout', 'true');
+  link.setAttribute('aria-label', 'Sair do Atius SSO');
+  link.style.cssText = 'position:fixed;z-index:2147483646;right:16px;bottom:16px;padding:8px 12px;border:1px solid #f97316;border-radius:8px;background:#171b22;color:#fff;font:600 13px/1.2 system-ui,sans-serif;text-decoration:none;box-shadow:0 4px 16px rgba(0,0,0,.35)';
+  document.body.appendChild(link);
+})();`;
+}
+
+function injectLogoutBridge(html) {
+  const script = `<script>${logoutBridgeScript()}</script>`;
+  if (html.includes('data-atius-sso-logout')) return html;
+  return /<\/body>/i.test(html) ? html.replace(/<\/body>/i, `${script}</body>`) : `${html}${script}`;
 }
 
 function websocketReject(socket, statusCode, reason) {
@@ -179,13 +221,43 @@ function websocketReject(socket, statusCode, reason) {
   socket.destroy();
 }
 
-async function verifySession(config, route, req) {
-  const cookies = parseCookies(req.headers.cookie);
-  const token = cookies.get(config.authCookieName);
-  if (!token) {
-    return { ok: false, reason: 'missing_auth' };
-  }
+function sessionTokenHash(token) {
+  return createHash('sha256').update(token).digest('base64url');
+}
 
+function sessionCacheKey(config, route, token) {
+  return [
+    new URL(config.publicOrigin).host,
+    route.basePath,
+    route.requiredPermission || '',
+    sessionTokenHash(token),
+  ].join('|');
+}
+
+function pruneSessionCache(now = Date.now()) {
+  for (const [key, entry] of sessionCache.entries()) {
+    if (entry.expiresAt <= now) sessionCache.delete(key);
+  }
+  while (sessionCache.size > SESSION_CACHE_MAX_ENTRIES) {
+    const oldest = sessionCache.keys().next().value;
+    if (!oldest) break;
+    sessionCache.delete(oldest);
+  }
+}
+
+function clearSessionCacheForToken(config, token) {
+  if (!token) return;
+  const host = new URL(config.publicOrigin).host;
+  const tokenHash = sessionTokenHash(token);
+  for (const key of sessionCache.keys()) {
+    if (key.startsWith(`${host}|`) && key.endsWith(`|${tokenHash}`)) {
+      sessionCache.delete(key);
+    }
+  }
+}
+
+async function verifySessionUncached(config, route, req, token) {
+  const cookies = parseCookies(req.headers.cookie);
   let response;
   try {
     response = await requestJson(config.authCheckUrl, {
@@ -224,6 +296,37 @@ async function verifySession(config, route, req) {
   }
 
   return { ok: true, userId: user.id || null };
+}
+
+async function verifySession(config, route, req) {
+  const cookies = parseCookies(req.headers.cookie);
+  const token = cookies.get(config.authCookieName);
+  if (!token) {
+    return { ok: false, reason: 'missing_auth' };
+  }
+
+  const now = Date.now();
+  const cacheKey = sessionCacheKey(config, route, token);
+  const cached = sessionCache.get(cacheKey);
+  if (cached && cached.expiresAt > now) return cached.session;
+
+  pruneSessionCache(now);
+  if (sessionRequests.has(cacheKey)) return sessionRequests.get(cacheKey);
+
+  const pending = verifySessionUncached(config, route, req, token);
+  sessionRequests.set(cacheKey, pending);
+  try {
+    const session = await pending;
+    if (session.ok) {
+      sessionCache.set(cacheKey, {
+        expiresAt: now + SESSION_CACHE_TTL_MS,
+        session,
+      });
+    }
+    return session;
+  } finally {
+    sessionRequests.delete(cacheKey);
+  }
 }
 
 function requestJson(targetUrl, headers) {
@@ -338,7 +441,9 @@ function sendStatic(req, res, route, relPath) {
   };
 
   if (relPath === 'index.html') {
-    const html = fs.readFileSync(filePath, 'utf8').replaceAll('/mt5/1', route.basePath);
+    const html = injectLogoutBridge(
+      fs.readFileSync(filePath, 'utf8').replaceAll('/mt5/1', route.basePath),
+    );
     const payload = Buffer.from(html);
     res.writeHead(200, {
       ...headers,
@@ -382,6 +487,30 @@ function proxyHttp(req, res, route, parsedUrl) {
     timeout: 300000,
   }, (proxyRes) => {
     const responseHeaders = rewriteResponseHeaders(proxyRes.headers, route);
+    const contentType = String(responseHeaders['content-type'] || '');
+    if ((proxyRes.statusCode || 0) === 200 && /^text\/html(?:;|$)/i.test(contentType)) {
+      const chunks = [];
+      let total = 0;
+      proxyRes.on('data', (chunk) => {
+        total += chunk.length;
+        if (total > MAX_PROXY_HTML_BYTES) {
+          proxyRes.destroy(new Error('upstream HTML response too large'));
+          return;
+        }
+        chunks.push(chunk);
+      });
+      proxyRes.on('end', () => {
+        if (res.headersSent || res.destroyed) return;
+        const payload = Buffer.from(injectLogoutBridge(Buffer.concat(chunks).toString('utf8')));
+        delete responseHeaders['content-encoding'];
+        delete responseHeaders.etag;
+        delete responseHeaders['last-modified'];
+        responseHeaders['content-length'] = payload.length;
+        res.writeHead(proxyRes.statusCode || 502, responseHeaders);
+        res.end(payload);
+      });
+      return;
+    }
     res.writeHead(proxyRes.statusCode || 502, responseHeaders);
     proxyRes.pipe(res);
   });
@@ -462,6 +591,33 @@ async function handleRequest(config, req, res) {
       ok: true,
       routeCount: Object.keys(config.routes).length,
     });
+    return;
+  }
+
+  if (parsedUrl.pathname === '/sso') {
+    res.writeHead(308, { 'Cache-Control': 'no-store', Location: '/login' });
+    res.end();
+    return;
+  }
+
+  if (parsedUrl.pathname === '/') {
+    res.writeHead(302, {
+      'Cache-Control': 'no-store',
+      Location: `${config.routes[config.defaultRouteId].basePath}/`,
+    });
+    res.end();
+    return;
+  }
+
+  if (parsedUrl.pathname === '/logout') {
+    const token = parseCookies(req.headers.cookie).get(config.authCookieName);
+    clearSessionCacheForToken(config, token);
+    res.writeHead(302, {
+      'Cache-Control': 'no-store',
+      Location: '/login',
+      'Set-Cookie': clearAtiusCookies(),
+    });
+    res.end();
     return;
   }
 
@@ -588,3 +744,5 @@ function main() {
 if (require.main === module) {
   main();
 }
+
+module.exports = { handleRequest, injectLogoutBridge, readConfig, redirectToSso, verifySession };
