@@ -292,9 +292,20 @@ def test_requirement_ledger_contract() -> None:
     assert len(canonical) == payload["requirement_count"] == 36
     assert [row["requirement_id"] for row in payload["requirements"]] == list(canonical)
     assert len({evidence_id for row in payload["requirements"] for evidence_id in row["evidence_ids"]}) == 36
+    assert canonical["SCP-01"] == 55
+    scp01 = next(
+        row for row in payload["requirements"] if row["requirement_id"] == "SCP-01"
+    )
+    assert scp01 == {
+        "acceptance_kind": "fleet-rollout-live",
+        "evidence_ids": ["RDF-V19-SCP-01"],
+        "last_verified_at": None,
+        "owner_phase": 55,
+        "requirement_id": "SCP-01",
+        "status": "pending",
+    }
     passed = {row["requirement_id"] for row in payload["requirements"] if row["status"] == "pass"}
     assert passed == {
-        "SCP-01",
         "SCP-02",
         "SCP-03",
         "SCP-04",
@@ -303,8 +314,10 @@ def test_requirement_ledger_contract() -> None:
         "SRV-05",
         "SRV-07",
     }
-    assert sum(row["status"] == "pending" for row in payload["requirements"]) == 28
+    assert len(passed) == 7
+    assert sum(row["status"] == "pending" for row in payload["requirements"]) == 29
     assert set(payload["evidence_catalog"]) == {f"RDF-V19-{requirement}" for requirement in passed}
+    assert "RDF-V19-SCP-01" not in payload["evidence_catalog"]
     for evidence in payload["evidence_catalog"].values():
         evidence_path = REPO / evidence["path"]
         assert evidence["sha256"] == validator._sha256_file(evidence_path)

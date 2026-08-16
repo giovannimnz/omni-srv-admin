@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "state": "BLOCKED",
+  "status": "PENDING",
+  "reason_code": "phase53-not-admitted",
+  "phase52_gate": "BLOCKED",
+  "phase53_gate": "BLOCKED",
+  "mutation_performed": false,
+  "secret_material_present": false,
+  "value_free": true,
+  "targets": {
+    "horistic-srv": {
+      "installation": "PENDING",
+      "live_evidence": "PENDING",
+      "human_checkpoint": "PENDING"
+    },
+    "GIOVANNI-W11-PC": {
+      "installation": "PENDING",
+      "live_evidence": "PENDING",
+      "human_checkpoint": "PENDING"
+    }
+  },
+  "excluded_targets": [
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "WSL",
+    "GIOVANNI-S23"
+  ],
+  "blockers": [
+    "phase53-independent-pass-required",
+    "phase54-preflight-receipt-required",
+    "horistic-lightdm-x11-checkpoint-pending",
+    "windows-uac-rdp-checkpoint-pending"
+  ]
+}

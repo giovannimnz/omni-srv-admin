@@ -1,0 +1,32 @@
+{
+  "authorizes_live": false,
+  "checks": [
+    "backend-private-address",
+    "backend-public-vnic-separation",
+    "drg-attachments",
+    "drg-route-tables",
+    "edge-public-ip-binding",
+    "future-handoff-disabled",
+    "operation-plan-rejected",
+    "return-path"
+  ],
+  "committed_authority": false,
+  "contract_digest": "sha256:923ffc091eee25fea61ae3a1810d7de1bb4b1ac3e339f07bdaf287adf6f46da3",
+  "contract_id": "phase53-topology-d06-d16-d17-v1",
+  "future_handoff_executable": false,
+  "generated_at": "2026-07-26T04:43:54Z",
+  "mutation_performed": false,
+  "observed_at": "2026-07-26T04:43:00Z",
+  "operation_plan_material_present": false,
+  "operation_plan_rejected": true,
+  "schema_version": 1,
+  "secret_material_present": false,
+  "semantic_observation_digest": "sha256:3dfcc63214ba8709f79cb7aa71451f87bfe18bde97afc9756d24b543315cde48",
+  "source_methods": [
+    "host-readback:ip-route",
+    "oci-admin:peering.drg_status",
+    "oci-admin:public-ip-inventory"
+  ],
+  "status": "PASS",
+  "workstream": "rustdesk-fleet"
+}

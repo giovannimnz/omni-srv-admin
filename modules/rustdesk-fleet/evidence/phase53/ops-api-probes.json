@@ -1,0 +1,11 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "state": "BLOCKED_NOT_RUN",
+  "hostname": "rustdesk-ops.atius.com.br",
+  "authenticated_probe_required": true,
+  "redacted": true,
+  "vhost_mutation_performed": false,
+  "final_receipt_present": false,
+  "secret_material_present": false
+}

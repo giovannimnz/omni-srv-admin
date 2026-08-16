@@ -1,0 +1,157 @@
+{
+  "schema_version": 1,
+  "operation": "rustdesk-phase53-public-edge",
+  "state": "AWAITING_OWNER_HASH_APPROVAL",
+  "mutation_performed": false,
+  "source_head": "eff852186669354a1ffcca59c80980f0ab6f990f",
+  "canonical_input": {
+    "accountable_owner": "Giovanni Muniz",
+    "server_candidate": {
+      "version": "1.1.16",
+      "commit": "73523b31cfd25d77dee862e6fc9f5e1fb5e485ef",
+      "image_linux_arm64_digest": "sha256:593c9af7fb8010df0104f9150e8cac8fface359bcc3a358533214cc09ec80520",
+      "release_zip_sha256": "6a4ae3c5ca257a4278ded72fd17eb2ca4eeb0356a5425e63a3e7fcb0ec6c155c",
+      "provenance": "unsigned-upstream-tag-owner-exception",
+      "risk_disposition": "accept immutable digest-bound RustDesk OSS 1.1.16 candidate with preserved rollback and no automatic update",
+      "approval_expires_at": "2026-08-25T00:00:00Z"
+    },
+    "server_runtime": {
+      "host": "horistic-srv",
+      "private_ipv4": "10.21.1.21",
+      "manager": "rootless-podman-user-systemd",
+      "identity_authority": "kv/atius/rustdesk/server",
+      "cpu_total_percent_max": 20,
+      "memory_bytes_max": 1073741824
+    },
+    "public_edge": {
+      "host": "atius-srv-1",
+      "reserved_public_ipv4": "137.131.140.20",
+      "private_ipv4": "10.0.0.238",
+      "public_ip_ocid": "ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7yjj2jaatpqftykxfils5l736iuweb4owcouyhqa3wybqnfqghpa",
+      "private_ip_ocid": "ocid1.privateip.oc1.sa-saopaulo-1.aaaaaaaa3dza3dwp6nuulpwrwln63s462mnesujyro2do6hfigdsrwmthtla",
+      "vnic_ocid": "ocid1.vnic.oc1.sa-saopaulo-1.abtxeljriqahfclyt4cj4x4u4hy5nla5g6qo3wpnhmpe23c4uexl4rag6sea",
+      "forwarding": {
+        "tcp": [
+          {
+            "public_port": 34099,
+            "target_ipv4": "10.21.1.21",
+            "target_port": 21115,
+            "purpose": "nat-type-test"
+          },
+          {
+            "public_port": 34100,
+            "target_ipv4": "10.21.1.21",
+            "target_port": 21116,
+            "purpose": "id-rendezvous"
+          },
+          {
+            "public_port": 34101,
+            "target_ipv4": "10.21.1.21",
+            "target_port": 21117,
+            "purpose": "relay"
+          }
+        ],
+        "udp": [
+          {
+            "public_port": 34100,
+            "target_ipv4": "10.21.1.21",
+            "target_port": 21116,
+            "purpose": "registration-heartbeat"
+          }
+        ],
+        "forbidden_public_tcp": [
+          21114,
+          21115,
+          21116,
+          21117,
+          21118,
+          21119,
+          34102,
+          34103
+        ],
+        "forbidden_public_udp": [
+          21116,
+          34101,
+          34102,
+          34103
+        ]
+      }
+    },
+    "dns": {
+      "zone": "atius.com.br",
+      "records": [
+        {
+          "record_type": "A",
+          "name": "rustdesk.atius.com.br",
+          "content": "137.131.140.20",
+          "proxied": false,
+          "ttl": 300,
+          "prestate": []
+        },
+        {
+          "record_type": "A",
+          "name": "rustdesk-id.atius.com.br",
+          "content": "137.131.140.20",
+          "proxied": false,
+          "ttl": 300,
+          "prestate": []
+        },
+        {
+          "record_type": "A",
+          "name": "rustdesk-relay.atius.com.br",
+          "content": "137.131.140.20",
+          "proxied": false,
+          "ttl": 300,
+          "prestate": []
+        }
+      ],
+      "forbid_aaaa": true,
+      "forbid_cname": true,
+      "publish_last": true
+    },
+    "client_configuration": {
+      "id_server": "rustdesk-id.atius.com.br:34100",
+      "relay_server": "rustdesk-relay.atius.com.br:34101",
+      "combined_fallback": "rustdesk.atius.com.br",
+      "api_server": null,
+      "public_key_from_vault": true
+    },
+    "rollback": {
+      "order": [
+        "remove-or-restore-cloudflare-record-by-cas",
+        "close-owned-oci-and-host-public-ingress",
+        "remove-owned-forwarding-rules",
+        "stop-phase53-rustdesk-services",
+        "restore-owned-prestate",
+        "prove-public-ports-closed"
+      ],
+      "preserve_adguard_tcp_udp_53": true,
+      "preserve_existing_ssh_and_https_services": true,
+      "preserve_phase52_backups": true
+    }
+  },
+  "canonical_input_sha256": "f01fda01a7e0e342502bdb9e87995afd5e5959e3546bd227730284b88942ce14",
+  "oci_previews": [
+    {
+      "operation_id": "4e3c3a83-eaaa-4fd1-9e72-558720df9444",
+      "action": "security-list.rule.add",
+      "protocol": "tcp",
+      "destination_ports": "34099-34101",
+      "plan_hash": "sha256:c7ecfdf89f5e36db72c0cb9842a95d7042313fd678780193008d4bfc49342b9c",
+      "typed_confirmation": "APPLY:20df9444",
+      "expires_at": "2026-07-26T00:40:27Z",
+      "status": "previewed"
+    },
+    {
+      "operation_id": "25c18b54-862d-472b-90ee-814d366b9d66",
+      "action": "security-list.rule.add",
+      "protocol": "udp",
+      "destination_ports": "34100",
+      "plan_hash": "sha256:86cf34e935c523f8badf0a04340b6d9e616e972293d16515bdeed184ed108289",
+      "typed_confirmation": "APPLY:366b9d66",
+      "expires_at": "2026-07-26T00:40:48Z",
+      "status": "previewed"
+    }
+  ],
+  "secret_material_present": false
+}

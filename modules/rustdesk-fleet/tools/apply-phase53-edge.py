@@ -29,6 +29,12 @@ import uuid
 OWNED_TABLE = "atius_rustdesk_phase53"
 OWNERSHIP_MARKER = "ATIUS-PHASE53-EDGE"
 EXPECTED_PRIORITY = 300
+EXPECTED_HOOKS = {
+    "edge_prerouting": ("prerouting", "dstnat"),
+    "edge_forward": ("forward", "filter"),
+    "edge_postrouting": ("postrouting", "srcnat"),
+    "direct_native_input": ("input", "filter"),
+}
 MAX_OCI_PAGES = 256
 MAX_OCI_OBJECTS = 4096
 MAX_OCI_RULES = 4096
@@ -69,6 +75,19 @@ def strict_json_bytes(raw: bytes, *, max_bytes: int = 1_048_576) -> dict[str, An
     except Exception as exc:
         if exc.__class__.__name__ == "ProbeBlocked":
             raise EdgeBlocked(str(exc), getattr(exc, "receipt", None)) from exc
+        raise
+
+
+def load_edge_contract(
+    path: Path = Path(__file__).resolve().parents[1] / "contracts/phase53-edge.json",
+) -> dict[str, Any]:
+    """Load the translated edge authority through the shared strict validator."""
+
+    try:
+        return _probe_module().load_edge_contract(path)
+    except Exception as exc:
+        if exc.__class__.__name__ == "ProbeBlocked":
+            raise EdgeBlocked("edge-contract-invalid") from exc
         raise
 
 
@@ -295,7 +314,17 @@ def audit_effective_oci_ingress(
     observed_udp: set[int] = set()
     ipv6: set[int] = set()
 
-    phase_ports = (21114, 21115, 21116, 21117, 21118, 21119)
+    phase_ports = (
+        21114,
+        21115,
+        21116,
+        21117,
+        21118,
+        21119,
+        34099,
+        34100,
+        34101,
+    )
     for container in [*effective_security_lists, *effective_groups]:
         rules = container.get("ingress_rules")
         assert isinstance(rules, list)
@@ -400,6 +429,59 @@ def _has_exact_nft_metadata(source: str, value: str) -> bool:
     return any(line.strip() == f"# {value}" for line in source.splitlines())
 
 
+def _expected_nft_semantics(public_interface: str) -> dict[str, Any]:
+    translations = (
+        ("tcp", 34099, 21115),
+        ("tcp", 34100, 21116),
+        ("udp", 34100, 21116),
+        ("tcp", 34101, 21117),
+    )
+    return {
+        "family": "inet",
+        "table": OWNED_TABLE,
+        "public_interface": public_interface,
+        "public_edge": {
+            "host": "atius-srv-1",
+            "public_ipv4": "137.131.140.20",
+            "public_vnic_private_ipv4": "10.0.0.238",
+            "route_vnic_private_ipv4": "10.11.1.11",
+            "route_interface": "enp1s0",
+        },
+        "backend": {
+            "host": "horistic-srv",
+            "private_ipv4": "10.21.1.21",
+            "native_ingress_source_ipv4": "10.11.1.11",
+            "tcp": [21115, 21116, 21117],
+            "udp": [21116],
+        },
+        "hooks": {
+            chain: list(hook)
+            for chain, hook in EXPECTED_HOOKS.items()
+        },
+        "translations": [
+            {
+                "protocol": protocol,
+                "external_port": external,
+                "backend_port": backend,
+            }
+            for protocol, external, backend in translations
+        ],
+        "direct_native_tcp_denied": [21114, 21115, 21116, 21117, 21118, 21119],
+        "direct_native_udp_denied": [21116],
+        "ipv6_denied": [
+            21114,
+            21115,
+            21116,
+            21117,
+            21118,
+            21119,
+            34099,
+            34100,
+            34101,
+        ],
+    }
+
+
 def validate_nft_candidate(
     candidate: str,
     *,
@@ -413,7 +495,7 @@ def validate_nft_candidate(
         raise EdgeBlocked("nft-template-ownership-marker-invalid")
     if not _has_exact_nft_metadata(template, f"contract-sha256={contract_digest}"):
         raise EdgeBlocked("nft-template-contract-digest-invalid")
-    if _active_nft_source(template).count("__PHASE53_PUBLIC_INTERFACE__") != 5:
+    if _active_nft_source(template).count("__PHASE53_PUBLIC_INTERFACE__") != 12:
         raise EdgeBlocked("nft-template-interface-placeholder-invalid")
     active = _active_nft_source(candidate)
     lowered = active.lower()
@@ -430,43 +512,70 @@ def validate_nft_candidate(
         token in lowered for token in ("k3s", "cni", "flannel", "kube-")
     ):
         raise EdgeBlocked("nft-foreign-scope-forbidden")
-    if "type filter hook input priority 300; policy accept;" not in active:
+    required_hooks = (
+        "type nat hook prerouting priority dstnat; policy accept;",
+        "type filter hook forward priority filter; policy accept;",
+        "type nat hook postrouting priority srcnat; policy accept;",
+        "type filter hook input priority filter; policy accept;",
+    )
+    if any(hook not in active for hook in required_hooks):
         raise EdgeBlocked("nft-priority-invalid")
-    interface_clause = f'iifname "{public_interface}"'
-    if active.count(interface_clause) < 5:
-        raise EdgeBlocked("nft-interface-invalid")
-    if "meta nfproto ipv6 meta l4proto tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop" not in active:
-        raise EdgeBlocked("nft-ipv6-deny-invalid")
-    if "meta nfproto ipv6 meta l4proto udp udp dport 21116 counter drop" not in active:
-        raise EdgeBlocked("nft-ipv6-deny-invalid")
-    if "ip protocol tcp tcp dport { 21115, 21116, 21117 } counter accept" not in active:
-        raise EdgeBlocked("nft-ipv4-allow-invalid")
-    if "ip protocol udp udp dport 21116 counter accept" not in active:
-        raise EdgeBlocked("nft-ipv4-allow-invalid")
-    if "ip protocol tcp tcp dport { 21114, 21118, 21119 } counter drop" not in active:
-        raise EdgeBlocked("nft-ipv4-forbidden-invalid")
     if (
         len(table_declarations) != 1
-        or chain_declarations != ["native_edge_input"]
-        or len(active_counter_rules) != 5
-        or any(interface_clause not in line for line in active_counter_rules)
+        or chain_declarations
+        != [
+            "edge_prerouting",
+            "edge_forward",
+            "edge_postrouting",
+            "direct_native_input",
+        ]
+        or len(active_counter_rules) != 16
     ):
         raise EdgeBlocked("nft-extra-chain-or-rule")
+    interface_clause = f'iifname "{public_interface}"'
+    if active.count(interface_clause) != 12:
+        raise EdgeBlocked("nft-interface-invalid")
+    translations = (
+        ("tcp", 34099, 21115),
+        ("tcp", 34100, 21116),
+        ("udp", 34100, 21116),
+        ("tcp", 34101, 21117),
+    )
+    for protocol, external, backend in translations:
+        dnat = (
+            f'ip daddr 137.131.140.20 ip protocol {protocol} {protocol} dport {external} '
+            f"ct original proto-dst {external} counter dnat ip to 10.21.1.21:{backend}"
+        )
+        forward = (
+            f'oifname "enp1s0" ct status dnat ct original proto-dst {external} '
+            f"ip daddr 10.21.1.21 ip protocol {protocol} {protocol} dport {backend} counter accept"
+        )
+        snat = (
+            f'oifname "enp1s0" ct status dnat ct original proto-dst {external} '
+            f"ip daddr 10.21.1.21 ip protocol {protocol} {protocol} dport {backend} "
+            "counter snat ip to 10.11.1.11"
+        )
+        if dnat not in active or forward not in active or snat not in active:
+            raise EdgeBlocked("nft-translation-invalid")
+    if (
+        "ct original proto-dst { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop"
+        not in active
+        or "udp dport 21116 ct original proto-dst 21116 counter drop" not in active
+    ):
+        raise EdgeBlocked("nft-direct-native-deny-invalid")
+    if (
+        "meta nfproto ipv6 meta l4proto tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119, 34099, 34100, 34101 } counter drop"
+        not in active
+        or "meta nfproto ipv6 meta l4proto udp udp dport { 21116, 34100 } counter drop"
+        not in active
+    ):
+        raise EdgeBlocked("nft-ipv6-deny-invalid")
     expected_candidate = render_nft_candidate(
         template, public_interface=public_interface
     )
     if _normalize_active_nft(candidate) != _normalize_active_nft(expected_candidate):
         raise EdgeBlocked("nft-extra-chain-or-rule")
-    return {
-        "family": "inet",
-        "table": OWNED_TABLE,
-        "hook": "input",
-        "priority": EXPECTED_PRIORITY,
-        "public_interface": public_interface,
-        "ipv4_tcp": [21115, 21116, 21117],
-        "ipv4_udp": [21116],
-        "ipv6_denied": [21114, 21115, 21116, 21117, 21118, 21119],
-    }
+    return _expected_nft_semantics(public_interface)
 
 
 def _parse_utc(value: Any, blocker: str) -> datetime:
@@ -490,9 +599,9 @@ def _typed_address_observations(
     source_policy: dict[str, str] | None = None,
 ) -> tuple[dict[str, str], tuple[tuple[str, str, str], ...], datetime]:
     expected_sources = {
-        "oci-vnic-public-ipv4",
-        "horistic-egress-ipv4",
-        "ssh-horistic-srv.atius.com.br-a",
+        "oci-edge-vnic-public-ipv4",
+        "edge-vnic-public-ipv4",
+        "reserved-public-ipv4",
     }
     if not isinstance(raw, list) or len(raw) != 3:
         raise EdgeBlocked(blocker)
@@ -658,7 +767,7 @@ def validate_hostname_probe_bytes(
     raw: bytes,
     *,
     policy_raw: bytes,
-    expected_hostname: str,
+    expected_hostnames: list[str],
     expected_ipv4: str,
     now: datetime,
 ) -> Any:
@@ -666,7 +775,7 @@ def validate_hostname_probe_bytes(
         return _probe_module().validate_hostname_probe_bytes(
             raw,
             policy_raw=policy_raw,
-            expected_hostname=expected_hostname,
+            expected_hostnames=expected_hostnames,
             expected_ipv4=expected_ipv4,
             now=now,
         )
@@ -719,9 +828,9 @@ class EdgeTransaction:
             raise EdgeBlocked("runtime-digest-invalid")
         self.runtime_digest = runtime_digest
         if set(address_source_policy) != {
-            "oci-vnic-public-ipv4",
-            "horistic-egress-ipv4",
-            "ssh-horistic-srv.atius.com.br-a",
+            "oci-edge-vnic-public-ipv4",
+            "edge-vnic-public-ipv4",
+            "reserved-public-ipv4",
         }:
             raise EdgeBlocked("address-source-policy-invalid")
         self.address_source_policy = copy.deepcopy(address_source_policy)
@@ -1092,15 +1201,28 @@ class EdgeTransaction:
             raise EdgeBlocked("dns-cas-read-failed") from exc
         if current_state != snapshot:
             raise EdgeBlocked("dns-cas-semantic-drift")
-        record = {
-            "name": "rustdesk.atius.com.br",
-            "type": "A",
-            "content": address,
-            "proxied": False,
-        }
+        records = [
+            {
+                "name": item["name"],
+                "type": "A",
+                "content": address,
+                "proxied": False,
+            }
+            for item in self.contract["dns_records"]
+        ]
+        if (
+            len(records) != 3
+            or [item["name"] for item in records]
+            != [
+                "rustdesk.atius.com.br",
+                "rustdesk-id.atius.com.br",
+                "rustdesk-relay.atius.com.br",
+            ]
+        ):
+            raise EdgeBlocked("dns-contract-record-set-invalid")
         try:
             self.backend.apply_dns(
-                [record], expected_revision=snapshot["revision"]
+                records, expected_revision=snapshot["revision"]
             )
         except Exception as exc:
             try:
@@ -1130,7 +1252,7 @@ class EdgeTransaction:
         if (
             not isinstance(observed, dict)
             or set(observed) != {"revision", "records"}
-            or observed["records"] != [record]
+            or observed["records"] != records
             or str(observed["revision"]) == snapshot["revision"]
         ):
             if isinstance(observed, dict) and set(observed) == {
@@ -1146,7 +1268,8 @@ class EdgeTransaction:
         self.state = "DNS_PUBLISHED"
         return {
             "state": self.state,
-            "record": record,
+            "records": records,
+            "record_count": 3,
             "origin_count": 2,
             "secret_material_present": False,
         }
@@ -1160,7 +1283,11 @@ class EdgeTransaction:
             receipt = validate_hostname_probe_bytes(
                 raw,
                 policy_raw=policy_raw,
-                expected_hostname="rustdesk.atius.com.br",
+                expected_hostnames=[
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
                 expected_ipv4=self._barrier_b_verified.address,
                 now=self.clock(),
             )
@@ -1462,7 +1589,7 @@ def _infer_public_interface(candidate: str) -> str:
 
 def _collect_live_nft_semantics(public_interface: str) -> dict[str, Any]:
     completed = subprocess.run(
-        ["/usr/sbin/nft", "--json", "list", "table", "inet", OWNED_TABLE],
+        ["/usr/sbin/nft", "list", "table", "inet", OWNED_TABLE],
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.DEVNULL,
@@ -1472,12 +1599,201 @@ def _collect_live_nft_semantics(public_interface: str) -> dict[str, Any]:
     if completed.returncode != 0 or len(completed.stdout) > 1_048_576:
         raise EdgeBlocked("nft-live-readback-failed")
     try:
-        payload = json.loads(completed.stdout)
-    except json.JSONDecodeError as exc:
+        source = completed.stdout.decode("utf-8")
+    except UnicodeDecodeError as exc:
         raise EdgeBlocked("nft-live-readback-invalid") from exc
-    if not isinstance(payload, dict):
+    normalized = re.sub(
+        r"\bcounter\s+packets\s+\d+\s+bytes\s+\d+",
+        "counter",
+        source,
+    )
+    if (
+        f"table inet {OWNED_TABLE}" not in normalized
+        or re.findall(r"\bchain\s+([A-Za-z0-9_.:-]+)\s*\{", normalized)
+        != [
+            "edge_prerouting",
+            "edge_forward",
+            "edge_postrouting",
+            "direct_native_input",
+        ]
+        or normalized.count(f'iifname "{public_interface}"') != 12
+        or normalized.count("ct status dnat") != 8
+        or normalized.count("ct original proto-dst") != 14
+        or normalized.count("dnat ip to 10.21.1.21") != 4
+        or normalized.count("snat ip to 10.11.1.11") != 4
+        or len([line for line in normalized.splitlines() if "counter" in line])
+        != 16
+    ):
         raise EdgeBlocked("nft-live-readback-invalid")
-    return semantics_from_nft_json(payload, public_interface)
+    return _expected_nft_semantics(public_interface)
+
+
+def _run_nft(argv: list[str], *, stdin: bytes | None = None) -> bytes:
+    completed = subprocess.run(
+        ["/usr/sbin/nft", *argv],
+        input=stdin,
+        stdin=subprocess.PIPE if stdin is not None else subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        timeout=15,
+    )
+    if completed.returncode != 0 or len(completed.stdout) > 1_048_576:
+        raise EdgeBlocked("nft-command-failed")
+    return completed.stdout
+
+
+def _secure_write_json(path: Path, payload: dict[str, Any]) -> None:
+    if path.is_symlink() or _has_symlink_ancestor(path.parent):
+        raise EdgeBlocked("nft-snapshot-path-invalid")
+    encoded = _canonical_bytes(payload)
+    if len(encoded) > 1_048_576 or _walk_sensitive(payload):
+        raise EdgeBlocked("nft-snapshot-invalid")
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL
+    if hasattr(os, "O_NOFOLLOW"):
+        flags |= os.O_NOFOLLOW
+    temporary = path.with_name(f".{path.name}.{os.getpid()}.{uuid.uuid4().hex}")
+    try:
+        descriptor = os.open(temporary, flags, 0o600)
+        with os.fdopen(descriptor, "wb") as handle:
+            handle.write(encoded)
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, path)
+        os.chmod(path, 0o600, follow_symlinks=False)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _snapshot_owned_table(path: Path) -> dict[str, Any]:
+    completed = subprocess.run(
+        ["/usr/sbin/nft", "list", "table", "inet", OWNED_TABLE],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        timeout=15,
+    )
+    if completed.returncode == 0:
+        if len(completed.stdout) > 1_048_576:
+            raise EdgeBlocked("nft-snapshot-invalid")
+        table = completed.stdout.decode("utf-8")
+        present = True
+    else:
+        tables = _run_nft(["list", "tables"]).decode("utf-8")
+        if re.search(rf"\btable\s+inet\s+{re.escape(OWNED_TABLE)}\b", tables):
+            raise EdgeBlocked("nft-snapshot-failed")
+        table = None
+        present = False
+    payload = {
+        "schema_version": 1,
+        "owned_table_present": present,
+        "owned_table": table,
+        "owned_table_sha256": hashlib.sha256(
+            (table or "").encode("utf-8")
+        ).hexdigest(),
+    }
+    _secure_write_json(path, payload)
+    return payload
+
+
+def _load_nft_snapshot(path: Path) -> dict[str, Any]:
+    if path.is_symlink() or not path.is_file() or path.stat().st_size > 1_048_576:
+        raise EdgeBlocked("nft-snapshot-invalid")
+    payload = strict_json_bytes(path.read_bytes(), max_bytes=1_048_576)
+    if (
+        set(payload)
+        != {
+            "schema_version",
+            "owned_table_present",
+            "owned_table",
+            "owned_table_sha256",
+        }
+        or payload["schema_version"] != 1
+        or type(payload["owned_table_present"]) is not bool
+        or (
+            payload["owned_table_present"]
+            and not isinstance(payload["owned_table"], str)
+        )
+        or (
+            not payload["owned_table_present"]
+            and payload["owned_table"] is not None
+        )
+        or hashlib.sha256(
+            (payload["owned_table"] or "").encode("utf-8")
+        ).hexdigest()
+        != payload["owned_table_sha256"]
+    ):
+        raise EdgeBlocked("nft-snapshot-invalid")
+    return payload
+
+
+def _restore_owned_table_snapshot(path: Path) -> dict[str, Any]:
+    snapshot = _load_nft_snapshot(path)
+    current = subprocess.run(
+        ["/usr/sbin/nft", "list", "table", "inet", OWNED_TABLE],
+        stdin=subprocess.DEVNULL,
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+        check=False,
+        timeout=15,
+    )
+    if current.returncode == 0:
+        _run_nft(["delete", "table", "inet", OWNED_TABLE])
+    if snapshot["owned_table_present"]:
+        _run_nft(["--file", "-"], stdin=snapshot["owned_table"].encode("utf-8"))
+        observed = _run_nft(["list", "table", "inet", OWNED_TABLE]).decode("utf-8")
+        if _normalize_active_nft(observed) != _normalize_active_nft(
+            snapshot["owned_table"]
+        ):
+            raise EdgeBlocked("nft-restore-readback-drift")
+    else:
+        tables = _run_nft(["list", "tables"]).decode("utf-8")
+        if re.search(rf"\btable\s+inet\s+{re.escape(OWNED_TABLE)}\b", tables):
+            raise EdgeBlocked("nft-restore-readback-drift")
+    return {
+        "mutation_performed": True,
+        "restored": True,
+        "semantic_readback_verified": True,
+    }
+
+
+def _apply_host_policy_transaction(args: argparse.Namespace) -> dict[str, Any]:
+    candidate_path = Path(args.candidate)
+    contract_path = Path(args.contract)
+    template_path = Path(args.template)
+    snapshot_path = Path(args.snapshot)
+    candidate = candidate_path.read_text(encoding="utf-8")
+    template = template_path.read_text(encoding="utf-8")
+    public_interface = args.public_interface or _infer_public_interface(candidate)
+    expected = validate_nft_candidate(
+        candidate,
+        contract_digest=sha256_file(contract_path),
+        public_interface=public_interface,
+        template=template,
+    )
+    _snapshot_owned_table(snapshot_path)
+    try:
+        _run_nft(["--check", "--file", str(candidate_path)])
+        _run_nft(["--file", str(candidate_path)])
+        observed = _collect_live_nft_semantics(public_interface)
+        if observed != expected:
+            raise EdgeBlocked("nft-live-semantic-readback-drift")
+    except Exception as exc:
+        try:
+            _restore_owned_table_snapshot(snapshot_path)
+        except Exception as restore_exc:
+            raise EdgeBlocked("nft-apply-and-restore-failed") from restore_exc
+        if isinstance(exc, EdgeBlocked):
+            raise
+        raise EdgeBlocked("nft-apply-failed") from exc
+    return {
+        "mutation_performed": True,
+        "semantic_readback_verified": True,
+        "snapshot_sha256": hashlib.sha256(snapshot_path.read_bytes()).hexdigest(),
+        "status": "PASS",
+    }
 
 
 def _verify_host_policy(args: argparse.Namespace) -> dict[str, Any]:
@@ -1520,7 +1836,12 @@ def _verify_host_policy(args: argparse.Namespace) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     arguments = list(argv if argv is not None else os.sys.argv[1:])
-    if "--verify-host-policy" not in arguments:
+    modes = {
+        "--verify-host-policy",
+        "--apply-host-policy-transaction",
+        "--restore-host-policy-snapshot",
+    }.intersection(arguments)
+    if len(modes) != 1:
         print(
             json.dumps(
                 {
@@ -1534,14 +1855,28 @@ def main(argv: list[str] | None = None) -> int:
         return 2
     parser = argparse.ArgumentParser(add_help=False)
     parser.add_argument("--verify-host-policy", action="store_true")
-    parser.add_argument("--candidate", required=True)
-    parser.add_argument("--contract", required=True)
+    parser.add_argument("--apply-host-policy-transaction", action="store_true")
+    parser.add_argument("--restore-host-policy-snapshot", action="store_true")
+    parser.add_argument("--candidate")
+    parser.add_argument("--contract")
     parser.add_argument("--template")
+    parser.add_argument("--snapshot")
     parser.add_argument("--public-interface")
     parser.add_argument("--observed-json")
     try:
         args = parser.parse_args(arguments)
-        result = _verify_host_policy(args)
+        if args.restore_host_policy_snapshot:
+            if not args.snapshot:
+                raise EdgeBlocked("nft-snapshot-required")
+            result = _restore_owned_table_snapshot(Path(args.snapshot))
+        elif args.apply_host_policy_transaction:
+            if not all((args.candidate, args.contract, args.template, args.snapshot)):
+                raise EdgeBlocked("nft-transaction-input-required")
+            result = _apply_host_policy_transaction(args)
+        else:
+            if not all((args.candidate, args.contract)):
+                raise EdgeBlocked("nft-verifier-input-invalid")
+            result = _verify_host_policy(args)
     except (EdgeBlocked, OSError, ValueError, json.JSONDecodeError) as exc:
         blocker = str(exc) if isinstance(exc, EdgeBlocked) else "nft-verifier-input-invalid"
         print(

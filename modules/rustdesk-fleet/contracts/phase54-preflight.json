@@ -1,0 +1,120 @@
+{
+  "schema_version": 1,
+  "phase": 54,
+  "workstream": "rustdesk-fleet",
+  "status_before_admission": "BLOCKED",
+  "purpose": "Shared fail-closed preflight for every Phase 54 host mutation.",
+  "scope": {
+    "allowed_targets": ["horistic-srv", "GIOVANNI-W11-PC"],
+    "excluded_targets": ["atius-srv-1", "atius-srv-2", "atius-srv-3", "GIOVANNI-S23", "WSL"],
+    "server_paths_mutable": false,
+    "client_paths_only": true,
+    "serial_mutation_required": true
+  },
+  "target_selector": {
+    "individual_targets": ["horistic-srv", "GIOVANNI-W11-PC"],
+    "aggregate_selector": "both",
+    "aggregate_only": true
+  },
+  "required_inputs": {
+    "phase52": {
+      "state": "CURRENT",
+      "current_source_commit": true,
+      "observed": true,
+      "ttl_seconds_max": 86400,
+      "read_only": true,
+      "mutation_performed": false,
+      "recomputed_digests": true,
+      "receipt_root": "modules/rustdesk-fleet/evidence/phase52",
+      "ordered_stages": [
+        "supply",
+        "capacity",
+        "vault",
+        "backup",
+        "restore",
+        "capacity_finalize",
+        "rollback",
+        "topology_security"
+      ],
+      "gate_vector_current": true,
+      "vault_helper_current": true,
+      "backup_a_current": true,
+      "backup_b_current": true,
+      "isolated_restore_current": true
+    },
+    "phase53": {
+      "state": "ADMITTED_PHASE53",
+      "independent_verifier": "PASS",
+      "current_source_commit": true,
+      "owner_bound_admission": true
+    },
+    "owner": {
+      "name": "Giovanni Muniz",
+      "approval_ref_required": true,
+      "expires_at_required": true,
+      "hash_binding_required": true,
+      "risk_disposition_required": true
+    },
+    "fresh_state": {
+      "capacity": "CURRENT",
+      "target_pre_state": "CURRENT",
+      "rollback_readiness": "CURRENT",
+      "source_and_contracts": "CURRENT",
+      "graphify": "CURRENT"
+    },
+    "client_authority": {
+      "package_hashes": "PINNED_AND_VERIFIED",
+      "vault_refs_only": true,
+      "credential_channel": "EPHEMERAL_FD_PIPE_OR_TMPFS",
+      "human_checkpoints": ["horistic-lightdm-x11", "windows-uac-rdp", "windows-prelogin"]
+    }
+  },
+  "fail_closed": {
+    "missing_or_stale_input": "BLOCKED",
+    "phase53_not_current_pass": "BLOCKED",
+    "owner_or_hash_drift": "BLOCKED",
+    "server_path_write_attempt": "BLOCKED_AND_ROLLBACK",
+    "secret_or_raw_id_in_evidence": "BLOCKED_AND_REDACT",
+    "mutation_performed_until_all_inputs_pass": false
+  },
+  "receipt": {
+    "value_free": true,
+    "required_fields": [
+      "source_commit",
+      "phase52_gate",
+      "phase53_gate",
+      "phase53_state",
+      "phase53_independent_verifier",
+      "phase53_contract_digests",
+      "phase54_contract_digests",
+      "owner_admission",
+      "capacity_state",
+      "pre_state_digest",
+      "rollback_state",
+      "graphify_state",
+      "target_scope",
+      "predecessor",
+      "mutation_performed",
+      "blockers"
+    ],
+    "secret_forbidden": ["password", "private_key", "bearer_token", "token", "credential", "credentials", "raw_client_id", "raw_gui_payload", "id", "raw_id", "client_id", "session_id", "payload", "screenshot", "screen_capture", "gui_payload"]
+  },
+  "evidence_manifest": {
+    "canonical_path": "modules/rustdesk-fleet/evidence/phase54/live-evidence.json",
+    "artifact_refs": [
+      "horistic-install",
+      "windows-install",
+      "horistic-session",
+      "windows-session",
+      "permissions",
+      "transport",
+      "reboot",
+      "fallbacks",
+      "rollback",
+      "gate-report"
+    ],
+    "sha256_required": true,
+    "path_escape": "BLOCKED",
+    "test_only_injection": "UNIT_TESTS_ONLY"
+  }
+}

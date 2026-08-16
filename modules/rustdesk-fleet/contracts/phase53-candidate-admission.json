@@ -1,0 +1,85 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "workstream": "rustdesk-fleet",
+  "candidate_status": "NOT_ADMITTED",
+  "state_machine": {
+    "initial": "OBSERVED_UNADMITTED",
+    "allowed": [
+      "OBSERVED_UNADMITTED",
+      "BLOCKED_PROVENANCE_UNSIGNED",
+      "SIGNED_REBUILD_PENDING",
+      "SIGNED_REBUILD_VERIFIED",
+      "OWNER_EXCEPTION_PENDING",
+      "OWNER_EXCEPTION_APPROVED",
+      "SUPPLY_PENDING",
+      "COMPATIBILITY_PENDING",
+      "CAPACITY_PENDING",
+      "ADMITTED_PHASE53"
+    ],
+    "admission_requires": [
+      "SIGNED_REBUILD_VERIFIED or OWNER_EXCEPTION_APPROVED",
+      "fresh_supply",
+      "compatibility_matrix",
+      "contract_parity",
+      "pre_state",
+      "rollback_ready",
+      "capacity_finalize",
+      "owner_bound_hashes"
+    ]
+  },
+  "candidate": {
+    "server_version": "1.1.16",
+    "server_tag": "1.1.16",
+    "server_commit": "73523b31cfd25d77dee862e6fc9f5e1fb5e485ef",
+    "image_repository": "docker.io/rustdesk/rustdesk-server",
+    "image_multiarch_digest": "sha256:8ecdab65deb7c84652a626380e31d11a8f1fbafd97916d57f95c20628f943c00",
+    "image_linux_arm64_digest": "sha256:593c9af7fb8010df0104f9150e8cac8fface359bcc3a358533214cc09ec80520",
+    "release_zip_sha256": "6a4ae3c5ca257a4278ded72fd17eb2ca4eeb0356a5425e63a3e7fcb0ec6c155c",
+    "release_zip_size_bytes": 5488673
+  },
+  "provenance": {
+    "signature_verified": false,
+    "default_disposition": "BLOCKED_PROVENANCE_UNSIGNED",
+    "owner_exception_allowed": true,
+    "owner_exception_requires": [
+      "Giovanni Muniz",
+      "exact candidate hashes",
+      "vulnerability disposition",
+      "pre-state digest",
+      "rollback evidence",
+      "expires_at"
+    ]
+  },
+  "client_compatibility": {
+    "version": "1.4.9",
+    "linux_arm64_sha256": "ce62c996f14d33f3bbe3a330e953644a44bace7f05885a7953f7395d69fb49c0",
+    "windows_x86_64_msi_sha256": "c87d2f4cef2a5acd6003b6507dcfbf5d5168a256db082cd90b54d35193224aaa",
+    "required_matrix": [
+      "direct-first",
+      "forced-relay",
+      "reconnect",
+      "same-public-key-and-db",
+      "udp-21116-reflection-negative",
+      "negative-ports-21114-21118-21119",
+      "client-api-server-forbidden"
+    ],
+    "install_allowed_before_admission": false
+  },
+  "owner_approval": {
+    "required": true,
+    "owner": "Giovanni Muniz",
+    "approval_ref": null,
+    "expires_at": null,
+    "risk_disposition": null,
+    "hash_binding_required": true
+  },
+  "input_contracts": [
+    "phase53-runtime.json",
+    "phase53-edge.json",
+    "phase53-ops-api.json",
+    "phase53-provider-manifest.json",
+    "phase53-runtime-candidate.json"
+  ],
+  "secret_material_present": false
+}

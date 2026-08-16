@@ -2,18 +2,43 @@
 
 # ATIUS-PHASE53-EDGE
 # Managed-By: omni-srv-admin/rustdesk-fleet/phase53
-# contract-sha256=1708fda3e0d9bcbfee05a3bf354deae56e2922dc743405514f4efb0cf6fac3d8
+# contract-sha256=1dc2ec69c33ba8722ec9e609abf6e3ab328710823da1c4215b4d84da6dc86c40
 # __PHASE53_PUBLIC_INTERFACE__ is rendered from the revalidated live interface.
 
 table inet atius_rustdesk_phase53 {
-    chain native_edge_input {
-        type filter hook input priority 300; policy accept;
+    chain edge_prerouting {
+        type nat hook prerouting priority dstnat; policy accept;
 
-        iifname "__PHASE53_PUBLIC_INTERFACE__" meta nfproto ipv6 meta l4proto tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop
-        iifname "__PHASE53_PUBLIC_INTERFACE__" meta nfproto ipv6 meta l4proto udp udp dport 21116 counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip daddr 137.131.140.20 ip protocol tcp tcp dport 34099 ct original proto-dst 34099 counter dnat ip to 10.21.1.21:21115
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip daddr 137.131.140.20 ip protocol tcp tcp dport 34100 ct original proto-dst 34100 counter dnat ip to 10.21.1.21:21116
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip daddr 137.131.140.20 ip protocol udp udp dport 34100 ct original proto-dst 34100 counter dnat ip to 10.21.1.21:21116
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip daddr 137.131.140.20 ip protocol tcp tcp dport 34101 ct original proto-dst 34101 counter dnat ip to 10.21.1.21:21117
+    }
 
-        iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol tcp tcp dport { 21115, 21116, 21117 } counter accept
-        iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol udp udp dport 21116 counter accept
-        iifname "__PHASE53_PUBLIC_INTERFACE__" ip protocol tcp tcp dport { 21114, 21118, 21119 } counter drop
+    chain edge_forward {
+        type filter hook forward priority filter; policy accept;
+
+        iifname "__PHASE53_PUBLIC_INTERFACE__" oifname "enp1s0" ct status dnat ct original proto-dst 34099 ip daddr 10.21.1.21 ip protocol tcp tcp dport 21115 counter accept
+        iifname "__PHASE53_PUBLIC_INTERFACE__" oifname "enp1s0" ct status dnat ct original proto-dst 34100 ip daddr 10.21.1.21 ip protocol tcp tcp dport 21116 counter accept
+        iifname "__PHASE53_PUBLIC_INTERFACE__" oifname "enp1s0" ct status dnat ct original proto-dst 34100 ip daddr 10.21.1.21 ip protocol udp udp dport 21116 counter accept
+        iifname "__PHASE53_PUBLIC_INTERFACE__" oifname "enp1s0" ct status dnat ct original proto-dst 34101 ip daddr 10.21.1.21 ip protocol tcp tcp dport 21117 counter accept
+    }
+
+    chain edge_postrouting {
+        type nat hook postrouting priority srcnat; policy accept;
+
+        oifname "enp1s0" ct status dnat ct original proto-dst 34099 ip daddr 10.21.1.21 ip protocol tcp tcp dport 21115 counter snat ip to 10.11.1.11
+        oifname "enp1s0" ct status dnat ct original proto-dst 34100 ip daddr 10.21.1.21 ip protocol tcp tcp dport 21116 counter snat ip to 10.11.1.11
+        oifname "enp1s0" ct status dnat ct original proto-dst 34100 ip daddr 10.21.1.21 ip protocol udp udp dport 21116 counter snat ip to 10.11.1.11
+        oifname "enp1s0" ct status dnat ct original proto-dst 34101 ip daddr 10.21.1.21 ip protocol tcp tcp dport 21117 counter snat ip to 10.11.1.11
+    }
+
+    chain direct_native_input {
+        type filter hook input priority filter; policy accept;
+
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip daddr 137.131.140.20 ip protocol tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } ct original proto-dst { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" ip daddr 137.131.140.20 ip protocol udp udp dport 21116 ct original proto-dst 21116 counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" meta nfproto ipv6 meta l4proto tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119, 34099, 34100, 34101 } counter drop
+        iifname "__PHASE53_PUBLIC_INTERFACE__" meta nfproto ipv6 meta l4proto udp udp dport { 21116, 34100 } counter drop
     }
 }

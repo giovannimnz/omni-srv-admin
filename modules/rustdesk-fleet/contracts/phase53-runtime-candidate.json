@@ -1,0 +1,42 @@
+{
+  "schema_version": 1,
+  "phase": 53,
+  "workstream": "rustdesk-fleet",
+  "candidate_status_required": "ADMITTED_PHASE53",
+  "base_contract": "phase53-runtime.json",
+  "upstream": {
+    "version": "1.1.16",
+    "architecture": "arm64",
+    "repository": "docker.io/rustdesk/rustdesk-server",
+    "immutable_reference": "docker.io/rustdesk/rustdesk-server@sha256:593c9af7fb8010df0104f9150e8cac8fface359bcc3a358533214cc09ec80520",
+    "linux_arm64_digest": "sha256:593c9af7fb8010df0104f9150e8cac8fface359bcc3a358533214cc09ec80520",
+    "pull_policy": "never",
+    "build_on_target": false
+  },
+  "runtime": {
+    "engine": "podman",
+    "rootless": true,
+    "manager": "user-systemd-quadlet",
+    "network": "host",
+    "containers": {
+      "hbbs": {"command": "hbbs", "tcp": [21115, 21116, 21118], "udp": [21116]},
+      "hbbr": {"command": "hbbr", "tcp": [21117, 21119], "udp": []}
+    }
+  },
+  "consumer_contracts": {
+    "quadlets": [
+      "atius-rustdesk-server-hbbs.container",
+      "atius-rustdesk-server-hbbr.container"
+    ],
+    "installer": "install-phase53-server.py",
+    "ops_api": "rustdesk-ops-api.py"
+  },
+  "owner_bound_exception": {
+    "allowed": true,
+    "owner": "Giovanni Muniz",
+    "approval_ref": null,
+    "expires_at": null,
+    "risk_disposition": null
+  },
+  "secret_material_present": false
+}

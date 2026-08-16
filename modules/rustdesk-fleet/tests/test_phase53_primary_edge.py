@@ -4,6 +4,7 @@ import copy
 import configparser
 import base64
 from datetime import datetime, timezone
+import hashlib
 import importlib.util
 import inspect
 import json
@@ -13,6 +14,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+from types import MappingProxyType
 from typing import Any
 
 import pytest
@@ -23,6 +25,9 @@ CONTRACT_DIR = REPO / "modules/rustdesk-fleet/contracts"
 RUNTIME_CONTRACT = CONTRACT_DIR / "phase53-runtime.json"
 EDGE_CONTRACT = CONTRACT_DIR / "phase53-edge.json"
 OPS_API_CONTRACT = CONTRACT_DIR / "phase53-ops-api.json"
+ADMISSION_CONTRACT = CONTRACT_DIR / "phase53-candidate-admission.json"
+PROVIDER_CONTRACT = CONTRACT_DIR / "phase53-provider-manifest.json"
+CANDIDATE_RUNTIME_CONTRACT = CONTRACT_DIR / "phase53-runtime-candidate.json"
 LIVE_GATE_PATH = REPO / "modules/rustdesk-fleet/tools/run-phase53-live-gate.py"
 HBBS_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
 HBBR_QUADLET = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container"
@@ -42,6 +47,64 @@ EDGE_PROBE = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.py"
 EDGE_PROBE_PS1 = REPO / "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1"
 EDGE_NFT_POLICY = REPO / "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft"
 EDGE_BOOT_SERVICE = REPO / "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service"
+LIVE_BACKEND = REPO / "modules/rustdesk-fleet/tools/phase53-live-backend.py"
+MIGRATION_HANDOFF = (
+    REPO / "modules/rustdesk-fleet/contracts/phase53-horistic-migration-handoff.json"
+)
+BINDING_CHECKER = (
+    REPO / "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py"
+)
+AUTHORITY_BUILDER = (
+    REPO / "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py"
+)
+EXECUTION_SOURCE_SCOPE = (
+    CONTRACT_DIR / "phase53-execution-source-scope.json"
+)
+EXPECTED_EXECUTION_SOURCE_PATHS = (
+    "modules/rustdesk-fleet/apache/rustdesk-ops.atius.com.br.conf",
+    "modules/rustdesk-fleet/contracts/phase53-candidate-admission.json",
+    "modules/rustdesk-fleet/contracts/phase53-edge.json",
+    "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+    "modules/rustdesk-fleet/contracts/phase53-horistic-migration-handoff.json",
+    "modules/rustdesk-fleet/contracts/phase53-ops-api.json",
+    "modules/rustdesk-fleet/contracts/phase53-provider-manifest.json",
+    "modules/rustdesk-fleet/contracts/phase53-runtime-candidate.json",
+    "modules/rustdesk-fleet/contracts/phase53-runtime.json",
+    "modules/rustdesk-fleet/contracts/phase53-topology.json",
+    "modules/rustdesk-fleet/nftables/atius-rustdesk-phase53.nft",
+    "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbr.container",
+    "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-ops-api.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53-edge.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-phase53.slice",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.service",
+    "modules/rustdesk-fleet/systemd/atius-rustdesk-server-logrotate.timer",
+    "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tests/test_phase53_topology.py",
+    "modules/rustdesk-fleet/tools/apply-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py",
+    "modules/rustdesk-fleet/tools/discover-phase53-topology.py",
+    "modules/rustdesk-fleet/tools/install-phase53-server.py",
+    "modules/rustdesk-fleet/tools/phase53-live-adapters.py",
+    "modules/rustdesk-fleet/tools/phase53-live-backend.py",
+    "modules/rustdesk-fleet/tools/phase53-production-adapters.py",
+    "modules/rustdesk-fleet/tools/phase53_production_adapters.py",
+    "modules/rustdesk-fleet/tools/probe-phase53-edge.ps1",
+    "modules/rustdesk-fleet/tools/probe-phase53-edge.py",
+    "modules/rustdesk-fleet/tools/run-phase53-live-gate.py",
+    "modules/rustdesk-fleet/tools/rustdesk-ops-api.py",
+    "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
+    "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+)
+EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS = (
+    "modules/rustdesk-fleet/contracts/phase53-execution-source-scope.json",
+    "modules/rustdesk-fleet/tests/test_phase53_primary_edge.py",
+    "modules/rustdesk-fleet/tools/build-phase53-authority-plan.py",
+    "modules/rustdesk-fleet/tools/phase53-live-backend.py",
+    "modules/rustdesk-fleet/tools/run-phase53-live-gate.py",
+    "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
+    "modules/rustdesk-fleet/tools/verify-phase53-binding-chain.py",
+)
 
 
 class DuplicateKeyError(ValueError):
@@ -96,6 +159,60 @@ def _ops_api_module() -> Any:
 def _edge_applier_module() -> Any:
     assert EDGE_APPLIER.is_file(), EDGE_APPLIER
     spec = importlib.util.spec_from_file_location("phase53_edge_applier", EDGE_APPLIER)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _edge_probe_module() -> Any:
+    assert EDGE_PROBE.is_file(), EDGE_PROBE
+    spec = importlib.util.spec_from_file_location("phase53_edge_probe", EDGE_PROBE)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _live_backend_module() -> Any:
+    assert LIVE_BACKEND.is_file(), LIVE_BACKEND
+    spec = importlib.util.spec_from_file_location("phase53_live_backend", LIVE_BACKEND)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _binding_checker_module() -> Any:
+    assert BINDING_CHECKER.is_file(), BINDING_CHECKER
+    spec = importlib.util.spec_from_file_location(
+        "phase53_binding_checker", BINDING_CHECKER
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _authority_builder_module() -> Any:
+    assert AUTHORITY_BUILDER.is_file(), AUTHORITY_BUILDER
+    spec = importlib.util.spec_from_file_location(
+        "phase53_authority_builder", AUTHORITY_BUILDER
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _load_python_module(path: Path, name: str) -> Any:
+    assert path.is_file(), path
+    spec = importlib.util.spec_from_file_location(name, path)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     sys.modules[spec.name] = module
@@ -272,7 +389,13 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "schema_version",
             "workstream",
             "primary_host",
+            "public_edge",
+            "backend",
+            "target",
             "hostnames",
+            "dns_records",
+            "translations",
+            "internal_native_listeners",
             "address_consensus",
             "effective_ingress",
             "public_ipv4_allowed",
@@ -284,32 +407,118 @@ def _validate_edge(payload: dict[str, Any]) -> None:
             "rollback_order",
         },
     )
-    assert payload["schema_version"] == 1
+    assert payload["schema_version"] == 2
     assert payload["primary_host"] == "horistic-srv"
+    assert payload["target"] == {
+        "private_ipv4": "10.21.1.21",
+        "reserved_public_ipv4": "137.131.140.20",
+    }
+    assert payload["public_edge"] == {
+        "host": "atius-srv-1",
+        "public_ipv4": "137.131.140.20",
+        "public_vnic_private_ipv4": "10.0.0.238",
+        "route_vnic_private_ipv4": "10.11.1.11",
+        "route_interface": "enp1s0",
+    }
+    assert payload["backend"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.21.1.21",
+        "native_ingress_source_ipv4": "10.11.1.11",
+        "native_listeners": {
+            "tcp": [21115, 21116, 21117],
+            "udp": [21116],
+        },
+    }
     assert payload["hostnames"] == {
-        "native": "rustdesk.atius.com.br",
+        "general": "rustdesk.atius.com.br",
+        "id": "rustdesk-id.atius.com.br",
+        "relay": "rustdesk-relay.atius.com.br",
         "operations": "rustdesk-ops.atius.com.br",
     }
-    assert payload["public_ipv4_allowed"] == {"tcp": [21115, 21116, 21117], "udp": [21116]}
+    assert payload["dns_records"] == [
+        {
+            "name": "rustdesk.atius.com.br",
+            "role": "general",
+            "type": "A",
+            "content": "137.131.140.20",
+            "proxied": False,
+        },
+        {
+            "name": "rustdesk-id.atius.com.br",
+            "role": "id",
+            "type": "A",
+            "content": "137.131.140.20",
+            "proxied": False,
+        },
+        {
+            "name": "rustdesk-relay.atius.com.br",
+            "role": "relay",
+            "type": "A",
+            "content": "137.131.140.20",
+            "proxied": False,
+        },
+    ]
+    assert payload["translations"] == [
+        {"role": "id", "protocol": "tcp", "external_port": 34099, "internal_port": 21115},
+        {
+            "role": "rendezvous",
+            "protocol": "tcp",
+            "external_port": 34100,
+            "internal_port": 21116,
+        },
+        {
+            "role": "rendezvous",
+            "protocol": "udp",
+            "external_port": 34100,
+            "internal_port": 21116,
+        },
+        {
+            "role": "relay",
+            "protocol": "tcp",
+            "external_port": 34101,
+            "internal_port": 21117,
+        },
+    ]
+    assert payload["internal_native_listeners"] == {
+        "tcp": [21115, 21116, 21117],
+        "udp": [21116],
+    }
+    assert payload["public_ipv4_allowed"] == {
+        "tcp": [34099, 34100, 34101],
+        "udp": [34100],
+    }
     assert payload["public_forbidden"] == {
-        "tcp": [21114, 21118, 21119],
-        "unexpected": "all-other-phase53-exposure",
+        "tcp": [21114, 21115, 21116, 21117, 21118, 21119],
+        "udp": [21116],
+        "unexpected": "all-other-direct-public-listeners",
     }
     assert payload["ipv6_policy"] == {"rustdesk": "deny-all", "aaaa_record": False}
 
     consensus = payload["address_consensus"]
     _assert_keys(consensus, {"required_equal_sources", "mismatch_action"})
     assert consensus["required_equal_sources"] == [
-        "oci-vnic-public-ipv4",
-        "horistic-egress-ipv4",
-        "ssh-horistic-srv.atius.com.br-a",
+        "oci-edge-vnic-public-ipv4",
+        "edge-vnic-public-ipv4",
+        "reserved-public-ipv4",
     ]
     assert consensus["mismatch_action"] == "block-before-write"
 
     ingress = payload["effective_ingress"]
-    _assert_keys(ingress, {"host_policy", "oci_policy", "union_audit_required", "broad_allow_action"})
-    assert ingress["host_policy"] == "owned-nftables-scope"
-    assert ingress["oci_policy"] == "security-lists-plus-attached-nsgs"
+    _assert_keys(
+        ingress,
+        {
+            "host_policy",
+            "oci_policy",
+            "backend_policy",
+            "backend_source_ipv4",
+            "union_audit_required",
+            "broad_allow_action",
+        },
+    )
+    assert ingress["host_policy"] == "owned-cross-host-dnat-forward-snat"
+    assert ingress["oci_policy"] == "edge-public-vnic-security-lists-plus-attached-nsgs"
+    assert ingress["backend_policy"] == "native-listeners-from-deterministic-edge-identity-only"
+    assert ingress["backend_source_ipv4"] == "10.11.1.11"
     assert ingress["union_audit_required"] is True
     assert ingress["broad_allow_action"] == "block"
 
@@ -323,14 +532,29 @@ def _validate_edge(payload: dict[str, Any]) -> None:
     assert dns["rollback_exact"] is True
 
     probes = payload["external_probes"]
-    _assert_keys(probes, {"origins", "tcp", "udp_correlation", "same_host_allowed"})
+    _assert_keys(probes, {"origins", "tcp", "udp", "udp_correlation", "same_host_allowed"})
     assert probes["origins"][0] == "GIOVANNI-W11-PC-private-first"
     assert len(probes["origins"]) == 2
     assert probes["same_host_allowed"] is False
     assert probes["tcp"] == {
-        "positive": [21115, 21116, 21117],
-        "negative": [21114, 21118, 21119],
-        "targets": ["public-ipv4", "native-hostname"],
+        "positive": [34099, 34100, 34101],
+        "negative": [21114, 21115, 21116, 21117, 21118, 21119],
+        "targets": [
+            "public-ipv4",
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ],
+    }
+    assert probes["udp"] == {
+        "external_port": 34100,
+        "backend_port": 21116,
+        "targets": [
+            "public-ipv4",
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ],
     }
     assert probes["udp_correlation"] == [
         "disposable-nonce-not-persisted",
@@ -398,9 +622,288 @@ def _validate_ops_api(payload: dict[str, Any]) -> None:
 
 
 def test_contract_schema_files_parse_strictly() -> None:
-    for path in (RUNTIME_CONTRACT, EDGE_CONTRACT, OPS_API_CONTRACT):
+    for path in (
+        RUNTIME_CONTRACT,
+        EDGE_CONTRACT,
+        OPS_API_CONTRACT,
+        ADMISSION_CONTRACT,
+        PROVIDER_CONTRACT,
+        CANDIDATE_RUNTIME_CONTRACT,
+    ):
         assert path.is_file(), path
         _load_strict(path)
+
+
+def test_successor_admission_and_evidence_validator_are_fail_closed() -> None:
+    admission = _load_strict(ADMISSION_CONTRACT)
+    candidate = _load_strict(CANDIDATE_RUNTIME_CONTRACT)
+    evidence = _load_strict(
+        REPO / "modules/rustdesk-fleet/evidence/phase53/candidate-admission.json"
+    )
+    assert admission["candidate_status"] == "NOT_ADMITTED"
+    assert admission["provenance"]["signature_verified"] is False
+    assert candidate["upstream"]["version"] == "1.1.16"
+    assert evidence["candidate_status"] == "NOT_ADMITTED"
+    assert evidence["admission_performed"] is False
+    assert evidence["live_mutation_performed"] is False
+    validator_path = REPO / "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py"
+    spec = importlib.util.spec_from_file_location("phase53_evidence_validator", validator_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    with pytest.raises(module.EvidenceInvalid, match="^obsolete-05b-authority-set$"):
+        module.validate(REPO)
+
+
+def test_evidence_validator_supports_current_admitted_pre_mutation_state(monkeypatch: Any) -> None:
+    validator_path = REPO / "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py"
+    spec = importlib.util.spec_from_file_location("phase53_evidence_validator_admitted", validator_path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+
+    originals = {
+        name: copy.deepcopy(
+            _load_strict(REPO / "modules/rustdesk-fleet/evidence/phase53" / name)
+        )
+        for name in module.EVIDENCE_NAMES
+    }
+    contract_originals = {
+        name: copy.deepcopy(_load_strict(CONTRACT_DIR / name))
+        for name in module.CONTRACT_NAMES
+    }
+    for payload in originals.values():
+        payload["source_head"] = "head"
+    originals["candidate-admission.json"].update(
+        {
+            "candidate_status": "ADMITTED_PHASE53",
+            "state": "ADMITTED_PHASE53",
+            "admission_performed": True,
+            "provenance": {
+                "signature_verified": False,
+                "disposition": "OWNER_EXCEPTION_APPROVED",
+            },
+            "owner_approval": {
+                "owner": "Giovanni Muniz",
+                "approval_ref": "review-53-05C",
+                "expires_at": "2099-01-01T00:00:00Z",
+                "risk_disposition": "accepted-for-test",
+                "hash_binding": True,
+            },
+            "required_gates": {
+                "fresh_supply": "PASS",
+                "compatibility_matrix": "PASS",
+                "contract_parity": "CURRENT",
+                "pre_state": "PASS",
+                "rollback_ready": "PASS",
+                "capacity_finalize": "PASS",
+            },
+        }
+    )
+    originals["server-1.1.16-evaluation.json"].update(
+        {"candidate_status": "ADMITTED_PHASE53", "admission_performed": True}
+    )
+    originals["contract-parity.json"].update(
+        {
+            "state": "CURRENT",
+            "current_contract_digests": {
+                name: "a" * 64 for name in module.CONTRACT_NAMES
+            },
+            "consumer_digests": {
+                "atius-rustdesk-server-hbbs.container": "a" * 64,
+                "atius-rustdesk-server-hbbr.container": "a" * 64,
+                "install-phase53-server.py": "a" * 64,
+                "rustdesk-ops-api.py": "a" * 64,
+            },
+        }
+    )
+    required_vectors = contract_originals["phase53-candidate-admission.json"][
+        "client_compatibility"
+    ]["required_matrix"]
+    compatibility = originals["compatibility-pending.json"]
+    compatibility.update(
+        {
+            "state": "CURRENT",
+            "vectors_tested": list(required_vectors),
+        }
+    )
+    for item in compatibility["matrix"].values():
+        item["tested"] = True
+    now = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+    samples = []
+    for host in ("atius-srv-2", "atius-srv-3"):
+        for _ in range(2):
+            samples.append(
+                {
+                    "host": host,
+                    "observed_at": now,
+                    "placement_state": "NO-GO",
+                    "zero_cleanup_performed": False,
+                }
+            )
+    for _ in range(2):
+        samples.append(
+            {
+                "host": "horistic-srv",
+                "observed_at": now,
+                "placement_state": "GO",
+                "raw_capacity_state": "CURRENT",
+                "capacity_finalize_state": "CURRENT",
+                "zero_cleanup_performed": False,
+            }
+        )
+    originals["capacity-current.json"].update(
+        {
+            "state": "CURRENT",
+            "finalize_ttl_seconds": 3600,
+            "selected_primary": "horistic-srv",
+            "samples": samples,
+        }
+    )
+    originals["deploy-transaction.json"].update(
+        {
+            "state": "READY_BEFORE_MUTATION",
+            "rollback_ready": True,
+            "pre_state_digest": "b" * 64,
+            "transaction_id": None,
+            "mutation_performed": False,
+            "journal_created": False,
+        }
+    )
+    originals["edge-probes.json"].update(
+        {
+                "state": "CURRENT",
+                "probes_completed": True,
+                "udp_reflection_negative": True,
+                "positive_tcp_ports": [34099, 34100, 34101],
+                "negative_tcp_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+                "targets": [
+                    "public-ipv4",
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+                "udp_targets": [
+                    "public-ipv4",
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+                "udp_external_port": 34100,
+                "udp_backend_port": 21116,
+                "dns_records": [
+                    "rustdesk.atius.com.br",
+                    "rustdesk-id.atius.com.br",
+                    "rustdesk-relay.atius.com.br",
+                ],
+                "public_edge_host": "atius-srv-1",
+                "backend_host": "horistic-srv",
+                "backend_ingress_source_ipv4": "10.11.1.11",
+                "native_public_positive": False,
+        }
+    )
+    originals["ops-api-probes.json"].update(
+        {
+            "state": "CURRENT",
+            "probes_completed": True,
+            "mutation_performed": False,
+            "final_receipt_present": True,
+        }
+    )
+
+    monkeypatch.setattr(module, "_head", lambda repo: "head")
+    monkeypatch.setattr(
+        module,
+        "_strict",
+        lambda path: originals[path.name]
+        if path.name in originals
+        else contract_originals[path.name],
+    )
+    monkeypatch.setattr(module, "_sha256", lambda path: "a" * 64)
+    result = module.validate_legacy_05b(REPO)
+    assert result["state"] == "ADMITTED_PHASE53"
+    assert result["candidate_status"] == "ADMITTED_PHASE53"
+    assert result["mutation_performed"] is False
+
+    samples = originals["capacity-current.json"]["samples"]
+    samples[1], samples[2] = samples[2], samples[1]
+    with pytest.raises(module.EvidenceInvalid, match="capacity-sample-order-invalid"):
+        module.validate_legacy_05b(REPO)
+    samples[1], samples[2] = samples[2], samples[1]
+
+    bad_digest = "sha256:" + "g" * 64
+    digest_targets = (
+        (
+            originals["candidate-admission.json"]["candidate_contract"],
+            "image_linux_arm64_digest",
+            "candidate-image-digest-invalid",
+        ),
+        (
+            contract_originals["phase53-runtime-candidate.json"]["upstream"],
+            "linux_arm64_digest",
+            "runtime-image-digest-invalid",
+        ),
+        (
+            originals["server-1.1.16-evaluation.json"]["server"]["image"],
+            "linux_arm64_digest",
+            "evaluation-image-digest-invalid",
+        ),
+    )
+    for target, key, error in digest_targets:
+        original_value = target[key]
+        target[key] = bad_digest
+        with pytest.raises(module.EvidenceInvalid, match=error):
+            module.validate_legacy_05b(REPO)
+        target[key] = original_value
+    immutable_upstream = contract_originals["phase53-runtime-candidate.json"]["upstream"]
+    original_reference = immutable_upstream["immutable_reference"]
+    immutable_upstream["immutable_reference"] = "docker.io/rustdesk/rustdesk-server@" + bad_digest
+    with pytest.raises(module.EvidenceInvalid, match="candidate-immutable-reference-digest-invalid"):
+        module.validate_legacy_05b(REPO)
+    immutable_upstream["immutable_reference"] = original_reference
+
+    originals["capacity-current.json"]["secret_material_present"] = True
+    with pytest.raises(module.EvidenceInvalid, match="secret-surface:capacity-current.json.secret_material_present"):
+        module.validate_legacy_05b(REPO)
+    originals["capacity-current.json"].pop("secret_material_present")
+
+    provider_payload = contract_originals["phase53-provider-manifest.json"]
+    original_routes = provider_payload["routes"]
+    provider_payload["routes"] = []
+    with pytest.raises(module.EvidenceInvalid, match="provider-manifest-shape-invalid"):
+        module.validate_legacy_05b(REPO)
+    provider_payload["routes"] = original_routes
+
+    edge_payload = contract_originals["phase53-edge.json"]
+    original_external = edge_payload["external_probes"]
+    edge_payload["external_probes"] = []
+    with pytest.raises(module.EvidenceInvalid, match="edge-contract-shape-invalid"):
+        module.validate_legacy_05b(REPO)
+    edge_payload["external_probes"] = original_external
+
+    originals["capacity-current.json"]["state"] = "BLOCKED_STALE"
+    with pytest.raises(module.EvidenceInvalid, match="capacity-finalize-not-current"):
+        module.validate_legacy_05b(REPO)
+    originals["capacity-current.json"]["state"] = "CURRENT"
+
+    originals["compatibility-pending.json"]["state"] = "PENDING"
+    with pytest.raises(module.EvidenceInvalid, match="compatibility-not-current"):
+        module.validate_legacy_05b(REPO)
+    originals["compatibility-pending.json"]["state"] = "CURRENT"
+
+    contract_originals["phase53-provider-manifest.json"]["routes"]["ssh"]["batch_mode"] = False
+    with pytest.raises(module.EvidenceInvalid, match="provider-manifest-semantics-invalid"):
+        module.validate_legacy_05b(REPO)
+    contract_originals["phase53-provider-manifest.json"]["routes"]["ssh"]["batch_mode"] = True
+
+    contract_originals["phase53-runtime-candidate.json"]["upstream"]["version"] = "drift"
+    with pytest.raises(module.EvidenceInvalid, match="candidate-runtime-hash-drift"):
+        module.validate_legacy_05b(REPO)
+    originals["candidate-admission.json"]["required_gates"].pop("capacity_finalize")
+    with pytest.raises(module.EvidenceInvalid, match="admission-authority-incomplete"):
+        module.validate_legacy_05b(REPO)
 
 
 def test_contract_schema_rejects_duplicate_json_keys(tmp_path: Path) -> None:
@@ -416,6 +919,919 @@ def test_runtime_contract_schema_and_resource_arithmetic() -> None:
 
 def test_edge_contract_schema_and_dns_last_order() -> None:
     _validate_edge(_load_strict(EDGE_CONTRACT))
+
+
+def test_d06_cross_host_contract_and_provider_roles_are_exact() -> None:
+    edge = _load_strict(EDGE_CONTRACT)
+    provider = _load_strict(PROVIDER_CONTRACT)
+
+    assert edge["public_edge"] == {
+        "host": "atius-srv-1",
+        "public_ipv4": "137.131.140.20",
+        "public_vnic_private_ipv4": "10.0.0.238",
+        "route_vnic_private_ipv4": "10.11.1.11",
+        "route_interface": "enp1s0",
+    }
+    assert edge["backend"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.21.1.21",
+        "native_ingress_source_ipv4": "10.11.1.11",
+        "native_listeners": {
+            "tcp": [21115, 21116, 21117],
+            "udp": [21116],
+        },
+    }
+    assert provider["routes"]["oci"]["execution_targets"] == {
+        "public_edge": {
+            "host": "atius-srv-1",
+            "private_ipv4": "10.0.0.238",
+            "capabilities": ["nft-dnat", "nft-forward", "nft-snat", "oci-edge-ingress"],
+        },
+        "backend": {
+            "host": "horistic-srv",
+            "private_ipv4": "10.21.1.21",
+            "capabilities": ["rustdesk-server", "native-ingress-source-restriction"],
+        },
+    }
+
+
+def test_d06_nft_and_boot_unit_are_transactional_cross_host_policy() -> None:
+    nft = EDGE_NFT_POLICY.read_text(encoding="utf-8")
+    for required in (
+        "type nat hook prerouting priority dstnat; policy accept;",
+        "ct status dnat",
+        "ct original proto-dst 34099",
+        "ct original proto-dst 34100",
+        "ct original proto-dst 34101",
+        "dnat ip to 10.21.1.21:21115",
+        "dnat ip to 10.21.1.21:21116",
+        "dnat ip to 10.21.1.21:21117",
+        "type filter hook forward priority filter; policy accept;",
+        "type nat hook postrouting priority srcnat; policy accept;",
+        "snat ip to 10.11.1.11",
+    ):
+        assert required in nft
+    assert "redirect to" not in nft
+
+    service = _load_unit(EDGE_BOOT_SERVICE)["Service"]
+    assert service["ExecStart"].startswith(
+        "/usr/local/libexec/apply-phase53-edge.py --apply-host-policy-transaction "
+    )
+    assert "/usr/sbin/nft --file" not in service["ExecStart"]
+    assert "ExecStartPost" not in service
+
+
+def test_translated_edge_contract_is_single_consumer_authority(tmp_path: Path) -> None:
+    expected = _load_strict(EDGE_CONTRACT)
+    probe = _edge_probe_module()
+    apply = _edge_applier_module()
+
+    assert probe.load_edge_contract(EDGE_CONTRACT) == expected
+    assert apply.load_edge_contract(EDGE_CONTRACT) == expected
+
+    duplicate = tmp_path / "duplicate.json"
+    duplicate.write_text(
+        EDGE_CONTRACT.read_text(encoding="utf-8").replace(
+                '"schema_version": 2,',
+                '"schema_version": 2, "schema_version": 2,',
+            1,
+        ),
+        encoding="utf-8",
+    )
+    with pytest.raises(probe.ProbeBlocked, match="edge-contract-invalid"):
+        probe.load_edge_contract(duplicate)
+    with pytest.raises(apply.EdgeBlocked, match="edge-contract-invalid"):
+        apply.load_edge_contract(duplicate)
+
+    stale = copy.deepcopy(expected)
+    stale["translations"][3]["external_port"] = 21117
+    stale_path = tmp_path / "stale.json"
+    stale_path.write_text(json.dumps(stale), encoding="utf-8")
+    with pytest.raises(probe.ProbeBlocked, match="edge-contract-invalid"):
+        probe.load_edge_contract(stale_path)
+    with pytest.raises(apply.EdgeBlocked, match="edge-contract-invalid"):
+        apply.load_edge_contract(stale_path)
+
+
+def test_hbbs_relay_announcement_is_derived_from_translated_edge_contract() -> None:
+    edge = _load_strict(EDGE_CONTRACT)
+    relay_record = next(item for item in edge["dns_records"] if item["role"] == "relay")
+    relay_mapping = next(
+        item
+        for item in edge["translations"]
+        if item["role"] == "relay" and item["protocol"] == "tcp"
+    )
+    expected = f"{relay_record['name']}:{relay_mapping['external_port']}"
+    unit = _load_unit(HBBS_QUADLET)
+    assert unit["Container"]["Exec"] == f"hbbs -r {expected}"
+    assert expected == "rustdesk-relay.atius.com.br:34101"
+
+
+def test_phase53_server_installer_rejects_source_and_runtime_hbbs_tamper(
+    tmp_path: Path,
+) -> None:
+    module = _server_installer_module()
+    runner = _FakeServerRunner()
+    repo = tmp_path / "repo"
+    shutil.copytree(
+        REPO / "modules/rustdesk-fleet",
+        repo / "modules/rustdesk-fleet",
+    )
+    sandbox = tmp_path / "sandbox"
+    sandbox.mkdir()
+    transaction = _new_server_transaction(module, sandbox, runner, repo=repo)
+    transaction._validate_sources()
+
+    source = transaction.repo / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
+    source.write_text(
+        source.read_text(encoding="utf-8").replace(":34101", ":21117"),
+        encoding="utf-8",
+    )
+    with pytest.raises(module.Phase53ServerBlocked, match="hbbs-relay-endpoint-invalid"):
+        transaction._validate_sources()
+    shutil.copy2(HBBS_QUADLET, source)
+
+    transaction.snapshot_prestate()
+    transaction.render_and_verify_units()
+    installed = transaction.quadlet_dir / source.name
+    transaction._validate_installed_hbbs()
+    installed.write_text(
+        installed.read_text(encoding="utf-8").replace(":34101", ":21117"),
+        encoding="utf-8",
+    )
+    with pytest.raises(module.Phase53ServerBlocked, match="installed-hbbs-command-invalid"):
+        transaction._validate_installed_hbbs()
+
+
+def test_provider_manifest_is_exact_and_rejects_mutable_or_unbounded_backends(
+    tmp_path: Path,
+) -> None:
+    backend = _live_backend_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    backend.validate_provider_manifest(manifest, repo=REPO)
+
+    mutations = [
+        ("provider-manifest-target-invalid", lambda item: item.update({"execution_target": "10.31.1.31"})),
+        (
+            "provider-manifest-edge-contract-invalid",
+            lambda item: item.update({"edge_contract": "/tmp/phase53-edge.json"}),
+        ),
+        (
+            "provider-manifest-backend-invalid",
+            lambda item: item["backends"].update({"apply": "shell"}),
+        ),
+        (
+            "provider-manifest-limit-invalid",
+            lambda item: item["limits"].update({"command_timeout_seconds": 0}),
+        ),
+    ]
+    for blocker, mutate in mutations:
+        candidate = copy.deepcopy(manifest)
+        mutate(candidate)
+        with pytest.raises(backend.BackendBlocked, match=f"^{blocker}$"):
+            backend.validate_provider_manifest(candidate, repo=REPO)
+
+    candidate_path = tmp_path / "manifest.json"
+    candidate_path.write_text(json.dumps(manifest), encoding="utf-8")
+    binding = backend.ExecutionSourceBinding(
+        commit="a" * 40,
+        tree_sha256="b" * 64,
+        blobs={"modules/rustdesk-fleet/contracts/phase53-edge.json": "c" * 64},
+    )
+    read_only = backend.build_phase53_read_only_backend(
+        repo=REPO,
+        manifest_path=candidate_path,
+        source_binding=binding,
+        clock=lambda: datetime(2026, 7, 25, tzinfo=timezone.utc),
+    )
+    assert read_only.capabilities == frozenset({"read", "preview"})
+    assert not any(
+        hasattr(read_only, name)
+        for name in ("runtime", "providers", "mutate", "containment", "rollback", "restore")
+    )
+    for callback in (
+        read_only.read_prestate,
+        read_only.preview_oci,
+        read_only.preview_cloudflare,
+        read_only.preview_apache,
+    ):
+        result = callback()
+        assert result["mutation_performed"] is False
+        assert result["secret_material_present"] is False
+
+
+def test_apply_backend_is_owner_hash_and_expiry_bound() -> None:
+    backend = _live_backend_module()
+    now = datetime(2026, 7, 25, tzinfo=timezone.utc)
+    noop = lambda: {"mutation_performed": False}
+    edge_stages = {stage: noop for stage in backend.RUNTIME_EDGE_STAGES}
+    runtime = backend.RuntimeProvider(
+        transaction_id="d" * 32,
+        snapshot_prestate=noop,
+        install_closed=noop,
+        rollback_server=noop,
+        edge_stages=edge_stages,
+        containment=noop,
+    )
+    providers = runtime.to_bundle()
+    plan = {
+        "schema_version": 1,
+        "target": "10.21.1.21",
+        "operation_plan_sha256": "a" * 64,
+        "expires_at": "2026-07-25T01:00:00Z",
+        "runtime": runtime,
+        "providers": providers,
+    }
+    approval = {
+        "schema_version": 1,
+        "owner": "Giovanni Muniz",
+        "operation_plan_sha256": "a" * 64,
+        "approval_sha256": "b" * 64,
+        "expires_at": "2026-07-25T01:00:00Z",
+    }
+    with pytest.raises(backend.BackendBlocked, match="^live-flag-required$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=approval,
+            live_enabled=False,
+            admitted=True,
+            clock=lambda: now,
+        )
+    with pytest.raises(backend.BackendBlocked, match="^admission-required$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=approval,
+            live_enabled=True,
+            admitted=False,
+            clock=lambda: now,
+        )
+    drifted = dict(approval, operation_plan_sha256="f" * 64)
+    with pytest.raises(backend.BackendBlocked, match="^owner-approval-invalid$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=drifted,
+            live_enabled=True,
+            admitted=True,
+            clock=lambda: now,
+        )
+    result = backend.build_phase53_apply_backend(
+        repo=REPO,
+        manifest_path=PROVIDER_CONTRACT,
+        operation_plan=plan,
+        owner_approval=approval,
+        live_enabled=True,
+        admitted=True,
+        clock=lambda: now,
+    )
+    assert result.runtime is runtime
+    assert result.providers is providers
+    assert result.operation_plan_sha256 == "a" * 64
+    assert result.approval_sha256 == "b" * 64
+
+    expired = dict(approval, expires_at="2026-07-24T23:59:59Z")
+    with pytest.raises(backend.BackendBlocked, match="^owner-approval-expired$"):
+        backend.build_phase53_apply_backend(
+            repo=REPO,
+            manifest_path=PROVIDER_CONTRACT,
+            operation_plan=plan,
+            owner_approval=expired,
+            live_enabled=True,
+            admitted=True,
+            clock=lambda: now,
+        )
+
+
+def test_cli_mode_and_stage_matrix_are_literal() -> None:
+    module = _live_gate_module()
+    parser = module.build_parser()
+    parsed = parser.parse_args(
+        [
+            "--repo",
+            str(REPO),
+            "--live-backend",
+            "phase53-production",
+            "--mode",
+            "plan",
+            "--stage",
+            "full",
+            "--operation-plan",
+            "operation-plan.json",
+        ]
+    )
+    assert parsed.live_backend == "phase53-production"
+    assert parsed.mode == "plan"
+    assert parsed.stage == "full"
+    assert parsed.owner_approval is None
+    assert set(module.EXECUTION_STAGES) == {
+        "full",
+        "edge-probes",
+        "ops-api",
+        "lifecycle",
+        "rollback",
+        "restore-production",
+    }
+    assert module.EXIT_USAGE == 2
+    assert module.EXIT_AUTHORITY == 3
+    assert module.EXIT_APPLY_FAILED == 4
+
+
+def test_stage_full_uses_distinct_journals_and_immutable_rollback(
+    tmp_path: Path,
+) -> None:
+    module = _live_gate_module()
+    calls: list[str] = []
+
+    def callback(stage: str) -> Any:
+        def invoke() -> dict[str, Any]:
+            calls.append(stage)
+            return {
+                "stage": stage,
+                "mutation_performed": stage
+                not in {"preflight", "ip-probes", "hostname-probes", "lifecycle"},
+                "secret_material_present": False,
+            }
+
+        return invoke
+
+    adapters = {
+        stage: callback(stage) for stage in module.FULL_TRANSACTION_SEQUENCE
+    }
+    result = module.execute_apply_transaction(
+        journal_dir=tmp_path,
+        operation_plan_sha256="a" * 64,
+        approval_sha256="b" * 64,
+        execution_source_commit="c" * 40,
+        execution_source_tree_sha256="d" * 64,
+        adapters=adapters,
+    )
+    assert calls == list(module.FULL_TRANSACTION_SEQUENCE)
+    assert len(
+        {
+            result["apply_transaction_id"],
+            result["rollback_transaction_id"],
+            result["restore_production_transaction_id"],
+        }
+    ) == 3
+    assert result["apply_journal"] == "deploy-transaction.json"
+    assert result["rollback_journal"] == "rollback-drill.json"
+    assert result["restore_production_journal"] == "restore-production-transaction.json"
+    rollback = tmp_path / result["rollback_journal"]
+    before = rollback.read_bytes()
+    assert hashlib.sha256(before).hexdigest() == result["rollback_seal_sha256"]
+    assert rollback.stat().st_mode & 0o222 == 0
+    assert rollback.read_bytes() == before
+
+
+def test_migration_handoff_is_non_executable_and_future_target_is_rejected(
+    tmp_path: Path,
+) -> None:
+    handoff = _load_strict(MIGRATION_HANDOFF)
+    assert handoff["current"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.21.1.21",
+    }
+    assert handoff["future"] == {
+        "host": "horistic-srv",
+        "private_ipv4": "10.31.1.31",
+        "executable": False,
+        "phase53_provider_allowed": False,
+    }
+    assert handoff["preserve"] == {
+        "server_identity": True,
+        "state_database": True,
+        "public_edge_contract": True,
+        "rollback_boundary": True,
+    }
+
+    backend = _live_backend_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    manifest["execution_target"] = "10.31.1.31"
+    candidate = tmp_path / "provider.json"
+    candidate.write_text(json.dumps(manifest), encoding="utf-8")
+    binding = backend.ExecutionSourceBinding(
+        commit="a" * 40,
+        tree_sha256="b" * 64,
+        blobs={"modules/rustdesk-fleet/contracts/phase53-edge.json": "c" * 64},
+    )
+    with pytest.raises(
+        backend.BackendBlocked, match="provider-manifest-target-invalid"
+    ):
+        backend.build_phase53_read_only_backend(
+            repo=REPO,
+            manifest_path=candidate,
+            source_binding=binding,
+            clock=lambda: datetime(2026, 7, 25, tzinfo=timezone.utc),
+        )
+
+    production = _production_adapters_module()
+    with pytest.raises(
+        production.AdapterBlocked, match="provider-manifest-target-invalid"
+    ):
+        production.validate_provider_manifest(manifest)
+
+
+def test_apply_cli_negative_authority_has_zero_side_effect(
+    tmp_path: Path,
+) -> None:
+    env = {
+        "PATH": os.environ["PATH"],
+        "HOME": str(tmp_path),
+        "ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1",
+        "ADMITTED_PHASE53": "1",
+        "PYTHONDONTWRITEBYTECODE": "1",
+    }
+    before = sorted(item.relative_to(tmp_path) for item in tmp_path.rglob("*"))
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(LIVE_GATE_PATH),
+            "--repo",
+            str(REPO),
+            "--live-backend",
+            "phase53-production",
+            "--mode",
+            "apply",
+            "--stage",
+            "full",
+            "--operation-plan",
+            str(tmp_path / "missing-plan.json"),
+            "--owner-approval",
+            str(tmp_path / "missing-approval.json"),
+        ],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 3
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "BLOCKED"
+    assert payload["mutation_performed"] is False
+    assert payload["journal_created"] is False
+    assert payload["provider_constructed"] is False
+    assert sorted(item.relative_to(tmp_path) for item in tmp_path.rglob("*")) == before
+
+
+def _git_fixture(repo: Path, *args: str) -> str:
+    completed = subprocess.run(
+        ["git", *args],
+        cwd=repo,
+        text=True,
+        capture_output=True,
+        check=True,
+    )
+    return completed.stdout.strip()
+
+
+def _phase53_binding_chain_fixture(tmp_path: Path) -> dict[str, Any]:
+    repo = tmp_path / "binding-repo"
+    repo.mkdir()
+    _git_fixture(repo, "init", "-q")
+    _git_fixture(repo, "config", "user.name", "Phase53 Test")
+    _git_fixture(repo, "config", "user.email", "phase53@example.invalid")
+
+    source_path = "source/runner.py"
+    source = repo / source_path
+    source.parent.mkdir(parents=True)
+    source.write_text("EXECUTION_TARGET = '10.21.1.21'\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", source_path)
+    _git_fixture(repo, "commit", "-qm", "source")
+    source_commit = _git_fixture(repo, "rev-parse", "HEAD")
+    source_oid = _git_fixture(repo, "rev-parse", f"{source_commit}:{source_path}")
+    source_tree = hashlib.sha256(
+        f"{source_path}\0{source_oid}\n".encode()
+    ).hexdigest()
+
+    evidence_root = repo / "modules/rustdesk-fleet/evidence/phase53"
+    evidence_root.mkdir(parents=True)
+    plan_digest = "a" * 64
+    apply_id = "1" * 32
+    rollback_id = "2" * 32
+    restore_id = "3" * 32
+    seal = "b" * 64
+    common = {
+        "schema_version": 1,
+        "execution_source_commit": source_commit,
+        "execution_source_tree_sha256": source_tree,
+        "operation_plan_sha256": plan_digest,
+        "secret_material_present": False,
+    }
+    authority_payloads = {
+        "preflight.json": {**common, "source_scope_clean": True},
+        "edge-forwarder-operation-plan.json": {
+            **common,
+            "target": "10.21.1.21",
+            "expires_at": "2099-01-01T00:00:00Z",
+        },
+        "edge-forwarder-owner-approval.json": {
+            **common,
+            "owner": "Giovanni Muniz",
+            "decision": "approve",
+            "expires_at": "2099-01-01T00:00:00Z",
+        },
+    }
+    authority_paths: dict[str, Path] = {}
+    for name, payload in authority_payloads.items():
+        file_path = evidence_root / name
+        file_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        authority_paths[name] = file_path
+    _git_fixture(
+        repo,
+        "add",
+        "--",
+        *[str(item.relative_to(repo)) for item in authority_paths.values()],
+    )
+    _git_fixture(repo, "commit", "-qm", "authority")
+
+    evidence_payloads = {
+        "deploy-transaction.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+        },
+        "edge-probes.json": {**common, "apply_transaction_id": apply_id},
+        "ops-api-probes.json": {**common, "apply_transaction_id": apply_id},
+        "lifecycle.json": {**common, "apply_transaction_id": apply_id},
+        "rollback-drill.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+            "rollback_transaction_id": rollback_id,
+            "rollback_seal_sha256": seal,
+        },
+        "restore-production-transaction.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+            "rollback_transaction_id": rollback_id,
+            "restore_production_transaction_id": restore_id,
+            "rollback_seal_sha256": seal,
+        },
+        "direct-relay-metrics.json": {
+            **common,
+            "apply_transaction_id": apply_id,
+            "restore_production_transaction_id": restore_id,
+        },
+    }
+    evidence_paths: dict[str, Path] = {}
+    for name, payload in evidence_payloads.items():
+        file_path = evidence_root / name
+        file_path.write_text(json.dumps(payload, sort_keys=True), encoding="utf-8")
+        evidence_paths[name] = file_path
+    _git_fixture(
+        repo,
+        "add",
+        "--",
+        *[str(item.relative_to(repo)) for item in evidence_paths.values()],
+    )
+    _git_fixture(repo, "commit", "-qm", "evidence only")
+    live_commit = _git_fixture(repo, "rev-parse", "HEAD")
+    manifest_digests = {
+        str(file_path.relative_to(repo)): hashlib.sha256(
+            _git_fixture(
+                repo, "show", f"{live_commit}:{file_path.relative_to(repo)}"
+            ).encode()
+        ).hexdigest()
+        for file_path in evidence_paths.values()
+    }
+
+    phase_root = (
+        repo
+        / ".planning/workstreams/rustdesk-fleet/phases/53-primary-relay-and-public-edge"
+    )
+    phase_root.mkdir(parents=True)
+    summary = phase_root / "53-05F-SUMMARY.md"
+    table = "\n".join(
+        f"| {name} | {digest} |" for name, digest in manifest_digests.items()
+    )
+    summary.write_text(
+        "---\n"
+        f"live_executor_commit: {live_commit}\n"
+        f"execution_source_commit: {source_commit}\n"
+        f"execution_source_tree_sha256: {source_tree}\n"
+        f"operation_plan_sha256: {plan_digest}\n"
+        "---\n"
+        "# 53-05F Summary\n\n"
+        "| path | sha256 |\n|---|---|\n"
+        f"{table}\n",
+        encoding="utf-8",
+    )
+    _git_fixture(repo, "add", "--", str(summary.relative_to(repo)))
+    _git_fixture(repo, "commit", "-qm", "summary only")
+    summary_commit = _git_fixture(repo, "rev-parse", "HEAD")
+
+    verification = phase_root / "53-05F-VERIFICATION.md"
+    verification.write_text(
+        "---\n"
+        "status: passed\n"
+        f"live_executor_commit: {live_commit}\n"
+        f"05F_summary_commit: {summary_commit}\n"
+        f"execution_source_commit: {source_commit}\n"
+        f"execution_source_tree_sha256: {source_tree}\n"
+        "---\n# Independent verification\n",
+        encoding="utf-8",
+    )
+    _git_fixture(repo, "add", "--", str(verification.relative_to(repo)))
+    _git_fixture(repo, "commit", "-qm", "independent verification")
+
+    return {
+        "repo": repo,
+        "source_path": source,
+        "source_relative": source_path,
+        "source_commit": source_commit,
+        "source_tree": source_tree,
+        "live_commit": live_commit,
+        "summary_commit": summary_commit,
+        "summary": summary,
+        "verification": verification,
+        "authority": authority_paths,
+        "evidence": evidence_paths,
+    }
+
+
+def _validate_binding_fixture(module: Any, fixture: dict[str, Any]) -> dict[str, Any]:
+    authority = fixture["authority"]
+    evidence = fixture["evidence"]
+    return module.validate_phase53_binding_chain(
+        repo=fixture["repo"],
+        preflight=authority["preflight.json"],
+        operation_plan=authority["edge-forwarder-operation-plan.json"],
+        owner_approval=authority["edge-forwarder-owner-approval.json"],
+        deploy=evidence["deploy-transaction.json"],
+        edge_probes=evidence["edge-probes.json"],
+        ops_api_probes=evidence["ops-api-probes.json"],
+        lifecycle=evidence["lifecycle.json"],
+        rollback=evidence["rollback-drill.json"],
+        restore_production=evidence["restore-production-transaction.json"],
+        direct_relay_metrics=evidence["direct-relay-metrics.json"],
+        summary=fixture["summary"],
+        verification=fixture["verification"],
+        execution_source_paths=[fixture["source_relative"]],
+        strict_validator=lambda _repo: {
+            "state": "PASS",
+            "requirements": ["SRV-02", "SRV-03", "SRV-04", "SRV-06", "OPS-01"],
+        },
+    )
+
+
+def test_binding_chain_proves_evidence_only_summary_only_and_ancestry(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    computed = module.compute_execution_source_binding(
+        repo=fixture["repo"],
+        execution_source_commit=fixture["source_commit"],
+        manifest_paths=[fixture["source_relative"]],
+    )
+    assert computed["execution_source_tree_sha256"] == fixture["source_tree"]
+    result = _validate_binding_fixture(module, fixture)
+    assert result["status"] == "PASS"
+    assert result["live_executor_commit"] == fixture["live_commit"]
+    assert result["05F_summary_commit"] == fixture["summary_commit"]
+    assert result["mutation_performed"] is False
+    assert result["provider_constructed"] is False
+
+
+def test_binding_chain_rejects_self_hash_ancestry_and_duplicate_inputs(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    deploy = fixture["evidence"]["deploy-transaction.json"]
+    payload = _load_strict(deploy)
+    payload["self_sha256"] = "f" * 64
+    deploy.write_text(json.dumps(payload), encoding="utf-8")
+    with pytest.raises(module.BindingChainInvalid, match="self-hash-forbidden"):
+        _validate_binding_fixture(module, fixture)
+    _git_fixture(
+        fixture["repo"],
+        "checkout",
+        "--",
+        str(deploy.relative_to(fixture["repo"])),
+    )
+
+    verification = fixture["verification"]
+    text = verification.read_text(encoding="utf-8").replace(
+        fixture["summary_commit"], fixture["source_commit"]
+    )
+    verification.write_text(text, encoding="utf-8")
+    with pytest.raises(module.BindingChainInvalid, match="summary-commit-mismatch"):
+        _validate_binding_fixture(module, fixture)
+
+    with pytest.raises(module.BindingChainInvalid, match="explicit-path-duplicate"):
+        module.compute_execution_source_binding(
+            repo=fixture["repo"],
+            execution_source_commit=fixture["source_commit"],
+            manifest_paths=[
+                fixture["source_relative"],
+                fixture["source_relative"],
+            ],
+        )
+
+
+def test_binding_chain_rejects_dirty_scope_without_writes(tmp_path: Path) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    fixture["source_path"].write_text("DIRTY = True\n", encoding="utf-8")
+    before = {
+        item.relative_to(fixture["repo"]): item.read_bytes()
+        for item in fixture["repo"].rglob("*")
+        if item.is_file() and ".git" not in item.parts
+    }
+    with pytest.raises(module.BindingChainInvalid, match="execution-source-dirty"):
+        _validate_binding_fixture(module, fixture)
+    after = {
+        item.relative_to(fixture["repo"]): item.read_bytes()
+        for item in fixture["repo"].rglob("*")
+        if item.is_file() and ".git" not in item.parts
+    }
+    assert after == before
+
+
+def test_execution_source_scope_is_closed_sorted_and_excludes_mutable_authority() -> None:
+    module = _binding_checker_module()
+    payload = _load_strict(EXECUTION_SOURCE_SCOPE)
+    paths = module.validate_execution_source_scope_payload(payload)
+
+    assert tuple(paths) == EXPECTED_EXECUTION_SOURCE_PATHS
+    assert paths == sorted(paths)
+    assert len(paths) == len(set(paths)) == 34
+    assert all((REPO / item).is_file() for item in paths)
+    assert not any((REPO / item).is_symlink() for item in paths)
+    assert not any(
+        marker in item
+        for item in paths
+        for marker in ("/evidence/", "/.planning/", "approval", "operation-plan")
+    )
+    assert not {
+        ".planning/workstreams/rustdesk-fleet/REQUIREMENTS.md",
+        "modules/rustdesk-fleet/evidence/ledger.json",
+        "modules/rustdesk-fleet/tests/test_phase51_contracts.py",
+    }.intersection(paths)
+
+
+@pytest.mark.parametrize(
+    ("mutation", "blocker"),
+    [
+        ("unknown-field", "source-scope-schema-invalid"),
+        ("missing", "source-scope-missing"),
+        ("extra", "source-scope-extra"),
+        ("duplicate", "source-scope-duplicate"),
+        ("unsorted", "source-scope-order-invalid"),
+        ("evidence", "source-scope-forbidden"),
+    ],
+)
+def test_execution_source_scope_rejects_unknown_missing_extra_and_mutable_paths(
+    mutation: str,
+    blocker: str,
+) -> None:
+    module = _binding_checker_module()
+    payload = _load_strict(EXECUTION_SOURCE_SCOPE)
+    if mutation == "unknown-field":
+        payload["stored_verdict"] = "PASS"
+    elif mutation == "missing":
+        payload["paths"].remove(EXPECTED_EXECUTION_SOURCE_PATHS[0])
+    elif mutation == "extra":
+        payload["paths"].append(
+            "modules/rustdesk-fleet/tools/phase53-unknown-live-consumer.py"
+        )
+        payload["paths"].sort()
+    elif mutation == "duplicate":
+        payload["paths"].append(payload["paths"][-1])
+    elif mutation == "unsorted":
+        payload["paths"] = list(reversed(payload["paths"]))
+    else:
+        payload["paths"].append(
+            "modules/rustdesk-fleet/evidence/phase53/preflight.json"
+        )
+        payload["paths"].sort()
+
+    with pytest.raises(module.BindingChainInvalid, match=blocker):
+        module.validate_execution_source_scope_payload(payload)
+
+
+def test_source_tree_digest_uses_only_sorted_git_blob_records(tmp_path: Path) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    second_relative = "source/validator.py"
+    second_path = fixture["repo"] / second_relative
+    second_path.write_text("STRICT = True\n", encoding="utf-8")
+    _git_fixture(fixture["repo"], "add", "--", second_relative)
+    _git_fixture(fixture["repo"], "commit", "-qm", "second source")
+    source_commit = _git_fixture(fixture["repo"], "rev-parse", "HEAD")
+    paths = sorted([fixture["source_relative"], second_relative])
+    records = b""
+    for relative in paths:
+        oid = _git_fixture(
+            fixture["repo"], "rev-parse", f"{source_commit}:{relative}"
+        )
+        records += relative.encode() + b"\0" + oid.encode() + b"\n"
+
+    binding = module.compute_execution_source_binding(
+        repo=fixture["repo"],
+        execution_source_commit=source_commit,
+        manifest_paths=paths,
+    )
+    assert binding["execution_source_tree_sha256"] == hashlib.sha256(records).hexdigest()
+    assert binding["manifest_paths"] == paths
+
+
+def test_execution_source_commit_accepts_exact_seven_paths_and_rejects_eighth(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    repo = tmp_path / "source-commit-repo"
+    repo.mkdir()
+    _git_fixture(repo, "init", "-q")
+    _git_fixture(repo, "config", "user.name", "Phase53 Test")
+    _git_fixture(repo, "config", "user.email", "phase53@example.invalid")
+    (repo / "base.txt").write_text("base\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", "base.txt")
+    _git_fixture(repo, "commit", "-qm", "base")
+    for relative in EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS:
+        path = repo / relative
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"{relative}\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", *EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS)
+    _git_fixture(repo, "commit", "-qm", "exact source seal")
+    source_commit = _git_fixture(repo, "rev-parse", "HEAD")
+
+    assert module.validate_execution_source_commit_paths(repo, source_commit) == list(
+        EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS
+    )
+
+    eighth = "modules/rustdesk-fleet/tools/unreviewed-eighth.py"
+    eighth_path = repo / eighth
+    eighth_path.write_text("UNREVIEWED = True\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", eighth)
+    _git_fixture(repo, "commit", "--amend", "--no-edit", "-q")
+    with pytest.raises(
+        module.BindingChainInvalid,
+        match="execution-source-commit-paths-invalid",
+    ):
+        module.validate_execution_source_commit_paths(
+            repo, _git_fixture(repo, "rev-parse", "HEAD")
+        )
+
+
+def test_execution_source_git_objects_reject_missing_and_symlink_entries(
+    tmp_path: Path,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    with pytest.raises(module.BindingChainInvalid, match="git-object-missing"):
+        module.compute_execution_source_binding(
+            repo=fixture["repo"],
+            execution_source_commit=fixture["source_commit"],
+            manifest_paths=["source/missing.py"],
+        )
+
+    link = fixture["repo"] / "source/link.py"
+    link.symlink_to("runner.py")
+    _git_fixture(fixture["repo"], "add", "--", "source/link.py")
+    _git_fixture(fixture["repo"], "commit", "-qm", "symlink source")
+    link_commit = _git_fixture(fixture["repo"], "rev-parse", "HEAD")
+    with pytest.raises(module.BindingChainInvalid, match="git-object-symlink"):
+        module.compute_execution_source_binding(
+            repo=fixture["repo"],
+            execution_source_commit=link_commit,
+            manifest_paths=["source/link.py"],
+        )
+
+
+@pytest.mark.parametrize("mutation", ["missing", "symlink", "modified-commit"])
+def test_execution_source_worktree_rejects_missing_symlink_and_modified_entries(
+    tmp_path: Path,
+    mutation: str,
+) -> None:
+    module = _binding_checker_module()
+    fixture = _phase53_binding_chain_fixture(tmp_path)
+    if mutation == "missing":
+        fixture["source_path"].unlink()
+        blocker = "explicit-path-missing"
+    elif mutation == "symlink":
+        fixture["source_path"].unlink()
+        fixture["source_path"].symlink_to("../source/runner.py")
+        blocker = "explicit-path-invalid"
+    else:
+        fixture["source_path"].write_text("CHANGED = True\n", encoding="utf-8")
+        _git_fixture(fixture["repo"], "add", "--", fixture["source_relative"])
+        _git_fixture(fixture["repo"], "commit", "-qm", "changed source")
+        blocker = "execution-source-changed"
+
+    with pytest.raises(module.BindingChainInvalid, match=blocker):
+        module.require_clean_execution_source(
+            repo=fixture["repo"],
+            execution_source_commit=fixture["source_commit"],
+            manifest_paths=[fixture["source_relative"]],
+            expected_tree=fixture["source_tree"],
+        )
 
 
 def test_ops_api_contract_schema_auth_and_readiness() -> None:
@@ -592,13 +2008,14 @@ def _new_server_transaction(
     runner: _FakeServerRunner,
     *,
     fault_after: str | None = None,
+    repo: Path = REPO,
 ) -> Any:
     home = tmp_path / "home"
     runtime = tmp_path / "run-user-1000"
     home.mkdir()
     runtime.mkdir()
     return module.Phase53ServerTransaction(
-        repo=REPO,
+        repo=repo,
         home=home,
         runtime_dir=runtime,
         uid=1000,
@@ -631,6 +2048,23 @@ def test_identity_hydration_is_tmpfs_only_and_evidence_is_value_free(
     encoded = json.dumps(evidence, sort_keys=True)
     assert not any(value in encoded for value in _vault_fixture().values())
     assert not list(transaction.home.rglob("id_ed25519*"))
+
+
+def test_candidate_runtime_rendering_is_owner_admission_bound(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    module = _server_installer_module()
+    monkeypatch.delenv("ADMITTED_PHASE53", raising=False)
+    assert module.select_runtime_candidate(REPO) is None
+    monkeypatch.setenv("ADMITTED_PHASE53", "1")
+    with pytest.raises(module.Phase53ServerBlocked, match="candidate-admission-required"):
+        module.select_runtime_candidate(REPO)
+
+    monkeypatch.delenv("ADMITTED_PHASE53", raising=False)
+    transaction = _new_server_transaction(module, tmp_path, _FakeServerRunner())
+    source = REPO / "modules/rustdesk-fleet/quadlets/atius-rustdesk-server-hbbs.container"
+    baseline = transaction._source_bytes(source)
+    assert baseline == source.read_bytes()
 
 
 def test_sqlite_state_digest_and_integrity_are_preserved_by_install_and_rollback(
@@ -730,7 +2164,6 @@ def test_log_bound_rotation_is_actual_bounded_and_retained(tmp_path: Path) -> No
 @pytest.mark.parametrize(
     ("artifact", "owner_plan"),
     [
-        ("evidence/phase53/deploy-transaction.json", "53-05"),
         ("tools/validate_phase53.py", "53-06"),
     ],
 )
@@ -930,11 +2363,15 @@ def _healthy_ops_observations() -> dict[str, Any]:
         },
         "public_fingerprint": "sha256:" + "a" * 64,
         "expected_public_fingerprint": "sha256:" + "a" * 64,
-        "edge": {
-            "ipv4_tcp": edge["public_ipv4_allowed"]["tcp"],
-            "ipv4_udp": edge["public_ipv4_allowed"]["udp"],
-            "ipv6": [],
-            "forbidden_not_open": edge["public_forbidden"]["tcp"],
+        "edge_forwarder": {
+            "host": "atius-srv-1",
+            "public_ipv4": edge["public_edge"]["public_ipv4"],
+            "external_tcp": edge["public_ipv4_allowed"]["tcp"],
+            "external_udp": edge["public_ipv4_allowed"]["udp"],
+            "native_public_closed_tcp": edge["public_forbidden"]["tcp"],
+            "native_public_closed_udp": edge["public_forbidden"]["udp"],
+            "backend_ipv4": edge["backend"]["private_ipv4"],
+            "snat_source_ipv4": edge["backend"]["native_ingress_source_ipv4"],
         },
         "cgroups": {
             "parent_cpu_percent": 80,
@@ -983,6 +2420,8 @@ def test_ops_api_endpoints_auth_redaction_and_unknown_route_denial() -> None:
         "schema_version": 1,
         "service": "atius-rustdesk-ops",
         "primary_host": "horistic-srv",
+        "public_edge": observations["edge_forwarder"],
+        "backend_listeners": observations["listeners"],
         "service_active": True,
         "image_digest": observations["image_digest"],
         "public_fingerprint": observations["public_fingerprint"],
@@ -1024,7 +2463,7 @@ def test_ops_api_endpoints_auth_redaction_and_unknown_route_denial() -> None:
         ({"image_digest": "sha256:" + "0" * 64}, "immutable-image-digest"),
         ({"listeners": {}}, "exact-listener-ownership"),
         ({"public_fingerprint": "sha256:" + "b" * 64}, "public-fingerprint-continuity"),
-        ({"edge": {"ipv4_tcp": [21114]}}, "effective-edge-policy"),
+        ({"edge_forwarder": {"external_tcp": [21114]}}, "effective-edge-policy"),
         ({"cgroups": {"ops_cpu_percent": 11}}, "resource-ceilings"),
         ({"log_growth_bytes": 134217729}, "disk-and-log-bounds"),
         ({"restart_count": 4}, "bounded-restart-counters"),
@@ -1046,6 +2485,15 @@ def test_ops_api_readiness_derives_current_inputs_and_fails_on_drift(
     result = module.derive_readiness(drifted)
     assert result["ready"] is False
     assert result["checks"][failed_check] is False
+
+
+def test_ops_api_successor_digest_requires_admission(monkeypatch: pytest.MonkeyPatch) -> None:
+    module = _ops_api_module()
+    monkeypatch.delenv("ADMITTED_PHASE53", raising=False)
+    assert module.select_runtime_digest(environ={}) == module.EXPECTED_DIGEST
+    monkeypatch.setenv("ADMITTED_PHASE53", "1")
+    with pytest.raises(module.OpsApiBlocked, match="candidate-admission-required"):
+        module.select_runtime_digest(repo=REPO)
 
 
 def test_ops_api_metrics_are_allowlisted_observational_and_secret_free() -> None:
@@ -1172,6 +2620,560 @@ def test_unflagged_cli_refuses_without_runtime_evidence(tmp_path: Path) -> None:
     assert list(tmp_path.iterdir()) == []
 
 
+def test_explicit_cli_uses_requested_evidence_dir_and_stays_fail_closed(
+    tmp_path: Path,
+) -> None:
+    env = {
+        "PATH": os.environ["PATH"],
+        "ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1",
+    }
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(LIVE_GATE_PATH),
+            "--repo",
+            str(REPO),
+            "--evidence-dir",
+            str(tmp_path),
+            "--stage",
+            "edge-probes",
+        ],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    assert completed.stderr == ""
+    payload = json.loads(completed.stdout)
+    assert payload == {
+        "blocker": "preflight-input-required",
+        "mutation_performed": False,
+        "secret_material_present": False,
+        "status": "BLOCKED",
+    }
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_cli_checks_admission_and_provider_before_opening_journal(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    preflight = _current_preflight(module)
+    preflight.update(
+        {
+            "candidate_admission_performed": True,
+            "candidate_contract_digest": preflight["contract_digests"][
+                "phase53-runtime-candidate.json"
+            ],
+            "provider_manifest_digest": preflight["contract_digests"][
+                "phase53-provider-manifest.json"
+            ],
+        }
+    )
+    (tmp_path / "preflight.json").write_text(json.dumps(preflight), encoding="utf-8")
+    env = {
+        "PATH": os.environ["PATH"],
+        "ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1",
+        "ADMITTED_PHASE53": "1",
+    }
+    completed = subprocess.run(
+        [
+            sys.executable,
+            str(LIVE_GATE_PATH),
+            "--repo",
+            str(REPO),
+            "--evidence-dir",
+            str(tmp_path),
+            "--stage",
+            "edge-probes",
+        ],
+        cwd=REPO,
+        env=env,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert completed.returncode == 2
+    payload = json.loads(completed.stdout)
+    assert payload["status"] == "BLOCKED"
+    assert payload["blocker"] == "candidate-evidence-not-admitted"
+    assert not (tmp_path / "phase53-journal.json").exists()
+
+
+def test_edge_probes_dispatches_ordered_injected_adapters() -> None:
+    module = _live_gate_module()
+    transaction_id = "1" * 32
+    calls: list[str] = []
+    adapters: dict[str, Any] = {}
+
+    for stage in module.EDGE_PROBES_SEQUENCE:
+        def adapter(stage: str = stage) -> Any:
+            calls.append(stage)
+            return module.StageReceipt.create(
+                transaction_id=transaction_id,
+                stage=stage,
+                input_digest="2" * 64,
+                observations={"raw_observation_digest": "3" * 64},
+                mutation={
+                    "performed": False,
+                    "classes": [],
+                    "cleanup_pending": [],
+                },
+                rollback_state="ready",
+            )
+
+        adapters[stage] = adapter
+
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        stage_adapters=adapters,
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+
+    result = gate.run_stage("edge-probes")
+
+    assert calls == list(module.EDGE_PROBES_SEQUENCE)
+    assert result["stage"] == "edge-probes"
+    assert result["receipt_count"] == len(module.EDGE_PROBES_SEQUENCE)
+    assert [receipt["stage"] for receipt in result["receipts"]] == calls
+    assert result["secret_material_present"] is False
+
+
+def test_stage_dispatch_requires_explicit_adapter() -> None:
+    module = _live_gate_module()
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+
+    with pytest.raises(module.GateBlocked, match="stage-adapter-required:preflight"):
+        gate.run_stage("preflight")
+
+
+def test_stage_failure_requests_containment_and_writes_rollback_journal(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    calls: list[str] = []
+    transaction_id = "9" * 32
+
+    def preflight() -> Any:
+        return module.StageReceipt.create(
+            transaction_id=transaction_id,
+            stage="preflight",
+            input_digest="a" * 64,
+            observations={"raw_observation_digest": "b" * 64},
+            mutation={"performed": False, "classes": [], "cleanup_pending": []},
+            rollback_state="ready",
+        )
+
+    def runtime() -> Any:
+        raise RuntimeError("provider failure")
+
+    def contain_on_failure() -> dict[str, Any]:
+        calls.append("contain")
+        return {"status": "ignored", "token": "never-recorded"}
+
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        stage_adapters={
+            "preflight": preflight,
+            "runtime": runtime,
+            "contain_on_failure": contain_on_failure,
+        },
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+    gate.journal = module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id)
+    gate.run_stage("preflight")
+
+    with pytest.raises(module.GateBlocked, match="stage-adapter-failed:runtime"):
+        gate.run_stage("runtime")
+
+    assert calls == ["contain"]
+    payload = _load_strict(tmp_path / "journal.json")
+    assert payload["last_stage"] == "rollback"
+    serialized = json.dumps(payload)
+    assert "provider failure" not in serialized
+    assert "never-recorded" not in serialized
+
+
+def _live_adapters_module() -> Any:
+    path = REPO / "modules/rustdesk-fleet/tools/phase53-live-adapters.py"
+    spec = importlib.util.spec_from_file_location("phase53_live_adapters_test", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def _production_adapters_module() -> Any:
+    path = REPO / "modules/rustdesk-fleet/tools/phase53_production_adapters.py"
+    spec = importlib.util.spec_from_file_location("phase53_production_adapters_test", path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_live_adapter_factory_requires_admitted_candidate(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", "a" * 32)
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": False, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        transaction_id="a" * 32,
+        journal=journal,
+    )
+    with pytest.raises(module.AdapterBlocked, match="candidate-not-admitted"):
+        module.build_live_adapters(context, injected={stage: lambda: {} for stage in module.EDGE_SEQUENCE})
+
+    admitted = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": True, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        transaction_id="a" * 32,
+        journal=journal,
+    )
+    with pytest.raises(module.AdapterBlocked, match="live-backend-containment-missing"):
+        module.build_live_adapters(admitted, injected={stage: lambda: {} for stage in module.EDGE_SEQUENCE})
+
+
+def test_production_adapter_factory_requires_current_candidate_and_provider_digests(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", "c" * 32)
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": False, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1", "ADMITTED_PHASE53": "1"},
+        transaction_id="c" * 32,
+        journal=None,
+    )
+    with pytest.raises(module.AdapterBlocked, match="candidate-not-admitted"):
+        module.build_production_adapters(context)
+
+    admitted = copy.deepcopy(context.preflight)
+    admitted["candidate_admission_performed"] = True
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=context.evidence_dir,
+        preflight=admitted,
+        environ=context.environ,
+        transaction_id=context.transaction_id,
+        journal=journal,
+    )
+    with pytest.raises(module.AdapterBlocked, match="candidate-evidence-not-admitted"):
+        module.build_production_adapters(context)
+
+
+def test_production_bundle_factory_is_not_constructed_before_authority(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    calls: list[str] = []
+    context = module.AdapterContext(
+        repo=REPO,
+        evidence_dir=REPO / "modules/rustdesk-fleet/evidence/phase53",
+        preflight={"candidate_admission_performed": False, "rollback_ready": True},
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1", "ADMITTED_PHASE53": "1"},
+        transaction_id="4" * 32,
+        journal=None,
+    )
+
+    def factory() -> Any:
+        calls.append("constructed")
+        return object()
+
+    with pytest.raises(module.AdapterBlocked, match="candidate-not-admitted"):
+        module.build_production_adapters(context, provider_bundle_factory=factory)
+    assert calls == []
+
+
+def test_production_provider_seam_is_explicit_and_route_policy_is_fail_closed() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    module.validate_provider_manifest(manifest)
+    assert module.select_ssh_route(0) == "private"
+    assert module.select_ssh_route(255) == "public-native-fallback"
+    with pytest.raises(module.AdapterBlocked, match="ssh-private-probe-failed"):
+        module.select_ssh_route(1)
+    with pytest.raises(module.AdapterBlocked, match="provider-shell-eval-forbidden"):
+        module.validate_command_argv(["ssh", "-o", "ProxyCommand=$(id)"])
+
+
+def test_production_provider_bundle_requires_authority_before_callbacks() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    calls: list[str] = []
+
+    def callback() -> dict[str, Any]:
+        calls.append("provider")
+        return {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+
+    stages = {stage: callback for stage in module.EDGE_SEQUENCE}
+    bundle = module.ProviderBundle(stages=stages, containment=callback, transaction_id="d" * 32)
+    with pytest.raises(module.AdapterBlocked, match="provider-authority-required"):
+        module.bind_provider_bundle(manifest, bundle, authorized=False)
+    assert calls == []
+
+    backend = module.bind_provider_bundle(manifest, bundle, authorized=True)
+    receipt = backend.stages["preflight"]()
+    assert receipt["stage"] == "preflight"
+    assert receipt["secret_material_present"] is False
+    assert receipt["mutation"] == {
+        "performed": False,
+        "classes": [],
+        "cleanup_pending": [],
+    }
+    assert calls == ["provider"]
+
+
+def test_production_provider_bundle_rejects_transaction_drift_before_callbacks() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    calls: list[str] = []
+
+    def callback() -> dict[str, Any]:
+        calls.append("provider")
+        return {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+
+    bundle = module.ProviderBundle(
+        stages={stage: callback for stage in module.EDGE_SEQUENCE},
+        containment=callback,
+        transaction_id="f" * 32,
+    )
+    with pytest.raises(module.AdapterBlocked, match="provider-transaction-drift"):
+        module.bind_provider_bundle(
+            manifest, bundle, authorized=True, expected_transaction_id="0" * 32
+        )
+    assert calls == []
+
+
+def test_production_provider_bundle_validates_all_callbacks_before_binding() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+    callback = lambda: {
+        "mutation_performed": False,
+        "mutation_classes": [],
+        "cleanup_pending": [],
+    }
+    stages = {stage: callback for stage in module.EDGE_SEQUENCE}
+    stages["runtime"] = object()
+    bundle = module.ProviderBundle(
+        stages=stages, containment=callback, transaction_id="1" * 32
+    )
+    with pytest.raises(module.AdapterBlocked, match="provider-callback-invalid:runtime"):
+        module.bind_provider_bundle(manifest, bundle, authorized=True)
+
+
+def test_runtime_provider_builds_explicit_bundle_without_invoking_callbacks() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def callback(name: str) -> Any:
+        def run() -> dict[str, Any]:
+            calls.append(name)
+            return {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+
+        return run
+
+    provider = module.RuntimeProvider(
+        transaction_id="a" * 32,
+        snapshot_prestate=callback("prestate"),
+        install_closed=callback("install"),
+        rollback_server=callback("rollback"),
+        edge_stages={stage: callback(stage) for stage in module.EDGE_SEQUENCE if stage != "runtime"},
+        containment=callback("containment"),
+    )
+    bundle = provider.to_bundle()
+    assert isinstance(bundle, module.ProviderBundle)
+    assert calls == []
+
+
+def test_runtime_provider_orders_prestate_before_install_and_is_value_free() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def prestate() -> dict[str, Any]:
+        calls.append("prestate")
+        return {"pre_state_digest": "a" * 64}
+
+    def install() -> dict[str, Any]:
+        calls.append("install")
+        return {"managed_units": 3}
+
+    provider = module.RuntimeProvider(
+        transaction_id="b" * 32,
+        snapshot_prestate=prestate,
+        install_closed=install,
+        rollback_server=lambda: {"rollback": "ready"},
+        edge_stages={
+            stage: lambda: {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+            for stage in module.EDGE_SEQUENCE
+            if stage != "runtime"
+        },
+        containment=lambda: {"contained": True},
+    )
+    bundle = provider.to_bundle()
+    backend = module.bind_provider_bundle(
+        _load_strict(PROVIDER_CONTRACT), bundle, authorized=True, expected_transaction_id="b" * 32
+    )
+    receipt = backend.stages["runtime"]()
+    assert calls == ["prestate", "install"]
+    serialized = json.dumps(receipt, sort_keys=True)
+    assert "argv" not in serialized
+    assert "stdout" not in serialized
+    assert "fixture-secret" not in serialized.lower()
+    assert receipt["mutation"]["performed"] is True
+
+
+def test_runtime_provider_rolls_back_on_install_fault_without_leaking_error() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def install() -> dict[str, Any]:
+        calls.append("install")
+        raise RuntimeError("fixture secret and argv must not escape")
+
+    def rollback() -> dict[str, Any]:
+        calls.append("rollback")
+        return {"state": "restored"}
+
+    provider = module.RuntimeProvider(
+        transaction_id="c" * 32,
+        snapshot_prestate=lambda: {"pre_state_digest": "d" * 64},
+        install_closed=install,
+        rollback_server=rollback,
+        edge_stages={
+            stage: lambda: {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+            for stage in module.EDGE_SEQUENCE
+            if stage != "runtime"
+        },
+        containment=lambda: {"contained": True},
+    )
+    backend = module.bind_provider_bundle(
+        _load_strict(PROVIDER_CONTRACT), provider.to_bundle(), authorized=True
+    )
+    with pytest.raises(module.AdapterBlocked, match="runtime-provider-install-failed") as error:
+        backend.stages["runtime"]()
+    assert calls == ["install", "rollback"]
+    assert "fixture secret" not in str(error.value)
+
+
+def test_runtime_provider_rolls_back_when_install_output_contains_secret() -> None:
+    module = _production_adapters_module()
+    calls: list[str] = []
+
+    def install() -> dict[str, Any]:
+        calls.append("install")
+        return {"password": "fixture-secret"}
+
+    def rollback() -> dict[str, Any]:
+        calls.append("rollback")
+        return {"state": "restored"}
+
+    provider = module.RuntimeProvider(
+        transaction_id="d" * 32,
+        snapshot_prestate=lambda: {"pre_state_digest": "e" * 64},
+        install_closed=install,
+        rollback_server=rollback,
+        edge_stages={
+            stage: lambda: {"mutation_performed": False, "mutation_classes": [], "cleanup_pending": []}
+            for stage in module.EDGE_SEQUENCE
+            if stage != "runtime"
+        },
+        containment=lambda: {"contained": True},
+    )
+    backend = module.bind_provider_bundle(
+        _load_strict(PROVIDER_CONTRACT), provider.to_bundle(), authorized=True
+    )
+    with pytest.raises(module.AdapterBlocked, match="runtime-provider-install-output-invalid"):
+        backend.stages["runtime"]()
+    assert calls == ["install", "rollback"]
+
+
+def test_live_gate_resumes_only_after_completed_journal_prefix(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    transaction_id = "2" * 32
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id)
+    journal.append("preflight", {"metadata_digest": "a" * 64})
+
+    calls: list[str] = []
+
+    def runtime() -> Any:
+        calls.append("runtime")
+        return module.StageReceipt.create(
+            transaction_id=transaction_id,
+            stage="runtime",
+            input_digest="b" * 64,
+            observations={"raw_observation_digest": "c" * 64},
+            mutation={"performed": False, "classes": [], "cleanup_pending": []},
+            rollback_state="ready",
+        )
+
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+        stage_adapters={"runtime": runtime},
+    )
+    gate.authorize_first_mutation(_current_preflight(module))
+    gate.hydrate_journal(module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id))
+    with pytest.raises(module.GateBlocked, match="journal-stage-already-complete"):
+        gate.run_stage("preflight")
+    gate.run_stage("runtime")
+    assert calls == ["runtime"]
+
+
+def test_live_gate_rejects_terminal_rollback_journal(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    transaction_id = "3" * 32
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id)
+    journal.append("rollback", {"containment_requested": True, "blocker_digest": "a" * 64})
+    gate = module.Phase53LiveGate(
+        repo=REPO,
+        environ={"ATIUS_RUN_RUSTDESK_PHASE53_LIVE": "1"},
+    )
+    with pytest.raises(module.GateBlocked, match="journal-terminal-rollback"):
+        gate.hydrate_journal(module.ValueFreeJournal.open(tmp_path / "journal.json", transaction_id))
+
+
+def test_production_provider_bundle_rejects_secret_output_before_receipt() -> None:
+    module = _production_adapters_module()
+    manifest = _load_strict(PROVIDER_CONTRACT)
+
+    def secret_callback() -> dict[str, Any]:
+        return {
+            "mutation_performed": False,
+            "mutation_classes": [],
+            "cleanup_pending": [],
+            "password": "fixture-secret",
+        }
+
+    stages = {stage: secret_callback for stage in module.EDGE_SEQUENCE}
+    bundle = module.ProviderBundle(
+        stages=stages, containment=secret_callback, transaction_id="e" * 32
+    )
+    backend = module.bind_provider_bundle(manifest, bundle, authorized=True)
+    with pytest.raises(module.AdapterBlocked, match="provider-secret-output:runtime"):
+        backend.stages["runtime"]()
+
+
+def test_value_free_journal_redacts_and_rejects_verdicts(tmp_path: Path) -> None:
+    module = _live_adapters_module()
+    journal = module.ValueFreeJournal.open(tmp_path / "journal.json", "b" * 32)
+    journal.append("preflight", {"observations": {"token": "[REDACTED]", "digest": "c" * 64}})
+    payload = _load_strict(tmp_path / "journal.json")
+    assert payload["secret_material_present"] is False
+    assert payload["last_stage"] == "preflight"
+    assert "fixture-secret" not in json.dumps(payload).lower()
+    with pytest.raises(module.AdapterBlocked, match="journal-receipt-invalid"):
+        journal.append("runtime", {"status": "PASS"})
+
+
 def _oci_rule(
     protocol: str,
     first: int,
@@ -1201,7 +3203,7 @@ def _allowed_oci_pages() -> dict[str, Any]:
                 "security_lists": [
                     {
                         "id": "sl-primary",
-                        "ingress_rules": [_oci_rule("tcp", 21115, 21117)],
+                        "ingress_rules": [_oci_rule("tcp", 34099, 34101)],
                     }
                 ],
                 "network_security_groups": [],
@@ -1220,7 +3222,7 @@ def _allowed_oci_pages() -> dict[str, Any]:
                 "network_security_groups": [
                     {
                         "id": "nsg-edge",
-                        "ingress_rules": [_oci_rule("udp", 21116, 21116)],
+                        "ingress_rules": [_oci_rule("udp", 34100, 34100)],
                     }
                 ],
                 "attachments": [],
@@ -1239,30 +3241,30 @@ def _phase53_edge_preflight() -> dict[str, Any]:
         "phase52_check_count": 11,
         "selected_primary": "horistic-srv",
         "address_consensus": {
-            "oci-vnic-public-ipv4": "203.0.113.8",
-            "horistic-egress-ipv4": "203.0.113.8",
-            "ssh-horistic-srv.atius.com.br-a": "203.0.113.8",
+            "oci-edge-vnic-public-ipv4": "203.0.113.8",
+            "edge-vnic-public-ipv4": "203.0.113.8",
+            "reserved-public-ipv4": "203.0.113.8",
         },
         "address_observations": [
             {
-                "source": "oci-vnic-public-ipv4",
+                "source": "oci-edge-vnic-public-ipv4",
                 "ipv4": "203.0.113.8",
                 "observed_at": "2026-07-23T02:00:00Z",
-                "topology_id": "vnic:ocid1.vnic.phase53",
+                "topology_id": "vnic:atius-srv-1-public",
                 "record_types": ["A"],
             },
             {
-                "source": "horistic-egress-ipv4",
+                "source": "edge-vnic-public-ipv4",
                 "ipv4": "203.0.113.8",
                 "observed_at": "2026-07-23T02:00:00Z",
-                "topology_id": "host:horistic-srv",
+                "topology_id": "host:atius-srv-1:10.0.0.238",
                 "record_types": ["A"],
             },
             {
-                "source": "ssh-horistic-srv.atius.com.br-a",
+                "source": "reserved-public-ipv4",
                 "ipv4": "203.0.113.8",
                 "observed_at": "2026-07-23T02:00:00Z",
-                "topology_id": "dns:ssh-horistic-srv.atius.com.br",
+                "topology_id": "reservation:137.131.140.20",
                 "record_types": ["A"],
             },
         ],
@@ -1390,11 +3392,9 @@ def _edge_transaction(module: Any, backend: Any, **kwargs: Any) -> Any:
     kwargs.setdefault(
         "address_source_policy",
         {
-            "oci-vnic-public-ipv4": "vnic:ocid1.vnic.phase53",
-            "horistic-egress-ipv4": "host:horistic-srv",
-            "ssh-horistic-srv.atius.com.br-a": (
-                "dns:ssh-horistic-srv.atius.com.br"
-            ),
+            "oci-edge-vnic-public-ipv4": "vnic:atius-srv-1-public",
+            "edge-vnic-public-ipv4": "host:atius-srv-1:10.0.0.238",
+            "reserved-public-ipv4": "reservation:137.131.140.20",
         },
     )
     return module.EdgeTransaction(
@@ -1415,8 +3415,8 @@ def test_oci_pagination_audits_full_security_list_and_nsg_union() -> None:
         "security_list_ids": ["sl-primary"],
         "network_security_group_ids": ["nsg-edge"],
         "attachment_ids": ["vnic-primary"],
-        "ipv4_tcp": [21115, 21116, 21117],
-        "ipv4_udp": [21116],
+        "ipv4_tcp": [34099, 34100, 34101],
+        "ipv4_udp": [34100],
         "ipv6": [],
     }
 
@@ -1511,15 +3511,20 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
         public_interface="ens3",
         template=_nft_template(),
     )
-    assert result == {
-        "family": "inet",
-        "table": "atius_rustdesk_phase53",
-        "hook": "input",
-        "priority": 300,
-        "public_interface": "ens3",
-        "ipv4_tcp": [21115, 21116, 21117],
-        "ipv4_udp": [21116],
-        "ipv6_denied": [21114, 21115, 21116, 21117, 21118, 21119],
+    assert result["public_edge"]["host"] == "atius-srv-1"
+    assert result["backend"]["host"] == "horistic-srv"
+    assert result["backend"]["native_ingress_source_ipv4"] == "10.11.1.11"
+    assert result["translations"] == [
+        {"protocol": "tcp", "external_port": 34099, "backend_port": 21115},
+        {"protocol": "tcp", "external_port": 34100, "backend_port": 21116},
+        {"protocol": "udp", "external_port": 34100, "backend_port": 21116},
+        {"protocol": "tcp", "external_port": 34101, "backend_port": 21117},
+    ]
+    assert result["hooks"] == {
+        "edge_prerouting": ["prerouting", "dstnat"],
+        "edge_forward": ["forward", "filter"],
+        "edge_postrouting": ["postrouting", "srcnat"],
+        "direct_native_input": ["input", "filter"],
     }
     lowered = candidate.lower()
     assert "flush ruleset" not in lowered
@@ -1530,7 +3535,7 @@ def test_nft_candidate_is_owned_effective_and_ipv6_deny_first() -> None:
     ("replacement", "blocker"),
     [
         ("ATIUS-PHASE53-EDGE", "nft-ownership-marker-invalid"),
-        ("priority 300", "nft-priority-invalid"),
+        ("priority dstnat", "nft-priority-invalid"),
         ('iifname "ens3"', "nft-interface-invalid"),
         ("meta nfproto ipv6 meta l4proto tcp", "nft-ipv6-deny-invalid"),
     ],
@@ -1571,14 +3576,13 @@ def test_boot_unit_loads_fixed_policy_before_network_pre_and_verifies_readback()
         "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.template.nft",
         "/usr/bin/test -r /etc/atius-rustdesk/phase53-edge.json",
         "/usr/bin/test -x /usr/local/libexec/apply-phase53-edge.py",
-        "/usr/sbin/nft --check --file /etc/atius-rustdesk/phase53-edge.nft",
     ]
-    assert service["ExecStart"] == "/usr/sbin/nft --file /etc/atius-rustdesk/phase53-edge.nft"
-    assert "--verify-host-policy" in service["ExecStartPost"]
-    assert (
-        "--template /etc/atius-rustdesk/phase53-edge.template.nft"
-        in service["ExecStartPost"]
-    )
+    assert "--apply-host-policy-transaction" in service["ExecStart"]
+    assert "--snapshot /run/atius-rustdesk-phase53-edge/nft-prestate.json" in service["ExecStart"]
+    assert "--restore-host-policy-snapshot" in service["ExecStop"]
+    assert "ExecStartPost" not in service
+    assert service["RuntimeDirectory"] == "atius-rustdesk-phase53-edge"
+    assert service["RuntimeDirectoryMode"] == "0700"
     assert unit["Install"]["WantedBy"] == "network-pre.target"
 
 
@@ -1745,8 +3749,8 @@ def test_rollback_restore_cas_blocks_toctou_without_blind_overwrite() -> None:
     ("active_fragment", "comment_fragment", "blocker"),
     [
         (
-            "type filter hook input priority 300; policy accept;",
-            "type filter hook input priority 300; policy accept;",
+            "type nat hook prerouting priority dstnat; policy accept;",
+            "type nat hook prerouting priority dstnat; policy accept;",
             "nft-priority-invalid",
         ),
         (
@@ -1773,7 +3777,7 @@ def test_nft_comments_cannot_satisfy_active_semantics(
 
 def test_nft_native_comment_statement_cannot_bypass_priority_validation() -> None:
     module = _edge_applier_module()
-    required = "type filter hook input priority 300; policy accept;"
+    required = "type nat hook prerouting priority dstnat; policy accept;"
     candidate = _rendered_nft_candidate(module).replace(required, "ACTIVE_DRIFT")
     candidate += f'\nadd table inet comment_fixture {{ comment "{required}"; }}\n'
     with pytest.raises(module.EdgeBlocked, match="nft-priority-invalid"):
@@ -1791,7 +3795,7 @@ def test_nft_backend_semantic_readback_is_independent_from_candidate_echo() -> N
     class ForgedReadbackBackend(_FakeEdgeBackend):
         def apply_nft(self, candidate: str, semantics: dict[str, Any]) -> None:
             forged = copy.deepcopy(semantics)
-            forged["priority"] = 0
+            forged["public_edge"]["host"] = "forged-edge"
             super().apply_nft(candidate, forged)
 
     backend = ForgedReadbackBackend()
@@ -1870,7 +3874,10 @@ def test_boot_verifier_is_operational_and_default_cli_is_zero_live(
         "semantic_readback_verified": True,
         "status": "PASS",
     }
-    assert "--contract" in _load_unit(EDGE_BOOT_SERVICE)["Service"]["ExecStartPost"]
+    service = _load_unit(EDGE_BOOT_SERVICE)["Service"]
+    assert "--apply-host-policy-transaction" in service["ExecStart"]
+    assert "--contract" in service["ExecStart"]
+    assert "ExecStartPost" not in service
 
 
 def test_nft_library_requires_explicit_template() -> None:
@@ -2021,9 +4028,9 @@ def test_oci_rule_count_is_bounded_and_ranges_are_not_expanded() -> None:
         (
             {
                 "address_consensus": {
-                    "oci-vnic-public-ipv4": "2001:db8::8",
-                    "horistic-egress-ipv4": "2001:db8::8",
-                    "ssh-horistic-srv.atius.com.br-a": "2001:db8::8",
+                    "oci-edge-vnic-public-ipv4": "2001:db8::8",
+                    "edge-vnic-public-ipv4": "2001:db8::8",
+                    "reserved-public-ipv4": "2001:db8::8",
                 }
             },
             "address-consensus-ipv4-invalid",
@@ -2362,6 +4369,7 @@ def _phase53_digest() -> str:
 
 
 def _tcp_positive(port: int, owner: str, origin_id: str) -> dict[str, Any]:
+    backend_port = {34099: 21115, 34100: 21116, 34101: 21117}[port]
     return {
         "attempt_id": f"tcp-{origin_id}-{port}",
         "port": port,
@@ -2372,7 +4380,7 @@ def _tcp_positive(port: int, owner: str, origin_id: str) -> dict[str, Any]:
         "container": f"atius-rustdesk-server-{owner}",
         "cgroup": "atius-rustdesk-phase53.slice",
         "image_digest": _phase53_digest(),
-        "socket_port": port,
+        "socket_port": backend_port,
         "counter_before": 10,
         "counter_after": 11,
         "owner_observed_at": "2026-07-23T02:00:38Z",
@@ -2426,38 +4434,23 @@ def _probe_origin(
                 "ended_at": "2026-07-23T02:00:34Z",
             },
             "positive": [
-                _tcp_positive(21115, "hbbs", origin_id),
-                _tcp_positive(21116, "hbbs", origin_id),
-                _tcp_positive(21117, "hbbr", origin_id),
+                _tcp_positive(34099, "hbbs", origin_id),
+                _tcp_positive(34100, "hbbs", origin_id),
+                _tcp_positive(34101, "hbbr", origin_id),
             ],
             "negative": [
+                *[
                 {
-                    "attempt_id": f"tcp-{origin_id}-21114",
-                    "port": 21114,
+                    "attempt_id": f"tcp-{origin_id}-{port}",
+                    "port": port,
                     "connected": False,
                     "started_at": "2026-07-23T02:00:41Z",
                     "ended_at": "2026-07-23T02:00:42Z",
                     "drop_counter_before": 30,
                     "drop_counter_after": 31,
-                },
-                {
-                    "attempt_id": f"tcp-{origin_id}-21118",
-                    "port": 21118,
-                    "connected": False,
-                    "started_at": "2026-07-23T02:00:42Z",
-                    "ended_at": "2026-07-23T02:00:43Z",
-                    "drop_counter_before": 31,
-                    "drop_counter_after": 32,
-                },
-                {
-                    "attempt_id": f"tcp-{origin_id}-21119",
-                    "port": 21119,
-                    "connected": False,
-                    "started_at": "2026-07-23T02:00:43Z",
-                    "ended_at": "2026-07-23T02:00:44Z",
-                    "drop_counter_before": 32,
-                    "drop_counter_after": 33,
-                },
+                }
+                for port in (21114, 21115, 21116, 21117, 21118, 21119)
+                ],
             ],
         },
         "udp": {
@@ -2467,7 +4460,7 @@ def _probe_origin(
             "source_ip": source_ip,
             "source_port": source_port,
             "destination_ip": "203.0.113.8",
-            "destination_port": 21116,
+            "destination_port": 34100,
             "counter_before": 20,
             "counter_after": 21,
             "capture": {
@@ -2475,7 +4468,7 @@ def _probe_origin(
                 "packet_count": 1,
                 "source_ip": source_ip,
                 "source_port": source_port,
-                "destination_ip": "203.0.113.8",
+                "destination_ip": "10.21.1.21",
                 "destination_port": 21116,
                 "captured_at": udp_captured,
             },
@@ -2552,39 +4545,47 @@ def _origin_policy() -> dict[str, Any]:
 
 
 def _hostname_probe_bundle() -> dict[str, Any]:
-    origins: list[dict[str, Any]] = []
-    for policy, egress in zip(
-        _origin_policy()["origins"],
-        ("198.51.100.10", "198.51.100.20"),
-        strict=True,
+    targets: list[dict[str, Any]] = []
+    for hostname in (
+        "rustdesk.atius.com.br",
+        "rustdesk-id.atius.com.br",
+        "rustdesk-relay.atius.com.br",
     ):
-        origins.append(
-            {
-                "origin_id": policy["origin_id"],
-                "attestation": {
-                    "transaction_id": "phase53-probe-transaction-0001",
-                    "target": "rustdesk.atius.com.br",
+        origins: list[dict[str, Any]] = []
+        for policy, egress in zip(
+            _origin_policy()["origins"],
+            ("198.51.100.10", "198.51.100.20"),
+            strict=True,
+        ):
+            origins.append(
+                {
                     "origin_id": policy["origin_id"],
-                    "origin_class": policy["origin_class"],
-                    "host_identity_sha256": policy["host_identity_sha256"],
-                    "executor_digest": policy["executor_digest"],
-                    "egress_ipv4": egress,
-                    "issued_at": "2026-07-23T02:04:00Z",
-                },
-                "resolved_addresses": ["203.0.113.8"],
-                "record_types": ["A"],
-                "checked_at": "2026-07-23T02:04:10Z",
-                "tcp_positive_ports": [21115, 21116, 21117],
-                "tcp_negative_ports": [21114, 21118, 21119],
-            }
-        )
+                    "attestation": {
+                        "transaction_id": "phase53-probe-transaction-0001",
+                        "target": hostname,
+                        "origin_id": policy["origin_id"],
+                        "origin_class": policy["origin_class"],
+                        "host_identity_sha256": policy["host_identity_sha256"],
+                        "executor_digest": policy["executor_digest"],
+                        "egress_ipv4": egress,
+                        "issued_at": "2026-07-23T02:04:00Z",
+                    },
+                    "resolved_addresses": ["203.0.113.8"],
+                    "record_types": ["A"],
+                    "checked_at": "2026-07-23T02:04:10Z",
+                    "tcp_positive_ports": [34099, 34100, 34101],
+                    "tcp_negative_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+                    "udp_external_port": 34100,
+                    "udp_backend_port": 21116,
+                }
+            )
+        targets.append({"hostname": hostname, "origins": origins})
     return {
         "schema_version": 1,
         "transaction_id": "phase53-probe-transaction-0001",
-        "hostname": "rustdesk.atius.com.br",
         "expected_ipv4": "203.0.113.8",
         "completed_at": "2026-07-23T02:04:20Z",
-        "origins": origins,
+        "targets": targets,
     }
 
 
@@ -2789,9 +4790,16 @@ def test_external_probe_receipt_is_two_origin_value_free_and_exact() -> None:
                 "attempted_routes": ["direct"],
             },
         ],
-        "tcp_positive_ports": [21115, 21116, 21117],
-        "tcp_negative_ports": [21114, 21118, 21119],
-        "udp_port": 21116,
+        "tcp_positive_ports": [34099, 34100, 34101],
+        "tcp_negative_ports": [21114, 21115, 21116, 21117, 21118, 21119],
+        "udp_port": 34100,
+        "udp_backend_port": 21116,
+        "targets": [
+            "public-ipv4",
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        ],
         "udp_attempt_ids": ["udp-independent-0001", "udp-w11-0001"],
         "secret_material_present": False,
     }
@@ -3004,13 +5012,20 @@ def test_barrier_b_is_post_ip_fresh_and_equal_to_barrier_a() -> None:
     transaction, backend, receipt = _edge_with_ip_proof(module)
     result = transaction.publish_dns_last()
     assert result["state"] == "DNS_PUBLISHED"
-    assert result["record"] == {
-        "name": "rustdesk.atius.com.br",
-        "type": "A",
-        "content": "203.0.113.8",
-        "proxied": False,
-    }
-    assert backend.dns_records == [result["record"]]
+    assert result["records"] == [
+        {
+            "name": hostname,
+            "type": "A",
+            "content": "203.0.113.8",
+            "proxied": False,
+        }
+        for hostname in (
+            "rustdesk.atius.com.br",
+            "rustdesk-id.atius.com.br",
+            "rustdesk-relay.atius.com.br",
+        )
+    ]
+    assert backend.dns_records == result["records"]
     assert backend.calls.index("dns-apply") > backend.calls.index("oci-apply")
 
 
@@ -3019,7 +5034,7 @@ def test_barrier_b_is_post_ip_fresh_and_equal_to_barrier_a() -> None:
     [
         (
             lambda barrier: barrier["address_consensus"].update(
-                {"horistic-egress-ipv4": "203.0.113.9"}
+                {"edge-vnic-public-ipv4": "203.0.113.9"}
             ),
             "barrier-b-address-drift",
         ),
@@ -3146,7 +5161,8 @@ def test_hostname_proof_is_internal_state_and_failure_rolls_back_all() -> None:
         _raw(_hostname_probe_bundle()),
         policy_raw=_raw(_origin_policy()),
     )
-    assert receipt["scope"] == "public-hostname"
+    assert receipt["scope"] == "public-hostnames"
+    assert receipt["hostname_count"] == 3
     assert transaction.state == "HOSTNAME_PROBES_VERIFIED"
 
     transaction, backend, _ = _edge_with_ip_proof(module)
@@ -3155,7 +5171,7 @@ def test_hostname_proof_is_internal_state_and_failure_rolls_back_all() -> None:
         2026, 7, 23, 2, 4, 30, tzinfo=timezone.utc
     )
     invalid = _hostname_probe_bundle()
-    invalid["origins"][0]["record_types"] = ["A", "AAAA"]
+    invalid["targets"][0]["origins"][0]["record_types"] = ["A", "AAAA"]
     with pytest.raises(module.EdgeBlocked, match="hostname-probe-invalid"):
         transaction.accept_hostname_probes(
             _raw(invalid),
@@ -3281,3 +5297,531 @@ def test_probe_scripts_are_offline_value_free_and_powershell_has_no_disk_surface
             sorted(path.relative_to(tmp_path) for path in tmp_path.rglob("*"))
             == before
         )
+
+
+def _phase53_authority_observation(
+    *, observed_at: str = "2098-12-31T23:59:00Z"
+) -> dict[str, Any]:
+    samples: list[dict[str, Any]] = []
+    for host in ("atius-srv-2", "atius-srv-3"):
+        samples.extend(
+            {
+                "host": host,
+                "observed_at": observed_at,
+                "placement_state": "NO-GO",
+                "zero_cleanup_performed": False,
+            }
+            for _ in range(2)
+        )
+    samples.extend(
+        {
+            "host": "horistic-srv",
+            "observed_at": observed_at,
+            "placement_state": "GO",
+            "raw_capacity_state": "CURRENT",
+            "capacity_finalize_state": "CURRENT",
+            "zero_cleanup_performed": False,
+        }
+        for _ in range(2)
+    )
+    return {
+        "schema_version": 1,
+        "observed_at": observed_at,
+        "ttl_seconds": 3600,
+        "read_only": True,
+        "synthetic": False,
+        "mutation_performed": False,
+        "secret_material_present": False,
+        "topology": {
+            "state": "CURRENT",
+            "public_edge_host": "atius-srv-1",
+            "public_ipv4": "137.131.140.20",
+            "public_vnic_private_ipv4": "10.0.0.238",
+            "route_vnic_private_ipv4": "10.11.1.11",
+            "backend_host": "horistic-srv",
+            "backend_private_ipv4": "10.21.1.21",
+            "backend_ingress_source_ipv4": "10.11.1.11",
+        },
+        "supply": {
+            "state": "CURRENT",
+            "immutable_reference": (
+                "docker.io/rustdesk/rustdesk-server@sha256:"
+                + "1" * 64
+            ),
+        },
+        "capacity_samples": samples,
+        "vault_public_fingerprint": {
+            "vault_path": "kv/atius/rustdesk/server",
+            "public_fingerprint_sha256": "2" * 64,
+            "value_free": True,
+        },
+        "provider": {
+            "prestates": {
+                surface: {
+                    "kind": "prestate",
+                    "surface": surface,
+                    "revision": f"{surface}-revision",
+                    "mutation_performed": False,
+                }
+                for surface in ("host", "oci", "cloudflare", "apache")
+            },
+            "previews": {
+                surface: {
+                    "kind": "preview",
+                    "surface": surface,
+                    "confirmation_sha256": hashlib.sha256(
+                        surface.encode("utf-8")
+                    ).hexdigest(),
+                    "mutation_performed": False,
+                }
+                for surface in ("host", "oci", "cloudflare", "apache")
+            },
+        },
+    }
+
+
+def test_05e_successor_attestation_binds_frozen_phase52() -> None:
+    module = _authority_builder_module()
+    result = module.validate_frozen_phase52(REPO)
+    assert result["source_freeze_commit"] == (
+        "6bb2e0abad5cad3eb1ff750bcb92130c06ee0f6c"
+    )
+    assert result["attestation_commit"] == (
+        "e552c876f32cc87bb0d97b71308056f30423c452"
+    )
+    assert result["closeout_commit"] == (
+        "11fa627fdd27c7032f0029cd594bc2e1241e20bb"
+    )
+    assert result["reviewer_ids"] == [
+        "fresh-reviewer-52-08-e",
+        "fresh-reviewer-52-08-f",
+    ]
+    assert result["historical_replay"] is False
+    assert result["historical_rebaseline"] is False
+    assert result["authorizes_live"] is False
+
+
+def test_05e_descendant_source_binding_rejects_drift() -> None:
+    module = _binding_checker_module()
+    payload = _load_strict(EXECUTION_SOURCE_SCOPE)
+    paths = module.validate_execution_source_scope_payload(payload)
+    assert len(paths) == 34
+    assert module.EXECUTION_SOURCE_COMMIT_PATHS == tuple(
+        sorted(EXPECTED_EXECUTION_SOURCE_COMMIT_PATHS)
+    )
+
+
+def test_05e_read_only_backend_has_no_write_capability() -> None:
+    backend = _live_backend_module()
+    builder = _authority_builder_module()
+    fields = set(backend.ReadOnlyProviderBundle.__dataclass_fields__)
+    assert fields == {
+        "read_topology",
+        "read_supply",
+        "read_capacity",
+        "read_vault_public_fingerprint",
+        "read_provider_prestates",
+        "preview_provider_changes",
+        "capabilities",
+    }
+    assert not fields.intersection(
+        {
+            "apply",
+            "mutate",
+            "contain",
+            "containment",
+            "rollback",
+            "restore",
+            "runtime",
+            "providers",
+        }
+    )
+    mapping = MappingProxyType(
+        {"outer": MappingProxyType({"sequence": (3, 2, 1)})}
+    )
+    assert builder.canonical_bytes(mapping) == (
+        b'{"outer":{"sequence":[3,2,1]}}'
+    )
+    assert builder.canonical_bytes(mapping) == builder.canonical_bytes(mapping)
+    for unsafe, blocker in (
+        ({"blob": b"bytes"}, "bytes-forbidden"),
+        ({"password": "value"}, "secret-key-forbidden"),
+        ({"verdict": "PASS"}, "stored-verdict-forbidden"),
+    ):
+        with pytest.raises(builder.AuthorityPlanBlocked, match=blocker):
+            builder.canonical_bytes(unsafe)
+
+
+def test_05e_operation_plan_writes_exact_six_artifacts_and_rejects_public_vnic_backend_source(
+    tmp_path: Path,
+) -> None:
+    module = _authority_builder_module()
+    observation = _phase53_authority_observation()
+    receipt = {
+        "05D2H_summary_commit": "3" * 40,
+        "quarantine_manifest_sha256": "4" * 64,
+        "generation_id": "5" * 64,
+        "canonical_seven_absent_sha256": "6" * 64,
+        "canonical_paths_absent": True,
+    }
+    payloads = module.build_authority_payloads(
+        observation=observation,
+        source_binding={
+            "execution_source_commit": "7" * 40,
+            "execution_source_tree_sha256": "8" * 64,
+            "manifest_paths": list(EXPECTED_EXECUTION_SOURCE_PATHS),
+        },
+        phase52=module.validate_frozen_phase52(REPO),
+        housekeeping_receipt=receipt,
+        now=datetime(2098, 12, 31, 23, 59, tzinfo=timezone.utc),
+    )
+    output = tmp_path / "authority"
+    module.promote_authority_generation(output, payloads)
+    assert sorted(path.name for path in output.iterdir()) == sorted(
+        module.AUTHORITY_FILENAMES
+    )
+    assert json.loads(
+        (output / "edge-forwarder-operation-plan.json").read_text(encoding="utf-8")
+    )["status"] == "AWAITING_OWNER_HASH_APPROVAL"
+    for boundary in range(1, 6):
+        partial = tmp_path / f"partial-{boundary}"
+        with pytest.raises(
+            module.AuthorityPlanBlocked, match="injected-promotion-failure"
+        ):
+            module.promote_authority_generation(
+                partial, payloads, fail_after=boundary
+            )
+        with pytest.raises(module.AuthorityPlanBlocked):
+            module.validate_authority_generation(partial)
+
+    drift = copy.deepcopy(observation)
+    drift["topology"]["backend_ingress_source_ipv4"] = "10.0.0.238"
+    with pytest.raises(
+        module.AuthorityPlanBlocked, match="public-vnic-backend-source-forbidden"
+    ):
+        module.validate_authority_observation(
+            drift, now=datetime(2098, 12, 31, 23, 59, tzinfo=timezone.utc)
+        )
+
+
+def test_05e_capacity_current_requires_six_ordered_samples() -> None:
+    module = _authority_builder_module()
+    observation = _phase53_authority_observation()
+    module.validate_authority_observation(
+        observation, now=datetime(2098, 12, 31, 23, 59, tzinfo=timezone.utc)
+    )
+    observation["capacity_samples"][1], observation["capacity_samples"][2] = (
+        observation["capacity_samples"][2],
+        observation["capacity_samples"][1],
+    )
+    with pytest.raises(module.AuthorityPlanBlocked, match="capacity-sample-order-invalid"):
+        module.validate_authority_observation(
+            observation, now=datetime(2098, 12, 31, 23, 59, tzinfo=timezone.utc)
+        )
+
+
+def test_05e_awaiting_owner_is_exit_zero_without_owner_or_journal(
+    tmp_path: Path,
+) -> None:
+    module = _authority_builder_module()
+    operation_plan = {
+        "schema_version": 1,
+        "status": "AWAITING_OWNER_HASH_APPROVAL",
+        "operation_plan_sha256": "a" * 64,
+        "execution_source_commit": "b" * 40,
+        "execution_source_tree_sha256": "c" * 64,
+        "expires_at": "2099-01-01T00:00:00Z",
+        "mutation_performed": False,
+        "secret_material_present": False,
+    }
+    result = module.awaiting_owner_result(operation_plan)
+    assert result["status"] == "AWAITING_OWNER_HASH_APPROVAL"
+    assert result["exit_code"] == 0
+    assert result["owner_record_created"] is False
+    assert result["journal_created"] is False
+    assert result["provider_constructed"] is False
+    assert list(tmp_path.iterdir()) == []
+
+
+def test_05e_strict_validator_accepts_authority_and_live_set_with_immutable_source() -> None:
+    validator = _load_python_module(
+        REPO / "modules/rustdesk-fleet/tools/validate_phase53_live_evidence.py",
+        "phase53_strict_live_evidence",
+    )
+    assert validator.AUTHORITY_NAMES == (
+        "topology-discovery.json",
+        "phase52-successor-attestation.json",
+        "candidate-admission.json",
+        "capacity-current.json",
+        "preflight.json",
+        "edge-forwarder-operation-plan.json",
+        "edge-forwarder-owner-approval.json",
+    )
+    assert validator.LIVE_NAMES == (
+        "deploy-transaction.json",
+        "edge-probes.json",
+        "ops-api-probes.json",
+        "lifecycle.json",
+        "rollback-drill.json",
+        "restore-production-transaction.json",
+        "direct-relay-metrics.json",
+    )
+    assert "compatibility-pending.json" not in validator.AUTHORITY_NAMES
+
+
+def test_05e_housekeeping_receipt_is_explicit_current_and_symlink_safe(
+    tmp_path: Path,
+) -> None:
+    module = _authority_builder_module()
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    _git_fixture(repo, "init", "-q")
+    _git_fixture(repo, "config", "user.name", "Phase53 Test")
+    _git_fixture(repo, "config", "user.email", "phase53@example.invalid")
+    d2d = repo / module.D2D_SUMMARY_PATH
+    d2d.parent.mkdir(parents=True)
+    d2d.write_text("source summary\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", str(module.D2D_SUMMARY_PATH))
+    _git_fixture(repo, "commit", "-qm", "05D2D summary")
+    d2d_commit = _git_fixture(repo, "rev-parse", "HEAD")
+    d2h = repo / module.D2H_SUMMARY_PATH
+    d2h.write_text("housekeeping summary\n", encoding="utf-8")
+    _git_fixture(repo, "add", "--", str(module.D2H_SUMMARY_PATH))
+    _git_fixture(repo, "commit", "-qm", "05D2H summary")
+    d2h_commit = _git_fixture(repo, "rev-parse", "HEAD")
+
+    root = tmp_path / "quarantine"
+    generation = root / ("d" * 64)
+    generation.mkdir(parents=True, mode=0o700)
+    os.chmod(root, 0o700)
+    os.chmod(generation, 0o700)
+    rows = []
+    for index, relative in enumerate(module.CANONICAL_05F_PATHS):
+        backup = generation / f"{index}.json"
+        backup.write_text(relative, encoding="utf-8")
+        os.chmod(backup, 0o600)
+        rows.append(
+            {
+                "source": relative,
+                "backup": str(backup),
+                "size": backup.stat().st_size,
+                "sha256": hashlib.sha256(backup.read_bytes()).hexdigest(),
+            }
+        )
+    manifest = generation / "manifest.json"
+    manifest.write_bytes(
+        module.canonical_bytes(
+            {
+                "status": "complete",
+                "generation_id": "d" * 64,
+                "inventory_sha256": "d" * 64,
+                "canonical_paths": list(module.CANONICAL_05F_PATHS),
+                "moved_paths": list(module.CANONICAL_05F_PATHS),
+                "files": rows,
+            }
+        )
+    )
+    os.chmod(manifest, 0o600)
+    pointer = root / "current-phase53.json"
+    pointer.write_bytes(
+        module.canonical_bytes(
+            {
+                "manifest_path": str(manifest),
+                "manifest_sha256": hashlib.sha256(manifest.read_bytes()).hexdigest(),
+                "generation_id": "d" * 64,
+            }
+        )
+    )
+    os.chmod(pointer, 0o600)
+    d2h.write_text(
+        "quarantine_manifest_sha256: "
+        f"{hashlib.sha256(manifest.read_bytes()).hexdigest()}\n"
+        f"generation_id: {'d' * 64}\n"
+        "canonical_paths_absent: true\n",
+        encoding="utf-8",
+    )
+    _git_fixture(repo, "add", "--", str(module.D2H_SUMMARY_PATH))
+    _git_fixture(repo, "commit", "--amend", "--no-edit", "-q")
+    d2h_commit = _git_fixture(repo, "rev-parse", "HEAD")
+    receipt = module.validate_housekeeping_receipt(
+        repo=repo,
+        summary_path=d2h,
+        quarantine_pointer=pointer,
+        expected_05d2d_summary_commit=d2d_commit,
+        quarantine_root=root,
+    )
+    assert receipt["05D2H_summary_commit"] == d2h_commit
+    assert receipt["canonical_paths_absent"] is True
+    pointer.unlink()
+    pointer.symlink_to(manifest)
+    with pytest.raises(module.AuthorityPlanBlocked, match="housekeeping-pointer-invalid"):
+        module.validate_housekeeping_receipt(
+            repo=repo,
+            summary_path=d2h,
+            quarantine_pointer=pointer,
+            expected_05d2d_summary_commit=d2d_commit,
+            quarantine_root=root,
+        )
+
+
+def test_05e_owner_approval_requires_explicit_response() -> None:
+    module = _authority_builder_module()
+    plan = {
+        "operation_plan_sha256": "a" * 64,
+        "execution_source_commit": "b" * 40,
+        "execution_source_tree_sha256": "c" * 64,
+        "expires_at": "2099-01-01T00:00:00Z",
+        "risk_acknowledgement_required": True,
+        "rollback_acknowledgement_required": True,
+    }
+    with pytest.raises(module.AuthorityPlanBlocked, match="owner-response-invalid"):
+        module.build_owner_approval({}, plan, now=datetime(2098, 1, 1, tzinfo=timezone.utc))
+
+
+def test_05e_owner_approval_hash_and_expiry_are_current() -> None:
+    module = _authority_builder_module()
+    plan = {
+        "operation_plan_sha256": "a" * 64,
+        "execution_source_commit": "b" * 40,
+        "execution_source_tree_sha256": "c" * 64,
+        "expires_at": "2099-01-01T00:00:00Z",
+        "risk_acknowledgement_required": True,
+        "rollback_acknowledgement_required": True,
+    }
+    response = {
+        "owner": "Giovanni Muniz",
+        "decision": "approve",
+        "operation_plan_sha256": "a" * 64,
+        "expires_at": "2098-06-01T00:00:00Z",
+        "risk_acknowledged": True,
+        "rollback_acknowledged": True,
+    }
+    approval = module.build_owner_approval(
+        response, plan, now=datetime(2098, 1, 1, tzinfo=timezone.utc)
+    )
+    assert approval["operation_plan_sha256"] == plan["operation_plan_sha256"]
+    response["operation_plan_sha256"] = "d" * 64
+    with pytest.raises(module.AuthorityPlanBlocked, match="owner-plan-hash-mismatch"):
+        module.build_owner_approval(
+            response, plan, now=datetime(2098, 1, 1, tzinfo=timezone.utc)
+        )
+
+
+def test_05e_no_auto_apply_after_owner_record(tmp_path: Path) -> None:
+    module = _authority_builder_module()
+    source = inspect.getsource(module)
+    assert "build_phase53_apply_backend" not in source
+    assert "RuntimeProvider" not in source
+    assert "ApplyProviderBundle" not in source
+    output = tmp_path / "owner.json"
+    module.write_owner_record(
+        output,
+        {
+            "schema_version": 1,
+            "owner": "Giovanni Muniz",
+            "decision": "approve",
+            "operation_plan_sha256": "a" * 64,
+            "execution_source_commit": "b" * 40,
+            "execution_source_tree_sha256": "c" * 64,
+            "expires_at": "2099-01-01T00:00:00Z",
+            "risk_acknowledged": True,
+            "rollback_acknowledged": True,
+            "response_sha256": "d" * 64,
+            "secret_material_present": False,
+            "mutation_performed": False,
+        },
+    )
+    assert [item.name for item in tmp_path.iterdir()] == ["owner.json"]
+
+
+def test_05f_new_process_revalidates_authority_before_journal(
+    tmp_path: Path,
+) -> None:
+    module = _live_gate_module()
+    calls: list[str] = []
+    with pytest.raises(module.GateBlocked, match="authority-revalidation-failed"):
+        module.execute_revalidated_apply_transaction(
+            authority_validator=lambda: False,
+            journal_dir=tmp_path / "journals",
+            provider_factory=lambda: calls.append("provider"),
+        )
+    assert calls == []
+    assert not (tmp_path / "journals").exists()
+
+
+def test_05f_full_sequence_is_single_transaction(tmp_path: Path) -> None:
+    module = _live_gate_module()
+    calls: list[str] = []
+    result = module.execute_apply_transaction(
+        journal_dir=tmp_path,
+        operation_plan_sha256="1" * 64,
+        approval_sha256="2" * 64,
+        execution_source_commit="3" * 40,
+        execution_source_tree_sha256="4" * 64,
+        adapters={
+            stage: (lambda stage=stage: calls.append(stage) or {"stage": stage})
+            for stage in module.FULL_TRANSACTION_SEQUENCE
+        },
+        stage="full",
+    )
+    assert calls == list(module.FULL_TRANSACTION_SEQUENCE)
+    assert len(
+        {
+            result["apply_transaction_id"],
+            result["rollback_transaction_id"],
+            result["restore_production_transaction_id"],
+        }
+    ) == 3
+
+
+def test_05f_lifecycle_and_two_origin_probes_are_bound() -> None:
+    module = _live_gate_module()
+    assert module.FULL_TRANSACTION_SEQUENCE.index("ip-probes") < (
+        module.FULL_TRANSACTION_SEQUENCE.index("dns-publication")
+    )
+    assert module.FULL_TRANSACTION_SEQUENCE.index("hostname-probes") < (
+        module.FULL_TRANSACTION_SEQUENCE.index("lifecycle")
+    )
+    assert tuple(module.FULL_TRANSACTION_SEQUENCE).count("lifecycle") == 1
+
+
+def test_05f_immutable_rollback_and_distinct_restore_transaction(
+    tmp_path: Path,
+) -> None:
+    module = _live_gate_module()
+    result = module.execute_apply_transaction(
+        journal_dir=tmp_path,
+        operation_plan_sha256="1" * 64,
+        approval_sha256="2" * 64,
+        execution_source_commit="3" * 40,
+        execution_source_tree_sha256="4" * 64,
+        adapters={
+            stage: (lambda stage=stage: {"stage": stage})
+            for stage in module.FULL_TRANSACTION_SEQUENCE
+        },
+        stage="full",
+    )
+    rollback = tmp_path / result["rollback_journal"]
+    before = rollback.read_bytes()
+    assert result["rollback_transaction_id"] != result[
+        "restore_production_transaction_id"
+    ]
+    assert rollback.read_bytes() == before
+
+
+def test_05f_zero_cleanup_migration_and_stale_output_prestate_remain_untouched(
+    tmp_path: Path,
+) -> None:
+    module = _authority_builder_module()
+    observation = _phase53_authority_observation()
+    before = copy.deepcopy(observation)
+    module.validate_authority_observation(
+        observation, now=datetime(2098, 12, 31, 23, 59, tzinfo=timezone.utc)
+    )
+    assert observation == before
+    assert all(
+        item["zero_cleanup_performed"] is False
+        for item in observation["capacity_samples"]
+    )
+    assert "10.31.1.31" not in json.dumps(observation, sort_keys=True)
+    assert list(tmp_path.iterdir()) == []
