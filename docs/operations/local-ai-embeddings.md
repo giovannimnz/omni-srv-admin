@@ -99,11 +99,32 @@ Batch cap: 4
 Header: X-Embedding-Workload: batch
 ```
 
+Candidate reranking uses the same public Router and never calls the private TEI
+NodePort directly:
+
+```text
+Helper: ~/.local/bin/graphify-rerank
+Endpoint: https://router.atius.com.br/v1/rerank
+Model: reranker-gte-multilingual-v1
+Document cap: 20
+Header: X-Rerank-Workload: interactive|batch
+```
+
+`graphify update`, structural graph construction, clustering and graph traversal
+remain local CPU/filesystem work. Only embedding, reranking and optional semantic
+LLM calls are offloaded through the Router. Host CPU containment therefore remains
+mandatory for heavy Graphify commands even when all model inference is remote.
+
 Smoke:
 
 ```bash
 graphify-embed --text "Graphify retrieval smoke" --pretty
+graphify-rerank --query "Graphify" --document "candidate one" --document "candidate two" --top-n 1 --pretty
 ```
+
+Validated on 2026-08-14: both public helpers succeeded through the Router;
+embeddings returned 768 dimensions, reranking returned the expected top document,
+and a 21-document public request failed closed with HTTP 400.
 
 ## New API Channel
 
