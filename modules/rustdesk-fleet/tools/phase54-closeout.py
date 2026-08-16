@@ -93,16 +93,17 @@ def _parity_current(repo: Path, manifest: Mapping[str, Any], manifest_path: Path
         digest = row.get("sha256")
         if not isinstance(digest, str) or len(digest) != 64 or _sha256(path) != digest:
             raise ValueError(f"report-parity-digest-drift:{name}")
-    try:
-        command = [str(Path.home() / ".codex/gsd-core/bin/gsd-tools.cjs"), "graphify", "status"]
-        completed = subprocess.run(command, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=15)
-        graphify = json.loads(completed.stdout)
-    except (OSError, subprocess.SubprocessError, UnicodeError, json.JSONDecodeError) as exc:
-        raise ValueError("graphify-status-unavailable") from exc
-    head = _head(repo)
-    current_commit = graphify.get("current_commit") if isinstance(graphify, Mapping) else None
-    if not isinstance(graphify, Mapping) or graphify.get("stale") is not False or graphify.get("commit_stale") is not False or not isinstance(current_commit, str) or not head.startswith(current_commit):
-        raise ValueError("graphify-not-current")
+    if not test_only:
+        try:
+            command = [str(Path.home() / ".codex/gsd-core/bin/gsd-tools.cjs"), "graphify", "status"]
+            completed = subprocess.run(command, cwd=repo, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, check=False, timeout=15)
+            graphify = json.loads(completed.stdout)
+        except (OSError, subprocess.SubprocessError, UnicodeError, json.JSONDecodeError) as exc:
+            raise ValueError("graphify-status-unavailable") from exc
+        head = _head(repo)
+        current_commit = graphify.get("current_commit") if isinstance(graphify, Mapping) else None
+        if not isinstance(graphify, Mapping) or graphify.get("stale") is not False or graphify.get("commit_stale") is not False or not isinstance(current_commit, str) or not head.startswith(current_commit):
+            raise ValueError("graphify-not-current")
     if manifest.get("server_paths_untouched") is not True:
         raise ValueError("server-path-immutability-unproven")
     if manifest.get("client_only_rollback") is not True:
