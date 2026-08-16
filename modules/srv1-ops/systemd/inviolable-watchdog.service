@@ -1,15 +1,15 @@
 [Unit]
 Description=ATIUS-SRV-1 Inviolable Services Watchdog
-Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+Documentation=file://%h/GitHub/omni-srv-admin/docs/operations/resource-governor.md
 
 [Service]
 Type=oneshot
-ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/inviolable-watchdog.sh
+ExecStart=%h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/inviolable-watchdog.sh
 Nice=-20
 OOMScoreAdjust=-1000
 OOMPolicy=continue
 Restart=no
 KillMode=process
 TimeoutStartSec=120
-StandardOutput=append:/home/ubuntu/.logs/resource-governor/inviolable-watchdog.log
-StandardError=append:/home/ubuntu/.logs/resource-governor/inviolable-watchdog.log
+StandardOutput=append:%h/.logs/resource-governor/inviolable-watchdog.log
+StandardError=append:%h/.logs/resource-governor/inviolable-watchdog.log

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Atius SSO"
+  short_description: "Implement, validate, add, or remove Atius SSO."
+  default_prompt: "Use $atius-sso to integrate, validate, or remove Atius SSO for one of our systems."

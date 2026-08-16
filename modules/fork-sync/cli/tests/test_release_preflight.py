@@ -10,7 +10,10 @@ from fork_sync.core.release_preflight import (
     ATIUS_ROUTER_DOCS_LINK_FILES,
     ATIUS_ROUTER_DOCS_PROTECTED_FILES,
     ATIUS_ROUTER_PT_BR_REQUIRED_FILES,
+    ATIUS_ROUTER_RERANK_PROTECTED_PATHS,
+    ATIUS_ROUTER_RERANK_REQUIRED_FILES,
     ATIUS_ROUTER_USER_QUOTA_REQUIRED_FILES,
+    _locale_pair_violations,
     _load_yaml,
     run_preflight,
 )
@@ -56,6 +59,31 @@ func checkAndSendQuotaNotify(relayInfo *RelayInfo, threshold int) {
     if relayInfo.UserQuota < threshold { notify() }
 }
 """,
+    )
+
+
+def _write_atius_router_rerank_fixture(repo: Path) -> None:
+    for rel in ATIUS_ROUTER_RERANK_REQUIRED_FILES:
+        _write(repo / rel, "present\n")
+    _write(
+        repo / "dto" / "channel_settings.go",
+        'AdvancedCustomConverterJinaRerankToTEINative = "jina_rerank_to_tei_native"\n',
+    )
+    _write(
+        repo / "k8s" / "router-ai-atius" / "configmap.yaml",
+        'EMBEDDING_GOVERNOR_MODELS: "embedding-gte-v1,reranker-gte-multilingual-v1"\n',
+    )
+    _write(
+        repo / "relay" / "channel" / "advancedcustom" / "tei_rerank.go",
+        "func newTEIRerankRequest() {}\nfunc doTEIRerankResponse() {}\n",
+    )
+    _write(
+        repo / "relay" / "rerank_handler.go",
+        "var acquireRerankGovernor = Acquire\nconst maxGovernedTEIRerankDocuments = 20\n",
+    )
+    _write(
+        repo / "service" / "embeddinggovernor" / "governor.go",
+        'const defaultModels = "embedding-gte-v1,reranker-gte-multilingual-v1"\n',
     )
 
 
@@ -220,6 +248,45 @@ def test_preflight_blocks_tracked_sensitive_files(tmp_path: Path) -> None:
     assert "tracked-sensitive-files" in {item["code"] for item in result["errors"]}
 
 
+def test_preflight_allows_gitkeep_inside_secrets_directory(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    _init_git_repo(repo)
+    _write(repo / "podman" / "secrets" / ".gitkeep", "")
+    _commit_all(repo)
+
+    result = run_preflight(repo, secret_names=set())
+
+    assert "tracked-sensitive-files" not in {
+        item["code"] for item in result["errors"]
+    }
+
+
+def test_classic_locale_uses_source_key_placeholders_when_base_value_is_empty() -> None:
+    key = "（共 {{total}} 个，省略 {{omit}} 个）"
+
+    violations = _locale_pair_violations(
+        {key: ""},
+        {key: "(Total: {{total}}; {{omit}} omitidos)"},
+        pt_path=Path("web/classic/src/i18n/locales/pt.json"),
+        locale_name="frontend JSON",
+    )
+
+    assert violations == []
+
+
+def test_locale_does_not_use_key_placeholders_when_base_value_is_nonempty() -> None:
+    key = "Source key {{name}}"
+
+    violations = _locale_pair_violations(
+        {key: "Rendered without interpolation"},
+        {key: "Renderizado sem interpolação"},
+        pt_path=Path("web/classic/src/i18n/locales/pt.json"),
+        locale_name="frontend JSON",
+    )
+
+    assert violations == []
+
+
 def test_preflight_blocks_secret_like_values_in_tracked_files(tmp_path: Path) -> None:
     repo = tmp_path / "repo"
     _init_git_repo(repo)
@@ -332,6 +399,7 @@ def test_preflight_accepts_complete_atius_router_pt_br(tmp_path: Path) -> None:
     for rel in ATIUS_ROUTER_PT_BR_REQUIRED_FILES:
         _write(repo / rel, "present\n")
     _write_atius_router_user_quota_fixture(repo)
+    _write_atius_router_rerank_fixture(repo)
 
     _write(
         repo / "i18n" / "i18n.go",
@@ -383,6 +451,34 @@ def test_preflight_accepts_complete_atius_router_pt_br(tmp_path: Path) -> None:
         "check": "atius-router-user-quota-invariant",
         "status": "complete",
     } in result["checks"]
+    assert {
+        "check": "atius-router-governed-rerank",
+        "status": "complete",
+    } in result["checks"]
+
+
+def test_preflight_blocks_missing_atius_router_governed_rerank(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    _write_atius_router_user_quota_fixture(repo)
+
+    result = run_preflight(
+        repo,
+        github_repo="giovannimnz/router-ai-atius",
+        secret_names=set(),
+    )
+
+    rerank_errors = [
+        item
+        for item in result["errors"]
+        if item["code"] == "atius-router-rerank-regression"
+    ]
+    assert result["status"] == "error"
+    assert any(
+        item.get("path") == "relay/channel/advancedcustom/tei_rerank.go"
+        for item in rerank_errors
+    )
 
 
 def test_preflight_blocks_atius_router_user_quota_admission_regression(
@@ -550,6 +646,19 @@ def test_atius_router_sync_yaml_protects_user_quota_invariant() -> None:
 
     assert set(ATIUS_ROUTER_USER_QUOTA_REQUIRED_FILES).issubset(protected)
     assert post_sync[0] == "scripts/atius-user-quota-guard.sh repair"
+
+
+def test_atius_router_sync_yaml_protects_governed_rerank() -> None:
+    fork_sync_root = Path(__file__).resolve().parents[2]
+    sync = _load_yaml(fork_sync_root / "projects" / "atius-router" / "sync.yaml")
+    protected = set(sync.get("protected_paths") or [])
+    post_sync = sync.get("post_sync") or []
+
+    assert set(ATIUS_ROUTER_RERANK_PROTECTED_PATHS).issubset(protected)
+    assert any(
+        isinstance(item, dict) and item.get("name") == "governed reranker regression"
+        for item in post_sync
+    )
 
 
 def test_preflight_flags_pull_request_target_risks(tmp_path: Path) -> None:

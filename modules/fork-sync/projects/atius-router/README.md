@@ -71,7 +71,8 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
 - `controller/model.go`, `controller/model_list_test.go` — public `/v1/models` contract and regression tests
 - `service/modelcatalog/` — deterministic model catalog projection and ordering
 - `relay/common/relay_utils.go`, `relay/common/relay_utils_test.go` — base URL normalization, including trailing `/v1`
-- `relay/embedding_handler.go`, `service/embeddinggovernor/` — local TEI embeddings governor inside the Go router, with no Python sidecar
+- `relay/embedding_handler.go`, `relay/rerank_handler.go`, `relay/channel/advancedcustom/`, `service/embeddinggovernor/` — local TEI embeddings and reranking inside the same Go-native governor, with no Python sidecar
+- `k8s/router-ai-atius/configmap.yaml` — preserves both governed aliases in `EMBEDDING_GOVERNOR_MODELS`
 - `relay/channel/codex/`, `service/codex_*.go` — Codex OAuth chat/responses/embeddings, sharing the same OAuth credential
 - `common/endpoint_type.go`, `dto/embedding.go`, `relay/channel/minimax/`, `relay/channel/deepseek/` — single-channel MiniMax/DeepSeek routing across OpenAI/Anthropic/embeddings where supported
 - `constant/channel.go`, frontend channel constants and i18n locale files — canonical label `OpenAI - Codex`
@@ -92,6 +93,10 @@ The fork-sync GitHub Action reads from this directory on the `sync` branch.
   Repair is idempotent, creates a backup, requires `git apply --check`, and
   ends in fail-closed audit. The Omni release preflight also performs an
   independent static scan before any build/deploy.
+- Fork-sync then runs the focused governed-reranker Go tests through
+  `scripts/podman-admin.sh profile-run`; failure blocks auto-push. The release
+  preflight independently requires the converter, handler, governor tests and
+  ConfigMap value `embedding-gte-v1,reranker-gte-multilingual-v1`.
 
 See `UPSTREAM-SYNC-GUARDS.md` before any upstream merge.
 

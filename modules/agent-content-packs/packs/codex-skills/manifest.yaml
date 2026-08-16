@@ -1,0 +1,51 @@
+version: 1
+pack: codex-skills
+updated_at: 2026-08-15T05:03:23-0300
+items:
+- name: atius-sso
+  kind: skill
+  products: &id001
+  - codex
+  platforms:
+  - windows
+  - linux
+  source_path: items/atius-sso
+  hash: fd3c52d77ee9cf4eb1f59ff4c22d8f8e65c0c89ca68266687c5c2950277da52b
+  required_files:
+  - SKILL.md
+  files:
+  - path: agents/openai.yaml
+    sha256: 822bae6a1e44258858e53e0af267ecd45987fcb291db97120e495298ed3d02ea
+    bytes: 212
+  - path: references/lifecycle-acceptance.md
+    sha256: cf9ba13e562ce6285c9945b54bc5051a0ce7e62bcb7709b56925a888cde7cd86
+    bytes: 5710
+  - path: references/source-of-truth.md
+    sha256: 8b2814f2666a142c5dfeb6b6d6a7a0ad637b35178944d10e9ae68eff27c19e8f
+    bytes: 4309
+  - path: SKILL.md
+    sha256: 1f9e66d0b69038116c50b84b4a421cc3dc328b0843c8636c5e035cfa913676f5
+    bytes: 15619
+  install:
+    codex:
+      rel_path: skills/atius-sso
+- name: atius-sso-governed-release-closeout
+  kind: skill
+  products: *id001
+  platforms:
+  - windows
+  - linux
+  source_path: items/atius-sso-governed-release-closeout
+  hash: 9b7c7306eb8615442f1a7e0f6e1b613e9a1f14b9a3193ae87185657eec960860
+  required_files:
+  - SKILL.md
+  files:
+  - path: references/phase10-runbook.md
+    sha256: 3a746b5bd17a7918565bf68f2282eff3b1cbaf434231b2576a7b11c40842cbe6
+    bytes: 1603
+  - path: SKILL.md
+    sha256: e4685b6c38d4e843171fe76224f1be21bdfa973f023a29f2370af63db742ad34
+    bytes: 3380
+  install:
+    codex:
+      rel_path: skills/atius-sso-governed-release-closeout

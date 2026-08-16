@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # inviolable-watchdog.sh - ATIUS-SRV-1
 # Canonical source: omni-srv-admin/modules/srv1-ops/scripts/inviolable-watchdog.sh
-# Deployed copy: /home/ubuntu/scripts/inviolable-watchdog.sh
+# Deployed copy: $HOME/scripts/inviolable-watchdog.sh
 #
 # 2026-06-11: service-aware checks, single-instance lock and relaunch
 # hysteresis/cooldown. This avoids deterministic timer relaunch storms for
@@ -9,14 +9,15 @@
 
 set -u
 
-export PATH="/home/ubuntu/.nvm/versions/node/v24.13.1/bin:/home/ubuntu/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+HOME_DIR="${HOME:-$(getent passwd "$(id -u)" | cut -d: -f6)}"
+export PATH="${HOME_DIR}/.nvm/versions/node/v24.13.1/bin:${HOME_DIR}/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
-LOG="/home/ubuntu/.logs/resource-governor/inviolable-watchdog.log"
-STATE_DIR="/home/ubuntu/.local/state/omni/inviolable-watchdog"
-LOCK_FILE="/home/ubuntu/.local/state/omni/inviolable-watchdog.lock"
-PM2_BIN="/home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2"
-ATS_ECOSYSTEM="/home/ubuntu/GitHub/Atius-Capital/ats/ecosystem.config.js"
-HORISTIC_ECOSYSTEM="/home/ubuntu/GitHub/Atius-Capital/horistic/ecosystem.config.js"
+LOG="${HOME_DIR}/.logs/resource-governor/inviolable-watchdog.log"
+STATE_DIR="${HOME_DIR}/.local/state/omni/inviolable-watchdog"
+LOCK_FILE="${HOME_DIR}/.local/state/omni/inviolable-watchdog.lock"
+PM2_BIN="${HOME_DIR}/.nvm/versions/node/v24.13.1/bin/pm2"
+ATS_ECOSYSTEM="${HOME_DIR}/GitHub/Atius-Capital/ats/ecosystem.config.js"
+HORISTIC_ECOSYSTEM="${HOME_DIR}/GitHub/Atius-Capital/horistic/ecosystem.config.js"
 
 DEFAULT_COOLDOWN_SEC="${INVIOLABLE_RESTART_COOLDOWN_SEC:-180}"
 DEFAULT_FAILURE_THRESHOLD="${INVIOLABLE_RESTART_FAILURE_THRESHOLD:-2}"
@@ -195,7 +196,7 @@ atius_web_ok() {
 }
 
 atius_web_healthcheck_ok() {
-  timeout 20s /home/ubuntu/.local/bin/atius-web-healthcheck.sh >/tmp/inviolable-atius-web-healthcheck.probe 2>&1
+  timeout 20s "${HOME_DIR}/.local/bin/atius-web-healthcheck.sh" >/tmp/inviolable-atius-web-healthcheck.probe 2>&1
 }
 
 atius_router_docs_ok() {
@@ -392,7 +393,7 @@ else
   guarded_relaunch "hermes-ws-gateway" "$DEFAULT_FAILURE_THRESHOLD" "$DEFAULT_COOLDOWN_SEC" systemctl_user_start "hermes-ws-gateway.service"
 fi
 
-if mountpoint -q /home/ubuntu/GDrive 2>/dev/null; then
+if mountpoint -q "${HOME_DIR}/GDrive" 2>/dev/null; then
   mark_ok "gdrive-mount"
 else
   guarded_relaunch "gdrive-mount" 1 "$CRITICAL_COOLDOWN_SEC" systemctl_user_start "gdrive-mount.service"

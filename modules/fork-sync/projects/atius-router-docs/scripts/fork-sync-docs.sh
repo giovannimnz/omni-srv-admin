@@ -46,6 +46,7 @@ SYNC_YAML="$SOURCE_DIR/projects/$PROJECT/sync.yaml"
 LOG_DIR="$SOURCE_DIR/logs"
 DATE=$(date +%Y%m%d)
 LOG_FILE="$LOG_DIR/sync-${PROJECT}-${DATE}.log"
+RUNTIME_INSTALLER="$SOURCE_DIR/projects/$PROJECT/scripts/install-runtime.sh"
 
 mkdir -p "$LOG_DIR" "$(dirname "$REPO_PATH")"
 
@@ -74,6 +75,11 @@ if [ ! -d "$REPO_PATH/.git" ]; then
   log "ERROR" "Clone https://github.com/giovannimnz/new-api-docs-v1 there before syncing."
   exit 1
 fi
+
+# The docs unit used to be static, so it remained dead after a reboot or an
+# operator stop. Reconcile and enable the canonical user unit on every sync,
+# including no-release runs, before deciding whether the upstream needs work.
+"$RUNTIME_INSTALLER" 2>&1 | tee -a "$LOG_FILE"
 
 # === 3. Detect new release ===
 log "INFO" "Checking for new upstream release..."

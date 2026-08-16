@@ -1,0 +1,22 @@
+[Unit]
+Description=GSD graphify auto-update (governed global sweep)
+After=network-online.target resource-governor-cgroup-init.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+Environment="PATH=%h/.local/bin:%h/.bun/bin:%h/.nvm/versions/node/v24.13.1/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+ExecStart=/usr/bin/flock --wait=7200 %h/.local/state/omni/resource-governor-builds.lock %h/scripts/gsd-graphify-auto-update.sh
+WorkingDirectory=%h
+StandardOutput=append:%h/.hermes/logs/gsd-graphify-auto-update.log
+StandardError=append:%h/.hermes/logs/gsd-graphify-auto-update.log
+Slice=omni-builds.slice
+MemoryMax=2G
+IOWeight=50
+Nice=15
+IOSchedulingClass=idle
+IOSchedulingPriority=7
+Restart=no
+
+[Install]
+WantedBy=default.target

@@ -71,6 +71,8 @@ merge_strategy: custom
 merge_script: /home/ubuntu/GitHub/horus-spec-driven/bin/install.js
 merge_args: ["sync", "--all", "--global"]
 merge_description: |
+  LEGACY CONGELADO: não executar deploy automático no Hermes.
+  O runtime canônico foi migrado para ~/.hermes/osd-core/ em 2026-07-27.
   1. git submodule update --remote modules/gsd-core
   2. Build unified wordlist (gsd-X → hsd-{role}) + upstream_filter
   3. Apply content + frontmatter converters per runtime
@@ -78,13 +80,15 @@ merge_description: |
   5. Install horus-sdk-adapter + agentes de role
 
 deploy:
-  enabled: true
+  enabled: false
+  superseded_by: ~/.hermes/osd-core
+  migration_note: ~/.hermes/osd-core/MIGRATION.md
   method: cli
   targets:
     - runtime: hermes
       home: ~/.hermes
       mode: global
-      dest_subpath: skills/hsd
+      dest_subpath: skills/hsd-legacy-disabled
     - runtime: claude
       home: ~/.claude
       mode: global
