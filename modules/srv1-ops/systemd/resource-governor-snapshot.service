@@ -8,9 +8,9 @@ Type=oneshot
 Slice=omni-builds.slice
 Environment=OMNI_BUILD_CPU_GUARD_ACTIVE=1
 Environment=OMNI_RESOURCE_HYGIENE_ACTIVE=1
-ExecStart=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-snapshot.py
-ExecStartPost=/usr/bin/python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py refresh
-WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+ExecStart=/usr/bin/python3 %h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-snapshot.py
+ExecStartPost=/usr/bin/python3 %h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-hygiene-queue.py refresh
+WorkingDirectory=%h/GitHub/omni-srv-admin
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7

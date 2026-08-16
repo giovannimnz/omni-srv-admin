@@ -7,6 +7,7 @@ import fcntl
 import json
 import os
 import re
+import sys
 import subprocess
 import time
 from datetime import datetime
@@ -246,6 +247,25 @@ def semaphore_busy(path: Path) -> bool:
     return proc.returncode != 0
 
 
+def warn_output_path(path: Path, exc: OSError) -> None:
+    print(
+        f"WARN output_path_unwritable path={path} error={exc.__class__.__name__}: {exc}",
+        file=sys.stderr,
+    )
+
+
+def prepare_output_dir(path: Path) -> bool:
+    try:
+        path.mkdir(parents=True, exist_ok=True)
+        path.chmod(0o755)
+        return True
+    except PermissionError as exc:
+        warn_output_path(path, exc)
+    except OSError as exc:
+        warn_output_path(path, exc)
+    return False
+
+
 def collect(config: dict[str, str]) -> dict[str, Any]:
     now = time.time()
     checks: list[dict[str, Any]] = []
@@ -328,8 +348,7 @@ def write_outputs(report: dict[str, Any], config: dict[str, str]) -> None:
     state_file = Path(os.path.expanduser(config["RG_DOCTOR_STATE_FILE"]))
     metrics_file = Path(os.path.expanduser(config["RG_DOCTOR_METRICS_FILE"]))
     state_file.parent.mkdir(parents=True, exist_ok=True)
-    metrics_file.parent.mkdir(parents=True, exist_ok=True)
-    metrics_file.parent.chmod(0o755)
+    metrics_dir_ready = prepare_output_dir(metrics_file.parent)
     state_tmp = state_file.with_suffix(".tmp")
     state_tmp.write_text(json.dumps(report, indent=2, sort_keys=True) + "\n")
     state_tmp.replace(state_file)
@@ -367,10 +386,17 @@ def write_outputs(report: dict[str, Any], config: dict[str, str]) -> None:
         "# TYPE omni_resource_governor_doctor_timestamp_seconds gauge",
         f"omni_resource_governor_doctor_timestamp_seconds {int(time.time())}",
     ]
+    if not metrics_dir_ready:
+        return
     metrics_tmp = metrics_file.with_suffix(".tmp")
-    metrics_tmp.write_text("\n".join(lines) + "\n")
-    metrics_tmp.chmod(0o644)
-    metrics_tmp.replace(metrics_file)
+    try:
+        metrics_tmp.write_text("\n".join(lines) + "\n")
+        metrics_tmp.chmod(0o644)
+        metrics_tmp.replace(metrics_file)
+    except PermissionError as exc:
+        warn_output_path(metrics_file, exc)
+    except OSError as exc:
+        warn_output_path(metrics_file, exc)
 
 
 def print_report(report: dict[str, Any]) -> None:

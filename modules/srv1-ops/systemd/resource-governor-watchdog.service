@@ -1,13 +1,13 @@
 [Unit]
 Description=Resource governor watchdog daemon (continuous, 5s poll)
-Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/resource-governor.md
+Documentation=file://%h/GitHub/omni-srv-admin/docs/operations/resource-governor.md
 After=network-online.target
 Wants=network-online.target
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-watchdog.py
-WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+ExecStart=/usr/bin/env python3 %h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/resource-governor-watchdog.py
+WorkingDirectory=%h/GitHub/omni-srv-admin
 Nice=15
 IOSchedulingClass=idle
 IOSchedulingPriority=7
