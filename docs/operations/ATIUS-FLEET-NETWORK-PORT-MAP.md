@@ -482,6 +482,7 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 8080   | OCI Admin web/API          | 10.13.1.13   | ubuntu/PM2 | `oci-admin-web`, namespace `oci-admin`; `/healthz`; OCI/DRG primary |
 | 8088   | Vaultwarden/private gateway | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
 | 8090   | OCI Admin MCP HTTP         | 10.13.1.13   | ubuntu/PM2 | `oci-admin-mcp-http`; public `/oci-admin`; OCI/DRG primary |
+| 8001   | Atius Talk Meta webhook | 10.13.1.13 | ubuntu/systemd | `atius-talk-meta-webhook.service`; origin privado do Apache SRV-1 para `https://webhook.atius.com.br/talk`; assinatura HMAC ainda fail-closed até App Secret |
 | 8202   | HashiCorp Vault HTTPS      | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
 | 8203   | HashiCorp Vault cluster    | 10.13.1.13 / 10.100.100.3 | podman/systemd | OCI-private preferred via local proxy; `wg100` reserve |
 | 2379   | etcd                       | 10.13.1.13 / 10.100.100.3 | root     | K3s; OCI-private preferred |
