@@ -49,3 +49,20 @@ items:
   install:
     codex:
       rel_path: skills/atius-sso-governed-release-closeout
+- name: xrdp-abnt2-fleet
+  kind: skill
+  products: *id001
+  platforms:
+  - windows
+  - linux
+  source_path: items/xrdp-abnt2-fleet
+  hash: 63ece2ad8c638726e63ed254f698626bf1f4bcb1aff379685dd8f9e17bc430aa
+  required_files:
+  - SKILL.md
+  files:
+  - path: SKILL.md
+    sha256: 63ece2ad8c638726e63ed254f698626bf1f4bcb1aff379685dd8f9e17bc430aa
+    bytes: 2217
+  install:
+    codex:
+      rel_path: skills/xrdp-abnt2-fleet

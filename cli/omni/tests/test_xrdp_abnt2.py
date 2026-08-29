@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 import sys
+import subprocess
+import zipfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parents[3]
@@ -47,6 +49,50 @@ def test_canonical_assets_are_lf_only() -> None:
         assert b"\r" not in raw, f"{name} must be LF-only in repo: {path}"
 
 
+def test_noneditable_package_includes_xrdp_assets(tmp_path: Path) -> None:
+    cli_dir = REPO / "cli"
+    build_base = tmp_path / "build"
+    result = subprocess.run(
+        [sys.executable, "setup.py", "build_py", "--build-lib", str(build_base)],
+        cwd=cli_dir,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert result.returncode == 0, result.stderr
+    package_assets = build_base / "omni" / "assets" / "xrdp-abnt2"
+    assert (package_assets / "km-abnt2.ini").is_file()
+    assert (package_assets / "xrdp-abnt2-reconcile.timer").is_file()
+
+    probe = subprocess.run(
+        [
+            sys.executable,
+            "-c",
+            "import sys; sys.path.insert(0, sys.argv[1]); import omni.xrdp_abnt2 as x; "
+            "assert x.FILES_DIR == x._PACKAGE_FILES_DIR and x.CANONICAL['km_abnt2'].is_file()",
+            str(build_base),
+        ],
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert probe.returncode == 0, probe.stderr
+
+    wheel_dir = tmp_path / "wheel"
+    wheel_dir.mkdir()
+    wheel_build = subprocess.run(
+        [sys.executable, "setup.py", "bdist_wheel", "--dist-dir", str(wheel_dir)],
+        cwd=cli_dir,
+        text=True,
+        capture_output=True,
+        check=False,
+    )
+    assert wheel_build.returncode == 0, wheel_build.stderr
+    with zipfile.ZipFile(next(wheel_dir.glob("*.whl"))) as wheel:
+        assert "omni/assets/xrdp-abnt2/km-abnt2.ini" in wheel.namelist()
+        assert "omni/assets/xrdp-abnt2/xrdp-abnt2-reconcile.timer" in wheel.namelist()
+
+
 def test_xrdp_overrides_are_idempotent_and_replace_commented_defaults() -> None:
     original = """[Globals]
 #xrdp.override_keyboard_type=0x04
@@ -68,8 +114,61 @@ LogLevel=INFO
 def test_guard_covers_current_br_layout_and_critical_keys() -> None:
     assert "km_00000416" in xrdp_abnt2_mod.SYSTEM_TARGETS
     text = xrdp_abnt2_mod.CANONICAL["km_abnt2"].read_text(encoding="utf-8")
-    for snippet in xrdp_abnt2_mod.REQUIRED_KEYMAP_SNIPPETS:
-        assert snippet in text
+    assert xrdp_abnt2_mod._keymap_contract_errors(text) == []
+    assert xrdp_abnt2_mod._rdp_scancode_smoke(text) == []
+
+
+def test_keymap_uses_xrdp_0924_xfree86_indexes_not_live_evdev_offsets() -> None:
+    sections = xrdp_abnt2_mod._parse_keymap_text(
+        xrdp_abnt2_mod.CANONICAL["km_abnt2"].read_text(encoding="utf-8")
+    )
+
+    for values in sections.values():
+        assert values["Key98"] == "65362:0"   # Up, not Key111
+        assert values["Key100"] == "65361:0"  # Left, not Key113
+        assert values["Key102"] == "65363:0"  # Right, not Key114
+        assert values["Key104"] == "65364:0"  # Down, not Key116
+        assert values["Key107"] == "65535:127"  # Delete, not Key119
+        assert values["Key111"] == "65377:0"  # Print Screen
+
+
+def test_abnt_c1_slash_has_all_modifier_levels() -> None:
+    sections = xrdp_abnt2_mod._parse_keymap_text(
+        xrdp_abnt2_mod.CANONICAL["km_abnt2"].read_text(encoding="utf-8")
+    )
+
+    for section, expected in xrdp_abnt2_mod.REQUIRED_ABNT_SECTION_VALUES.items():
+        assert sections[section]["Key123"] == expected["Key123"]
+
+
+def test_watchdog_clears_options_before_reapplying_altgr() -> None:
+    text = xrdp_abnt2_mod.CANONICAL["watchdog"].read_text(encoding="utf-8")
+    assert "-option '' -option lv3:ralt_switch" in text
+    assert "-option -option" not in text
+
+
+def test_reconciliation_timer_never_restarts_xrdp() -> None:
+    service = xrdp_abnt2_mod.CANONICAL["reconcile_service"].read_text(encoding="utf-8")
+    timer = xrdp_abnt2_mod.CANONICAL["reconcile_timer"].read_text(encoding="utf-8")
+    assert "ExecStart=/usr/local/sbin/fix-xrdp-abnt2-keyboard" in service
+    assert "systemctl restart" not in service.lower()
+    assert "OnUnitActiveSec=1h" in timer
+    assert "RandomizedDelaySec=15min" in timer
+    repairer = xrdp_abnt2_mod.CANONICAL["fix_script"].read_text(encoding="utf-8")
+    assert 'backup_root="/var/backups/xrdp-abnt2-reconcile"' in repairer
+    assert "max_backups=8" in repairer
+
+
+def test_reconciliation_timer_requires_enabled_and_active(monkeypatch) -> None:
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_state",
+        lambda mode, unit: "enabled" if mode == "is-enabled" else "active",
+    )
+    assert xrdp_abnt2_mod._reconcile_timer_errors() == []
+
+    monkeypatch.setattr(xrdp_abnt2_mod, "_systemctl_state", lambda _mode, _unit: "inactive")
+    assert len(xrdp_abnt2_mod._reconcile_timer_errors()) == 2
 
 
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:

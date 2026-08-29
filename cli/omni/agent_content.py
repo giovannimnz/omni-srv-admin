@@ -481,6 +481,16 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
     raise click.ClickException(f"runtime não suportado para apply: {runtime}")
 
 
+def _post_status_summary(post: dict[str, Any]) -> str:
+    """Render local diffs and SSH apply acknowledgements without assuming shape."""
+    if {"missing", "changed", "extra", "unchanged"} <= post.keys():
+        return (
+            f"post_status={post['status']} missing={post['missing']} "
+            f"changed={post['changed']} extra={post['extra']} unchanged={post['unchanged']}"
+        )
+    return f"post_status={post.get('status', 'unknown')}"
+
+
 @click.group(name="agent-content")
 def agent_content() -> None:
     """Sync de content packs Git-backed para Hermes/Codex."""
@@ -574,7 +584,7 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
         click.echo(f"pack={pack} target={target} mode=apply")
         for item in applied:
             post = item['post_status']
-            click.echo(f"- {item['item']}: post_status={post['status']} missing={post['missing']} changed={post['changed']} extra={post['extra']} unchanged={post['unchanged']}")
+            click.echo(f"- {item['item']}: {_post_status_summary(post)}")
             click.echo(f"    backup={item['backup_root']}")
         click.echo(f"runtime_validation={runtime_validation}")
 

@@ -5,7 +5,7 @@ apply_abnt2() {
     if [ -z "${XAUTHORITY:-}" ] && [ -n "${HOME:-}" ]; then
         export XAUTHORITY="$HOME/.Xauthority"
     fi
-    setxkbmap -model pc105 -layout br -variant abnt2 -option -option lv3:ralt_switch >/dev/null 2>&1 || true
+    setxkbmap -model pc105 -layout br -variant abnt2 -option '' -option lv3:ralt_switch >/dev/null 2>&1 || true
 }
 
 case "${1:-}" in

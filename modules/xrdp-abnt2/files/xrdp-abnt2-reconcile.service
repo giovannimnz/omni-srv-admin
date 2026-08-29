@@ -1,0 +1,8 @@
+[Unit]
+Description=Reconcile XRDP ABNT2 keyboard assets without restarting XRDP
+ConditionPathIsDirectory=/etc/xrdp
+ConditionPathExists=/usr/local/share/xrdp-abnt2/km-abnt2.ini
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/fix-xrdp-abnt2-keyboard
