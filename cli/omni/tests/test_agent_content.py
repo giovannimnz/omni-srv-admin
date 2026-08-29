@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -132,7 +133,7 @@ def test_ssh_extract_tree_quotes_transactional_remote_command(monkeypatch, tmp_p
 
 def test_ssh_apply_refuses_skill_pack_extract_when_backup_fails(monkeypatch, tmp_path):
     source_root = tmp_path / "item" / "codex"
-    _write(source_root / "SKILL.md", "# demo\n")
+    _write(source_root / "skills" / "demo-skill" / "SKILL.md", "# demo\n")
     target = {
         "runtime": "ssh-linux",
         "host": "atius-srv-1",
@@ -140,7 +141,11 @@ def test_ssh_apply_refuses_skill_pack_extract_when_backup_fails(monkeypatch, tmp
         "home": "/home/ubuntu/.codex",
         "product": "codex",
     }
-    item = {"name": "demo-skill", "kind": "skill-pack"}
+    item = {
+        "name": "demo-skill",
+        "kind": "skill-pack",
+        "files": [{"path": "codex/skills/demo-skill/SKILL.md"}],
+    }
     extracted = []
 
     class FailedBackup:
@@ -158,6 +163,51 @@ def test_ssh_apply_refuses_skill_pack_extract_when_backup_fails(monkeypatch, tmp
     else:
         raise AssertionError("expected a failed remote backup to abort apply")
     assert extracted == []
+
+
+def test_ssh_skill_pack_replaces_only_managed_roots_and_preserves_product_home(monkeypatch, tmp_path):
+    source_root = tmp_path / "item" / "codex"
+    _write(source_root / "skills" / "demo-skill" / "SKILL.md", "# managed skill\n")
+    _write(source_root / "slash-commands" / "demo.md", "# managed command\n")
+    home = tmp_path / "remote-codex-home"
+    _write(home / "config.toml", "keep = true\n")
+    _write(home / "unrelated-sentinel.txt", "must survive\n")
+    target = {
+        "runtime": "ssh-linux",
+        "host": "atius-srv-1",
+        "user": "ubuntu",
+        "home": str(home),
+        "product": "codex",
+    }
+    item = {
+        "name": "demo-skill-pack",
+        "kind": "skill-pack",
+        "files": [
+            {"path": "codex/skills/demo-skill/SKILL.md"},
+            {"path": "codex/slash-commands/demo.md"},
+        ],
+    }
+    extracted: list[str] = []
+
+    class SuccessfulBackup:
+        returncode = 0
+        stderr = ""
+
+    def fake_extract(_target, source, dest_home, rel_path):
+        extracted.append(rel_path)
+        shutil.copytree(source, Path(dest_home) / rel_path, dirs_exist_ok=True)
+
+    monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, _item: source_root.parent)
+    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: SuccessfulBackup())
+    monkeypatch.setattr(agent_content, "_ssh_extract_tree", fake_extract)
+
+    agent_content._apply_item("demo", item, target)
+
+    assert extracted == ["skills", "slash-commands"]
+    assert (home / "skills" / "demo-skill" / "SKILL.md").read_text(encoding="utf-8") == "# managed skill\n"
+    assert (home / "slash-commands" / "demo.md").read_text(encoding="utf-8") == "# managed command\n"
+    assert (home / "unrelated-sentinel.txt").read_text(encoding="utf-8") == "must survive\n"
+    assert (home / "config.toml").read_text(encoding="utf-8") == "keep = true\n"
 
 
 def test_ssh_apply_refuses_regular_item_extract_when_backup_fails(monkeypatch, tmp_path):

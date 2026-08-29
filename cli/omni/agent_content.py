@@ -246,6 +246,43 @@ def _ssh_file_sha256(target: dict[str, Any], remote_path: str) -> tuple[bool, st
     return True, out
 
 
+def _ssh_skill_pack_roots(source_root: Path, item: dict[str, Any], product: str) -> list[tuple[Path, str]]:
+    """Return the explicitly managed top-level roots for an SSH skill-pack.
+
+    A skill-pack is allowed to manage several product roots (for example,
+    ``skills`` and ``slash-commands``), but it must never make the product
+    home itself a replacement target.  The manifest file list is the authority
+    so an untracked directory in a pack cannot expand the remote write scope.
+    """
+    prefix = PurePosixPath(product)
+    roots: set[str] = set()
+    files = item.get("files", [])
+    if not isinstance(files, list):
+        raise click.ClickException(f"item com files inválidos: {item.get('name')}")
+    for entry in files:
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise click.ClickException(f"item com arquivo inválido: {item.get('name')}")
+        path = PurePosixPath(entry["path"])
+        try:
+            relative = path.relative_to(prefix)
+        except ValueError:
+            continue
+        if not relative.parts:
+            continue
+        roots.add(relative.parts[0])
+
+    if not roots:
+        raise click.ClickException(f"skill-pack sem raízes gerenciadas para produto {product}: {item.get('name')}")
+
+    managed_roots: list[tuple[Path, str]] = []
+    for root in sorted(roots):
+        source = source_root / root
+        if not source.is_dir():
+            raise click.ClickException(f"raiz gerenciada ausente ou não é diretório: {source}")
+        managed_roots.append((source, root))
+    return managed_roots
+
+
 def _item_mappings(pack: str, item: dict[str, Any], target: dict[str, Any]) -> tuple[Path | None, Path | None, list[tuple[Path, Path]]]:
     item_dir = _pack_item_dir(pack, item)
     runtime = _target_runtime(target)
@@ -478,13 +515,12 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
             source_root = _pack_item_dir(pack, item) / str(target.get('product'))
             if not source_root.exists():
                 raise click.ClickException(f"source_root ausente: {source_root}")
-            for src in sorted(path for path in source_root.rglob("*") if path.is_file()):
-                rel = src.relative_to(source_root).as_posix()
-                remote_path = str(PurePosixPath(dest_home) / PurePosixPath(rel))
-                remote_backup = str(PurePosixPath(backup_root) / PurePosixPath(rel))
-                cmd = f'mkdir -p {shlex.quote(str(PurePosixPath(remote_backup).parent))}; if [ -f {shlex.quote(remote_path)} ]; then cp {shlex.quote(remote_path)} {shlex.quote(remote_backup)}; fi'
+            for root_source, rel_root in _ssh_skill_pack_roots(source_root, item, str(target.get('product'))):
+                remote_dest = str(PurePosixPath(dest_home) / PurePosixPath(rel_root))
+                remote_backup = str(PurePosixPath(backup_root) / PurePosixPath(rel_root))
+                cmd = f'mkdir -p {shlex.quote(str(PurePosixPath(remote_backup).parent))}; if [ -d {shlex.quote(remote_dest)} ]; then cp -a {shlex.quote(remote_dest)} {shlex.quote(remote_backup)}; fi'
                 _ssh_backup(target, cmd)
-            _ssh_extract_tree(target, source_root, dest_home, '')
+                _ssh_extract_tree(target, root_source, dest_home, rel_root)
         else:
             source_root = _pack_item_dir(pack, item)
             install = item.get('install', {})
