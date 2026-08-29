@@ -69,6 +69,10 @@ updated: 2026-08-29
   result: "Review GSD pós-merge convergiu em follow-up limpo: 14 findings corrigidos em seis iterações e review deep final clean (0 Critical/Warning). O escopo 0.2.5 adiciona rollback exato de arquivos/uid/gid/units, package opt-in, exact-one [Globals], execução real do oneshot e teste do reconciliador sob mawk; não contém restart XRDP."
 - timestamp: 2026-08-29
   result: "Landscape self-hosted está operacional e os quatro clients estão registrados, mas o profile Vault canônico ainda aponta ao SaaS. O rollout XRDP não dependeu dele; integração self-hosted permanece separada até existir profile Vault próprio."
+- timestamp: 2026-08-29
+  result: "O primeiro install local 0.2.5 falhou corretamente no health gate e executou rollback porque o validator consultava apenas NextElapseUSecRealtime; o timer real usa NextElapseUSecMonotonic. Readback pós-rollback manteve xrdp/xrdp-sesman e Xvnc :1 ativos, service reconcile Result=success e timer enabled+active."
+- timestamp: 2026-08-29
+  result: "Hotfix aceita schedule finito realtime ou monotonic e rejeita vazio/0/n-a/infinity; 30 testes focais e review deep final clean."
 
 ## Eliminated
 
