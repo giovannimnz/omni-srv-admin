@@ -21,7 +21,7 @@ updated: 2026-08-29
 - hypothesis: "SRV-2, SRV-3 e Horistic mantêm keymaps gerados/indexados para evdev, enquanto o XRDP 0.9.24 consulta índices xfree86/base; isso roteia os scancodes estendidos aos símbolos errados. A CLI instalada em Horistic deriva REPO_ROOT de site-packages e não encontra os assets do módulo."
 - test: "Executar os testes focais, criar uma distribuição wheel que contém assets do módulo e, após deploy sem restart, comparar os hashes live e executar validate/diff em cada host."
 - expecting: "Cada host remoto terá o payload SHA-256 cdd4e2... e validate/diff passarão; a CLI instalada encontrará os assets distribuídos."
-- next_action: "Adicionar assets XRDP ao pacote omni e um teste de distribuição; implementar reconciliação periódica systemd sem restart; depois criar branch/commit focal e fazer rollout remoto com o install que já cria backup."
+- next_action: "Aplicar a reconciliação do mesmo commit no SRV-1, instalar a skill Codex em um target, então registrar o rollout e confirmar a sessão Microsoft RDP nova."
 - reasoning_checkpoint:
     hypothesis: "Os índices evdev do keymap nos três hosts causam scancodes estendidos errados porque XRDP 0.9.24 resolve km-*.ini pelos índices xfree86/base; o pacote uv do Horistic não inclui modules/xrdp-abnt2, logo REPO_ROOT em site-packages não contém seus assets."
     confirming_evidence:
@@ -59,6 +59,10 @@ updated: 2026-08-29
   result: "Backup do diff focal XRDP criado antes de mutações do repo: /home/ubuntu/.backups/xrdp-keyboard-fleet-20260829/repo-xrdp-focused-pre-fix.tgz (sha256 cb9cb66b7e6f10946eb39ba2e51bd0e526fe113ebe640f2b5b0c8e7af1ad)."
 - timestamp: 2026-08-29
   result: "Escopo de closeout ampliado pelo operador: reconciliação systemd sem restart, auditoria Landscape somente se material, skill Codex nativa, e registros Obsidian/GBrain."
+- timestamp: 2026-08-29
+  result: "Commit focal 41ba2acb em branch fix/xrdp-keyboard-fleet-drift-20260829 e PR #19 criados; testes focais 12/12 e validate-pack codex-skills passaram. Os três hosts remotos estão em main limpo, com XRDP/XRDP-sesman ativos, pré-requisitos presentes e conectividade pública confirmada; as rotas VPN de SRV-2/SRV-3 falharam no banner conforme registrado."
+- timestamp: 2026-08-29
+  result: "Rollout serial passou em SRV-2, SRV-3 e Horistic: cada install criou backup, não reiniciou XRDP, validate/diff passaram, timer está enabled+active e os cinco keymaps agora têm SHA-256 cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237. Sessões e processos XRDP/Xvnc ativos permaneceram presentes. Horistic atualizou `uv tool` para omni 0.2.4 e sua CLI instalada passou validate/diff, corrigindo os assets ausentes."
 
 ## Eliminated
 
