@@ -304,6 +304,32 @@ def test_reconciliation_timer_requires_enabled_and_active(monkeypatch) -> None:
     assert len(xrdp_abnt2_mod._reconcile_timer_errors()) == 2
 
 
+def test_reconciliation_timer_accepts_monotonic_next_trigger(monkeypatch) -> None:
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_state",
+        lambda mode, _unit: "enabled" if mode == "is-enabled" else "active",
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_properties",
+        lambda unit, *_properties: (
+            {
+                "Result": "success",
+                "ExecMainStatus": "0",
+                "ExecMainStartTimestampMonotonic": "123456789",
+            }
+            if unit == xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT
+            else {
+                "NextElapseUSecRealtime": "",
+                "NextElapseUSecMonotonic": "1h 12min",
+            }
+        ),
+    )
+
+    assert xrdp_abnt2_mod._reconcile_timer_errors() == []
+
+
 def test_reconciliation_timer_rejects_never_run_service(monkeypatch) -> None:
     monkeypatch.setattr(
         xrdp_abnt2_mod,
