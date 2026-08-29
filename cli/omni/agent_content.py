@@ -423,6 +423,13 @@ def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
 
 def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     runtime = _target_runtime(target)
+    if runtime == "ssh-linux":
+        # The legacy remote writer can replace content before a later reporting
+        # or validation failure. Keep apply fail-closed until it has a reviewed
+        # per-item transaction with rollback. SSH dry-run remains available.
+        raise click.ClickException(
+            "sync --apply para ssh-linux está desabilitado: exige transação e rollback remoto"
+        )
     home = _accessible_home(target) if runtime in {"windows", "wsl"} else None
     source_root, dest_root, mappings = _item_mappings(pack, item, target) if runtime in {"windows", "wsl"} else ( _pack_item_dir(pack, item), None, [] )
     if runtime in {"windows", "wsl"}:
@@ -479,6 +486,16 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
         return {"item": item.get("name"), "backup_root": backup_root, "post_status": {"item": item.get('name'), 'status': 'applied-ssh'}}
 
     raise click.ClickException(f"runtime não suportado para apply: {runtime}")
+
+
+def _post_status_summary(post: dict[str, Any]) -> str:
+    """Render local diffs and SSH acknowledgements without assuming shape."""
+    if {"missing", "changed", "extra", "unchanged"} <= post.keys():
+        return (
+            f"post_status={post['status']} missing={post['missing']} "
+            f"changed={post['changed']} extra={post['extra']} unchanged={post['unchanged']}"
+        )
+    return f"post_status={post.get('status', 'unknown')}"
 
 
 @click.group(name="agent-content")
@@ -574,7 +591,7 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
         click.echo(f"pack={pack} target={target} mode=apply")
         for item in applied:
             post = item['post_status']
-            click.echo(f"- {item['item']}: post_status={post['status']} missing={post['missing']} changed={post['changed']} extra={post['extra']} unchanged={post['unchanged']}")
+            click.echo(f"- {item['item']}: {_post_status_summary(post)}")
             click.echo(f"    backup={item['backup_root']}")
         click.echo(f"runtime_validation={runtime_validation}")
 
