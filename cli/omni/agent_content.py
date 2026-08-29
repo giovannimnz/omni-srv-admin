@@ -575,14 +575,21 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
         if home is None:
             raise click.ClickException(f"runtime não suportado para apply local: {target.get('runtime')}")
         backup_root = _backup_root(home) / _timestamp() / pack / str(item.get("name")) / "before"
-        backup_root.mkdir(parents=True, exist_ok=True)
         if str(item.get("kind")) == "skill-pack":
+            # ``copy2`` accepts a directory destination and would write below it.
+            # A skill-pack manifest controls files only, so reject any existing
+            # non-regular node (including symlinks) before creating a backup or
+            # changing the target tree.
+            for _src, dst in mappings:
+                if (dst.exists() or dst.is_symlink()) and (not dst.is_file() or dst.is_symlink()):
+                    raise click.ClickException(f"destino de skill-pack não é arquivo: {dst}")
+            backup_root.mkdir(parents=True, exist_ok=True)
             entries: list[tuple[str, bool]] = []
             for _src, dst in mappings:
                 rel = dst.relative_to(home).as_posix()
                 existed = dst.exists()
                 entries.append((rel, existed))
-                if dst.exists() and dst.is_file():
+                if existed:
                     _backup_file(dst, backup_root, home)
             result = {
                 "item": item.get("name"),
@@ -593,14 +600,17 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
                 for src, dst in mappings:
                     dst.parent.mkdir(parents=True, exist_ok=True)
                     shutil.copy2(src, dst)
+                result["post_status"] = _compute_diff(pack, item, target)
             except Exception:
                 _rollback_item(result)
                 raise
+            return result
         else:
             if source_root is None:
                 raise click.ClickException(f"item sem source_root: {item.get('name')}")
             if not isinstance(dest_root, Path):
                 raise click.ClickException(f"item sem destino resolvido: {item.get('name')}")
+            backup_root.mkdir(parents=True, exist_ok=True)
             existed = dest_root.exists()
             if existed:
                 shutil.copytree(dest_root, backup_root / "tree")
@@ -611,12 +621,11 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
             }
             try:
                 _copy_tree(source_root, dest_root)
+                result["post_status"] = _compute_diff(pack, item, target)
             except Exception:
                 _rollback_item(result)
                 raise
-        diff = _compute_diff(pack, item, target)
-        result["post_status"] = diff
-        return result
+            return result
 
     if runtime == "ssh-linux":
         # The former SSH implementation swapped source-directory roots. It

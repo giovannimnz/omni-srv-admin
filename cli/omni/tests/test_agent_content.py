@@ -312,6 +312,64 @@ def test_sync_rolls_back_local_item_when_validator_fails(monkeypatch, tmp_path):
     assert not (home / "skills" / "demo" / "new.txt").exists()
 
 
+def test_skill_pack_apply_rejects_directory_file_destination_without_writes(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    source = tmp_path / "source" / "SKILL.md"
+    destination = home / "skills" / "demo" / "SKILL.md"
+    _write(source, "managed\n")
+    _write(destination / "preserved.txt", "must survive\n")
+    before = {
+        path.relative_to(home): path.read_bytes()
+        for path in home.rglob("*")
+        if path.is_file()
+    }
+    target = {"product": "codex", "runtime": "windows", "home": str(home)}
+    item = {"name": "demo-skill-pack", "kind": "skill-pack"}
+    monkeypatch.setattr(
+        agent_content,
+        "_item_mappings",
+        lambda *_args: (source.parent, home, [(source, destination)]),
+    )
+
+    with pytest.raises(agent_content.click.ClickException, match="destino de skill-pack não é arquivo"):
+        agent_content._apply_item("demo", item, target)
+
+    assert destination.is_dir()
+    assert (destination / "preserved.txt").read_text() == "must survive\n"
+    assert not (destination / "SKILL.md").exists()
+    assert not (home / "backups").exists()
+    assert {
+        path.relative_to(home): path.read_bytes()
+        for path in home.rglob("*")
+        if path.is_file()
+    } == before
+
+
+def test_skill_pack_apply_rolls_back_when_post_copy_diff_fails(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    source = tmp_path / "source" / "SKILL.md"
+    destination = home / "skills" / "demo" / "SKILL.md"
+    _write(source, "managed\n")
+    _write(destination, "previous\n")
+    target = {"product": "codex", "runtime": "windows", "home": str(home)}
+    item = {"name": "demo-skill-pack", "kind": "skill-pack"}
+    monkeypatch.setattr(
+        agent_content,
+        "_item_mappings",
+        lambda *_args: (source.parent, home, [(source, destination)]),
+    )
+
+    def fail_post_copy_diff(*_args):
+        raise OSError("post-copy diff failed")
+
+    monkeypatch.setattr(agent_content, "_compute_diff", fail_post_copy_diff)
+
+    with pytest.raises(OSError, match="post-copy diff failed"):
+        agent_content._apply_item("demo", item, target)
+
+    assert destination.read_text() == "previous\n"
+
+
 @pytest.mark.parametrize(
     ("item", "fragment"),
     [
