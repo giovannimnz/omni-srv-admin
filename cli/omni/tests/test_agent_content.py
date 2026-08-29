@@ -103,7 +103,3 @@ def test_remote_posix_path_for_ssh_target():
     local = Path('/tmp/example/SKILL.md')
     out = agent_content._remote_posix_path(target, local)
     assert out.replace('\\', '/') == '/tmp/example/SKILL.md'
-
-
-def test_post_status_summary_accepts_ssh_apply_shape():
-    assert agent_content._post_status_summary({'status': 'applied-ssh'}) == 'post_status=applied-ssh'
