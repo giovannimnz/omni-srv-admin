@@ -38,7 +38,7 @@ notes:
 Required operational contract:
 
 1. The host has a repo clone at `~/GitHub/omni-srv-admin`.
-2. `sudo omni xrdp-abnt2 install --yes` is the canonical persistent patch entrypoint.
+2. `sudo omni xrdp-abnt2 install --yes` is the canonical persistent patch entrypoint when prerequisites already exist; a new host with missing packages requires explicit `--install-packages`.
 3. `dark-theme-ubuntu/scripts/dark-themectl.sh repair --install-packages --restart-session` is the canonical LXDE/XRDP desktop repair path.
 4. `xrdp` and `xrdp-sesman` remain `enabled` and `active`.
 5. XRDP helper scripts and text assets remain `LF`, not `CRLF`.
@@ -115,12 +115,16 @@ Apply:
 ```bash
 cd ~/GitHub/omni-srv-admin
 sudo -n python3 cli/omni/xrdp_abnt2.py install --user "$USER" --yes
+# New host only, when the preflight reports missing packages:
+sudo -n python3 cli/omni/xrdp_abnt2.py install --user "$USER" --yes --install-packages
 ```
 
-The install command is the canonical persistent patch entrypoint. It guarantees
-the package baseline, normalizes textual XRDP assets to `LF`, reinstalls the
-APT/DPKG repair hook, refreshes `/usr/local/share/xrdp-abnt2/`, and ensures
-`xrdp` + `xrdp-sesman` remain enabled.
+The install command is the canonical persistent patch entrypoint. Missing
+packages fail before any mutation unless `--install-packages` explicitly
+authorizes the non-rollbackable package-manager boundary. The XRDP transaction
+then normalizes assets to `LF`, reinstalls the APT/DPKG hook, refreshes
+`/usr/local/share/xrdp-abnt2/`, ensures the services remain enabled, and restores
+files, ownership/mode, and prior unit state if a later step fails.
 
 Validate:
 

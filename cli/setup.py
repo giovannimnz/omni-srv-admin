@@ -39,7 +39,7 @@ class install_lib(_install_lib):
 
 setup(
     name="omni",
-    version="0.2.4",
+    version="0.2.5",
     author="Giovanni Muniz",
     author_email="munizgiovanni@hotmail.com",
     description="CLI unificada para administração de servidores e gestão de forks",

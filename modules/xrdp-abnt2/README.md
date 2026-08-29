@@ -50,10 +50,13 @@ Hosts alvo atuais:
 - `atius-srv-3`
 - `horistic-srv`
 
-## Pacotes garantidos
+## Pacotes pré-requisito
 
-`omni xrdp-abnt2 install --yes` garante os pré-requisitos do patch antes de
-reaplicar os assets:
+`omni xrdp-abnt2 install --yes` reaplica o guard quando os pacotes abaixo já
+estão presentes. Se algum estiver ausente, o comando falha antes da primeira
+mutação e exige repetição com `--install-packages`. Esse opt-in é uma fronteira
+explícita e não reversível do gerenciador de pacotes; a transação XRDP posterior
+continua com rollback de arquivos, ownership/mode e estado dos units.
 
 - `xrdp`
 - `xorgxrdp`
@@ -77,6 +80,8 @@ omni xrdp-abnt2 status
 omni xrdp-abnt2 validate
 omni xrdp-abnt2 diff
 sudo omni xrdp-abnt2 install --yes
+# Somente em host novo com pré-requisitos ausentes:
+sudo omni xrdp-abnt2 install --yes --install-packages
 ```
 
 ## Assets canônicos
@@ -112,6 +117,7 @@ Depois instala:
 /home/<user>/.local/bin/setxkbmap-abnt2.sh
 /etc/xrdp/xrdp_keyboard.ini
 /etc/xrdp/km-00000409.ini
+/etc/xrdp/km-00000416.ini
 /etc/xrdp/km-00010416.ini
 /etc/xrdp/km-0000080a.ini
 /etc/xrdp/km-0000f010.ini
@@ -121,9 +127,11 @@ Depois instala:
 Também normaliza line endings dos assets textuais para `LF` durante a
 instalação, mesmo que o checkout local tenha vindo com `CRLF`.
 
-Não reinicia `xrdp` automaticamente. O comando só garante:
+Não reinicia `xrdp` automaticamente. Depois do limite opcional de packages, a
+aplicação é transacional: falha tardia restaura arquivos, `mode`, `uid/gid` e o
+estado anterior dos units. O comando garante:
 
-- pacotes
+- pacotes já presentes, ou instalação autorizada por `--install-packages`
 - arquivos canônicos
 - helper persistente em `/usr/local/sbin`
 - payload persistente em `/usr/local/share/xrdp-abnt2`
