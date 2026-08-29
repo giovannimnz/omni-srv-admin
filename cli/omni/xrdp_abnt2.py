@@ -313,6 +313,33 @@ def _render_xrdp_overrides(text: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _globals_missing_overrides(text: str) -> list[str]:
+    lines = text.splitlines()
+    globals_start = next(
+        (index for index, line in enumerate(lines) if line.strip().lower() == "[globals]"),
+        None,
+    )
+    if globals_start is None:
+        return [f"{key}={value}" for key, value in REQUIRED_XRDP_OVERRIDES.items()]
+    globals_end = next(
+        (
+            index
+            for index in range(globals_start + 1, len(lines))
+            if re.fullmatch(r"\s*\[[^]]+\]\s*", lines[index])
+        ),
+        len(lines),
+    )
+    globals_text = "\n".join(lines[globals_start + 1:globals_end])
+    return [
+        f"{key}={value}"
+        for key, value in REQUIRED_XRDP_OVERRIDES.items()
+        if not re.search(
+            rf"(?mi)^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$",
+            globals_text,
+        )
+    ]
+
+
 def _apply_xrdp_overrides(dry_run: bool) -> None:
     target = SYSTEM_TARGETS["xrdp_ini"]
     if dry_run:
@@ -522,14 +549,7 @@ def _validation(username: str) -> tuple[bool, list[str], list[str]]:
     xrdp_ini = SYSTEM_TARGETS["xrdp_ini"]
     if xrdp_ini.exists():
         text = xrdp_ini.read_text(errors="replace")
-        missing_overrides = [
-            f"{key}={value}"
-            for key, value in REQUIRED_XRDP_OVERRIDES.items()
-            if not re.search(
-                rf"(?mi)^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$",
-                text,
-            )
-        ]
+        missing_overrides = _globals_missing_overrides(text)
         if missing_overrides:
             fail.append("xrdp.ini sem overrides ativos: " + ", ".join(missing_overrides))
         else:
