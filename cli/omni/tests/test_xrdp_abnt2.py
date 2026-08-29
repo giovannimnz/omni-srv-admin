@@ -218,6 +218,67 @@ def test_reconciliation_timer_never_restarts_xrdp() -> None:
     assert "max_backups=8" in repairer
 
 
+def test_reconciler_snapshots_duplicate_globals_before_normalizing(tmp_path: Path) -> None:
+    source_script = xrdp_abnt2_mod.CANONICAL["fix_script"].read_text(encoding="utf-8")
+    duplicate_cases = (
+        "xrdp.override_keyboard_type=0x04\nxrdp.override_keyboard_type=0x07\n",
+        "xrdp.override_keyboard_type=0x04\nxrdp.override_keyboard_type=0x04\n",
+    )
+
+    for index, duplicate in enumerate(duplicate_cases):
+        case_root = tmp_path / f"case-{index}"
+        src = case_root / "src"
+        dst = case_root / "etc-xrdp"
+        backups = case_root / "backups"
+        src.mkdir(parents=True)
+        dst.mkdir(parents=True)
+        for name, content in (
+            ("xrdp_keyboard.ini", "keyboard\n"),
+            ("km-abnt2.ini", "keymap\n"),
+            ("startwm.sh", "#!/bin/sh\n"),
+        ):
+            _write(src / name, content)
+        _write(dst / "xrdp_keyboard.ini", "keyboard\n")
+        _write(dst / "startwm.sh", "#!/bin/sh\n")
+        for keymap in (
+            "km-00000409.ini",
+            "km-00000416.ini",
+            "km-00010416.ini",
+            "km-0000080a.ini",
+            "km-0000f010.ini",
+        ):
+            _write(dst / keymap, "keymap\n")
+        original_ini = (
+            "[Globals]\n"
+            + duplicate
+            + "xrdp.override_keyboard_subtype=0x00\n"
+            + "xrdp.override_keylayout=0x00000416\n\n[Logging]\nLogLevel=INFO\n"
+        )
+        _write(dst / "xrdp.ini", original_ini)
+
+        rendered = source_script.replace(
+            'src="/usr/local/share/xrdp-abnt2"', f'src="{src}"'
+        ).replace('dst="/etc/xrdp"', f'dst="{dst}"').replace(
+            'backup_root="/var/backups/xrdp-abnt2-reconcile"',
+            f'backup_root="{backups}"',
+        )
+        rendered = rendered.replace("install -d -o root -g root -m", "install -d -m")
+        rendered = rendered.replace("install -o nobody -g nogroup -m", "install -m")
+        rendered = rendered.replace("install -o root -g root -m", "install -m")
+        script = case_root / "fix-xrdp-abnt2-keyboard"
+        _write(script, rendered)
+        script.chmod(0o755)
+
+        subprocess.run([str(script)], check=True, text=True, capture_output=True)
+
+        snapshots = list(backups.iterdir())
+        assert len(snapshots) == 1
+        assert (snapshots[0] / "xrdp.ini").read_text(encoding="utf-8") == original_ini
+        normalized = (dst / "xrdp.ini").read_text(encoding="utf-8")
+        assert normalized.count("xrdp.override_keyboard_type=0x04") == 1
+        assert "xrdp.override_keyboard_type=0x07" not in normalized
+
+
 def test_reconciliation_timer_requires_enabled_and_active(monkeypatch) -> None:
     monkeypatch.setattr(
         xrdp_abnt2_mod,

@@ -51,10 +51,19 @@ if [ -f "$xrdp_ini" ]; then
                     value = substr(line, index(line, "=") + 1)
                     gsub(/[[:space:]]+$/, "", key)
                     gsub(/^[[:space:]]+|[[:space:]]+$/, "", value)
-                    if (key in required && value == required[key]) seen[key] = 1
+                    if (key in required) {
+                        count[key]++
+                        actual[key] = value
+                    }
                 }
             }
-            END { exit !(seen["xrdp.override_keyboard_type"] && seen["xrdp.override_keyboard_subtype"] && seen["xrdp.override_keylayout"]) }
+            END {
+                invalid = 0
+                for (key in required) {
+                    if (count[key] != 1 || actual[key] != required[key]) invalid = 1
+                }
+                exit invalid
+            }
         ' "$xrdp_ini"
     }
     globals_overrides_present || needs_backup=1
@@ -90,9 +99,9 @@ if [ -f "$xrdp_ini" ]; then
             order[2] = "xrdp.override_keyboard_subtype"
             order[3] = "xrdp.override_keylayout"
         }
-        function emit_missing(    index, key) {
-            for (index = 1; index <= 3; index++) {
-                key = order[index]
+        function emit_missing(    i, key) {
+            for (i = 1; i <= 3; i++) {
+                key = order[i]
                 if (!seen[key]) print key "=" required[key]
             }
         }
