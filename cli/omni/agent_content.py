@@ -148,6 +148,59 @@ def _target_root(target: dict[str, Any], rel_path: str) -> Path:
     return home_path / rel_path
 
 
+def _relative_posix_path(value: object, *, field: str) -> PurePosixPath:
+    """Accept only a normalized, non-empty POSIX-relative manifest path."""
+    if not isinstance(value, str) or not value:
+        raise click.ClickException(f"{field} inválido: caminho ausente")
+    if "\\" in value:
+        raise click.ClickException(f"{field} inválido: barras invertidas não são aceitas: {value}")
+    path = PurePosixPath(value)
+    if path.is_absolute() or not path.parts or any(part in {".", ".."} for part in path.parts):
+        raise click.ClickException(f"{field} inválido: exige caminho POSIX relativo normalizado: {value}")
+    return path
+
+
+def _local_destination(home: Path, rel_path: object, *, field: str) -> Path:
+    """Resolve a local manifest destination and prove it cannot leave ``home``."""
+    rel = _relative_posix_path(rel_path, field=field)
+    destination = home.joinpath(*rel.parts)
+    try:
+        destination.resolve(strict=False).relative_to(home.resolve(strict=False))
+    except ValueError as exc:
+        raise click.ClickException(f"{field} inválido: destino fora do home configurado") from exc
+    return destination
+
+
+def _validate_sync_paths(items: list[dict[str, Any]], target: dict[str, Any]) -> None:
+    """Validate every manifest-controlled write path before any target action."""
+    product = str(target.get("product", ""))
+    runtime = _target_runtime(target)
+    home = _accessible_home(target) if runtime in {"windows", "wsl"} else None
+    for item in items:
+        if str(item.get("kind")) == "skill-pack":
+            files = item.get("files")
+            if not isinstance(files, list):
+                raise click.ClickException(f"item com files inválidos: {item.get('name')}")
+            for entry in files:
+                if not isinstance(entry, dict):
+                    raise click.ClickException(f"item com arquivo inválido: {item.get('name')}")
+                path = _relative_posix_path(entry.get("path"), field=f"files[].path de {item.get('name')}")
+                # A skill-pack file is relative to its product source root.
+                if path.parts[0] == product:
+                    path = PurePosixPath(*path.parts[1:])
+                if not path.parts:
+                    raise click.ClickException(f"files[].path de {item.get('name')} não pode apontar ao home")
+                if home is not None:
+                    _local_destination(home, path.as_posix(), field=f"files[].path de {item.get('name')}")
+        else:
+            rel_path = _install_rel_path(target, item)
+            if rel_path is None:
+                continue
+            _relative_posix_path(rel_path, field=f"install.{product}.rel_path de {item.get('name')}")
+            if home is not None:
+                _local_destination(home, rel_path, field=f"install.{product}.rel_path de {item.get('name')}")
+
+
 def _install_rel_path(target: dict[str, Any], item: dict[str, Any]) -> str | None:
     install = item.get('install', {})
     product = str(target.get('product', ''))
@@ -509,30 +562,13 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
         return {"item": item.get("name"), "backup_root": str(backup_root), "post_status": diff}
 
     if runtime == "ssh-linux":
-        dest_home = _target_home_str(target)
-        backup_root = f"{dest_home}/backups/agent-content-sync/{_timestamp()}/{pack}/{item.get('name')}/before"
-        if str(item.get("kind")) == "skill-pack":
-            source_root = _pack_item_dir(pack, item) / str(target.get('product'))
-            if not source_root.exists():
-                raise click.ClickException(f"source_root ausente: {source_root}")
-            for root_source, rel_root in _ssh_skill_pack_roots(source_root, item, str(target.get('product'))):
-                remote_dest = str(PurePosixPath(dest_home) / PurePosixPath(rel_root))
-                remote_backup = str(PurePosixPath(backup_root) / PurePosixPath(rel_root))
-                cmd = f'mkdir -p {shlex.quote(str(PurePosixPath(remote_backup).parent))}; if [ -d {shlex.quote(remote_dest)} ]; then cp -a {shlex.quote(remote_dest)} {shlex.quote(remote_backup)}; fi'
-                _ssh_backup(target, cmd)
-                _ssh_extract_tree(target, root_source, dest_home, rel_root)
-        else:
-            source_root = _pack_item_dir(pack, item)
-            install = item.get('install', {})
-            product = str(target.get('product', ''))
-            if not isinstance(install, dict) or product not in install:
-                raise click.ClickException(f"item sem install para produto {product}: {item.get('name')}")
-            rel_path = str(install[product].get('rel_path'))
-            remote_dest = str(PurePosixPath(str(_target_root(target, rel_path)).replace('\\', '/')))
-            backup_cmd = f'mkdir -p {shlex.quote(backup_root)}; if [ -d {shlex.quote(remote_dest)} ]; then cp -a {shlex.quote(remote_dest)} {shlex.quote(backup_root)}/{shlex.quote(PurePosixPath(remote_dest).name)}; fi'
-            _ssh_backup(target, backup_cmd)
-            _ssh_extract_tree(target, source_root, dest_home, rel_path)
-        return {"item": item.get("name"), "backup_root": backup_root, "post_status": {"item": item.get('name'), 'status': 'applied-ssh'}}
+        # The former SSH implementation swapped source-directory roots. It
+        # could publish unlisted files and lacked a journal that could restore
+        # every completed destination after a later failure. Keep remote apply
+        # fail-closed until a leaf-level remote transaction exists.
+        raise click.ClickException(
+            "sync --apply para ssh-linux está desabilitado: exige journal/rollback remoto por arquivo"
+        )
 
     raise click.ClickException(f"runtime não suportado para apply: {runtime}")
 
@@ -608,6 +644,9 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
         items = [item for item in items if item.get("name") == item_filter]
         if not items:
             raise click.ClickException(f"item não encontrado no pack {pack}: {item_filter}")
+    # Validate the complete write set before validation, diffing, SSH, or any
+    # local filesystem operation. Manifests are untrusted write instructions.
+    _validate_sync_paths(items, target_cfg)
     validation = [_validate_item(pack, item) for item in items]
     failures = [item for item in validation if not item["ok"]]
     if failures:

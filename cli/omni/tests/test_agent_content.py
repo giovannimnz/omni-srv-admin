@@ -5,6 +5,7 @@ import shutil
 import sys
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 REPO = Path(__file__).resolve().parents[3]
@@ -165,7 +166,7 @@ def test_ssh_apply_refuses_skill_pack_extract_when_backup_fails(monkeypatch, tmp
     assert extracted == []
 
 
-def test_ssh_skill_pack_replaces_only_managed_roots_and_preserves_product_home(monkeypatch, tmp_path):
+def test_ssh_skill_pack_apply_fails_closed_without_touching_unmanaged_content(monkeypatch, tmp_path):
     source_root = tmp_path / "item" / "codex"
     _write(source_root / "skills" / "demo-skill" / "SKILL.md", "# managed skill\n")
     _write(source_root / "slash-commands" / "demo.md", "# managed command\n")
@@ -187,27 +188,14 @@ def test_ssh_skill_pack_replaces_only_managed_roots_and_preserves_product_home(m
             {"path": "codex/slash-commands/demo.md"},
         ],
     }
-    extracted: list[str] = []
-
-    class SuccessfulBackup:
-        returncode = 0
-        stderr = ""
-
-    def fake_extract(_target, source, dest_home, rel_path):
-        extracted.append(rel_path)
-        shutil.copytree(source, Path(dest_home) / rel_path, dirs_exist_ok=True)
-
     monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, _item: source_root.parent)
-    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: SuccessfulBackup())
-    monkeypatch.setattr(agent_content, "_ssh_extract_tree", fake_extract)
+    with pytest.raises(agent_content.click.ClickException, match="desabilitado"):
+        agent_content._apply_item("demo", item, target)
 
-    agent_content._apply_item("demo", item, target)
-
-    assert extracted == ["skills", "slash-commands"]
-    assert (home / "skills" / "demo-skill" / "SKILL.md").read_text(encoding="utf-8") == "# managed skill\n"
-    assert (home / "slash-commands" / "demo.md").read_text(encoding="utf-8") == "# managed command\n"
     assert (home / "unrelated-sentinel.txt").read_text(encoding="utf-8") == "must survive\n"
     assert (home / "config.toml").read_text(encoding="utf-8") == "keep = true\n"
+    assert not (home / "skills" / "demo-skill").exists()
+    assert not (home / "slash-commands" / "demo.md").exists()
 
 
 def test_ssh_apply_refuses_regular_item_extract_when_backup_fails(monkeypatch, tmp_path):
