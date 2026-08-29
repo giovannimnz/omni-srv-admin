@@ -1,5 +1,5 @@
 ---
-status: fixing
+status: awaiting_human_verify
 trigger: "Validar os ajustes recentes de teclado/idioma/RDP no atius-srv-1, confirmar paridade em atius-srv-2, atius-srv-3 e horistic-srv, reconstruir logs/scripts/skills/Obsidian/GBrain e tornar a correção definitiva contra drift."
 created: 2026-08-29
 updated: 2026-08-29
@@ -21,7 +21,7 @@ updated: 2026-08-29
 - hypothesis: "SRV-2, SRV-3 e Horistic mantêm keymaps gerados/indexados para evdev, enquanto o XRDP 0.9.24 consulta índices xfree86/base; isso roteia os scancodes estendidos aos símbolos errados. A CLI instalada em Horistic deriva REPO_ROOT de site-packages e não encontra os assets do módulo."
 - test: "Executar os testes focais, criar uma distribuição wheel que contém assets do módulo e, após deploy sem restart, comparar os hashes live e executar validate/diff em cada host."
 - expecting: "Cada host remoto terá o payload SHA-256 cdd4e2... e validate/diff passarão; a CLI instalada encontrará os assets distribuídos."
-- next_action: "Endurecer o guard: validator deve exigir timer enabled+active e o reconciliador deve criar backup limitado somente quando detectar divergência, com jitter para a fleet; então fazer review/merge e solicitar confirmação de sessão Microsoft RDP nova."
+- next_action: "Aguardar a confirmação de nova sessão Microsoft RDP nos quatro hosts: setas, Delete, Print Screen, /, ?, AltGr e clipboard."
 - reasoning_checkpoint:
     hypothesis: "Os índices evdev do keymap nos três hosts causam scancodes estendidos errados porque XRDP 0.9.24 resolve km-*.ini pelos índices xfree86/base; o pacote uv do Horistic não inclui modules/xrdp-abnt2, logo REPO_ROOT em site-packages não contém seus assets."
     confirming_evidence:
@@ -63,6 +63,8 @@ updated: 2026-08-29
   result: "Commit focal 41ba2acb em branch fix/xrdp-keyboard-fleet-drift-20260829 e PR #19 criados; testes focais 12/12 e validate-pack codex-skills passaram. Os três hosts remotos estão em main limpo, com XRDP/XRDP-sesman ativos, pré-requisitos presentes e conectividade pública confirmada; as rotas VPN de SRV-2/SRV-3 falharam no banner conforme registrado."
 - timestamp: 2026-08-29
   result: "Rollout serial passou em SRV-2, SRV-3 e Horistic: cada install criou backup, não reiniciou XRDP, validate/diff passaram, timer está enabled+active e os cinco keymaps agora têm SHA-256 cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237. Sessões e processos XRDP/Xvnc ativos permaneceram presentes. Horistic atualizou `uv tool` para omni 0.2.4 e sua CLI instalada passou validate/diff, corrigindo os assets ausentes."
+- timestamp: 2026-08-29
+  result: "Post-rollout 3f9047cc8 em todos os quatro hosts: validator agora exige timer enabled+active; xrdp-abnt2-reconcile.timer usa RandomizedDelaySec=15min; fix script cria backup em /var/backups/xrdp-abnt2-reconcile somente ao detectar drift e retém no máximo 8. SRV-1/SRV-2/SRV-3/Horistic passaram validate+diff; GBrain e Obsidian foram atualizados sem segredos. Landscape foi avaliado como não material: a prova necessária é arquivo/hash/systemd e sessão XRDP no host."
 
 ## Eliminated
 
@@ -70,5 +72,20 @@ updated: 2026-08-29
 
 - root_cause: "Configuração/payload: o rollout de 2026-08-28 que corrige os índices consumidos pelo XRDP 0.9.24 está somente no SRV-1. SRV-2, SRV-3 e Horistic ainda usam km-abnt2 evdev antigo (hash e24a96...) e portanto interpretam scancodes estendidos em índices errados; SRV-2/SRV-3 também não têm os overrides de xrdp.ini e helper atualizados. A instalação uv de Horistic possui um bug independente de empacotamento (assets ausentes sob REPO_ROOT em site-packages), que impede validate/diff quando a CLI não é importada do checkout."
 - fix: "Pendente de rollout coordenado: preservar backup e aplicar o payload focal já presente no checkout para SRV-2/SRV-3/Horistic, sem restart de xrdp, depois validar hash/CLI e nova sessão Microsoft RDP; reparar o empacotamento uv de Horistic para distribuir os assets ou resolver seu caminho instalado."
-- verification: "Pré-fix confirmado diretamente em quatro hosts; SRV-1 validado e os outros três divergentes. Teste focal local: 10 passed. Verificação de pós-rollout e confirmação humana ainda pendentes."
-- files_changed: []
+- verification: |
+    target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 19 }
+    mutation_check: { result: skipped, reason_if_skipped: "Stryker não configurado para esta CLI Python" }
+    no_op_deletion: { result: pass, deletion_justified_by_rca: false }
+    adjacent_tests: { result: pass, suites_run: ["cli/omni/tests/test_xrdp_abnt2.py", "cli/omni/tests/test_agent_content.py", "agent-content validate-pack codex-skills"] }
+    revert_and_reconfirm: { result: skipped, reason: "reverter a correção em quatro hosts ativos restabeleceria deliberadamente o teclado incorreto; evidência pré-fix direta já documentada no mapa e24a96" }
+    live_rollout: { result: pass, hosts: ["atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv"], keymap_sha256: "cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237", timer: "enabled+active" }
+    human_rdp_uat: { result: pending, required: "nova sessão Microsoft RDP em cada host" }
+    guardrail_verdict: accepted_pending_human_rdp_uat
+- files_changed:
+  - cli/omni/xrdp_abnt2.py
+  - cli/setup.py
+  - modules/xrdp-abnt2/files/km-abnt2.ini
+  - modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard
+  - modules/xrdp-abnt2/files/xrdp-abnt2-reconcile.service
+  - modules/xrdp-abnt2/files/xrdp-abnt2-reconcile.timer
+  - modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
