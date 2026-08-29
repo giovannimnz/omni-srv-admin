@@ -65,13 +65,17 @@ updated: 2026-08-29
   result: "Rollout serial passou em SRV-2, SRV-3 e Horistic: cada install criou backup, não reiniciou XRDP, validate/diff passaram, timer está enabled+active e os cinco keymaps agora têm SHA-256 cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237. Sessões e processos XRDP/Xvnc ativos permaneceram presentes. Horistic atualizou `uv tool` para omni 0.2.4 e sua CLI instalada passou validate/diff, corrigindo os assets ausentes."
 - timestamp: 2026-08-29
   result: "Post-rollout 3f9047cc8 em todos os quatro hosts: validator agora exige timer enabled+active; xrdp-abnt2-reconcile.timer usa RandomizedDelaySec=15min; fix script cria backup em /var/backups/xrdp-abnt2-reconcile somente ao detectar drift e retém no máximo 8. SRV-1/SRV-2/SRV-3/Horistic passaram validate+diff; GBrain e Obsidian foram atualizados sem segredos. Landscape foi avaliado como não material: a prova necessária é arquivo/hash/systemd e sessão XRDP no host."
+- timestamp: 2026-08-29
+  result: "Review GSD pós-merge convergiu em follow-up limpo: 14 findings corrigidos em seis iterações e review deep final clean (0 Critical/Warning). O escopo 0.2.5 adiciona rollback exato de arquivos/uid/gid/units, package opt-in, exact-one [Globals], execução real do oneshot e teste do reconciliador sob mawk; não contém restart XRDP."
+- timestamp: 2026-08-29
+  result: "Landscape self-hosted está operacional e os quatro clients estão registrados, mas o profile Vault canônico ainda aponta ao SaaS. O rollout XRDP não dependeu dele; integração self-hosted permanece separada até existir profile Vault próprio."
 
 ## Eliminated
 
 ## Resolution
 
 - root_cause: "Configuração/payload: o rollout de 2026-08-28 que corrige os índices consumidos pelo XRDP 0.9.24 está somente no SRV-1. SRV-2, SRV-3 e Horistic ainda usam km-abnt2 evdev antigo (hash e24a96...) e portanto interpretam scancodes estendidos em índices errados; SRV-2/SRV-3 também não têm os overrides de xrdp.ini e helper atualizados. A instalação uv de Horistic possui um bug independente de empacotamento (assets ausentes sob REPO_ROOT em site-packages), que impede validate/diff quando a CLI não é importada do checkout."
-- fix: "Aplicado e merged via PR #19: keymaps canônicos usam índices xfree86/base consumidos pelo XRDP 0.9.24; SRV-1/SRV-2/SRV-3/Horistic receberam o payload persistente e timer de reconciliação sem restart. O timer tem jitter de 15 minutos; o reparador salva até 8 backups somente ao detectar drift. A wheel omni 0.2.4 inclui assets XRDP, e Horistic foi reinstalado via uv tool."
+- fix: "Aplicado via PR #19 e endurecido no follow-up 0.2.5: keymaps canônicos usam índices xfree86/base consumidos pelo XRDP 0.9.24; o install possui rollback exato de arquivos/metadata/units, package opt-in, exact-one [Globals], timer com jitter e backups limitados; nenhum caminho reinicia XRDP. SRV-1/SRV-2/SRV-3/Horistic receberam o payload persistente."
 - verification: |
     target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 19 }
     mutation_check: { result: skipped, reason_if_skipped: "Stryker não configurado para esta CLI Python" }
