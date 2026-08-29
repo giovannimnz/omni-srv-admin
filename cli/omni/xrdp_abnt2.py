@@ -777,6 +777,11 @@ def install_cmd(username: str, yes: bool, dry_run: bool, skip_packages: bool) ->
         _run(["systemctl", "enable", unit], dry_run=dry_run)
     _run(["systemctl", "daemon-reload"], dry_run=dry_run)
     _run(["systemctl", "enable", "--now", RECONCILE_TIMER_UNIT], dry_run=dry_run)
+    # A newly enabled timer has not necessarily fired yet (it intentionally
+    # uses boot delay and jitter). Run the file-only reconciler once so the
+    # post-install validation proves a successful repair without restarting
+    # either XRDP service.
+    _run(["systemctl", "start", RECONCILE_SERVICE_UNIT], dry_run=dry_run)
 
     if dry_run:
         click.echo("DRY-RUN concluído. Nenhum arquivo foi escrito.")

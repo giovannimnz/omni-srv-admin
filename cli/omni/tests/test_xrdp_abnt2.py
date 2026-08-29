@@ -5,6 +5,8 @@ import subprocess
 import zipfile
 from pathlib import Path
 
+from click.testing import CliRunner
+
 REPO = Path(__file__).resolve().parents[3]
 REPO_CLI = REPO / "cli"
 
@@ -244,6 +246,67 @@ def test_reconciliation_timer_rejects_failed_service_or_missing_next_trigger(mon
     errors = xrdp_abnt2_mod._reconcile_timer_errors()
     assert any("não concluiu com sucesso" in error for error in errors)
     assert any("não tem próximo disparo" in error for error in errors)
+
+
+def _prepare_install_command(monkeypatch, tmp_path: Path) -> None:
+    monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_root", lambda: None)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_check_files_exist", lambda _paths: [])
+    monkeypatch.setattr(xrdp_abnt2_mod, "_backup_current", lambda _username, dry_run: tmp_path / "backup")
+    monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_packages", lambda dry_run: [])
+    monkeypatch.setattr(xrdp_abnt2_mod, "_watchdog_target", lambda _username: tmp_path / "home" / ".local" / "bin" / "watchdog")
+    monkeypatch.setattr(xrdp_abnt2_mod, "_user_group", lambda _username: "users")
+    monkeypatch.setattr(xrdp_abnt2_mod, "_target_specs", lambda _username: [])
+    monkeypatch.setattr(xrdp_abnt2_mod, "_apply_xrdp_overrides", lambda dry_run: None)
+
+
+def test_install_runs_reconciler_once_before_validating_fresh_timer(monkeypatch, tmp_path: Path) -> None:
+    _prepare_install_command(monkeypatch, tmp_path)
+    commands: list[list[str]] = []
+    reconciled = False
+
+    def fake_run(args, *, dry_run=False, env=None):
+        nonlocal reconciled
+        assert dry_run is False
+        commands.append(args)
+        if args == ["systemctl", "start", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT]:
+            reconciled = True
+
+    def fake_validation(_username):
+        assert reconciled, "fresh install must reconcile before validating"
+        return True, ["timer reconciled"], []
+
+    monkeypatch.setattr(xrdp_abnt2_mod, "_run", fake_run)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_validation", fake_validation)
+
+    result = CliRunner().invoke(xrdp_abnt2_mod.xrdp_abnt2, ["install", "--user", "ubuntu", "--yes"])
+
+    assert result.exit_code == 0, result.output
+    assert ["systemctl", "enable", "--now", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT] in commands
+    assert ["systemctl", "start", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT] in commands
+    assert not any(command[:2] == ["systemctl", "restart"] for command in commands)
+
+
+def test_install_propagates_first_reconciler_failure_before_validation(monkeypatch, tmp_path: Path) -> None:
+    _prepare_install_command(monkeypatch, tmp_path)
+    validated = False
+
+    def fake_run(args, *, dry_run=False, env=None):
+        if args == ["systemctl", "start", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT]:
+            raise subprocess.CalledProcessError(1, args)
+
+    def fake_validation(_username):
+        nonlocal validated
+        validated = True
+        return True, [], []
+
+    monkeypatch.setattr(xrdp_abnt2_mod, "_run", fake_run)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_validation", fake_validation)
+
+    result = CliRunner().invoke(xrdp_abnt2_mod.xrdp_abnt2, ["install", "--user", "ubuntu", "--yes"])
+
+    assert result.exit_code != 0
+    assert isinstance(result.exception, subprocess.CalledProcessError)
+    assert validated is False
 
 
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:
