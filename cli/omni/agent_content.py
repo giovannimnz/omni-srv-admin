@@ -160,6 +160,13 @@ def _relative_posix_path(value: object, *, field: str) -> PurePosixPath:
     return path
 
 
+def _safe_backup_component(value: object, *, field: str) -> str:
+    """Accept one manifest-controlled name safe to use below a backup root."""
+    if not isinstance(value, str) or not value or value in {".", ".."} or "/" in value or "\\" in value:
+        raise click.ClickException(f"{field} inválido para backup")
+    return value
+
+
 def _local_destination(home: Path, rel_path: object, *, field: str) -> Path:
     """Resolve a local manifest destination and prove it cannot leave ``home``."""
     rel = _relative_posix_path(rel_path, field=field)
@@ -171,12 +178,14 @@ def _local_destination(home: Path, rel_path: object, *, field: str) -> Path:
     return destination
 
 
-def _validate_sync_paths(items: list[dict[str, Any]], target: dict[str, Any]) -> None:
+def _validate_sync_paths(pack: object, items: list[dict[str, Any]], target: dict[str, Any]) -> None:
     """Validate every manifest-controlled write path before any target action."""
+    _safe_backup_component(pack, field="pack")
     product = str(target.get("product", ""))
     runtime = _target_runtime(target)
     home = _accessible_home(target) if runtime in {"windows", "wsl"} else None
     for item in items:
+        _safe_backup_component(item.get("name"), field="item.name")
         if str(item.get("kind")) == "skill-pack":
             files = item.get("files")
             if not isinstance(files, list):
@@ -568,13 +577,15 @@ def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
 
 
 def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
+    pack_component = _safe_backup_component(pack, field="pack")
+    item_name = _safe_backup_component(item.get("name"), field="item.name")
     runtime = _target_runtime(target)
     home = _accessible_home(target) if runtime in {"windows", "wsl"} else None
     source_root, dest_root, mappings = _item_mappings(pack, item, target) if runtime in {"windows", "wsl"} else ( _pack_item_dir(pack, item), None, [] )
     if runtime in {"windows", "wsl"}:
         if home is None:
             raise click.ClickException(f"runtime não suportado para apply local: {target.get('runtime')}")
-        backup_root = _backup_root(home) / _timestamp() / pack / str(item.get("name")) / "before"
+        backup_root = _backup_root(home) / _timestamp() / pack_component / item_name / "before"
         if str(item.get("kind")) == "skill-pack":
             # ``copy2`` accepts a directory destination and would write below it.
             # A skill-pack manifest controls files only, so reject any existing
@@ -610,6 +621,10 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
                 raise click.ClickException(f"item sem source_root: {item.get('name')}")
             if not isinstance(dest_root, Path):
                 raise click.ClickException(f"item sem destino resolvido: {item.get('name')}")
+            if (dest_root.exists() or dest_root.is_symlink()) and (
+                not dest_root.is_dir() or dest_root.is_symlink()
+            ):
+                raise click.ClickException(f"destino de item não é diretório regular: {dest_root}")
             backup_root.mkdir(parents=True, exist_ok=True)
             existed = dest_root.exists()
             if existed:
@@ -712,7 +727,7 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
             raise click.ClickException(f"item não encontrado no pack {pack}: {item_filter}")
     # Validate the complete write set before validation, diffing, SSH, or any
     # local filesystem operation. Manifests are untrusted write instructions.
-    _validate_sync_paths(items, target_cfg)
+    _validate_sync_paths(pack, items, target_cfg)
     validation = [_validate_item(pack, item) for item in items]
     failures = [item for item in validation if not item["ok"]]
     if failures:

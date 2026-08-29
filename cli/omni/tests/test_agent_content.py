@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import os
 import shutil
 import sys
 from pathlib import Path
@@ -368,6 +369,79 @@ def test_skill_pack_apply_rolls_back_when_post_copy_diff_fails(monkeypatch, tmp_
         agent_content._apply_item("demo", item, target)
 
     assert destination.read_text() == "previous\n"
+
+
+@pytest.mark.parametrize("unsafe", ["", ".", "..", "../outside", "pack/name", r"pack\\name", 7])
+def test_local_apply_rejects_unsafe_backup_pack_before_any_write(monkeypatch, tmp_path, unsafe):
+    home = tmp_path / "home"
+    target = {"product": "codex", "runtime": "windows", "home": str(home)}
+    item = {"name": "demo", "kind": "skill", "install": {"codex": {"rel_path": "skills/demo"}}}
+    called = False
+
+    def should_not_map(*_args):
+        nonlocal called
+        called = True
+        raise AssertionError("unsafe pack reached item mapping")
+
+    monkeypatch.setattr(agent_content, "_item_mappings", should_not_map)
+
+    with pytest.raises(agent_content.click.ClickException, match="pack inválido para backup"):
+        agent_content._apply_item(unsafe, item, target)  # type: ignore[arg-type]
+
+    assert called is False
+    assert not (home / "backups").exists()
+    assert not (tmp_path / "outside").exists()
+
+
+@pytest.mark.parametrize("unsafe", ["", ".", "..", "../outside", "item/name", r"item\\name", None, 7])
+def test_local_apply_rejects_unsafe_backup_item_name_before_any_write(monkeypatch, tmp_path, unsafe):
+    home = tmp_path / "home"
+    target = {"product": "codex", "runtime": "windows", "home": str(home)}
+    item = {"name": unsafe, "kind": "skill", "install": {"codex": {"rel_path": "skills/demo"}}}
+    called = False
+
+    def should_not_map(*_args):
+        nonlocal called
+        called = True
+        raise AssertionError("unsafe item name reached item mapping")
+
+    monkeypatch.setattr(agent_content, "_item_mappings", should_not_map)
+
+    with pytest.raises(agent_content.click.ClickException, match="item.name inválido para backup"):
+        agent_content._apply_item("demo", item, target)
+
+    assert called is False
+    assert not (home / "backups").exists()
+    assert not (tmp_path / "outside").exists()
+
+
+@pytest.mark.parametrize("node_kind", ["file", "fifo", "symlink"])
+def test_local_tree_apply_rejects_non_directory_destination_before_backup(monkeypatch, tmp_path, node_kind):
+    home = tmp_path / "home"
+    source = tmp_path / "source"
+    destination = home / "skills" / "demo"
+    _write(source / "SKILL.md", "managed\n")
+    destination.parent.mkdir(parents=True)
+    outside = tmp_path / "outside"
+    _write(outside / "preserved.txt", "must survive\n")
+    if node_kind == "file":
+        destination.write_text("not a directory\n", encoding="utf-8")
+    elif node_kind == "fifo":
+        if not hasattr(os, "mkfifo"):
+            pytest.skip("mkfifo unavailable on this platform")
+        os.mkfifo(destination)
+    else:
+        destination.symlink_to(outside, target_is_directory=True)
+    target = {"product": "codex", "runtime": "windows", "home": str(home)}
+    item = {"name": "demo", "kind": "skill", "install": {"codex": {"rel_path": "skills/demo"}}}
+    monkeypatch.setattr(agent_content, "_item_mappings", lambda *_args: (source, destination, []))
+
+    with pytest.raises(agent_content.click.ClickException, match="destino de item não é diretório regular"):
+        agent_content._apply_item("demo", item, target)
+
+    assert not (home / "backups").exists()
+    assert (outside / "preserved.txt").read_text(encoding="utf-8") == "must survive\n"
+    assert destination.is_symlink() if node_kind == "symlink" else destination.exists()
 
 
 @pytest.mark.parametrize(
