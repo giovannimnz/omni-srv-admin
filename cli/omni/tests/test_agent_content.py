@@ -98,6 +98,37 @@ def test_run_validate_command_ssh_linux(monkeypatch):
     assert calls
 
 
+def test_ssh_extract_tree_quotes_transactional_remote_command(monkeypatch, tmp_path):
+    captured = {}
+
+    class Result:
+        returncode = 0
+        stderr = b""
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        captured["kwargs"] = kwargs
+        return Result()
+
+    monkeypatch.setattr(agent_content, "_ssh_capture_tree", lambda _root: b"archive")
+    monkeypatch.setattr(agent_content.subprocess, "run", fake_run)
+    source_root = tmp_path / "demo-skill"
+
+    agent_content._ssh_extract_tree(
+        {"host": "atius-srv-1", "user": "ubuntu"},
+        source_root,
+        "/home/ubuntu/.codex",
+        "skills/demo-skill",
+    )
+
+    remote_command = captured["command"][-1]
+    assert remote_command.startswith("'")
+    assert "stage=$(mktemp -d" in remote_command
+    assert "test -d \"$next\"" in remote_command
+    assert "rm -rf \"$dest\"" not in remote_command
+    assert captured["kwargs"]["input"] == b"archive"
+
+
 def test_remote_posix_path_for_ssh_target():
     target = {'runtime': 'ssh-linux', 'host': 'atius-srv-1', 'user': 'ubuntu', 'home': '/home/ubuntu/.hermes'}
     local = Path('/tmp/example/SKILL.md')

@@ -200,17 +200,28 @@ def _ssh_extract_tree(target: dict[str, Any], source_root: Path, dest_home: str,
     archive_bytes = _ssh_capture_tree(source_root)
     remote_cmd = (
         f"set -euo pipefail; "
-        f"tmp=$(mktemp /tmp/agent-content-XXXXXX.tgz); "
-        f"cat > \"$tmp\"; "
         f"mkdir -p {shlex.quote(dest_home)}; "
         f"dest={shlex.quote(str(PurePosixPath(dest_home) / PurePosixPath(rel_path)))}; "
-        f"rm -rf \"$dest\"; mkdir -p \"$(dirname \"$dest\")\"; "
-        f"tar -xzf \"$tmp\" -C \"$(dirname \"$dest\")\"; "
+        f"parent=$(dirname \"$dest\"); mkdir -p \"$parent\"; "
+        f"tmp=$(mktemp \"$parent/.agent-content-XXXXXX.tgz\"); "
+        f"stage=$(mktemp -d \"$parent/.agent-content-stage-XXXXXX\"); "
+        f"previous=''; "
+        f"cleanup() {{ rm -f \"$tmp\"; rm -rf \"$stage\"; if [ -n \"$previous\" ] && [ ! -e \"$dest\" ]; then mv \"$previous\" \"$dest\"; fi; }}; "
+        f"trap cleanup EXIT; "
+        f"cat > \"$tmp\"; "
+        f"tar -xzf \"$tmp\" -C \"$stage\"; "
         f"base={shlex.quote(source_root.name)}; "
-        f"if [ \"$(dirname \"$dest\")/$base\" != \"$dest\" ]; then mv \"$(dirname \"$dest\")/$base\" \"$dest\"; fi; "
-        f"rm -f \"$tmp\""
+        f"next=\"$stage/$base\"; test -d \"$next\"; "
+        f"if [ -e \"$dest\" ]; then previous=$(mktemp -d \"$parent/.agent-content-previous-XXXXXX\"); rmdir \"$previous\"; mv \"$dest\" \"$previous\"; fi; "
+        f"mv \"$next\" \"$dest\"; "
+        f"if [ -n \"$previous\" ]; then rm -rf \"$previous\"; previous=''; fi"
     )
-    proc = subprocess.run(_ssh_base_command(target) + ["bash", "-lc", remote_cmd], input=archive_bytes, capture_output=True, timeout=300)
+    proc = subprocess.run(
+        _ssh_base_command(target) + ["bash", "-lc", shlex.quote(remote_cmd)],
+        input=archive_bytes,
+        capture_output=True,
+        timeout=300,
+    )
     if proc.returncode != 0:
         raise click.ClickException(f"falha no extract remoto ({target.get('host')}): {proc.stderr.decode(errors='replace')}")
 
