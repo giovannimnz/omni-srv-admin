@@ -1,8 +1,9 @@
 from __future__ import annotations
 
 import json
-import sys
+import stat
 import subprocess
+import sys
 import zipfile
 from pathlib import Path
 
@@ -139,6 +140,36 @@ xrdp.override_keylayout=0x00000416
     assert rendered.count("xrdp.override_keyboard_type=0x04") == 2
 
 
+def test_xrdp_override_validator_rejects_conflicting_duplicates_in_either_order() -> None:
+    expected = xrdp_abnt2_mod.REQUIRED_XRDP_OVERRIDES["xrdp.override_keyboard_type"]
+    for values in ((expected, "0x07"), ("0x07", expected), (expected, expected)):
+        original = "[Globals]\n" + "\n".join(
+            f"xrdp.override_keyboard_type={value}" for value in values
+        ) + "\n"
+
+        errors = xrdp_abnt2_mod._globals_missing_overrides(original)
+
+        assert f"xrdp.override_keyboard_type={expected}" in errors
+
+
+def test_xrdp_override_repair_normalizes_duplicates_deterministically() -> None:
+    expected_lines = {
+        f"{key}={value}" for key, value in xrdp_abnt2_mod.REQUIRED_XRDP_OVERRIDES.items()
+    }
+    rendered_variants = []
+    for values in (("0x04", "0x07"), ("0x07", "0x04")):
+        original = "[Globals]\n" + "\n".join(
+            f"xrdp.override_keyboard_type={value}" for value in values
+        ) + "\n"
+        rendered = xrdp_abnt2_mod._render_xrdp_overrides(original)
+        rendered_variants.append(rendered)
+        assert xrdp_abnt2_mod._globals_missing_overrides(rendered) == []
+        for expected in expected_lines:
+            assert rendered.splitlines().count(expected) == 1
+
+    assert rendered_variants[0] == rendered_variants[1]
+
+
 def test_guard_covers_current_br_layout_and_critical_keys() -> None:
     assert "km_00000416" in xrdp_abnt2_mod.SYSTEM_TARGETS
     text = xrdp_abnt2_mod.CANONICAL["km_abnt2"].read_text(encoding="utf-8")
@@ -257,6 +288,7 @@ def test_reconciliation_timer_rejects_failed_service_or_missing_next_trigger(mon
 def _prepare_install_command(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_root", lambda: None)
     monkeypatch.setattr(xrdp_abnt2_mod, "_check_files_exist", lambda _paths: [])
+    monkeypatch.setattr(xrdp_abnt2_mod, "_missing_packages", lambda: [])
     monkeypatch.setattr(xrdp_abnt2_mod, "_backup_current", lambda _username, dry_run: tmp_path / "backup")
     monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_packages", lambda dry_run: [])
     monkeypatch.setattr(xrdp_abnt2_mod, "_watchdog_target", lambda _username: tmp_path / "home" / ".local" / "bin" / "watchdog")
@@ -264,6 +296,74 @@ def _prepare_install_command(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(xrdp_abnt2_mod, "_target_specs", lambda _username: [])
     monkeypatch.setattr(xrdp_abnt2_mod, "_apply_xrdp_overrides", lambda dry_run: None)
     monkeypatch.setattr(xrdp_abnt2_mod, "_restore_backup", lambda _backup: None)
+
+
+def test_install_requires_package_opt_in_before_any_mutation(monkeypatch, tmp_path: Path) -> None:
+    mutations = []
+    monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_root", lambda: None)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_check_files_exist", lambda _paths: [])
+    monkeypatch.setattr(xrdp_abnt2_mod, "_missing_packages", lambda: ["xrdp", "lxde"])
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_backup_current",
+        lambda *_args, **_kwargs: mutations.append("backup"),
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_ensure_packages",
+        lambda **_kwargs: mutations.append("apt"),
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_run",
+        lambda args, **_kwargs: mutations.append(args),
+    )
+
+    result = CliRunner().invoke(
+        xrdp_abnt2_mod.xrdp_abnt2,
+        ["install", "--user", "ubuntu", "--yes"],
+    )
+
+    assert result.exit_code != 0
+    assert "--install-packages" in result.output
+    assert mutations == []
+
+
+def test_package_opt_in_is_explicit_nonrollbackable_boundary(monkeypatch, tmp_path: Path) -> None:
+    _prepare_install_command(monkeypatch, tmp_path)
+    events = []
+    monkeypatch.setattr(xrdp_abnt2_mod, "_missing_packages", lambda: ["xrdp"])
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_ensure_packages",
+        lambda dry_run: events.append(("apt", dry_run)) or ["xrdp"],
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_backup_current",
+        lambda _username, dry_run: events.append(("backup", dry_run)) or tmp_path / "backup",
+    )
+    monkeypatch.setattr(xrdp_abnt2_mod, "_install_steps", lambda *_args, **_kwargs: None)
+
+    result = CliRunner().invoke(
+        xrdp_abnt2_mod.xrdp_abnt2,
+        ["install", "--user", "ubuntu", "--yes", "--install-packages"],
+    )
+
+    assert result.exit_code == 0, result.output
+    assert events == [("apt", False), ("backup", False)]
+    assert "não será revertida" in result.output
+
+
+def test_install_help_marks_package_boundary_and_skip_deprecation() -> None:
+    result = CliRunner().invoke(xrdp_abnt2_mod.xrdp_abnt2, ["install", "--help"])
+    normalized_help = " ".join(result.output.split())
+
+    assert result.exit_code == 0
+    assert "--install-packages" in normalized_help
+    assert "não reversível" in normalized_help
+    assert "--skip-packages" in normalized_help
+    assert "Deprecated/no-op" in normalized_help
 
 
 def test_install_runs_reconciler_once_before_validating_fresh_timer(monkeypatch, tmp_path: Path) -> None:
@@ -319,36 +419,188 @@ def test_install_propagates_first_reconciler_failure_before_validation(monkeypat
     assert restored == [tmp_path / "backup"]
 
 
-def test_restore_backup_restores_files_and_reconciliation_unit_state(monkeypatch, tmp_path: Path) -> None:
+def test_late_validation_failure_rolls_back_without_restarting_xrdp(monkeypatch, tmp_path: Path) -> None:
+    _prepare_install_command(monkeypatch, tmp_path)
+    commands = []
+    restored = []
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_run",
+        lambda args, **_kwargs: commands.append(args),
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_validation",
+        lambda _username: (False, [], ["injected late failure"]),
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_restore_backup",
+        lambda backup: restored.append(backup),
+    )
+
+    result = CliRunner().invoke(
+        xrdp_abnt2_mod.xrdp_abnt2,
+        ["install", "--user", "ubuntu", "--yes"],
+    )
+
+    assert result.exit_code != 0
+    assert restored == [tmp_path / "backup"]
+    assert not any(command[:2] == ["systemctl", "restart"] for command in commands)
+
+
+def test_backup_manifest_records_exact_metadata_and_all_unit_state(monkeypatch, tmp_path: Path) -> None:
+    existing = tmp_path / "etc" / "xrdp" / "startwm.sh"
+    absent = tmp_path / "etc" / "xrdp" / "new.ini"
+    _write(existing, "original\n")
+    existing.chmod(0o751)
+    original = existing.lstat()
+    monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_root", lambda: None)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_user_home", lambda _username: tmp_path / "home")
+    monkeypatch.setattr(xrdp_abnt2_mod, "_rollback_paths", lambda _username: [existing, absent])
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_state",
+        lambda mode, unit: f"{mode}:{unit}",
+    )
+    chowns = []
+    monkeypatch.setattr(
+        xrdp_abnt2_mod.os,
+        "chown",
+        lambda path, uid, gid, **_kwargs: chowns.append((Path(path), uid, gid)),
+    )
+
+    backup = xrdp_abnt2_mod._backup_current("ubuntu", dry_run=False)
+    manifest = json.loads((backup / "rollback-manifest.json").read_text())
+
+    existing_entry = next(entry for entry in manifest["files"] if entry["path"] == str(existing))
+    assert existing_entry == {
+        "path": str(existing),
+        "existed": True,
+        "st_mode": original.st_mode,
+        "st_uid": original.st_uid,
+        "st_gid": original.st_gid,
+    }
+    assert next(entry for entry in manifest["files"] if entry["path"] == str(absent)) == {
+        "path": str(absent),
+        "existed": False,
+    }
+    assert set(manifest["units"]) == set(xrdp_abnt2_mod.ROLLBACK_SYSTEMD_UNITS)
+    assert stat.S_IMODE((backup / "rollback-manifest.json").stat().st_mode) == 0o600
+    assert chowns[-1][1:] == (0, 0)
+
+
+def test_restore_backup_restores_exact_metadata_and_all_unit_state(monkeypatch, tmp_path: Path) -> None:
     backup = tmp_path / "backup"
     destination = tmp_path / "etc" / "xrdp" / "startwm.sh"
     _write(destination, "new\n")
     source = backup / str(destination).lstrip("/")
     _write(source, "old\n")
+    expected_mode = stat.S_IFREG | 0o4751
+    expected_uid = 123
+    expected_gid = 456
+    units = {
+        "xrdp": {"enabled": "disabled", "active": "active"},
+        "xrdp-sesman": {"enabled": "enabled", "active": "active"},
+        xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT: {
+            "enabled": "static",
+            "active": "inactive",
+        },
+        xrdp_abnt2_mod.RECONCILE_TIMER_UNIT: {
+            "enabled": "enabled",
+            "active": "active",
+        },
+    }
     manifest = {
+        "username": "ubuntu",
         "files": [
-            {"path": str(destination), "existed": True},
+            {
+                "path": str(destination),
+                "existed": True,
+                "st_mode": expected_mode,
+                "st_uid": expected_uid,
+                "st_gid": expected_gid,
+            },
             {"path": str(tmp_path / "new-file"), "existed": False},
         ],
-        "units": {
-            xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT: {"enabled": "disabled", "active": "inactive"},
-            xrdp_abnt2_mod.RECONCILE_TIMER_UNIT: {"enabled": "enabled", "active": "active"},
-        },
+        "units": units,
     }
     _write(backup / "rollback-manifest.json", json.dumps(manifest))
     _write(tmp_path / "new-file", "remove me\n")
     commands = []
+    chowns = []
+    monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_root", lambda: None)
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_rollback_paths",
+        lambda _username: [destination, tmp_path / "new-file"],
+    )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod.os,
+        "chown",
+        lambda path, uid, gid, **_kwargs: (
+            chowns.append((Path(path), uid, gid)),
+            Path(path).chmod(stat.S_IMODE(Path(path).stat().st_mode) & ~0o6000),
+        ),
+    )
     monkeypatch.setattr(xrdp_abnt2_mod, "_run", lambda args, **_kwargs: commands.append(args))
 
     xrdp_abnt2_mod._restore_backup(backup)
 
     assert destination.read_text() == "old\n"
+    assert stat.S_IMODE(destination.stat().st_mode) == 0o4751
+    assert chowns == [(chowns[0][0], expected_uid, expected_gid)]
     assert not (tmp_path / "new-file").exists()
     assert ["systemctl", "daemon-reload"] in commands
+    assert ["systemctl", "disable", "xrdp"] in commands
+    assert ["systemctl", "start", "xrdp"] in commands
+    assert ["systemctl", "enable", "xrdp-sesman"] in commands
+    assert ["systemctl", "start", "xrdp-sesman"] in commands
     assert ["systemctl", "disable", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT] in commands
     assert ["systemctl", "stop", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT] in commands
     assert ["systemctl", "enable", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT] in commands
     assert ["systemctl", "start", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT] in commands
+    assert not any(command[:2] == ["systemctl", "restart"] for command in commands)
+
+
+def test_fresh_install_rollback_stops_new_reconcile_units_before_removing_files(
+    monkeypatch,
+    tmp_path: Path,
+) -> None:
+    backup = tmp_path / "backup"
+    units = {
+        "xrdp": {"enabled": "enabled", "active": "active"},
+        "xrdp-sesman": {"enabled": "enabled", "active": "active"},
+        xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT: {
+            "enabled": "not-found",
+            "active": "inactive",
+        },
+        xrdp_abnt2_mod.RECONCILE_TIMER_UNIT: {
+            "enabled": "not-found",
+            "active": "inactive",
+        },
+    }
+    _write(
+        backup / "rollback-manifest.json",
+        json.dumps({"username": "ubuntu", "files": [], "units": units}),
+    )
+    commands = []
+    monkeypatch.setattr(xrdp_abnt2_mod, "_ensure_root", lambda: None)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_rollback_paths", lambda _username: [])
+    monkeypatch.setattr(xrdp_abnt2_mod, "_run", lambda args, **_kwargs: commands.append(args))
+
+    xrdp_abnt2_mod._restore_backup(backup)
+
+    daemon_reload_index = commands.index(["systemctl", "daemon-reload"])
+    assert commands.index(
+        ["systemctl", "stop", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT]
+    ) < daemon_reload_index
+    assert commands.index(
+        ["systemctl", "disable", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT]
+    ) < daemon_reload_index
+    assert commands.index(
+        ["systemctl", "stop", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT]
+    ) < daemon_reload_index
     assert not any(command[:2] == ["systemctl", "restart"] for command in commands)
 
 
