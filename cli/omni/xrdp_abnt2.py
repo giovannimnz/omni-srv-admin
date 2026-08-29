@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import difflib
 import hashlib
+import json
 import os
 import re
 import shutil
@@ -469,9 +470,53 @@ def _backup_current(username: str, dry_run: bool) -> Path:
                 click.echo(f"DRY  save {p}")
         return backup_dir
     backup_dir.mkdir(parents=True, exist_ok=True)
+    file_state: list[dict[str, str | bool]] = []
     for p in paths:
+        file_state.append({"path": str(p), "existed": p.exists()})
         _copy_if_exists(p, backup_dir)
+    unit_state = {
+        unit: {
+            "enabled": _systemctl_state("is-enabled", unit),
+            "active": _systemctl_state("is-active", unit),
+        }
+        for unit in (RECONCILE_SERVICE_UNIT, RECONCILE_TIMER_UNIT)
+    }
+    (backup_dir / "rollback-manifest.json").write_text(
+        json.dumps({"files": file_state, "units": unit_state}, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return backup_dir
+
+
+def _restore_backup(backup_dir: Path) -> None:
+    """Restore file and reconciliation-unit state captured before install."""
+    manifest_path = backup_dir / "rollback-manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise click.ClickException(f"rollback manifest indisponível: {manifest_path}") from exc
+    files = manifest.get("files")
+    units = manifest.get("units")
+    if not isinstance(files, list) or not isinstance(units, dict):
+        raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+    for entry in files:
+        if not isinstance(entry, dict) or not isinstance(entry.get("path"), str):
+            raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+        destination = Path(entry["path"])
+        if entry.get("existed"):
+            source = backup_dir / str(destination).lstrip("/")
+            if not source.is_file():
+                raise click.ClickException(f"backup ausente para restore: {destination}")
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        elif destination.exists() or destination.is_symlink():
+            destination.unlink()
+    _run(["systemctl", "daemon-reload"])
+    for unit, state in units.items():
+        if not isinstance(state, dict):
+            raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+        _run(["systemctl", "enable" if state.get("enabled") == "enabled" else "disable", unit])
+        _run(["systemctl", "start" if state.get("active") == "active" else "stop", unit])
 
 
 def _target_specs(username: str) -> list[tuple[Path, Path, str, str, str]]:
@@ -753,40 +798,34 @@ def install_cmd(username: str, yes: bool, dry_run: bool, skip_packages: bool) ->
     backup_dir = _backup_current(username, dry_run=dry_run)
     click.echo(f"Backup: {backup_dir}")
 
+    try:
+        _install_steps(username, dry_run=dry_run, skip_packages=skip_packages)
+    except Exception:
+        if not dry_run:
+            _restore_backup(backup_dir)
+        raise
+
+
+def _install_steps(username: str, *, dry_run: bool, skip_packages: bool) -> None:
     if skip_packages:
         click.echo("Pacotes pré-requisito: SKIPPED")
     else:
         installed_now = _ensure_packages(dry_run=dry_run)
-        if installed_now:
-            click.echo("Pacotes pré-requisito garantidos: " + ", ".join(installed_now))
-        else:
-            click.echo("Pacotes pré-requisito já presentes")
-
+        click.echo("Pacotes pré-requisito garantidos: " + ", ".join(installed_now) if installed_now else "Pacotes pré-requisito já presentes")
     _run(["install", "-d", "-o", "root", "-g", "root", "-m", "755", "/usr/local/share/xrdp-abnt2"], dry_run=dry_run)
     _run(["install", "-d", "-o", "root", "-g", "root", "-m", "755", "/usr/local/sbin"], dry_run=dry_run)
-    home_bin = _watchdog_target(username).parent
-    user_group = _user_group(username)
-    _run(["install", "-d", "-o", username, "-g", user_group, "-m", "755", str(home_bin)], dry_run=dry_run)
-
+    _run(["install", "-d", "-o", username, "-g", _user_group(username), "-m", "755", str(_watchdog_target(username).parent)], dry_run=dry_run)
     for src, dst, mode, owner, group in _target_specs(username):
         _install_file(src, dst, mode, owner, group, dry_run=dry_run)
-
     _apply_xrdp_overrides(dry_run=dry_run)
-
     for unit in REQUIRED_SYSTEMD_UNITS:
         _run(["systemctl", "enable", unit], dry_run=dry_run)
     _run(["systemctl", "daemon-reload"], dry_run=dry_run)
     _run(["systemctl", "enable", "--now", RECONCILE_TIMER_UNIT], dry_run=dry_run)
-    # A newly enabled timer has not necessarily fired yet (it intentionally
-    # uses boot delay and jitter). Run the file-only reconciler once so the
-    # post-install validation proves a successful repair without restarting
-    # either XRDP service.
     _run(["systemctl", "start", RECONCILE_SERVICE_UNIT], dry_run=dry_run)
-
     if dry_run:
         click.echo("DRY-RUN concluído. Nenhum arquivo foi escrito.")
         return
-
     click.echo("Instalação aplicada. Não reiniciei xrdp; reconecta via RDP para pegar nova sessão.")
     success, ok, fail = _validation(username)
     for item in ok:
