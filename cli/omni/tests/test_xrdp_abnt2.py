@@ -111,6 +111,26 @@ LogLevel=INFO
     assert "[Logging]\nLogLevel=INFO" in rendered
 
 
+def test_xrdp_overrides_require_globals_and_ignore_other_sections() -> None:
+    original = """[Globals]
+port=3389
+
+[Logging]
+xrdp.override_keyboard_type=0x04
+xrdp.override_keyboard_subtype=0x00
+xrdp.override_keylayout=0x00000416
+"""
+
+    assert xrdp_abnt2_mod._globals_missing_overrides(original) == [
+        "xrdp.override_keyboard_type=0x04",
+        "xrdp.override_keyboard_subtype=0x00",
+        "xrdp.override_keylayout=0x00000416",
+    ]
+    rendered = xrdp_abnt2_mod._render_xrdp_overrides(original)
+    assert xrdp_abnt2_mod._globals_missing_overrides(rendered) == []
+    assert rendered.count("xrdp.override_keyboard_type=0x04") == 2
+
+
 def test_guard_covers_current_br_layout_and_critical_keys() -> None:
     assert "km_00000416" in xrdp_abnt2_mod.SYSTEM_TARGETS
     text = xrdp_abnt2_mod.CANONICAL["km_abnt2"].read_text(encoding="utf-8")
