@@ -460,7 +460,7 @@ def _reconcile_timer_errors() -> list[str]:
         timer_properties.get("NextElapseUSecRealtime", "").strip(),
         timer_properties.get("NextElapseUSecMonotonic", "").strip(),
     )
-    if not any(value not in {"", "0", "n/a"} for value in next_values):
+    if not any(value.lower() not in {"", "0", "n/a", "infinity"} for value in next_values):
         errors.append(f"timer {RECONCILE_TIMER_UNIT} não tem próximo disparo agendado")
     return errors
 

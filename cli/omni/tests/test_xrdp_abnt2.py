@@ -305,6 +305,33 @@ def test_reconciliation_timer_requires_enabled_and_active(monkeypatch) -> None:
 
 
 def test_reconciliation_timer_accepts_monotonic_next_trigger(monkeypatch) -> None:
+    requested: list[tuple[str, ...]] = []
+
+    def properties(unit: str, *names: str) -> dict[str, str]:
+        requested.append(names)
+        if unit == xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT:
+            return {
+                "Result": "success",
+                "ExecMainStatus": "0",
+                "ExecMainStartTimestampMonotonic": "123456789",
+            }
+        return {
+            "NextElapseUSecRealtime": "",
+            "NextElapseUSecMonotonic": "1h 12min",
+        }
+
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_state",
+        lambda mode, _unit: "enabled" if mode == "is-enabled" else "active",
+    )
+    monkeypatch.setattr(xrdp_abnt2_mod, "_systemctl_properties", properties)
+
+    assert xrdp_abnt2_mod._reconcile_timer_errors() == []
+    assert any("NextElapseUSecMonotonic" in names for names in requested)
+
+
+def test_reconciliation_timer_rejects_infinite_monotonic_schedule(monkeypatch) -> None:
     monkeypatch.setattr(
         xrdp_abnt2_mod,
         "_systemctl_state",
@@ -322,12 +349,13 @@ def test_reconciliation_timer_accepts_monotonic_next_trigger(monkeypatch) -> Non
             if unit == xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT
             else {
                 "NextElapseUSecRealtime": "",
-                "NextElapseUSecMonotonic": "1h 12min",
+                "NextElapseUSecMonotonic": "infinity",
             }
         ),
     )
 
-    assert xrdp_abnt2_mod._reconcile_timer_errors() == []
+    errors = xrdp_abnt2_mod._reconcile_timer_errors()
+    assert any("não tem próximo disparo" in error for error in errors)
 
 
 def test_reconciliation_timer_rejects_never_run_service(monkeypatch) -> None:
