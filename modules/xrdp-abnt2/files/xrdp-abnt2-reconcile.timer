@@ -1,0 +1,11 @@
+[Unit]
+Description=Periodic XRDP ABNT2 keyboard reconciliation
+
+[Timer]
+OnBootSec=10min
+OnUnitActiveSec=1h
+Persistent=true
+Unit=xrdp-abnt2-reconcile.service
+
+[Install]
+WantedBy=timers.target

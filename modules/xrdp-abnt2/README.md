@@ -8,12 +8,15 @@ Windows 11 Microsoft Remote Desktop -> Ubuntu 24.04+ + XRDP + LXDE
 
 ## Lógica
 
-O bug operacional é uma cadeia de fallback:
+O bug operacional é uma cadeia de fallback e tradução:
 
 1. Windows RDP envia `keylayout` que o XRDP local nem sempre mapeia (`0x00010416`, `0x0000F010` e, quando o cliente cai em Latin America, `0x0000080A`).
 2. Quando o XRDP não acha o keymap, cai em `/etc/xrdp/km-00000409.ini` (US).
 3. A sessão X11 pode ainda ser alterada por autodetecção do cliente ou GUI tools.
 4. Updates do pacote `xrdp` podem restaurar conffiles e desfazer a correção.
+5. No XRDP `0.9.24`, `lang.c` traduz scancodes estendidos para índices
+   `xfree86/base`, enquanto o XKB live usa `evdev`. Um keymap validado pelos
+   índices live errados faz `Delete` virar `Print Screen` e quebra as setas.
 
 O guard fecha as 4 camadas:
 
@@ -21,9 +24,10 @@ O guard fecha as 4 camadas:
 |---|---|---|
 | Sistema | `/etc/default/keyboard` | Esperado `br` + `abnt2` |
 | XRDP map | `/etc/xrdp/xrdp_keyboard.ini` | `00010416`, `0000F010`, `0000080A`, `00000409` -> `br(abnt2)` |
-| XRDP keymaps | `/etc/xrdp/km-*.ini` | US fallback e BR alternativos usam keymap ABNT2 idêntico |
+| XRDP keymaps | `/etc/xrdp/km-*.ini` | US fallback e BR alternativos usam keymap ABNT2 idêntico, gerado por `xrdp-genkeymap` contra `evdev` e indexado para o tradutor `xfree86/base` do XRDP 0.9.24 |
 | Sessão | `/etc/xrdp/startwm.sh` + `~/.local/bin/setxkbmap-abnt2.sh` | Aplica ABNT2 no login e corrige drift a cada 5s |
 | Update guard | `/etc/apt/apt.conf.d/99xrdp-abnt2-keyboard` | Reaplica após `apt/dpkg` |
+| Drift guard | `xrdp-abnt2-reconcile.timer` | Reaplica os assets a cada hora e após boot, sem reiniciar XRDP |
 
 ## Fleet contract
 
@@ -103,6 +107,8 @@ Depois instala:
 /usr/local/share/xrdp-abnt2/startwm.sh
 /usr/local/sbin/fix-xrdp-abnt2-keyboard
 /etc/apt/apt.conf.d/99xrdp-abnt2-keyboard
+/etc/systemd/system/xrdp-abnt2-reconcile.service
+/etc/systemd/system/xrdp-abnt2-reconcile.timer
 /home/<user>/.local/bin/setxkbmap-abnt2.sh
 /etc/xrdp/xrdp_keyboard.ini
 /etc/xrdp/km-00000409.ini
@@ -122,6 +128,8 @@ Não reinicia `xrdp` automaticamente. O comando só garante:
 - helper persistente em `/usr/local/sbin`
 - payload persistente em `/usr/local/share/xrdp-abnt2`
 - hook APT/DPKG
+- `xrdp-abnt2-reconcile.timer` ativo: ele chama apenas o reparador de arquivos,
+  nunca `restart xrdp` ou `restart xrdp-sesman`
 - `systemctl enable xrdp xrdp-sesman`
 
 Reconecta via RDP para validar nova sessão.
@@ -143,6 +151,10 @@ Critérios:
 - `xrdp_keyboard.ini` contém `00010416`, `0000F010`, `0000080A`, `rdp_layout_us=br(abnt2)` e `rdp_layout_latam=br(abnt2)`.
 - `km-00000409`, `km-00010416`, `km-0000080a`, `km-0000f010` têm o mesmo hash do `km-abnt2.ini` canônico.
 - `km-00000416`, usado pelo cliente Windows PT-BR atual, também é gerido e tem o mesmo hash.
+- O keymap tem 8 estados de modificadores e usa os índices efetivamente
+  consumidos pelo XRDP 0.9.24: `Up=Key98`, `Left=Key100`, `Right=Key102`,
+  `Down=Key104`, `Delete=Key107`, `Print=Key111`.
+- A tecla física ABNT_C1 usa `Key123`: `/`, `?`, `°`, `¿` conforme o modificador.
 - `[Globals]` em `/etc/xrdp/xrdp.ini` força `keyboard_type=0x04`,
   `keyboard_subtype=0x00` e `keylayout=0x00000416`, neutralizando clientes que
   anunciem incorretamente teclado Japanese `0x07`.

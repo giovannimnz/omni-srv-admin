@@ -32,7 +32,12 @@ except ModuleNotFoundError:  # pragma: no cover - Windows test environment
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MODULE_DIR = REPO_ROOT / "modules" / "xrdp-abnt2"
-FILES_DIR = MODULE_DIR / "files"
+_REPO_FILES_DIR = MODULE_DIR / "files"
+_PACKAGE_FILES_DIR = Path(__file__).resolve().parent / "assets" / "xrdp-abnt2"
+# Editable/source installs use the module as the single source of truth. Wheels
+# also carry an immutable copy so `uv tool install` can validate/repair a host
+# without a checkout beside site-packages.
+FILES_DIR = _REPO_FILES_DIR if _REPO_FILES_DIR.is_dir() else _PACKAGE_FILES_DIR
 DEFAULT_USER = os.environ.get("SUDO_USER") or os.environ.get("USER") or "ubuntu"
 
 CANONICAL = {
@@ -42,6 +47,8 @@ CANONICAL = {
     "apt_hook": FILES_DIR / "99xrdp-abnt2-keyboard",
     "fix_script": FILES_DIR / "fix-xrdp-abnt2-keyboard",
     "watchdog": FILES_DIR / "setxkbmap-abnt2.sh",
+    "reconcile_service": FILES_DIR / "xrdp-abnt2-reconcile.service",
+    "reconcile_timer": FILES_DIR / "xrdp-abnt2-reconcile.timer",
 }
 
 SYSTEM_TARGETS = {
@@ -58,6 +65,8 @@ SYSTEM_TARGETS = {
     "share_xrdp_keyboard": Path("/usr/local/share/xrdp-abnt2/xrdp_keyboard.ini"),
     "share_km_abnt2": Path("/usr/local/share/xrdp-abnt2/km-abnt2.ini"),
     "share_startwm": Path("/usr/local/share/xrdp-abnt2/startwm.sh"),
+    "reconcile_service": Path("/etc/systemd/system/xrdp-abnt2-reconcile.service"),
+    "reconcile_timer": Path("/etc/systemd/system/xrdp-abnt2-reconcile.timer"),
 }
 
 REQUIRED_XRDP_OVERRIDES = {
@@ -76,14 +85,59 @@ REQUIRED_LAYOUT_SNIPPETS = [
     "rdp_layout_br_abnt2=br(abnt2)",
 ]
 
-REQUIRED_KEYMAP_SNIPPETS = [
-    "Key94=92:92",       # backslash
-    "Key97=47:47",       # slash
-    "Key111=65362:0",    # Up
-    "Key113=65361:0",    # Left
-    "Key114=65363:0",    # Right
-    "Key116=65364:0",    # Down
-]
+KEYMAP_SECTIONS = (
+    "noshift",
+    "shift",
+    "altgr",
+    "shiftaltgr",
+    "capslock",
+    "capslockaltgr",
+    "shiftcapslock",
+    "shiftcapslockaltgr",
+)
+
+# xrdp 0.9.24 translates RDP scancodes to the legacy xfree86/base keycode
+# indexes in xrdp/lang.c before looking them up in km-*.ini. xrdp-genkeymap
+# compensates for an evdev X server by storing the evdev symbols under these
+# legacy indexes. Validating the live evdev indexes (111/113/114/116/119) here
+# is wrong: it makes arrows resolve to Print/AltGr/media symbols and Delete to
+# Print Screen in the Microsoft RDP -> libvnc/TigerVNC path.
+REQUIRED_KEYMAP_VALUES = {
+    "Key97": "65360:0",     # Home
+    "Key98": "65362:0",     # Up
+    "Key99": "65365:0",     # Page Up
+    "Key100": "65361:0",    # Left
+    "Key102": "65363:0",    # Right
+    "Key103": "65367:0",    # End
+    "Key104": "65364:0",    # Down
+    "Key105": "65366:0",    # Page Down
+    "Key106": "65379:0",    # Insert
+    "Key107": "65535:127",  # Delete
+    "Key111": "65377:0",    # Print Screen
+}
+
+REQUIRED_ABNT_SECTION_VALUES = {
+    "noshift": {"Key94": "92:92", "Key123": "47:47", "Key134": "65454:46"},
+    "shift": {"Key94": "124:124", "Key123": "63:63", "Key134": "65454:46"},
+    "altgr": {"Key94": "65114:711", "Key123": "176:176", "Key134": "65454:46"},
+    "shiftaltgr": {"Key94": "65109:728", "Key123": "191:191", "Key134": "65454:46"},
+    "capslock": {"Key94": "92:92", "Key123": "47:47", "Key134": "65454:46"},
+    "capslockaltgr": {"Key94": "65114:711", "Key123": "176:176", "Key134": "65454:46"},
+    "shiftcapslock": {"Key94": "124:124", "Key123": "63:63", "Key134": "65454:46"},
+    "shiftcapslockaltgr": {"Key94": "65109:728", "Key123": "191:191", "Key134": "65454:46"},
+}
+
+RDP_SCANCODE_EXPECTATIONS = (
+    ("backslash_oem102", "0x56", False, "Key94", "92:92"),
+    ("slash_abnt_c1", "0x73", False, "Key123", "47:47"),
+    ("up", "0x48", True, "Key98", "65362:0"),
+    ("left", "0x4b", True, "Key100", "65361:0"),
+    ("right", "0x4d", True, "Key102", "65363:0"),
+    ("down", "0x50", True, "Key104", "65364:0"),
+    ("insert", "0x52", True, "Key106", "65379:0"),
+    ("delete", "0x53", True, "Key107", "65535:127"),
+    ("print_screen", "0x37", True, "Key111", "65377:0"),
+)
 
 PREREQUISITE_PACKAGES = [
     "xrdp",
@@ -105,6 +159,7 @@ PREREQUISITE_COMMANDS = {
 }
 
 REQUIRED_SYSTEMD_UNITS = ("xrdp", "xrdp-sesman")
+RECONCILE_TIMER_UNIT = "xrdp-abnt2-reconcile.timer"
 
 
 @click.group(name="xrdp-abnt2")
@@ -152,6 +207,59 @@ def _run(args: list[str], *, dry_run: bool = False, env: dict[str, str] | None =
 
 def _normalized_bytes(src: Path) -> bytes:
     return src.read_bytes().replace(b"\r\n", b"\n").replace(b"\r", b"\n")
+
+
+def _parse_keymap_text(text: str) -> dict[str, dict[str, str]]:
+    sections: dict[str, dict[str, str]] = {}
+    current: str | None = None
+    for raw_line in text.splitlines():
+        line = raw_line.strip()
+        if not line or line.startswith(("#", ";")):
+            continue
+        if line.startswith("[") and line.endswith("]"):
+            current = line[1:-1].strip().lower()
+            sections[current] = {}
+            continue
+        if current is not None and "=" in line:
+            key, value = line.split("=", 1)
+            sections[current][key.strip()] = value.strip()
+    return sections
+
+
+def _keymap_contract_errors(text: str) -> list[str]:
+    sections = _parse_keymap_text(text)
+    errors: list[str] = []
+    if tuple(sections) != KEYMAP_SECTIONS:
+        errors.append(
+            "seções esperadas " + ",".join(KEYMAP_SECTIONS)
+            + "; encontradas " + ",".join(sections)
+        )
+        return errors
+
+    for section in KEYMAP_SECTIONS:
+        values = sections[section]
+        for key, expected in REQUIRED_KEYMAP_VALUES.items():
+            actual = values.get(key)
+            if actual != expected:
+                errors.append(f"[{section}] {key}={actual!r}; esperado {expected!r}")
+        for key, expected in REQUIRED_ABNT_SECTION_VALUES[section].items():
+            actual = values.get(key)
+            if actual != expected:
+                errors.append(f"[{section}] {key}={actual!r}; esperado {expected!r}")
+    return errors
+
+
+def _rdp_scancode_smoke(text: str) -> list[str]:
+    noshift = _parse_keymap_text(text).get("noshift", {})
+    errors = []
+    for name, scancode, extended, key, expected in RDP_SCANCODE_EXPECTATIONS:
+        actual = noshift.get(key)
+        if actual != expected:
+            ext = "extended" if extended else "base"
+            errors.append(
+                f"{name} scancode={scancode} {ext} -> {key}={actual!r}; esperado {expected!r}"
+            )
+    return errors
 
 
 def _install_file(src: Path, dst: Path, mode: str, owner: str, group: str, dry_run: bool) -> None:
@@ -309,6 +417,8 @@ def _target_specs(username: str) -> list[tuple[Path, Path, str, str, str]]:
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_0000080a"], "644", "nobody", "nogroup"),
         (CANONICAL["km_abnt2"], SYSTEM_TARGETS["km_0000f010"], "644", "nobody", "nogroup"),
         (CANONICAL["startwm"], SYSTEM_TARGETS["startwm"], "755", "nobody", "nogroup"),
+        (CANONICAL["reconcile_service"], SYSTEM_TARGETS["reconcile_service"], "644", "root", "root"),
+        (CANONICAL["reconcile_timer"], SYSTEM_TARGETS["reconcile_timer"], "644", "root", "root"),
     ]
 
 
@@ -429,11 +539,17 @@ def _validation(username: str) -> tuple[bool, list[str], list[str]]:
     canonical_keymap = CANONICAL["km_abnt2"]
     if canonical_keymap.exists():
         text = canonical_keymap.read_text(errors="replace")
-        missing_keycodes = [item for item in REQUIRED_KEYMAP_SNIPPETS if item not in text]
-        if missing_keycodes:
-            fail.append("keymap ABNT2 sem teclas críticas: " + ", ".join(missing_keycodes))
+        contract_errors = _keymap_contract_errors(text)
+        if contract_errors:
+            fail.append("keymap ABNT2 incompatível com XRDP 0.9.24: " + "; ".join(contract_errors))
         else:
-            ok.append("keymap contém barra e setas ABNT2")
+            ok.append("keymap xfree86/base cobre 8 estados de modificadores")
+
+        smoke_errors = _rdp_scancode_smoke(text)
+        if smoke_errors:
+            fail.append("smoke de scancodes RDP falhou: " + "; ".join(smoke_errors))
+        else:
+            ok.append("scancodes RDP cobrem barra, navegação, Delete e Print Screen")
 
     hook = SYSTEM_TARGETS["apt_hook"]
     if hook.exists():
@@ -587,6 +703,8 @@ def install_cmd(username: str, yes: bool, dry_run: bool, skip_packages: bool) ->
 
     for unit in REQUIRED_SYSTEMD_UNITS:
         _run(["systemctl", "enable", unit], dry_run=dry_run)
+    _run(["systemctl", "daemon-reload"], dry_run=dry_run)
+    _run(["systemctl", "enable", "--now", RECONCILE_TIMER_UNIT], dry_run=dry_run)
 
     if dry_run:
         click.echo("DRY-RUN concluído. Nenhum arquivo foi escrito.")

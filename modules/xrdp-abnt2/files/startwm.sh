@@ -39,7 +39,7 @@ fi
 # Force ABNT2 keyboard layout - DISPLAY is set by xrdp before this runs
 # Using while loop to wait for X to be ready (max 10 seconds)
 for i in $(seq 1 10); do
-    if [ -n "$DISPLAY" ] && /usr/bin/setxkbmap -model pc105 -layout br -variant abnt2 -option -option lv3:ralt_switch 2>/dev/null; then
+    if [ -n "$DISPLAY" ] && /usr/bin/setxkbmap -model pc105 -layout br -variant abnt2 -option '' -option lv3:ralt_switch 2>/dev/null; then
         break
     fi
     sleep 1

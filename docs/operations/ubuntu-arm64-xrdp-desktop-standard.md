@@ -64,6 +64,17 @@ Required mappings:
 - `0x0000F010` -> `br(abnt2)`
 - `0x0000080A` -> `br(abnt2)`
 
+Required XRDP `0.9.24` scancode translation contract:
+
+- the X server may report `evdev`, but `xrdp/lang.c` consumes `xfree86/base`
+  keymap indexes in `km-*.ini`
+- `Up=Key98`, `Left=Key100`, `Right=Key102`, `Down=Key104`
+- `Insert=Key106`, `Delete=Key107`, `Print Screen=Key111`
+- physical ABNT_C1 slash key is `Key123` with `/`, `?`, `°`, `¿`
+- do not validate extended keys against the live evdev offsets
+  `111/113/114/116/119`; that mismatch reproduces arrows taking screenshots
+  and Delete acting as Print Screen
+
 Required live files:
 
 ```text
@@ -79,6 +90,8 @@ Required live files:
 /usr/local/share/xrdp-abnt2/startwm.sh
 /usr/local/sbin/fix-xrdp-abnt2-keyboard
 /etc/apt/apt.conf.d/99xrdp-abnt2-keyboard
+/etc/systemd/system/xrdp-abnt2-reconcile.service
+/etc/systemd/system/xrdp-abnt2-reconcile.timer
 ~/.local/bin/setxkbmap-abnt2.sh
 ```
 
@@ -114,6 +127,8 @@ Validate:
 ```bash
 python3 cli/omni/xrdp_abnt2.py validate --user "$USER"
 python3 cli/omni/xrdp_abnt2.py diff --user "$USER"
+systemctl is-enabled xrdp-abnt2-reconcile.timer
+systemctl is-active xrdp-abnt2-reconcile.timer
 DISPLAY=:1 XAUTHORITY="$HOME/.Xauthority" setxkbmap -query
 command -v xfreerdp
 ```
@@ -203,6 +218,8 @@ bash -n dark-theme-ubuntu/scripts/dark-themectl.sh
 6. Validate both modules.
 7. If Obsidian is installed on the host, verify the managed wrapper/titlebar defaults and repair them only if drift exists.
 8. Do not restart `xrdp` or `xrdp-sesman` unless explicitly approved.
+   The installed reconciliation timer only reapplies files through
+   `fix-xrdp-abnt2-keyboard`; it does not restart either service.
 9. If a live XRDP display exists, `--restart-session` may restart LXDE panel/Openbox/PCManFM only; this can flicker the desktop but should not drop RDP.
 
 ## Required Logging
