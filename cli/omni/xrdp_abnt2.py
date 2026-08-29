@@ -451,8 +451,16 @@ def _reconcile_timer_errors() -> list[str]:
         )
     elif service_properties.get("ExecMainStartTimestampMonotonic", "0").strip() in {"", "0"}:
         errors.append(f"service {RECONCILE_SERVICE_UNIT} ainda não executou")
-    timer_properties = _systemctl_properties(RECONCILE_TIMER_UNIT, "NextElapseUSecRealtime")
-    if not timer_properties.get("NextElapseUSecRealtime", "").strip():
+    timer_properties = _systemctl_properties(
+        RECONCILE_TIMER_UNIT,
+        "NextElapseUSecRealtime",
+        "NextElapseUSecMonotonic",
+    )
+    next_values = (
+        timer_properties.get("NextElapseUSecRealtime", "").strip(),
+        timer_properties.get("NextElapseUSecMonotonic", "").strip(),
+    )
+    if not any(value.lower() not in {"", "0", "n/a", "infinity"} for value in next_values):
         errors.append(f"timer {RECONCILE_TIMER_UNIT} não tem próximo disparo agendado")
     return errors
 

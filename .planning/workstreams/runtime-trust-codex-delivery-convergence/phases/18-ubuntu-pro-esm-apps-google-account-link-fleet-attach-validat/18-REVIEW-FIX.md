@@ -57,3 +57,13 @@ defects are not activated by this delivery.
 SSH cannot prove physical keyboard events. A new Microsoft RDP session on each
 host must still exercise arrows, Delete, Print Screen, `/`, `?`, AltGr and
 clipboard. That is an operator UAT gate, not an unresolved code-review finding.
+
+## Post-merge timer hotfix
+
+The first local 0.2.5 install correctly failed closed and rolled back because
+the health probe queried only `NextElapseUSecRealtime`; this timer is scheduled
+on the monotonic clock. The hotfix accepts a finite schedule in either realtime
+or monotonic form, rejects empty, `0`, `n/a` and `infinity`, and pins the exact
+properties requested from systemd. The final hotfix review is `clean` and the
+focused suite passes 30 tests. XRDP/Xvnc remained active through the failed
+install and rollback.
