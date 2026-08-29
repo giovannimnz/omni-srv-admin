@@ -199,6 +199,13 @@ def _validate_sync_paths(items: list[dict[str, Any]], target: dict[str, Any]) ->
             _relative_posix_path(rel_path, field=f"install.{product}.rel_path de {item.get('name')}")
             if home is not None:
                 _local_destination(home, rel_path, field=f"install.{product}.rel_path de {item.get('name')}")
+                mapped = _target_root(target, rel_path)
+                try:
+                    mapped.resolve(strict=False).relative_to(home.resolve(strict=False))
+                except ValueError as exc:
+                    raise click.ClickException(
+                        f"install.{product}.rel_path de {item.get('name')} resolve fora do home configurado"
+                    ) from exc
 
 
 def _install_rel_path(target: dict[str, Any], item: dict[str, Any]) -> str | None:

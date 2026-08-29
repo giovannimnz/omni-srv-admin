@@ -296,6 +296,44 @@ def test_sync_rolls_back_local_item_when_validator_fails(monkeypatch, tmp_path):
     assert not (home / "skills" / "demo" / "new.txt").exists()
 
 
+@pytest.mark.parametrize(
+    ("item", "fragment"),
+    [
+        ({"name": "demo", "kind": "skill", "install": {"codex": {"rel_path": "../.ssh"}}}, "install.codex.rel_path"),
+        ({"name": "demo", "kind": "skill-pack", "files": [{"path": "codex/../escape/SKILL.md"}]}, "files[].path"),
+    ],
+)
+def test_sync_rejects_manifest_traversal_before_validation(monkeypatch, tmp_path, item, fragment):
+    target = {"product": "codex", "runtime": "windows", "home": str(tmp_path / "home")}
+    monkeypatch.setattr(agent_content, "_load_manifest", lambda _pack: {"items": [item]})
+    monkeypatch.setattr(agent_content, "_load_targets", lambda _pack: {"targets": {"target": target}})
+    called = False
+
+    def should_not_validate(*_args):
+        nonlocal called
+        called = True
+        return {"ok": True}
+
+    monkeypatch.setattr(agent_content, "_validate_item", should_not_validate)
+    result = CliRunner().invoke(agent_content.agent_content, ["sync", "--pack", "demo", "--target", "target"])
+    assert result.exit_code != 0
+    assert fragment in result.output
+    assert called is False
+
+
+def test_sync_rejects_local_product_root_outside_home(monkeypatch, tmp_path):
+    target = {
+        "product": "codex", "runtime": "windows", "home": str(tmp_path / "home"),
+        "skills_root": str(tmp_path / "outside"),
+    }
+    item = {"name": "demo", "kind": "skill", "install": {"codex": {"rel_path": "skills/demo"}}}
+    monkeypatch.setattr(agent_content, "_load_manifest", lambda _pack: {"items": [item]})
+    monkeypatch.setattr(agent_content, "_load_targets", lambda _pack: {"targets": {"target": target}})
+    result = CliRunner().invoke(agent_content.agent_content, ["sync", "--pack", "demo", "--target", "target"])
+    assert result.exit_code != 0
+    assert "fora do home" in result.output
+
+
 def test_remote_posix_path_for_ssh_target():
     target = {'runtime': 'ssh-linux', 'host': 'atius-srv-1', 'user': 'ubuntu', 'home': '/home/ubuntu/.hermes'}
     local = Path('/tmp/example/SKILL.md')
