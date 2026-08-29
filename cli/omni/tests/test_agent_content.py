@@ -193,6 +193,22 @@ def test_ssh_skill_pack_apply_fails_closed_without_touching_unmanaged_content(mo
     assert not (home / "slash-commands" / "demo.md").exists()
 
 
+def test_ssh_apply_never_archives_unlisted_source_content(monkeypatch, tmp_path):
+    source = tmp_path / "item"
+    _write(source / "SKILL.md", "managed\n")
+    _write(source / "unlisted" / "secret.md", "must never deploy\n")
+    target = {"runtime": "ssh-linux", "host": "example", "user": "ubuntu", "home": "/home/ubuntu/.codex", "product": "codex"}
+    item = {"name": "demo", "kind": "skill", "install": {"codex": {"rel_path": "skills/demo"}}}
+    captured = []
+    monkeypatch.setattr(agent_content, "_pack_item_dir", lambda *_args: source)
+    monkeypatch.setattr(agent_content, "_ssh_capture_tree", lambda path: captured.append(path))
+
+    with pytest.raises(agent_content.click.ClickException, match="desabilitado"):
+        agent_content._apply_item("demo", item, target)
+
+    assert captured == []
+
+
 def test_ssh_apply_refuses_regular_item_extract_when_backup_fails(monkeypatch, tmp_path):
     target = {
         "runtime": "ssh-linux",
