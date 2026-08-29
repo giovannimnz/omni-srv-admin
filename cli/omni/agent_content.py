@@ -506,6 +506,35 @@ def _backup_file(src: Path, backup_root: Path, relative_to: Path) -> None:
     shutil.copy2(src, dst)
 
 
+def _remove_path(path: Path) -> None:
+    if path.is_dir() and not path.is_symlink():
+        shutil.rmtree(path)
+    elif path.exists() or path.is_symlink():
+        path.unlink()
+
+
+def _rollback_item(result: dict[str, Any]) -> None:
+    """Restore one completed local item from its pre-apply journal."""
+    rollback = result.get("rollback")
+    if not isinstance(rollback, dict) or rollback.get("runtime") != "local":
+        return
+    backup_root = Path(str(rollback["backup_root"]))
+    if rollback["kind"] == "files":
+        home = Path(str(rollback["home"]))
+        for rel, existed in rollback["entries"]:
+            destination = home / rel
+            if existed:
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(backup_root / rel, destination)
+            else:
+                _remove_path(destination)
+        return
+    destination = Path(str(rollback["destination"]))
+    _remove_path(destination)
+    if rollback["existed"]:
+        shutil.copytree(backup_root / "tree", destination)
+
+
 def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
     validate = target.get("validate")
     if not isinstance(validate, dict):
@@ -541,25 +570,46 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
         backup_root = _backup_root(home) / _timestamp() / pack / str(item.get("name")) / "before"
         backup_root.mkdir(parents=True, exist_ok=True)
         if str(item.get("kind")) == "skill-pack":
+            entries: list[tuple[str, bool]] = []
             for _src, dst in mappings:
+                rel = dst.relative_to(home).as_posix()
+                existed = dst.exists()
+                entries.append((rel, existed))
                 if dst.exists() and dst.is_file():
                     _backup_file(dst, backup_root, home)
-            for src, dst in mappings:
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
+            result = {
+                "item": item.get("name"),
+                "backup_root": str(backup_root),
+                "rollback": {"runtime": "local", "kind": "files", "home": str(home), "backup_root": str(backup_root), "entries": entries},
+            }
+            try:
+                for src, dst in mappings:
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    shutil.copy2(src, dst)
+            except Exception:
+                _rollback_item(result)
+                raise
         else:
             if source_root is None:
                 raise click.ClickException(f"item sem source_root: {item.get('name')}")
             if not isinstance(dest_root, Path):
                 raise click.ClickException(f"item sem destino resolvido: {item.get('name')}")
-            if dest_root.exists():
-                backup_target = backup_root / dest_root.name
-                if backup_target.exists():
-                    shutil.rmtree(backup_target)
-                shutil.copytree(dest_root, backup_target)
-            _copy_tree(source_root, dest_root)
+            existed = dest_root.exists()
+            if existed:
+                shutil.copytree(dest_root, backup_root / "tree")
+            result = {
+                "item": item.get("name"),
+                "backup_root": str(backup_root),
+                "rollback": {"runtime": "local", "kind": "tree", "destination": str(dest_root), "backup_root": str(backup_root), "existed": existed},
+            }
+            try:
+                _copy_tree(source_root, dest_root)
+            except Exception:
+                _rollback_item(result)
+                raise
         diff = _compute_diff(pack, item, target)
-        return {"item": item.get("name"), "backup_root": str(backup_root), "post_status": diff}
+        result["post_status"] = diff
+        return result
 
     if runtime == "ssh-linux":
         # The former SSH implementation swapped source-directory roots. It
@@ -670,8 +720,19 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
             for item in diffs:
                 click.echo(f"- {item['item']}: status={item['status']} missing={item['missing']} changed={item['changed']} extra={item['extra']} unchanged={item['unchanged']}")
         return
-    applied = [_apply_item(pack, item, target_cfg) for item in items]
-    runtime_validation = _run_validate_command(target_cfg)
+    applied: list[dict[str, Any]] = []
+    try:
+        for item in items:
+            applied.append(_apply_item(pack, item, target_cfg))
+        runtime_validation = _run_validate_command(target_cfg)
+    except Exception:
+        for result in reversed(applied):
+            _rollback_item(result)
+        raise
+    validation_failed = runtime_validation.get("ok") is not True
+    if validation_failed:
+        for result in reversed(applied):
+            _rollback_item(result)
     payload = {"pack": pack, "target": target, "mode": "apply", "results": applied, "runtime_validation": runtime_validation}
     if json_output:
         click.echo(json.dumps(payload, indent=2, ensure_ascii=False))
@@ -682,7 +743,7 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
             click.echo(f"- {item['item']}: {_post_status_summary(post)}")
             click.echo(f"    backup={item['backup_root']}")
         click.echo(f"runtime_validation={runtime_validation}")
-    if runtime_validation.get("ok") is not True:
+    if validation_failed:
         raise click.ClickException("sync aplicado, mas a validação do target falhou")
 
 

@@ -149,18 +149,13 @@ def test_ssh_apply_refuses_skill_pack_extract_when_backup_fails(monkeypatch, tmp
     }
     extracted = []
 
-    class FailedBackup:
-        returncode = 1
-        stderr = "backup volume full"
-
     monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, _item: source_root.parent)
-    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: FailedBackup())
     monkeypatch.setattr(agent_content, "_ssh_extract_tree", lambda *_args: extracted.append(True))
 
     try:
         agent_content._apply_item("demo", item, target)
     except agent_content.click.ClickException as exc:
-        assert "falha no backup remoto (atius-srv-1): backup volume full" in str(exc)
+        assert "desabilitado" in str(exc)
     else:
         raise AssertionError("expected a failed remote backup to abort apply")
     assert extracted == []
@@ -213,18 +208,13 @@ def test_ssh_apply_refuses_regular_item_extract_when_backup_fails(monkeypatch, t
     }
     extracted = []
 
-    class FailedBackup:
-        returncode = 1
-        stderr = "backup permission denied"
-
     monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, _item: tmp_path / "item")
-    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: FailedBackup())
     monkeypatch.setattr(agent_content, "_ssh_extract_tree", lambda *_args: extracted.append(True))
 
     try:
         agent_content._apply_item("demo", item, target)
     except agent_content.click.ClickException as exc:
-        assert "falha no backup remoto (atius-srv-1): backup permission denied" in str(exc)
+        assert "desabilitado" in str(exc)
     else:
         raise AssertionError("expected a failed remote backup to abort apply")
     assert extracted == []
@@ -257,6 +247,53 @@ def test_sync_apply_fails_when_runtime_validation_fails_in_text_and_json(monkeyp
             if json_output:
                 payload = json.loads(result.output.split("Error:")[0])
                 assert payload["runtime_validation"] == runtime_validation
+
+
+def test_sync_rolls_back_first_local_item_when_second_item_fails(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    sources = {"first": tmp_path / "source-first", "second": tmp_path / "source-second"}
+    _write(home / "skills" / "first" / "old.txt", "old-first\n")
+    _write(sources["first"] / "new.txt", "new-first\n")
+    _write(sources["second"] / "new.txt", "new-second\n")
+    target = {"product": "codex", "runtime": "windows", "home": str(home)}
+    items = [
+        {"name": name, "kind": "skill", "install": {"codex": {"rel_path": f"skills/{name}"}}}
+        for name in ("first", "second")
+    ]
+    monkeypatch.setattr(agent_content, "_load_manifest", lambda _pack: {"items": items})
+    monkeypatch.setattr(agent_content, "_load_targets", lambda _pack: {"targets": {"target": target}})
+    monkeypatch.setattr(agent_content, "_validate_item", lambda *_args: {"ok": True})
+    monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, item: sources[item["name"]])
+    real_apply = agent_content._apply_item
+
+    def fail_second(pack, item, target_cfg):
+        if item["name"] == "second":
+            raise OSError("second item extraction failed")
+        return real_apply(pack, item, target_cfg)
+
+    monkeypatch.setattr(agent_content, "_apply_item", fail_second)
+    result = CliRunner().invoke(agent_content.agent_content, ["sync", "--pack", "demo", "--target", "target", "--apply"])
+    assert result.exit_code != 0
+    assert (home / "skills" / "first" / "old.txt").read_text() == "old-first\n"
+    assert not (home / "skills" / "first" / "new.txt").exists()
+
+
+def test_sync_rolls_back_local_item_when_validator_fails(monkeypatch, tmp_path):
+    home = tmp_path / "home"
+    source = tmp_path / "source"
+    _write(home / "skills" / "demo" / "old.txt", "old\n")
+    _write(source / "new.txt", "new\n")
+    target = {"product": "codex", "runtime": "windows", "home": str(home), "validate": {"command": ["false"]}}
+    item = {"name": "demo", "kind": "skill", "install": {"codex": {"rel_path": "skills/demo"}}}
+    monkeypatch.setattr(agent_content, "_load_manifest", lambda _pack: {"items": [item]})
+    monkeypatch.setattr(agent_content, "_load_targets", lambda _pack: {"targets": {"target": target}})
+    monkeypatch.setattr(agent_content, "_validate_item", lambda *_args: {"ok": True})
+    monkeypatch.setattr(agent_content, "_pack_item_dir", lambda *_args: source)
+    monkeypatch.setattr(agent_content, "_run_validate_command", lambda _target: {"ok": False, "stderr": "validator failed"})
+    result = CliRunner().invoke(agent_content.agent_content, ["sync", "--pack", "demo", "--target", "target", "--apply"])
+    assert result.exit_code != 0
+    assert (home / "skills" / "demo" / "old.txt").read_text() == "old\n"
+    assert not (home / "skills" / "demo" / "new.txt").exists()
 
 
 def test_remote_posix_path_for_ssh_target():
