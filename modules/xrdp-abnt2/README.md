@@ -130,6 +130,9 @@ Não reinicia `xrdp` automaticamente. O comando só garante:
 - hook APT/DPKG
 - `xrdp-abnt2-reconcile.timer` ativo: ele chama apenas o reparador de arquivos,
   nunca `restart xrdp` ou `restart xrdp-sesman`
+  e aplica jitter de até 15 minutos. Se detectar arquivo XRDP divergente, o
+  reparador salva uma cópia prévia em `/var/backups/xrdp-abnt2-reconcile/` e
+  mantém no máximo 8 snapshots antes de reconciliar.
 - `systemctl enable xrdp xrdp-sesman`
 
 Reconecta via RDP para validar nova sessão.

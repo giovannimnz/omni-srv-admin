@@ -21,7 +21,7 @@ updated: 2026-08-29
 - hypothesis: "SRV-2, SRV-3 e Horistic mantêm keymaps gerados/indexados para evdev, enquanto o XRDP 0.9.24 consulta índices xfree86/base; isso roteia os scancodes estendidos aos símbolos errados. A CLI instalada em Horistic deriva REPO_ROOT de site-packages e não encontra os assets do módulo."
 - test: "Executar os testes focais, criar uma distribuição wheel que contém assets do módulo e, após deploy sem restart, comparar os hashes live e executar validate/diff em cada host."
 - expecting: "Cada host remoto terá o payload SHA-256 cdd4e2... e validate/diff passarão; a CLI instalada encontrará os assets distribuídos."
-- next_action: "Aplicar a reconciliação do mesmo commit no SRV-1, instalar a skill Codex em um target, então registrar o rollout e confirmar a sessão Microsoft RDP nova."
+- next_action: "Endurecer o guard: validator deve exigir timer enabled+active e o reconciliador deve criar backup limitado somente quando detectar divergência, com jitter para a fleet; então fazer review/merge e solicitar confirmação de sessão Microsoft RDP nova."
 - reasoning_checkpoint:
     hypothesis: "Os índices evdev do keymap nos três hosts causam scancodes estendidos errados porque XRDP 0.9.24 resolve km-*.ini pelos índices xfree86/base; o pacote uv do Horistic não inclui modules/xrdp-abnt2, logo REPO_ROOT em site-packages não contém seus assets."
     confirming_evidence:

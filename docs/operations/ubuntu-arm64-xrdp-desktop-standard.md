@@ -219,7 +219,9 @@ bash -n dark-theme-ubuntu/scripts/dark-themectl.sh
 7. If Obsidian is installed on the host, verify the managed wrapper/titlebar defaults and repair them only if drift exists.
 8. Do not restart `xrdp` or `xrdp-sesman` unless explicitly approved.
    The installed reconciliation timer only reapplies files through
-   `fix-xrdp-abnt2-keyboard`; it does not restart either service.
+   `fix-xrdp-abnt2-keyboard`; it does not restart either service. It applies a
+   randomized delay of up to 15 minutes and, only on detected drift, retains at
+   most eight pre-reconciliation snapshots in `/var/backups/xrdp-abnt2-reconcile/`.
 9. If a live XRDP display exists, `--restart-session` may restart LXDE panel/Openbox/PCManFM only; this can flicker the desktop but should not drop RDP.
 
 ## Required Logging

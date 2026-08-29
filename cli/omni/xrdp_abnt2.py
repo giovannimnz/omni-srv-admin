@@ -373,6 +373,15 @@ def _systemctl_state(mode: str, unit: str) -> str:
     return output.splitlines()[0] if output else "unknown"
 
 
+def _reconcile_timer_errors() -> list[str]:
+    errors: list[str] = []
+    if _systemctl_state("is-enabled", RECONCILE_TIMER_UNIT) != "enabled":
+        errors.append(f"timer {RECONCILE_TIMER_UNIT} não está enabled")
+    if _systemctl_state("is-active", RECONCILE_TIMER_UNIT) != "active":
+        errors.append(f"timer {RECONCILE_TIMER_UNIT} não está active")
+    return errors
+
+
 def _ensure_packages(dry_run: bool) -> list[str]:
     missing = _missing_packages()
     if not missing:
@@ -494,6 +503,12 @@ def _validation(username: str) -> tuple[bool, list[str], list[str]]:
             ok.append(f"service {unit} active")
         else:
             fail.append(f"service {unit} não está active ({active_state})")
+
+    timer_errors = _reconcile_timer_errors()
+    if timer_errors:
+        fail.extend(timer_errors)
+    else:
+        ok.append(f"timer {RECONCILE_TIMER_UNIT} enabled e active")
 
     keyboard = SYSTEM_TARGETS["xrdp_keyboard"]
     if keyboard.exists():

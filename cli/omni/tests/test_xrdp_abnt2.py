@@ -153,6 +153,22 @@ def test_reconciliation_timer_never_restarts_xrdp() -> None:
     assert "ExecStart=/usr/local/sbin/fix-xrdp-abnt2-keyboard" in service
     assert "systemctl restart" not in service.lower()
     assert "OnUnitActiveSec=1h" in timer
+    assert "RandomizedDelaySec=15min" in timer
+    repairer = xrdp_abnt2_mod.CANONICAL["fix_script"].read_text(encoding="utf-8")
+    assert 'backup_root="/var/backups/xrdp-abnt2-reconcile"' in repairer
+    assert "max_backups=8" in repairer
+
+
+def test_reconciliation_timer_requires_enabled_and_active(monkeypatch) -> None:
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_state",
+        lambda mode, unit: "enabled" if mode == "is-enabled" else "active",
+    )
+    assert xrdp_abnt2_mod._reconcile_timer_errors() == []
+
+    monkeypatch.setattr(xrdp_abnt2_mod, "_systemctl_state", lambda _mode, _unit: "inactive")
+    assert len(xrdp_abnt2_mod._reconcile_timer_errors()) == 2
 
 
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:

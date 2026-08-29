@@ -3,11 +3,49 @@ set -eu
 
 src="/usr/local/share/xrdp-abnt2"
 dst="/etc/xrdp"
+backup_root="/var/backups/xrdp-abnt2-reconcile"
+max_backups=8
 
 [ -d "$dst" ] || exit 0
 [ -f "$src/xrdp_keyboard.ini" ] || exit 0
 [ -f "$src/km-abnt2.ini" ] || exit 0
 [ -f "$src/startwm.sh" ] || exit 0
+
+needs_backup=0
+for target in \
+    "$dst/xrdp_keyboard.ini" \
+    "$dst/km-00000409.ini" \
+    "$dst/km-00000416.ini" \
+    "$dst/km-00010416.ini" \
+    "$dst/km-0000080a.ini" \
+    "$dst/km-0000f010.ini" \
+    "$dst/startwm.sh"; do
+    [ -e "$target" ] || continue
+    case "$target" in
+        "$dst/xrdp_keyboard.ini") source="$src/xrdp_keyboard.ini" ;;
+        "$dst/startwm.sh") source="$src/startwm.sh" ;;
+        *) source="$src/km-abnt2.ini" ;;
+    esac
+    cmp -s "$source" "$target" || needs_backup=1
+done
+
+xrdp_ini="$dst/xrdp.ini"
+if [ -f "$xrdp_ini" ]; then
+    grep -Eq '^xrdp\.override_keyboard_type=0x04$' "$xrdp_ini" || needs_backup=1
+    grep -Eq '^xrdp\.override_keyboard_subtype=0x00$' "$xrdp_ini" || needs_backup=1
+    grep -Eq '^xrdp\.override_keylayout=0x00000416$' "$xrdp_ini" || needs_backup=1
+fi
+
+if [ "$needs_backup" -eq 1 ]; then
+    backup_dir="$backup_root/$(date +%Y%m%d-%H%M%S)"
+    install -d -o root -g root -m 700 "$backup_dir"
+    for target in "$dst"/xrdp_keyboard.ini "$dst"/km-*.ini "$dst"/startwm.sh "$dst"/xrdp.ini; do
+        [ -f "$target" ] && cp -a "$target" "$backup_dir/"
+    done
+    find "$backup_root" -mindepth 1 -maxdepth 1 -type d -printf '%T@ %p\n' | sort -nr | awk -v keep="$max_backups" 'NR > keep {sub(/^[^ ]+ /, ""); print}' | while IFS= read -r old; do
+        [ -n "$old" ] && rm -rf -- "$old"
+    done
+fi
 
 install -o nobody -g nogroup -m 644 "$src/xrdp_keyboard.ini" "$dst/xrdp_keyboard.ini"
 install -o nobody -g nogroup -m 644 "$src/km-abnt2.ini" "$dst/km-00000409.ini"
@@ -17,7 +55,6 @@ install -o nobody -g nogroup -m 644 "$src/km-abnt2.ini" "$dst/km-0000080a.ini"
 install -o nobody -g nogroup -m 644 "$src/km-abnt2.ini" "$dst/km-0000f010.ini"
 install -o nobody -g nogroup -m 755 "$src/startwm.sh" "$dst/startwm.sh"
 
-xrdp_ini="$dst/xrdp.ini"
 if [ -f "$xrdp_ini" ]; then
     ensure_override() {
         key="$1"
