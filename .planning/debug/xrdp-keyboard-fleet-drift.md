@@ -71,7 +71,7 @@ updated: 2026-08-29
 ## Resolution
 
 - root_cause: "Configuração/payload: o rollout de 2026-08-28 que corrige os índices consumidos pelo XRDP 0.9.24 está somente no SRV-1. SRV-2, SRV-3 e Horistic ainda usam km-abnt2 evdev antigo (hash e24a96...) e portanto interpretam scancodes estendidos em índices errados; SRV-2/SRV-3 também não têm os overrides de xrdp.ini e helper atualizados. A instalação uv de Horistic possui um bug independente de empacotamento (assets ausentes sob REPO_ROOT em site-packages), que impede validate/diff quando a CLI não é importada do checkout."
-- fix: "Pendente de rollout coordenado: preservar backup e aplicar o payload focal já presente no checkout para SRV-2/SRV-3/Horistic, sem restart de xrdp, depois validar hash/CLI e nova sessão Microsoft RDP; reparar o empacotamento uv de Horistic para distribuir os assets ou resolver seu caminho instalado."
+- fix: "Aplicado e merged via PR #19: keymaps canônicos usam índices xfree86/base consumidos pelo XRDP 0.9.24; SRV-1/SRV-2/SRV-3/Horistic receberam o payload persistente e timer de reconciliação sem restart. O timer tem jitter de 15 minutos; o reparador salva até 8 backups somente ao detectar drift. A wheel omni 0.2.4 inclui assets XRDP, e Horistic foi reinstalado via uv tool."
 - verification: |
     target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 19 }
     mutation_check: { result: skipped, reason_if_skipped: "Stryker não configurado para esta CLI Python" }
