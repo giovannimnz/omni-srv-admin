@@ -423,6 +423,13 @@ def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
 
 def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     runtime = _target_runtime(target)
+    if runtime == "ssh-linux":
+        # The legacy remote writer can replace content before a later reporting
+        # or validation failure. Keep apply fail-closed until it has a reviewed
+        # per-item transaction with rollback. SSH dry-run remains available.
+        raise click.ClickException(
+            "sync --apply para ssh-linux está desabilitado: exige transação e rollback remoto"
+        )
     home = _accessible_home(target) if runtime in {"windows", "wsl"} else None
     source_root, dest_root, mappings = _item_mappings(pack, item, target) if runtime in {"windows", "wsl"} else ( _pack_item_dir(pack, item), None, [] )
     if runtime in {"windows", "wsl"}:
@@ -482,7 +489,7 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
 
 
 def _post_status_summary(post: dict[str, Any]) -> str:
-    """Render local diffs and SSH apply acknowledgements without assuming shape."""
+    """Render local diffs and SSH acknowledgements without assuming shape."""
     if {"missing", "changed", "extra", "unchanged"} <= post.keys():
         return (
             f"post_status={post['status']} missing={post['missing']} "

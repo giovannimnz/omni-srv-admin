@@ -4,6 +4,7 @@ import json
 import sys
 from pathlib import Path
 
+import pytest
 from click.testing import CliRunner
 
 REPO = Path(__file__).resolve().parents[3]
@@ -107,3 +108,28 @@ def test_remote_posix_path_for_ssh_target():
 
 def test_post_status_summary_accepts_ssh_apply_shape():
     assert agent_content._post_status_summary({'status': 'applied-ssh'}) == 'post_status=applied-ssh'
+
+
+def test_ssh_apply_fails_closed_before_any_remote_write(monkeypatch):
+    calls: list[str] = []
+    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: calls.append("ssh"))
+    monkeypatch.setattr(
+        agent_content,
+        "_ssh_extract_tree",
+        lambda *_args, **_kwargs: calls.append("extract"),
+    )
+
+    with pytest.raises(agent_content.click.ClickException, match="desabilitado"):
+        agent_content._apply_item(
+            "codex-skills",
+            {"name": "xrdp-abnt2-fleet", "kind": "skill"},
+            {
+                "runtime": "ssh-linux",
+                "host": "atius-srv-2",
+                "user": "ubuntu",
+                "home": "/home/ubuntu/.codex",
+                "product": "codex",
+            },
+        )
+
+    assert calls == []

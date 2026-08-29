@@ -7,9 +7,11 @@ from __future__ import annotations
 
 import difflib
 import hashlib
+import json
 import os
 import re
 import shutil
+import stat
 import subprocess
 import sys
 import tempfile
@@ -159,7 +161,12 @@ PREREQUISITE_COMMANDS = {
 }
 
 REQUIRED_SYSTEMD_UNITS = ("xrdp", "xrdp-sesman")
+RECONCILE_SERVICE_UNIT = "xrdp-abnt2-reconcile.service"
 RECONCILE_TIMER_UNIT = "xrdp-abnt2-reconcile.timer"
+ROLLBACK_SYSTEMD_UNITS = REQUIRED_SYSTEMD_UNITS + (
+    RECONCILE_SERVICE_UNIT,
+    RECONCILE_TIMER_UNIT,
+)
 
 
 @click.group(name="xrdp-abnt2")
@@ -313,6 +320,38 @@ def _render_xrdp_overrides(text: str) -> str:
     return "\n".join(lines) + "\n"
 
 
+def _globals_missing_overrides(text: str) -> list[str]:
+    lines = text.splitlines()
+    globals_start = next(
+        (index for index, line in enumerate(lines) if line.strip().lower() == "[globals]"),
+        None,
+    )
+    if globals_start is None:
+        return [f"{key}={value}" for key, value in REQUIRED_XRDP_OVERRIDES.items()]
+    globals_end = next(
+        (
+            index
+            for index in range(globals_start + 1, len(lines))
+            if re.fullmatch(r"\s*\[[^]]+\]\s*", lines[index])
+        ),
+        len(lines),
+    )
+    globals_lines = lines[globals_start + 1:globals_end]
+    errors: list[str] = []
+    for key, expected in REQUIRED_XRDP_OVERRIDES.items():
+        pattern = re.compile(rf"^\s*{re.escape(key)}\s*=\s*(.*?)\s*$", re.IGNORECASE)
+        active_values = [
+            match.group(1)
+            for line in globals_lines
+            if (match := pattern.match(line)) is not None
+        ]
+        # XRDP accepts duplicate keys and order can change which value wins.
+        # Validation therefore requires one, and only one, active managed key.
+        if active_values != [expected]:
+            errors.append(f"{key}={expected}")
+    return errors
+
+
 def _apply_xrdp_overrides(dry_run: bool) -> None:
     target = SYSTEM_TARGETS["xrdp_ini"]
     if dry_run:
@@ -373,12 +412,48 @@ def _systemctl_state(mode: str, unit: str) -> str:
     return output.splitlines()[0] if output else "unknown"
 
 
+def _systemctl_properties(unit: str, *properties: str) -> dict[str, str]:
+    result = subprocess.run(
+        ["systemctl", "show", unit, *[f"--property={property}" for property in properties]],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return {}
+    return {
+        key: value
+        for line in result.stdout.splitlines()
+        if "=" in line
+        for key, value in [line.split("=", 1)]
+    }
+
+
 def _reconcile_timer_errors() -> list[str]:
     errors: list[str] = []
     if _systemctl_state("is-enabled", RECONCILE_TIMER_UNIT) != "enabled":
         errors.append(f"timer {RECONCILE_TIMER_UNIT} não está enabled")
     if _systemctl_state("is-active", RECONCILE_TIMER_UNIT) != "active":
         errors.append(f"timer {RECONCILE_TIMER_UNIT} não está active")
+    service_properties = _systemctl_properties(
+        RECONCILE_SERVICE_UNIT,
+        "Result",
+        "ExecMainStatus",
+        "ExecMainStartTimestampMonotonic",
+    )
+    if not service_properties:
+        errors.append(f"não foi possível inspecionar {RECONCILE_SERVICE_UNIT}")
+    elif service_properties.get("Result") != "success" or service_properties.get("ExecMainStatus") != "0":
+        errors.append(
+            f"service {RECONCILE_SERVICE_UNIT} não concluiu com sucesso "
+            f"(Result={service_properties.get('Result', 'unknown')}, "
+            f"ExecMainStatus={service_properties.get('ExecMainStatus', 'unknown')})"
+        )
+    elif service_properties.get("ExecMainStartTimestampMonotonic", "0").strip() in {"", "0"}:
+        errors.append(f"service {RECONCILE_SERVICE_UNIT} ainda não executou")
+    timer_properties = _systemctl_properties(RECONCILE_TIMER_UNIT, "NextElapseUSecRealtime")
+    if not timer_properties.get("NextElapseUSecRealtime", "").strip():
+        errors.append(f"timer {RECONCILE_TIMER_UNIT} não tem próximo disparo agendado")
     return errors
 
 
@@ -394,20 +469,200 @@ def _ensure_packages(dry_run: bool) -> list[str]:
     return missing
 
 
+def _rollback_paths(username: str) -> list[Path]:
+    return list(SYSTEM_TARGETS.values()) + [
+        _watchdog_target(username),
+        Path("/etc/default/keyboard"),
+    ]
+
+
 def _backup_current(username: str, dry_run: bool) -> Path:
-    stamp = datetime.now().strftime("%Y%m%d-%H%M%S")
+    if not dry_run:
+        _ensure_root()
+    stamp = datetime.now().strftime("%Y%m%d-%H%M%S-%f")
     backup_dir = _user_home(username) / ".backups" / f"xrdp-abnt2-{stamp}"
-    paths = list(SYSTEM_TARGETS.values()) + [_watchdog_target(username), Path("/etc/default/keyboard")]
+    paths = _rollback_paths(username)
     if dry_run:
         click.echo(f"DRY  backup -> {backup_dir}")
         for p in paths:
             if p.exists():
                 click.echo(f"DRY  save {p}")
         return backup_dir
-    backup_dir.mkdir(parents=True, exist_ok=True)
+    backup_dir.mkdir(parents=True, exist_ok=False, mode=0o700)
+    os.chmod(backup_dir, 0o700)
+    os.chown(backup_dir, 0, 0)
+    file_state: list[dict[str, str | bool | int]] = []
     for p in paths:
-        _copy_if_exists(p, backup_dir)
+        existed = p.exists() or p.is_symlink()
+        entry: dict[str, str | bool | int] = {"path": str(p), "existed": existed}
+        if existed:
+            metadata = p.lstat()
+            if not stat.S_ISREG(metadata.st_mode):
+                raise click.ClickException(f"backup recusou path não regular: {p}")
+            entry.update(
+                {
+                    "st_mode": metadata.st_mode,
+                    "st_uid": metadata.st_uid,
+                    "st_gid": metadata.st_gid,
+                }
+            )
+            _copy_if_exists(p, backup_dir)
+        file_state.append(entry)
+    unit_state = {
+        unit: {
+            "enabled": _systemctl_state("is-enabled", unit),
+            "active": _systemctl_state("is-active", unit),
+        }
+        for unit in ROLLBACK_SYSTEMD_UNITS
+    }
+    manifest_path = backup_dir / "rollback-manifest.json"
+    manifest_path.write_text(
+        json.dumps(
+            {"username": username, "files": file_state, "units": unit_state},
+            indent=2,
+        ) + "\n",
+        encoding="utf-8",
+    )
+    os.chmod(manifest_path, 0o600)
+    os.chown(manifest_path, 0, 0)
     return backup_dir
+
+
+def _manifest_int(entry: dict[str, object], key: str, manifest_path: Path) -> int:
+    value = entry.get(key)
+    if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+        raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+    return value
+
+
+def _restore_regular_file(
+    source: Path,
+    destination: Path,
+    *,
+    st_mode: int,
+    st_uid: int,
+    st_gid: int,
+) -> None:
+    """Atomically restore one allowlisted regular file and its exact POSIX metadata."""
+    if source.is_symlink() or not source.is_file() or not stat.S_ISREG(st_mode):
+        raise click.ClickException(f"backup ausente ou inválido para restore: {destination}")
+    if not destination.parent.is_dir():
+        raise click.ClickException(f"diretório de restore ausente: {destination.parent}")
+
+    temporary: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(dir=destination.parent, delete=False) as tmp:
+            temporary = Path(tmp.name)
+            with source.open("rb") as backup_file:
+                shutil.copyfileobj(backup_file, tmp)
+        os.chown(temporary, st_uid, st_gid, follow_symlinks=False)
+        # chown may clear setuid/setgid bits, so mode must be restored last.
+        os.chmod(temporary, stat.S_IMODE(st_mode), follow_symlinks=False)
+        os.replace(temporary, destination)
+        temporary = None
+    finally:
+        if temporary is not None:
+            temporary.unlink(missing_ok=True)
+
+
+def _restore_unit_state(unit: str, state: dict[str, object]) -> None:
+    enabled = state.get("enabled")
+    active = state.get("active")
+    if not isinstance(enabled, str) or not isinstance(active, str):
+        raise click.ClickException(f"estado systemd inválido para rollback: {unit}")
+    if enabled == "not-found":
+        return
+
+    if enabled in {"masked", "masked-runtime"}:
+        _run(["systemctl", "disable", unit])
+        command = ["systemctl", "mask"]
+        if enabled == "masked-runtime":
+            command.append("--runtime")
+        _run([*command, unit])
+    elif enabled in {"enabled", "enabled-runtime", "linked", "linked-runtime", "alias"}:
+        _run(["systemctl", "unmask", unit])
+        command = ["systemctl", "enable"]
+        if enabled.endswith("-runtime"):
+            command.append("--runtime")
+        _run([*command, unit])
+    else:
+        # static/indirect/generated units have no enablement link of their own;
+        # disable removes links introduced by this install and exposes that state.
+        _run(["systemctl", "unmask", unit])
+        _run(["systemctl", "disable", unit])
+
+    # Never restart either XRDP daemon. A previously active unit only needs a
+    # start if the failed transaction stopped it; success does not enter here.
+    _run(["systemctl", "start" if active == "active" else "stop", unit])
+
+
+def _restore_backup(backup_dir: Path) -> None:
+    """Restore file and reconciliation-unit state captured before install."""
+    _ensure_root()
+    manifest_path = backup_dir / "rollback-manifest.json"
+    try:
+        manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        raise click.ClickException(f"rollback manifest indisponível: {manifest_path}") from exc
+    if not isinstance(manifest, dict):
+        raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+    files = manifest.get("files")
+    units = manifest.get("units")
+    username = manifest.get("username")
+    if not isinstance(username, str) or not isinstance(files, list) or not isinstance(units, dict):
+        raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+    allowed_paths = {str(path): path for path in _rollback_paths(username)}
+    if set(units) != set(ROLLBACK_SYSTEMD_UNITS):
+        raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+    for unit in ROLLBACK_SYSTEMD_UNITS:
+        state = units[unit]
+        if (
+            not isinstance(state, dict)
+            or not isinstance(state.get("enabled"), str)
+            or not isinstance(state.get("active"), str)
+        ):
+            raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+    entries_by_path: dict[str, dict[str, object]] = {}
+    for entry in files:
+        if (
+            not isinstance(entry, dict)
+            or not isinstance(entry.get("path"), str)
+            or not isinstance(entry.get("existed"), bool)
+            or entry["path"] in entries_by_path
+        ):
+            raise click.ClickException(f"rollback manifest inválido: {manifest_path}")
+        entries_by_path[entry["path"]] = entry
+    if set(entries_by_path) != set(allowed_paths):
+        raise click.ClickException(f"rollback manifest incompleto: {manifest_path}")
+
+    # A fresh install has no reconcile units in its snapshot. Stop and disable
+    # those newly loaded units while their files still exist, then remove them.
+    for unit in (RECONCILE_TIMER_UNIT, RECONCILE_SERVICE_UNIT):
+        state = units[unit]
+        if state.get("enabled") == "not-found":
+            _run(["systemctl", "stop", unit])
+            if unit == RECONCILE_TIMER_UNIT:
+                _run(["systemctl", "disable", unit])
+
+    for path, entry in entries_by_path.items():
+        destination = allowed_paths.get(path)
+        if destination is None or not destination.is_absolute():
+            raise click.ClickException(f"rollback manifest contém path não permitido: {path}")
+        if entry.get("existed"):
+            source = backup_dir / str(destination).lstrip("/")
+            _restore_regular_file(
+                source,
+                destination,
+                st_mode=_manifest_int(entry, "st_mode", manifest_path),
+                st_uid=_manifest_int(entry, "st_uid", manifest_path),
+                st_gid=_manifest_int(entry, "st_gid", manifest_path),
+            )
+        elif destination.exists() or destination.is_symlink():
+            destination.unlink()
+    _run(["systemctl", "daemon-reload"])
+    for unit in ROLLBACK_SYSTEMD_UNITS:
+        state = units[unit]
+        _restore_unit_state(unit, state)
 
 
 def _target_specs(username: str) -> list[tuple[Path, Path, str, str, str]]:
@@ -522,14 +777,7 @@ def _validation(username: str) -> tuple[bool, list[str], list[str]]:
     xrdp_ini = SYSTEM_TARGETS["xrdp_ini"]
     if xrdp_ini.exists():
         text = xrdp_ini.read_text(errors="replace")
-        missing_overrides = [
-            f"{key}={value}"
-            for key, value in REQUIRED_XRDP_OVERRIDES.items()
-            if not re.search(
-                rf"(?mi)^\s*{re.escape(key)}\s*=\s*{re.escape(value)}\s*$",
-                text,
-            )
-        ]
+        missing_overrides = _globals_missing_overrides(text)
         if missing_overrides:
             fail.append("xrdp.ini sem overrides ativos: " + ", ".join(missing_overrides))
         else:
@@ -682,49 +930,85 @@ def diff_cmd(username: str) -> None:
 @click.option("--user", "username", default=DEFAULT_USER, show_default=True, help="Usuário da sessão XRDP.")
 @click.option("--yes", is_flag=True, help="Confirma instalação sem prompt.")
 @click.option("--dry-run", is_flag=True, help="Mostra ações sem escrever.")
-@click.option("--skip-packages", is_flag=True, help="Não instala pacotes pré-requisito; só reaplica assets.")
-def install_cmd(username: str, yes: bool, dry_run: bool, skip_packages: bool) -> None:
-    """Instala/reaplica o guard XRDP ABNT2 com backup prévio."""
+@click.option(
+    "--install-packages",
+    is_flag=True,
+    help="Autoriza instalar pré-requisitos ausentes (mudança não reversível pelo rollback).",
+)
+@click.option(
+    "--skip-packages",
+    is_flag=True,
+    help="Deprecated/no-op: pacotes nunca são instalados sem --install-packages.",
+)
+def install_cmd(
+    username: str,
+    yes: bool,
+    dry_run: bool,
+    install_packages: bool,
+    skip_packages: bool,
+) -> None:
+    """Instala/reaplica o guard; packages ausentes exigem opt-in explícito."""
     if not dry_run:
         _ensure_root()
     missing_assets = _check_files_exist(CANONICAL.values())
     if missing_assets:
         raise click.ClickException("assets ausentes: " + ", ".join(missing_assets))
+    if skip_packages and install_packages:
+        raise click.ClickException("--skip-packages e --install-packages são incompatíveis")
+    if skip_packages:
+        click.echo(
+            "Aviso: --skip-packages está deprecated; omita a flag para o mesmo comportamento.",
+            err=True,
+        )
+
+    missing_packages = _missing_packages()
+    if missing_packages and not install_packages:
+        raise click.ClickException(
+            "pacotes pré-requisito ausentes: "
+            + ", ".join(missing_packages)
+            + "; rode novamente com --install-packages para autorizar essa mudança não reversível"
+        )
     if not yes and not dry_run:
         click.confirm("Instalar/reaplicar XRDP ABNT2 Guard agora?", abort=True)
+
+    # Package-manager transactions can start services, create files, and cannot
+    # be faithfully undone here. Keep this explicit, non-rollbackable boundary
+    # before the managed asset/systemd transaction and its rollback snapshot.
+    if missing_packages:
+        click.echo(
+            "Limite de rollback: instalação de packages foi autorizada e não será revertida."
+        )
+        installed_now = _ensure_packages(dry_run=dry_run)
+        click.echo("Pacotes pré-requisito instalados: " + ", ".join(installed_now))
+    else:
+        click.echo("Pacotes pré-requisito já presentes")
 
     backup_dir = _backup_current(username, dry_run=dry_run)
     click.echo(f"Backup: {backup_dir}")
 
-    if skip_packages:
-        click.echo("Pacotes pré-requisito: SKIPPED")
-    else:
-        installed_now = _ensure_packages(dry_run=dry_run)
-        if installed_now:
-            click.echo("Pacotes pré-requisito garantidos: " + ", ".join(installed_now))
-        else:
-            click.echo("Pacotes pré-requisito já presentes")
+    try:
+        _install_steps(username, dry_run=dry_run)
+    except Exception:
+        if not dry_run:
+            _restore_backup(backup_dir)
+        raise
 
+
+def _install_steps(username: str, *, dry_run: bool) -> None:
     _run(["install", "-d", "-o", "root", "-g", "root", "-m", "755", "/usr/local/share/xrdp-abnt2"], dry_run=dry_run)
     _run(["install", "-d", "-o", "root", "-g", "root", "-m", "755", "/usr/local/sbin"], dry_run=dry_run)
-    home_bin = _watchdog_target(username).parent
-    user_group = _user_group(username)
-    _run(["install", "-d", "-o", username, "-g", user_group, "-m", "755", str(home_bin)], dry_run=dry_run)
-
+    _run(["install", "-d", "-o", username, "-g", _user_group(username), "-m", "755", str(_watchdog_target(username).parent)], dry_run=dry_run)
     for src, dst, mode, owner, group in _target_specs(username):
         _install_file(src, dst, mode, owner, group, dry_run=dry_run)
-
     _apply_xrdp_overrides(dry_run=dry_run)
-
     for unit in REQUIRED_SYSTEMD_UNITS:
         _run(["systemctl", "enable", unit], dry_run=dry_run)
     _run(["systemctl", "daemon-reload"], dry_run=dry_run)
     _run(["systemctl", "enable", "--now", RECONCILE_TIMER_UNIT], dry_run=dry_run)
-
+    _run(["systemctl", "start", RECONCILE_SERVICE_UNIT], dry_run=dry_run)
     if dry_run:
         click.echo("DRY-RUN concluído. Nenhum arquivo foi escrito.")
         return
-
     click.echo("Instalação aplicada. Não reiniciei xrdp; reconecta via RDP para pegar nova sessão.")
     success, ok, fail = _validation(username)
     for item in ok:

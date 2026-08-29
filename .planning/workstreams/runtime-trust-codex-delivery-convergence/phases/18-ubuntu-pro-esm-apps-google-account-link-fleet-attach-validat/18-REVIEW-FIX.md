@@ -1,0 +1,59 @@
+---
+phase: 18-ubuntu-pro-esm-apps-google-account-link-fleet-attach-validat
+fixed_at: 2026-08-29T08:22:00Z
+review_path: 18-REVIEW.md
+iterations: 6
+findings_in_scope: 14
+fixed: 14
+skipped: 0
+status: all_fixed
+---
+
+# Phase 18: XRDP fleet review fix report
+
+## Result
+
+The post-merge adversarial loop was reduced to a clean follow-up diff and
+converged with zero Critical or Warning findings. The final deep review covers
+the behavior changed relative to `origin/main`; older generic agent-content
+defects are not activated by this delivery.
+
+## Fixed boundaries
+
+- XRDP 0.9.24 keymaps use the xfree86/base indexes for arrows, navigation,
+  Delete, Print Screen and ABNT_C1.
+- `[Globals]` validation requires exactly one expected value for each managed
+  override; the repairer detects duplicate/conflicting values as drift, creates
+  a snapshot, then normalizes them.
+- The POSIX repair script runs under Ubuntu `mawk`; the reserved `index` local
+  variable was removed.
+- Install rolls back tracked files with exact mode, uid and gid and restores
+  the prior state of `xrdp`, `xrdp-sesman`, reconcile service and timer after a
+  late failure.
+- Missing packages fail before the XRDP transaction unless
+  `--install-packages` explicitly accepts the non-rollbackable package-manager
+  boundary.
+- A fresh install runs the reconcile oneshot synchronously before validation;
+  the health check requires a real execution timestamp and a scheduled timer.
+- No success path restarts `xrdp` or `xrdp-sesman`.
+- Wheel `omni 0.2.5`, content-pack manifest, runbook and Codex skill are aligned.
+- `agent-content sync --apply` for `ssh-linux` now fails before any remote
+  writer is invoked; SSH dry-run remains available. The remote transaction
+  engine is intentionally deferred rather than shipped partially.
+
+## Verification
+
+- Final GSD review: `clean`, depth `deep`, 11 files, 0 findings.
+- Focused tests: 35 passed in the final review; local rerun had 28 XRDP tests
+  and 7 agent-content tests passing.
+- The reconciler was executed in a temporary filesystem using Ubuntu `mawk`;
+  duplicate desired/conflicting overrides produced a backup and exactly one
+  canonical live value.
+- `agent-content-validate-all.sh`: all Hermes, Codex and shared packs valid.
+- `py_compile`, `sh -n`, `git diff --check` and Graphify freshness passed.
+
+## Residual UAT
+
+SSH cannot prove physical keyboard events. A new Microsoft RDP session on each
+host must still exercise arrows, Delete, Print Screen, `/`, `?`, AltGr and
+clipboard. That is an operator UAT gate, not an unresolved code-review finding.

@@ -56,13 +56,13 @@ items:
   - windows
   - linux
   source_path: items/xrdp-abnt2-fleet
-  hash: 63ece2ad8c638726e63ed254f698626bf1f4bcb1aff379685dd8f9e17bc430aa
+  hash: 5e611b6acec3bd4e49d1b8475cfa93f8d994cea84895a108bfe2f20d741c4af2
   required_files:
   - SKILL.md
   files:
   - path: SKILL.md
-    sha256: 63ece2ad8c638726e63ed254f698626bf1f4bcb1aff379685dd8f9e17bc430aa
-    bytes: 2217
+    sha256: 5e611b6acec3bd4e49d1b8475cfa93f8d994cea84895a108bfe2f20d741c4af2
+    bytes: 2526
   install:
     codex:
       rel_path: skills/xrdp-abnt2-fleet

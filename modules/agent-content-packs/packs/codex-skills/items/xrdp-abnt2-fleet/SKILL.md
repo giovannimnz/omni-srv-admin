@@ -22,7 +22,10 @@ Atius Ubuntu desktop hosts.
   `Key100`, Right `Key102`, Down `Key104`, Delete `Key107`, Print `Key111`,
   ABNT_C1 `Key123`. Do not validate them against evdev offsets.
 - Use `sudo -n python3 cli/omni/xrdp_abnt2.py install --user "$USER" --yes`.
-  It creates a per-host backup and must not restart `xrdp` or `xrdp-sesman`.
+  It creates a per-host backup, rolls back file/unit mutations on late failure,
+  and must not restart `xrdp` or `xrdp-sesman`. If a new host lacks packages,
+  inspect the preflight and explicitly repeat with `--install-packages`; package
+  installation is intentionally outside rollback.
 - The `xrdp-abnt2-reconcile.timer` is the persistent drift guard. It reapplies
   files only; validate it is enabled and active after deployment.
 - Do not use the packaged `omni` command until its installed asset path is
@@ -35,6 +38,8 @@ Atius Ubuntu desktop hosts.
    paths before declaring a host unreachable.
 2. Confirm the reviewed repository and run syntax plus focused tests.
 3. Run the installer on one host at a time. Record the backup path it prints.
+   Do not add `--install-packages` on an established host whose baseline is
+   already complete.
 4. Verify `validate`, `diff`, keymap SHA-256 parity, and timer enabled/active.
 5. Require a new Microsoft RDP session to test arrows, Delete, Print Screen,
    `/`, `?`, AltGr symbols and clipboard. SSH cannot prove client input.
