@@ -73,6 +73,7 @@ def test_sync_apply_copies_files_and_creates_backup(tmp_path, monkeypatch):
     monkeypatch.setattr(agent_content, "REPO", repo)
     monkeypatch.setattr(agent_content, "PACKS_ROOT", repo / "modules" / "agent-content-packs" / "packs")
     monkeypatch.setattr(agent_content, "INDEX_PATH", repo / "modules" / "agent-content-packs" / "manifest-index.yaml")
+    monkeypatch.setattr(agent_content, "_run_validate_command", lambda _target: {"ok": True, "returncode": 0, "stdout": "", "stderr": ""})
     result = CliRunner().invoke(agent_content.agent_content, ["sync", "--pack", "hermes-skills", "--target", "local", "--apply", "--json-output"])
     assert result.exit_code == 0
     payload = json.loads(result.output)
@@ -127,6 +128,35 @@ def test_ssh_extract_tree_quotes_transactional_remote_command(monkeypatch, tmp_p
     assert "test -d \"$next\"" in remote_command
     assert "rm -rf \"$dest\"" not in remote_command
     assert captured["kwargs"]["input"] == b"archive"
+
+
+def test_sync_apply_fails_when_runtime_validation_fails_in_text_and_json(monkeypatch):
+    target = {"product": "codex", "runtime": "ssh-linux", "host": "atius-srv-1", "user": "ubuntu"}
+    item = {"name": "demo-skill"}
+    monkeypatch.setattr(agent_content, "_load_manifest", lambda _pack: {"items": [item]})
+    monkeypatch.setattr(agent_content, "_load_targets", lambda _pack: {"targets": {"target": target}})
+    monkeypatch.setattr(agent_content, "_validate_item", lambda _pack, _item: {"ok": True})
+    monkeypatch.setattr(
+        agent_content,
+        "_apply_item",
+        lambda _pack, _item, _target: {"item": "demo-skill", "backup_root": "/tmp/backup", "post_status": {"status": "applied-ssh"}},
+    )
+
+    for runtime_validation in (
+        {"ok": False, "returncode": 7, "stdout": "", "stderr": "validator failed"},
+        {"ok": False, "error": "validator unavailable", "stdout": "", "stderr": ""},
+    ):
+        monkeypatch.setattr(agent_content, "_run_validate_command", lambda _target: runtime_validation)
+        for json_output in (False, True):
+            args = ["sync", "--pack", "demo", "--target", "target", "--apply"]
+            if json_output:
+                args.append("--json-output")
+            result = CliRunner().invoke(agent_content.agent_content, args)
+            assert result.exit_code != 0
+            assert "validação do target falhou" in result.output
+            if json_output:
+                payload = json.loads(result.output.split("Error:")[0])
+                assert payload["runtime_validation"] == runtime_validation
 
 
 def test_remote_posix_path_for_ssh_target():

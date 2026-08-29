@@ -598,6 +598,8 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
             click.echo(f"- {item['item']}: {_post_status_summary(post)}")
             click.echo(f"    backup={item['backup_root']}")
         click.echo(f"runtime_validation={runtime_validation}")
+    if runtime_validation.get("ok") is not True:
+        raise click.ClickException("sync aplicado, mas a validação do target falhou")
 
 
 def main() -> None:
