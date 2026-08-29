@@ -73,6 +73,10 @@ updated: 2026-08-29
   result: "O primeiro install local 0.2.5 falhou corretamente no health gate e executou rollback porque o validator consultava apenas NextElapseUSecRealtime; o timer real usa NextElapseUSecMonotonic. Readback pós-rollback manteve xrdp/xrdp-sesman e Xvnc :1 ativos, service reconcile Result=success e timer enabled+active."
 - timestamp: 2026-08-29
   result: "Hotfix aceita schedule finito realtime ou monotonic e rejeita vazio/0/n-a/infinity; 30 testes focais e review deep final clean."
+- timestamp: 2026-08-29
+  result: "Rollout final do main 22aa555 nos quatro hosts: validate PASS, diff CLEAN, xrdp/xrdp-sesman/timer active, reconcile Result=success/ExecMainStatus=0 e cinco keymaps SHA-256 cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237. Backups: SRV-1 20260829-053525-129301; SRV-2 20260829-053609-821839; SRV-3 20260829-083630-051200; Horistic 20260829-053701-971238."
+- timestamp: 2026-08-29
+  result: "Horistic wheel instalada como omni 0.2.5 sob systemd-run CPUQuota=80% em host de 4 vCPUs; packaged CLI validate/diff PASS."
 
 ## Eliminated
 
@@ -81,12 +85,12 @@ updated: 2026-08-29
 - root_cause: "Configuração/payload: o rollout de 2026-08-28 que corrige os índices consumidos pelo XRDP 0.9.24 está somente no SRV-1. SRV-2, SRV-3 e Horistic ainda usam km-abnt2 evdev antigo (hash e24a96...) e portanto interpretam scancodes estendidos em índices errados; SRV-2/SRV-3 também não têm os overrides de xrdp.ini e helper atualizados. A instalação uv de Horistic possui um bug independente de empacotamento (assets ausentes sob REPO_ROOT em site-packages), que impede validate/diff quando a CLI não é importada do checkout."
 - fix: "Aplicado via PR #19 e endurecido no follow-up 0.2.5: keymaps canônicos usam índices xfree86/base consumidos pelo XRDP 0.9.24; o install possui rollback exato de arquivos/metadata/units, package opt-in, exact-one [Globals], timer com jitter e backups limitados; nenhum caminho reinicia XRDP. SRV-1/SRV-2/SRV-3/Horistic receberam o payload persistente."
 - verification: |
-    target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 19 }
+    target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 37 }
     mutation_check: { result: skipped, reason_if_skipped: "Stryker não configurado para esta CLI Python" }
     no_op_deletion: { result: pass, deletion_justified_by_rca: false }
     adjacent_tests: { result: pass, suites_run: ["cli/omni/tests/test_xrdp_abnt2.py", "cli/omni/tests/test_agent_content.py", "agent-content validate-pack codex-skills"] }
     revert_and_reconfirm: { result: skipped, reason: "reverter a correção em quatro hosts ativos restabeleceria deliberadamente o teclado incorreto; evidência pré-fix direta já documentada no mapa e24a96" }
-    live_rollout: { result: pass, hosts: ["atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv"], keymap_sha256: "cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237", timer: "enabled+active" }
+    live_rollout: { result: pass, commit: "22aa555ce", hosts: ["atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv"], keymap_sha256: "cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237", timer: "enabled+active+scheduled", reconcile: "Result=success ExecMainStatus=0", packaged_cli: "horistic omni 0.2.5" }
     human_rdp_uat: { result: pending, required: "nova sessão Microsoft RDP em cada host" }
     guardrail_verdict: accepted_pending_human_rdp_uat
 - files_changed:

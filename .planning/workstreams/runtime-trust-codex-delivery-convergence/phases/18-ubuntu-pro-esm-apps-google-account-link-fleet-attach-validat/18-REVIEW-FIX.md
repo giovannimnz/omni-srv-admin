@@ -67,3 +67,14 @@ or monotonic form, rejects empty, `0`, `n/a` and `infinity`, and pins the exact
 properties requested from systemd. The final hotfix review is `clean` and the
 focused suite passes 30 tests. XRDP/Xvnc remained active through the failed
 install and rollback.
+
+## Final live rollout
+
+After PRs #20 and #21 merged, all four repos fast-forwarded to `22aa555ce`.
+Each host created a new per-host backup, applied without XRDP restart, and
+returned `validate=PASS`, `diff=CLEAN`, timer active/scheduled, reconcile
+`Result=success` and `ExecMainStatus=0`. All five managed keymaps converge on
+SHA-256 `cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237`.
+SRV-1 and SRV-2 kept their active Xvnc `:1` sessions. Horistic's packaged CLI
+was rebuilt as `omni 0.2.5` under a verified 80% CPU quota on its four-vCPU
+host and passed the same validate/diff gates.
