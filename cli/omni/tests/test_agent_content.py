@@ -130,6 +130,68 @@ def test_ssh_extract_tree_quotes_transactional_remote_command(monkeypatch, tmp_p
     assert captured["kwargs"]["input"] == b"archive"
 
 
+def test_ssh_apply_refuses_skill_pack_extract_when_backup_fails(monkeypatch, tmp_path):
+    source_root = tmp_path / "item" / "codex"
+    _write(source_root / "SKILL.md", "# demo\n")
+    target = {
+        "runtime": "ssh-linux",
+        "host": "atius-srv-1",
+        "user": "ubuntu",
+        "home": "/home/ubuntu/.codex",
+        "product": "codex",
+    }
+    item = {"name": "demo-skill", "kind": "skill-pack"}
+    extracted = []
+
+    class FailedBackup:
+        returncode = 1
+        stderr = "backup volume full"
+
+    monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, _item: source_root.parent)
+    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: FailedBackup())
+    monkeypatch.setattr(agent_content, "_ssh_extract_tree", lambda *_args: extracted.append(True))
+
+    try:
+        agent_content._apply_item("demo", item, target)
+    except agent_content.click.ClickException as exc:
+        assert "falha no backup remoto (atius-srv-1): backup volume full" in str(exc)
+    else:
+        raise AssertionError("expected a failed remote backup to abort apply")
+    assert extracted == []
+
+
+def test_ssh_apply_refuses_regular_item_extract_when_backup_fails(monkeypatch, tmp_path):
+    target = {
+        "runtime": "ssh-linux",
+        "host": "atius-srv-1",
+        "user": "ubuntu",
+        "home": "/home/ubuntu/.codex",
+        "product": "codex",
+    }
+    item = {
+        "name": "demo-item",
+        "kind": "skill",
+        "install": {"codex": {"rel_path": "skills/demo-item"}},
+    }
+    extracted = []
+
+    class FailedBackup:
+        returncode = 1
+        stderr = "backup permission denied"
+
+    monkeypatch.setattr(agent_content, "_pack_item_dir", lambda _pack, _item: tmp_path / "item")
+    monkeypatch.setattr(agent_content, "_ssh_run", lambda *_args, **_kwargs: FailedBackup())
+    monkeypatch.setattr(agent_content, "_ssh_extract_tree", lambda *_args: extracted.append(True))
+
+    try:
+        agent_content._apply_item("demo", item, target)
+    except agent_content.click.ClickException as exc:
+        assert "falha no backup remoto (atius-srv-1): backup permission denied" in str(exc)
+    else:
+        raise AssertionError("expected a failed remote backup to abort apply")
+    assert extracted == []
+
+
 def test_sync_apply_fails_when_runtime_validation_fails_in_text_and_json(monkeypatch):
     target = {"product": "codex", "runtime": "ssh-linux", "host": "atius-srv-1", "user": "ubuntu"}
     item = {"name": "demo-skill"}

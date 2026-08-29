@@ -185,6 +185,15 @@ def _ssh_run(target: dict[str, Any], command: str, timeout: int = 120) -> subpro
     return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
 
 
+def _ssh_backup(target: dict[str, Any], command: str) -> None:
+    """Preserve remote content before an SSH replacement, failing closed on error."""
+    backup = _ssh_run(target, command, timeout=180)
+    if backup.returncode != 0:
+        raise click.ClickException(
+            f"falha no backup remoto ({target.get('host')}): {backup.stderr.strip()}"
+        )
+
+
 def _ssh_capture_tree(root: Path) -> bytes:
     with tempfile.NamedTemporaryFile(delete=False, suffix=".tgz") as handle:
         temp_path = Path(handle.name)
@@ -474,7 +483,7 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
                 remote_path = str(PurePosixPath(dest_home) / PurePosixPath(rel))
                 remote_backup = str(PurePosixPath(backup_root) / PurePosixPath(rel))
                 cmd = f'mkdir -p {shlex.quote(str(PurePosixPath(remote_backup).parent))}; if [ -f {shlex.quote(remote_path)} ]; then cp {shlex.quote(remote_path)} {shlex.quote(remote_backup)}; fi'
-                _ssh_run(target, cmd, timeout=180)
+                _ssh_backup(target, cmd)
             _ssh_extract_tree(target, source_root, dest_home, '')
         else:
             source_root = _pack_item_dir(pack, item)
@@ -485,7 +494,7 @@ def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict
             rel_path = str(install[product].get('rel_path'))
             remote_dest = str(PurePosixPath(str(_target_root(target, rel_path)).replace('\\', '/')))
             backup_cmd = f'mkdir -p {shlex.quote(backup_root)}; if [ -d {shlex.quote(remote_dest)} ]; then cp -a {shlex.quote(remote_dest)} {shlex.quote(backup_root)}/{shlex.quote(PurePosixPath(remote_dest).name)}; fi'
-            _ssh_run(target, backup_cmd, timeout=180)
+            _ssh_backup(target, backup_cmd)
             _ssh_extract_tree(target, source_root, dest_home, rel_path)
         return {"item": item.get("name"), "backup_root": backup_root, "post_status": {"item": item.get('name'), 'status': 'applied-ssh'}}
 
