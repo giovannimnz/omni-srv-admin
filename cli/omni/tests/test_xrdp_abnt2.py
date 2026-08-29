@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import sys
 import subprocess
 import zipfile
@@ -14,6 +15,11 @@ if str(REPO_CLI) not in sys.path:
     sys.path.insert(0, str(REPO_CLI))
 
 from omni import xrdp_abnt2 as xrdp_abnt2_mod
+
+
+def _write(path: Path, text: str) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
 
 def test_required_packages_cover_fleet_xrdp_desktop_parity() -> None:
     expected = {
@@ -257,6 +263,7 @@ def _prepare_install_command(monkeypatch, tmp_path: Path) -> None:
     monkeypatch.setattr(xrdp_abnt2_mod, "_user_group", lambda _username: "users")
     monkeypatch.setattr(xrdp_abnt2_mod, "_target_specs", lambda _username: [])
     monkeypatch.setattr(xrdp_abnt2_mod, "_apply_xrdp_overrides", lambda dry_run: None)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_restore_backup", lambda _backup: None)
 
 
 def test_install_runs_reconciler_once_before_validating_fresh_timer(monkeypatch, tmp_path: Path) -> None:
@@ -299,7 +306,9 @@ def test_install_propagates_first_reconciler_failure_before_validation(monkeypat
         validated = True
         return True, [], []
 
+    restored = []
     monkeypatch.setattr(xrdp_abnt2_mod, "_run", fake_run)
+    monkeypatch.setattr(xrdp_abnt2_mod, "_restore_backup", lambda backup: restored.append(backup))
     monkeypatch.setattr(xrdp_abnt2_mod, "_validation", fake_validation)
 
     result = CliRunner().invoke(xrdp_abnt2_mod.xrdp_abnt2, ["install", "--user", "ubuntu", "--yes"])
@@ -307,6 +316,40 @@ def test_install_propagates_first_reconciler_failure_before_validation(monkeypat
     assert result.exit_code != 0
     assert isinstance(result.exception, subprocess.CalledProcessError)
     assert validated is False
+    assert restored == [tmp_path / "backup"]
+
+
+def test_restore_backup_restores_files_and_reconciliation_unit_state(monkeypatch, tmp_path: Path) -> None:
+    backup = tmp_path / "backup"
+    destination = tmp_path / "etc" / "xrdp" / "startwm.sh"
+    _write(destination, "new\n")
+    source = backup / str(destination).lstrip("/")
+    _write(source, "old\n")
+    manifest = {
+        "files": [
+            {"path": str(destination), "existed": True},
+            {"path": str(tmp_path / "new-file"), "existed": False},
+        ],
+        "units": {
+            xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT: {"enabled": "disabled", "active": "inactive"},
+            xrdp_abnt2_mod.RECONCILE_TIMER_UNIT: {"enabled": "enabled", "active": "active"},
+        },
+    }
+    _write(backup / "rollback-manifest.json", json.dumps(manifest))
+    _write(tmp_path / "new-file", "remove me\n")
+    commands = []
+    monkeypatch.setattr(xrdp_abnt2_mod, "_run", lambda args, **_kwargs: commands.append(args))
+
+    xrdp_abnt2_mod._restore_backup(backup)
+
+    assert destination.read_text() == "old\n"
+    assert not (tmp_path / "new-file").exists()
+    assert ["systemctl", "daemon-reload"] in commands
+    assert ["systemctl", "disable", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT] in commands
+    assert ["systemctl", "stop", xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT] in commands
+    assert ["systemctl", "enable", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT] in commands
+    assert ["systemctl", "start", xrdp_abnt2_mod.RECONCILE_TIMER_UNIT] in commands
+    assert not any(command[:2] == ["systemctl", "restart"] for command in commands)
 
 
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:
