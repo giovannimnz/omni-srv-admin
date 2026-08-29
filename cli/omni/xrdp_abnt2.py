@@ -159,6 +159,7 @@ PREREQUISITE_COMMANDS = {
 }
 
 REQUIRED_SYSTEMD_UNITS = ("xrdp", "xrdp-sesman")
+RECONCILE_SERVICE_UNIT = "xrdp-abnt2-reconcile.service"
 RECONCILE_TIMER_UNIT = "xrdp-abnt2-reconcile.timer"
 
 
@@ -400,12 +401,45 @@ def _systemctl_state(mode: str, unit: str) -> str:
     return output.splitlines()[0] if output else "unknown"
 
 
+def _systemctl_properties(unit: str, *properties: str) -> dict[str, str]:
+    result = subprocess.run(
+        ["systemctl", "show", unit, *[f"--property={property}" for property in properties]],
+        capture_output=True,
+        text=True,
+        check=False,
+    )
+    if result.returncode != 0:
+        return {}
+    return {
+        key: value
+        for line in result.stdout.splitlines()
+        if "=" in line
+        for key, value in [line.split("=", 1)]
+    }
+
+
 def _reconcile_timer_errors() -> list[str]:
     errors: list[str] = []
     if _systemctl_state("is-enabled", RECONCILE_TIMER_UNIT) != "enabled":
         errors.append(f"timer {RECONCILE_TIMER_UNIT} não está enabled")
     if _systemctl_state("is-active", RECONCILE_TIMER_UNIT) != "active":
         errors.append(f"timer {RECONCILE_TIMER_UNIT} não está active")
+    service_properties = _systemctl_properties(
+        RECONCILE_SERVICE_UNIT,
+        "Result",
+        "ExecMainStatus",
+    )
+    if not service_properties:
+        errors.append(f"não foi possível inspecionar {RECONCILE_SERVICE_UNIT}")
+    elif service_properties.get("Result") != "success" or service_properties.get("ExecMainStatus") != "0":
+        errors.append(
+            f"service {RECONCILE_SERVICE_UNIT} não concluiu com sucesso "
+            f"(Result={service_properties.get('Result', 'unknown')}, "
+            f"ExecMainStatus={service_properties.get('ExecMainStatus', 'unknown')})"
+        )
+    timer_properties = _systemctl_properties(RECONCILE_TIMER_UNIT, "NextElapseUSecRealtime")
+    if not timer_properties.get("NextElapseUSecRealtime", "").strip():
+        errors.append(f"timer {RECONCILE_TIMER_UNIT} não tem próximo disparo agendado")
     return errors
 
 

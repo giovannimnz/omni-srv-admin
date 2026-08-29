@@ -185,10 +185,41 @@ def test_reconciliation_timer_requires_enabled_and_active(monkeypatch) -> None:
         "_systemctl_state",
         lambda mode, unit: "enabled" if mode == "is-enabled" else "active",
     )
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_properties",
+        lambda unit, *_properties: (
+            {"Result": "success", "ExecMainStatus": "0"}
+            if unit == xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT
+            else {"NextElapseUSecRealtime": "Fri 2026-08-29 12:00:00 -03"}
+        ),
+    )
     assert xrdp_abnt2_mod._reconcile_timer_errors() == []
 
     monkeypatch.setattr(xrdp_abnt2_mod, "_systemctl_state", lambda _mode, _unit: "inactive")
     assert len(xrdp_abnt2_mod._reconcile_timer_errors()) == 2
+
+
+def test_reconciliation_timer_rejects_failed_service_or_missing_next_trigger(monkeypatch) -> None:
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_state",
+        lambda mode, _unit: "enabled" if mode == "is-enabled" else "active",
+    )
+
+    monkeypatch.setattr(
+        xrdp_abnt2_mod,
+        "_systemctl_properties",
+        lambda unit, *_properties: (
+            {"Result": "failed", "ExecMainStatus": "1"}
+            if unit == xrdp_abnt2_mod.RECONCILE_SERVICE_UNIT
+            else {"NextElapseUSecRealtime": ""}
+        ),
+    )
+
+    errors = xrdp_abnt2_mod._reconcile_timer_errors()
+    assert any("não concluiu com sucesso" in error for error in errors)
+    assert any("não tem próximo disparo" in error for error in errors)
 
 
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:
