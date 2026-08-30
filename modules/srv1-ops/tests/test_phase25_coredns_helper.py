@@ -5,7 +5,10 @@ import importlib.util
 import json
 from pathlib import Path
 import stat
+import subprocess
 import sys
+import tempfile
+import textwrap
 from typing import Any
 
 import pytest
@@ -285,3 +288,222 @@ def test_result_serialization_is_single_compact_sentinel() -> None:
     line = helper.serialize_result({"z": 1, "a": "ok"})
     assert line == f'{helper.SENTINEL} {json.dumps({"a": "ok", "z": 1}, separators=(",", ":"), sort_keys=True)}\n'
     assert len(line.encode("utf-8")) <= helper.MAX_RESULT_BYTES
+
+
+def _wsl_path(path: Path) -> str:
+    resolved = path.resolve()
+    drive = resolved.drive.rstrip(":").lower()
+    relative = resolved.as_posix().split(":", 1)[1].lstrip("/")
+    return f"/mnt/{drive}/{relative}"
+
+
+def _bash(command: str, *args: str) -> subprocess.CompletedProcess[str]:
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w", encoding="utf-8", newline="\n", suffix=".sh", delete=False
+        ) as stream:
+            stream.write("#!/usr/bin/env bash\n")
+            stream.write(command)
+            stream.write("\n")
+            temporary_path = Path(stream.name)
+        return subprocess.run(
+            ["bash", _wsl_path(temporary_path), *args],
+            check=False,
+            text=True,
+            capture_output=True,
+            timeout=60,
+        )
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
+
+
+def _installer_harness(body: str) -> subprocess.CompletedProcess[str]:
+    setup = r"""
+set -euo pipefail
+workspace=$(mktemp -d /tmp/oci-admin-coredns-installer-test.XXXXXX)
+case "$workspace" in /tmp/oci-admin-coredns-installer-test.*) ;; *) exit 91 ;; esac
+trap 'rm -rf -- "$workspace"' EXIT
+source_repo="$workspace/source"
+test_root="$workspace/root"
+mkdir -p "$source_repo/modules/srv1-ops/scripts"
+mkdir -p "$source_repo/modules/srv1-ops/configs"
+mkdir -p "$test_root"
+cp -- "$1" "$source_repo/modules/srv1-ops/scripts/oci-admin-coredns-helper.py"
+cp -- "$2" "$source_repo/modules/srv1-ops/scripts/install-oci-admin-coredns-helper.sh"
+cp -- "$3" "$source_repo/modules/srv1-ops/configs/101-oci-admin-coredns-run-command.sudoers"
+git -C "$source_repo" init -q
+git -C "$source_repo" config user.email phase25-test@atius.invalid
+git -C "$source_repo" config user.name phase25-test
+git -C "$source_repo" config commit.gpgsign false
+git -C "$source_repo" add modules/srv1-ops/scripts/oci-admin-coredns-helper.py
+git -C "$source_repo" add modules/srv1-ops/scripts/install-oci-admin-coredns-helper.sh
+git -C "$source_repo" add modules/srv1-ops/configs/101-oci-admin-coredns-run-command.sudoers
+git -C "$source_repo" commit -q -m fixture
+source_commit=$(git -C "$source_repo" rev-parse HEAD)
+helper_sha="sha256:$(sha256sum "$source_repo/modules/srv1-ops/scripts/oci-admin-coredns-helper.py" | awk '{print $1}')"
+sudoers_sha="sha256:$(sha256sum "$source_repo/modules/srv1-ops/configs/101-oci-admin-coredns-run-command.sudoers" | awk '{print $1}')"
+installer="$source_repo/modules/srv1-ops/scripts/install-oci-admin-coredns-helper.sh"
+installer_args=(
+  --expected-commit "$source_commit"
+  --expected-helper-sha256 "$helper_sha"
+  --expected-sudoers-sha256 "$sudoers_sha"
+  --run-command-user ocarun
+)
+"""
+    return _bash(
+        setup + "\n" + textwrap.dedent(body),
+        _wsl_path(HELPER_PATH),
+        _wsl_path(INSTALLER_PATH),
+        _wsl_path(SUDOERS_PATH),
+    )
+
+
+def test_installer_and_sudoers_contract_is_closed_and_syntax_valid() -> None:
+    assert INSTALLER_PATH.is_file(), "Phase 25 CoreDNS installer has not been implemented"
+    assert SUDOERS_PATH.is_file(), "Phase 25 CoreDNS sudoers has not been implemented"
+    installer = INSTALLER_PATH.read_text(encoding="utf-8")
+    sudoers = SUDOERS_PATH.read_text(encoding="utf-8")
+    normalized = sudoers.replace("\\:", ":")
+
+    assert "install|rollback" in installer
+    assert "--expected-commit" in installer
+    assert "--expected-helper-sha256" in installer
+    assert "--expected-sudoers-sha256" in installer
+    assert "--run-command-user ocarun" in installer
+    assert "rollback --receipt" in installer
+    assert "--root" not in installer
+    assert "--source" not in installer
+    assert "--command" not in installer
+    assert "/usr/local/libexec/oci-admin-coredns-helper" in installer
+    assert "/etc/sudoers.d/101-oci-admin-coredns-run-command" in installer
+    assert "root:root" in installer and "0755" in installer and "0440" in installer
+    assert "bash" in installer and "-n" in installer
+    assert "ast.parse" in installer
+    assert "visudo" in installer and "-cf" in installer and "-c" in installer
+    assert "os.replace" in installer and "fsync" in installer
+
+    assert "Defaults:ocarun env_reset" in sudoers
+    assert "Defaults:ocarun !setenv" in sudoers
+    assert "ocarun ALL=(root) NOPASSWD:" in sudoers
+    assert "/usr/local/libexec/oci-admin-coredns-helper inspect" in sudoers
+    assert "/usr/local/libexec/oci-admin-coredns-helper apply" in sudoers
+    assert "/usr/local/libexec/oci-admin-coredns-helper rollback" in sudoers
+    assert "/bin/sh" not in sudoers and "/bin/bash" not in sudoers
+    assert "/usr/bin/python" not in sudoers and "SETENV" not in sudoers
+    for digest in _load_helper().MANIFEST_DIGESTS.values():
+        assert digest in normalized
+
+    syntax = _bash("bash -n \"$1\" && /usr/sbin/visudo -cf \"$2\"", _wsl_path(INSTALLER_PATH), _wsl_path(SUDOERS_PATH))
+    assert syntax.returncode == 0, syntax.stderr or syntax.stdout
+
+
+def test_installer_fake_root_install_and_rollback_absent_preimages() -> None:
+    result = _installer_harness(
+        r"""
+export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+export OCI_ADMIN_COREDNS_TEST_ROOT="$test_root"
+source "$installer"
+coredns_installer_main install "${installer_args[@]}" >"$workspace/install.json"
+helper_dest="$test_root/usr/local/libexec/oci-admin-coredns-helper"
+sudoers_dest="$test_root/etc/sudoers.d/101-oci-admin-coredns-run-command"
+[[ -f "$helper_dest" && ! -L "$helper_dest" ]]
+[[ -f "$sudoers_dest" && ! -L "$sudoers_dest" ]]
+[[ $(stat -c '%a' "$helper_dest") == 755 ]]
+[[ $(stat -c '%a' "$sudoers_dest") == 440 ]]
+[[ "sha256:$(sha256sum "$helper_dest" | awk '{print $1}')" == "$helper_sha" ]]
+[[ "sha256:$(sha256sum "$sudoers_dest" | awk '{print $1}')" == "$sudoers_sha" ]]
+grep -q '^ATIUS_COREDNS_INSTALL_RECEIPT_V1 ' "$workspace/install.json"
+receipt=$(python3 -c 'import json,sys; print(json.loads(open(sys.argv[1]).read().split(" ",1)[1])["receipt_id"])' "$workspace/install.json")
+coredns_installer_main rollback --receipt "$receipt" >"$workspace/rollback.json"
+[[ ! -e "$helper_dest" && ! -L "$helper_dest" ]]
+[[ ! -e "$sudoers_dest" && ! -L "$sudoers_dest" ]]
+grep -q '"status":"rolled-back"' "$workspace/rollback.json"
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_restores_exact_present_preimages() -> None:
+    result = _installer_harness(
+        r"""
+helper_dest="$test_root/usr/local/libexec/oci-admin-coredns-helper"
+sudoers_dest="$test_root/etc/sudoers.d/101-oci-admin-coredns-run-command"
+mkdir -p "$(dirname "$helper_dest")" "$(dirname "$sudoers_dest")"
+printf '#!/bin/sh\nexit 7\n' >"$helper_dest"
+printf 'Defaults env_reset\n' >"$sudoers_dest"
+chmod 0700 "$helper_dest"
+chmod 0400 "$sudoers_dest"
+before_helper=$(sha256sum "$helper_dest" | awk '{print $1}')
+before_sudoers=$(sha256sum "$sudoers_dest" | awk '{print $1}')
+export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+export OCI_ADMIN_COREDNS_TEST_ROOT="$test_root"
+source "$installer"
+coredns_installer_main install "${installer_args[@]}" >"$workspace/install.json"
+receipt=$(python3 -c 'import json,sys; print(json.loads(open(sys.argv[1]).read().split(" ",1)[1])["receipt_id"])' "$workspace/install.json")
+coredns_installer_main rollback --receipt "$receipt" >/dev/null
+[[ $(sha256sum "$helper_dest" | awk '{print $1}') == "$before_helper" ]]
+[[ $(sha256sum "$sudoers_dest" | awk '{print $1}') == "$before_sudoers" ]]
+[[ $(stat -c '%a' "$helper_dest") == 700 ]]
+[[ $(stat -c '%a' "$sudoers_dest") == 400 ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_failure_stages_leave_no_partial_replacement() -> None:
+    result = _installer_harness(
+        r"""
+for stage in preimage helper-stage sudoers-stage helper-replace sudoers-replace global-visudo readback; do
+  stage_root="$workspace/root-$stage"
+  mkdir -p "$stage_root"
+  (
+    export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+    export OCI_ADMIN_COREDNS_TEST_ROOT="$stage_root"
+    export OCI_ADMIN_COREDNS_TEST_FAIL_STAGE="$stage"
+    source "$installer"
+    set +e
+    coredns_installer_main install "${installer_args[@]}" >"$workspace/$stage.json" 2>"$workspace/$stage.err"
+    rc=$?
+    set -e
+    [[ $rc -eq 2 ]]
+  )
+  [[ ! -e "$stage_root/usr/local/libexec/oci-admin-coredns-helper" ]]
+  [[ ! -e "$stage_root/etc/sudoers.d/101-oci-admin-coredns-run-command" ]]
+  grep -q '"status":"failed-restored"' "$workspace/$stage.json"
+  grep -q '^oci-admin-coredns-installer: rejected$' "$workspace/$stage.err"
+done
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_rejects_commit_digest_path_and_environment_override() -> None:
+    result = _installer_harness(
+        r"""
+export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+export OCI_ADMIN_COREDNS_TEST_ROOT="$test_root"
+source "$installer"
+set +e
+coredns_installer_main install --expected-commit "${source_commit%?}0" --expected-helper-sha256 "$helper_sha" --expected-sudoers-sha256 "$sudoers_sha" --run-command-user ocarun >/dev/null 2>&1
+bad_commit=$?
+coredns_installer_main install "${installer_args[@]}" --root /tmp/caller >/dev/null 2>&1
+bad_path=$?
+coredns_installer_main rollback --receipt '../../escape' >/dev/null 2>&1
+bad_receipt=$?
+set -e
+[[ $bad_commit -ne 0 && $bad_path -eq 64 && $bad_receipt -eq 64 ]]
+[[ -z $(find "$test_root" -mindepth 1 -print -quit) ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+    public = _bash(
+        'OCI_ADMIN_COREDNS_INTERNAL_TESTING=1 OCI_ADMIN_COREDNS_TEST_ROOT=/tmp/caller "$1" install --expected-commit "$2" --expected-helper-sha256 "$3" --expected-sudoers-sha256 "$4" --run-command-user ocarun',
+        _wsl_path(INSTALLER_PATH),
+        "0" * 40,
+        "sha256:" + "1" * 64,
+        "sha256:" + "2" * 64,
+    )
+    assert public.returncode == 64
