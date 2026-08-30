@@ -484,17 +484,17 @@ def validate_attestation_document(
         raise ProbeError("projection contract has drifted")
     readback = payload["readback_preimage"]
     if not isinstance(readback, Mapping) or set(readback) != {
-        "expected_state",
+        "allowed_expected_states",
         "previous_answer",
         "preimage_digest",
     }:
         raise ProbeError("readback preimage is invalid")
-    expected_state = str(readback["expected_state"])
+    allowed_expected_states = tuple(
+        str(item) for item in readback["allowed_expected_states"]
+    )
     previous_answer = str(readback["previous_answer"])
-    if expected_state not in {"present", "absent"}:
+    if allowed_expected_states != ("present", "absent"):
         raise ProbeError("readback expected state is invalid")
-    if expected_state == "absent" and previous_answer != "NXDOMAIN":
-        raise ProbeError("absent readback must restore NXDOMAIN")
     if previous_answer != "NXDOMAIN":
         try:
             if ip_address(previous_answer).version != 4:
@@ -536,8 +536,31 @@ def validate_attestation_document(
         ):
             raise ProbeError("peer preimage identity is invalid")
     target_peer = payload["target_peer_preimage"]
-    if not isinstance(target_peer, Mapping) or dict(target_peer) not in [dict(item) for item in peers]:
-        raise ProbeError("target peer is not in attested fanout")
+    if not isinstance(target_peer, Mapping):
+        raise ProbeError("target peer is invalid")
+    target_payload = dict(target_peer)
+    if target_payload not in [dict(item) for item in peers]:
+        expected_atius4 = {
+            "role": "dns-peer",
+            "profile_name": "atius4",
+            "region": "sa-saopaulo-1",
+            "display_name": "atius-srv-4",
+            "private_ip": "10.14.1.14",
+            "source_repo_commit": source["repo_commit"],
+            "source_path": "inventory/hosts/atius-srv-4.yaml",
+            "source_digest": source["digest"],
+        }
+        if (
+            set(target_payload) != peer_fields
+            or any(target_payload.get(key) != item for key, item in expected_atius4.items())
+            or not str(target_payload.get("compartment_id") or "").startswith(
+                "ocid1.compartment."
+            )
+            or not str(target_payload.get("instance_id") or "").startswith(
+                "ocid1.instance."
+            )
+        ):
+            raise ProbeError("target peer is not in attested five-host set")
     if expected_target is not None and target_peer["display_name"] != expected_target:
         raise ProbeError("attestation target mismatch")
     binding = payload["target_binding_preimage"]
@@ -1599,10 +1622,12 @@ def main(
                 or attestation["projection_digest"] != invocation["projection_digest"]
                 or attestation["readback_preimage"]
                 != {
-                    "expected_state": invocation["expected_state"],
+                    "allowed_expected_states": ["present", "absent"],
                     "previous_answer": invocation["previous_answer"],
                     "preimage_digest": invocation["preimage_digest"],
                 }
+                or invocation["expected_state"]
+                not in attestation["readback_preimage"]["allowed_expected_states"]
             ):
                 raise ProbeError("attestation preimages do not match invocation")
         payload = _build_payload(

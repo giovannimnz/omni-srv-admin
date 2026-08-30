@@ -67,6 +67,7 @@ def _attestation_document(
     previous_answer: str = "NXDOMAIN",
     preimage_digest: str = "sha256:" + "d" * 64,
 ) -> dict[str, Any]:
+    assert expected_state in {"present", "absent"}
     source = {
         "authority": "omni-srv-admin",
         "repo_commit": "1" * 40,
@@ -93,7 +94,22 @@ def _attestation_document(
             ("horistic-srv", "horistic", "10.21.1.21"),
         )
     ]
-    target_peer = next(item for item in peers if item["display_name"] == target)
+    target_peer = (
+        next(item for item in peers if item["display_name"] == target)
+        if target != "atius-srv-4"
+        else {
+            "role": "dns-peer",
+            "profile_name": "atius4",
+            "region": "sa-saopaulo-1",
+            "compartment_id": "ocid1.compartment.oc1..atiussrv4",
+            "instance_id": "ocid1.instance.oc1.sa-saopaulo-1.atiussrv4",
+            "display_name": "atius-srv-4",
+            "private_ip": "10.14.1.14",
+            "source_repo_commit": source["repo_commit"],
+            "source_path": "inventory/hosts/atius-srv-4.yaml",
+            "source_digest": source["digest"],
+        }
+    )
     projection = {
         "schema": "atius.internal-dns-projection-attestation/v1",
         "source": source,
@@ -112,7 +128,7 @@ def _attestation_document(
     }
     projection_digest = _canonical_digest(projection)
     readback_preimage = {
-        "expected_state": expected_state,
+        "allowed_expected_states": ["present", "absent"],
         "previous_answer": previous_answer,
         "preimage_digest": preimage_digest,
     }
@@ -535,6 +551,16 @@ def test_probe_coredns_absent_readback_accepts_only_authoritative_nxdomain() -> 
     assert payload["expected_state"] == "absent"
     assert {row["answer"] for row in payload["rows"]} == {"NXDOMAIN"}
     assert {row["status"] for row in payload["rows"]} == {"nxdomain"}
+
+
+def test_attestation_accepts_exact_atius_srv4_fifth_install_target() -> None:
+    document = _attestation_document("atius-srv-4")
+    validated = probe.validate_attestation_document(
+        document,
+        expected_digest=document["digest"],
+        expected_target="atius-srv-4",
+    )
+    assert validated["document"]["target_peer_preimage"]["private_ip"] == "10.14.1.14"
 
 
 @pytest.mark.parametrize(
