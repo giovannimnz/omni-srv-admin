@@ -9,14 +9,14 @@ from ipaddress import IPv4Address, IPv4Network, ip_address, ip_network
 import json
 import os
 from pathlib import Path
-from queue import Empty, Queue
+from queue import Empty, Full, Queue
 import re
 import signal
 import socket
 import stat
 import subprocess
 import sys
-from threading import Thread
+from threading import Event, Thread
 from time import monotonic
 from typing import Any, Callable, Mapping, Sequence
 
@@ -944,17 +944,28 @@ def _bounded_process_output(
     timeout_seconds: int,
     maximum_bytes: int,
 ) -> tuple[bytes, bytes]:
-    messages: Queue[tuple[str, bytes | None]] = Queue()
+    messages: Queue[tuple[str, bytes | None]] = Queue(maxsize=4)
+    cancelled = Event()
+
+    def enqueue(message: tuple[str, bytes | None]) -> bool:
+        while not cancelled.is_set():
+            try:
+                messages.put(message, timeout=0.05)
+                return True
+            except Full:
+                continue
+        return False
 
     def read_stream(label: str, stream: Any) -> None:
         try:
-            while True:
-                chunk = stream.read(8192)
+            while not cancelled.is_set():
+                chunk = stream.read(min(8192, maximum_bytes + 1))
                 if not chunk:
                     break
-                messages.put((label, chunk))
+                if not enqueue((label, chunk)):
+                    return
         finally:
-            messages.put((label, None))
+            enqueue((label, None))
 
     threads = [
         Thread(target=read_stream, args=("stdout", process.stdout), daemon=True),
@@ -982,6 +993,7 @@ def _bounded_process_output(
                 raise ProbeError("command output is oversized")
         process.wait(timeout=max(0.01, deadline - monotonic()))
     except (ProbeError, subprocess.TimeoutExpired) as exc:
+        cancelled.set()
         _kill_process_group(process)
         try:
             process.wait(timeout=1)
@@ -990,6 +1002,7 @@ def _bounded_process_output(
             process.wait(timeout=1)
         raise ProbeError("command output exceeded its bound") from exc
     finally:
+        cancelled.set()
         for thread in threads:
             thread.join(timeout=1)
     return bytes(buffers["stdout"]), bytes(buffers["stderr"])

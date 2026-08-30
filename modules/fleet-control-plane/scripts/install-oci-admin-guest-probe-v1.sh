@@ -95,7 +95,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
-from queue import Empty, Queue
+from queue import Empty, Full, Queue
 import re
 import signal
 import shutil
@@ -103,7 +103,7 @@ import stat
 import subprocess
 import sys
 import tempfile
-from threading import Thread
+from threading import Event, Thread
 from time import monotonic
 from typing import Any
 
@@ -291,17 +291,28 @@ def run_checked(
         bufsize=0,
         preexec_fn=preexec_fn,
     )
-    messages: Queue[tuple[str, bytes | None]] = Queue()
+    messages: Queue[tuple[str, bytes | None]] = Queue(maxsize=4)
+    cancelled = Event()
+
+    def enqueue(message: tuple[str, bytes | None]) -> bool:
+        while not cancelled.is_set():
+            try:
+                messages.put(message, timeout=0.05)
+                return True
+            except Full:
+                continue
+        return False
 
     def read_stream(label: str, stream: Any) -> None:
         try:
-            while True:
-                chunk = stream.read(8192)
+            while not cancelled.is_set():
+                chunk = stream.read(min(8192, maximum_bytes + 1))
                 if not chunk:
                     break
-                messages.put((label, chunk))
+                if not enqueue((label, chunk)):
+                    return
         finally:
-            messages.put((label, None))
+            enqueue((label, None))
 
     threads = [
         Thread(target=read_stream, args=("stdout", process.stdout), daemon=True),
@@ -331,6 +342,7 @@ def run_checked(
         if process.returncode != 0:
             raise InstallerError("fixed validation command failed")
     except (InstallerError, subprocess.TimeoutExpired) as exc:
+        cancelled.set()
         kill_process_group(process)
         try:
             process.wait(timeout=1)
@@ -339,6 +351,7 @@ def run_checked(
             process.wait(timeout=1)
         raise InstallerError("fixed validation command failed") from exc
     finally:
+        cancelled.set()
         for thread in threads:
             thread.join(timeout=1)
     return bytes(output["stdout"])

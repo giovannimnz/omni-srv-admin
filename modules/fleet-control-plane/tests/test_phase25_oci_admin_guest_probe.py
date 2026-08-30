@@ -717,6 +717,7 @@ def test_probe_ignores_caller_environment_and_subprocess_shell(
 
 
 def test_probe_kills_real_oversized_emitter_before_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    assert "Queue(maxsize=4)" in PROBE_PATH.read_text(encoding="utf-8")
     monkeypatch.setattr(probe, "MAX_COMMAND_OUTPUT_BYTES", 4096)
     started = monotonic()
     with pytest.raises(probe.ProbeError):
@@ -1200,6 +1201,7 @@ done
 
 
 def test_installer_probe_bounds_real_emitter_before_timeout() -> None:
+    assert "Queue(maxsize=4)" in INSTALLER_PATH.read_text(encoding="utf-8")
     result = _installer_harness(
         r"""
 export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
