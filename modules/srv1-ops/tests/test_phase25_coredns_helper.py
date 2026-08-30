@@ -5,6 +5,7 @@ import importlib.util
 import json
 from pathlib import Path
 import stat
+import sys
 from typing import Any
 
 import pytest
@@ -21,6 +22,7 @@ def _load_helper() -> Any:
     spec = importlib.util.spec_from_file_location("oci_admin_coredns_helper", HELPER_PATH)
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
@@ -55,6 +57,8 @@ class FakeRuntime:
 
     def readback(self, short_name: str, fqdn: str, expected_answer: str) -> list[dict[str, Any]]:
         assert (short_name, fqdn) == ("atius-srv-4", "atius-srv-4.atius.internal")
+        if expected_answer == "AUTO":
+            expected_answer = "NXDOMAIN"
         self.readbacks.append(expected_answer)
         status = "nxdomain" if expected_answer == "NXDOMAIN" else "resolved"
         return [
@@ -76,8 +80,8 @@ def _layout(helper: Any, root: Path) -> Any:
     config_path = root / "etc/coredns/Corefile"
     data_path = root / "etc/coredns/hosts.atius"
     config_path.parent.mkdir(parents=True)
-    config_path.write_text(".:53 {\n    hosts /etc/coredns/hosts.atius {\n        reload 5s\n    }\n}\n", encoding="utf-8")
-    data_path.write_text("10.11.1.11 atius-srv-1 atius-srv-1.atius.internal\n", encoding="utf-8")
+    config_path.write_bytes(b".:53 {\n    hosts /etc/coredns/hosts.atius {\n        reload 5s\n    }\n}\n")
+    data_path.write_bytes(b"10.11.1.11 atius-srv-1 atius-srv-1.atius.internal\n")
     data_path.chmod(0o640)
     return helper.Layout(
         binary_path="/usr/local/bin/coredns",
