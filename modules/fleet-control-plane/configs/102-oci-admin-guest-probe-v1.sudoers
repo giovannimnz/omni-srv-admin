@@ -1,0 +1,14 @@
+# Fleet-owned OCI Admin Phase 25 read-only probe boundary.
+Defaults:ocarun env_reset
+Defaults:ocarun !setenv
+Defaults:ocarun secure_path=/usr/sbin:/usr/bin:/sbin:/bin
+
+Cmnd_Alias OCI_ADMIN_GUEST_PROBE_V1 = \
+  /usr/local/libexec/oci-admin-guest-probe-v1 execute --runbook phase25.wg100-routes --version 1 --manifest-digest sha256\:9164882a74ffa123ddaae79acba0c0abaad5c465f968ea61f7747f3c3cf025d9 --target * --max-rows * --sentinel ATIUS_RUNBOOK_RESULT_V1, \
+  /usr/local/libexec/oci-admin-guest-probe-v1 execute --runbook phase25.k3s-routes --version 1 --manifest-digest sha256\:9393edee3f0a04daa447bb93781d28196691622133e37f516299ce4a30d12423 --target * --max-rows * --sentinel ATIUS_RUNBOOK_RESULT_V1, \
+  /usr/local/libexec/oci-admin-guest-probe-v1 execute --runbook phase25.podman-routes --version 1 --manifest-digest sha256\:51ed6d3faa653fa67076d01ade327815550b7198bdff5efb5956b90df1f789c4 --target * --max-rows * --sentinel ATIUS_RUNBOOK_RESULT_V1, \
+  /usr/local/libexec/oci-admin-guest-probe-v1 execute --runbook phase25.lan-routes --version 1 --manifest-digest sha256\:d6d8801eb5b7e178dc3337c291eb9dc989b87b787f9cd422397e65a4f66aafb6 --target * --max-rows * --sentinel ATIUS_RUNBOOK_RESULT_V1, \
+  /usr/local/libexec/oci-admin-guest-probe-v1 execute --runbook phase25.reachability --version 1 --manifest-digest sha256\:a499d0b95c45e91f59ceeed50ea9ddeb81fa2bf2ad7425a81b878cd4adf79764 --target * --peers * --probe-count * --sentinel ATIUS_RUNBOOK_RESULT_V1, \
+  /usr/local/libexec/oci-admin-guest-probe-v1 execute --runbook phase25.coredns-peer-readback --version 1 --manifest-digest sha256\:bda7602824792a3c6276f3d1441c88017990043b3fae96042ce74af45e4220e7 --target-binding-digest * --probe-digest * --target * --peer-set-digest * --projection-digest * --short-name atius-srv-4 --fqdn atius-srv-4.atius.internal --expected-address 10.14.1.14 --primary-resolver 10.11.1.11\:53 --reserve-resolver 10.100.100.1\:53 --sentinel ATIUS_RUNBOOK_RESULT_V1
+
+ocarun ALL=(root) NOPASSWD: OCI_ADMIN_GUEST_PROBE_V1

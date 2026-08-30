@@ -7,6 +7,7 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import tempfile
 import textwrap
 from typing import Any
 
@@ -548,13 +549,29 @@ def _wsl_path(path: Path) -> str:
 
 
 def _bash(command: str, *args: str) -> subprocess.CompletedProcess[str]:
-    return subprocess.run(
-        ["bash", "-lc", command, "phase25-test", *args],
-        check=False,
-        text=True,
-        capture_output=True,
-        timeout=60,
-    )
+    temporary_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            suffix=".sh",
+            delete=False,
+        ) as stream:
+            stream.write("#!/usr/bin/env bash\n")
+            stream.write(command)
+            stream.write("\n")
+            temporary_path = Path(stream.name)
+        return subprocess.run(
+            ["bash", _wsl_path(temporary_path), *args],
+            check=False,
+            text=True,
+            capture_output=True,
+            timeout=60,
+        )
+    finally:
+        if temporary_path is not None:
+            temporary_path.unlink(missing_ok=True)
 
 
 def _installer_harness(body: str) -> subprocess.CompletedProcess[str]:
@@ -603,6 +620,7 @@ installer_args=(
 def test_installer_probe_contract_is_closed_and_sudoers_is_least_privilege() -> None:
     installer = INSTALLER_PATH.read_text(encoding="utf-8")
     sudoers = SUDOERS_PATH.read_text(encoding="utf-8")
+    normalized_sudoers = sudoers.replace("\\:", ":")
 
     assert "preview|install|rollback" in installer
     assert "--expected-source-commit" in installer
@@ -628,8 +646,8 @@ def test_installer_probe_contract_is_closed_and_sudoers_is_least_privilege() -> 
     assert "/usr/bin/python" not in sudoers
     for runbook_id, filename in MANIFEST_FILES.items():
         manifest = json.loads((MANIFEST_ROOT / filename).read_text(encoding="utf-8"))
-        assert runbook_id in sudoers
-        assert manifest["digest"] in sudoers
+        assert runbook_id in normalized_sudoers
+        assert manifest["digest"] in normalized_sudoers
 
     syntax = _bash("visudo -cf \"$1\"", _wsl_path(SUDOERS_PATH))
     assert syntax.returncode == 0, syntax.stderr
@@ -719,8 +737,16 @@ for stage in preimage helper-stage sudoers-stage helper-replace sudoers-replace 
   )
   [[ ! -e "$stage_root/usr/local/libexec/oci-admin-guest-probe-v1" ]]
   [[ ! -e "$stage_root/etc/sudoers.d/102-oci-admin-guest-probe-v1" ]]
-  grep -q '"status":"failed-restored"' "$workspace/$stage.json"
-  grep -q '^oci-admin-guest-probe-installer-v1: rejected$' "$workspace/$stage.err"
+  grep -q '"status":"failed-restored"' "$workspace/$stage.json" || {
+    printf 'missing failed receipt for %s\n' "$stage" >&2
+    cat "$workspace/$stage.json" >&2
+    exit 1
+  }
+  grep -q '^oci-admin-guest-probe-installer-v1: rejected$' "$workspace/$stage.err" || {
+    printf 'missing sanitized error for %s\n' "$stage" >&2
+    cat "$workspace/$stage.err" >&2
+    exit 1
+  }
 done
 """
     )
