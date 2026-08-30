@@ -53,6 +53,84 @@ def _manifest(runbook_id: str) -> dict[str, Any]:
     )
 
 
+def _canonical_digest(value: dict[str, Any]) -> str:
+    encoded = json.dumps(value, sort_keys=True, separators=(",", ":")).encode()
+    return "sha256:" + hashlib.sha256(encoded).hexdigest()
+
+
+def _attestation_document(target: str = "atius-srv-1") -> dict[str, Any]:
+    source = {
+        "authority": "omni-srv-admin",
+        "repo_commit": "1" * 40,
+        "path": "inventory/hosts/atius-srv-4.yaml",
+        "digest": "sha256:" + "b" * 64,
+    }
+    peers = [
+        {
+            "role": "dns-peer",
+            "profile_name": profile,
+            "region": "sa-saopaulo-1",
+            "compartment_id": f"ocid1.compartment.oc1..{name.replace('-', '')}",
+            "instance_id": f"ocid1.instance.oc1.sa-saopaulo-1.{name.replace('-', '')}",
+            "display_name": name,
+            "private_ip": address,
+            "source_repo_commit": source["repo_commit"],
+            "source_path": f"inventory/hosts/{name}.yaml",
+            "source_digest": "sha256:" + "c" * 64,
+        }
+        for name, profile, address in (
+            ("atius-srv-1", "atius1", "10.11.1.11"),
+            ("atius-srv-2", "atius2", "10.12.1.12"),
+            ("atius-srv-3", "atius3", "10.13.1.13"),
+            ("horistic-srv", "horistic", "10.21.1.21"),
+        )
+    ]
+    target_peer = next(item for item in peers if item["display_name"] == target)
+    projection = {
+        "schema": "atius.internal-dns-projection-attestation/v1",
+        "source": source,
+        "records": [
+            {"name": "atius-srv-4", "type": "A", "value": "10.14.1.14"},
+            {
+                "name": "atius-srv-4.atius.internal",
+                "type": "A",
+                "value": "10.14.1.14",
+            },
+        ],
+        "resolvers": [
+            {"role": "primary", "address": "10.11.1.11", "port": 53},
+            {"role": "reserve", "address": "10.100.100.1", "port": 53},
+        ],
+    }
+    projection_digest = _canonical_digest(projection)
+    target_binding = {
+        "target_role": target_peer["role"],
+        "profile_name": target_peer["profile_name"],
+        "region": target_peer["region"],
+        "compartment_id": target_peer["compartment_id"],
+        "instance_id": target_peer["instance_id"],
+        "display_name": target_peer["display_name"],
+        "source_repo_commit": source["repo_commit"],
+        "source_path": source["path"],
+        "source_digest": source["digest"],
+        "projection_digest": projection_digest,
+    }
+    base = {
+        "schema": "atius.oci-admin-guest-probe-attestation/v1",
+        "version": "1",
+        "target_binding_preimage": target_binding,
+        "target_peer_preimage": target_peer,
+        "peer_set_preimage": peers,
+        "projection_preimage": projection,
+        "digests": {
+            "target_binding": _canonical_digest(target_binding),
+            "peer_set": _canonical_digest(peers),
+            "projection": projection_digest,
+        },
+    }
+    return {**base, "digest": _canonical_digest(base)}
+
+
 def _render_argv(
     runbook_id: str,
     *,
@@ -88,8 +166,9 @@ def _coredns_argv(
     probe_digest: str | None = None,
     peer_set_digest: str | None = None,
     projection_digest: str | None = None,
+    attestation_digest: str | None = None,
 ) -> list[str]:
-    digest = "sha256:" + "1" * 64
+    attestation = _attestation_document(target)
     return [
         "execute",
         "--runbook",
@@ -99,15 +178,17 @@ def _coredns_argv(
         "--manifest-digest",
         _manifest("phase25.coredns-peer-readback")["digest"],
         "--target-binding-digest",
-        target_binding_digest or digest,
+        target_binding_digest or attestation["digests"]["target_binding"],
         "--probe-digest",
         probe_digest or probe.self_digest(),
+        "--attestation-digest",
+        attestation_digest or attestation["digest"],
         "--target",
         target,
         "--peer-set-digest",
-        peer_set_digest or ("sha256:" + "2" * 64),
+        peer_set_digest or attestation["digests"]["peer_set"],
         "--projection-digest",
-        projection_digest or ("sha256:" + "3" * 64),
+        projection_digest or attestation["digests"]["projection"],
         "--short-name",
         "atius-srv-4",
         "--fqdn",
@@ -174,6 +255,12 @@ ROUTE_FIXTURE = json.dumps(
             "scope": "link",
             "protocol": "kernel",
         },
+        {
+            "dst": "127.0.0.0/8",
+            "dev": "lo",
+            "scope": "host",
+            "protocol": "kernel",
+        },
     ]
 ).encode()
 
@@ -202,6 +289,10 @@ class FakeRunner:
             )
         if argv and argv[0] == probe.PING_BINARY:
             return _command_result(b"1 packets transmitted, 1 received, time=7.4 ms")
+        if argv and argv[0] == probe.GETENT_BINARY:
+            name = argv[-1]
+            address = probe.EXPECTED_HOST_ADDRESSES[name]
+            return _command_result(f"{address} STREAM {name}\n".encode())
         if argv and argv[0] == probe.DIG_BINARY:
             name = argv[-2]
             return _command_result(
@@ -221,6 +312,7 @@ def _run_main(
     hostname: str,
     resolver: Any | None = None,
     tcp_probe: Any | None = None,
+    attestation_loader: Any | None = None,
 ) -> tuple[int, str, str]:
     stdout = io.StringIO()
     stderr = io.StringIO()
@@ -230,6 +322,10 @@ def _run_main(
         hostname_provider=lambda: hostname,
         resolver=resolver,
         tcp_probe=tcp_probe,
+        attestation_loader=(
+            attestation_loader
+            or (lambda: json.dumps(_attestation_document(hostname)).encode())
+        ),
         stdout=stdout,
         stderr=stderr,
     )
@@ -331,6 +427,29 @@ def test_probe_reachability_uses_only_locked_bidirectional_matrix() -> None:
     )
     assert {timeout for _, _, timeout in tcp_calls} == {probe.TCP_TIMEOUT_SECONDS}
     assert {row["probe"] for row in result["rows"]} == {"icmp", "dns", "tcp"}
+    ping_calls = [call for call, _ in runner.calls if call[0] == probe.PING_BINARY]
+    assert all(call[4:8] == ("-W", "1", "-w", "5") for call in ping_calls)
+
+
+def test_probe_default_dns_uses_fixed_getent_command_under_clean_runner() -> None:
+    runner = FakeRunner(address="10.14.1.14")
+    code, stdout, stderr = _run_main(
+        _render_argv("phase25.reachability", target="atius-srv-4"),
+        runner=runner,
+        hostname="atius-srv-4",
+        tcp_probe=lambda address, port, timeout: (True, 1),
+    )
+
+    assert code == 0
+    assert stderr == ""
+    assert _payload(stdout)["runbook_id"] == "phase25.reachability"
+    getent_calls = [call for call, _ in runner.calls if call[0] == probe.GETENT_BINARY]
+    assert getent_calls == [
+        (probe.GETENT_BINARY, "ahostsv4", "atius-srv-1"),
+        (probe.GETENT_BINARY, "ahostsv4", "atius-srv-2"),
+        (probe.GETENT_BINARY, "ahostsv4", "atius-srv-3"),
+        (probe.GETENT_BINARY, "ahostsv4", "horistic-srv"),
+    ]
 
 
 def test_probe_coredns_readback_uses_four_exact_authoritative_queries() -> None:
@@ -345,6 +464,7 @@ def test_probe_coredns_readback_uses_four_exact_authoritative_queries() -> None:
     assert code == 0
     assert stderr == ""
     result = _payload(stdout)
+    assert result["attestation_digest"] == _attestation_document()["digest"]
     assert len(result["rows"]) == 4
     assert {(row["resolver"], row["name"]) for row in result["rows"]} == {
         ("10.11.1.11:53", "atius-srv-4"),
@@ -356,6 +476,25 @@ def test_probe_coredns_readback_uses_four_exact_authoritative_queries() -> None:
     dig_calls = [call for call, _ in runner.calls if call[0] == probe.DIG_BINARY]
     assert len(dig_calls) == 4
     assert all(call[: len(probe.DIG_PREFIX)] == probe.DIG_PREFIX for call in dig_calls)
+
+
+def test_probe_deny_coredns_answer_for_wrong_owner_name() -> None:
+    runner = FakeRunner()
+    command = probe.dig_command("10.11.1.11:53", "atius-srv-4")
+    runner.overrides[command] = _command_result(
+        b";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1\n"
+        b";; flags: qr aa rd ra; QUERY: 1, ANSWER: 1\n"
+        b"attacker.invalid. 60 IN A 10.14.1.14\n"
+    )
+    code, stdout, stderr = _run_main(
+        _coredns_argv(),
+        runner=runner,
+        hostname="atius-srv-1",
+    )
+
+    assert code != 0
+    assert stdout == ""
+    assert stderr == probe.SANITIZED_ERROR_LINE
 
 
 @pytest.mark.parametrize(
@@ -422,6 +561,7 @@ def test_probe_deny_unknown_peer_and_caller_port() -> None:
     [
         ("--target-binding-digest", "sha256:bad"),
         ("--probe-digest", "sha256:" + "9" * 64),
+        ("--attestation-digest", "sha256:bad"),
         ("--peer-set-digest", "sha256:bad"),
         ("--projection-digest", "sha256:bad"),
     ],
@@ -436,6 +576,39 @@ def test_probe_deny_coredns_forged_digests(field: str, value: str) -> None:
     assert stdout == ""
     assert stderr == probe.SANITIZED_ERROR_LINE
     assert runner.calls == []
+
+
+def test_probe_deny_hash_consistent_but_semantically_forged_attestation() -> None:
+    runner = FakeRunner()
+    forged = _attestation_document()
+    forged["projection_preimage"]["records"][0]["value"] = "203.0.113.7"
+    forged["digests"]["projection"] = _canonical_digest(
+        forged["projection_preimage"]
+    )
+    forged["target_binding_preimage"]["projection_digest"] = forged["digests"][
+        "projection"
+    ]
+    forged["digests"]["target_binding"] = _canonical_digest(
+        forged["target_binding_preimage"]
+    )
+    base = {key: value for key, value in forged.items() if key != "digest"}
+    forged["digest"] = _canonical_digest(base)
+    argv = _coredns_argv(
+        target_binding_digest=forged["digests"]["target_binding"],
+        projection_digest=forged["digests"]["projection"],
+        attestation_digest=forged["digest"],
+    )
+
+    code, stdout, stderr = _run_main(
+        argv,
+        runner=runner,
+        hostname="atius-srv-1",
+        attestation_loader=lambda: json.dumps(forged).encode(),
+    )
+    assert code != 0
+    assert stdout == ""
+    assert stderr == probe.SANITIZED_ERROR_LINE
+    assert [call for call, _ in runner.calls] == [probe.IP_ADDRESS_COMMAND]
 
 
 def test_probe_deny_oversized_and_secret_shaped_subprocess_output() -> None:
@@ -589,6 +762,7 @@ mkdir -p "$test_root"
 cp -- "$1" "$source_repo/modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py"
 cp -- "$2" "$source_repo/modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh"
 cp -- "$3" "$source_repo/modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers"
+cp -- "$4" "$workspace/attestation.json"
 git -C "$source_repo" init -q
 git -C "$source_repo" config user.email phase25-test@atius.invalid
 git -C "$source_repo" config user.name phase25-test
@@ -600,21 +774,45 @@ git -C "$source_repo" commit -q -m fixture
 source_commit=$(git -C "$source_repo" rev-parse HEAD)
 helper_sha="sha256:$(sha256sum "$source_repo/modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py" | awk '{print $1}')"
 sudoers_sha="sha256:$(sha256sum "$source_repo/modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers" | awk '{print $1}')"
+attestation_sha=$(python3 -c 'import json,sys; print(json.load(open(sys.argv[1], encoding="utf-8"))["digest"])' "$workspace/attestation.json")
 installer="$source_repo/modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh"
 installer_args=(
   --expected-source-commit "$source_commit"
   --expected-helper-sha256 "$helper_sha"
   --expected-sudoers-sha256 "$sudoers_sha"
+  --expected-attestation-sha256 "$attestation_sha"
   --host-id atius-srv-1
   --rollback-receipt-id phase25-test-receipt
 )
 """
-    return _bash(
-        setup + "\n" + textwrap.dedent(body),
-        _wsl_path(PROBE_PATH),
-        _wsl_path(INSTALLER_PATH),
-        _wsl_path(SUDOERS_PATH),
-    )
+    attestation_path: Path | None = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            mode="w",
+            encoding="utf-8",
+            newline="\n",
+            suffix=".json",
+            delete=False,
+        ) as stream:
+            stream.write(
+                json.dumps(
+                    _attestation_document(),
+                    sort_keys=True,
+                    separators=(",", ":"),
+                )
+                + "\n"
+            )
+            attestation_path = Path(stream.name)
+        return _bash(
+            setup + "\n" + textwrap.dedent(body),
+            _wsl_path(PROBE_PATH),
+            _wsl_path(INSTALLER_PATH),
+            _wsl_path(SUDOERS_PATH),
+            _wsl_path(attestation_path),
+        )
+    finally:
+        if attestation_path is not None:
+            attestation_path.unlink(missing_ok=True)
 
 
 def test_installer_probe_contract_is_closed_and_sudoers_is_least_privilege() -> None:
@@ -626,15 +824,17 @@ def test_installer_probe_contract_is_closed_and_sudoers_is_least_privilege() -> 
     assert "--expected-source-commit" in installer
     assert "--expected-helper-sha256" in installer
     assert "--expected-sudoers-sha256" in installer
+    assert "--expected-attestation-sha256" in installer
     assert "--host-id" in installer
     assert "--rollback-receipt-id" in installer
     assert "--root" not in installer
     assert "--source" not in installer
     assert "/usr/local/libexec/oci-admin-guest-probe-v1" in installer
     assert "/etc/sudoers.d/102-oci-admin-guest-probe-v1" in installer
+    assert "/etc/oci-admin-guest-probe-v1/attestation.json" in installer
     assert "visudo" in installer and "-cf" in installer and "-c" in installer
     assert "root:root" in installer
-    assert "0755" in installer and "0440" in installer
+    assert "0755" in installer and "0440" in installer and "0400" in installer
     assert "ABSENT" in installer
 
     assert "Defaults:ocarun env_reset" in sudoers
@@ -660,28 +860,32 @@ export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
 export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
 source "$installer"
 before=$(find "$test_root" -mindepth 1 -print -quit)
-guest_probe_installer_main preview "${installer_args[@]}" >"$workspace/preview.json"
+guest_probe_installer_main preview "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/preview.json"
 after=$(find "$test_root" -mindepth 1 -print -quit)
 [[ -z "$before" && -z "$after" ]]
 grep -q '^ATIUS_GUEST_PROBE_INSTALL_RECEIPT_V1 ' "$workspace/preview.json"
 
-guest_probe_installer_main install "${installer_args[@]}" >"$workspace/install-1.json"
+guest_probe_installer_main install "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/install-1.json"
 helper_dest="$test_root/usr/local/libexec/oci-admin-guest-probe-v1"
 sudoers_dest="$test_root/etc/sudoers.d/102-oci-admin-guest-probe-v1"
+attestation_dest="$test_root/etc/oci-admin-guest-probe-v1/attestation.json"
 [[ -f "$helper_dest" && ! -L "$helper_dest" ]]
 [[ -f "$sudoers_dest" && ! -L "$sudoers_dest" ]]
+[[ -f "$attestation_dest" && ! -L "$attestation_dest" ]]
 [[ $(stat -c '%a' "$helper_dest") == 755 ]]
 [[ $(stat -c '%a' "$sudoers_dest") == 440 ]]
+[[ $(stat -c '%a' "$attestation_dest") == 400 ]]
 [[ "sha256:$(sha256sum "$helper_dest" | awk '{print $1}')" == "$helper_sha" ]]
 [[ "sha256:$(sha256sum "$sudoers_dest" | awk '{print $1}')" == "$sudoers_sha" ]]
 [[ $(stat -c '%u:%g' "$helper_dest") == "$(id -u):$(id -g)" ]]
 [[ $(stat -c '%u:%g' "$sudoers_dest") == "$(id -u):$(id -g)" ]]
 
-guest_probe_installer_main install "${installer_args[@]}" >"$workspace/install-2.json"
+guest_probe_installer_main install "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/install-2.json"
 cmp -s "$workspace/install-1.json" "$workspace/install-2.json"
 guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/rollback-1.json"
 [[ ! -e "$helper_dest" && ! -L "$helper_dest" ]]
 [[ ! -e "$sudoers_dest" && ! -L "$sudoers_dest" ]]
+[[ ! -e "$attestation_dest" && ! -L "$attestation_dest" ]]
 guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/rollback-2.json"
 cmp -s "$workspace/rollback-1.json" "$workspace/rollback-2.json"
 grep -q '"status":"rolled-back"' "$workspace/rollback-1.json"
@@ -695,23 +899,29 @@ def test_installer_probe_restores_exact_present_preimages() -> None:
         r"""
 helper_dest="$test_root/usr/local/libexec/oci-admin-guest-probe-v1"
 sudoers_dest="$test_root/etc/sudoers.d/102-oci-admin-guest-probe-v1"
-mkdir -p "$(dirname "$helper_dest")" "$(dirname "$sudoers_dest")"
+attestation_dest="$test_root/etc/oci-admin-guest-probe-v1/attestation.json"
+mkdir -p "$(dirname "$helper_dest")" "$(dirname "$sudoers_dest")" "$(dirname "$attestation_dest")"
 printf '#!/bin/sh\nexit 7\n' >"$helper_dest"
 printf 'Defaults env_reset\n' >"$sudoers_dest"
+printf '{"legacy":true}\n' >"$attestation_dest"
 chmod 0700 "$helper_dest"
 chmod 0400 "$sudoers_dest"
+chmod 0600 "$attestation_dest"
 before_helper=$(sha256sum "$helper_dest" | awk '{print $1}')
 before_sudoers=$(sha256sum "$sudoers_dest" | awk '{print $1}')
+before_attestation=$(sha256sum "$attestation_dest" | awk '{print $1}')
 
 export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
 export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
 source "$installer"
-guest_probe_installer_main install "${installer_args[@]}" >/dev/null
+guest_probe_installer_main install "${installer_args[@]}" <"$workspace/attestation.json" >/dev/null
 guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/rollback.json"
 [[ $(sha256sum "$helper_dest" | awk '{print $1}') == "$before_helper" ]]
 [[ $(sha256sum "$sudoers_dest" | awk '{print $1}') == "$before_sudoers" ]]
+[[ $(sha256sum "$attestation_dest" | awk '{print $1}') == "$before_attestation" ]]
 [[ $(stat -c '%a' "$helper_dest") == 700 ]]
 [[ $(stat -c '%a' "$sudoers_dest") == 400 ]]
+[[ $(stat -c '%a' "$attestation_dest") == 600 ]]
 grep -q '"state":"PRESENT"' "$workspace/rollback.json"
 """
     )
@@ -721,7 +931,7 @@ grep -q '"state":"PRESENT"' "$workspace/rollback.json"
 def test_installer_probe_failure_at_every_stage_restores_absence() -> None:
     result = _installer_harness(
         r"""
-for stage in preimage helper-stage sudoers-stage helper-replace sudoers-replace global-visudo readback; do
+for stage in preimage helper-stage attestation-stage sudoers-stage helper-replace attestation-replace sudoers-replace global-visudo readback; do
   stage_root="$workspace/root-$stage"
   mkdir -p "$stage_root"
   (
@@ -730,13 +940,14 @@ for stage in preimage helper-stage sudoers-stage helper-replace sudoers-replace 
     export OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE="$stage"
     source "$installer"
     set +e
-    guest_probe_installer_main install "${installer_args[@]}" >"$workspace/$stage.json" 2>"$workspace/$stage.err"
+    guest_probe_installer_main install "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/$stage.json" 2>"$workspace/$stage.err"
     rc=$?
     set -e
     [[ $rc -eq 2 ]]
   )
   [[ ! -e "$stage_root/usr/local/libexec/oci-admin-guest-probe-v1" ]]
   [[ ! -e "$stage_root/etc/sudoers.d/102-oci-admin-guest-probe-v1" ]]
+  [[ ! -e "$stage_root/etc/oci-admin-guest-probe-v1/attestation.json" ]]
   grep -q '"status":"failed-restored"' "$workspace/$stage.json" || {
     printf 'missing failed receipt for %s\n' "$stage" >&2
     cat "$workspace/$stage.json" >&2
@@ -763,6 +974,8 @@ def test_installer_probe_denies_public_path_command_and_environment_override() -
         "sha256:" + "1" * 64,
         "--expected-sudoers-sha256",
         "sha256:" + "2" * 64,
+        "--expected-attestation-sha256",
+        "sha256:" + "3" * 64,
         "--host-id",
         "atius-srv-1",
         "--rollback-receipt-id",
@@ -801,13 +1014,56 @@ export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
 export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
 source "$installer"
 set +e
-guest_probe_installer_main preview "${installer_args[@]}" >"$workspace/out" 2>"$workspace/err"
+guest_probe_installer_main preview "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/out" 2>"$workspace/err"
 rc=$?
 set -e
 [[ $rc -eq 2 ]]
 [[ ! -s "$workspace/out" ]]
 grep -q '^oci-admin-guest-probe-installer-v1: rejected$' "$workspace/err"
 [[ -z $(find "$test_root" -mindepth 1 -print -quit) ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_denies_symlink_parent_and_control_dir_drift() -> None:
+    result = _installer_harness(
+        r"""
+outside="$workspace/outside"
+mkdir -p "$outside"
+mkdir -p "$test_root"
+ln -s "$outside" "$test_root/usr"
+(
+  export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+  export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+  source "$installer"
+  set +e
+  guest_probe_installer_main preview "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/symlink.out" 2>"$workspace/symlink.err"
+  rc=$?
+  set -e
+  [[ $rc -eq 2 ]]
+)
+[[ ! -s "$workspace/symlink.out" ]]
+[[ -z $(find "$outside" -mindepth 1 -print -quit) ]]
+rm "$test_root/usr"
+
+state="$test_root/var/lib/oci-admin-guest-probe-v1"
+mkdir -p "$state"
+chmod 0777 "$state"
+(
+  export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+  export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+  source "$installer"
+  set +e
+  guest_probe_installer_main install "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/state.out" 2>"$workspace/state.err"
+  rc=$?
+  set -e
+  [[ $rc -eq 2 ]]
+)
+[[ ! -s "$workspace/state.out" ]]
+[[ ! -e "$test_root/usr/local/libexec/oci-admin-guest-probe-v1" ]]
+[[ ! -e "$test_root/etc/sudoers.d/102-oci-admin-guest-probe-v1" ]]
+[[ ! -e "$test_root/etc/oci-admin-guest-probe-v1/attestation.json" ]]
 """
     )
     assert result.returncode == 0, result.stderr or result.stdout
