@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 import importlib.util
+import hashlib
 import io
 import json
 import os
 from pathlib import Path
+import subprocess
+import textwrap
 from typing import Any
 
 import pytest
@@ -15,6 +18,14 @@ OCI_ADMIN_REPO = OMNI_REPO.parent / "oci-admin"
 PROBE_PATH = (
     OMNI_REPO
     / "modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py"
+)
+INSTALLER_PATH = (
+    OMNI_REPO
+    / "modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh"
+)
+SUDOERS_PATH = (
+    OMNI_REPO
+    / "modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers"
 )
 MANIFEST_ROOT = OCI_ADMIN_REPO / "app/guest_runbooks/phase25"
 MANIFEST_FILES = {
@@ -27,6 +38,8 @@ MANIFEST_FILES = {
 }
 
 assert PROBE_PATH.is_file(), "Phase 25 guest probe source has not been implemented"
+assert INSTALLER_PATH.is_file(), "Phase 25 guest probe installer has not been implemented"
+assert SUDOERS_PATH.is_file(), "Phase 25 guest probe sudoers has not been implemented"
 SPEC = importlib.util.spec_from_file_location("oci_admin_guest_probe_v1", PROBE_PATH)
 assert SPEC and SPEC.loader
 probe = importlib.util.module_from_spec(SPEC)
@@ -525,3 +538,260 @@ def test_probe_output_is_single_compact_deterministic_sentinel() -> None:
     assert len(first[1].encode()) < 32768
     assert " " not in first[1].split(" ", 1)[1]
     assert os.linesep not in first[1].rstrip("\n")
+
+
+def _wsl_path(path: Path) -> str:
+    resolved = path.resolve()
+    drive = resolved.drive.rstrip(":").lower()
+    relative = resolved.as_posix().split(":", 1)[1].lstrip("/")
+    return f"/mnt/{drive}/{relative}"
+
+
+def _bash(command: str, *args: str) -> subprocess.CompletedProcess[str]:
+    return subprocess.run(
+        ["bash", "-lc", command, "phase25-test", *args],
+        check=False,
+        text=True,
+        capture_output=True,
+        timeout=60,
+    )
+
+
+def _installer_harness(body: str) -> subprocess.CompletedProcess[str]:
+    setup = r"""
+set -euo pipefail
+workspace=$(mktemp -d /tmp/oci-admin-guest-probe-test.XXXXXX)
+case "$workspace" in /tmp/oci-admin-guest-probe-test.*) ;; *) exit 91 ;; esac
+trap 'rm -rf -- "$workspace"' EXIT
+source_repo="$workspace/source"
+test_root="$workspace/root"
+mkdir -p "$source_repo/modules/fleet-control-plane/tools"
+mkdir -p "$source_repo/modules/fleet-control-plane/scripts"
+mkdir -p "$source_repo/modules/fleet-control-plane/configs"
+mkdir -p "$test_root"
+cp -- "$1" "$source_repo/modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py"
+cp -- "$2" "$source_repo/modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh"
+cp -- "$3" "$source_repo/modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers"
+git -C "$source_repo" init -q
+git -C "$source_repo" config user.email phase25-test@atius.invalid
+git -C "$source_repo" config user.name phase25-test
+git -C "$source_repo" config commit.gpgsign false
+git -C "$source_repo" add modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py
+git -C "$source_repo" add modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh
+git -C "$source_repo" add modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers
+git -C "$source_repo" commit -q -m fixture
+source_commit=$(git -C "$source_repo" rev-parse HEAD)
+helper_sha="sha256:$(sha256sum "$source_repo/modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py" | awk '{print $1}')"
+sudoers_sha="sha256:$(sha256sum "$source_repo/modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers" | awk '{print $1}')"
+installer="$source_repo/modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh"
+installer_args=(
+  --expected-source-commit "$source_commit"
+  --expected-helper-sha256 "$helper_sha"
+  --expected-sudoers-sha256 "$sudoers_sha"
+  --host-id atius-srv-1
+  --rollback-receipt-id phase25-test-receipt
+)
+"""
+    return _bash(
+        setup + "\n" + textwrap.dedent(body),
+        _wsl_path(PROBE_PATH),
+        _wsl_path(INSTALLER_PATH),
+        _wsl_path(SUDOERS_PATH),
+    )
+
+
+def test_installer_probe_contract_is_closed_and_sudoers_is_least_privilege() -> None:
+    installer = INSTALLER_PATH.read_text(encoding="utf-8")
+    sudoers = SUDOERS_PATH.read_text(encoding="utf-8")
+
+    assert "preview|install|rollback" in installer
+    assert "--expected-source-commit" in installer
+    assert "--expected-helper-sha256" in installer
+    assert "--expected-sudoers-sha256" in installer
+    assert "--host-id" in installer
+    assert "--rollback-receipt-id" in installer
+    assert "--root" not in installer
+    assert "--source" not in installer
+    assert "/usr/local/libexec/oci-admin-guest-probe-v1" in installer
+    assert "/etc/sudoers.d/102-oci-admin-guest-probe-v1" in installer
+    assert "visudo" in installer and "-cf" in installer and "-c" in installer
+    assert "root:root" in installer
+    assert "0755" in installer and "0440" in installer
+    assert "ABSENT" in installer
+
+    assert "Defaults:ocarun env_reset" in sudoers
+    assert "Defaults:ocarun !setenv" in sudoers
+    assert "ocarun ALL=(root) NOPASSWD:" in sudoers
+    assert "/usr/local/libexec/oci-admin-guest-probe-v1 execute" in sudoers
+    assert "/bin/sh" not in sudoers
+    assert "/bin/bash" not in sudoers
+    assert "/usr/bin/python" not in sudoers
+    for runbook_id, filename in MANIFEST_FILES.items():
+        manifest = json.loads((MANIFEST_ROOT / filename).read_text(encoding="utf-8"))
+        assert runbook_id in sudoers
+        assert manifest["digest"] in sudoers
+
+    syntax = _bash("visudo -cf \"$1\"", _wsl_path(SUDOERS_PATH))
+    assert syntax.returncode == 0, syntax.stderr
+
+
+def test_installer_probe_preview_install_rollback_and_idempotency() -> None:
+    result = _installer_harness(
+        r"""
+export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+source "$installer"
+before=$(find "$test_root" -mindepth 1 -print -quit)
+guest_probe_installer_main preview "${installer_args[@]}" >"$workspace/preview.json"
+after=$(find "$test_root" -mindepth 1 -print -quit)
+[[ -z "$before" && -z "$after" ]]
+grep -q '^ATIUS_GUEST_PROBE_INSTALL_RECEIPT_V1 ' "$workspace/preview.json"
+
+guest_probe_installer_main install "${installer_args[@]}" >"$workspace/install-1.json"
+helper_dest="$test_root/usr/local/libexec/oci-admin-guest-probe-v1"
+sudoers_dest="$test_root/etc/sudoers.d/102-oci-admin-guest-probe-v1"
+[[ -f "$helper_dest" && ! -L "$helper_dest" ]]
+[[ -f "$sudoers_dest" && ! -L "$sudoers_dest" ]]
+[[ $(stat -c '%a' "$helper_dest") == 755 ]]
+[[ $(stat -c '%a' "$sudoers_dest") == 440 ]]
+[[ "sha256:$(sha256sum "$helper_dest" | awk '{print $1}')" == "$helper_sha" ]]
+[[ "sha256:$(sha256sum "$sudoers_dest" | awk '{print $1}')" == "$sudoers_sha" ]]
+[[ $(stat -c '%u:%g' "$helper_dest") == "$(id -u):$(id -g)" ]]
+[[ $(stat -c '%u:%g' "$sudoers_dest") == "$(id -u):$(id -g)" ]]
+
+guest_probe_installer_main install "${installer_args[@]}" >"$workspace/install-2.json"
+cmp -s "$workspace/install-1.json" "$workspace/install-2.json"
+guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/rollback-1.json"
+[[ ! -e "$helper_dest" && ! -L "$helper_dest" ]]
+[[ ! -e "$sudoers_dest" && ! -L "$sudoers_dest" ]]
+guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/rollback-2.json"
+cmp -s "$workspace/rollback-1.json" "$workspace/rollback-2.json"
+grep -q '"status":"rolled-back"' "$workspace/rollback-1.json"
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_restores_exact_present_preimages() -> None:
+    result = _installer_harness(
+        r"""
+helper_dest="$test_root/usr/local/libexec/oci-admin-guest-probe-v1"
+sudoers_dest="$test_root/etc/sudoers.d/102-oci-admin-guest-probe-v1"
+mkdir -p "$(dirname "$helper_dest")" "$(dirname "$sudoers_dest")"
+printf '#!/bin/sh\nexit 7\n' >"$helper_dest"
+printf 'Defaults env_reset\n' >"$sudoers_dest"
+chmod 0700 "$helper_dest"
+chmod 0400 "$sudoers_dest"
+before_helper=$(sha256sum "$helper_dest" | awk '{print $1}')
+before_sudoers=$(sha256sum "$sudoers_dest" | awk '{print $1}')
+
+export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+source "$installer"
+guest_probe_installer_main install "${installer_args[@]}" >/dev/null
+guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/rollback.json"
+[[ $(sha256sum "$helper_dest" | awk '{print $1}') == "$before_helper" ]]
+[[ $(sha256sum "$sudoers_dest" | awk '{print $1}') == "$before_sudoers" ]]
+[[ $(stat -c '%a' "$helper_dest") == 700 ]]
+[[ $(stat -c '%a' "$sudoers_dest") == 400 ]]
+grep -q '"state":"PRESENT"' "$workspace/rollback.json"
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_failure_at_every_stage_restores_absence() -> None:
+    result = _installer_harness(
+        r"""
+for stage in preimage helper-stage sudoers-stage helper-replace sudoers-replace global-visudo readback; do
+  stage_root="$workspace/root-$stage"
+  mkdir -p "$stage_root"
+  (
+    export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+    export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$stage_root"
+    export OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE="$stage"
+    source "$installer"
+    set +e
+    guest_probe_installer_main install "${installer_args[@]}" >"$workspace/$stage.json" 2>"$workspace/$stage.err"
+    rc=$?
+    set -e
+    [[ $rc -eq 2 ]]
+  )
+  [[ ! -e "$stage_root/usr/local/libexec/oci-admin-guest-probe-v1" ]]
+  [[ ! -e "$stage_root/etc/sudoers.d/102-oci-admin-guest-probe-v1" ]]
+  grep -q '"status":"failed-restored"' "$workspace/$stage.json"
+  grep -q '^oci-admin-guest-probe-installer-v1: rejected$' "$workspace/$stage.err"
+done
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_denies_public_path_command_and_environment_override() -> None:
+    script = _wsl_path(INSTALLER_PATH)
+    valid = [
+        "preview",
+        "--expected-source-commit",
+        "0" * 40,
+        "--expected-helper-sha256",
+        "sha256:" + "1" * 64,
+        "--expected-sudoers-sha256",
+        "sha256:" + "2" * 64,
+        "--host-id",
+        "atius-srv-1",
+        "--rollback-receipt-id",
+        "phase25-public-deny",
+    ]
+    path_override = _bash(
+        '"$1" "${@:2}" --root /tmp/caller',
+        script,
+        *valid,
+    )
+    assert path_override.returncode == 64
+    assert "caller" not in path_override.stdout
+
+    command_override = _bash(
+        '"$1" "${@:2}" --command id',
+        script,
+        *valid,
+    )
+    assert command_override.returncode == 64
+    assert "uid=" not in command_override.stdout + command_override.stderr
+
+    environment_override = _bash(
+        'OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1 '
+        'OCI_ADMIN_GUEST_PROBE_TEST_ROOT=/tmp/caller "$1" "${@:2}"',
+        script,
+        *valid,
+    )
+    assert environment_override.returncode == 64
+
+
+def test_installer_probe_rejects_dirty_source_identity() -> None:
+    result = _installer_harness(
+        r"""
+printf '\n# dirty\n' >>"$source_repo/modules/fleet-control-plane/configs/102-oci-admin-guest-probe-v1.sudoers"
+export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+source "$installer"
+set +e
+guest_probe_installer_main preview "${installer_args[@]}" >"$workspace/out" 2>"$workspace/err"
+rc=$?
+set -e
+[[ $rc -eq 2 ]]
+[[ ! -s "$workspace/out" ]]
+grep -q '^oci-admin-guest-probe-installer-v1: rejected$' "$workspace/err"
+[[ -z $(find "$test_root" -mindepth 1 -print -quit) ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_source_digests_match_files() -> None:
+    helper_digest = "sha256:" + hashlib.sha256(PROBE_PATH.read_bytes()).hexdigest()
+    sudoers_digest = "sha256:" + hashlib.sha256(SUDOERS_PATH.read_bytes()).hexdigest()
+    assert helper_digest == probe.self_digest()
+    assert helper_digest in INSTALLER_PATH.read_text(encoding="utf-8") or (
+        "--expected-helper-sha256" in INSTALLER_PATH.read_text(encoding="utf-8")
+    )
+    assert sudoers_digest.startswith("sha256:")
