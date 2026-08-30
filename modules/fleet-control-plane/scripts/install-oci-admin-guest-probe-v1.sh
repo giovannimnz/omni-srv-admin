@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # modes: preview|install|rollback
-# Production installs are fixed root:root 0755 (helper) and root:root 0440 (sudoers).
+# Production installs are fixed root:root 0755 (helper), root:root 0440 (sudoers),
+# and root:root 0400 (host attestation).
 # Fixed destinations: /usr/local/libexec/oci-admin-guest-probe-v1 and
-# /etc/sudoers.d/102-oci-admin-guest-probe-v1.
+# /etc/sudoers.d/102-oci-admin-guest-probe-v1 plus
+# /etc/oci-admin-guest-probe-v1/attestation.json.
 set -euo pipefail
 set +x
 IFS=$'\n\t'
@@ -13,7 +15,7 @@ SANITIZED_ERROR='oci-admin-guest-probe-installer-v1: rejected'
 
 _usage() {
   printf '%s\n' \
-    'usage: install-oci-admin-guest-probe-v1.sh <preview|install|rollback> --expected-source-commit COMMIT --expected-helper-sha256 SHA256 --expected-sudoers-sha256 SHA256 --host-id HOST --rollback-receipt-id ID' >&2
+    'usage: install-oci-admin-guest-probe-v1.sh <preview|install|rollback> --expected-source-commit COMMIT --expected-helper-sha256 SHA256 --expected-sudoers-sha256 SHA256 --expected-attestation-sha256 SHA256 --host-id HOST --rollback-receipt-id ID' >&2
   return 64
 }
 
@@ -39,7 +41,7 @@ _script_dir=$(unset CDPATH; cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)
 _repo_root=$(cd -- "$_script_dir/../../.." && pwd -P)
 
 guest_probe_installer_main() {
-  (($# == 11)) || { _usage; return 64; }
+  (($# == 13)) || { _usage; return 64; }
   local mode=$1
   shift
   [[ $mode == preview || $mode == install || $mode == rollback ]] || { _usage; return 64; }
@@ -49,14 +51,17 @@ guest_probe_installer_main() {
   local expected_helper_sha256=$4
   [[ $5 == --expected-sudoers-sha256 ]] || { _usage; return 64; }
   local expected_sudoers_sha256=$6
-  [[ $7 == --host-id ]] || { _usage; return 64; }
-  local host_id=$8
-  [[ $9 == --rollback-receipt-id ]] || { _usage; return 64; }
-  local rollback_receipt_id=${10}
+  [[ $7 == --expected-attestation-sha256 ]] || { _usage; return 64; }
+  local expected_attestation_sha256=$8
+  [[ $9 == --host-id ]] || { _usage; return 64; }
+  local host_id=${10}
+  [[ ${11} == --rollback-receipt-id ]] || { _usage; return 64; }
+  local rollback_receipt_id=${12}
 
   [[ $expected_source_commit =~ ^[0-9a-f]{40}$ ]] || { _usage; return 64; }
   [[ $expected_helper_sha256 =~ ^sha256:[0-9a-f]{64}$ ]] || { _usage; return 64; }
   [[ $expected_sudoers_sha256 =~ ^sha256:[0-9a-f]{64}$ ]] || { _usage; return 64; }
+  [[ $expected_attestation_sha256 =~ ^sha256:[0-9a-f]{64}$ ]] || { _usage; return 64; }
   case $host_id in
     atius-srv-1|atius-srv-2|atius-srv-3|atius-srv-4|horistic-srv) ;;
     *) _usage; return 64 ;;
@@ -74,10 +79,11 @@ guest_probe_installer_main() {
     "$expected_source_commit" \
     "$expected_helper_sha256" \
     "$expected_sudoers_sha256" \
+    "$expected_attestation_sha256" \
     "$host_id" \
     "$rollback_receipt_id" \
     "$_internal_test" \
-    "$_failure_stage" <<'PY'
+    "$_failure_stage" 3<&0 <<'PY'
 from __future__ import annotations
 
 import ast
@@ -102,6 +108,7 @@ from typing import Any
     expected_source_commit,
     expected_helper_sha256,
     expected_sudoers_sha256,
+    expected_attestation_sha256,
     host_id,
     receipt_id,
     internal_test_raw,
@@ -114,8 +121,10 @@ ALLOWED_FAILURE_STAGES = {
     "",
     "preimage",
     "helper-stage",
+    "attestation-stage",
     "sudoers-stage",
     "helper-replace",
+    "attestation-replace",
     "sudoers-replace",
     "global-visudo",
     "readback",
@@ -186,6 +195,8 @@ def fsync_parent(path: Path) -> None:
 
 def atomic_bytes(path: Path, data: bytes, mode_value: int, uid: int, gid: int) -> None:
     ensure_safe_chain(path.parent, destination_root, create=True)
+    if lexists(path):
+        regular_file(path, "atomic target")
     descriptor, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     temporary = Path(temporary_name)
     try:
@@ -248,13 +259,41 @@ def validate_python(path: Path) -> None:
         raise InstallerError("helper syntax validation failed") from exc
 
 
+def validate_python_bytes(data: bytes) -> None:
+    try:
+        ast.parse(data, filename="oci-admin-guest-probe-v1.py")
+    except SyntaxError as exc:
+        raise InstallerError("helper syntax validation failed") from exc
+
+
 def validate_sudoers(path: Path) -> None:
     run_checked(["/usr/sbin/visudo", "-cf", str(path)])
 
 
+def validate_sudoers_bytes(data: bytes) -> None:
+    descriptor, name = tempfile.mkstemp(prefix="oci-admin-guest-probe-sudoers.")
+    temporary = Path(name)
+    try:
+        with os.fdopen(descriptor, "wb", closefd=True) as stream:
+            stream.write(data)
+            stream.flush()
+            os.fsync(stream.fileno())
+        descriptor = -1
+        os.chmod(temporary, 0o440)
+        validate_sudoers(temporary)
+    finally:
+        if descriptor >= 0:
+            os.close(descriptor)
+        temporary.unlink(missing_ok=True)
+
+
 def validate_global_sudoers() -> None:
     if internal_test:
-        validate_sudoers(sudoers_destination if sudoers_destination.is_file() else sudoers_source)
+        if lexists(sudoers_destination):
+            regular_file(sudoers_destination, "installed sudoers")
+            validate_sudoers(sudoers_destination)
+        else:
+            validate_sudoers(sudoers_source)
     else:
         run_checked(["/usr/sbin/visudo", "-c"])
 
@@ -267,7 +306,44 @@ def git_output(arguments: list[str]) -> str:
         raise InstallerError("source git output invalid") from exc
 
 
-def verify_sources() -> None:
+def read_pinned_source(path: Path, label: str) -> bytes:
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
+    except OSError as exc:
+        raise InstallerError(f"{label} unavailable") from exc
+    try:
+        before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or before.st_nlink != 1
+            or not 1 <= before.st_size <= 1048576
+        ):
+            raise InstallerError(f"{label} identity drift")
+        chunks: list[bytes] = []
+        remaining = 1048577
+        while remaining > 0:
+            chunk = os.read(descriptor, min(65536, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        if remaining <= 0:
+            raise InstallerError(f"{label} is oversized")
+        after = os.fstat(descriptor)
+        current = path.lstat()
+        if (
+            (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns, before.st_ctime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns, after.st_ctime_ns)
+            or (current.st_dev, current.st_ino) != (after.st_dev, after.st_ino)
+        ):
+            raise InstallerError(f"{label} changed during verification")
+        return b"".join(chunks)
+    finally:
+        os.close(descriptor)
+
+
+def verify_sources() -> tuple[bytes, bytes]:
     for source in (helper_source, sudoers_source, installer_source):
         regular_file(source, "managed source")
     head = git_output(["rev-parse", "--verify", "HEAD"])
@@ -297,15 +373,57 @@ def verify_sources() -> None:
     )
     if dirty:
         raise InstallerError("managed source is dirty")
-    if digest_file(helper_source) != expected_helper_sha256:
+    helper_bytes = read_pinned_source(helper_source, "helper source")
+    sudoers_bytes = read_pinned_source(sudoers_source, "sudoers source")
+    if digest_bytes(helper_bytes) != expected_helper_sha256:
         raise InstallerError("helper source digest mismatch")
-    if digest_file(sudoers_source) != expected_sudoers_sha256:
+    if digest_bytes(sudoers_bytes) != expected_sudoers_sha256:
         raise InstallerError("sudoers source digest mismatch")
-    validate_python(helper_source)
-    validate_sudoers(sudoers_source)
+    validate_python_bytes(helper_bytes)
+    validate_sudoers_bytes(sudoers_bytes)
+    return helper_bytes, sudoers_bytes
+
+
+def read_attestation_input() -> bytes:
+    chunks: list[bytes] = []
+    remaining = 65537
+    while remaining > 0:
+        chunk = os.read(3, min(65536, remaining))
+        if not chunk:
+            break
+        chunks.append(chunk)
+        remaining -= len(chunk)
+    if remaining <= 0:
+        raise InstallerError("attestation input is oversized")
+    raw = b"".join(chunks)
+    if not raw:
+        raise InstallerError("attestation input is missing")
+    return raw
+
+
+def validate_attestation_input(raw: bytes, helper_bytes: bytes) -> tuple[bytes, str]:
+    namespace: dict[str, Any] = {
+        "__name__": "oci_admin_guest_probe_validator",
+        "__file__": str(helper_source),
+    }
+    try:
+        exec(compile(helper_bytes, str(helper_source), "exec"), namespace)
+        binding = namespace["validate_attestation_bytes"](
+            raw,
+            expected_digest=expected_attestation_sha256,
+            expected_target=host_id,
+        )
+        canonical_bytes = binding["canonical_bytes"]
+        digest = binding["digest"]
+    except BaseException as exc:
+        raise InstallerError("attestation validation failed") from exc
+    if not isinstance(canonical_bytes, bytes) or digest != expected_attestation_sha256:
+        raise InstallerError("attestation validation failed")
+    return canonical_bytes, digest_bytes(canonical_bytes)
 
 
 def preimage(path: Path, label: str, backup_directory: Path | None) -> dict[str, Any]:
+    ensure_safe_chain(path.parent, destination_root, create=False)
     if not lexists(path):
         return {"state": "ABSENT"}
     info = regular_file(path, f"{label} preimage")
@@ -387,6 +505,7 @@ def make_receipt(
     preimages: dict[str, Any],
     readback: dict[str, Any],
     rollback_status: str,
+    attestation_file_sha256: str,
 ) -> dict[str, Any]:
     body = {
         "schema": "atius.oci-admin-guest-probe-install-receipt/v1",
@@ -398,6 +517,8 @@ def make_receipt(
         "sources": {
             "helper_sha256": expected_helper_sha256,
             "sudoers_sha256": expected_sudoers_sha256,
+            "attestation_sha256": expected_attestation_sha256,
+            "attestation_file_sha256": attestation_file_sha256,
         },
         "preimages": preimages,
         "readback": readback,
@@ -431,6 +552,8 @@ def load_state() -> dict[str, Any]:
         "receipt_id",
         "helper_sha256",
         "sudoers_sha256",
+        "attestation_sha256",
+        "attestation_file_sha256",
         "preimages",
         "install_receipt",
         "rollback_receipt",
@@ -443,6 +566,7 @@ def load_state() -> dict[str, Any]:
         payload["receipt_id"],
         payload["helper_sha256"],
         payload["sudoers_sha256"],
+        payload["attestation_sha256"],
     )
     expected = (
         host_id,
@@ -450,10 +574,13 @@ def load_state() -> dict[str, Any]:
         receipt_id,
         expected_helper_sha256,
         expected_sudoers_sha256,
+        expected_attestation_sha256,
     )
     if identity != expected:
         raise InstallerError("install state identity mismatch")
-    if set(payload["preimages"]) != {"helper", "sudoers"}:
+    if not re.fullmatch(r"sha256:[0-9a-f]{64}", str(payload["attestation_file_sha256"])):
+        raise InstallerError("install state attestation file digest is invalid")
+    if set(payload["preimages"]) != {"helper", "sudoers", "attestation"}:
         raise InstallerError("install state preimages invalid")
     return payload
 
@@ -461,7 +588,8 @@ def load_state() -> dict[str, Any]:
 def store_receipt(receipt: dict[str, Any]) -> None:
     digest = receipt["receipt_digest"].removeprefix("sha256:")
     receipt_path = receipt_directory / f"receipt-{digest}.json"
-    if receipt_path.exists():
+    if lexists(receipt_path):
+        regular_file(receipt_path, "stored receipt")
         if receipt_path.read_bytes() != canonical(receipt) + b"\n":
             raise InstallerError("receipt digest collision")
         return
@@ -493,6 +621,7 @@ sudoers_source = repo_root / "modules/fleet-control-plane/configs/102-oci-admin-
 installer_source = repo_root / "modules/fleet-control-plane/scripts/install-oci-admin-guest-probe-v1.sh"
 helper_destination = destination_root / "usr/local/libexec/oci-admin-guest-probe-v1"
 sudoers_destination = destination_root / "etc/sudoers.d/102-oci-admin-guest-probe-v1"
+attestation_destination = destination_root / "etc/oci-admin-guest-probe-v1/attestation.json"
 state_root = destination_root / "var/lib/oci-admin-guest-probe-v1"
 receipt_directory = state_root / "receipts" / receipt_id
 backup_directory = receipt_directory / "preimages"
@@ -502,10 +631,14 @@ install_gid = destination_root.stat().st_gid if internal_test else 0
 
 
 def preview() -> int:
-    verify_sources()
+    helper_bytes, _ = verify_sources()
+    _, attestation_file_sha256 = validate_attestation_input(
+        read_attestation_input(), helper_bytes
+    )
     preimages = {
         "helper": preimage(helper_destination, "helper", None),
         "sudoers": preimage(sudoers_destination, "sudoers", None),
+        "attestation": preimage(attestation_destination, "attestation", None),
     }
     receipt = make_receipt(
         receipt_mode="preview",
@@ -513,53 +646,98 @@ def preview() -> int:
         preimages=preimages,
         readback={},
         rollback_status="not-run",
+        attestation_file_sha256=attestation_file_sha256,
     )
     emit(receipt)
     return 0
 
 
 def prepare_control_plane() -> int:
-    ensure_safe_chain(state_root, destination_root, create=True, final_mode=0o700)
-    os.chmod(state_root, 0o700)
-    os.chown(state_root, install_uid, install_gid)
-    ensure_safe_chain(receipt_directory, destination_root, create=True, final_mode=0o700)
-    os.chmod(receipt_directory, 0o700)
-    os.chown(receipt_directory, install_uid, install_gid)
-    ensure_safe_chain(backup_directory, destination_root, create=True, final_mode=0o700)
-    os.chmod(backup_directory, 0o700)
-    os.chown(backup_directory, install_uid, install_gid)
+    def ensure_control_directory(path: Path) -> None:
+        existed = lexists(path)
+        ensure_safe_chain(path, destination_root, create=True, final_mode=0o700)
+        info = path.lstat()
+        if (
+            stat.S_ISLNK(info.st_mode)
+            or not stat.S_ISDIR(info.st_mode)
+            or (existed and stat.S_IMODE(info.st_mode) != 0o700)
+            or (existed and (info.st_uid != install_uid or info.st_gid != install_gid))
+        ):
+            raise InstallerError("control directory identity drift")
+        if not existed:
+            os.chmod(path, 0o700)
+            os.chown(path, install_uid, install_gid)
+
+    ensure_control_directory(state_root)
+    ensure_control_directory(state_root / "receipts")
+    ensure_control_directory(receipt_directory)
+    ensure_control_directory(backup_directory)
     lock_path = state_root / "installer.lock"
+    lock_existed = lexists(lock_path)
     descriptor = os.open(
         lock_path,
         os.O_RDWR | os.O_CREAT | getattr(os, "O_NOFOLLOW", 0),
         0o600,
     )
+    lock_info = os.fstat(descriptor)
+    if (
+        not stat.S_ISREG(lock_info.st_mode)
+        or lock_info.st_nlink != 1
+        or (
+            lock_existed
+            and (
+                stat.S_IMODE(lock_info.st_mode) != 0o600
+                or lock_info.st_uid != install_uid
+                or lock_info.st_gid != install_gid
+            )
+        )
+    ):
+        os.close(descriptor)
+        raise InstallerError("control lock identity drift")
     os.fchmod(descriptor, 0o600)
     os.fchown(descriptor, install_uid, install_gid)
     return descriptor
 
 
 def install() -> int:
-    verify_sources()
+    helper_source_bytes, sudoers_source_bytes = verify_sources()
+    attestation_source_bytes, attestation_file_sha256 = validate_attestation_input(
+        read_attestation_input(), helper_source_bytes
+    )
     lock_descriptor = prepare_control_plane()
     with os.fdopen(lock_descriptor, "rb+", closefd=True):
         fcntl.flock(lock_descriptor, fcntl.LOCK_EX)
-        if state_path.exists():
+        if lexists(state_path):
             state = load_state()
             if state["status"] == "installed":
+                if attestation_file_sha256 != state["attestation_file_sha256"]:
+                    raise InstallerError("attestation receipt identity mismatch")
                 installed_readback(helper_destination, expected_helper_sha256, 0o755)
                 installed_readback(sudoers_destination, expected_sudoers_sha256, 0o440)
+                installed_readback(
+                    attestation_destination,
+                    state["attestation_file_sha256"],
+                    0o400,
+                )
                 emit(state["install_receipt"])
                 return 0
             if state["status"] in {"prepared", "failed-restored"}:
                 restore(helper_destination, state["preimages"]["helper"], backup_directory)
                 restore(sudoers_destination, state["preimages"]["sudoers"], backup_directory)
+                restore(
+                    attestation_destination,
+                    state["preimages"]["attestation"],
+                    backup_directory,
+                )
                 validate_global_sudoers()
             raise InstallerError("receipt is not reusable for install")
 
         preimages = {
             "helper": preimage(helper_destination, "helper", backup_directory),
             "sudoers": preimage(sudoers_destination, "sudoers", backup_directory),
+            "attestation": preimage(
+                attestation_destination, "attestation", backup_directory
+            ),
         }
         state = {
             "schema": 1,
@@ -569,27 +747,38 @@ def install() -> int:
             "receipt_id": receipt_id,
             "helper_sha256": expected_helper_sha256,
             "sudoers_sha256": expected_sudoers_sha256,
+            "attestation_sha256": expected_attestation_sha256,
+            "attestation_file_sha256": attestation_file_sha256,
             "preimages": preimages,
             "install_receipt": None,
             "rollback_receipt": None,
         }
         write_state(state)
         helper_stage: Path | None = None
+        attestation_stage: Path | None = None
         sudoers_stage: Path | None = None
         try:
             inject("preimage")
             helper_stage = stage_bytes(
                 helper_destination,
-                helper_source.read_bytes(),
+                helper_source_bytes,
                 0o755,
                 install_uid,
                 install_gid,
             )
             validate_python(helper_stage)
             inject("helper-stage")
+            attestation_stage = stage_bytes(
+                attestation_destination,
+                attestation_source_bytes,
+                0o400,
+                install_uid,
+                install_gid,
+            )
+            inject("attestation-stage")
             sudoers_stage = stage_bytes(
                 sudoers_destination,
-                sudoers_source.read_bytes(),
+                sudoers_source_bytes,
                 0o440,
                 install_uid,
                 install_gid,
@@ -600,6 +789,10 @@ def install() -> int:
             helper_stage = None
             fsync_parent(helper_destination)
             inject("helper-replace")
+            os.replace(attestation_stage, attestation_destination)
+            attestation_stage = None
+            fsync_parent(attestation_destination)
+            inject("attestation-replace")
             os.replace(sudoers_stage, sudoers_destination)
             sudoers_stage = None
             fsync_parent(sudoers_destination)
@@ -613,19 +806,32 @@ def install() -> int:
                 "sudoers": installed_readback(
                     sudoers_destination, expected_sudoers_sha256, 0o440
                 ),
+                "attestation": installed_readback(
+                    attestation_destination, attestation_file_sha256, 0o400
+                ),
             }
             inject("readback")
         except BaseException:
             if helper_stage is not None:
                 helper_stage.unlink(missing_ok=True)
+            if attestation_stage is not None:
+                attestation_stage.unlink(missing_ok=True)
             if sudoers_stage is not None:
                 sudoers_stage.unlink(missing_ok=True)
             restore(helper_destination, preimages["helper"], backup_directory)
             restore(sudoers_destination, preimages["sudoers"], backup_directory)
+            restore(
+                attestation_destination,
+                preimages["attestation"],
+                backup_directory,
+            )
             validate_global_sudoers()
             restored = {
                 "helper": restored_readback(helper_destination, preimages["helper"]),
                 "sudoers": restored_readback(sudoers_destination, preimages["sudoers"]),
+                "attestation": restored_readback(
+                    attestation_destination, preimages["attestation"]
+                ),
             }
             failure_receipt = make_receipt(
                 receipt_mode="install",
@@ -633,6 +839,7 @@ def install() -> int:
                 preimages=preimages,
                 readback=restored,
                 rollback_status="restored",
+                attestation_file_sha256=attestation_file_sha256,
             )
             state["status"] = "failed-restored"
             state["rollback_receipt"] = failure_receipt
@@ -647,6 +854,7 @@ def install() -> int:
             preimages=preimages,
             readback=readback,
             rollback_status="available",
+            attestation_file_sha256=attestation_file_sha256,
         )
         state["status"] = "installed"
         state["install_receipt"] = install_receipt
@@ -665,24 +873,43 @@ def rollback() -> int:
         if state["status"] == "rolled-back":
             restored_readback(helper_destination, state["preimages"]["helper"])
             restored_readback(sudoers_destination, state["preimages"]["sudoers"])
+            restored_readback(
+                attestation_destination, state["preimages"]["attestation"]
+            )
             emit(state["rollback_receipt"])
             return 0
         if state["status"] == "installed":
             installed_readback(helper_destination, expected_helper_sha256, 0o755)
             installed_readback(sudoers_destination, expected_sudoers_sha256, 0o440)
+            installed_readback(
+                attestation_destination,
+                state["attestation_file_sha256"],
+                0o400,
+            )
         elif state["status"] == "failed-restored":
             restored_readback(helper_destination, state["preimages"]["helper"])
             restored_readback(sudoers_destination, state["preimages"]["sudoers"])
+            restored_readback(
+                attestation_destination, state["preimages"]["attestation"]
+            )
         else:
             raise InstallerError("rollback state is invalid")
         state["status"] = "rolling-back"
         write_state(state)
         restore(helper_destination, state["preimages"]["helper"], backup_directory)
         restore(sudoers_destination, state["preimages"]["sudoers"], backup_directory)
+        restore(
+            attestation_destination,
+            state["preimages"]["attestation"],
+            backup_directory,
+        )
         validate_global_sudoers()
         readback = {
             "helper": restored_readback(helper_destination, state["preimages"]["helper"]),
             "sudoers": restored_readback(sudoers_destination, state["preimages"]["sudoers"]),
+            "attestation": restored_readback(
+                attestation_destination, state["preimages"]["attestation"]
+            ),
         }
         receipt = make_receipt(
             receipt_mode="rollback",
@@ -690,6 +917,7 @@ def rollback() -> int:
             preimages=state["preimages"],
             readback=readback,
             rollback_status="restored",
+            attestation_file_sha256=state["attestation_file_sha256"],
         )
         state["status"] = "rolled-back"
         state["rollback_receipt"] = receipt

@@ -20,6 +20,7 @@ VERSION = "1"
 SENTINEL = "ATIUS_RUNBOOK_RESULT_V1"
 MAX_RESULT_BYTES = 32768
 MAX_COMMAND_OUTPUT_BYTES = 131072
+MAX_ATTESTATION_BYTES = 65536
 MAX_COMMAND_TIMEOUT_SECONDS = 10
 TCP_TIMEOUT_SECONDS = 3
 SANITIZED_ERROR_LINE = "oci-admin-guest-probe-v1: rejected\n"
@@ -28,6 +29,8 @@ IP_BINARY = "/usr/sbin/ip"
 PODMAN_BINARY = "/usr/bin/podman"
 PING_BINARY = "/usr/bin/ping"
 DIG_BINARY = "/usr/bin/dig"
+GETENT_BINARY = "/usr/bin/getent"
+ATTESTATION_PATH = Path("/etc/oci-admin-guest-probe-v1/attestation.json")
 
 IP_ADDRESS_COMMAND = (IP_BINARY, "-j", "-4", "address", "show")
 IP_ROUTE_COMMAND = (IP_BINARY, "-j", "-4", "route", "show", "table", "all")
@@ -55,6 +58,13 @@ EXPECTED_HOST_ADDRESSES = {
     "atius-srv-4": "10.14.1.14",
     "horistic-srv": "10.21.1.21",
 }
+ATTESTED_PEER_ORDER = ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv")
+ATTESTED_PEER_PROFILES = {
+    "atius-srv-1": "atius1",
+    "atius-srv-2": "atius2",
+    "atius-srv-3": "atius3",
+    "horistic-srv": "horistic",
+}
 
 LOCKED_TCP_ENDPOINTS = (
     ("10.11.1.11", 53),
@@ -75,8 +85,14 @@ K3S_NETWORKS = (
     IPv4Network("10.43.0.0/16"),
 )
 K3S_INTERFACES = frozenset({"cni0", "flannel.1", "kube-ipvs0"})
+RFC1918_NETWORKS = (
+    IPv4Network("10.0.0.0/8"),
+    IPv4Network("172.16.0.0/12"),
+    IPv4Network("192.168.0.0/16"),
+)
 
 _DIGEST = re.compile(r"sha256:[0-9a-f]{64}")
+_COMMIT = re.compile(r"[0-9a-f]{40}(?:[0-9a-f]{24})?")
 _SAFE_NAME = re.compile(r"[A-Za-z0-9_.:-]{1,64}")
 _SAFE_PROTOCOL = re.compile(r"[A-Za-z0-9_.-]{1,32}")
 _SAFE_PODMAN_NAME = re.compile(r"[A-Za-z0-9_.-]{1,64}")
@@ -182,6 +198,7 @@ COREDNS_SCHEMA = {
         "version",
         "target_display_name",
         "peer_set_digest",
+        "attestation_digest",
         "rows",
     ],
     "properties": {
@@ -200,6 +217,10 @@ COREDNS_SCHEMA = {
             ],
         },
         "peer_set_digest": {
+            "type": "string",
+            "pattern": "^sha256:[0-9a-f]{64}$",
+        },
+        "attestation_digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
         },
@@ -285,8 +306,15 @@ PINNED_RUNBOOKS = {
         REACHABILITY_SCHEMA,
     ),
     "phase25.coredns-peer-readback": RunbookContract(
-        "sha256:bda7602824792a3c6276f3d1441c88017990043b3fae96042ce74af45e4220e7",
-        ("runbook_id", "version", "target_display_name", "peer_set_digest", "rows"),
+        "sha256:7b71d4fd9742fc6ca509a2d3e702367c0269fc27fc446ba63b942928004a8510",
+        (
+            "runbook_id",
+            "version",
+            "target_display_name",
+            "peer_set_digest",
+            "attestation_digest",
+            "rows",
+        ),
         _ROUTE_TARGETS,
         COREDNS_SCHEMA,
     ),
@@ -340,6 +368,7 @@ _ARGUMENT_FLAGS = {
         "--manifest-digest",
         "--target-binding-digest",
         "--probe-digest",
+        "--attestation-digest",
         "--target",
         "--peer-set-digest",
         "--projection-digest",
@@ -363,6 +392,202 @@ def canonical_manifest_digest(manifest: Mapping[str, Any]) -> str:
         ensure_ascii=False,
     ).encode("utf-8")
     return f"sha256:{sha256(encoded).hexdigest()}"
+
+
+def _canonical_digest(value: Any) -> str:
+    encoded = json.dumps(
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return f"sha256:{sha256(encoded).hexdigest()}"
+
+
+def validate_attestation_document(
+    document: Mapping[str, Any],
+    *,
+    expected_digest: str | None = None,
+    expected_target: str | None = None,
+) -> dict[str, Any]:
+    if not isinstance(document, Mapping):
+        raise ProbeError("attestation must be an object")
+    payload = dict(document)
+    if set(payload) != {
+        "schema",
+        "version",
+        "target_binding_preimage",
+        "target_peer_preimage",
+        "peer_set_preimage",
+        "projection_preimage",
+        "digests",
+        "digest",
+    }:
+        raise ProbeError("attestation fields are not exact")
+    if (
+        payload["schema"] != "atius.oci-admin-guest-probe-attestation/v1"
+        or payload["version"] != "1"
+    ):
+        raise ProbeError("attestation schema is invalid")
+    projection = payload["projection_preimage"]
+    if not isinstance(projection, Mapping) or set(projection) != {
+        "schema",
+        "source",
+        "records",
+        "resolvers",
+    }:
+        raise ProbeError("projection preimage is invalid")
+    source = projection["source"]
+    if (
+        projection["schema"] != "atius.internal-dns-projection-attestation/v1"
+        or not isinstance(source, Mapping)
+        or set(source) != {"authority", "repo_commit", "path", "digest"}
+        or source["authority"] != "omni-srv-admin"
+        or not _COMMIT.fullmatch(str(source["repo_commit"]))
+        or source["path"] != "inventory/hosts/atius-srv-4.yaml"
+        or not _DIGEST.fullmatch(str(source["digest"]))
+    ):
+        raise ProbeError("projection source is invalid")
+    expected_records = [
+        {"name": "atius-srv-4", "type": "A", "value": "10.14.1.14"},
+        {
+            "name": "atius-srv-4.atius.internal",
+            "type": "A",
+            "value": "10.14.1.14",
+        },
+    ]
+    expected_resolvers = [
+        {"role": "primary", "address": "10.11.1.11", "port": 53},
+        {"role": "reserve", "address": "10.100.100.1", "port": 53},
+    ]
+    if projection["records"] != expected_records or projection["resolvers"] != expected_resolvers:
+        raise ProbeError("projection contract has drifted")
+    peers = payload["peer_set_preimage"]
+    if not isinstance(peers, list) or len(peers) != 4:
+        raise ProbeError("peer set preimage is incomplete")
+    peer_fields = {
+        "role",
+        "profile_name",
+        "region",
+        "compartment_id",
+        "instance_id",
+        "display_name",
+        "private_ip",
+        "source_repo_commit",
+        "source_path",
+        "source_digest",
+    }
+    for name, peer in zip(ATTESTED_PEER_ORDER, peers, strict=True):
+        if not isinstance(peer, Mapping) or set(peer) != peer_fields:
+            raise ProbeError("peer preimage fields are not exact")
+        if (
+            peer["role"] != "dns-peer"
+            or peer["profile_name"] != ATTESTED_PEER_PROFILES[name]
+            or peer["region"] != "sa-saopaulo-1"
+            or peer["display_name"] != name
+            or peer["private_ip"] != EXPECTED_HOST_ADDRESSES[name]
+            or not str(peer["compartment_id"]).startswith("ocid1.compartment.")
+            or not str(peer["instance_id"]).startswith("ocid1.instance.")
+            or peer["source_repo_commit"] != source["repo_commit"]
+            or peer["source_path"] != f"inventory/hosts/{name}.yaml"
+            or not _DIGEST.fullmatch(str(peer["source_digest"]))
+        ):
+            raise ProbeError("peer preimage identity is invalid")
+    target_peer = payload["target_peer_preimage"]
+    if not isinstance(target_peer, Mapping) or dict(target_peer) not in [dict(item) for item in peers]:
+        raise ProbeError("target peer is not in attested fanout")
+    if expected_target is not None and target_peer["display_name"] != expected_target:
+        raise ProbeError("attestation target mismatch")
+    binding = payload["target_binding_preimage"]
+    if not isinstance(binding, Mapping) or set(binding) != {
+        "target_role",
+        "profile_name",
+        "region",
+        "compartment_id",
+        "instance_id",
+        "display_name",
+        "source_repo_commit",
+        "source_path",
+        "source_digest",
+        "projection_digest",
+    }:
+        raise ProbeError("target binding preimage fields are not exact")
+    expected_binding = {
+        "target_role": target_peer["role"],
+        "profile_name": target_peer["profile_name"],
+        "region": target_peer["region"],
+        "compartment_id": target_peer["compartment_id"],
+        "instance_id": target_peer["instance_id"],
+        "display_name": target_peer["display_name"],
+        "source_repo_commit": source["repo_commit"],
+        "source_path": source["path"],
+        "source_digest": source["digest"],
+        "projection_digest": _canonical_digest(projection),
+    }
+    if dict(binding) != expected_binding:
+        raise ProbeError("target binding preimage is inconsistent")
+    expected_digests = {
+        "target_binding": _canonical_digest(binding),
+        "peer_set": _canonical_digest(peers),
+        "projection": _canonical_digest(projection),
+    }
+    if not isinstance(payload["digests"], Mapping) or dict(payload["digests"]) != expected_digests:
+        raise ProbeError("attestation preimage digests are invalid")
+    base = {key: value for key, value in payload.items() if key != "digest"}
+    digest = _canonical_digest(base)
+    if payload["digest"] != digest or (expected_digest is not None and digest != expected_digest):
+        raise ProbeError("attestation digest mismatch")
+    canonical_bytes = json.dumps(
+        payload,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8") + b"\n"
+    return {
+        "document": payload,
+        "canonical_bytes": canonical_bytes,
+        "digest": digest,
+        "target_binding_digest": expected_digests["target_binding"],
+        "peer_set_digest": expected_digests["peer_set"],
+        "projection_digest": expected_digests["projection"],
+    }
+
+
+def validate_attestation_bytes(
+    raw: bytes,
+    *,
+    expected_digest: str | None = None,
+    expected_target: str | None = None,
+) -> dict[str, Any]:
+    if not isinstance(raw, bytes) or not 1 <= len(raw) <= MAX_ATTESTATION_BYTES:
+        raise ProbeError("attestation size is invalid")
+    try:
+        document = json.loads(raw.decode("utf-8"), object_pairs_hook=_unique_object)
+    except (UnicodeDecodeError, json.JSONDecodeError, ProbeError) as exc:
+        raise ProbeError("attestation JSON is invalid") from exc
+    return validate_attestation_document(
+        document,
+        expected_digest=expected_digest,
+        expected_target=expected_target,
+    )
+
+
+def load_installed_attestation() -> bytes:
+    try:
+        info = ATTESTATION_PATH.lstat()
+        if (
+            ATTESTATION_PATH.is_symlink()
+            or not ATTESTATION_PATH.is_file()
+            or info.st_nlink != 1
+            or info.st_uid != 0
+            or info.st_gid != 0
+            or (info.st_mode & 0o777) != 0o400
+            or not 1 <= info.st_size <= MAX_ATTESTATION_BYTES
+        ):
+            raise ProbeError("installed attestation identity is invalid")
+        return ATTESTATION_PATH.read_bytes()
+    except OSError as exc:
+        raise ProbeError("installed attestation is unavailable") from exc
 
 
 def self_digest() -> str:
@@ -537,6 +762,7 @@ def parse_invocation(argv: Sequence[str]) -> dict[str, Any]:
         for flag in (
             "--target-binding-digest",
             "--probe-digest",
+            "--attestation-digest",
             "--peer-set-digest",
             "--projection-digest",
         ):
@@ -556,6 +782,7 @@ def parse_invocation(argv: Sequence[str]) -> dict[str, Any]:
         parsed.update(
             {
                 "target_binding_digest": values["--target-binding-digest"],
+                "attestation_digest": values["--attestation-digest"],
                 "peer_set_digest": values["--peer-set-digest"],
                 "projection_digest": values["--projection-digest"],
             }
@@ -573,15 +800,21 @@ def _allowed_command(argv: tuple[str, ...]) -> bool:
     ):
         return True
     if (
-        len(argv) == 7
+        len(argv) == 9
         and argv[0] == PING_BINARY
         and argv[1:3] == ("-n", "-c")
-        and argv[4:6] == ("-W", "3")
+        and argv[4:8] == ("-W", "1", "-w", "5")
     ):
         try:
-            return 1 <= int(argv[3]) <= 3 and argv[6] in EXPECTED_HOST_ADDRESSES.values()
+            return 1 <= int(argv[3]) <= 3 and argv[8] in EXPECTED_HOST_ADDRESSES.values()
         except ValueError:
             return False
+    if (
+        len(argv) == 3
+        and argv[:2] == (GETENT_BINARY, "ahostsv4")
+        and argv[2] in EXPECTED_HOST_ADDRESSES
+    ):
+        return True
     if len(argv) == 11 and argv[:6] == DIG_PREFIX:
         return (
             argv[6] in {"@10.11.1.11", "@10.100.100.1"}
@@ -822,7 +1055,11 @@ def collect_routes(
                     not is_wg100
                     and not is_k3s
                     and not is_podman
-                    and (network.is_private or network.is_link_local or scope == "link")
+                    and (
+                        network.is_link_local
+                        or scope == "link"
+                        or any(network.subnet_of(expected) for expected in RFC1918_NETWORKS)
+                    )
                 )
                 kind = "lan_route"
             if selected:
@@ -836,12 +1073,25 @@ def collect_routes(
     return ordered[:max_rows]
 
 
-def _default_resolver(name: str) -> tuple[str, ...]:
-    try:
-        answers = socket.getaddrinfo(name, None, family=socket.AF_INET, type=socket.SOCK_STREAM)
-    except OSError:
+def _getent_resolver(
+    name: str,
+    runner: Callable[[tuple[str, ...], int], CommandResult],
+) -> tuple[str, ...]:
+    result = _checked_run(
+        runner,
+        (GETENT_BINARY, "ahostsv4", name),
+        timeout_seconds=5,
+        require_success=False,
+    )
+    if result.returncode != 0:
         return ()
-    values = sorted({_safe_ipv4(answer[4][0]) for answer in answers})
+    try:
+        lines = result.stdout.decode("utf-8").splitlines()
+    except UnicodeDecodeError as exc:
+        raise ProbeError("resolver output is invalid") from exc
+    if len(lines) > 32:
+        raise ProbeError("resolver answer bound exceeded")
+    values = sorted({_safe_ipv4(line.split()[0]) for line in lines if line.split()})
     if len(values) > 16:
         raise ProbeError("resolver answer bound exceeded")
     return tuple(values)
@@ -861,7 +1111,7 @@ def _default_tcp_probe(address: str, port: int, timeout_seconds: int) -> tuple[b
 
 
 def _ping_command(address: str, count: int) -> tuple[str, ...]:
-    return (PING_BINARY, "-n", "-c", str(count), "-W", "3", address)
+    return (PING_BINARY, "-n", "-c", str(count), "-W", "1", "-w", "5", address)
 
 
 def _ping_latency(raw: bytes) -> int | None:
@@ -963,12 +1213,12 @@ def collect_reachability(
     )
 
 
-def _dig_command(resolver: str, name: str) -> tuple[str, ...]:
+def dig_command(resolver: str, name: str) -> tuple[str, ...]:
     address, port = resolver.rsplit(":", 1)
     return (*DIG_PREFIX, f"@{address}", "-p", port, name, "A")
 
 
-def _parse_dig(raw: bytes, *, expected_address: str) -> None:
+def _parse_dig(raw: bytes, *, expected_address: str, expected_name: str) -> None:
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -984,7 +1234,11 @@ def _parse_dig(raw: bytes, *, expected_address: str) -> None:
         if line.startswith(";;") or not line.strip():
             continue
         fields = line.split()
-        if len(fields) >= 5 and fields[-2] == "A":
+        if (
+            len(fields) >= 5
+            and fields[-2] == "A"
+            and fields[0].rstrip(".") == expected_name
+        ):
             answers.append(_safe_ipv4(fields[-1]))
     if answers != [expected_address]:
         raise ProbeError("DNS answer mismatch")
@@ -1004,10 +1258,14 @@ def collect_coredns(
         for name in names:
             result = _checked_run(
                 runner,
-                _dig_command(resolver, name),
+                dig_command(resolver, name),
                 timeout_seconds=5,
             )
-            _parse_dig(result.stdout, expected_address="10.14.1.14")
+            _parse_dig(
+                result.stdout,
+                expected_address="10.14.1.14",
+                expected_name=name,
+            )
             rows.append(
                 {
                     "resolver_role": resolver_role,
@@ -1050,6 +1308,7 @@ def _build_payload(
     }
     if runbook_id == "phase25.coredns-peer-readback":
         payload["peer_set_digest"] = invocation["peer_set_digest"]
+        payload["attestation_digest"] = invocation["attestation_digest"]
     payload["rows"] = rows
     validate_schema(payload, invocation["contract"].result_schema)
     if tuple(payload) != invocation["contract"].result_fields:
@@ -1064,13 +1323,15 @@ def main(
     hostname_provider: Callable[[], str] | None = None,
     resolver: Callable[[str], Sequence[str]] | None = None,
     tcp_probe: Callable[[str, int, int], tuple[bool, int]] | None = None,
+    attestation_loader: Callable[[], bytes] | None = None,
     stdout: Any | None = None,
     stderr: Any | None = None,
 ) -> int:
     runner = runner or subprocess_runner
     hostname_provider = hostname_provider or socket.gethostname
-    resolver = resolver or _default_resolver
+    resolver = resolver or (lambda name: _getent_resolver(name, runner))
     tcp_probe = tcp_probe or _default_tcp_probe
+    attestation_loader = attestation_loader or load_installed_attestation
     stdout = stdout or sys.stdout
     stderr = stderr or sys.stderr
     try:
@@ -1080,6 +1341,19 @@ def main(
             runner=runner,
             hostname_provider=hostname_provider,
         )
+        if invocation["runbook_id"] == "phase25.coredns-peer-readback":
+            attestation = validate_attestation_bytes(
+                attestation_loader(),
+                expected_digest=invocation["attestation_digest"],
+                expected_target=invocation["target"],
+            )
+            if (
+                attestation["target_binding_digest"]
+                != invocation["target_binding_digest"]
+                or attestation["peer_set_digest"] != invocation["peer_set_digest"]
+                or attestation["projection_digest"] != invocation["projection_digest"]
+            ):
+                raise ProbeError("attestation preimages do not match invocation")
         payload = _build_payload(
             invocation,
             runner=runner,
