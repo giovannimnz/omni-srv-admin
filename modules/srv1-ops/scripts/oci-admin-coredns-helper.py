@@ -11,6 +11,8 @@ import json
 import os
 from pathlib import Path
 import re
+import secrets
+import signal
 import stat
 import subprocess
 import sys
@@ -23,6 +25,8 @@ VERSION = "1"
 SENTINEL = "ATIUS_RUNBOOK_RESULT_V1"
 MAX_RESULT_BYTES = 49152
 MAX_FILE_BYTES = 1048576
+MAX_RELOAD_INTERVAL_SECONDS = 60
+READBACK_ATTEMPT_BUDGET_SECONDS = 21.0
 TARGET_DISPLAY_NAME = "atius-srv-1"
 SHORT_NAME = "atius-srv-4"
 FQDN = "atius-srv-4.atius.internal"
@@ -226,6 +230,9 @@ def _validate_common(request: Any, command: str) -> None:
         raise HelperError("operation rejected")
     if request.sentinel != SENTINEL:
         raise HelperError("sentinel rejected")
+    for value in request.__dict__.values():
+        if isinstance(value, str) and _SENSITIVE.search(value):
+            raise HelperError("sensitive-shaped argument rejected")
 
 
 def _validate_answer(value: str) -> None:
@@ -285,6 +292,11 @@ def parse_request(argv: Sequence[str]) -> InspectRequest | ApplyRequest | Rollba
 
 
 def layout_digest(layout: Layout) -> str:
+    config_bytes, _ = _read_regular(layout.config_path, "CoreDNS config")
+    return layout_digest_from_config(layout, config_bytes)
+
+
+def layout_digest_from_config(layout: Layout, config_bytes: bytes) -> str:
     return canonical_digest(
         {
             "binary_path": layout.binary_path,
@@ -295,6 +307,7 @@ def layout_digest(layout: Layout) -> str:
             "data_path": str(layout.data_path),
             "activation_mode": layout.activation_mode,
             "reload_interval_seconds": layout.reload_interval_seconds,
+            "config_digest": sha256_digest(config_bytes),
         }
     )
 
@@ -439,6 +452,121 @@ def _read_regular(path: Path, label: str) -> tuple[bytes, os.stat_result]:
     return value, after
 
 
+def assert_trusted_path(
+    path: Path,
+    *,
+    trust_root: Path,
+    trusted_uid: int,
+    trusted_gid: int,
+    require_executable: bool = False,
+) -> None:
+    """Reject symlink/writable ancestors before any root path is re-resolved."""
+    if not path.is_absolute() or not trust_root.is_absolute():
+        raise HelperError("managed path is not absolute")
+    try:
+        relative = path.relative_to(trust_root)
+    except ValueError as exc:
+        raise HelperError("managed path escaped trust root") from exc
+    current = trust_root
+    parts = ("", *relative.parts)
+    for index, part in enumerate(parts):
+        if part:
+            current = current / part
+        try:
+            info = current.lstat()
+        except OSError as exc:
+            raise HelperError("managed path unavailable") from exc
+        is_leaf = index == len(parts) - 1
+        if stat.S_ISLNK(info.st_mode):
+            raise HelperError("managed path symlink rejected")
+        if is_leaf:
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise HelperError("managed file identity rejected")
+        elif not stat.S_ISDIR(info.st_mode):
+            raise HelperError("managed parent identity rejected")
+        if (
+            info.st_uid != trusted_uid
+            or info.st_gid != trusted_gid
+            or stat.S_IMODE(info.st_mode) & 0o022
+        ):
+            raise HelperError("managed path ownership rejected")
+        if is_leaf and require_executable and not stat.S_IMODE(info.st_mode) & 0o111:
+            raise HelperError("managed executable mode rejected")
+
+
+def assert_live_layout_security(layout: Layout) -> None:
+    import pwd
+
+    try:
+        ubuntu = pwd.getpwnam("ubuntu")
+        ocarun = pwd.getpwnam("ocarun")
+    except KeyError as exc:
+        raise HelperError("managed owner identity unavailable") from exc
+    if ubuntu.pw_uid == ocarun.pw_uid:
+        raise HelperError("Run Command user owns CoreDNS source")
+    for path, executable in (
+        (Path(layout.binary_path), True),
+        (layout.config_path, False),
+        (layout.data_path, False),
+    ):
+        assert_delegated_trusted_path(
+            path,
+            trust_root=Path("/"),
+            delegated_root=Path("/home/ubuntu"),
+            delegated_uid=ubuntu.pw_uid,
+            delegated_gid=ubuntu.pw_gid,
+            require_executable=executable,
+        )
+
+
+def assert_delegated_trusted_path(
+    path: Path,
+    *,
+    trust_root: Path,
+    delegated_root: Path,
+    delegated_uid: int,
+    delegated_gid: int,
+    require_executable: bool = False,
+) -> None:
+    if not path.is_absolute() or not trust_root.is_absolute() or not delegated_root.is_absolute():
+        raise HelperError("managed path is not absolute")
+    try:
+        relative = path.relative_to(trust_root)
+    except ValueError as exc:
+        raise HelperError("managed path escaped trust root") from exc
+    current = trust_root
+    parts = ("", *relative.parts)
+    for index, part in enumerate(parts):
+        if part:
+            current = current / part
+        try:
+            info = current.lstat()
+        except OSError as exc:
+            raise HelperError("managed path unavailable") from exc
+        is_leaf = index == len(parts) - 1
+        delegated = current == delegated_root or delegated_root in current.parents
+        allowed_owners = {(0, 0)}
+        if delegated:
+            allowed_owners.add((delegated_uid, delegated_gid))
+        if stat.S_ISLNK(info.st_mode):
+            raise HelperError("managed path symlink rejected")
+        if is_leaf:
+            if not stat.S_ISREG(info.st_mode) or info.st_nlink != 1:
+                raise HelperError("managed file identity rejected")
+        elif not stat.S_ISDIR(info.st_mode):
+            raise HelperError("managed parent identity rejected")
+        if (info.st_uid, info.st_gid) not in allowed_owners or stat.S_IMODE(info.st_mode) & 0o022:
+            raise HelperError("managed path ownership rejected")
+        if hasattr(os, "listxattr"):
+            try:
+                if "system.posix_acl_access" in os.listxattr(current, follow_symlinks=False):
+                    raise HelperError("managed path ACL rejected")
+            except OSError as exc:
+                raise HelperError("managed path ACL unavailable") from exc
+        if is_leaf and require_executable and not stat.S_IMODE(info.st_mode) & 0o111:
+            raise HelperError("managed executable mode rejected")
+
+
 def _fsync_parent(path: Path) -> None:
     if os.name == "nt":
         return
@@ -447,6 +575,49 @@ def _fsync_parent(path: Path) -> None:
         os.fsync(descriptor)
     finally:
         os.close(descriptor)
+
+
+def _fsync_directory(path: Path) -> None:
+    if os.name == "nt":
+        return
+    descriptor = os.open(path, os.O_RDONLY | os.O_DIRECTORY)
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def _durable_mkdir_tree(
+    path: Path,
+    *,
+    trust_root: Path,
+    uid: int,
+    gid: int,
+    new_mode: int,
+) -> None:
+    try:
+        relative = path.relative_to(trust_root)
+    except ValueError as exc:
+        raise HelperError("directory path escaped trust root") from exc
+    current = trust_root
+    for part in relative.parts:
+        current = current / part
+        if current.exists() or current.is_symlink():
+            info = current.lstat()
+            if (
+                stat.S_ISLNK(info.st_mode)
+                or not stat.S_ISDIR(info.st_mode)
+                or info.st_uid != uid
+                or info.st_gid != gid
+                or stat.S_IMODE(info.st_mode) & 0o022
+            ):
+                raise HelperError("directory identity rejected")
+            continue
+        current.mkdir(mode=new_mode)
+        if hasattr(os, "chown"):
+            os.chown(current, uid, gid)
+        _fsync_parent(current)
+        _fsync_directory(current)
 
 
 def _apply_identity(descriptor: int, mode: int, uid: int, gid: int) -> None:
@@ -525,11 +696,25 @@ def _ensure_root_storage(path: Path, fixed_root: Path) -> None:
         path.relative_to(fixed_root)
     except ValueError as exc:
         raise HelperError("backup path escaped fixed root") from exc
-    fixed_root.mkdir(mode=0o700, parents=True, exist_ok=True)
-    path.mkdir(mode=0o700, parents=True, exist_ok=True)
+    _durable_mkdir_tree(
+        path,
+        trust_root=Path("/"),
+        uid=0,
+        gid=0,
+        new_mode=0o700,
+    )
+    _assert_root_storage(path, fixed_root)
+
+
+def _assert_root_storage(path: Path, fixed_root: Path) -> None:
+    try:
+        path.relative_to(fixed_root)
+    except ValueError as exc:
+        raise HelperError("backup path escaped fixed root") from exc
     current = fixed_root
-    for part in path.relative_to(fixed_root).parts:
-        current = current / part
+    for part in ("", *path.relative_to(fixed_root).parts):
+        if part:
+            current = current / part
         info = current.lstat()
         if (
             stat.S_ISLNK(info.st_mode)
@@ -541,6 +726,143 @@ def _ensure_root_storage(path: Path, fixed_root: Path) -> None:
             raise HelperError("backup directory identity rejected")
 
 
+class PinnedLayoutIO:
+    """Pin CoreDNS parents and perform data operations with openat/renameat."""
+
+    def __init__(self, layout: Layout) -> None:
+        self.layout = layout
+        self.config_fd = self._open_parent(layout.config_path.parent)
+        try:
+            self.data_fd = self._open_parent(layout.data_path.parent)
+        except BaseException:
+            os.close(self.config_fd)
+            raise
+        self._stages: dict[str, str] = {}
+
+    @staticmethod
+    def _open_parent(path: Path) -> int:
+        descriptor = os.open(
+            path,
+            os.O_RDONLY | os.O_DIRECTORY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+        )
+        opened = os.fstat(descriptor)
+        lexical = path.lstat()
+        if (
+            not stat.S_ISDIR(opened.st_mode)
+            or stat.S_ISLNK(lexical.st_mode)
+            or (opened.st_dev, opened.st_ino) != (lexical.st_dev, lexical.st_ino)
+        ):
+            os.close(descriptor)
+            raise HelperError("managed parent pin rejected")
+        return descriptor
+
+    @staticmethod
+    def _read_at(descriptor: int, name: str, label: str) -> tuple[bytes, os.stat_result]:
+        flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+        file_descriptor = os.open(name, flags, dir_fd=descriptor)
+        try:
+            before = os.fstat(file_descriptor)
+            if (
+                not stat.S_ISREG(before.st_mode)
+                or before.st_nlink != 1
+                or not 0 < before.st_size <= MAX_FILE_BYTES
+            ):
+                raise HelperError(f"{label} identity rejected")
+            chunks: list[bytes] = []
+            remaining = MAX_FILE_BYTES + 1
+            while remaining > 0:
+                chunk = os.read(file_descriptor, min(65536, remaining))
+                if not chunk:
+                    break
+                chunks.append(chunk)
+                remaining -= len(chunk)
+            if remaining <= 0:
+                raise HelperError(f"{label} oversized")
+            after = os.fstat(file_descriptor)
+            lexical = os.stat(name, dir_fd=descriptor, follow_symlinks=False)
+            if (
+                before.st_dev,
+                before.st_ino,
+                before.st_size,
+                before.st_mtime_ns,
+                before.st_ctime_ns,
+            ) != (
+                after.st_dev,
+                after.st_ino,
+                after.st_size,
+                after.st_mtime_ns,
+                after.st_ctime_ns,
+            ) or (lexical.st_dev, lexical.st_ino) != (after.st_dev, after.st_ino):
+                raise HelperError(f"{label} changed during read")
+            return b"".join(chunks), after
+        finally:
+            os.close(file_descriptor)
+
+    def read_config(self) -> tuple[bytes, os.stat_result]:
+        return self._read_at(self.config_fd, self.layout.config_path.name, "CoreDNS config")
+
+    def read_data(self) -> tuple[bytes, os.stat_result]:
+        return self._read_at(self.data_fd, self.layout.data_path.name, "CoreDNS data")
+
+    def stage_data(self, value: bytes, identity: os.stat_result) -> Path:
+        name = f".{self.layout.data_path.name}.stage.{secrets.token_hex(16)}"
+        descriptor = os.open(
+            name,
+            os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0),
+            stat.S_IMODE(identity.st_mode),
+            dir_fd=self.data_fd,
+        )
+        try:
+            os.fchmod(descriptor, stat.S_IMODE(identity.st_mode))
+            os.fchown(descriptor, identity.st_uid, identity.st_gid)
+            offset = 0
+            while offset < len(value):
+                offset += os.write(descriptor, value[offset:])
+            os.fsync(descriptor)
+        except BaseException:
+            try:
+                os.unlink(name, dir_fd=self.data_fd)
+            except OSError:
+                pass
+            raise
+        finally:
+            os.close(descriptor)
+        process_path = Path(f"/proc/{os.getpid()}/fd/{self.data_fd}/{name}")
+        self._stages[str(process_path)] = name
+        return process_path
+
+    def replace_stage(self, staged: Path) -> None:
+        name = self._stages.pop(str(staged), None)
+        if name is None:
+            raise HelperError("staged file identity rejected")
+        os.replace(
+            name,
+            self.layout.data_path.name,
+            src_dir_fd=self.data_fd,
+            dst_dir_fd=self.data_fd,
+        )
+        os.fsync(self.data_fd)
+
+    def atomic_data(self, value: bytes, identity: os.stat_result) -> None:
+        staged = self.stage_data(value, identity)
+        try:
+            self.replace_stage(staged)
+        finally:
+            self.cleanup_stage(staged)
+
+    def cleanup_stage(self, staged: Path) -> None:
+        name = self._stages.pop(str(staged), None)
+        if name is not None:
+            try:
+                os.unlink(name, dir_fd=self.data_fd)
+            except FileNotFoundError:
+                pass
+
+    def close(self) -> None:
+        for descriptor in (self.config_fd, self.data_fd):
+            os.close(descriptor)
+
+
 class CoreDNSManager:
     def __init__(
         self,
@@ -550,12 +872,56 @@ class CoreDNSManager:
         runtime: Runtime,
         fault_hook: Callable[[str], None] | None = None,
         enforce_root_storage: bool = False,
+        security_hook: Callable[[], None] | None = None,
+        pinned_io: PinnedLayoutIO | None = None,
     ) -> None:
+        if not 0 <= layout.reload_interval_seconds <= MAX_RELOAD_INTERVAL_SECONDS:
+            raise HelperError("reload interval exceeds transaction budget")
         self.layout = layout
         self.backup_root = backup_root
         self.runtime = runtime
         self.fault_hook = fault_hook or (lambda _stage: None)
         self.enforce_root_storage = enforce_root_storage
+        self.security_hook = security_hook or (lambda: None)
+        self.pinned_io = pinned_io
+
+    def _read_config(self) -> tuple[bytes, os.stat_result]:
+        if self.pinned_io is not None:
+            return self.pinned_io.read_config()
+        return _read_regular(self.layout.config_path, "CoreDNS config")
+
+    def _read_data(self) -> tuple[bytes, os.stat_result]:
+        if self.pinned_io is not None:
+            return self.pinned_io.read_data()
+        return _read_regular(self.layout.data_path, "CoreDNS data")
+
+    def _stage_data(self, value: bytes, identity: os.stat_result) -> Path:
+        if self.pinned_io is not None:
+            return self.pinned_io.stage_data(value, identity)
+        return _stage_bytes(self.layout.data_path, value, identity)
+
+    def _replace_stage(self, staged: Path) -> None:
+        if self.pinned_io is not None:
+            self.pinned_io.replace_stage(staged)
+            return
+        os.replace(staged, self.layout.data_path)
+        _fsync_parent(self.layout.data_path)
+
+    def _cleanup_stage(self, staged: Path) -> None:
+        if self.pinned_io is not None:
+            self.pinned_io.cleanup_stage(staged)
+        else:
+            staged.unlink(missing_ok=True)
+
+    def _atomic_data(self, value: bytes, identity: os.stat_result) -> None:
+        if self.pinned_io is not None:
+            self.pinned_io.atomic_data(value, identity)
+        else:
+            _atomic_write(self.layout.data_path, value, identity)
+
+    def _discovery_digest(self) -> str:
+        config, _ = self._read_config()
+        return layout_digest_from_config(self.layout, config)
 
     def backup_path(self, backup_id: str, backup_digest: str) -> Path:
         if not _BACKUP_ID.fullmatch(backup_id) or not _DIGEST.fullmatch(backup_digest):
@@ -577,6 +943,7 @@ class CoreDNSManager:
             "preimage_digest": request.preimage_digest,
             "desired_config_digest": request.desired_config_digest,
             "helper_digest": request.helper_digest,
+            "previous_answer": request.previous_answer,
             "mode": f"{stat.S_IMODE(identity.st_mode):04o}",
             "uid": identity.st_uid,
             "gid": identity.st_gid,
@@ -606,8 +973,15 @@ class CoreDNSManager:
 
     def _load_backup(self, request: RollbackRequest) -> tuple[bytes, dict[str, Any]]:
         path = self.backup_path(request.backup_id, request.backup_digest)
+        if self.enforce_root_storage:
+            _assert_root_storage(path.parent, self.backup_root)
         preimage, _ = _read_regular(path, "backup")
         binding_bytes, _ = _read_regular(self._binding_path(request), "backup binding")
+        if self.enforce_root_storage:
+            for stored in (path, self._binding_path(request)):
+                info = stored.lstat()
+                if info.st_uid != 0 or info.st_gid != 0 or stat.S_IMODE(info.st_mode) != 0o600:
+                    raise HelperError("backup storage identity rejected")
         if sha256_digest(preimage) != request.backup_digest:
             raise HelperError("backup digest mismatch")
         try:
@@ -624,6 +998,7 @@ class CoreDNSManager:
             "preimage_digest": request.preimage_digest,
             "desired_config_digest": request.desired_config_digest,
             "helper_digest": request.helper_digest,
+            "previous_answer": request.previous_answer,
         }
         if binding.get("schema") != "atius.oci-admin-coredns-backup/v1" or any(
             binding.get(key) != value for key, value in expected.items()
@@ -634,11 +1009,12 @@ class CoreDNSManager:
     def inspect(
         self, request: InspectRequest, *, installed_helper_path: Path
     ) -> dict[str, Any]:
+        self.security_hook()
         helper_bytes, _ = _read_regular(installed_helper_path, "helper")
         if sha256_digest(helper_bytes) != request.helper_digest:
             raise HelperError("helper digest mismatch")
-        config, _ = _read_regular(self.layout.config_path, "CoreDNS config")
-        data, _ = _read_regular(self.layout.data_path, "CoreDNS data")
+        config, _ = self._read_config()
+        data, _ = self._read_data()
         before = self.runtime.readback(SHORT_NAME, FQDN, "AUTO")
         return {
             "runbook_id": "phase25.coredns-inspect",
@@ -675,19 +1051,41 @@ class CoreDNSManager:
         identity: os.stat_result,
         request: ApplyRequest | RollbackRequest,
     ) -> list[dict[str, Any]]:
-        _atomic_write(self.layout.data_path, preimage, identity)
-        if sha256_digest(self.layout.data_path.read_bytes()) != request.preimage_digest:
+        self.security_hook()
+        self._atomic_data(preimage, identity)
+        restored, _ = self._read_data()
+        if sha256_digest(restored) != request.preimage_digest:
             raise HelperError("restored digest mismatch")
         self.runtime.activate(self.layout)
         self.runtime.healthy(self.layout)
-        return self.runtime.readback(
+        return self._bounded_readback(
             request.short_name, request.fqdn, request.previous_answer
         )
 
+    def _bounded_readback(
+        self, short_name: str, fqdn: str, expected_answer: str
+    ) -> list[dict[str, Any]]:
+        deadline = (
+            time.monotonic()
+            + float(self.layout.reload_interval_seconds)
+            + READBACK_ATTEMPT_BUDGET_SECONDS
+            + 5.0
+        )
+        while True:
+            if deadline - time.monotonic() < READBACK_ATTEMPT_BUDGET_SECONDS:
+                raise HelperError("DNS readback budget exhausted")
+            try:
+                return self.runtime.readback(short_name, fqdn, expected_answer)
+            except HelperError:
+                if time.monotonic() >= deadline:
+                    raise
+                time.sleep(0.25)
+
     def apply(self, request: ApplyRequest) -> dict[str, Any]:
-        if request.discovery_digest != layout_digest(self.layout):
+        self.security_hook()
+        if request.discovery_digest != self._discovery_digest():
             raise HelperError("discovery drift")
-        preimage, identity = _read_regular(self.layout.data_path, "CoreDNS data")
+        preimage, identity = self._read_data()
         if sha256_digest(preimage) != request.preimage_digest:
             raise HelperError("preimage drift")
         desired = render_desired_data(
@@ -699,8 +1097,11 @@ class CoreDNSManager:
         )
         if sha256_digest(desired) != request.desired_config_digest:
             raise HelperError("desired digest mismatch")
+        self.runtime.readback(
+            request.short_name, request.fqdn, request.previous_answer
+        )
         self._create_backup(request, preimage, identity)
-        staged = _stage_bytes(self.layout.data_path, desired, identity)
+        staged = self._stage_data(desired, identity)
         stages = {
             "validation": "not-run",
             "replace": "not-run",
@@ -714,8 +1115,8 @@ class CoreDNSManager:
             stages["validation"] = "strict-passed"
             current_stage = "replace"
             self.fault_hook("replace")
-            os.replace(staged, self.layout.data_path)
-            _fsync_parent(self.layout.data_path)
+            self.security_hook()
+            self._replace_stage(staged)
             stages["replace"] = "atomic"
             current_stage = "activation"
             self.fault_hook("activation")
@@ -727,7 +1128,7 @@ class CoreDNSManager:
             stages["health"] = "ready"
             current_stage = "readback"
             self.fault_hook("readback")
-            readback = self.runtime.readback(
+            readback = self._bounded_readback(
                 request.short_name, request.fqdn, request.expected_address
             )
         except BaseException as exc:
@@ -750,7 +1151,7 @@ class CoreDNSManager:
                 restored_digest=sha256_digest(preimage),
             )
         finally:
-            staged.unlink(missing_ok=True)
+            self._cleanup_stage(staged)
         return self._apply_result(
             request,
             status="applied",
@@ -794,7 +1195,11 @@ class CoreDNSManager:
                 "validation": stages["validation"],
                 "replace": stages["replace"],
                 "activation": stages["activation"],
-                "activation_wait": "bounded" if stages["activation"] == "completed" else "not-run",
+                "activation_wait": (
+                    "bounded"
+                    if stages["activation"] in {"completed", "failed"}
+                    else "not-run"
+                ),
                 "health": stages["health"],
                 "restore": {
                     "replace": "atomic" if restored else "not-required",
@@ -813,9 +1218,10 @@ class CoreDNSManager:
         }
 
     def rollback(self, request: RollbackRequest) -> dict[str, Any]:
-        if request.discovery_digest != layout_digest(self.layout):
+        self.security_hook()
+        if request.discovery_digest != self._discovery_digest():
             raise HelperError("discovery drift")
-        current, identity = _read_regular(self.layout.data_path, "CoreDNS data")
+        current, identity = self._read_data()
         if sha256_digest(current) != request.desired_config_digest:
             raise HelperError("current generation drift")
         preimage, binding = self._load_backup(request)
@@ -878,7 +1284,58 @@ class LiveRuntime:
     def validate(self, layout: Layout, staged_path: Path) -> None:
         value, _ = _read_regular(staged_path, "staged CoreDNS data")
         validate_data_bytes(layout.plugin, value)
-        self._run([layout.binary_path, "-conf", str(layout.config_path), "-plugins"], timeout=10)
+        _, config_identity = _read_regular(layout.config_path, "CoreDNS config")
+        if layout.plugin == "hosts":
+            validation_config = (
+                f".:0 {{\n    hosts {staged_path} {{\n        fallthrough\n    }}\n}}\n"
+            )
+        elif layout.plugin == "file":
+            validation_config = (
+                f"atius.internal.:0 {{\n    file {staged_path}\n}}\n"
+            )
+        else:
+            raise HelperError("plugin rejected")
+        temporary_config = _stage_bytes(
+            layout.config_path,
+            validation_config.encode("utf-8"),
+            config_identity,
+        )
+        process: subprocess.Popen[bytes] | None = None
+        try:
+            process = subprocess.Popen(
+                [layout.binary_path, "-conf", str(temporary_config), "-dns.port", "0"],
+                stdin=subprocess.DEVNULL,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                env=self.CLEAN_ENV,
+                shell=False,
+                close_fds=True,
+                start_new_session=True,
+            )
+            deadline = time.monotonic() + 1.0
+            while time.monotonic() < deadline and process.poll() is None:
+                time.sleep(0.05)
+            if process.poll() is not None and process.returncode != 0:
+                raise HelperError("CoreDNS staged validation failed")
+        except OSError as exc:
+            raise HelperError("CoreDNS staged validation failed") from exc
+        finally:
+            if process is not None and process.poll() is None:
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                    process.wait(timeout=2)
+                except (OSError, subprocess.TimeoutExpired):
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except OSError:
+                        process.kill()
+                    process.wait(timeout=2)
+            if process is not None:
+                stdout, stderr = process.communicate(timeout=1)
+                output = stdout + stderr
+                if len(output) > 131072 or _SENSITIVE.search(output.decode("utf-8", "ignore")):
+                    raise HelperError("CoreDNS validation output rejected")
+            temporary_config.unlink(missing_ok=True)
 
     def activate(self, layout: Layout) -> None:
         self._run(["/usr/bin/systemctl", "reload-or-restart", layout.unit], timeout=15)
@@ -911,27 +1368,37 @@ class LiveRuntime:
         flags_match = re.search(r"flags:\s*([^;]+);", text)
         if not status_match or not flags_match or "aa" not in flags_match.group(1).split():
             raise HelperError("DNS authority rejected")
-        answers: list[str] = []
+        records: list[list[str]] = []
         for line in text.splitlines():
             if not line or line.startswith(";"):
                 continue
             fields = line.split()
-            if len(fields) >= 5 and fields[-2].upper() == "A":
-                try:
-                    answer = ip_address(fields[-1])
-                except ValueError as exc:
-                    raise HelperError("DNS answer rejected") from exc
-                if answer.version != 4:
-                    raise HelperError("DNS answer rejected")
-                answers.append(str(answer))
+            if len(fields) < 5:
+                raise HelperError("DNS record rejected")
+            records.append(fields)
         status = status_match.group(1)
         if status == "NXDOMAIN":
-            if answers:
+            if records:
                 raise HelperError("DNS NXDOMAIN answer rejected")
             return {"answer": "NXDOMAIN", "status": "nxdomain"}
-        if len(answers) != 1:
+        if len(records) != 1:
             raise HelperError("DNS answer cardinality rejected")
-        return {"answer": answers[0], "status": "resolved"}
+        owner, ttl, dns_class, record_type, answer_raw = records[0][:5]
+        if (
+            owner.rstrip(".").lower() != name.rstrip(".").lower()
+            or not ttl.isdigit()
+            or dns_class.upper() != "IN"
+            or record_type.upper() != "A"
+            or len(records[0]) != 5
+        ):
+            raise HelperError("DNS record identity rejected")
+        try:
+            answer = ip_address(answer_raw)
+        except ValueError as exc:
+            raise HelperError("DNS answer rejected") from exc
+        if answer.version != 4:
+            raise HelperError("DNS answer rejected")
+        return {"answer": str(answer), "status": "resolved"}
 
     def readback(self, short_name: str, fqdn: str, expected_answer: str) -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
@@ -971,6 +1438,25 @@ _DATA_CANDIDATES = tuple(
 _UNIT_CANDIDATES = ("coredns-vpn.service", "coredns.service")
 
 
+def data_candidates_for_plugin(plugin: str) -> tuple[Path, ...]:
+    if plugin == "hosts":
+        names = {"hosts", "hosts.atius", "atius.hosts"}
+    elif plugin == "file":
+        names = {"db.atius.internal"}
+    else:
+        raise HelperError("plugin rejected")
+    return tuple(path for path in _DATA_CANDIDATES if path.name in names)
+
+
+def activation_mode_from_systemd(can_reload: str) -> str:
+    normalized = can_reload.strip().lower()
+    if normalized == "yes":
+        return "reload"
+    if normalized == "no":
+        return "restart"
+    raise HelperError("CoreDNS CanReload state rejected")
+
+
 def _one_existing(candidates: Sequence[Path], label: str) -> Path:
     existing = [candidate for candidate in candidates if candidate.is_file() and not candidate.is_symlink()]
     if len(existing) != 1:
@@ -988,7 +1474,7 @@ def discover_live_layout(runtime: LiveRuntime) -> Layout:
         raise HelperError("CoreDNS config encoding rejected") from exc
     matches: list[tuple[str, Path]] = []
     for plugin in ("hosts", "file"):
-        for data in _DATA_CANDIDATES:
+        for data in data_candidates_for_plugin(plugin):
             if re.search(rf"(?m)^\s*{plugin}\s+{re.escape(str(data))}(?:\s|\{{|$)", config_text):
                 matches.append((plugin, data))
     if len(matches) != 1:
@@ -1005,24 +1491,34 @@ def discover_live_layout(runtime: LiveRuntime) -> Layout:
             loaded_units.append(unit)
     if len(loaded_units) != 1:
         raise HelperError("CoreDNS unit discovery rejected")
+    can_reload = runtime._run(
+        [
+            "/usr/bin/systemctl", "show", "-p", "CanReload", "--value",
+            loaded_units[0],
+        ],
+        timeout=5,
+    ).decode("ascii", "ignore")
+    activation_mode = activation_mode_from_systemd(can_reload)
     version_raw = runtime._run([str(binary), "-version"], timeout=5).decode("ascii", "ignore")
     version_match = _VERSION.search(version_raw)
     if not version_match:
         raise HelperError("CoreDNS version rejected")
     reload_match = re.search(r"(?m)^\s*reload\s+([0-9]+)s\s*$", config_text)
     reload_seconds = int(reload_match.group(1)) if reload_match else 0
-    if not 0 <= reload_seconds <= 3600:
+    if not 0 <= reload_seconds <= MAX_RELOAD_INTERVAL_SECONDS:
         raise HelperError("CoreDNS reload interval rejected")
-    return Layout(
+    layout = Layout(
         binary_path=str(binary),
         version=version_match.group(0),
         unit=loaded_units[0],
         plugin=plugin,
         config_path=config,
         data_path=data,
-        activation_mode="reload" if reload_seconds else "restart",
+        activation_mode=activation_mode,
         reload_interval_seconds=reload_seconds,
     )
+    assert_live_layout_security(layout)
+    return layout
 
 
 def _assert_installed_identity(path: Path) -> None:
@@ -1080,18 +1576,25 @@ def _execute(request: InspectRequest | ApplyRequest | RollbackRequest) -> tuple[
         raise HelperError("helper digest mismatch")
     with _operation_lock():
         runtime = LiveRuntime()
-        manager = CoreDNSManager(
-            layout=discover_live_layout(runtime),
-            backup_root=BACKUP_ROOT,
-            runtime=runtime,
-            enforce_root_storage=True,
-        )
-        if isinstance(request, InspectRequest):
-            return manager.inspect(request, installed_helper_path=path), 0
-        if isinstance(request, ApplyRequest):
-            result = manager.apply(request)
-            return result, 0 if result["status"] == "applied" else 2
-        return manager.rollback(request), 0
+        layout = discover_live_layout(runtime)
+        pinned_io = PinnedLayoutIO(layout)
+        try:
+            manager = CoreDNSManager(
+                layout=layout,
+                backup_root=BACKUP_ROOT,
+                runtime=runtime,
+                enforce_root_storage=True,
+                security_hook=lambda: assert_live_layout_security(layout),
+                pinned_io=pinned_io,
+            )
+            if isinstance(request, InspectRequest):
+                return manager.inspect(request, installed_helper_path=path), 0
+            if isinstance(request, ApplyRequest):
+                result = manager.apply(request)
+                return result, 0 if result["status"] == "applied" else 2
+            return manager.rollback(request), 0
+        finally:
+            pinned_io.close()
 
 
 def main(argv: Sequence[str] | None = None) -> int:

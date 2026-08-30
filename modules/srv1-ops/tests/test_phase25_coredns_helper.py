@@ -223,7 +223,87 @@ def test_apply_is_same_filesystem_atomic_and_preserves_identity(tmp_path: Path) 
     backup = manager.backup_path(request.backup_id, request.backup_digest)
     assert backup.is_file() and _digest(backup.read_bytes()) == request.backup_digest
     assert runtime.validated and runtime.activations == 1 and runtime.health_checks == 1
-    assert runtime.readbacks == ["10.14.1.14"]
+    assert runtime.readbacks == ["NXDOMAIN", "10.14.1.14"]
+
+
+def test_apply_rejects_corefile_drift_after_discovery(tmp_path: Path) -> None:
+    helper = _load_helper()
+    manager, _runtime, layout = _manager(helper, tmp_path)
+    request = _apply_request(helper, layout)
+    layout.config_path.write_bytes(layout.config_path.read_bytes() + b"# drift\n")
+    with pytest.raises(helper.HelperError, match="discovery drift"):
+        manager.apply(request)
+
+
+@pytest.mark.parametrize("command,field", [("apply", "operation_id"), ("rollback", "origin_operation_id")])
+def test_sensitive_shaped_ids_fail_before_any_mutation(
+    tmp_path: Path, command: str, field: str
+) -> None:
+    helper = _load_helper()
+    _manager_instance, _runtime, layout = _manager(helper, tmp_path)
+    apply_request = _apply_request(helper, layout)
+    if command == "apply":
+        request = helper.ApplyRequest(**{**apply_request.__dict__, field: "token:abc"})
+        flags = helper._APPLY_FLAGS
+    else:
+        request = helper.RollbackRequest(
+            manifest_digest=helper.MANIFEST_DIGESTS["rollback"],
+            target_binding_digest=apply_request.target_binding_digest,
+            operation_id="phase25-rollback",
+            plan_hash=apply_request.plan_hash,
+            origin_operation_id="token:abc",
+            backup_id=apply_request.backup_id,
+            backup_digest=apply_request.backup_digest,
+            discovery_digest=apply_request.discovery_digest,
+            preimage_digest=apply_request.preimage_digest,
+            desired_config_digest=apply_request.desired_config_digest,
+            helper_digest=apply_request.helper_digest,
+            short_name=apply_request.short_name,
+            fqdn=apply_request.fqdn,
+            previous_answer=apply_request.previous_answer,
+            sentinel=helper.SENTINEL,
+        )
+        flags = helper._ROLLBACK_FLAGS
+    argv = [command]
+    for flag in flags:
+        argv.extend([flag, getattr(request, flag.removeprefix("--").replace("-", "_"))])
+    before = layout.data_path.read_bytes()
+    with pytest.raises(helper.HelperError, match="sensitive-shaped"):
+        helper.parse_request(argv)
+    assert layout.data_path.read_bytes() == before
+
+
+def test_apply_polls_bounded_until_async_dns_reload_converges(tmp_path: Path) -> None:
+    helper = _load_helper()
+    manager, runtime, layout = _manager(helper, tmp_path)
+    request = _apply_request(helper, layout)
+    original = runtime.readback
+    attempts = 0
+
+    def delayed(short_name: str, fqdn: str, expected_answer: str) -> list[dict[str, Any]]:
+        nonlocal attempts
+        if expected_answer == "10.14.1.14":
+            attempts += 1
+            if attempts < 3:
+                raise helper.HelperError("not propagated")
+        return original(short_name, fqdn, expected_answer)
+
+    runtime.readback = delayed
+    assert manager.apply(request)["status"] == "applied"
+    assert attempts == 3
+
+
+def test_reload_interval_above_transaction_budget_fails_before_stage(tmp_path: Path) -> None:
+    helper = _load_helper()
+    layout = _layout(helper, tmp_path)
+    oversized = helper.Layout(**{**layout.__dict__, "reload_interval_seconds": 3600})
+    with pytest.raises(helper.HelperError, match="transaction budget"):
+        helper.CoreDNSManager(
+            layout=oversized,
+            backup_root=tmp_path / "backups",
+            runtime=FakeRuntime(helper, oversized),
+        )
+    assert not (tmp_path / "backups").exists()
 
 
 @pytest.mark.parametrize("failure_stage", ["validation", "replace", "activation", "health", "readback"])
@@ -237,6 +317,8 @@ def test_apply_failure_self_restores_and_proves_old_answer(tmp_path: Path, failu
     after = layout.data_path.stat()
     assert result["status"] == "restored"
     assert result["transaction"]["failed_stage"] == failure_stage
+    expected_wait = "not-run" if failure_stage in {"validation", "replace"} else "bounded"
+    assert result["transaction"]["activation_wait"] == expected_wait
     assert result["transaction"]["restore"] == {"replace": "atomic", "activation": "completed", "health": "ready", "readback": "old-answer-verified", "restored_digest": _digest(preimage)}
     assert result["auto_restore"] == {"performed": True, "reason": f"{failure_stage}-failed", "old_answer_verified": True}
     assert layout.data_path.read_bytes() == preimage
@@ -281,6 +363,10 @@ def test_hosts_and_file_rendering_are_closed_and_deterministic() -> None:
     helper.validate_data_bytes("file", rendered_zone)
     with pytest.raises(helper.HelperError):
         helper.render_desired_data("hosts", b"10.14.1.14 atius-srv-4\n10.14.1.15 atius-srv-4.atius.internal\n", short_name="atius-srv-4", fqdn="atius-srv-4.atius.internal", expected_address="10.14.1.14")
+    assert {path.name for path in helper.data_candidates_for_plugin("hosts")} == {"hosts", "hosts.atius", "atius.hosts"}
+    assert {path.name for path in helper.data_candidates_for_plugin("file")} == {"db.atius.internal"}
+    assert helper.activation_mode_from_systemd("no\n") == "restart"
+    assert helper.activation_mode_from_systemd("yes\n") == "reload"
 
 
 def test_result_serialization_is_single_compact_sentinel() -> None:
@@ -288,6 +374,21 @@ def test_result_serialization_is_single_compact_sentinel() -> None:
     line = helper.serialize_result({"z": 1, "a": "ok"})
     assert line == f'{helper.SENTINEL} {json.dumps({"a": "ok", "z": 1}, separators=(",", ":"), sort_keys=True)}\n'
     assert len(line.encode("utf-8")) <= helper.MAX_RESULT_BYTES
+
+
+@pytest.mark.parametrize(
+    "answer",
+    [
+        b";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1\n;; flags: qr aa; QUERY: 1, ANSWER: 2\natius-srv-4. 60 IN CNAME other.\nother. 60 IN A 10.14.1.14\n",
+        b";; ->>HEADER<<- opcode: QUERY, status: NOERROR, id: 1\n;; flags: qr aa; QUERY: 1, ANSWER: 1\nother. 60 IN A 10.14.1.14\n",
+    ],
+)
+def test_dns_readback_rejects_cname_chain_and_wrong_owner(answer: bytes) -> None:
+    helper = _load_helper()
+    runtime = helper.LiveRuntime()
+    runtime._run = lambda *_args, **_kwargs: answer
+    with pytest.raises(helper.HelperError):
+        runtime._query("10.11.1.11:53", "atius-srv-4")
 
 
 def _wsl_path(path: Path) -> str:
@@ -317,6 +418,109 @@ def _bash(command: str, *args: str) -> subprocess.CompletedProcess[str]:
     finally:
         if temporary_path is not None:
             temporary_path.unlink(missing_ok=True)
+
+
+def test_helper_rejects_world_writable_and_symlinked_parent_chain() -> None:
+    result = _bash(
+        r"""
+set -euo pipefail
+root=$(mktemp -d /tmp/oci-admin-coredns-path-test.XXXXXX)
+trap 'rm -rf -- "$root"' EXIT
+mkdir -m 0700 "$root/safe" "$root/outside"
+printf 'data\n' >"$root/safe/data"
+printf 'data\n' >"$root/outside/data"
+chmod 0600 "$root/safe/data" "$root/outside/data"
+python3 - "$1" "$root" <<'PY'
+import importlib.util,os,pathlib,sys
+spec=importlib.util.spec_from_file_location('coredns_path_test',sys.argv[1])
+module=importlib.util.module_from_spec(spec); sys.modules[spec.name]=module; spec.loader.exec_module(module)
+root=pathlib.Path(sys.argv[2]); safe=root/'safe'/'data'
+module.assert_trusted_path(safe,trust_root=root,trusted_uid=os.getuid(),trusted_gid=os.getgid())
+events=[]
+module._fsync_parent=lambda path: events.append(('parent',path.name))
+module._fsync_directory=lambda path: events.append(('directory',path.name))
+module._durable_mkdir_tree(root/'durable'/'child',trust_root=root,uid=os.getuid(),gid=os.getgid(),new_mode=0o700)
+assert events == [('parent','durable'),('directory','durable'),('parent','child'),('directory','child')]
+os.chmod(root/'safe',0o777)
+try: module.assert_trusted_path(safe,trust_root=root,trusted_uid=os.getuid(),trusted_gid=os.getgid())
+except module.HelperError: pass
+else: raise SystemExit('world-writable parent accepted')
+os.chmod(root/'safe',0o700)
+(root/'link').symlink_to(root/'outside',target_is_directory=True)
+try: module.assert_trusted_path(root/'link'/'data',trust_root=root,trusted_uid=os.getuid(),trusted_gid=os.getgid())
+except module.HelperError: pass
+else: raise SystemExit('symlink parent accepted')
+PY
+""",
+        _wsl_path(HELPER_PATH),
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_live_validator_binds_coredns_binary_to_staged_data() -> None:
+    result = _bash(
+        r"""
+set -euo pipefail
+root=$(mktemp -d /tmp/oci-admin-coredns-validate-test.XXXXXX)
+trap 'rm -rf -- "$root"' EXIT
+cat >"$root/fake-coredns" <<'PY'
+#!/usr/bin/env python3
+import pathlib,re,sys,time
+conf=pathlib.Path(sys.argv[sys.argv.index('-conf')+1]).read_text()
+match=re.search(r'^\s*(?:hosts|file)\s+(\S+)',conf,re.M)
+if not match or 'BROKEN' in pathlib.Path(match.group(1)).read_text(): raise SystemExit(3)
+time.sleep(5)
+PY
+chmod 0755 "$root/fake-coredns"
+printf '.:53 {\n file %s/data\n}\n' "$root" >"$root/Corefile"
+printf '$ORIGIN atius.internal.\n@ 60 IN SOA ns hostmaster 1 60 60 60 60\n' >"$root/data"
+cp "$root/data" "$root/good"
+{ cat "$root/data"; printf '; BROKEN but custom parser accepts comments\n'; } >"$root/bad"
+python3 - "$1" "$root" <<'PY'
+import importlib.util,pathlib,sys
+spec=importlib.util.spec_from_file_location('coredns_validate_test',sys.argv[1])
+module=importlib.util.module_from_spec(spec); sys.modules[spec.name]=module; spec.loader.exec_module(module)
+root=pathlib.Path(sys.argv[2])
+layout=module.Layout(str(root/'fake-coredns'),'1.0.0','coredns.service','file',root/'Corefile',root/'data','restart',0)
+runtime=module.LiveRuntime(); runtime.validate(layout,root/'good')
+try: runtime.validate(layout,root/'bad')
+except module.HelperError: pass
+else: raise SystemExit('binary did not validate staged bytes')
+PY
+""",
+        _wsl_path(HELPER_PATH),
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_pinned_layout_io_survives_parent_swap_without_escape() -> None:
+    result = _bash(
+        r"""
+set -euo pipefail
+root=$(mktemp -d /tmp/oci-admin-coredns-openat-test.XXXXXX)
+trap 'rm -rf -- "$root"' EXIT
+mkdir "$root/live" "$root/outside"
+printf 'config\n' >"$root/live/Corefile"
+printf 'old\n' >"$root/live/hosts.atius"
+printf 'outside\n' >"$root/outside/hosts.atius"
+python3 - "$1" "$root" <<'PY'
+import importlib.util,os,pathlib,sys
+spec=importlib.util.spec_from_file_location('coredns_openat_test',sys.argv[1])
+module=importlib.util.module_from_spec(spec); sys.modules[spec.name]=module; spec.loader.exec_module(module)
+root=pathlib.Path(sys.argv[2]); live=root/'live'
+layout=module.Layout('/bin/true','1.0.0','coredns.service','hosts',live/'Corefile',live/'hosts.atius','restart',0)
+pinned=module.PinnedLayoutIO(layout)
+identity=pinned.read_data()[1]
+live.rename(root/'pinned-live'); live.symlink_to(root/'outside',target_is_directory=True)
+pinned.atomic_data(b'new\n',identity)
+assert (root/'pinned-live'/'hosts.atius').read_bytes() == b'new\n'
+assert (root/'outside'/'hosts.atius').read_bytes() == b'outside\n'
+pinned.close()
+PY
+""",
+        _wsl_path(HELPER_PATH),
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
 
 
 def _installer_harness(body: str) -> subprocess.CompletedProcess[str]:
@@ -378,11 +582,14 @@ def test_installer_and_sudoers_contract_is_closed_and_syntax_valid() -> None:
     assert "--command" not in installer
     assert "/usr/local/libexec/oci-admin-coredns-helper" in installer
     assert "/etc/sudoers.d/101-oci-admin-coredns-run-command" in installer
+    assert "/usr/local/sbin/install-oci-admin-coredns-helper" in installer
+    assert "/home/ubuntu/GitHub/omni-srv-admin" in installer
     assert "root:root" in installer and "0755" in installer and "0440" in installer
     assert "bash" in installer and "-n" in installer
     assert "ast.parse" in installer
     assert "visudo" in installer and "-cf" in installer and "-c" in installer
     assert "os.replace" in installer and "fsync" in installer
+    assert "fsync_parent(current)" in installer and "fsync_directory(current)" in installer
 
     assert "Defaults:ocarun env_reset" in sudoers
     assert "Defaults:ocarun !setenv" in sudoers
@@ -452,6 +659,97 @@ coredns_installer_main rollback --receipt "$receipt" >/dev/null
     assert result.returncode == 0, result.stderr or result.stdout
 
 
+def test_installer_recovers_prepared_journal_and_allows_reinstall() -> None:
+    result = _installer_harness(
+        r"""
+export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+export OCI_ADMIN_COREDNS_TEST_ROOT="$test_root"
+source "$installer"
+coredns_installer_main install "${installer_args[@]}" >"$workspace/install.json"
+receipt=$(python3 -c 'import json,sys; print(json.loads(open(sys.argv[1]).read().split(" ",1)[1])["receipt_id"])' "$workspace/install.json")
+state="$test_root/var/lib/oci-admin-coredns-helper/install/receipts/$receipt/state.json"
+python3 - "$state" <<'PY'
+import json,sys
+p=sys.argv[1]; value=json.load(open(p)); value['status']='prepared'; value['install_stage']='sudoers-replaced'
+open(p,'w').write(json.dumps(value,sort_keys=True,separators=(',',':'))+'\n')
+PY
+chmod 0600 "$state"
+coredns_installer_main install "${installer_args[@]}" >"$workspace/recovered.json"
+grep -q '"status":"installed"' "$workspace/recovered.json"
+coredns_installer_main rollback --receipt "$receipt" >"$workspace/rollback.json"
+coredns_installer_main install "${installer_args[@]}" >"$workspace/reinstalled.json"
+grep -q '"status":"installed"' "$workspace/reinstalled.json"
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_explicit_rollback_refuses_installed_file_drift() -> None:
+    result = _installer_harness(
+        r"""
+export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+export OCI_ADMIN_COREDNS_TEST_ROOT="$test_root"
+source "$installer"
+coredns_installer_main install "${installer_args[@]}" >"$workspace/install.json"
+receipt=$(python3 -c 'import json,sys; print(json.loads(open(sys.argv[1]).read().split(" ",1)[1])["receipt_id"])' "$workspace/install.json")
+helper_dest="$test_root/usr/local/libexec/oci-admin-coredns-helper"
+printf 'root-admin-drift\n' >"$helper_dest"
+chmod 0755 "$helper_dest"
+drift=$(sha256sum "$helper_dest" | awk '{print $1}')
+set +e
+coredns_installer_main rollback --receipt "$receipt" >"$workspace/rollback.out" 2>"$workspace/rollback.err"
+rc=$?
+set -e
+[[ $rc -eq 2 ]]
+[[ $(sha256sum "$helper_dest" | awk '{print $1}') == "$drift" ]]
+[[ -f "$test_root/etc/sudoers.d/101-oci-admin-coredns-run-command" ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_rollback_journal_resumes_every_stage() -> None:
+    result = _installer_harness(
+        r"""
+for stage in rollback-sudoers-closed rollback-helper-restored rollback-sudoers-restored rollback-validated rollback-readback; do
+  stage_root="$workspace/resume-$stage"
+  mkdir -p "$stage_root"
+  (
+    export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+    export OCI_ADMIN_COREDNS_TEST_ROOT="$stage_root"
+    source "$installer"
+    coredns_installer_main install "${installer_args[@]}" >"$workspace/$stage.install"
+  )
+  receipt=$(python3 -c 'import json,sys; print(json.loads(open(sys.argv[1]).read().split(" ",1)[1])["receipt_id"])' "$workspace/$stage.install")
+  (
+    export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+    export OCI_ADMIN_COREDNS_TEST_ROOT="$stage_root"
+    export OCI_ADMIN_COREDNS_TEST_FAIL_STAGE="$stage"
+    source "$installer"
+    set +e
+    coredns_installer_main rollback --receipt "$receipt" >"$workspace/$stage.out" 2>"$workspace/$stage.err"
+    rc=$?
+    set -e
+    [[ $rc -eq 2 ]]
+  )
+  state="$stage_root/var/lib/oci-admin-coredns-helper/install/receipts/$receipt/state.json"
+  grep -q '"status":"rolling-back"' "$state"
+  (
+    export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
+    export OCI_ADMIN_COREDNS_TEST_ROOT="$stage_root"
+    source "$installer"
+    coredns_installer_main rollback --receipt "$receipt" >"$workspace/$stage.retry"
+    coredns_installer_main rollback --receipt "$receipt" >"$workspace/$stage.repeat"
+  )
+  cmp -s "$workspace/$stage.retry" "$workspace/$stage.repeat"
+  [[ ! -e "$stage_root/usr/local/libexec/oci-admin-coredns-helper" ]]
+  [[ ! -e "$stage_root/etc/sudoers.d/101-oci-admin-coredns-run-command" ]]
+done
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
 def test_installer_failure_stages_leave_no_partial_replacement() -> None:
     result = _installer_harness(
         r"""
@@ -486,7 +784,8 @@ export OCI_ADMIN_COREDNS_INTERNAL_TESTING=1
 export OCI_ADMIN_COREDNS_TEST_ROOT="$test_root"
 source "$installer"
 set +e
-coredns_installer_main install --expected-commit "${source_commit%?}0" --expected-helper-sha256 "$helper_sha" --expected-sudoers-sha256 "$sudoers_sha" --run-command-user ocarun >/dev/null 2>&1
+if [[ ${source_commit:0:1} == f ]]; then bad_source_commit="0${source_commit:1}"; else bad_source_commit="f${source_commit:1}"; fi
+coredns_installer_main install --expected-commit "$bad_source_commit" --expected-helper-sha256 "$helper_sha" --expected-sudoers-sha256 "$sudoers_sha" --run-command-user ocarun >/dev/null 2>&1
 bad_commit=$?
 coredns_installer_main install "${installer_args[@]}" --root /tmp/caller >/dev/null 2>&1
 bad_path=$?
