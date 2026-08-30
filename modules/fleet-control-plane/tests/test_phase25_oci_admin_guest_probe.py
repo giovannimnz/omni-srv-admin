@@ -60,7 +60,13 @@ def _canonical_digest(value: dict[str, Any]) -> str:
     return "sha256:" + hashlib.sha256(encoded).hexdigest()
 
 
-def _attestation_document(target: str = "atius-srv-1") -> dict[str, Any]:
+def _attestation_document(
+    target: str = "atius-srv-1",
+    *,
+    expected_state: str = "present",
+    previous_answer: str = "NXDOMAIN",
+    preimage_digest: str = "sha256:" + "d" * 64,
+) -> dict[str, Any]:
     source = {
         "authority": "omni-srv-admin",
         "repo_commit": "1" * 40,
@@ -105,6 +111,12 @@ def _attestation_document(target: str = "atius-srv-1") -> dict[str, Any]:
         ],
     }
     projection_digest = _canonical_digest(projection)
+    readback_preimage = {
+        "expected_state": expected_state,
+        "previous_answer": previous_answer,
+        "preimage_digest": preimage_digest,
+    }
+    readback_digest = _canonical_digest(readback_preimage)
     target_binding = {
         "target_role": target_peer["role"],
         "profile_name": target_peer["profile_name"],
@@ -116,6 +128,7 @@ def _attestation_document(target: str = "atius-srv-1") -> dict[str, Any]:
         "source_path": source["path"],
         "source_digest": source["digest"],
         "projection_digest": projection_digest,
+        "readback_digest": readback_digest,
     }
     base = {
         "schema": "atius.oci-admin-guest-probe-attestation/v1",
@@ -124,10 +137,12 @@ def _attestation_document(target: str = "atius-srv-1") -> dict[str, Any]:
         "target_peer_preimage": target_peer,
         "peer_set_preimage": peers,
         "projection_preimage": projection,
+        "readback_preimage": readback_preimage,
         "digests": {
             "target_binding": _canonical_digest(target_binding),
             "peer_set": _canonical_digest(peers),
             "projection": projection_digest,
+            "readback": readback_digest,
         },
     }
     return {**base, "digest": _canonical_digest(base)}
@@ -169,8 +184,16 @@ def _coredns_argv(
     peer_set_digest: str | None = None,
     projection_digest: str | None = None,
     attestation_digest: str | None = None,
+    expected_state: str = "present",
+    previous_answer: str = "NXDOMAIN",
+    preimage_digest: str = "sha256:" + "d" * 64,
 ) -> list[str]:
-    attestation = _attestation_document(target)
+    attestation = _attestation_document(
+        target,
+        expected_state=expected_state,
+        previous_answer=previous_answer,
+        preimage_digest=preimage_digest,
+    )
     return [
         "execute",
         "--runbook",
@@ -195,8 +218,12 @@ def _coredns_argv(
         "atius-srv-4",
         "--fqdn",
         "atius-srv-4.atius.internal",
-        "--expected-address",
-        "10.14.1.14",
+        "--expected-state",
+        expected_state,
+        "--previous-answer",
+        previous_answer,
+        "--preimage-digest",
+        preimage_digest,
         "--primary-resolver",
         "10.11.1.11:53",
         "--reserve-resolver",
@@ -468,6 +495,7 @@ def test_probe_coredns_readback_uses_four_exact_authoritative_queries() -> None:
     assert stderr == ""
     result = _payload(stdout)
     assert result["attestation_digest"] == _attestation_document()["digest"]
+    assert result["expected_state"] == "present"
     assert len(result["rows"]) == 4
     assert {(row["resolver"], row["name"]) for row in result["rows"]} == {
         ("10.11.1.11:53", "atius-srv-4"),
@@ -479,6 +507,53 @@ def test_probe_coredns_readback_uses_four_exact_authoritative_queries() -> None:
     dig_calls = [call for call, _ in runner.calls if call[0] == probe.DIG_BINARY]
     assert len(dig_calls) == 4
     assert all(call[: len(probe.DIG_PREFIX)] == probe.DIG_PREFIX for call in dig_calls)
+
+
+def test_probe_coredns_absent_readback_accepts_only_authoritative_nxdomain() -> None:
+    runner = FakeRunner()
+    for role, resolver in (
+        ("primary", "10.11.1.11:53"),
+        ("reserve", "10.100.100.1:53"),
+    ):
+        del role
+        for name in ("atius-srv-4", "atius-srv-4.atius.internal"):
+            runner.overrides[probe.dig_command(resolver, name)] = _command_result(
+                b";; ->>HEADER<<- opcode: QUERY, status: NXDOMAIN, id: 1\n"
+                b";; flags: qr aa; QUERY: 1, ANSWER: 0\n"
+            )
+    attestation = _attestation_document(expected_state="absent")
+    code, stdout, stderr = _run_main(
+        _coredns_argv(expected_state="absent"),
+        runner=runner,
+        hostname="atius-srv-1",
+        attestation_loader=lambda: json.dumps(attestation).encode(),
+    )
+
+    assert code == 0
+    assert stderr == ""
+    payload = _payload(stdout)
+    assert payload["expected_state"] == "absent"
+    assert {row["answer"] for row in payload["rows"]} == {"NXDOMAIN"}
+    assert {row["status"] for row in payload["rows"]} == {"nxdomain"}
+
+
+@pytest.mark.parametrize(
+    ("expected_state", "previous_answer"),
+    (("unknown", "NXDOMAIN"), ("absent", "10.11.1.99")),
+)
+def test_probe_rejects_unbound_expected_state_before_collection(
+    expected_state: str,
+    previous_answer: str,
+) -> None:
+    runner = FakeRunner()
+    argv = _coredns_argv()
+    argv[argv.index("--expected-state") + 1] = expected_state
+    argv[argv.index("--previous-answer") + 1] = previous_answer
+    code, stdout, stderr = _run_main(argv, runner=runner, hostname="atius-srv-1")
+    assert code != 0
+    assert stdout == ""
+    assert stderr == probe.SANITIZED_ERROR_LINE
+    assert runner.calls == []
 
 
 def test_probe_deny_coredns_answer_for_wrong_owner_name() -> None:

@@ -108,6 +108,9 @@ def _inspect_request(helper: Any) -> Any:
         source_digest="sha256:" + "4" * 64,
         projection_digest="sha256:" + "5" * 64,
         helper_digest="sha256:" + "6" * 64,
+        short_name="atius-srv-4",
+        fqdn="atius-srv-4.atius.internal",
+        expected_address="10.14.1.14",
         sentinel=helper.SENTINEL,
     )
 
@@ -172,6 +175,9 @@ def test_helper_cli_accepts_only_exact_manifest_bound_argv() -> None:
         "--source-digest", request.source_digest,
         "--projection-digest", request.projection_digest,
         "--helper-digest", request.helper_digest,
+        "--short-name", request.short_name,
+        "--fqdn", request.fqdn,
+        "--expected-address", request.expected_address,
         "--sentinel", request.sentinel,
     ]
     assert helper.parse_request(argv) == request
@@ -186,6 +192,15 @@ def test_helper_cli_accepts_only_exact_manifest_bound_argv() -> None:
     ):
         with pytest.raises(helper.HelperError):
             helper.parse_request(candidate)
+    for flag, value in (
+        ("--short-name", "caller"),
+        ("--fqdn", "caller.atius.internal"),
+        ("--expected-address", "203.0.113.7"),
+    ):
+        candidate = list(argv)
+        candidate[candidate.index(flag) + 1] = value
+        with pytest.raises(helper.HelperError, match="record identity"):
+            helper.parse_request(candidate)
 
 
 def test_inspect_reports_fixed_layout_preimage_and_exact_authoritative_rows(tmp_path: Path) -> None:
@@ -194,12 +209,25 @@ def test_inspect_reports_fixed_layout_preimage_and_exact_authoritative_rows(tmp_
     request = _inspect_request(helper)
     request = helper.InspectRequest(**{**request.__dict__, "helper_digest": _digest(HELPER_PATH.read_bytes())})
     result = manager.inspect(request, installed_helper_path=HELPER_PATH)
-    assert set(result) == {"runbook_id", "version", "target_display_name", "owner", "coredns", "helper", "preimage", "before_readback"}
+    assert set(result) == {"runbook_id", "version", "target_display_name", "owner", "coredns", "helper", "preimage", "desired", "before_readback"}
     assert result["target_display_name"] == "atius-srv-1"
     assert result["owner"] == {"machine_id": "atius-srv-1", "effective_user": "ocarun"}
     assert result["coredns"]["unit"] == "coredns-vpn.service"
     assert result["coredns"]["plugin"] == "hosts"
     assert result["preimage"] == {"config_digest": _digest(layout.config_path.read_bytes()), "data_digest": _digest(layout.data_path.read_bytes())}
+    desired = helper.render_desired_data(
+        layout.plugin,
+        layout.data_path.read_bytes(),
+        short_name="atius-srv-4",
+        fqdn="atius-srv-4.atius.internal",
+        expected_address="10.14.1.14",
+    )
+    assert result["desired"] == {
+        "short_name": "atius-srv-4",
+        "fqdn": "atius-srv-4.atius.internal",
+        "expected_address": "10.14.1.14",
+        "config_digest": _digest(desired),
+    }
     assert len(result["before_readback"]) == 4
     assert all(row["authoritative"] is True for row in result["before_readback"])
     assert runtime.readbacks == ["NXDOMAIN"]
