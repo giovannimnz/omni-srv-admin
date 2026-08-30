@@ -35,7 +35,7 @@ INSTALLED_HELPER_PATH = Path("/usr/local/libexec/oci-admin-coredns-helper")
 BACKUP_ROOT = Path("/var/lib/oci-admin-coredns-helper/backups")
 
 MANIFEST_DIGESTS = {
-    "inspect": "sha256:0ba3a1831b73c5b76c8c245c6598251a0b2507a2f145f99a1722efc29d6e52e6",
+    "inspect": "sha256:be3fde76bdb4fb9d6e5c8944cb8da79921da2a45c67964265d3a61650b67dc84",
     "apply": "sha256:46e109c4b4909ac401368bfabb123d6e44c30e0ab4bd2bfe95df156c2bae6b60",
     "rollback": "sha256:d15b19e3d09e59b40ea3b8547854f497c5818b89f7faaf7364afe7b211b43de6",
 }
@@ -60,6 +60,9 @@ _INSPECT_FLAGS = (
     "--source-digest",
     "--projection-digest",
     "--helper-digest",
+    "--short-name",
+    "--fqdn",
+    "--expected-address",
     "--sentinel",
 )
 _APPLY_FLAGS = (
@@ -115,6 +118,9 @@ class InspectRequest:
     source_digest: str
     projection_digest: str
     helper_digest: str
+    short_name: str
+    fqdn: str
+    expected_address: str
     sentinel: str
 
 
@@ -265,6 +271,14 @@ def parse_request(argv: Sequence[str]) -> InspectRequest | ApplyRequest | Rollba
         for field in ("source_digest", "projection_digest"):
             if not _DIGEST.fullmatch(getattr(request, field)):
                 raise HelperError("source digest rejected")
+    if isinstance(request, (InspectRequest, ApplyRequest, RollbackRequest)):
+        if (
+            request.short_name != SHORT_NAME
+            or request.fqdn != FQDN
+            or getattr(request, "expected_address", EXPECTED_ADDRESS)
+            != EXPECTED_ADDRESS
+        ):
+            raise HelperError("record identity rejected")
     if isinstance(request, (ApplyRequest, RollbackRequest)):
         for field in (
             "discovery_digest",
@@ -276,13 +290,6 @@ def parse_request(argv: Sequence[str]) -> InspectRequest | ApplyRequest | Rollba
                 raise HelperError("transaction digest rejected")
         if not _BACKUP_ID.fullmatch(request.backup_id):
             raise HelperError("backup id rejected")
-        if (
-            request.short_name != SHORT_NAME
-            or request.fqdn != FQDN
-            or getattr(request, "expected_address", EXPECTED_ADDRESS)
-            != EXPECTED_ADDRESS
-        ):
-            raise HelperError("record identity rejected")
         _validate_answer(request.previous_answer)
     if isinstance(request, RollbackRequest) and not _IDENTIFIER.fullmatch(
         request.origin_operation_id
@@ -1015,7 +1022,18 @@ class CoreDNSManager:
             raise HelperError("helper digest mismatch")
         config, _ = self._read_config()
         data, _ = self._read_data()
-        before = self.runtime.readback(SHORT_NAME, FQDN, "AUTO")
+        before = self.runtime.readback(
+            request.short_name,
+            request.fqdn,
+            "AUTO",
+        )
+        desired = render_desired_data(
+            self.layout.plugin,
+            data,
+            short_name=request.short_name,
+            fqdn=request.fqdn,
+            expected_address=request.expected_address,
+        )
         return {
             "runbook_id": "phase25.coredns-inspect",
             "version": VERSION,
@@ -1041,6 +1059,12 @@ class CoreDNSManager:
             "preimage": {
                 "config_digest": sha256_digest(config),
                 "data_digest": sha256_digest(data),
+            },
+            "desired": {
+                "short_name": request.short_name,
+                "fqdn": request.fqdn,
+                "expected_address": request.expected_address,
+                "config_digest": sha256_digest(desired),
             },
             "before_readback": before,
         }

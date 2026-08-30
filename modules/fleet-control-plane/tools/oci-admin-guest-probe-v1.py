@@ -204,6 +204,7 @@ COREDNS_SCHEMA = {
         "target_display_name",
         "peer_set_digest",
         "attestation_digest",
+        "expected_state",
         "rows",
     ],
     "properties": {
@@ -228,6 +229,10 @@ COREDNS_SCHEMA = {
         "attestation_digest": {
             "type": "string",
             "pattern": "^sha256:[0-9a-f]{64}$",
+        },
+        "expected_state": {
+            "type": "string",
+            "enum": ["present", "absent"],
         },
         "rows": {
             "type": "array",
@@ -258,9 +263,15 @@ COREDNS_SCHEMA = {
                         "enum": ["atius-srv-4", "atius-srv-4.atius.internal"],
                     },
                     "record_type": {"type": "string", "const": "A"},
-                    "answer": {"type": "string", "const": "10.14.1.14"},
+                    "answer": {
+                        "type": "string",
+                        "enum": ["10.14.1.14", "NXDOMAIN"],
+                    },
                     "authoritative": {"type": "boolean", "const": True},
-                    "status": {"type": "string", "const": "resolved"},
+                    "status": {
+                        "type": "string",
+                        "enum": ["resolved", "nxdomain"],
+                    },
                 },
                 "additionalProperties": False,
             },
@@ -311,13 +322,14 @@ PINNED_RUNBOOKS = {
         REACHABILITY_SCHEMA,
     ),
     "phase25.coredns-peer-readback": RunbookContract(
-        "sha256:7b71d4fd9742fc6ca509a2d3e702367c0269fc27fc446ba63b942928004a8510",
+        "sha256:b7c8ea6c7e5b83e6147ab924ff6b82fe492e571b824d9e735a7d4f04db968ec7",
         (
             "runbook_id",
             "version",
             "target_display_name",
             "peer_set_digest",
             "attestation_digest",
+            "expected_state",
             "rows",
         ),
         _ROUTE_TARGETS,
@@ -379,7 +391,9 @@ _ARGUMENT_FLAGS = {
         "--projection-digest",
         "--short-name",
         "--fqdn",
-        "--expected-address",
+        "--expected-state",
+        "--previous-answer",
+        "--preimage-digest",
         "--primary-resolver",
         "--reserve-resolver",
         "--sentinel",
@@ -425,6 +439,7 @@ def validate_attestation_document(
         "target_peer_preimage",
         "peer_set_preimage",
         "projection_preimage",
+        "readback_preimage",
         "digests",
         "digest",
     }:
@@ -467,6 +482,28 @@ def validate_attestation_document(
     ]
     if projection["records"] != expected_records or projection["resolvers"] != expected_resolvers:
         raise ProbeError("projection contract has drifted")
+    readback = payload["readback_preimage"]
+    if not isinstance(readback, Mapping) or set(readback) != {
+        "expected_state",
+        "previous_answer",
+        "preimage_digest",
+    }:
+        raise ProbeError("readback preimage is invalid")
+    expected_state = str(readback["expected_state"])
+    previous_answer = str(readback["previous_answer"])
+    if expected_state not in {"present", "absent"}:
+        raise ProbeError("readback expected state is invalid")
+    if expected_state == "absent" and previous_answer != "NXDOMAIN":
+        raise ProbeError("absent readback must restore NXDOMAIN")
+    if previous_answer != "NXDOMAIN":
+        try:
+            if ip_address(previous_answer).version != 4:
+                raise ValueError
+        except ValueError as exc:
+            raise ProbeError("readback previous answer is invalid") from exc
+    if not _DIGEST.fullmatch(str(readback["preimage_digest"])):
+        raise ProbeError("readback preimage digest is invalid")
+    readback_digest = _canonical_digest(readback)
     peers = payload["peer_set_preimage"]
     if not isinstance(peers, list) or len(peers) != 4:
         raise ProbeError("peer set preimage is incomplete")
@@ -515,6 +552,7 @@ def validate_attestation_document(
         "source_path",
         "source_digest",
         "projection_digest",
+        "readback_digest",
     }:
         raise ProbeError("target binding preimage fields are not exact")
     expected_binding = {
@@ -528,6 +566,7 @@ def validate_attestation_document(
         "source_path": source["path"],
         "source_digest": source["digest"],
         "projection_digest": _canonical_digest(projection),
+        "readback_digest": readback_digest,
     }
     if dict(binding) != expected_binding:
         raise ProbeError("target binding preimage is inconsistent")
@@ -535,6 +574,7 @@ def validate_attestation_document(
         "target_binding": _canonical_digest(binding),
         "peer_set": _canonical_digest(peers),
         "projection": _canonical_digest(projection),
+        "readback": readback_digest,
     }
     if not isinstance(payload["digests"], Mapping) or dict(payload["digests"]) != expected_digests:
         raise ProbeError("attestation preimage digests are invalid")
@@ -555,6 +595,8 @@ def validate_attestation_document(
         "target_binding_digest": expected_digests["target_binding"],
         "peer_set_digest": expected_digests["peer_set"],
         "projection_digest": expected_digests["projection"],
+        "readback_digest": expected_digests["readback"],
+        "readback_preimage": dict(readback),
     }
 
 
@@ -854,18 +896,34 @@ def parse_invocation(argv: Sequence[str]) -> dict[str, Any]:
         fixed = {
             "--short-name": "atius-srv-4",
             "--fqdn": "atius-srv-4.atius.internal",
-            "--expected-address": "10.14.1.14",
             "--primary-resolver": "10.11.1.11:53",
             "--reserve-resolver": "10.100.100.1:53",
         }
         if any(values[flag] != expected for flag, expected in fixed.items()):
             raise ProbeError("CoreDNS projection is not fixed")
+        expected_state = values["--expected-state"]
+        previous_answer = values["--previous-answer"]
+        if expected_state not in {"present", "absent"}:
+            raise ProbeError("CoreDNS expected state is invalid")
+        if expected_state == "absent" and previous_answer != "NXDOMAIN":
+            raise ProbeError("CoreDNS absent state must restore NXDOMAIN")
+        if previous_answer != "NXDOMAIN":
+            try:
+                if ip_address(previous_answer).version != 4:
+                    raise ValueError
+            except ValueError as exc:
+                raise ProbeError("CoreDNS previous answer is invalid") from exc
+        if not _DIGEST.fullmatch(values["--preimage-digest"]):
+            raise ProbeError("CoreDNS preimage digest is invalid")
         parsed.update(
             {
                 "target_binding_digest": values["--target-binding-digest"],
                 "attestation_digest": values["--attestation-digest"],
                 "peer_set_digest": values["--peer-set-digest"],
                 "projection_digest": values["--projection-digest"],
+                "expected_state": expected_state,
+                "previous_answer": previous_answer,
+                "preimage_digest": values["--preimage-digest"],
             }
         )
     return parsed
@@ -1382,7 +1440,12 @@ def dig_command(resolver: str, name: str) -> tuple[str, ...]:
     return (*DIG_PREFIX, f"@{address}", "-p", port, name, "A")
 
 
-def _parse_dig(raw: bytes, *, expected_address: str, expected_name: str) -> None:
+def _parse_dig(
+    raw: bytes,
+    *,
+    expected_state: str,
+    expected_name: str,
+) -> dict[str, str]:
     try:
         text = raw.decode("utf-8")
     except UnicodeDecodeError as exc:
@@ -1391,26 +1454,37 @@ def _parse_dig(raw: bytes, *, expected_address: str, expected_name: str) -> None
         raise ProbeError("DNS output is unsafe")
     header = next((line for line in text.splitlines() if "status:" in line), "")
     flags = next((line for line in text.splitlines() if line.startswith(";; flags:")), "")
-    if "status: NOERROR" not in header or not re.search(r"\baa\b", flags):
+    if not re.search(r"\baa\b", flags):
         raise ProbeError("DNS answer is not authoritative")
-    answers: list[str] = []
+    answer_rows: list[list[str]] = []
     for line in text.splitlines():
         if line.startswith(";;") or not line.strip():
             continue
         fields = line.split()
-        if (
-            len(fields) >= 5
-            and fields[-2] == "A"
-            and fields[0].rstrip(".") == expected_name
-        ):
-            answers.append(_safe_ipv4(fields[-1]))
-    if answers != [expected_address]:
+        answer_rows.append(fields)
+    if expected_state == "absent":
+        if "status: NXDOMAIN" not in header or answer_rows:
+            raise ProbeError("DNS absent answer mismatch")
+        return {"answer": "NXDOMAIN", "status": "nxdomain"}
+    if expected_state != "present" or "status: NOERROR" not in header:
+        raise ProbeError("DNS expected state mismatch")
+    if len(answer_rows) != 1:
+        raise ProbeError("DNS answer cardinality mismatch")
+    fields = answer_rows[0]
+    if (
+        len(fields) != 5
+        or fields[-2] != "A"
+        or fields[0].rstrip(".") != expected_name
+        or _safe_ipv4(fields[-1]) != "10.14.1.14"
+    ):
         raise ProbeError("DNS answer mismatch")
+    return {"answer": "10.14.1.14", "status": "resolved"}
 
 
 def collect_coredns(
     *,
     runner: Callable[[tuple[str, ...], int], CommandResult],
+    expected_state: str,
 ) -> list[dict[str, Any]]:
     rows: list[dict[str, Any]] = []
     resolvers = (
@@ -1425,9 +1499,9 @@ def collect_coredns(
                 dig_command(resolver, name),
                 timeout_seconds=5,
             )
-            _parse_dig(
+            observed = _parse_dig(
                 result.stdout,
-                expected_address="10.14.1.14",
+                expected_state=expected_state,
                 expected_name=name,
             )
             rows.append(
@@ -1436,9 +1510,9 @@ def collect_coredns(
                     "resolver": resolver,
                     "name": name,
                     "record_type": "A",
-                    "answer": "10.14.1.14",
+                    "answer": observed["answer"],
                     "authoritative": True,
-                    "status": "resolved",
+                    "status": observed["status"],
                 }
             )
     return rows
@@ -1464,7 +1538,10 @@ def _build_payload(
             tcp_probe=tcp_probe,
         )
     else:
-        rows = collect_coredns(runner=runner)
+        rows = collect_coredns(
+            runner=runner,
+            expected_state=str(invocation["expected_state"]),
+        )
     payload: dict[str, Any] = {
         "runbook_id": runbook_id,
         "version": VERSION,
@@ -1473,6 +1550,7 @@ def _build_payload(
     if runbook_id == "phase25.coredns-peer-readback":
         payload["peer_set_digest"] = invocation["peer_set_digest"]
         payload["attestation_digest"] = invocation["attestation_digest"]
+        payload["expected_state"] = invocation["expected_state"]
     payload["rows"] = rows
     validate_schema(payload, invocation["contract"].result_schema)
     if tuple(payload) != invocation["contract"].result_fields:
@@ -1519,6 +1597,12 @@ def main(
                 != invocation["target_binding_digest"]
                 or attestation["peer_set_digest"] != invocation["peer_set_digest"]
                 or attestation["projection_digest"] != invocation["projection_digest"]
+                or attestation["readback_preimage"]
+                != {
+                    "expected_state": invocation["expected_state"],
+                    "previous_answer": invocation["previous_answer"],
+                    "preimage_digest": invocation["preimage_digest"],
+                }
             ):
                 raise ProbeError("attestation preimages do not match invocation")
         payload = _build_payload(
