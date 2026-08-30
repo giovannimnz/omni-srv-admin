@@ -7,11 +7,16 @@ from collections import namedtuple
 from hashlib import sha256
 from ipaddress import IPv4Address, IPv4Network, ip_address, ip_network
 import json
+import os
 from pathlib import Path
+from queue import Empty, Queue
 import re
+import signal
 import socket
+import stat
 import subprocess
 import sys
+from threading import Thread
 from time import monotonic
 from typing import Any, Callable, Mapping, Sequence
 
@@ -573,21 +578,97 @@ def validate_attestation_bytes(
 
 
 def load_installed_attestation() -> bytes:
+    return read_root_owned_file(
+        ATTESTATION_PATH,
+        expected_mode=0o400,
+        max_bytes=MAX_ATTESTATION_BYTES,
+    )
+
+
+def read_root_owned_file(
+    path: Path,
+    *,
+    expected_mode: int,
+    max_bytes: int,
+    root: Path = Path("/"),
+    expected_uid: int = 0,
+    expected_gid: int = 0,
+) -> bytes:
+    path = Path(path)
+    root = Path(root)
     try:
-        info = ATTESTATION_PATH.lstat()
+        relative = path.relative_to(root)
+        root_info = root.lstat()
+    except (ValueError, OSError) as exc:
+        raise ProbeError("trusted path escaped its root") from exc
+    if (
+        root.is_symlink()
+        or not root.is_dir()
+        or root_info.st_uid != expected_uid
+        or root_info.st_gid != expected_gid
+        or (root_info.st_mode & 0o022)
+    ):
+        raise ProbeError("trusted root identity is invalid")
+    current = root
+    for part in relative.parts[:-1]:
+        current = current / part
+        try:
+            info = current.lstat()
+        except OSError as exc:
+            raise ProbeError("trusted parent is unavailable") from exc
         if (
-            ATTESTATION_PATH.is_symlink()
-            or not ATTESTATION_PATH.is_file()
-            or info.st_nlink != 1
-            or info.st_uid != 0
-            or info.st_gid != 0
-            or (info.st_mode & 0o777) != 0o400
-            or not 1 <= info.st_size <= MAX_ATTESTATION_BYTES
+            current.is_symlink()
+            or not current.is_dir()
+            or info.st_uid != expected_uid
+            or info.st_gid != expected_gid
+            or (info.st_mode & 0o022)
         ):
-            raise ProbeError("installed attestation identity is invalid")
-        return ATTESTATION_PATH.read_bytes()
+            raise ProbeError("trusted parent identity is invalid")
+    flags = os.O_RDONLY | getattr(os, "O_CLOEXEC", 0) | getattr(os, "O_NOFOLLOW", 0)
+    try:
+        descriptor = os.open(path, flags)
     except OSError as exc:
-        raise ProbeError("installed attestation is unavailable") from exc
+        raise ProbeError("trusted file is unavailable") from exc
+    try:
+        before = os.fstat(descriptor)
+        if (
+            not stat.S_ISREG(before.st_mode)
+            or
+            not 1 <= before.st_size <= max_bytes
+            or before.st_nlink != 1
+            or before.st_uid != expected_uid
+            or before.st_gid != expected_gid
+            or (before.st_mode & 0o777) != expected_mode
+        ):
+            raise ProbeError("trusted file identity is invalid")
+        chunks: list[bytes] = []
+        remaining = max_bytes + 1
+        while remaining > 0:
+            chunk = os.read(descriptor, min(65536, remaining))
+            if not chunk:
+                break
+            chunks.append(chunk)
+            remaining -= len(chunk)
+        if remaining <= 0:
+            raise ProbeError("trusted file is oversized")
+        after = os.fstat(descriptor)
+        current_info = path.lstat()
+        if (
+            (before.st_dev, before.st_ino, before.st_size, before.st_mtime_ns)
+            != (after.st_dev, after.st_ino, after.st_size, after.st_mtime_ns)
+            or (current_info.st_dev, current_info.st_ino) != (after.st_dev, after.st_ino)
+        ):
+            raise ProbeError("trusted file changed during read")
+        return b"".join(chunks)
+    finally:
+        os.close(descriptor)
+
+
+def validate_installed_identity() -> None:
+    executable = Path(__file__)
+    if executable != Path("/usr/local/libexec/oci-admin-guest-probe-v1"):
+        raise ProbeError("probe executable path is not canonical")
+    read_root_owned_file(executable, expected_mode=0o755, max_bytes=1048576)
 
 
 def self_digest() -> str:
@@ -834,14 +915,84 @@ def subprocess_runner(argv: tuple[str, ...], timeout_seconds: int) -> CommandRes
         shell=False,
         env=dict(CLEAN_ENVIRONMENT),
         close_fds=True,
+        start_new_session=True,
+        bufsize=0,
     )
-    try:
-        stdout, stderr = process.communicate(timeout=timeout_seconds)
-    except subprocess.TimeoutExpired as exc:
-        process.kill()
-        process.communicate()
-        raise ProbeError("command timed out") from exc
+    stdout, stderr = _bounded_process_output(
+        process,
+        timeout_seconds=timeout_seconds,
+        maximum_bytes=MAX_COMMAND_OUTPUT_BYTES,
+    )
     return CommandResult(process.returncode, stdout, stderr)
+
+
+def _kill_process_group(process: Any) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGKILL)
+        else:
+            process.kill()
+    except (OSError, ProcessLookupError):
+        process.kill()
+
+
+def _bounded_process_output(
+    process: Any,
+    *,
+    timeout_seconds: int,
+    maximum_bytes: int,
+) -> tuple[bytes, bytes]:
+    messages: Queue[tuple[str, bytes | None]] = Queue()
+
+    def read_stream(label: str, stream: Any) -> None:
+        try:
+            while True:
+                chunk = stream.read(8192)
+                if not chunk:
+                    break
+                messages.put((label, chunk))
+        finally:
+            messages.put((label, None))
+
+    threads = [
+        Thread(target=read_stream, args=("stdout", process.stdout), daemon=True),
+        Thread(target=read_stream, args=("stderr", process.stderr), daemon=True),
+    ]
+    for thread in threads:
+        thread.start()
+    buffers = {"stdout": bytearray(), "stderr": bytearray()}
+    finished: set[str] = set()
+    deadline = monotonic() + timeout_seconds
+    try:
+        while len(finished) != 2:
+            remaining = deadline - monotonic()
+            if remaining <= 0:
+                raise ProbeError("command timed out")
+            try:
+                label, chunk = messages.get(timeout=remaining)
+            except Empty as exc:
+                raise ProbeError("command timed out") from exc
+            if chunk is None:
+                finished.add(label)
+                continue
+            buffers[label].extend(chunk)
+            if len(buffers["stdout"]) + len(buffers["stderr"]) > maximum_bytes:
+                raise ProbeError("command output is oversized")
+        process.wait(timeout=max(0.01, deadline - monotonic()))
+    except (ProbeError, subprocess.TimeoutExpired) as exc:
+        _kill_process_group(process)
+        try:
+            process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=1)
+        raise ProbeError("command output exceeded its bound") from exc
+    finally:
+        for thread in threads:
+            thread.join(timeout=1)
+    return bytes(buffers["stdout"]), bytes(buffers["stderr"])
 
 
 def _checked_run(
@@ -1324,6 +1475,7 @@ def main(
     resolver: Callable[[str], Sequence[str]] | None = None,
     tcp_probe: Callable[[str, int, int], tuple[bool, int]] | None = None,
     attestation_loader: Callable[[], bytes] | None = None,
+    identity_validator: Callable[[], None] | None = None,
     stdout: Any | None = None,
     stderr: Any | None = None,
 ) -> int:
@@ -1332,10 +1484,12 @@ def main(
     resolver = resolver or (lambda name: _getent_resolver(name, runner))
     tcp_probe = tcp_probe or _default_tcp_probe
     attestation_loader = attestation_loader or load_installed_attestation
+    identity_validator = identity_validator or validate_installed_identity
     stdout = stdout or sys.stdout
     stderr = stderr or sys.stderr
     try:
         invocation = parse_invocation(sys.argv[1:] if argv is None else argv)
+        identity_validator()
         _attest_target(
             invocation["target"],
             runner=runner,

@@ -328,6 +328,7 @@ def _run_main(
             attestation_loader
             or (lambda: json.dumps(_attestation_document(hostname)).encode())
         ),
+        identity_validator=lambda: None,
         stdout=stdout,
         stderr=stderr,
     )
@@ -680,14 +681,23 @@ def test_probe_ignores_caller_environment_and_subprocess_shell(
 
     class FakePopen:
         returncode = 0
+        pid = 12345
 
         def __init__(self, argv: Any, **kwargs: Any) -> None:
             captured["argv"] = argv
             captured.update(kwargs)
+            self.stdout = io.BytesIO()
+            self.stderr = io.BytesIO()
 
-        def communicate(self, timeout: int) -> tuple[bytes, bytes]:
+        def wait(self, timeout: float) -> int:
             captured["timeout"] = timeout
-            return b"", b""
+            return self.returncode
+
+        def poll(self) -> int:
+            return self.returncode
+
+        def kill(self) -> None:
+            self.returncode = -9
 
     monkeypatch.setenv("PATH", "/tmp/attacker")
     monkeypatch.setenv("LD_PRELOAD", "/tmp/attacker.so")
@@ -702,6 +712,8 @@ def test_probe_ignores_caller_environment_and_subprocess_shell(
     assert captured["stdin"] is probe.subprocess.DEVNULL
     assert captured["stdout"] is probe.subprocess.PIPE
     assert captured["stderr"] is probe.subprocess.PIPE
+    assert captured["start_new_session"] is True
+    assert captured["bufsize"] == 0
 
 
 def test_probe_kills_real_oversized_emitter_before_timeout(monkeypatch: pytest.MonkeyPatch) -> None:

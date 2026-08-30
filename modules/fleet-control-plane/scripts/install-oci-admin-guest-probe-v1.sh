@@ -22,17 +22,19 @@ _usage() {
 _internal_test=false
 _destination_root=/
 _failure_stage=''
+_test_emit_oversize=false
 if [[ ${BASH_SOURCE[0]} != "$0" ]]; then
   if [[ ${OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING:-} == 1 ]]; then
     _internal_test=true
     _destination_root=${OCI_ADMIN_GUEST_PROBE_TEST_ROOT:-}
     _failure_stage=${OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE:-}
+    [[ ${OCI_ADMIN_GUEST_PROBE_TEST_EMIT_OVERSIZE:-0} == 1 ]] && _test_emit_oversize=true
     [[ $_destination_root == /tmp/oci-admin-guest-probe-test.*/* ]] || return 64
     [[ -d $_destination_root && ! -L $_destination_root ]] || return 64
-  elif [[ -n ${OCI_ADMIN_GUEST_PROBE_TEST_ROOT:-}${OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE:-} ]]; then
+  elif [[ -n ${OCI_ADMIN_GUEST_PROBE_TEST_ROOT:-}${OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE:-}${OCI_ADMIN_GUEST_PROBE_TEST_EMIT_OVERSIZE:-} ]]; then
     return 64
   fi
-elif [[ -n ${OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING:-}${OCI_ADMIN_GUEST_PROBE_TEST_ROOT:-}${OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE:-} ]]; then
+elif [[ -n ${OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING:-}${OCI_ADMIN_GUEST_PROBE_TEST_ROOT:-}${OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE:-}${OCI_ADMIN_GUEST_PROBE_TEST_EMIT_OVERSIZE:-} ]]; then
   printf '%s\n' "$SANITIZED_ERROR" >&2
   exit 64
 fi
@@ -83,7 +85,8 @@ guest_probe_installer_main() {
     "$host_id" \
     "$rollback_receipt_id" \
     "$_internal_test" \
-    "$_failure_stage" 3<&0 <<'PY'
+    "$_failure_stage" \
+    "$_test_emit_oversize" 3<&0 <<'PY'
 from __future__ import annotations
 
 import ast
@@ -92,12 +95,16 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+from queue import Empty, Queue
 import re
+import signal
 import shutil
 import stat
 import subprocess
 import sys
 import tempfile
+from threading import Thread
+from time import monotonic
 from typing import Any
 
 
@@ -113,6 +120,7 @@ from typing import Any
     receipt_id,
     internal_test_raw,
     failure_stage,
+    test_emit_oversize_raw,
 ) = sys.argv[1:]
 
 SENTINEL = "ATIUS_GUEST_PROBE_INSTALL_RECEIPT_V1"
@@ -128,6 +136,12 @@ ALLOWED_FAILURE_STAGES = {
     "sudoers-replace",
     "global-visudo",
     "readback",
+    "rollback-sudoers-closed",
+    "rollback-helper-restored",
+    "rollback-attestation-restored",
+    "rollback-sudoers-restored",
+    "rollback-validated",
+    "rollback-readback",
 }
 
 
@@ -171,13 +185,25 @@ def ensure_safe_chain(path: Path, root: Path, *, create: bool, final_mode: int =
         raise InstallerError("path escaped fixed root") from exc
     current = root
     root_info = root.lstat()
-    if stat.S_ISLNK(root_info.st_mode) or not stat.S_ISDIR(root_info.st_mode):
+    if (
+        stat.S_ISLNK(root_info.st_mode)
+        or not stat.S_ISDIR(root_info.st_mode)
+        or root_info.st_uid != install_uid
+        or root_info.st_gid != install_gid
+        or stat.S_IMODE(root_info.st_mode) & 0o022
+    ):
         raise InstallerError("destination root is unsafe")
     for index, part in enumerate(relative.parts):
         current = current / part
         if lexists(current):
             info = current.lstat()
-            if stat.S_ISLNK(info.st_mode) or not stat.S_ISDIR(info.st_mode):
+            if (
+                stat.S_ISLNK(info.st_mode)
+                or not stat.S_ISDIR(info.st_mode)
+                or info.st_uid != install_uid
+                or info.st_gid != install_gid
+                or stat.S_IMODE(info.st_mode) & 0o022
+            ):
                 raise InstallerError("destination parent chain is unsafe")
         elif create:
             current.mkdir(mode=final_mode if index == len(relative.parts) - 1 else 0o755)
@@ -236,20 +262,86 @@ def stage_bytes(path: Path, data: bytes, mode_value: int, uid: int, gid: int) ->
         raise
 
 
-def run_checked(argv: list[str]) -> bytes:
-    result = subprocess.run(
+def kill_process_group(process: Any) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        os.killpg(process.pid, signal.SIGKILL)
+    except (OSError, ProcessLookupError):
+        process.kill()
+
+
+def run_checked(
+    argv: list[str],
+    *,
+    maximum_bytes: int = 131072,
+    timeout_seconds: int = 15,
+    environment: dict[str, str] | None = None,
+    preexec_fn: Any | None = None,
+) -> bytes:
+    process = subprocess.Popen(
         argv,
         stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env=CLEAN_ENV,
+        env=environment or CLEAN_ENV,
         shell=False,
-        check=False,
-        timeout=15,
+        close_fds=True,
+        start_new_session=True,
+        bufsize=0,
+        preexec_fn=preexec_fn,
     )
-    if result.returncode != 0 or len(result.stdout) + len(result.stderr) > 131072:
-        raise InstallerError("fixed validation command failed")
-    return result.stdout
+    messages: Queue[tuple[str, bytes | None]] = Queue()
+
+    def read_stream(label: str, stream: Any) -> None:
+        try:
+            while True:
+                chunk = stream.read(8192)
+                if not chunk:
+                    break
+                messages.put((label, chunk))
+        finally:
+            messages.put((label, None))
+
+    threads = [
+        Thread(target=read_stream, args=("stdout", process.stdout), daemon=True),
+        Thread(target=read_stream, args=("stderr", process.stderr), daemon=True),
+    ]
+    for thread in threads:
+        thread.start()
+    output = {"stdout": bytearray(), "stderr": bytearray()}
+    finished: set[str] = set()
+    deadline = monotonic() + timeout_seconds
+    try:
+        while len(finished) != 2:
+            remaining = deadline - monotonic()
+            if remaining <= 0:
+                raise InstallerError("fixed command timed out")
+            try:
+                label, chunk = messages.get(timeout=remaining)
+            except Empty as exc:
+                raise InstallerError("fixed command timed out") from exc
+            if chunk is None:
+                finished.add(label)
+                continue
+            output[label].extend(chunk)
+            if len(output["stdout"]) + len(output["stderr"]) > maximum_bytes:
+                raise InstallerError("fixed command output is oversized")
+        process.wait(timeout=max(0.01, deadline - monotonic()))
+        if process.returncode != 0:
+            raise InstallerError("fixed validation command failed")
+    except (InstallerError, subprocess.TimeoutExpired) as exc:
+        kill_process_group(process)
+        try:
+            process.wait(timeout=1)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            process.wait(timeout=1)
+        raise InstallerError("fixed validation command failed") from exc
+    finally:
+        for thread in threads:
+            thread.join(timeout=1)
+    return bytes(output["stdout"])
 
 
 def validate_python(path: Path) -> None:
@@ -298,8 +390,42 @@ def validate_global_sudoers() -> None:
         run_checked(["/usr/sbin/visudo", "-c"])
 
 
-def git_output(arguments: list[str]) -> str:
-    raw = run_checked(["/usr/bin/git", "-C", str(repo_root), *arguments])
+def source_owner_preexec() -> None:
+    if os.geteuid() == source_owner_uid and os.getegid() == source_owner_gid:
+        return
+    os.setgroups([])
+    os.setgid(source_owner_gid)
+    os.setuid(source_owner_uid)
+
+
+def git_bytes(arguments: list[str], *, maximum_bytes: int = 1048576) -> bytes:
+    environment = {
+        **CLEAN_ENV,
+        "HOME": "/nonexistent",
+        "XDG_CONFIG_HOME": "/nonexistent",
+        "GIT_CONFIG_NOSYSTEM": "1",
+        "GIT_CONFIG_GLOBAL": "/dev/null",
+        "GIT_OPTIONAL_LOCKS": "0",
+        "GIT_NO_LAZY_FETCH": "1",
+        "GIT_TERMINAL_PROMPT": "0",
+        "GIT_CONFIG_COUNT": "3",
+        "GIT_CONFIG_KEY_0": "core.hooksPath",
+        "GIT_CONFIG_VALUE_0": "/dev/null",
+        "GIT_CONFIG_KEY_1": "core.fsmonitor",
+        "GIT_CONFIG_VALUE_1": "false",
+        "GIT_CONFIG_KEY_2": "protocol.file.allow",
+        "GIT_CONFIG_VALUE_2": "never",
+    }
+    return run_checked(
+        ["/usr/bin/git", "-C", str(repo_root), *arguments],
+        maximum_bytes=maximum_bytes,
+        environment=environment,
+        preexec_fn=source_owner_preexec,
+    )
+
+
+def git_text(arguments: list[str]) -> str:
+    raw = git_bytes(arguments, maximum_bytes=4096)
     try:
         return raw.decode("utf-8").strip()
     except UnicodeDecodeError as exc:
@@ -344,37 +470,40 @@ def read_pinned_source(path: Path, label: str) -> bytes:
 
 
 def verify_sources() -> tuple[bytes, bytes]:
+    if test_emit_oversize:
+        run_checked(
+            [
+                "/usr/bin/python3",
+                "-c",
+                "import os\nwhile True: os.write(1, b'x' * 8192)",
+            ],
+            maximum_bytes=4096,
+            timeout_seconds=10,
+        )
     for source in (helper_source, sudoers_source, installer_source):
         regular_file(source, "managed source")
-    head = git_output(["rev-parse", "--verify", "HEAD"])
-    if head != expected_source_commit:
-        raise InstallerError("source commit mismatch")
-    tracked = git_output(
-        [
-            "ls-files",
-            "--error-unmatch",
-            str(helper_source.relative_to(repo_root)),
-            str(sudoers_source.relative_to(repo_root)),
-            str(installer_source.relative_to(repo_root)),
-        ]
-    ).splitlines()
-    if len(tracked) != 3:
-        raise InstallerError("managed source is not tracked")
-    dirty = git_output(
-        [
-            "status",
-            "--porcelain=v1",
-            "--untracked-files=all",
-            "--",
-            str(helper_source.relative_to(repo_root)),
-            str(sudoers_source.relative_to(repo_root)),
-            str(installer_source.relative_to(repo_root)),
-        ]
-    )
-    if dirty:
-        raise InstallerError("managed source is dirty")
     helper_bytes = read_pinned_source(helper_source, "helper source")
     sudoers_bytes = read_pinned_source(sudoers_source, "sudoers source")
+    installer_bytes = read_pinned_source(installer_source, "installer source")
+    toplevel = git_text(["rev-parse", "--show-toplevel"])
+    if Path(toplevel).resolve() != repo_root:
+        raise InstallerError("source git toplevel mismatch")
+    head = git_text(["rev-parse", "--verify", f"{expected_source_commit}^{{commit}}"])
+    if head != expected_source_commit:
+        raise InstallerError("source commit mismatch")
+    blobs = {
+        helper_source: helper_bytes,
+        sudoers_source: sudoers_bytes,
+        installer_source: installer_bytes,
+    }
+    for source, working_bytes in blobs.items():
+        relative = source.relative_to(repo_root).as_posix()
+        committed_bytes = git_bytes(
+            ["cat-file", "blob", f"{expected_source_commit}:{relative}"],
+            maximum_bytes=1048576,
+        )
+        if committed_bytes != working_bytes:
+            raise InstallerError("managed source differs from expected commit blob")
     if digest_bytes(helper_bytes) != expected_helper_sha256:
         raise InstallerError("helper source digest mismatch")
     if digest_bytes(sudoers_bytes) != expected_sudoers_sha256:
@@ -498,6 +627,94 @@ def restore(path: Path, record: dict[str, Any], backup_directory: Path) -> None:
     atomic_bytes(path, backup.read_bytes(), mode_value, record["uid"], record["gid"])
 
 
+ROLLBACK_STAGES = (
+    "not-started",
+    "sudoers-closed",
+    "helper-restored",
+    "attestation-restored",
+    "sudoers-restored",
+    "validated",
+    "readback-complete",
+)
+CLOSED_SUDOERS_BYTES = b"# OCI Admin guest probe rollback in progress; no commands allowed.\n"
+
+
+def close_sudoers() -> None:
+    atomic_bytes(
+        sudoers_destination,
+        CLOSED_SUDOERS_BYTES,
+        0o440,
+        install_uid,
+        install_gid,
+    )
+    validate_sudoers(sudoers_destination)
+    validate_global_sudoers()
+
+
+def assert_sudoers_closed() -> None:
+    installed_readback(
+        sudoers_destination,
+        digest_bytes(CLOSED_SUDOERS_BYTES),
+        0o440,
+    )
+
+
+def set_rollback_stage(state: dict[str, Any], stage: str) -> None:
+    state["status"] = "rolling-back"
+    state["rollback_stage"] = stage
+    write_state(state)
+    inject("rollback-readback" if stage == "readback-complete" else f"rollback-{stage}")
+
+
+def perform_restore(state: dict[str, Any]) -> dict[str, Any]:
+    stage = state["rollback_stage"]
+    if stage not in ROLLBACK_STAGES:
+        raise InstallerError("rollback journal stage is invalid")
+    position = ROLLBACK_STAGES.index(stage)
+    if position == 0:
+        close_sudoers()
+        set_rollback_stage(state, "sudoers-closed")
+        position = 1
+    if position < ROLLBACK_STAGES.index("sudoers-restored"):
+        assert_sudoers_closed()
+    if position == 1:
+        restore(helper_destination, state["preimages"]["helper"], backup_directory)
+        restored_readback(helper_destination, state["preimages"]["helper"])
+        set_rollback_stage(state, "helper-restored")
+        position = 2
+    if position == 2:
+        restored_readback(helper_destination, state["preimages"]["helper"])
+        restore(
+            attestation_destination,
+            state["preimages"]["attestation"],
+            backup_directory,
+        )
+        restored_readback(attestation_destination, state["preimages"]["attestation"])
+        set_rollback_stage(state, "attestation-restored")
+        position = 3
+    if position == 3:
+        restored_readback(helper_destination, state["preimages"]["helper"])
+        restored_readback(attestation_destination, state["preimages"]["attestation"])
+        restore(sudoers_destination, state["preimages"]["sudoers"], backup_directory)
+        restored_readback(sudoers_destination, state["preimages"]["sudoers"])
+        set_rollback_stage(state, "sudoers-restored")
+        position = 4
+    if position == 4:
+        validate_global_sudoers()
+        set_rollback_stage(state, "validated")
+        position = 5
+    readback = {
+        "helper": restored_readback(helper_destination, state["preimages"]["helper"]),
+        "sudoers": restored_readback(sudoers_destination, state["preimages"]["sudoers"]),
+        "attestation": restored_readback(
+            attestation_destination, state["preimages"]["attestation"]
+        ),
+    }
+    if position == 5:
+        set_rollback_stage(state, "readback-complete")
+    return readback
+
+
 def make_receipt(
     *,
     receipt_mode: str,
@@ -557,6 +774,7 @@ def load_state() -> dict[str, Any]:
         "preimages",
         "install_receipt",
         "rollback_receipt",
+        "rollback_stage",
     }
     if not isinstance(payload, dict) or set(payload) != required or payload["schema"] != 1:
         raise InstallerError("install state shape drift")
@@ -582,6 +800,8 @@ def load_state() -> dict[str, Any]:
         raise InstallerError("install state attestation file digest is invalid")
     if set(payload["preimages"]) != {"helper", "sudoers", "attestation"}:
         raise InstallerError("install state preimages invalid")
+    if payload["rollback_stage"] not in ROLLBACK_STAGES:
+        raise InstallerError("install state rollback journal is invalid")
     return payload
 
 
@@ -602,7 +822,12 @@ def inject(stage: str) -> None:
 
 
 internal_test = internal_test_raw == "true"
-if failure_stage not in ALLOWED_FAILURE_STAGES or (failure_stage and not internal_test):
+test_emit_oversize = test_emit_oversize_raw == "true"
+if (
+    failure_stage not in ALLOWED_FAILURE_STAGES
+    or (failure_stage and not internal_test)
+    or (test_emit_oversize and not internal_test)
+):
     raise SystemExit(2)
 repo_root = Path(repo_root_raw).resolve()
 destination_root = Path(destination_root_raw).resolve()
@@ -614,6 +839,21 @@ elif destination_root != Path("/"):
 if not destination_root.is_dir() or destination_root.is_symlink():
     raise SystemExit(2)
 if mode != "preview" and not internal_test and os.geteuid() != 0:
+    raise SystemExit(2)
+repo_info = repo_root.lstat()
+if (
+    repo_root.is_symlink()
+    or not repo_root.is_dir()
+    or stat.S_IMODE(repo_info.st_mode) & 0o022
+):
+    raise SystemExit(2)
+source_owner_uid = repo_info.st_uid
+source_owner_gid = repo_info.st_gid
+if not internal_test and source_owner_uid == 0:
+    raise SystemExit(2)
+if os.geteuid() != 0 and (
+    os.geteuid() != source_owner_uid or os.getegid() != source_owner_gid
+):
     raise SystemExit(2)
 
 helper_source = repo_root / "modules/fleet-control-plane/tools/oci-admin-guest-probe-v1.py"
@@ -721,15 +961,22 @@ def install() -> int:
                 )
                 emit(state["install_receipt"])
                 return 0
-            if state["status"] in {"prepared", "failed-restored"}:
-                restore(helper_destination, state["preimages"]["helper"], backup_directory)
-                restore(sudoers_destination, state["preimages"]["sudoers"], backup_directory)
-                restore(
-                    attestation_destination,
-                    state["preimages"]["attestation"],
-                    backup_directory,
+            if state["status"] in {"prepared", "rolling-back"}:
+                if state["status"] == "prepared":
+                    state["rollback_stage"] = "not-started"
+                    state["status"] = "rolling-back"
+                    write_state(state)
+                restored = perform_restore(state)
+                state["status"] = "failed-restored"
+                state["rollback_receipt"] = make_receipt(
+                    receipt_mode="install",
+                    status="failed-restored",
+                    preimages=state["preimages"],
+                    readback=restored,
+                    rollback_status="restored",
+                    attestation_file_sha256=state["attestation_file_sha256"],
                 )
-                validate_global_sudoers()
+                write_state(state)
             raise InstallerError("receipt is not reusable for install")
 
         preimages = {
@@ -752,6 +999,7 @@ def install() -> int:
             "preimages": preimages,
             "install_receipt": None,
             "rollback_receipt": None,
+            "rollback_stage": "not-started",
         }
         write_state(state)
         helper_stage: Path | None = None
@@ -818,21 +1066,10 @@ def install() -> int:
                 attestation_stage.unlink(missing_ok=True)
             if sudoers_stage is not None:
                 sudoers_stage.unlink(missing_ok=True)
-            restore(helper_destination, preimages["helper"], backup_directory)
-            restore(sudoers_destination, preimages["sudoers"], backup_directory)
-            restore(
-                attestation_destination,
-                preimages["attestation"],
-                backup_directory,
-            )
-            validate_global_sudoers()
-            restored = {
-                "helper": restored_readback(helper_destination, preimages["helper"]),
-                "sudoers": restored_readback(sudoers_destination, preimages["sudoers"]),
-                "attestation": restored_readback(
-                    attestation_destination, preimages["attestation"]
-                ),
-            }
+            state["status"] = "rolling-back"
+            state["rollback_stage"] = "not-started"
+            write_state(state)
+            restored = perform_restore(state)
             failure_receipt = make_receipt(
                 receipt_mode="install",
                 status="failed-restored",
@@ -886,31 +1123,25 @@ def rollback() -> int:
                 state["attestation_file_sha256"],
                 0o400,
             )
+            state["status"] = "rolling-back"
+            state["rollback_stage"] = "not-started"
+            write_state(state)
         elif state["status"] == "failed-restored":
             restored_readback(helper_destination, state["preimages"]["helper"])
             restored_readback(sudoers_destination, state["preimages"]["sudoers"])
             restored_readback(
                 attestation_destination, state["preimages"]["attestation"]
             )
-        else:
+            state["status"] = "rolling-back"
+            state["rollback_stage"] = "readback-complete"
+            write_state(state)
+        elif state["status"] == "prepared":
+            state["status"] = "rolling-back"
+            state["rollback_stage"] = "not-started"
+            write_state(state)
+        elif state["status"] != "rolling-back":
             raise InstallerError("rollback state is invalid")
-        state["status"] = "rolling-back"
-        write_state(state)
-        restore(helper_destination, state["preimages"]["helper"], backup_directory)
-        restore(sudoers_destination, state["preimages"]["sudoers"], backup_directory)
-        restore(
-            attestation_destination,
-            state["preimages"]["attestation"],
-            backup_directory,
-        )
-        validate_global_sudoers()
-        readback = {
-            "helper": restored_readback(helper_destination, state["preimages"]["helper"]),
-            "sudoers": restored_readback(sudoers_destination, state["preimages"]["sudoers"]),
-            "attestation": restored_readback(
-                attestation_destination, state["preimages"]["attestation"]
-            ),
-        }
+        readback = perform_restore(state)
         receipt = make_receipt(
             receipt_mode="rollback",
             status="rolled-back",
