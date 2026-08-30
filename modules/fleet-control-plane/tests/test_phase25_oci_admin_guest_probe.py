@@ -7,8 +7,10 @@ import json
 import os
 from pathlib import Path
 import subprocess
+import sys
 import tempfile
 import textwrap
+from time import monotonic
 from typing import Any
 
 import pytest
@@ -702,6 +704,21 @@ def test_probe_ignores_caller_environment_and_subprocess_shell(
     assert captured["stderr"] is probe.subprocess.PIPE
 
 
+def test_probe_kills_real_oversized_emitter_before_timeout(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setattr(probe, "MAX_COMMAND_OUTPUT_BYTES", 4096)
+    started = monotonic()
+    with pytest.raises(probe.ProbeError):
+        probe.subprocess_runner(
+            (
+                sys.executable,
+                "-c",
+                "import os\nwhile True: os.write(1, b'x' * 8192)",
+            ),
+            5,
+        )
+    assert monotonic() - started < 2
+
+
 def test_probe_output_is_single_compact_deterministic_sentinel() -> None:
     argv = _render_argv("phase25.wg100-routes", target="atius-srv-1")
     first = _run_main(argv, runner=FakeRunner(), hostname="atius-srv-1")
@@ -851,6 +868,39 @@ def test_installer_probe_contract_is_closed_and_sudoers_is_least_privilege() -> 
 
     syntax = _bash("visudo -cf \"$1\"", _wsl_path(SUDOERS_PATH))
     assert syntax.returncode == 0, syntax.stderr
+
+
+def test_probe_rejects_world_writable_attestation_parent_chain() -> None:
+    result = _bash(
+        r"""
+set -euo pipefail
+root=$(mktemp -d /tmp/oci-admin-guest-probe-parent.XXXXXX)
+trap 'rm -rf -- "$root"' EXIT
+mkdir -p "$root/etc/oci-admin-guest-probe-v1"
+chmod 0777 "$root/etc/oci-admin-guest-probe-v1"
+printf '{}\n' >"$root/etc/oci-admin-guest-probe-v1/attestation.json"
+chmod 0400 "$root/etc/oci-admin-guest-probe-v1/attestation.json"
+set +e
+python3 - "$1" "$root" <<'PY'
+import importlib.util,os,pathlib,sys
+spec=importlib.util.spec_from_file_location('probe_parent_test',sys.argv[1])
+module=importlib.util.module_from_spec(spec); spec.loader.exec_module(module)
+try:
+ module.read_root_owned_file(
+  pathlib.Path(sys.argv[2])/'etc/oci-admin-guest-probe-v1/attestation.json',
+  expected_mode=0o400,max_bytes=65536,root=pathlib.Path(sys.argv[2]),
+  expected_uid=os.getuid(),expected_gid=os.getgid())
+except module.ProbeError:
+ raise SystemExit(0)
+raise SystemExit(1)
+PY
+rc=$?
+set -e
+[[ $rc -eq 0 ]]
+""",
+        _wsl_path(PROBE_PATH),
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
 
 
 def test_installer_probe_preview_install_rollback_and_idempotency() -> None:
@@ -1064,6 +1114,114 @@ chmod 0777 "$state"
 [[ ! -e "$test_root/usr/local/libexec/oci-admin-guest-probe-v1" ]]
 [[ ! -e "$test_root/etc/sudoers.d/102-oci-admin-guest-probe-v1" ]]
 [[ ! -e "$test_root/etc/oci-admin-guest-probe-v1/attestation.json" ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_rejects_world_writable_destination_parents() -> None:
+    result = _installer_harness(
+        r"""
+parent_root="$workspace/root-parents"
+mkdir -p "$parent_root/usr/local/libexec"
+mkdir -p "$parent_root/etc/sudoers.d"
+mkdir -p "$parent_root/etc/oci-admin-guest-probe-v1"
+chmod 0777 "$parent_root/usr/local/libexec"
+chmod 0777 "$parent_root/etc/sudoers.d"
+chmod 0777 "$parent_root/etc/oci-admin-guest-probe-v1"
+(
+  export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+  export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$parent_root"
+  source "$installer"
+  set +e
+  guest_probe_installer_main preview "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/parents.out" 2>"$workspace/parents.err"
+  rc=$?
+  set -e
+  [[ $rc -eq 2 ]]
+)
+[[ ! -s "$workspace/parents.out" ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_rollback_journal_resumes_every_stage() -> None:
+    result = _installer_harness(
+        r"""
+for stage in rollback-sudoers-closed rollback-helper-restored rollback-attestation-restored rollback-sudoers-restored rollback-validated rollback-readback; do
+  stage_root="$workspace/resume-$stage"
+  mkdir -p "$stage_root"
+  (
+    export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+    export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$stage_root"
+    source "$installer"
+    guest_probe_installer_main install "${installer_args[@]}" <"$workspace/attestation.json" >/dev/null
+  )
+  (
+    export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+    export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$stage_root"
+    export OCI_ADMIN_GUEST_PROBE_TEST_FAIL_STAGE="$stage"
+    source "$installer"
+    set +e
+    guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/$stage.out" 2>"$workspace/$stage.err"
+    rc=$?
+    set -e
+    [[ $rc -eq 2 ]]
+  )
+  state="$stage_root/var/lib/oci-admin-guest-probe-v1/receipts/phase25-test-receipt/state.json"
+  grep -q '"status":"rolling-back"' "$state"
+  (
+    export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+    export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$stage_root"
+    source "$installer"
+    guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/$stage.retry"
+    guest_probe_installer_main rollback "${installer_args[@]}" >"$workspace/$stage.repeat"
+  )
+  cmp -s "$workspace/$stage.retry" "$workspace/$stage.repeat"
+  [[ ! -e "$stage_root/usr/local/libexec/oci-admin-guest-probe-v1" ]]
+  [[ ! -e "$stage_root/etc/sudoers.d/102-oci-admin-guest-probe-v1" ]]
+  [[ ! -e "$stage_root/etc/oci-admin-guest-probe-v1/attestation.json" ]]
+done
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_bounds_real_emitter_before_timeout() -> None:
+    result = _installer_harness(
+        r"""
+export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+export OCI_ADMIN_GUEST_PROBE_TEST_EMIT_OVERSIZE=1
+source "$installer"
+started=$(date +%s)
+set +e
+guest_probe_installer_main preview "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/bound.out" 2>"$workspace/bound.err"
+rc=$?
+set -e
+elapsed=$(($(date +%s)-started))
+[[ $rc -eq 2 ]]
+[[ $elapsed -lt 3 ]]
+[[ ! -s "$workspace/bound.out" ]]
+"""
+    )
+    assert result.returncode == 0, result.stderr or result.stdout
+
+
+def test_installer_probe_git_blob_verification_ignores_malicious_fsmonitor() -> None:
+    result = _installer_harness(
+        r"""
+marker="$workspace/fsmonitor-ran"
+monitor="$workspace/fsmonitor.sh"
+printf '#!/bin/sh\ntouch %q\nprintf "0\\n"\n' "$marker" >"$monitor"
+chmod 0755 "$monitor"
+git -C "$source_repo" config core.fsmonitor "$monitor"
+export OCI_ADMIN_GUEST_PROBE_INTERNAL_TESTING=1
+export OCI_ADMIN_GUEST_PROBE_TEST_ROOT="$test_root"
+source "$installer"
+guest_probe_installer_main preview "${installer_args[@]}" <"$workspace/attestation.json" >"$workspace/git.out"
+[[ ! -e "$marker" ]]
+grep -q '^ATIUS_GUEST_PROBE_INSTALL_RECEIPT_V1 ' "$workspace/git.out"
 """
     )
     assert result.returncode == 0, result.stderr or result.stdout
