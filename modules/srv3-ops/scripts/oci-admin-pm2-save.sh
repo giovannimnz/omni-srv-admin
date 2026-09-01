@@ -8,7 +8,15 @@ DUMP="$PM2_HOME/dump.pm2"
 "$PM2_BIN" save --force
 chmod 0600 "$DUMP"
 
-if rg -q 'ATIUS_MCP_TOKEN|OCI_ADMIN_SECRET_KEY' "$DUMP"; then
+if ! jq -e '
+  [
+    .. | objects | keys[]
+    | select(test(
+        "(^|_)(API_KEY|API_TOKEN|ACCESS_TOKEN|AUTH_TOKEN|BEARER_TOKEN|TOKEN|SECRET|SECRET_ID|ROLE_ID|PASSWORD|PASSPHRASE|PRIVATE_KEY|DATABASE_URI|DATABASE_URL)(_|$)";
+        "i"
+      ))
+  ] | length == 0
+' "$DUMP" >/dev/null; then
   echo "ERRO: dump PM2 contém nomes de variáveis sensíveis; snapshot rejeitado" >&2
   exit 1
 fi

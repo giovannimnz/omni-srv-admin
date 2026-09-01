@@ -25,6 +25,9 @@ efemeros sob `/run`. Os runners PM2 leem esses arquivos somente no processo
 filho. O ecosystem e o `dump.pm2` nao recebem valores de secret. O start
 canonico e `/usr/local/sbin/oci-admin-pm2-start`, que usa `env -i`; iniciar o
 ecosystem diretamente de um shell hidratado e proibido.
+O gate de save rejeita nomes secret-like de qualquer integração, não apenas
+segredos do OCI Admin, evitando que credenciais herdadas do shell do operador
+entrem no dump global do PM2.
 
 ## Recovery
 

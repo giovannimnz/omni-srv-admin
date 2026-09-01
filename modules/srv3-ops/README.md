@@ -24,8 +24,10 @@ do probe público é observada, mas não causa restart local quando os probes
 privados estão saudáveis.
 
 `oci-admin-pm2-save` é o único caminho documentado para atualizar o snapshot:
-ele aplica mode 0600, rejeita nomes de env sensível no dump e exige as duas
-apps do namespace. Logs têm rotação diária/10 MiB e retenção de 14 arquivos.
+ele aplica mode 0600, rejeita qualquer nome de env secret-like no dump
+(`*_TOKEN`, `*_SECRET`, `*_PASSWORD`, `*_API_KEY`, `DATABASE_URI` e famílias)
+e exige as duas apps do namespace. Logs têm rotação diária/10 MiB e retenção
+de 14 arquivos.
 `oci-admin-pm2-start` inicia o ecosystem com `env -i`; o ecosystem também
 filtra os prefixes `ATIUS_`, `OCI_ADMIN_` e `VAULT_`. Isso impede que o
 ambiente do operador seja serializado pelo PM2.
