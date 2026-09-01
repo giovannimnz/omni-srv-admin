@@ -9,10 +9,14 @@
 - Boot owner: `pm2-ubuntu.service` via `pm2 resurrect`.
 - Snapshot: `/home/ubuntu/.pm2/dump.pm2`.
 - Monitor: `oci-admin-watchdog.timer`, a cada 30 segundos.
-- Ecosystem canonico: `/home/ubuntu/GitHub/oci-admin/deploy/pm2/ecosystem.config.cjs`.
+- Ecosystem canônico: ponteiro
+  `/home/ubuntu/.local/share/oci-admin/current/deploy/pm2/ecosystem.config.cjs`,
+  com alvo imutável em `releases/<commit>`.
 
 O processo web reune FastAPI, rotas backend, templates Jinja e static assets.
 Nao ha frontend Node independente. O CLI continua on-demand.
+O checkout de controle não é runtime: mudanças locais não commitadas nunca
+entram em restart, watchdog ou resurrect.
 
 ## Secrets
 

@@ -5,7 +5,7 @@ export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 export PM2_HOME="/home/ubuntu/.pm2"
 
 PM2_BIN="/usr/local/bin/pm2"
-ECOSYSTEM="/home/ubuntu/GitHub/oci-admin/deploy/pm2/ecosystem.config.cjs"
+ECOSYSTEM="/home/ubuntu/.local/share/oci-admin/current/deploy/pm2/ecosystem.config.cjs"
 STATE_DIR="/home/ubuntu/.local/state/omni/oci-admin-watchdog"
 LOG_DIR="/home/ubuntu/.logs/omni"
 LOG_FILE="$LOG_DIR/oci-admin-watchdog.log"
@@ -76,6 +76,10 @@ recover_app() {
   if pm2_app_exists "$app"; then
     timeout 60s "$PM2_BIN" restart "$app"
   else
+    if [[ ! -r "$ECOSYSTEM" ]]; then
+      log "ERROR namespace=oci-admin app=$app action=start reason=release-pointer-missing"
+      return 1
+    fi
     timeout 60s "$PM2_BIN" start "$ECOSYSTEM" --only "$app"
     timeout 60s /usr/local/sbin/oci-admin-pm2-save
   fi

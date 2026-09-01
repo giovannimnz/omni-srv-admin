@@ -11,8 +11,10 @@ O runtime do OCI Admin usa o namespace PM2 `oci-admin`, com duas apps:
 - `oci-admin-web`: FastAPI backend com frontend Jinja/static integrado;
 - `oci-admin-mcp-http`: MCP Streamable HTTP.
 
-O ecosystem canônico pertence ao produto em
-`/home/ubuntu/GitHub/oci-admin/deploy/pm2/ecosystem.config.cjs`. O
+O ecosystem canônico pertence ao produto e é promovido por ponteiro atômico em
+`/home/ubuntu/.local/share/oci-admin/current/deploy/pm2/ecosystem.config.cjs`.
+O alvo fica sob `releases/<commit>` e nunca aponta para checkout com mudanças
+não commitadas. O
 `pm2-ubuntu.service` é o único boot owner e executa `pm2 resurrect` sobre
 `/home/ubuntu/.pm2/dump.pm2`.
 
@@ -27,6 +29,10 @@ apps do namespace. Logs têm rotação diária/10 MiB e retenção de 14 arquivo
 `oci-admin-pm2-start` inicia o ecosystem com `env -i`; o ecosystem também
 filtra os prefixes `ATIUS_`, `OCI_ADMIN_` e `VAULT_`. Isso impede que o
 ambiente do operador seja serializado pelo PM2.
+
+Antes de start/cutover, atualize `current` para a worktree detached testada.
+Rollback reponta `current` para a release anterior, recarrega o ecosystem e
+executa novamente o gate de save/readback.
 
 Instalação dos artefatos, sem ativar o timer:
 
