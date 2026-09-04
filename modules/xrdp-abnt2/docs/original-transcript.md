@@ -1,5 +1,16 @@
 # Transcricao da Conversa
 
+> [!WARNING]
+> **Transcrição histórica/evidence-only — não use seus comandos como runbook.**
+> Para o procedimento vigente, invoque `$xrdp-abnt2-fleet` e consulte
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos antigos com
+> `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não integram o fluxo atual. O diálogo abaixo foi preservado para cronologia e
+> evidência, inclusive quando registra hipóteses ou passos superados.
+
 Registro operacional da conversa inteira sobre a correcao do teclado XRDP ABNT2.
 
 Observacao: outputs longos de comandos foram resumidos quando repetitivos, mas as decisoes, diagnosticos, arquivos alterados e resultados foram preservados.

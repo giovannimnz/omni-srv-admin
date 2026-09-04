@@ -24,9 +24,11 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
    Configurar Podman com `srv4-podman` em `10.10.4.0/24`, netavark e
    `systemd-resolved`; habilitar linger e `podman.socket` para persistência
    user-level, sem iniciar stacks de aplicação.
-7. Instalar `omni` em pipx e aplicar `xrdp-abnt2` com
-   `--install-packages` apenas em host novo. Validar os três units XRDP e o
-   timer de reconciliação.
+7. Instalar `omni` em pipx e executar a etapa de teclado pela skill
+   `$xrdp-abnt2-fleet`, versionada em
+   `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+   Usar `--install-packages` somente no host novo e validar os três units XRDP
+   e o timer de reconciliação conforme o procedimento canônico.
 8. Fixar o teclado global em `br(abnt2)` e revalidar o guard XRDP; a sessão
    RDP usa os keymaps canônicos mesmo sem um desktop já aberto.
 9. Instalar e registrar `landscape-client` no Landscape self-hosted
@@ -37,6 +39,9 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
     versão antes de declarar o host incluído nos relatórios.
 11. Registrar o host no inventário, documentar a evidência e atualizar GBrain
     e Obsidian com fatos sem segredos.
+
+O SRV-4 segue esse contrato como bootstrap próprio; isso não o torna
+participante do rollout histórico da frota em 2026-08-29.
 
 ## Guardrails
 

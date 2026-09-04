@@ -11,6 +11,16 @@ Managed scope:
 - `horistic-srv`
 - `GIOVANNI-W11-PC`
 
+## Scope boundary
+
+Este documento governa somente trust/TLS: assinatura dos arquivos `.rdp`, CA,
+certificados leaf, SAN, revogação e configuração `certificate`/`key_file` do
+XRDP. Teclado/layout ABNT2, keymaps e o reconciliador são responsabilidade de
+`$xrdp-abnt2-fleet`, versionada em
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+que encaminha ao runbook de desktop. Um gate TLS aprovado não valida teclado,
+e um gate de teclado aprovado não valida trust/TLS.
+
 ## Goal
 
 Eliminate the two distinct trust problems in Remote Desktop:

@@ -280,6 +280,11 @@ omni xrdp-abnt2 diff
 omni xrdp-abnt2 install
 ```
 
+Para audit, rollout, recovery e validação multi-host, invoque a skill
+`$xrdp-abnt2-fleet`. A fonte versionada é
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`;
+ela encaminha aos módulos e runbooks canônicos sem duplicá-los.
+
 ### Fork Sync
 
 ```bash
@@ -343,6 +348,8 @@ Responsável por automações locais do `atius-srv-1`:
 ### `modules/xrdp-abnt2/`
 
 Responsável por manter teclado ABNT2 no fluxo Windows 11 RDP → Ubuntu LXDE.
+O entrypoint operacional da frota é `$xrdp-abnt2-fleet`, versionado em
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
 
 ### `modules/fork-sync/`
 

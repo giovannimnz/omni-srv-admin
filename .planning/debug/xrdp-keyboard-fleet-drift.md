@@ -17,6 +17,7 @@ updated: 2026-08-29
 
 ## Current Focus
 
+- operator_skill: "$xrdp-abnt2-fleet (modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md)"
 - bug_class: heisenbug-mandelbug (depende de host, sessão XRDP nova e update de pacote)
 - hypothesis: "SRV-2, SRV-3 e Horistic mantêm keymaps gerados/indexados para evdev, enquanto o XRDP 0.9.24 consulta índices xfree86/base; isso roteia os scancodes estendidos aos símbolos errados. A CLI instalada em Horistic deriva REPO_ROOT de site-packages e não encontra os assets do módulo."
 - test: "Executar os testes focais, criar uma distribuição wheel que contém assets do módulo e, após deploy sem restart, comparar os hashes live e executar validate/diff em cada host."
@@ -84,6 +85,7 @@ updated: 2026-08-29
 
 - root_cause: "Configuração/payload: o rollout de 2026-08-28 que corrige os índices consumidos pelo XRDP 0.9.24 está somente no SRV-1. SRV-2, SRV-3 e Horistic ainda usam km-abnt2 evdev antigo (hash e24a96...) e portanto interpretam scancodes estendidos em índices errados; SRV-2/SRV-3 também não têm os overrides de xrdp.ini e helper atualizados. A instalação uv de Horistic possui um bug independente de empacotamento (assets ausentes sob REPO_ROOT em site-packages), que impede validate/diff quando a CLI não é importada do checkout."
 - fix: "Aplicado via PR #19 e endurecido no follow-up 0.2.5: keymaps canônicos usam índices xfree86/base consumidos pelo XRDP 0.9.24; o install possui rollback exato de arquivos/metadata/units, package opt-in, exact-one [Globals], timer com jitter e backups limitados; nenhum caminho reinicia XRDP. SRV-1/SRV-2/SRV-3/Horistic receberam o payload persistente."
+- operational_entrypoint: "$xrdp-abnt2-fleet; source versionada em modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md"
 - verification: |
     target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 37 }
     mutation_check: { result: skipped, reason_if_skipped: "Stryker não configurado para esta CLI Python" }

@@ -17,7 +17,8 @@
 
 - [ ] Mark modules as compatible with host classes.
 - [ ] `srv1-ops`: SRV-1 only.
-- [ ] `xrdp-abnt2`: OCI Ubuntu with XRDP only.
+- [ ] `xrdp-abnt2`: OCI Ubuntu with XRDP only; operar por
+  `$xrdp-abnt2-fleet` (`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`).
 - [ ] `remote-manager`: OCI Ubuntu + Desktop Ubuntu, later Termux partial.
 - [ ] `backup`: OCI Ubuntu + Desktop Ubuntu + PRoot, Termux variant.
 

@@ -1,5 +1,18 @@
 # Hermes/Codex skills + slash commands fleet sharing study — 2026-07-04
 
+> [!WARNING]
+> **Estudo histórico/evidence-only; não use suas listas como inventário atual.**
+> A autoridade vigente de distribuição é
+> `modules/agent-content-packs/manifest-index.yaml`. Para XRDP ABNT2, use a
+> skill canônica `$xrdp-abnt2-fleet`, sua fonte versionada em
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> o módulo `modules/xrdp-abnt2/README.md` e o runbook
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos históricos
+> com `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não são o fluxo XRDP atual. O estudo abaixo permanece intacto como fotografia
+> datada da sincronização Hermes/Codex.
+
 ## Context
 
 NotebookLM bridge artifacts were imported from `atius-srv-1` to `GIOVANNI-W11-PC`.

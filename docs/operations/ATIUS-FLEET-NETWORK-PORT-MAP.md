@@ -698,7 +698,9 @@ Upgrade gated em janela separada.
 - Skill: `devops/fleet-port-audit/` (cross-server ss scan)
 - Skill: `devops/service-port-migration/` (port migration playbook)
 - Skill: `notebooklm-bridge-camofox-install/` (camofox install, v1.1.0 a bumpar)
-- Skill: `devops/abnt2-keyboard-fix/` (display :10 LXDE)
+- Skill: `$xrdp-abnt2-fleet` — fonte canônica versionada em
+  `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`
+  (teclado/layout ABNT2 e drift XRDP)
 
 ---
 

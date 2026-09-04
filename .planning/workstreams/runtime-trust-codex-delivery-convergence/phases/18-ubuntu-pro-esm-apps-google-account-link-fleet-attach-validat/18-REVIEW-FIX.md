@@ -36,7 +36,9 @@ defects are not activated by this delivery.
 - A fresh install runs the reconcile oneshot synchronously before validation;
   the health check requires a real execution timestamp and a scheduled timer.
 - No success path restarts `xrdp` or `xrdp-sesman`.
-- Wheel `omni 0.2.5`, content-pack manifest, runbook and Codex skill are aligned.
+- Wheel `omni 0.2.5`, content-pack manifest, runbook and Codex skill
+  `$xrdp-abnt2-fleet` are aligned. Versioned source:
+  `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
 - `agent-content sync --apply` for `ssh-linux` now fails before any remote
   writer is invoked; SSH dry-run remains available. The remote transaction
   engine is intentionally deferred rather than shipped partially.

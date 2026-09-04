@@ -37,3 +37,7 @@ CLI (`omni`)
 | SRV-1 Ops | `modules/srv1-ops/` | `omni srv1-ops ...` |
 | XRDP ABNT2 | `modules/xrdp-abnt2/` | `omni xrdp-abnt2 ...` |
 | Fork Sync | `modules/fork-sync/` | `omni fork-sync ...` |
+
+O módulo XRDP é operado na frota pela skill `$xrdp-abnt2-fleet`, cuja fonte
+versionada é
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.

@@ -43,6 +43,11 @@ Para rollout em fleet, use `repair --install-packages --restart-session` como pa
 
 Runbook canonico: `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`.
 
+O guard de sessão `setxkbmap` deste tema não substitui os keymaps e o
+reconciliador XRDP. Para teclado ABNT2 em fleet, use `$xrdp-abnt2-fleet`,
+versionada em
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+
 ## Arquivos Aplicados
 
 ```text

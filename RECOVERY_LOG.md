@@ -1,4 +1,17 @@
 # Log de Recuperação - Problema RDP Atius SRV
+
+> [!WARNING]
+> **Evidência histórica apenas — não execute este arquivo como runbook atual.**
+> Para qualquer diagnóstico, instalação, validação ou recuperação do teclado
+> XRDP ABNT2 da frota, use `$xrdp-abnt2-fleet` e consulte a fonte versionada
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> o módulo `modules/xrdp-abnt2/README.md` e o runbook
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos históricos
+> com `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não fazem parte do fluxo atual. O corpo abaixo é preservado somente como
+> cronologia/evidência.
+
 Data: 05 de Abril de 2026
 
 ## Estado Atual do Sistema

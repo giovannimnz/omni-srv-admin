@@ -78,6 +78,11 @@ omni srv1-ops run cleanup-local --dry-run
 omni xrdp-abnt2 validate
 ```
 
+Para operar ou recuperar a frota, use `$xrdp-abnt2-fleet`; sua fonte
+versionada é
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+A skill direciona ao runbook canônico e exige evidência nova por host.
+
 ## Regras antes de mexer
 
 1. Consultar vault.

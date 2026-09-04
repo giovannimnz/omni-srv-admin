@@ -25,7 +25,13 @@ status: active
 modules:
   - srv1-ops
   - xrdp-abnt2
+operational_skill: xrdp-abnt2-fleet
+operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
 ```
+
+Use `$xrdp-abnt2-fleet` para validação, rollout e recovery do guard; o
+inventário declara o roteamento operacional, enquanto o módulo e o runbook
+continuam sendo as fontes de implementação e procedimento.
 
 ## Remote inventory
 
