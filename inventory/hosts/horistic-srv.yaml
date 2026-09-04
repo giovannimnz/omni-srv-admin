@@ -55,14 +55,20 @@ apps:
     namespace: ebeddings-local
     service: tei-gte
     model: Alibaba-NLP/gte-multilingual-base
-    listen: 10.21.1.21:3115
+    revision: 9bbca17d9273fd0d03d5725c7a4b0f6b45142062
+    listen: 10.21.1.21:31115
     public_alias: embedding-gte-v1
-    router_upstream: http://10.21.1.21:3115
+    router_upstream: http://10.21.1.21:31115
+    replicas: 2
+    cpu_per_pod: 500m
+    memory_request_per_pod: 2Gi
+    memory_limit_per_pod: 8Gi
     managed_by: "omni-srv-admin"
     update_policy: "plan-first"
-    last_audited: "2026-07-05"
+    last_audited: "2026-08-21"
     notes:
-      - "Pod tei-gte runs on horistic-srv in namespace ebeddings-local; k3s service exposes 80/9000 internally and host listener 10.21.1.21:3115 is the OCI/DRG router-facing upstream."
+      - "Two tei-gte pods run on horistic-srv in namespace ebeddings-local; private NodePort 10.21.1.21:31115 is the OCI/DRG router-facing upstream."
+      - "This is pod/process HA on one physical node; a horistic-srv, storage, or kube-proxy outage affects both replicas."
       - "10.100.100.4:3115 remains reserve fallback only."
       - "The deployment has an explicit toleration for the horistic-srv manual-only taint; generic K3s agents must not schedule on this node."
       - "Public OpenAI-compatible embeddings flow through https://router.atius.com.br/v1 with alias embedding-gte-v1."
@@ -74,7 +80,7 @@ apps:
     revision: 8215cf04918ba6f7b6a62bb44238ce2953d8831c
     dtype: float16
     listen: 10.21.1.21:31216
-    public_alias: reranker-gte-multilingual-v1
+    public_alias: reranker-gte-v1
     router_upstream: http://10.21.1.21:31216
     replicas_min: 2
     replicas_max: 4

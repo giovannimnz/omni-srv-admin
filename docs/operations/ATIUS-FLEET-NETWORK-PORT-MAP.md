@@ -516,22 +516,20 @@ somente quando representam alvo de edge ou drift operacional documentado.
 | 10250  | kubelet                    | *            | root     | K3s                                |
 | 10256  | kube-proxy healthz         | 127.0.0.1    | root     | K3s                                |
 | 22061  | local service              | 127.0.0.1    | -        | investigate                        |
-| 3115   | TEI GTE embeddings         | 10.21.1.21 / 0.0.0.0 | k3s/containerd | `ebeddings-local/tei-gte`, OCI-private preferred |
+| 31115  | TEI GTE embeddings HA      | 10.21.1.21 NodePort | k3s/containerd | `ebeddings-local/tei-gte`, two pods on `horistic-srv` |
 | 31216  | TEI GTE reranker FP16      | 10.21.1.21 NodePort | k3s/containerd | `ebeddings-local/tei-gte-reranker`, private router upstream |
 
-Validated 2026-07-08: the OCI-primary listener is reachable on `10.21.1.21:3115`
-returns TEI health `200`, and public `embedding-gte-v1` through
-`https://router.atius.com.br/v1/embeddings` returns 768-dimensional vectors.
+Validated 2026-08-21: the OCI-primary private NodePort at `10.21.1.21:31115`
+balances two ready TEI pods and returns health `200`; public `embedding-gte-v1`
+through `https://router.atius.com.br/v1/embeddings` returns 768-dimensional vectors.
 
-Validated 2026-07-10: W11 direct health to `10.21.1.21:3115/health` returned
-HTTP `200`; `10.100.100.4:3115/health` also returned HTTP `200` as reserve
-fallback. `router-ai-atius` channel `9` is `TEI - GTE Embeddings` with primary
-upstream `http://10.21.1.21:3115`, and router/Graphify embedding smokes returned
-`embedding-gte-v1` vectors with dimension `768`.
+The former `10.21.1.21:3115` host-network listener is retired. The
+`10.100.100.4:3115` path remains a reserve fallback only. Router channel `11`
+is `Atius Local` with primary upstream `http://10.21.1.21:31115`.
 
 Validated 2026-07-22: `10.21.1.21:31216` serves two ready FP16 reranker pods,
 with HPA 2-4 and 500m per pod. The public alias
-`reranker-gte-multilingual-v1` remains behind the governed router route
+`reranker-gte-v1` remains behind the governed router route
 `/v1/rerank`; there is no direct public Ingress for TEI.
 
 ### MT5 KVM execution VMs (sem K3s)
@@ -570,7 +568,7 @@ Notas:
 | K3s etcd        | 2379, 2380     | 10.11/10.12/10.13/10.21 preferred, `wg100` reserve | K3s |
 | K3s kubelet     | 10250          | *             | K3s                      |
 | Prometheus node-exporter | 9100 | *             | K3s                      |
-| Local TEI embeddings | 3115       | 10.21.1.21  | K3s `ebeddings-local/tei-gte` |
+| Local TEI embeddings | 31115      | 10.21.1.21  | K3s `ebeddings-local/tei-gte`, two-pod Service |
 | Local TEI reranker | 31216       | 10.21.1.21  | K3s `ebeddings-local/tei-gte-reranker` |
 | PgBouncer       | 6432           | 10.11.1.11  | central DB               |
 | Obsidian REST/MCP | 27124        | 10.11.1.11  | AiSecondBrain via OCI/DRG |

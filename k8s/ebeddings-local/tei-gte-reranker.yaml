@@ -8,11 +8,11 @@ metadata:
     managed-by: omni-srv-admin
 spec:
   hard:
-    pods: "5"
-    requests.cpu: 2500m
-    limits.cpu: 2500m
+    pods: "6"
+    requests.cpu: 3000m
+    limits.cpu: 3000m
     requests.memory: 14Gi
-    limits.memory: 24Gi
+    limits.memory: 30Gi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

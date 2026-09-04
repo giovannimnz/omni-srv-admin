@@ -55,19 +55,25 @@ metadata:
     embeddings.atius.com.br/model-id: Alibaba-NLP/gte-multilingual-base
     embeddings.atius.com.br/served-model-name: embedding-gte-v1
     embeddings.atius.com.br/dimensions: "768"
-    embeddings.atius.com.br/revision: main
-    embeddings.atius.com.br/revision-note: pin-to-huggingface-commit-after-first-live-validation
+    embeddings.atius.com.br/revision: 9bbca17d9273fd0d03d5725c7a4b0f6b45142062
+    embeddings.atius.com.br/revision-note: pinned-after-ha-validation-2026-08-21
     embeddings.atius.com.br/cpu-request: 500m
     embeddings.atius.com.br/cpu-limit: 500m
-    embeddings.atius.com.br/memory-request: 6Gi
-    embeddings.atius.com.br/memory-limit: 12Gi
+    embeddings.atius.com.br/memory-request: 2Gi
+    embeddings.atius.com.br/memory-limit: 8Gi
     embeddings.atius.com.br/tokenization-workers: "1"
     embeddings.atius.com.br/max-client-batch-size: "4"
-    embeddings.atius.com.br/autoscaling: disabled
+    embeddings.atius.com.br/autoscaling: fixed-2-ha
+    embeddings.atius.com.br/image-digest: 16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e
+    embeddings.atius.com.br/node-port: "31115"
 spec:
-  replicas: 1
+  replicas: 2
   strategy:
-    type: Recreate
+    type: RollingUpdate
+    rollingUpdate:
+      maxUnavailable: 1
+      maxSurge: 0
+  minReadySeconds: 10
   selector:
     matchLabels:
       app.kubernetes.io/name: tei-gte
@@ -85,7 +91,6 @@ spec:
           operator: Equal
           value: "true"
           effect: NoSchedule
-      hostNetwork: true
       dnsPolicy: None
       dnsConfig:
         nameservers:
@@ -101,13 +106,13 @@ spec:
       terminationGracePeriodSeconds: 30
       containers:
         - name: text-embeddings-inference
-          image: ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest
+          image: ghcr.io/huggingface/text-embeddings-inference@sha256:16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e
           imagePullPolicy: IfNotPresent
           args:
             - --model-id
             - Alibaba-NLP/gte-multilingual-base
             - --revision
-            - main
+            - 9bbca17d9273fd0d03d5725c7a4b0f6b45142062
             - --tokenization-workers
             - "1"
             - --served-model-name
@@ -115,7 +120,7 @@ spec:
             - --hostname
             - 0.0.0.0
             - --port
-            - "3115"
+            - "3000"
             - --dtype
             - float32
             - --pooling
@@ -135,16 +140,20 @@ spec:
               value: /data
           ports:
             - name: http
-              containerPort: 3115
+              containerPort: 3000
             - name: metrics
               containerPort: 9000
           resources:
             requests:
               cpu: 500m
-              memory: 6Gi
+              memory: 2Gi
             limits:
               cpu: 500m
-              memory: 12Gi
+              memory: 8Gi
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
           volumeMounts:
             - name: model-cache
               mountPath: /data
@@ -179,6 +188,21 @@ spec:
           persistentVolumeClaim:
             claimName: tei-gte-cache
 ---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: tei-gte
+  namespace: ebeddings-local
+  labels:
+    app.kubernetes.io/name: tei-gte
+    app.kubernetes.io/component: embeddings-backend
+    app.kubernetes.io/part-of: local-ai-embeddings
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: tei-gte
+---
 apiVersion: v1
 kind: Service
 metadata:
@@ -189,15 +213,14 @@ metadata:
     app.kubernetes.io/component: embeddings-backend
     app.kubernetes.io/part-of: local-ai-embeddings
   annotations:
-    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:3115
+    embeddings.atius.com.br/internal-base-url: http://10.21.1.21:31115
 spec:
-  type: ClusterIP
+  type: NodePort
+  externalTrafficPolicy: Local
   selector:
     app.kubernetes.io/name: tei-gte
   ports:
     - name: http
       port: 80
       targetPort: http
-    - name: metrics
-      port: 9000
-      targetPort: metrics
+      nodePort: 31115

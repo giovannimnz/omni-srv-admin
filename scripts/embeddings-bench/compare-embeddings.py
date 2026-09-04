@@ -184,7 +184,7 @@ def semantic_check(url: str, dimensions: int) -> dict[str, object]:
 
 
 def run_gte() -> dict[str, object]:
-    url = "http://10.21.1.21:3115/embed"
+    url = "http://10.21.1.21:31115/embed"
     validation = validate(url, 768)
     semantic = semantic_check(url, 768)
     profiles = []

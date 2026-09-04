@@ -17,13 +17,13 @@ embedding-gte-v1
 The stable public reranker alias is:
 
 ```text
-reranker-gte-multilingual-v1
+reranker-gte-v1
 ```
 
 The backend for this phase is TEI running inside k3s:
 
 ```text
-http://10.21.1.21:3115
+http://10.21.1.21:31115
 ```
 
 The loaded model is `Alibaba-NLP/gte-multilingual-base`. The upstream TEI served model name for the New API channel is `embedding-gte-v1`. The frozen vector dimension for this alias is `768`, with `cls` pooling.
@@ -37,7 +37,7 @@ weights at revision `8215cf04918ba6f7b6a62bb44238ce2953d8831c`, served as FP16 b
 TEI 1.9.3/Candle on ARM64 CPU. The private backend is
 `http://10.21.1.21:31216/rerank`; clients use the governed public route
 `POST https://router.atius.com.br/v1/rerank` with model
-`reranker-gte-multilingual-v1`.
+`reranker-gte-v1`.
 
 The Go router converts the public Jina/OpenAI-style contract
 `query`/`documents`/`top_n` into TEI's native `query`/`texts` contract and maps
@@ -55,8 +55,9 @@ reranker supplies workload, document-count and character-count admission data.
 
 The HPA target is 70% CPU. Scale-up is limited to one pod every 30 seconds and
 scale-down to one pod every 120 seconds, with a 300-second stabilization window.
-The namespace ResourceQuota covers one embedding pod plus four reranker pods:
-5 pods, 2500m CPU, 14Gi memory requests and 24Gi memory limits.
+The namespace ResourceQuota covers two embedding pods plus four reranker pods:
+6 pods, 3000m CPU, 14Gi memory requests and 30Gi memory limits. Embedding
+rollouts use `maxSurge: 0` and keep one ready replica while replacing the other.
 
 Observed on 2026-07-22 after load: about 805Mi idle RSS per reranker pod. A
 20-document long-text test peaked near 836Mi RSS and completed in about 64.3s
@@ -72,7 +73,7 @@ The embedding governor lives inside the Go router process, not in a Python sidec
 - `relay/embedding_handler.go`
 
 The governed local models are `embedding-gte-v1` and
-`reranker-gte-multilingual-v1`. The old `embedding-pt-v1` and `*-batch` aliases
+`reranker-gte-v1`. The old `embedding-pt-v1` and `*-batch` aliases
 are not active. Embeddings use `X-Embedding-Workload`; reranking uses
 `X-Rerank-Workload`. Both paths share the same governor so local inference
 cannot bypass admission control.
@@ -105,7 +106,7 @@ NodePort directly:
 ```text
 Helper: ~/.local/bin/graphify-rerank
 Endpoint: https://router.atius.com.br/v1/rerank
-Model: reranker-gte-multilingual-v1
+Model: reranker-gte-v1
 Document cap: 20
 Header: X-Rerank-Workload: interactive|batch
 ```
@@ -133,7 +134,7 @@ Create or update a New API channel for embeddings with these fields:
 | Field | Value |
 |---|---|
 | Type | OpenAI-compatible |
-| Base URL | `http://10.21.1.21:3115` |
+| Base URL | `http://10.21.1.21:31115` |
 | Upstream model | `embedding-gte-v1` |
 | Public alias | `embedding-gte-v1` |
 | Backend model | `Alibaba-NLP/gte-multilingual-base` |
@@ -167,22 +168,22 @@ kubectl -n ebeddings-local get deploy,svc,pvc tei-gte
 kubectl -n ebeddings-local get ingress
 ```
 
-The expected service is `ClusterIP`. No TEI Ingress should exist.
+The expected service is a private `NodePort` on `31115`. No TEI Ingress should exist.
 
 The Phase 41 manifest uses the official ARM64 CPU TEI image:
 
 ```text
-ghcr.io/huggingface/text-embeddings-inference:cpu-arm64-latest
+ghcr.io/huggingface/text-embeddings-inference@sha256:16c0a827cf79d5dc9b9ec1b0b5df7ffd165726f9bdf1daa9d4f7a355dd842f7e
 ```
 
-The embedding Service remains ClusterIP-only for internal bookkeeping, but the router-facing upstream uses the private worker IP and TEI port:
+The embedding Service balances the two pods and exposes only a private worker NodePort to the Router:
 
 ```text
-http://10.21.1.21:3115
+http://10.21.1.21:31115
 ```
 
-The embedding TEI pod runs on `horistic-srv` in namespace `ebeddings-local`
-with `hostNetwork: true`. The reranker uses a private NodePort because
+The two embedding TEI pods run on `horistic-srv` in namespace `ebeddings-local`
+without `hostNetwork`. The embedding and reranker Services use private NodePorts because
 `router-ai-atius` runs on SRV-1 and must reach the worker through the OCI/DRG
 private address rather than the worker PodIP. `10.100.100.4` remains reserve
 fallback only.
@@ -197,10 +198,10 @@ Live resource contract:
 |---|---|
 | CPU request | `500m` = 0.5 node CPU/vCPU |
 | CPU limit | `500m` = 0.5 node CPU/vCPU |
-| Memory request | `6Gi` |
-| Memory limit | `12Gi` |
+| Memory request | `2Gi` per pod |
+| Memory limit | `8Gi` per pod |
 | Tokenization workers | `1` |
-| Autoscaling | Disabled; `replicas: 1` |
+| Autoscaling | Fixed process HA; `replicas: 2` on `horistic-srv` |
 
 Namespace default:
 
@@ -215,9 +216,9 @@ Two replicas/pods at this standard equal `1000m`, i.e. one full CPU core.
 Kubernetes accounts CPU per container, so multi-container pods must explicitly
 split the total pod budget and stay at or below `500m`.
 
-`--tokenization-workers 1` is intentionally pinned. During resource tuning, TEI auto-selected 3 tokenization workers when the CPU ceiling was higher and exceeded the earlier 8Gi memory limit while warming up. Keeping one tokenization worker preserves predictable memory behavior with the current 12Gi memory limit.
+`--tokenization-workers 1` is intentionally pinned. During resource tuning, TEI auto-selected 3 tokenization workers when the CPU ceiling was higher and exceeded the earlier memory limit while warming up. Keeping one tokenization worker preserves predictable memory behavior with the current 8Gi per-pod limit.
 
-After the first live validation, pin the Hugging Face model revision to a concrete commit SHA instead of `main`, then re-run the smoke tests and update the manifest annotation.
+The Hugging Face model revision is pinned to `9bbca17d9273fd0d03d5725c7a4b0f6b45142062` and the TEI image is pinned by digest. This is pod/process HA on one required physical host, not host-level HA; loss of `horistic-srv`, its storage, or kube-proxy affects both replicas.
 
 ## Internal Smoke
 
