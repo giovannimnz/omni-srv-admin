@@ -209,6 +209,7 @@ def test_config_requires_pgbouncer_and_denies_direct_node_access():
     assert config["pgbouncer"]["listen_port"] == 6432
     assert "10.12.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
     assert "10.13.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
+    assert "10.14.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
     assert "10.21.0.0/16" in config["pgbouncer"]["allowed_client_networks"]
     assert "10.100.100.0/24" in config["pgbouncer"]["allowed_client_networks"]
     assert "fleet-nodes" in config["database"]["direct_access"]["denied_for"]

@@ -35,6 +35,9 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
   servidor sem que a função do novo host esteja explicitamente definida.
 - A integração ao DRG central é cross-tenancy e exige OperationPlan, preview,
   confirmação tipada, readback e atualização das rotas dos dois lados.
+- Depois de a rota DRG estar comprovada, adicionar `10.14.0.0/16` aos guards
+  persistentes de serviços do SRV-1 (PgBouncer e Obsidian REST) e às rotas
+  OCI-primary do host antes de declarar a malha privada green.
 - RDP público não é baseline. Expor TCP/3389 somente por regra OCI específica
   e aprovada para a origem necessária.
 
