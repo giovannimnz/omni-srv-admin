@@ -260,7 +260,7 @@ resource_governor:
     - transfers
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
-  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
+  codex_runtime_standard: "2026-08-21: base ~/.codex/config.toml applies GPT-5.6 Sol/Luna policy model_context_window=872_000, model_auto_compact_token_limit=800_000, scope=total; cache v0.149.0 advertises max=872_000/effective=828_400 for both. Backup config.toml.bak-gpt56-sol-luna-context-20260821T042510Z is byte-verified. TOML parses; aligned NVM v24.18.0 Codex strict Doctor passed (20 ok, 0 fail). Default /usr/local/bin still resolves v24.13.1 and reports separate install/update-path drift (2 fail). 2026-07-04 service_tier normal audit remains historical."
   wg100_readdress: "2026-07-10: `wg100`/10.100.100.1 remains reserve fallback only; the canonical private service path for SRV-1 is `oci_private_ip=10.11.1.11`."
   dns_validation: "2026-07-10: srv-1 serves DNS on both 10.11.1.11:53 and reserve 10.100.100.1:53; both return the OCI-primary targets 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21."
   oci_primary_validation: "2026-07-08: attached secondary VNIC 10.11.1.11, opened peer OCI CIDR access for PgBouncer and Obsidian REST/MCP, and exposed 10.11.1.11:{53,6432,27124} successfully to srv-2/srv-3/horistic."

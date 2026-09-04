@@ -200,7 +200,7 @@ notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
   knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
-  codex_runtime_standard: "2026-07-12: Codex 0.144.1 is canonical through ~/.local/bin, login zsh and /usr/local/bin; [features].hooks is enabled; explicit service_tier=normal is omitted because the runtime rejects it and uses standard routing by default; Cloudflare plugin/MCP is disabled on this Wayland runtime."
+  codex_runtime_standard: "2026-08-21: base ~/.codex/config.toml applies GPT-5.6 Sol/Luna policy model_context_window=872_000, model_auto_compact_token_limit=800_000, scope=total; cache v0.149.0 advertises max=872_000/effective=828_400 for both. Backup config.toml.bak-gpt56-sol-luna-context-20260821T042314Z is byte-verified; TOML parse and strict Doctor passed (20 ok, 0 fail). Historical 2026-07-12 runtime notes: [features].hooks, default routing without explicit service_tier, and disabled Cloudflare plugin/MCP on Wayland."
   wg100_readdress: "2026-07-10: `wg100`/10.100.100.3 remains reserve fallback only; the canonical private service path for SRV-3 is `oci_private_ip=10.13.1.13`."
   last_readdressed: 2026-06-17
   readdress_note: "SRV-3 now serves Vault/Vaultwarden and K3s on OCI-private 10.13.1.13, with 10.100.100.3 retained only as reserve fallback."

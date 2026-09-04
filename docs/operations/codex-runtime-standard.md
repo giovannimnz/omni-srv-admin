@@ -8,9 +8,10 @@ Canonical Codex runtime standard for the managed machines:
 - `/home/ubuntu/.codex` on `atius-srv-3`
 - `/home/horistic/.codex` on `horistic-srv`
 
-## Default config
+## GPT-5.4 long-context profile baseline
 
-Keep this in the base `config.toml`:
+Use this in an explicit GPT-5.4 profile when 1M context is needed. Do not
+copy these limits into a base config that is operating GPT-5.6 Sol/Luna:
 
 ```toml
 model = "gpt-5.4"
@@ -26,6 +27,44 @@ Why this is the default:
 - Current Codex local catalog exposes `gpt-5.5` with `max_context_window = 272000`.
 - `gpt-5.4` is the only practical Codex local path for 1M context on this fleet.
 - `medium` is the best daily default for latency, throughput, and stability.
+
+## GPT-5.6 Sol/Luna base policy — 2026-08-21
+
+Applied to the base `config.toml` on `atius-srv-1`, `atius-srv-2`,
+`atius-srv-3`, and `horistic-srv`:
+
+```toml
+model_context_window = 872_000
+model_auto_compact_token_limit = 800_000
+model_auto_compact_token_limit_scope = "total"
+```
+
+These top-level keys apply to the active model. The four host caches
+(`client_version=0.149.0`) advertise the same GPT-5.6 Sol/Luna contract:
+
+| Model | context_window | max_context_window | effective_context_window_percent | Effective limit |
+|---|---:|---:|---:|---:|
+| `gpt-5.6-sol` | 272_000 | 872_000 | 95 | 828_400 |
+| `gpt-5.6-luna` | 272_000 | 872_000 | 95 | 828_400 |
+
+`900_000` is above the live maximum. `850_000` would trigger automatic
+compaction after the effective limit. `800_000` keeps `28_400` tokens of
+headroom. Use an explicit `gpt-5.4` profile to recover the 1M GPT-5.4 policy;
+do not claim that these base keys create a 900K/1M entitlement for another
+backend model.
+
+Backups were byte-verified before each edit:
+
+- `atius-srv-1`: `/home/ubuntu/.codex/config.toml.bak-gpt56-sol-luna-context-20260821T042510Z`
+- `atius-srv-2`: `/home/ubuntu/.codex/config.toml.bak-gpt56-sol-luna-context-20260821T042314Z`
+- `atius-srv-3`: `/home/ubuntu/.codex/config.toml.bak-gpt56-sol-luna-context-20260821T042314Z`
+- `horistic-srv`: `/home/horistic/.codex/config.toml.bak-gpt56-sol-luna-context-20260821T042517Z`
+
+Validation:
+
+- All four TOMLs parse with `tomllib` and re-read the exact policy above.
+- `atius-srv-2`, `atius-srv-3`, and `horistic-srv`: `codex --strict-config doctor --summary --no-color` reports `0 fail`.
+- `atius-srv-1`: default `/usr/local/bin/codex` loads the policy but reports an independent install/update-path drift because it resolves to NVM `v24.13.1` while npm global resolves to NVM `v24.18.0`. The aligned `~/.nvm/versions/node/v24.18.0/bin/codex --strict-config doctor --summary --no-color` passed with `20 ok, 0 fail`. Repair the default path separately; it is not a context-policy failure.
 
 ## Standard profiles
 

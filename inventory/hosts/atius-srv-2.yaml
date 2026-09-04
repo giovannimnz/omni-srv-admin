@@ -108,7 +108,7 @@ notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
   desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
   knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
-  codex_runtime_standard: "2026-07-04: ~/.codex active TOML service_tier values verified/enforced as normal (Padrão), including base config, profiles and GSD agents."
+  codex_runtime_standard: "2026-08-21: base ~/.codex/config.toml applies GPT-5.6 Sol/Luna policy model_context_window=872_000, model_auto_compact_token_limit=800_000, scope=total; cache v0.149.0 advertises max=872_000/effective=828_400 for both. Backup config.toml.bak-gpt56-sol-luna-context-20260821T042314Z is byte-verified; TOML parse and strict Doctor passed (20 ok, 0 fail). 2026-07-04 service_tier normal audit remains historical."
   wg100_readdress: "2026-07-10: `wg100`/10.100.100.2 remains reserve fallback only; the canonical private service path for SRV-2 is `oci_private_ip=10.12.1.12`."
   dns_validation: "2026-07-10: srv-2 now resolves through `systemd-resolved` with global DNS `10.11.1.11 1.1.1.1`; `getent hosts atius-srv-1 atius-srv-2 atius-srv-3 horistic-srv` and `ping atius-srv-1` return the OCI-primary targets."
   oci_primary_validation: "2026-07-08: attached secondary VNIC 10.12.1.12, added peer OCI CIDR routes, and validated connectivity to 10.11.1.11:{53,6432,27124}, 10.13.1.13:{8088,8202,8203}, and 10.21.1.21:3115."
