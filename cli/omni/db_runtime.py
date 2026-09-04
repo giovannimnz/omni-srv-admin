@@ -29,7 +29,7 @@ def default_fleet_db_env() -> Path:
         ]
     )
     for candidate in candidates:
-        if candidate.exists():
+        if candidate.exists() and os.access(candidate, os.R_OK):
             return candidate
     return candidates[0]
 
