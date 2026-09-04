@@ -406,8 +406,10 @@ Antes de instalar, hidrate o cache root-only
 `/etc/omni-srv-admin/fleet-db.env` a partir do profile Vault `omni-fleet`.
 O instalador então escreve `/etc/omni-srv-admin/fleet-agent.env`, copia
 `omni-fleet-agent.service` to `~/.config/systemd/user/`, reloads systemd user
-and enables the service. This should not drop RDP/XRDP; it only starts a user
-service loop.
+and enables the service. Como o agent é user-level, ele cria também o cache
+`~/.config/omni-srv-admin/fleet-db.env` com modo `0600`, derivado do cache
+Vault root-only; o unit fixa esse path por `OMNI_FLEET_DB_ENV`. This should not
+drop RDP/XRDP; it only starts a user service loop.
 
 ## Direct IP Fallback
 

@@ -8,6 +8,7 @@ Type=simple
 Environment=OMNI_HOST_ID=%H
 Environment=OMNI_AGENT_INTERVAL_SECONDS=30
 Environment=OMNI_REPO_DIR=%h/GitHub/omni-srv-admin
+Environment=OMNI_FLEET_DB_ENV=%h/.config/omni-srv-admin/fleet-db.env
 EnvironmentFile=-/etc/omni-srv-admin/fleet-agent.env
 WorkingDirectory=%h
 ExecStart=/usr/bin/env bash -lc 'cd "$OMNI_REPO_DIR" && export OMNI_SRV_ADMIN="$OMNI_REPO_DIR" PYTHONPATH="$OMNI_REPO_DIR/cli${PYTHONPATH:+:$PYTHONPATH}" && exec /usr/bin/python3 -m omni fleet agent loop --host "$OMNI_HOST_ID" --interval "$OMNI_AGENT_INTERVAL_SECONDS" --apply'

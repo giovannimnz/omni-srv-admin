@@ -5,6 +5,7 @@ ROOT="${OMNI_SRV_ADMIN:-$HOME/GitHub/omni-srv-admin}"
 UNIT_SRC="$ROOT/modules/fleet-control-plane/systemd/omni-fleet-agent.service"
 UNIT_DST="$HOME/.config/systemd/user/omni-fleet-agent.service"
 ENV_DST="/etc/omni-srv-admin/fleet-agent.env"
+DB_CACHE_DST="$HOME/.config/omni-srv-admin/fleet-db.env"
 
 host_id="${1:-${OMNI_HOST_ID:-}}"
 if [[ -z "$host_id" ]]; then
@@ -27,6 +28,13 @@ if [[ ! -f /etc/omni-srv-admin/fleet-db.env ]]; then
   echo "missing /etc/omni-srv-admin/fleet-db.env; configure PgBouncer DB env first" >&2
   exit 1
 fi
+
+# The agent is user-level systemd, so it cannot read the root-only hydration
+# cache directly. Materialize a mode-0600 user cache from that Vault-derived
+# cache; the unit pins this path through OMNI_FLEET_DB_ENV.
+install -d -m 0700 "$HOME/.config/omni-srv-admin"
+sudo install -o "$(id -u)" -g "$(id -g)" -m 0600 \
+  /etc/omni-srv-admin/fleet-db.env "$DB_CACHE_DST"
 
 mkdir -p "$HOME/.config/systemd/user"
 cp "$UNIT_SRC" "$UNIT_DST"
