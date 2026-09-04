@@ -1,7 +1,26 @@
 version: 1
 pack: hermes-skills
-updated_at: 2026-08-15T05:03:23-0300
+updated_at: 2026-09-04T23:30:00+0000
 items:
+- name: git-worktree-fleet-closeout
+  kind: skill
+  products:
+  - hermes
+  platforms:
+  - windows
+  - linux
+  source_path: items/git-worktree-fleet-closeout
+  hash: 09f9fb1a9f7cf8893465709a8430506f3d647d986846f459117ea01c6ec8973d
+  required_files:
+  - SKILL.md
+  files:
+  - path: SKILL.md
+    sha256: 09f9fb1a9f7cf8893465709a8430506f3d647d986846f459117ea01c6ec8973d
+    bytes: 4237
+  category: devops
+  install:
+    hermes:
+      rel_path: skills/devops/git-worktree-fleet-closeout
 - name: hermes-wslinterop-restore
   kind: skill
   products: &id001

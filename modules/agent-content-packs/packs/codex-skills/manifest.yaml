@@ -1,7 +1,25 @@
 version: 1
 pack: codex-skills
-updated_at: 2026-09-04T03:15:00+0000
+updated_at: 2026-09-04T23:30:00+0000
 items:
+- name: git-worktree-fleet-closeout
+  kind: skill
+  products:
+  - codex
+  platforms:
+  - windows
+  - linux
+  source_path: items/git-worktree-fleet-closeout
+  hash: 09f9fb1a9f7cf8893465709a8430506f3d647d986846f459117ea01c6ec8973d
+  required_files:
+  - SKILL.md
+  files:
+  - path: SKILL.md
+    sha256: 09f9fb1a9f7cf8893465709a8430506f3d647d986846f459117ea01c6ec8973d
+    bytes: 4237
+  install:
+    codex:
+      rel_path: skills/git-worktree-fleet-closeout
 - name: atius-sso
   kind: skill
   products: &id001
