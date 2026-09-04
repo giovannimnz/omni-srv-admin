@@ -18,6 +18,9 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
    recente de `omni-srv-admin` ou clonar a origem verificada.
 6. Instalar a baseline ARM64: Git, Python/venv/pipx, Podman rootless, rede,
    build tools, Rust, cargo-binstall e Zellij.
+   Configurar Podman com `srv4-podman` em `10.10.4.0/24`, netavark e
+   `systemd-resolved`; habilitar linger e `podman.socket` para persistência
+   user-level, sem iniciar stacks de aplicação.
 7. Instalar `omni` em pipx e aplicar `xrdp-abnt2` com
    `--install-packages` apenas em host novo. Validar os três units XRDP e o
    timer de reconciliação.

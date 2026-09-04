@@ -1,4 +1,4 @@
-# Podman networking standard — ATIUS fleet (SRV-1/2/3)
+# Podman networking standard — ATIUS fleet (SRV-1/2/3/4)
 
 > Canonical one-page spec. Source of truth for `containers.conf`,
 > `containers.conf.d/`, network `srv<N>-podman`, `systemd-resolved`,
@@ -8,7 +8,7 @@
 > Version: 1.0.0 (2026-06-16)
 > Skill: `~/.hermes/skills/devops/podman-fleet-standardize/`
 
-## Files per server (N ∈ {1, 2, 3})
+## Files per server (N ∈ {1, 2, 3, 4})
 
 ### `~/.config/containers/containers.conf`
 

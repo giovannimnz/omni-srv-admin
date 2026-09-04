@@ -2,7 +2,7 @@
 # apply-standardize.sh — runs the apply sequence on one ATIUS server.
 #
 # Usage: ./apply-standardize.sh <N>
-#   N: server number (1, 2, or 3)
+#   N: server number (1, 2, 3, or 4)
 #
 # Idempotent. Backs up containers.conf before any change.
 # Will NOT touch any running systemd-managed services — run the
@@ -10,8 +10,8 @@
 
 set -eu
 
-if [ $# -ne 1 ] || ! [[ "$1" =~ ^[123]$ ]]; then
-  echo "Usage: $0 <N>  (N=1, 2, or 3)" >&2
+if [ $# -ne 1 ] || ! [[ "$1" =~ ^[1234]$ ]]; then
+  echo "Usage: $0 <N>  (N=1, 2, 3, or 4)" >&2
   exit 1
 fi
 
@@ -20,6 +20,7 @@ case $N in
   1) HOST=10.11.1.11 ;;
   2) HOST=10.12.1.12 ;;
   3) HOST=10.13.1.13 ;;
+  4) HOST=10.14.1.14 ;;
 esac
 
 USER=ubuntu
