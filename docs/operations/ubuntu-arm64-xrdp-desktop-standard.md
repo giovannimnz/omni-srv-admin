@@ -5,11 +5,14 @@ Operator entrypoint: `$xrdp-abnt2-fleet`, versioned at
 Use it before any keyboard audit, repair, packaging or fleet closeout. This
 runbook remains the canonical operational and evidence contract.
 
-Canonical standard for all Giovanni-managed Ubuntu ARM64 servers with human RDP/XRDP access:
+Canonical standard for inventory-managed Ubuntu ARM64 servers with human
+RDP/XRDP access. Resolve the current scope from `inventory/hosts/*.yaml`; this
+list is a convenience snapshot, not authority:
 
 - `atius-srv-1`
 - `atius-srv-2`
 - `atius-srv-3`
+- `atius-srv-4`
 - `horistic-srv`
 
 ## Scope

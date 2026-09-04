@@ -1,6 +1,6 @@
 version: 1
 pack: codex-skills
-updated_at: 2026-09-04T23:45:00+0000
+updated_at: 2026-09-04T23:50:00+0000
 items:
 - name: git-worktree-fleet-closeout
   kind: skill
@@ -74,7 +74,7 @@ items:
   - windows
   - linux
   source_path: items/xrdp-abnt2-fleet
-  hash: eb6b246c61cdb4036a34a05e02bfdb0cc00276f7d0e5e6c6befef85b0a836d85
+  hash: 5576f831e7497d232d4b3adba1aaf6be314472be5876df8f0f203277875c5f63
   required_files:
   - SKILL.md
   files:
@@ -85,8 +85,8 @@ items:
     sha256: ed34268e163fac6776498ac49f403d1e6d856660fdc5db49e22f51d0715e36f7
     bytes: 1663
   - path: SKILL.md
-    sha256: d84f4b33f06a3418e62ff5972f2e573f86dc6fd3d99eaf8c8d1353657f6118cd
-    bytes: 6921
+    sha256: a83f10cd08cdce84b7ab904cdf567ad515119287a28e5b41e580e652b1bff1a8
+    bytes: 7731
   install:
     codex:
       rel_path: skills/xrdp-abnt2-fleet

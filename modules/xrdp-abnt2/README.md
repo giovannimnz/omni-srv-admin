@@ -48,11 +48,13 @@ Regra de baseline:
 - não tratar isso como hotfix manual por host; tratar como patch persistente de
   fleet
 
-Hosts alvo atuais:
+Hosts alvo conhecidos no inventory atual (revalidar o inventory; a lista não é
+autoridade estática):
 
 - `atius-srv-1`
 - `atius-srv-2`
 - `atius-srv-3`
+- `atius-srv-4`
 - `horistic-srv`
 
 ## Pacotes pré-requisito

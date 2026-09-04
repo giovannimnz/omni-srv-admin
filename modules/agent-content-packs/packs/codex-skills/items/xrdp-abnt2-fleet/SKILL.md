@@ -35,6 +35,9 @@ From the current `omni-srv-admin` checkout, read in this order:
 
 Planning, transcripts, old Hermes skills and legacy scripts never override
 these sources. If any appear, read `references/legacy-hermes-boundary.md`.
+When reading the desktop runbook for a keyboard-only task, do not execute its
+dark-theme `--restart-session` workflow; theme/session polish is outside this
+skill and requires its own scope and impact decision.
 
 ## Modes
 
@@ -58,6 +61,8 @@ these sources. If any appear, read `references/legacy-hermes-boundary.md`.
 - Never restart `xrdp` or `xrdp-sesman` without task-specific approval.
 - Use `--install-packages` only after preflight proves packages missing;
   package installation is outside transactional rollback.
+- Missing packages on a host with an active RDP session are a hard block until
+  the operator separately approves the package/service-impact window.
 - Preserve dirty checkouts and active sessions. Stop at the first failed host.
 - Do not expose credentials, cookies, Xauthority data or Vault values.
 
@@ -70,6 +75,9 @@ these sources. If any appear, read `references/legacy-hermes-boundary.md`.
    timer/service properties, APT hook, backups and relevant logs.
 4. For Horistic, probe private then public SSH before declaring it unreachable.
 5. Treat mtimes and temporal proximity as evidence, not causality.
+6. Complete this read-only audit for every inventory-derived target and publish
+   a go/no-go matrix before mutating the first host. An unreachable or
+   un-audited target is blocked unless the operator explicitly excludes it.
 
 Use the reviewed checkout entrypoints:
 
@@ -91,9 +99,11 @@ sudo -n python3 cli/omni/xrdp_abnt2.py install --user "$USER" --yes
 ```
 
 4. Record the printed backup. If prerequisites are missing, stop and review
-   them before explicitly repeating with `--install-packages`.
+   them before explicitly repeating with `--install-packages`; active-session
+   hosts additionally require a separate service-impact approval.
 5. If a host fails, prove rollback of files, mode, uid/gid and the prior states
-   of `xrdp`, `xrdp-sesman`, reconcile service and timer before continuing.
+   of `xrdp`, `xrdp-sesman`, reconcile service and timer. Do not continue to
+   another host without explicit operator approval.
 
 ## Health gate
 
@@ -128,10 +138,11 @@ profile as authority or replace host-level evidence.
 ## Closeout
 
 When authorized: run focused tests/content-pack validation/`git diff --check`;
-obtain independent review; refresh Graphify; commit, PR, review, merge and
-post-merge readback; then write sanitized Obsidian/GBrain records containing
-observations, inference, backups, hosts, validation, residual risks and next
-gate.
+obtain independent review; refresh Graphify; commit and open a PR; then write
+sanitized Obsidian/GBrain records containing observations, inference, backups,
+hosts, validation, residual risks and next gate. Opening or reviewing a PR does
+not authorize merge. Merge and post-merge readback require explicit user
+authorization.
 
 ## Completion states
 
