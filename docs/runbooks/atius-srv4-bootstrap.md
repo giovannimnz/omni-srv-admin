@@ -17,15 +17,26 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
 5. Criar `~/GitHub` e `~/GitHub/containers`; copiar o checkout limpo mais
    recente de `omni-srv-admin` ou clonar a origem verificada.
 6. Instalar a baseline ARM64: Git, Python/venv/pipx, Podman rootless, rede,
-   build tools, Rust, cargo-binstall e Zellij.
+   build tools, Rust estável, cargo-binstall e Zellij. Materializar
+   `~/.config/environment.d/90-atius-developer-tools.conf` para que
+   `~/.cargo/bin` e `~/.local/bin` existam também nas sessões XRDP e systemd
+   do usuário.
    Configurar Podman com `srv4-podman` em `10.10.4.0/24`, netavark e
    `systemd-resolved`; habilitar linger e `podman.socket` para persistência
    user-level, sem iniciar stacks de aplicação.
 7. Instalar `omni` em pipx e aplicar `xrdp-abnt2` com
    `--install-packages` apenas em host novo. Validar os três units XRDP e o
    timer de reconciliação.
-8. Registrar o host no inventário, documentar a evidência e atualizar GBrain
-   e Obsidian com fatos sem segredos.
+8. Fixar o teclado global em `br(abnt2)` e revalidar o guard XRDP; a sessão
+   RDP usa os keymaps canônicos mesmo sem um desktop já aberto.
+9. Instalar e registrar `landscape-client` no Landscape self-hosted
+   `standalone` com os endpoints `message-system` HTTPS e `ping` HTTP. Nunca
+   usar o profile SaaS legado para o self-hosted.
+10. Hidratar o profile Vault `omni-fleet`, instalar `omni-fleet-agent` e
+    registrar o inventário no DbOmniFleet; confirmar heartbeat, programas e
+    versão antes de declarar o host incluído nos relatórios.
+11. Registrar o host no inventário, documentar a evidência e atualizar GBrain
+    e Obsidian com fatos sem segredos.
 
 ## Guardrails
 
@@ -47,5 +58,7 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
 - TCP/22 e a route table efetiva comprovados;
 - `podman info` rootless e smoke de container aprovados;
 - `omni xrdp-abnt2 validate` aprovado;
+- `landscape-config --is-registered` e `landscape-client` ativos;
+- `omni-fleet-agent` ativo, com heartbeat e relatórios DB para o host;
 - `~/GitHub/omni-srv-admin` limpo no commit registrado;
 - inventário, GBrain e Obsidian atualizados.
