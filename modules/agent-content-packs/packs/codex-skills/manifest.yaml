@@ -1,6 +1,6 @@
 version: 1
 pack: codex-skills
-updated_at: 2026-08-15T05:03:23-0300
+updated_at: 2026-09-04T03:15:00+0000
 items:
 - name: atius-sso
   kind: skill
@@ -66,3 +66,19 @@ items:
   install:
     codex:
       rel_path: skills/xrdp-abnt2-fleet
+- name: oci-arm64-new-server-bootstrap
+  kind: skill
+  products: *id001
+  platforms:
+  - linux
+  source_path: items/oci-arm64-new-server-bootstrap
+  hash: da8eec5910d1920d84fb02e6fcd8a49d6916d7c0811e53d3699bd1b9cf73222a
+  required_files:
+  - SKILL.md
+  files:
+  - path: SKILL.md
+    sha256: da8eec5910d1920d84fb02e6fcd8a49d6916d7c0811e53d3699bd1b9cf73222a
+    bytes: 1346
+  install:
+    codex:
+      rel_path: skills/oci-arm64-new-server-bootstrap

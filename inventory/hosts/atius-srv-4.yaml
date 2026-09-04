@@ -1,0 +1,53 @@
+id: atius-srv-4
+aliases:
+  - srv4
+owner: giovanni
+role: general
+access:
+  ssh: ubuntu@10.14.1.14
+  public_ip: 137.131.156.141
+  oci_private_ip: 10.14.1.14
+platform:
+  provider: oracle-oci
+  os: ubuntu-24.04
+  arch: arm64
+  desktop: lxde-xrdp
+status: bootstrap-in-progress
+modules:
+  - xrdp-abnt2
+logs:
+  local_dir: /home/ubuntu/.logs
+  retention_days: 15
+apps:
+  - id: omni-srv-admin
+    runtime: git-worktree
+    install_path: /home/ubuntu/GitHub/omni-srv-admin
+    source: https://github.com/giovannimnz/omni-srv-admin
+    managed_by: omni-srv-admin
+  - id: podman
+    runtime: rootless
+    install_type: apt-managed
+  - id: rust-toolchain
+    runtime: local-rustup
+    install_path: /home/ubuntu/.cargo/bin
+    toolchain: stable
+    profile: minimal
+    arch: aarch64-unknown-linux-gnu
+  - id: zellij
+    runtime: local-rustup-binary
+    install_path: /home/ubuntu/.cargo/bin/zellij
+  - id: xrdp-abnt2
+    runtime: systemd
+    units:
+      - xrdp.service
+      - xrdp-sesman.service
+      - xrdp-abnt2-reconcile.timer
+network:
+  vcn_cidr: 10.14.0.0/16
+  subnet_cidr: 10.14.1.0/24
+  subnet_route_table: Default Route Table for vcn-atius4
+  drg_state: pending-governed-onboarding
+notes:
+  - Public SSH is validated with the canonical Vault-managed public key.
+  - The default subnet route table must retain 0.0.0.0/0 through the IGW.
+  - Do not attach the host to the central DRG outside a governed cross-tenancy plan.
