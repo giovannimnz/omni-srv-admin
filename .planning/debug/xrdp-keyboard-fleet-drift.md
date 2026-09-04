@@ -78,6 +78,8 @@ updated: 2026-08-29
   result: "Rollout final do main 22aa555 nos quatro hosts: validate PASS, diff CLEAN, xrdp/xrdp-sesman/timer active, reconcile Result=success/ExecMainStatus=0 e cinco keymaps SHA-256 cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237. Backups: SRV-1 20260829-053525-129301; SRV-2 20260829-053609-821839; SRV-3 20260829-083630-051200; Horistic 20260829-053701-971238."
 - timestamp: 2026-08-29
   result: "Horistic wheel instalada como omni 0.2.5 sob systemd-run CPUQuota=80% em host de 4 vCPUs; packaged CLI validate/diff PASS."
+- timestamp: 2026-09-04
+  result: "Skill $xrdp-abnt2-fleet expandida para audit/diagnose/reconcile/recover/package/closeout, com escopo derivado do inventory (incluindo SRV-4), UI metadata e boundary Hermes histórico. Forward-test independente passou após fechar audit fleet barrier, dark-theme exclusion, active-session package gate, PR-vs-merge authority e lista estática de hosts."
 
 ## Eliminated
 
@@ -86,6 +88,7 @@ updated: 2026-08-29
 - root_cause: "Configuração/payload: o rollout de 2026-08-28 que corrige os índices consumidos pelo XRDP 0.9.24 está somente no SRV-1. SRV-2, SRV-3 e Horistic ainda usam km-abnt2 evdev antigo (hash e24a96...) e portanto interpretam scancodes estendidos em índices errados; SRV-2/SRV-3 também não têm os overrides de xrdp.ini e helper atualizados. A instalação uv de Horistic possui um bug independente de empacotamento (assets ausentes sob REPO_ROOT em site-packages), que impede validate/diff quando a CLI não é importada do checkout."
 - fix: "Aplicado via PR #19 e endurecido no follow-up 0.2.5: keymaps canônicos usam índices xfree86/base consumidos pelo XRDP 0.9.24; o install possui rollback exato de arquivos/metadata/units, package opt-in, exact-one [Globals], timer com jitter e backups limitados; nenhum caminho reinicia XRDP. SRV-1/SRV-2/SRV-3/Horistic receberam o payload persistente."
 - operational_entrypoint: "$xrdp-abnt2-fleet; source versionada em modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md"
+- skill_validation: "2026-09-04 quick_validate PASS; codex-skills manifest PASS; forward-test PASS; documentação ativa e redirects históricos referenciam a mesma source."
 - verification: |
     target_test: { result: pass, suite: "cli/omni/tests/test_xrdp_abnt2.py + test_agent_content.py", tests: 37 }
     mutation_check: { result: skipped, reason_if_skipped: "Stryker não configurado para esta CLI Python" }

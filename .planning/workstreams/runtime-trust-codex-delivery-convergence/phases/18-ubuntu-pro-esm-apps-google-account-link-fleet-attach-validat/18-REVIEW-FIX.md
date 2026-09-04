@@ -80,3 +80,17 @@ SHA-256 `cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237`.
 SRV-1 and SRV-2 kept their active Xvnc `:1` sessions. Horistic's packaged CLI
 was rebuilt as `omni 0.2.5` under a verified 80% CPU quota on its four-vCPU
 host and passed the same validate/diff gates.
+
+## Canonical skill closeout — 2026-09-04
+
+`$xrdp-abnt2-fleet` now owns the complete agent workflow for inventory-derived
+scope, read-only audit, diagnosis, serial reconcile, rollback verification,
+timer health, wheel/content-pack parity, Landscape boundaries, GSD/GitHub and
+Obsidian/GBrain closeout. It includes Codex UI metadata and a conditional
+legacy Hermes boundary; executable behavior remains solely in the canonical
+module/CLI.
+
+`skill-creator` validation, content-pack file hashes/bytes, all-pack validation,
+inventory YAML parsing and an independent realistic forward-test passed. Active
+docs and inventories reference the source skill; dangerous historical
+procedures retain their chronology behind explicit evidence-only redirects.
