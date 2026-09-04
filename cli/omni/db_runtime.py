@@ -56,9 +56,10 @@ def run_sql(query: str, *, env: dict[str, str], timeout: int = 20) -> str:
         import subprocess
 
         completed = subprocess.run(
-            ["psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1", "-c", query],
+            ["psql", "-X", "-qAt", "-v", "ON_ERROR_STOP=1"],
             capture_output=True,
             text=True,
+            input=query,
             timeout=timeout,
             env=env,
         )
