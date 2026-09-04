@@ -1,0 +1,4 @@
+interface:
+  display_name: "Atius XRDP ABNT2 Fleet"
+  short_description: "Audit and safely repair XRDP ABNT2 drift"
+  default_prompt: "Use $xrdp-abnt2-fleet to audit or safely reconcile ABNT2 keyboard drift across the ATIUS XRDP fleet."

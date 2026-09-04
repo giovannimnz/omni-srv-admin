@@ -1,5 +1,10 @@
 # Ubuntu ARM64 XRDP Desktop Standard
 
+Operator entrypoint: `$xrdp-abnt2-fleet`, versioned at
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+Use it before any keyboard audit, repair, packaging or fleet closeout. This
+runbook remains the canonical operational and evidence contract.
+
 Canonical standard for all Giovanni-managed Ubuntu ARM64 servers with human RDP/XRDP access:
 
 - `atius-srv-1`
@@ -234,6 +239,11 @@ Every fleet rollout or incident touching this standard must be recorded only in 
 
 - Obsidian vault on `atius-srv-1`.
 - GBrain on `atius-srv-1`.
+
+The `$xrdp-abnt2-fleet` closeout mode defines the minimum GitHub, Graphify,
+Obsidian/GBrain and physical Microsoft RDP UAT evidence. Machine-only evidence
+must remain `code-and-runtime-pass-awaiting-rdp-uat` until every in-scope host
+passes a new client session.
 
 Minimum record:
 

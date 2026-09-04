@@ -51,6 +51,8 @@ Hermes:
 Codex:
 - atius-sso
 - atius-sso-governed-release-closeout
+- xrdp-abnt2-fleet
+- oci-arm64-new-server-bootstrap
 
 Shared:
 - notebooklm bridge references/content
@@ -92,6 +94,11 @@ bash modules/agent-content-packs/scripts/agent-content-workflow.sh apply-local -
 ```bash
 bash modules/agent-content-packs/scripts/agent-content-workflow.sh apply-fleet --yes-sync
 ```
+
+`agent-content sync --apply` is fail-closed for `ssh-linux` targets until a
+reviewed per-file remote transaction with rollback exists. Fleet apply must not
+be used to bypass that guard. `$xrdp-abnt2-fleet` may be installed locally from
+the reviewed source, then verified by source/installed tree hashes.
 
 ### Generate drift report
 

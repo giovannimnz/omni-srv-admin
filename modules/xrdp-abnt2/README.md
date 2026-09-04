@@ -2,6 +2,11 @@
 
 Funcionalidade do `omni-srv-admin` para manter o host Ubuntu/XRDP fixo em `br(abnt2)` no fluxo:
 
+Fluxo operacional agent-facing: `$xrdp-abnt2-fleet`. Fonte versionada:
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+Use a skill para audit, diagnose, rollout, recovery, packaging e closeout; este
+README continua sendo a fonte técnica do módulo.
+
 ```text
 Windows 11 Microsoft Remote Desktop -> Ubuntu 24.04+ + XRDP + LXDE
 ```

@@ -11,6 +11,7 @@ Use for a new ATIUS OCI Ubuntu 24.04 ARM64 server.
 
 - `docs/runbooks/atius-srv4-bootstrap.md`
 - `modules/xrdp-abnt2/README.md`
+- `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`
 - `inventory/hosts/atius-srv-4.yaml` when applicable
 
 ## Workflow
@@ -22,8 +23,10 @@ Use for a new ATIUS OCI Ubuntu 24.04 ARM64 server.
    then compare public/private-key fingerprints before troubleshooting auth.
 4. Create `~/GitHub` and `~/GitHub/containers`; copy only a clean Git source.
 5. Install the ARM64 baseline and verify Podman rootless.
-6. Install the `omni` CLI and the transactional XRDP ABNT2 guard; keep its
-   backup evidence and validate the timer.
+6. Invoke `$xrdp-abnt2-fleet` for the keyboard stage after installing the
+   `omni` CLI; keep the transactional guard's backup evidence and validate the
+   timer. Treat the new host as its own bootstrap target, not as evidence that
+   it participated in an earlier fleet rollout.
 7. Add the host inventory and publish sanitized evidence to GBrain/Obsidian.
 
 ## Never do
