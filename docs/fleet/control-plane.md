@@ -399,9 +399,12 @@ User-level systemd unit:
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-1
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-2
 modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-3
+modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh atius-srv-4
 ```
 
-The installer writes `/etc/omni-srv-admin/fleet-agent.env`, copies
+Antes de instalar, hidrate o cache root-only
+`/etc/omni-srv-admin/fleet-db.env` a partir do profile Vault `omni-fleet`.
+O instalador então escreve `/etc/omni-srv-admin/fleet-agent.env`, copia
 `omni-fleet-agent.service` to `~/.config/systemd/user/`, reloads systemd user
 and enables the service. This should not drop RDP/XRDP; it only starts a user
 service loop.

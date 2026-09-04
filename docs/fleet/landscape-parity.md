@@ -15,7 +15,7 @@ No CVE/USN fix is applied automatically from reporting. `pro fix` is allowed onl
 
 | Capability | Landscape self-hosted | Omni Fleet | Decision |
 |---|---|---|---|
-| Registered Ubuntu machines | Primary UI/API for the four current hosts | Inventory/source-of-truth projection | Both are used; Omni owns reviewed identity |
+| Registered Ubuntu machines | Primary UI/API for the five managed hosts | Inventory/source-of-truth projection | Both are used; Omni owns reviewed identity |
 | Package alerts | Landscape package upgrade/alert UI | `TbPrograms`, `TbVersions`, collector cache | Landscape is operator UI; Omni records audit/governance state |
 | CVE/USN visibility | Landscape package/security evidence where available | `omni fleet security report` from Ubuntu Pro Client | Omni centralizes snapshots for policy decisions |
 | Repository profiles | Landscape repository profiles where useful | `TbRepositoryProfiles`, desired-state rules | Omni owns policy; Landscape can execute machine-side activities |
@@ -76,4 +76,3 @@ TbSecurityFindings
 ```
 
 The table stores normalized fields and redacted evidence. It must not store Ubuntu Pro tokens, Landscape API secrets or package-manager credentials.
-

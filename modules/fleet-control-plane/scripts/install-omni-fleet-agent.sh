@@ -13,6 +13,7 @@ if [[ -z "$host_id" ]]; then
     atius-srv-1|srv1|atius) host_id="atius-srv-1" ;;
     atius-srv-2|srv2|zentrius) host_id="atius-srv-2" ;;
     atius-srv-3|srv3) host_id="atius-srv-3" ;;
+    atius-srv-4|srv4) host_id="atius-srv-4" ;;
     *) host_id="$short_host" ;;
   esac
 fi

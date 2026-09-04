@@ -12,9 +12,12 @@ platform:
   os: ubuntu-24.04
   arch: arm64
   desktop: lxde-xrdp
-status: bootstrap-in-progress
+status: active
 modules:
   - xrdp-abnt2
+  - landscape-client
+  - oracle-cloud-agent
+  - unified-monitoring-agent
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
@@ -51,3 +54,5 @@ notes:
   - Public SSH is validated with the canonical Vault-managed public key.
   - The default subnet route table must retain 0.0.0.0/0 through the IGW.
   - Do not attach the host to the central DRG outside a governed cross-tenancy plan.
+  - Landscape self-hosted account is standalone; use the public message-system
+    endpoint and HTTP ping endpoint, never the stale SaaS profile.

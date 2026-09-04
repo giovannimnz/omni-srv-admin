@@ -54,6 +54,7 @@ codex-cloud-ops
 | `atius-mcp` | `kv/atius/atius-mcp/api` | `ATIUS_MCP_TOKEN` |
 | `vault-omni-approle` | `kv/atius/hashicorp-vault/approle/omni-automation` | `VAULT_ADDR`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID` |
 | `vault-landscape-bridge` | `kv/atius/hashicorp-vault/approle/landscape-secrets-bridge` | `VAULT_ADDR`, `VAULT_ROLE_ID`, `VAULT_SECRET_ID` |
+| `omni-fleet` | `kv/atius/omni-fleet/database` | `PGHOST`, `PGPORT`, `PGDATABASE`, `PGUSER`, `PGPASSWORD`, `PGSSLMODE` |
 
 ## Landscape Editable Records
 

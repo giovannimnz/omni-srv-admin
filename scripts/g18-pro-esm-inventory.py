@@ -25,7 +25,13 @@ DEFAULT_OUTPUT = (
     / ".planning/workstreams/runtime-trust-codex-delivery-convergence"
     / "phases/28-g18-ubuntu-pro-esm-fleet-gates/28-01-G18-INVENTORY.md"
 )
-ALLOWED_HOSTS = ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv")
+ALLOWED_HOSTS = (
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "atius-srv-4",
+    "horistic-srv",
+)
 TOKEN_PATHS = (
     "/home/ubuntu/secrets/ubuntu-pro-token.txt",
     "/home/ubuntu/ubuntu-pro-token.txt",

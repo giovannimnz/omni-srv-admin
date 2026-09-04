@@ -720,6 +720,6 @@ def test_fresh_install_rollback_stops_new_reconcile_units_before_removing_files(
 
 
 def test_fleet_xrdp_hosts_declare_xrdp_abnt2_module() -> None:
-    for host in ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv"):
+    for host in ("atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "horistic-srv"):
         text = (REPO / "inventory" / "hosts" / f"{host}.yaml").read_text(encoding="utf-8")
         assert "- xrdp-abnt2" in text, f"{host} must declare xrdp-abnt2 in inventory"

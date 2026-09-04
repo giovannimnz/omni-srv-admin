@@ -1,7 +1,7 @@
 # Landscape / Omni Governance Operating Model
 
 **Date:** 2026-06-25  
-**Scope:** Landscape self-hosted, Landscape SaaS fallback, Omni Fleet, Cockpit, K3s/Portainer and observability for the four managed servers: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv`.
+**Scope:** Landscape self-hosted, Landscape SaaS fallback, Omni Fleet, Cockpit, K3s/Portainer and observability for the managed servers: `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, `horistic-srv`.
 
 ## Decision
 
@@ -73,7 +73,7 @@ Purpose:
 
 - Keep script source, version, hash, risk and host scope reviewed in `omni-srv-admin`.
 - Sync those scripts into Landscape with `omni landscape scripts sync --yes`.
-- Execute them across all four managed hosts with `omni landscape run <script> --hosts all --yes`.
+- Execute them across all managed hosts with `omni landscape run <script> --hosts all --yes`.
 - Use Landscape activity tracking as the delivery/audit surface.
 
 Canonical runbook:
@@ -100,12 +100,12 @@ Versioned script registry:
 
 | Item | State |
 |---|---|
-| Managed servers | `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `horistic-srv` |
+| Managed servers | `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, `horistic-srv` |
 | Landscape self-hosted | LXD container `landscape` on `atius-srv-3` |
 | Landscape public edge | Cloudflare proxied DNS -> SRV1 Apache reverse proxy -> SRV3 |
 | Landscape default UI | Classic `/account/standalone/secrets`; modern dashboard remains direct-link only |
 | Landscape TCP 6554 | SRV1 socket proxy to SRV3, OCI NSG scoped to SRV1; direct origin `137.131.190.161:6554` remains open, but `landscape.atius.com.br:6554` is not available while the hostname is Cloudflare proxied |
-| Landscape clients | Four hosts registered to self-hosted account `standalone`; `accepted=4`, `pending=0` |
+| Landscape clients | Five managed hosts target the self-hosted account `standalone`; refresh `accepted/pending` through the Landscape API before using the count as evidence |
 | Landscape secrets | Local HashiCorp Vault on `127.0.0.1:8200`, `landscape-secrets-service` token present |
 | K3s | Four nodes Ready from Phase 29 closeout |
 | Portainer | Public edge live with admin gate fallback |

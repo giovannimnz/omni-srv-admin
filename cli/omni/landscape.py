@@ -26,7 +26,13 @@ REPO = Path(__file__).resolve().parents[2]
 MANIFEST_PATH = REPO / "modules" / "landscape-control-plane" / "scripts" / "manifest.json"
 DEFAULT_ENDPOINT = "https://landscape.atius.com.br/api/"
 DEFAULT_API_VERSION = "2011-08-01"
-CONTROLLED_HOSTS = ("atius-srv-1", "atius-srv-2", "atius-srv-3", "horistic-srv")
+CONTROLLED_HOSTS = (
+    "atius-srv-1",
+    "atius-srv-2",
+    "atius-srv-3",
+    "atius-srv-4",
+    "horistic-srv",
+)
 READ_ONLY_ACTION_PREFIXES = ("Get",)
 
 

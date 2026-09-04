@@ -152,7 +152,7 @@ PYTHONPATH=cli python3 -m omni landscape activities recent --status undelivered
 
 - `run` is plan-only unless `--yes` is provided.
 - `scripts push/sync` is plan-only unless `--yes` is provided.
-- Host selection is restricted to `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, and `horistic-srv` unless a custom Landscape query is explicitly passed.
+- Host selection is restricted to `atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, and `horistic-srv` unless a custom Landscape query is explicitly passed.
 - Reboots, package mutation, PM2 restart, XRDP restart and K3s mutation should live in separate high-risk scripts with explicit approval gates.
 - Script output may contain operational evidence; do not echo secrets from scripts.
 

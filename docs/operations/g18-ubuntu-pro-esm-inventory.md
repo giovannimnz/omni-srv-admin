@@ -8,7 +8,7 @@ SRV-2, or SRV-3.
 
 ```bash
 python3 scripts/g18-pro-esm-inventory.py \
-  --hosts atius-srv-1,atius-srv-2,atius-srv-3,horistic-srv \
+  --hosts atius-srv-1,atius-srv-2,atius-srv-3,atius-srv-4,horistic-srv \
   --output .planning/phases/28-g18-ubuntu-pro-esm-fleet-gates/28-01-G18-INVENTORY.md
 ```
 
@@ -80,7 +80,7 @@ classes:
 
 Before any live upgrade in Phase 29, the operator should confirm:
 
-1. All four hosts are reachable by SSH.
+1. All five managed hosts are reachable by SSH.
 2. Ubuntu Pro is attached and `esm-apps` / `esm-infra` are enabled.
 3. Account and contract identity are present, with exact values kept out of
    docs and logs.
@@ -97,10 +97,10 @@ POST.
 
 ## Scope addendum - 2026-06-24
 
-`horistic-srv` is now an allowed G18 managed host. Use the four-host list for Phase 29 refreshes:
+`atius-srv-4` and `horistic-srv` are allowed G18 managed hosts. Use the five-host list for Phase 29 refreshes:
 
 ```bash
 python3 scripts/g18-pro-esm-inventory.py \
-  --hosts atius-srv-1,atius-srv-2,atius-srv-3,horistic-srv \
+  --hosts atius-srv-1,atius-srv-2,atius-srv-3,atius-srv-4,horistic-srv \
   --output .planning/phases/29-g18-controlled-upgrade-rdp-landscape-validation/29-01-G18-FRESH-INVENTORY.md
 ```
