@@ -74,6 +74,10 @@ Não deve ser aplicado em outros hosts sem portabilidade explícita.
 
 `modules/xrdp-abnt2/` e `dark-theme-ubuntu/` formam o padrão portátil de desktop XRDP para todos os servidores Ubuntu ARM64 da fleet. O runbook canônico é `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`.
 
+O entrypoint operacional para audit, rollout, recovery e evidência por host é
+`$xrdp-abnt2-fleet`, versionado em
+`modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+
 ### Customization Governance
 
 `omni-srv-admin` governa dois lanes distintos:

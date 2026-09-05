@@ -51,6 +51,8 @@ Hermes:
 Codex:
 - atius-sso
 - atius-sso-governed-release-closeout
+- xrdp-abnt2-fleet
+- oci-arm64-new-server-bootstrap
 
 Shared:
 - notebooklm bridge references/content
@@ -59,3 +61,6 @@ Shared:
 
 - `external_dirs` remains a local tactical tool, not the fleet backbone.
 - Apply is manual; drift detection can later run on schedule in dry-run mode.
+- `ssh-linux --apply` is intentionally fail-closed. Do not bypass it to install
+  `$xrdp-abnt2-fleet`; use a reviewed local install and verify source/installed
+  hashes until remote per-file rollback is implemented.

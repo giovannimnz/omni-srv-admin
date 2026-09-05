@@ -30,6 +30,8 @@ status: active
 modules:
   - srv1-ops
   - xrdp-abnt2
+operational_skill: xrdp-abnt2-fleet
+operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
 apps:
   - id: router-ai-atius
     runtime: podman
@@ -67,6 +69,8 @@ notes:
 | `platform` | sim | provider/OS/arch/device |
 | `status` | sim | active, planned, template, retired |
 | `modules` | não | módulos aplicáveis |
+| `operational_skill` | não | skill canônica que governa a operação do host para o domínio declarado |
+| `operational_skill_source` | não | fonte versionada da skill, relativa ao repo |
 | `apps` | não | programas/runtimes instalados e geridos pelo omni |
 | `forks` | não | worktrees/forks locais que seguem upstream |
 | `database` | não | contrato do `DbOmniFleet`/PgBouncer para aquele host |
@@ -84,11 +88,14 @@ platform:
   desktop: lxde-xrdp
 modules:
   - xrdp-abnt2
+operational_skill: xrdp-abnt2-fleet
+operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
 ```
 
 Isso marca o host como participante do patch persistente controlado por
 `omni-srv-admin` para teclado PT-BR ABNT2, Xvnc/XRDP e smoke peer com
-`xfreerdp`.
+`xfreerdp`. Invoque `$xrdp-abnt2-fleet` para obter evidência live; datas de
+rollout no inventário são históricas e não substituem a validação atual.
 
 ## Regra formal de separação
 

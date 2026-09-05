@@ -20,6 +20,8 @@ modules:
   - xrdp-abnt2
   - fork-sync
   - domain-infrastructure
+operational_skill: xrdp-abnt2-fleet
+operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
 apps:
   - id: omni-srv-admin
     runtime: git-worktree
@@ -265,7 +267,7 @@ notes:
   dns_validation: "2026-07-10: srv-1 serves DNS on both 10.11.1.11:53 and reserve 10.100.100.1:53; both return the OCI-primary targets 10.11.1.11/10.12.1.12/10.13.1.13/10.21.1.21."
   oci_primary_validation: "2026-07-08: attached secondary VNIC 10.11.1.11, opened peer OCI CIDR access for PgBouncer and Obsidian REST/MCP, and exposed 10.11.1.11:{53,6432,27124} successfully to srv-2/srv-3/horistic."
   k3s_phase16_blocker: "2026-07-10: kube-apiserver and etcd already dual-bind on 10.11.1.11 and 10.100.100.1; the remaining blocker is repo/runtime drift that still treats wg100 as primary in some service/env/docs paths."
-  desktop_standard: "2026-07-02: ubuntu-arm64-xrdp-desktop-standard is mandatory here; xrdp-abnt2 and dark-theme-ubuntu validated live."
+  desktop_standard: "Historical: 2026-07-02 ubuntu-arm64-xrdp-desktop-standard was validated live with xrdp-abnt2 and dark-theme-ubuntu. Prior rollout: 2026-08-29 xrdp-abnt2 fleet rollout. Neither entry is current live validation; invoke $xrdp-abnt2-fleet and record fresh host evidence before asserting status."
   knowledge_authority: "Obsidian and GBrain authoritative writes stay on atius-srv-1 only."
 oci:
   last_snapshot_id: "pending-250f32ed-819e-4ccf-9b70-a08aa298a94c"

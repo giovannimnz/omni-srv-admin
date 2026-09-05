@@ -1,5 +1,16 @@
 # Source map — XRDP ABNT2 migration
 
+> [!WARNING]
+> **Mapa de migração histórico/evidence-only.** Não execute os artefatos de
+> origem listados abaixo. O fluxo atual é `$xrdp-abnt2-fleet`, com fonte em
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`;
+> as autoridades operacionais são `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos antigos com
+> `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não são o procedimento vigente. O mapeamento permanece como proveniência da
+> migração original.
+
 Canonical target:
 - `/home/ubuntu/GitHub/omni-srv-admin/modules/xrdp-abnt2/`
 

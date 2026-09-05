@@ -18,6 +18,8 @@ modules:
   - landscape-client
   - oracle-cloud-agent
   - unified-monitoring-agent
+operational_skill: xrdp-abnt2-fleet
+operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
 logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15

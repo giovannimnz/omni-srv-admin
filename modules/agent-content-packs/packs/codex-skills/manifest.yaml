@@ -1,6 +1,6 @@
 version: 1
 pack: codex-skills
-updated_at: 2026-09-04T23:30:00+0000
+updated_at: 2026-09-04T23:50:00+0000
 items:
 - name: git-worktree-fleet-closeout
   kind: skill
@@ -74,13 +74,19 @@ items:
   - windows
   - linux
   source_path: items/xrdp-abnt2-fleet
-  hash: 5e611b6acec3bd4e49d1b8475cfa93f8d994cea84895a108bfe2f20d741c4af2
+  hash: 5576f831e7497d232d4b3adba1aaf6be314472be5876df8f0f203277875c5f63
   required_files:
   - SKILL.md
   files:
+  - path: agents/openai.yaml
+    sha256: 30287a391e40e5a3e633bac97bc3ad57677b8788c631870aa2f66e75ab98331f
+    bytes: 237
+  - path: references/legacy-hermes-boundary.md
+    sha256: ed34268e163fac6776498ac49f403d1e6d856660fdc5db49e22f51d0715e36f7
+    bytes: 1663
   - path: SKILL.md
-    sha256: 5e611b6acec3bd4e49d1b8475cfa93f8d994cea84895a108bfe2f20d741c4af2
-    bytes: 2526
+    sha256: a83f10cd08cdce84b7ab904cdf567ad515119287a28e5b41e580e652b1bff1a8
+    bytes: 7731
   install:
     codex:
       rel_path: skills/xrdp-abnt2-fleet
@@ -90,13 +96,13 @@ items:
   platforms:
   - linux
   source_path: items/oci-arm64-new-server-bootstrap
-  hash: da8eec5910d1920d84fb02e6fcd8a49d6916d7c0811e53d3699bd1b9cf73222a
+  hash: 1a96f67da8fc16aa43f515cf0159008a0a8702b09ff9910b0b59e10f9a29f3c4
   required_files:
   - SKILL.md
   files:
   - path: SKILL.md
-    sha256: da8eec5910d1920d84fb02e6fcd8a49d6916d7c0811e53d3699bd1b9cf73222a
-    bytes: 1346
+    sha256: 1a96f67da8fc16aa43f515cf0159008a0a8702b09ff9910b0b59e10f9a29f3c4
+    bytes: 1591
   install:
     codex:
       rel_path: skills/oci-arm64-new-server-bootstrap

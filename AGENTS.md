@@ -53,6 +53,17 @@ For more information about GSD agents, run `/gsd-help`.
 - If a pod has multiple containers, split the pod budget explicitly so the total pod CPU stays at or below `500m`; Kubernetes accounts CPU per container, so this must be checked in the manifest.
 - Two replicas/pods at this standard equal `1000m`, i.e. one full CPU core of the host.
 
+## XRDP ABNT2 Fleet
+
+- Toda auditoria, diagnostico, reconcile, recovery, packaging ou closeout de
+  teclado ABNT2 em XRDP deve usar `$xrdp-abnt2-fleet`.
+- Fonte versionada: `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+- A skill resolve os hosts pelo inventory, preserva sessoes/dirty worktrees,
+  proibe restart XRDP por default e exige UAT fisica em nova sessao Microsoft
+  RDP antes de `complete`.
+- Skills/scripts Hermes antigos e `modules/srv1-ops/legacy-scripts/fix-abnt2.sh`
+  sao evidencia historica, nao entrypoints operacionais.
+
 ## Segredos ATIUS e MCP
 
 - Fonte autoritativa de segredos: HashiCorp Vault, nao `.env`, `.zshrc`, historico de shell, chat, Obsidian, GBrain ou arquivos do repo.

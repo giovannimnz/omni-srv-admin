@@ -1,5 +1,15 @@
 # Source map — srv1-ops migration
 
+> [!WARNING]
+> **Mapa histórico/evidence-only.** Para teclado XRDP ABNT2, use
+> `$xrdp-abnt2-fleet`, a fonte versionada
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Não execute scripts
+> XRDP/ABNT2 legados nem comandos antigos com `DISPLAY=:10`, edição direta por
+> `sed`/`tee`/`nano`, `xbindkeys`, `dpkg-reconfigure`, `pkill`, restart de
+> `xrdp` ou instalação APT implícita.
+
 ## Migrated into module
 
 | Source | Destination | Action |
@@ -21,7 +31,7 @@
 | `/home/ubuntu/scripts/start-qbittorrent.sh` | qBittorrent-specific |
 | `/home/ubuntu/scripts/start-aionui.sh` | AionUI-specific; already has AionUI skills/runbooks |
 | `/home/ubuntu/scripts/fix-shared_smb.sh` | legacy one-shot; superseded by fstab/GVFS runbook |
-| `/home/ubuntu/scripts/fix-abnt2.sh` | superseded by `modules/xrdp-abnt2/` |
+| `/home/ubuntu/scripts/fix-abnt2.sh` | **LEGADO — NÃO EXECUTAR**; superseded by `$xrdp-abnt2-fleet` and `modules/xrdp-abnt2/` |
 | `/home/ubuntu/scripts/optimize_network.sh` | needs review before applying; network-impacting |
 | `/home/ubuntu/bin/pm2ns` | utility; evaluate as `omni admin pm2` later |
 | `/home/ubuntu/bin/setxkbmap-abnt2.sh` | superseded by `modules/xrdp-abnt2/files/setxkbmap-abnt2.sh` |

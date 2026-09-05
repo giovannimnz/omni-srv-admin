@@ -1,5 +1,17 @@
 # Solucao Teclado XRDP BR ABNT2
 
+> [!WARNING]
+> **Fonte original preservada apenas como evidência histórica. Não execute as
+> instruções abaixo.** O fluxo vigente é `$xrdp-abnt2-fleet`, cuja fonte
+> versionada está em
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`.
+> Consulte também `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos antigos com
+> `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não fazem parte do procedimento atual. O corpo foi mantido sem reescrita para
+> preservar a origem e a cronologia.
+
 Data do registro: 2026-06-05 23:46:48 -03:00
 
 ## Objetivo

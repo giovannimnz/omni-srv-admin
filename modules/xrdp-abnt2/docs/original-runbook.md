@@ -1,5 +1,16 @@
 # Solucao Passo a Passo
 
+> [!WARNING]
+> **Runbook original obsoleto, retido somente como evidência histórica. Não
+> execute os passos abaixo.** Use `$xrdp-abnt2-fleet`, a fonte versionada
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos antigos com
+> `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não são o fluxo atual. O conteúdo restante permanece inalterado para fins de
+> rastreabilidade.
+
 ## 1. Confirmar Configuracao Base do Ubuntu
 
 Arquivo esperado:

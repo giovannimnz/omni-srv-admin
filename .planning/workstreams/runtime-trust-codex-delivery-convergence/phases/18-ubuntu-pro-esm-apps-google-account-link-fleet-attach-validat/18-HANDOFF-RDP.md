@@ -1,5 +1,17 @@
 # 2026-06-16 — RDP/xrdp/Xvnc/xorgxrdp: SESSÃO DE FIX COMPLETA (ainda NÃO funcional)
 
+> [!WARNING]
+> **Handoff histórico/evidence-only — não execute os comandos abaixo como
+> procedimento vigente.** Para teclado XRDP ABNT2 na frota, use
+> `$xrdp-abnt2-fleet` e as autoridades atuais
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos antigos com
+> `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não são o fluxo atual. O restante do documento permanece intacto para
+> cronologia e evidência da sessão de 2026-06-16.
+
 > **Status: NÃO RESOLVIDO.** O usuário reportou que RDP continua
 > não funcional apesar de todos os fixes aplicados. Esta doc é
 > o handoff completo: o que foi tentado, o que mudou, o que está

@@ -9,6 +9,17 @@ status: closed
 
 # XRDP Fleet Closure — 2026-06-16
 
+> [!WARNING]
+> **Registro histórico/evidence-only, não um runbook operacional atual.** Para
+> teclado XRDP ABNT2 na frota, use `$xrdp-abnt2-fleet` e consulte
+> `modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md`,
+> `modules/xrdp-abnt2/README.md` e
+> `docs/operations/ubuntu-arm64-xrdp-desktop-standard.md`. Comandos antigos com
+> `DISPLAY=:10`, edição direta por `sed`/`tee`/`nano`, `xbindkeys`,
+> `dpkg-reconfigure`, `pkill`, restart de `xrdp` ou instalação APT implícita
+> não são o fluxo vigente. A closure abaixo é preservada como evidência datada
+> de 2026-06-16.
+
 Closes the XRDP adjustment track inside Phase 18.
 
 ## Final operator validation
