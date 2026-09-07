@@ -1,0 +1,16 @@
+P0=0 P1=0 P2=0 P3=0
+
+Findings: nenhum.
+
+Confirmado:
+
+- PII/email removido; log público redacted e raw mantido apenas no host. Hashes raw/redacted registrados em [provenance.json](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-8df4807a96c0-provenance.json:34).
+- Cadeia live correta: `~/.local/bin/npm → build-cpu-guard-wrapper.sh → Node install root npm`, conforme [reconciliation.md](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-8df4807a96c0-reconciliation.md:43).
+- Classificação/subtype, oito steps, source fix e teste `12/12 PASS` confirmados.
+- Runs finais `233823` e `234149`: `17/17`, `status=PASS`.
+- Manifest `aa1883d1…`, failed units live `0/0`, processos residuais `0`.
+- `current_actionable=false`.
+- Seal: `43/43 OK`; readback idêntico ao `SHA256SUMS.check`.
+- Nenhum arquivo editado.
+
+VERDICT=GO

@@ -1,0 +1,21 @@
+P0=0 P1=0 P2=1 P3=1
+
+Findings:
+
+- P2 — [proc-8df4807a96c0-setup.log:87](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-8df4807a96c0-setup.log:87): contém email pessoal em repo `PUBLIC`. O arquivo está gitignored, mas é selado em [SHA256SUMS:8](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/SHA256SUMS:8) e precisaria de force-add. Redigir o identificador e reseal antes de versionar.
+- P3 — [proc-8df4807a96c0-reconciliation.md:46](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-8df4807a96c0-reconciliation.md:46): afirma que `~/.local/bin/npm` aponta diretamente ao Node bundle; no target live ele aponta ao `build-cpu-guard-wrapper.sh`, que despacha para o npm do bundle. Não altera causalidade nem fix, mas a descrição está imprecisa.
+
+Confirmado:
+
+- Sessão `300007/300010/300011`: run `055159` entrou no orchestrator, oito steps concluídos e `toolchains` falhou com `npm EEXIST` em `~/.local/bin/npm`.
+- Source atualiza npm dentro do Node install root e instala Codex separadamente.
+- Source/package/commit: SHA idêntico `59ee6d1…`.
+- Teste focado: `12/12 PASS`.
+- Runs `233823` e `234149`: PASS.
+- Runtime `aa1883d1…`; failed units `0/0`; processos residuais `0`.
+- `SHA256SUMS`: `42/42 OK`, exatamente igual ao `SHA256SUMS.check`.
+- Classificação `partial-workload-failure/npm-prefix-symlink-collision`: correta.
+- `current_actionable=false`: correto operacionalmente.
+- Nenhum arquivo foi editado.
+
+VERDICT=NO-GO

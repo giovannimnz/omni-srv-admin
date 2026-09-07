@@ -52,6 +52,8 @@ Status: PASS
 - `reviews/aa-runtime-final-go.txt`
 - `reviews/proc-b20-reconciliation-go.txt`
 - `reviews/proc-d7-reconciliation-go.txt`
+- `reviews/proc-8df-reconciliation-v1-nogo.txt`
+- `reviews/proc-8df-reconciliation-v2-go.txt`
 
 ## Cleanup
 
@@ -95,6 +97,15 @@ the successful readback authority.
   `pre-workload-launcher-failure/missing-pythonpath`, superseded, sem current
   actionable.
 - Reconciliação: `delayed-backup/proc-d7b3cd5a26de-reconciliation.md`.
+- `proc_8df4807a96c0` foi o relaunch com `PYTHONPATH` corrigido. Ele concluiu
+  oito steps e falhou em `toolchains` por `npm EEXIST` no symlink
+  `~/.local/bin/npm`.
+- O source final move a atualização do npm para o próprio Node install root e
+  instala Codex separadamente. Source, package instalado e commit são byte-equal;
+  test focado `12/12 PASS`.
+- Classificação: `partial-workload-failure/npm-prefix-symlink-collision`,
+  superseded pelos runs finais, sem current actionable.
+- Reconciliação: `delayed-backup/proc-8df4807a96c0-reconciliation.md`.
 
 ## Graphify final
 
