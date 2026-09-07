@@ -66,6 +66,9 @@ Status: PASS
 - `reviews/proc-8eca-reconciliation-v2-blocked-capacity.txt`
 - `reviews/proc-8eca-reconciliation-v3-blocked-unsupported-model.txt`
 - `reviews/proc-8eca-reconciliation-v4-go.txt`
+- `reviews/proc-f216-reconciliation-v1-go-preseal-stale.txt`
+- `reviews/proc-f216-reconciliation-v1-disposition.txt`
+- `reviews/proc-f216-reconciliation-v2-go.txt`
 
 ## Cleanup
 
@@ -188,6 +191,16 @@ the successful readback authority.
 - Classificação: `historical-source-promotion-operational-pass`, superseded pela
   source final 444 com apply/verify e run-local seal `aa1883…`.
 - Reconciliação: `delayed-source/proc-8eca-reconciliation.md`.
+- `proc_f2166f90095c` é o apply imediato do package 418: run
+  `20260906T071332+0000-1040769`, `17 START/DONE`, zero skip/fail,
+  `COMPLETE=PASS` e 17 receipts contemporâneos ligados ao orchestrator
+  `539594…`.
+- O run antecede source seal run-local; manifest `d6fad…` é contexto externo,
+  não seal. Classificação: `historical-full-apply-operational-pass`, superseded
+  pelo apply/verify 444 selado em `aa1883…`.
+- Warnings de portal sem DISPLAY e references `.claude` foram preservados e
+  classificados; nenhum foi falsamente tratado como removido.
+- Reconciliação: `delayed-apply/proc-f216-reconciliation.md`.
 
 ## Graphify final
 

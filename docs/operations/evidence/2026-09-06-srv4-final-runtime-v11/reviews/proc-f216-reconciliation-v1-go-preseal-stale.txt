@@ -1,0 +1,14 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings:
+1. Confirmação de trilha de autoridade do `proc_f2166f90095c`: launch `300323`, polls/completion `300325,300332`, readbacks `300333,300348` e notification `316298` (em `proc-f216-provenance.json`), conforme solicitado.
+2. `proc-f216-run-state.json` e `proc-f216-COMPLETE` confirmam `run_id=20260906T071332+0000-1040769`, `mode=apply`, `starts=17`, `done=17`, `skips=0`, `failed=0`, `status=PASS`, sem divergências.
+3. `proc-f216-contemporary-receipts.json` confirma 17 receipts PASS, mesmo `run_id` e `source_sha256=539594…`, com nota explícita de overwrite de receipts em diretório compartilhado posterior.
+4. Verificação de integridade 11/11 (artifacts em `proc-f216-provenance.json`) para os arquivos `proc-f216-*` bate com `sha256` registrado; `proc-f216-setup.log` tem `24831` bytes e SHA `86f71514…`.
+5. Fonte histórica de origem em 418 (`d6fad…`) é tratada como contextual (external context) e não selada localmente no run (`run_local_source_seal=false`), portanto classificação operacional está correta (`historical-full-apply-operational-pass`).
+6. Warnings preservados conforme descrito: 3 `portal-without-DISPLAY` com `deferred-to-session-proof` e 2 `.claude` com `accepted-installer-warning`, ambos não bloqueantes e não falsamente “removidos”.
+7. Autoridade atual correta: `manifest aa1883…`, `final apply/verify=17/17` com `run_local_seal=true`, `repo clean`, `health=0/0`, `setup=0`, `current_actionable=false`, `GSD 1.13.0 full` e `Graphify 0.9.23`.
+8. SHA256SUMS.check inteiro está `OK` no pacote avaliado.
+9. Varredura de PII/segredos nos arquivos alvo não encontrou credenciais secretas/valores sensíveis (somente hashes, ids e paths de prova).
+
+VERDICT=GO

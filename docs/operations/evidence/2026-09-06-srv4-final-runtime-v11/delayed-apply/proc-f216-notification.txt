@@ -1,0 +1,12 @@
+[IMPORTANT: Background process proc_f2166f90095c completed normally (exit code 0).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 '... oci-arm64-host-setup.sh --apply --resume'
+Output authority:
+- final step `final-verify`: PASS/DONE;
+- status=PASS;
+- mode=apply;
+- run_id=20260906T071332+0000-1040769;
+- completed_at=2026-09-06T07:15:09+00:00;
+- connection closed normally.
+]
+
+O output completo e byte-exato do run está em `proc-f216-setup.log`; este arquivo preserva apenas a notification tardia e seus marcadores conclusivos.

@@ -1,0 +1,223 @@
+{
+  "artifacts": {
+    "proc-f216-COMPLETE": {
+      "bytes": 98,
+      "sha256": "55048ad20830cd0a060fd53da87b8cf26df4654afa719961cbd196799ac14192"
+    },
+    "proc-f216-contemporary-receipts.json": {
+      "bytes": 1069,
+      "sha256": "af4b3516de5ae4e53b934ec59715d8450f44fa4d80708cdcccdcf2248e7aa116"
+    },
+    "proc-f216-current-authority.json": {
+      "bytes": 1582,
+      "sha256": "dbb2af949b6551ec8094adc37d00d5ba98685f4d70af003455db33a0d8b00148"
+    },
+    "proc-f216-disposition-matrix.md": {
+      "bytes": 1489,
+      "sha256": "8e35bcb80a1c18e7ece0f8790a7acf925eb7ba05ff32e190d8e3c6a63165b38b"
+    },
+    "proc-f216-graphify-query.json": {
+      "bytes": 168,
+      "sha256": "6944a259bf45e8faf6eff08fbfc9606d67413bea0e1f6de7c78b912e57b54896"
+    },
+    "proc-f216-notification.txt": {
+      "bytes": 534,
+      "sha256": "8d691b09d0ee7fc827696ce6928ba1567f5c6b9a4841dfbb807d1cc939a144bc"
+    },
+    "proc-f216-reconciliation.md": {
+      "bytes": 4632,
+      "sha256": "bbe2dbba9721fe5217dc60331fd3109bc58b862683eac833e5deadded001bfd5"
+    },
+    "proc-f216-run-state.json": {
+      "bytes": 1952,
+      "sha256": "e66c963f83395e588a1f321c96ee14e4d03ea5a695f535a660d371cf25e35de6"
+    },
+    "proc-f216-setup.log": {
+      "bytes": 24831,
+      "sha256": "86f71514cead1061df595131552c468535597549a2e7c3c84ca772f3d34a7ef2"
+    },
+    "proc-f216-source-boundary.json": {
+      "bytes": 1507,
+      "sha256": "8983d3a0c62e9ab54e64adf12f99c3c2c2c3816aa01d234fea7d7ede462781ca"
+    },
+    "proc-f216-warning-disposition.json": {
+      "bytes": 1371,
+      "sha256": "abc75320b3412de089fb26d484db1d7a1d34a2c5a26ac2ec26aec7ff400d1554"
+    }
+  },
+  "authority_messages": [
+    300323,
+    300325,
+    300332,
+    300333,
+    300336,
+    300348,
+    316298
+  ],
+  "classification": "historical-full-apply-operational-pass",
+  "contemporary_receipts": {
+    "count": 17,
+    "mutable_files_overwritten_later": true,
+    "pass": 17,
+    "run_ids": [
+      "20260906T071332+0000-1040769"
+    ],
+    "source_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278"
+  },
+  "current_actionable": false,
+  "current_authority": {
+    "canonical_source": {
+      "file_count": 444,
+      "manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+      "orchestrator_sha256": "59ee6d177edbcaf28af6cdf67325eae581dfafa4bc37204597fcafa0ad25a898"
+    },
+    "failed_units": {
+      "system": 0,
+      "user": 0
+    },
+    "final_runs": [
+      {
+        "complete": "status=PASS mode=apply run_id=20260906T233823+0000-1549801 completed_at=2026-09-06T23:40:48+00:00",
+        "dones": 17,
+        "log_sha256": "a0a969286d42eb05c2541801ba9ab7cd9afc1f97497919b5bfb645c8b0e87cf6",
+        "run_id": "20260906T233823+0000-1549801",
+        "run_local_seal": true,
+        "seal_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+        "skips": 0,
+        "starts": 17
+      },
+      {
+        "complete": "status=PASS mode=verify-only run_id=20260906T234149+0000-1558144 completed_at=2026-09-06T23:43:00+00:00",
+        "dones": 17,
+        "log_sha256": "3495b266d9698cf6d83193381025c06d65f286d8027e403ab65f6287e3f11734",
+        "run_id": "20260906T234149+0000-1558144",
+        "run_local_seal": true,
+        "seal_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+        "skips": 0,
+        "starts": 17
+      }
+    ],
+    "graphify_version": "graphify 0.9.23",
+    "gsd": {
+      "codex_auto_mode_rc": 0,
+      "codex_profile": "full",
+      "codex_version": "1.13.0",
+      "hermes_auto_mode_rc": 0,
+      "hermes_profile": "full",
+      "hermes_version": "1.13.0"
+    },
+    "host": "atius-srv-4.atius.internal",
+    "repo_dirty_count": 0,
+    "schema": "proc-f216-current-authority-v1",
+    "setup_processes": 0
+  },
+  "current_classification": "superseded-by-sealed-444",
+  "historical_pid": 3169543,
+  "process_id": "proc_f2166f90095c",
+  "recorded_at": "2026-09-07T05:27:48.370976+00:00",
+  "restore_reference": "../delayed-source/proc-8eca-reconstructed-restore-drill.json",
+  "run": {
+    "complete_file_sha256": "55048ad20830cd0a060fd53da87b8cf26df4654afa719961cbd196799ac14192",
+    "completed_at": "2026-09-06T07:15:09+00:00",
+    "dones": 17,
+    "error_count": 0,
+    "errors": [],
+    "mode": "apply",
+    "pass_markers": 34,
+    "process_id": "proc_f2166f90095c",
+    "run_id": "20260906T071332+0000-1040769",
+    "run_local_source_seal": false,
+    "schema": "proc-f216-run-state-v1",
+    "setup_log_bytes": 24831,
+    "setup_log_sha256": "86f71514cead1061df595131552c468535597549a2e7c3c84ca772f3d34a7ef2",
+    "skips": 0,
+    "starts": 17,
+    "status": "PASS",
+    "step_modes": {
+      "agent-content": "apply",
+      "agents": "apply",
+      "desktop-apps": "apply",
+      "desktop-theme": "apply",
+      "desktop-xrdp": "apply",
+      "final-verify": "apply",
+      "fleet-agent": "apply",
+      "gsd-graphify": "apply",
+      "identity-network": "apply",
+      "landscape": "apply",
+      "obsidian": "apply",
+      "packages": "apply",
+      "podman": "apply",
+      "preflight": "apply",
+      "resource-governor": "apply",
+      "toolchains": "apply",
+      "ubuntu-pro": "apply"
+    },
+    "steps": [
+      "preflight",
+      "packages",
+      "ubuntu-pro",
+      "identity-network",
+      "podman",
+      "desktop-xrdp",
+      "landscape",
+      "fleet-agent",
+      "toolchains",
+      "desktop-apps",
+      "agents",
+      "gsd-graphify",
+      "agent-content",
+      "obsidian",
+      "resource-governor",
+      "desktop-theme",
+      "final-verify"
+    ],
+    "warning_event_count": 5,
+    "warnings": {
+      "gsd_unreplaced_claude_references": {
+        "classification": "accepted-installer-warning",
+        "count": 2,
+        "current_actionable": false,
+        "evidence": "GSD 1.13.0 full profiles, Codex/Hermes check auto-mode and Graphify 0.9.23 pass; warning remains visible in final installers"
+      },
+      "portal_without_display": {
+        "classification": "deferred-to-session-proof",
+        "count": 3,
+        "current_actionable": false,
+        "evidence": "later XRDP framebuffer and dark-theme validation"
+      }
+    }
+  },
+  "runner_exit_code": 0,
+  "schema": "delayed-full-apply-reconciliation-v1",
+  "session_id": "20260904_200755_1d1861",
+  "source_boundary": {
+    "classification": "historical-full-apply-operational-pass/superseded-by-sealed-444",
+    "current_source": {
+      "both_final_runs_have_matching_run_local_seal": true,
+      "file_count": 444,
+      "full_apply_run": "20260906T233823+0000-1549801",
+      "manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+      "orchestrator_sha256": "59ee6d177edbcaf28af6cdf67325eae581dfafa4bc37204597fcafa0ad25a898",
+      "verify_only_run": "20260906T234149+0000-1558144"
+    },
+    "historical_package_restore_reference": "../delayed-source/proc-8eca-reconstructed-restore-drill.json",
+    "historical_source": {
+      "attribution_basis": [
+        "promotion completed immediately before launch",
+        "launcher read canonical source path",
+        "contemporary 17-receipt readback bound all receipts to orchestrator SHA-256 539594...",
+        "run directory preserves COMPLETE and setup log"
+      ],
+      "authority_limit": "manifest identity is external contextual evidence because the run predates run-local source-manifest.sealed.json",
+      "file_count": 418,
+      "manifest_sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed",
+      "orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+      "promotion_process": "proc_8eca51e24f34",
+      "promotion_result": "PASS",
+      "run_local_source_manifest_seal": false
+    },
+    "process_id": "proc_f2166f90095c",
+    "run_id": "20260906T071332+0000-1040769",
+    "schema": "proc-f216-source-boundary-v1"
+  }
+}

@@ -1,0 +1,71 @@
+{
+  "complete_file_sha256": "55048ad20830cd0a060fd53da87b8cf26df4654afa719961cbd196799ac14192",
+  "completed_at": "2026-09-06T07:15:09+00:00",
+  "dones": 17,
+  "error_count": 0,
+  "errors": [],
+  "mode": "apply",
+  "pass_markers": 34,
+  "process_id": "proc_f2166f90095c",
+  "run_id": "20260906T071332+0000-1040769",
+  "run_local_source_seal": false,
+  "schema": "proc-f216-run-state-v1",
+  "setup_log_bytes": 24831,
+  "setup_log_sha256": "86f71514cead1061df595131552c468535597549a2e7c3c84ca772f3d34a7ef2",
+  "skips": 0,
+  "starts": 17,
+  "status": "PASS",
+  "step_modes": {
+    "agent-content": "apply",
+    "agents": "apply",
+    "desktop-apps": "apply",
+    "desktop-theme": "apply",
+    "desktop-xrdp": "apply",
+    "final-verify": "apply",
+    "fleet-agent": "apply",
+    "gsd-graphify": "apply",
+    "identity-network": "apply",
+    "landscape": "apply",
+    "obsidian": "apply",
+    "packages": "apply",
+    "podman": "apply",
+    "preflight": "apply",
+    "resource-governor": "apply",
+    "toolchains": "apply",
+    "ubuntu-pro": "apply"
+  },
+  "steps": [
+    "preflight",
+    "packages",
+    "ubuntu-pro",
+    "identity-network",
+    "podman",
+    "desktop-xrdp",
+    "landscape",
+    "fleet-agent",
+    "toolchains",
+    "desktop-apps",
+    "agents",
+    "gsd-graphify",
+    "agent-content",
+    "obsidian",
+    "resource-governor",
+    "desktop-theme",
+    "final-verify"
+  ],
+  "warning_event_count": 5,
+  "warnings": {
+    "gsd_unreplaced_claude_references": {
+      "classification": "accepted-installer-warning",
+      "count": 2,
+      "current_actionable": false,
+      "evidence": "GSD 1.13.0 full profiles, Codex/Hermes check auto-mode and Graphify 0.9.23 pass; warning remains visible in final installers"
+    },
+    "portal_without_display": {
+      "classification": "deferred-to-session-proof",
+      "count": 3,
+      "current_actionable": false,
+      "evidence": "later XRDP framebuffer and dark-theme validation"
+    }
+  }
+}

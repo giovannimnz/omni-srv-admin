@@ -1,0 +1,23 @@
+Review v1 disposition — GO_PRESEAL_STALE / NOT_FINAL_CLOSEOUT
+
+Review file: `proc-f216-reconciliation-v1-go-preseal-stale.txt`
+Reviewer verdict: GO, P0/P1/P2/P3=0
+Reviewer artifact/provenance checks: PASS
+Final closeout authority: withheld
+
+Parent-side post-review gate found:
+- `SHA256SUMS` contained zero `delayed-apply/proc-f216-*` entries;
+- the evidence-root seal was stale because the prior seal attempt stopped on a false-positive broad scanner before writing the manifest;
+- the reviewer validated the packet and its internal 11/11 provenance, but its statement that the root `SHA256SUMS.check` covered the evaluated packet was false.
+
+Disposition:
+- preserve the review's exact GO verdict;
+- preserve the raw byte-exact output in
+  `/home/ubuntu/.backups/proc-f216-review-v1-preseal-20260907T023155-0300/proc-f216-reconciliation-review.txt`;
+- normalize only trailing blank lines in the versionable copy so the Git
+  whitespace gate passes; verdict, counters and findings remain unchanged;
+- do not rewrite it as NO-GO;
+- do not use it as the final closeout seal;
+- reseal the root with the full packet and relaunch an independent convergence review.
+
+The broad scanner false positives were safe forensic source excerpts containing variable names such as password/token; no credential value was found. The corrected scanner checks actual email/private-key/API-key/Bearer patterns and packet-specific structured assertions.

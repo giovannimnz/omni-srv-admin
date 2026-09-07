@@ -1,0 +1,37 @@
+{
+  "schema": "proc-f216-contemporary-receipt-set-v1",
+  "session_id": "20260904_200755_1d1861",
+  "authority_message": 300333,
+  "observed_after_process_completion": true,
+  "receipt_directory_semantics": "shared mutable completed/apply directory; receipts were later overwritten by newer runs",
+  "count": 17,
+  "pass": 17,
+  "current_sha_at_readback": 17,
+  "run_ids": [
+    "20260906T071332+0000-1040769"
+  ],
+  "source_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+  "steps": [
+    "agent-content",
+    "agents",
+    "desktop-apps",
+    "desktop-theme",
+    "desktop-xrdp",
+    "final-verify",
+    "fleet-agent",
+    "gsd-graphify",
+    "identity-network",
+    "landscape",
+    "obsidian",
+    "packages",
+    "podman",
+    "preflight",
+    "resource-governor",
+    "toolchains",
+    "ubuntu-pro"
+  ],
+  "all_status_pass": true,
+  "all_run_id_match": true,
+  "all_source_sha256_match": true,
+  "preservation": "structured transcription of contemporaneous readback; not a claim that the shared receipt files remain unchanged today"
+}
