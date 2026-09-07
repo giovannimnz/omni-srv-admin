@@ -1,0 +1,12 @@
+[IMPORTANT: Background process proc_b20a6f181b17 exited (exit code 1).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 'exec nice -n 15 ionice -c2 -n7 /tmp/srv4-verify-existing-backup.sh'
+Output:
+BACKUP=/home/ubuntu/.backups/srv4-full-setup-parity-pre-20260906T041902+0000
+CHECKSUM_ENTRIES=13
+CHECKSUM_FAILURES=13
+ROOT_COMPARE=0
+USER_COMPARE=0
+BUNDLE=0
+RESTORE=PASS
+Connection to 10.14.1.14 closed.
+]

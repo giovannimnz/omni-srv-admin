@@ -50,6 +50,7 @@ Status: PASS
 - `reviews/runtime-v11-go.txt`
 - `reviews/server-analysis-hotfix-go.txt`
 - `reviews/aa-runtime-final-go.txt`
+- `reviews/proc-b20-reconciliation-go.txt`
 
 ## Cleanup
 
@@ -76,6 +77,13 @@ the successful readback authority.
 - O backup preapply atual permaneceu checksummed e supersede esse backup antigo
   como rollback operacional. Nenhum current actionable foi reaberto.
 - Evidência preservada em `delayed-backup/`.
+- O processo posterior `proc_b20a6f181b17` confirmou o mesmo backup com
+  `ROOT_COMPARE=0`, `USER_COMPARE=0`, `BUNDLE=0` e `RESTORE=PASS`, mas o
+  wrapper retornou `exit 1` porque procurou o token localizado `SUCESSO$`
+  enquanto `sha256sum -c` emitiu `OK`. Classificação:
+  `post-workload-harness-failure/localized-checksum-token-mismatch`.
+- Readback atual: 15/15 checksums `OK`; nenhum current actionable.
+- Reconciliação: `delayed-backup/proc-b20a6f181b17-reconciliation.md`.
 
 ## Graphify final
 

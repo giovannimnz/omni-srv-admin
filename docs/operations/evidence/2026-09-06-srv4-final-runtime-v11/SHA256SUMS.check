@@ -2,6 +2,9 @@ README.md: OK
 cleanup/inventory.json: OK
 cleanup/result.json: OK
 delayed-backup/git-bundle-verify-final.log: OK
+delayed-backup/proc-b20a6f181b17-notification.txt: OK
+delayed-backup/proc-b20a6f181b17-provenance.json: OK
+delayed-backup/proc-b20a6f181b17-reconciliation.md: OK
 delayed-backup/reconciliation.md: OK
 delayed-backup/restore-drill.env: OK
 reviews/aa-runtime-final-go.txt: OK
@@ -9,6 +12,7 @@ reviews/doc-package-go.txt: OK
 reviews/final-ignore-go.txt: OK
 reviews/ops-p3-go.txt: OK
 reviews/ops-v10-go.txt: OK
+reviews/proc-b20-reconciliation-go.txt: OK
 reviews/reset-hotfix-go.txt: OK
 reviews/runtime-v11-go.txt: OK
 reviews/server-analysis-hotfix-go.txt: OK

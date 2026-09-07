@@ -1,0 +1,31 @@
+{
+  "classification": "post-workload-harness-failure",
+  "current_actionable": false,
+  "current_commit": "4cb0695bc18a14f133479a897b967d6b770bcd7c",
+  "current_readback": {
+    "checksum_exit_code": 0,
+    "checksum_rows": 15,
+    "git_bundle_rc": 0,
+    "restore": "PASS",
+    "root_compare_rc": 0,
+    "user_compare_rc": 0
+  },
+  "current_runtime_manifest": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "historical_backup": "/home/ubuntu/.backups/srv4-full-setup-parity-pre-20260906T041902+0000",
+  "host": "atius-srv-4",
+  "notification_sha256": "cadbe6ec273c5186b2f59f95f135c89acd1da6bd3f196733e06d1f2d051d0288",
+  "observed_output": {
+    "bundle_rc": 0,
+    "checksum_entries_reported": 13,
+    "checksum_failures_reported": 13,
+    "restore": "PASS",
+    "root_compare_rc": 0,
+    "user_compare_rc": 0
+  },
+  "process_id": "proc_b20a6f181b17",
+  "reconciliation_sha256": "91690ff439e3c7161fc0961a69159ae9fd86365e0df25180b9010316a254251d",
+  "recorded_at": "2026-09-07T00:39:57.123481+00:00",
+  "runner_exit_code": 1,
+  "schema": "delayed-process-reconciliation-provenance-v1",
+  "subtype": "localized-checksum-token-mismatch"
+}
