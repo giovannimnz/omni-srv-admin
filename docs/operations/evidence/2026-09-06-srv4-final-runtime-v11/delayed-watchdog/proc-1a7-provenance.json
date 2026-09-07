@@ -1,0 +1,134 @@
+{
+  "artifacts": {
+    "proc-1a7-disposition-matrix.md": {
+      "bytes": 1186,
+      "sha256": "f7473e2dfb0ed50f9dc1ad7da0e243abd8eae93d998c5fc6f9348df39a07b56f"
+    },
+    "proc-1a7-focused-test.log": {
+      "bytes": 110,
+      "sha256": "7d754ba177ce7b25b0f0f9bcf0642598ee35f31a64150f8df9e30e3085923f58"
+    },
+    "proc-1a7-generated-keyboard-watchdog.sh": {
+      "bytes": 780,
+      "sha256": "22dafbef4c1e5ee88466a81090eeac309d4a9493943dcd27afb9065d6a38522e"
+    },
+    "proc-1a7-generated-panel-watchdog.sh": {
+      "bytes": 1701,
+      "sha256": "e72c1057cd4e0ef434b9bb777dc59ebd6ab6e90dc898c220d5e5933524bd99ba"
+    },
+    "proc-1a7-graphify-query.json": {
+      "bytes": 184,
+      "sha256": "87f221c9b35d9e0c21768a7f9922fc14b503e8362d8f7d618961e3df43d06da4"
+    },
+    "proc-1a7-lifecycle.sh": {
+      "bytes": 1078,
+      "sha256": "de6c09d738bc5312b8281be6944219a46e74e4f06992aceaf494cfd5ce8d7bc4"
+    },
+    "proc-1a7-notification.txt": {
+      "bytes": 545,
+      "sha256": "df10ead1dc8459ad29cf1690ff701948a841d81aa3cff7b5a34a4b2fe194307c"
+    },
+    "proc-1a7-post-cleanup-state.json": {
+      "bytes": 2691,
+      "sha256": "fad2da635265aef018a5cba5bb81e455c1fc5b5862db2004eef1e5f3bb1943d3"
+    },
+    "proc-1a7-reconciliation.md": {
+      "bytes": 3589,
+      "sha256": "7304d23f9327316c17b4b009dc890ce5c15c6a73670dcdbcf88bd0cb2b4328c9"
+    },
+    "proc-1a7-source-runtime-parity.json": {
+      "bytes": 1324,
+      "sha256": "b40444b35d8d58c01c9986fd930df5e14e0f3042af0eecfd0d83989929a0452b"
+    }
+  },
+  "cleanup": {
+    "backup_first": true,
+    "launcher_backup": "/home/ubuntu/.backups/proc-1a7-lifecycle-residue-20260907T032441+0000",
+    "launcher_backup_entries": 1,
+    "lock_backup": "/home/ubuntu/.backups/proc-1a7-lock-residue-20260907T032624+0000",
+    "lock_backup_entries": 2,
+    "post_cleanup": {
+      "keyboard_lock_exists": false,
+      "launcher_script_exists": false,
+      "panel_lock_exists": false,
+      "test_directories": 0
+    },
+    "processes": {
+      "keyboard_watchdog": 0,
+      "panel_watchdog": 0,
+      "setup": 0,
+      "xvfb_97": 0
+    }
+  },
+  "current_actionable": "resolved",
+  "current_runtime_manifest": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "final_apply_run": "20260906T233823+0000-1549801",
+  "final_verify_run": "20260906T234149+0000-1558144",
+  "historical_pid": 3113609,
+  "launcher": {
+    "pattern": "exec payload; rc=$?; cleanup; exit $rc",
+    "post_exec_cleanup_reachable": false,
+    "versioned_source_contains_pattern": false
+  },
+  "launcher_classification": "post-workload-cleanup-skipped-after-exec",
+  "process_id": "proc_1a7a5a507eb3",
+  "recorded_at": "2026-09-07T03:33:36.668743+00:00",
+  "residue_found": {
+    "keyboard_lock": true,
+    "keyboard_process": false,
+    "launcher_script": true,
+    "panel_lock": true,
+    "panel_process": false,
+    "workdir": false,
+    "xvfb_process": false
+  },
+  "runner_exit_code": 0,
+  "schema": "delayed-watchdog-lifecycle-reconciliation-v1",
+  "session_authority_messages": [
+    301273,
+    301274,
+    301276,
+    301279
+  ],
+  "source_runtime": {
+    "focused_test_log_sha256": "7d754ba177ce7b25b0f0f9bcf0642598ee35f31a64150f8df9e30e3085923f58",
+    "keyboard": {
+      "byte_equal": true,
+      "display_exit_guard_count": 1,
+      "generated_sha256": "22dafbef4c1e5ee88466a81090eeac309d4a9493943dcd27afb9065d6a38522e",
+      "installed_mode": "0o755",
+      "installed_sha256": "22dafbef4c1e5ee88466a81090eeac309d4a9493943dcd27afb9065d6a38522e"
+    },
+    "lifecycle_script_sha256": "de6c09d738bc5312b8281be6944219a46e74e4f06992aceaf494cfd5ce8d7bc4",
+    "panel": {
+      "byte_equal": true,
+      "display_exit_guard_count": 1,
+      "generated_sha256": "e72c1057cd4e0ef434b9bb777dc59ebd6ab6e90dc898c220d5e5933524bd99ba",
+      "installed_mode": "0o755",
+      "installed_sha256": "e72c1057cd4e0ef434b9bb777dc59ebd6ab6e90dc898c220d5e5933524bd99ba"
+    },
+    "schema": "proc-1a7-source-runtime-parity-v1",
+    "source_commit": "a99d9a84f57c3ad32e4d9a424ab5f1a3e4ced67b",
+    "source_contract": {
+      "display_exit_guard": "xdpyinfo >/dev/null 2>&1 || exit 0",
+      "file": "dark-theme-ubuntu/scripts/dark-themectl.sh",
+      "sha256": "25c96f832b338d813f5fcb3a683488302c2ac2ec860afff04501ff520765c87f"
+    },
+    "test_contract": {
+      "file": "cli/omni/tests/test_dark_theme_contract.py",
+      "focused_result": "1 passed",
+      "sha256": "990a9ad788ef2102ebcfd51b870f83ab8638f4adeaefb9d65ffd2423e9440042"
+    }
+  },
+  "workload": {
+    "elapsed_max_sec": 10,
+    "keyboard_alive": 0,
+    "panel_alive": 0,
+    "pass_marker": "watchdog_display_lifecycle=PASS"
+  },
+  "workload_classification": "operational-pass"
+}

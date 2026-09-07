@@ -1,0 +1,30 @@
+{
+  "focused_test_log_sha256": "7d754ba177ce7b25b0f0f9bcf0642598ee35f31a64150f8df9e30e3085923f58",
+  "keyboard": {
+    "byte_equal": true,
+    "display_exit_guard_count": 1,
+    "generated_sha256": "22dafbef4c1e5ee88466a81090eeac309d4a9493943dcd27afb9065d6a38522e",
+    "installed_mode": "0o755",
+    "installed_sha256": "22dafbef4c1e5ee88466a81090eeac309d4a9493943dcd27afb9065d6a38522e"
+  },
+  "lifecycle_script_sha256": "de6c09d738bc5312b8281be6944219a46e74e4f06992aceaf494cfd5ce8d7bc4",
+  "panel": {
+    "byte_equal": true,
+    "display_exit_guard_count": 1,
+    "generated_sha256": "e72c1057cd4e0ef434b9bb777dc59ebd6ab6e90dc898c220d5e5933524bd99ba",
+    "installed_mode": "0o755",
+    "installed_sha256": "e72c1057cd4e0ef434b9bb777dc59ebd6ab6e90dc898c220d5e5933524bd99ba"
+  },
+  "schema": "proc-1a7-source-runtime-parity-v1",
+  "source_commit": "a99d9a84f57c3ad32e4d9a424ab5f1a3e4ced67b",
+  "source_contract": {
+    "display_exit_guard": "xdpyinfo >/dev/null 2>&1 || exit 0",
+    "file": "dark-theme-ubuntu/scripts/dark-themectl.sh",
+    "sha256": "25c96f832b338d813f5fcb3a683488302c2ac2ec860afff04501ff520765c87f"
+  },
+  "test_contract": {
+    "file": "cli/omni/tests/test_dark_theme_contract.py",
+    "focused_result": "1 passed",
+    "sha256": "990a9ad788ef2102ebcfd51b870f83ab8638f4adeaefb9d65ffd2423e9440042"
+  }
+}

@@ -46,6 +46,17 @@ delayed-rdp/proc-067-notification.txt: OK
 delayed-rdp/proc-067-provenance.json: OK
 delayed-rdp/proc-067-reconciliation.md: OK
 delayed-rdp/proc-067-visual-observations.md: OK
+delayed-watchdog/proc-1a7-disposition-matrix.md: OK
+delayed-watchdog/proc-1a7-focused-test.log: OK
+delayed-watchdog/proc-1a7-generated-keyboard-watchdog.sh: OK
+delayed-watchdog/proc-1a7-generated-panel-watchdog.sh: OK
+delayed-watchdog/proc-1a7-graphify-query.json: OK
+delayed-watchdog/proc-1a7-lifecycle.sh: OK
+delayed-watchdog/proc-1a7-notification.txt: OK
+delayed-watchdog/proc-1a7-post-cleanup-state.json: OK
+delayed-watchdog/proc-1a7-provenance.json: OK
+delayed-watchdog/proc-1a7-reconciliation.md: OK
+delayed-watchdog/proc-1a7-source-runtime-parity.json: OK
 reviews/aa-runtime-final-go.txt: OK
 reviews/doc-package-go.txt: OK
 reviews/final-ignore-go.txt: OK
@@ -53,6 +64,7 @@ reviews/ops-p3-go.txt: OK
 reviews/ops-v10-go.txt: OK
 reviews/proc-067-reconciliation-v1-go-p3.txt: OK
 reviews/proc-067-reconciliation-v2-go.txt: OK
+reviews/proc-1a7-reconciliation-go.txt: OK
 reviews/proc-419-reconciliation-go.txt: OK
 reviews/proc-8df-reconciliation-v1-nogo.txt: OK
 reviews/proc-8df-reconciliation-v2-go.txt: OK

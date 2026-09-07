@@ -1,0 +1,89 @@
+{
+  "backups": {
+    "launcher": {
+      "all_ok": true,
+      "entries": 1,
+      "path": "/home/ubuntu/.backups/proc-1a7-lifecycle-residue-20260907T032441+0000",
+      "rows": [
+        {
+          "actual": "de6c09d738bc5312b8281be6944219a46e74e4f06992aceaf494cfd5ce8d7bc4",
+          "expected": "de6c09d738bc5312b8281be6944219a46e74e4f06992aceaf494cfd5ce8d7bc4",
+          "ok": true,
+          "path": "/home/ubuntu/.backups/proc-1a7-lifecycle-residue-20260907T032441+0000/srv4-watchdog-lifecycle.sh"
+        }
+      ]
+    },
+    "locks": {
+      "all_ok": true,
+      "entries": 2,
+      "path": "/home/ubuntu/.backups/proc-1a7-lock-residue-20260907T032624+0000",
+      "rows": [
+        {
+          "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "ok": true,
+          "path": "omni-lxde-panel-guard-ubuntu-_97.lock"
+        },
+        {
+          "actual": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "expected": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "ok": true,
+          "path": "setxkbmap-abnt2-ubuntu-_97.lock"
+        }
+      ]
+    }
+  },
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "host": "atius-srv-4.atius.internal",
+  "installed": {
+    "keyboard": {
+      "bytes": 780,
+      "display_exit_guard_count": 1,
+      "mode": "0o755",
+      "path": "/home/ubuntu/.local/bin/setxkbmap-abnt2.sh",
+      "sha256": "22dafbef4c1e5ee88466a81090eeac309d4a9493943dcd27afb9065d6a38522e"
+    },
+    "panel": {
+      "bytes": 1701,
+      "display_exit_guard_count": 1,
+      "mode": "0o755",
+      "path": "/home/ubuntu/.local/bin/omni-lxde-panel-guard.sh",
+      "sha256": "e72c1057cd4e0ef434b9bb777dc59ebd6ab6e90dc898c220d5e5933524bd99ba"
+    }
+  },
+  "processes": {
+    "keyboard_watchdog": 0,
+    "panel_watchdog": 0,
+    "setup": 0,
+    "xvfb_97": 0
+  },
+  "residue": {
+    "keyboard_lock_exists": false,
+    "launcher_script_exists": false,
+    "panel_lock_exists": false,
+    "test_directories": 0
+  },
+  "runtime_manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "schema": "proc-1a7-post-cleanup-state-v1",
+  "services": {
+    "xrdp": {
+      "ActiveState": "active",
+      "ExecMainStatus": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "xrdp_sesman": {
+      "ActiveState": "active",
+      "ExecMainStatus": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  }
+}

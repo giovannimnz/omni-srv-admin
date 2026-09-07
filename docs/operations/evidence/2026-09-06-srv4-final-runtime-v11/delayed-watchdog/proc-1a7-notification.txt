@@ -1,0 +1,7 @@
+[IMPORTANT: Background process proc_1a7a5a507eb3 completed normally (exit code 0).
+Command: set -euo pipefail; chmod 700 /tmp/srv4-watchdog-lifecycle.sh; scp -q /tmp/srv4-watchdog-lifecycle.sh atius-srv-4:/tmp/srv4-watchdog-lifecycle.sh; exec ssh -tt -o BatchMode=yes atius-srv-4 'chmod 700 /tmp/srv4-watchdog-lifecycle.sh && exec /tmp/srv4-watchdog-lifecycle.sh; rc=$?; rm -f /tmp/srv4-watchdog-lifecycle.sh; exit $rc'
+Output:
+keyboard_alive=0 panel_alive=0 elapsed_max_sec=10
+watchdog_display_lifecycle=PASS
+Connection to 10.14.1.14 closed.
+]

@@ -60,6 +60,7 @@ Status: PASS
 - `reviews/proc-419-reconciliation-go.txt`
 - `reviews/proc-067-reconciliation-v1-go-p3.txt`
 - `reviews/proc-067-reconciliation-v2-go.txt`
+- `reviews/proc-1a7-reconciliation-go.txt`
 
 ## Cleanup
 
@@ -150,6 +151,16 @@ the successful readback authority.
 - Classificação: `historical-rdp-harness-false-negative/auth-only-session-side-effect-plus-invalid-embedded-probe`,
   sem current actionable.
 - Reconciliação: `delayed-rdp/proc-067-reconciliation.md`.
+- `proc_1a7a5a507eb3` provou o lifecycle dos watchers: display `:97` morreu,
+  keyboard/panel saíram em até 10s e o workload terminou PASS.
+- O launcher externo usou `exec payload; cleanup`, tornando o cleanup posterior
+  inalcançável. Script e dois lockfiles vazios ficaram como resíduos de teste.
+- Todos foram preservados em backups checksummed e removidos seletivamente;
+  state final: script/locks/workdir/processes `0`, XRDP active, health `0/0`.
+- Scripts instalados são byte-equal aos gerados pelo source e o teste focado
+  passa. Classificação: `operational-pass` +
+  `post-workload-cleanup-skipped-after-exec`, current actionable resolvido.
+- Reconciliação: `delayed-watchdog/proc-1a7-reconciliation.md`.
 
 ## Graphify final
 

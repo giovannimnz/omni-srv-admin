@@ -1,0 +1,14 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings: nenhum.
+
+- Lifecycle PASS confirmado: `keyboard_alive=0`, `panel_alive=0`, bound ≤10s e exit 0 ([notification](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-watchdog/proc-1a7-notification.txt:1), [lifecycle](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-watchdog/proc-1a7-lifecycle.sh:16)).
+- Guard `xdpyinfo` presente nos dois generators; teste focado reexecutado: `1 passed`; source→generated→runtime byte-equal.
+- Launcher com `exec` tornou `rc/rm/exit` inalcançáveis ([reconciliation](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-watchdog/proc-1a7-reconciliation.md:48)). O source versionado não contém esse launcher.
+- Cleanup e falha de quoting estão corretamente classificados; state estruturado supersede o primeiro probe.
+- Live SRV-4: script/locks/workdir/Xvfb/watchdogs/setup=`0`; XRDP e sesman active; failed units=`0/0`.
+- Backups permanecem presentes e passaram `sha256sum -c`; runs finais permanecem `17 START/17 DONE`, zero skip/fail, `COMPLETE=PASS`; manifest `444` arquivos e SHA `aa1883d1…`.
+- Provenance, hashes, tamanhos e JSONs consistentes. Seal completo: `93/93`, e `SHA256SUMS.check` é byte-exato ao readback atual.
+- Nenhum secret, credential, e-mail ou PII pessoal encontrado; apenas endereços de infraestrutura esperados.
+
+VERDICT=GO
