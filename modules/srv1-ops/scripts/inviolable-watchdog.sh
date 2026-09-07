@@ -10,12 +10,12 @@
 set -u
 
 HOME_DIR="${HOME:-$(getent passwd "$(id -u)" | cut -d: -f6)}"
-export PATH="${HOME_DIR}/.nvm/versions/node/v24.13.1/bin:${HOME_DIR}/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+export PATH="${HOME_DIR}/.local/bin:${HOME_DIR}/.bun/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
 
 LOG="${HOME_DIR}/.logs/resource-governor/inviolable-watchdog.log"
 STATE_DIR="${HOME_DIR}/.local/state/omni/inviolable-watchdog"
 LOCK_FILE="${HOME_DIR}/.local/state/omni/inviolable-watchdog.lock"
-PM2_BIN="${HOME_DIR}/.nvm/versions/node/v24.13.1/bin/pm2"
+PM2_BIN="${HOME_DIR}/.local/bin/pm2"
 ATS_ECOSYSTEM="${HOME_DIR}/GitHub/Atius-Capital/ats/ecosystem.config.js"
 HORISTIC_ECOSYSTEM="${HOME_DIR}/GitHub/Atius-Capital/horistic/ecosystem.config.js"
 

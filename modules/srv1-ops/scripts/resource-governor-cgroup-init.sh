@@ -50,6 +50,24 @@ load_env() {
 load_env "$CONFIG"
 load_env "$RUNTIME_OVERRIDE"
 
+validate_build_cpu_cap() {
+    local total quota cpus effective
+    cpus="$(nproc --all 2>/dev/null || getconf _NPROCESSORS_ONLN 2>/dev/null || echo 1)"
+    total="${CFG[RG_PROFILE_BUILDS_CPU_TOTAL_PCT]:-}"
+    if [[ -n "$total" ]]; then
+        effective="$total"
+    else
+        quota="${CFG[RG_PROFILE_BUILDS_CPU_QUOTA]:-100%}"
+        quota="${quota%\%}"
+        effective="$(LC_ALL=C awk "BEGIN{print $quota / $cpus}")"
+    fi
+    [[ "$effective" =~ ^[0-9]+([.][0-9]+)?$ ]] \
+        || { echo "invalid build CPU configuration: $effective" >&2; exit 2; }
+    LC_ALL=C awk "BEGIN{exit !($effective > 0 && $effective <= 20)}" \
+        || { echo "build CPU configuration exceeds 20% total host CPU: ${effective}%" >&2; exit 2; }
+}
+validate_build_cpu_cap
+
 quote() { echo "$@" | sed "s/^['\"]//;s/['\"]$//"; }
 
 user_systemd_env() {

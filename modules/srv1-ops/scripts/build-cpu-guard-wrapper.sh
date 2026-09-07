@@ -108,11 +108,30 @@ find_nvm_command() {
   printf '%s\n' "$candidate"
 }
 
+find_user_node_command() {
+  local name="$1"
+  local candidate
+
+  case "$name" in
+    npm|npx) ;;
+    *) return 1 ;;
+  esac
+
+  candidate="$(find "${HOME}/.local/opt" -mindepth 3 -maxdepth 3 \
+    -path "*/bin/${name}" -executable -printf '%p\n' 2>/dev/null | sort -V | tail -n 1)"
+  [[ -n "$candidate" ]] || return 1
+  printf '%s\n' "$candidate"
+}
+
 find_real_command() {
   local name="$1"
   local dir candidate resolved preferred
 
   if preferred="$(find_nvm_command "$name")"; then
+    printf '%s\n' "$preferred"
+    return 0
+  fi
+  if preferred="$(find_user_node_command "$name")"; then
     printf '%s\n' "$preferred"
     return 0
   fi
@@ -214,7 +233,7 @@ if [[ -z "$real_cmd" ]]; then
 fi
 
 case "$real_cmd" in
-  "${HOME}"/.nvm/versions/node/*/bin/npm|"${HOME}"/.nvm/versions/node/*/bin/npx)
+  "${HOME}"/.nvm/versions/node/*/bin/npm|"${HOME}"/.nvm/versions/node/*/bin/npx|"${HOME}"/.local/opt/node-*/bin/npm|"${HOME}"/.local/opt/node-*/bin/npx)
     export PATH="$(dirname "$real_cmd"):${PATH:-}"
     ;;
 esac
@@ -228,9 +247,13 @@ if ! is_build_command "$cmd_name" "$@"; then
   exec "$real_cmd" "$@"
 fi
 
-# The marker is inherited by nested wrappers, but it is not authority by
-# itself.  Only bypass routing when this process is demonstrably contained.
-if [[ "${OMNI_BUILD_CPU_GUARD_ACTIVE:-0}" == "1" ]] && inside_build_cgroup; then
+# The cgroup is the kernel-backed authority. Nested package managers and
+# native builds do not reliably preserve OMNI_BUILD_CPU_GUARD_ACTIVE (for
+# example npm -> node-gyp -> make), so requiring the marker here can make a
+# child re-enter the governor and deadlock on the build semaphore held by its
+# own ancestor. If the process is already in omni-builds.slice, execute the
+# real binary directly; the inherited cgroup still enforces every limit.
+if inside_build_cgroup; then
   exec "$real_cmd" "$@"
 fi
 

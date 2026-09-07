@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+env_file="$HOME/.hermes/.env"
+[ -f "$env_file" ] && [ ! -L "$env_file" ] && [ "$(stat -c %a "$env_file")" = "600" ] || {
+  echo "graphify: Hermes env missing or unsafe" >&2
+  exit 2
+}
+router_api_key="$(python3 - "$env_file" <<'PY'
+from pathlib import Path
+import ast, sys
+value=""
+for raw in Path(sys.argv[1]).read_text().splitlines():
+    line=raw.strip()
+    if line.startswith("export "):
+        line=line[7:].lstrip()
+    if not line.startswith("ATIUS_ROUTER_API_KEY="):
+        continue
+    candidate=line.split("=",1)[1].strip()
+    if candidate[:1] in {'\"', "'"}:
+        candidate=ast.literal_eval(candidate)
+    value=candidate
+    break
+if not value:
+    raise SystemExit("graphify: ATIUS_ROUTER_API_KEY missing")
+print(value,end="")
+PY
+)"
+export ATIUS_ROUTER_API_KEY="$router_api_key"
+export OPENAI_API_KEY="$router_api_key"
+export OPENAI_BASE_URL="https://router.atius.com.br/v1"
+export OPENAI_MODEL="gpt-5.4-mini"
+export GRAPHIFY_OPENAI_MODEL="gpt-5.4-mini"
+export PYTHONPATH="$HOME/.local/share/graphify-patches${PYTHONPATH:+:$PYTHONPATH}"
+exec "$HOME/.local/share/uv/tools/graphifyy/bin/graphify" "$@"

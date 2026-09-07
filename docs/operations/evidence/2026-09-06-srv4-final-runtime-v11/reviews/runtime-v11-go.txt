@@ -1,0 +1,25 @@
+VERDICT=GO
+
+- Apply `20260906T211445+0000-1451525`: `COMPLETE PASS`, `FAILED` ausente, 17/17 receipts e steps.
+- Verify `20260906T211836+0000-1461313`: `PASS`, `FAILED` ausente, 17/17.
+- Manifest runtime: SHA `22bc6ba2...1c93da`; `444/444`, zero missing, undeclared ou drift.
+- Health final: system/user `0/0`.
+- Backup `srv4-final-runtime-preapply-20260906T205141+0000`: `SHA256SUMS` 6/6, cinco archives íntegros e inventory/member counts exatos.
+- Versões do checklist e quatro hashes APT/keyring em paridade com SRV-1.
+- Graphify SRV-4: `0.9.23`, OpenAI `2.24.0`, backend presente, dois patches ativos e ambos os API smokes aprovados.
+- Hermes: `0.21.0`, commit pinado, checkout clean, `custom:atius-router / gpt-5.6-sol`.
+- MCPs live: `115/16/12`.
+- Obsidian: `master`, clean, origin/local/remote iguais, timer com próximo trigger finito e último serviço `success`.
+- Fleet: service active, cache e DB healthy, versão `0.2.5`, commit `f851a03`, idade 4s.
+- DNS/IP/WG/XRDP/theme/oito pastas: aprovados; SSH autenticado também por `10.100.100.18`.
+- Nove units SRV1-only: todas `not-found`.
+- Repo runtime: `main=f851a03=origin/main=ls-remote`, clean.
+- Hotfix runtime `reset-failed`: byte-idêntico ao source local/manifest; filtra somente `ActiveState=failed`; apply registrou `reset-failed not-needed`.
+- O worktree source local dirty em `feat/srv4-complete-onboarding` foi preservado e não foi confundido com o clone runtime remoto.
+
+P0=0
+P1=0
+P2=0
+P3=0
+
+Findings: No findings.

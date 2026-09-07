@@ -1,0 +1,11 @@
+{
+  "archive": "/tmp/srv4-source-hotfix-final.tgz",
+  "archive_sha256": "80d1066f6a051045bc1abc69114663e1badf3fa4ac0972e769344a178bc7d847",
+  "file_count": 444,
+  "file_list": "/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/modules/fleet/configs/oci-arm64-host-setup-files.txt",
+  "manifest_sha256": "22bc6ba2cee36acc695a6b0066333b5771689407d781a92f150feecdea1c93da",
+  "output": "/tmp/srv4-source-hotfix-final",
+  "repo_root": "/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding",
+  "schema": "omni-oci-arm64-host-setup-source-manifest-v1",
+  "status": "PASS"
+}

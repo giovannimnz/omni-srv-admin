@@ -10,6 +10,7 @@ Two-layer system:
 """
 
 import json
+import fcntl
 import os
 import subprocess
 import sys
@@ -23,6 +24,16 @@ from pathlib import Path
 PERF_FILE = Path.home() / ".logs/resource-governor/perf.jsonl"
 ANALYSIS_LOG_DIR = Path.home() / ".logs/server-analysis"
 ANALYSIS_INTERVAL_MIN = 15
+DISK_REMEDIATION_STATE_FILE = (
+    Path.home() / ".local/state/omni/server-analysis-remediation.json"
+)
+DISK_REMEDIATION_LOCK_FILE = (
+    Path.home() / ".local/state/omni/server-analysis-remediation.lock"
+)
+DISK_CLEANUP_COOLDOWN_SECONDS = int(
+    os.environ.get("SERVER_ANALYSIS_DISK_CLEANUP_COOLDOWN_SECONDS", str(6 * 60 * 60))
+)
+DISK_CLEANUP_UNIT = "resource-governor-post-build-cleanup.service"
 
 # Thresholds for auto-fix
 DISK_WARN = 85
@@ -33,6 +44,7 @@ CPU_PSI_WARN = 15
 CPU_PSI_CRITICAL = 30
 MEM_LOW_WARN = 2048   # MiB
 MEM_LOW_CRITICAL = 800
+SWAP_MEMORY_OK = 4096  # MiB: high swap alone is normal cold-page retention
 
 # Crash-loop detection
 CRASH_LOOP_RESTART_THRESHOLD = 5
@@ -42,44 +54,17 @@ ANALYSIS_LOG_DIR.mkdir(parents=True, exist_ok=True)
 
 BRT_TZ = timezone(timedelta(hours=-3))
 
-# === KNOWN FIXES DATABASE ===
-# Container name patterns -> fix actions for crash-loop
-KNOWN_FIXES = {
-    "cloudbeaver": [
-        {
-            "check": "permission denied",
-            "fix_cmd": "sudo chown -R 8978:8978 /home/ubuntu/docker/infra/cloudbeaver/workspace && sudo docker stop cloudbeaver-cloudbeaver-1 2>/dev/null; sudo docker rm cloudbeaver-cloudbeaver-1 2>/dev/null; sudo docker run -d --name cloudbeaver-cloudbeaver-1 --restart unless-stopped -p 8978:8978 -v /home/ubuntu/docker/infra/cloudbeaver/workspace:/opt/cloudbeaver/workspace dbeaver/cloudbeaver:latest",
-            "desc": "Workspace owned by root. Recreate with UID 8978 perms."
-        }
-    ],
-    "hermes-ws-gateway": [
-        {
-            "check": "address already in use|port.*in use|eaddrinuse",
-            "fix_cmd": "lsof -ti:8300 2>/dev/null | xargs kill -9 2>/dev/null; sleep 2; pm2 restart hermes-ws-gateway-pg",
-            "desc": "Port conflict — kill lingering PID, restart via PM2."
-        }
-    ],
-    "plane-app": [
-        {
-            "check": "connection refused|econnrefused.*db|postgres.*connect",
-            "fix_cmd": "cd /home/ubuntu/docker/Atius/plane && sudo docker compose restart plane-db 2>/dev/null; sleep 5; sudo docker compose up -d 2>/dev/null",
-            "desc": "DB connection issue — restart database first, then stack."
-        }
-    ],
-    "paperclip": [
-        {
-            "check": "port.*already allocated|address.*in use",
-            "fix_cmd": "sudo docker stop paperclip-atius-db 2>/dev/null; sudo docker rm paperclip-atius-db 2>/dev/null; sudo docker run -d --name paperclip-atius-db --restart unless-stopped -e POSTGRES_PASSWORD=atius2024 postgres:17-alpine",
-            "desc": "Port conflict or DB corruption — recreate container."
-        }
-    ]
-}
+# Auto-repair is fail-closed. Add a fix only after its current Podman/systemd
+# contract, backup and rollback are covered by tests. Legacy Docker commands and
+# inline credentials are forbidden here.
+KNOWN_FIXES = {}
 
 def log(msg):
     ts = datetime.now(BRT_TZ).strftime("%Y-%m-%d %H:%M:%S")
     entry = f"[{ts}] {msg}"
     print(entry)
-    (ANALYSIS_LOG_DIR / "analysis.log").open("a").write(entry + "\n")
+    with (ANALYSIS_LOG_DIR / "analysis.log").open("a", encoding="utf-8") as handle:
+        handle.write(entry + "\n")
 
 def run_cmd(cmd, timeout=30):
     try:
@@ -89,6 +74,78 @@ def run_cmd(cmd, timeout=30):
         return "", f"TIMEOUT ({timeout}s)", -1
     except Exception as e:
         return "", str(e), -1
+
+
+def _write_json_atomic(path: Path, payload: dict) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_name(f".{path.name}.{os.getpid()}.tmp")
+    try:
+        with tmp.open("w", encoding="utf-8") as handle:
+            json.dump(payload, handle, indent=2, sort_keys=True)
+            handle.write("\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+        tmp.chmod(0o600)
+        os.replace(tmp, path)
+        path.chmod(0o600)
+    finally:
+        tmp.unlink(missing_ok=True)
+
+
+def attempt_disk_cleanup(now=None):
+    """Run light governed cleanup at most once per persistent cooldown."""
+    attempted_at = float(time.time() if now is None else now)
+    DISK_REMEDIATION_LOCK_FILE.parent.mkdir(parents=True, exist_ok=True)
+    DISK_REMEDIATION_LOCK_FILE.touch(mode=0o600, exist_ok=True)
+    DISK_REMEDIATION_LOCK_FILE.chmod(0o600)
+
+    with DISK_REMEDIATION_LOCK_FILE.open("r+", encoding="utf-8") as lock_handle:
+        fcntl.flock(lock_handle.fileno(), fcntl.LOCK_EX)
+        state = {}
+        if DISK_REMEDIATION_STATE_FILE.exists():
+            try:
+                state = json.loads(DISK_REMEDIATION_STATE_FILE.read_text())
+                if not isinstance(state, dict):
+                    raise ValueError("state root must be an object")
+            except (json.JSONDecodeError, OSError, ValueError) as exc:
+                log(f"  SKIP cleanup: state inválido ({exc})")
+                return {"status": "state-invalid"}
+
+        last_attempt = float(state.get("last_attempt_ts", 0.0) or 0.0)
+        elapsed = max(0.0, attempted_at - last_attempt)
+        if last_attempt > 0 and elapsed < DISK_CLEANUP_COOLDOWN_SECONDS:
+            remaining = max(0, int(DISK_CLEANUP_COOLDOWN_SECONDS - elapsed))
+            return {"status": "cooldown", "remaining_seconds": remaining}
+
+        command = f"systemctl --user start {DISK_CLEANUP_UNIT}"
+        state.update(
+            {
+                "last_attempt_ts": attempted_at,
+                "last_command": command,
+                "cooldown_seconds": DISK_CLEANUP_COOLDOWN_SECONDS,
+            }
+        )
+        _write_json_atomic(DISK_REMEDIATION_STATE_FILE, state)
+
+        out, err, rc = run_cmd(command, timeout=120)
+        status = "success" if rc == 0 else "failed"
+        state.update(
+            {
+                "last_result": status,
+                "last_returncode": rc,
+                "last_error": err[:200] if err else "",
+            }
+        )
+        if rc == 0:
+            state["last_success_ts"] = attempted_at
+        _write_json_atomic(DISK_REMEDIATION_STATE_FILE, state)
+        return {
+            "status": status,
+            "attempted_at": attempted_at,
+            "returncode": rc,
+            "stdout": out[:200] if out else "",
+            "stderr": err[:200] if err else "",
+        }
 
 def read_perf_window(minutes=ANALYSIS_INTERVAL_MIN):
     if not PERF_FILE.exists():
@@ -249,16 +306,7 @@ def auto_fix_crash_loop(container_info):
         return True
     else:
         log(f"  Fix FALHOU para {container_info['name']}: {err[:200] if err else 'rc!=0'}")
-        # Fallback: try generic restart
-        runtime = container_info["runtime"]
-        name = container_info["name"]
-        log(f"  Fallback: tentando {runtime} restart {name}")
-        r_out, r_err, r_rc = run_cmd(
-            f"sudo {runtime} restart {shlex.quote(name)} 2>/dev/null", timeout=30
-        ) if runtime == "docker" else run_cmd(
-            f"{runtime} restart {shlex.quote(name)} 2>/dev/null", timeout=30
-        )
-        return r_rc == 0
+        return False
 
 
 # ============================================================
@@ -302,7 +350,8 @@ def analyze_disk_deep():
             reclaimable.append({
                 "source": "podman-volumes",
                 "action": "podman volume prune -f",
-                "desc": f"Podman unused volumes ({count} encontrados; revisar antes de aplicar)"
+                "desc": f"Podman unused volumes ({count} encontrados; revisar antes de aplicar)",
+                "auto_apply": False,
             })
 
     # Snap cache (old revisions)
@@ -344,6 +393,10 @@ def auto_reclaim_disk(reclaimable_items):
     """Execute disk reclamation for all items found. Returns list of results."""
     results = []
     for item in reclaimable_items:
+        if item.get("auto_apply") is False:
+            results.append(f"{item['source']}: SKIP revisão explícita necessária")
+            log(f"  SKIP: {item['desc']}")
+            continue
         log(f"AUTO-FIX: Recuperando espaço — {item['desc']}")
         out, err, rc = run_cmd(item["action"], timeout=120)
         if rc == 0:
@@ -386,27 +439,44 @@ def analyze_trends(entries):
 
     # Disk
     disk_avg = avg(disk_pcts)
-    if disk_avg >= DISK_WARN:
-        sev = "critical" if disk_avg >= DISK_CRITICAL else "warning"
+    disk_latest = disk_pcts[-1] if disk_pcts else 0
+    if disk_latest >= DISK_WARN:
+        sev = "critical" if disk_latest >= DISK_CRITICAL else "warning"
         disk_trend = disk_pcts[-1] - disk_pcts[0] if len(disk_pcts) > 1 else 0
         trend_str = f"(+{disk_trend:.1f}%/15min)" if disk_trend > 1 else ("(estável)" if abs(disk_trend) <= 1 else f"({disk_trend:+.1f}%/15min)")
         issues.append({
             "type": "disk",
             "severity": sev,
-            "value": f"{disk_avg:.1f}%",
+            "value": f"{disk_latest:.1f}%",
             "trend": trend_str,
-            "detail": f"Disco a {disk_avg:.1f}% ({latest.get('disk_free_gib', 0):.1f}G livre) {trend_str}"
+            "detail": (
+                f"Disco atual {disk_latest:.1f}%; média 15min {disk_avg:.1f}% "
+                f"({latest.get('disk_free_gib', 0):.1f}G livre) {trend_str}"
+            )
         })
 
-    # Swap
+    mem_avg = avg(mem_avail)
+
+    # Swap is pressure only when available memory is also constrained. This
+    # desktop intentionally retains cold pages in swap while keeping >4 GiB
+    # available; classifying that state as critical creates permanent noise.
     swap_avg = avg(swap_pcts)
-    if swap_avg >= SWAP_WARN:
-        sev = "critical" if swap_avg >= SWAP_CRITICAL else "warning"
+    swap_pressure = "normal-cold-pages"
+    if swap_avg >= SWAP_WARN and mem_avg < SWAP_MEMORY_OK:
+        swap_pressure = "memory-pressure"
+        sev = (
+            "critical"
+            if swap_avg >= SWAP_CRITICAL and mem_avg <= MEM_LOW_WARN
+            else "warning"
+        )
         issues.append({
             "type": "swap",
             "severity": sev,
             "value": f"{swap_avg:.1f}%",
-            "detail": f"Swap a {swap_avg:.1f}% {'— CRÍTICO' if swap_avg >= SWAP_CRITICAL else '— elevado'}"
+            "detail": (
+                f"Swap a {swap_avg:.1f}% com {mem_avg:.0f} MiB disponíveis "
+                f"{'— CRÍTICO' if sev == 'critical' else '— elevado'}"
+            )
         })
 
     # CPU pressure
@@ -421,7 +491,6 @@ def analyze_trends(entries):
         })
 
     # Low memory
-    mem_avg = avg(mem_avail)
     if mem_avg <= MEM_LOW_WARN:
         sev = "critical" if mem_avg <= MEM_LOW_CRITICAL else "warning"
         issues.append({
@@ -435,9 +504,11 @@ def analyze_trends(entries):
     top_mem = entries[-1].get("top_mem", [])
 
     summary = {
-        "disk_pct": f"{disk_avg:.1f}%",
+        "disk_pct": f"{disk_latest:.1f}%",
+        "disk_avg_pct": f"{disk_avg:.1f}%",
         "disk_free_gib": latest.get("disk_free_gib", 0),
         "swap_pct": f"{swap_avg:.1f}%",
+        "swap_pressure": swap_pressure,
         "mem_available_mib": f"{mem_avg:.0f}",
         "cpu_load_1m": f"{avg(cpu_load_1m):.2f}",
         "cpu_psi_some_avg10": f"{cpu_psi_avg:.1f}",
@@ -455,35 +526,34 @@ def auto_fix(issues, summary):
     fixes = []
 
     for issue in issues:
-        # DISK CRITICAL → cleanup + deep reclaim
+        # DISK CRITICAL → one governed light cleanup per persistent cooldown.
         if issue["type"] == "disk" and issue["severity"] == "critical":
-            log("AUTO-FIX: Disco crítico — executando cleanup-local.sh")
-            out, err, rc = run_cmd(
-                "~/GitHub/omni-srv-admin/modules/srv1-ops/scripts/cleanup-local.sh",
-                timeout=120
-            )
-            if rc == 0:
+            cleanup = attempt_disk_cleanup()
+            summary["disk_cleanup"] = cleanup
+            if cleanup["status"] == "success":
+                log("AUTO-FIX: Disco crítico — cleanup leve governado executado")
                 out2, _, _ = run_cmd("df -h / | tail -1 | awk '{print $5, $4}'")
-                fixes.append(f"cleanup-local: {out2}")
-            else:
-                fixes.append(f"cleanup-local FALHOU: {err[:80] if err else 'rc!=0'}")
+                fixes.append(f"cleanup-local leve: {out2}")
+            elif cleanup["status"] == "cooldown":
+                log(
+                    "SKIP cleanup: cooldown persistente "
+                    f"({cleanup['remaining_seconds']}s restantes)"
+                )
+            elif cleanup["status"] == "failed":
+                fixes.append(
+                    "cleanup-local leve FALHOU: "
+                    f"rc={cleanup.get('returncode', '?')}"
+                )
 
-            # Deep reclaim: prune dangling images + unused volumes
-            reclaimable = analyze_disk_deep()
-            if reclaimable:
-                log(f"AUTO-FIX: Recuperação profunda — {len(reclaimable)} itens encontrados")
-                results = auto_reclaim_disk(reclaimable)
-                fixes.extend(results)
-            else:
-                log("  Nada recuperável via prune")
-
-        # DISK WARNING (not critical) → just deep reclaim check
+        # DISK WARNING → inventory only. Mutations require the governed lane.
         elif issue["type"] == "disk" and issue["severity"] == "warning":
-            log("AUTO-FIX: Disco elevado — verificando reclaim profundo")
+            log("Disco elevado — inventariando reclaim sem aplicar")
             reclaimable = analyze_disk_deep()
+            summary["disk_reclaim_candidates"] = [
+                item["desc"] for item in reclaimable
+            ]
             if reclaimable:
-                results = auto_reclaim_disk(reclaimable)
-                fixes.extend(results)
+                log(f"  {len(reclaimable)} candidate(s); nenhuma mutação aplicada")
             else:
                 log("  Nada recuperável via prune")
                 # Check what's using space
@@ -527,18 +597,7 @@ def auto_fix(issues, summary):
                 fixes.append(f"unhealthy {ci['name']}: {ci['status']}")
             elif ci["severity"] == "crashed":
                 log(f"  CRASHED [{ci['runtime']}] {ci['name']}: {ci['status']}")
-                # Try generic restart
-                runtime = ci["runtime"]
-                name = ci["name"]
-                r_out, r_err, r_rc = run_cmd(
-                    f"sudo {runtime} start {shlex.quote(name)} 2>/dev/null", timeout=30
-                ) if runtime == "docker" else run_cmd(
-                    f"{runtime} start {shlex.quote(name)} 2>/dev/null", timeout=30
-                )
-                if r_rc == 0:
-                    fixes.append(f"restart {ci['name']}: OK")
-                else:
-                    fixes.append(f"restart {ci['name']}: FALHOU ({r_err[:80]})")
+                fixes.append(f"crashed {ci['name']}: intervenção governada necessária")
     else:
         log("  Todos os containers saudáveis")
 
@@ -550,9 +609,11 @@ def auto_fix(issues, summary):
     )
     if out:
         errors = [e.strip()[:120] for e in out.strip().split('\n') if e.strip()][:5]
-        fixes.append(f"journal errors: {len(errors)} (ex: {errors[0]})")
+        summary["journal_error_count"] = len(errors)
+        summary["journal_error_sample"] = errors[0]
         log(f"  {len(errors)} erros (amostra: {errors[0] if errors else '?'})")
     else:
+        summary["journal_error_count"] = 0
         log("  Sem erros novos")
 
     return fixes
@@ -576,7 +637,8 @@ def save_report(issues, crash_issues, reclaimable, summary, fixes):
     latest_path.write_text(json.dumps(report, indent=2, default=str))
 
     daily_path = ANALYSIS_LOG_DIR / f"analysis-{now.strftime('%Y-%m-%d')}.jsonl"
-    daily_path.open("a").write(json.dumps(report, default=str) + "\n")
+    with daily_path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(report, default=str) + "\n")
 
     brief = (
         f"[{now.strftime('%H:%M')}] "
@@ -587,7 +649,8 @@ def save_report(issues, crash_issues, reclaimable, summary, fixes):
         f"mem={summary.get('mem_available_mib','?')}MiB "
         f"psi={summary.get('cpu_psi_some_avg10','?')}"
     )
-    (ANALYSIS_LOG_DIR / "brief.log").open("a").write(brief + "\n")
+    with (ANALYSIS_LOG_DIR / "brief.log").open("a", encoding="utf-8") as handle:
+        handle.write(brief + "\n")
     return report
 
 

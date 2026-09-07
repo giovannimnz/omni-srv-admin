@@ -1,0 +1,22 @@
+Review runtime read-only concluído no `atius-srv-4`. Comparei somente o delta de ignores/package; estados superseded não foram reabertos.
+
+- Seal exato: manifest `bc5786ec…c60070`, `444/444`, zero missing/undeclared/drift.
+- Apply `20260906T224207+0000-1514065`: `COMPLETE=PASS`, `FAILED` ausente, `17/17` receipts.
+- Verify `20260906T224549+0000-1525527`: `COMPLETE=PASS`, `FAILED` ausente, `17/17` receipts.
+- Health final: system/user `0/0`.
+- `.gitignore` e `.graphifyignore`: hashes iguais ao manifest; `.graphifyignore` preserva `.gitignore` byte a byte e acrescenta somente outputs Graphify. `/cli/build/` coberto em ambos.
+- Skill bootstrap: source/runtime/manifest iguais em `eb3cdd32…a952a`.
+- MCPs live: GBrain `115`, Obsidian `16`, OCI Admin `12`.
+- Hermes: `0.21.0`, commit fleet-pinned `01ae7a56…`, config válida e checkout clean.
+- Graphify: `0.9.23`, OpenAI `2.24.0`, backend e dois patches ativos; smokes live de labeling e extraction aprovados.
+- Fleet DB/cache healthy e fresh; DNS A/PTR correto; WG handshake fresh e SSH funcional.
+- XRDP/TLS/ABNT2, timers, Obsidian pull-only, dark theme e oito pastas XDG aprovados.
+- Repo runtime: `main=origin/main=remote main@f851a03`, clean.
+- Backup preapply presente: cinco archives, seis checksums válidos e `RESTORE-INVENTORY.status=PASS`.
+- Nenhuma mutação realizada. O worktree source já dirty foi preservado.
+
+Evidência: [README.md](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/README.md:6), [final-state.json](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/runtime/final-state.json:2), [final-ignore-go.txt](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/reviews/final-ignore-go.txt:1).
+
+P0=0 P1=0 P2=0 P3=0
+No findings.
+VERDICT=GO

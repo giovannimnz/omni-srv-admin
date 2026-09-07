@@ -29,6 +29,7 @@ else
     LOG="$HOME/.logs/sync-vault.log"
 fi
 LOCK="/tmp/sync-vault.lock"
+HOLD_FILE="${SYNC_VAULT_HOLD_FILE:-$HOME/.local/state/omni/sync-vault.hold}"
 GBRAIN_BIN="${SYNC_VAULT_GBRAIN_BIN:-$HOME/.local/bin/gbrain}"
 GBRAIN_SYNC_REPO="${SYNC_VAULT_GBRAIN_REPO:-$VAULT}"
 GBRAIN_SYNC_ENABLED="${SYNC_VAULT_GBRAIN_SYNC:-1}"
@@ -45,6 +46,13 @@ GITLEAKS_REGEX='(api[_-]?key|token|secret|password|access[_-]?key|auth[_-]?key|c
 GITLEAKS_AWS_REGEX='AKIA[0-9A-Z]{16}'
 GITLEAKS_GHP_REGEX='ghp_[a-zA-Z0-9]{36}'
 GITLEAKS_SK_REGEX='sk-[a-zA-Z0-9]{20,}'
+
+mkdir -p "$(dirname "$LOG")"
+if [ -e "$HOLD_FILE" ]; then
+    reason=$(head -1 "$HOLD_FILE" 2>/dev/null || true)
+    echo "[$(date '+%H:%M')] HOLD: ${reason:-operator hold} file=$HOLD_FILE" >> "$LOG"
+    exit 0
+fi
 
 notify_telegram() {
     local msg="${1:-Sync failed on $(hostname) at $(date '+%H:%M:%S')}"
@@ -209,7 +217,6 @@ auto_commit_changes() {
 
 # === 0. Lock file (evita overlap) ===
 exec 200>"$LOCK"
-mkdir -p "$(dirname "$LOG")"
 if ! flock -n 200; then
     echo "[$(date '+%H:%M')] SKIPPED: another sync in progress (lock held)" >> "$LOG"
     exit 0

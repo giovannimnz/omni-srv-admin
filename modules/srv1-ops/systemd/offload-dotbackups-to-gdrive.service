@@ -1,6 +1,7 @@
 [Unit]
-Description=Offload ~/.backups to GDrive after integrity verification
+Description=Verified offload of ~/.backups and ~/backups to GDrive
 Documentation=https://github.com/giovannimnz/omni-srv-admin
+ConditionHost=atius-srv-1*
 After=network-online.target
 Wants=network-online.target
 
@@ -13,6 +14,11 @@ WorkingDirectory=%h
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
+Slice=omni-transfers.slice
+CPUQuota=80%
+TimeoutStartSec=12h
+TimeoutStopSec=5min
+KillMode=control-group
 
 [Install]
 WantedBy=default.target

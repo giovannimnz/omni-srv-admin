@@ -21,7 +21,7 @@
 set -uo pipefail
 
 # Carregar PATH completo (nvm, .local) — systemd user não tem o mesmo PATH
-export PATH="$HOME/.nvm/versions/node/v24.13.1/bin:$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.local/share/pnpm:$PATH"
 
 LOG="$HOME/.logs/cleanup-local.log"
 TIMESTAMP=$(date '+%Y-%m-%d_%H%M%S')
@@ -198,7 +198,7 @@ cleanup_podman() {
 
     before=$($podman_bin system df --format '{{.Size}}' 2>/dev/null | head -1 || true)
     $podman_bin image prune -f 2>&1 | tail -3 | tee -a "$LOG"
-    $podman_bin volume prune -f 2>&1 | tail -3 | tee -a "$LOG"
+    log "  SKIP podman volume prune: revisão explícita necessária"
     after=$($podman_bin system df --format '{{.Size}}' 2>/dev/null | head -1 || true)
     log "  Podman antes/depois: ${before:-indisponivel} -> ${after:-indisponivel}"
 }

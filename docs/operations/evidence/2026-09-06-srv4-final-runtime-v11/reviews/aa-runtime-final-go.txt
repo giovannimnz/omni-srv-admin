@@ -1,0 +1,21 @@
+P0=0 P1=0 P2=0 P3=1
+
+Finding:
+
+- P3 — evidence pack não foi resealed após a reconciliação tardia. `sha256sum -c SHA256SUMS` falha somente para [README.md](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/README.md:57) e [final-state.json](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/runtime/final-state.json:45), modificados depois do [SHA256SUMS](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/SHA256SUMS:3). É drift documental de baixa severidade; os logs autoritativos continuam byte-idênticos ao host.
+
+Evidência runtime `atius-srv-4`:
+
+- Manifest live `aa1883d1…788`, `444/444`, zero drift.
+- Apply `20260906T233823+0000-1549801` e verify-only `20260906T234149+0000-1558144`: `COMPLETE=PASS`, `FAILED` ausente, `17/17` receipts; hashes dos logs remotos iguais aos arquivos locais.
+- System/user failed units `0/0`; reboot não requerido; zero upgrades pendentes.
+- `server-analysis.py`: source local = setup-source instalado, SHA `1ca624d9…b1ac`, 27.269 bytes, mode `0775`. O clone runtime `main` contém a versão histórica, mas `server-analysis.service/timer` estão `not-found` por design no generic-host.
+- Fleet cache/DB healthy, versão `0.2.5`, commit `f851a03`, heartbeat com 9 s.
+- Hermes `0.21.0`, commit `01ae7a56…`, clean; MCP live `115/16/12`.
+- Graphify runtime `0.9.23`, OpenAI `2.24.0`, backend e dois patches ativos. Grafo governado do source local: `13.729/21.421`, fresh em `f851a03`. O grafo antigo do clone remoto não foi usado como evidência.
+- Obsidian clean e sincronizado; último pull `success`, próximo trigger finito.
+- Rede, DNS A/PTR, WireGuard, XRDP/TLS/ABNT2, oito diretórios XDG e theme passaram. O warning de portal sem `DISPLAY` é o limite já documentado.
+- Resultado tardio reconciliado: backup histórico `15/15`, bundle verify `rc=0`, zero scratch residual; backup operacional atual `6/6` e restore inventory `PASS`. Não há evidência de regressão atual.
+- Nenhuma edição realizada; sem collab/subagents.
+
+VERDICT=GO

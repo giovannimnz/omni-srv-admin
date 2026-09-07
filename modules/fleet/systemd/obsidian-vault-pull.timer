@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Obsidian vault pull-only sync every five minutes
+
+[Timer]
+OnBootSec=4min
+OnUnitActiveSec=5min
+RandomizedDelaySec=15s
+Persistent=true
+Unit=obsidian-vault-pull.service
+
+[Install]
+WantedBy=timers.target

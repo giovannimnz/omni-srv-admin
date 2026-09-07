@@ -2,7 +2,8 @@
 set -Eeuo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-MODULE_DIR="$(cd "${SCRIPT_DIR}/.." && pwd)"
+MODULE_DIR="${OMNI_DARK_MODULE_DIR:-$(cd "${SCRIPT_DIR}/.." && pwd)}"
+MODULE_DIR="$(cd "${MODULE_DIR}" && pwd)"
 CONFIG_DIR="${MODULE_DIR}/config_files"
 THEME_DIR="${MODULE_DIR}/themes"
 FONT_DIR="${MODULE_DIR}/fonts"
@@ -201,6 +202,7 @@ backup_current() {
   backup_path "${HOME}/.config/lxsession/${PROFILE}/desktop.conf"
   backup_path "${HOME}/.config/lxsession/${PROFILE}/autostart"
   backup_path "${HOME}/.config/autostart/nm-applet.desktop"
+  backup_path "${HOME}/.config/autostart/light-locker.desktop"
   backup_path "${HOME}/.config/lxpanel/${PROFILE}/panel-background.xpm"
   backup_path "${HOME}/.config/lxpanel/${PROFILE}/panels/00-background"
   backup_path "${HOME}/.config/lxpanel/${PROFILE}/panels/panel"
@@ -254,7 +256,20 @@ write_env_block() {
   local file="$1"
   mkdir -p "$(dirname "${file}")"
   touch "${file}"
-  sed -i '/^# omni dark system env begin$/,/^# omni dark system env end$/d' "${file}"
+  python3 - "${file}" <<'PY'
+from pathlib import Path
+import re
+import sys
+
+path = Path(sys.argv[1])
+text = path.read_text(encoding="utf-8")
+text = re.sub(
+    r"(?ms)^# omni dark system env begin\n.*?^# omni dark system env end\n?",
+    "",
+    text,
+)
+path.write_text(text.rstrip() + ("\n" if text.rstrip() else ""), encoding="utf-8")
+PY
   cat >>"${file}" <<EOF
 
 # omni dark system env begin
@@ -263,6 +278,7 @@ export DESKTOP_SESSION="\${DESKTOP_SESSION:-LXDE}"
 export GTK_THEME="Greybird-dark"
 export GTK2_RC_FILES="${HOME}/.gtkrc-2.0"
 export QT_QPA_PLATFORMTHEME="gtk3"
+export OMNI_WG_IFACE="wg100"
 # omni dark system env end
 EOF
 }
@@ -317,6 +333,7 @@ DESKTOP_SESSION=LXDE
 GTK_THEME=Greybird-dark
 GTK2_RC_FILES=${HOME}/.gtkrc-2.0
 QT_QPA_PLATFORMTHEME=gtk3
+OMNI_WG_IFACE=wg100
 EOF
 
   cat >"${HOME}/.config/xdg-desktop-portal/lxde-portals.conf" <<'EOF'
@@ -422,8 +439,7 @@ apply_pcmanfm_desktop() {
 ensure_abnt2_watchdog() {
   local target="${HOME}/.local/bin/setxkbmap-abnt2.sh"
   mkdir -p "$(dirname "${target}")"
-  if [ ! -x "${target}" ]; then
-    cat >"${target}" <<'EOF'
+  cat >"${target}" <<'EOF'
 #!/bin/sh
 apply_abnt2() {
     command -v setxkbmap >/dev/null 2>&1 || return 0
@@ -439,6 +455,7 @@ case "${1:-}" in
         exec 9>"$lock_file" || exit 0
         flock -n 9 || exit 0
         while :; do
+            command -v xdpyinfo >/dev/null 2>&1 && xdpyinfo >/dev/null 2>&1 || exit 0
             apply_abnt2
             sleep 5
         done
@@ -448,8 +465,7 @@ case "${1:-}" in
         ;;
 esac
 EOF
-    chmod 0755 "${target}"
-  fi
+  chmod 0755 "${target}"
 }
 
 ensure_panel_guard() {
@@ -506,6 +522,7 @@ case "${1:-}" in
     exec 9>"$lock_file" || exit 0
     flock -n 9 || exit 0
     while :; do
+      command -v xdpyinfo >/dev/null 2>&1 && xdpyinfo >/dev/null 2>&1 || exit 0
       fix_once
       sleep 5
     done
@@ -538,7 +555,7 @@ from gi.repository import GLib, Gtk
 
 
 ORACLE_IFACE = os.environ.get("OMNI_ORACLE_IFACE") or ""
-WG_IFACE = os.environ.get("OMNI_WG_IFACE", "wg0")
+WG_IFACE = os.environ.get("OMNI_WG_IFACE", "wg100")
 ICON_DIR = os.path.expanduser("~/.local/share/icons/omni-dark-theme")
 LOCK_PATH = f"/tmp/omni-network-tray-{os.environ.get('USER', 'ubuntu')}.lock"
 
@@ -749,6 +766,20 @@ EOF
   ok "nm-applet XDG autostart desabilitado"
 }
 
+disable_light_locker() {
+  local override="${HOME}/.config/autostart/light-locker.desktop"
+  mkdir -p "$(dirname "${override}")"
+  cat >"${override}" <<'EOF'
+[Desktop Entry]
+Type=Application
+Name=Screen Locker
+Hidden=true
+X-GNOME-Autostart-enabled=false
+EOF
+  chmod 0600 "${override}"
+  ok "light-locker XDG autostart desabilitado para XRDP"
+}
+
 apply_autostart() {
   local file="${HOME}/.config/lxsession/${PROFILE}/autostart"
   mkdir -p "$(dirname "${file}")"
@@ -758,6 +789,7 @@ apply_autostart() {
   install_network_icons
   ensure_network_tray
   disable_networkmanager_applet
+  disable_light_locker
 
   sed -i \
     -e '/^@lxpanel --profile LXDE$/d' \
@@ -1108,6 +1140,8 @@ Plugin {
 EOF
   } >"${status_panel}"
 
+  chmod 0644 "${panel_bg_file}" "${background_panel}" "${panel}" "${status_panel}"
+
   ok "LXPanel refeito com fundo full-width, painel esquerdo e status-right"
 }
 
@@ -1146,6 +1180,7 @@ configure_sublime_defaults() {
     run_sudo sed -i 's/Categories=TextEditor;Development;/Categories=Utility;TextEditor;Development;/g' /usr/share/applications/sublime_text.desktop
     ok "Sublime configurado como editor padrao de texto"
   fi
+  return 0
 }
 
 configure_zsh() {
@@ -1263,6 +1298,7 @@ apply_all() {
   configure_sublime_defaults
   configure_zsh
   [ "${RESTART_SESSION}" -eq 1 ] && restart_session_components
+  return 0
 }
 
 check_contains() {
@@ -1348,6 +1384,7 @@ validate() {
   local status_panel="${HOME}/.config/lxpanel/${PROFILE}/panels/status-right"
   local autostart="${HOME}/.config/lxsession/${PROFILE}/autostart"
   local nm_override="${HOME}/.config/autostart/nm-applet.desktop"
+  local light_locker_override="${HOME}/.config/autostart/light-locker.desktop"
   local openbox_rc="${HOME}/.config/openbox/lxde-rc.xml"
   local pcmanfm="${HOME}/.config/pcmanfm/${PROFILE}/desktop-items-0.conf"
   local env_file="${HOME}/.config/environment.d/10-omni-dark.conf"
@@ -1359,6 +1396,7 @@ validate() {
   check_gsettings_value org.gnome.desktop.interface gtk-theme "'Greybird-dark'" "GSettings gtk-theme Greybird-dark" || errors=$((errors + 1))
   check_contains "${env_file}" "GTK_THEME=Greybird-dark" "environment.d exporta GTK_THEME dark" || errors=$((errors + 1))
   check_contains "${env_file}" "QT_QPA_PLATFORMTHEME=gtk3" "environment.d faz Qt seguir GTK" || errors=$((errors + 1))
+  check_contains "${env_file}" "OMNI_WG_IFACE=wg100" "environment.d fixa interface WireGuard wg100" || errors=$((errors + 1))
   check_contains "${HOME}/.xsessionrc" "export GTK_THEME=\"Greybird-dark\"" "xsessionrc exporta GTK_THEME dark" || errors=$((errors + 1))
   check_contains "${portal_conf}" "org.freedesktop.impl.portal.Settings=gtk" "Portal LXDE usa backend GTK para Settings" || errors=$((errors + 1))
   check_portal_color_scheme || errors=$((errors + 1))
@@ -1395,6 +1433,7 @@ validate() {
   check_contains "${autostart}" "@${HOME}/.local/bin/omni-network-tray.py" "autostart inicia indicador Omni Network" || errors=$((errors + 1))
   check_not_contains "${autostart}" "@nm-applet" "autostart nao inicia nm-applet unmanaged" || errors=$((errors + 1))
   check_contains "${nm_override}" "Hidden=true" "XDG autostart desabilita nm-applet unmanaged" || errors=$((errors + 1))
+  check_contains "${light_locker_override}" "X-GNOME-Autostart-enabled=false" "XDG autostart desabilita light-locker no XRDP" || errors=$((errors + 1))
   check_contains "${autostart}" "@${HOME}/.local/bin/omni-dark-system-env.sh --restart-portal" "autostart aplica system dark/portal" || errors=$((errors + 1))
   check_contains "${autostart}" "@${HOME}/.local/bin/setxkbmap-abnt2.sh --watch" "autostart fixa ABNT2" || errors=$((errors + 1))
   check_contains "${pcmanfm}" "desktop_bg=${DESKTOP_BG}" "PCManFM desktop escuro" || errors=$((errors + 1))
@@ -1530,6 +1569,7 @@ restore_latest() {
     "home/${USER}/.config/environment.d/10-omni-dark.conf" \
     "home/${USER}/.config/xdg-desktop-portal/lxde-portals.conf" \
     "home/${USER}/.config/autostart/nm-applet.desktop" \
+    "home/${USER}/.config/autostart/light-locker.desktop" \
     "home/${USER}/.config/lxsession/${PROFILE}/desktop.conf" \
     "home/${USER}/.config/lxsession/${PROFILE}/autostart" \
     "home/${USER}/.config/lxpanel/${PROFILE}/panel-background.xpm" \
@@ -1557,6 +1597,13 @@ restore_latest() {
   if [ ! -e "${nm_backup}" ] && [ -f "${nm_override}" ] && grep -Fq "X-Omni-Managed=dark-theme-ubuntu" "${nm_override}"; then
     rm -f "${nm_override}"
     ok "Removido override Omni de nm-applet"
+  fi
+
+  local light_locker_override="${HOME}/.config/autostart/light-locker.desktop"
+  local light_locker_backup="${source}/home/${USER}/.config/autostart/light-locker.desktop"
+  if [ ! -e "${light_locker_backup}" ] && [ -f "${light_locker_override}" ] && grep -Fq "X-GNOME-Autostart-enabled=false" "${light_locker_override}"; then
+    rm -f "${light_locker_override}"
+    ok "Removido override Omni de light-locker"
   fi
 
   local icon_dir="${HOME}/.local/share/icons/omni-dark-theme"

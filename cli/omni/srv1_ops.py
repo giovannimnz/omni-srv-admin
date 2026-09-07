@@ -1,9 +1,13 @@
 """srv1-ops — operações locais centralizadas do ATIUS-SRV-1."""
 from __future__ import annotations
 
+import hashlib
 import os
 import shlex
+import shutil
 import subprocess
+import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +22,7 @@ LIVE_SYSTEMD_DIR = Path.home() / ".config" / "systemd" / "user"
 RESOURCE_RUNTIME_CONFIG = Path.home() / ".config" / "omni" / "resource-governor.runtime.env"
 RESOURCE_WATCHDOG_STATE = Path.home() / ".local" / "state" / "omni" / "resource-governor-watchdog.json"
 RESOURCE_HYGIENE_STATE_DIR = Path.home() / ".local" / "state" / "omni"
+RESOURCE_PURGE_BACKUP_ROOT = Path.home() / ".backups" / "omni-resource-unit-purge"
 
 SCRIPT_MAP = {
     "sync-vault": SCRIPTS / "sync-vault.sh",
@@ -65,6 +70,8 @@ RESOURCE_DEFAULTS = {
 }
 
 RESOURCE_UNIT_NAMES = [
+    "offload-dotbackups-to-gdrive.service",
+    "offload-dotbackups-to-gdrive.timer",
     "gsd-graphify-auto-update.service",
     "omni-builds.slice",
     "omni-interactive.slice",
@@ -84,16 +91,28 @@ RESOURCE_UNIT_NAMES = [
     "resource-governor-watchdog.timer",
     "resource-governor-cgroup-init.service",
     "resource-governor-patcher.service",
+    "pm2-dump-sanitizer.service",
+    "pm2-dump-sanitizer.path",
+    "pm2-dump-sanitizer.timer",
     "inviolable-watchdog.service",
     "inviolable-watchdog.timer",
+    "server-analysis.service",
+    "server-analysis.timer",
 ]
 
 RESOURCE_ENABLE_TIMERS = [
+    "offload-dotbackups-to-gdrive.timer",
     "resource-governor-snapshot.timer",
     "resource-governor-audit.timer",
     "resource-governor-doctor.timer",
     "resource-governor-watchdog.timer",
+    "pm2-dump-sanitizer.timer",
     "inviolable-watchdog.timer",
+    "server-analysis.timer",
+]
+
+RESOURCE_ENABLE_PATHS = [
+    "pm2-dump-sanitizer.path",
 ]
 
 RESOURCE_ENABLE_SERVICES = [
@@ -101,6 +120,18 @@ RESOURCE_ENABLE_SERVICES = [
     "resource-governor-watchdog.service",
     "resource-governor-patcher.service",
 ]
+
+RESOURCE_SRV1_ONLY_UNITS = {
+    "offload-dotbackups-to-gdrive.service",
+    "offload-dotbackups-to-gdrive.timer",
+    "pm2-dump-sanitizer.service",
+    "pm2-dump-sanitizer.path",
+    "pm2-dump-sanitizer.timer",
+    "inviolable-watchdog.service",
+    "inviolable-watchdog.timer",
+    "server-analysis.service",
+    "server-analysis.timer",
+}
 
 RISKY_EXECUTABLES = {
     "docker",
@@ -173,12 +204,31 @@ def _host_cpu_count() -> int:
     return os.cpu_count() or 1
 
 
-def _profile_cpu_quota(config: dict[str, str], prefix: str) -> str:
+def _profile_cpu_quota(
+    config: dict[str, str], prefix: str, *, max_total_pct: float | None = None
+) -> str:
     total_pct = config.get(prefix + "CPU_TOTAL_PCT", "")
     if total_pct:
-        quota = float(total_pct) * _host_cpu_count()
+        total = float(total_pct)
+        if total <= 0:
+            raise click.ClickException(f"{prefix}CPU_TOTAL_PCT must be positive")
+        if max_total_pct is not None and total > max_total_pct:
+            raise click.ClickException(
+                f"{prefix}CPU_TOTAL_PCT={total:g} exceeds {max_total_pct:g}% host CPU"
+            )
+        quota = total * _host_cpu_count()
         return f"{quota:g}%"
-    return config.get(prefix + "CPU_QUOTA", "")
+    quota_value = config.get(prefix + "CPU_QUOTA", "")
+    if quota_value and max_total_pct is not None:
+        quota = float(quota_value.removesuffix("%"))
+        total = quota / _host_cpu_count()
+        if total <= 0:
+            raise click.ClickException(f"{prefix}CPU_QUOTA must be positive")
+        if total > max_total_pct:
+            raise click.ClickException(
+                f"{prefix}CPU_QUOTA={quota_value} exceeds {max_total_pct:g}% host CPU"
+            )
+    return quota_value
 
 
 def _resource_profile(config: dict[str, str], profile: str) -> dict[str, Any]:
@@ -187,7 +237,11 @@ def _resource_profile(config: dict[str, str], profile: str) -> dict[str, Any]:
     root_device = config.get("RG_ROOT_DEVICE", "/dev/sda")
     props: list[tuple[str, str]] = []
     scalar_map = {
-        "CPUQuota": _profile_cpu_quota(config, prefix),
+        "CPUQuota": _profile_cpu_quota(
+            config,
+            prefix,
+            max_total_pct=20 if profile == "builds" else None,
+        ),
         "CPUWeight": config.get(prefix + "CPU_WEIGHT", ""),
         "MemoryHigh": config.get(prefix + "MEMORY_HIGH", ""),
         "MemoryMax": config.get(prefix + "MEMORY_MAX", ""),
@@ -242,7 +296,10 @@ def _schedule_post_workload_hygiene(config: dict[str, str], reason: str) -> list
     )
     output = (proc.stdout or proc.stderr).strip().splitlines()
     if proc.returncode != 0:
-        output.append(f"queue failed rc={proc.returncode}")
+        raise click.ClickException(
+            f"post-workload hygiene queue failed rc={proc.returncode}: "
+            f"{(proc.stderr or proc.stdout).strip()}"
+        )
     return output or ["queue returned no output"]
 
 
@@ -273,9 +330,129 @@ def _resource_timers() -> list[str]:
     return RESOURCE_ENABLE_TIMERS.copy()
 
 
-def _copy_resource_units(*, dry_run: bool) -> list[str]:
+def _resource_unit_names(*, generic_host: bool) -> list[str]:
+    if not generic_host:
+        return RESOURCE_UNIT_NAMES.copy()
+    return [name for name in RESOURCE_UNIT_NAMES if name not in RESOURCE_SRV1_ONLY_UNITS]
+
+
+def _systemd_user_unit_state(name: str, env: dict[str, str]) -> dict[str, str]:
+    proc = subprocess.run(
+        [
+            "systemctl", "--user", "show", name, "--no-pager",
+            "-p", "LoadState", "-p", "UnitFileState", "-p", "ActiveState",
+        ],
+        capture_output=True,
+        text=True,
+        check=False,
+        env=env,
+    )
+    if proc.returncode != 0:
+        detail = (proc.stderr or proc.stdout or "unknown systemctl error").strip()
+        raise click.ClickException(f"systemctl state query failed for {name}: {detail}")
+    state = dict(
+        line.split("=", 1) for line in proc.stdout.splitlines() if "=" in line
+    )
+    if state.get("LoadState") not in {"loaded", "not-found"} or not state.get("ActiveState"):
+        raise click.ClickException(f"invalid systemctl state for {name}: {state}")
+    return state
+
+
+def _restore_purged_units(records: list[dict[str, Any]], env: dict[str, str]) -> None:
+    failures: list[str] = []
+    for record in reversed(records):
+        name = str(record["name"])
+        try:
+            destination = Path(record["destination"])
+            if os.path.lexists(destination):
+                destination.unlink()
+            backup = Path(record["backup"]) if record.get("backup") else None
+            if backup and backup.is_file():
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                shutil.copy2(backup, destination)
+            elif record.get("symlink_target"):
+                destination.parent.mkdir(parents=True, exist_ok=True)
+                destination.symlink_to(record["symlink_target"])
+            else:
+                raise click.ClickException(f"rollback source missing for {name}")
+            subprocess.run(["systemctl", "--user", "daemon-reload"], check=True, env=env)
+            enabled_action = "enable" if record.get("enabled") else "disable"
+            active_action = "start" if record.get("active") else "stop"
+            subprocess.run(["systemctl", "--user", enabled_action, name], check=True, env=env)
+            subprocess.run(["systemctl", "--user", active_action, name], check=True, env=env)
+            state = _systemd_user_unit_state(name, env)
+            is_enabled = state.get("UnitFileState") == "enabled"
+            is_active = state["ActiveState"] == "active"
+            if state["LoadState"] != "loaded" or is_enabled != bool(record.get("enabled")) or is_active != bool(record.get("active")):
+                raise click.ClickException(f"rollback state mismatch for {name}")
+        except BaseException as exc:
+            failures.append(f"{name}: {exc}")
+    if failures:
+        raise click.ClickException("SRV-1-only rollback incomplete: " + "; ".join(failures))
+
+
+def _purge_srv1_only_units(
+    *, dry_run: bool, env: dict[str, str], records: list[dict[str, Any]] | None = None
+) -> list[str]:
+    actions: list[str] = []
+    transaction = records if records is not None else []
+    for name in sorted(RESOURCE_SRV1_ONLY_UNITS):
+        destination = LIVE_SYSTEMD_DIR / name
+        initial_state = _systemd_user_unit_state(name, env)
+        loaded = initial_state["LoadState"]
+        if not os.path.lexists(destination) and loaded in {"", "not-found"}:
+            actions.append(f"SRV-1-only unit already absent {name}")
+            continue
+        if dry_run:
+            actions.append(f"DRY disable/remove SRV-1-only unit {name}")
+            continue
+        backup_dir = RESOURCE_PURGE_BACKUP_ROOT / f"{time.strftime('%Y%m%dT%H%M%S')}-{os.getpid()}" / name
+        backup_dir.mkdir(parents=True, exist_ok=False)
+        backup: Path | None = None
+        symlink_target = ""
+        if destination.is_symlink():
+            symlink_target = os.readlink(destination)
+            (backup_dir / "symlink-target").write_text(symlink_target)
+        elif destination.is_file():
+            backup = backup_dir / "unit"
+            shutil.copy2(destination, backup)
+        elif loaded not in {"", "not-found"}:
+            raise click.ClickException(f"refusing to purge non-user SRV-1-only unit {name}")
+        record = {
+            "name": name,
+            "destination": str(destination),
+            "backup": str(backup) if backup else "",
+            "symlink_target": symlink_target,
+            "enabled": initial_state.get("UnitFileState") == "enabled",
+            "active": initial_state["ActiveState"] == "active",
+        }
+        manifest = backup_dir / "SHA256SUMS"
+        files = [path for path in backup_dir.iterdir() if path.is_file()]
+        manifest.write_text("".join(f"{hashlib.sha256(path.read_bytes()).hexdigest()}  {path.name}\n" for path in files))
+        subprocess.run(["sha256sum", "-c", "SHA256SUMS"], cwd=backup_dir, check=True, env=env)
+        transaction.append(record)
+        try:
+            subprocess.run(["systemctl", "--user", "disable", "--now", name], check=True, env=env)
+            state_after_disable = _systemd_user_unit_state(name, env)
+            if state_after_disable["ActiveState"] == "active":
+                raise click.ClickException(f"SRV-1-only unit still active after disable: {name}")
+            if os.path.lexists(destination):
+                destination.unlink()
+            subprocess.run(["systemctl", "--user", "daemon-reload"], check=True, env=env)
+            load_after = _systemd_user_unit_state(name, env)["LoadState"]
+            if load_after not in {"", "not-found"}:
+                raise click.ClickException(f"SRV-1-only unit still loaded after purge: {name}")
+        except BaseException as exc:
+            _restore_purged_units([record], env)
+            transaction.pop()
+            raise click.ClickException(f"could not purge SRV-1-only unit {name}: {exc}") from exc
+        actions.append(f"removed SRV-1-only unit {name}")
+    return actions
+
+
+def _copy_resource_units(*, dry_run: bool, generic_host: bool = False) -> list[str]:
     copied: list[str] = []
-    for name in RESOURCE_UNIT_NAMES:
+    for name in _resource_unit_names(generic_host=generic_host):
         src = MODULE / "systemd" / name
         dst = LIVE_SYSTEMD_DIR / name
         if dry_run:
@@ -287,43 +464,74 @@ def _copy_resource_units(*, dry_run: bool) -> list[str]:
     return copied
 
 
-def _install_resource_units(*, dry_run: bool, run_audit_now: bool) -> list[str]:
+def _install_resource_units(*, dry_run: bool, run_audit_now: bool, generic_host: bool = False) -> list[str]:
     env = _user_systemd_env()
-    actions = _copy_resource_units(dry_run=dry_run)
-    actions.extend(_purge_legacy_post_build_units(dry_run=dry_run, env=env))
-    if dry_run:
-        actions.append("DRY systemctl --user daemon-reload")
-        actions.append("DRY systemctl --user reset-failed resource governor services/timers")
-        for timer in RESOURCE_ENABLE_TIMERS:
-            actions.append(f"DRY systemctl --user enable --now {timer}")
-        actions.append("DRY systemctl --user start resource-governor-snapshot.service")
-        for service in RESOURCE_ENABLE_SERVICES:
-            suffix = " (daemon)" if service.endswith(("watchdog.service", "patcher.service")) else ""
-            actions.append(f"DRY systemctl --user enable --now {service}{suffix}")
-        if run_audit_now:
-            actions.append("DRY systemctl --user start resource-governor-audit.service")
-        return actions
+    unit_names = _resource_unit_names(generic_host=generic_host)
+    timers = [name for name in RESOURCE_ENABLE_TIMERS if name in unit_names]
+    paths = [name for name in RESOURCE_ENABLE_PATHS if name in unit_names]
+    services = [name for name in RESOURCE_ENABLE_SERVICES if name in unit_names]
+    actions: list[str] = []
+    purge_records: list[dict[str, Any]] = []
+    try:
+        if generic_host:
+            actions.extend(_purge_srv1_only_units(dry_run=dry_run, env=env, records=purge_records))
+        actions.extend(_copy_resource_units(dry_run=dry_run, generic_host=generic_host))
+        actions.extend(_purge_legacy_post_build_units(dry_run=dry_run, env=env))
+        if dry_run:
+            actions.append("DRY systemctl --user daemon-reload")
+            actions.append("DRY systemctl --user reset-failed resource governor services/timers")
+            for timer in timers:
+                actions.append(f"DRY systemctl --user enable --now {timer}")
+            for path in paths:
+                actions.append(f"DRY systemctl --user enable --now {path}")
+            actions.append("DRY systemctl --user start resource-governor-snapshot.service")
+            for service in services:
+                suffix = " (daemon)" if service.endswith(("watchdog.service", "patcher.service")) else ""
+                actions.append(f"DRY systemctl --user enable --now {service}{suffix}")
+            if run_audit_now:
+                actions.append("DRY systemctl --user start resource-governor-audit.service")
+            return actions
 
-    subprocess.run(["systemctl", "--user", "daemon-reload"], check=False, env=env)
-    subprocess.run(
-        ["systemctl", "--user", "reset-failed", *[name for name in RESOURCE_UNIT_NAMES if name.endswith((".service", ".timer"))]],
-        check=False,
-        env=env,
-    )
-    actions.append("reset-failed resource governor services/timers")
-    for timer in RESOURCE_ENABLE_TIMERS:
-        subprocess.run(["systemctl", "--user", "enable", "--now", timer], check=False, env=env)
-        actions.append(f"enable-now {timer}")
-    subprocess.run(["systemctl", "--user", "start", "resource-governor-snapshot.service"], check=False, env=env)
-    actions.append("start resource-governor-snapshot.service")
-    for service in RESOURCE_ENABLE_SERVICES:
-        subprocess.run(["systemctl", "--user", "enable", "--now", service], check=False, env=env)
-        suffix = " (daemon)" if service.endswith(("watchdog.service", "patcher.service")) else ""
-        actions.append(f"enable-now {service}{suffix}")
-    if run_audit_now:
-        subprocess.run(["systemctl", "--user", "start", "resource-governor-audit.service"], check=False, env=env)
-        actions.append("start resource-governor-audit.service")
-    return actions
+        subprocess.run(["systemctl", "--user", "daemon-reload"], check=True, env=env)
+        if generic_host:
+            for name in RESOURCE_SRV1_ONLY_UNITS:
+                loaded = _systemd_user_unit_state(name, env)["LoadState"]
+                if loaded not in {"", "not-found"}:
+                    raise click.ClickException(f"SRV-1-only unit still loaded after purge: {name}")
+        failed_units = [
+            name
+            for name in unit_names
+            if name.endswith((".service", ".timer"))
+            and _systemd_user_unit_state(name, env)["ActiveState"] == "failed"
+        ]
+        if failed_units:
+            subprocess.run(
+                ["systemctl", "--user", "reset-failed", *failed_units],
+                check=True, env=env,
+            )
+            actions.append("reset-failed " + " ".join(failed_units))
+        else:
+            actions.append("reset-failed not-needed")
+        for timer in timers:
+            subprocess.run(["systemctl", "--user", "enable", "--now", timer], check=True, env=env)
+            actions.append(f"enable-now {timer}")
+        for path in paths:
+            subprocess.run(["systemctl", "--user", "enable", "--now", path], check=True, env=env)
+            actions.append(f"enable-now {path}")
+        subprocess.run(["systemctl", "--user", "start", "resource-governor-snapshot.service"], check=True, env=env)
+        actions.append("start resource-governor-snapshot.service")
+        for service in services:
+            subprocess.run(["systemctl", "--user", "enable", "--now", service], check=True, env=env)
+            suffix = " (daemon)" if service.endswith(("watchdog.service", "patcher.service")) else ""
+            actions.append(f"enable-now {service}{suffix}")
+        if run_audit_now:
+            subprocess.run(["systemctl", "--user", "start", "resource-governor-audit.service"], check=True, env=env)
+            actions.append("start resource-governor-audit.service")
+        return actions
+    except BaseException:
+        if not dry_run and purge_records:
+            _restore_purged_units(purge_records, env)
+        raise
 
 
 @click.group(name="srv1-ops")
@@ -359,6 +567,15 @@ def run_op(name: str, dry_run: bool) -> None:
         )
     if name.startswith("resource-") and path.suffix == ".py":
         raise SystemExit(_run(["python3", str(path)], env=env))
+    if name == "offload-dotbackups":
+        if dry_run:
+            raise SystemExit(_run([str(path), "--dry-run"], env=env))
+        raise SystemExit(
+            _run(
+                ["systemctl", "--user", "start", "offload-dotbackups-to-gdrive.service"],
+                env=_user_systemd_env(),
+            )
+        )
     raise SystemExit(_run([str(path)], env=env))
 
 
@@ -537,12 +754,26 @@ def resource_run(profile: str, dry_run: bool, schedule_hygiene: bool | None, com
     if profile == "builds" and config.get("RG_PROFILE_BUILDS_SERIALIZE", "1") == "1":
         Path(os.path.expanduser(config["RG_PROFILE_BUILDS_LOCK_FILE"])).parent.mkdir(parents=True, exist_ok=True)
 
-    rc = _run(cmd, env=_user_systemd_env(), cwd=Path.cwd())
-    if should_schedule:
-        scheduled = _schedule_post_workload_hygiene(config, reason=f"profile={profile}")
-        click.echo("post-run hygiene:")
-        for item in scheduled:
-            click.echo(f"  - {item}")
+    rc: int | None = None
+    workload_error: BaseException | None = None
+    try:
+        rc = _run(cmd, env=_user_systemd_env(), cwd=Path.cwd())
+    except BaseException as exc:
+        workload_error = exc
+    finally:
+        if should_schedule:
+            try:
+                scheduled = _schedule_post_workload_hygiene(config, reason=f"profile={profile}")
+                click.echo("post-run hygiene:")
+                for item in scheduled:
+                    click.echo(f"  - {item}")
+            except BaseException:
+                if workload_error is None:
+                    raise
+    if workload_error is not None:
+        raise workload_error
+    if rc is None:
+        raise click.ClickException("resource workload returned without an exit status")
     raise SystemExit(rc)
 
 
@@ -596,9 +827,18 @@ def resource_doctor(json_output: bool, admission: bool) -> None:
 @resources.command("install")
 @click.option("--dry-run", is_flag=True, help="Mostra copy/enable sem aplicar.")
 @click.option("--run-audit-now/--no-run-audit-now", default=True, help="Roda audit inicial após instalar timers.")
-def resource_install(dry_run: bool, run_audit_now: bool) -> None:
+@click.option(
+    "--generic-host",
+    is_flag=True,
+    help="Omite units de proteção específicas dos apps de produção do SRV-1.",
+)
+def resource_install(dry_run: bool, run_audit_now: bool, generic_host: bool) -> None:
     """Instala as slices/timers/serviços do resource governor no systemd user live."""
-    actions = _install_resource_units(dry_run=dry_run, run_audit_now=run_audit_now)
+    actions = _install_resource_units(
+        dry_run=dry_run,
+        run_audit_now=run_audit_now,
+        generic_host=generic_host,
+    )
     click.echo(f"live-systemd-dir: {LIVE_SYSTEMD_DIR}")
     for item in actions:
         click.echo(f"- {item}")

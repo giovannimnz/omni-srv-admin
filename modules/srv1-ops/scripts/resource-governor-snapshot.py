@@ -16,6 +16,7 @@ DEFAULT_CONFIG = {
     'RG_LOG_DIR': str(Path.home() / '.logs' / 'resource-governor'),
     'RG_SNAPSHOT_ALERT_DISK_PCT': '95',
     'RG_SNAPSHOT_ALERT_SWAP_PCT': '85',
+    'RG_SNAPSHOT_ALERT_SWAP_MEM_AVAILABLE_MIB': '4096',
     'RG_SNAPSHOT_ALERT_MEM_AVAILABLE_MIB': '2048',
     'RG_SNAPSHOT_ALERT_PSI_IO_FULL_AVG10': '5.0',
     'RG_SNAPSHOT_ALERT_PSI_MEMORY_FULL_AVG10': '1.0',
@@ -164,7 +165,10 @@ def main() -> int:
 
     if disk_pct >= float(config['RG_SNAPSHOT_ALERT_DISK_PCT']):
         snapshot['alerts'].append('disk-root-high')
-    if swap_used_pct >= float(config['RG_SNAPSHOT_ALERT_SWAP_PCT']):
+    if (
+        swap_used_pct >= float(config['RG_SNAPSHOT_ALERT_SWAP_PCT'])
+        and mem_available_mib < float(config['RG_SNAPSHOT_ALERT_SWAP_MEM_AVAILABLE_MIB'])
+    ):
         snapshot['alerts'].append('swap-high')
     if mem_available_mib <= float(config['RG_SNAPSHOT_ALERT_MEM_AVAILABLE_MIB']):
         snapshot['alerts'].append('mem-available-low')

@@ -1,0 +1,9 @@
+[Unit]
+Description=Reapply the validated RustDesk nft edge atomically
+After=atius-rustdesk-edge.service
+Requires=atius-rustdesk-edge.service
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl reload atius-rustdesk-edge.service
+TimeoutStartSec=30

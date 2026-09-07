@@ -18,6 +18,11 @@ Tema operacional para o desktop remoto dos servidores Ubuntu 24.04 ARM64 gerenci
   - `status-right`: ABNT2, tray, volume, relógio, lock/logout à direita.
 - Guard de ABNT2 e guard de geometria do painel no autostart.
 - Backup antes de qualquer alteração em `~/.backups/omni-dark-theme/`.
+- `repair` sem `--restart-session` deve sair `0`; `apply_all()` não pode herdar
+  o status false do guard opcional de restart.
+- Reaplicações são idempotentes: `.profile/.xsessionrc` não acumulam linhas,
+  `OMNI_WG_IFACE=wg100` permanece em `environment.d`, e outputs LXPanel ficam
+  mode `0644` independentemente do `umask` do caller.
 
 ## Comandos
 
@@ -38,6 +43,19 @@ Wrappers:
 ./repair.sh     # repair seguro para LXDE/XRDP
 ./uninstall.sh  # restore do ultimo backup
 ```
+
+Runtime sem sujar o clone remoto:
+
+```text
+~/.local/lib/omni-dark-theme/dark-themectl.sh
+~/.local/bin/dark-themectl
+```
+
+Instalar `scripts/dark-themectl.sh` no primeiro path e
+`scripts/dark-themectl-wrapper.sh` no segundo. O wrapper exporta
+`OMNI_DARK_MODULE_DIR=~/GitHub/omni-srv-admin/dark-theme-ubuntu`, portanto usa
+assets do clone canônico sem sobrescrever o arquivo tracked. Validar com
+`dark-themectl validate`.
 
 Para rollout em fleet, use `repair --install-packages --restart-session` como padrao. Reserve `apply --with-sublime --with-zsh` para hosts que precisam dessas opcoes explicitamente.
 

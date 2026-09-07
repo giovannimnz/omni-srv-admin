@@ -1,0 +1,13 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings: none
+
+Validação:
+
+- 3 context managers preservam semântica de append e fecham descriptors deterministicamente.
+- Probe de 250 ciclos: `fd_before=4`, `fd_after=4`, conteúdo preservado.
+- `pytest -W error`: `11 passed`.
+- Classificação `historical-harness-failure` coerente com compares/bundle PASS, divergência de contagens heterogêneas e runtime final saudável.
+- Nenhum arquivo editado.
+
+VERDICT=GO

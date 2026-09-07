@@ -1,0 +1,14 @@
+services:
+  jenkins:
+    image: docker.io/jenkins/jenkins:2.541.3-jdk17
+    container_name: jenkins
+    restart: unless-stopped
+    ports:
+      - "8085:8080"
+      - "50000:50000"
+    volumes:
+      - /home/ubuntu/GitHub/containers/jenkins/jenkins_home:/var/jenkins_home
+      - /usr/lib/aarch64-linux-gnu/libltdl.so.7:/usr/lib/aarch64-linux-gnu/libltdl.so.7:ro
+      - /home/ubuntu/GitHub/Atius-Capital/ats:/workspace/atius:ro
+    userns_mode: keep-id
+    user: root

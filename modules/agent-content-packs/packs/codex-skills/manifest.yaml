@@ -1,6 +1,6 @@
 version: 1
 pack: codex-skills
-updated_at: 2026-09-04T23:50:00+0000
+updated_at: '2026-09-06T18:54:25.992945-03:00'
 items:
 - name: git-worktree-fleet-closeout
   kind: skill
@@ -96,13 +96,14 @@ items:
   platforms:
   - linux
   source_path: items/oci-arm64-new-server-bootstrap
-  hash: 1a96f67da8fc16aa43f515cf0159008a0a8702b09ff9910b0b59e10f9a29f3c4
+  hash: eb3cdd32bfedabb34032099828b17a47be5990bc6aaf889e9aa73609740a952a
   required_files:
   - SKILL.md
   files:
   - path: SKILL.md
-    sha256: 1a96f67da8fc16aa43f515cf0159008a0a8702b09ff9910b0b59e10f9a29f3c4
-    bytes: 1591
+    sha256: eb3cdd32bfedabb34032099828b17a47be5990bc6aaf889e9aa73609740a952a
+    bytes: 11130
   install:
     codex:
       rel_path: skills/oci-arm64-new-server-bootstrap
+  last_updated: '2026-09-06'

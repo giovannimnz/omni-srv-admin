@@ -2,6 +2,7 @@
 set -euo pipefail
 
 ROOT="${OMNI_SRV_ADMIN:-$HOME/GitHub/omni-srv-admin}"
+RUNTIME_REPO="${OMNI_FLEET_RUNTIME_REPO:-$HOME/GitHub/omni-srv-admin}"
 UNIT_SRC="$ROOT/modules/fleet-control-plane/systemd/omni-fleet-agent.service"
 UNIT_DST="$HOME/.config/systemd/user/omni-fleet-agent.service"
 ENV_DST="/etc/omni-srv-admin/fleet-agent.env"
@@ -44,7 +45,7 @@ tmp_env="$(mktemp)"
 cat >"$tmp_env" <<EOF
 OMNI_HOST_ID=$host_id
 OMNI_AGENT_INTERVAL_SECONDS=30
-OMNI_REPO_DIR=$ROOT
+OMNI_REPO_DIR=$RUNTIME_REPO
 EOF
 sudo install -m 0644 "$tmp_env" "$ENV_DST"
 rm -f "$tmp_env"

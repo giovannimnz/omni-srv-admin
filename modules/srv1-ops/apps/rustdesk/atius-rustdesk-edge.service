@@ -1,0 +1,16 @@
+[Unit]
+Description=Atius RustDesk approved public edge
+Documentation=file://%h/GitHub/omni-srv-admin/docs/operations/srv1-service-recovery-2026-09-05.md
+After=network-online.target nftables.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/atius-rustdesk/apply-edge.sh
+ExecReload=/usr/local/lib/atius-rustdesk/apply-edge.sh
+RemainAfterExit=yes
+TimeoutStartSec=30
+TimeoutStopSec=15
+
+[Install]
+WantedBy=multi-user.target

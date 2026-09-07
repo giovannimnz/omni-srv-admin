@@ -1,0 +1,47 @@
+# container-jenkins.service
+# Managed by omni-srv-admin: Podman --new unit, no stale container IDs.
+# 2026-06-15: removed /var/run/docker.sock and /usr/bin/docker mounts.
+# Docker daemon was uninstalled during the Docker→Podman cutover, so those
+# bind mounts were breaking the unit with exit 125 (statfs ENOENT).
+# Jenkins stays in Podman and uses Podman in-container for any build work
+# (or delegates to a dedicated Podman-in-Podman sidecar if needed later).
+
+[Unit]
+Description=Podman container-jenkins.service
+Documentation=man:podman-generate-systemd(1)
+Wants=network-online.target
+After=network-online.target
+RequiresMountsFor=%t/containers
+
+[Service]
+Environment=PODMAN_SYSTEMD_UNIT=%n
+Restart=always
+TimeoutStopSec=70
+ExecStart=/usr/bin/podman run \
+	--cidfile=%t/%n.ctr-id \
+	--cgroups=no-conmon \
+	--rm \
+	--sdnotify=conmon \
+	--replace \
+	--cpus 2 \
+	-d \
+	--name jenkins \
+	--network srv1-podman-v2 \
+	-p 8085:8080 \
+	-p 50000:50000 \
+	-v /home/ubuntu/GitHub/containers/jenkins/jenkins_home:/var/jenkins_home:rw \
+	-v /usr/lib/aarch64-linux-gnu/libltdl.so.7:/usr/lib/aarch64-linux-gnu/libltdl.so.7:ro \
+	-v /home/ubuntu/GitHub/Atius-Capital/ats:/workspace/atius:ro \
+	--label io.containers.autoupdate=registry docker.io/jenkins/jenkins:2.541.3-jdk17
+ExecStop=/usr/bin/podman stop \
+	--ignore -t 10 \
+	--cidfile=%t/%n.ctr-id
+ExecStopPost=/usr/bin/podman rm \
+	-f \
+	--ignore -t 10 \
+	--cidfile=%t/%n.ctr-id
+Type=notify
+NotifyAccess=all
+
+[Install]
+WantedBy=default.target

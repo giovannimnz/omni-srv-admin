@@ -1,0 +1,18 @@
+[Unit]
+Description=Server analysis engine — 15min trend + auto-fix
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/server-analysis.md
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/env python3 /home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/server-analysis.py
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+Nice=15
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+SuccessExitStatus=1
+Environment=PATH=/home/ubuntu/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=default.target

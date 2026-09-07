@@ -1,0 +1,11 @@
+{
+  "archive": "/tmp/srv4-stable-final-source.tgz",
+  "archive_sha256": "6e1a9e6d8fa2c1e68a1fb89d1ad46f2c95b12a359f8550e90925abfd1d763924",
+  "file_count": 444,
+  "file_list": "/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/modules/fleet/configs/oci-arm64-host-setup-files.txt",
+  "manifest_sha256": "bc5786ec3996ad69b0adb9d0decd0909cc2fc97a176b1696b505abdee1c60070",
+  "output": "/tmp/srv4-stable-final-source",
+  "repo_root": "/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding",
+  "schema": "omni-oci-arm64-host-setup-source-manifest-v1",
+  "status": "PASS"
+}

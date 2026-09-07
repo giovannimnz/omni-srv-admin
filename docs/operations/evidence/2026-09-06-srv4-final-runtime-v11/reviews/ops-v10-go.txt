@@ -1,0 +1,15 @@
+P0=0 P1=0 P2=0 P3=1
+
+- P3 [modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh:357](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh:357) — `quarantine_item()` cria `item.*` antes do `rename`, mas não remove o diretório se o rename falhar. Reproduzido com item mountpoint: `quarantine_rename_rc=1`, `quarantine_empty_dirs=1`. O cleanup v10 após restore bem-sucedido passou com `quarantine_dirs=0`.
+
+Provas:
+
+- Drift final: manifest correto, branch/HEAD corretos, `13/13` hashes.
+- Focused: `99 passed`, `-W error`, sob `CPUQuota=80%` em 4 vCPU.
+- Scanner: `clean=1`, `busy=0`.
+- Nested mount: bloqueado antes da remoção; `partial_delete=0`.
+- Rollback `LoadState=loaded`, bus fail-closed, CLI dry/live, timer/inventário/purge, restore collision, Vault/type drive, `dir_fd`, RustDesk, cap e links: válidos.
+- Bash/Python/ShellCheck/systemd/nft: GREEN.
+- Nenhum arquivo do worktree editado.
+
+VERDICT=GO

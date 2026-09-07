@@ -1,0 +1,113 @@
+#!/usr/bin/env bash
+set -Eeuo pipefail
+umask 077
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+MODULE_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+SYSTEMD_DIR="$MODULE_DIR/systemd"
+BROWSER_DESKTOP="${BROWSER_DESKTOP:-brave-browser.desktop}"
+CODEX_DESKTOP="${CODEX_DESKTOP:-chatgpt.desktop}"
+RUNTIME_SCRIPT="$HOME/.local/libexec/browser-default-reconciler.py"
+USER_SYSTEMD="$HOME/.config/systemd/user"
+ENV_FILE="$HOME/.config/omni/browser-default-reconciler.env"
+MIMEAPPS="$HOME/.config/mimeapps.list"
+STATE_DIR="$HOME/.local/state/omni"
+
+valid_desktop() {
+  [[ "$1" =~ ^[A-Za-z0-9._+-]+\.desktop$ ]]
+}
+valid_desktop "$BROWSER_DESKTOP" || { printf 'invalid BROWSER_DESKTOP: %s\n' "$BROWSER_DESKTOP" >&2; exit 2; }
+valid_desktop "$CODEX_DESKTOP" || { printf 'invalid CODEX_DESKTOP: %s\n' "$CODEX_DESKTOP" >&2; exit 2; }
+
+for source in \
+  "$SCRIPT_DIR/browser-default-reconciler.py" \
+  "$SYSTEMD_DIR/browser-default-reconciler.service" \
+  "$SYSTEMD_DIR/browser-default-reconciler.path" \
+  "$SYSTEMD_DIR/browser-default-reconciler.timer"; do
+  test -f "$source"
+done
+
+mkdir -p "$HOME/.backups" "$HOME/.config" "$STATE_DIR"
+TS="$(date +%Y%m%dT%H%M%S%z)"
+BACKUP="$HOME/.backups/browser-default-reconciler-$TS"
+mkdir -p "$BACKUP/home/ubuntu/.config/systemd/user" "$BACKUP/home/ubuntu/.config/omni" "$BACKUP/home/ubuntu/.local/libexec" "$BACKUP/home/ubuntu/.local/state/omni" "$BACKUP/home/ubuntu/.config"
+
+backup_if_present() {
+  local source="$1" relative="$2"
+  if [[ -e "$source" || -L "$source" ]]; then
+    mkdir -p "$BACKUP/$(dirname "$relative")"
+    cp -a "$source" "$BACKUP/$relative"
+  fi
+}
+backup_if_present "$RUNTIME_SCRIPT" home/ubuntu/.local/libexec/browser-default-reconciler.py
+backup_if_present "$ENV_FILE" home/ubuntu/.config/omni/browser-default-reconciler.env
+backup_if_present "$MIMEAPPS" home/ubuntu/.config/mimeapps.list
+for unit in browser-default-reconciler.service browser-default-reconciler.path browser-default-reconciler.timer; do
+  backup_if_present "$USER_SYSTEMD/$unit" "home/ubuntu/.config/systemd/user/$unit"
+done
+for state in browser-default-reconciler.json browser-default-reconciler.lock; do
+  backup_if_present "$STATE_DIR/$state" "home/ubuntu/.local/state/omni/$state"
+done
+{ systemctl --user is-enabled browser-default-reconciler.path 2>/dev/null || true; } > "$BACKUP/path-enabled.before"
+{ systemctl --user is-active browser-default-reconciler.path 2>/dev/null || true; } > "$BACKUP/path-active.before"
+{ systemctl --user is-enabled browser-default-reconciler.timer 2>/dev/null || true; } > "$BACKUP/timer-enabled.before"
+{ systemctl --user is-active browser-default-reconciler.timer 2>/dev/null || true; } > "$BACKUP/timer-active.before"
+printf 'created_at=%s\nhost=%s\nbrowser_desktop=%s\ncodex_desktop=%s\n' "$(date -Is)" "$(hostname -f)" "$BROWSER_DESKTOP" "$CODEX_DESKTOP" > "$BACKUP/MANIFEST.env"
+find "$BACKUP" -type f ! -name SHA256SUMS -print0 | sort -z | xargs -0 sha256sum > "$BACKUP/SHA256SUMS"
+sha256sum -c "$BACKUP/SHA256SUMS" >/dev/null
+RESTORE_TMP="$(mktemp -d /dev/shm/browser-default-reconciler-restore.XXXXXX)"
+trap 'rm -rf -- "$RESTORE_TMP"' EXIT
+cp -a "$BACKUP/." "$RESTORE_TMP/"
+python3 - "$BACKUP" "$RESTORE_TMP" <<'PY'
+from pathlib import Path
+import hashlib
+import stat
+import sys
+
+source, restored = map(Path, sys.argv[1:])
+for path in source.rglob("*"):
+    if not path.is_file():
+        continue
+    target = restored / path.relative_to(source)
+    assert target.is_file(), path
+    assert hashlib.sha256(path.read_bytes()).digest() == hashlib.sha256(target.read_bytes()).digest(), path
+    assert stat.S_IMODE(path.stat().st_mode) == stat.S_IMODE(target.stat().st_mode), path
+PY
+rm -rf -- "$RESTORE_TMP"
+trap - EXIT
+
+systemctl --user stop browser-default-reconciler.path browser-default-reconciler.timer 2>/dev/null || true
+install -D -m 0755 "$SCRIPT_DIR/browser-default-reconciler.py" "$RUNTIME_SCRIPT"
+for unit in browser-default-reconciler.service browser-default-reconciler.path browser-default-reconciler.timer; do
+  install -D -m 0644 "$SYSTEMD_DIR/$unit" "$USER_SYSTEMD/$unit"
+done
+ENV_TMP="$(mktemp "$HOME/.config/omni/.browser-default-reconciler.env.XXXXXX")"
+printf 'BROWSER_DESKTOP=%s\nCODEX_DESKTOP=%s\n' "$BROWSER_DESKTOP" "$CODEX_DESKTOP" > "$ENV_TMP"
+chmod 0600 "$ENV_TMP"
+mv -f "$ENV_TMP" "$ENV_FILE"
+mkdir -p "$(dirname "$MIMEAPPS")"
+touch "$MIMEAPPS"
+chmod 0664 "$MIMEAPPS"
+
+systemctl --user daemon-reload
+systemctl --user reset-failed browser-default-reconciler.service 2>/dev/null || true
+systemctl --user start browser-default-reconciler.service
+systemctl --user enable --now browser-default-reconciler.path browser-default-reconciler.timer
+systemctl --user is-active --quiet browser-default-reconciler.path
+systemctl --user is-active --quiet browser-default-reconciler.timer
+python3 - "$STATE_DIR/browser-default-reconciler.json" "$BROWSER_DESKTOP" "$CODEX_DESKTOP" <<'PY'
+import json,sys
+p,browser,codex=sys.argv[1:]
+d=json.load(open(p))
+assert d["status"] == "success"
+assert d["browser_desktop"] == browser
+assert d["handlers"]["text/html"] == browser
+assert d["handlers"]["x-scheme-handler/http"] == browser
+assert d["handlers"]["x-scheme-handler/https"] == browser
+assert d["handlers"]["x-scheme-handler/codex"] == codex
+PY
+cmp "$SCRIPT_DIR/browser-default-reconciler.py" "$RUNTIME_SCRIPT"
+for unit in browser-default-reconciler.service browser-default-reconciler.path browser-default-reconciler.timer; do
+  cmp "$SYSTEMD_DIR/$unit" "$USER_SYSTEMD/$unit"
+done
+printf 'BROWSER_DEFAULT_RECONCILER_INSTALLED backup=%s restore_test=PASS browser=%s codex=%s\n' "$BACKUP" "$BROWSER_DESKTOP" "$CODEX_DESKTOP"

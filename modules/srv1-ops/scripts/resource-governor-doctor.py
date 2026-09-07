@@ -52,6 +52,7 @@ def load_config() -> dict[str, str]:
         "RG_DOCTOR_AUDIT_MAX_AGE_SEC": "172800",
         "RG_DOCTOR_CPU_PSI_WARN_AVG10": "70",
         "RG_DOCTOR_SWAP_WARN_PCT": "85",
+        "RG_DOCTOR_SWAP_MEM_AVAILABLE_OK_MIB": "4096",
         "RG_PROFILE_BUILDS_CPU_TOTAL_PCT": "20",
     }
     data.update(load_key_values(CONFIG_PATH))
@@ -240,6 +241,16 @@ def swap_used_pct() -> float:
     return 0.0 if total <= 0 else 100.0 * (total - values.get("SwapFree", 0)) / total
 
 
+def memory_available_mib() -> float:
+    try:
+        for line in Path("/proc/meminfo").read_text().splitlines():
+            if line.startswith("MemAvailable:"):
+                return float(line.split()[1]) / 1024.0
+    except (OSError, ValueError, IndexError):
+        pass
+    return 0.0
+
+
 def semaphore_busy(path: Path) -> bool:
     if not path.exists():
         return False
@@ -319,7 +330,18 @@ def collect(config: dict[str, str]) -> dict[str, Any]:
     add("cpu_pressure", "warning", psi < psi_warn, f"psi_some_avg10={psi:.2f} warn={psi_warn:.2f}")
     swap = swap_used_pct()
     swap_warn = float(config.get("RG_DOCTOR_SWAP_WARN_PCT", "85"))
-    add("swap_pressure", "warning", swap < swap_warn, f"used_pct={swap:.2f} warn={swap_warn:.2f}")
+    mem_available = memory_available_mib()
+    swap_mem_ok = float(config.get("RG_DOCTOR_SWAP_MEM_AVAILABLE_OK_MIB", "4096"))
+    swap_ok = swap < swap_warn or mem_available >= swap_mem_ok
+    add(
+        "swap_pressure",
+        "warning",
+        swap_ok,
+        (
+            f"used_pct={swap:.2f} warn={swap_warn:.2f} "
+            f"mem_available_mib={mem_available:.0f} memory_ok={swap_mem_ok:.0f}"
+        ),
+    )
 
     structural_ok = all(check["ok"] for check in checks if check["severity"] == "critical")
     doctor_ok = all(check["ok"] for check in checks)
@@ -340,6 +362,7 @@ def collect(config: dict[str, str]) -> dict[str, Any]:
             "build_semaphore_busy": semaphore_busy(build_lock),
             "cpu_psi_some_avg10": psi,
             "swap_used_pct": round(swap, 3),
+            "mem_available_mib": round(mem_available, 3),
         },
     }
 

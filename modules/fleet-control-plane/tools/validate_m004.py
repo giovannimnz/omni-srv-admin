@@ -435,7 +435,7 @@ def _scenario_internal_network_canonicality() -> ScenarioResult:
 
     _, s23 = _load_host("giovanni-s23-termux")
     s23_vpn = _nested(s23, "access", "vpn_ip")
-    if s23_vpn != "10.100.100.9":
+    if s23_vpn != "10.100.100.10":
         failures.append(f"giovanni-s23-termux: access.vpn_ip={s23_vpn!r}")
     evidence.append(f"giovanni-s23-termux: edge={s23_vpn}")
 

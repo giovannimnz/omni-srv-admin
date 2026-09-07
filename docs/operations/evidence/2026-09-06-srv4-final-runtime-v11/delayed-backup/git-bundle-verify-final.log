@@ -1,0 +1,43 @@
+/home/ubuntu/.backups/srv4-full-setup-parity-pre-20260906T041902+0000/git/omni-srv-admin.bundle is okay
+The bundle contains these 39 refs:
+0e117315b9aeff86efa9b0014999ee273dd2a7bd refs/heads/codex/canonical-runtime-20260816
+acbb286312b125c14c537d31f6e2c8d1577f3449 refs/heads/codex/omni-fleet-control-plane-m004
+f851a0353e7ed3f03e736b571270ff7baaf8c357 refs/heads/main
+f851a0353e7ed3f03e736b571270ff7baaf8c357 refs/remotes/origin/HEAD
+acbb286312b125c14c537d31f6e2c8d1577f3449 refs/remotes/origin/archive/atius-srv-2-closeout-codex-omni-fleet-control-plane-m004-20260904
+4b5125716387923802df7e04db7be6eb6374060c refs/remotes/origin/archive/atius-srv-3-closeout-codex-omni-fleet-control-plane-m004-20260904
+ecf5e585a446ace4b9c2abe70b97fb08506b8f82 refs/remotes/origin/archive/codex-disable-wayland-auto-update-20260814-local-20260904
+53d9656e9681ee5b749da757930ff75f553c3866 refs/remotes/origin/archive/codex-srv1-active-preserve-20260816-local-20260904
+7e60c3a5587f7bc31ef169ac77515f141de01446 refs/remotes/origin/archive/fix-xrdp-keyboard-fleet-drift-20260829-local-20260904
+ed59bc5e091203e9e81d8aded45a137fadaf94ec refs/remotes/origin/archive/srv1-main-dirty-20260904
+fd8bd2e0451e1858ea3669b71205420ded19742e refs/remotes/origin/archive/srv1-pre-v0.2.3-sync-20260706T085407Z-20260904
+c7ed0e16e8b062b3e99d1a3ee5ee179af43d9909 refs/remotes/origin/codex/agent-content-canonical-win-20260816
+c57170f8f44dd44e179f1f8668a2cd385fd0c407 refs/remotes/origin/codex/disable-wayland-auto-update-20260814
+057010b65b8e163c3037cd3dc89979ddb8c8d3be refs/remotes/origin/codex/graphify-main-refresh-20260816
+28ec618b251ac12cd34b17e186a34d7094647432 refs/remotes/origin/codex/k3s-portainer-oci-plan
+0e81bac0be9ed5ccaa28f6905e4f1fe361c7f58f refs/remotes/origin/codex/meta-webhook-network-map
+906e315d77c1c3fe3d32795a2d5da0634e47607e refs/remotes/origin/codex/ops-k3s-canonical-win-20260816
+7c43ce78d137886904361377beb00b63d0ffee9f refs/remotes/origin/codex/phase54-execution-20260726
+c6e822b7035ded5bdc18011b0ea85139f5d932d8 refs/remotes/origin/codex/phase59-bootstrap-canonical-win-20260816c
+d416f6c99e620754735d586452b53af5e2efe959 refs/remotes/origin/codex/resource-governor-portable-runtime-20260816
+51bcdca7d321d88f45f398f8c3d7dd06736bbf9c refs/remotes/origin/codex/rustdesk-canonical-win-20260816b
+0da792ea0b9a659d9f5d7f075e57cedccfa7cd1d refs/remotes/origin/codex/srv1-active-preserve-20260816
+6b49f4ef697db1667c1db7485f77afd58c30077d refs/remotes/origin/codex/srv3-active-preserve-20260816
+089931c61fd22b7bb99e35bfbfb575913a65f104 refs/remotes/origin/codex/sso-canonical-win-20260816
+7254b2adbf901ad1a4a7e60d867d74cbc5de5169 refs/remotes/origin/docs/xrdp-skill-complete
+3e1b1fb85a5157549dcfa758323648f6a3777815 refs/remotes/origin/fix/xrdp-keyboard-fleet-drift-20260829
+af26339162af8eeece5552de4b600eac8200c663 refs/remotes/origin/integration/srv1-canonical-super-merge-20260723
+f851a0353e7ed3f03e736b571270ff7baaf8c357 refs/remotes/origin/main
+ec3b11f273341881845c2478459d3f5543da58f7 refs/remotes/origin/phase59-qwen-cutover
+662bd94df0277135060e4c1be8ef4f1a5e911728 refs/stash
+4fcbeb5233352009e3e5d67c69b327f1d068327a refs/tags/v0.2.0
+ce4e0fdf34ffa4699168d31de2d8afc77fdbac82 refs/tags/v0.2.1
+e109762b3ee2715cf3b9e2ea48f9bb8f71f92f11 refs/tags/v0.2.2
+f7c84e0090bf8981bb9b84a3f43de36c7974933d refs/tags/v0.2.3
+f851a0353e7ed3f03e736b571270ff7baaf8c357 HEAD
+3f9047cc8fb7023c7ceed66ce47d1f4f3c8f9991 worktrees/omni-xrdp-srv2-3f9047cc/HEAD
+41ba2acb7ffea0d002191efdded5547fca5404a9 worktrees/omni-xrdp-srv2-41ba2acb/HEAD
+af26339162af8eeece5552de4b600eac8200c663 worktrees/_omni-supermerge-test-af26339/HEAD
+0e117315b9aeff86efa9b0014999ee273dd2a7bd worktrees/_omni-srv-admin-canonical-20260816/HEAD
+The bundle records a complete history.
+The bundle uses this hash algorithm: sha1

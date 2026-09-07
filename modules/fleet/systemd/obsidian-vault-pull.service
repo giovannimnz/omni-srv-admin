@@ -1,0 +1,16 @@
+[Unit]
+Description=Obsidian vault pull-only sync
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/.local/lib/omni-fleet/obsidian-vault-pull.sh
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/GitHub/obsidian-vault %h/.local/state/omni

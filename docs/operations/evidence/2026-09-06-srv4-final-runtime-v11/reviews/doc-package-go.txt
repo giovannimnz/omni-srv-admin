@@ -1,0 +1,15 @@
+P0=0 P1=0 P2=0 P3=0
+
+No findings.
+
+- Freeze válido: schema/root/HEAD corretos; SHA-256 do freeze `126448a8b20d8197e71c719321a039196219cfc02916dd67050b25118e90cd5c`.
+- 2/2 arquivos correspondem ao freeze.
+- [SKILL.md](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/modules/agent-content-packs/packs/codex-skills/items/oci-arm64-new-server-bootstrap/SKILL.md): `11130` bytes, SHA-256 `eb3cdd32...40a952a`.
+- [manifest.yaml](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/modules/agent-content-packs/packs/codex-skills/manifest.yaml): `3103` bytes, SHA-256 `aee9f2e6...8cd5bef`; item hash, file hash e bytes conferem.
+- Sem self-reference impossível: o manifest efêmero fica no evidence pack, fora da skill allowlisted.
+- Workflow `dry-run → full apply sem resume → verify-only`, secrets, backups, Graphify, systemd e Obsidian conferem com source/runtime aceitos.
+- `validate-pack`: 5/5 OK. Focused: 100/100 PASS.
+- `git diff --check`: PASS.
+- Nenhum arquivo editado.
+
+VERDICT=GO

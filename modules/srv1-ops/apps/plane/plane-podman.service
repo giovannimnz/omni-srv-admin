@@ -1,0 +1,16 @@
+[Unit]
+Description=Plane Podman compose stack
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+WorkingDirectory=/home/ubuntu/GitHub/containers/plane-app
+ExecStart=/home/ubuntu/.local/bin/podman-compose --podman-path /usr/bin/podman --env-file .env -f podman-compose.yaml up -d
+ExecStop=/home/ubuntu/.local/bin/podman-compose --podman-path /usr/bin/podman --env-file .env -f podman-compose.yaml stop
+TimeoutStartSec=900
+TimeoutStopSec=180
+
+[Install]
+WantedBy=default.target

@@ -2,6 +2,13 @@
 
 remote: "giovanni-drive:"
 base: ATIUS-SRV/SRV-1/Backup
+orchestrator: atius-srv-1
+state_dir: /home/ubuntu/.local/state/omni/backup-gdrive
+retryable_exit_code: 75
+per_tick_timeout_seconds: 6900
+retention_requires_state: complete
+queue_hold_file: /home/ubuntu/.local/state/omni/rclone-fleet-queue.hold
+oauth_client_required_fields: [client_id, client_secret, token]
 
 sources:
   github:

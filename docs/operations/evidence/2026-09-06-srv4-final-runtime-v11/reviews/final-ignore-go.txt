@@ -1,0 +1,13 @@
+Freeze e hashes validados:
+
+- `.gitignore`: `00b8577...effe1d2`
+- `.graphifyignore`: `1195afa...c18486`
+- `root`, `HEAD`, schema e bytes conferem.
+- `/cli/build/` ignorado por Git e Graphify.
+- `.graphifyignore` preserva `.gitignore` byte a byte; sufixo contém apenas outputs derivados.
+- Nenhuma source real ou self-reference excluída.
+- Nenhuma edição realizada.
+
+P0=0 P1=0 P2=0 P3=0
+No findings.
+VERDICT=GO

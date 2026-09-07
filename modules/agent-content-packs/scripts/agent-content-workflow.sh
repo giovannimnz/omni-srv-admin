@@ -10,9 +10,9 @@ PYTHON_BIN="${PYTHON_BIN:-python}"
 OMNI=("$PYTHON_BIN" -m omni)
 
 PACKS=(hermes-skills codex-skills shared-agent-content)
-HERMES_TARGETS=(windows-hermes-default wsl-hermes-default srv1-hermes-default srv2-hermes-default srv3-hermes-default)
-CODEX_TARGETS=(windows-codex-default wsl-codex-default srv1-codex-default srv2-codex-default srv3-codex-default)
-SHARED_TARGETS=(windows-hermes-default wsl-hermes-default windows-codex-default wsl-codex-default srv1-hermes-default srv1-codex-default srv2-hermes-default srv2-codex-default srv3-hermes-default srv3-codex-default)
+HERMES_TARGETS=(windows-hermes-default wsl-hermes-default srv1-hermes-default srv2-hermes-default srv3-hermes-default srv4-hermes-default)
+CODEX_TARGETS=(windows-codex-default wsl-codex-default srv1-codex-default srv2-codex-default srv3-codex-default srv4-codex-default)
+SHARED_TARGETS=(windows-hermes-default wsl-hermes-default windows-codex-default wsl-codex-default srv1-hermes-default srv1-codex-default srv2-hermes-default srv2-codex-default srv3-hermes-default srv3-codex-default srv4-hermes-default srv4-codex-default)
 
 usage() {
   cat <<'EOF'
@@ -80,7 +80,7 @@ run_matrix() {
 }
 
 LOCAL_TARGETS=(windows-hermes-default wsl-hermes-default windows-codex-default wsl-codex-default)
-FLEET_TARGETS=(srv1-hermes-default srv1-codex-default srv2-hermes-default srv2-codex-default srv3-hermes-default srv3-codex-default)
+FLEET_TARGETS=(srv1-hermes-default srv1-codex-default srv2-hermes-default srv2-codex-default srv3-hermes-default srv3-codex-default srv4-hermes-default srv4-codex-default)
 ALL_TARGETS=("${LOCAL_TARGETS[@]}" "${FLEET_TARGETS[@]}")
 
 main() {

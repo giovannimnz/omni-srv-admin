@@ -16,11 +16,17 @@
 |---|---|---|
 | `/home/ubuntu/scripts/sync-vault.sh` | `modules/srv1-ops/scripts/sync-vault.sh` | copied + updated log path |
 | `/home/ubuntu/.local/bin/backup-srv1-to-gdrive.sh` | `modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh` | copied + updated GDrive layout/log path |
+| state resumível ausente | `modules/srv1-ops/scripts/backup-gdrive-state.py` | state JSON atômico `0600`, copy/verify/quarantine/finalize |
 | `/home/ubuntu/.local/bin/offload-dotbackups-to-gdrive.sh` | `modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh` | copied + updated GDrive layout/log path |
+| units live órfãs `offload-retired-artifacts-*` | `modules/srv1-ops/systemd/offload-retired-artifacts-to-gdrive.*` | versionadas, SRV-1-only, fleet lock e deadlines |
 | `/home/ubuntu/.local/bin/cleanup-local.sh` | `modules/srv1-ops/scripts/cleanup-local.sh` | copied + updated `.logs` retention |
 | `/home/ubuntu/.local/bin/backup-to-smb.sh` | `modules/srv1-ops/scripts/backup-to-smb.sh` | copied |
 | `/home/ubuntu/.local/bin/atius-web-healthcheck.sh` | `modules/srv1-ops/scripts/atius-web-healthcheck.sh` | copied as legacy |
 | `/home/ubuntu/.config/systemd/user/*backup*/*cleanup*` | `modules/srv1-ops/systemd/` | copied for reference |
+| `~/.config/systemd/user/container-cloudbeaver.service` + runtime compose | `modules/srv1-ops/apps/cloudbeaver/` | source-of-truth após recovery 2026-09-05 |
+| `~/.config/systemd/user/container-jenkins.service` + runtime compose | `modules/srv1-ops/apps/jenkins/` | source-of-truth após recovery 2026-09-05 |
+| `~/.config/systemd/user/plane-podman.service` + runtime compose | `modules/srv1-ops/apps/plane/` | source-of-truth após recovery 2026-09-05; `.env` continua fora do repo |
+| Quadlets/runtime preflight RustDesk + nft edge root | `modules/srv1-ops/apps/rustdesk/` | source-of-truth após recovery 2026-09-05; state/identity/segredos fora do repo |
 
 ## Candidates not migrated yet
 

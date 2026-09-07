@@ -1,0 +1,12 @@
+[Unit]
+Description=Verificação diária de artefatos aposentados
+
+[Timer]
+OnCalendar=*-*-* 06:15:00 America/Sao_Paulo
+AccuracySec=15min
+Persistent=true
+RandomizedDelaySec=15min
+Unit=offload-retired-artifacts-to-gdrive.service
+
+[Install]
+WantedBy=timers.target

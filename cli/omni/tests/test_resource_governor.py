@@ -49,9 +49,208 @@ def test_build_wrapper_canonicalizes_user_systemd_bus():
     assert "python3 -m omni srv1-ops resources run builds" in wrapper
     assert 'cd "$repo"' not in wrapper
     assert 'candidate="${HOME}/.cargo/bin/${name}"' in wrapper
+    assert 'find "${HOME}/.local/opt"' in wrapper
+    assert '"${HOME}"/.local/opt/node-*/bin/npm' in wrapper
     assert 'python3 -m omni srv1-ops resources run builds -- "$real_cmd" "$@"\n  exit $?' in wrapper
     assert "inside_build_cgroup" in wrapper
     assert 'grep -q \'omni-builds\'' in wrapper
+    assert "if inside_build_cgroup; then" in wrapper
+    assert 'if [[ "${OMNI_BUILD_CPU_GUARD_ACTIVE:-0}" == "1" ]] && inside_build_cgroup' not in wrapper
+
+
+def test_generic_resource_install_omits_srv1_app_watchdog():
+    generic = srv1_ops._resource_unit_names(generic_host=True)
+    srv1 = srv1_ops._resource_unit_names(generic_host=False)
+
+    assert "inviolable-watchdog.service" not in generic
+    assert "inviolable-watchdog.timer" not in generic
+    assert "resource-governor-doctor.timer" in generic
+    assert "resource-governor-patcher.service" in generic
+    assert "inviolable-watchdog.service" in srv1
+    assert "pm2-dump-sanitizer.service" not in generic
+    assert "pm2-dump-sanitizer.path" not in generic
+    assert "pm2-dump-sanitizer.timer" not in generic
+    assert "pm2-dump-sanitizer.service" in srv1
+    assert "pm2-dump-sanitizer.path" in srv1
+    assert "pm2-dump-sanitizer.timer" in srv1
+    assert "offload-dotbackups-to-gdrive.timer" in srv1_ops.RESOURCE_SRV1_ONLY_UNITS
+    assert "offload-dotbackups-to-gdrive.timer" not in generic
+    assert "offload-dotbackups-to-gdrive.service" in srv1_ops.RESOURCE_UNIT_NAMES
+    assert "offload-dotbackups-to-gdrive.timer" in srv1_ops.RESOURCE_UNIT_NAMES
+    assert "offload-dotbackups-to-gdrive.timer" in srv1_ops.RESOURCE_ENABLE_TIMERS
+
+
+def test_run_offload_dry_run_uses_cli_flag_and_live_uses_governed_service(monkeypatch):
+    calls=[]
+    monkeypatch.setattr(srv1_ops,"_run",lambda cmd,**kwargs: calls.append((cmd,kwargs)) or 0)
+    with pytest.raises(SystemExit):
+        srv1_ops.run_op.callback("offload-dotbackups",True)
+    assert calls[-1][0][-1] == "--dry-run"
+    with pytest.raises(SystemExit):
+        srv1_ops.run_op.callback("offload-dotbackups",False)
+    assert calls[-1][0] == ["systemctl","--user","start","offload-dotbackups-to-gdrive.service"]
+
+
+def test_generic_resource_install_purges_preexisting_srv1_units(monkeypatch, tmp_path):
+    calls: list[list[str]] = []
+
+    def fake_run(args, **kwargs):
+        calls.append(list(args))
+        if args[:3] == ["systemctl", "--user", "show"]:
+            name = args[3]
+            loaded = "loaded" if (tmp_path / name).exists() else "not-found"
+            return subprocess.CompletedProcess(args, 0, f"LoadState={loaded}\nActiveState=inactive\nUnitFileState=disabled\n", "")
+        return subprocess.CompletedProcess(args, 0, "", "")
+
+    monkeypatch.setattr(srv1_ops, "LIVE_SYSTEMD_DIR", tmp_path)
+    monkeypatch.setattr(srv1_ops, "RESOURCE_PURGE_BACKUP_ROOT", tmp_path / "purge-backups")
+    monkeypatch.setattr(srv1_ops.subprocess, "run", fake_run)
+    for name in srv1_ops.RESOURCE_SRV1_ONLY_UNITS:
+        (tmp_path / name).write_text("stale\n")
+
+    actions = srv1_ops._purge_srv1_only_units(dry_run=False, env={})
+
+    assert not [name for name in srv1_ops.RESOURCE_SRV1_ONLY_UNITS if (tmp_path / name).exists()]
+    for name in srv1_ops.RESOURCE_SRV1_ONLY_UNITS:
+        assert ["systemctl", "--user", "disable", "--now", name] in calls
+    assert any(action.startswith("removed SRV-1-only unit") for action in actions)
+
+
+def test_generic_resource_purge_preserves_unit_when_disable_fails(monkeypatch, tmp_path):
+    unit = "offload-dotbackups-to-gdrive.service"
+    target = tmp_path / unit
+    target.write_text("stale\n")
+    monkeypatch.setattr(srv1_ops, "LIVE_SYSTEMD_DIR", tmp_path)
+    monkeypatch.setattr(srv1_ops, "RESOURCE_PURGE_BACKUP_ROOT", tmp_path / "backups")
+
+    def fake_run(args, **kwargs):
+        if args[:3] == ["systemctl", "--user", "show"]:
+            name = args[3]
+            if name != unit:
+                return subprocess.CompletedProcess(args, 0, "LoadState=not-found\nActiveState=inactive\nUnitFileState=\n", "")
+            return subprocess.CompletedProcess(args, 0, "LoadState=loaded\nActiveState=active\nUnitFileState=enabled\n", "")
+        rc = 1 if args[:4] == ["systemctl", "--user", "disable", "--now"] else 0
+        if kwargs.get("check") and rc:
+            raise subprocess.CalledProcessError(rc,args)
+        return subprocess.CompletedProcess(args, rc, "", "")
+
+    monkeypatch.setattr(srv1_ops.subprocess, "run", fake_run)
+    with pytest.raises(srv1_ops.click.ClickException, match="could not purge"):
+        srv1_ops._purge_srv1_only_units(dry_run=False, env={})
+    assert target.read_text() == "stale\n"
+
+
+def test_generic_resource_purge_handles_dangling_symlink_and_restores_lot_on_later_failure(monkeypatch, tmp_path):
+    unit = "offload-dotbackups-to-gdrive.service"
+    target = tmp_path / unit
+    target.symlink_to(tmp_path / "missing")
+    monkeypatch.setattr(srv1_ops, "LIVE_SYSTEMD_DIR", tmp_path)
+    monkeypatch.setattr(srv1_ops, "RESOURCE_PURGE_BACKUP_ROOT", tmp_path / "backups")
+    monkeypatch.setattr(srv1_ops, "RESOURCE_SRV1_ONLY_UNITS", {unit})
+    calls=[]
+    def fake_run(args, **kwargs):
+        calls.append(list(args))
+        if args[:3] == ["systemctl", "--user", "show"]:
+            loaded = "loaded" if target.is_symlink() else "not-found"
+            return subprocess.CompletedProcess(args,0,f"LoadState={loaded}\nActiveState=inactive\nUnitFileState=disabled\n","")
+        return subprocess.CompletedProcess(args,0,"","")
+    monkeypatch.setattr(srv1_ops.subprocess,"run",fake_run)
+    records=[]
+    srv1_ops._purge_srv1_only_units(dry_run=False,env={},records=records)
+    assert not target.exists() and not target.is_symlink()
+    assert records and records[0]["symlink_target"].endswith("missing")
+    srv1_ops._restore_purged_units(records,{})
+    assert target.is_symlink()
+
+
+def test_restore_purged_units_fails_closed_when_systemd_restore_fails(monkeypatch, tmp_path):
+    unit = "offload-dotbackups-to-gdrive.service"
+    destination = tmp_path / unit
+    backup = tmp_path / "backup"
+    backup.write_text("unit\n")
+    def fake_run(args, **kwargs):
+        rc = 1 if args[:3] == ["systemctl", "--user", "daemon-reload"] else 0
+        if kwargs.get("check") and rc:
+            raise subprocess.CalledProcessError(rc, args)
+        return subprocess.CompletedProcess(args, rc, "", "")
+    monkeypatch.setattr(srv1_ops.subprocess, "run", fake_run)
+    with pytest.raises(srv1_ops.click.ClickException, match="rollback incomplete"):
+        srv1_ops._restore_purged_units(
+            [{"name": unit, "destination": str(destination), "backup": str(backup), "symlink_target": "", "enabled": True, "active": True}],
+            {},
+        )
+    assert destination.read_text() == "unit\n"
+
+
+def test_systemd_state_query_fails_closed_on_bus_error(monkeypatch):
+    monkeypatch.setattr(
+        srv1_ops.subprocess,
+        "run",
+        lambda args, **kwargs: subprocess.CompletedProcess(args, 1, "", "Failed to connect to bus"),
+    )
+    with pytest.raises(srv1_ops.click.ClickException, match="state query failed"):
+        srv1_ops._systemd_user_unit_state("demo.service", {})
+
+
+def test_resource_install_resets_only_failed_loaded_units(monkeypatch, tmp_path):
+    calls=[]
+    monkeypatch.setattr(srv1_ops,"LIVE_SYSTEMD_DIR",tmp_path)
+    monkeypatch.setattr(srv1_ops,"RESOURCE_UNIT_NAMES",["healthy.service","failed.service","never-loaded.service"])
+    monkeypatch.setattr(srv1_ops,"RESOURCE_ENABLE_TIMERS",[])
+    monkeypatch.setattr(srv1_ops,"RESOURCE_ENABLE_PATHS",[])
+    monkeypatch.setattr(srv1_ops,"RESOURCE_ENABLE_SERVICES",[])
+    monkeypatch.setattr(srv1_ops,"_copy_resource_units",lambda **kwargs: [])
+    monkeypatch.setattr(srv1_ops,"_purge_legacy_post_build_units",lambda **kwargs: [])
+    states={
+        "healthy.service":{"LoadState":"loaded","ActiveState":"inactive","UnitFileState":"static"},
+        "failed.service":{"LoadState":"loaded","ActiveState":"failed","UnitFileState":"static"},
+        "never-loaded.service":{"LoadState":"loaded","ActiveState":"inactive","UnitFileState":"static"},
+    }
+    monkeypatch.setattr(srv1_ops,"_systemd_user_unit_state",lambda name,env: states[name])
+    monkeypatch.setattr(srv1_ops.subprocess,"run",lambda args,**kwargs: calls.append(list(args)) or subprocess.CompletedProcess(args,0,"", ""))
+    actions=srv1_ops._install_resource_units(dry_run=False,run_audit_now=False)
+    assert ["systemctl","--user","reset-failed","failed.service"] in calls
+    assert not any("healthy.service" in call[3:] for call in calls if call[:3]==["systemctl","--user","reset-failed"])
+    assert any(action=="reset-failed failed.service" for action in actions)
+
+
+def test_restore_requires_unit_to_be_loaded(monkeypatch, tmp_path):
+    destination = tmp_path / "demo.service"
+    backup = tmp_path / "backup"
+    backup.write_text("[Service]\n")
+    def fake_run(args, **kwargs):
+        if args[:3] == ["systemctl","--user","show"]:
+            return subprocess.CompletedProcess(args,0,"LoadState=not-found\nActiveState=inactive\nUnitFileState=\n","")
+        return subprocess.CompletedProcess(args,0,"","")
+    monkeypatch.setattr(srv1_ops.subprocess,"run",fake_run)
+    with pytest.raises(srv1_ops.click.ClickException,match="rollback incomplete"):
+        srv1_ops._restore_purged_units(
+            [{"name":"demo.service","destination":str(destination),"backup":str(backup),"symlink_target":"","enabled":False,"active":False}],{}
+        )
+
+
+def test_build_profile_rejects_more_than_twenty_percent_of_host(monkeypatch):
+    monkeypatch.setattr(srv1_ops, "_host_cpu_count", lambda: 4)
+    with pytest.raises(srv1_ops.click.ClickException, match="20% host CPU"):
+        srv1_ops._profile_cpu_quota(
+            {"RG_PROFILE_BUILDS_CPU_TOTAL_PCT": "25"},
+            "RG_PROFILE_BUILDS_",
+            max_total_pct=20,
+        )
+    with pytest.raises(srv1_ops.click.ClickException, match="20% host CPU"):
+        srv1_ops._profile_cpu_quota(
+            {"RG_PROFILE_BUILDS_CPU_QUOTA": "100%"},
+            "RG_PROFILE_BUILDS_",
+            max_total_pct=20,
+        )
+    assert srv1_ops._profile_cpu_quota(
+        {"RG_PROFILE_BUILDS_CPU_TOTAL_PCT": "20"},
+        "RG_PROFILE_BUILDS_",
+        max_total_pct=20,
+    ) == "80%"
+    cgroup_init = (srv1_ops.MODULE / "scripts/resource-governor-cgroup-init.sh").read_text()
+    assert "validate_build_cpu_cap" in cgroup_init
+    assert "effective <= 20" in cgroup_init
 
 
 def test_resource_run_preserves_callers_working_directory(monkeypatch):
@@ -180,6 +379,7 @@ def test_doctor_detects_structural_quota_drift(monkeypatch, tmp_path):
     monkeypatch.setattr(doctor, "user_unit_state", lambda unit: {"enabled": "enabled", "active": "active", "healthy": True})
     monkeypatch.setattr(doctor, "cpu_psi_avg10", lambda: 0.0)
     monkeypatch.setattr(doctor, "swap_used_pct", lambda: 0.0)
+    monkeypatch.setattr(doctor, "memory_available_mib", lambda: 8192.0)
     monkeypatch.setattr(doctor.os, "cpu_count", lambda: 4)
 
     report = doctor.collect(
@@ -223,6 +423,37 @@ def test_post_build_scheduler_uses_bounded_queue(monkeypatch):
     assert output == ["queued: cleanup + snapshot + audit"]
     assert calls[0][1].endswith("resource-governor-hygiene-queue.py")
     assert "systemd-run" not in calls[0]
+
+
+def test_resource_run_schedules_hygiene_even_when_workload_raises(monkeypatch):
+    scheduled: list[str] = []
+    monkeypatch.setattr(srv1_ops, "_resource_config", lambda: {**srv1_ops.RESOURCE_DEFAULTS, "RG_PROFILE_BUILDS_SLICE": "omni-builds.slice", "RG_PROFILE_BUILDS_CPU_TOTAL_PCT": "20", "RG_PROFILE_BUILDS_SERIALIZE": "0"})
+    def fake_run(args, **kwargs):
+        if args and args[0] == "systemd-run":
+            raise RuntimeError("workload failed")
+        return 0
+    monkeypatch.setattr(srv1_ops, "_run", fake_run)
+    monkeypatch.setattr(srv1_ops, "_schedule_post_workload_hygiene", lambda _config, reason: scheduled.append(reason) or ["queued"])
+
+    with pytest.raises(RuntimeError, match="workload failed"):
+        srv1_ops.resource_run.callback("builds", False, True, ("make", "all"))
+    assert scheduled == ["profile=builds"]
+
+
+def test_resource_run_has_no_optimize_removable_exit_assertion() -> None:
+    source = Path(srv1_ops.__file__).read_text()
+    assert "assert rc is not None" not in source
+    assert "resource workload returned without an exit status" in source
+
+
+def test_post_build_scheduler_failure_is_not_ignored(monkeypatch):
+    monkeypatch.setattr(
+        srv1_ops.subprocess,
+        "run",
+        lambda cmd, **kwargs: subprocess.CompletedProcess(cmd, 9, "", "queue broken"),
+    )
+    with pytest.raises(srv1_ops.click.ClickException, match="queue failed"):
+        srv1_ops._schedule_post_workload_hygiene({}, "test")
 
 
 def test_hygiene_queue_coalesces_without_moving_deadlines(monkeypatch, tmp_path):
@@ -298,6 +529,27 @@ def test_heavy_hygiene_services_run_in_collective_build_slice():
         assert "OMNI_RESOURCE_HYGIENE_ACTIVE=1" in content
 
 
+def test_server_analysis_timer_is_versioned_and_srv1_only():
+    systemd = REPO / "modules" / "srv1-ops" / "systemd"
+    service = systemd / "server-analysis.service"
+    timer = systemd / "server-analysis.timer"
+
+    assert service.is_file()
+    assert timer.is_file()
+    assert "OnCalendar=*:0/15" in timer.read_text()
+    assert "Persistent=true" in timer.read_text()
+    assert "Requires=offload-dotbackups-to-gdrive.service" not in (srv1_ops.MODULE / "systemd/offload-dotbackups-to-gdrive.timer").read_text()
+    assert "SuccessExitStatus=1" in service.read_text()
+    assert "server-analysis.service" in srv1_ops.RESOURCE_UNIT_NAMES
+    assert "server-analysis.timer" in srv1_ops.RESOURCE_UNIT_NAMES
+    assert "server-analysis.timer" in srv1_ops.RESOURCE_ENABLE_TIMERS
+    assert "server-analysis.service" in srv1_ops.RESOURCE_SRV1_ONLY_UNITS
+    assert "server-analysis.timer" in srv1_ops.RESOURCE_SRV1_ONLY_UNITS
+    assert "server-analysis.timer" not in srv1_ops._resource_unit_names(
+        generic_host=True
+    )
+
+
 def test_graphify_auto_update_uses_build_slice_and_semaphore():
     content = (
         REPO
@@ -309,6 +561,27 @@ def test_graphify_auto_update_uses_build_slice_and_semaphore():
     assert "Slice=omni-builds.slice" in content
     assert "/usr/bin/flock --wait=7200" in content
     assert "resource-governor-builds.lock" in content
+    assert ".nvm/versions/node/v" not in content
+
+
+def test_hermes_telegram_unit_is_inviolable_and_version_independent():
+    content = (
+        REPO
+        / "modules"
+        / "srv1-ops"
+        / "systemd"
+        / "hermes-telegram.service"
+    ).read_text()
+
+    assert "Restart=always" in content
+    assert "RestartForceExitStatus=75" in content
+    assert "OOMScoreAdjust=-1000" in content
+    assert "OOMPolicy=continue" in content
+    assert "KillMode=mixed" in content
+    assert "ExecReload=/bin/kill -USR1 $MAINPID" in content
+    assert "TimeoutStopSec=210" in content
+    assert "/home/ubuntu/.local/bin" in content
+    assert ".nvm/versions/node/v" not in content
 
 
 def test_patcher_classifies_graphify_and_pytest_as_builds():

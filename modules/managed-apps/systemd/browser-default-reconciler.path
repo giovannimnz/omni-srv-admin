@@ -1,0 +1,9 @@
+[Unit]
+Description=Reconcile browser defaults whenever mimeapps changes
+
+[Path]
+PathChanged=%h/.config/mimeapps.list
+Unit=browser-default-reconciler.service
+
+[Install]
+WantedBy=default.target

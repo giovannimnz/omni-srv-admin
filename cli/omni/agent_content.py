@@ -45,6 +45,7 @@ def _load_index() -> dict[str, Any]:
 
 
 def _manifest_path(pack: str) -> Path:
+    _safe_identifier(pack, "pack")
     index = _load_index()
     entries = index.get("packs")
     if not isinstance(entries, list):
@@ -54,7 +55,8 @@ def _manifest_path(pack: str) -> Path:
             manifest = entry.get("manifest")
             if not manifest:
                 raise click.ClickException(f"pack sem manifest: {pack}")
-            return REPO / str(manifest)
+            rel = _safe_relative_path(manifest, f"manifest de {pack}")
+            return _contained_path(REPO, rel, f"manifest de {pack}")
     raise click.ClickException(f"pack não encontrado: {pack}")
 
 
@@ -79,7 +81,10 @@ def _sha256_file(path: Path) -> str:
 
 
 def _timestamp() -> str:
-    return datetime.now().strftime("%Y%m%d-%H%M%S")
+    return (
+        datetime.now().strftime("%Y%m%d-%H%M%S-%f")
+        + f"-{os.getpid()}-{os.urandom(4).hex()}"
+    )
 
 
 def _parse_frontmatter(text: str) -> dict[str, Any]:
@@ -103,11 +108,51 @@ def _scan_secrets(text: str) -> list[str]:
     return hits
 
 
+def _safe_relative_path(value: Any, label: str) -> PurePosixPath:
+    raw = str(value or "").strip().replace("\\", "/")
+    lexical_parts = raw.split("/")
+    path = PurePosixPath(raw)
+    if not raw or path.is_absolute() or any(part in {"", ".", ".."} for part in lexical_parts):
+        raise click.ClickException(f"path inseguro em {label}: {value!r}")
+    return path
+
+
+def _safe_identifier(value: Any, label: str) -> str:
+    raw = str(value or "").strip()
+    if not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]*", raw):
+        raise click.ClickException(f"identificador inseguro em {label}: {value!r}")
+    return raw
+
+
+def _contained_path(root: Path, rel: PurePosixPath, label: str) -> Path:
+    root_resolved = root.resolve()
+    candidate = root.joinpath(*rel.parts)
+    current = root
+    for part in rel.parts:
+        current = current / part
+        if current.is_symlink():
+            raise click.ClickException(f"symlink proibido em {label}: {current}")
+    resolved = candidate.resolve(strict=False)
+    if not resolved.is_relative_to(root_resolved):
+        raise click.ClickException(f"path escapa do root em {label}: {candidate}")
+    return candidate
+
+
+def _assert_tree_has_no_symlinks(root: Path, label: str) -> None:
+    if root.is_symlink():
+        raise click.ClickException(f"symlink proibido em {label}: {root}")
+    for path in root.rglob("*"):
+        if path.is_symlink():
+            raise click.ClickException(f"symlink proibido em {label}: {path}")
+
+
 def _pack_item_dir(pack: str, item: dict[str, Any]) -> Path:
     source_path = item.get("source_path")
     if not source_path:
         raise click.ClickException(f"item sem source_path: {item.get('name', '?')}")
-    return _manifest_path(pack).parent / str(source_path)
+    root = _manifest_path(pack).parent
+    rel = _safe_relative_path(source_path, f"source_path de {item.get('name', '?')}")
+    return _contained_path(root, rel, f"source_path de {item.get('name', '?')}")
 
 
 def _accessible_home(target: dict[str, Any]) -> Path | None:
@@ -120,6 +165,8 @@ def _accessible_home(target: dict[str, Any]) -> Path | None:
         posix_home = PurePosixPath(home)
         unc = "\\\\wsl.localhost\\" + distro + "\\" + "\\".join(posix_home.parts[1:])
         return Path(unc)
+    if runtime == "linux-local":
+        return Path(home).expanduser()
     return None
 
 
@@ -136,7 +183,8 @@ def _target_root(target: dict[str, Any], rel_path: str) -> Path:
     home_path = Path(home_str) if home_str else Path('.')
     skills_root = str(target.get('skills_root', '') or '')
     slash_root = str(target.get('slash_commands_root', '') or '')
-    normalized = rel_path.replace('\\', '/')
+    safe_rel = _safe_relative_path(rel_path, "install.rel_path") if rel_path else PurePosixPath()
+    normalized = safe_rel.as_posix() if rel_path else ''
     if normalized == 'skills' or normalized.startswith('skills/'):
         suffix = normalized[len('skills/'): ] if normalized.startswith('skills/') else ''
         base = Path(skills_root) if skills_root else (home_path / 'skills')
@@ -145,7 +193,9 @@ def _target_root(target: dict[str, Any], rel_path: str) -> Path:
         suffix = normalized[len('slash-commands/'): ] if normalized.startswith('slash-commands/') else ''
         base = Path(slash_root) if slash_root else (home_path / 'slash-commands')
         return base / suffix if suffix else base
-    return home_path / rel_path
+    if not rel_path:
+        return home_path
+    return home_path.joinpath(*safe_rel.parts)
 
 
 def _install_rel_path(target: dict[str, Any], item: dict[str, Any]) -> str | None:
@@ -170,14 +220,18 @@ def _ssh_base_command(target: dict[str, Any]) -> list[str]:
     user = str(target.get("user", ""))
     if not host or not user:
         raise click.ClickException("target ssh-linux sem host/user")
-    return [
+    command = [
         "ssh",
         "-o",
         "BatchMode=yes",
         "-o",
         "ConnectTimeout=10",
-        f"{user}@{host}",
     ]
+    identity_file = str(target.get("identity_file", "")).strip()
+    if identity_file:
+        command.extend(["-o", "IdentitiesOnly=yes", "-i", os.path.expanduser(identity_file)])
+    command.append(f"{user}@{host}")
+    return command
 
 
 def _ssh_run(target: dict[str, Any], command: str, timeout: int = 120) -> subprocess.CompletedProcess[str]:
@@ -228,9 +282,11 @@ def _ssh_file_sha256(target: dict[str, Any], remote_path: str) -> tuple[bool, st
 
 def _item_mappings(pack: str, item: dict[str, Any], target: dict[str, Any]) -> tuple[Path | None, Path | None, list[tuple[Path, Path]]]:
     item_dir = _pack_item_dir(pack, item)
+    if item_dir.exists():
+        _assert_tree_has_no_symlinks(item_dir, f"source tree de {item.get('name', '?')}")
     runtime = _target_runtime(target)
     home = _accessible_home(target)
-    if runtime not in {"windows", "wsl", "ssh-linux"}:
+    if runtime not in {"windows", "wsl", "ssh-linux", "linux-local"}:
         raise click.ClickException(f"runtime não suportado para sync: {target.get('runtime')}")
     product = str(target.get("product", ""))
     kind = str(item.get("kind", "skill"))
@@ -254,7 +310,8 @@ def _item_mappings(pack: str, item: dict[str, Any], target: dict[str, Any]) -> t
     rel_path = _install_rel_path(target, item)
     if rel_path is None:
         return item_dir, None, []
-    dest_root = home_path / str(rel_path)
+    safe_rel = _safe_relative_path(rel_path, f"install.rel_path de {item.get('name', '?')}")
+    dest_root = home_path.joinpath(*safe_rel.parts)
     for src in sorted(path for path in item_dir.rglob("*") if path.is_file()):
         rel = src.relative_to(item_dir)
         mappings.append((src, dest_root / rel))
@@ -262,18 +319,36 @@ def _item_mappings(pack: str, item: dict[str, Any], target: dict[str, Any]) -> t
 
 
 def _validate_item(pack: str, item: dict[str, Any]) -> dict[str, Any]:
-    item_dir = _pack_item_dir(pack, item)
     issues: list[str] = []
+    try:
+        _safe_identifier(item.get("name"), "item.name")
+    except click.ClickException as exc:
+        issues.append(str(exc))
+    try:
+        item_dir = _pack_item_dir(pack, item)
+    except click.ClickException as exc:
+        return {"name": item.get("name"), "ok": False, "issues": [str(exc)]}
     files = item.get("files", [])
     if not item_dir.exists():
         return {"name": item.get("name"), "ok": False, "issues": [f"source ausente: {item_dir}"]}
+    try:
+        _assert_tree_has_no_symlinks(item_dir, f"source tree de {item.get('name', '?')}")
+    except click.ClickException as exc:
+        issues.append(str(exc))
+    declared_paths: set[str] = set()
     for file_entry in files:
         rel = file_entry.get("path")
         expected = file_entry.get("sha256")
         if not rel:
             issues.append("entrada de file sem path")
             continue
-        path = item_dir / str(rel)
+        try:
+            safe_rel = _safe_relative_path(rel, f"files[].path de {item.get('name', '?')}")
+            path = _contained_path(item_dir, safe_rel, f"files[].path de {item.get('name', '?')}")
+            declared_paths.add(safe_rel.as_posix())
+        except click.ClickException as exc:
+            issues.append(str(exc))
+            continue
         if not path.exists():
             issues.append(f"arquivo ausente: {rel}")
             continue
@@ -296,6 +371,13 @@ def _validate_item(pack: str, item: dict[str, Any]) -> dict[str, Any]:
             secret_hits = _scan_secrets(text)
             if secret_hits:
                 issues.append(f"possible secret leak em {rel}: {', '.join(secret_hits)}")
+    actual_paths = {
+        path.relative_to(item_dir).as_posix()
+        for path in item_dir.rglob("*")
+        if path.is_file() and not path.is_symlink()
+    }
+    for extra in sorted(actual_paths - declared_paths):
+        issues.append(f"arquivo não declarado no manifest: {extra}")
     if str(item.get("kind")) == "skill-pack":
         has_skill = any(str(f.get("path", "")).endswith("SKILL.md") for f in files)
         if not has_skill:
@@ -303,8 +385,22 @@ def _validate_item(pack: str, item: dict[str, Any]) -> dict[str, Any]:
     else:
         required = item.get("required_files", [])
         for req in required:
-            if not (item_dir / str(req)).exists():
+            try:
+                safe_req = _safe_relative_path(req, f"required_files de {item.get('name', '?')}")
+                required_path = _contained_path(item_dir, safe_req, f"required_files de {item.get('name', '?')}")
+            except click.ClickException as exc:
+                issues.append(str(exc))
+                continue
+            if not required_path.exists():
                 issues.append(f"required file ausente: {req}")
+    install = item.get("install", {})
+    if isinstance(install, dict):
+        for product, entry in install.items():
+            if isinstance(entry, dict) and entry.get("rel_path"):
+                try:
+                    _safe_relative_path(entry["rel_path"], f"install.{product}.rel_path de {item.get('name', '?')}")
+                except click.ClickException as exc:
+                    issues.append(str(exc))
     return {"name": item.get("name"), "ok": not issues, "issues": issues, "file_count": len(files)}
 
 
@@ -386,7 +482,7 @@ def _copy_tree(src_root: Path, dst_root: Path) -> None:
     dst_root.parent.mkdir(parents=True, exist_ok=True)
     if dst_root.exists():
         shutil.rmtree(dst_root)
-    shutil.copytree(src_root, dst_root)
+    shutil.copytree(src_root, dst_root, symlinks=True)
 
 
 def _backup_file(src: Path, backup_root: Path, relative_to: Path) -> None:
@@ -394,6 +490,46 @@ def _backup_file(src: Path, backup_root: Path, relative_to: Path) -> None:
     dst = backup_root / rel
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copy2(src, dst)
+
+
+def _rollback_local_item(rollback: dict[str, Any]) -> None:
+    mode = str(rollback["mode"])
+    if mode == "tree":
+        destination = Path(rollback["destination"])
+        backup = Path(rollback["backup"])
+        shutil.rmtree(destination, ignore_errors=True)
+        if rollback.get("existed") and backup.exists():
+            shutil.copytree(backup, destination, symlinks=True)
+        return
+    if mode == "files":
+        for path in rollback.get("written", []):
+            candidate = Path(path)
+            if candidate.is_symlink() or candidate.is_file():
+                candidate.unlink(missing_ok=True)
+        home = Path(rollback["home"])
+        backup_root = Path(rollback["backup_root"])
+        for raw in rollback.get("backups", []):
+            source = Path(raw)
+            destination = home / source.relative_to(backup_root)
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copy2(source, destination)
+        return
+    raise click.ClickException(f"rollback local desconhecido: {mode}")
+
+
+def _assert_local_destination_safe(home: Path, destination: Path) -> None:
+    home = home.resolve()
+    try:
+        destination.relative_to(home)
+    except ValueError as exc:
+        raise click.ClickException(f"destino local fora do home: {destination}") from exc
+    cursor = destination
+    while cursor != home:
+        if cursor.is_symlink():
+            raise click.ClickException(f"symlink proibido no destino local: {cursor}")
+        cursor = cursor.parent
+    if destination.exists() and not destination.is_file() and not destination.is_dir():
+        raise click.ClickException(f"destino local não regular: {destination}")
 
 
 def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
@@ -405,7 +541,7 @@ def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
         return {"skipped": True, "reason": "invalid-validate-command"}
     runtime = _target_runtime(target)
     try:
-        if runtime == "windows":
+        if runtime in {"windows", "linux-local"}:
             result = subprocess.run([str(part) for part in cmd], capture_output=True, text=True, timeout=120)
         elif runtime == "wsl":
             distro = str(target.get("distro", ""))
@@ -421,69 +557,218 @@ def _run_validate_command(target: dict[str, Any]) -> dict[str, Any]:
     return {"ok": result.returncode == 0, "returncode": result.returncode, "stdout": result.stdout, "stderr": result.stderr}
 
 
+def _ssh_require_success(result: subprocess.CompletedProcess[str], action: str) -> None:
+    if result.returncode == 0:
+        return
+    detail = (result.stderr or result.stdout or "sem saída").strip()
+    raise click.ClickException(f"{action} falhou no target SSH: {detail}")
+
+
+def _ssh_rollback_item(target: dict[str, Any], rollback: dict[str, str]) -> None:
+    mode = rollback["mode"]
+    backup_root = rollback["backup_root"]
+    if mode == "tree":
+        remote_dest = rollback["remote_dest"]
+        command = (
+            "set -euo pipefail; "
+            f"dest={shlex.quote(remote_dest)}; before={shlex.quote(backup_root)}; "
+            'if [ -e "$before/tree" ] || [ -L "$before/tree" ]; then '
+            'rm -rf "$dest"; mkdir -p "$(dirname "$dest")"; cp -a "$before/tree" "$dest"; '
+            'elif [ -f "$before/ABSENT" ]; then rm -rf "$dest"; else exit 0; fi; '
+            'rm -f "$before/READY"; touch "$before/ROLLED_BACK"'
+        )
+    elif mode == "files":
+        dest_home = rollback["dest_home"]
+        command = (
+            "set -euo pipefail; "
+            f"home={shlex.quote(dest_home)}; before={shlex.quote(backup_root)}; "
+            'if [ ! -f "$before/READY" ]; then exit 0; fi; '
+            'if [ -f "$before/absent.list" ]; then '
+            'while IFS= read -r -d "" rel; do rm -f -- "$home/$rel"; done < "$before/absent.list"; fi; '
+            'test -f "$before/files.tgz"; tar -xzf "$before/files.tgz" -C "$home"; '
+            'rm -f "$before/READY"; touch "$before/ROLLED_BACK"'
+        )
+    else:
+        raise click.ClickException(f"rollback SSH desconhecido: {mode}")
+    _ssh_require_success(_ssh_run(target, command, timeout=300), "rollback")
+
+
+def _apply_ssh_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
+    dest_home = _target_home_str(target)
+    item_name = _safe_identifier(item.get("name"), "item.name")
+    transaction_root = str(
+        PurePosixPath(dest_home)
+        / "backups"
+        / "agent-content-sync"
+        / _timestamp()
+        / pack
+        / item_name
+    )
+    backup_root = str(PurePosixPath(transaction_root) / "before")
+
+    if str(item.get("kind")) == "skill-pack":
+        source_root = _pack_item_dir(pack, item) / str(target.get("product"))
+        if not source_root.exists():
+            raise click.ClickException(f"source_root ausente: {source_root}")
+        stage = str(PurePosixPath(transaction_root) / "stage" / "payload")
+        _ssh_extract_tree(target, source_root, transaction_root, "stage/payload")
+        rollback = {
+            "mode": "files",
+            "backup_root": backup_root,
+            "dest_home": dest_home,
+        }
+        command = (
+            "set -euo pipefail; "
+            f"home={shlex.quote(dest_home)}; stage={shlex.quote(stage)}; before={shlex.quote(backup_root)}; "
+            'mkdir -p "$home" "$before"; '
+            'find "$stage" -type f -printf "%P\\0" > "$before/entries.list"; '
+            ': > "$before/existing.list"; : > "$before/absent.list"; '
+            'while IFS= read -r -d "" rel; do '
+            'if [ -e "$home/$rel" ] || [ -L "$home/$rel" ]; then '
+            'printf "%s\\0" "$rel" >> "$before/existing.list"; '
+            'else printf "%s\\0" "$rel" >> "$before/absent.list"; fi; '
+            'done < "$before/entries.list"; '
+            'if [ -s "$before/existing.list" ]; then '
+            'tar -C "$home" --null -T "$before/existing.list" -czf "$before/files.tgz"; '
+            'else tar -C "$home" -czf "$before/files.tgz" --files-from /dev/null; fi; '
+            'rollback_files() { '
+            'while IFS= read -r -d "" rel; do rm -f -- "$home/$rel"; done < "$before/absent.list"; '
+            'tar -xzf "$before/files.tgz" -C "$home"; rm -f "$before/READY"; touch "$before/ROLLED_BACK"; }; '
+            "trap 'rc=$?; if [ \"$rc\" -ne 0 ] && [ -f \"$before/READY\" ]; then rollback_files; fi; exit \"$rc\"' EXIT; "
+            'touch "$before/READY"; '
+            'while IFS= read -r -d "" rel; do '
+            'dest="$home/$rel"; tmp="$dest.agent-content.$$"; mkdir -p "$(dirname "$dest")"; '
+            'rm -rf "$tmp"; cp -a "$stage/$rel" "$tmp"; mv -Tf "$tmp" "$dest"; '
+            'done < "$before/entries.list"; rm -rf "$stage"; trap - EXIT'
+        )
+    else:
+        source_root = _pack_item_dir(pack, item)
+        install = item.get("install", {})
+        product = str(target.get("product", ""))
+        if not isinstance(install, dict) or product not in install:
+            raise click.ClickException(f"item sem install para produto {product}: {item_name}")
+        rel_path = str(install[product].get("rel_path"))
+        remote_dest = str(PurePosixPath(str(_target_root(target, rel_path)).replace("\\", "/")))
+        stage = str(PurePosixPath(transaction_root) / "stage" / "tree")
+        _ssh_extract_tree(target, source_root, transaction_root, "stage/tree")
+        rollback = {
+            "mode": "tree",
+            "backup_root": backup_root,
+            "remote_dest": remote_dest,
+        }
+        command = (
+            "set -euo pipefail; "
+            f"dest={shlex.quote(remote_dest)}; stage={shlex.quote(stage)}; before={shlex.quote(backup_root)}; "
+            'mkdir -p "$before" "$(dirname "$dest")"; '
+            'rollback_tree() { '
+            'if [ -e "$before/tree" ] || [ -L "$before/tree" ]; then '
+            'rm -rf "$dest"; cp -a "$before/tree" "$dest"; '
+            'elif [ -f "$before/ABSENT" ]; then rm -rf "$dest"; fi; '
+            'rm -f "$before/READY"; touch "$before/ROLLED_BACK"; }; '
+            "trap 'rc=$?; if [ \"$rc\" -ne 0 ]; then rollback_tree; fi; exit \"$rc\"' EXIT; "
+            'if [ -e "$dest" ] || [ -L "$dest" ]; then mv "$dest" "$before/tree"; '
+            'else touch "$before/ABSENT"; fi; '
+            'touch "$before/READY"; mv "$stage" "$dest"'
+            '; trap - EXIT'
+        )
+
+    result = _ssh_run(target, command, timeout=300)
+    if result.returncode != 0:
+        try:
+            _ssh_rollback_item(target, rollback)
+        except click.ClickException:
+            pass
+        _ssh_require_success(result, "apply")
+
+    try:
+        post_status = _compute_diff(pack, item, target)
+    except Exception:
+        _ssh_rollback_item(target, rollback)
+        raise
+    if post_status["status"] != "noop":
+        _ssh_rollback_item(target, rollback)
+        raise click.ClickException(
+            f"verificação pós-write falhou para {item_name}; rollback aplicado: {post_status}"
+        )
+    return {
+        "item": item_name,
+        "backup_root": backup_root,
+        "post_status": post_status,
+        "_rollback": rollback,
+    }
+
+
 def _apply_item(pack: str, item: dict[str, Any], target: dict[str, Any]) -> dict[str, Any]:
     runtime = _target_runtime(target)
     if runtime == "ssh-linux":
-        # The legacy remote writer can replace content before a later reporting
-        # or validation failure. Keep apply fail-closed until it has a reviewed
-        # per-item transaction with rollback. SSH dry-run remains available.
-        raise click.ClickException(
-            "sync --apply para ssh-linux está desabilitado: exige transação e rollback remoto"
-        )
-    home = _accessible_home(target) if runtime in {"windows", "wsl"} else None
-    source_root, dest_root, mappings = _item_mappings(pack, item, target) if runtime in {"windows", "wsl"} else ( _pack_item_dir(pack, item), None, [] )
-    if runtime in {"windows", "wsl"}:
+        return _apply_ssh_item(pack, item, target)
+    home = _accessible_home(target) if runtime in {"windows", "wsl", "linux-local"} else None
+    source_root, dest_root, mappings = _item_mappings(pack, item, target) if runtime in {"windows", "wsl", "linux-local"} else ( _pack_item_dir(pack, item), None, [] )
+    if runtime in {"windows", "wsl", "linux-local"}:
         if home is None:
             raise click.ClickException(f"runtime não suportado para apply local: {target.get('runtime')}")
         backup_root = _backup_root(home) / _timestamp() / pack / str(item.get("name")) / "before"
         backup_root.mkdir(parents=True, exist_ok=True)
         if str(item.get("kind")) == "skill-pack":
+            backed_up: list[str] = []
             for _src, dst in mappings:
+                _assert_local_destination_safe(home, dst)
+                if dst.exists() and not dst.is_file():
+                    raise click.ClickException(f"destino local inseguro para skill-pack: {dst}")
                 if dst.exists() and dst.is_file():
                     _backup_file(dst, backup_root, home)
-            for src, dst in mappings:
-                dst.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copy2(src, dst)
+                    backed_up.append(str(backup_root / dst.relative_to(home)))
+            rollback = {
+                "mode": "files",
+                "home": str(home),
+                "backup_root": str(backup_root),
+                "backups": backed_up,
+                "written": [str(dst) for _, dst in mappings],
+            }
+            try:
+                for src, dst in mappings:
+                    dst.parent.mkdir(parents=True, exist_ok=True)
+                    temp = dst.with_name(f".{dst.name}.agent-content-{os.getpid()}")
+                    temp.unlink(missing_ok=True)
+                    shutil.copy2(src, temp)
+                    temp.replace(dst)
+            except Exception:
+                for _src, dst in mappings:
+                    dst.with_name(f".{dst.name}.agent-content-{os.getpid()}").unlink(missing_ok=True)
+                _rollback_local_item(rollback)
+                raise
         else:
             if source_root is None:
                 raise click.ClickException(f"item sem source_root: {item.get('name')}")
             if not isinstance(dest_root, Path):
                 raise click.ClickException(f"item sem destino resolvido: {item.get('name')}")
-            if dest_root.exists():
-                backup_target = backup_root / dest_root.name
+            _assert_local_destination_safe(home, dest_root)
+            existed = dest_root.exists()
+            backup_target = backup_root / dest_root.name
+            if existed:
                 if backup_target.exists():
                     shutil.rmtree(backup_target)
-                shutil.copytree(dest_root, backup_target)
-            _copy_tree(source_root, dest_root)
-        diff = _compute_diff(pack, item, target)
-        return {"item": item.get("name"), "backup_root": str(backup_root), "post_status": diff}
-
-    if runtime == "ssh-linux":
-        dest_home = _target_home_str(target)
-        backup_root = f"{dest_home}/backups/agent-content-sync/{_timestamp()}/{pack}/{item.get('name')}/before"
-        if str(item.get("kind")) == "skill-pack":
-            source_root = _pack_item_dir(pack, item) / str(target.get('product'))
-            if not source_root.exists():
-                raise click.ClickException(f"source_root ausente: {source_root}")
-            for src in sorted(path for path in source_root.rglob("*") if path.is_file()):
-                rel = src.relative_to(source_root).as_posix()
-                remote_path = str(PurePosixPath(dest_home) / PurePosixPath(rel))
-                remote_backup = str(PurePosixPath(backup_root) / PurePosixPath(rel))
-                cmd = f'mkdir -p {shlex.quote(str(PurePosixPath(remote_backup).parent))}; if [ -f {shlex.quote(remote_path)} ]; then cp {shlex.quote(remote_path)} {shlex.quote(remote_backup)}; fi'
-                _ssh_run(target, cmd, timeout=180)
-            _ssh_extract_tree(target, source_root, dest_home, '')
-        else:
-            source_root = _pack_item_dir(pack, item)
-            install = item.get('install', {})
-            product = str(target.get('product', ''))
-            if not isinstance(install, dict) or product not in install:
-                raise click.ClickException(f"item sem install para produto {product}: {item.get('name')}")
-            rel_path = str(install[product].get('rel_path'))
-            remote_dest = str(PurePosixPath(str(_target_root(target, rel_path)).replace('\\', '/')))
-            backup_cmd = f'mkdir -p {shlex.quote(backup_root)}; if [ -d {shlex.quote(remote_dest)} ]; then cp -a {shlex.quote(remote_dest)} {shlex.quote(backup_root)}/{shlex.quote(PurePosixPath(remote_dest).name)}; fi'
-            _ssh_run(target, backup_cmd, timeout=180)
-            _ssh_extract_tree(target, source_root, dest_home, rel_path)
-        return {"item": item.get("name"), "backup_root": backup_root, "post_status": {"item": item.get('name'), 'status': 'applied-ssh'}}
+                shutil.copytree(dest_root, backup_target, symlinks=True)
+            rollback = {
+                "mode": "tree",
+                "destination": str(dest_root),
+                "backup": str(backup_target),
+                "existed": existed,
+            }
+            try:
+                _copy_tree(source_root, dest_root)
+            except Exception:
+                _rollback_local_item(rollback)
+                raise
+        try:
+            diff = _compute_diff(pack, item, target)
+        except Exception:
+            _rollback_local_item(rollback)
+            raise
+        if diff["status"] != "noop":
+            _rollback_local_item(rollback)
+            raise click.ClickException(f"verificação pós-write local falhou; rollback aplicado: {diff}")
+        return {"item": item.get("name"), "backup_root": str(backup_root), "post_status": diff, "_rollback": rollback}
 
     raise click.ClickException(f"runtime não suportado para apply: {runtime}")
 
@@ -582,14 +867,37 @@ def sync(pack: str, target: str, item_filter: str | None, dry_run: bool, json_ou
             for item in diffs:
                 click.echo(f"- {item['item']}: status={item['status']} missing={item['missing']} changed={item['changed']} extra={item['extra']} unchanged={item['unchanged']}")
         return
-    applied = [_apply_item(pack, item, target_cfg) for item in items]
-    runtime_validation = _run_validate_command(target_cfg)
-    payload = {"pack": pack, "target": target, "mode": "apply", "results": applied, "runtime_validation": runtime_validation}
+    applied: list[dict[str, Any]] = []
+    try:
+        for item in items:
+            applied.append(_apply_item(pack, item, target_cfg))
+        runtime_validation = _run_validate_command(target_cfg)
+        if runtime_validation.get("ok") is False:
+            raise click.ClickException(
+                f"validação do runtime falhou após apply: {runtime_validation}"
+            )
+    except Exception:
+        if _target_runtime(target_cfg) == "ssh-linux":
+            for result in reversed(applied):
+                rollback = result.get("_rollback")
+                if isinstance(rollback, dict):
+                    _ssh_rollback_item(target_cfg, rollback)
+        elif _target_runtime(target_cfg) in {"windows", "wsl", "linux-local"}:
+            for result in reversed(applied):
+                rollback = result.get("_rollback")
+                if isinstance(rollback, dict):
+                    _rollback_local_item(rollback)
+        raise
+    public_applied = [
+        {key: value for key, value in result.items() if key != "_rollback"}
+        for result in applied
+    ]
+    payload = {"pack": pack, "target": target, "mode": "apply", "results": public_applied, "runtime_validation": runtime_validation}
     if json_output:
         click.echo(json.dumps(payload, indent=2, ensure_ascii=False))
     else:
         click.echo(f"pack={pack} target={target} mode=apply")
-        for item in applied:
+        for item in public_applied:
             post = item['post_status']
             click.echo(f"- {item['item']}: {_post_status_summary(post)}")
             click.echo(f"    backup={item['backup_root']}")

@@ -1,0 +1,10 @@
+services:
+  cloudbeaver:
+    image: docker.io/dbeaver/cloudbeaver:26.1.0
+    container_name: cloudbeaver
+    restart: unless-stopped
+    ports:
+      - "8978:8978"
+    volumes:
+      - /home/ubuntu/GitHub/containers/cloudbeaver/workspace_recent:/opt/cloudbeaver/workspace
+    userns_mode: keep-id

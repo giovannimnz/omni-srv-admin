@@ -117,3 +117,27 @@ targets:
       command:
       - codex
       - --version
+  srv4-codex-default:
+    product: codex
+    runtime: ssh-linux
+    host: atius-srv-4
+    user: ubuntu
+    identity_file: /home/ubuntu/.ssh/id_oracle
+    home: /home/ubuntu/.codex
+    skills_root: /home/ubuntu/.codex/skills
+    slash_commands_root: /home/ubuntu/.codex/slash-commands
+    validate:
+      command:
+      - codex
+      - --version
+  srv4-codex-local:
+    product: codex
+    runtime: linux-local
+    profile: default
+    home: /home/ubuntu/.codex
+    skills_root: /home/ubuntu/.codex/skills
+    slash_commands_root: /home/ubuntu/.codex/slash-commands
+    validate:
+      command:
+      - /home/ubuntu/.local/bin/codex
+      - --version

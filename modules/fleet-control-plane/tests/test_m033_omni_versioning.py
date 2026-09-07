@@ -15,6 +15,22 @@ from omni import fleet as fleet_module  # noqa: E402
 from omni.fleet_versioning import collect_omni_version  # noqa: E402
 
 
+def test_default_version_matrix_and_agent_commands_include_srv4():
+    matrix = fleet_module.load_omni_version_matrix()
+
+    assert "atius-srv-4" in matrix["target_hosts"]
+    assert matrix["hosts"]["atius-srv-4"] == {
+        "platform": "linux",
+        "repo_dir": "/home/ubuntu/GitHub/omni-srv-admin",
+        "track_branch": "main",
+        "desired_version": "0.2.5",
+        "command_key": "omni.self-update.linux",
+        "scheduler": "omni-fleet-agent.service",
+    }
+    assert "atius-srv-4" in fleet_module.LOCAL_COMMANDS["omni.fleet.heartbeat"]["allowed_host_ids"]
+    assert "atius-srv-4" in fleet_module.LOCAL_COMMANDS["omni.self-update.linux"]["allowed_host_ids"]
+
+
 def fake_git_runner(argv: list[str], cwd: Path | None, timeout: int):
     command = " ".join(argv)
     if argv[:3] == ["git", "rev-parse", "--abbrev-ref"]:

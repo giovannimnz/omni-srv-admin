@@ -37,6 +37,7 @@ bower_components
 
 # Compiled binary addons (https://nodejs.org/api/addons.html)
 build/Release
+/cli/build/
 
 # Dependency directories
 node_modules/
@@ -156,6 +157,8 @@ secrets/cloudflare-service-token.json
 **/secrets/cloudflare-service-token.json
 
 # Graphify: keep published map artifacts, ignore volatile build/cache state
+.planning/graphs/
+graphify-out/
 .planning/graphs/.last-build-*.json
 .planning/graphs/.rebuild.lock
 graphify-out/.rebuild.lock

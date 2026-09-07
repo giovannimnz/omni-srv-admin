@@ -5,16 +5,29 @@ owner: giovanni
 role: general
 access:
   ssh: ubuntu@10.14.1.14
-  public_ip: 137.131.156.141
+  identity_file: /home/ubuntu/.ssh/id_oracle
+  public_ip: 164.152.48.22
   oci_private_ip: 10.14.1.14
+  vpn_ip: 10.100.100.18
+  public_dns: atius-srv-4.atius.com.br
+  internal_dns: atius-srv-4.atius.internal
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
   arch: arm64
   desktop: lxde-xrdp
 status: active
+last_validated_at: 2026-09-06T23:43:30Z
+setup_seal:
+  manifest_sha256: aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788
+  file_count: 444
+  apply_run: 20260906T233823+0000-1549801
+  verify_run: 20260906T234149+0000-1558144
+  runtime_review: GO
+  backup_path: /home/ubuntu/.backups/srv4-final-runtime-preapply-20260906T205141+0000
 modules:
   - xrdp-abnt2
+  - ubuntu-pro-client
   - landscape-client
   - oracle-cloud-agent
   - unified-monitoring-agent
@@ -29,9 +42,22 @@ apps:
     install_path: /home/ubuntu/GitHub/omni-srv-admin
     source: https://github.com/giovannimnz/omni-srv-admin
     managed_by: omni-srv-admin
+    fleet_agent_version: 0.2.3
+    fleet_matrix_desired_version: 0.2.5
+    fleet_db_heartbeat: healthy
+    fleet_db_version_readback: pass
   - id: podman
     runtime: rootless
     install_type: apt-managed
+    compose_primary:
+      path: /home/ubuntu/.local/bin/podman-compose
+      version: 1.6.0
+    compose_fallback:
+      path: /usr/bin/podman-compose
+      version: 1.0.6
+      validation_env: PYTHONNOUSERSITE=1
+    socket_unit: podman.socket
+    linger: true
   - id: rust-toolchain
     runtime: local-rustup
     install_path: /home/ubuntu/.cargo/bin
@@ -41,20 +67,157 @@ apps:
   - id: zellij
     runtime: local-rustup-binary
     install_path: /home/ubuntu/.cargo/bin/zellij
+  - id: nodejs
+    runtime: local-user
+    install_path: /home/ubuntu/.local/opt/node-v24.20.0-linux-arm64
+    current_version: 24.20.0
+    npm_version: 11.19.0
+  - id: bun
+    runtime: local-user
+    install_path: /home/ubuntu/.bun/bin/bun
+    current_version: 1.4.2
+  - id: codex-cli
+    runtime: local-user
+    install_path: /home/ubuntu/.local/bin/codex
+    current_version: 0.153.4
+    auth_state: pending-host-login
+  - id: hermes-agent
+    runtime: local-user
+    install_path: /home/ubuntu/.hermes/hermes-agent
+    current_version: 0.21.0
+    source_commit: 01ae7a5668ce0fa2efca524a4567cacdd0786c95
+    source_commit_observed_at: 2026-09-06T09:15:00Z
+    auth_state: pending-host-login
+    mcp_servers: [gbrain_http, obsidian_http, oci_admin_http]
+    provider: custom:atius-router
+    model: gpt-5.6-sol
+    timezone: America/Sao_Paulo
+    source_policy: fleet-pinned-commit
+  - id: gsd-core
+    runtime: local-user
+    install_path: /home/ubuntu/.codex/gsd-core
+    hermes_install_path: /home/ubuntu/.hermes/gsd-core
+    current_version: 1.13.0
+  - id: graphify
+    runtime: local-user
+    install_path: /home/ubuntu/.local/bin/graphify
+    current_version: 0.9.23
+    openai_compat_version: 2.24.0
+    backend: atius-router-gpt
+    labeling_stream_patch: active
+    extraction_stream_patch: active
+  - id: obsidian
+    runtime: manual-appimage
+    install_path: /home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage
+    current_version: 1.12.7
+    replica_path: /home/ubuntu/GitHub/obsidian-vault/AiSecondBrain
+    sync_unit: obsidian-vault-pull.timer
+    sync_policy: pull-only
+  - id: chatgpt-desktop
+    runtime: apt-package
+    package: chatgpt
+    current_version: 26.901.51231
+    auth_state: pending-host-login
+  - id: google-chrome-stable
+    runtime: apt-package
+    package: google-chrome-stable
+    current_version: 152.0.7977.82-1
+    default_browser: true
+    desktop_entry: google-chrome.desktop
+    mime_handlers: [text/html, x-scheme-handler/http, x-scheme-handler/https]
+  - id: browser-default-reconciler
+    runtime: systemd-user
+    browser_desktop: google-chrome.desktop
+    codex_desktop: chatgpt.desktop
+    units:
+      - browser-default-reconciler.path
+      - browser-default-reconciler.timer
+    recovery_target_ms: 1000
+  - id: prometheus-node-exporter
+    runtime: systemd
+    unit: prometheus-node-exporter.service
+    current_version: 1.7.0-1ubuntu0.3+esm2
+    port: 9100
+    localhost_smoke: HTTP-200
+    public_edge: blocked-observational
+  - id: cockpit
+    runtime: systemd-socket
+    unit: cockpit.socket
+    current_version: 314-1
+    plugins: [cockpit-podman]
+    port: 9090
+    purpose: break-glass
+    localhost_smoke: HTTPS-200
+    public_edge: blocked-observational
+  - id: resource-governor
+    runtime: systemd-user
+    install_type: omni-generic-host
+    profile: generic-host
+    build_cpu_total_percent: 20
+    doctor_state: pass
   - id: xrdp-abnt2
     runtime: systemd
     units:
       - xrdp.service
       - xrdp-sesman.service
       - xrdp-abnt2-reconcile.timer
+    package_version: 0.9.24-4ubuntu0.1~esm1
+    freerdp_version: 2.11.5+dfsg1-1ubuntu0.1~esm6
+    tls:
+      cert_path: /etc/xrdp/atius-rdp/server.crt.pem
+      key_path: /etc/xrdp/atius-rdp/server.key.pem
+      issuer: ATIUS RDP Fleet Root CA
+      serial: '100C'
+      fingerprint_sha256: 7B:26:6A:45:87:98:21:A7:59:9C:07:16:51:B9:1D:4A:ED:BB:C6:40:28:85:D1:D1:1F:AB:3C:A1:BE:CF:C6:02
+      protocol: TLSv1.3
+      cipher: TLS_AES_256_GCM_SHA384
+      validated_at: 2026-09-06T06:55:21Z
+  - id: ubuntu-pro
+    runtime: system
+    attached: true
+    services: [esm-apps, esm-infra]
+    landscape_self_hosted_preserved: true
 network:
   vcn_cidr: 10.14.0.0/16
   subnet_cidr: 10.14.1.0/24
   subnet_route_table: Default Route Table for vcn-atius4
-  drg_state: pending-governed-onboarding
+  drg_state: active
+  wireguard_interface: wg100
+  wireguard_ip: 10.100.100.18
+  wireguard_role: reserve-fallback
+  internal_dns_server: 10.11.1.11
+  public_ip_lifetime: RESERVED
+  public_ip_previous_ephemeral: 137.131.156.141
+  admin_service_edge:
+    security_list_public_tcp_ports: [22]
+    observed_blocked_public_tcp_ports: [9090, 9100]
+    probe_origins: [atius-srv-1, atius-srv-2, atius-srv-3]
+    attached_nsg_rule_details: unavailable-in-current-oci-mcp
+    proof_level: observational-not-complete-security-list-nsg-union
 notes:
   - Public SSH is validated with the canonical Vault-managed public key.
   - The default subnet route table must retain 0.0.0.0/0 through the IGW.
-  - Do not attach the host to the central DRG outside a governed cross-tenancy plan.
+  - DRG cross-tenancy is active; 10.14.1.14 reaches the four OCI/DRG peers.
+  - Reserved Public IP 164.152.48.22 replaced ephemeral 137.131.156.141 through an OCI OperationPlan.
+  - WireGuard 10.100.100.18 is a reserve path. Slot 10.100.100.14 remains assigned to the historical GIOVANNI-UBUNTU-S23 peer and was not reused.
+  - Codex and Hermes Agent are installed and preconfigured; OAuth login remains host-local and pending Giovanni.
+  - Hermes Agent está pinado no seal fleet-validado 01ae7a5668ce0fa2efca524a4567cacdd0786c95. O backup pre-update-2026-09-06-060309.zip e a orphan ref preservam o HEAD 9e23028e; config/doctor, MCPs 115/16/12 e smoke SRV4_FULL_SETUP_HERMES_OK passaram. OAuth continua host-local e pendente.
+  - GSD Core 1.13.0/full e Graphify 0.9.23 estão instalados para Codex/Hermes; ambos os manifests GSD passaram 868/868, incluindo 72 skills relocadas do Codex.
+  - "proc_f7b5314f81e7 exit 23 was a post-workload harness failure: curl piped to head closed the Node Exporter metrics pipe after a valid first line. Current services and endpoints pass. Podman Compose was promoted from APT fallback 1.0.6 to user-local 1.6.0 with config/run/down smoke and zero residue. Public 9090/9100 time out from SRV-1/2/3; Security List exposes only TCP/22. Attached NSG rule details remain unavailable, so public block is observational rather than a complete OCI union seal."
+  - "proc_2df37032fe87 upgraded ChatGPT to 26.901.41600; the full setup on 2026-09-06 superseded it with ChatGPT 26.901.51231. Current apt check/upgradable/reboot state is PASS/0/no."
+  - ChatGPT 26.901.51231 and Google Chrome Stable 152.0.7977.82-1 are installed from official ARM64 APT repositories. Chrome is the explicitly approved default browser on SRV-4 because Brave is absent; `text/html`, HTTP and HTTPS resolve to `google-chrome.desktop`, while `x-scheme-handler/codex` remains `chatgpt.desktop`.
+  - Agent content uses Git-backed item-scoped packs, never whole-root replacement. Current declared pack mappings are noop for Codex 11 files, Hermes 19, shared-Hermes 10 and shared-Codex 20; host-specific extras are preserved. Current root discovery counts are 31 Codex and 449 Hermes skills, with Hermes GSD manifest 737/737.
+  - Omni Fleet Agent 0.2.3 publica cache local em `~/.logs/fleet/` e escreve `TbNodes`/`TbVersion` via PgBouncer. O heartbeat autônomo avançou 90 segundos com PID/invocation estáveis; `omni-version-matrix.json` inclui o SRV-4 com desired version 0.2.5.
+  - Resource governor generic-host passed doctor and a real build scope in omni-builds.slice at 20% total host CPU.
+  - Obsidian replica is pull-only; authoritative writes remain on atius-srv-1.
+  - O setup canônico `modules/fleet/scripts/oci-arm64-host-setup.sh` concluiu 17/17 steps em apply e 17/17 em verify-only. Receipts incluem o SHA de `SOURCE-MANIFEST.json`, que cobre todos os artifacts staged e impede resume com código parcial/stale.
+  - O seal v11 stable final usa manifest aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788, full apply sem resume 20260906T233823+0000-1549801 e verify-only 20260906T234149+0000-1558144. Runtime review independente retornou GO com zero findings; delta final de ignores também recebeu GO.
+  - O build guard usa membership real em `omni-builds.slice` para evitar reentrada/deadlock em chains como npm -> node-gyp -> make.
+  - O primeiro login pós-setup foi validado no display :1: TLSv1.3, ATIUS RDP Fleet Root CA, ABNT2 0x00000416, LXDE/LXPanel/PCManFM, oito pastas XDG e captura visual dark sem erro. `ATIUS-SRV-4.rdp` no Windows usa 10.100.100.18 e assinatura do publisher ATIUS v4.
+  - Watchers de teclado/painel agora encerram em até 10 segundos quando o X display desaparece; sessões abandoned c3/c4 e seus quatro processos órfãos foram removidos.
   - Landscape self-hosted account is standalone; use the public message-system
     endpoint and HTTP ping endpoint, never the stale SaaS profile.
+  - O package de setup é gerado por builder/allowlist versionados; keyrings/sources oficiais de ChatGPT/Chrome e browser-default-reconciler fazem parte do fresh-host contract.
+  - SRV-1/2/3/4 resolvem atius-srv-4.atius.internal para 10.14.1.14 pelo stub local; o route-only drop-in 60-atius-internal.conf eliminou NXDOMAIN nos peers sem quebrar resolução pública.
+  - Graphify exclui .planning/graphs e graphify-out do corpus; o rebuild removeu 1577 nodes autorreferenciais, zero nodes reais e adicionou 107 nodes reais.
+  - proc_6c7a69a68341 permanece FAIL histórico de cleanup pós-restore; o backup canônico passou 15/15 checksums, root/user compare 0/0, Git bundle 0 e zero scratch residual.

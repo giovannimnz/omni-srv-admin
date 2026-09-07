@@ -1,0 +1,27 @@
+[Unit]
+Description=Reconcile browser MIME defaults without desktop portal activation
+Documentation=file://%h/GitHub/omni-srv-admin/modules/managed-apps/README.md
+
+[Service]
+Type=oneshot
+EnvironmentFile=-%h/.config/omni/browser-default-reconciler.env
+ExecStart=/usr/bin/python3 %h/.local/libexec/browser-default-reconciler.py --mimeapps %h/.config/mimeapps.list --state %h/.local/state/omni/browser-default-reconciler.json --lock %h/.local/state/omni/browser-default-reconciler.lock --browser-desktop=${BROWSER_DESKTOP} --codex-desktop=${CODEX_DESKTOP}
+UMask=0077
+Slice=omni-background.slice
+CPUWeight=10
+IOWeight=10
+MemoryMax=64M
+TasksMax=32
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=read-only
+ReadWritePaths=%h/.config/mimeapps.list %h/.local/state/omni
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictSUIDSGID=true
+LockPersonality=true
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=default.target

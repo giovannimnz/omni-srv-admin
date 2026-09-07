@@ -1,0 +1,12 @@
+P0=0 P1=0 P2=0 P3=0
+
+No findings.
+
+- Manifest SHA-256: PASS
+- Arquivos: 2/2 hashes e tamanhos válidos
+- Branch/HEAD/root: PASS
+- Ops tests: 59/59 PASS
+- Static check do patch: PASS
+- Nenhum arquivo-fonte alterado
+
+VERDICT=GO

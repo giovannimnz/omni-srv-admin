@@ -1,0 +1,23 @@
+{
+  "bytes": 5634420094,
+  "paths": [
+    "/tmp/srv4-v10-package-review.VaLD9p",
+    "/tmp/srv4-source-hotfix-final",
+    "/tmp/srv4-source-final",
+    "/tmp/srv4-review-fixed-final",
+    "/tmp/srv4-setup-source-final-seal-v9",
+    "/tmp/srv4-setup-source",
+    "/tmp/srv4-source-hotfix-final.tgz",
+    "/tmp/srv4-source-final.tgz",
+    "/tmp/srv4-review-fixed-final.tgz",
+    "/tmp/srv4-setup-source-final-seal-v9.tgz",
+    "/home/ubuntu/.rustup/downloads/396e17c0a669399823d0e59073686a4e5f50b2d41f062f1d3afc9210f9d3553d",
+    "/home/ubuntu/.rustup/downloads/7d4c136278b61096d46ef23019c29acb7ee5a2a1412cbfee5050316110c6fd8c",
+    "/home/ubuntu/.rustup/downloads/89fb83041993b48816514815606f53a5264729b8b449671a6b291e6f0ae74f40",
+    "/home/ubuntu/.rustup/downloads/9bf796a6ec5b004813ebd0b650775a7c6a4f3aae97ad362ae294798dca4f3b23",
+    "/home/ubuntu/.rustup/downloads/c09425a7f300af148c0bdfded0e7d5f1fe7c075b2b9674e8935afa769297b2f6",
+    "/home/ubuntu/.rustup/downloads/c45f51fcd8d381dc43be800eb2b93dff86fb772ff29ba693657057c47d08ff16"
+  ],
+  "remaining": [],
+  "removed": 16
+}

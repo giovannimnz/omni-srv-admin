@@ -13,6 +13,7 @@ APPIMAGE="$RELEASES_DIR/Obsidian-${VERSION}-arm64.AppImage"
 STABLE_APPIMAGE="$INSTALL_DIR/Obsidian.AppImage"
 STATE_FILE="$STATE_DIR/current-release.json"
 ICON_FILE="$ICONS_DIR/obsidian.png"
+XRDP_LAUNCH="$HOME/.local/bin/xrdp-launch"
 VAULT_PATH="${OBSIDIAN_VAULT_PATH:-$HOME/GitHub/obsidian-vault/AiSecondBrain}"
 APPEARANCE_JSON="${OBSIDIAN_APPEARANCE_JSON:-$HOME/GitHub/obsidian-vault/AiSecondBrain/.obsidian/appearance.json}"
 BACKUP_ROOT="${OBSIDIAN_BACKUP_ROOT:-/var/backups/omni-managed-apps}"
@@ -69,6 +70,7 @@ backup_metadata() {
     "$HOME/.config/obsidian" \
     "$HOME/.local/bin/obsidian" \
     "$HOME/.local/bin/obsidian-tray" \
+    "$XRDP_LAUNCH" \
     "$HOME/Desktop/obsidian.desktop" \
     "$HOME/.local/share/applications/obsidian.desktop" \
     "/usr/share/applications/obsidian.desktop"
@@ -127,6 +129,18 @@ set_appearance_defaults() {
   jq '.titlebarStyle = "native"' "$APPEARANCE_JSON" >"$tmp"
   mv "$tmp" "$APPEARANCE_JSON"
   chmod 664 "$APPEARANCE_JSON" 2>/dev/null || true
+}
+
+write_xrdp_launch() {
+  mkdir -p "$(dirname "$XRDP_LAUNCH")"
+  cat >"$XRDP_LAUNCH" <<'WRAPPER'
+#!/bin/sh
+[ -n "${DISPLAY:-}" ] || DISPLAY=:1
+[ -n "${XAUTHORITY:-}" ] || XAUTHORITY="${HOME}/.Xauthority"
+export DISPLAY XAUTHORITY
+exec "$@"
+WRAPPER
+  chmod 755 "$XRDP_LAUNCH"
 }
 
 write_wrappers() {
@@ -302,12 +316,17 @@ write_launchers() {
 verify_install() {
   local failed=0
   [ -x "$STABLE_APPIMAGE" ] || { printf 'missing executable: %s\n' "$STABLE_APPIMAGE" >&2; failed=1; }
+  [ -x "$XRDP_LAUNCH" ] || { printf 'missing executable: %s\n' "$XRDP_LAUNCH" >&2; failed=1; }
   [ "$(jq -r '.titlebarStyle // empty' "$APPEARANCE_JSON" 2>/dev/null || true)" = "native" ] || {
     printf 'appearance default drift: titlebarStyle is not native\n' >&2
     failed=1
   }
   grep -q "$HOME/.local/bin/obsidian-tray" "$HOME/Desktop/obsidian.desktop" 2>/dev/null || failed=1
   grep -q "Icon=$ICON_FILE" "$HOME/Desktop/obsidian.desktop" 2>/dev/null || failed=1
+  if command -v desktop-file-validate >/dev/null 2>&1; then
+    desktop-file-validate "$HOME/Desktop/obsidian.desktop" || failed=1
+    desktop-file-validate "$HOME/.local/share/applications/obsidian.desktop" || failed=1
+  fi
   grep -q 'kdocker -b -q -w' "$HOME/.local/bin/obsidian-tray" 2>/dev/null || {
     printf 'obsidian-tray drift: KDocker must dock by existing window id\n' >&2
     failed=1
@@ -328,6 +347,7 @@ case "$MODE" in
     download_appimage
     ensure_icon
     set_appearance_defaults
+    write_xrdp_launch
     write_wrappers
     write_launchers
     verify_install

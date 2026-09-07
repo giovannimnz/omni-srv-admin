@@ -1,0 +1,16 @@
+{
+  "default": "atius-router",
+  "providers": {
+    "atius-router": {
+      "type": "openai-compatible",
+      "base_url": "https://router.atius.com.br/v1",
+      "model": "embedding-gte-v1",
+      "env_key": "ATIUS_ROUTER_API_KEY",
+      "dimensions": 768,
+      "max_batch_size": 4,
+      "headers": {
+        "X-Embedding-Workload": "batch"
+      }
+    }
+  }
+}

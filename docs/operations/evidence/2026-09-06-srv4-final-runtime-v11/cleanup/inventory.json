@@ -1,0 +1,155 @@
+{
+  "classification": "reproducible-session-artifacts",
+  "items": [
+    {
+      "bytes": 981408759,
+      "files": 448,
+      "kind": "dir",
+      "mode": "0o700",
+      "path": "/tmp/srv4-v10-package-review.VaLD9p",
+      "uid": 1001
+    },
+    {
+      "bytes": 589262043,
+      "files": 445,
+      "kind": "dir",
+      "mode": "0o700",
+      "path": "/tmp/srv4-source-hotfix-final",
+      "source_manifest_sha256": "22bc6ba2cee36acc695a6b0066333b5771689407d781a92f150feecdea1c93da",
+      "uid": 1001
+    },
+    {
+      "bytes": 589260245,
+      "files": 445,
+      "kind": "dir",
+      "mode": "0o700",
+      "path": "/tmp/srv4-source-final",
+      "source_manifest_sha256": "4708aed0fd1a8f388e98ca4076c7a4124ce16c733730214a8042f49d32088b7a",
+      "uid": 1001
+    },
+    {
+      "bytes": 589176870,
+      "files": 444,
+      "kind": "dir",
+      "mode": "0o775",
+      "path": "/tmp/srv4-review-fixed-final",
+      "source_manifest_sha256": "3185ed265c638d89414b2835e31b39e4a74ad2ba83ef7d2e38e590e5c64a2d7d",
+      "uid": 1001
+    },
+    {
+      "bytes": 589135132,
+      "files": 433,
+      "kind": "dir",
+      "mode": "0o775",
+      "path": "/tmp/srv4-setup-source-final-seal-v9",
+      "source_manifest_sha256": "b7c72ceacccccaf75d30730f0ed74297a5b403ce4615466e6ac9f3c38205f26c",
+      "uid": 1001
+    },
+    {
+      "bytes": 588910241,
+      "files": 384,
+      "kind": "dir",
+      "mode": "0o775",
+      "path": "/tmp/srv4-setup-source",
+      "source_manifest_sha256": "8ffbb942c5c281da7d1361bea63c22d031b4ce07612612f08c0df5a177604192",
+      "uid": 1001
+    },
+    {
+      "bytes": 392148263,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o600",
+      "path": "/tmp/srv4-source-hotfix-final.tgz",
+      "sha256": "80d1066f6a051045bc1abc69114663e1badf3fa4ac0972e769344a178bc7d847",
+      "uid": 1001
+    },
+    {
+      "bytes": 392147895,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o600",
+      "path": "/tmp/srv4-source-final.tgz",
+      "sha256": "8941002f6f2d4bbe2d21e989df8e7e27c89a60d169011b5cab1e046a0d638d6e",
+      "uid": 1001
+    },
+    {
+      "bytes": 392138179,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o600",
+      "path": "/tmp/srv4-review-fixed-final.tgz",
+      "sha256": "e987988707a94f61be5c5fda9372aa2709668ec557c91afefad0cf83ebd3bb35",
+      "uid": 1001
+    },
+    {
+      "bytes": 392124103,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o600",
+      "path": "/tmp/srv4-setup-source-final-seal-v9.tgz",
+      "sha256": "e8138b1148e09a9a0fe33a2612c768b8123e7162ac663aa8b2881d2930929da6",
+      "uid": 1001
+    },
+    {
+      "bytes": 3915700,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o664",
+      "path": "/home/ubuntu/.rustup/downloads/396e17c0a669399823d0e59073686a4e5f50b2d41f062f1d3afc9210f9d3553d",
+      "sha256": "396e17c0a669399823d0e59073686a4e5f50b2d41f062f1d3afc9210f9d3553d",
+      "uid": 1001
+    },
+    {
+      "bytes": 2288788,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o664",
+      "path": "/home/ubuntu/.rustup/downloads/7d4c136278b61096d46ef23019c29acb7ee5a2a1412cbfee5050316110c6fd8c",
+      "sha256": "7d4c136278b61096d46ef23019c29acb7ee5a2a1412cbfee5050316110c6fd8c",
+      "uid": 1001
+    },
+    {
+      "bytes": 66438268,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o664",
+      "path": "/home/ubuntu/.rustup/downloads/89fb83041993b48816514815606f53a5264729b8b449671a6b291e6f0ae74f40",
+      "sha256": "89fb83041993b48816514815606f53a5264729b8b449671a6b291e6f0ae74f40",
+      "uid": 1001
+    },
+    {
+      "bytes": 30815124,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o664",
+      "path": "/home/ubuntu/.rustup/downloads/9bf796a6ec5b004813ebd0b650775a7c6a4f3aae97ad362ae294798dca4f3b23",
+      "sha256": "9bf796a6ec5b004813ebd0b650775a7c6a4f3aae97ad362ae294798dca4f3b23",
+      "uid": 1001
+    },
+    {
+      "bytes": 11108572,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o664",
+      "path": "/home/ubuntu/.rustup/downloads/c09425a7f300af148c0bdfded0e7d5f1fe7c075b2b9674e8935afa769297b2f6",
+      "sha256": "c09425a7f300af148c0bdfded0e7d5f1fe7c075b2b9674e8935afa769297b2f6",
+      "uid": 1001
+    },
+    {
+      "bytes": 24141912,
+      "files": 1,
+      "kind": "file",
+      "mode": "0o664",
+      "path": "/home/ubuntu/.rustup/downloads/c45f51fcd8d381dc43be800eb2b93dff86fb772ff29ba693657057c47d08ff16",
+      "sha256": "c45f51fcd8d381dc43be800eb2b93dff86fb772ff29ba693657057c47d08ff16",
+      "uid": 1001
+    }
+  ],
+  "preserved": [
+    "/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding",
+    "atius-srv-4:/home/ubuntu/.local/share/omni-setup-source",
+    "atius-srv-4:/home/ubuntu/.backups/srv4-final-runtime-preapply-20260906T205141+0000"
+  ],
+  "schema": "srv4-validation-temp-cleanup-v1",
+  "total_bytes": 5634420094
+}

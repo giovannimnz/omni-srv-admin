@@ -3,12 +3,20 @@
 # Targets: open-webui, hermes-pers, paperclip-pers legacy leftovers.
 set -euo pipefail
 
+EXPECTED_HOST="${RETIRED_OFFLOAD_EXPECTED_HOST:-atius-srv-1}"
+if [ "$(hostname -s)" != "$EXPECTED_HOST" ]; then
+  printf 'SKIP wrong-host current=%s expected=%s\n' "$(hostname -s)" "$EXPECTED_HOST" >&2
+  exit 0
+fi
+
 HOME_DIR="/home/ubuntu"
 REMOTE="giovanni-drive:ATIUS-SRV/SRV-1/Backup/retired-services"
 RCLONE_CONFIG="$HOME_DIR/.config/rclone/rclone.conf"
 LOG="$HOME_DIR/.logs/offload-retired-artifacts.log"
 BWLIMIT_KBPS="${BWLIMIT_KBPS:-54000}"
 LOCK="/tmp/offload-retired-artifacts.lock"
+FLEET_LOCK="${FLEET_LOCK:-/tmp/rclone-fleet.lock}"
+FLEET_HOLD_FILE="${RCLONE_FLEET_HOLD_FILE:-$HOME_DIR/.local/state/omni/rclone-fleet-queue.hold}"
 
 log() { echo "[$(date '+%Y-%m-%d %H:%M:%S')] $*" | tee -a "$LOG"; }
 
@@ -92,8 +100,14 @@ backup_path() {
 }
 
 main() {
+  if [ -f "$FLEET_HOLD_FILE" ]; then
+    log "SKIP fleet-hold-active file=$FLEET_HOLD_FILE"
+    exit 0
+  fi
   exec 9>"$LOCK"
   flock -n 9 || { log "SKIP already_running"; exit 0; }
+  exec 8>"$FLEET_LOCK"
+  flock -n 8 || { log "SKIP fleet-lock-held lock=$FLEET_LOCK"; exit 0; }
   mkdir -p "$(dirname "$LOG")"
   log "=================================================="
   log "OFFLOAD RETIRED ARTIFACTS INICIO bwlimit=${BWLIMIT_KBPS}k"

@@ -1,0 +1,11 @@
+[Unit]
+Description=Sanitize inherited secrets from PM2 persistence
+Documentation=file://%h/GitHub/omni-srv-admin/docs/security/retired-shared-credential-remediation-2026-09-05.md
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/python3 %h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/pm2-dump-sanitizer.py
+WorkingDirectory=%h/GitHub/omni-srv-admin
+UMask=0077
+NoNewPrivileges=true
+PrivateTmp=true

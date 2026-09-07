@@ -1,0 +1,88 @@
+model:
+  default: gpt-5.6-sol
+  provider: custom:atius-router
+  base_url: https://router.atius.com.br/v1
+  api_key: ${ATIUS_ROUTER_API_KEY}
+  api_mode: chat_completions
+  context_length: 1050000
+  max_tokens: 128000
+  aliases:
+    gpt-5.4: custom:atius-router/gpt-5.4
+    gpt-5.6-sol: custom:atius-router/gpt-5.6-sol
+
+custom_providers:
+  - name: Atius Router
+    base_url: https://router.atius.com.br/v1
+    key_env: ATIUS_ROUTER_API_KEY
+    model: gpt-5.6-sol
+    api_mode: chat_completions
+    discover_models: true
+    models:
+      gpt-5.6-sol:
+        context_length: 1000000
+        max_output_tokens: 128000
+      gpt-5.4:
+        context_length: 1000000
+        max_output_tokens: 128000
+      gpt-5.4-mini:
+        context_length: 272000
+        max_output_tokens: 64000
+
+timezone: America/Sao_Paulo
+
+display:
+  language: pt-BR
+  interface: cli
+  skin: default
+  streaming: true
+  show_reasoning: false
+  inline_diffs: true
+  file_mutation_verifier: true
+  final_response_markdown: strip
+
+memory:
+  memory_enabled: true
+  user_profile_enabled: true
+  memory_char_limit: 2200
+  user_char_limit: 1375
+  nudge_interval: 10
+
+delegation:
+  provider: custom:atius-router
+  model: gpt-5.6-sol
+  max_iterations: 500
+  max_concurrent_children: 6
+  max_spawn_depth: 1
+  child_timeout_seconds: 600
+  reasoning_effort: medium
+  inherit_mcp_toolsets: true
+
+auxiliary:
+  compression:
+    provider: custom:atius-router
+    model: gpt-5.6-sol
+    timeout: 120
+  title_generation:
+    provider: custom:atius-router
+    model: gpt-5.4-mini
+    timeout: 60
+
+mcp_servers:
+  gbrain_http:
+    url: https://mcp.atius.com.br/gbrain
+    headers:
+      Authorization: Bearer ${ATIUS_MCP_TOKEN}
+    connect_timeout: 15
+    timeout: 120
+  obsidian_http:
+    url: https://mcp.atius.com.br/obsidian
+    headers:
+      Authorization: Bearer ${ATIUS_MCP_TOKEN}
+    connect_timeout: 15
+    timeout: 120
+  oci_admin_http:
+    url: https://mcp.atius.com.br/oci-admin
+    headers:
+      Authorization: Bearer ${ATIUS_MCP_TOKEN}
+    connect_timeout: 15
+    timeout: 120

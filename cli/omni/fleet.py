@@ -87,14 +87,14 @@ LOCAL_COMMANDS: dict[str, dict[str, Any]] = {
         "argv": [sys.executable, "-c", "print('omni.noop ok')"],
         "default_profile": "interactive",
         "requires_approval": True,
-        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3"],
+        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"],
     },
     "omni.fleet.heartbeat": {
         "description": "Internal heartbeat and telemetry collection.",
         "internal": "heartbeat",
         "default_profile": "interactive",
         "requires_approval": False,
-        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3"],
+        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"],
     },
     "omni.resource.snapshot": {
         "description": "Collect local resource-governor snapshot when available.",
@@ -119,7 +119,7 @@ LOCAL_COMMANDS: dict[str, dict[str, Any]] = {
         ],
         "default_profile": "interactive",
         "requires_approval": True,
-        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3"],
+        "allowed_host_ids": ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"],
     },
     "omni.self-update.windows": {
         "description": "Apply approved omni-srv-admin update on Windows host checkout.",

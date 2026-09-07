@@ -1,0 +1,11 @@
+[Unit]
+Description=Server analysis — every 15 minutes
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/server-analysis.md
+
+[Timer]
+OnCalendar=*:0/15
+Persistent=true
+RandomizedDelaySec=30
+
+[Install]
+WantedBy=default.target

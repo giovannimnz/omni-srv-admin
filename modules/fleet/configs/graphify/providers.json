@@ -1,0 +1,8 @@
+{
+  "atius-router-gpt": {
+    "base_url": "https://router.atius.com.br/v1",
+    "default_model": "gpt-5.4-mini",
+    "env_key": "ATIUS_ROUTER_API_KEY",
+    "stream": true
+  }
+}

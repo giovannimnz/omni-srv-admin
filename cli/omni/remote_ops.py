@@ -9,14 +9,18 @@ Uso:
 """
 from __future__ import annotations
 
+from concurrent.futures import ThreadPoolExecutor
 import os
+import signal
 import subprocess
 import sys
 import json
 import shlex
+import time
 from pathlib import Path
 
 import click
+import yaml
 
 REPO = Path(os.environ.get("OMNI_SRV_ADMIN", str(Path(__file__).resolve().parents[2])))
 HOSTS_DIR = REPO / "inventory" / "hosts"
@@ -67,12 +71,19 @@ def _parse_host(path: Path, requested_id: str) -> tuple[Path, str, str]:
     text = path.read_text()
     ssh_val = ""
     host_id_val = path.stem
+    section = ""
     for line in text.splitlines():
+        if not line.strip() or line.lstrip().startswith("#"):
+            continue
+        indent = len(line) - len(line.lstrip(" "))
         ls = line.strip()
-        if ls.startswith("ssh:"):
+        if indent == 0:
+            section = ls[:-1] if ls.endswith(":") else ""
+            if ls.startswith("id:"):
+                host_id_val = ls.split(":", 1)[1].strip().strip('"').strip("'")
+            continue
+        if section == "access" and indent == 2 and ls.startswith("ssh:"):
             ssh_val = ls.split(":", 1)[1].strip().strip('"').strip("'")
-        if ls.startswith("id:"):
-            host_id_val = ls.split(":", 1)[1].strip().strip('"').strip("'")
     if not ssh_val:
         raise click.ClickException(f"Host {path.stem} sem configuração SSH")
     return path, ssh_val, host_id_val
@@ -88,12 +99,39 @@ def _yaml_scalar(path: Path, key: str) -> str:
     return ""
 
 
+def _inventory(path: Path) -> dict:
+    data = yaml.safe_load(path.read_text()) or {}
+    if not isinstance(data, dict):
+        raise click.ClickException(f"Inventário inválido: {path}")
+    return data
+
+
+def _split_ssh_target(target: str) -> tuple[str, str, int | None]:
+    user_host = target.strip()
+    if "@" not in user_host:
+        raise click.ClickException(f"target SSH sem usuário: {target}")
+    user, host_port = user_host.split("@", 1)
+    host = host_port
+    port: int | None = None
+    if host_port.count(":") == 1:
+        candidate_host, candidate_port = host_port.rsplit(":", 1)
+        if candidate_port.isdigit():
+            host = candidate_host
+            port = int(candidate_port)
+    if not user or not host:
+        raise click.ClickException(f"target SSH inválido: {target}")
+    return user, host, port
+
+
 def _ssh_candidates(path: Path, ssh_target: str) -> list[str]:
     """Retorna alvos SSH em ordem: inventario, VPN, publico ou publico primeiro via env."""
+    data = _inventory(path)
+    raw_access = data.get("access")
+    access: dict = raw_access if isinstance(raw_access, dict) else {}
     user = ssh_target.split("@", 1)[0] if "@" in ssh_target else "ubuntu"
-    oci_private_ip = _yaml_scalar(path, "oci_private_ip")
-    vpn_ip = _yaml_scalar(path, "vpn_ip")
-    public_ip = _yaml_scalar(path, "public_ip")
+    oci_private_ip = str(access.get("oci_private_ip") or "")
+    vpn_ip = str(access.get("vpn_ip") or "")
+    public_ip = str(access.get("public_ip") or "")
     prefer_public = os.environ.get("OMNI_SRV_PUBLIC_FIRST", "0") == "1"
 
     candidates: list[str] = []
@@ -102,6 +140,11 @@ def _ssh_candidates(path: Path, ssh_target: str) -> list[str]:
         if target and target not in candidates:
             candidates.append(target)
 
+    route_order = access.get("ssh_route_order")
+    if isinstance(route_order, list) and route_order:
+        for target in route_order:
+            add(str(target))
+        return candidates
     if prefer_public and public_ip:
         add(f"{user}@{public_ip}")
     if oci_private_ip:
@@ -114,13 +157,20 @@ def _ssh_candidates(path: Path, ssh_target: str) -> list[str]:
     return candidates
 
 
-def _ssh_run(ssh_target: str, cmd: str | list[str], timeout: int = 300) -> subprocess.CompletedProcess:
+def _ssh_run(
+    ssh_target: str,
+    cmd: str | list[str],
+    timeout: int | float = 300,
+    *,
+    identity_file: str = "",
+) -> subprocess.CompletedProcess:
     """Executa comando via SSH e retorna resultado."""
     if isinstance(cmd, list):
-        cmd_str = " ".join(cmd)
+        cmd_str = shlex.join([str(part) for part in cmd])
     else:
         cmd_str = cmd
     
+    user, host, port = _split_ssh_target(ssh_target)
     full_cmd = [
         "ssh",
         "-o",
@@ -129,36 +179,123 @@ def _ssh_run(ssh_target: str, cmd: str | list[str], timeout: int = 300) -> subpr
         "BatchMode=yes",
         "-o",
         "StrictHostKeyChecking=accept-new",
-        ssh_target,
+    ]
+    if identity_file:
+        full_cmd.extend(["-o", "IdentitiesOnly=yes", "-i", os.path.expanduser(identity_file)])
+    if port is not None:
+        full_cmd.extend(["-p", str(port)])
+    full_cmd.extend([
+        f"{user}@{host}",
         "bash",
         "-lc",
         shlex.quote(cmd_str),
-    ]
-    return subprocess.run(full_cmd, capture_output=True, text=True, timeout=timeout)
+    ])
+    return _run_process_group(full_cmd, timeout=timeout)
 
 
-def _ssh_run_any(path: Path, ssh_target: str, cmd: str | list[str], timeout: int = 300) -> subprocess.CompletedProcess:
-    """Executa via SSH tentando VPN/public fallback quando o alvo primario nao conecta."""
-    last: subprocess.CompletedProcess | None = None
-    for target in _ssh_candidates(path, ssh_target):
+def _run_process_group(argv: list[str], *, timeout: int | float) -> subprocess.CompletedProcess[str]:
+    """Executa argv e elimina o process group inteiro quando o timeout expira."""
+    proc = subprocess.Popen(
+        argv,
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True,
+        start_new_session=True,
+    )
+    try:
+        stdout, stderr = proc.communicate(timeout=timeout)
+    except subprocess.TimeoutExpired as exc:
         try:
-            result = _ssh_run(target, cmd, timeout=timeout)
+            os.killpg(proc.pid, signal.SIGTERM)
+        except ProcessLookupError:
+            pass
+        try:
+            stdout, stderr = proc.communicate(timeout=3)
+        except subprocess.TimeoutExpired:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
+            stdout, stderr = proc.communicate()
+        raise subprocess.TimeoutExpired(
+            argv,
+            timeout,
+            output=stdout,
+            stderr=stderr,
+        ) from exc
+    return subprocess.CompletedProcess(argv, proc.returncode, stdout, stderr)
+
+
+def _ssh_run_any(path: Path, ssh_target: str, cmd: str | list[str], timeout: int | float = 300) -> subprocess.CompletedProcess:
+    """Seleciona uma rota SSH por probe e executa o payload uma única vez."""
+    data = _inventory(path)
+    raw_access = data.get("access")
+    access: dict = raw_access if isinstance(raw_access, dict) else {}
+    identity_file = str(access.get("identity_file") or "")
+    last: subprocess.CompletedProcess | None = None
+    candidates = _ssh_candidates(path, ssh_target)
+    deadline = time.monotonic() + float(timeout)
+    for target in candidates:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            last = subprocess.CompletedProcess(
+                args=target,
+                returncode=255,
+                stdout="",
+                stderr="timeout",
+            )
+            break
+        probe_timeout = min(12.0, remaining)
+        try:
+            probe = _ssh_run(
+                target,
+                "printf __OMNI_SSH_READY__",
+                timeout=probe_timeout,
+                identity_file=identity_file,
+            )
         except subprocess.TimeoutExpired:
             last = subprocess.CompletedProcess(args=target, returncode=255, stdout="", stderr="timeout")
             continue
-        if result.returncode == 255 and any(s in result.stderr.lower() for s in ("timed out", "no route", "connection refused")):
-            last = result
+        if probe.returncode == 0 and probe.stdout.strip() == "__OMNI_SSH_READY__":
+            payload_timeout = deadline - time.monotonic()
+            if payload_timeout <= 0:
+                raise subprocess.TimeoutExpired(cmd, timeout)
+            # Never retry a payload on another route: it may have side effects.
+            return _ssh_run(
+                target,
+                cmd,
+                timeout=payload_timeout,
+                identity_file=identity_file,
+            )
+        if probe.returncode == 255 and any(
+            text in probe.stderr.lower()
+            for text in (
+                "timed out",
+                "no route",
+                "connection refused",
+                "permission denied",
+                "host key verification failed",
+                "connection closed",
+                "could not resolve",
+            )
+        ):
+            last = probe
             continue
-        return result
+        last = probe
     if last is not None:
         return last
-    return _ssh_run(ssh_target, cmd, timeout=timeout)
+    return subprocess.CompletedProcess(
+        args=ssh_target,
+        returncode=255,
+        stdout="",
+        stderr="no SSH candidates",
+    )
 
 
-def _run_host(path: Path, ssh_target: str, hid: str, cmd: str, timeout: int = 300) -> subprocess.CompletedProcess:
+def _run_host(path: Path, ssh_target: str, hid: str, cmd: str, timeout: int | float = 300) -> subprocess.CompletedProcess:
     """Executa localmente no SRV-1 quando aplicavel, senao por SSH."""
     if hid in LOCAL_HOST_IDS and os.environ.get("OMNI_SRV_FORCE_SSH", "0") != "1":
-        return subprocess.run(["bash", "-lc", cmd], capture_output=True, text=True, timeout=timeout)
+        return _run_process_group(["bash", "-lc", cmd], timeout=timeout)
     return _ssh_run_any(path, ssh_target, cmd, timeout=timeout)
 
 
@@ -168,27 +305,26 @@ def _list_hosts() -> list[dict]:
     hosts = []
     for path in sorted(hosts_dir.glob("*.yaml")):
         text = path.read_text()
-        data = {"id": path.stem, "role": "", "status": "", "ssh": "", "aliases": ""}
+        data = {"id": path.stem, "role": "", "status": "", "ssh": "", "aliases": "", "os": ""}
         aliases = []
-        in_aliases = False
+        section = ""
         for line in text.splitlines():
-            ls = line.strip()
-            if ls.startswith("ssh:"):
-                data["ssh"] = ls.split(":", 1)[1].strip().strip('"').strip("'")
-            if ls.startswith("role:"):
-                data["role"] = ls.split(":", 1)[1].strip().strip('"')
-            if ls.startswith("status:"):
-                data["status"] = ls.split(":", 1)[1].strip().strip('"')
-            if ls.startswith("id:"):
-                data["id"] = ls.split(":", 1)[1].strip().strip('"').strip("'")
-            if ls == "aliases:":
-                in_aliases = True
+            if not line.strip() or line.lstrip().startswith("#"):
                 continue
-            if in_aliases:
-                if ":" in ls and not ls.startswith("-"):
-                    in_aliases = False
-                elif ls.startswith("- "):
-                    aliases.append(ls[2:].strip())
+            indent = len(line) - len(line.lstrip(" "))
+            ls = line.strip()
+            if indent == 0:
+                section = ls[:-1] if ls.endswith(":") else ""
+                for key in ("id", "role", "status"):
+                    if ls.startswith(f"{key}:"):
+                        data[key] = ls.split(":", 1)[1].strip().strip('"').strip("'")
+                continue
+            if section == "aliases" and indent == 2 and ls.startswith("- "):
+                aliases.append(ls[2:].strip().strip('"').strip("'"))
+            elif section == "access" and indent == 2 and ls.startswith("ssh:"):
+                data["ssh"] = ls.split(":", 1)[1].strip().strip('"').strip("'")
+            elif section == "platform" and indent == 2 and ls.startswith("os:"):
+                data["os"] = ls.split(":", 1)[1].strip().strip('"').strip("'")
         if aliases:
             data["aliases"] = ", ".join(aliases)
         hosts.append(data)
@@ -198,7 +334,12 @@ def _list_hosts() -> list[dict]:
 def _host_ids_for_arg(host_id: str) -> list[str]:
     if host_id != "all":
         return [host_id]
-    return [h["id"] for h in _list_hosts() if h.get("status", "") != "retired"]
+    return [
+        h["id"]
+        for h in _list_hosts()
+        if h.get("status", "") == "active"
+        and not str(h.get("os", "")).startswith("windows")
+    ]
 
 
 def _storage_audit_script() -> str:
@@ -217,19 +358,22 @@ ps -eo pid,comm,args | grep -E 'apt|dpkg|unattended|do-release' | grep -v grep |
 echo "-- journal"
 journalctl --disk-usage 2>/dev/null || true
 echo "-- podman df"
-podman system df 2>/dev/null || true
+timeout --signal=TERM --kill-after=2s 10s podman system df 2>/dev/null || true
 echo "-- pm2 logs"
-du -sh "$HOME/.pm2/logs" 2>/dev/null || true
+timeout --signal=TERM --kill-after=2s 5s du -sh "$HOME/.pm2/logs" 2>/dev/null || true
 echo "-- home top"
-timeout 45s du -x -h -d1 "$HOME" 2>/dev/null | sort -h | tail -25 || true
+timeout --signal=TERM --kill-after=2s 20s du -x -h -d1 "$HOME" 2>/dev/null | sort -h | tail -25 || true
 echo "-- varlog top"
-timeout 20s du -x -h -d1 /var/log 2>/dev/null | sort -h | tail -20 || true
+timeout --signal=TERM --kill-after=2s 10s du -x -h -d1 /var/log 2>/dev/null | sort -h | tail -20 || true
 echo "-- podman storage"
-du -sh "$HOME/.local/share/containers/storage" 2>/dev/null || true
+timeout --signal=TERM --kill-after=2s 10s du -sh "$HOME/.local/share/containers/storage" 2>/dev/null || true
 echo "-- candidate bulky backups"
-find "$HOME" -xdev -maxdepth 1 \( -name 'pre-upgrade-24.04-backup' -o -name 'srv3-disk-relief-before-config-clone-*' -o -name '.config-clone-backups' -o -name '.backups' \) -exec du -sh {} \; 2>/dev/null | sort -h || true
+for candidate in "$HOME/pre-upgrade-24.04-backup" "$HOME"/srv3-disk-relief-before-config-clone-* "$HOME/.config-clone-backups" "$HOME/.backups"; do
+  [ -e "$candidate" ] || continue
+  timeout --signal=TERM --kill-after=2s 5s du -sh "$candidate" 2>/dev/null || true
+done
 echo "-- large media-ish >100M"
-find "$HOME" -xdev -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -size +100M -printf '%s %p\n' 2>/dev/null | sort -n | tail -30 | numfmt --field=1 --to=iec-i --suffix=B || true
+timeout --signal=TERM --kill-after=2s 20s find "$HOME" -xdev -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -size +100M -printf '%s %p\n' 2>/dev/null | sort -n | tail -30 | numfmt --field=1 --to=iec-i --suffix=B || true
 """
 
 
@@ -498,16 +642,60 @@ def remote_cleanup(host_id: str, dry_run: bool, include_volumes: bool, phase: st
 @click.option("--timeout", default=180, help="Timeout por host em segundos.")
 def storage_audit(host_id: str, timeout: int) -> None:
     """Auditoria read-only de storage/logs/containers/caches por host ou all."""
-    for item in _host_ids_for_arg(host_id):
-        path, ssh_target, hid = _find_host(item)
+    items = _host_ids_for_arg(host_id)
+
+    def collect(item: str) -> dict[str, object]:
+        try:
+            path, ssh_target, hid = _find_host(item)
+            result = _run_host(
+                path,
+                ssh_target,
+                hid,
+                _storage_audit_script(),
+                timeout=timeout,
+            )
+            return {
+                "host": hid,
+                "status": "ok" if result.returncode == 0 else "remote-error",
+                "result": result,
+            }
+        except subprocess.TimeoutExpired:
+            return {"host": item, "status": "timeout"}
+        except Exception as exc:
+            return {"host": item, "status": "runner-error", "error": str(exc)}
+
+    if host_id == "all" and len(items) > 1:
+        with ThreadPoolExecutor(
+            max_workers=min(4, len(items)),
+            thread_name_prefix="storage-audit",
+        ) as executor:
+            outcomes = list(executor.map(collect, items))
+    else:
+        outcomes = [collect(item) for item in items]
+
+    counts = {"ok": 0, "remote-error": 0, "timeout": 0, "runner-error": 0}
+    for outcome in outcomes:
+        hid = str(outcome["host"])
         click.echo(f"\n=== Storage audit {hid} ===")
-        r = _run_host(path, ssh_target, hid, _storage_audit_script(), timeout=timeout)
+        status = str(outcome["status"])
+        counts[status] += 1
+        if status == "timeout":
+            click.echo(f"timeout: host excedeu {timeout}s", err=True)
+            continue
+        if status == "runner-error":
+            click.echo(f"runner-error: {outcome.get('error', 'unknown')}", err=True)
+            continue
+        r = outcome["result"]
+        assert isinstance(r, subprocess.CompletedProcess)
         if r.stdout:
             click.echo(r.stdout.rstrip())
         if r.stderr:
             click.echo(f"stderr: {r.stderr.rstrip()}", err=True)
         if r.returncode != 0:
             click.echo(f"rc={r.returncode}", err=True)
+    click.echo(
+        "\nsummary " + " ".join(f"{key}={value}" for key, value in counts.items())
+    )
 
 
 @srv.command("autoclean")

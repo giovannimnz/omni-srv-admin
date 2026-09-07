@@ -1,0 +1,15 @@
+P0=0 P1=0 P2=0 P3=0
+
+No findings.
+
+- Manifest e 2/2 hashes/tamanhos: PASS.
+- Semântica `not-loaded/inactive/failed/bus-error`: PASS fail-closed.
+- `reset-failed` limitado às units realmente `failed`.
+- `100/100` testes com warnings como erro: PASS.
+- Static/compile `optimize=2`/diff check: PASS.
+- Backup SRV-4: 5 archives, SHA-256 e restore inventory PASS.
+- Runtime: zero failed units; timers ativos; system/user managers `running`.
+- Side effect observado de `systemctl show`: apenas carregamento transitório da definição no manager; nenhuma unit iniciada, habilitada ou resetada.
+- Nenhum arquivo editado; freeze final permaneceu íntegro.
+
+VERDICT=GO

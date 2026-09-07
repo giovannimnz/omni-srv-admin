@@ -23,8 +23,8 @@ log "WARN — porta $PORT nao responde — restarting $PM2_APP"
 
 if command -v pm2 >/dev/null 2>&1; then
     pm2 restart "$PM2_APP" >> "$LOG" 2>&1
-elif [[ -x /home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2 ]]; then
-    /home/ubuntu/.nvm/versions/node/v24.13.1/bin/pm2 restart "$PM2_APP" >> "$LOG" 2>&1
+elif [[ -x /home/ubuntu/.local/bin/pm2 ]]; then
+    /home/ubuntu/.local/bin/pm2 restart "$PM2_APP" >> "$LOG" 2>&1
 else
     log "FAIL — pm2 nao encontrado"
     exit 1

@@ -27,6 +27,7 @@ DEFAULTS = {
     'RG_WATCHDOG_LOG_FILE': str(Path.home() / '.logs' / 'resource-governor' / 'watchdog.log'),
     'RG_WATCHDOG_DISK_CRITICAL_PCT': '97',
     'RG_WATCHDOG_SWAP_CRITICAL_PCT': '95',
+    'RG_WATCHDOG_SWAP_MEM_AVAILABLE_OK_MIB': '4096',
     'RG_WATCHDOG_MEM_AVAILABLE_CRITICAL_MIB': '1536',
     'RG_WATCHDOG_PSI_IO_FULL_CRITICAL_AVG10': '2.0',
     'RG_WATCHDOG_PSI_MEMORY_FULL_CRITICAL_AVG10': '0.5',
@@ -273,6 +274,46 @@ def sample_system() -> dict:
     }
 
 
+def pressure_reasons(system_data: dict, config: dict[str, str]) -> list[str]:
+    reasons: list[str] = []
+    if system_data['disk_pct'] >= float(config['RG_WATCHDOG_DISK_CRITICAL_PCT']):
+        reasons.append('disk-critical')
+    swap_is_pressure = (
+        system_data['swap_pct'] >= float(config['RG_WATCHDOG_SWAP_CRITICAL_PCT'])
+        and system_data['mem_available_mib']
+        < float(config['RG_WATCHDOG_SWAP_MEM_AVAILABLE_OK_MIB'])
+    )
+    if swap_is_pressure:
+        reasons.append('swap-critical')
+    if system_data['mem_available_mib'] <= float(config['RG_WATCHDOG_MEM_AVAILABLE_CRITICAL_MIB']):
+        reasons.append('mem-low')
+    psi = system_data.get('psi', {})
+    if psi.get('io_full_avg10', 0.0) >= float(config['RG_WATCHDOG_PSI_IO_FULL_CRITICAL_AVG10']):
+        reasons.append('psi-io-high')
+    if psi.get('memory_full_avg10', 0.0) >= float(config['RG_WATCHDOG_PSI_MEMORY_FULL_CRITICAL_AVG10']):
+        reasons.append('psi-memory-high')
+    return reasons
+
+
+def recovery_ready(
+    system_data: dict,
+    config: dict[str, str],
+    healthy_streak: int,
+    hysteresis_cycles: int,
+) -> bool:
+    swap_recovered = (
+        system_data['swap_pct'] <= float(config['RG_WATCHDOG_RECOVERY_SWAP_PCT'])
+        or system_data['mem_available_mib']
+        >= float(config['RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB'])
+    )
+    return (
+        healthy_streak >= hysteresis_cycles
+        and system_data['disk_pct'] <= float(config['RG_WATCHDOG_RECOVERY_DISK_PCT'])
+        and swap_recovered
+        and system_data['mem_available_mib'] >= float(config['RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB'])
+    )
+
+
 def apply_cgroup_limits() -> list[str]:
     """Apply global cgroup v2 safety limits via sudo. Returns list of actions taken."""
     actions = []
@@ -379,18 +420,8 @@ def main() -> int:
             process_windows[name].add(pinfo)
 
         # Detect thresholds
-        reasons: list[str] = []
-        if system_data['disk_pct'] >= float(config['RG_WATCHDOG_DISK_CRITICAL_PCT']):
-            reasons.append('disk-critical')
-        if system_data['swap_pct'] >= float(config['RG_WATCHDOG_SWAP_CRITICAL_PCT']):
-            reasons.append('swap-critical')
-        if system_data['mem_available_mib'] <= float(config['RG_WATCHDOG_MEM_AVAILABLE_CRITICAL_MIB']):
-            reasons.append('mem-low')
+        reasons = pressure_reasons(system_data, config)
         psi = system_data.get('psi', {})
-        if psi.get('io_full_avg10', 0.0) >= float(config['RG_WATCHDOG_PSI_IO_FULL_CRITICAL_AVG10']):
-            reasons.append('psi-io-high')
-        if psi.get('memory_full_avg10', 0.0) >= float(config['RG_WATCHDOG_PSI_MEMORY_FULL_CRITICAL_AVG10']):
-            reasons.append('psi-memory-high')
 
         # Action: threshold detected
         if reasons:
@@ -449,11 +480,11 @@ def main() -> int:
             state['healthy_streak'] = healthy_streak
             HYSTERESIS_CYCLES = int(config.get('RG_WATCHDOG_RECOVERY_HYSTERESIS_CYCLES', '5'))
             # Recovery check
-            recovered = (
-                healthy_streak >= HYSTERESIS_CYCLES
-                and system_data['disk_pct'] <= float(config['RG_WATCHDOG_RECOVERY_DISK_PCT'])
-                and system_data['swap_pct'] <= float(config['RG_WATCHDOG_RECOVERY_SWAP_PCT'])
-                and system_data['mem_available_mib'] >= float(config['RG_WATCHDOG_RECOVERY_MEM_AVAILABLE_MIB'])
+            recovered = recovery_ready(
+                system_data,
+                config,
+                healthy_streak,
+                HYSTERESIS_CYCLES,
             )
             if recovered and state.get('runtime_mode') == 'conservative':
                 state['runtime_mode'] = 'base'

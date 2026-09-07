@@ -1,0 +1,189 @@
+[oci-arm64-setup] START step=preflight mode=verify-only
+source_manifest_entries=444
+[oci-arm64-setup] PASS source manifest
+[oci-arm64-setup] PASS preflight
+[oci-arm64-setup] DONE step=preflight
+[oci-arm64-setup] START step=packages mode=verify-only
+[oci-arm64-setup] PASS desktop app apt repositories
+[oci-arm64-setup] PASS packages
+[oci-arm64-setup] DONE step=packages
+[oci-arm64-setup] START step=ubuntu-pro mode=verify-only
+[oci-arm64-setup] PASS pro status --format json attached with esm-apps/esm-infra
+[oci-arm64-setup] DONE step=ubuntu-pro
+[oci-arm64-setup] START step=identity-network mode=verify-only
+[oci-arm64-setup] PASS hostname -f / resolvectl / wg show / A/PTR
+[oci-arm64-setup] DONE step=identity-network
+[oci-arm64-setup] START step=podman mode=verify-only
+[oci-arm64-setup] PASS podman-compose 1.6.0 / srv4-podman / netavark
+[oci-arm64-setup] DONE step=podman
+[oci-arm64-setup] START step=desktop-xrdp mode=verify-only
+OK   assets canônicos presentes
+OK   assets canônicos em LF
+OK   pacotes pré-requisito presentes
+OK   comandos pré-requisito presentes
+OK   arquivos instalados presentes
+OK   arquivos live em LF
+OK   service xrdp enabled
+OK   service xrdp active
+OK   service xrdp-sesman enabled
+OK   service xrdp-sesman active
+OK   timer xrdp-abnt2-reconcile.timer enabled e active
+OK   xrdp_keyboard.ini mapeia Windows RDP -> br(abnt2)
+OK   xrdp.ini força keyboard type 0x04 e layout ABNT2
+OK   todos os keymaps críticos são ABNT2 idêntico
+OK   keymap xfree86/base cobre 8 estados de modificadores
+OK   scancodes RDP cobrem barra, navegação, Delete e Print Screen
+OK   hook APT/DPKG aponta para reparador
+PASS XRDP ABNT2 Guard validado
+[oci-arm64-setup] PASS xrdp_abnt2.py validate
+[oci-arm64-setup] PASS XRDP ATIUS TLS leaf / SAN / key / trust
+[oci-arm64-setup] DONE step=desktop-xrdp
+[oci-arm64-setup] START step=landscape mode=verify-only
+[oci-arm64-setup] PASS landscape-config --is-registered
+[oci-arm64-setup] DONE step=landscape
+[oci-arm64-setup] START step=fleet-agent mode=verify-only
+[oci-arm64-setup] PASS omni-fleet-agent.service / cache / DbOmniFleet readback
+[oci-arm64-setup] DONE step=fleet-agent
+[oci-arm64-setup] START step=toolchains mode=verify-only
+[oci-arm64-setup] PASS node --version / npm --version / bun --version / codex --version
+[oci-arm64-setup] DONE step=toolchains
+[oci-arm64-setup] START step=desktop-apps mode=verify-only
+[oci-arm64-setup] PASS desktop app apt repositories
+[oci-arm64-setup] PASS chatgpt / google-chrome-stable
+[oci-arm64-setup] PASS browser-default-reconciler google-chrome/chatgpt
+[oci-arm64-setup] DONE step=desktop-apps
+[oci-arm64-setup] START step=agents mode=verify-only
+[oci-arm64-setup] PASS Hermes configured; auth.json remains host-local/pending
+[oci-arm64-setup] DONE step=agents
+[oci-arm64-setup] START step=gsd-graphify mode=verify-only
+[graphify] WARNING: ignoring project-local .graphify/providers.json (custom providers control where your corpus and API key are sent). Set GRAPHIFY_ALLOW_LOCAL_PROVIDERS=1 to load it.
+[graphify] WARNING: ignoring project-local .graphify/providers.json (custom providers control where your corpus and API key are sent). Set GRAPHIFY_ALLOW_LOCAL_PROVIDERS=1 to load it.
+[oci-arm64-setup] PASS GSD check auto-mode / Graphify
+[oci-arm64-setup] DONE step=gsd-graphify
+[oci-arm64-setup] START step=agent-content mode=verify-only
+[oci-arm64-setup] PASS agent-content all managed files converge to noop
+[oci-arm64-setup] DONE step=agent-content
+[oci-arm64-setup] START step=obsidian mode=verify-only
+[oci-arm64-setup] PASS Obsidian 1.12.7 / obsidian-vault-pull.timer
+[oci-arm64-setup] DONE step=obsidian
+[oci-arm64-setup] START step=resource-governor mode=verify-only
+[oci-arm64-setup] PASS resources doctor; SRV-1-only units must_not_load
+[oci-arm64-setup] DONE step=resource-governor
+[oci-arm64-setup] START step=desktop-theme mode=verify-only
+OK   LXSession usa Greybird-dark
+OK   GTK3 prefer-dark habilitado
+OK   GSettings color-scheme prefer-dark
+OK   GSettings gtk-theme Greybird-dark
+OK   environment.d exporta GTK_THEME dark
+OK   environment.d faz Qt seguir GTK
+OK   environment.d fixa interface WireGuard wg100
+OK   xsessionrc exporta GTK_THEME dark
+OK   Portal LXDE usa backend GTK para Settings
+WARN Portal color-scheme nao validado sem DISPLAY/gdbus/timeout
+OK   GTK3 CSS sem sintaxe legada invalida
+OK   GTK2 usa Greybird-dark
+OK   Openbox usa Dark-Onyx
+OK   LXPanel usa asset de fundo escuro
+OK   LXPanel referencia panel-background.xpm
+OK   LXPanel tem fundo full-width elastico
+OK   LXPanel status-right tem system tray
+OK   LXPanel status-right tem mini monitor CPU
+OK   LXPanel status-right tem indicador ABNT2
+OK   LXPanel tem taskbar
+OK   LXPanel status-right tem controle de volume compativel
+OK   LXPanel status-right tem relogio
+OK   autostart inicia lxpanel
+OK   autostart inicia desktop PCManFM
+OK   autostart inicia indicador Omni Network
+OK   autostart nao inicia nm-applet unmanaged
+OK   XDG autostart desabilita nm-applet unmanaged
+OK   XDG autostart desabilita light-locker no XRDP
+OK   autostart aplica system dark/portal
+OK   autostart fixa ABNT2
+OK   PCManFM desktop escuro
+OK   SF Pro Display disponivel
+OK   Omni Network detecta Oracle OCI e WireGuard
+OK   Omni Network usa icone dark custom
+OK   Openbox XML valido
+OK   Dark Ubuntu validado
+[oci-arm64-setup] PASS dark-themectl.sh validate
+[oci-arm64-setup] DONE step=desktop-theme
+[oci-arm64-setup] START step=final-verify mode=verify-only
+source_manifest_entries=444
+[oci-arm64-setup] PASS source manifest
+[oci-arm64-setup] PASS preflight
+[oci-arm64-setup] PASS pro status --format json attached with esm-apps/esm-infra
+[oci-arm64-setup] PASS hostname -f / resolvectl / wg show / A/PTR
+[oci-arm64-setup] PASS podman-compose 1.6.0 / srv4-podman / netavark
+OK   assets canônicos presentes
+OK   assets canônicos em LF
+OK   pacotes pré-requisito presentes
+OK   comandos pré-requisito presentes
+OK   arquivos instalados presentes
+OK   arquivos live em LF
+OK   service xrdp enabled
+OK   service xrdp active
+OK   service xrdp-sesman enabled
+OK   service xrdp-sesman active
+OK   timer xrdp-abnt2-reconcile.timer enabled e active
+OK   xrdp_keyboard.ini mapeia Windows RDP -> br(abnt2)
+OK   xrdp.ini força keyboard type 0x04 e layout ABNT2
+OK   todos os keymaps críticos são ABNT2 idêntico
+OK   keymap xfree86/base cobre 8 estados de modificadores
+OK   scancodes RDP cobrem barra, navegação, Delete e Print Screen
+OK   hook APT/DPKG aponta para reparador
+PASS XRDP ABNT2 Guard validado
+[oci-arm64-setup] PASS xrdp_abnt2.py validate
+[oci-arm64-setup] PASS XRDP ATIUS TLS leaf / SAN / key / trust
+[oci-arm64-setup] PASS landscape-config --is-registered
+[oci-arm64-setup] PASS omni-fleet-agent.service / cache / DbOmniFleet readback
+[oci-arm64-setup] PASS node --version / npm --version / bun --version / codex --version
+[oci-arm64-setup] PASS desktop app apt repositories
+[oci-arm64-setup] PASS chatgpt / google-chrome-stable
+[oci-arm64-setup] PASS Hermes configured; auth.json remains host-local/pending
+[graphify] WARNING: ignoring project-local .graphify/providers.json (custom providers control where your corpus and API key are sent). Set GRAPHIFY_ALLOW_LOCAL_PROVIDERS=1 to load it.
+[graphify] WARNING: ignoring project-local .graphify/providers.json (custom providers control where your corpus and API key are sent). Set GRAPHIFY_ALLOW_LOCAL_PROVIDERS=1 to load it.
+[oci-arm64-setup] PASS GSD check auto-mode / Graphify
+[oci-arm64-setup] PASS agent-content all managed files converge to noop
+[oci-arm64-setup] PASS Obsidian 1.12.7 / obsidian-vault-pull.timer
+[oci-arm64-setup] PASS resources doctor; SRV-1-only units must_not_load
+OK   LXSession usa Greybird-dark
+OK   GTK3 prefer-dark habilitado
+OK   GSettings color-scheme prefer-dark
+OK   GSettings gtk-theme Greybird-dark
+OK   environment.d exporta GTK_THEME dark
+OK   environment.d faz Qt seguir GTK
+OK   environment.d fixa interface WireGuard wg100
+OK   xsessionrc exporta GTK_THEME dark
+OK   Portal LXDE usa backend GTK para Settings
+WARN Portal color-scheme nao validado sem DISPLAY/gdbus/timeout
+OK   GTK3 CSS sem sintaxe legada invalida
+OK   GTK2 usa Greybird-dark
+OK   Openbox usa Dark-Onyx
+OK   LXPanel usa asset de fundo escuro
+OK   LXPanel referencia panel-background.xpm
+OK   LXPanel tem fundo full-width elastico
+OK   LXPanel status-right tem system tray
+OK   LXPanel status-right tem mini monitor CPU
+OK   LXPanel status-right tem indicador ABNT2
+OK   LXPanel tem taskbar
+OK   LXPanel status-right tem controle de volume compativel
+OK   LXPanel status-right tem relogio
+OK   autostart inicia lxpanel
+OK   autostart inicia desktop PCManFM
+OK   autostart inicia indicador Omni Network
+OK   autostart nao inicia nm-applet unmanaged
+OK   XDG autostart desabilita nm-applet unmanaged
+OK   XDG autostart desabilita light-locker no XRDP
+OK   autostart aplica system dark/portal
+OK   autostart fixa ABNT2
+OK   PCManFM desktop escuro
+OK   SF Pro Display disponivel
+OK   Omni Network detecta Oracle OCI e WireGuard
+OK   Omni Network usa icone dark custom
+OK   Openbox XML valido
+OK   Dark Ubuntu validado
+[oci-arm64-setup] PASS dark-themectl.sh validate
+[oci-arm64-setup] PASS final-verify
+[oci-arm64-setup] DONE step=final-verify
+status=PASS mode=verify-only run_id=20260906T220854+0000-1496459 completed_at=2026-09-06T22:09:52+00:00

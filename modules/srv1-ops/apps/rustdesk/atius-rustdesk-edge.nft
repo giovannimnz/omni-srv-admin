@@ -1,0 +1,29 @@
+# Managed by omni-srv-admin/modules/srv1-ops/apps/rustdesk
+# Public OCI VNIC 137.131.140.20 is delivered locally as 10.0.0.238 on enp0s6.
+# Approved external contract: 34100/TCP -> hbbs NAT test,
+# 34125/TCP+UDP -> hbbs rendezvous, 34126/TCP -> hbbr relay.
+
+table inet atius_rustdesk_edge {
+    chain prerouting {
+        type nat hook prerouting priority dstnat - 5; policy accept;
+
+        iifname "enp0s6" ip daddr 10.0.0.238 tcp dport 34100 counter dnat ip to 10.0.0.238:21115
+        iifname "enp0s6" ip daddr 10.0.0.238 tcp dport 34125 counter dnat ip to 10.0.0.238:21116
+        iifname "enp0s6" ip daddr 10.0.0.238 udp dport 34125 counter dnat ip to 10.0.0.238:21116
+        iifname "enp0s6" ip daddr 10.0.0.238 tcp dport 34126 counter dnat ip to 10.0.0.238:21117
+    }
+
+    chain input {
+        type filter hook input priority filter - 10; policy accept;
+
+        iifname "enp0s6" ip daddr 10.0.0.238 ct status dnat ct original ip daddr 10.0.0.238 ct original proto-dst 34100 tcp dport 21115 counter accept
+        iifname "enp0s6" ip daddr 10.0.0.238 ct status dnat ct original ip daddr 10.0.0.238 ct original proto-dst 34125 tcp dport 21116 counter accept
+        iifname "enp0s6" ip daddr 10.0.0.238 ct status dnat ct original ip daddr 10.0.0.238 ct original proto-dst 34125 udp dport 21116 counter accept
+        iifname "enp0s6" ip daddr 10.0.0.238 ct status dnat ct original ip daddr 10.0.0.238 ct original proto-dst 34126 tcp dport 21117 counter accept
+
+        iifname "enp0s6" ip daddr 10.0.0.238 tcp dport { 21114, 21115, 21116, 21117, 21118, 21119 } counter drop
+        iifname "enp0s6" ip daddr 10.0.0.238 udp dport 21116 counter drop
+        iifname "enp0s6" meta nfproto ipv6 meta l4proto tcp tcp dport { 21114, 21115, 21116, 21117, 21118, 21119, 34100, 34125, 34126 } counter drop
+        iifname "enp0s6" meta nfproto ipv6 meta l4proto udp udp dport { 21116, 34125 } counter drop
+    }
+}

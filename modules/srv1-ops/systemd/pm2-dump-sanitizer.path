@@ -1,0 +1,10 @@
+[Unit]
+Description=Sanitize PM2 dumps whenever persistence changes
+
+[Path]
+PathChanged=%h/.pm2/dump.pm2
+PathChanged=%h/.pm2/dump.pm2.bak
+Unit=pm2-dump-sanitizer.service
+
+[Install]
+WantedBy=default.target
