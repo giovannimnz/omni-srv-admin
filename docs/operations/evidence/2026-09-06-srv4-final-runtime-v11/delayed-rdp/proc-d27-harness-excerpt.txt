@@ -1,0 +1,45 @@
+14|def remote_state():
+15| script="""from pathlib import Path
+16|import json
+17|names=('Xvnc :1','/usr/bin/lxsession','lxpanel --profile LXDE','pcmanfm --desktop --profile LXDE')
+18|out={n:[] for n in names}
+19|for p in Path('/proc').iterdir():
+20| if not p.name.isdigit(): continue
+21| try:
+22|  c=(p/'cmdline').read_bytes().replace(b'\\0',b' ').decode(errors='ignore').strip()
+23|  st=(p/'stat').read_text().split()
+24|  for n in names:
+25|   if n in c: out[n].append({'pid':int(p.name),'ppid':int(st[3]),'state':st[2],'cmd':c[:300]})
+26| except: pass
+27|out['dirs']={n:(Path.home()/n).is_dir() for n in ('Desktop','Documents','Downloads','Music','Pictures','Public','Templates','Videos')}
+28|out['theme']=(Path.home()/'.config/environment.d/10-omni-dark.conf').exists()
+29|print(json.dumps(out,sort_keys=True))
+30|"""
+31| r=run(['ssh','-n','-o','BatchMode=yes','atius-srv-4','python3 -'],input=script,timeout=30)
+32| return json.loads(r.stdout) if r.returncode==0 and r.stdout.strip() else {'probe_rc':r.returncode,'stderr':r.stderr[-500:]}
+33|def main():
+34| OUT.mkdir(mode=0o700,exist_ok=True)
+35| user,password=cred(); plen=len(password); phash=hashlib.sha256(password.encode()).hexdigest()
+36| with tempfile.TemporaryDirectory(prefix='srv4-rdp-tls-client-') as h:
+37|  runtime=Path(h)/'runtime'; runtime.mkdir(mode=0o700)
+38|  env={**os.environ,'HOME':h,'DISPLAY':':98','XDG_RUNTIME_DIR':str(runtime),'XDG_CONFIG_HOME':h+'/config','XDG_CACHE_HOME':h+'/cache','XDG_DATA_HOME':h+'/data'}
+39|  xvfb=subprocess.Popen(['Xvfb',':98','-screen','0','1280x800x24','-nolisten','tcp'],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
+40|  try:
+41|   for _ in range(40):
+42|    if run(['xdpyinfo','-display',':98']).returncode==0: break
+43|    time.sleep(.25)
+44|   auth=run(['xfreerdp',f'/v:{TARGET}',f'/u:{user}','/cert:ignore','+auth-only','/from-stdin:force','/log-level:WARN'],input=password+'\n',env=env,timeout=60)
+45|   (OUT/'auth.stdout').write_text(scrub(auth.stdout,password)); (OUT/'auth.stderr').write_text(scrub(auth.stderr,password))
+46|   if auth.returncode!=0: raise RuntimeError(f'auth rc={auth.returncode}')
+47|   start=time.time()
+48|   client=subprocess.Popen(['xfreerdp',f'/v:{TARGET}',f'/u:{user}','/cert:ignore','/from-stdin:force','/size:1280x800','/bpp:24','/audio-mode:2','/network:lan','/log-level:WARN'],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env=env)
+49|   assert client.stdin; client.stdin.write(password+'\n'); client.stdin.flush(); client.stdin.close(); client.stdin=None; password=''
+50|   state={}
+51|   for _ in range(60):
+52|    state=remote_state()
+53|    ok=bool(state.get('Xvnc :1') and state.get('/usr/bin/lxsession') and state.get('lxpanel --profile LXDE') and state.get('pcmanfm --desktop --profile LXDE') and all(state.get('dirs',{}).values()) and state.get('theme'))
+54|    if ok: break
+55|    if client.poll() is not None: break
+56|    time.sleep(1)
+57|   else: ok=False
+58|   if not ok: raise RuntimeError(f'desktop not ready: {state}')

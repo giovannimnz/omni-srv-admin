@@ -1,0 +1,89 @@
+Sep 06 06:55:19 atius-srv-4.atius.internal xrdp[1022979]: [INFO ] Socket 12: AF_INET6 connection received from ::ffff:10.100.100.1 port 61372
+Sep 06 06:55:19 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] Security protocol: configured [SSL|RDP], requested [SSL|HYBRID|RDP], selected [SSL]
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] Connected client computer name: atius-srv-1
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [WARN ] Received [MS-RDPBCGR] TS_UD_HEADER type 0xc006 is unknown (ignored)
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [WARN ] Received [MS-RDPBCGR] TS_UD_HEADER type 0xc00a is unknown (ignored)
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] xrdp_load_keyboard_layout: Keyboard information sent by the RDP client, keyboard_type:[0x04], keyboard_subtype:[0x00], keylayout:[0x00000409]
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] overrode keyboard_type 0x04 with 0x04
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] overrode keyboard_subtype 0x00 with 0x00
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] overrode keylayout 0x00000409 with 0x00000416
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] xrdp_load_keyboard_layout: model [] variant [] layout [br(abnt2)] options []
+Sep 06 06:55:20 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] TLS connection established from ::ffff:10.100.100.1 port 61372: TLSv1.3 with cipher TLS_AES_256_GCM_SHA384
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] xrdp_caps_process_pointer: client supports new(color) cursor
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] xrdp_caps_process_codecs: RemoteFX, codec id 3, properties len 49
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] Loading keymap file /etc/xrdp/km-00000416.ini
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [WARN ] local keymap file for 0x00000416 found and doesn't match built in keymap, using local keymap file
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] connecting to sesman on 127.0.0.1:3350
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] Socket 12: AF_INET6 connection received from ::1 port 54378
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] xrdp_wm_log_msg: sesman connect ok
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] sesman connect ok
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [INFO ] sending login info to session manager. Please wait...
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [ERROR] xrdp_iso_send: trans_write_copy_s failed
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025566]: [ERROR] Sending [ITU T.125] DisconnectProviderUltimatum failed
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] Terminal Server Users group is disabled, allowing authentication
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] ++ created session (access granted): username ubuntu, ip ::ffff:10.100.100.1:61372 - socket: 12
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] starting Xvnc session...
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] Starting session: session_pid 1025606, display :1.0, width 1024, height 768, bpp 32, client ip ::ffff:10.100.100.1:61372 - socket: 12, user name ubuntu
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] [session start] (display 1): calling auth_start_session from pid 1025606
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [ERROR] sesman_data_in: scp_process_msg failed
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1025606]: pam_unix(xrdp-sesman:session): session opened for user ubuntu(uid=1001) by (uid=0)
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1022967]: [ERROR] sesman_main_loop: trans_check_wait_objs failed, removing trans
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1022979]: [INFO ] Socket 12: AF_INET6 connection received from ::ffff:10.100.100.1 port 61388
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] Security protocol: configured [SSL|RDP], requested [SSL|HYBRID|RDP], selected [SSL]
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] Connected client computer name: atius-srv-1
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [WARN ] Received [MS-RDPBCGR] TS_UD_HEADER type 0xc006 is unknown (ignored)
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [WARN ] Received [MS-RDPBCGR] TS_UD_HEADER type 0xc00a is unknown (ignored)
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] Found X server running at /tmp/.X11-unix/X1
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] Session started successfully for user ubuntu on display 1
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] Session in progress on display 1, waiting until the window manager (pid 1025607) exits to end the session
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] xrdp_load_keyboard_layout: Keyboard information sent by the RDP client, keyboard_type:[0x04], keyboard_subtype:[0x00], keylayout:[0x00000409]
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] overrode keyboard_type 0x04 with 0x04
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] overrode keyboard_subtype 0x00 with 0x00
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] overrode keylayout 0x00000409 with 0x00000416
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] xrdp_load_keyboard_layout: model [] variant [] layout [br(abnt2)] options []
+Sep 06 06:55:21 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] TLS connection established from ::ffff:10.100.100.1 port 61388: TLSv1.3 with cipher TLS_AES_256_GCM_SHA384
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] xrdp_caps_process_pointer: client supports new(color) cursor
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [WARN ] Dynamic Virtual Channel named 'drdynvc' not found, channel not initialized
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] Loading keymap file /etc/xrdp/km-00000416.ini
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [WARN ] local keymap file for 0x00000416 found and doesn't match built in keymap, using local keymap file
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] connecting to sesman on 127.0.0.1:3350
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] Socket 12: AF_INET6 connection received from ::1 port 54386
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] xrdp_wm_log_msg: sesman connect ok
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] sesman connect ok
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] sending login info to session manager. Please wait...
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] Terminal Server Users group is disabled, allowing authentication
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] ++ created session (access granted): username ubuntu, ip ::ffff:10.100.100.1:61388 - socket: 12
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [INFO ] starting Xvnc session...
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [ERROR] max concurrent session limit exceeded. login for user ubuntu denied
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [ERROR] sesman_data_in: scp_process_msg failed
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] xrdp_wm_log_msg: login failed for user ubuntu
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp-sesman[1022967]: [ERROR] sesman_main_loop: trans_check_wait_objs failed, removing trans
+Sep 06 06:55:22 atius-srv-4.atius.internal xrdp[1025632]: [INFO ] login failed for user ubuntu
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1022979]: [INFO ] Socket 12: AF_INET6 connection received from ::ffff:10.100.100.1 port 6038
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] libxrdp_force_read: header read error
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] [ITU-T X.224] Connection Sequence: CR-TPDU (Connection Request) failed
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] xrdp_sec_incoming: xrdp_iso_incoming failed
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] xrdp_rdp_incoming: xrdp_sec_incoming failed
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] xrdp_process_main_loop: libxrdp_process_incoming failed
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] xrdp_iso_send: trans_write_copy_s failed
+Sep 06 06:55:40 atius-srv-4.atius.internal xrdp[1026969]: [ERROR] Sending [ITU T.125] DisconnectProviderUltimatum failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1022979]: [INFO ] Socket 12: AF_INET6 connection received from ::ffff:10.100.100.2 port 2162
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] libxrdp_force_read: header read error
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] [ITU-T X.224] Connection Sequence: CR-TPDU (Connection Request) failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] xrdp_sec_incoming: xrdp_iso_incoming failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] xrdp_rdp_incoming: xrdp_sec_incoming failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] xrdp_process_main_loop: libxrdp_process_incoming failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] xrdp_iso_send: trans_write_copy_s failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026970]: [ERROR] Sending [ITU T.125] DisconnectProviderUltimatum failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1022979]: [INFO ] Socket 12: AF_INET6 connection received from ::ffff:10.100.100.3 port 44638
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] libxrdp_force_read: header read error
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] [ITU-T X.224] Connection Sequence: CR-TPDU (Connection Request) failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] xrdp_sec_incoming: xrdp_iso_incoming failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] xrdp_rdp_incoming: xrdp_sec_incoming failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] xrdp_process_main_loop: libxrdp_process_incoming failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] xrdp_iso_send: trans_write_copy_s failed
+Sep 06 06:55:41 atius-srv-4.atius.internal xrdp[1026971]: [ERROR] Sending [ITU T.125] DisconnectProviderUltimatum failed
+Sep 06 06:56:36 atius-srv-4.atius.internal xrdp[1025632]: [ERROR] SSL_read: Failure in SSL library (protocol error?)
+Sep 06 06:56:36 atius-srv-4.atius.internal xrdp[1025632]: [ERROR] SSL: error:0A000126:SSL routines::unexpected eof while reading
+Sep 06 06:56:36 atius-srv-4.atius.internal xrdp[1025632]: [ERROR] xrdp_iso_send: trans_write_copy_s failed
+Sep 06 06:56:36 atius-srv-4.atius.internal xrdp[1025632]: [ERROR] Sending [ITU T.125] DisconnectProviderUltimatum failed

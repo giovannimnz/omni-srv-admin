@@ -1,0 +1,17 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings: nenhum.
+
+Confirmado separadamente:
+
+- Runner `exit 1`; auth-only `rc=0` criou `c6/:1`. [notification](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-d27-notification.txt:1), [auth-result](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-d27-auth-result.json:5)
+- Journal prova SSL, TLS 1.3, ABNT2, início da sessão e segunda conexão bloqueada por `MaxSessions=1`. [historical journal](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-d27-historical-tls-journal.log:2)
+- State/framebuffer provam Xvnc, LXDE, LXPanel, PCManFM, 8 XDG e desktop escuro sem PII visual. [remote state](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-d27-remote-state-c6.json:2)
+- `remote_state()` contém `ssh -n` + `input=script` para `python3 -`. Reprodução live confirmou com `-n`: `rc=0`, output vazio, payload false; sem `-n`: marker executado. [harness](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-d27-harness-excerpt.txt:18), [reprodução](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-d27-probe-reproduction.json:5)
+- Live SRV-4: `c6` ausente; Xvnc/watchdogs/setup `0`; XRDP/sesman `active`; health `0/0`; cert/key correspondentes; resíduos ausentes.
+- Source versionado sem o harness throwaway. Classificação, runner FAIL, sessão TLS operacional PASS e `current_actionable=false` estão coerentes.
+- Apply/verify `17/17`, manifest `aa1883d1…` e backups atual/histórico permanecem válidos.
+- Provenance `13/13`; todos os bytes/hashes conferem. Seal `108/108`, `SHA256SUMS.check` íntegro; scanner de secrets/PII limpo.
+- Nenhum arquivo editado nesta revisão.
+
+VERDICT=GO

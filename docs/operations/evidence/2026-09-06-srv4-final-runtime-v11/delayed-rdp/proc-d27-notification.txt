@@ -1,0 +1,10 @@
+[IMPORTANT: Background process proc_d27e0eaeee4b exited (exit code 1).
+Command: exec python3 /tmp/srv4-rdp-tls-final.py
+Output:
+Traceback (most recent call last):
+  File "/tmp/srv4-rdp-tls-final.py", line 74, in <module>
+    if __name__=='__main__': main()
+  File "/tmp/srv4-rdp-tls-final.py", line 58, in main
+    if not ok: raise RuntimeError(f'desktop not ready: {state}')
+RuntimeError: desktop not ready: {'probe_rc': 0, 'stderr': ''}
+]

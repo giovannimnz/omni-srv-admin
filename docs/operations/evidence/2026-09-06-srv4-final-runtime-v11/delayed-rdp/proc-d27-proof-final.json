@@ -1,0 +1,62 @@
+{
+  "abnt2_keylayout": "0x00000416",
+  "auth_only": "PASS from sanitized FreeRDP log",
+  "display": ":1",
+  "harness_note": "client state probe used ssh -n with stdin and timed out after server-side success; proof reconstructed from journal, live process state and remote framebuffer",
+  "observed_at": "2026-09-06T03:58:22.865947-03:00",
+  "password_printed": false,
+  "remote_state": {
+    "/usr/bin/lxsession": [
+      {
+        "cmd": "/usr/bin/lxsession -s LXDE -e LXDE",
+        "pid": 1025607,
+        "ppid": 1025606,
+        "state": "S"
+      }
+    ],
+    "Xvnc :1": [
+      {
+        "cmd": "Xvnc :1 -auth .Xauthority -geometry 1024x768 -depth 32 -rfbauth [redacted-rfbauth-path] -bs -nolisten tcp -localhost -SecurityTypes None -Protocol3.3 -rfbunixpath /run/xrdp/sockdir/xrdp_display_1 -rfbunixmode 432 -dpi 96",
+        "pid": 1025608,
+        "ppid": 1025606,
+        "state": "S"
+      }
+    ],
+    "dirs": {
+      "Desktop": true,
+      "Documents": true,
+      "Downloads": true,
+      "Music": true,
+      "Pictures": true,
+      "Public": true,
+      "Templates": true,
+      "Videos": true
+    },
+    "lxpanel --profile LXDE": [
+      {
+        "cmd": "lxpanel --profile LXDE",
+        "pid": 1025701,
+        "ppid": 1025607,
+        "state": "S"
+      }
+    ],
+    "pcmanfm --desktop --profile LXDE": [
+      {
+        "cmd": "pcmanfm --desktop --profile LXDE",
+        "pid": 1025702,
+        "ppid": 1025607,
+        "state": "S"
+      }
+    ],
+    "theme": true
+  },
+  "screenshot": "/tmp/srv4-rdp-tls-final/desktop-c6.png",
+  "screenshot_bytes": 25738,
+  "screenshot_sha256": "d2265325bf55e40c494fdfa16ae7a721b3ff835a1ef573554441ee498d102d21",
+  "security_selected": "SSL",
+  "session": "c6",
+  "session_started": true,
+  "target": "10.100.100.18:3389",
+  "tls": "TLSv1.3 TLS_AES_256_GCM_SHA384",
+  "user": "ubuntu"
+}

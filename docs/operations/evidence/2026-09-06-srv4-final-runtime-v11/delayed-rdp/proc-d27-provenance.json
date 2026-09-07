@@ -1,0 +1,151 @@
+{
+  "artifacts": {
+    "proc-d27-auth-result.json": {
+      "bytes": 365,
+      "sha256": "9de92402715b55ff5238b4b0c3cfbb2589f9150c08199c56eb47b3ccd4bc52e6"
+    },
+    "proc-d27-c6-cleanup-journal.log": {
+      "bytes": 3010,
+      "sha256": "403ad69c923b696718dad1a5dd41dff87839732713fe124e85eb7335420d0e5a"
+    },
+    "proc-d27-current-state.json": {
+      "bytes": 964,
+      "sha256": "a3ba20bfb691f604f8cbea3882ae673126368c943fa5a7ef3c967e49945e2bf9"
+    },
+    "proc-d27-desktop-c6.png": {
+      "bytes": 25738,
+      "sha256": "d2265325bf55e40c494fdfa16ae7a721b3ff835a1ef573554441ee498d102d21"
+    },
+    "proc-d27-disposition-matrix.md": {
+      "bytes": 1491,
+      "sha256": "9ec09fc3692ac14a44de4adc9c0b34151bb1fb76fd6d8515864dc4ac4dfc0227"
+    },
+    "proc-d27-harness-excerpt.txt": {
+      "bytes": 3022,
+      "sha256": "4298f909bdafe3203682db0bbe522bf0178cf68534a426cc5914cf69daf8269c"
+    },
+    "proc-d27-historical-tls-journal.log": {
+      "bytes": 11358,
+      "sha256": "9c890a5ed5b1f73511fa531b6a9d460ec4ca0f8f92e50be2b64ddcbb00798bf7"
+    },
+    "proc-d27-notification.txt": {
+      "bytes": 441,
+      "sha256": "50fc2259465eb12cb7adbc8f4625a1b24c109ec1128462c54e589aff99433917"
+    },
+    "proc-d27-probe-reproduction.json": {
+      "bytes": 412,
+      "sha256": "c1fd87aebe7b1e28043d21dd1d6547d7bf120cb882afd4b6f40a18c53babfc11"
+    },
+    "proc-d27-proof-final.json": {
+      "bytes": 1845,
+      "sha256": "b4279478c60ecb314ae9bc8b9042e54f1e2fe5870625addb5618533d4a504aef"
+    },
+    "proc-d27-reconciliation.md": {
+      "bytes": 4092,
+      "sha256": "f7928e22a817703f04b8ba4eca8de25613a192fc71042cc507a3178ac553d85a"
+    },
+    "proc-d27-remote-state-c6.json": {
+      "bytes": 1018,
+      "sha256": "0bcef8d92740c8b443c4ebd1b239b152a54c32f7e4fde6d4f306762215a63f36"
+    },
+    "proc-d27-visual-observation.md": {
+      "bytes": 511,
+      "sha256": "c5a1c79f1c721b511741aa9ef99a758b407d40f7ede9f15b1e2f4cfc99fbb9bb"
+    }
+  },
+  "classification": "historical-rdp-harness-false-negative",
+  "cleanup": {
+    "remote_residue": {
+      "/tmp/srv4-rdp-tls-final.png": false,
+      "/tmp/srv4-rdp-tls-final.py": false
+    },
+    "session_c6_absent": true,
+    "setup": 0,
+    "watchdogs": 0,
+    "xvnc": 0
+  },
+  "current_actionable": false,
+  "current_runtime_manifest": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "final_apply_run": "20260906T233823+0000-1549801",
+  "final_verify_run": "20260906T234149+0000-1558144",
+  "historical_pid": 3116616,
+  "historical_session": {
+    "abnt2_keylayout": "0x00000416",
+    "desktop_processes": [
+      "Xvnc :1",
+      "/usr/bin/lxsession",
+      "lxpanel --profile LXDE",
+      "pcmanfm --desktop --profile LXDE"
+    ],
+    "display": ":1.0",
+    "framebuffer_sha256": "d2265325bf55e40c494fdfa16ae7a721b3ff835a1ef573554441ee498d102d21",
+    "security_selected": "SSL",
+    "session": "c6",
+    "session_started": true,
+    "theme": true,
+    "tls": "TLSv1.3 TLS_AES_256_GCM_SHA384",
+    "xdg_dirs": 8
+  },
+  "probe": {
+    "call": "ssh -n ... python3 - with caller input=script",
+    "observed_result": {
+      "probe_rc": 0,
+      "stderr": ""
+    },
+    "reproduction": {
+      "payload_sha256": "35cd2c51a34f8254701c2f483c1c760597e023c7ea9b737cf11c7350b65b78d8",
+      "runtime_mutated": false,
+      "schema": "ssh-n-stdin-suppression-reproduction-v1",
+      "with_n": {
+        "payload_executed": false,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": ""
+      },
+      "without_n": {
+        "payload_executed": true,
+        "returncode": 0,
+        "stderr": "",
+        "stdout": "PROBE_PAYLOAD_EXECUTED\n"
+      }
+    },
+    "root_cause": "ssh -n redirects stdin from /dev/null; remote python3 - receives EOF"
+  },
+  "process_id": "proc_d27e0eaeee4b",
+  "raw_harness_sha256": "7e6125f46731ea107ac60bc9ef2c35bab3596960e6e068155be7fad49a76454a",
+  "recorded_at": "2026-09-07T04:06:26.969582+00:00",
+  "restricted_raw_backup": "/home/ubuntu/.backups/proc-d27-rdp-harness-raw-20260907T005743-0300",
+  "runner_exit_code": 1,
+  "runner_status": "FAIL",
+  "schema": "delayed-rdp-tls-harness-reconciliation-v1",
+  "second_connection": {
+    "does_not_invalidate_first_session": true,
+    "status": "denied-by-MaxSessions-1"
+  },
+  "session_authority_messages": [
+    301279,
+    301280,
+    301282,
+    301285,
+    301286,
+    301287,
+    301288,
+    301289,
+    301290,
+    301291,
+    300270,
+    300276,
+    300280,
+    300281,
+    300285,
+    300286,
+    300288,
+    300290
+  ],
+  "session_status": "operational-pass",
+  "subtype": "ssh-n-stdin-suppression-plus-auth-only-session-side-effect"
+}

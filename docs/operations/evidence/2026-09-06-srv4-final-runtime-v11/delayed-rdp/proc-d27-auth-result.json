@@ -1,0 +1,12 @@
+{
+  "display": ":1.0",
+  "password_recorded": false,
+  "raw_auth_stderr_sha256": "7a1f45df7f506e54ad20b6dc2fa71d9dbb3e21ae4df1b23d32c4cfd426b09009",
+  "returncode": 0,
+  "schema": "rdp-auth-axis-v1",
+  "session": "c6",
+  "success_marker": true,
+  "target": "10.100.100.18:3389",
+  "tls": "TLSv1.3 TLS_AES_256_GCM_SHA384",
+  "unexpected_session_side_effect": true
+}

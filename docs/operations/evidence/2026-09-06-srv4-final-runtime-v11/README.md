@@ -61,6 +61,7 @@ Status: PASS
 - `reviews/proc-067-reconciliation-v1-go-p3.txt`
 - `reviews/proc-067-reconciliation-v2-go.txt`
 - `reviews/proc-1a7-reconciliation-go.txt`
+- `reviews/proc-d27-reconciliation-go.txt`
 
 ## Cleanup
 
@@ -161,6 +162,16 @@ the successful readback authority.
   passa. Classificação: `operational-pass` +
   `post-workload-cleanup-skipped-after-exec`, current actionable resolvido.
 - Reconciliação: `delayed-watchdog/proc-1a7-reconciliation.md`.
+- `proc_d27e0eaeee4b` abriu a sessão TLS `c6/:1`, mas o runner terminou FAIL
+  porque a probe usou `ssh -n ... python3 -` junto de `input=script`.
+- `ssh -n` suprimiu stdin: o payload remoto não executou, `python3 -` saiu 0
+  com output vazio e o harness produziu `desktop not ready` falso.
+- Journal/state/framebuffer posteriores provaram SSL, TLS 1.3, ABNT2,
+  Xvnc/LXDE/LXPanel/PCManFM e 8/8 pastas. `c6` foi encerrada e o state atual
+  registra sessão/Xvnc/watchdogs/resíduos `0`, XRDP active, health `0/0`.
+- Classificação: `historical-rdp-harness-false-negative/ssh-n-stdin-suppression-plus-auth-only-session-side-effect`;
+  runner FAIL, sessão TLS PASS operacional, nenhum current actionable.
+- Reconciliação: `delayed-rdp/proc-d27-reconciliation.md`.
 
 ## Graphify final
 

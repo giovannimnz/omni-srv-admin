@@ -1,0 +1,17 @@
+{
+  "payload_sha256": "35cd2c51a34f8254701c2f483c1c760597e023c7ea9b737cf11c7350b65b78d8",
+  "runtime_mutated": false,
+  "schema": "ssh-n-stdin-suppression-reproduction-v1",
+  "with_n": {
+    "payload_executed": false,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": ""
+  },
+  "without_n": {
+    "payload_executed": true,
+    "returncode": 0,
+    "stderr": "",
+    "stdout": "PROBE_PAYLOAD_EXECUTED\n"
+  }
+}

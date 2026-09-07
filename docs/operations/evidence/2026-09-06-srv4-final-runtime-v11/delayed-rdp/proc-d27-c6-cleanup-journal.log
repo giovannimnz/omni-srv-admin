@@ -1,0 +1,24 @@
+Sep 06 07:04:01 atius-srv-4.atius.internal sudo[1033418]: pam_unix(sudo:session): session closed for user root
+Sep 06 07:04:01 atius-srv-4.atius.internal sudo[1033420]: pam_unix(sudo:session): session closed for user root
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: prometheus-node-exporter-nvme.service: Deactivated successfully.
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: prometheus-node-exporter-smartmon.service: Deactivated successfully.
+Sep 06 07:04:08 atius-srv-4.atius.internal sudo[1033784]:   ubuntu : PWD=/home/ubuntu ; USER=root ; COMMAND=/usr/bin/loginctl terminate-session c6
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: Stopping session-c6.scope - Session c6 of User ubuntu...
+Sep 06 07:04:08 atius-srv-4.atius.internal sudo[1033784]: pam_unix(sudo:session): session closed for user root
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: home-ubuntu-.cache-doc.mount: Deactivated successfully.
+Sep 06 07:04:08 atius-srv-4.atius.internal polkitd[1085]: Unregistered Authentication Agent for unix-session:c6 (system bus name :1.55760, object path /org/freedesktop/PolicyKit1/AuthenticationAgent, locale C.UTF-8) (disconnected from bus)
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: home-ubuntu-.gvfs.mount: Deactivated successfully.
+Sep 06 07:04:08 atius-srv-4.atius.internal xrdp-sesman[1025606]: [WARN ] Window manager (pid 1025607, display 1) exited with non-zero exit code 255 and signal 15. This could indicate a window manager config problem
+Sep 06 07:04:08 atius-srv-4.atius.internal xrdp-sesman[1025606]: pam_unix(xrdp-sesman:session): session closed for user ubuntu
+Sep 06 07:04:08 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] Terminating X server (pid 1025608) on display 1
+Sep 06 07:04:08 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] Terminating the xrdp channel server (pid 1025636) on display 1
+Sep 06 07:04:08 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] X server on display 1 (pid 1025608) returned exit code 0 and signal number 0
+Sep 06 07:04:08 atius-srv-4.atius.internal xrdp-sesman[1025606]: [INFO ] xrdp channel server for display 1 (pid 1025636) exit code 255 and signal number 1
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: session-c6.scope: Deactivated successfully.
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: Stopped session-c6.scope - Session c6 of User ubuntu.
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd[1]: session-c6.scope: Consumed 18.621s CPU time.
+Sep 06 07:04:08 atius-srv-4.atius.internal systemd-logind[1093]: Removed session c6.
+Sep 06 07:04:09 atius-srv-4.atius.internal systemd[1]: prometheus-node-exporter-apt.service: Deactivated successfully.
+Sep 06 07:04:09 atius-srv-4.atius.internal sshd[1033453]: pam_unix(sshd:session): session closed for user ubuntu
+Sep 06 07:04:09 atius-srv-4.atius.internal systemd[1]: session-1610.scope: Deactivated successfully.
+Sep 06 07:04:09 atius-srv-4.atius.internal systemd-logind[1093]: Removed session 1610.

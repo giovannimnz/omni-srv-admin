@@ -1,0 +1,42 @@
+{
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "host": "atius-srv-4.atius.internal",
+  "processes": {
+    "setup": 0,
+    "watchdogs": 0,
+    "xvnc": 0
+  },
+  "remote_residue": {
+    "/tmp/srv4-rdp-tls-final.png": false,
+    "/tmp/srv4-rdp-tls-final.py": false
+  },
+  "runtime_manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "schema": "proc-d27-current-state-v1",
+  "services": {
+    "xrdp": {
+      "ActiveState": "active",
+      "ExecMainStatus": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    },
+    "xrdp_sesman": {
+      "ActiveState": "active",
+      "ExecMainStatus": "0",
+      "NRestarts": "0",
+      "Result": "success",
+      "SubState": "running",
+      "UnitFileState": "enabled"
+    }
+  },
+  "session_c6_exists": false,
+  "tls": {
+    "certificate_exists": true,
+    "key_exists": true,
+    "public_key_match": true
+  }
+}
