@@ -13,6 +13,10 @@ delayed-backup/proc-c81d92104fcd-notification.txt: OK
 delayed-backup/proc-c81d92104fcd-provenance.json: OK
 delayed-backup/proc-c81d92104fcd-reconciliation.md: OK
 delayed-backup/proc-c81d92104fcd-setup.log: OK
+delayed-backup/proc-d3ee6b4484bf-notification.txt: OK
+delayed-backup/proc-d3ee6b4484bf-provenance.json: OK
+delayed-backup/proc-d3ee6b4484bf-reconciliation.md: OK
+delayed-backup/proc-d3ee6b4484bf-setup.log: OK
 delayed-backup/proc-d7b3cd5a26de-notification.txt: OK
 delayed-backup/proc-d7b3cd5a26de-provenance.json: OK
 delayed-backup/proc-d7b3cd5a26de-reconciliation.md: OK
@@ -27,6 +31,8 @@ reviews/proc-8df-reconciliation-v1-nogo.txt: OK
 reviews/proc-8df-reconciliation-v2-go.txt: OK
 reviews/proc-b20-reconciliation-go.txt: OK
 reviews/proc-c81-reconciliation-go.txt: OK
+reviews/proc-d3e-reconciliation-v1-nogo.txt: OK
+reviews/proc-d3e-reconciliation-v2-go.txt: OK
 reviews/proc-d7-reconciliation-go.txt: OK
 reviews/reset-hotfix-go.txt: OK
 reviews/runtime-v11-go.txt: OK

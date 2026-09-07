@@ -1,0 +1,16 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings: nenhum.
+
+Validações:
+
+- P2 v1 corrigido: mensagem `300045` explicitamente vinculada ao completion `exit 0` na [reconciliation](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-d3ee6b4484bf-reconciliation.md:16) e na [provenance](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-d3ee6b4484bf-provenance.json:4).
+- `SKIP=8`, herdados de `055159`; `START=9`, `DONE=9`, `COMPLETE PASS`, `FAILED=0`.
+- Classificação operacional histórica, sem autoridade de seal/review; `source-manifest.sealed.json` ausente.
+- Autoridade final: runs `233823`/`234149`, manifest `aa1883d1…`, health `0/0`, backups PASS e `current_actionable=false`.
+- Provenance e hashes internos coerentes.
+- Seal recalculado: `54/54 OK`; readback idêntico a `SHA256SUMS.check`.
+- Nenhum PII ou secret detectado.
+- Nenhum arquivo editado.
+
+VERDICT=GO

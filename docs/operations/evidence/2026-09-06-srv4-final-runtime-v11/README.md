@@ -55,6 +55,8 @@ Status: PASS
 - `reviews/proc-8df-reconciliation-v1-nogo.txt`
 - `reviews/proc-8df-reconciliation-v2-go.txt`
 - `reviews/proc-c81-reconciliation-go.txt`
+- `reviews/proc-d3e-reconciliation-v1-nogo.txt`
+- `reviews/proc-d3e-reconciliation-v2-go.txt`
 
 ## Cleanup
 
@@ -116,6 +118,15 @@ the successful readback authority.
 - Classificação: `pre-step-orchestrator-initialization-failure/setup-log-process-substitution-race`,
   superseded pelos runs finais, sem current actionable.
 - Reconciliação: `delayed-backup/proc-c81d92104fcd-reconciliation.md`.
+- `proc_d3ee6b4484bf` foi o primeiro resume pós-race que terminou `exit 0`:
+  herdou oito receipts do run `055159` e executou os nove steps restantes até
+  `final-verify`, com `COMPLETE=PASS`.
+- A revisão do orchestrator ainda não produzia `source-manifest.sealed.json` e
+  o staging havia recebido patch remoto mínimo; o run prova operação, não
+  source closure, seal ou review independente.
+- Classificação: `historical-resume-operational-pass`, superseded pelo full
+  apply `233823` e verify-only `234149`, sem current actionable.
+- Reconciliação: `delayed-backup/proc-d3ee6b4484bf-reconciliation.md`.
 
 ## Graphify final
 

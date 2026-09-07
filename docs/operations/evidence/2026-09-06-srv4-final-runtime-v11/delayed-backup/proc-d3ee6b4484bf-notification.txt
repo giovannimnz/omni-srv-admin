@@ -1,0 +1,7 @@
+[IMPORTANT: Background process proc_d3ee6b4484bf completed normally (exit code 0).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 '... PYTHONPATH="$ROOT/cli"; python3 -m omni srv1-ops resources run ... oci-arm64-host-setup.sh --apply --resume'
+Output summary:
+- nine remaining steps from toolchains through final-verify completed;
+- final line: status=PASS mode=apply run_id=20260906T060259+0000-977600;
+- runner exit 0.
+]

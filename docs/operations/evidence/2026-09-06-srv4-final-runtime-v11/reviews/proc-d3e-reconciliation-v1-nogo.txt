@@ -1,0 +1,15 @@
+P0=0 P1=0 P2=1 P3=0
+
+- P2 — [proc-d3ee6b4484bf-reconciliation.md:16](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-d3ee6b4484bf-reconciliation.md:16): a referência `300032–300036` termina enquanto o processo ainda estava running. A conclusão `exit 0` e `COMPLETE=PASS` está na mensagem `300045`; ela precisa integrar a authority citada.
+
+Demais verificações passaram:
+
+- `060259`: `SKIP=8`, `START=9`, `DONE=9`, `COMPLETE PASS`, `FAILED` ausente.
+- O run `055159` concluiu exatamente os oito steps herdados.
+- Patch remoto mínimo e ausência de `source-manifest.sealed.json` confirmados; classificação operacional histórica está correta.
+- `233823` e `234149`: `17/17 PASS`, ambos com manifest `aa1883d1…`.
+- Live: failed units `0/0`, processos residuais `0`, backups PASS.
+- Seal consistente: `53/53 OK`; hashes locais e remoto do log `060259` coincidem.
+- Nenhum secret ou PII pessoal encontrado.
+
+VERDICT=NO-GO
