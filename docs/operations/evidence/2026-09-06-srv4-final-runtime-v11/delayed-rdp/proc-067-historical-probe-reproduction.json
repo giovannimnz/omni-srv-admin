@@ -1,0 +1,8 @@
+{
+  "schema": "proc-067-original-probe-reproduction-v1",
+  "returncode": 1,
+  "stdout": "",
+  "stderr": "  File \"<stdin>\", line 4\n    print(json.dumps({'xvnc':sh(\"ps -eo pid,args | grep '^ *[0-9].*Xvnc :1 ' | grep -v grep\"),'lxsession':sh(\"pgrep -a -u ubuntu lxsession\"),'lxpanel':sh(\"pgrep -a -u ubuntu lxpanel\"),'pcmanfm':sh(\"pgrep -a -u ubuntu pcmanfm\"),'dirs':{n:(Path.home()/n).is_dir() for n in ('Desktop','Documents','Downloads','Music','Pictures','Public','Templates','Videos')},'theme':(Path.home()/'.config/environment.d/10-omni-dark.conf').exists(),'light_locker_disabled':'X-GNOME-Autostart-enabled=false' in (Path.home()/'.config/autostart/light-locker.desktop').read_text(errors='ignore')})\n         ^\nSyntaxError: '(' was never closed\n",
+  "classification": "invalid-embedded-python-syntax",
+  "current_runtime_mutated": false
+}

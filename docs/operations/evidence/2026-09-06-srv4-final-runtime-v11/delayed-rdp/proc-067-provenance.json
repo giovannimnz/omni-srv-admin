@@ -1,0 +1,165 @@
+{
+  "artifacts": {
+    "proc-067-current-auth-result.json": {
+      "bytes": 399,
+      "sha256": "b98dc8eda7aaac7d5d72048836e0d486bb763f761d2715f51a5b685f51b02c93"
+    },
+    "proc-067-current-ingress.json": {
+      "bytes": 519,
+      "sha256": "be5526c74817cc353c8a7f77a51527b467f0e2e3577925085b76b19fd5b04b2f"
+    },
+    "proc-067-current-journal.log": {
+      "bytes": 4418,
+      "sha256": "6558cb332f5b03c0927e8ef8d8c95d0e2e0a8917a7f08111c19e92f6ddae6a15"
+    },
+    "proc-067-current-post-cleanup-state.json": {
+      "bytes": 1756,
+      "sha256": "9f45e69a107fc571e3afa089f0a308f3779adb90f66fea36f05ccda9648694b3"
+    },
+    "proc-067-current-pre-cleanup-state.json": {
+      "bytes": 1756,
+      "sha256": "804d8d8ac658838793e822597096ee073721fc6e10cfecb35b6eeee8e6bd712f"
+    },
+    "proc-067-current-session-c7.txt": {
+      "bytes": 135,
+      "sha256": "0e31a32dc76de5608619c99e4461ade49043e4123ae7a70dba51643bc8dd86bc"
+    },
+    "proc-067-current-tls-desktop.png": {
+      "bytes": 25627,
+      "sha256": "c6bb4a6e3a22446784dc0795ab088892bd9c7cc0824200f2df3715403829972c"
+    },
+    "proc-067-disposition-matrix.md": {
+      "bytes": 1836,
+      "sha256": "41a107b2fcc3b47d329f329b4060bffa86fc620320680b647be1a8f7f7f6bda8"
+    },
+    "proc-067-historical-auth-result.json": {
+      "bytes": 406,
+      "sha256": "86b95bd74dabc275900b43661560e24273b81afbc296933887cd6e98ad9ac262"
+    },
+    "proc-067-historical-client-negative.png": {
+      "bytes": 2809,
+      "sha256": "1c66e016eecfaffce1ab9c7b7136d98446e4006a9041a859de7c0b65f93f8c35"
+    },
+    "proc-067-historical-journal.log": {
+      "bytes": 9284,
+      "sha256": "ef72e31e19f55fd1135fea0f81318a6a9d2fecc7d135fa9ca826e33a29ac3caa"
+    },
+    "proc-067-historical-probe-reproduction.json": {
+      "bytes": 858,
+      "sha256": "7cc038a34b7d30ccdaf0efad43434d69d1deea59ce030fcff69dd5315558340d"
+    },
+    "proc-067-historical-remote-desktop.png": {
+      "bytes": 24860,
+      "sha256": "ae829263cb1f2d711730323c6c29afaf92e4a8f246cbf87cfe8846e812a79ba0"
+    },
+    "proc-067-historical-remote-state.json": {
+      "bytes": 1437,
+      "sha256": "086903299fa90e1626e534e582ce2de5dc49073a4b7ad0962336bb38abc9a679"
+    },
+    "proc-067-invalid-probe-excerpt.txt": {
+      "bytes": 1895,
+      "sha256": "b69c73b19a58e4fd96801d57b053ce90654d48baf53c0f5b2fe159f32360ef6b"
+    },
+    "proc-067-notification.txt": {
+      "bytes": 435,
+      "sha256": "ff9c9fad52e873809758c5372c71291b296f90b994e654ce8f582a90c3870a36"
+    },
+    "proc-067-reconciliation.md": {
+      "bytes": 4438,
+      "sha256": "aead177f50634760f2e8e7a099c24c4997b5012b5d51dff4218f6f7cab882355"
+    },
+    "proc-067-visual-observations.md": {
+      "bytes": 1137,
+      "sha256": "f6a1809e62f8c0621b74ec04c15158a1383e86fa08d02b1e8fe546fdd9b1b7f3"
+    }
+  },
+  "axes": {
+    "cleanup": {
+      "session_c7_absent": true,
+      "xvnc_count": 0
+    },
+    "current_auth": {
+      "display": ":1.0",
+      "session": "c7",
+      "status": "PASS",
+      "tls": "TLSv1.3",
+      "unexpected_session_side_effect": true
+    },
+    "current_ingress": {
+      "contract": "wg100-only",
+      "status": "PASS"
+    },
+    "current_remote_framebuffer": {
+      "status": "DESKTOP_PROOF",
+      "visual_error": false
+    },
+    "embedded_probe": {
+      "error": "SyntaxError: parenthesis never closed",
+      "returncode": 1,
+      "status": "INVALID",
+      "stdout_empty": true
+    },
+    "historical_auth": {
+      "display": ":1.0",
+      "returncode": 0,
+      "session": "c5",
+      "status": "PASS",
+      "unexpected_session_side_effect": true
+    },
+    "historical_client_screenshot": {
+      "desktop_proof": false,
+      "status": "NEGATIVE_ARTIFACT"
+    },
+    "historical_remote_framebuffer": {
+      "status": "DESKTOP_PROOF",
+      "visual_error": false
+    },
+    "historical_session": {
+      "lxpanel": true,
+      "lxsession": true,
+      "pcmanfm": true,
+      "status": "PASS",
+      "theme": true,
+      "xdg_dirs": 8,
+      "xvnc": true
+    },
+    "historical_tls": {
+      "selected_protocol": "RDP",
+      "status": "GAP_DISCOVERED"
+    },
+    "second_connection": {
+      "reason": "MaxSessions=1 already occupied by auth-only-created c5",
+      "status": "DENIED_BY_SESSION_LIMIT"
+    }
+  },
+  "classification": "historical-rdp-harness-false-negative",
+  "current_actionable": false,
+  "current_runtime_manifest": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "final_apply_run": "20260906T233823+0000-1549801",
+  "final_verify_run": "20260906T234149+0000-1558144",
+  "historical_pid": 3003432,
+  "process_id": "proc_06700dd17aab",
+  "raw_harness_sha256": "f1525c72e1272a4178ef8ee6bd33b75c61f0bda03404421179e1d0a09205aa1d",
+  "recorded_at": "2026-09-07T02:56:28.664740+00:00",
+  "restricted_raw_backup": "/home/ubuntu/.backups/proc-067-rdp-harness-pre-20260906T234100-0300",
+  "runner_exit_code": 1,
+  "schema": "delayed-rdp-harness-reconciliation-v1",
+  "session_authority_messages": [
+    301104,
+    301105,
+    301107,
+    301117,
+    301120,
+    301121,
+    301123,
+    301124,
+    301125,
+    301129,
+    301130,
+    301137,
+    314487,
+    314494,
+    314497
+  ],
+  "subtype": "auth-only-session-side-effect-plus-invalid-embedded-probe"
+}

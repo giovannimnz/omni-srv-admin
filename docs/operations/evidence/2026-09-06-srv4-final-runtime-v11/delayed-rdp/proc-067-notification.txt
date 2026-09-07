@@ -1,0 +1,10 @@
+[IMPORTANT: Background process proc_06700dd17aab exited (exit code 1).
+Command: exec python3 /tmp/srv4-rdp-first-login.py
+Output:
+Traceback (most recent call last):
+  File "/tmp/srv4-rdp-first-login.py", line 159, in <module>
+    raise SystemExit(main())
+  File "/tmp/srv4-rdp-first-login.py", line 130, in main
+    raise RuntimeError(f"session did not reach desktop: {remote_state}")
+RuntimeError: session did not reach desktop: {}
+]

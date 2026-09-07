@@ -58,6 +58,8 @@ Status: PASS
 - `reviews/proc-d3e-reconciliation-v1-nogo.txt`
 - `reviews/proc-d3e-reconciliation-v2-go.txt`
 - `reviews/proc-419-reconciliation-go.txt`
+- `reviews/proc-067-reconciliation-v1-go-p3.txt`
+- `reviews/proc-067-reconciliation-v2-go.txt`
 
 ## Cleanup
 
@@ -137,6 +139,17 @@ the successful readback authority.
 - Classificação: `historical-full-verify-operational-pass`, não seal/review,
   superseded pelos runs finais `233823`/`234149`, sem current actionable.
 - Reconciliação: `delayed-backup/proc-419dd742547f-reconciliation.md`.
+- `proc_06700dd17aab` foi um false negative do harness RDP: `+auth-only`
+  criou a sessão real `c5/:1`, a probe SSH tinha SyntaxError e a segunda
+  conexão foi negada por `MaxSessions=1`.
+- O primeiro login foi provado por journal, processos e framebuffer remoto; a
+  screenshot local `login failed` é artifact negativo da segunda conexão.
+- O gap TLS descoberto nesse fluxo foi corrigido. Reprodução atual negociou
+  TLS 1.3, abriu `c7/:1`, capturou desktop escuro e encerrou a sessão
+  seletivamente; pós-cleanup `Xvnc=0`, XRDP active, health `0/0`.
+- Classificação: `historical-rdp-harness-false-negative/auth-only-session-side-effect-plus-invalid-embedded-probe`,
+  sem current actionable.
+- Reconciliação: `delayed-rdp/proc-067-reconciliation.md`.
 
 ## Graphify final
 

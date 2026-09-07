@@ -1,0 +1,29 @@
+{
+  "contract": "wg100-only",
+  "pass": true,
+  "results": [
+    {
+      "duration_ms": 1,
+      "host": "10.100.100.18",
+      "port": 3389,
+      "rc": 0,
+      "status": "open"
+    },
+    {
+      "duration_ms": 5004,
+      "host": "10.14.1.14",
+      "port": 3389,
+      "rc": 11,
+      "status": "not-open"
+    },
+    {
+      "duration_ms": 5005,
+      "host": "164.152.48.22",
+      "port": 3389,
+      "rc": 11,
+      "status": "not-open"
+    }
+  ],
+  "schema": "rdp-ingress-v1",
+  "source_host": "atius-srv-1"
+}

@@ -1,0 +1,10 @@
+Id=c7
+User=1001
+Name=ubuntu
+Timestamp=Mon 2026-09-07 02:43:38 UTC
+Remote=no
+Leader=1622968
+Type=x11
+Class=user
+Active=yes
+State=active

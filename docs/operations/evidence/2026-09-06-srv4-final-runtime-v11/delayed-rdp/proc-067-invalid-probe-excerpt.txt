@@ -1,0 +1,24 @@
+92|            password = ""
+93|            deadline = time.time() + 90
+94|            remote_ok = False
+95|            remote_state: dict[str, object] = {}
+96|            while time.time() < deadline:
+97|                probe = run([
+98|                    "ssh", "-n", "-o", "BatchMode=yes", "atius-srv-4",
+99|                    "python3 - <<'PY'\n"
+100|                    "from pathlib import Path\nimport json,subprocess\n"
+101|                    "def sh(s): return subprocess.run(['/bin/bash','-lc',s],text=True,capture_output=True).stdout.strip()\n"
+102|                    "print(json.dumps({'xvnc':sh(\"ps -eo pid,args | grep '^ *[0-9].*Xvnc :1 ' | grep -v grep\"),"
+103|                    "'lxsession':sh(\"pgrep -a -u ubuntu lxsession\"),'lxpanel':sh(\"pgrep -a -u ubuntu lxpanel\"),"
+104|                    "'pcmanfm':sh(\"pgrep -a -u ubuntu pcmanfm\"),'dirs':{n:(Path.home()/n).is_dir() for n in ('Desktop','Documents','Downloads','Music','Pictures','Public','Templates','Videos')},"
+105|                    "'theme':(Path.home()/'.config/environment.d/10-omni-dark.conf').exists(),"
+106|                    "'light_locker_disabled':'X-GNOME-Autostart-enabled=false' in (Path.home()/'.config/autostart/light-locker.desktop').read_text(errors='ignore')})\nPY"
+107|                ], timeout=20)
+108|                if probe.returncode == 0:
+109|                    remote_state = json.loads(probe.stdout)
+110|                    remote_ok = bool(remote_state.get("xvnc") and remote_state.get("lxsession") and remote_state.get("lxpanel") and remote_state.get("pcmanfm") and all(remote_state.get("dirs", {}).values()) and remote_state.get("theme") and remote_state.get("light_locker_disabled"))
+111|                    if remote_ok:
+112|                        break
+113|                if client.poll() is not None:
+114|                    break
+115|                time.sleep(2)

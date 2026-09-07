@@ -1,0 +1,26 @@
+P0=0 P1=0 P2=0 P3=1
+
+Finding:
+
+- P3 — `delayed-rdp/proc-067-provenance.json:147`: `session_authority_messages` referencia apenas o histórico `301104–301137`; omite os eventos atuais `314487/314494/314497`, que provaram TLS/c7, captura e cleanup seletivo. Hashes, session history e live target confirmam os fatos, portanto é apenas uma lacuna menor de rastreabilidade.
+
+Eixos confirmados separadamente:
+
+1. Auth histórico `rc=0`; `+auth-only` criou `c5/:1`.
+2. Journal + state + framebuffer comprovam Xvnc, LXDE/LXPanel/PCManFM, 8/8 XDG e dark theme.
+3. Execução exata da probe preservada reproduziu `rc=1`, stdout vazio e `SyntaxError: '(' was never closed`; `remote_state={}` foi false negative.
+4. Segunda conexão encontrou `MaxSessions=1`; `proc-067-historical-client-negative.png` é artifact negativo, não desktop proof.
+5. Journal histórico prova downgrade para RDP sem TLS; estado atual confirma cert/key, public-key match, `negotiate/high` e TLS 1.3.
+6. Reprodução atual comprovou `c7/:1`, TLS 1.3, ABNT2 e framebuffer escuro. Journal live confirma término de `c7`; agora `c7=absent` e `Xvnc=0`.
+7. Ingress live desde SRV-1: WG `10.100.100.18:3389` aberto; OCI private e public não abertos.
+8. Live target: apply e verify `17/17`, manifest `aa1883d1…`, health `0/0`, setup processes `0`; backups `6/6 PASS` e `15/15 PASS`.
+
+Integridade e exposição:
+
+- `SHA256SUMS`: `80/80 OK`; output idêntico a `SHA256SUMS.check`.
+- Escopo solicitado: `20/20 OK`; provenance interno `18/18`.
+- Raw harness, auth stderr e duas imagens históricas coincidem com os hashes de origem.
+- Nenhum token, password, private key, e-mail ou metadata secreta nas imagens. IPs, usuário técnico `ubuntu`, paths do Vault e metadata pública do certificado são dados operacionais deliberados.
+- Papéis visuais corretos: uma captura negativa de login e dois framebuffers positivos distintos.
+
+VERDICT=GO

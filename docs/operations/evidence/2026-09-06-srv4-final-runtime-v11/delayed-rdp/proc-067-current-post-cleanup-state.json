@@ -1,0 +1,58 @@
+{
+  "host": "atius-srv-4.atius.internal",
+  "xrdp": {
+    "Result": "success",
+    "NRestarts": "0",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "running",
+    "UnitFileState": "enabled"
+  },
+  "xrdp_sesman": {
+    "Result": "success",
+    "NRestarts": "0",
+    "ExecMainStatus": "0",
+    "ActiveState": "active",
+    "SubState": "running",
+    "UnitFileState": "enabled"
+  },
+  "listen_3389_count": 1,
+  "active_xvnc_count": 0,
+  "xdg_dirs": {
+    "Desktop": true,
+    "Documents": true,
+    "Downloads": true,
+    "Music": true,
+    "Pictures": true,
+    "Public": true,
+    "Templates": true,
+    "Videos": true
+  },
+  "dark_theme_config": true,
+  "tls": {
+    "certificate": {
+      "path": "/etc/xrdp/atius-rdp/server.crt.pem",
+      "exists": true,
+      "bytes": 9629
+    },
+    "key": {
+      "path": "/etc/xrdp/atius-rdp/server.key.pem",
+      "exists": true,
+      "bytes": 2484
+    },
+    "public_key_match": true,
+    "metadata": "subject=C = BR, ST = SP, O = ATIUS, OU = RDP, CN = atius-srv-4\nissuer=C = BR, ST = SP, L = SaoPaulo, O = ATIUS, OU = Infra, CN = ATIUS RDP Fleet Root CA\nnotBefore=Sep  6 06:37:46 2026 GMT\nnotAfter=Sep  5 06:37:46 2031 GMT\nX509v3 Subject Alternative Name: \n    DNS:atius-srv-4, DNS:srv4, DNS:atius-srv-4.atius.internal, IP Address:164.152.48.22, IP Address:10.14.1.14, IP Address:10.100.100.18",
+    "config": {
+      "security_layer": "negotiate",
+      "crypt_level": "high",
+      "certificate": "/etc/xrdp/atius-rdp/server.crt.pem",
+      "key_file": "/etc/xrdp/atius-rdp/server.key.pem"
+    }
+  },
+  "runtime_manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "setup_processes": 0
+}

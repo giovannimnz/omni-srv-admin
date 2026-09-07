@@ -1,0 +1,14 @@
+{
+  "auth_success_marker": true,
+  "credential_source": "kv/atius/host-console-logins/atius-srv-1",
+  "display": ":1.0",
+  "password_recorded": false,
+  "post_cleanup_xvnc_count": 0,
+  "returncode": 0,
+  "schema": "rdp-auth-axis-v1",
+  "session_id": "c7",
+  "session_terminated_selectively": true,
+  "target": "10.100.100.18:3389",
+  "unexpected_session_side_effect": true,
+  "username": "ubuntu"
+}

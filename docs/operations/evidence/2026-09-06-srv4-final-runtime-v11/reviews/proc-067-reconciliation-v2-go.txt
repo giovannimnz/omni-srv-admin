@@ -1,0 +1,14 @@
+P0=0 P1=0 P2=0 P3=0
+
+Findings: nenhum.
+
+- Finding v1 corrigido: authorities atuais `314487`, `314494` e `314497` constam em [proc-067-provenance.json](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-rdp/proc-067-provenance.json:147).
+- Auth/session/probe/screenshot/TLS/ingress/cleanup coerentes.
+- Imagens: uma captura negativa da segunda conexão e dois framebuffers positivos distintos; sem segredo ou PII.
+- `c7` declarada ausente, `Xvnc=0`, XRDP/sesman active/enabled e health system/user `0/0`.
+- Apply `17/17`, verify `17/17`, manifest final e backups confirmados no packet.
+- Provenance interno: `18/18`, zero mismatch.
+- Seal atual: `81/81 OK`; readback recomputado idêntico a `SHA256SUMS.check`.
+- Nenhum arquivo editado.
+
+VERDICT=GO

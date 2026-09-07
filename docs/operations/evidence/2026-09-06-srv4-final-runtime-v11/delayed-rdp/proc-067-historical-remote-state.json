@@ -1,0 +1,64 @@
+{
+  "dirs": {
+    "Desktop": true,
+    "Documents": true,
+    "Downloads": true,
+    "Music": true,
+    "Pictures": true,
+    "Public": true,
+    "Templates": true,
+    "Videos": true
+  },
+  "light_locker_disabled": true,
+  "lxpanel": [
+    {
+      "cmd": "lxpanel --profile LXDE",
+      "env": {
+        "DISPLAY": ":1.0",
+        "XAUTHORITY": "/home/ubuntu/.Xauthority",
+        "XDG_SESSION_ID": "c5"
+      },
+      "pid": 993822,
+      "ppid": 993741,
+      "state": "S"
+    }
+  ],
+  "lxsession": [
+    {
+      "cmd": "/usr/bin/lxsession -s LXDE -e LXDE",
+      "env": {
+        "DISPLAY": ":1.0",
+        "XAUTHORITY": "/home/ubuntu/.Xauthority",
+        "XDG_SESSION_ID": "c5"
+      },
+      "pid": 993741,
+      "ppid": 993740,
+      "state": "S"
+    }
+  ],
+  "pcmanfm": [
+    {
+      "cmd": "pcmanfm --desktop --profile LXDE",
+      "env": {
+        "DISPLAY": ":1.0",
+        "XAUTHORITY": "/home/ubuntu/.Xauthority",
+        "XDG_SESSION_ID": "c5"
+      },
+      "pid": 993823,
+      "ppid": 993741,
+      "state": "S"
+    }
+  ],
+  "theme": true,
+  "xvnc": [
+    {
+      "cmd": "Xvnc :1 -auth .Xauthority -geometry 1024x768 -depth 32 -rfbauth [redacted-rfbauth-path] -bs -nolisten tcp -localhost -SecurityTypes None -Protocol3.3 -rfbunixpath /run/xrdp/sockdir/xrdp_display_1 -rfbunixmode 432 -dpi 96",
+      "env": {
+        "DISPLAY": ":1.0"
+      },
+      "pid": 993742,
+      "ppid": 993740,
+      "state": "S"
+    }
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "client": "xfreerdp",
+  "display": ":1.0",
+  "flag": "auth-only",
+  "password_recorded": false,
+  "raw_auth_stderr_sha256": "359a6e7f85515a6fd71866cafc6198aa878563a39534d73f3013d056ca244443",
+  "returncode": 0,
+  "schema": "rdp-auth-axis-v1",
+  "session_id": "c5",
+  "success_marker": true,
+  "target": "10.100.100.18:3389",
+  "unexpected_session_side_effect": true,
+  "when": "2026-09-06T06:14:55Z"
+}
