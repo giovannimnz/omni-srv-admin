@@ -1,0 +1,6 @@
+[IMPORTANT: Background process proc_d7b3cd5a26de exited (exit code 1).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 'set -euo pipefail; export PATH="$HOME/.local/bin:$HOME/.cargo/bin:$HOME/.bun/bin:$PATH"; ROOT="$HOME/.local/share/omni-setup-source"; OMNI_SRV_ADMIN="$ROOT" OMNI_UBUNTU_PRO_TOKEN_FILE="$HOME/.local/state/omni/ubuntu-pro-token.tmp" python3 -m omni srv1-ops resources run --no-schedule-hygiene builds -- "$ROOT/modules/fleet/scripts/oci-arm64-host-setup.sh" --apply --resume'
+Output:
+/usr/bin/python3: No module named omni
+Connection to 10.14.1.14 closed.
+]

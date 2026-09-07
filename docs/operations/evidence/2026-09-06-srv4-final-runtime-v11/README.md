@@ -51,6 +51,7 @@ Status: PASS
 - `reviews/server-analysis-hotfix-go.txt`
 - `reviews/aa-runtime-final-go.txt`
 - `reviews/proc-b20-reconciliation-go.txt`
+- `reviews/proc-d7-reconciliation-go.txt`
 
 ## Cleanup
 
@@ -84,6 +85,16 @@ the successful readback authority.
   `post-workload-harness-failure/localized-checksum-token-mismatch`.
 - Readback atual: 15/15 checksums `OK`; nenhum current actionable.
 - Reconciliação: `delayed-backup/proc-b20a6f181b17-reconciliation.md`.
+- `proc_d7b3cd5a26de` falhou antes do workload com `No module named omni`:
+  o launcher source-based não exportou `PYTHONPATH=$ROOT/cli`.
+- A sessão detectou a falha e relançou como `proc_8df4807a96c0` com o ambiente
+  correto; esse relaunch avançou oito steps e depois encontrou o bug independente
+  `npm EEXIST`, corrigido nas retomadas seguintes.
+- Apply `20260906T233823+0000-1549801` e verify-only
+  `20260906T234149+0000-1558144` são a autoridade final. Classificação:
+  `pre-workload-launcher-failure/missing-pythonpath`, superseded, sem current
+  actionable.
+- Reconciliação: `delayed-backup/proc-d7b3cd5a26de-reconciliation.md`.
 
 ## Graphify final
 

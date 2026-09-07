@@ -5,6 +5,9 @@ delayed-backup/git-bundle-verify-final.log: OK
 delayed-backup/proc-b20a6f181b17-notification.txt: OK
 delayed-backup/proc-b20a6f181b17-provenance.json: OK
 delayed-backup/proc-b20a6f181b17-reconciliation.md: OK
+delayed-backup/proc-d7b3cd5a26de-notification.txt: OK
+delayed-backup/proc-d7b3cd5a26de-provenance.json: OK
+delayed-backup/proc-d7b3cd5a26de-reconciliation.md: OK
 delayed-backup/reconciliation.md: OK
 delayed-backup/restore-drill.env: OK
 reviews/aa-runtime-final-go.txt: OK
@@ -13,6 +16,7 @@ reviews/final-ignore-go.txt: OK
 reviews/ops-p3-go.txt: OK
 reviews/ops-v10-go.txt: OK
 reviews/proc-b20-reconciliation-go.txt: OK
+reviews/proc-d7-reconciliation-go.txt: OK
 reviews/reset-hotfix-go.txt: OK
 reviews/runtime-v11-go.txt: OK
 reviews/server-analysis-hotfix-go.txt: OK

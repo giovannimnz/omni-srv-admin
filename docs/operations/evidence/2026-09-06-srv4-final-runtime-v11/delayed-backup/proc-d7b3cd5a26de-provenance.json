@@ -1,0 +1,21 @@
+{
+  "classification": "pre-workload-launcher-failure",
+  "corrected_environment": "PYTHONPATH=$ROOT/cli",
+  "corrected_relaunch": "proc_8df4807a96c0",
+  "corrected_relaunch_full_pass": false,
+  "corrected_relaunch_later_failure": "npm EEXIST at toolchains",
+  "current_actionable": false,
+  "current_runtime_manifest": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "failed_before_orchestrator": true,
+  "failed_command_module": "omni",
+  "final_apply_run": "20260906T233823+0000-1549801",
+  "final_verify_run": "20260906T234149+0000-1558144",
+  "host": "atius-srv-4",
+  "notification_sha256": "df50e3ad22be3599edf11bd4a23b193bacf2ced07d1c9b54c4e7fb0b357c84e6",
+  "process_id": "proc_d7b3cd5a26de",
+  "reconciliation_sha256": "2fac4dc670610df60e41570b098fb47d2856300d61be7deee78a0f2b87719131",
+  "recorded_at": "2026-09-07T00:55:38.977321+00:00",
+  "runner_exit_code": 1,
+  "schema": "delayed-process-reconciliation-provenance-v1",
+  "subtype": "missing-pythonpath"
+}
