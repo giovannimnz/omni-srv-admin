@@ -2,6 +2,11 @@ README.md: OK
 cleanup/inventory.json: OK
 cleanup/result.json: OK
 delayed-backup/git-bundle-verify-final.log: OK
+delayed-backup/proc-419-pre-run-external-manifest.json: OK
+delayed-backup/proc-419dd742547f-notification.txt: OK
+delayed-backup/proc-419dd742547f-provenance.json: OK
+delayed-backup/proc-419dd742547f-reconciliation.md: OK
+delayed-backup/proc-419dd742547f-setup.log: OK
 delayed-backup/proc-8df4807a96c0-notification.txt: OK
 delayed-backup/proc-8df4807a96c0-provenance.json: OK
 delayed-backup/proc-8df4807a96c0-reconciliation.md: OK
@@ -27,6 +32,7 @@ reviews/doc-package-go.txt: OK
 reviews/final-ignore-go.txt: OK
 reviews/ops-p3-go.txt: OK
 reviews/ops-v10-go.txt: OK
+reviews/proc-419-reconciliation-go.txt: OK
 reviews/proc-8df-reconciliation-v1-nogo.txt: OK
 reviews/proc-8df-reconciliation-v2-go.txt: OK
 reviews/proc-b20-reconciliation-go.txt: OK

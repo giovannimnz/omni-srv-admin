@@ -57,6 +57,7 @@ Status: PASS
 - `reviews/proc-c81-reconciliation-go.txt`
 - `reviews/proc-d3e-reconciliation-v1-nogo.txt`
 - `reviews/proc-d3e-reconciliation-v2-go.txt`
+- `reviews/proc-419-reconciliation-go.txt`
 
 ## Cleanup
 
@@ -127,6 +128,15 @@ the successful readback authority.
 - Classificação: `historical-resume-operational-pass`, superseded pelo full
   apply `233823` e verify-only `234149`, sem current actionable.
 - Reconciliação: `delayed-backup/proc-d3ee6b4484bf-reconciliation.md`.
+- `proc_419dd742547f` executou verify-only completo: `START/DONE=17`, zero
+  skip, `COMPLETE=PASS`.
+- O package externo pré-run foi validado `265/265` com manifest `818cc5af…`,
+  mas o run ainda não copiava `source-manifest.sealed.json` para seu diretório.
+- O backing tree histórico recebeu patches posteriores e hoje confere 264/265;
+  isso limita a reconstrução atual, sem retroagir sobre os postconditions do run.
+- Classificação: `historical-full-verify-operational-pass`, não seal/review,
+  superseded pelos runs finais `233823`/`234149`, sem current actionable.
+- Reconciliação: `delayed-backup/proc-419dd742547f-reconciliation.md`.
 
 ## Graphify final
 

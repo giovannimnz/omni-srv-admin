@@ -1,0 +1,52 @@
+{
+  "authority": "operational-not-seal-or-review",
+  "classification": "historical-full-verify-operational-pass",
+  "counts": {
+    "done": 17,
+    "skipped": 0,
+    "started": 17
+  },
+  "current_actionable": false,
+  "current_runtime_manifest": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+  "external_manifest_copy_sha256": "818cc5af6dd8fc3d8aafa405da8f66a59b8b222b1f1321c04c9ee5e58c6c1ca4",
+  "final_apply_run": "20260906T233823+0000-1549801",
+  "final_verify_run": "20260906T234149+0000-1558144",
+  "hermes_observed_commit": "245e48008fa814b3251f50755eb656bd9fb86cb1",
+  "historical_backing_tree_readback": {
+    "checked_after_run": true,
+    "declared_entries": 265,
+    "drift_attribution": "later-in-place-patches; not attributed to run time",
+    "drifted_path": "modules/fleet/scripts/oci-arm64-host-setup.sh",
+    "matching_entries": 264,
+    "orchestrator_actual_sha256": "ba5dd2c78105bb70efb4db9abb4ac236f989e728b2c19df63d85edbdbb06110d"
+  },
+  "historical_pid": 2998895,
+  "host": "atius-srv-4",
+  "notification_sha256": "c3f75424923ac61713c43dad888dccaf984795f942ab9f2f84d38b6fff598ccd",
+  "orchestrator_run_id": "20260906T061314+0000-991532",
+  "pre_run_external_manifest": {
+    "declared_files": 265,
+    "orchestrator_expected_sha256": "477d4fb1cf02a97ce6b67bff52dd17a2badbb2e6f30a21ac4dd3c6fe7adc537a",
+    "run_local_copy": false,
+    "sha256": "818cc5af6dd8fc3d8aafa405da8f66a59b8b222b1f1321c04c9ee5e58c6c1ca4",
+    "source_head": "f851a0353e7ed3f03e736b571270ff7baaf8c357",
+    "validated_before_run_bad_count": 0
+  },
+  "process_id": "proc_419dd742547f",
+  "reconciliation_sha256": "9591be33527ce9dfa38261a77bee910037133898f581b775ad71ab4449cfdaa0",
+  "recorded_at": "2026-09-07T02:16:50.760374+00:00",
+  "run_complete_pass": true,
+  "run_failed_marker": false,
+  "runner_exit_code": 0,
+  "schema": "delayed-process-reconciliation-provenance-v1",
+  "session_authority_messages": {
+    "completion": 300062,
+    "launch": 300060,
+    "package_build": 299333,
+    "package_promotion": 300058
+  },
+  "setup_log_bytes": 8065,
+  "setup_log_sha256": "ae0b0a9303235d2410d9cc56dc127fb5ea10747f25181889f640ec67d347ba67",
+  "source_closure": "not-reconstructible-at-run-boundary",
+  "source_manifest_sealed_present": false
+}

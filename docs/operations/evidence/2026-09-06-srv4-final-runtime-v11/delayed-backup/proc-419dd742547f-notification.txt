@@ -1,0 +1,7 @@
+[IMPORTANT: Background process proc_419dd742547f completed normally (exit code 0).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 '... OMNI_SRV_ADMIN="$ROOT" PYTHONPATH="$ROOT/cli"; "$ROOT/modules/fleet/scripts/oci-arm64-host-setup.sh" --verify-only'
+Output summary:
+- all 17 setup steps started and completed;
+- final line: status=PASS mode=verify-only run_id=20260906T061314+0000-991532;
+- runner exit 0.
+]

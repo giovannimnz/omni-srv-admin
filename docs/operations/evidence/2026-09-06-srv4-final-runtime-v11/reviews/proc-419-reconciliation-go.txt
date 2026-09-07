@@ -1,0 +1,20 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings: nenhum.
+
+Confirmado:
+
+- Session history: mensagens `300060` launch e `300062` completion, exit 0.
+- Run `061314`: `START=17`, `DONE=17`, `SKIP=0`, `COMPLETE=PASS`, sem `FAILED` ([setup.log](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-419dd742547f-setup.log:175)).
+- Manifest externo `818cc5af…`: 265 arquivos, pré-run `bad=0`; ausente no diretório run-local.
+- Backing tree live: `264/265`; único drift no orchestrator, causado posteriormente. Source closure histórica não é reconstruível.
+- Classificação correta: `historical-full-verify-operational-pass`, explicitamente não seal/review ([reconciliation.md](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-backup/proc-419dd742547f-reconciliation.md:47)).
+- Autoridade live: runs finais `233823` e `234149`, ambos `17/17 PASS`, manifest run-local `aa1883d1…`.
+- Health live: failed units system/user `0/0`.
+- Backups: atual `6/6 PASS`; histórico `15/15 PASS`, compares/bundle/restore PASS.
+- `current_actionable=false`.
+- Seal documental: `SHA256SUMS` passou `60/60`; readback reproduz exatamente `SHA256SUMS.check`.
+- Nenhum segredo, credential, e-mail, CPF ou telefone real. O único nome próprio detectado está em um path versionado do manifest, sem dado pessoal adicional.
+- Nenhuma edição realizada.
+
+VERDICT=GO

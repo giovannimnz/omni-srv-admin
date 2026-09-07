@@ -1,0 +1,1596 @@
+{
+  "created_at": "2026-09-06T03:08:18.953902-03:00",
+  "files": [
+    {
+      "bytes": 157,
+      "mode": "0o664",
+      "path": "cli/omni/__init__.py",
+      "sha256": "6d34862714dd0344ad45b0cde49d1c6d333b7aa269450c50104ef339311b7276"
+    },
+    {
+      "bytes": 99,
+      "mode": "0o664",
+      "path": "cli/omni/__main__.py",
+      "sha256": "b2e17ab9edaf550aadf66f64928335a893226d59b225aa146b029cc78a5cfaa6"
+    },
+    {
+      "bytes": 34782,
+      "mode": "0o664",
+      "path": "cli/omni/agent_content.py",
+      "sha256": "0e6391754b73c49fc8d76ea6052b08f477d7936436c2a5f7b5fe9d6df2113f64"
+    },
+    {
+      "bytes": 16411,
+      "mode": "0o664",
+      "path": "cli/omni/cli.py",
+      "sha256": "29378820afe83d68e36f3fa10f21f219abd63dec635b350a76df2e720f7b1907"
+    },
+    {
+      "bytes": 3171,
+      "mode": "0o664",
+      "path": "cli/omni/db_runtime.py",
+      "sha256": "033b102fb3f7408f74345d2869941f8bf438eca5896d45e8bdafb801389bd0d5"
+    },
+    {
+      "bytes": 11197,
+      "mode": "0o664",
+      "path": "cli/omni/edge.py",
+      "sha256": "fe863023bd23e146f2582fab2c5324cb9466883eb832e482c5483b022946e4aa"
+    },
+    {
+      "bytes": 168417,
+      "mode": "0o664",
+      "path": "cli/omni/fleet.py",
+      "sha256": "1ad9429366dd620ed52bd16da4d8dda5c9f676213324621e79347d1e8181c254"
+    },
+    {
+      "bytes": 2258,
+      "mode": "0o664",
+      "path": "cli/omni/fleet_backup.py",
+      "sha256": "e9583cd5ed21eeb811961e586bc291c2e90842c171dd8b644e2c0c2eb6baad9a"
+    },
+    {
+      "bytes": 16526,
+      "mode": "0o664",
+      "path": "cli/omni/fleet_collectors.py",
+      "sha256": "6349a11c218f0076221fa4f5870e7149fa1dcd74d98a9dcefe601b3f15651b60"
+    },
+    {
+      "bytes": 115,
+      "mode": "0o664",
+      "path": "cli/omni/fleet_entry.py",
+      "sha256": "c828f55fbf7f53b24922f2601c27f793bd2a54825370c5ac2b3f41bc3183e1e9"
+    },
+    {
+      "bytes": 3456,
+      "mode": "0o664",
+      "path": "cli/omni/fleet_governance.py",
+      "sha256": "f89636156f05c05438c39e3a89157eb36c557535f7616601fb903e2de991920f"
+    },
+    {
+      "bytes": 2713,
+      "mode": "0o664",
+      "path": "cli/omni/fleet_security.py",
+      "sha256": "cb027510ae3689bc82942c5aad50d058e19eff3c30405265894dbf708a5229d0"
+    },
+    {
+      "bytes": 10575,
+      "mode": "0o664",
+      "path": "cli/omni/fleet_versioning.py",
+      "sha256": "8c0a167f79b8881be4b16e1a276debf39fa82d7b4e2a614bd3e331cd2e588cb9"
+    },
+    {
+      "bytes": 21399,
+      "mode": "0o664",
+      "path": "cli/omni/landscape.py",
+      "sha256": "828857f2ff80b52d424536779273d6d09996487afd7940a1672310fef07557d3"
+    },
+    {
+      "bytes": 55962,
+      "mode": "0o664",
+      "path": "cli/omni/managed_apps.py",
+      "sha256": "d90ac8694c69fb2de1bcbddba8f176689a1650be3d655d19fac351b6b0e1ecec"
+    },
+    {
+      "bytes": 29295,
+      "mode": "0o664",
+      "path": "cli/omni/observability.py",
+      "sha256": "79d0872cffadd4d13cd5427dfd87d4ed749efc986f105acebec78fd9c3d13d92"
+    },
+    {
+      "bytes": 31874,
+      "mode": "0o664",
+      "path": "cli/omni/oci.py",
+      "sha256": "549c04c7e1c09b8e909d08c5b38458860855af301fb583302c3bc1d156aef102"
+    },
+    {
+      "bytes": 3005,
+      "mode": "0o664",
+      "path": "cli/omni/podman_network.py",
+      "sha256": "8b8c2c0b7bc7e6a54519555f00ed2c5515c4f4170438e0984d6876e79cf400be"
+    },
+    {
+      "bytes": 6246,
+      "mode": "0o664",
+      "path": "cli/omni/remote_manager.py",
+      "sha256": "6cb141cff303d745e8255388860d9b9baf99a1b1074085ee0e3348fdb0c4b60d"
+    },
+    {
+      "bytes": 28728,
+      "mode": "0o664",
+      "path": "cli/omni/remote_ops.py",
+      "sha256": "0ffc36c1f9117dd36ea4946aa04fa38a8a6d74816c2117d694abe20a558b9dc0"
+    },
+    {
+      "bytes": 27264,
+      "mode": "0o664",
+      "path": "cli/omni/srv1_ops.py",
+      "sha256": "6b7a9e0579956daccc10a6264d0b147fd3fb1224f48412fae12631c0398a5ea3"
+    },
+    {
+      "bytes": 17886,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_agent_content.py",
+      "sha256": "bec4e8be4bb94a92b6d21166cbc5388d99e9f0b8d0563f523294c7a7a034f0ec"
+    },
+    {
+      "bytes": 11722,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_backup_gdrive_resume.py",
+      "sha256": "c441ca507900ae9a0444ffc322fdd043ca928e04cc104c07ebf79e20588369a2"
+    },
+    {
+      "bytes": 2900,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_dark_theme_contract.py",
+      "sha256": "5674255e2cfbb47aa342eb1a77d0de087b3a93989a1e63d423940c9a4644719f"
+    },
+    {
+      "bytes": 7252,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_edge.py",
+      "sha256": "b4b5a1f44192ab0a66eeae1cd496a549597cb587c28fdc678ef079749ed85b8b"
+    },
+    {
+      "bytes": 9896,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_fleet_pki.py",
+      "sha256": "c4a2165745bc71d9c7ebf7a5c3a4353e54bf43b981b5a24b4164a0fe09b3b110"
+    },
+    {
+      "bytes": 9066,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_managed_apps.py",
+      "sha256": "608f378bef797145f3ddcd117b638ac9c3b78e0782917184164458d4d1c9ef31"
+    },
+    {
+      "bytes": 8537,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_observability.py",
+      "sha256": "b07504398de110bda8ad4bd5e598a24eae2b9d6ca9ed68ee7434d0357ba1f762"
+    },
+    {
+      "bytes": 8654,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_oci.py",
+      "sha256": "a7fac82df29bbb501f7e83279445c606fff2bbd82f1b6ea7856af73e6a10f05b"
+    },
+    {
+      "bytes": 5091,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_oci_arm64_host_setup.py",
+      "sha256": "3053fb6af3dfd60290e5e05508226197d1c2032b38250fb27b5b9961fcda385a"
+    },
+    {
+      "bytes": 3303,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_offload_lock_contention.py",
+      "sha256": "c5ade431fc31a93233b2d020a4cac6abd003e0f43b0de59ac38d783cefa82484"
+    },
+    {
+      "bytes": 3514,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_pm2_dump_sanitizer.py",
+      "sha256": "6f9a8a55e764ffbfc278d3f56b15ef0a25c6e3ac328013449f966a0557924bf1"
+    },
+    {
+      "bytes": 767,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_rclone_fleet_queue.py",
+      "sha256": "d5fa356a5993a35be2d147c15ed4f8c698fe4835f57161cc780c3be35a18dfc4"
+    },
+    {
+      "bytes": 7906,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_remote_ops_cleanup.py",
+      "sha256": "1097b07e7d1b1be17d8adfb891bdac053d96547b8da7df6565a560ded0518bfe"
+    },
+    {
+      "bytes": 2821,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_resource_doctor_swap.py",
+      "sha256": "88e3f740d5af4a80d5f11fc36b7131afc6d75dafa96ce644e2c3096e177f9446"
+    },
+    {
+      "bytes": 14356,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_resource_governor.py",
+      "sha256": "37256ecdfd8208c9ce9b68f2168e4f101df25c9ce437e267ffd05b1ff56c0516"
+    },
+    {
+      "bytes": 2480,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_resource_watchdog_swap.py",
+      "sha256": "7cc6664bcfe6a75aeb93099984b7d217b8f8994f88ace5b91e623b4c0f756963"
+    },
+    {
+      "bytes": 4189,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_rustdesk_edge_contract.py",
+      "sha256": "536f281064fd5c3a04575c2ad32bece47d8266169e583389ab29d60107c24c1d"
+    },
+    {
+      "bytes": 3733,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_rustdesk_runtime_preflight.py",
+      "sha256": "6eedd8c61f5b38bfab82cc93ad1c3107a1da438e73e6f5f83908c71b802820e3"
+    },
+    {
+      "bytes": 7086,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_server_analysis_pressure.py",
+      "sha256": "c8a574aec95c1d3edca346136a68d54f1171d32d910813122aedb3dcdcf075a7"
+    },
+    {
+      "bytes": 3250,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_srv1_app_runtime_contracts.py",
+      "sha256": "6c6addeff3da463c01da29dc118a7466fbbcebd3f7d297ea766b32668b28b4d1"
+    },
+    {
+      "bytes": 24335,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_srv1_production_guard.py",
+      "sha256": "48523d17c8fafd04eb620533cb4563332c16eae9ccbfe3ac217007533f200376"
+    },
+    {
+      "bytes": 1431,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_sync_vault_hold.py",
+      "sha256": "7b9969c8a31fbe5e90dea4725d183f0841505e458398cdce24a7d170d8dc01bc"
+    },
+    {
+      "bytes": 1657,
+      "mode": "0o600",
+      "path": "cli/omni/tests/test_vscode_mcp_secret_contract.py",
+      "sha256": "11591a51a32aec5f011c4dfb5913682f3ddc27b4ce71a3a8261518663e8decca"
+    },
+    {
+      "bytes": 27640,
+      "mode": "0o664",
+      "path": "cli/omni/tests/test_xrdp_abnt2.py",
+      "sha256": "9e8faf18dc81be7aaada6775b375d55d8ea2f60b17dff9aed246b4a8d0360c26"
+    },
+    {
+      "bytes": 39742,
+      "mode": "0o664",
+      "path": "cli/omni/xrdp_abnt2.py",
+      "sha256": "598e2ed59ead410cc19e25fa1b3ccaa40abf353150caaac8977a2e188a939bdd"
+    },
+    {
+      "bytes": 5321,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/README.md",
+      "sha256": "4e949b10a384574e00c010ced27a89613f728f4d367efccc830a093050f9873f"
+    },
+    {
+      "bytes": 4529,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/.zshrc",
+      "sha256": "7ea0ab4eadd42450d1ef06bb631584291da1665138f1cce5eaee5fae0b0d41f7"
+    },
+    {
+      "bytes": 468,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/00-background",
+      "sha256": "9109854cf1bc660eae95c113fdabc71bdbe55434762cde92747116823c8dc868"
+    },
+    {
+      "bytes": 1122,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/desktop.conf",
+      "sha256": "3330400f8cffb706ce3903d520d1df4fc1e764b457edd232378b96bab1a4dcba"
+    },
+    {
+      "bytes": 329,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/gtk-3.0-settings.ini",
+      "sha256": "0599558d976939c1e7cc0ad934a4fcce0ab56e3263863f68ae7415ce22c409ae"
+    },
+    {
+      "bytes": 227,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/gtk-3.0.css",
+      "sha256": "e2c3f9c3d96d73bbbb646ad2116a095cca5288cdb1d25a42bc9397642383f881"
+    },
+    {
+      "bytes": 1541,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/gtkrc-2.0",
+      "sha256": "eb8c3ad030a11193e7a75ef6db711f54e8a52db350f97e8ae4092f0c84532f3a"
+    },
+    {
+      "bytes": 22409,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/lxde-rc.xml",
+      "sha256": "43e245d40d965b02bf74371357f64ea7e0ff100d18089b443d61de14d2258acd"
+    },
+    {
+      "bytes": 612,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/omni-network-error.svg",
+      "sha256": "58ffa0d4058f9d0cef9ad67f4312ce8b8eb5356e3e35993911e30c1616aacfd5"
+    },
+    {
+      "bytes": 601,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/omni-network-ok.svg",
+      "sha256": "3a723ee24db3c6fa74f486a4ffadd18625f21947e687ed8ff567da7e72158160"
+    },
+    {
+      "bytes": 587,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/omni-network-wired.svg",
+      "sha256": "78619a719d7ceb9c5c9943c5bd403b214397c698d55bd99eca2e95a8e78e1351"
+    },
+    {
+      "bytes": 1689,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/panel",
+      "sha256": "96ed7b39d250af99c97958bf87588de8d2501febbc922d820df7caa959e3323f"
+    },
+    {
+      "bytes": 87,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/panel-background.xpm",
+      "sha256": "923eb1f2daf9f81e57bce47897d90ea5415d031ff7aebb91c6f2e03c7ea35cfe"
+    },
+    {
+      "bytes": 1058,
+      "mode": "0o664",
+      "path": "dark-theme-ubuntu/config_files/status-right",
+      "sha256": "b6f1ee2602d40c396549abfb0dad51d01c9d522af6c745322a457c64530ef05d"
+    },
+    {
+      "bytes": 203,
+      "mode": "0o755",
+      "path": "dark-theme-ubuntu/scripts/dark-themectl-wrapper.sh",
+      "sha256": "c3aea228884bcfcc76f0945452decfe9dec3910c4b2a78baf85bccba393cebcd"
+    },
+    {
+      "bytes": 50475,
+      "mode": "0o775",
+      "path": "dark-theme-ubuntu/scripts/dark-themectl.sh",
+      "sha256": "6af07ed54daed41ce0388f5c25ddd08960cc883efac13b9aed22d3c7a22f64c1"
+    },
+    {
+      "bytes": 476,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/CHANGELOG.md",
+      "sha256": "a34d63a9d8d1e793888baa3c69c941ff4c9ccd4dd8b7bce549d51c6ce515e657"
+    },
+    {
+      "bytes": 2848,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/README.md",
+      "sha256": "1d97683a270a6e15bb782abd0d2dfedda911c9a694f39880bfcf4d105f38f92c"
+    },
+    {
+      "bytes": 367,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/manifest-index.yaml",
+      "sha256": "6ff9a7d4d518fe52b77bd63ff3a287b8f1f0784d7033e64c44c880bd0e0d686b"
+    },
+    {
+      "bytes": 15619,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/atius-sso/SKILL.md",
+      "sha256": "1f9e66d0b69038116c50b84b4a421cc3dc328b0843c8636c5e035cfa913676f5"
+    },
+    {
+      "bytes": 212,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/atius-sso/agents/openai.yaml",
+      "sha256": "822bae6a1e44258858e53e0af267ecd45987fcb291db97120e495298ed3d02ea"
+    },
+    {
+      "bytes": 5710,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/atius-sso/references/lifecycle-acceptance.md",
+      "sha256": "cf9ba13e562ce6285c9945b54bc5051a0ce7e62bcb7709b56925a888cde7cd86"
+    },
+    {
+      "bytes": 4309,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/atius-sso/references/source-of-truth.md",
+      "sha256": "8b2814f2666a142c5dfeb6b6d6a7a0ad637b35178944d10e9ae68eff27c19e8f"
+    },
+    {
+      "bytes": 3380,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/atius-sso-governed-release-closeout/SKILL.md",
+      "sha256": "e4685b6c38d4e843171fe76224f1be21bdfa973f023a29f2370af63db742ad34"
+    },
+    {
+      "bytes": 1603,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/atius-sso-governed-release-closeout/references/phase10-runbook.md",
+      "sha256": "3a746b5bd17a7918565bf68f2282eff3b1cbaf434231b2576a7b11c40842cbe6"
+    },
+    {
+      "bytes": 4237,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/git-worktree-fleet-closeout/SKILL.md",
+      "sha256": "09f9fb1a9f7cf8893465709a8430506f3d647d986846f459117ea01c6ec8973d"
+    },
+    {
+      "bytes": 5217,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/oci-arm64-new-server-bootstrap/SKILL.md",
+      "sha256": "b8e8632ddeb4ff1b60fc4fedaadb3e6701dd5fb6a105b88023c231d39ff06eb1"
+    },
+    {
+      "bytes": 7731,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md",
+      "sha256": "a83f10cd08cdce84b7ab904cdf567ad515119287a28e5b41e580e652b1bff1a8"
+    },
+    {
+      "bytes": 237,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/agents/openai.yaml",
+      "sha256": "30287a391e40e5a3e633bac97bc3ad57677b8788c631870aa2f66e75ab98331f"
+    },
+    {
+      "bytes": 1663,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/references/legacy-hermes-boundary.md",
+      "sha256": "ed34268e163fac6776498ac49f403d1e6d856660fdc5db49e22f51d0715e36f7"
+    },
+    {
+      "bytes": 3066,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/manifest.yaml",
+      "sha256": "9975c1696e3d5db8b5cc6e4325cba176d80f651431d083ff5142b23ce7b71c3d"
+    },
+    {
+      "bytes": 3308,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/codex-skills/targets.yaml",
+      "sha256": "3021dc3ffb7b5755255964a2e3f39b8d5a7cfe6d337dceb5250961773a480cc5"
+    },
+    {
+      "bytes": 9505,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/gbrain-mcp-operations/SKILL.md",
+      "sha256": "c023a83353a458722567c9a4d9cdb20684466760b042fb6c6603635af5aa1365"
+    },
+    {
+      "bytes": 3272,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/gbrain-mcp-operations/references/giovanni-gbrain-mcp-audit-2026-07-03.md",
+      "sha256": "0429878a7c5fcd978aff9a2261bae47b8deb1dea9f2157cbc8445d768bc7d782"
+    },
+    {
+      "bytes": 4024,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/gbrain-mcp-operations/references/http-mcp-troubleshooting.md",
+      "sha256": "aa23ee7746789f8e664f81e1efc71ab74c45cc665675efd503655c82a44b7947"
+    },
+    {
+      "bytes": 2645,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/gbrain-mcp-operations/references/write-fallback-embedding-governor.md",
+      "sha256": "06ffae858cfe6ed1e2ae156bd83bfa0371a27eb66a674746c3bf1db0c0a1f49e"
+    },
+    {
+      "bytes": 4237,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/git-worktree-fleet-closeout/SKILL.md",
+      "sha256": "09f9fb1a9f7cf8893465709a8430506f3d647d986846f459117ea01c6ec8973d"
+    },
+    {
+      "bytes": 27985,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-cross-runtime-bridge/SKILL.md",
+      "sha256": "dd9fa8c89ee0ceb821e1cada3fff6c3d85f36705c8519679f76ae120e36ffd4e"
+    },
+    {
+      "bytes": 2086,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-cross-runtime-bridge/references/approval-mode-yaml-bool-audit.md",
+      "sha256": "0102d6e48ba6ac79252d33554a6df6114d107511199f356d6cd8bb8609f9717f"
+    },
+    {
+      "bytes": 4376,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-cross-runtime-bridge/references/default-model-provider-sync.md",
+      "sha256": "96fe9641699baeacc1d2cbd98cf459e63975d38221096efbad792fd5ea8c90e5"
+    },
+    {
+      "bytes": 3850,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-cross-runtime-bridge/references/verified-topology-and-probes.md",
+      "sha256": "7b139ef78f43a8631a21d0f711d39f00f510848444a383bad000faf97402e1b8"
+    },
+    {
+      "bytes": 26685,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-windows-wsl/SKILL.md",
+      "sha256": "97bedb8f9d9e4350e5eb041710285784a1facfdf35fc2a0e09c54baf98a7330c"
+    },
+    {
+      "bytes": 3746,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-windows-wsl/references/computer-use-wsl-win32-manifest.md",
+      "sha256": "0142d799ea28c21ee75ce6d479ce4ed21b67238274c2f38024a0fe3ccad962ed"
+    },
+    {
+      "bytes": 2901,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-windows-wsl/references/gateway-cross-runtime-send.md",
+      "sha256": "4400e05e74b3a61ea92c9c1a7ac92fb2b1d1337e86a86faa704df22dac3cffb3"
+    },
+    {
+      "bytes": 5656,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-windows-wsl/references/gateway-sigterm-loop-diag.md",
+      "sha256": "31f0cba4cfe06a83753c9e0ff43612e321e36ce0f51fda4bc74f978b68cf06ec"
+    },
+    {
+      "bytes": 7038,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-windows-wsl/references/runtime-home-isolation-and-mcp-shutdown.md",
+      "sha256": "2f3f6a4b7a55534b56e0d3f6464c5582d06b3cbb2d5869e084ca4bb2b2826c13"
+    },
+    {
+      "bytes": 4134,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-windows-wsl/references/wsl-gateway-setup-session.md",
+      "sha256": "d5097bb998bf951d8aeaf8a2db213b29e498da3a8806c821a0f669a849347a1b"
+    },
+    {
+      "bytes": 5595,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-wslinterop-restore/SKILL.md",
+      "sha256": "f323eecd6bb16c9ee7a85ce87dbee96d0d78930808f40f96712cabed8be74409"
+    },
+    {
+      "bytes": 985,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-wslinterop-restore/references/catalog-links.md",
+      "sha256": "ea94c03865cc379c4f4aa0e7823e894ae7f20210b1f9eb0ba6656b4af7ef53fa"
+    },
+    {
+      "bytes": 882,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-wslinterop-restore/references/related-docs.md",
+      "sha256": "3e5c29215bf032c1a957099f4ce6b92ad59bf0ad29eec42282befd49a3b9d5eb"
+    },
+    {
+      "bytes": 3556,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/items/hermes-yolo-three-env/SKILL.md",
+      "sha256": "81cb598947e7c5aee1c873fade2f92c9e1bcb2e1b19339c2ee69e3caae67773c"
+    },
+    {
+      "bytes": 4771,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/manifest.yaml",
+      "sha256": "43b0e5514db91752626e0374331381581e3e00aaf65d077061428712ca5608c5"
+    },
+    {
+      "bytes": 3005,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/hermes-skills/targets.yaml",
+      "sha256": "0202c1f9ad12f5625b1247eee9da2206a80e59c7a37576fa4e329ec48f1f61a1"
+    },
+    {
+      "bytes": 2720,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-auto-login/SKILL.md",
+      "sha256": "9b2d0a41c9b6943a88cc4e5faa2d39fe184e0da649375a7e02c5fa318e644e6c"
+    },
+    {
+      "bytes": 1523,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-camofox-display/SKILL.md",
+      "sha256": "814663bdd3e3698d102e5d19d2182fefc79b2f7e2f38df8f8920ae892311415c"
+    },
+    {
+      "bytes": 5498,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-camofox-install/SKILL.md",
+      "sha256": "693d9e1d10ff29c98c835a5424b166b43cbb97a850897ec0c09f5059314bb271"
+    },
+    {
+      "bytes": 1046,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-camofox-refresh/SKILL.md",
+      "sha256": "7579d018ad629abffee2b77d7b36316703091b03ba3b4cb8347bc61b0694474b"
+    },
+    {
+      "bytes": 758,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-e2e/SKILL.md",
+      "sha256": "06473fa3a3e578da4cbd56adef9d1ae4a76f87ac52f9ce09d898841c72458035"
+    },
+    {
+      "bytes": 1556,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-maintenance/SKILL.md",
+      "sha256": "dcaffc5994d0a8be789c7a4fc25eeea5039c6f08c56b1fff1d91092b38a2f044"
+    },
+    {
+      "bytes": 259,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-maintenance/agents/openai.yaml",
+      "sha256": "af9ac448a25f384f25a5146c39ee955e4da5f2dab022fea3dabb68b5a7bf4a5c"
+    },
+    {
+      "bytes": 570,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-safe-export/SKILL.md",
+      "sha256": "03eb7fb95ecab6b53df54a905bbdbcacc07d0281beab0474a31e896657839ae6"
+    },
+    {
+      "bytes": 903,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-smoke/SKILL.md",
+      "sha256": "5bafb6f2532128a08a58a26ba120040e3d2eca2343244831b82c7def0a6668aa"
+    },
+    {
+      "bytes": 872,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-bridge-status/SKILL.md",
+      "sha256": "8e8bfe0f02fb22113c5aaa0b2ecc76be2aff2c7ea5ae49e5c44f00daace2a6f5"
+    },
+    {
+      "bytes": 2037,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-obsidian-bridge/SKILL.md",
+      "sha256": "41d1fef092e0cd868b3923701598c2b884f868019c8d4d32eb894c0d1301d0be"
+    },
+    {
+      "bytes": 246,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/skills/notebooklm-obsidian-bridge/agents/openai.yaml",
+      "sha256": "fa6fa1c4d2e1eeb29d7500c3139a7c520f2d90de4138a3b7b3521b99ecfc6e01"
+    },
+    {
+      "bytes": 1616,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-auto-login.md",
+      "sha256": "7670a7c30e5db8c856ccac90017c6062143c4677af722a64dd87b47bf95b629e"
+    },
+    {
+      "bytes": 871,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-camofox-display.md",
+      "sha256": "41ffabf2eb07aa9274efb0824aa085549ce5d9e2b49942441f08c4a87b21112f"
+    },
+    {
+      "bytes": 775,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-camofox-refresh.md",
+      "sha256": "3ca87862ec6beb0acc638ef00f6f31e488819eaa7b5b43a74d5beeab1121f34e"
+    },
+    {
+      "bytes": 585,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-e2e.md",
+      "sha256": "09a503129d6503b0f7d0feac1e92e9b5a9e969f213e042e549c21c7e536540f0"
+    },
+    {
+      "bytes": 695,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-maintenance.md",
+      "sha256": "0ad03936fa714f4dd25777141f7d7eb852abe9d418a00dd26b63f37c2419c11d"
+    },
+    {
+      "bytes": 484,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-safe-export.md",
+      "sha256": "f962c0f6a30e4a1a644d4e63cc9bc0cde5a5f3806a70b87ec8bafc9b36a59bd1"
+    },
+    {
+      "bytes": 799,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-smoke.md",
+      "sha256": "ce05c808722a560e53a96fbc432dcae05612b4cc6c78eb8bf9296a9e03b5c843"
+    },
+    {
+      "bytes": 609,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/codex/slash-commands/notebooklm-bridge-status.md",
+      "sha256": "fbc2bccc550b99a437a85fc1e81caa33b0039b53fd00cae1b0bb35d848affe98"
+    },
+    {
+      "bytes": 2338,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-auto-login/SKILL.md",
+      "sha256": "a318bbf7acab7e166d99576e59af46186531b39f2ff8da4fde40acc89fcd68f0"
+    },
+    {
+      "bytes": 1130,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-camofox-display/SKILL.md",
+      "sha256": "bcc34c93431dc3d277087e95c7e8ee8eb0c5b872f28efe688dd217c35a44d4d5"
+    },
+    {
+      "bytes": 5492,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-camofox-install/SKILL.md",
+      "sha256": "acf8f554217699dac5aeb2639ec166c9af24c42f10dfaa38b889f5f329919c9d"
+    },
+    {
+      "bytes": 993,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-camofox-refresh/SKILL.md",
+      "sha256": "20641cc21c32be3cb566d5498dc87b4104d225eeb879c3e00ec34b7f46f1039f"
+    },
+    {
+      "bytes": 640,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-e2e/SKILL.md",
+      "sha256": "c211aa67ca61f556b5fe5163f0dc6eeaaf1b9ba67e20baeb5b2d86ca30103583"
+    },
+    {
+      "bytes": 934,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-maintenance/SKILL.md",
+      "sha256": "e8aa0c7aa6b74d8fef7914d32dd6350b02becadee310108d0f393ecde3485f5f"
+    },
+    {
+      "bytes": 443,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-safe-export/SKILL.md",
+      "sha256": "ed6938c34e3c1dc157a79cf8dec1c1e828bd11f264be98715544db9f19c48705"
+    },
+    {
+      "bytes": 689,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-smoke/SKILL.md",
+      "sha256": "a5e3bc190de2da46ea0addcc6f718e2bcdfadb1e57bd08047fc281c29810d085"
+    },
+    {
+      "bytes": 826,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-bridge-status/SKILL.md",
+      "sha256": "f00e4c4a413f20599be32eb977ff0ee0846659657ba3efa8dde41c5d2ca64073"
+    },
+    {
+      "bytes": 1815,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/items/notebooklm-bridge/hermes/skills/notebooklm-obsidian-bridge/SKILL.md",
+      "sha256": "0597ac09910d267a5d69365a5ed69488a7ebb2cae5e2df47c3794d2ad92d04da"
+    },
+    {
+      "bytes": 5158,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/manifest.yaml",
+      "sha256": "94010a508ebbaeacfc0b90907c9c30f51e6a4e063759ebf9dfa6d86e75f3eab9"
+    },
+    {
+      "bytes": 3632,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/packs/shared-agent-content/targets.yaml",
+      "sha256": "e4e156f5582d40d3d322a2308bc227018506a28dfa3564fb45576debe4e2954d"
+    },
+    {
+      "bytes": 1129,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/scripts/agent-content-drift-report.sh",
+      "sha256": "acec3a1de24ff3845d2e6f455e8d2c805d7cd560f3a473fc24a6fa02ebe6aa4d"
+    },
+    {
+      "bytes": 583,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/scripts/agent-content-validate-all.sh",
+      "sha256": "de1432efcf4f59949dc5f36ca12ebf2d5f70a3b34709810a008ac09002855499"
+    },
+    {
+      "bytes": 3854,
+      "mode": "0o664",
+      "path": "modules/agent-content-packs/scripts/agent-content-workflow.sh",
+      "sha256": "262afc27d750469f108bc2605f6f636ede4df9957e54b1fb6436466992b12da1"
+    },
+    {
+      "bytes": 831,
+      "mode": "0o755",
+      "path": "modules/fleet/scripts/obsidian-vault-pull.sh",
+      "sha256": "04e80755bcdc3ebb1be64d70d28d46689d789b6d4b8052636c12278888c471bd"
+    },
+    {
+      "bytes": 23663,
+      "mode": "0o755",
+      "path": "modules/fleet/scripts/oci-arm64-host-setup.sh",
+      "sha256": "477d4fb1cf02a97ce6b67bff52dd17a2badbb2e6f30a21ac4dd3c6fe7adc537a"
+    },
+    {
+      "bytes": 444,
+      "mode": "0o644",
+      "path": "modules/fleet/systemd/obsidian-vault-pull.service",
+      "sha256": "c8018cf130595f24838e04a5b3549609671a50bdeac295c240f39ecde9c74d0b"
+    },
+    {
+      "bytes": 223,
+      "mode": "0o644",
+      "path": "modules/fleet/systemd/obsidian-vault-pull.timer",
+      "sha256": "6a3b69b7bed3258feed885246003cb0412c83bf245b315ff0c769d615b726c1f"
+    },
+    {
+      "bytes": 1773,
+      "mode": "0o775",
+      "path": "modules/fleet-control-plane/scripts/install-omni-fleet-agent.sh",
+      "sha256": "985bbb6971a7eeea6beaf4ffd09f82ec4cd21bd2777780109bd267dbd2efe267"
+    },
+    {
+      "bytes": 732,
+      "mode": "0o664",
+      "path": "modules/fleet-control-plane/systemd/omni-fleet-agent.service",
+      "sha256": "97426494aea5776cafa140fbb5fc66121b4dfbd4c6203793e5d18f86e9242d6e"
+    },
+    {
+      "bytes": 11535,
+      "mode": "0o755",
+      "path": "modules/managed-apps/scripts/install-obsidian-arm64-appimage",
+      "sha256": "3fa4f8f733b8cb9c1d093666d085d2435e35b379fac121164572a68b99dbd10d"
+    },
+    {
+      "bytes": 11839,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/README.md",
+      "sha256": "8317a068bc04b04e9877ef3d6becf92e4c34c7452ce60d0660a7a6dc3ffd2773"
+    },
+    {
+      "bytes": 1079,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apache/mcp.atius.com.br.conf",
+      "sha256": "175219ed8abe12b053ee68bbff0adb1d377c7d977741741c4e18031a6cf81976"
+    },
+    {
+      "bytes": 2002,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/apps/README.md",
+      "sha256": "1a3f6fe8e9d84970c9a2d7e37ff8ae2038283a66fa60e361166143f0e040ead7"
+    },
+    {
+      "bytes": 1052,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/cloudbeaver/container-cloudbeaver.service",
+      "sha256": "cb3cea8bb15ad19b102caceac90e0610b31403a077b6ea8e7eada2c8574bcea1"
+    },
+    {
+      "bytes": 297,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/cloudbeaver/podman-compose.yml",
+      "sha256": "d22ee14d74e0f71341aff8f53fe5fff1bd30b7bd3dd000200853a83d9885617d"
+    },
+    {
+      "bytes": 1485,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/jenkins/container-jenkins.service",
+      "sha256": "13bcaf29210078f05a289da2b7f99452f0cf9ca92c37e201e4bc76e6f041d170"
+    },
+    {
+      "bytes": 469,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/jenkins/podman-compose.yml",
+      "sha256": "67517c2ead179753ffacc9da1b2bded340087fb854ea2524d60e644c577f9ae2"
+    },
+    {
+      "bytes": 524,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/plane/plane-podman.service",
+      "sha256": "8fc1bead9d015236d6a0adedda603e92975cb8d6a17add900e433035fd39a8cc"
+    },
+    {
+      "bytes": 9575,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/plane/podman-compose.yaml",
+      "sha256": "f14436a732b867f54f1c18995c43ac3a1d9ccb2a42a7d0937436995afdecfdfd"
+    },
+    {
+      "bytes": 184,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/apps/rustdesk/10-runtime-preflight.conf",
+      "sha256": "de923156664ba95d5c98783d0e72c5a2beed8c1adf1e271fc43b5d72883193a8"
+    },
+    {
+      "bytes": 1671,
+      "mode": "0o755",
+      "path": "modules/srv1-ops/apps/rustdesk/apply-rustdesk-edge.sh",
+      "sha256": "a2ac098a495427e364f5aa31b975a9c1dbcc016885ac6117e03d7b8bd397170b"
+    },
+    {
+      "bytes": 248,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-edge-guard.service",
+      "sha256": "1c380f39213987f84c2d04640bd7b85194b088af29e7338703df36dff878a6b8"
+    },
+    {
+      "bytes": 236,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-edge-guard.timer",
+      "sha256": "cc384f0514a05043a08d801f3ebfeaf7ffce1876677e1605f269f6279142cd1e"
+    },
+    {
+      "bytes": 1776,
+      "mode": "0o644",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-edge.nft",
+      "sha256": "ccf3965b22f8bc45f0f059d1746d5cce6557378cbacda0964e5732ed4b3f5e93"
+    },
+    {
+      "bytes": 454,
+      "mode": "0o644",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-edge.service",
+      "sha256": "62736669e03f55c932802fa7357ffe93446c941a2c4da81e07ebfe0fbca7cb97"
+    },
+    {
+      "bytes": 196,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-phase53.slice",
+      "sha256": "f35eab4c208c886ea84b30a3ac81725d0a09bf13ed0cb5333073d70a7e135393"
+    },
+    {
+      "bytes": 1208,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-server-hbbr.container",
+      "sha256": "a474d798da8bb9f5be3f4a41b310115da96ecfe37729307de683ee0424b1f89f"
+    },
+    {
+      "bytes": 1239,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/apps/rustdesk/atius-rustdesk-server-hbbs.container",
+      "sha256": "f387163d660aebdca677a1fc3ff2afe7176f3d30ef1dd3fa6f09e9184a33681e"
+    },
+    {
+      "bytes": 9691,
+      "mode": "0o755",
+      "path": "modules/srv1-ops/apps/rustdesk/ensure-rustdesk-runtime.py",
+      "sha256": "e4b111d3a332071c26dbe2127c31fbbac4d8ee465dcb5f226ccabbb280da8234"
+    },
+    {
+      "bytes": 2588,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/configs/backup-map.yaml",
+      "sha256": "e1ab0c4b9f50cabaa6140d58e62727ecc86982af0e2f80e0f0c968a5f2968795"
+    },
+    {
+      "bytes": 2141,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/configs/inviolable-services.env",
+      "sha256": "936e61aa663457bdca40b0ac8e26436b6e6aa62798092b2eac2194af28d8e8e2"
+    },
+    {
+      "bytes": 7853,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/configs/production-guard.yaml",
+      "sha256": "f7a5f3ad321671251719c77016feac8100a0c43e0c2826366889dc9d88129780"
+    },
+    {
+      "bytes": 3513,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/configs/resource-governor.env",
+      "sha256": "dcb258ff1272f4933f943221fc375f8be4e16f9a754d2d9c633f67dd33de83b2"
+    },
+    {
+      "bytes": 5922,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/docs/source-map.md",
+      "sha256": "3acb4c119716d3e4cd0dbff5a0c3a71fbdb1bd2a2ce2f4366d890ef157926168"
+    },
+    {
+      "bytes": 6024,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/fix-abnt2.sh",
+      "sha256": "71b5a78d4d8f4bdb9cd1cd78219be5f4d608e3cfcc44f57023b10a798b261b94"
+    },
+    {
+      "bytes": 1184,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/fix-shared_smb.sh",
+      "sha256": "7f9c8407f51255d47cdd91d4dcc3ec87e762dd1dac4a455858b024a3f083e36d"
+    },
+    {
+      "bytes": 2612,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/hermes-desktop-start.sh",
+      "sha256": "acb2254973658e025daeab0f8ca23fb1f7e53838539e9edffaecdc97799e7b4d"
+    },
+    {
+      "bytes": 1103,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/hermes-desktop-status.sh",
+      "sha256": "74dd6531f6a7064bf7b9c2a9aa6212adf5ffdbf988c1749f709b463cb5655f82"
+    },
+    {
+      "bytes": 689,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/hermes-desktop-stop.sh",
+      "sha256": "9e9cf2ad4950c831dad9257e2c26f0c676440399bad6e97fb3dfd1bbdc770ee1"
+    },
+    {
+      "bytes": 1140,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/mount-gdrive.sh",
+      "sha256": "a50c75d016d0cdde9756cac91c1b694c22e467ad8808a9b1fc570cf2f098cd46"
+    },
+    {
+      "bytes": 8103,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/optimize_network.sh",
+      "sha256": "35d707eb02f5f911d14fbe54e73890e1fa19cdf7c67a79959fc6737552f018ea"
+    },
+    {
+      "bytes": 2003,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/qbt-postprocess.sh",
+      "sha256": "0c07b8348b6a46db6cc0cd7e9a5f8f5bb973f3759f05fac72a96b5a932594fdd"
+    },
+    {
+      "bytes": 332,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/start-aionui.sh",
+      "sha256": "c88de87a7c51a87c2802a4871f9d56716921dfa81d3ceeae3061b30adff629d6"
+    },
+    {
+      "bytes": 646,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/start-qbittorrent.sh",
+      "sha256": "f38214ef5c88d6f15349eebb849d587ee8bf5ac680673f4459a4a003f6a38cfb"
+    },
+    {
+      "bytes": 1796,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/legacy-scripts/vault-sync-monitor.sh",
+      "sha256": "a26e776694a09f2f56327435578ea767e40c91f49c26ac5433264aca7f1f5758"
+    },
+    {
+      "bytes": 6726,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/lib/metrics.py",
+      "sha256": "96630dda55e9d8256f1695d70e5f8485b7ac00421d21ea5610aeffaeb5eb4692"
+    },
+    {
+      "bytes": 1091,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/atius-web-healthcheck.sh",
+      "sha256": "47f135db39d9ad29770e7f705f3d0ad8017a136e5eeaf0c2d544a357c24c542c"
+    },
+    {
+      "bytes": 11522,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/scripts/backup-dangling-to-gdrive.py",
+      "sha256": "30ca55eae76f2aa622d5805c0da376c178aad7893b36b18e4ea08e5462d14f83"
+    },
+    {
+      "bytes": 7601,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/scripts/backup-gdrive-state.py",
+      "sha256": "82ae91e8bf8d15698fd1119e7a675485fd0de1cd7da75cba450d4f8708da789d"
+    },
+    {
+      "bytes": 17098,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/backup-srv1-to-gdrive.sh",
+      "sha256": "d41363709c2ffbbc40561a4e109daffbc647ee1c5a494ea445f79ce5f709ece0"
+    },
+    {
+      "bytes": 5744,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/backup-to-smb.sh",
+      "sha256": "5c2ce606510d87fa841276b7add369df2043ede704b209c12bd3e532360555ca"
+    },
+    {
+      "bytes": 8074,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/build-cpu-guard-wrapper.sh",
+      "sha256": "1899112b0b9f7b41d6ede06359a4d1dc68345ec6b8876040529de6ea4525161e"
+    },
+    {
+      "bytes": 9679,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/cleanup-local.sh",
+      "sha256": "15263330d9b75854291ea31ad221774540b878a46c58d5cf81de00ac1f477b47"
+    },
+    {
+      "bytes": 8321,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/scripts/fleet-defense-monitor.py",
+      "sha256": "d47ced5620308996458af14358d64f9869e0641e476910309e0a99cfcc38b115"
+    },
+    {
+      "bytes": 1319,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/install-build-cpu-guard.sh",
+      "sha256": "4231023381e98b5f06c9570a549722a9226ea0ff9a563f57a752f178fb4be6a4"
+    },
+    {
+      "bytes": 1577,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/install-orphan-mcp-reaper.sh",
+      "sha256": "1c722eaa2177fbc89197a388354ea5fc02e83b5f3f073de3a9747884ee5a887e"
+    },
+    {
+      "bytes": 12102,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/inviolable-watchdog.sh",
+      "sha256": "d069b2578309e2a5da13bccbd50054cf4955623d928de563db078337e13adb33"
+    },
+    {
+      "bytes": 4631,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/mcp-conformance-smoke.py",
+      "sha256": "c3c739bd6a7a5aad9e8231549c3deab15d6f9503618be8fd3c0cf48b5c869c2b"
+    },
+    {
+      "bytes": 4244,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/mcp-edge-guard.py",
+      "sha256": "125326367b346798246d55df0c828426736464c898806bc08b17ff5b9c3dc115"
+    },
+    {
+      "bytes": 15102,
+      "mode": "0o755",
+      "path": "modules/srv1-ops/scripts/offload-dotbackups-to-gdrive.sh",
+      "sha256": "af814f350bde885a47c9d4a907d928945a4efab1e8595fee9f823cd8c555418b"
+    },
+    {
+      "bytes": 5648,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh",
+      "sha256": "934452159c3e71e9b39c83c679b47336d3c179ccc10758ca3db76d1cf81c59d2"
+    },
+    {
+      "bytes": 1319,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/omni-obsidian-rest-access-guard.sh",
+      "sha256": "2c58704e7bd00c335a9b4eb9646d61e71a03bd46f597096645bcf3d1b02b5a49"
+    },
+    {
+      "bytes": 3541,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/orphan-mcp-reaper.sh",
+      "sha256": "a34b3d893811bca1e386227a54f9ae0e38ca25c18e0351ed70958a91c517387d"
+    },
+    {
+      "bytes": 5149,
+      "mode": "0o755",
+      "path": "modules/srv1-ops/scripts/pm2-dump-sanitizer.py",
+      "sha256": "262775e60bd4e40e92b6f063d89d6ddafaa065f4ec19526e8c0724062e1132f5"
+    },
+    {
+      "bytes": 62333,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/scripts/production_guard.py",
+      "sha256": "0bd901f3754e19fe866df8edb30d09311383c13ec1f40fa45070484ddef3c54b"
+    },
+    {
+      "bytes": 9250,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-audit.py",
+      "sha256": "5c3909b4b3f4b87e3c883dc4f98c9f9b58d5cbda8acf42e274ea3df0af19e6b4"
+    },
+    {
+      "bytes": 15928,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-cap75.py",
+      "sha256": "b2323c9c5d6ffaf91c2b82263608a83c5deb5ec158c39a8ffc86500d8cfd5dcb"
+    },
+    {
+      "bytes": 8258,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-cgroup-init.sh",
+      "sha256": "d2a7e5e5652d28cdf17d04d1078d385e5e429711525f96e9370eb5674e03ee89"
+    },
+    {
+      "bytes": 18476,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/scripts/resource-governor-doctor.py",
+      "sha256": "9b4d5f7cbb558c11482086d7240c4d492e878e650c1fba6faf8745b21043bd87"
+    },
+    {
+      "bytes": 11130,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-hygiene-queue.py",
+      "sha256": "2f999764b3db760f302a00c2feb723fa8d9dfca6545d42b6ec43f25c09bc5877"
+    },
+    {
+      "bytes": 30949,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/scripts/resource-governor-patcher.py",
+      "sha256": "7b861a5080eb0e4ab2bf87d92f497ee09b8d16156c09d0676baf3e51e61387c7"
+    },
+    {
+      "bytes": 4046,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-reconcile-legacy.sh",
+      "sha256": "ce5fcac15aedb05f319815254c314ffac269bbb7ff5426261fb0c172eca4f782"
+    },
+    {
+      "bytes": 7287,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-snapshot.py",
+      "sha256": "ec5540aab883108e310035145fdc5f0658357ac03388d3f61b65bc6fc1c2925c"
+    },
+    {
+      "bytes": 15966,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-status.py",
+      "sha256": "139fe05a1a6e31c0055023fcea828d669fa2f092b894f82f30e33e1f75357f64"
+    },
+    {
+      "bytes": 23663,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/resource-governor-watchdog.py",
+      "sha256": "e6b4193eb0b12a3fff895893063276b4a79511c93d6825ba5e97064279f305a3"
+    },
+    {
+      "bytes": 27122,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/server-analysis.py",
+      "sha256": "7408809eb2c37ee16f24f0203fbf39bfa57c15b5776be68997d6f5e17b7b8b6f"
+    },
+    {
+      "bytes": 13863,
+      "mode": "0o775",
+      "path": "modules/srv1-ops/scripts/sync-vault.sh",
+      "sha256": "5a141512ce81263e5588b6104cb2407e548443c6e999a542e0a97fa35dfde874"
+    },
+    {
+      "bytes": 451,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/backup-smb-daily.service",
+      "sha256": "cc1207afb53fd3ec52b6129d86d6a48732e6ed32476965c5f69400ec5fe5f2ad"
+    },
+    {
+      "bytes": 605,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/backup-srv1-daily.service",
+      "sha256": "752cf569f67878bfd0e65011448ff86974686905b8b987169b91f236d77f8d8c"
+    },
+    {
+      "bytes": 383,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/backup-srv1-daily.timer",
+      "sha256": "fca608f40f8e523ad3e9894a83e1d5febd22ed22e48ea08577e16fb1b13033eb"
+    },
+    {
+      "bytes": 580,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/cleanup-local-weekly.service",
+      "sha256": "175c9c9174237457027400d7a0122ec6b78ffc4682195a54b9afddbeef217e48"
+    },
+    {
+      "bytes": 463,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/cleanup-local-weekly.timer",
+      "sha256": "37ebcc1e5fbb8120665e546989869209c9779dd4935867b0b82cd5e9d371841c"
+    },
+    {
+      "bytes": 756,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/gsd-graphify-auto-update.service",
+      "sha256": "2b91824168b7421d307748994af7e152b3ee64e9289eec2b7afefcaee35d7c2c"
+    },
+    {
+      "bytes": 492,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/inviolable-watchdog.service",
+      "sha256": "56e38e67706c062025c8b50d5d3c3e09d077ecfca79bfc899b069c56e6cae116"
+    },
+    {
+      "bytes": 167,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/inviolable-watchdog.timer",
+      "sha256": "7e9a5e6f2c78a42be5501038280a29dd3f14f04940decfef8c73aba9a39e248a"
+    },
+    {
+      "bytes": 722,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/mcp-edge-guard.service",
+      "sha256": "73deaebd9dbdc158480d1a604e0da58d444d3d12fc25cc59eea741ee5224e050"
+    },
+    {
+      "bytes": 777,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/obsidian-aisecondbrain-rest.service",
+      "sha256": "afa62b3e68e816ac6745e8e14d0101822f82c2309d5355e455fce7bdfcc6e03c"
+    },
+    {
+      "bytes": 584,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/offload-dotbackups-to-gdrive.service",
+      "sha256": "288f1159e19f461c0e862ba53d7b6ad6f8c1e6fe88a4ee17c5f98df1a00719dd"
+    },
+    {
+      "bytes": 264,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/offload-dotbackups-to-gdrive.timer",
+      "sha256": "52cd5a64252926cba1cd95c25b8f5c3e39a52d5534fbfb06a9da3c4006d9c0e2"
+    },
+    {
+      "bytes": 597,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/systemd/offload-retired-artifacts-to-gdrive.service",
+      "sha256": "d4a8267f2b131bf56b1f8dd72f86186d1a374714624122521fca1976c881143a"
+    },
+    {
+      "bytes": 260,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/systemd/offload-retired-artifacts-to-gdrive.timer",
+      "sha256": "8be81c38e0d054161e5b32da29cf79d4f0bd9d4fcea1494f03bf0159ab0d91fa"
+    },
+    {
+      "bytes": 311,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/omni-builds.slice",
+      "sha256": "28631f3999d1e8eff5318d603453287bce4ddeec9cb9531ea5834974e8d7d413"
+    },
+    {
+      "bytes": 319,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/omni-interactive.slice",
+      "sha256": "1944b1c466d160e521e0e90fc9c3defa7f5dc47167cf1899faa3aeffb0afbc1b"
+    },
+    {
+      "bytes": 269,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/omni-obsidian-rest-access-guard.service",
+      "sha256": "f0b49f8d10b7ec247786e2881b51150db82f25abbd3201251fdc660171e24880"
+    },
+    {
+      "bytes": 317,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/omni-transfers.slice",
+      "sha256": "b87bf9187f86002edd8b04b7d64f2ce5a043028fbd1ece1f633e37b9598a4c4a"
+    },
+    {
+      "bytes": 204,
+      "mode": "0o644",
+      "path": "modules/srv1-ops/systemd/pm2-dump-sanitizer.path",
+      "sha256": "65d65a1e7ea49dd58de2306c3c0828614957d48d2757a6541472f5ce20cef9ed"
+    },
+    {
+      "bytes": 392,
+      "mode": "0o644",
+      "path": "modules/srv1-ops/systemd/pm2-dump-sanitizer.service",
+      "sha256": "44d63e26d5c15e6381dec69cdd31ed177e21a2a4d942457b40f97b0776550760"
+    },
+    {
+      "bytes": 203,
+      "mode": "0o644",
+      "path": "modules/srv1-ops/systemd/pm2-dump-sanitizer.timer",
+      "sha256": "4ef09fa972ed5e59de115169567cbcdd535569be9d0cbe2a44551ff83ce96b10"
+    },
+    {
+      "bytes": 1492,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/pm2-ubuntu.service",
+      "sha256": "4c1443af705c8dc2252ea77aaca6a083a935dcde93fbb7229f664a700d03949c"
+    },
+    {
+      "bytes": 447,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/production-guard-login.service",
+      "sha256": "438d24bb6951572121829c3842cbec018ee11569227d9c9814e13946c5bb8c4a"
+    },
+    {
+      "bytes": 439,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/production-guard.service",
+      "sha256": "fc15def07f475f10c53e96a8bdfba998160b63e128c9c5ad9eede6737648bc68"
+    },
+    {
+      "bytes": 244,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/production-guard.timer",
+      "sha256": "63ce8bfcf817a702333741f8d83be6517ee1f8f83961a673057db36979efd60f"
+    },
+    {
+      "bytes": 840,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-audit.service",
+      "sha256": "493299fad151cb73f9d6737eb83ede69c2be85d1f9740e60fdc842f605f40e3c"
+    },
+    {
+      "bytes": 189,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-audit.timer",
+      "sha256": "daaf004a3ffb3c089a462cba825003713ffa7688dd369752f83152e92891b065"
+    },
+    {
+      "bytes": 533,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-cgroup-init.service",
+      "sha256": "15c172b362432d44bf2f9e1c79ab4d43a4798eaf46832f85ae519b2ad83fb1c5"
+    },
+    {
+      "bytes": 484,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-doctor.service",
+      "sha256": "ed488b153af30ea9471a275a2bab377c38d245d9aca684da42cd8463134ba886"
+    },
+    {
+      "bytes": 224,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-doctor.timer",
+      "sha256": "4814c3b5cab4f9c95807016ce072ea9ec9738f478fc670e1844f881ea7b487c3"
+    },
+    {
+      "bytes": 696,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-patcher.service",
+      "sha256": "0c3afc3d099df4eacba040eaea702b08773cc1e62234a2d853f6b7295674d394"
+    },
+    {
+      "bytes": 135,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-post-build-audit.timer",
+      "sha256": "5de83a54f0ade605c7fe2456aa7aa61c5702bb81f05183ec50aa7cd915c5c792"
+    },
+    {
+      "bytes": 850,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-post-build-cleanup.service",
+      "sha256": "0ff911c4352e80ea4d8b899655439f2d462145e9a113b0cc85aa7e3b8a857352"
+    },
+    {
+      "bytes": 149,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-post-build-cleanup.timer",
+      "sha256": "3993770543e90a48f943998a302a3ff61cbc0150a7c823ee62562bb7f5a4012e"
+    },
+    {
+      "bytes": 695,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-post-build-snapshot.service",
+      "sha256": "59b42356d257437093e0f7e6762013d1e6d413e2df8b89da508a64d26413a094"
+    },
+    {
+      "bytes": 152,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-post-build-snapshot.timer",
+      "sha256": "db451adee43efce084e4e4afd32869c67169c491bc8a87776cea2e480bbd7cbd"
+    },
+    {
+      "bytes": 626,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-snapshot.service",
+      "sha256": "c10d3dd89201d6d6a1d3cb251c039f9c55c71af442b08f8821494f9f55c32269"
+    },
+    {
+      "bytes": 177,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-snapshot.timer",
+      "sha256": "2462de26a2e870c877859105dd9f521d962358086dda86149a8958bcc9e1acfc"
+    },
+    {
+      "bytes": 667,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-watchdog.service",
+      "sha256": "ee638431823a6c15be3b7a634209f1c3e0492bd07a6a76564e8c3e0c1dffbf3a"
+    },
+    {
+      "bytes": 177,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/resource-governor-watchdog.timer",
+      "sha256": "35de2cb4e2ee451ff0ed9000f21c6c2f3a1226a41953d4d288a2b9020dd63736"
+    },
+    {
+      "bytes": 664,
+      "mode": "0o664",
+      "path": "modules/srv1-ops/systemd/server-analysis.service",
+      "sha256": "129738b285242f91c5d747d0f8729967a852119e12491914bef022e0c3b62086"
+    },
+    {
+      "bytes": 247,
+      "mode": "0o600",
+      "path": "modules/srv1-ops/systemd/server-analysis.timer",
+      "sha256": "4cbcf2eb4395d1cc12686371b131c9feb6137de89b2023805a805cfce52d057d"
+    },
+    {
+      "bytes": 6825,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/README.md",
+      "sha256": "26e51404e571f7caa35f530922e6611dc2943066c3a7aa4abe410a36986d1048"
+    },
+    {
+      "bytes": 3355,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/docs/original-readme.md",
+      "sha256": "b75e748f6f86b31b704771823dcaaed99b59e382e148232fde64cf5673ea8481"
+    },
+    {
+      "bytes": 3528,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/docs/original-runbook.md",
+      "sha256": "64929d214172e7847ea15124b04bb1a58bb0ed29246b189de9c09ba63550c56b"
+    },
+    {
+      "bytes": 6311,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/docs/original-transcript.md",
+      "sha256": "9652e72ad0367edfe71acd5f02f06398478ac536c6a0f2667eb3cb61fb7e3306"
+    },
+    {
+      "bytes": 2148,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/docs/source-map.md",
+      "sha256": "dc128f1cde689374b70dab53a5f51b65cc0adc7d01c89ce070fc2a5011a4779d"
+    },
+    {
+      "bytes": 74,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/files/99xrdp-abnt2-keyboard",
+      "sha256": "e5261c954796f1258c508932dd568e92fb03f7591687d143204908f200592d50"
+    },
+    {
+      "bytes": 4986,
+      "mode": "0o775",
+      "path": "modules/xrdp-abnt2/files/fix-xrdp-abnt2-keyboard",
+      "sha256": "19f4b13884697acb9e0a62e6fc44646378a1f5e08386681845fa6af71a809f9b"
+    },
+    {
+      "bytes": 14542,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/files/km-abnt2.ini",
+      "sha256": "cdd4e2def3657b451fdef8d9c2038e28112f1df2498e768f3c8ddd5eb0a34237"
+    },
+    {
+      "bytes": 698,
+      "mode": "0o775",
+      "path": "modules/xrdp-abnt2/files/setxkbmap-abnt2.sh",
+      "sha256": "d3949894647d3a669b1548a765239e8f86594a745db996aebe6a4373181ebe2c"
+    },
+    {
+      "bytes": 1664,
+      "mode": "0o775",
+      "path": "modules/xrdp-abnt2/files/startwm.sh",
+      "sha256": "fd97e197e9fcac9c63496f5ca4044966b2f38274912406d48bed5e2b1c77045b"
+    },
+    {
+      "bytes": 250,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/files/xrdp-abnt2-reconcile.service",
+      "sha256": "60658e33ccef814565998594531b105a1752843334fab9cded2bf2bb6074cfb2"
+    },
+    {
+      "bytes": 216,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/files/xrdp-abnt2-reconcile.timer",
+      "sha256": "7129693e1c57fa96bafe4cd143fbcd7f00662eb0d4befa43ed96ef62896a76d2"
+    },
+    {
+      "bytes": 3945,
+      "mode": "0o664",
+      "path": "modules/xrdp-abnt2/files/xrdp_keyboard.ini",
+      "sha256": "a1ca351477ffb842deac55a72eacbe708eb1d2f5001bec2e083c3f4c31b00da0"
+    },
+    {
+      "bytes": 423,
+      "mode": "0o775",
+      "path": "modules/xrdp-abnt2/scripts/install.sh",
+      "sha256": "d25267a06047b2220a094ca421af18dbea6fc4e9597eea27bd5cdf719a5ef99d"
+    },
+    {
+      "bytes": 316,
+      "mode": "0o775",
+      "path": "modules/xrdp-abnt2/scripts/validate.sh",
+      "sha256": "bb1cd308eba851899b155ac2b1bf8137c51fd41a1605c730533e49f07390d73e"
+    }
+  ],
+  "source_head": "f851a0353e7ed3f03e736b571270ff7baaf8c357"
+}
