@@ -1,0 +1,21 @@
+{
+  "bad": [],
+  "created_at": "2026-09-07T04:39:03.119395+00:00",
+  "declared_files": 418,
+  "extra": [],
+  "manifest_sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed",
+  "missing": [],
+  "normalization": {
+    "declared_tree_entries_from_backup": 417,
+    "orchestrator_from_preimage": 1,
+    "runtime_extras_excluded_by_manifest": true
+  },
+  "orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+  "orchestrator_source": "/home/ubuntu/.backups/omni-setup-source-pre-final-20260906T092728+0000/modules/fleet/scripts/oci-arm64-host-setup.sh.pre-self-hosts-1788679602",
+  "restore_tree_removed_after_validation": true,
+  "restored_files": 418,
+  "result": "PASS",
+  "schema": "proc-8eca-reconstructed-restore-drill-v1",
+  "source_backup": "/home/ubuntu/.backups/omni-setup-source-pre-final-20260906T092728+0000",
+  "source_backup_unchanged": true
+}

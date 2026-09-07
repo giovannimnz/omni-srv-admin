@@ -1,0 +1,101 @@
+{
+  "rows": [
+    {
+      "complete": "status=PASS mode=dry-run run_id=20260906T092835+0000-1095783 completed_at=2026-09-06T09:28:41+00:00",
+      "dones": 17,
+      "failed": null,
+      "mode": "dry-run",
+      "run_id": "20260906T092835+0000-1095783",
+      "run_local_seal": false,
+      "setup_log_sha256": "ed98dbdcb3ec6f2a8eda2f66c95fde37bc029167e5aa3ae956e046fd376a6c06",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=dry-run run_id=20260906T093626+0000-1101177 completed_at=2026-09-06T09:36:32+00:00",
+      "dones": 17,
+      "failed": null,
+      "mode": "dry-run",
+      "run_id": "20260906T093626+0000-1101177",
+      "run_local_seal": false,
+      "setup_log_sha256": "daca549a8ef2d822f2081c512e9ccc367beb0d517a3889955b9558caf47f3a0a",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 17
+    },
+    {
+      "complete": null,
+      "dones": 10,
+      "failed": "status=FAILED step=agents rc=1 at=2026-09-06T09:37:45+00:00",
+      "mode": "apply",
+      "run_id": "20260906T093650+0000-1103183",
+      "run_local_seal": false,
+      "setup_log_sha256": "b3057a058063d8779b05daadd7c52e58be785001658a5ef20a28780b34e7cc66",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 11
+    },
+    {
+      "complete": null,
+      "dones": 10,
+      "failed": "status=FAILED step=agents rc=1 at=2026-09-06T09:44:15+00:00",
+      "mode": "apply",
+      "run_id": "20260906T094240+0000-1110895",
+      "run_local_seal": false,
+      "setup_log_sha256": "0f5633aa54dc86bdeb87dade1ce673bae292cc9045b4f975be958d3c5e20759d",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 11
+    },
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T094822+0000-1118946 completed_at=2026-09-06T09:50:16+00:00",
+      "dones": 17,
+      "failed": null,
+      "mode": "apply",
+      "run_id": "20260906T094822+0000-1118946",
+      "run_local_seal": false,
+      "setup_log_sha256": "4068d4422d668d040964d8c0ed337b213607853f8fc9701c74d24b8a44072227",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=verify-only run_id=20260906T095200+0000-1128188 completed_at=2026-09-06T09:52:50+00:00",
+      "dones": 17,
+      "failed": null,
+      "mode": "verify-only",
+      "run_id": "20260906T095200+0000-1128188",
+      "run_local_seal": false,
+      "setup_log_sha256": "b62827a5609c628e9816956ea0eb163440eb433894f8770cca61397cd230c83d",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T095806+0000-1135895 completed_at=2026-09-06T09:59:41+00:00",
+      "dones": 17,
+      "failed": null,
+      "mode": "apply",
+      "run_id": "20260906T095806+0000-1135895",
+      "run_local_seal": false,
+      "setup_log_sha256": "372351a22946e7f4c41ffc094815e762f0c694a2cb14b89ee169a234843505bc",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=verify-only run_id=20260906T100127+0000-1144496 completed_at=2026-09-06T10:02:18+00:00",
+      "dones": 17,
+      "failed": null,
+      "mode": "verify-only",
+      "run_id": "20260906T100127+0000-1144496",
+      "run_local_seal": false,
+      "setup_log_sha256": "b1444b14504634641608f54cd17a64662afffa3177d80e14f5804102cd2a2b48",
+      "skips": 0,
+      "source_entries": 418,
+      "starts": 17
+    }
+  ],
+  "schema": "historical-runs-with-source-entries-418-v1"
+}

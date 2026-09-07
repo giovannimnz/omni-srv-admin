@@ -1,0 +1,28 @@
+{
+  "schema": "proc-8eca-promotion-receipt-v1",
+  "process_id": "proc_8eca51e24f34",
+  "runner_exit_code": 0,
+  "target": "atius-srv-4",
+  "archive_transfer": {
+    "expected_sha256": "b30eb57049b854c44b99686f0a63a57a8e40616221387fc2ac827a792e12412f",
+    "verified_before_transfer": true,
+    "verified_after_transfer": true,
+    "remote_copy_removed_by_promoter": true
+  },
+  "package_validation": {
+    "declared_files": 418,
+    "bad_files": 0,
+    "manifest_sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed",
+    "orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+    "source_head": "f851a0353e7ed3f03e736b571270ff7baaf8c357"
+  },
+  "atomic_promotion": {
+    "new_tree_moved_into_canonical_path": true,
+    "preimage_path": "/home/ubuntu/.local/share/omni-setup-source.pre-20260906T071252+0000",
+    "preimage_manifest_sha256": "818cc5af6dd8fc3d8aafa405da8f66a59b8b222b1f1321c04c9ee5e58c6c1ca4",
+    "preimage_file_count": 265,
+    "repo_dirty_after": 0
+  },
+  "result": "PASS",
+  "authority": "historical-promotion-operational-pass-not-current-seal"
+}

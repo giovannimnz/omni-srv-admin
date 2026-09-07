@@ -62,6 +62,10 @@ Status: PASS
 - `reviews/proc-067-reconciliation-v2-go.txt`
 - `reviews/proc-1a7-reconciliation-go.txt`
 - `reviews/proc-d27-reconciliation-go.txt`
+- `reviews/proc-8eca-reconciliation-v1-nogo.txt`
+- `reviews/proc-8eca-reconciliation-v2-blocked-capacity.txt`
+- `reviews/proc-8eca-reconciliation-v3-blocked-unsupported-model.txt`
+- `reviews/proc-8eca-reconciliation-v4-go.txt`
 
 ## Cleanup
 
@@ -172,6 +176,18 @@ the successful readback authority.
 - Classificação: `historical-rdp-harness-false-negative/ssh-n-stdin-suppression-plus-auth-only-session-side-effect`;
   runner FAIL, sessão TLS PASS operacional, nenhum current actionable.
 - Reconciliação: `delayed-rdp/proc-d27-reconciliation.md`.
+- `proc_8eca51e24f34` promoveu atomicamente um package histórico validado
+  `418/418`: manifest `d6fad…`, orchestrator `539594…`, archive `b30eb…`.
+- O apply imediato `20260906T071332+0000-1040769` executou `17/17 PASS`; o
+  readback contemporâneo mostrou 17 receipts do mesmo run ligados ao
+  orchestrator `539594…`. Ainda não havia source seal run-local.
+- O archive remoto foi removido pelo promoter; o local foi removido depois no
+  cleanup ENOSPC checksummed. O backing tree histórico sofreu drift em um
+  declared file e ganhou extras de runtime, mas preservou o orchestrator exato
+  em preimage. Restore drill normalizado reconstruiu `418/418`, zero drift.
+- Classificação: `historical-source-promotion-operational-pass`, superseded pela
+  source final 444 com apply/verify e run-local seal `aa1883…`.
+- Reconciliação: `delayed-source/proc-8eca-reconciliation.md`.
 
 ## Graphify final
 

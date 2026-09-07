@@ -1,0 +1,159 @@
+{
+  "artifacts": {
+    "proc-8eca-backing-tree-validation.json": {
+      "bytes": 2338,
+      "sha256": "1d4fcd5d0aa77e92fd349b5bfd528d6e028293e925ddbcaf7b4ae72ec91faf73"
+    },
+    "proc-8eca-current-state.json": {
+      "bytes": 3625,
+      "sha256": "bc7d02698659562d790830e234e63f027c4744fbbafae738d0f16d854243ec6a"
+    },
+    "proc-8eca-disposition-matrix.md": {
+      "bytes": 1995,
+      "sha256": "bca2521e444fcf57a8aad86c2f4e26b603f81f9f1067420becdec80761c0d953"
+    },
+    "proc-8eca-graphify-query.json": {
+      "bytes": 160,
+      "sha256": "4c5dc36d1fedfb58a6b7f6b9c0cf9bf73987c007eb0932e7ddb0e488bc860f08"
+    },
+    "proc-8eca-notification.txt": {
+      "bytes": 800,
+      "sha256": "185f8f9d1d836df03115777854f246eae61d100271c8850fd5a222bac834dd2e"
+    },
+    "proc-8eca-package-build-receipt.json": {
+      "bytes": 1140,
+      "sha256": "1a7c62cf79e4a1fbd1b3a2b2975489bb6b888be1895717184bd4b35cf62e0b01"
+    },
+    "proc-8eca-promotion-receipt.json": {
+      "bytes": 1124,
+      "sha256": "9438604f233d5a9c201e7197afe3a4363d1337f42f8e7ff3f3077ec19b385ec2"
+    },
+    "proc-8eca-receipt-search.json": {
+      "bytes": 984,
+      "sha256": "e3a0aacd87f3753875be50548531aec25a5ad3fdb09ad6cce5a6e9452c7f2cfc"
+    },
+    "proc-8eca-reconciliation.md": {
+      "bytes": 5691,
+      "sha256": "663a85e68e6188983830388fce099d054487242d98be69528673192f26e6bace"
+    },
+    "proc-8eca-reconstructed-restore-drill.json": {
+      "bytes": 913,
+      "sha256": "c26ed1ca612767ed6a09cb987c86376c3f45456dbb1bf5ea63fbf362ae6c305c"
+    },
+    "proc-8eca-runs-418.json": {
+      "bytes": 3513,
+      "sha256": "a56f98f2de6e1f83ad16c4181121ef8d2106f9218f4256c586a6776ceabe68b7"
+    },
+    "proc-8eca-temp-cleanup-receipt.env": {
+      "bytes": 1578,
+      "sha256": "484f8c86067c3ba03c2bb217e936e67dfe1a0377dd4f0f69e9f51cd41e5f6366"
+    }
+  },
+  "authority_messages": [
+    300314,
+    300316,
+    300317,
+    300319,
+    300322,
+    300323,
+    300332,
+    300333,
+    300348,
+    302214,
+    302215,
+    302218,
+    302219
+  ],
+  "classification": "historical-source-promotion-operational-pass",
+  "cleanup": {
+    "cleanup_receipt_sha256": "484f8c86067c3ba03c2bb217e936e67dfe1a0377dd4f0f69e9f51cd41e5f6366",
+    "local_archive_removed_by_later_enospc_cleanup": true,
+    "remote_archive_removed_by_promoter": true
+  },
+  "current": {
+    "file_count": 444,
+    "manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+    "orchestrator_sha256": "59ee6d177edbcaf28af6cdf67325eae581dfafa4bc37204597fcafa0ad25a898"
+  },
+  "current_actionable": false,
+  "current_classification": "superseded-by-sealed-444",
+  "final_runs": [
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T233823+0000-1549801 completed_at=2026-09-06T23:40:48+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 35073,
+      "log_sha256": "a0a969286d42eb05c2541801ba9ab7cd9afc1f97497919b5bfb645c8b0e87cf6",
+      "run_id": "20260906T233823+0000-1549801",
+      "run_local_seal": true,
+      "seal_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+      "skips": 0,
+      "source_entries": [
+        444,
+        444
+      ],
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=verify-only run_id=20260906T234149+0000-1558144 completed_at=2026-09-06T23:43:00+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 8574,
+      "log_sha256": "3495b266d9698cf6d83193381025c06d65f286d8027e403ab65f6287e3f11734",
+      "run_id": "20260906T234149+0000-1558144",
+      "run_local_seal": true,
+      "seal_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+      "skips": 0,
+      "source_entries": [
+        444,
+        444
+      ],
+      "starts": 17
+    }
+  ],
+  "historical_package": {
+    "archive_bytes": 392104728,
+    "archive_sha256": "b30eb57049b854c44b99686f0a63a57a8e40616221387fc2ac827a792e12412f",
+    "files": 418,
+    "manifest_sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed",
+    "orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+    "source_bytes": 588930127,
+    "source_head": "f851a0353e7ed3f03e736b571270ff7baaf8c357"
+  },
+  "historical_pid": 3167182,
+  "immediate_apply": {
+    "dones": 17,
+    "log_sha256": "86f71514cead1061df595131552c468535597549a2e7c3c84ca772f3d34a7ef2",
+    "receipt_count_at_contemporary_readback": 17,
+    "receipt_orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+    "run_id": "20260906T071332+0000-1040769",
+    "run_local_source_seal": false,
+    "skips": 0,
+    "starts": 17,
+    "status": "PASS"
+  },
+  "later_418_lineage": {
+    "all_attributed_to_exact_manifest": false,
+    "all_unsealed": true,
+    "failed": 2,
+    "pass": 6,
+    "runs": 8
+  },
+  "process_id": "proc_8eca51e24f34",
+  "recorded_at": "2026-09-07T04:41:36.896016+00:00",
+  "restore": {
+    "deterministically_reconstructible": true,
+    "direct_archive_available": false,
+    "direct_tree_clean": false,
+    "drill_result": "PASS",
+    "normalization": {
+      "declared_tree_entries_from_backup": 417,
+      "orchestrator_from_preimage": 1,
+      "runtime_extras_excluded_by_manifest": true
+    },
+    "restored_files": 418
+  },
+  "runner_exit_code": 0,
+  "schema": "delayed-source-promotion-reconciliation-v1",
+  "session_id": "20260904_200755_1d1861"
+}

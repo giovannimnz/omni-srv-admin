@@ -1,0 +1,111 @@
+{
+  "archive_state": {
+    "deterministically_reconstructible": true,
+    "direct_clean_tree_found": false,
+    "exact_418_archive_found": false,
+    "exact_418_manifest_found_in_backups": true,
+    "remote_copy_exists": false
+  },
+  "current_source": {
+    "file_count": 444,
+    "manifest_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+    "orchestrator_sha256": "59ee6d177edbcaf28af6cdf67325eae581dfafa4bc37204597fcafa0ad25a898"
+  },
+  "final_runs": [
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T233823+0000-1549801 completed_at=2026-09-06T23:40:48+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 35073,
+      "log_sha256": "a0a969286d42eb05c2541801ba9ab7cd9afc1f97497919b5bfb645c8b0e87cf6",
+      "run_id": "20260906T233823+0000-1549801",
+      "run_local_seal": true,
+      "seal_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+      "skips": 0,
+      "source_entries": [
+        444,
+        444
+      ],
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=verify-only run_id=20260906T234149+0000-1558144 completed_at=2026-09-06T23:43:00+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 8574,
+      "log_sha256": "3495b266d9698cf6d83193381025c06d65f286d8027e403ab65f6287e3f11734",
+      "run_id": "20260906T234149+0000-1558144",
+      "run_local_seal": true,
+      "seal_sha256": "aa1883d1dfb95fda6978dc31d5499520d91b0c68d67d536bfe0914a8f86bd788",
+      "skips": 0,
+      "source_entries": [
+        444,
+        444
+      ],
+      "starts": 17
+    }
+  ],
+  "historical_exact_apply_context": [
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T071332+0000-1040769 completed_at=2026-09-06T07:15:09+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 24831,
+      "log_sha256": "86f71514cead1061df595131552c468535597549a2e7c3c84ca772f3d34a7ef2",
+      "run_id": "20260906T071332+0000-1040769",
+      "run_local_seal": false,
+      "seal_sha256": null,
+      "skips": 0,
+      "source_entries": [],
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T072705+0000-1053677 completed_at=2026-09-06T07:28:35+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 24831,
+      "log_sha256": "0808c770345afe80a8a8e6b9620d2e441bab5ec001a9db0351355f5eb2fb5535",
+      "run_id": "20260906T072705+0000-1053677",
+      "run_local_seal": false,
+      "seal_sha256": null,
+      "skips": 0,
+      "source_entries": [],
+      "starts": 17
+    }
+  ],
+  "historical_successor_421": [
+    {
+      "complete": "status=PASS mode=apply run_id=20260906T103837+0000-1165560 completed_at=2026-09-06T10:40:11+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 25453,
+      "log_sha256": "a1304c311853d066102ac89674b4fb5880707ad1df3bf5244129db5cb6e1da01",
+      "run_id": "20260906T103837+0000-1165560",
+      "run_local_seal": false,
+      "seal_sha256": null,
+      "skips": 0,
+      "source_entries": [
+        421,
+        421
+      ],
+      "starts": 17
+    },
+    {
+      "complete": "status=PASS mode=verify-only run_id=20260906T104148+0000-1174121 completed_at=2026-09-06T10:42:38+00:00",
+      "dones": 17,
+      "failed": null,
+      "log_bytes": 8388,
+      "log_sha256": "f08b21c5dcc94f37b7e171f0f25b40f49b76ed0e7779c51d2f89e1b34a34fc53",
+      "run_id": "20260906T104148+0000-1174121",
+      "run_local_seal": false,
+      "seal_sha256": null,
+      "skips": 0,
+      "source_entries": [
+        421,
+        421
+      ],
+      "starts": 17
+    }
+  ],
+  "schema": "proc-8eca-current-source-state-v1"
+}

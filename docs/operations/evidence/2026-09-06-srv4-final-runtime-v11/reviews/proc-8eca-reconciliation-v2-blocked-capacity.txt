@@ -1,0 +1,17 @@
+Review attempt v2 — BLOCKED_CAPACITY / NO_APPROVAL
+
+Process: proc_f81eb46975d1
+Model: gpt-5.6-sol
+Mode: read-only, ephemeral
+Exit code: 1
+Verdict emitted: no
+Approval authority: none
+
+Observed terminal error:
+ERROR: Selected model is at capacity. Please try a different model.
+
+Disposition:
+- preserve as a blocked review attempt;
+- do not classify as GO or NO-GO;
+- relaunch the corrected packet with another reviewer model;
+- current runtime remains unchanged.

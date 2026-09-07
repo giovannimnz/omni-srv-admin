@@ -1,0 +1,10 @@
+[IMPORTANT: Background process proc_8eca51e24f34 completed normally (exit code 0).
+Command summary: verify local archive SHA-256; copy to atius-srv-4; verify remote archive; extract to a new tree; validate every manifest entry; move the previous canonical tree to a timestamped preimage; atomically promote the validated tree; remove the remote archive; report hashes and repo cleanliness.
+Output:
+{'files': 418, 'bad': 0, 'source_head': 'f851a0353e7ed3f03e736b571270ff7baaf8c357', 'orchestrator_sha256': '539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278'}
+manifest=d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed
+orchestrator=539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278
+repo_dirty=0
+source_seal_promotion=PASS
+Connection to 10.14.1.14 closed.
+]

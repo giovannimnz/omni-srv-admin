@@ -1,0 +1,17 @@
+Review attempt v3 — BLOCKED_UNSUPPORTED_MODEL / NO_APPROVAL
+
+Process: proc_a88796d37afb
+Requested model: gpt-5.4
+Mode requested: read-only, ephemeral
+Exit code: 1
+Verdict emitted: no
+Approval authority: none
+
+Observed terminal error:
+The 'gpt-5.4' model is not supported when using Codex with a ChatGPT account.
+
+Disposition:
+- preserve as a blocked review attempt;
+- do not classify as GO or NO-GO;
+- relaunch the corrected packet with a supported Codex model;
+- current runtime remains unchanged.

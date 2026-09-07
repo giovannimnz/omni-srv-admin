@@ -1,0 +1,25 @@
+{
+  "deterministically_reconstructible_now": true,
+  "direct_archive_available_now": false,
+  "direct_tree_restore_available_now": false,
+  "package": {
+    "archive_bytes": 392104728,
+    "archive_sha256": "b30eb57049b854c44b99686f0a63a57a8e40616221387fc2ac827a792e12412f",
+    "file_count": 418,
+    "manifest_sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed",
+    "orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+    "source_bytes": 588930127,
+    "source_head": "f851a0353e7ed3f03e736b571270ff7baaf8c357"
+  },
+  "reconstruction": "417 manifest-declared entries from backup plus exact orchestrator preimage; runtime extras excluded by manifest",
+  "reconstruction_validation": "proc-8eca-reconstructed-restore-drill.json: 418/418 PASS",
+  "schema": "proc-8eca-package-build-receipt-v1",
+  "session_authority": {
+    "build_message": 300314,
+    "immediate_apply_completion_message": 300332,
+    "immediate_receipt_set_message": 300333,
+    "promotion_completion_message": 300319,
+    "promotion_launch_message": 300317,
+    "session_id": "20260904_200755_1d1861"
+  }
+}

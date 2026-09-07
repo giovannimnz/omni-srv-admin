@@ -1,0 +1,29 @@
+{
+  "rows": [
+    {
+      "bytes": 98,
+      "matched": [
+        "20260906T071332+0000-1040769"
+      ],
+      "path": "/home/ubuntu/.local/state/omni/oci-arm64-host-setup/runs/20260906T071332+0000-1040769/COMPLETE",
+      "sha256": "55048ad20830cd0a060fd53da87b8cf26df4654afa719961cbd196799ac14192"
+    },
+    {
+      "bytes": 24831,
+      "matched": [
+        "20260906T071332+0000-1040769"
+      ],
+      "path": "/home/ubuntu/.local/state/omni/oci-arm64-host-setup/runs/20260906T071332+0000-1040769/setup.log",
+      "sha256": "86f71514cead1061df595131552c468535597549a2e7c3c84ca772f3d34a7ef2"
+    },
+    {
+      "bytes": 90817,
+      "matched": [
+        "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278"
+      ],
+      "path": "/home/ubuntu/.backups/omni-setup-source-pre-final-20260906T092728+0000/SOURCE-MANIFEST.json",
+      "sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed"
+    }
+  ],
+  "schema": "proc-8eca-receipt-search-v1"
+}

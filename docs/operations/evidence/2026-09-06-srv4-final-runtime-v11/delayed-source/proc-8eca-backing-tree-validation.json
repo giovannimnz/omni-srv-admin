@@ -1,0 +1,53 @@
+{
+  "actual_declared_files": 418,
+  "actual_orchestrator_sha256": "54ba94542747d8d51072c2b5afe6012f81dfe8a2cc6e5ef8234a4278782318fb",
+  "bad": [
+    {
+      "actual": {
+        "bytes": 27088,
+        "mode": "0o755",
+        "sha256": "54ba94542747d8d51072c2b5afe6012f81dfe8a2cc6e5ef8234a4278782318fb"
+      },
+      "expected": {
+        "bytes": 26137,
+        "mode": "0o755",
+        "sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278"
+      },
+      "path": "modules/fleet/scripts/oci-arm64-host-setup.sh",
+      "reason": "metadata-or-content"
+    }
+  ],
+  "declared_files": 418,
+  "declared_orchestrator_sha256": "539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278",
+  "extra": [
+    "cli/omni/__pycache__/__init__.cpython-312.pyc",
+    "cli/omni/__pycache__/__main__.cpython-312.pyc",
+    "cli/omni/__pycache__/agent_content.cpython-312.pyc",
+    "cli/omni/__pycache__/cli.cpython-312.pyc",
+    "cli/omni/__pycache__/db_runtime.cpython-312.pyc",
+    "cli/omni/__pycache__/edge.cpython-312.pyc",
+    "cli/omni/__pycache__/fleet.cpython-312.pyc",
+    "cli/omni/__pycache__/fleet_backup.cpython-312.pyc",
+    "cli/omni/__pycache__/fleet_collectors.cpython-312.pyc",
+    "cli/omni/__pycache__/fleet_governance.cpython-312.pyc",
+    "cli/omni/__pycache__/fleet_security.cpython-312.pyc",
+    "cli/omni/__pycache__/fleet_versioning.cpython-312.pyc",
+    "cli/omni/__pycache__/landscape.cpython-312.pyc",
+    "cli/omni/__pycache__/managed_apps.cpython-312.pyc",
+    "cli/omni/__pycache__/observability.cpython-312.pyc",
+    "cli/omni/__pycache__/oci.cpython-312.pyc",
+    "cli/omni/__pycache__/podman_network.cpython-312.pyc",
+    "cli/omni/__pycache__/remote_manager.cpython-312.pyc",
+    "cli/omni/__pycache__/remote_ops.cpython-312.pyc",
+    "cli/omni/__pycache__/srv1_ops.cpython-312.pyc",
+    "cli/omni/__pycache__/xrdp_abnt2.cpython-312.pyc",
+    "modules/fleet/scripts/oci-arm64-host-setup.sh.pre-self-hosts-1788679602"
+  ],
+  "manifest_bytes": 90817,
+  "manifest_sha256": "d6fad21c664e48913cc537e0e43ac8d31db72a7299a7c369a2006f97580d0eed",
+  "missing": [],
+  "restorable_byte_exact": false,
+  "root": "/home/ubuntu/.backups/omni-setup-source-pre-final-20260906T092728+0000",
+  "schema": "proc-8eca-exact-backup-validation-v1",
+  "source_head": "f851a0353e7ed3f03e736b571270ff7baaf8c357"
+}

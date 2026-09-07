@@ -1,0 +1,9 @@
+P0=0 P1=0 P2=1 P3=0
+
+- P2 — [proc-8eca-current-state.json:3](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-source/proc-8eca-current-state.json:3), artifact `archive_state`: `exact_418_manifest_found_in_backups=false` está incorreto. O manifest exato `d6fad…` existe live no backup e é confirmado por [proc-8eca-receipt-search.json:24](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-source/proc-8eca-receipt-search.json:24) e [proc-8eca-backing-tree-validation.json:47](/home/ubuntu/GitHub/worktrees/omni-srv-admin-srv4-onboarding/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-source/proc-8eca-backing-tree-validation.json:47). Se o campo pretendia representar o archive direto, deve ser renomeado.
+
+Demais gates: PASS — metadata, promotion/apply, lineage 6/2, restore 418/418, source atual 444/444, seals finais, repo clean, saúde 0/0, setup 0, provenance 12/12, JSON, 122/122 checksums e scan PII/secrets. Nenhum arquivo editado.
+
+Os IDs da session authority não estavam disponíveis nos stores locais; foram triangulados pelos receipts/notificação preservados e pelo readback live.
+
+VERDICT=NO-GO
