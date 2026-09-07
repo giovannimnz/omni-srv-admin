@@ -1,0 +1,8 @@
+[IMPORTANT: Background process proc_c81d92104fcd exited (exit code 1).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 '... PYTHONPATH="$ROOT/cli"; python3 -m omni srv1-ops resources run ... oci-arm64-host-setup.sh --apply --resume'
+Output summary:
+- resource governor entered `omni-builds.slice` and passed doctor;
+- orchestrator run directory `20260906T060022+0000-973861` was created;
+- startup failed before any step with `chmod: cannot access .../setup.log`;
+- runner exit 1.
+]

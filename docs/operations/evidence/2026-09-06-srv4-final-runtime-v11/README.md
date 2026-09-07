@@ -54,6 +54,7 @@ Status: PASS
 - `reviews/proc-d7-reconciliation-go.txt`
 - `reviews/proc-8df-reconciliation-v1-nogo.txt`
 - `reviews/proc-8df-reconciliation-v2-go.txt`
+- `reviews/proc-c81-reconciliation-go.txt`
 
 ## Cleanup
 
@@ -106,6 +107,15 @@ the successful readback authority.
 - Classificação: `partial-workload-failure/npm-prefix-symlink-collision`,
   superseded pelos runs finais, sem current actionable.
 - Reconciliação: `delayed-backup/proc-8df4807a96c0-reconciliation.md`.
+- `proc_c81d92104fcd` entrou no governor, criou o run dir
+  `20260906T060022+0000-973861` e falhou antes de qualquer step: `chmod`
+  correu antes de a process substitution do `tee` criar `setup.log`.
+- O run não gerou `FAILED`, `COMPLETE` ou receipt próprio. Os oito receipts
+  então existentes pertenciam ao run anterior.
+- Fix final: `touch → chmod → exec`; teste de ordem e `12/12 PASS`.
+- Classificação: `pre-step-orchestrator-initialization-failure/setup-log-process-substitution-race`,
+  superseded pelos runs finais, sem current actionable.
+- Reconciliação: `delayed-backup/proc-c81d92104fcd-reconciliation.md`.
 
 ## Graphify final
 
