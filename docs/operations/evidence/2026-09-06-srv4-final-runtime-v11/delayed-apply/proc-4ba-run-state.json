@@ -1,0 +1,41 @@
+{
+  "complete_file_sha256": "20c49b047fb44e3c9bc7fd5146e1ca04754388b7f77cea18eeaad94234099ce7",
+  "completed_at": "2026-09-06T07:28:35+00:00",
+  "dones": 17,
+  "error_count": 0,
+  "errors": [],
+  "mode": "apply",
+  "process_id": "proc_4ba8d1574e50",
+  "run_id": "20260906T072705+0000-1053677",
+  "run_local_source_seal": false,
+  "schema": "proc-4ba-run-state-v1",
+  "setup_log_bytes": 24831,
+  "setup_log_sha256": "0808c770345afe80a8a8e6b9620d2e441bab5ec001a9db0351355f5eb2fb5535",
+  "skips": 0,
+  "source_manifest_entries_emitted": false,
+  "starts": 17,
+  "status": "PASS",
+  "steps": [
+    "preflight",
+    "packages",
+    "ubuntu-pro",
+    "identity-network",
+    "podman",
+    "desktop-xrdp",
+    "landscape",
+    "fleet-agent",
+    "toolchains",
+    "desktop-apps",
+    "agents",
+    "gsd-graphify",
+    "agent-content",
+    "obsidian",
+    "resource-governor",
+    "desktop-theme",
+    "final-verify"
+  ],
+  "warning_events": {
+    "gsd_unreplaced_claude_references": 2,
+    "portal_without_display": 3
+  }
+}

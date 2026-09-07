@@ -1,0 +1,19 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings:
+
+- Nenhum finding.
+- Root seal: exatamente 13 entries `proc-4ba`; todas recalculadas `OK`, com path-set idêntico ao `SHA256SUMS.check`.
+- Provenance `12/12`; todos os bytes e SHA-256 conferem. JSONs válidos; log `24831` bytes/`0808c7…`; `COMPLETE` `20c49b…`; diff `539594… → 54ba94…` íntegro.
+- Authorities exatas: `300377/300381/300382/300383/300396/300397/316445`.
+- Run `072705`: `17 START`, `17 DONE`, zero `SKIP/FAIL`, `PASS`; receipts contemporâneos `17/17`, orchestrator `54ba94…`.
+- Boundary correto: manifest externo `d6fad…/418` stale declarando `539594…`; exact orchestrator=true, exact source closure=false, sem run-local seal.
+- Self-FQDN/readback: `getent`, DNS e `/etc/hosts` convergem para `10.14.1.14`; health `0/0`.
+- Warnings preservados: portal `3` deferred; `.claude` `2` accepted.
+- Autoridade atual: source `444/aa1883…`; apply+verify `17/17` com seals; GSD `1.13.0/full` auto-mode rc0; Graphify `0.9.23`; repo remoto clean; health `0/0`; setup `0`; backups PASS.
+- V1 e V2 explicitam `Verdict emitted: no` e `Approval authority: none`.
+- Nenhuma credencial, secret material ou PII detectados.
+
+Classificação confirmada: `historical-full-apply-operational-pass-with-stale-external-manifest/superseded-by-sealed-444`, `current_actionable=false`.
+
+VERDICT=GO

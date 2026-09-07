@@ -1,0 +1,20 @@
+P0=0 P1=0 P2=0 P3=0
+
+findings:
+
+- Nenhum finding.
+- Root seal recomposto: `158/158 OK`. Core packet contém exatamente `13` entries `delayed-apply/proc-4ba-*`, todas `OK`; os quatro reviews são audit trail separado.
+- Raw diff preservado: `027f764c…`, 2042 bytes. Versão normalizada: `65ca084d…`, 2041 bytes. Única diferença: uma trailing space; conteúdo normalizado idêntico.
+- Diff mantém `539594… → 54ba94…` sem alteração semântica.
+- Run `072705`: `17 START`, `17 DONE`, `0 SKIP`, `0 FAIL`, `PASS`.
+- Receipts: `17/17 PASS`, run e source SHA `54ba94…` correspondentes.
+- Boundary correto: manifest `d6fad…/418` stale; `exact_executed_orchestrator=true`; `exact_executed_source_closure=false`; sem run-local seal.
+- Self-FQDN: readback preservado converge `getent`, DNS e `/etc/hosts` para `10.14.1.14`.
+- Warnings preservados: portal sem DISPLAY `3`; referências `.claude` `2`; nenhum current actionable.
+- Autoridade atual consistente: `444/444`, manifest `aa1883…`, apply e verify-only `17/17` com seals correspondentes.
+- Provenance: `12/12`; JSONs `7/7` válidos.
+- V1/V2: nenhum `VERDICT`, sem approval authority. V3: GO pré-normalização corretamente preservado e explicitamente marcado como não final.
+- Nenhum padrão de credencial, secret material ou PII detectado nos 20 arquivos do escopo.
+- Review estritamente read-only; nenhum arquivo alterado.
+
+VERDICT=GO

@@ -1,0 +1,12 @@
+[IMPORTANT: Background process proc_4ba8d1574e50 completed normally (exit code 0).
+Command: exec ssh -tt -o BatchMode=yes atius-srv-4 '... oci-arm64-host-setup.sh --apply --resume'
+Output authority:
+- final step `final-verify`: PASS/DONE;
+- status=PASS;
+- mode=apply;
+- run_id=20260906T072705+0000-1053677;
+- completed_at=2026-09-06T07:28:35+00:00;
+- connection closed normally.
+]
+
+O output completo e byte-exato está em `proc-4ba-setup.log`; este arquivo preserva a notification tardia e os marcadores conclusivos.

@@ -1,0 +1,18 @@
+Review v3 disposition — GO_PRE_NORMALIZATION / NOT_FINAL_CLOSEOUT
+
+Review file: `proc-4ba-reconciliation-v3-go.txt`
+Reviewer verdict: GO, P0/P1/P2/P3=0
+Packet/seal checks at review time: PASS
+Final closeout authority: withheld after a versionable-only normalization
+
+Parent-side post-review change:
+- `proc-4ba-orchestrator-diff.txt` had one trailing-space-only line;
+- the raw byte-exact diff remains at `/home/ubuntu/.backups/proc-4ba-doc-commit-pre-20260907T025858-0300/files/docs/operations/evidence/2026-09-06-srv4-final-runtime-v11/delayed-apply/proc-4ba-orchestrator-diff.txt` with SHA-256 `027f764c0050204e3d10385b8c644c7d2f4b99a95a8fc36570dc0df05ad9c9e1`;
+- the versionable copy removed only trailing whitespace and has SHA-256 `65ca084d386cf0218f0b5850dd37bb28dd8194b9626ebc4bb1a8930904066d49`;
+- `proc-4ba-reconciliation.md` and provenance were updated to document that distinction.
+
+Disposition:
+- preserve v3's exact GO verdict;
+- do not rewrite it as NO-GO;
+- do not use it as the final post-normalization seal;
+- reseal the changed packet and request a new convergence review.

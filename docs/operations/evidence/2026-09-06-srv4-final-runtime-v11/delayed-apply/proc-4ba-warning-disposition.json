@@ -1,0 +1,32 @@
+{
+  "schema": "proc-4ba-warning-disposition-v1",
+  "run_id": "20260906T072705+0000-1053677",
+  "warnings": [
+    {
+      "type": "portal-color-scheme-without-display",
+      "occurrences": 3,
+      "classification": "deferred-to-session-proof",
+      "historical_effect": "none; dark-theme validation continued and passed",
+      "current_evidence": [
+        "final apply and verify include Dark Ubuntu validado",
+        "later RDP framebuffer proves dark LXDE desktop"
+      ],
+      "current_actionable": false
+    },
+    {
+      "type": "gsd-unreplaced-claude-path-references",
+      "occurrences": 2,
+      "classification": "accepted-installer-warning",
+      "historical_effect": "none; installer completed and setup gate passed",
+      "current_evidence": [
+        "Codex and Hermes GSD Core 1.13.0 profiles full",
+        "both gsd-tools check auto-mode return zero",
+        "Graphify 0.9.23",
+        "warning remains visible in final installer output"
+      ],
+      "current_actionable": false
+    }
+  ],
+  "error_markers": 0,
+  "decision": "preserve warnings; do not promote them to failures and do not claim they disappeared"
+}

@@ -69,6 +69,11 @@ Status: PASS
 - `reviews/proc-f216-reconciliation-v1-go-preseal-stale.txt`
 - `reviews/proc-f216-reconciliation-v1-disposition.txt`
 - `reviews/proc-f216-reconciliation-v2-go.txt`
+- `reviews/proc-4ba-reconciliation-v1-blocked-usage-limit.txt`
+- `reviews/proc-4ba-reconciliation-v2-blocked-unsupported-model.txt`
+- `reviews/proc-4ba-reconciliation-v3-go.txt`
+- `reviews/proc-4ba-reconciliation-v3-disposition.txt`
+- `reviews/proc-4ba-reconciliation-v4-go.txt`
 
 ## Cleanup
 
@@ -201,6 +206,16 @@ the successful readback authority.
 - Warnings de portal sem DISPLAY e references `.claude` foram preservados e
   classificados; nenhum foi falsamente tratado como removido.
 - Reconciliação: `delayed-apply/proc-f216-reconciliation.md`.
+- `proc_4ba8d1574e50` é o apply `20260906T072705+0000-1053677`:
+  `17 START/DONE`, zero skip/fail, `COMPLETE=PASS` e 17 receipts
+  contemporâneos ligados ao orchestrator `54ba94…`.
+- O orchestrator foi corrigido in-place antes do run para reconciliar self-FQDN
+  em `10.14.1.14`, mas o manifest externo `d6fad…` ainda declarava
+  `539594…`. Source closure do run ficou unsealed e o manifest não é atribuído
+  como source seal.
+- Classificação: `historical-full-apply-operational-pass-with-stale-external-manifest`,
+  superseded pela source 444 com apply/verify selado em `aa1883…`.
+- Reconciliação: `delayed-apply/proc-4ba-reconciliation.md`.
 
 ## Graphify final
 

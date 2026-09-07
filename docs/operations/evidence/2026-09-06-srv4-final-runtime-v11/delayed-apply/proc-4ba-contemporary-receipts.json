@@ -1,0 +1,19 @@
+{
+  "all_run_id_match": true,
+  "all_source_sha256_match": true,
+  "all_status_pass": true,
+  "authority_message": 300397,
+  "count": 17,
+  "current_sha_at_readback": 17,
+  "observed_after_process_completion": true,
+  "pass": 17,
+  "preservation": "structured transcription of contemporaneous readback; not a claim that the shared receipt files remain unchanged today",
+  "receipt_directory_semantics": "shared mutable completed/apply directory; receipts were later overwritten by newer runs",
+  "run_ids": [
+    "20260906T072705+0000-1053677"
+  ],
+  "schema": "proc-4ba-contemporary-receipt-set-v1",
+  "session_id": "20260904_200755_1d1861",
+  "source_sha256": "54ba94542747d8d51072c2b5afe6012f81dfe8a2cc6e5ef8234a4278782318fb",
+  "step_names_source": "run log; contemporaneous summary asserted 17 receipt files but did not print each basename"
+}

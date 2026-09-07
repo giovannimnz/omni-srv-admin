@@ -1,0 +1,17 @@
+Review attempt v1 — BLOCKED_USAGE_LIMIT / NO_APPROVAL
+
+Process: proc_95012d491bca
+Requested model: gpt-5.3-codex-spark
+Mode requested: read-only, ephemeral
+Exit code: 1
+Verdict emitted: no
+Approval authority: none
+
+Observed terminal error:
+You've hit your usage limit for GPT-5.3-Codex-Spark. Switch to another model now, or try again at 6:36 AM.
+
+Disposition:
+- preserve as a blocked review attempt;
+- do not classify as GO or NO-GO;
+- relaunch the unchanged sealed packet with a supported model;
+- current runtime remains unchanged.

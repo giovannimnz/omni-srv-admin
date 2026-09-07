@@ -1,0 +1,57 @@
+old=539594a1de03ee6a6ee5cdb75619630a5adfcecbd47865b15e5ffe86a8519278
+new=54ba94542747d8d51072c2b5afe6012f81dfe8a2cc6e5ef8234a4278782318fb
+--- orchestrator-539594
++++ orchestrator-54ba94
+@@ -223,6 +223,7 @@
+ verify_network() {
+   require_eq "$(hostname -s)" "$TARGET_SHORT" "short hostname"
+   require_eq "$(hostname -f)" "$TARGET_FQDN" "FQDN"
++  require_eq "$(getent ahostsv4 "$TARGET_FQDN" | awk 'NR == 1 { print $1 }')" "$TARGET_PRIVATE_IP" "self FQDN address"
+   ip -4 -o addr show | grep -Fq "$TARGET_PRIVATE_IP/" || fail "private IP missing"
+   ip -4 -o addr show wg100 | grep -Fq "$TARGET_WG_IP/32" || fail "WireGuard IP missing"
+   resolvectl dns | grep -Fq "$DNS_PRIMARY" || fail "internal resolver missing"
+@@ -234,6 +235,32 @@
+   pass "hostname -f / resolvectl / wg show / A/PTR"
+ }
+
++apply_host_identity() {
++  [ "$MODE" = "apply" ] || return 0
++  local rendered
++  rendered="$(mktemp "$RUN_DIR/hosts.XXXXXX")"
++  python3 - /etc/hosts "$rendered" "$TARGET_PRIVATE_IP" "$TARGET_FQDN" "$TARGET_SHORT" <<'PY'
++from pathlib import Path
++import sys
++
++source, target = map(Path, sys.argv[1:3])
++private_ip, fqdn, short = sys.argv[3:]
++output = []
++for raw in source.read_text().splitlines():
++    body = raw.split("#", 1)[0]
++    fields = body.split()
++    names = set(fields[1:]) if len(fields) > 1 else set()
++    if fqdn in names or short in names:
++        continue
++    output.append(raw)
++output.append(f"{private_ip}\t{fqdn}\t{short}")
++target.write_text("\n".join(output).rstrip() + "\n")
++PY
++  chmod 600 "$rendered"
++  sudo -n install -m 644 -o root -g root "$rendered" /etc/hosts
++  rm -f "$rendered"
++}
++
+ verify_podman() {
+   require_command podman
+   require_command podman-compose
+@@ -554,7 +581,10 @@
+ step_packages() { apply_packages; }
+ step_ubuntu_pro() { apply_ubuntu_pro; }
+ step_identity_network() {
+-  if [ "$MODE" = "apply" ]; then sudo -n netplan generate; fi
++  if [ "$MODE" = "apply" ]; then
++    apply_host_identity
++    sudo -n netplan generate
++  fi
+   verify_network
+ }
+ step_podman() { verify_podman; }
