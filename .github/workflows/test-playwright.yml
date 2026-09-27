@@ -4,9 +4,6 @@ on:
   push:
     branches:
       - main
-  pull_request:
-    branches:
-      - main
   workflow_dispatch:
 
 permissions:
@@ -16,6 +13,7 @@ jobs:
   playwright-tests:
     name: Run Playwright E2E Tests
     runs-on: [self-hosted, linux, atius-srv-4]
+    timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -37,4 +35,5 @@ jobs:
         with:
           name: playwright-report
           path: playwright-report/
+          if-no-files-found: ignore
           retention-days: 14

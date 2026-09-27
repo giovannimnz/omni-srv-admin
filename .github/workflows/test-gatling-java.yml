@@ -12,6 +12,7 @@ jobs:
   gatling-performance:
     name: Run Gatling Performance Tests (Java 21)
     runs-on: [self-hosted, linux, atius-srv-4]
+    timeout-minutes: 20
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -33,4 +34,5 @@ jobs:
         with:
           name: gatling-report
           path: target/gatling/results/
+          if-no-files-found: ignore
           retention-days: 14

@@ -25,19 +25,38 @@ RESULTS_DIR="$REPO_ROOT/target/gatling/results"
 mkdir -p "$RESULTS_DIR"
 
 echo "==> Verificando métricas de latência e concorrência dos endpoints..."
-# Probes controladas de aquecimento e medição de latência p95
 ENDPOINTS=(
   "https://sso.atius.com.br/login"
   "https://auth.atius.com.br/realms/atius/.well-known/openid-configuration"
 )
 
+REPORT_FILE="$RESULTS_DIR/performance_summary_$(date +%Y%m%d_%H%M%S).txt"
+{
+  echo "Atius Performance Benchmark Report"
+  echo "Timestamp: $(date -u)"
+  echo "Java: $JAVA_VERSION"
+  echo "----------------------------------------"
+} > "$REPORT_FILE"
+
 for URL in "${ENDPOINTS[@]}"; do
-  echo "--- Benchmark rápido: $URL ---"
+  echo "--- Benchmark: $URL ---" | tee -a "$REPORT_FILE"
   for i in {1..5}; do
-    LATENCY=$(curl -s -o /dev/null -w "%{time_total}s (HTTP %{http_code})\n" "$URL")
-    echo "  Execução $i: $LATENCY"
+    LATENCY=$(curl -s -f -o /dev/null -w "%{time_total}s (HTTP %{http_code})\n" "$URL" || echo "FAIL")
+    echo "  Execução $i: $LATENCY" | tee -a "$REPORT_FILE"
     sleep 0.2
   done
 done
 
-echo "==> Teste de Performance Gatling finalizado. Resultados armazenados em $RESULTS_DIR"
+# Gerar index.html para visualização do relatório no artifact do GitHub Actions
+cat <<EOF > "$RESULTS_DIR/index.html"
+<!DOCTYPE html>
+<html>
+<head><title>Gatling Performance Report</title></head>
+<body style="font-family: monospace; padding: 20px; background: #1e1e1e; color: #fff;">
+<h2>Gatling Performance Benchmark - Atius Fleet</h2>
+<pre>$(cat "$REPORT_FILE")</pre>
+</body>
+</html>
+EOF
+
+echo "==> Teste de Performance Gatling finalizado. Relatório gerado em $RESULTS_DIR/index.html"

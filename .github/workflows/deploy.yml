@@ -23,6 +23,7 @@ jobs:
   deploy:
     name: Deploy to Atius Fleet (K3s / Podman)
     runs-on: [self-hosted, linux, atius-srv-4]
+    timeout-minutes: 15
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -36,4 +37,4 @@ jobs:
       - name: Execute Governed Deploy
         shell: bash
         run: |
-          ./scripts/ci/deploy-governed.sh
+          ./scripts/ci/deploy-governed.sh "${{ inputs.target_env || 'production' }}"
