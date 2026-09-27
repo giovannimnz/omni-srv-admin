@@ -1,7 +1,7 @@
 # ==============================================================================
 # GitLab CI/CD Pipeline - Governed Multi-Stage Pipeline (atius-srv-4)
+# Multi-Environment: DEV (gitlabdev.atius / pipelinedev.atius) & PRD (gitlab.atius / pipeline.atius)
 # Enforces: ATIUS CPU Guardrail (<20%), 1 pod = 500m max, Vault Auth & Playwright/Gatling
-# Domains: https://gitlab.atius.com.br e https://gitlab.atius.io
 # ==============================================================================
 
 stages:
@@ -9,7 +9,8 @@ stages:
   - validate
   - test
   - performance
-  - deploy
+  - deploy-dev
+  - deploy-prd
   - k3s-cluster-ops
   - teardown-ephemeral
 
@@ -17,7 +18,6 @@ variables:
   VAULT_ADDR: "https://10.13.1.13:8202"
   VAULT_PROFILE: "pipeline"
   KUBECONFIG: "/home/ubuntu/.kube/config"
-  KUBE_NAMESPACE: "pipeline-runners"
   K3S_RUNNER_TAG: "atius-srv-4"
 
 default:
@@ -73,30 +73,49 @@ test-gatling-performance:
   rules:
     - if: '$CI_PIPELINE_SOURCE == "schedule" || $CI_PIPELINE_SOURCE == "web"'
 
-# 5. Deploy Governado (com CPU Guardrail <20% e Healthchecks)
-deploy-fleet:
-  stage: deploy
+# 5. Deploy Governado DEV (gitlabdev.atius.com.br / pipelinedev.atius.com.br)
+deploy-dev:
+  stage: deploy-dev
+  environment:
+    name: dev
+    url: https://gitlabdev.atius.com.br
   script:
-    - echo "==> Executando Deploy Governado na frota Atius..."
-    - ./scripts/ci/deploy-governed.sh "${DEPLOY_ENV:-production}"
+    - echo "==> Executando Deploy Governado no ambiente [DEV]..."
+    - ./scripts/ci/deploy-governed.sh dev
+  rules:
+    - if: '$CI_COMMIT_BRANCH == "develop" || $CI_PIPELINE_SOURCE == "merge_request_event" || $CI_PIPELINE_SOURCE == "web"'
+    - if: '$CI_COMMIT_BRANCH == "main"'
+
+# 6. Deploy Governado PRD (gitlab.atius.com.br / pipeline.atius.com.br)
+deploy-prd:
+  stage: deploy-prd
+  environment:
+    name: prd
+    url: https://gitlab.atius.com.br
+  script:
+    - echo "==> Executando Deploy Governado no ambiente [PRD]..."
+    - ./scripts/ci/deploy-governed.sh prd
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" && $CI_PIPELINE_SOURCE == "push"'
     - if: '$CI_PIPELINE_SOURCE == "web"'
 
-# 6. Agent de CI/CD para Containers no K3s
+# 7. Agent de CI/CD para Containers no K3s (Reconciliação em DEV e PRD)
 k3s-container-agent:
   stage: k3s-cluster-ops
   script:
     - echo "==> Ativando K3s Container Agent no nó atius-srv-4..."
     - kubectl get nodes -o wide
-    - kubectl -n pipeline-runners get pods -o wide
-    - echo "==> Executando reconciliação de containers no cluster K3s..."
-    - kubectl -n pipeline-runners rollout status deployment/atius-pipeline-runner --timeout=60s
-    - echo "==> K3s CI/CD Container Agent executado com sucesso."
+    - echo "==> Verificando Pods e Quotas em pipeline-dev e pipeline-prd..."
+    - kubectl -n pipeline-dev get pods -o wide
+    - kubectl -n pipeline-prd get pods -o wide
+    - echo "==> Reconciliando runners nos dois ambientes..."
+    - kubectl -n pipeline-dev rollout status deployment/atius-pipeline-runner-dev --timeout=60s
+    - kubectl -n pipeline-prd rollout status deployment/atius-pipeline-runner-prd --timeout=60s
+    - echo "==> K3s CI/CD Container Agent executado com sucesso nos ambientes DEV e PRD."
   rules:
     - if: '$CI_COMMIT_BRANCH == "main" || $CI_PIPELINE_SOURCE == "web"'
 
-# 7. Ephemeral Container Teardown
+# 8. Ephemeral Container Teardown
 teardown_ephemeral_app:
   stage: teardown-ephemeral
   script:
