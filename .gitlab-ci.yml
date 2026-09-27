@@ -1,0 +1,64 @@
+# ==============================================================================
+# GitLab CI/CD Pipeline - Governed K3s Container Lifecycle (atius-k3s-ha)
+# Enforces: ATIUS CPU Guardrail (1 pod = 500m max), Resource Limits & Vault Auth
+# ==============================================================================
+
+stages:
+  - validate
+  - test
+  - deploy-ephemeral
+  - teardown-ephemeral
+
+variables:
+  KUBE_NAMESPACE: "pipeline-workloads"
+  K3S_RUNNER_TAG: "atius-srv-4"
+  VAULT_ADDR: "https://10.13.1.13:8202"
+
+default:
+  tags:
+    - self-hosted
+    - linux
+    - arm64
+    - atius-srv-4
+
+# ------------------------------------------------------------------------------
+# 1. Validation & Vault Preflight
+# ------------------------------------------------------------------------------
+lint-and-validate:
+  stage: validate
+  script:
+    - echo "Validating Kubernetes manifests and resource boundaries..."
+    - ./scripts/ci/k3s-container-lifecycle.sh validate-manifests
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event" || $CI_COMMIT_BRANCH == "main"'
+
+# ------------------------------------------------------------------------------
+# 2. Ephemeral Container Deployment (Spin Up)
+# ------------------------------------------------------------------------------
+deploy_ephemeral_app:
+  stage: deploy-ephemeral
+  script:
+    - echo "Deploying ephemeral workload to K3s cluster on atius-srv-4..."
+    - ./scripts/ci/k3s-container-lifecycle.sh up "${CI_COMMIT_REF_SLUG}" "${CI_COMMIT_SHA}"
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    url: https://${CI_COMMIT_REF_SLUG}.k3s-preview.atius.internal
+    on_stop: teardown_ephemeral_app
+    auto_stop_in: 2 hours
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+
+# ------------------------------------------------------------------------------
+# 3. Ephemeral Container Teardown (Tear Down)
+# ------------------------------------------------------------------------------
+teardown_ephemeral_app:
+  stage: teardown-ephemeral
+  script:
+    - echo "Tearing down ephemeral workload from K3s cluster..."
+    - ./scripts/ci/k3s-container-lifecycle.sh down "${CI_COMMIT_REF_SLUG}"
+  when: manual
+  environment:
+    name: review/${CI_COMMIT_REF_SLUG}
+    action: stop
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
