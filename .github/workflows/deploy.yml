@@ -1,0 +1,39 @@
+name: Deploy Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - release
+  workflow_dispatch:
+    inputs:
+      target_env:
+        description: 'Target Environment'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - production
+          - staging
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    name: Deploy to Atius Fleet (K3s / Podman)
+    runs-on: [self-hosted, linux, atius-srv-4]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Load Secrets from HashiCorp Vault
+        shell: bash
+        run: |
+          chmod +x ./scripts/ci/*.sh
+          ./scripts/ci/vault-load-secrets.sh pipeline
+
+      - name: Execute Governed Deploy
+        shell: bash
+        run: |
+          ./scripts/ci/deploy-governed.sh

@@ -1,0 +1,40 @@
+name: Automated E2E Tests (Playwright)
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  playwright-tests:
+    name: Run Playwright E2E Tests
+    runs-on: [self-hosted, linux, atius-srv-4]
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Load Secrets from HashiCorp Vault
+        shell: bash
+        run: |
+          chmod +x ./scripts/ci/*.sh
+          ./scripts/ci/vault-load-secrets.sh pipeline
+
+      - name: Run Playwright Tests (Headless)
+        shell: bash
+        run: |
+          ./scripts/ci/run-playwright-tests.sh
+
+      - name: Upload Playwright Report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

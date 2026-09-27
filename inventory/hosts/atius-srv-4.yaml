@@ -5,8 +5,12 @@ owner: giovanni
 role: general
 access:
   ssh: ubuntu@10.14.1.14
-  public_ip: 137.131.156.141
+  identity_file: /home/ubuntu/.ssh/id_oracle
+  public_ip: 164.152.48.22
   oci_private_ip: 10.14.1.14
+  vpn_ip: 10.100.100.18
+  public_dns: atius-srv-4.atius.com.br
+  internal_dns: atius-srv-4.atius.internal
 platform:
   provider: oracle-oci
   os: ubuntu-24.04
@@ -49,20 +53,121 @@ apps:
   - id: zellij
     runtime: local-rustup-binary
     install_path: /home/ubuntu/.cargo/bin/zellij
+  - id: nodejs
+    runtime: local-user
+    install_path: /home/ubuntu/.local/opt/node-v24.20.0-linux-arm64
+    current_version: 24.20.0
+    npm_version: 11.19.0
+  - id: bun
+    runtime: local-user
+    install_path: /home/ubuntu/.bun/bin/bun
+    current_version: 1.4.1
+  - id: codex-cli
+    runtime: local-user
+    install_path: /home/ubuntu/.local/bin/codex
+    current_version: 0.153.4
+    auth_state: pending-host-login
+  - id: hermes-agent
+    runtime: local-user
+    install_path: /home/ubuntu/.hermes/hermes-agent
+    current_version: 0.21.0
+    source_commit: 9e23028e2effadadf5b2bda8d3bcac4c7dd18bcf
+    source_commit_observed_at: 2026-09-05T12:46:16Z
+    auth_state: pending-host-login
+    mcp_servers: [gbrain_http, obsidian_http, oci_admin_http]
+    provider: custom:atius-router
+    model: gpt-5.6-sol
+  - id: gsd-core
+    runtime: local-user
+    install_path: /home/ubuntu/.codex/gsd-core
+    hermes_install_path: /home/ubuntu/.hermes/gsd-core
+    current_version: 1.12.0
+  - id: graphify
+    runtime: local-user
+    install_path: /home/ubuntu/.local/bin/graphify
+    current_version: 0.9.23
+  - id: obsidian
+    runtime: manual-appimage
+    install_path: /home/ubuntu/GitHub/Programs/obsidian/Obsidian.AppImage
+    current_version: 1.12.7
+    replica_path: /home/ubuntu/GitHub/obsidian-vault/AiSecondBrain
+    sync_unit: obsidian-vault-pull.timer
+    sync_policy: pull-only
+  - id: chatgpt-desktop
+    runtime: apt-package
+    package: chatgpt
+    current_version: 26.901.41600
+    auth_state: pending-host-login
+  - id: google-chrome-stable
+    runtime: apt-package
+    package: google-chrome-stable
+    current_version: 152.0.7977.82-1
+  - id: prometheus-node-exporter
+    runtime: systemd
+    unit: prometheus-node-exporter.service
+    current_version: 1.7.0-1ubuntu0.3
+  - id: cockpit
+    runtime: systemd-socket
+    unit: cockpit.socket
+    current_version: 314-1
+    plugins: [cockpit-podman]
+  - id: resource-governor
+    runtime: systemd-user
+    install_type: omni-generic-host
+    profile: generic-host
+    build_cpu_total_percent: 20
+    doctor_state: pass
   - id: xrdp-abnt2
     runtime: systemd
     units:
       - xrdp.service
       - xrdp-sesman.service
       - xrdp-abnt2-reconcile.timer
+  - id: k3s-agent
+    runtime: systemd
+    unit: k3s-agent.service
+    cluster: atius-k3s-ha
+    role: ci-runner
+    node_name: atius-srv-4
+    node_ip: 10.14.1.14
+    flannel_iface: enp0s6
+    k3s_version: "v1.35.5+k3s1"
+    status: active
+  - id: java-runtime
+    runtime: system-package
+    package: openjdk-21-jre-headless
+    version: "21.0.12.1"
+    purpose: gatling-performance-tests
+  - id: github-actions-runner
+    runtime: hybrid-k3s-and-systemd
+    install_path: /opt/actions-runner
+    k3s_namespace: pipeline-runners
+    k3s_deployment: atius-pipeline-runner
+    runner_version: "2.322.0"
+    labels: [self-hosted, linux, arm64, atius-srv-4]
+    vault_integration: true
+    vault_profile: pipeline
 network:
   vcn_cidr: 10.14.0.0/16
   subnet_cidr: 10.14.1.0/24
   subnet_route_table: Default Route Table for vcn-atius4
-  drg_state: pending-governed-onboarding
+  drg_state: active
+  wireguard_interface: wg100
+  wireguard_ip: 10.100.100.18
+  wireguard_role: reserve-fallback
+  internal_dns_server: 10.11.1.11
+  public_ip_lifetime: RESERVED
+  public_ip_previous_ephemeral: 137.131.156.141
 notes:
   - Public SSH is validated with the canonical Vault-managed public key.
   - The default subnet route table must retain 0.0.0.0/0 through the IGW.
-  - Do not attach the host to the central DRG outside a governed cross-tenancy plan.
+  - DRG cross-tenancy is active; 10.14.1.14 reaches the four OCI/DRG peers.
+  - Reserved Public IP 164.152.48.22 replaced ephemeral 137.131.156.141 through an OCI OperationPlan.
+  - WireGuard 10.100.100.18 is a reserve path. Slot 10.100.100.14 remains assigned to the historical GIOVANNI-UBUNTU-S23 peer and was not reused.
+  - Codex and Hermes Agent are installed and preconfigured; OAuth login remains host-local and pending Giovanni.
+  - Hermes Agent updater ran twice because upstream advanced during the closeout. At 2026-09-05T12:46:16Z source was clean and aligned 0/0 to origin/main 9e23028e; previous orphan/grafted heads remain under refs/hermes-update-backups/. Final backup pre-update-2026-09-05-124525.zip is mode 0600, unzip-tested and SHA-256 verified; config/doctor and MCPs 115/16/12 passed; model smoke returned SRV4_HERMES_9E23028_OK.
+  - GSD Core 1.12.0 and Graphify 0.9.23 are installed for Codex/Hermes; all three MCP HTTP servers passed live discovery.
+  - Resource governor generic-host passed doctor and a real build scope in omni-builds.slice at 20% total host CPU.
+  - Obsidian replica is pull-only; authoritative writes remain on atius-srv-1.
   - Landscape self-hosted account is standalone; use the public message-system
     endpoint and HTTP ping endpoint, never the stale SaaS profile.

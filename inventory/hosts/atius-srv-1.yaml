@@ -46,66 +46,82 @@ apps:
       - "Auto-update target governed by TbVersion + omni version matrix."
       - "Agent executor may stash local dirty work before switching back to main/release target."
   - id: jenkins
-    runtime: podman
-    image: localhost/jenkins:podman-latest
-    unit: container-jenkins.service
-    compose: ~/GitHub/containers/jenkins/podman-compose.yml
-    public_url: https://jenkins.atius.com.br/
-    healthcheck_url: http://127.0.0.1:8085/
-    ports:
-      - "8085:8080"
-      - "50000:50000"
-    volumes:
-      - ~/GitHub/containers/jenkins/jenkins_home:/var/jenkins_home:rw
-      - ~/GitHub/atius:/workspace/atius:ro
-    cpus: 2
-    network: srv1-podman
-    install_type: podman-compose
-    current_version: "2.541.3"
-    desired_version: "2.541.3"
-    source: "https://github.com/jenkinsci/jenkins"
-    managed_by: "omni-srv-admin"
-    update_policy: "plan-first"
-    last_audited: "2026-06-15"
+    status: retired
+    retired_date: "2026-09-27"
+    replacement: "github-actions-runner-k3s-atius-srv-4"
     notes:
-      - "Phase 14-05: removed /var/run/docker.sock and /usr/bin/docker mounts (Docker uninstalled in cutover)"
-      - "Use Podman-in-container or delegate to external Podman runners for DinD-equivalent jobs"
-  - id: jenkins-agent
-    runtime: k8s
-    cluster: srv1-k3s
-    namespace: jenkins
-    image: localhost/jenkins:podman-latest
-    manifest: modules/k3s-ha-portainer-oci/jenkins/agent-deployment.yaml
-    jnlp_target: http://10.11.1.11:8085/  # OCI/DRG private plane
+      - "Desinstalado e erradicado completamente em 2026-09-27 (containers, volumes, DNS Cloudflare, units systemd, Apache vhost e K3s agents)."
+      - "Substituído por GitHub Actions Self-Hosted Runner no nó K3s atius-srv-4 com pipelines governadas e integração HashiCorp Vault."
     replicas: 2
-    install_type: k8s-deployment
+    install_type: k8s-reachability-placeholder
+    desired_state: placeholder-reachability-only
+    registration_status: not-registered
+    controller_plugin_status: absent
+    controller_node_status: absent
+    workload_behavior: reachability-probe-then-sleep-infinity
     current_version: "0.1.0"
     desired_version: "0.1.0"
     source: "https://github.com/jenkinsci/kubernetes-plugin"
     managed_by: "omni-srv-admin"
     update_policy: "plan-first"
-    last_audited: "2026-06-15"
+    last_audited: "2026-09-05"
     depends_on: [jenkins]
     notes:
-      - "Phase 14-06: Jenkins agent on K3s, replaces DinD with ephemeral build pods"
-      - "Uses Kubernetes plugin + Pod templates per job type (maven, node, python)"
-      - "JNLP over OCI/DRG (10.11.1.11) - no public exposure"
+      - "Phase 14-06 deployed a static reachability placeholder, not a registered Jenkins agent."
+      - "Deployment reports 2/2 Ready but probes the controller and then sleeps forever."
+      - "Kubernetes plugin and controller nodes are absent; dynamic pod templates are not active."
+      - "OCI/DRG reachability to 10.11.1.11:8085/50000 is validated; public direct exposure is blocked."
   - id: cloudbeaver
     runtime: podman
-    compose: ~/containers/cloudbeaver/podman-compose.yml
-    public_url: https://cloudbeaver.atius.com.br/
-    healthcheck_url: http://127.0.0.1:8978/
+    image: docker.io/dbeaver/cloudbeaver:26.1.0
+    unit: container-cloudbeaver.service
+    compose: ~/GitHub/containers/cloudbeaver/podman-compose.yml
+    public_url: https://db.atius.com.br/
+    healthcheck_url: http://127.0.0.1:8978/status
     ports:
-      - "8978:8978"
-    install_type: podman-compose
-    current_version: "latest"
-    desired_version: "latest"
+      - "127.0.0.1:8978:8978"
+    volumes:
+      - ~/GitHub/containers/cloudbeaver/workspace_recent:/opt/cloudbeaver/workspace:rw
+    cpus: 2
+    network: srv1-podman-v2
+    install_type: systemd-user-podman-container
+    current_version: "26.1.0"
+    desired_version: "26.1.0"
     source: "https://github.com/dbeaver/cloudbeaver"
     managed_by: "omni-srv-admin"
     update_policy: "plan-first"
-    last_audited: "2026-06-15"
+    last_audited: "2026-09-05"
     notes:
-      - "Migrated to Podman during Docker→Podman cutover 2026-06-12; running on srv1-podman"
+      - "Rootless Podman container managed by container-cloudbeaver.service on srv1-podman-v2."
+      - "Image 26.1.0 restored by proc_c911d3f83c90 on 2026-09-05; workspace H2 persisted at ~/GitHub/containers/cloudbeaver/workspace_recent."
+      - "Canonical public edge is db.atius.com.br; cloudbeaver.atius.com.br has no public DNS record."
+      - "Host port 8978 is loopback-only; direct public access is forbidden and the supported path is Cloudflare → Apache → 127.0.0.1:8978."
+  - id: plane
+    runtime: podman
+    unit: plane-podman.service
+    compose: ~/GitHub/containers/plane-app/podman-compose.yaml
+    public_url: https://plane.atius.com.br/
+    healthcheck_url: http://127.0.0.1:8090/api/v1/users/me/
+    ports:
+      - "127.0.0.1:8080:80"
+      - "127.0.0.1:8090:80"
+      - "127.0.0.1:8747:5432"
+      - "10.11.1.11:8747:5432"
+      - "10.100.100.1:8747:5432"
+    network: atius
+    install_type: systemd-user-podman-compose
+    current_version: "1.3.1"
+    desired_version: "1.3.1"
+    source: "https://github.com/makeplane/plane"
+    managed_by: "omni-srv-admin"
+    update_policy: "plan-first"
+    last_audited: "2026-09-05"
+    migrations: 162
+    container_count: 13
+    notes:
+      - "Plane runs as 12 long-lived containers plus one successful migrator container."
+      - "plane-stack-up.sh waits for migrator exited:0 before requiring API 401 and root/setup/spaces 200."
+      - "Web and proxy host ports are loopback-only; PostgreSQL is loopback + OCI/DRG primary + wg100 reserve. Public access is through Cloudflare and Apache to 127.0.0.1:8090."
   - id: redis
     runtime: podman
     image: docker.io/library/redis:7-alpine
