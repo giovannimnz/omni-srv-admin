@@ -46,8 +46,8 @@ const allTargets = [
   { id: 'ssh', origin: 'https://ssh.atius.com.br', authenticated: /Atius SSH|Acessos remotos via SSH/i, readySelector: '.session, .grid', logoutSelector: '.logout[href="/logout"]' },
   { id: 'rdp', origin: 'https://rdp.atius.com.br', authenticated: /RDP|acesso remoto|credencial temporária|sessão/i, readySelector: 'main, form, .session, .grid', logoutSelector: '.logout[href="/logout"], a[href="/logout"]' },
   { id: 'oci', origin: 'https://oci.atius.com.br', authenticated: /OCI|Oracle Cloud|inventory|compute|network/i, readySelector: 'main, [role="main"], table', logoutSelector: 'a[href="/logout"], button:has-text("Sair"), [data-atius-sso-logout="true"]' },
-  { id: 'talk', origin: 'https://talk.atius.com.br', authenticated: /talk\.atius|client portal|shell autenticada|review/i, readySelector: '.page-shell', logoutSelector: 'form[action="/logout"] button, form[action="/logout"] input[type="submit"]' },
-  { id: 'admin-talk', origin: 'https://admin.talk.atius.com.br', authenticated: /admin\.talk|Atius Talk Atius Admin|autoridade master|oversight/i, readySelector: '.page-shell', logoutSelector: 'form[action="/logout"] button, form[action="/logout"] input[type="submit"]' },
+  { id: 'talk', origin: 'https://talk.atius.com.br', authenticated: /talk\.atius|client portal|shell autenticada|review|Central de Operações|Operações Atius/i, readySelector: '.page-shell', logoutSelector: 'form[action="/logout"] button, form[action="/logout"] input[type="submit"]' },
+  { id: 'admin-talk', origin: 'https://talk.atius.com.br', entryPath: '/admin/', loginPath: '/admin/login', authenticated: /admin\.talk|Atius Talk Atius Admin|autoridade master|oversight|admin/i, readySelector: '.page-shell', logoutSelector: 'form[action*="/logout"] button, form[action*="/logout"] input[type="submit"]' },
   { id: 'remote', origin: 'https://remote.atius.com.br', authenticated: /noVNC|VNC|remote|desktop/i, readySelector: '#noVNC_container, #noVNC_status, body', logoutSelector: '[data-atius-sso-logout="true"]' },
   { id: 'grafana', origin: 'https://grafana.atius.com.br', authenticated: /grafana|dashboard/i, readySelector: '[aria-label="Perfil"]', logoutSelector: '[data-atius-sso-logout="true"]' },
   { id: 'portainer', origin: 'https://portainer.atius.com.br', authenticated: /portainer|environment|dashboard/i, readySelector: '[data-cy="userMenu-button"]', logoutSelector: '[data-atius-sso-logout="true"]' },
@@ -123,8 +123,8 @@ async function screenshot(page, targetDir, cycle, stage, stageName) {
   return { name, path, sha256: sha256(image), url: sanitizedUrl(page.url()) };
 }
 
-async function waitForLogin(page, origin) {
-  await waitForCurrentUrl(page, (url) => url.origin === origin && url.pathname === '/login', 60_000);
+async function waitForLogin(page, origin, loginPath = '/login') {
+  await waitForCurrentUrl(page, (url) => url.origin === origin && url.pathname === loginPath, 60_000);
   await page.getByPlaceholder('Digite seu email ou username').first().waitFor({ state: 'visible', timeout: 30_000 });
   await page.getByPlaceholder('Digite sua senha').first().waitFor({ state: 'visible', timeout: 30_000 });
   await page.waitForFunction(() => {
@@ -292,14 +292,15 @@ async function visibleLoginError(page) {
 }
 
 async function login(page, target, credentials) {
+  const loginPath = target.loginPath || '/login';
   let lastError = '';
   for (let attempt = 1; attempt <= LOGIN_ATTEMPTS; attempt += 1) {
     const currentBeforeLogin = new URL(page.url());
-    if (currentBeforeLogin.origin === target.origin && currentBeforeLogin.pathname !== '/login') {
+    if (currentBeforeLogin.origin === target.origin && currentBeforeLogin.pathname !== loginPath) {
       await waitForAuthenticatedUi(page, target);
       return;
     }
-    await waitForLogin(page, target.origin);
+    await waitForLogin(page, target.origin, loginPath);
     if (target.neutralLoginAuthenticated) {
       const text = await page.locator('body').innerText().catch(() => '');
       if (/Sessão Atius ativa/i.test(text)) {
@@ -312,7 +313,7 @@ async function login(page, target, credentials) {
       await page.getByRole('button', { name: /Entrar com Atius SSO|Entrar/i }).first().click();
     } catch (error) {
       const currentAfterDetachedLogin = new URL(page.url());
-      if (currentAfterDetachedLogin.origin === target.origin && currentAfterDetachedLogin.pathname !== '/login') {
+      if (currentAfterDetachedLogin.origin === target.origin && currentAfterDetachedLogin.pathname !== loginPath) {
         await waitForAuthenticatedUi(page, target);
         return;
       }
@@ -322,30 +323,30 @@ async function login(page, target, credentials) {
     while (Date.now() - start < 60_000) {
       const current = new URL(page.url());
       if (current.origin !== target.origin) throw new Error(`foreign visible origin observed after login click: ${sanitizedUrl(page.url())}`);
-      if (target.neutralLoginAuthenticated && current.pathname === '/login') {
+      if (target.neutralLoginAuthenticated && current.pathname === loginPath) {
         const text = await page.locator('body').innerText().catch(() => '');
         if (/Sessão Atius ativa/i.test(text) && /Encerrar sessão|Sair/i.test(text)) {
           await waitForAuthenticatedUi(page, target);
           return;
         }
       }
-      if (current.pathname !== '/login') {
+      if (current.pathname !== loginPath) {
         await page.waitForLoadState('domcontentloaded', { timeout: 15_000 }).catch(() => {});
         await waitForAuthenticatedUi(page, target);
         return;
       }
       if (await visibleLoginError(page)) {
-        lastError = `login attempt ${attempt} stayed on /login with visible auth error`;
+        lastError = `login attempt ${attempt} stayed on ${loginPath} with visible auth error`;
         break;
       }
       await page.waitForTimeout(500);
     }
     if (attempt < LOGIN_ATTEMPTS) {
       await page.waitForTimeout(LOGIN_RETRY_DELAY_MS);
-      await page.goto(`${target.origin}/login`, { waitUntil: 'commit', timeout: 30_000 }).catch(() => {});
+      await page.goto(`${target.origin}${loginPath}`, { waitUntil: 'commit', timeout: 30_000 }).catch(() => {});
     }
   }
-  throw new Error(lastError || `login did not leave app-local /login at ${sanitizedUrl(page.url())}`);
+  throw new Error(lastError || `login did not leave app-local ${loginPath} at ${sanitizedUrl(page.url())}`);
 }
 
 async function waitForAuthenticatedUi(page, target) {
@@ -355,6 +356,8 @@ async function waitForAuthenticatedUi(page, target) {
       const operationalWindow = new URL(current);
       operationalWindow.searchParams.set('from', 'now-15m');
       operationalWindow.searchParams.set('to', 'now');
+      operationalWindow.searchParams.set('var-job', 'coredns');
+      operationalWindow.searchParams.set('var-cluster', 'All');
       if (operationalWindow.href !== current.href) {
         await page.goto(operationalWindow.href, { waitUntil: 'domcontentloaded', timeout: 45_000 });
       }
@@ -392,7 +395,7 @@ async function waitForAuthenticatedUi(page, target) {
         && !/(^|\b)(sem dados|no data|loading|carregando)(\b|$)/i.test(panelText)
         && !/datasource.*(error|unavailable)|query error|failed to fetch|no data source/i.test(panelText)
       ));
-    }, { timeout: 60_000 });
+    }, null, { timeout: 60_000 });
     const visiblePanelCount = await panels.count();
     const panelContentTexts = await panelContents.allInnerTexts();
     const invalidPanels = panelContentTexts.filter((panelText) => (
@@ -448,6 +451,7 @@ async function assertAuthenticated(page, target) {
 }
 
 async function logout(page, target) {
+  const loginPath = target.loginPath || '/login';
   const controls = page.locator(target.logoutSelector);
   await controls.first().waitFor({ state: 'attached', timeout: 20_000 });
   let clicked = false;
@@ -459,7 +463,7 @@ async function logout(page, target) {
     break;
   }
   if (!clicked) throw new Error(`visible app logout control not found: ${target.logoutSelector}`);
-  await waitForLogin(page, target.origin);
+  await waitForLogin(page, target.origin, loginPath);
   return target.logoutSelector;
 }
 
@@ -494,13 +498,15 @@ async function runTarget(browser, target, credentials) {
 
   try {
     for (let cycle = 1; cycle <= 2; cycle += 1) {
+      const entryPath = target.entryPath || '/';
+      const loginPath = target.loginPath || '/login';
       await context.clearCookies();
       const cycleStart = documentResponses.length;
-      await page.goto(`${target.origin}/`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
-      await waitForLogin(page, target.origin);
+      await page.goto(`${target.origin}${entryPath}`, { waitUntil: 'domcontentloaded', timeout: 45_000 });
+      await waitForLogin(page, target.origin, loginPath);
       screenshots.push(await screenshot(page, targetDir, cycle, '01', 'access'));
 
-      if (page.url() !== `${target.origin}/login`) {
+      if (page.url() !== `${target.origin}${loginPath}`) {
         throw new Error(`entry did not preserve app-local clean login: ${sanitizedUrl(page.url())}`);
       }
       screenshots.push(await screenshot(page, targetDir, cycle, '02', 'login'));
@@ -522,8 +528,8 @@ async function runTarget(browser, target, credentials) {
       cycles.push({
         cycle,
         status: 'PASS',
-        entryUrl: `${target.origin}/`,
-        loginUrl: `${target.origin}/login`,
+        entryUrl: `${target.origin}${entryPath}`,
+        loginUrl: `${target.origin}${loginPath}`,
         authenticatedUrl: screenshots.at(-2).url,
         logoutUrl: screenshots.at(-1).url,
         authCookieIssued: true,
