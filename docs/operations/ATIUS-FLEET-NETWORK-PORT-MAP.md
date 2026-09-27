@@ -574,8 +574,9 @@ Notas:
 | Local TEI reranker | 31216       | 10.21.1.21  | K3s `ebeddings-local/tei-gte-reranker` |
 | PgBouncer       | 6432           | 10.11.1.11  | central DB               |
 | Obsidian REST/MCP | 27124        | 10.11.1.11  | AiSecondBrain via OCI/DRG |
+| Mosh Mobile Shell | 60001..60999 (UDP) | 0.0.0.0 | toda a frota (SRV-1..4, Horistic); OCI Security Lists & iptables |
 | GBrain HTTP MCP | 3131           | 127.0.0.1     | SRV-1 local backend; public edge `mcp.atius.com.br/gbrain` |
-| OCI Admin web/MCP | 8080, 8090   | 10.13.1.13    | SRV-3 PM2 namespace `oci-admin`; public `/` and `/oci-admin` |
+| OCI Admin web/MCP | 8080, 8090   | 10.13.1.13    | SRV-3 PM2 namespace `oci-admin`; public `oci.atius.com.br` & `oci.atius.io` (`/` e `/oci-admin`) |
 | Router Web/API  | 3000           | 0.0.0.0       | SRV-1 Podman `router-ai-atius` |
 | Router docs target | 3003        | 127.0.0.1     | target esperado; drift atual sem listener |
 | Wayland runtime | 25725          | 0.0.0.0       | SRV-3 `wayland.service` |

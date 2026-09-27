@@ -11,6 +11,7 @@ import hashlib
 import hmac
 import json
 import os
+import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -119,7 +120,29 @@ def _find_script(script_id: str) -> ScriptSpec:
     return matches[0]
 
 
+def _load_env_file() -> None:
+    env_path = Path.home() / ".config" / "omni" / "landscape-selfhost.env"
+    if not env_path.is_file():
+        return
+    try:
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            if line.startswith("export "):
+                line = line[7:].strip()
+            if "=" in line:
+                key, val = line.split("=", 1)
+                key = key.strip()
+                val = val.strip().strip("'\"")
+                if key and key not in os.environ:
+                    os.environ[key] = val
+    except Exception:
+        pass
+
+
 def _endpoint() -> str:
+    _load_env_file()
     endpoint = (
         os.environ.get("OMNI_LANDSCAPE_ENDPOINT")
         or os.environ.get("LANDSCAPE_API_URI")
@@ -130,14 +153,17 @@ def _endpoint() -> str:
 
 
 def _access_key() -> str | None:
+    _load_env_file()
     return os.environ.get("OMNI_LANDSCAPE_ACCESS_KEY") or os.environ.get("LANDSCAPE_API_KEY") or os.environ.get("LANDSCAPE_ACCESS_KEY")
 
 
 def _secret_key() -> str | None:
+    _load_env_file()
     return os.environ.get("OMNI_LANDSCAPE_SECRET_KEY") or os.environ.get("LANDSCAPE_API_SECRET") or os.environ.get("LANDSCAPE_SECRET_KEY")
 
 
 def _jwt() -> str | None:
+    _load_env_file()
     return os.environ.get("OMNI_LANDSCAPE_JWT") or os.environ.get("LANDSCAPE_JWT")
 
 
@@ -180,7 +206,10 @@ class LandscapeClient:
         return bool(self.jwt)
 
     def _request_json(self, method: str, url: str, data: bytes | None = None, headers: dict[str, str] | None = None) -> Any:
-        req = Request(url, data=data, headers=headers or {}, method=method)
+        final_headers = dict(headers or {})
+        if "User-Agent" not in final_headers:
+            final_headers["User-Agent"] = "omni-cli/1.0 (Atius Fleet Landscape Client)"
+        req = Request(url, data=data, headers=final_headers, method=method)
         try:
             with urlopen(req, timeout=60) as response:
                 body = response.read().decode("utf-8")
@@ -239,14 +268,14 @@ class LandscapeClient:
         return self._request_json("GET", base + path.lstrip("/"), headers={"Authorization": f"Bearer {self.jwt}"})
 
 
-def _host_query(hosts: str | None, query: str | None) -> str:
+def _host_query(hosts: str | None, query: str | None = None) -> str:
     if query:
         return query
     selected = CONTROLLED_HOSTS if not hosts or hosts == "all" else tuple(item.strip() for item in hosts.split(",") if item.strip())
     unknown = [host for host in selected if host not in CONTROLLED_HOSTS]
     if unknown:
         raise LandscapeError(f"host fora do escopo controlado: {', '.join(unknown)}")
-    return " OR ".join(f"hostname:{host}" for host in selected)
+    return " OR ".join(f"title:{host}" for host in selected)
 
 
 def _remote_scripts_by_title(client: LandscapeClient) -> dict[str, dict[str, Any]]:
@@ -459,6 +488,38 @@ def scripts_versions(script_id: str, json_output: bool) -> None:
     click.echo(json.dumps(result, indent=2, sort_keys=json_output, ensure_ascii=False))
 
 
+def _wait_for_activity_group(
+    client: LandscapeClient,
+    parent_id: int | str,
+    timeout: int = 180,
+    poll_interval: float = 3.0,
+) -> list[dict[str, Any]]:
+    start_time = time.time()
+    click.echo(f"Aguardando execucao simultanea na frota (ActivityGroup: {parent_id}, timeout: {timeout}s)...")
+
+    last_summary = ""
+    while time.time() - start_time < timeout:
+        children = client.legacy("GetActivities", query=f"parent-id:{parent_id}")
+        if isinstance(children, list) and children:
+            statuses = [str(c.get("activity_status")) for c in children]
+            status_counts: dict[str, int] = {}
+            for s in statuses:
+                status_counts[s] = status_counts.get(s, 0) + 1
+            summary_str = ", ".join(f"{k}: {v}" for k, v in sorted(status_counts.items()))
+            if summary_str != last_summary:
+                last_summary = summary_str
+                elapsed = int(time.time() - start_time)
+                click.echo(f"[{elapsed:02d}s] Progresso: {summary_str}")
+
+            pending = [s for s in statuses if s in ("undelivered", "in-progress", "approved", "delivered")]
+            if not pending:
+                return children
+        time.sleep(poll_interval)
+
+    children = client.legacy("GetActivities", query=f"parent-id:{parent_id}")
+    return children if isinstance(children, list) else []
+
+
 @landscape.command("run")
 @click.argument("script_id")
 @click.option("--hosts", default="all", help="all ou lista controlada.")
@@ -466,9 +527,22 @@ def scripts_versions(script_id: str, json_output: bool) -> None:
 @click.option("--username", default=None, help="Usuario de execucao. Default do manifesto.")
 @click.option("--deliver-after", default=None, help="YYYY-MM-DDTHH:MM:SSZ.")
 @click.option("--sync-script", is_flag=True, help="Sincroniza script antes de executar.")
+@click.option("--wait", "wait_for_finish", is_flag=True, help="Aguarda execucao simultanea e exibe outputs.")
+@click.option("--timeout", default=180, type=int, help="Tempo limite de espera em segundos.")
 @click.option("--yes", is_flag=True, help="Executa no Landscape. Sem isto e plan-only.")
 @click.option("--json", "json_output", is_flag=True, help="Emite JSON.")
-def run_script(script_id: str, hosts: str, query: str, username: str | None, deliver_after: str | None, sync_script: bool, yes: bool, json_output: bool) -> None:
+def run_script(
+    script_id: str,
+    hosts: str,
+    query: str,
+    username: str | None,
+    deliver_after: str | None,
+    sync_script: bool,
+    wait_for_finish: bool,
+    timeout: int,
+    yes: bool,
+    json_output: bool,
+) -> None:
     """Executa um script versionado em lote via Landscape ExecuteScript."""
     client = LandscapeClient()
     spec = _find_script(script_id)
@@ -484,4 +558,39 @@ def run_script(script_id: str, hosts: str, query: str, username: str | None, del
         click.echo("plan-only: use --yes para executar no Landscape")
         return
     result = client.legacy("ExecuteScript", **payload)
-    click.echo(json.dumps({"submitted": result, "plan": plan}, indent=2, sort_keys=json_output, ensure_ascii=False))
+    if not wait_for_finish:
+        click.echo(json.dumps({"submitted": result, "plan": plan}, indent=2, sort_keys=json_output, ensure_ascii=False))
+        return
+
+    parent_id = None
+    if isinstance(result, dict):
+        parent_id = result.get("id") or result.get("activity_id")
+    elif isinstance(result, (int, str)):
+        parent_id = result
+
+    if not parent_id:
+        click.echo(json.dumps({"submitted": result, "plan": plan}, indent=2, sort_keys=json_output, ensure_ascii=False))
+        return
+
+    children = _wait_for_activity_group(client, parent_id, timeout=timeout)
+    computers_list = client.legacy("GetComputers", limit=1000)
+    comp_map = {c.get("id"): c.get("title") or c.get("hostname") for c in (computers_list if isinstance(computers_list, list) else [])}
+
+    if json_output:
+        _echo_json({"submitted": result, "children": children})
+        return
+
+    click.echo("\n" + "=" * 60)
+    click.echo(f"RESULTADO DA EXECUCAO SIMULTANEA: {spec.title}")
+    click.echo("=" * 60)
+    for child in children:
+        c_id = child.get("computer_id")
+        host_name = comp_map.get(c_id, f"computer-{c_id}")
+        st = child.get("activity_status")
+        res_code = child.get("result_code")
+        click.echo(f"\n[{host_name}] Status: {st} (exit_code: {res_code})")
+        res_text = child.get("result_text")
+        if res_text:
+            click.echo("-" * 40)
+            click.echo(str(res_text).strip())
+            click.echo("-" * 40)

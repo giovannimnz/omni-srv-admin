@@ -33,6 +33,14 @@ cleanup:
     - review Docker volumes before any volume prune
     - router is router-ai-zentrius under /home/ubuntu/docker/Atius/router-ai-zentrius, not router-ai-atius
 apps:
+  - id: mosh
+    runtime: binary
+    install_type: apt-managed
+    port_range: "60001-60999/udp"
+    current_version: "1.4.0"
+    managed_by: omni-srv-admin
+    notes:
+      - "Mosh mobile shell UDP server port range 60001-60999 allowed on host iptables and OCI Security Lists (Public + DRG)."
   - id: omni-srv-admin
     runtime: git-worktree
     install_type: source-git-release-managed

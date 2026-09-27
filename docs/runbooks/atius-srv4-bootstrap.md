@@ -7,7 +7,9 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
 
 1. Confirmar que cloud-init e qualquer instalador de utilitários terminaram.
 2. Pelo `oci_admin_http`, validar instance `RUNNING`, VNIC, IP privado/público,
-   NSG/security list e a tabela de rota efetiva da subnet.
+   NSG/security list e a tabela de rota efetiva da subnet. Na Security List da
+   Subnet, além de TCP/22 (SSH), adicionar a regra de Ingress Stateful UDP
+   `60001:60999` com origem `0.0.0.0/0` (ou CIDR autorizado) para o Mosh.
 3. Para SSH público, a subnet precisa usar uma route table com
    `0.0.0.0/0 -> Internet Gateway`; não usar a VCN ingress route table como
    route table da subnet.
@@ -17,8 +19,9 @@ operacional ATIUS. Ele foi validado em `atius-srv-4`.
 5. Criar `~/GitHub` e `~/GitHub/containers`; copiar o checkout limpo mais
    recente de `omni-srv-admin` ou clonar a origem verificada.
 6. Instalar a baseline ARM64: Git, Python/venv/pipx, Podman rootless, rede,
-   build tools, Rust estável, cargo-binstall e Zellij. Materializar
-   `~/.config/environment.d/90-atius-developer-tools.conf` para que
+   `mosh` (`sudo apt-get install -y mosh`), build tools, Rust estável,
+   cargo-binstall e Zellij. Aplicar a regra do iptables para Mosh (`sudo iptables -I INPUT 1 -p udp --dport 60001:60999 -m comment --comment "MOSH_SERVER_UDP_RANGE" -j ACCEPT && sudo netfilter-persistent save`).
+   Materializar `~/.config/environment.d/90-atius-developer-tools.conf` para que
    `~/.cargo/bin` e `~/.local/bin` existam também nas sessões XRDP e systemd
    do usuário.
    Configurar Podman com `srv4-podman` em `10.10.4.0/24`, netavark e

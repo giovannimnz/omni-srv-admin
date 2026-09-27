@@ -22,6 +22,14 @@ modules:
 operational_skill: xrdp-abnt2-fleet
 operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
 apps:
+  - id: mosh
+    runtime: binary
+    install_type: apt-managed
+    port_range: "60001-60999/udp"
+    current_version: "1.4.0"
+    managed_by: omni-srv-admin
+    notes:
+      - "Mosh mobile shell UDP server port range 60001-60999 allowed on host iptables and OCI Security Lists (Public + DRG)."
   - id: pm2-ubuntu
     runtime: systemd
     unit: pm2-ubuntu.service

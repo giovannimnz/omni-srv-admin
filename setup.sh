@@ -37,8 +37,8 @@ case $STAGE_SELECTION in
     sudo apt-get update -qq
     sudo apt-get upgrade $APT_OPTS
 
-    echo "📦 Instalando ferramentas básicas..."
-    sudo apt-get install $APT_OPTS nano
+    echo "📦 Instalando ferramentas básicas (nano, mosh)..."
+    sudo apt-get install $APT_OPTS nano mosh
 
     echo "🐘 Instalando PostgreSQL 18 (mesma versão padrão deste servidor)..."
     sudo apt-get install $APT_OPTS postgresql-18 postgresql-client-18

@@ -32,6 +32,14 @@ cleanup:
     - inviolable-watchdog.timer active but service fails with status 203/EXEC because /home/ubuntu/scripts/inviolable-watchdog.sh is absent
     - Historical note only: old wg0-era aliases were retired after the wg100 cutover.
 apps:
+  - id: mosh
+    runtime: binary
+    install_type: apt-managed
+    port_range: "60001-60999/udp"
+    current_version: "1.4.0"
+    managed_by: omni-srv-admin
+    notes:
+      - "Mosh mobile shell UDP server port range 60001-60999 allowed on host iptables and OCI Security Lists (Public + DRG)."
   - id: omni-srv-admin
     runtime: git-worktree
     install_type: source-git-release-managed

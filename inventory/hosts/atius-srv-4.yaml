@@ -24,6 +24,14 @@ logs:
   local_dir: /home/ubuntu/.logs
   retention_days: 15
 apps:
+  - id: mosh
+    runtime: binary
+    install_type: apt-managed
+    port_range: "60001-60999/udp"
+    current_version: "1.4.0"
+    managed_by: omni-srv-admin
+    notes:
+      - "Mosh mobile shell UDP server port range 60001-60999 allowed on host iptables and OCI Security List."
   - id: omni-srv-admin
     runtime: git-worktree
     install_path: /home/ubuntu/GitHub/omni-srv-admin
