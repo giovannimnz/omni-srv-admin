@@ -83,12 +83,16 @@ def routine_show(routine_id: str, json_output: bool) -> None:
 @click.argument("routine_id")
 @click.option("--apply", is_flag=True, help="Executa de fato; sem esta flag roda em dry-run.")
 @click.option("--dry-run", is_flag=True, help="Modo simulação planejado.")
+@click.option("--local", "force_local", is_flag=True, help="Força execução no host local.")
+@click.option("--host", "target_host", default=None, help="Sobrescreve o host alvo da rotina.")
 @click.option("--logs-dir", type=click.Path(path_type=Path), default=None, help="Diretório customizado de logs.")
 @click.option("--locks-dir", type=click.Path(path_type=Path), default=None, help="Diretório customizado de locks.")
 def routine_run(
     routine_id: str,
     apply: bool,
     dry_run: bool,
+    force_local: bool,
+    target_host: str | None,
     logs_dir: Path | None,
     locks_dir: Path | None,
 ) -> None:
@@ -98,19 +102,22 @@ def routine_run(
     if not r:
         raise click.ClickException(f"Rotina não encontrada: {routine_id}")
 
+    effective_host = "local" if force_local else (target_host or r.target_host)
+
     is_dry_run = not apply or dry_run
     if is_dry_run:
         click.echo(f"[DRY-RUN] Planejando execução da rotina: {r.id}")
-        click.echo(f"Host:        {r.target_host}")
+        click.echo(f"Host:        {effective_host}")
         click.echo(f"Perfil:      {r.execution_profile}")
         click.echo(f"Comando:     {' '.join(r.command_argv)}")
         click.echo("Use --apply para executar.")
         return
 
-    runner = RoutineRunner(logs_dir=logs_dir, locks_dir=locks_dir)
-    click.echo(f"Disparando rotina: {r.id} ({r.name})...")
+    from .routine_dispatcher import RoutineDispatcher
+    dispatcher = RoutineDispatcher(logs_dir=logs_dir, locks_dir=locks_dir)
+    click.echo(f"Disparando rotina: {r.id} ({r.name}) no host {effective_host}...")
     try:
-        run = runner.run(r)
+        run = dispatcher.dispatch(r, target_host=effective_host)
     except CircuitBreakerError as e:
         raise click.ClickException(str(e))
 
@@ -157,3 +164,45 @@ def routine_status(run_id: str, logs_dir: Path | None) -> None:
     if data.get("stderr_tail"):
         click.echo("\n--- STDERR ---")
         click.echo(data.get("stderr_tail"))
+
+
+@routine.command("diagnose")
+@click.argument("routine_id", required=False, default=None)
+@click.option("--run", "run_id", default=None, help="UUID opcional de execução para inspecionar.")
+@click.option("--json", "json_output", is_flag=True, help="Emite saída em JSON.")
+@click.option("--logs-dir", type=click.Path(path_type=Path), default=None, help="Diretório customizado de logs.")
+def routine_diagnose(
+    routine_id: str | None,
+    run_id: str | None,
+    json_output: bool,
+    logs_dir: Path | None,
+) -> None:
+    """Diagnostica falhas, rate-budget de auto-cura e integridade operacional."""
+    from .routine_mcp import RoutineMcpHandler
+
+    if not routine_id and not run_id:
+        raise click.ClickException("Informe routine_id ou --run <run_id> para diagnóstico.")
+
+    handler = RoutineMcpHandler(logs_dir=logs_dir)
+    res = handler.call_tool("omni_routine_diagnose", {"routine_id": routine_id, "run_id": run_id})
+
+    if json_output:
+        click.echo(json.dumps(res, indent=2, ensure_ascii=False))
+        return
+
+    click.echo(f"DIAGNÓSTICO: {routine_id or run_id}")
+    cb = res.get("circuit_breaker", {})
+    click.echo(f"Circuit Breaker: {'TRIPPED' if cb.get('tripped') else 'OK'} (falhas: {cb.get('failures')}, cooldown restante: {cb.get('remaining_cooldown_seconds')}s)")
+
+    dec = res.get("remediation_decision")
+    if dec:
+        click.echo(f"Status Auto-Cura: {dec.get('status')} (Tentativa: {dec.get('attempt_number')}, Quarentena: {dec.get('quarantine_remaining_seconds')}s)")
+        click.echo(f"Parecer:         {dec.get('reason')}")
+
+    diag = res.get("diagnosis")
+    if diag:
+        click.echo(f"\nCategoria:       {diag.get('category')}")
+        click.echo(f"Fatal:           {diag.get('is_fatal')}")
+        click.echo(f"Resumo:          {diag.get('raw_summary')}")
+        click.echo(f"Ação Sugerida:   {diag.get('remediation_hint')}")
+

@@ -57,7 +57,7 @@ def test_cli_routine_run_apply(tmp_path: Path, monkeypatch):
     runner = CliRunner()
     result = runner.invoke(
         routine_cmd,
-        ["run", "srv1:resource-audit", "--apply", "--logs-dir", str(tmp_path / "logs"), "--locks-dir", str(tmp_path / "locks")]
+        ["run", "srv1:resource-audit", "--apply", "--local", "--logs-dir", str(tmp_path / "logs"), "--locks-dir", str(tmp_path / "locks")]
     )
     assert result.exit_code == 0
     assert "STATUS:      COMPLETED" in result.output
@@ -108,3 +108,13 @@ def test_mcp_routine_handler_tools(tmp_path: Path):
     )
     status_res = handler.call_tool("omni_routine_status", {"run_id": "run-abc"})
     assert status_res["state"] == "COMPLETED"
+
+
+def test_cli_routine_diagnose(tmp_path: Path):
+    runner = CliRunner()
+    result = runner.invoke(routine_cmd, ["diagnose", "srv1:backup-gdrive", "--logs-dir", str(tmp_path / "logs")])
+    assert result.exit_code == 0
+    assert "DIAGNÓSTICO: srv1:backup-gdrive" in result.output
+    assert "Circuit Breaker: OK" in result.output
+    assert "Status Auto-Cura: PERMITTED" in result.output
+

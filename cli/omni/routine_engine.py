@@ -28,7 +28,7 @@ class RoutineStateError(Exception):
 
 
 _VALID_TRANSITIONS: dict[RoutineState, set[RoutineState]] = {
-    RoutineState.PENDING: {RoutineState.QUEUED, RoutineState.RUNNING, RoutineState.SKIPPED, RoutineState.CANCELLED},
+    RoutineState.PENDING: {RoutineState.QUEUED, RoutineState.RUNNING, RoutineState.SKIPPED, RoutineState.CANCELLED, RoutineState.FAILED},
     RoutineState.QUEUED: {RoutineState.CLAIMED, RoutineState.RUNNING, RoutineState.CANCELLED, RoutineState.SKIPPED},
     RoutineState.CLAIMED: {RoutineState.RUNNING, RoutineState.CANCELLED},
     RoutineState.RUNNING: {RoutineState.COMPLETED, RoutineState.FAILED, RoutineState.CANCELLED},
