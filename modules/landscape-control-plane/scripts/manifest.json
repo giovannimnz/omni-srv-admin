@@ -68,6 +68,18 @@
       "access_group": "global",
       "risk": "read-only",
       "description": "Reports reboot-required state and related package hints."
+    },
+    {
+      "id": "antigravity-tarball-cleanup",
+      "title": "omni::antigravity-tarball-cleanup",
+      "version": "1.0.0",
+      "path": "antigravity-tarball-cleanup.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "targeted-cleanup",
+      "description": "Purges legacy Antigravity manual tarball extractions, build artifacts and downloads across the fleet."
     }
   ]
 }
