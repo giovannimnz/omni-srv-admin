@@ -92,6 +92,18 @@
       "access_group": "global",
       "risk": "targeted-cleanup",
       "description": "Synchronizes canonical AI instructions, Landscape directives and cross-harness symlinks across all fleet nodes."
+    },
+    {
+      "id": "agy-sessions-list",
+      "title": "omni::agy-sessions-list",
+      "version": "1.0.0",
+      "path": "agy-sessions-list.sh",
+      "interpreter": "/bin/bash",
+      "username": "ubuntu",
+      "time_limit": 120,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Lista sessoes Antigravity CLI/IDE recentes de cada host via SQLite e JSONL. Retorna titulo, ID, turnos, workspace e timestamp das ultimas 15 sessoes principais."
     }
   ]
 }
