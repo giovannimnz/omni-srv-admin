@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Script: sync-agent-instructions.sh
-# Purpose: Synchronize canonical AI agent instructions and Landscape directives
-#          across all fleet hosts via Landscape ExecuteScript.
+# Purpose: Synchronize canonical AI agent instructions, skills, Landscape directives,
+#          and install recurring systemd auto-sync timer across all fleet hosts.
 # Managed: Omni Landscape Control Plane
 # ==============================================================================
 set -euo pipefail
@@ -31,52 +31,44 @@ LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Pla
   - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
 - **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.'
 
+# ─── 1. Cria script daemon autônomo de sincronização ──────────────────────────
+cat << 'RUNTIMESYNC' > /usr/local/bin/omni-fleet-runtime-sync.sh
+#!/usr/bin/env bash
+# Omni Fleet AI Runtime & Skills Auto-Sync
+set -euo pipefail
+
+CANONICAL_HOST="10.11.1.11"
+LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
 for TARGET_USER in ubuntu horistic; do
     if ! id "${TARGET_USER}" >/dev/null 2>&1; then
         continue
     fi
     TARGET_HOME="$(eval echo ~${TARGET_USER})"
-    echo "[*] Syncing user ${TARGET_USER} (${TARGET_HOME}) on $(hostname)..."
+    GEMINI_CONFIG="${TARGET_HOME}/.gemini/config"
+    AGENTS_MD="${GEMINI_CONFIG}/AGENTS.md"
+    SKILLS_DIR="${GEMINI_CONFIG}/skills"
 
-    GEMINI_CONFIG_DIR="${TARGET_HOME}/.gemini/config"
-    AGENTS_MD="${GEMINI_CONFIG_DIR}/AGENTS.md"
+    mkdir -p "${GEMINI_CONFIG}" "${SKILLS_DIR}"
 
-    mkdir -p "${GEMINI_CONFIG_DIR}"
+    # Sincroniza AGENTS.md e skills se não for o host canônico srv-1
+    if [ "${LOCAL_IP}" != "${CANONICAL_HOST}" ] && [ "$(hostname)" != "atius-srv-1" ]; then
+        if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/AGENTS.md ${AGENTS_MD}.tmp" 2>/dev/null; then
+            mv "${AGENTS_MD}.tmp" "${AGENTS_MD}"
+            chown "${TARGET_USER}:${TARGET_USER}" "${AGENTS_MD}"
+        fi
 
-    # Inject or replace directive in AGENTS.md
-    if [ -f "${AGENTS_MD}" ]; then
-        if grep -q "Canonical Fleet Operations & Landscape Control-Plane Directive" "${AGENTS_MD}"; then
-            echo "  [*] Landscape directive already present in ${AGENTS_MD}"
-        else
-            echo "  [*] Injecting Landscape directive into ${AGENTS_MD}..."
-            if grep -q "## CPU Guardrail" "${AGENTS_MD}"; then
-                python3 -c "
-with open('${AGENTS_MD}', 'r') as f:
-    content = f.read()
-
-directive = '''${LANDSCAPE_DIRECTIVE_BLOCK}
-
-'''
-if '## CPU Guardrail' in content:
-    content = content.replace('## CPU Guardrail', directive + '## CPU Guardrail', 1)
-else:
-    content += '\n\n' + directive
-
-with open('${AGENTS_MD}', 'w') as f:
-    f.write(content)
-"
-                echo "  [OK] Injected before CPU Guardrail"
-            else
-                printf "\n\n%s\n" "${LANDSCAPE_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
-                echo "  [OK] Appended to AGENTS.md"
+        LOCAL_COUNT="$(find "${SKILLS_DIR}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
+        if [ "${LOCAL_COUNT}" -lt 315 ]; then
+            if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=20 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/fleet-skills.tar.gz /tmp/fleet-skills.tar.gz" 2>/dev/null; then
+                tar -xzf /tmp/fleet-skills.tar.gz -C "${GEMINI_CONFIG}/"
+                rm -f /tmp/fleet-skills.tar.gz
+                chown -R "${TARGET_USER}:${TARGET_USER}" "${SKILLS_DIR}"
             fi
         fi
-    else
-        echo "  [*] Creating ${AGENTS_MD} from template..."
-        printf "# Antigravity Global Runtime\n\n%s\n" "${LANDSCAPE_DIRECTIVE_BLOCK}" > "${AGENTS_MD}"
     fi
 
-    # Ensure canonical symlinks
+    # Symlinks canônicos
     LINKS=(
         "${TARGET_HOME}/AGENTS.md"
         "${TARGET_HOME}/GEMINI.md"
@@ -96,24 +88,66 @@ with open('${AGENTS_MD}', 'w') as f:
             mkdir -p "${parent_dir}"
             rm -f "${link}"
             ln -sf "${AGENTS_MD}" "${link}"
-            echo "    [LINK] ${link} -> ${AGENTS_MD}"
         fi
     done
 
-    # Ensure .agents/AGENTS.md has include
+    # .agents/AGENTS.md include
     AGENTS_SUB_DIR="${TARGET_HOME}/.agents"
     if [ -d "${AGENTS_SUB_DIR}" ]; then
         AGENTS_SUB_FILE="${AGENTS_SUB_DIR}/AGENTS.md"
         if [ ! -f "${AGENTS_SUB_FILE}" ] || ! grep -q "@${AGENTS_MD}" "${AGENTS_SUB_FILE}"; then
             echo "@${AGENTS_MD}" | cat - "${AGENTS_SUB_FILE}" 2>/dev/null > "${AGENTS_SUB_FILE}.tmp" || echo "@${AGENTS_MD}" > "${AGENTS_SUB_FILE}.tmp"
             mv "${AGENTS_SUB_FILE}.tmp" "${AGENTS_SUB_FILE}"
-            echo "    [UPDATE] Prepended @${AGENTS_MD} to ${AGENTS_SUB_FILE}"
         fi
     fi
 
-    # Fix ownership
-    chown -R "${TARGET_USER}:${TARGET_USER}" "${GEMINI_CONFIG_DIR}" 2>/dev/null || true
-    chown -h "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/AGENTS.md" "${TARGET_HOME}/GEMINI.md" "${TARGET_HOME}/CLAUDE.md" "${TARGET_HOME}/CODEX.md" 2>/dev/null || true
-done
+    # Sincronizar repositório omni-srv-admin se presente
+    REPO_DIR="${TARGET_HOME}/GitHub/omni-srv-admin"
+    if [ -d "${REPO_DIR}/.git" ]; then
+        su -s /bin/bash "${TARGET_USER}" -c "cd '${REPO_DIR}' && git pull --ff-only origin main" 2>/dev/null || true
+    fi
 
-echo "[SUCCESS] Instruction sync complete across all local users on $(hostname)"
+    chown -R "${TARGET_USER}:${TARGET_USER}" "${GEMINI_CONFIG}" 2>/dev/null || true
+done
+RUNTIMESYNC
+chmod +x /usr/local/bin/omni-fleet-runtime-sync.sh
+
+# ─── 2. Configura e ativa systemd service & timer ──────────────────────────────
+cat << 'SERVICE' > /etc/systemd/system/omni-fleet-runtime-sync.service
+[Unit]
+Description=Omni Fleet AI Runtime and Skills Synchronization
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/omni-fleet-runtime-sync.sh
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+[Install]
+WantedBy=multi-user.target
+SERVICE
+
+cat << 'TIMER' > /etc/systemd/system/omni-fleet-runtime-sync.timer
+[Unit]
+Description=Run Omni Fleet AI Runtime and Skills Synchronization every 2 hours
+After=network.target
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=2h
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+TIMER
+
+systemctl daemon-reload
+systemctl enable --now omni-fleet-runtime-sync.timer
+
+# ─── 3. Execução imediata no host atual ───────────────────────────────────────
+/usr/local/bin/omni-fleet-runtime-sync.sh
+
+echo "[SUCCESS] Instruction and skills auto-sync timer active on $(hostname)"
