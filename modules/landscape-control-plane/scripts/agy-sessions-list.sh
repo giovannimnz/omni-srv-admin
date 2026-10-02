@@ -1,12 +1,14 @@
 #!/bin/bash
 # omni::agy-sessions-list — lista sessões Antigravity CLI no host
 # Risk: read-only
-# Version: 1.0.0
+# Version: 1.0.1
+# Nota: roda como root via Landscape; acessa dados do usuario ubuntu via su
 set -euo pipefail
 
 HOST=$(hostname)
-BRAIN="${HOME}/.gemini/antigravity-cli/brain"
-DB="${HOME}/.gemini/antigravity-cli/conversation_summaries.db"
+AGY_USER="ubuntu"
+BRAIN="/home/${AGY_USER}/.gemini/antigravity-cli/brain"
+DB="/home/${AGY_USER}/.gemini/antigravity-cli/conversation_summaries.db"
 
 echo "=== HOST: ${HOST} ==="
 echo "Timestamp: $(date '+%Y-%m-%d %H:%M:%S %Z')"
@@ -21,24 +23,16 @@ fi
 # Tenta SQLite primeiro (mais rico)
 if command -v sqlite3 &>/dev/null && [ -f "${DB}" ]; then
     echo "--- Sessoes Principais (via SQLite) ---"
-    sqlite3 "${DB}" << 'SQLEOF'
-.mode column
+    su -s /bin/bash "${AGY_USER}" -c "sqlite3 '${DB}' \".mode column
 .headers on
-SELECT
-    substr(last_modified_time, 1, 16) AS modified,
-    substr(conversation_id, 1, 8) || '...' AS id_short,
-    step_count AS steps,
-    substr(title, 1, 50) AS title,
-    substr(workspace_uris, 1, 60) AS workspace
-FROM conversation_summaries
-WHERE nesting_depth = 0
-ORDER BY last_modified_time DESC
-LIMIT 15;
-SQLEOF
+SELECT substr(last_modified_time,1,16) AS modified, substr(conversation_id,1,8)||'...' AS id, step_count AS steps, nesting_depth AS depth, substr(title,1,45) AS title FROM conversation_summaries ORDER BY last_modified_time DESC LIMIT 15;\"" 2>/dev/null || \
+    sqlite3 "${DB}" ".mode column
+.headers on
+SELECT substr(last_modified_time,1,16) AS modified, substr(conversation_id,1,8)||'...' AS id, step_count AS steps, nesting_depth AS depth, substr(title,1,45) AS title FROM conversation_summaries ORDER BY last_modified_time DESC LIMIT 15;" 2>/dev/null || echo "(sqlite3 falhou)"
 
     echo ""
-    echo "--- Total de sessoes (incluindo subagentes) ---"
-    sqlite3 "${DB}" "SELECT COUNT(*) || ' sessoes totais, ' || SUM(CASE WHEN nesting_depth=0 THEN 1 ELSE 0 END) || ' principais' FROM conversation_summaries;"
+    echo "--- Total ---"
+    su -s /bin/bash "${AGY_USER}" -c "sqlite3 '${DB}' \"SELECT COUNT(*)||' sessoes totais, '||SUM(CASE WHEN nesting_depth=0 THEN 1 ELSE 0 END)||' principais' FROM conversation_summaries;\"" 2>/dev/null || true
 
 else
     echo "SQLite indisponivel — escaneando brain dir..."
