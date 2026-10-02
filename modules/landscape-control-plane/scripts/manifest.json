@@ -104,6 +104,30 @@
       "access_group": "global",
       "risk": "read-only",
       "description": "Lista sessoes Antigravity CLI/IDE recentes de cada host via SQLite e JSONL. Retorna titulo, ID, turnos, workspace e timestamp das ultimas 15 sessoes principais."
+    },
+    {
+      "id": "xrdp-audit",
+      "title": "omni::xrdp-audit",
+      "version": "1.0.0",
+      "path": "xrdp-audit.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 120,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Auditoria de status do XRDP, sesman, portas X11/VNC e sessões ativas na frota."
+    },
+    {
+      "id": "antigravity-hub-install",
+      "title": "omni::antigravity-hub-install",
+      "version": "1.0.0",
+      "path": "antigravity-hub-install.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 600,
+      "access_group": "global",
+      "risk": "medium",
+      "description": "Instala ou atualiza o Antigravity Hub (2.0) a partir do tarball oficial na frota, gerando symlink /usr/local/bin/antigravity e atalho .desktop 'Antigravity 2.0' na categoria Development."
     }
   ]
 }
