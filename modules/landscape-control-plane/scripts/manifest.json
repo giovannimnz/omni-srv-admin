@@ -99,7 +99,7 @@
       "version": "1.0.0",
       "path": "agy-sessions-list.sh",
       "interpreter": "/bin/bash",
-      "username": "ubuntu",
+      "username": "root",
       "time_limit": 120,
       "access_group": "global",
       "risk": "read-only",

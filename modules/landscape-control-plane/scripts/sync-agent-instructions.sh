@@ -7,25 +7,6 @@
 # ==============================================================================
 set -euo pipefail
 
-# Determine target non-root user
-if id horistic >/dev/null 2>&1; then
-    TARGET_USER="horistic"
-    TARGET_HOME="/home/horistic"
-elif id ubuntu >/dev/null 2>&1; then
-    TARGET_USER="ubuntu"
-    TARGET_HOME="/home/ubuntu"
-else
-    echo "[!] Neither horistic nor ubuntu user found"
-    exit 1
-fi
-
-echo "[*] Target user: ${TARGET_USER} (${TARGET_HOME})"
-
-GEMINI_CONFIG_DIR="${TARGET_HOME}/.gemini/config"
-AGENTS_MD="${GEMINI_CONFIG_DIR}/AGENTS.md"
-
-mkdir -p "${GEMINI_CONFIG_DIR}"
-
 LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Plane Directive
 
 - **Regra Mandatória para Múltiplos Servidores / Frota:** SEMPRE que qualquer operação, atualização, diagnóstico, instalação de pacotes APT, sincronização de arquivos, verificação ou execução envolver mais de um servidor (`atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, `horistic-srv`), NUNCA execute loops manuais seriais de SSH se a operação puder ser executada via **Landscape Control-Plane**.
@@ -50,15 +31,26 @@ LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Pla
   - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
 - **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.'
 
-# Inject or replace directive in AGENTS.md
-if [ -f "${AGENTS_MD}" ]; then
-    if grep -q "Canonical Fleet Operations & Landscape Control-Plane Directive" "${AGENTS_MD}"; then
-        echo "[*] Landscape directive already present in ${AGENTS_MD}"
-    else
-        echo "[*] Injecting Landscape directive into ${AGENTS_MD}..."
-        # Inject right before CPU Guardrail or at the end
-        if grep -q "## CPU Guardrail" "${AGENTS_MD}"; then
-            python3 -c "
+for TARGET_USER in ubuntu horistic; do
+    if ! id "${TARGET_USER}" >/dev/null 2>&1; then
+        continue
+    fi
+    TARGET_HOME="$(eval echo ~${TARGET_USER})"
+    echo "[*] Syncing user ${TARGET_USER} (${TARGET_HOME}) on $(hostname)..."
+
+    GEMINI_CONFIG_DIR="${TARGET_HOME}/.gemini/config"
+    AGENTS_MD="${GEMINI_CONFIG_DIR}/AGENTS.md"
+
+    mkdir -p "${GEMINI_CONFIG_DIR}"
+
+    # Inject or replace directive in AGENTS.md
+    if [ -f "${AGENTS_MD}" ]; then
+        if grep -q "Canonical Fleet Operations & Landscape Control-Plane Directive" "${AGENTS_MD}"; then
+            echo "  [*] Landscape directive already present in ${AGENTS_MD}"
+        else
+            echo "  [*] Injecting Landscape directive into ${AGENTS_MD}..."
+            if grep -q "## CPU Guardrail" "${AGENTS_MD}"; then
+                python3 -c "
 with open('${AGENTS_MD}', 'r') as f:
     content = f.read()
 
@@ -73,54 +65,55 @@ else:
 with open('${AGENTS_MD}', 'w') as f:
     f.write(content)
 "
-            echo "[OK] Injected before CPU Guardrail"
-        else
-            printf "\n\n%s\n" "${LANDSCAPE_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
-            echo "[OK] Appended to AGENTS.md"
+                echo "  [OK] Injected before CPU Guardrail"
+            else
+                printf "\n\n%s\n" "${LANDSCAPE_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
+                echo "  [OK] Appended to AGENTS.md"
+            fi
+        fi
+    else
+        echo "  [*] Creating ${AGENTS_MD} from template..."
+        printf "# Antigravity Global Runtime\n\n%s\n" "${LANDSCAPE_DIRECTIVE_BLOCK}" > "${AGENTS_MD}"
+    fi
+
+    # Ensure canonical symlinks
+    LINKS=(
+        "${TARGET_HOME}/AGENTS.md"
+        "${TARGET_HOME}/GEMINI.md"
+        "${TARGET_HOME}/CLAUDE.md"
+        "${TARGET_HOME}/CODEX.md"
+        "${TARGET_HOME}/.codex/AGENTS.md"
+        "${TARGET_HOME}/.codex/CODEX.md"
+        "${TARGET_HOME}/.claude/CLAUDE.md"
+        "${TARGET_HOME}/.gemini/AGENTS.md"
+        "${TARGET_HOME}/.gemini/GEMINI.md"
+        "${TARGET_HOME}/.gemini/config/GEMINI.md"
+    )
+
+    for link in "${LINKS[@]}"; do
+        parent_dir="$(dirname "${link}")"
+        if [ -d "${parent_dir}" ] || [ "${parent_dir}" = "${TARGET_HOME}" ]; then
+            mkdir -p "${parent_dir}"
+            rm -f "${link}"
+            ln -sf "${AGENTS_MD}" "${link}"
+            echo "    [LINK] ${link} -> ${AGENTS_MD}"
+        fi
+    done
+
+    # Ensure .agents/AGENTS.md has include
+    AGENTS_SUB_DIR="${TARGET_HOME}/.agents"
+    if [ -d "${AGENTS_SUB_DIR}" ]; then
+        AGENTS_SUB_FILE="${AGENTS_SUB_DIR}/AGENTS.md"
+        if [ ! -f "${AGENTS_SUB_FILE}" ] || ! grep -q "@${AGENTS_MD}" "${AGENTS_SUB_FILE}"; then
+            echo "@${AGENTS_MD}" | cat - "${AGENTS_SUB_FILE}" 2>/dev/null > "${AGENTS_SUB_FILE}.tmp" || echo "@${AGENTS_MD}" > "${AGENTS_SUB_FILE}.tmp"
+            mv "${AGENTS_SUB_FILE}.tmp" "${AGENTS_SUB_FILE}"
+            echo "    [UPDATE] Prepended @${AGENTS_MD} to ${AGENTS_SUB_FILE}"
         fi
     fi
-else
-    echo "[!] ${AGENTS_MD} not found, creating from template..."
-    printf "# Antigravity Global Runtime\n\n%s\n" "${LANDSCAPE_DIRECTIVE_BLOCK}" > "${AGENTS_MD}"
-fi
 
-# Ensure canonical symlinks
-LINKS=(
-    "${TARGET_HOME}/AGENTS.md"
-    "${TARGET_HOME}/GEMINI.md"
-    "${TARGET_HOME}/CLAUDE.md"
-    "${TARGET_HOME}/CODEX.md"
-    "${TARGET_HOME}/.codex/AGENTS.md"
-    "${TARGET_HOME}/.codex/CODEX.md"
-    "${TARGET_HOME}/.claude/CLAUDE.md"
-    "${TARGET_HOME}/.gemini/AGENTS.md"
-    "${TARGET_HOME}/.gemini/GEMINI.md"
-    "${TARGET_HOME}/.gemini/config/GEMINI.md"
-)
-
-for link in "${LINKS[@]}"; do
-    parent_dir="$(dirname "${link}")"
-    if [ -d "${parent_dir}" ] || [ "${parent_dir}" = "${TARGET_HOME}" ]; then
-        mkdir -p "${parent_dir}"
-        rm -f "${link}"
-        ln -sf "${AGENTS_MD}" "${link}"
-        echo "  [LINK] ${link} -> ${AGENTS_MD}"
-    fi
+    # Fix ownership
+    chown -R "${TARGET_USER}:${TARGET_USER}" "${GEMINI_CONFIG_DIR}" 2>/dev/null || true
+    chown -h "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/AGENTS.md" "${TARGET_HOME}/GEMINI.md" "${TARGET_HOME}/CLAUDE.md" "${TARGET_HOME}/CODEX.md" 2>/dev/null || true
 done
 
-# Ensure .agents/AGENTS.md has include
-AGENTS_SUB_DIR="${TARGET_HOME}/.agents"
-if [ -d "${AGENTS_SUB_DIR}" ]; then
-    AGENTS_SUB_FILE="${AGENTS_SUB_DIR}/AGENTS.md"
-    if [ ! -f "${AGENTS_SUB_FILE}" ] || ! grep -q "@${AGENTS_MD}" "${AGENTS_SUB_FILE}"; then
-        echo "@${AGENTS_MD}" | cat - "${AGENTS_SUB_FILE}" 2>/dev/null > "${AGENTS_SUB_FILE}.tmp" || echo "@${AGENTS_MD}" > "${AGENTS_SUB_FILE}.tmp"
-        mv "${AGENTS_SUB_FILE}.tmp" "${AGENTS_SUB_FILE}"
-        echo "  [UPDATE] Prepended @${AGENTS_MD} to ${AGENTS_SUB_FILE}"
-    fi
-fi
-
-# Fix ownership
-chown -R "${TARGET_USER}:${TARGET_USER}" "${GEMINI_CONFIG_DIR}" 2>/dev/null || true
-chown -h "${TARGET_USER}:${TARGET_USER}" "${TARGET_HOME}/AGENTS.md" "${TARGET_HOME}/GEMINI.md" "${TARGET_HOME}/CLAUDE.md" "${TARGET_HOME}/CODEX.md" 2>/dev/null || true
-
-echo "[SUCCESS] Instruction sync complete on $(hostname)"
+echo "[SUCCESS] Instruction sync complete across all local users on $(hostname)"
