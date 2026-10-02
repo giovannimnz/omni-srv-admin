@@ -128,6 +128,30 @@
       "access_group": "global",
       "risk": "medium",
       "description": "Instala ou atualiza o Antigravity Hub (2.0) a partir do tarball oficial na frota, gerando symlink /usr/local/bin/antigravity e atalho .desktop 'Antigravity 2.0' na categoria Development."
+    },
+    {
+      "id": "xrdp-enforce-single-session-override",
+      "title": "omni::xrdp-enforce-single-session-override",
+      "version": "1.0.0",
+      "path": "xrdp-enforce-single-session-override.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 180,
+      "access_group": "global",
+      "risk": "targeted-cleanup",
+      "description": "Aplica politica de sessao unica no XRDP em toda a frota: encerra sessoes em disconnect (KillDisconnected=true), elimina orfaos Xvnc, previne colisao de portas (5901->5900) e garante sobreposicao de novas conexoes."
+    },
+    {
+      "id": "antigravity-ui-dimension-fix",
+      "title": "omni::antigravity-ui-dimension-fix",
+      "version": "1.0.0",
+      "path": "antigravity-ui-dimension-fix.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 120,
+      "access_group": "global",
+      "risk": "medium",
+      "description": "Aplica correcao de dimensionamento e corte no topo da janela do Antigravity na frota (titleBarStyle=native no settings.json e decor=yes no Openbox lxde-rc.xml)."
     }
   ]
 }
