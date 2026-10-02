@@ -80,6 +80,18 @@
       "access_group": "global",
       "risk": "targeted-cleanup",
       "description": "Purges legacy Antigravity manual tarball extractions, build artifacts and downloads across the fleet."
+    },
+    {
+      "id": "sync-agent-instructions",
+      "title": "omni::sync-agent-instructions",
+      "version": "1.0.0",
+      "path": "sync-agent-instructions.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 180,
+      "access_group": "global",
+      "risk": "targeted-cleanup",
+      "description": "Synchronizes canonical AI instructions, Landscape directives and cross-harness symlinks across all fleet nodes."
     }
   ]
 }

@@ -225,7 +225,7 @@ class LandscapeClient:
         except json.JSONDecodeError as exc:
             raise LandscapeError(f"Landscape retornou JSON invalido: {body[:800]}") from exc
 
-    def legacy(self, action: str, **params: Any) -> Any:
+    def legacy(self, action: str, method: str = "POST", **params: Any) -> Any:
         payload: dict[str, str] = {"action": action, "version": self.version}
         for key, value in params.items():
             if value is None:
@@ -251,10 +251,14 @@ class LandscapeClient:
             )
             parsed = urlparse(self.endpoint)
             canonical = _canonical_query(payload)
-            string_to_sign = f"GET\n{parsed.netloc.lower()}\n{parsed.path or '/'}\n{canonical}"
+            string_to_sign = f"{method.upper()}\n{parsed.netloc.lower()}\n{parsed.path or '/'}\n{canonical}"
             digest = hmac.new(str(self.secret_key).encode("utf-8"), string_to_sign.encode("utf-8"), hashlib.sha256).digest()
             payload["signature"] = base64.b64encode(digest).decode("ascii")
 
+        if method.upper() == "POST":
+            data = urlencode(payload).encode("utf-8")
+            headers["Content-Type"] = "application/x-www-form-urlencoded"
+            return self._request_json("POST", self.endpoint, data=data, headers=headers)
         return self._request_json("GET", self.endpoint + "?" + urlencode(payload), headers=headers)
 
     def rest_v2(self, path: str) -> Any:
