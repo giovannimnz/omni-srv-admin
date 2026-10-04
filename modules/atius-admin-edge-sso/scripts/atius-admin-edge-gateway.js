@@ -44,6 +44,13 @@ function readConfig(configPath = process.env.ATIUS_ADMIN_EDGE_GATEWAY_CONFIG || 
       upstream: new URL(cfg.upstream || base.upstream),
       upstreamUsernameEnv: cfg.upstreamUsernameEnv || base.upstreamUsernameEnv || '',
       upstreamPasswordEnv: cfg.upstreamPasswordEnv || base.upstreamPasswordEnv || '',
+      upstreamTokenEnv: cfg.upstreamTokenEnv || base.upstreamTokenEnv || '',
+      upstreamToken: cfg.upstreamToken || base.upstreamToken || '',
+      preserveHost: Object.prototype.hasOwnProperty.call(cfg, 'preserveHost')
+        ? Boolean(cfg.preserveHost)
+        : (Object.prototype.hasOwnProperty.call(base, 'preserveHost')
+            ? Boolean(base.preserveHost)
+            : (cfg.appName || base.appName || '').toLowerCase().includes('cockpit')),
       upstreamAuthUrl: cfg.upstreamAuthUrl || base.upstreamAuthUrl || '/api/auth',
       allowedEmails: (cfg.allowedEmails || base.allowedEmails || []).map(v => String(v).trim().toLowerCase()),
     };
@@ -118,15 +125,57 @@ function redirect(res, statusCode, location, extraHeaders = {}) {
   res.end();
 }
 
-function clearAtiusCookies() {
-  return [
+function clearAtiusCookies(site) {
+  const cookies = [
     'auth-token=; Path=/; Domain=.atius.com.br; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
     'auth-token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax',
   ];
+  if (site && site.publicOrigin) {
+    try {
+      const host = new URL(site.publicOrigin).hostname;
+      if (!host.endsWith('.atius.com.br')) {
+        cookies.push(`auth-token=; Path=/; Domain=${host}; Max-Age=0; HttpOnly; Secure; SameSite=Lax`);
+      }
+    } catch {}
+  }
+  return cookies;
 }
 
 function clearHostOnlyAuthCookie() {
   return 'auth-token=; Path=/; Max-Age=0; HttpOnly; Secure; SameSite=Lax';
+}
+
+function filterCookieHeader(cookieHeader, authCookieName = 'auth-token') {
+  if (!cookieHeader) return '';
+  const parts = String(cookieHeader).split(';').map(p => p.trim()).filter(Boolean);
+  const filtered = parts.filter(part => {
+    const idx = part.indexOf('=');
+    const name = (idx === -1 ? part : part.slice(0, idx)).trim();
+    return name !== authCookieName;
+  });
+  return filtered.join('; ');
+}
+
+function sanitizeSetCookieHeader(value, site, authCookieName = 'auth-token') {
+  const cookies = Array.isArray(value) ? value : (value ? [String(value)] : []);
+  const result = [];
+  for (const cookieStr of cookies) {
+    if (!cookieStr || typeof cookieStr !== 'string') continue;
+    const firstEq = cookieStr.indexOf('=');
+    const name = (firstEq === -1 ? cookieStr : cookieStr.slice(0, firstEq)).trim();
+    if (name === authCookieName) continue;
+
+    let rewritten = cookieStr;
+    const domainMatch = cookieStr.match(/;\s*Domain=([^;]+)/i);
+    if (domainMatch) {
+      const domainVal = domainMatch[1].trim().replace(/^\./, '');
+      if (domainVal === site.upstream.hostname || LOOPBACK_HOSTS.has(domainVal)) {
+        rewritten = rewritten.replace(/;\s*Domain=[^;]+/i, '');
+      }
+    }
+    result.push(rewritten);
+  }
+  return Array.isArray(value) ? result : (result[0] || '');
 }
 
 function sendJson(res, statusCode, body, extraHeaders = {}) {
@@ -289,7 +338,7 @@ function requestJson(targetUrl, headers) {
   });
 }
 
-function postJson(targetUrl, payload) {
+function postJson(targetUrl, payload, extraHeaders = {}) {
   return new Promise((resolve, reject) => {
     const raw = Buffer.from(JSON.stringify(payload));
     const client = targetUrl.protocol === 'https:' ? https : http;
@@ -299,7 +348,7 @@ function postJson(targetUrl, payload) {
       port: targetUrl.port || (targetUrl.protocol === 'https:' ? 443 : 80),
       path: `${targetUrl.pathname}${targetUrl.search}`,
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'Content-Length': raw.length, Accept: 'application/json' },
+      headers: { 'Content-Type': 'application/json', 'Content-Length': raw.length, Accept: 'application/json', ...extraHeaders },
       timeout: 10000,
       rejectUnauthorized: false,
     }, (res) => {
@@ -409,8 +458,16 @@ function clearPortainerJwt(site) { tokenCache.delete(site.publicOrigin); }
 
 async function injectAuthHeaders(site, headers) {
   const next = { ...headers };
-  delete next.cookie;
+  if (!site.authMode || site.authMode === 'none') {
+    return next;
+  }
   delete next.authorization;
+  if (site.authMode === 'bearer') {
+    const token = site.upstreamToken || (site.upstreamTokenEnv ? process.env[site.upstreamTokenEnv] : '') || '';
+    if (!token) throw new Error(`missing upstream bearer token for ${site.publicOrigin}`);
+    next.Authorization = `Bearer ${token}`;
+    return next;
+  }
   if (site.authMode === 'basic') {
     const username = process.env[site.upstreamUsernameEnv] || '';
     const password = process.env[site.upstreamPasswordEnv] || '';
@@ -425,12 +482,17 @@ async function injectAuthHeaders(site, headers) {
   throw new Error(`unsupported authMode ${site.authMode}`);
 }
 
-function sanitizeProxyHeaders(rawHeaders) {
+function sanitizeProxyHeaders(rawHeaders, authCookieName = 'auth-token', keepAuthorization = false) {
   const headers = {};
   for (const [key, value] of Object.entries(rawHeaders)) {
     const normalized = key.toLowerCase();
     if (HOP_BY_HOP_HEADERS.has(normalized)) continue;
-    if (normalized === 'authorization' || normalized === 'cookie') continue;
+    if (normalized === 'authorization' && !keepAuthorization) continue;
+    if (normalized === 'cookie') {
+      const remaining = filterCookieHeader(value, authCookieName);
+      if (remaining) headers.cookie = remaining;
+      continue;
+    }
     headers[key] = value;
   }
   return headers;
@@ -443,22 +505,33 @@ function rewriteLocation(location, site) {
   } catch {}
   return location;
 }
-function rewriteResponseHeaders(rawHeaders, site) {
+function rewriteResponseHeaders(rawHeaders, site, authCookieName = 'auth-token') {
   const headers = {};
   for (const [key, value] of Object.entries(rawHeaders)) {
     const normalized = key.toLowerCase();
     if (HOP_BY_HOP_HEADERS.has(normalized)) continue;
-    if (normalized === 'set-cookie' || normalized === 'www-authenticate') continue;
+    if (normalized === 'www-authenticate') {
+      if (site.authMode === 'basic' || site.authMode === 'portainer-jwt') continue;
+    }
+    if (normalized === 'set-cookie') {
+      const filtered = sanitizeSetCookieHeader(value, site, authCookieName);
+      if (filtered && (!Array.isArray(filtered) || filtered.length > 0)) {
+        headers[key] = filtered;
+      }
+      continue;
+    }
     if (normalized === 'location' && typeof value === 'string') { headers[key] = rewriteLocation(value, site); continue; }
     headers[key] = value;
   }
   return headers;
 }
 
-async function proxyHttp(site, req, res, retry = false) {
+async function proxyHttp(site, req, res, config, retry = false) {
+  const authCookieName = config ? config.authCookieName : 'auth-token';
+  const keepAuth = !site.authMode || site.authMode === 'none';
   const parsed = new URL(req.url || '/', site.publicOrigin);
-  let headers = sanitizeProxyHeaders(req.headers);
-  headers.host = site.upstream.host;
+  let headers = sanitizeProxyHeaders(req.headers, authCookieName, keepAuth);
+  headers.host = site.preserveHost ? resolveHost(req) : site.upstream.host;
   headers['x-forwarded-for'] = forwardedFor(req);
   headers['x-forwarded-host'] = resolveHost(req);
   headers['x-forwarded-proto'] = 'https';
@@ -478,11 +551,12 @@ async function proxyHttp(site, req, res, retry = false) {
     if (site.authMode === 'portainer-jwt' && proxyRes.statusCode === 401 && !retry) {
       clearPortainerJwt(site);
       proxyRes.resume();
-      return proxyHttp(site, req, res, true);
+      return proxyHttp(site, req, res, config, true);
     }
-    const responseHeaders = rewriteResponseHeaders(proxyRes.headers, site);
+    const responseHeaders = rewriteResponseHeaders(proxyRes.headers, site, authCookieName);
     const contentType = String(responseHeaders['content-type'] || '');
-    if ((proxyRes.statusCode || 0) === 200 && /^text\/html(?:;|$)/i.test(contentType)) {
+    const isCompressed = Boolean(proxyRes.headers['content-encoding'] && proxyRes.headers['content-encoding'] !== 'identity');
+    if ((proxyRes.statusCode || 0) === 200 && /^text\/html(?:;|$)/i.test(contentType) && !isCompressed) {
       const chunks = [];
       let total = 0;
       proxyRes.on('data', (chunk) => {
@@ -522,10 +596,12 @@ async function proxyHttp(site, req, res, retry = false) {
   req.pipe(proxyReq);
 }
 
-async function proxyWebSocket(site, req, socket, head, retry = false) {
-  let headers = sanitizeProxyHeaders(req.headers);
+async function proxyWebSocket(site, req, socket, head, config) {
+  const authCookieName = config ? config.authCookieName : 'auth-token';
+  const keepAuth = !site.authMode || site.authMode === 'none';
+  let headers = sanitizeProxyHeaders(req.headers, authCookieName, keepAuth);
   headers.connection = 'Upgrade';
-  headers.host = site.upstream.host;
+  headers.host = site.preserveHost ? resolveHost(req) : site.upstream.host;
   headers.upgrade = req.headers.upgrade || 'websocket';
   headers['x-forwarded-for'] = forwardedFor(req);
   headers['x-forwarded-host'] = resolveHost(req);
@@ -535,13 +611,23 @@ async function proxyWebSocket(site, req, socket, head, retry = false) {
   const port = Number(site.upstream.port || (site.upstream.protocol === 'https:' ? 443 : 80));
   const connect = site.upstream.protocol === 'https:' ? tls.connect : net.connect;
   const upstreamSocket = connect({ host: site.upstream.hostname, port, servername: site.upstream.hostname, rejectUnauthorized: false });
-  upstreamSocket.once('connect', () => {
+  const connectEvent = site.upstream.protocol === 'https:' ? 'secureConnect' : 'connect';
+  upstreamSocket.once(connectEvent, () => {
     const headerLines = Object.entries(headers).flatMap(([key, value]) => Array.isArray(value) ? value.map((entry) => `${key}: ${entry}`) : [`${key}: ${value}`]);
     upstreamSocket.write(`${req.method} ${upstreamPath} HTTP/${req.httpVersion}\r\n`);
     upstreamSocket.write(`${headerLines.join('\r\n')}\r\n\r\n`);
     if (head && head.length) upstreamSocket.write(head);
     upstreamSocket.pipe(socket);
     socket.pipe(upstreamSocket);
+  });
+  socket.on('error', () => {
+    upstreamSocket.destroy();
+  });
+  socket.on('close', () => {
+    upstreamSocket.destroy();
+  });
+  upstreamSocket.on('close', () => {
+    socket.destroy();
   });
   upstreamSocket.on('error', (error) => {
     console.error(`[admin-edge-sso] upstream_ws_error upstream=${site.upstream.origin} message=${error.message}`);
@@ -568,21 +654,38 @@ async function handleLogin(config, site, req, res) {
   const senha = String(body.senha || '');
   if (!login || !senha) return sendHtml(res, 400, loginPage(site, 'Informe email ou username e senha.'));
   const tokenUrl = new URL('http://127.0.0.1:8015/v1/token/generate');
-  const upstream = await postJson(tokenUrl, { login, senha });
+  const upstream = await postJson(tokenUrl, { login, senha }, { 'X-Forwarded-Host': new URL(site.publicOrigin).host, 'X-Forwarded-Proto': 'https' });
   if (upstream.statusCode === 401 || upstream.statusCode === 403) {
     return sendHtml(res, 401, loginPage(site, 'Não foi possível entrar. Verifique as credenciais.'));
   }
   if (upstream.statusCode !== 200) return sendHtml(res, 503, loginPage(site, 'O serviço de autenticação está temporariamente indisponível.'));
+  const siteHostname = new URL(site.publicOrigin).hostname;
+  const isAtiusBr = siteHostname.endsWith('.atius.com.br');
   const setCookies = upstream.headers['set-cookie'];
   const cookieHeaders = [];
-  if (Array.isArray(setCookies)) cookieHeaders.push(...setCookies);
-  else if (setCookies) cookieHeaders.push(setCookies);
-  cookieHeaders.push(clearHostOnlyAuthCookie());
+  if (Array.isArray(setCookies)) {
+    for (const c of setCookies) {
+      if (!isAtiusBr) {
+        cookieHeaders.push(c.replace(/Domain=[^;]+/i, `Domain=${siteHostname}`));
+      } else {
+        cookieHeaders.push(c);
+      }
+    }
+  } else if (setCookies) {
+    if (!isAtiusBr) {
+      cookieHeaders.push(String(setCookies).replace(/Domain=[^;]+/i, `Domain=${siteHostname}`));
+    } else {
+      cookieHeaders.push(setCookies);
+    }
+  }
+  if (isAtiusBr) {
+    cookieHeaders.push(clearHostOnlyAuthCookie());
+  }
   return redirect(res, 302, `${site.publicOrigin}/`, cookieHeaders.length ? { 'Set-Cookie': cookieHeaders } : {});
 }
 
 async function handleLogout(site, res) {
-  return redirect(res, 302, `${site.publicOrigin}/login`, { 'Set-Cookie': clearAtiusCookies() });
+  return redirect(res, 302, `${site.publicOrigin}/login`, { 'Set-Cookie': clearAtiusCookies(site) });
 }
 
 function healthz(res, config) {
@@ -606,7 +709,7 @@ async function handleRequest(config, req, res) {
     if (session.reason === 'forbidden') return sendJson(res, 403, { error: 'forbidden' });
     return redirect(res, 302, `${site.publicOrigin}${site.loginPath}`);
   }
-  return proxyHttp(site, req, res);
+  return proxyHttp(site, req, res, config);
 }
 
 async function handleUpgrade(config, req, socket, head) {
@@ -621,7 +724,7 @@ async function handleUpgrade(config, req, socket, head) {
     socket.write(`HTTP/1.1 ${session.reason === 'forbidden' ? '403 Forbidden' : '401 Unauthorized'}\r\nConnection: close\r\n\r\n`);
     return socket.destroy();
   }
-  return proxyWebSocket(site, req, socket, head);
+  return proxyWebSocket(site, req, socket, head, config);
 }
 
 function main() {
@@ -648,4 +751,18 @@ function main() {
 }
 
 if (require.main === module) main();
-module.exports = { injectLogoutBridge, logoutBridgeScript, readConfig, verifySession };
+module.exports = {
+  clearAtiusCookies,
+  filterCookieHeader,
+  injectLogoutBridge,
+  logoutBridgeScript,
+  proxyHttp,
+  proxyWebSocket,
+  readConfig,
+  resolveHost,
+  rewriteResponseHeaders,
+  sanitizeProxyHeaders,
+  sanitizeSetCookieHeader,
+  siteForRequest,
+  verifySession,
+};
