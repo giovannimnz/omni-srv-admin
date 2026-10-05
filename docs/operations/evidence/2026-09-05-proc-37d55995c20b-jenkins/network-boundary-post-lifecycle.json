@@ -1,0 +1,48 @@
+{
+  "captured_at": "2026-09-05T22:12:56.988390-03:00",
+  "phase": "post-final-lifecycle",
+  "public_direct_probes": [
+    {
+      "host": "atius-srv-3",
+      "exit_code": 0,
+      "stdout": "port=8085 tcp_rc=1 port=50000 tcp_rc=1 http8085_rc=7 http=000 positive443_rc=0 http=403",
+      "stderr": "curl: (7) Failed to connect to 137.131.190.161 port 8085 after 0 ms: Couldn't connect to server"
+    },
+    {
+      "host": "atius-srv-4",
+      "exit_code": 0,
+      "stdout": "port=8085 tcp_rc=1 port=50000 tcp_rc=1 http8085_rc=7 http=000 positive443_rc=0 http=403",
+      "stderr": "curl: (7) Failed to connect to 137.131.190.161 port 8085 after 0 ms: Couldn't connect to server"
+    }
+  ],
+  "private_oci_drg_probes": [
+    {
+      "host": "atius-srv-2",
+      "exit_code": 0,
+      "stdout": "10.11.1.11:50000 tcp_rc=0 10.11.1.11:8085 tcp_rc=0 private_http_rc=0 http=200",
+      "stderr": ""
+    },
+    {
+      "host": "atius-srv-3",
+      "exit_code": 0,
+      "stdout": "10.11.1.11:50000 tcp_rc=0 10.11.1.11:8085 tcp_rc=0 private_http_rc=0 http=200",
+      "stderr": ""
+    },
+    {
+      "host": "atius-srv-4",
+      "exit_code": 0,
+      "stdout": "10.11.1.11:50000 tcp_rc=0 10.11.1.11:8085 tcp_rc=0 private_http_rc=0 http=200",
+      "stderr": ""
+    }
+  ],
+  "local_listeners": [
+    "LISTEN 0      4096    127.0.0.1:8085  0.0.0.0:* users:((\"rootlessport\",pid=2109746,fd=11))",
+    "LISTEN 0      4096   10.11.1.11:8085  0.0.0.0:* users:((\"rootlessport\",pid=2109746,fd=12))",
+    "LISTEN 0      4096   10.11.1.11:50000 0.0.0.0:* users:((\"rootlessport\",pid=2109746,fd=13))"
+  ],
+  "verdicts": {
+    "public_direct_block": "PASS",
+    "private_oci_drg": "PASS",
+    "positive_controls": "PASS"
+  }
+}

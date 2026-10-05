@@ -1,0 +1,45 @@
+{
+  "captured_at": "2026-09-06T00:01:34.864754-03:00",
+  "public_direct_probes": [
+    {
+      "host": "atius-srv-3",
+      "exit_code": 0,
+      "stdout": "8080=1 8090=1 8747=1 http8090=7/000 positive443=0/403",
+      "stderr": "curl: (7) Failed to connect to 137.131.190.161 port 8090 after 0 ms: Couldn't connect to server"
+    },
+    {
+      "host": "atius-srv-4",
+      "exit_code": 0,
+      "stdout": "8080=1 8090=1 8747=1 http8090=7/000 positive443=0/403",
+      "stderr": "curl: (7) Failed to connect to 137.131.190.161 port 8090 after 0 ms: Couldn't connect to server"
+    }
+  ],
+  "dual_private_probes": [
+    {
+      "host": "atius-srv-2",
+      "exit_code": 0,
+      "stdout": "10.11.1.11:8080=1 10.11.1.11:8090=1 10.11.1.11:8747=0 10.100.100.1:8080=1 10.100.100.1:8090=1 10.100.100.1:8747=0",
+      "stderr": ""
+    },
+    {
+      "host": "atius-srv-3",
+      "exit_code": 0,
+      "stdout": "10.11.1.11:8080=1 10.11.1.11:8090=1 10.11.1.11:8747=0 10.100.100.1:8080=1 10.100.100.1:8090=1 10.100.100.1:8747=0",
+      "stderr": ""
+    },
+    {
+      "host": "atius-srv-4",
+      "exit_code": 0,
+      "stdout": "10.11.1.11:8080=1 10.11.1.11:8090=1 10.11.1.11:8747=0 10.100.100.1:8080=1 10.100.100.1:8090=1 10.100.100.1:8747=0",
+      "stderr": ""
+    }
+  ],
+  "verdicts": {
+    "public_direct_block": "PASS",
+    "oci_drg_web_proxy_block": "PASS",
+    "oci_drg_db_preserved": "PASS",
+    "wg100_web_proxy_block": "PASS",
+    "wg100_db_reserve_preserved": "PASS",
+    "positive_controls": "PASS"
+  }
+}

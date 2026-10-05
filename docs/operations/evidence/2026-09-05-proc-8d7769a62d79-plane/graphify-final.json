@@ -1,0 +1,51 @@
+{
+  "artifact_role": "pre-final-seal Graphify observation",
+  "captured_at": "2026-09-06T00:21:10-03:00",
+  "tool": "/home/ubuntu/.codex/gsd-core/bin/gsd-tools.cjs",
+  "missing_policy_path": "/home/ubuntu/.Codex/get-shit-done/bin/gsd-tools.cjs",
+  "build_command": "graphify 0.9.23 update . under omni builds profile",
+  "status": {
+    "exists": true,
+    "last_build": "2026-09-06T03:21:08.519Z",
+    "node_count": 14545,
+    "edge_count": 21229,
+    "hyperedge_count": 0,
+    "stale": false,
+    "age_hours": 0,
+    "built_at_commit": "29379ce",
+    "current_commit": "29379ce",
+    "commits_behind": 0,
+    "commit_stale": false
+  },
+  "queries": {
+    "plane-stack-up": {
+      "nodes": 2,
+      "edges": 1,
+      "sources": [
+        "modules/srv1-ops/scripts/plane-stack-up.sh"
+      ]
+    },
+    "plane-healthcheck": {
+      "nodes": 3,
+      "edges": 3,
+      "sources": [
+        "modules/srv1-ops/scripts/plane-healthcheck.sh"
+      ]
+    },
+    "proc_8d7769a62d79": {
+      "nodes": 30,
+      "edges": 28,
+      "sources": [
+        "docs/operations/evidence/2026-09-05-proc-8d7769a62d79-plane/reconciliation.md",
+        "docs/operations/srv1-service-recovery-2026-09-05.md"
+      ]
+    }
+  },
+  "warnings": {
+    "zero_node_sources": 135,
+    "sql_without_tree_sitter_sql": 9,
+    "graph_html": "skipped because node count exceeds visualization limit 5000; prior graph.html left unchanged"
+  },
+  "final_status_authority": "external backup seal written only after the final rebuild, avoiding an infinite graph-receipt self-reference loop",
+  "verdict": "PASS"
+}

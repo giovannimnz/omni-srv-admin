@@ -1,0 +1,18 @@
+[Unit]
+Description=Plane Podman compose stack with migration and API readiness
+Wants=network-online.target
+After=network-online.target
+
+[Service]
+Type=oneshot
+RemainAfterExit=yes
+UMask=0077
+WorkingDirectory=/home/ubuntu/GitHub/containers/plane-app
+ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/plane-stack-up.sh
+ExecStop=/home/ubuntu/.local/bin/podman-compose --podman-path /usr/bin/podman --env-file .env -f podman-compose.yaml down
+TimeoutStartSec=2100
+TimeoutStopSec=180
+SuccessExitStatus=143
+
+[Install]
+WantedBy=default.target

@@ -1,0 +1,22 @@
+---
+type: note
+title: Plane App — documento substituído
+---
+
+# Plane App — documento substituído
+
+> DOCUMENTO SUBSTITUÍDO EM 2026-09-05.
+>
+> Leia a autoridade atual: [[30-RECURSOS/operations/plane-app-srv1-canonico]].
+
+Este arquivo arquivado descrevia o runtime Docker/v1.2.1 e continha configurações sensíveis antigas. O conteúdo original está preservado somente no backup externo checksummed:
+
+`/home/ubuntu/.backups/proc-8d7769a62d79-plane-pre-hardening-20260905T230018-0300/vault/20-PROJETOS/22-PROJETOS-ARQUIVADOS/plane/plane-app.md`
+
+Estado atual: Podman `1.3.1`, unit readiness-aware, proxy/web sem bind público e PostgreSQL restrito a loopback + OCI/DRG.
+
+## Ver também
+
+- [[60-LOGS/2026-06-16-plane-app-podman-v131-cutover]] — histórico do cutover.
+- [[61-Incidents/2026-09-05-srv1-services-stale-certbot-podman]] — incident consolidado.
+- [[30-RECURSOS/operations/ATIUS-FLEET-NETWORK-PORT-MAP]] — mapa de rede.

@@ -1,0 +1,268 @@
+{
+  "backup": "/home/ubuntu/.backups/proc-8d7769a62d79-plane-pre-hardening-20260905T230018-0300",
+  "classification": "post-workload-harness-failure",
+  "current_contract": {
+    "database": "110 tables; 162 migrations; 0 users/workspaces/projects",
+    "listeners": [
+      "127.0.0.1:8080",
+      "127.0.0.1:8090",
+      "127.0.0.1:8747",
+      "10.11.1.11:8747",
+      "10.100.100.1:8747"
+    ],
+    "minio": "plane-app_minio_data mounted at /data; retired anonymous empty volume removed",
+    "monitor": "plane-healthcheck.timer read-only; unit/listeners/HTTP; no Podman re-exec under NoNewPrivileges",
+    "private": "web/proxy blocked; DB available over OCI/DRG primary and wg100 reserve from three peers",
+    "public_direct": "8080/8090/8747 blocked from two origins",
+    "readiness": "migrator exited:0; API 401; root/setup/spaces 200; containers 13/12",
+    "timeout_start": "2100s",
+    "unit": "plane-podman.service active/exited Result=success"
+  },
+  "evidence": [
+    {
+      "bytes": 99,
+      "path": "container-contracts-v2.log",
+      "sha256": "043fab74ff735b1dee07f17d30bddb402e20ea4cfc2be20eabbf50eaf2e86912"
+    },
+    {
+      "bytes": 99,
+      "path": "container-contracts.log",
+      "sha256": "afd29dde277673ae5fdf4065212d4ff9dfcfb69674649964c2810313752808d3"
+    },
+    {
+      "bytes": 8270,
+      "path": "current-runtime.json",
+      "sha256": "efe80d283027a111aba379f75b31987877ef30f47c3754fafe054d32dce5da5e"
+    },
+    {
+      "bytes": 1627,
+      "path": "focused-final-v2.log",
+      "sha256": "11d0b6b27f50e83563cca784f1498852bf0d3d7aee2a07cfbc1da9b451b8d191"
+    },
+    {
+      "bytes": 1627,
+      "path": "focused-final.log",
+      "sha256": "5bf5a3c7b1ab9c3440de45ada470796b83c9fe47e3665d4902d47d3170af9ae7"
+    },
+    {
+      "bytes": 907,
+      "path": "full-suite-disposition.md",
+      "sha256": "3b1df93358eff91a3469c056ba5d6b6e0026008fbc28bbf133e9e929d85c58d4"
+    },
+    {
+      "bytes": 33265,
+      "path": "full-suite-v2.log",
+      "sha256": "680fed766a5371af44018aaf1e36ffe669562d0fc2146fa4cf6d15927b87b8c2"
+    },
+    {
+      "bytes": 33265,
+      "path": "full-suite.log",
+      "sha256": "260326261efa6a83163ea9b4bf81c17f3bd4c139ef8c40cd2759da5173cbd210"
+    },
+    {
+      "bytes": 1168,
+      "path": "gbrain-daily-2026-09-06-final.txt",
+      "sha256": "d3d2a01233ad22da42035a2d8167ebeba15b79a344746fa6763ea5ecc154df82"
+    },
+    {
+      "bytes": 893,
+      "path": "gbrain-final-import.stderr",
+      "sha256": "e4da7a4b64091158b4cea4d14982c18e9c4693356da174440200732f4af0fbb4"
+    },
+    {
+      "bytes": 128,
+      "path": "gbrain-final-import.stdout",
+      "sha256": "5fe5dee266e7edb565b7509b377dbbb486150dbf2ccf1119cc3264e2dc727857"
+    },
+    {
+      "bytes": 925,
+      "path": "gbrain-final-timeline.txt",
+      "sha256": "d1f5f9053d144d44d6a1e772d709d78e5031f552d46834808880c667ce92eea7"
+    },
+    {
+      "bytes": 893,
+      "path": "gbrain-import.stderr",
+      "sha256": "ce52fd3b43c3a424253eeed0624ea1989bf5aed12f91384f775fd2d08faa20fa"
+    },
+    {
+      "bytes": 128,
+      "path": "gbrain-import.stdout",
+      "sha256": "d4ea1f83108cd0ddd0ebeae0b34b3bbee7cfcbc00a4045fb3b17c7391f311bbf"
+    },
+    {
+      "bytes": 19659,
+      "path": "gbrain-incident-final.txt",
+      "sha256": "c4e8c49350d07f35f2574f273afb6518d8806d22bff9c371f16edd8c7f06e4ac"
+    },
+    {
+      "bytes": 942,
+      "path": "gbrain-plane-archived-stub.txt",
+      "sha256": "0a3e978b36a86b146f03489c3dcb12e9633e69a2ed4f048e6b80defa5e07fdf8"
+    },
+    {
+      "bytes": 2590,
+      "path": "gbrain-plane-authority-final.txt",
+      "sha256": "e1c82e9f95c5face3ce851c4f62daffc7f3aa7c31585667cc7941486888e9889"
+    },
+    {
+      "bytes": 2394,
+      "path": "gbrain-plane-authority.txt",
+      "sha256": "29fc6c71c61efb8fecbe8dda0069669d98998363262b9b8a43a99a2697b6f3f5"
+    },
+    {
+      "bytes": 1217,
+      "path": "gbrain-seal-import.stderr",
+      "sha256": "cc904eb6688edad2a5ea3e6146402af601cb3758dfc69ba5576d444b6672d825"
+    },
+    {
+      "bytes": 128,
+      "path": "gbrain-seal-import.stdout",
+      "sha256": "b8dfe1cfc13d923050a84eae41429c3b72d32e47e357c7d6af498a4a82365fd9"
+    },
+    {
+      "bytes": 1473,
+      "path": "gbrain-seal-readback.json",
+      "sha256": "75caef413fb06d0cb1e30d78d743c45807427108bb4b72249619c26f71696895"
+    },
+    {
+      "bytes": 736,
+      "path": "gbrain-timeline.txt",
+      "sha256": "ae9a86481db959b9cd5cf57abccd491da7599934f736b5ca6d05e9029d7a6b60"
+    },
+    {
+      "bytes": 1576,
+      "path": "graphify-final.json",
+      "sha256": "3863c635973af537a1d90aea398dc6f44c303a456ddf88d98d48488d5deb0a7f"
+    },
+    {
+      "bytes": 4010,
+      "path": "graphify-rebuild.log",
+      "sha256": "432b242637c248f4cc63b2a672d20edb43fd4c7290187b103d5284b01f288c0c"
+    },
+    {
+      "bytes": 1627,
+      "path": "green-static.log",
+      "sha256": "3a1439465d181d89f036aa9305666027d7a454a7e2bec97c289113986acd97bc"
+    },
+    {
+      "bytes": 13023,
+      "path": "historical-chain-exact.json",
+      "sha256": "5e16623f8c7831be4aadecfe3132fd98b5ec8bb0d7c637ab8d12542ec3881a66"
+    },
+    {
+      "bytes": 400,
+      "path": "input-provenance.log",
+      "sha256": "d3d335ce350fbeb00f63f15df187c81cf9e61adbc061eac32437ea74749a7279"
+    },
+    {
+      "bytes": 92,
+      "path": "input-sha256sums.log",
+      "sha256": "e07e3becf01e14d066d4a3d1e5153971dc27f5682ba6f0968697c5e537448600"
+    },
+    {
+      "bytes": 1304,
+      "path": "inspect-nnp.stderr",
+      "sha256": "019c0581f3fd42795354ed535ab508bfeffc118cf267e22d5118b5a25c05dc10"
+    },
+    {
+      "bytes": 0,
+      "path": "inspect-nnp.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 1243,
+      "path": "minio-volume-red.log",
+      "sha256": "9b5b0447864a5c16bc0dd7ae527a02208026aac654c28a362a925ae511d52f27"
+    },
+    {
+      "bytes": 1511,
+      "path": "network-boundary.json",
+      "sha256": "1c99d2e029ad3217154fe0ab6d1df7b14a00ecc6fac968f6b4da14387036a065"
+    },
+    {
+      "bytes": 1760,
+      "path": "notification-original.txt",
+      "sha256": "73e59e65f91b1ac6284ac6e2ddbe6a4c313901291ad2fb86461f8dd948be8eb0"
+    },
+    {
+      "bytes": 1304,
+      "path": "podman-nnp.stderr",
+      "sha256": "98dee33dc06d43ff0eddf24dd0edef0e92b50236f77d53874359f465f5a114b7"
+    },
+    {
+      "bytes": 0,
+      "path": "podman-nnp.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 6732,
+      "path": "reconciliation.md",
+      "sha256": "e362d248d7b631746192229e215d25638ca006aea2510ab21483ab58f2207632"
+    },
+    {
+      "bytes": 6778,
+      "path": "red-contract.log",
+      "sha256": "e2c71b376b40a27a151ee49066bd0d08e1d744c819b248d592344e0b774a927e"
+    },
+    {
+      "bytes": 472,
+      "path": "registry-isolation.json",
+      "sha256": "a2024d540f392fae402978837b307ad2ceb68936bc972fbb23a0da66cf2e90e0"
+    },
+    {
+      "bytes": 4205,
+      "path": "space-monitor-red.log",
+      "sha256": "32b5a4d068ed9dcbb4f66e95671d0a33980162fb0e5da5c8bbcb6504a0362b16"
+    },
+    {
+      "bytes": 1157,
+      "path": "timeout-budget-red.log",
+      "sha256": "8e92e047f03321ca978b395f6ff4a64fd69c26d2d13c361434bb5ebf1f694ae5"
+    },
+    {
+      "bytes": 0,
+      "path": "wg100-monitor-red.stderr",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 0,
+      "path": "wg100-monitor-red.stdout",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "bytes": 3436,
+      "path": "wg100-reserve-red.log",
+      "sha256": "cb87f8da312e06a5292f3984da4b6287bc0fb6e7a8a550dceef80719ae1e3d79"
+    }
+  ],
+  "evidence_files_before_manifest": 43,
+  "gbrain": "final targeted import/readback; archived legacy page reduced from 7 to 0 sensitive patterns; no noncanonical write-through",
+  "graphify": "pre-final observations in graphify-final.json; final post-manifest status stored only in external backup seal to avoid self-reference",
+  "historical_exit_code": 1,
+  "later_operational_proof": "proc_783f0e243afc / PLANE_READY_OK",
+  "limits": [
+    "later recovery is operational proof, not independent review",
+    "graph.html remains historical because node count exceeds visualization limit",
+    "full suite has two unrelated pre-existing backup/rclone failures",
+    "no commit or push performed"
+  ],
+  "process": "proc_8d7769a62d79",
+  "registry": "targeted apply + exact rollback dry test; Plane added; 11 existing apps, 4 forks, 5 policies unchanged",
+  "restore": {
+    "postgres": "custom dump 1460 TOC entries restored to disposable database; 110 tables/162 migrations",
+    "volumes": "11 consistent archives extracted; 2347 files; 75916021 bytes"
+  },
+  "sealed_at_pre_final_graphify": "2026-09-06T00:25:56.911325-03:00",
+  "secret_scan": {
+    "bad_files": 0,
+    "content_printed": false,
+    "patterns_checked": 7
+  },
+  "subtype": "api-readiness-probed-before-migrator-and-backend-ready",
+  "tests": {
+    "container_contracts": "14/14",
+    "full_suite": "165 passed, 2 unrelated pre-existing backup/rclone failures",
+    "plane": "4/4"
+  },
+  "verdict": "SEALED_CURRENT_PASS_HISTORICAL_EXIT_1_PRESERVED"
+}

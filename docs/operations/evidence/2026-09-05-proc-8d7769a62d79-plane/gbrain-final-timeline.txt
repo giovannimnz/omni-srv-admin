@@ -1,0 +1,5 @@
+2026-09-06T00:00:00.000Z  Plane final: OCI/DRG primary + wg100 reserve, direct public fechado [omni-srv-admin/docs/operations/evidence/2026-09-05-proc-8d7769a62d79-plane/reconciliation.md]
+2026-09-05T00:00:00.000Z  Emissão ativa Certbot DNS-01 dos quatro lineages e graceful reload do Apache comprovados. [proc_6d923d475ab0]
+2026-09-05T00:00:00.000Z  CloudBeaver proc_c911d3f83c90 reconciliado e porta 8978 fechada no loopback [omni-srv-admin/docs/operations/evidence/2026-09-05-proc-c911d3f83c90-cloudbeaver/reconciliation.md]
+2026-09-05T00:00:00.000Z  Jenkins proc_37d55995c20b reconciliado; mount corrigido e ports 8085/50000 privados [omni-srv-admin/docs/operations/evidence/2026-09-05-proc-37d55995c20b-jenkins/reconciliation.md]
+2026-09-05T00:00:00.000Z  Plane proc_8d7769a62d79 reconciliado; readiness e ports endurecidos [omni-srv-admin/docs/operations/evidence/2026-09-05-proc-8d7769a62d79-plane/reconciliation.md]

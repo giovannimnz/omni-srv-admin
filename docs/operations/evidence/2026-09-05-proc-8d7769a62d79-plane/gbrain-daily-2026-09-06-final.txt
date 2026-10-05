@@ -1,0 +1,26 @@
+---
+type: note
+title: '2026-09-06'
+date: '2026-09-06'
+---
+
+# 2026-09-06
+
+## Sessão — Plane `proc_8d7769a62d79` final seal
+
+- Sessão iniciada em 2026-09-05 e concluída após meia-noite.
+- Processo histórico preservado como `post-workload-harness-failure`: frontend
+  root `200`, API `502` durante migrations; `proc_783f0e243afc` provou
+  migrator `exited:0`, API `401` e `PLANE_READY_OK` posterior.
+- Unit Plane agora readiness-aware, `TimeoutStartSec=2100`, env `0600`.
+- Web/proxy apenas loopback. PostgreSQL em loopback + OCI/DRG primary +
+  `wg100` reserve. Direct public `8080/8090/8747` bloqueado.
+- MinIO `/data` em named volume; healthcheck transient órfão aposentado;
+  monitor read-only de 5min inclui `/spaces/`.
+- DB `110` tabelas, `162` migrations, zero users/workspaces/projects; dump e
+  11 volumes com restore test.
+- Tests Plane `4/4`, contracts `14/14`; full suite `165/167`, dois residuals
+  preexistentes backup/rclone sem overlap. Failed units `0/0`.
+- [[61-Incidents/2026-09-05-srv1-services-stale-certbot-podman]] ·
+  [[60-LOGS/2026-09-05-plane-proc-8d7769a62d79-reconciliation]] ·
+  [[30-RECURSOS/operations/plane-app-srv1-canonico]].

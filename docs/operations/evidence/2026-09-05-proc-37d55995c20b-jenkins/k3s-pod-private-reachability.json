@@ -1,0 +1,29 @@
+{
+  "captured_at": "2026-09-05T22:40:37.309354-03:00",
+  "target_web": "10.11.1.11:8085",
+  "target_jnlp": "10.11.1.11:50000",
+  "pods": [
+    {
+      "pod": "jenkins-agent-cc77b4d49-kxg96",
+      "node": "atius-srv-3",
+      "web_http": "200",
+      "web_exit_code": 0,
+      "jnlp_tcp_connected": true,
+      "jnlp_probe_exit_code": 28,
+      "jnlp_probe_disposition": "TCP connected; curl timed out waiting for protocol bytes",
+      "registration_claimed": false
+    },
+    {
+      "pod": "jenkins-agent-cc77b4d49-x65jh",
+      "node": "atius-srv-3",
+      "web_http": "200",
+      "web_exit_code": 0,
+      "jnlp_tcp_connected": true,
+      "jnlp_probe_exit_code": 28,
+      "jnlp_probe_disposition": "TCP connected; curl timed out waiting for protocol bytes",
+      "registration_claimed": false
+    }
+  ],
+  "private_reachability": "PASS",
+  "registration_status": "not-registered"
+}

@@ -1,0 +1,22 @@
+{
+  "exists": true,
+  "last_build": "2026-09-06T00:18:35.016Z",
+  "node_count": 14458,
+  "edge_count": 21149,
+  "hyperedge_count": 0,
+  "stale": false,
+  "age_hours": 0,
+  "built_at_commit": "29379ce",
+  "current_commit": "29379ce",
+  "commits_behind": 0,
+  "commit_stale": false,
+  "last_build_auto_update": {
+    "ts": "2026-07-30T18:16:15Z",
+    "status": "ok",
+    "exit_code": 0,
+    "duration_ms": 55467,
+    "head_at_build": "79844a369816db6283dbfd11c3d101bc3e0037aa",
+    "graphify_version": "graphify 0.8.39",
+    "trigger": "hermes-cron-auto-update"
+  }
+}

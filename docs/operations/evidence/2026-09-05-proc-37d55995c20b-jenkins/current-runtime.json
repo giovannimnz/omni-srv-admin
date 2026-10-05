@@ -1,0 +1,61 @@
+{
+  "captured_at": "2026-09-05T22:14:43.270410-03:00",
+  "container": {
+    "id": "2382c5dcbe52dc4d89d0b3eb93d15d3a987a1d433d5244cffcfac487746139ea",
+    "image_id": "f2c150c0dbf9ed2fd6bac0232de268571971b5dc8c31cf794450382ef5b5c857",
+    "image_name": "docker.io/jenkins/jenkins:2.541.3-jdk17",
+    "mounts": [
+      {
+        "destination": "/var/jenkins_home",
+        "rw": true,
+        "source": "/home/ubuntu/GitHub/containers/jenkins/jenkins_home"
+      },
+      {
+        "destination": "/usr/lib/aarch64-linux-gnu/libltdl.so.7",
+        "rw": false,
+        "source": "/usr/lib/aarch64-linux-gnu/libltdl.so.7"
+      },
+      {
+        "destination": "/workspace/atius",
+        "rw": false,
+        "source": "/home/ubuntu/GitHub/Atius-Capital/ats"
+      }
+    ],
+    "restart_count": 0,
+    "started_at": "2026-09-05T22:11:06.404603309-03:00",
+    "state": "running",
+    "user": "jenkins"
+  },
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "healthcheck": {
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "{\"unit\":\"container-jenkins.service\",\"image\":\"docker.io/jenkins/jenkins:2.541.3-jdk17\",\"listeners\":[\"10.11.1.11:50000\",\"10.11.1.11:8085\",\"127.0.0.1:8085\"],\"local\":\"ok\",\"private\":\"ok\",\"public\":\"ok\",\"restarts\":0}"
+  },
+  "jenkins_home": {
+    "config_sha256": "5d8e9d62be66d91be1d812abf4b5f198e1665be72f2932505adbce91ca2da1da",
+    "content_values_recorded": false,
+    "file_count": 2914,
+    "job_count": 0,
+    "root": "/home/ubuntu/GitHub/containers/jenkins/jenkins_home"
+  },
+  "listeners": [
+    "LISTEN 0      4096    127.0.0.1:8085  0.0.0.0:* users:((\"rootlessport\",pid=2109746,fd=11))",
+    "LISTEN 0      4096   10.11.1.11:8085  0.0.0.0:* users:((\"rootlessport\",pid=2109746,fd=12))",
+    "LISTEN 0      4096   10.11.1.11:50000 0.0.0.0:* users:((\"rootlessport\",pid=2109746,fd=13))"
+  ],
+  "unit": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Sat 2026-09-05 22:11:06 -03",
+    "ExecMainStatus": "0",
+    "ExecStart": "{ path=/usr/bin/podman ; argv[]=/usr/bin/podman run --cidfile=/run/user/1001/container-jenkins.service.ctr-id --cgroups=no-conmon --rm --sdnotify=conmon --replace --cpus 2 -d --name jenkins --network srv1-podman-v2 -p 127.0.0.1:8085:8080 -p 10.11.1.11:8085:8080 -p 10.11.1.11:50000:50000 -v /home/ubuntu/GitHub/containers/jenkins/jenkins_home:/var/jenkins_home:rw -v /usr/lib/aarch64-linux-gnu/libltdl.so.7:/usr/lib/aarch64-linux-gnu/libltdl.so.7:ro -v /home/ubuntu/GitHub/Atius-Capital/ats:/workspace/atius:ro --label io.containers.autoupdate=registry docker.io/jenkins/jenkins:2.541.3-jdk17 ; ignore_errors=no ; start_time=[Sat 2026-09-05 22:11:06 -03] ; stop_time=[n/a] ; pid=2109650 ; code=(null) ; status=0/0 }",
+    "InvocationID": "85ace929ce8748bb8d8880ec05f67654",
+    "NRestarts": "0",
+    "NeedDaemonReload": "no",
+    "Result": "success",
+    "SubState": "running"
+  }
+}

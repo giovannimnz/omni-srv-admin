@@ -1,0 +1,13 @@
+[Unit]
+Description=Read-only CloudBeaver runtime and edge healthcheck
+After=network-online.target container-cloudbeaver.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/cloudbeaver-healthcheck.sh
+NoNewPrivileges=true
+PrivateTmp=true
+TimeoutStartSec=60
+Nice=10
+IOSchedulingClass=idle

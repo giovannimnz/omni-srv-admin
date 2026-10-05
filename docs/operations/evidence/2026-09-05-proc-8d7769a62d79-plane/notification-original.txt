@@ -1,0 +1,31 @@
+[IMPORTANT: Background process proc_8d7769a62d79 exited (exit code 1).
+Command: set -euo pipefail
+systemctl --user start plane-podman.service
+for i in $(seq 1 180); do code=$(curl -kLsS -o /tmp/plane.out -w '%{http_code}' --max-time 4 https://plane.atius.com.br/ || true); [ "$code" = 200 ] && break; sleep 3; done
+printf 'public_http=%s\n' "$code"
+[ "$code" = 200 ]
+api_code=$(curl -kLsS -o /tmp/plane-api.out -w '%{http_code}' --max-time 10 https://plane.atius.com.br/api/v1/users/me/ || true)
+printf 'api_http=%s\n' "$api_code"
+[ "$api_code" = 401 ]
+setup_code=$(curl -kLsS -o /tmp/plane-setup.out -w '%{http_code}' --max-time 10 https://plane.atius.com.br/setup/ || true)
+printf 'setup_http=%s\n' "$setup_code"
+[ "$setup_code" = 200 ]
+rm -f /tmp/plane.out /tmp/plane-api.out /tmp/plane-setup.out
+systemctl --user is-active plane-podman.service
+printf '%s\n' '=== containers ==='
+/usr/bin/podman ps -a --format '{{.Names}}\t{{.Status}}\t{{.Image}}' | grep '^plane-app_' | sort
+count=$(/usr/bin/podman ps -a --format '{{.Names}}' | grep -c '^plane-app_')
+printf 'count=%s\n' "$count"
+[ "$count" -eq 13 ]
+printf '%s\n' '=== migrator ==='
+/usr/bin/podman inspect plane-app_migrator_1 --format 'status={{.State.Status}} exit={{.State.ExitCode}}' || /usr/bin/podman inspect plane-app-migrator-1 --format 'status={{.State.Status}} exit={{.State.ExitCode}}'
+printf '%s\n' '=== volumes ==='
+/usr/bin/podman volume ls --format '{{.Name}}' | grep '^plane-app_' | sort
+sleep 30
+systemctl --user is-active plane-podman.service
+for u in https://plane.atius.com.br/ https://plane.atius.com.br/setup/; do printf '%s ' "$u"; curl -kLsS -o /dev/null -w '%{http_code} %{url_effective}\n' --max-time 10 "$u"; done
+echo PLANE_RECOVERY_OK
+Output:
+public_http=200
+api_http=502
+]

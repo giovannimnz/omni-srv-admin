@@ -1,0 +1,19 @@
+{
+  "classification": "unattributed-external-tcp-connection-not-confirmed-exploitation",
+  "matches": [
+    {
+      "message_id": 296935,
+      "session_id": "20260904_200755_1d1861",
+      "role": "tool",
+      "timestamp_brt": "2026-09-05T21:57:45.595708-03:00",
+      "content": "{\"output\": \"=== no active Jenkins TCP sessions except local browser residue ===\\nESTAB      0      0      [::ffff:10.0.0.238]:50000 [::ffff:36.48.69.165]:62740 users:((\\\"rootlessport\\\",pid=2088913,fd=10))\\nFIN-WAIT-2 0      0       [::ffff:127.0.0.1]:8085     [::ffff:127.0.0.1]:17512 users:((\\\"rootlessport\\\",pid=2088913,fd=4)) \\n=== unit/current health ===\\nResult=success\\nNRestarts=0\\nActiveState=active\\nSubState=running\\nInvocationID=7738f03b209643c8a5df0622125c19bc\\nlocal=200\\npublic=200\\npre_cutover_health=PASS\", \"exit_code\": 0, \"error\": null}"
+    },
+    {
+      "message_id": 296937,
+      "session_id": "20260904_200755_1d1861",
+      "role": "assistant",
+      "timestamp_brt": "2026-09-05T21:58:15.964354-03:00",
+      "content": "Há uma conexão JNLP pública ativa de `36.48.69.165` em `50000`; não é um agent OCI/DRG. Isso confirma exploração real do bind público, não só reachability teórica.\n\nSem jobs e sem queue Jenkins. Vou preservar a conexão como evidência, parar uma vez, criar snapshot consistente do JENKINS_HOME e aplicar o core privado. O monitor entra depois, separado."
+    }
+  ]
+}

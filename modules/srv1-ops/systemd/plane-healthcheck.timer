@@ -1,0 +1,13 @@
+[Unit]
+Description=Run Plane read-only healthcheck every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+AccuracySec=30s
+RandomizedDelaySec=30s
+Persistent=true
+Unit=plane-healthcheck.service
+
+[Install]
+WantedBy=timers.target

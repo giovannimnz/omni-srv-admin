@@ -1,0 +1,23 @@
+[Unit]
+Description=Offload de artefatos aposentados para GDrive e exclusão local
+Documentation=https://github.com/giovannimnz/omni-srv-admin
+ConditionHost=atius-srv-1*
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=%h/GitHub/omni-srv-admin/modules/srv1-ops/scripts/offload-retired-artifacts-to-gdrive.sh
+WorkingDirectory=%h
+StandardOutput=journal
+StandardError=journal
+Nice=19
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+Slice=omni-transfers.slice
+TimeoutStartSec=2h
+TimeoutStopSec=5min
+KillMode=control-group
+
+[Install]
+WantedBy=default.target

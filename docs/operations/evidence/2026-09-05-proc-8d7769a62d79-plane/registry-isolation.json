@@ -1,0 +1,25 @@
+{
+  "before_apps": 11,
+  "after_apps": 12,
+  "added_apps": [
+    "plane"
+  ],
+  "unchanged_existing_apps": 11,
+  "before_forks": 4,
+  "after_forks": 4,
+  "changed_forks": [],
+  "before_policies": 5,
+  "after_policies": 5,
+  "changed_policies": [],
+  "mirror_added_apps": [
+    "plane"
+  ],
+  "plane_ports": [
+    "127.0.0.1:8080:80",
+    "127.0.0.1:8090:80",
+    "127.0.0.1:8747:5432",
+    "10.11.1.11:8747:5432",
+    "10.100.100.1:8747:5432"
+  ],
+  "isolation": "PASS"
+}

@@ -1,0 +1,45 @@
+[IMPORTANT: Background process proc_37d55995c20b exited (exit code 1).
+Command: set -euo pipefail
+/home/ubuntu/.local/bin/omni srv1-ops resources run transfers -- /usr/bin/podman pull docker.io/jenkins/jenkins:2.541.3-jdk17
+systemctl --user daemon-reload
+systemctl --user reset-failed container-jenkins.service
+systemctl --user start container-jenkins.service
+for i in $(seq 1 120); do code=$(curl -sS -o /tmp/jenkins.out -w '%{http_code}' --max-time 3 http://127.0.0.1:8085/login || true); [ "$code" = 200 ] && break; sleep 2; done
+printf 'local_http=%s\n' "$code"
+[ "$code" = 200 ]
+grep -qi 'Jenkins' /tmp/jenkins.out
+rm -f /tmp/jenkins.out
+systemctl --user is-active container-jenkins.service
+/usr/bin/podman inspect jenkins --format 'image={{.ImageName}} status={{.State.Status}} mount={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}}'
+code2=$(curl -kLsS -o /dev/null -w '%{http_code}' --max-time 15 https://jenkins.atius.com.br/login)
+printf 'public_http=%s\n' "$code2"
+[ "$code2" = 200 ]
+sleep 30
+systemctl --user is-active container-jenkins.service
+/usr/bin/podman ps --filter name=jenkins --format '{{.Names}} {{.Status}}'
+echo JENKINS_RECOVERY_OK
+Output:
+ers.slice
+cmd:     systemd-run --user --scope --collect --same-dir --slice=omni-transfers.slice -p CPUQuota=100% -p CPUWeight=25 -p MemoryHigh=2G -p MemoryMax=4G -p MemorySwapMax=1G -p IOWeight=25 -p TasksMax=2048 -p 'IOReadBandwidthMax=/dev/sda 60M' -p 'IOWriteBandwidthMax=/dev/sda 30M' /usr/bin/podman pull docker.io/jenkins/jenkins:2.541.3-jdk17
+cgroup-init: 2026-09-05T01:01:24-03:00 completou
+Running as unit: run-u107705.scope; invocation ID: e2733a576da84ffdb5e8676ef99383a7
+Trying to pull docker.io/jenkins/jenkins:2.541.3-jdk17...
+Getting image source signatures
+Copying blob sha256:d112e83c977db051476299dc616f6b574209aacba6fb4e1a6e7161f0693aeda8
+Copying blob sha256:9276e76e62afd8421516059c0238d0d2bba58227af1cbce32b43d67781151ea2
+Copying blob sha256:96eb72c8342a58295a4684572c63a230a958d316b0489ada4519f57d7715b692
+Copying blob sha256:52966e903c822e0ed57bebfc9afc96369bcd542a5ad1b0e5be91bf2406e8ddff
+Copying blob sha256:dfe417f3a4c0c6f2c28dcd6c55e29c874decd27c416d7aaaf4d0bbc39c796e6e
+Copying blob sha256:fed4757fb39eee38f23c968abc28f7dad44aec87f9a9566aa02238da7606d225
+Copying blob sha256:41d300a7ae387dad286aa9e9b0c637894b1f55dda1b69c7c914d1164dc052d12
+Copying blob sha256:5c192b0fd2d5575268f274b4b02c745f30cd0d87ea50c83d39f0ad88b9d5caad
+Copying blob sha256:952b33fc170329fc8010e67bf6b3507bae1560b87b898669398d4123d64aed2d
+Copying blob sha256:ccc5efb8c202eff2c31f5276308363973f139b83a4d61e37c15add3f86866084
+Copying blob sha256:baa0d013ff81168ab84d8bc1631abdfe905e42b91b7086ce68b3595262cf7add
+Copying blob sha256:359460856babac1e154b4ac9e23de1a1d1ed83ed460672b6f5d0c71c054e2aa0
+Copying config sha256:f2c150c0dbf9ed2fd6bac0232de268571971b5dc8c31cf794450382ef5b5c857
+Writing manifest to image destination
+f2c150c0dbf9ed2fd6bac0232de268571971b5dc8c31cf794450382ef5b5c857
+Job for container-jenkins.service failed because the control process exited with error code.
+See "systemctl --user status container-jenkins.service" and "journalctl --user -xeu container-jenkins.service" for details.
+]

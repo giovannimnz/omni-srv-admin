@@ -1,0 +1,176 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-09-27T08:13:36.778Z",
+  "finalVerdict": "PASS_SUBSET",
+  "runner": "playwright-headless",
+  "evidenceScope": "subset",
+  "selectedTargetIds": [
+    "admin-talk"
+  ],
+  "requiredFleetTargetIds": [
+    "sso",
+    "ssh",
+    "rdp",
+    "oci",
+    "talk",
+    "admin-talk",
+    "remote",
+    "grafana",
+    "portainer",
+    "docker",
+    "vpn",
+    "adguard"
+  ],
+  "completeFleetEvidence": false,
+  "proofScope": {
+    "hostLocalLifecycle": true,
+    "centralOidcFlow": false
+  },
+  "sites": [
+    {
+      "id": "admin-talk",
+      "origin": "https://talk.atius.com.br",
+      "status": "PASS",
+      "cycles": [
+        {
+          "cycle": 1,
+          "status": "PASS",
+          "entryUrl": "https://talk.atius.com.br/admin/",
+          "loginUrl": "https://talk.atius.com.br/admin/login",
+          "authenticatedUrl": "https://talk.atius.com.br/admin/",
+          "logoutUrl": "https://talk.atius.com.br/admin/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "form[action*=\"/logout\"] button, form[action*=\"/logout\"] input[type=\"submit\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://talk.atius.com.br/admin/"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/admin/login"
+            },
+            {
+              "status": 503,
+              "url": "https://talk.atius.com.br/admin/"
+            },
+            {
+              "status": 303,
+              "url": "https://talk.atius.com.br/admin/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/admin/login"
+            }
+          ]
+        },
+        {
+          "cycle": 2,
+          "status": "PASS",
+          "entryUrl": "https://talk.atius.com.br/admin/",
+          "loginUrl": "https://talk.atius.com.br/admin/login",
+          "authenticatedUrl": "https://talk.atius.com.br/admin/",
+          "logoutUrl": "https://talk.atius.com.br/admin/login",
+          "authCookieIssued": true,
+          "authCookieCleared": true,
+          "logoutInteraction": "visible-app-control",
+          "logoutControl": "form[action*=\"/logout\"] button, form[action*=\"/logout\"] input[type=\"submit\"]",
+          "controlPlaneVisible": false,
+          "documentResponses": [
+            {
+              "status": 302,
+              "url": "https://talk.atius.com.br/admin/"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/admin/login"
+            },
+            {
+              "status": 503,
+              "url": "https://talk.atius.com.br/admin/"
+            },
+            {
+              "status": 303,
+              "url": "https://talk.atius.com.br/admin/logout"
+            },
+            {
+              "status": 200,
+              "url": "https://talk.atius.com.br/admin/login"
+            }
+          ]
+        }
+      ],
+      "screenshots": [
+        {
+          "name": "cycle-1-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-1-01-access.png",
+          "sha256": "914a4222f0624d3cf96da35111ffe47439b073b435bed1702c6834e2a80ef3ea",
+          "url": "https://talk.atius.com.br/admin/login"
+        },
+        {
+          "name": "cycle-1-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-1-02-login.png",
+          "sha256": "914a4222f0624d3cf96da35111ffe47439b073b435bed1702c6834e2a80ef3ea",
+          "url": "https://talk.atius.com.br/admin/login"
+        },
+        {
+          "name": "cycle-1-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-1-03-authenticated.png",
+          "sha256": "88ae1c1de890f7e38ac34a748b9af35c5c7ae880c1c80d51e76a8a4c4536b924",
+          "url": "https://talk.atius.com.br/admin/"
+        },
+        {
+          "name": "cycle-1-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-1-04-logged-out.png",
+          "sha256": "914a4222f0624d3cf96da35111ffe47439b073b435bed1702c6834e2a80ef3ea",
+          "url": "https://talk.atius.com.br/admin/login"
+        },
+        {
+          "name": "cycle-2-01-access.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-2-01-access.png",
+          "sha256": "914a4222f0624d3cf96da35111ffe47439b073b435bed1702c6834e2a80ef3ea",
+          "url": "https://talk.atius.com.br/admin/login"
+        },
+        {
+          "name": "cycle-2-02-login.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-2-02-login.png",
+          "sha256": "914a4222f0624d3cf96da35111ffe47439b073b435bed1702c6834e2a80ef3ea",
+          "url": "https://talk.atius.com.br/admin/login"
+        },
+        {
+          "name": "cycle-2-03-authenticated.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-2-03-authenticated.png",
+          "sha256": "88ae1c1de890f7e38ac34a748b9af35c5c7ae880c1c80d51e76a8a4c4536b924",
+          "url": "https://talk.atius.com.br/admin/"
+        },
+        {
+          "name": "cycle-2-04-logged-out.png",
+          "path": "/home/ubuntu/GitHub/omni-srv-admin/docs/evidence/atius-sso/2026-07-30-host-local-lifecycle/admin-talk/cycle-2-04-logged-out.png",
+          "sha256": "914a4222f0624d3cf96da35111ffe47439b073b435bed1702c6834e2a80ef3ea",
+          "url": "https://talk.atius.com.br/admin/login"
+        }
+      ],
+      "mainFrameUrls": [
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/",
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/",
+        "https://talk.atius.com.br/admin/login",
+        "https://talk.atius.com.br/admin/login"
+      ]
+    }
+  ],
+  "totals": {
+    "sites": 1,
+    "cycles": 2,
+    "screenshots": 8
+  },
+  "secretsRecorded": false
+}

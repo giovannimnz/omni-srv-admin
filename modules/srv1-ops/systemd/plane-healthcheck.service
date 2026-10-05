@@ -1,0 +1,13 @@
+[Unit]
+Description=Read-only Plane stack, listener, API, and edge healthcheck
+After=network-online.target plane-podman.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/plane-healthcheck.sh
+NoNewPrivileges=true
+PrivateTmp=true
+TimeoutStartSec=90
+Nice=10
+IOSchedulingClass=idle

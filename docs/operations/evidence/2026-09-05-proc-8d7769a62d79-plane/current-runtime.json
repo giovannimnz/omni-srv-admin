@@ -1,0 +1,278 @@
+{
+  "captured_at": "2026-09-06T00:01:40.831956-03:00",
+  "containers": [
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "11acc9bc2aae08264ce9a11e56030e494c38eeb4bb41a0e781b4724b362523b4",
+      "image": "docker.io/makeplane/plane-admin:v1.3.1",
+      "mounts": [],
+      "name": "plane-app_admin_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "c994a3164ad639083ed2ee6c2012961397ec03a9624134a06ff0b715036d2795",
+      "image": "docker.io/makeplane/plane-backend:v1.3.1",
+      "mounts": [
+        {
+          "destination": "/code/plane/logs",
+          "name": "plane-app_logs_api",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_api_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "d74d97c7303f3d542b279f89fa52ce0b7e444f795a8b74e0c95c716708f00c17",
+      "image": "docker.io/makeplane/plane-backend:v1.3.1",
+      "mounts": [
+        {
+          "destination": "/code/plane/logs",
+          "name": "plane-app_logs_beat-worker",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_beat-worker_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "962eec01d3208dc983a73412d1d8f4f5bf076a824fe8cb356c0f9de3ddf1e3b0",
+      "image": "docker.io/makeplane/plane-live:v1.3.1",
+      "mounts": [],
+      "name": "plane-app_live_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "386b8b8ffe162c6551a87b9d95ed57dd881b8f494b4c0bf0c0e0e03d714b3e1d",
+      "image": "docker.io/makeplane/plane-backend:v1.3.1",
+      "mounts": [
+        {
+          "destination": "/code/plane/logs",
+          "name": "plane-app_logs_migrator",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_migrator_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "exited"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "3d103cfbced3a3e0b5cbbfac2d278358678e7be12371d392e73f067928af16f3",
+      "image": "docker.io/library/postgres:15.7-alpine",
+      "mounts": [
+        {
+          "destination": "/var/lib/postgresql/data",
+          "name": "plane-app_pgdata",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_plane-db_1",
+      "ports": {
+        "5432/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8747"
+          },
+          {
+            "HostIp": "10.11.1.11",
+            "HostPort": "8747"
+          },
+          {
+            "HostIp": "10.100.100.1",
+            "HostPort": "8747"
+          }
+        ]
+      },
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "d2b99f1e683f3e8749f8d4971b75a749c669f01838f6538abbfe20f8b19eae6b",
+      "image": "docker.io/minio/minio:latest",
+      "mounts": [
+        {
+          "destination": "/data",
+          "name": "plane-app_minio_data",
+          "rw": true
+        },
+        {
+          "destination": "/export",
+          "name": "plane-app_uploads",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_plane-minio_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "87d0659f21846ddad1c25bb6a340e06432755dee1bda3082b8308a5a1b33ee04",
+      "image": "docker.io/library/rabbitmq:3.13.6-management-alpine",
+      "mounts": [
+        {
+          "destination": "/var/lib/rabbitmq",
+          "name": "plane-app_rabbitmq_data",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_plane-mq_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "ca671607ff7edad3352510dab8dc02367a21d9d0e86f0cc1a993f69371c4534d",
+      "image": "docker.io/valkey/valkey:7.2.11-alpine",
+      "mounts": [
+        {
+          "destination": "/data",
+          "name": "plane-app_redisdata",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_plane-redis_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "0949b0f60368e2e1bd5b5e504f4bee026a529c8fbb5f2811343c7abceb15c092",
+      "image": "docker.io/makeplane/plane-proxy:v1.3.1",
+      "mounts": [
+        {
+          "destination": "/data",
+          "name": "plane-app_proxy_data",
+          "rw": true
+        },
+        {
+          "destination": "/config",
+          "name": "plane-app_proxy_config",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_proxy_1",
+      "ports": {
+        "80/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8090"
+          }
+        ]
+      },
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "49ec8041d5d2173256985c4deb3b03a9e4b8caf122b8cdd97caa8e0667fce73a",
+      "image": "docker.io/makeplane/plane-space:v1.3.1",
+      "mounts": [],
+      "name": "plane-app_space_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "85a510d76676d40b2683ee60b54ef883927ee67dcabe53a73ba552983a46ed37",
+      "image": "docker.io/makeplane/plane-frontend:v1.3.1",
+      "mounts": [],
+      "name": "plane-app_web_1",
+      "ports": {
+        "80/tcp": [
+          {
+            "HostIp": "127.0.0.1",
+            "HostPort": "8080"
+          }
+        ]
+      },
+      "restart_count": 0,
+      "state": "running"
+    },
+    {
+      "exit_code": 0,
+      "healthcheck_present": false,
+      "id": "610701cd36a014cfad273d459aecee0ab7295acae5f189ab6ba6c1632177ec10",
+      "image": "docker.io/makeplane/plane-backend:v1.3.1",
+      "mounts": [
+        {
+          "destination": "/code/plane/logs",
+          "name": "plane-app_logs_worker",
+          "rw": true
+        }
+      ],
+      "name": "plane-app_worker_1",
+      "ports": {},
+      "restart_count": 0,
+      "state": "running"
+    }
+  ],
+  "counts": {
+    "all": 13,
+    "exited_zero": 1,
+    "running": 12
+  },
+  "database_metrics": "bytes|tables|migrations|users|workspaces|projects = 18567983|110|162|0|0|0",
+  "env": {
+    "mode": "0o600",
+    "values_recorded": false
+  },
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "healthcheck": {
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "{\"unit\":\"plane-podman.service\",\"listeners\":[\"10.100.100.1:8747\",\"10.11.1.11:8747\",\"127.0.0.1:8080\",\"127.0.0.1:8090\",\"127.0.0.1:8747\"],\"local\":{\"root\":200,\"setup\":200,\"api\":401,\"spaces\":200},\"public\":{\"root\":200,\"setup\":200,\"api\":401,\"spaces\":200}}"
+  },
+  "listeners": [
+    "LISTEN 0      4096      127.0.0.1:8080 0.0.0.0:* users:((\"rootlessport\",pid=2428900,fd=11))",
+    "LISTEN 0      4096      127.0.0.1:8090 0.0.0.0:* users:((\"rootlessport\",pid=2429276,fd=5)) ",
+    "LISTEN 0      4096     10.11.1.11:8747 0.0.0.0:* users:((\"rootlessport\",pid=2428169,fd=12))",
+    "LISTEN 0      4096   10.100.100.1:8747 0.0.0.0:* users:((\"rootlessport\",pid=2428169,fd=13))",
+    "LISTEN 0      4096      127.0.0.1:8747 0.0.0.0:* users:((\"rootlessport\",pid=2428169,fd=10))"
+  ],
+  "unit": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Sat 2026-09-05 23:56:42 -03",
+    "ExecMainStatus": "0",
+    "ExecStart": "{ path=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/plane-stack-up.sh ; argv[]=/home/ubuntu/GitHub/omni-srv-admin/modules/srv1-ops/scripts/plane-stack-up.sh ; ignore_errors=no ; start_time=[Sat 2026-09-05 23:56:42 -03] ; stop_time=[Sat 2026-09-05 23:57:52 -03] ; pid=2427678 ; code=exited ; status=0 }",
+    "InvocationID": "21527f0c3fdd4b51aaff301c076769ed",
+    "NeedDaemonReload": "no",
+    "Result": "success",
+    "SubState": "exited",
+    "TimeoutStartUSec": "35min"
+  }
+}

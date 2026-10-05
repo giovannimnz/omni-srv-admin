@@ -1,0 +1,230 @@
+---
+type: incident
+title: 'SRV-1 — services stale, Certbot e apps Podman'
+date: '2026-09-05T00:00:00.000Z'
+status: resolved
+severity: high
+ingested_at: '2026-09-05T22:37:56.302Z'
+source_kind: 'mcp:put_page'
+ingested_via: 'mcp:put_page'
+tags:
+  - certbot
+  - cloudbeaver
+  - jenkins
+  - logrotate
+  - plane
+  - pm2
+  - podman
+  - srv1
+---
+
+# SRV-1 — services stale, Certbot e apps Podman
+
+## Impacto
+
+Durante o onboarding do `atius-srv-4`, a auditoria local encontrou Certbot/logrotate falhos e CloudBeaver/Jenkins/Plane em 503. `atius-talk-pm2-bootstrap` também ficou temporariamente preso em reconcile.
+
+## Causas
+
+- Certbot processava 27 renewal configs inativos/quebrados.
+- Logrotate tinha definição duplicada e owner insuficiente para rotations antigas.
+- CloudBeaver/Jenkins dependiam de imagens `localhost/*` removidas.
+- Jenkins ainda montava `/home/ubuntu/GitHub/atius`, path aposentado.
+- Plane perdeu network/volumes `plane-app_*`; unit usava invocation/timeout antigos; Space tinha healthcheck que convertia qualquer erro em sucesso.
+- O socket privado do `systemd --user` recusava conexão, impedindo Podman de agendar healthchecks após recreate.
+
+## Correção
+
+- Backup Let's Encrypt integral em `/var/backups/letsencrypt-pre-active-consolidation-20260905T002836-0300`; quatro lineages ativos migrados para DNS-01 e renovados até 4/dez/2026; 27 lineages inativos arquivados.
+- Backup apps em `/home/ubuntu/.backups/srv1-app-recovery-20260905T005017-0300`, com `SHA256SUMS` e restore test.
+- CloudBeaver 26.1.0 e Jenkins 2.541.3 restaurados com imagens upstream ARM64 e dados preservados.
+- Jenkins repontado para `/home/ubuntu/GitHub/Atius-Capital/ats` read-only.
+- Plane restaurado com 13 containers, 162 migrations, volumes isolados `plane-app_*` e health periódico real.
+- `systemd --user daemon-reexec` restaurou o private socket sem downtime dos serviços.
+- Certbot/logrotate/Atius Talk e apps recuperados ficaram `success`; endpoints públicos 200.
+
+## Evidência e rollback
+
+- Repo: `docs/operations/srv1-service-recovery-2026-09-05.md`.
+- Runtime contract CloudBeaver: `inventory/hosts/atius-srv-1.yaml`, live unit `/home/ubuntu/.config/systemd/user/container-cloudbeaver.service` e compose `/home/ubuntu/GitHub/containers/cloudbeaver/podman-compose.yml`.
+- Backups acima foram checksum-verified; archives CloudBeaver/Jenkins foram extraídos em diretório isolado.
+- Rollback: parar só a unit afetada, restaurar unit/compose e archive correspondente, validar endpoint local e depois público.
+
+### Certbot DNS-01 dry-run — 2026-09-05 19:33 BRT
+
+- Processo reconciliado: `proc_ea2ef8709f8e`, exit `0`.
+- Dry-run `certbot certonly --dry-run --dns-cloudflare` passou para `admin.talk.atius.com.br`, `landscape.atius.com.br`, `ssh.atius.com.br` e `vault.atius.com.br`.
+- Renewal configs dos quatro lineages usam `authenticator = dns-cloudflare`, `dns_cloudflare_credentials = /etc/letsencrypt/cloudflare-atius.ini` e propagação `30s`.
+- Certificados origin no Certbot válidos até `2026-12-04`; timer `certbot.timer` ativo.
+- `apache2ctl configtest` retornou `Syntax OK`.
+- Nuance externa: `landscape.atius.com.br` apresenta cert Cloudflare/Google Trust no edge público; a validação acima prova o lineage origin via DNS-01, não o edge cert.
+
+### Certbot DNS-01 emissão ativa — 2026-09-05 00:43–00:45 BRT
+
+- Processo tardio reconciliado: `proc_6d923d475ab0`, exit `0`; o tracker já não preservava a sessão, então a conclusão foi confrontada com o estado live e `/var/log/letsencrypt/letsencrypt.log`.
+- `--force-renewal` emitiu certificados reais via DNS-01 para os quatro lineages. O log registra `Successfully received certificate` para `admin.talk.atius.com.br`, `landscape.atius.com.br`, `ssh.atius.com.br` e `vault.atius.com.br`.
+- Symlinks live apontam para `fullchain2.pem`, `fullchain3.pem`, `fullchain2.pem` e `fullchain2.pem`, respectivamente; todos expiram em `2026-12-04`.
+- Os quatro renewal configs permanecem em `dns-cloudflare`, propagação `30s` e credencial referenciada em `/etc/letsencrypt/cloudflare-atius.ini`.
+- Apache fez graceful reload às `00:45:45` e retomou operação às `00:45:46`; estado atual `active/running`, `Result=success`, `Syntax OK`.
+- Edge público atual: HTTP `301/302/308/200`; `admin.talk`, `ssh` e `vault` apresentam exatamente os certificados origin novos. `landscape` continua apresentando o certificado Cloudflare/Google Trust no proxy público, comportamento esperado.
+- `certbot.timer` está `enabled/active`; `certbot.service` terminou com status `0`. Não houve nova reemissão durante esta reconciliação.
+- Backup documental checksum-verified: `/home/ubuntu/.backups/proc-6d923d475ab0-certbot-docs-20260905T194215-0300`.
+
+## Reconciliação CloudBeaver `proc_c911d3f83c90` — 2026-09-05 20:18–21:11 BRT
+
+- Processo histórico: exit `0`, duração `183s`, marker `CLOUDBEAVER_RECOVERY_OK`; imagem `docker.io/dbeaver/cloudbeaver:26.1.0`, mount persistente e HTTP local/público `200`.
+- Classificação: `operational-pass-not-review`; subtype `superseded-by-current-hardened-runtime`.
+- Finding sibling atual: `-p 8978:8978` permitia bypass direto do Apache/Cloudflare. SRV-3 e SRV-4 obtinham `HTTP 200` no IP público.
+- Hardening: listener agora é somente `127.0.0.1:8978`; `db.atius.com.br` continua `200`; probes externos diretos retornam curl `7/000` e TCP recusado, com positive control em `443`.
+- Source canônico criado em `modules/srv1-ops/`; unit/compose live ficaram byte-equal. Inventory e docs agora usam `db.atius.com.br`, versão `26.1.0`, network `srv1-podman-v2` e bind loopback.
+- Monitor read-only `cloudbeaver-healthcheck.timer` passou em runs manuais e tick natural de 5min. `podman inspect` foi retirado do monitor endurecido porque Podman 3.4 falha no clone/re-exec sob `NoNewPrivileges=true`.
+- DbOmniFleet atualizado targeted: somente CloudBeaver e seu elemento em `inventory.host.apps`; `10` outros apps, `4` forks e `5` policies ficaram idênticos. Dry transaction e rollback test passaram.
+- TDD: `5 passed`; failed units system/user `0/0`.
+- Lifecycle final da unit canônica: stop limpo `Result=success/143`, start com
+  H2 `9` arquivos/`1` DB candidate, bind loopback, zero restarts e tick natural
+  do monitor `success`.
+- Suite ampla: `156 passed, 2 failed`; os dois failures estão na lane dirty
+  preexistente de backup/rclone, sem overlap com CloudBeaver.
+- Backup/restore: `/home/ubuntu/.backups/cloudbeaver-loopback-cutover-20260905T204000-0300`, manifest `21/21`, snapshot consistente restaurado com `9` arquivos e `1` DB candidate.
+- False-starts do harness tiveram rollback PASS e ficaram preservados na evidence. O core de segurança foi separado do monitor para que falha auxiliar nunca reabra a porta pública.
+- Repo: `docs/operations/srv1-service-recovery-2026-09-05.md` e `docs/operations/evidence/2026-09-05-proc-c911d3f83c90-cloudbeaver/reconciliation.md`.
+- Checkpoint Graphify pré-seal `14.473/21.163`, fresh/current, query exata
+  `22/20`; build pós-documentação registrada no final seal externo. GBrain body
+  + timeline sincronizados targeted (`1/1`, `6` chunks, `--no-embed`).
+- [[60-LOGS/2026-09-05-cloudbeaver-proc-c911d3f83c90-reconciliation]].
+
+## Reconciliação Jenkins `proc_37d55995c20b` — 2026-09-05 21:45–22:17 BRT
+
+- FAIL histórico preservado: `01:01:21–01:02:37`, exit `1`. Pull da imagem
+  `2.541.3-jdk17` passou, mas o Podman saiu `125` cinco vezes por
+  `statfs /home/ubuntu/GitHub/atius: no such file or directory`.
+- Fix histórico: mount repontado RO para
+  `/home/ubuntu/GitHub/Atius-Capital/ats:/workspace/atius:ro`. Retry separado
+  `proc_71bb416a205d` terminou exit `0` com `JENKINS_RECOVERY_OK`.
+- Classificação: `failed-probe-fixed-current-tree`; subtype
+  `historical-missing-workspace-mount-fixed-before-successful-retry-current-runtime-hardened`.
+- Finding atual: `8085/50000` estavam em `*`; SRV-3/SRV-4 alcançavam ambos no
+  IP público. Uma conexão externa breve em `50000` foi observada, mas não
+  atribuída e não é classificada como exploração confirmada.
+- Hardening: web em `127.0.0.1:8085` + `10.11.1.11:8085`; JNLP apenas em
+  `10.11.1.11:50000`. Public direct bloqueado de dois origins; private OCI/DRG
+  preservado em SRV-2/SRV-3/SRV-4; edge Cloudflare `200`.
+- Unit/compose canônicos no `modules/srv1-ops/`, monitor read-only de 5min,
+  lifecycle `success/143→0`, zero restarts/jobs e `config.xml` hash preservado.
+- Backups: histórico `/home/ubuntu/.backups/srv1-app-recovery-20260905T005017-0300`
+  e hardening `/home/ubuntu/.backups/proc-37d55995c20b-pre-hardening-20260905T215218-0300`;
+  archives extraídos e `config.xml` byte-equal.
+- DbOmniFleet targeted isolation PASS: só Jenkins; `10` outros apps, `4` forks
+  e `5` policies intactos. Dry apply/rollback test PASS.
+- Tests: Jenkins `3/3`; container contracts `8/8`; full suite `159/161`, com
+  dois residuals preexistentes backup/rclone sem overlap.
+- Repo: `docs/operations/srv1-service-recovery-2026-09-05.md` e
+  `docs/operations/evidence/2026-09-05-proc-37d55995c20b-jenkins/reconciliation.md`.
+- [[60-LOGS/2026-09-05-jenkins-proc-37d55995c20b-reconciliation]].
+
+## Links
+
+- [[60-LOGS/2026-09-04-atius-srv4-bootstrap]]
+- [[20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/21.04-Log-Trabalho]]
+
+## Update RustDesk — 2026-09-05
+
+- Detectado restart storm oculto em `hbbs/hbbr`: aproximadamente 245 mil tentativas por `Pull=never` sem image local e identidade tmpfs ausente.
+- Loop parado; backup checksummed/restore-tested em `/home/ubuntu/.backups/rustdesk-server-loop-20260905T022043-0300`.
+- Digest ARM64 exato repuxado; fingerprint Vault aprovado; SQLite `integrity=ok`; `hbbs/hbbr` ativos com zero restarts.
+- Preflight durable repõe image/tag pinada e identidade tmpfs, valida SQLite e limita restart a `3/5min` com retry 30s. Restore drill real passou.
+- Edge público `34100/TCP`, `34125/TCP+UDP`, `34126/TCP` passou de SRV-3; direct native `21114-21119` ficou fechado; private OCI/DRG/`wg100` ficou aberto.
+- Guard nft root de 1 min removeu drift injetado e preservou policy em `systemctl stop`.
+- Source: `modules/srv1-ops/apps/rustdesk/`; inventário `inventory/hosts/atius-srv-1.yaml`; runbook `docs/operations/srv1-service-recovery-2026-09-05.md`.
+
+## Closeout de pressão e disco — 2026-09-05
+
+- SRV-1 caiu de 94% para 91% (`~20 GiB` livres) sem parar aplicações.
+- Dois conjuntos de runtimes/cache VS Code antigos foram enviados ao SRV-4 por SSH privado, com manifest JSONL por arquivo (type/mode/uid/gid/size/SHA-256), tar checksum, extração completa e restore manifest byte-equal antes da remoção local.
+- Backups SRV-4: `~/.backups/srv1-disk-relief/srv1-vscode-old-runtimes-cache-20260905T035902-0300` e `.../srv1-vscode-workspace-old-extensions-20260905T042221-0300`.
+- Preservados: settings/globalStorage, duas versões VS Code Server mais novas, extensões atuais e `~/.local/lib/python3.10` com Torch/CUDA.
+- Swap `~99%` com `~13–14 GiB MemAvailable` agora é `normal-cold-pages`, não incidente. Analyzer, doctor, watchdog e snapshot usam a regra `swap threshold + MemAvailable <4096 MiB`.
+- Histerese corrigida: watchdog entra por disco em 95%, recupera em 92% após cinco ciclos. Runtime voltou para `base`; doctor PASS.
+- Analyzer usa disco latest para severidade e média de 15 minutos só como trend. Estado final: disk `~90,7%`, warning, sem critical.
+- Fila rclone trata lock ocupado por backup saudável como `SKIP`/exit 0; backup GDrive ativo não foi interrompido.
+- CoreDNS TCP canary recuperou executable bit e request real passou.
+- Checkpoint intermediário: suite Omni `191 passed`.
+
+## Seal definitivo e findings residuais — 2026-09-05 09:26
+
+- Suite Omni `219/219`; Graphify definitivo `14.590/21.398`, fresh e
+  `commit_stale=false`; system/user failed units em zero.
+- `fleet-storage-audit.service` foi recuperada após novo failure de 181 s.
+  Root cause: checkout live stale, child pipes sobrevivendo ao timeout do
+  shell, parser YAML lendo `id/status` aninhados, inventários não ativos no
+  `all`, ausência de `identity_file` e parsing de `host:port`.
+- Correção live: process-group TERM→KILL, timeout por seção/deadline por host,
+  filtro POSIX active, parser top-level, rotas por probe e payload exactly-once.
+  Run final em 51 s: 5 OK; `giovanni-s23-termux` offline em VPN `:8022` e Casa
+  `:8322`; zero timeout/runner-error/orphan; unit `Result=success`.
+- Credencial legacy foi removida das fontes compartilháveis atuais. Scan exato
+  em 37.268 arquivos deixou apenas quatro caches operacionais `0600`; GBrain
+  ativo tem zero ocorrência. PM2 dump sanitizer impede regressão.
+- O full sync reexportou o root `ideaverse/`; após archives AES-256/restore,
+  páginas únicas foram migradas, 73 ticks incorporados e 42 slugs legacy
+  soft-deleted. Hold externo impede auto-commit das 831 mudanças preexistentes.
+- Residual: S23 Termux indisponível; rotação/history rewrite/snapshot GDrive
+  antigo seguem sob gate; backup GDrive serial continua ativo.
+- Vault residual: hold entrou com 831 mudanças e terminou com 862. Root `ops/`
+  preserva 33 write-throughs GBrain (16 exact duplicates, 17 review) em
+  archive AES-256/restore-tested
+  `/var/backups/obsidian-noncanonical-ops/20260905T100000-0300`; nenhum delete
+  em massa foi executado.
+- [[60-LOGS/2026-09-04-atius-srv4-bootstrap]] ·
+  [[20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin/21.04-Log-Trabalho]].
+
+## Recovery adicional — backup GDrive timeout/fleet writers
+
+- `backup-srv1-daily.service` atingiu o deadline de 6 h com status 130.
+- Partial `snapshot-2026-09-05_042520` preservado: 1.219 objetos e
+  730.102.032 bytes no subtree GitHub; state `quarantined` por ter começado
+  antes da redação da credencial legacy.
+- SRV-2/SRV-3 tinham units SRV-1-only e quatro writers concorrentes de 3–15
+  dias. Após backups checksummed, owners/PIDs stale foram parados e os timers
+  duplicados desabilitados.
+- Defesa em profundidade: SRV-1 orchestrator único, `ConditionHost`, guards
+  wrong-host/non-orchestrator, fleet lock compartilhado pelos offloads e
+  timers duplicados disabled nos demais hosts.
+- Backup novo é resumível por state atômico `0600`, uma tentativa por tick,
+  copy + `rclone check`, exit 75 retryable, outer deadline 2 h e retenção
+  somente para snapshots verificados/state complete.
+- Suite atual `230/230`; zero rclone writers nos três hosts antes do novo run.
+- Source: `docs/operations/evidence/2026-09-05-gdrive-backup-timeout-recovery/recovery.md`.
+
+### Quota residual durante o snapshot sanitizado
+
+- Dois ticks mantiveram o mesmo snapshot/job; ambos terminaram retryable.
+- Três mounts read-only compartilhavam o mesmo projeto Drive. Um `rg` root
+  órfão no SRV-1 segurava quatro FDs no mount e causou `EBUSY`.
+- Holder encerrado após preservação/hash; mounts SRV-1/2/3 pausados com backup,
+  `open_files=0` e enablement preservado.
+- Queue timer pausado; zero API consumers nos três hosts antes do cooldown.
+- Pacer final: 4 TPS, burst 1, `drive-pacer-min-sleep=1s`.
+
+### Blocker externo final
+
+- Tick 3 também saiu retryable com zero consumers locais.
+- Config Vault: token OAuth presente, `client_id/client_secret` ausentes.
+- O client público rclone usa o projeto compartilhado `202264815644`; quota
+  global permanece fora do controle do host.
+- Validator live bloqueia antes da API; queue e dois offloads compartilham hold
+  `0600` e saem success/no-op, preservando state/job.
+- Mounts read-only SRV-1/2/3 restaurados; zero non-mount writers.
+- Suite `233/233`; evidence final:
+  `docs/operations/evidence/2026-09-05-gdrive-backup-timeout-recovery/final-live-state.json`.
+- Desbloqueio exige OAuth Desktop client ATIUS próprio + reautorização e update
+  do `kv/atius/fleet-backup/rclone/giovanni-drive#rclone_conf`.
+
+<!-- timeline -->
+
+## Timeline
+
+- **2026-09-05** | proc_6d923d475ab0 — Emissão ativa Certbot DNS-01 dos quatro lineages e graceful reload do Apache comprovados.
+  Processo tardio proc_6d923d475ab0 reconciliado contra /var/log/letsencrypt/letsencrypt.log e estado live. Quatro force-renewals DNS-01 Cloudflare concluídos entre 00:43–00:45 BRT; lineages expiram em 2026-12-04. Apache fez graceful reload às 00:45:45 e retomou às 00:45:46. Estado atual: Apache active/running, certbot.timer enabled/active, Syntax OK. Verificação tardia não repetiu emissão nem reload.
+- **2026-09-05** | omni-srv-admin/docs/operations/evidence/2026-09-05-proc-c911d3f83c90-cloudbeaver/reconciliation.md — CloudBeaver proc_c911d3f83c90 reconciliado e porta 8978 fechada no loopback
+  O recovery histórico exit 0 foi classificado como operational-pass-not-review. A reconciliação encontrou bypass direto em 137.131.190.161:8978, mudou o bind para 127.0.0.1:8978, preservou db.atius.com.br em HTTP 200, bloqueou probes diretos de SRV-3/SRV-4, criou source canônico e monitor read-only de 5min, atualizou inventory e DbOmniFleet de forma targeted e validou backup/restore 21/21 com 9 arquivos e 1 DB candidate.

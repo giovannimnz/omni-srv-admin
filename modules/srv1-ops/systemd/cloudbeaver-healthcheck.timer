@@ -1,0 +1,13 @@
+[Unit]
+Description=Run CloudBeaver read-only healthcheck every five minutes
+
+[Timer]
+OnBootSec=5min
+OnUnitActiveSec=5min
+AccuracySec=30s
+RandomizedDelaySec=30s
+Persistent=true
+Unit=cloudbeaver-healthcheck.service
+
+[Install]
+WantedBy=timers.target

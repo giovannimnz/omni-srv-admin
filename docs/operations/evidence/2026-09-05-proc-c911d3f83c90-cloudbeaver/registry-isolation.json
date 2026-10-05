@@ -1,0 +1,21 @@
+{
+  "before_apps": 11,
+  "after_apps": 11,
+  "changed_apps": [
+    "cloudbeaver"
+  ],
+  "unchanged_non_cloudbeaver_apps": 10,
+  "before_forks": 4,
+  "after_forks": 4,
+  "changed_forks": [],
+  "before_policies": 5,
+  "after_policies": 5,
+  "changed_policies": [],
+  "mirror_changed_keys": [
+    "inventory.host.apps"
+  ],
+  "mirror_changed_apps": [
+    "cloudbeaver"
+  ],
+  "isolation": "PASS"
+}

@@ -1,0 +1,21 @@
+services:
+  cloudbeaver:
+    image: docker.io/dbeaver/cloudbeaver:26.1.0
+    container_name: cloudbeaver
+    restart: unless-stopped
+    cpus: 2
+    ports:
+      - "127.0.0.1:8978:8978"
+    volumes:
+      - /home/ubuntu/GitHub/containers/cloudbeaver/workspace_recent:/opt/cloudbeaver/workspace:rw
+    environment:
+      DBEAVER_UID: "8978"
+      DBEAVER_GID: "8978"
+      CLOUDBEAVER_APP_SUPPORTS_CUSTOM_CONNECTIONS: "true"
+    user: "8978:8978"
+    networks:
+      - srv1-podman-v2
+
+networks:
+  srv1-podman-v2:
+    external: true

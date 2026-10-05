@@ -1,0 +1,50 @@
+{
+  "process_id": "proc_c911d3f83c90",
+  "session_id": "20260904_200755_1d1861",
+  "classification": "operational-pass-not-review",
+  "subtype": "superseded-by-current-hardened-runtime",
+  "receipts": [
+    {
+      "message_id": 281702,
+      "observed_epoch": 1788580640.6797812,
+      "observed_brt": "2026-09-05T00:57:20.679781-03:00",
+      "payload": {
+        "output": "Background process started",
+        "session_id": "proc_c911d3f83c90",
+        "pid": 2040188,
+        "exit_code": 0,
+        "error": null,
+        "notify_on_complete": true
+      }
+    },
+    {
+      "message_id": 281705,
+      "observed_epoch": 1788580701.5139668,
+      "observed_brt": "2026-09-05T00:58:21.513967-03:00",
+      "payload": {
+        "session_id": "proc_c911d3f83c90",
+        "command": "set -euo pipefail\n/home/ubuntu/.local/bin/omni srv1-ops resources run transfers -- /usr/bin/podman pull docker.io/dbeaver/cloudbeaver:26.1.0\nsystemctl --user daemon-reload\nsystemctl --user reset-failed container-cloudbeaver.service\nsystemctl --user start container-cloudbeaver.service\nfor i in $(seq 1 60); do code=$(curl -sS -o /tmp/cloudbeaver.out -w '%{http_code}' --max-time 3 http://127.0.0.1:8978/ || true); [ \"$code\" = 200 ] && break; sleep 2; done\nprintf 'local_http=%s\\n' \"$code\"\n[ \"$code\" = 200 ]\ngrep -q '<title>CloudBeaver' /tmp/cloudbeaver.out\nrm -f /tmp/cloudbeaver.out\nsystemctl --user is-active container-cloudbeaver.service\n/usr/bin/podman inspect cloudbeaver --format 'image={{.ImageName}} status={{.State.Status}} mount={{range .Mounts}}{{.Source}}:{{.Destination}}{{end}}'\ncode2=$(curl -kLsS -o /dev/null -w '%{http_code}' --max-time 10 https://db.atius.com.br/)\nprintf 'public_http=%s\\n' \"$code2\"\n[ \"$code2\" = 200 ]\nsleep 30\nsystemctl --user is-active container-cloudbeaver.service\n/usr/bin/podman ps --filter name=cloudbeaver --format '{{.Names}} {{.Status}}'\necho CLOUDBEAVER_RECOVERY_OK",
+        "status": "running",
+        "pid": 2040188,
+        "uptime_seconds": 60,
+        "output_preview": "sha256:a7eeabeca9fa4f617a166a8f36a9b6f3df93dbe841e4586463950ffcd18f054c\nCopying blob sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1\nCopying blob sha256:84492386449aef7d571d1d043872dbfe2f6263a64cc3163d88963e9742a1b323\nCopying blob sha256:a619fec85e6e5565314c20d40b274b99ddb2a6bf9d42547ba59eb6d919d8a903\nCopying blob sha256:8c9456193390ccf5bef0fc67036c086a6179205adfa93e36208d22d081cb19b3\nCopying blob sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1\nCopying blob sha256:fa7076a6c4ccdaebde323d6bc5da73d555c3037224e5007591b4efcb560d8a3d\nCopying blob sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1\nCopying blob sha256:6c880b447c6461782984955e32479dab23e67f2848edf664cf2b40b87a9804a5\nCopying config sha256:143b9506f768dbe2fca707d6e912701abd680d93e2b6d9fe132c4b2c6e5b2101\nWriting manifest to image destination\n143b9506f768dbe2fca707d6e912701abd680d93e2b6d9fe132c4b2c6e5b2101\ncurl: (56) Recv failure: Conexão fechada pela outra ponta\n"
+      }
+    },
+    {
+      "message_id": 281711,
+      "observed_epoch": 1788580824.210449,
+      "observed_brt": "2026-09-05T01:00:24.210449-03:00",
+      "payload": {
+        "session_id": "proc_c911d3f83c90",
+        "command": "set -euo pipefail\n/home/ubuntu/.local/bin/omni srv1-ops resources run transfers -- /usr/bin/podman pull docker.io/dbeaver/cloudbeaver:26.1.0\nsystemctl --user daemon-reload\nsystemctl --user reset-failed container-cloudbeaver.service\nsystemctl --user start container-cloudbeaver.service\nfor i in $(seq 1 60); do code=$(curl -sS -o /tmp/cloudbeaver.out -w '%{http_code}' --max-time 3 http://127.0.0.1:8978/ || true); [ \"$code\" = 200 ] && break; sleep 2; done\nprintf 'local_http=%s\\n' \"$code\"\n[ \"$code\" = 200 ]\ngrep -q '<title>CloudBeaver' /tmp/cloudbeaver.out\nrm -f /tmp/cloudbeaver.out\nsystemctl --user is-active container-cloudbeaver.service\n/usr/bin/podman inspect cloudbeaver --format 'image={{.ImageName}} status={{.State.Status}} mount={{range .Mounts}}{{.Source}}:{{.Destination}}{{end}}'\ncode2=$(curl -kLsS -o /dev/null -w '%{http_code}' --max-time 10 https://db.atius.com.br/)\nprintf 'public_http=%s\\n' \"$code2\"\n[ \"$code2\" = 200 ]\nsleep 30\nsystemctl --user is-active container-cloudbeaver.service\n/usr/bin/podman ps --filter name=cloudbeaver --format '{{.Names}} {{.Status}}'\necho CLOUDBEAVER_RECOVERY_OK",
+        "status": "exited",
+        "pid": 2040188,
+        "uptime_seconds": 183,
+        "output_preview": "blob sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1\nCopying blob sha256:fa7076a6c4ccdaebde323d6bc5da73d555c3037224e5007591b4efcb560d8a3d\nCopying blob sha256:4f4fb700ef54461cfa02571ae0db9a0dc1e0cdb5577484a6d75e68dc38e8acc1\nCopying blob sha256:6c880b447c6461782984955e32479dab23e67f2848edf664cf2b40b87a9804a5\nCopying config sha256:143b9506f768dbe2fca707d6e912701abd680d93e2b6d9fe132c4b2c6e5b2101\nWriting manifest to image destination\n143b9506f768dbe2fca707d6e912701abd680d93e2b6d9fe132c4b2c6e5b2101\ncurl: (56) Recv failure: Conexão fechada pela outra ponta\ncurl: (56) Recv failure: Conexão fechada pela outra ponta\ncurl: (56) Recv failure: Conexão fechada pela outra ponta\ncurl: (56) Recv failure: Conexão fechada pela outra ponta\nlocal_http=200\nactive\nimage=docker.io/dbeaver/cloudbeaver:26.1.0 status=running mount=/home/ubuntu/GitHub/containers/cloudbeaver/workspace_recent:/opt/cloudbeaver/workspace\npublic_http=200\nactive\ncloudbeaver Up 39 seconds\nCLOUDBEAVER_RECOVERY_OK\n",
+        "exit_code": 0,
+        "completion_reason": "exited",
+        "termination_source": ""
+      }
+    }
+  ]
+}

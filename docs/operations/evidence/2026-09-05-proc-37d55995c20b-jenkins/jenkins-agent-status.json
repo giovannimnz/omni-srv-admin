@@ -1,0 +1,58 @@
+{
+  "captured_at": "2026-09-05T22:28:38.388787-03:00",
+  "deployment": {
+    "replicas": 2,
+    "ready_replicas": 2,
+    "available_replicas": 2,
+    "image": "jenkins/inbound-agent:latest",
+    "command": [
+      "/bin/sh",
+      "-c"
+    ],
+    "args": [
+      "set -eu\necho \"[agent] booting in cluster pod $$\"\necho \"[agent] JENKINS_AGENT_NAME=$${JENKINS_AGENT_NAME:-k3s-agent-$$(hostname)}\"\necho \"[agent] jnlp url=$${JENKINS_JNLP_URL}\"\necho \"[agent] waiting for jenkins controller on wg0...\"\nfor i in $$(seq 1 30); do\n  if curl -sS --max-time 2 -o /dev/null -w \"%{http_code}\" \"$${JENKINS_JNLP_URL}/login\" 2>/dev/null | grep -qE \"200|403\"; then\n    echo \"[agent] controller reachable\"\n    break\n  fi\n  echo \"[agent] attempt $$i/30...\"\n  sleep 5\ndone\necho \"[agent] Kubernetes plugin in Jenkins controller is required for live JNLP registration. Once installed + node template created, the controller will dynamically provision JNLP agents via pod templates and skip this static deployment.\"\nsleep infinity\n"
+    ],
+    "workload_behavior": "reachability-probe-then-sleep-infinity"
+  },
+  "pods": [
+    {
+      "name": "jenkins-agent-cc77b4d49-67fl7",
+      "phase": "Failed",
+      "node": "atius-srv-2",
+      "ready": [
+        false
+      ],
+      "restart_count": [
+        1
+      ]
+    },
+    {
+      "name": "jenkins-agent-cc77b4d49-kxg96",
+      "phase": "Running",
+      "node": "atius-srv-3",
+      "ready": [
+        true
+      ],
+      "restart_count": [
+        4
+      ]
+    },
+    {
+      "name": "jenkins-agent-cc77b4d49-x65jh",
+      "phase": "Running",
+      "node": "atius-srv-3",
+      "ready": [
+        true
+      ],
+      "restart_count": [
+        3
+      ]
+    }
+  ],
+  "controller": {
+    "nodes_dir_present": false,
+    "kubernetes_plugin_present": false
+  },
+  "classification": "placeholder-reachability-only",
+  "registration_status": "not-registered"
+}

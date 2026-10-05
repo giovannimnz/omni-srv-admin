@@ -1,0 +1,70 @@
+{
+  "root": "/home/ubuntu/GitHub/containers/cloudbeaver/workspace_recent",
+  "file_count": 9,
+  "files": [
+    {
+      "path": ".data/.cloudbeaver.runtime.conf",
+      "size": 4103,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    },
+    {
+      "path": ".data/.cloudbeaver.runtime.conf.bak",
+      "size": 4103,
+      "mode": "0o755",
+      "uid": 174513,
+      "gid": 174513
+    },
+    {
+      "path": ".data/.database-credentials.dat",
+      "size": 8,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    },
+    {
+      "path": ".data/cb.h2v2.dat.mv.db",
+      "size": 643072,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    },
+    {
+      "path": ".data/cb.h2v2.dat.trace.db",
+      "size": 8440,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    },
+    {
+      "path": ".metadata/dbeaver-instance.properties",
+      "size": 142,
+      "mode": "0o644",
+      "uid": 174513,
+      "gid": 174513
+    },
+    {
+      "path": ".metadata/dbeaver-instance.properties.lock",
+      "size": 0,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    },
+    {
+      "path": ".metadata/dbeaver-workspace.properties",
+      "size": 84,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    },
+    {
+      "path": "GlobalConfiguration/.dbeaver/data-sources.json",
+      "size": 41,
+      "mode": "0o777",
+      "uid": 65534,
+      "gid": 65534
+    }
+  ],
+  "content_values_recorded": false
+}

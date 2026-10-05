@@ -1,0 +1,42 @@
+{
+  "captured_at": "2026-09-05T21:20:54.146570-03:00",
+  "container": {
+    "id": "3f2114848aeff4f20e22205b27cca9e5891f53d408674704e757a94dfa2a2bdb",
+    "image_id": "143b9506f768dbe2fca707d6e912701abd680d93e2b6d9fe132c4b2c6e5b2101",
+    "image_name": "docker.io/dbeaver/cloudbeaver:26.1.0",
+    "mounts": [
+      {
+        "destination": "/opt/cloudbeaver/workspace",
+        "rw": true,
+        "source": "/home/ubuntu/GitHub/containers/cloudbeaver/workspace_recent"
+      }
+    ],
+    "restart_count": 0,
+    "started_at": "2026-09-05T21:13:34.748378768-03:00",
+    "state": "running"
+  },
+  "failed_units": {
+    "system": 0,
+    "user": 0
+  },
+  "healthcheck": {
+    "exit_code": 0,
+    "stderr": "",
+    "stdout": "{\"unit\":\"container-cloudbeaver.service\",\"image\":\"docker.io/dbeaver/cloudbeaver:26.1.0\",\"listener\":\"127.0.0.1:8978\",\"local\":\"ok\",\"public\":\"ok\",\"restarts\":0}"
+  },
+  "listener": "LISTEN 0      4096   127.0.0.1:8978 0.0.0.0:* users:((\"rootlessport\",pid=1886485,fd=11))",
+  "timer_show": "LastTriggerUSec=Sat 2026-09-05 21:18:53 -03\nResult=success\nId=cloudbeaver-healthcheck.timer\nActiveState=active\nSubState=waiting\n\nResult=success\nExecMainStatus=0\nId=cloudbeaver-healthcheck.service\nActiveState=inactive\nSubState=dead\n",
+  "unit": {
+    "ActiveState": "active",
+    "ExecMainStartTimestamp": "Sat 2026-09-05 21:13:34 -03",
+    "ExecMainStatus": "0",
+    "ExecStart": "{ path=/usr/bin/podman ; argv[]=/usr/bin/podman run --cidfile=/run/user/1001/container-cloudbeaver.service.ctr-id --cgroups=no-conmon --rm --sdnotify=conmon --replace --cpus 2 -d --name cloudbeaver --network srv1-podman-v2 -p 127.0.0.1:8978:8978 -v /home/ubuntu/GitHub/containers/cloudbeaver/workspace_recent:/opt/cloudbeaver/workspace:rw --user 8978:8978 -e DBEAVER_UID=8978 -e DBEAVER_GID=8978 -e CLOUDBEAVER_APP_SUPPORTS_CUSTOM_CONNECTIONS=true docker.io/dbeaver/cloudbeaver:26.1.0 ; ignore_errors=no ; start_time=[Sat 2026-09-05 21:13:34 -03] ; stop_time=[n/a] ; pid=1886422 ; code=(null) ; status=0/0 }",
+    "InvocationID": "11531c16bcc246f6a123118e950bb7f0",
+    "NRestarts": "0",
+    "NeedDaemonReload": "no",
+    "Result": "success",
+    "SubState": "running"
+  },
+  "workspace_db_candidates": 1,
+  "workspace_file_count": 9
+}

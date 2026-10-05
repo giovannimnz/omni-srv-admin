@@ -1,0 +1,70 @@
+{
+  "historical_failure": "proc_37d55995c20b",
+  "successful_retry": "proc_71bb416a205d",
+  "classification": "failed-probe-fixed-current-tree",
+  "subtype": "historical-missing-workspace-mount-fixed-before-successful-retry-current-runtime-hardened",
+  "processes": {
+    "proc_37d55995c20b": [
+      {
+        "message_id": 281718,
+        "observed_epoch": 1788580881.3597367,
+        "observed_brt": "2026-09-05T01:01:21.359737-03:00",
+        "payload": {
+          "output": "Background process started",
+          "session_id": "proc_37d55995c20b",
+          "pid": 2062190,
+          "exit_code": 0,
+          "error": null,
+          "notify_on_complete": true
+        }
+      },
+      {
+        "message_id": 281720,
+        "observed_epoch": 1788580957.455235,
+        "observed_brt": "2026-09-05T01:02:37.455235-03:00",
+        "payload": {
+          "session_id": "proc_37d55995c20b",
+          "command": "set -euo pipefail\n/home/ubuntu/.local/bin/omni srv1-ops resources run transfers -- /usr/bin/podman pull docker.io/jenkins/jenkins:2.541.3-jdk17\nsystemctl --user daemon-reload\nsystemctl --user reset-failed container-jenkins.service\nsystemctl --user start container-jenkins.service\nfor i in $(seq 1 120); do code=$(curl -sS -o /tmp/jenkins.out -w '%{http_code}' --max-time 3 http://127.0.0.1:8085/login || true); [ \"$code\" = 200 ] && break; sleep 2; done\nprintf 'local_http=%s\\n' \"$code\"\n[ \"$code\" = 200 ]\ngrep -qi 'Jenkins' /tmp/jenkins.out\nrm -f /tmp/jenkins.out\nsystemctl --user is-active container-jenkins.service\n/usr/bin/podman inspect jenkins --format 'image={{.ImageName}} status={{.State.Status}} mount={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}}'\ncode2=$(curl -kLsS -o /dev/null -w '%{http_code}' --max-time 15 https://jenkins.atius.com.br/login)\nprintf 'public_http=%s\\n' \"$code2\"\n[ \"$code2\" = 200 ]\nsleep 30\nsystemctl --user is-active container-jenkins.service\n/usr/bin/podman ps --filter name=jenkins --format '{{.Names}} {{.Status}}'\necho JENKINS_RECOVERY_OK",
+          "status": "exited",
+          "pid": 2062190,
+          "uptime_seconds": 76,
+          "output_preview": "pying blob sha256:fed4757fb39eee38f23c968abc28f7dad44aec87f9a9566aa02238da7606d225\nCopying blob sha256:41d300a7ae387dad286aa9e9b0c637894b1f55dda1b69c7c914d1164dc052d12\nCopying blob sha256:5c192b0fd2d5575268f274b4b02c745f30cd0d87ea50c83d39f0ad88b9d5caad\nCopying blob sha256:952b33fc170329fc8010e67bf6b3507bae1560b87b898669398d4123d64aed2d\nCopying blob sha256:ccc5efb8c202eff2c31f5276308363973f139b83a4d61e37c15add3f86866084\nCopying blob sha256:baa0d013ff81168ab84d8bc1631abdfe905e42b91b7086ce68b3595262cf7add\nCopying blob sha256:359460856babac1e154b4ac9e23de1a1d1ed83ed460672b6f5d0c71c054e2aa0\nCopying config sha256:f2c150c0dbf9ed2fd6bac0232de268571971b5dc8c31cf794450382ef5b5c857\nWriting manifest to image destination\nf2c150c0dbf9ed2fd6bac0232de268571971b5dc8c31cf794450382ef5b5c857\nJob for container-jenkins.service failed because the control process exited with error code.\nSee \"systemctl --user status container-jenkins.service\" and \"journalctl --user -xeu container-jenkins.service\" for details.\n",
+          "exit_code": 1,
+          "completion_reason": "exited",
+          "termination_source": ""
+        }
+      }
+    ],
+    "proc_71bb416a205d": [
+      {
+        "message_id": 281734,
+        "observed_epoch": 1788581247.7696831,
+        "observed_brt": "2026-09-05T01:07:27.769683-03:00",
+        "payload": {
+          "output": "Background process started",
+          "session_id": "proc_71bb416a205d",
+          "pid": 2088480,
+          "exit_code": 0,
+          "error": null,
+          "notify_on_complete": true
+        }
+      },
+      {
+        "message_id": 281736,
+        "observed_epoch": 1788581303.720062,
+        "observed_brt": "2026-09-05T01:08:23.720062-03:00",
+        "payload": {
+          "session_id": "proc_71bb416a205d",
+          "command": "set -euo pipefail\nsystemctl --user daemon-reload\nsystemctl --user reset-failed container-jenkins.service\nsystemctl --user start container-jenkins.service\nfor i in $(seq 1 120); do code=$(curl -sS -o /tmp/jenkins.out -w '%{http_code}' --max-time 3 http://127.0.0.1:8085/login || true); [ \"$code\" = 200 ] && break; sleep 2; done\nprintf 'local_http=%s\\n' \"$code\"\n[ \"$code\" = 200 ]\ngrep -qi Jenkins /tmp/jenkins.out\nrm -f /tmp/jenkins.out\nsystemctl --user is-active container-jenkins.service\n/usr/bin/podman inspect jenkins --format 'image={{.ImageName}} status={{.State.Status}} mount={{range .Mounts}}{{.Source}}:{{.Destination}} {{end}}'\n/usr/bin/podman exec jenkins test -f /var/jenkins_home/config.xml\n/usr/bin/podman exec jenkins sh -c 'test -d /workspace/atius && test -f /workspace/atius/package.json'\ncode2=$(curl -kLsS -o /dev/null -w '%{http_code}' --max-time 15 https://jenkins.atius.com.br/login)\nprintf 'public_http=%s\\n' \"$code2\"\n[ \"$code2\" = 200 ]\nsleep 30\nsystemctl --user is-active container-jenkins.service\n/usr/bin/podman ps --filter name=jenkins --format '{{.Names}} {{.Status}}'\necho JENKINS_RECOVERY_OK",
+          "status": "exited",
+          "pid": 2088480,
+          "uptime_seconds": 55,
+          "output_preview": "curl: (56) Recv failure: Conexão fechada pela outra ponta\ncurl: (28) Operation timed out after 3002 milliseconds with 0 bytes received\nlocal_http=200\nactive\nimage=docker.io/jenkins/jenkins:2.541.3-jdk17 status=running mount=/home/ubuntu/GitHub/containers/jenkins/jenkins_home:/var/jenkins_home /usr/lib/aarch64-linux-gnu/libltdl.so.7:/usr/lib/aarch64-linux-gnu/libltdl.so.7 /home/ubuntu/GitHub/Atius-Capital/ats:/workspace/atius \npublic_http=200\nactive\njenkins Up 51 seconds\nJENKINS_RECOVERY_OK\n",
+          "exit_code": 0,
+          "completion_reason": "exited",
+          "termination_source": ""
+        }
+      }
+    ]
+  }
+}

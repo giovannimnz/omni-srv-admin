@@ -1,0 +1,41 @@
+{
+  "archived_stub": "PASS",
+  "content_printed": false,
+  "import_result": {
+    "accepted_contract": "imported + unchanged = 5 and errors = 0",
+    "errors": 0,
+    "imported": 2,
+    "skipped": 3,
+    "unchanged": 3
+  },
+  "no_new_privileges_monitor_contract": "PASS",
+  "readbacks": {
+    "aisecondbrain/20-projetos/21-projetos-ativos/omni-srv-admin/21.04-log-trabalho": {
+      "bytes": 98777,
+      "sha256": "ca30084925ca9d41d7abca2dd715930928d12b32c6b9691b23a7167b0c6bb0f5"
+    },
+    "aisecondbrain/20-projetos/22-projetos-arquivados/plane/plane-app": {
+      "bytes": 942,
+      "sha256": "0a3e978b36a86b146f03489c3dcb12e9633e69a2ed4f048e6b80defa5e07fdf8"
+    },
+    "aisecondbrain/30-recursos/operations/plane-app-srv1-canonico": {
+      "bytes": 2745,
+      "sha256": "4ddc5adedc9636b5fb3547fc462b88ff7c7ece32d1e35881b85d6d2ccdef76c2"
+    },
+    "aisecondbrain/60-logs/2026-09-05-plane-proc-8d7769a62d79-reconciliation": {
+      "bytes": 1935,
+      "sha256": "8516f85293da73dfbcf0bbd6e3abeb6797802695abb0c224db2375f4b6ccf06f"
+    },
+    "aisecondbrain/61-incidents/2026-09-05-srv1-services-stale-certbot-podman": {
+      "bytes": 19659,
+      "sha256": "c4e8c49350d07f35f2574f273afb6518d8806d22bff9c371f16edd8c7f06e4ac"
+    },
+    "aisecondbrain/91-diarios/2026-09-06": {
+      "bytes": 1294,
+      "sha256": "f691cb731de5b037f4af52cc4c089803d3639eb418e847b37afc0dc329b03e46"
+    }
+  },
+  "sensitive_pattern_count": 0,
+  "verdict": "PASS",
+  "wg100": "PASS"
+}

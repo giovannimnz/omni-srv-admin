@@ -1,0 +1,78 @@
+---
+type: operations-reference
+title: Plane App — runtime canônico no SRV-1
+date: '2026-09-05T00:00:00.000Z'
+host: atius-srv-1
+status: canonical
+project: plane
+tags:
+  - network-security
+  - plane
+  - podman
+  - systemd
+---
+
+# Plane App — runtime canônico no SRV-1
+
+## Autoridade
+
+- Repo/runbook: `docs/operations/srv1-service-recovery-2026-09-05.md`.
+- Runtime: `/home/ubuntu/GitHub/containers/plane-app/`.
+- Unit: `plane-podman.service`.
+- Source unit: `modules/srv1-ops/systemd/plane-podman.service`.
+- Source compose: `modules/srv1-ops/configs/plane-podman-compose.yaml`.
+- Versão: `1.3.1`.
+- Network rootless Podman: `atius`, subnet `10.89.1.0/24`.
+
+## Readiness
+
+`plane-stack-up.sh` não conclui no primeiro HTTP `200` da frontend. A ordem é:
+
+1. `podman-compose up -d`;
+2. migrator `exited:0`;
+3. API anônima `/api/v1/users/me/` retorna `401`;
+4. root, `/setup/` e `/spaces/` retornam `200`;
+5. `13` containers totais, `12` long-lived running.
+
+A unit usa `TimeoutStartSec=2100` para que o teto acumulado dos loops não seja
+cortado pelo systemd antes do próprio wrapper emitir seu diagnóstico.
+
+Isso corrige o failure histórico `proc_8d7769a62d79`, que consultou a API durante migrations e recebeu `502`.
+
+## Portas
+
+| Porta | Bind | Função |
+|---|---|---|
+| `8080` | `127.0.0.1` | frontend fallback local |
+| `8090` | `127.0.0.1` | proxy Plane; upstream do Apache |
+| `8747` | `127.0.0.1` + `10.11.1.11` + `10.100.100.1` | PostgreSQL local + OCI/DRG primary + `wg100` reserve |
+
+Direct public `8080/8090/8747` é proibido. Publicação web somente por `https://plane.atius.com.br/` via Cloudflare e Apache.
+
+## Dados
+
+- `110` tabelas.
+- `162` migrations.
+- `0` users, workspaces e projects no seal de 2026-09-05.
+- MinIO `/data`: named volume `plane-app_minio_data`.
+- `.env`: `0600`; valores ficam fora de docs/chat.
+
+## Monitor
+
+- `plane-healthcheck.timer`: cinco minutos.
+- Script read-only: `modules/srv1-ops/scripts/plane-healthcheck.sh`.
+- Checks: unit, listeners, root/setup/API/spaces local e público.
+- Nenhum restart automático.
+
+## Backup e rollback
+
+- `/home/ubuntu/.backups/proc-8d7769a62d79-plane-pre-hardening-20260905T230018-0300`.
+- Dump PostgreSQL custom restaurado em database temporária.
+- Onze volumes hot + consistent extraídos em diretório isolado.
+- Rollback seguro mantém os binds canônicos e restaura somente dados/config necessários.
+
+## Links
+
+- [[61-Incidents/2026-09-05-srv1-services-stale-certbot-podman]]
+- [[60-LOGS/2026-09-05-plane-proc-8d7769a62d79-reconciliation]]
+- [[30-RECURSOS/operations/ATIUS-FLEET-NETWORK-PORT-MAP]]
