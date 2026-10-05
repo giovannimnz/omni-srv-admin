@@ -33,6 +33,8 @@ CONTROLLED_HOSTS = (
     "atius-srv-3",
     "atius-srv-4",
     "horistic-srv",
+    "aln-srv",
+    "giovanni-w11-wsl",
 )
 READ_ONLY_ACTION_PREFIXES = ("Get",)
 

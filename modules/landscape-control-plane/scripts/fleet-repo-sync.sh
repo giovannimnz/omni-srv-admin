@@ -6,6 +6,8 @@ set -u
 TARGET_USER="ubuntu"
 if id "horistic" >/dev/null 2>&1; then
   TARGET_USER="horistic"
+elif id "muniz" >/dev/null 2>&1; then
+  TARGET_USER="muniz"
 fi
 
 echo "[$(date -u +%Y-%m-%dT%H:%M:%SZ)] Starting fleet-repo-sync on $(hostname) as user $TARGET_USER"
