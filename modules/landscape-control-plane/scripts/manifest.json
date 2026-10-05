@@ -156,14 +156,14 @@
     {
       "id": "fleet-repo-sync",
       "title": "omni::fleet-repo-sync",
-      "version": "1.0.0",
+      "version": "2.0.0",
       "path": "fleet-repo-sync.sh",
       "interpreter": "/bin/bash",
       "username": "root",
       "time_limit": 300,
       "access_group": "global",
       "risk": "reconcile",
-      "description": "Synchronizes oci-admin and omni-srv-admin git repositories across the ATIUS fleet."
+      "description": "Synchronizes git repositories across ATIUS fleet with declarative policy enforcement."
     }
   ]
 }

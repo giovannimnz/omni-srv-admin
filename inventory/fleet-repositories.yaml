@@ -1,0 +1,151 @@
+# Matriz declarativa de governanca e alocacao de repositorios Git na frota ATIUS
+version: "1.0.0"
+default_policy:
+  unlisted_repositories: warn
+  enforce_forbidden_purge: true
+
+host_groups:
+  atius_core:
+    - atius-srv-1
+    - atius-srv-2
+    - atius-srv-3
+    - atius-srv-4
+  partners:
+    - horistic-srv
+    - aln-srv
+  workstations:
+    - giovanni-w11-pc
+    - giovanni-w11-wsl
+
+repositories:
+  oci-admin:
+    description: "Controle e governança de infraestrutura Oracle Cloud (OCI Tenancy). Exclusivo ATIUS."
+    classification: atius-internal-infrastructure
+    allowed_hosts:
+      - atius-srv-1
+      - atius-srv-2
+      - atius-srv-3
+      - atius-srv-4
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+    on_forbidden: purge
+
+  omni-srv-admin:
+    description: "Plano de controle, inventário, monitoramento e sincronização da frota. Exclusivo ATIUS."
+    classification: fleet-control-plane
+    allowed_hosts:
+      - atius-srv-1
+      - atius-srv-2
+      - atius-srv-3
+      - atius-srv-4
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+    on_forbidden: purge
+
+  parceiro-certo:
+    description: "Aplicação de articulação política, cobertura eleitoral e cadastros do parceiro ALN."
+    classification: partner-workload
+    aliases:
+      - pc-ci
+    allowed_hosts:
+      - aln-srv
+      - atius-srv-1
+      - atius-srv-2
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - atius-srv-3
+      - atius-srv-4
+      - horistic-srv
+    on_forbidden: warn
+
+  divap-painel:
+    description: "Painel de operações e dashboards do parceiro Horistic (Divap)."
+    classification: partner-workload
+    allowed_hosts:
+      - horistic-srv
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - atius-srv-1
+      - atius-srv-2
+      - atius-srv-3
+      - atius-srv-4
+      - aln-srv
+    on_forbidden: warn
+
+  atius-talk:
+    description: "Plataforma de conversação multicanal, IA e CRM ATIUS."
+    classification: atius-core-app
+    allowed_hosts:
+      - atius-srv-1
+      - atius-srv-3
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+    on_forbidden: purge
+
+  obsidian-vault:
+    description: "AiSecondBrain - Memória operacional, logs, incidentes e documentação restrita ATIUS."
+    classification: internal-knowledge-base
+    allowed_hosts:
+      - atius-srv-1
+      - atius-srv-3
+      - atius-srv-4
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+    on_forbidden: purge
+
+  ats:
+    description: "Atius Terminal Services / Gateway de autenticação corporativa."
+    classification: atius-core-infra
+    allowed_hosts:
+      - atius-srv-2
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+
+  mt5-arm:
+    description: "Ambiente de execução MT5 em instâncias OCI ARM."
+    classification: financial-trading-workload
+    allowed_hosts:
+      - atius-srv-2
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+
+  notebooklm-obsidian-bridge:
+    description: "Bridge de integração do NotebookLM com Obsidian."
+    classification: ai-research-bridge
+    allowed_hosts:
+      - atius-srv-1
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
+
+  home-proxy:
+    description: "Configurações, diagnósticos e automações do roteador doméstico BE3 e edge proxies."
+    classification: home-network-edge
+    allowed_hosts:
+      - giovanni-w11-pc
+      - giovanni-w11-wsl
+    forbidden_hosts:
+      - horistic-srv
+      - aln-srv
