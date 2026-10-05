@@ -178,3 +178,6 @@ graphify-out/manifest.json
 .codex-work/
 .tmp-wayland-edit/
 .tmp-wayland-codex-acp.patch
+playwright-report/
+test-results/
+cli/build/
