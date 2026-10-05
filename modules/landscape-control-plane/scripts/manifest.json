@@ -68,6 +68,18 @@
       "access_group": "global",
       "risk": "read-only",
       "description": "Reports reboot-required state and related package hints."
+    },
+    {
+      "id": "fleet-repo-sync",
+      "title": "omni::fleet-repo-sync",
+      "version": "1.0.0",
+      "path": "fleet-repo-sync.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Synchronizes oci-admin and omni-srv-admin git repositories across the ATIUS fleet."
     }
   ]
 }

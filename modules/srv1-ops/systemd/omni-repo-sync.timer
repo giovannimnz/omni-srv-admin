@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Omni Fleet Git Auto-Sync every 2 minutes
+Documentation=https://github.com/giovannimnz/omni-srv-admin
+
+[Timer]
+OnBootSec=1min
+OnUnitActiveSec=2min
+RandomizedDelaySec=20s
+Persistent=true
+
+[Install]
+WantedBy=timers.target

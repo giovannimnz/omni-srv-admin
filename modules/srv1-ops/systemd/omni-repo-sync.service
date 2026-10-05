@@ -1,0 +1,14 @@
+[Unit]
+Description=Omni Fleet Git Auto-Sync (oci-admin & omni-srv-admin)
+Documentation=https://github.com/giovannimnz/omni-srv-admin
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/omni-fleet-sync.sh all
+TimeoutStartSec=120
+CPUSchedulingPolicy=other
+Nice=19
+CPUQuota=20%
+StandardOutput=journal
+StandardError=journal

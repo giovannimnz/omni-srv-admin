@@ -6,7 +6,7 @@
 > atius-home-server-overview.md, SERVER-AUDIT-20260506.md,
 > 17.08-Obsidian-Local-REST-API-MCP-Setup.md).
 >
-> Versão: 1.7.9 — 2026-07-23
+> Versão: 1.8.1 — 2026-10-04
 > Owner: giovanni
 > Mantido por: omni-srv-admin (repo + vault)
 > Cross-refs: [[inventory/hosts/*]], [[.planning/STATE.md]],
@@ -24,7 +24,9 @@ Os hosts móveis/complementares são documentados para completeness.
 | atius-srv-1    | production         | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-1.yaml` |
 | atius-srv-2    | development        | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-2.yaml` |
 | atius-srv-3    | sandbox            | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-3.yaml` |
+| atius-srv-4    | general / fleet    | Ubuntu 24.04  | active  | `inventory/hosts/atius-srv-4.yaml` |
 | horistic-srv    | proxy reverso / K3s worker / AI Search | Ubuntu 24.04  | active  | `inventory/hosts/horistic-srv.yaml`    |
+| aln-srv        | parceiro / node OCI DRG | Ubuntu 24.04 (AMD) | active  | `inventory/hosts/aln-srv.yaml`        |
 | GIOVANNI-W11-PC | workstation Windows + WSL | Windows 11 / Ubuntu 24.04 WSL | active via VPN e Casa gateway | `inventory/hosts/giovanni-w11-pc.yaml` |
 | GIOVANNI-PC    | workstation pessoal| Ubuntu 26.04  | planned | `inventory/hosts/dell-inspiron-3520.yaml` |
 | GIOVANNI-S23   | mobile node        | Termux (Android) | active via VPN e Casa gateway | `inventory/hosts/giovanni-s23-termux.yaml` |
@@ -43,6 +45,14 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
 - builds/process-build: 20% do CPU total por padrão
 - RAM=11.71 GiB é teto de uso comum de processo
 - write não é build-default (varia por profile)
+
+Specs de aln-srv-amd (Oracle OCI VM.Standard.E2.1.Micro):
+- Arquitetura: x86_64 / AMD EPYC 7551
+- CPU: 1 vCPU
+- RAM: 1.00 GiB
+- Disco: 50.00 GB boot volume
+- Tenancy: alnrec (sa-saopaulo-1)
+- Papel: Servidor parceiro integrado à malha DRG (10.31.0.0/16)
 
 ---
 
@@ -79,7 +89,7 @@ Specs comuns (Oracle OCI Ampere A1.Flex):
 
 Camadas:
 1. **Oracle VCN** (10.0.0.0/24 ou DHCP): rede privada de cada OCI
-2. **OCI private / DRG** (`10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.21.1.21`): plano canônico de serviços entre hosts
+2. **OCI private / DRG** (`10.11.1.11`, `10.12.1.12`, `10.13.1.13`, `10.14.1.14`, `10.21.1.21`, `10.31.0.31`): plano canônico de serviços entre hosts
 3. **WireGuard wg100** (10.100.100.0/24): reserve/fallback, com uso principal para W11/S23 e break-glass
 4. **WireGuard wg0 retired** (`10.1.1.0/24`): faixa histórica aposentada; não
    usar como rede operacional, source of truth ou fallback vivo
@@ -96,7 +106,9 @@ Camadas:
 | atius-srv-1    | atius-srv-1     | 137.131.190.161  | 10.100.100.1      | 100.76.56.62     | 10.11.1.11  |
 | atius-srv-2    | atius-srv-2     | 129.148.47.32    | 10.100.100.2      | 100.93.43.113    | 10.12.1.12  |
 | atius-srv-3    | atius-srv-3     | 136.248.126.12   | 10.100.100.3      | 100.72.102.57    | 10.13.1.13  |
+| atius-srv-4    | atius-srv-4     | 164.152.48.22    | 10.100.100.18     | -                | 10.14.1.14  |
 | horistic-srv   | horistic-srv    | 163.176.232.119  | 10.100.100.4      | 100.102.126.61   | 10.21.1.21  |
+| aln-srv        | aln-srv-amd     | 168.138.136.251  | -                 | 100.88.42.80     | 10.31.0.31 (alias 10.31.0.197) |
 | GIOVANNI-W11-PC | GIOVANNI-W11-PC | dynamic/home     | 10.100.100.8 (legacy `10.100.100.5`) | - | LAN BE3 192.168.1.8 |
 | GIOVANNI-S20   | GIOVANNI-S20    | dynamic/home     | 10.100.100.9 (configured, no handshake) | - | LAN BE3 192.168.1.9; stale lease `.62` at 2026-07-23 readback |
 | GIOVANNI-S23   | GIOVANNI-S23    | dynamic/home     | 10.100.100.10 (configured, no handshake; previous `.9`) | - | LAN BE3 192.168.1.10 |
@@ -533,6 +545,14 @@ Validated 2026-07-22: `10.21.1.21:31216` serves two ready FP16 reranker pods,
 with HPA 2-4 and 500m per pod. The public alias
 `reranker-gte-multilingual-v1` remains behind the governed router route
 `/v1/rerank`; there is no direct public Ingress for TEI.
+
+### aln-srv (10.31.0.31 OCI primary / DRG) — parceiro
+
+| Porta  | Serviço                    | Bind         | PID/User | Notas                              |
+|--------|----------------------------|--------------|----------|-----------------------------------|
+| 22     | sshd                       | 0.0.0.0      | root     | WAN (168.138.136.251) + DRG (10.31.0.31/10.31.0.197), key-based |
+
+Validated 2026-10-04: `aln-srv-amd` integrado à malha DRG central em `10.31.0.0/16` (subnet `10.31.0.0/24`, IP primário `10.31.0.197`, secundário canônico `10.31.0.31`). Comunicação bidirecional e resolução DNS interna (`aln-srv.atius.internal -> 10.31.0.31`) 100% ativas com todos os nós da frota.
 
 ### MT5 KVM execution VMs (sem K3s)
 

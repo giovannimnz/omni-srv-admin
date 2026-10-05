@@ -1,0 +1,35 @@
+id: aln-srv
+aliases:
+  - aln-srv-amd
+  - alnrec
+owner: giovanni
+role: partner-node
+access:
+  ssh: ubuntu@10.31.0.31
+  identity_file: /home/ubuntu/.ssh/id_oracle
+  public_ip: 168.138.136.251
+  oci_private_ip: 10.31.0.31
+  oci_primary_alias: 10.31.0.197
+  tailscale_ip: 100.88.42.80
+  internal_dns: aln-srv.atius.internal
+platform:
+  provider: oracle-oci
+  tenancy: alnrec
+  compartment: alnrec (root)
+  shape: VM.Standard.E2.1.Micro
+  os: ubuntu-24.04
+  arch: x86_64
+status: active
+network:
+  oci_primary_vnic: ens3
+  oci_primary_ip: 10.31.0.31
+  oci_subnet_cidr: 10.31.0.0/24
+  oci_vcn_cidr: 10.31.0.0/16
+  drg: Brasil - Sao Paulo (central)
+  dns_server: 10.11.1.11
+  tailscale_fallback: true
+notes:
+  vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin
+  knowledge_authority: "Authoritative Obsidian and GBrain writes stay on atius-srv-1."
+  oci_drg_integration: "2026-10-04: Attached aln-srv-vcn to Central DRG via cross-tenancy policy (phase26-alnrec-drg-central / phase26-alnrec-vcn-attachment). Canonical OCI DRG IP assigned: 10.31.0.31 (secondary IP on ens3). Route rules and security lists synced across all 6 VCNs (atius-srv-1..4, horistic-srv, aln-srv)."
+  dns_validation: "2026-10-04: CoreDNS at atius-srv-1 (10.11.1.11) configured with 10.31.0.31 aln-srv.atius.internal aln-srv aln-srv-amd."
