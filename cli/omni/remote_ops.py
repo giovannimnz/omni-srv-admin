@@ -198,7 +198,8 @@ def _list_hosts() -> list[dict]:
 def _host_ids_for_arg(host_id: str) -> list[str]:
     if host_id != "all":
         return [host_id]
-    return [h["id"] for h in _list_hosts() if h.get("status", "") != "retired"]
+    excluded_statuses = ("retired", "blocked-network-readdress", "planned", "template")
+    return [h["id"] for h in _list_hosts() if h.get("status", "") not in excluded_statuses]
 
 
 def _storage_audit_script() -> str:
@@ -229,7 +230,7 @@ du -sh "$HOME/.local/share/containers/storage" 2>/dev/null || true
 echo "-- candidate bulky backups"
 find "$HOME" -xdev -maxdepth 1 \( -name 'pre-upgrade-24.04-backup' -o -name 'srv3-disk-relief-before-config-clone-*' -o -name '.config-clone-backups' -o -name '.backups' \) -exec du -sh {} \; 2>/dev/null | sort -h || true
 echo "-- large media-ish >100M"
-find "$HOME" -xdev -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -size +100M -printf '%s %p\n' 2>/dev/null | sort -n | tail -30 | numfmt --field=1 --to=iec-i --suffix=B || true
+timeout 45s find "$HOME" -xdev -type f \( -iname '*.mp4' -o -iname '*.mov' -o -iname '*.mkv' -o -iname '*.webm' -o -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) -size +100M -printf '%s %p\n' 2>/dev/null | sort -n | tail -30 | numfmt --field=1 --to=iec-i --suffix=B || true
 """
 
 
@@ -495,19 +496,24 @@ def remote_cleanup(host_id: str, dry_run: bool, include_volumes: bool, phase: st
 
 @srv.command("storage-audit")
 @click.argument("host_id")
-@click.option("--timeout", default=180, help="Timeout por host em segundos.")
+@click.option("--timeout", default=300, help="Timeout por host em segundos.")
 def storage_audit(host_id: str, timeout: int) -> None:
     """Auditoria read-only de storage/logs/containers/caches por host ou all."""
     for item in _host_ids_for_arg(host_id):
         path, ssh_target, hid = _find_host(item)
         click.echo(f"\n=== Storage audit {hid} ===")
-        r = _run_host(path, ssh_target, hid, _storage_audit_script(), timeout=timeout)
-        if r.stdout:
-            click.echo(r.stdout.rstrip())
-        if r.stderr:
-            click.echo(f"stderr: {r.stderr.rstrip()}", err=True)
-        if r.returncode != 0:
-            click.echo(f"rc={r.returncode}", err=True)
+        try:
+            r = _run_host(path, ssh_target, hid, _storage_audit_script(), timeout=timeout)
+            if r.stdout:
+                click.echo(r.stdout.rstrip())
+            if r.stderr:
+                click.echo(f"stderr: {r.stderr.rstrip()}", err=True)
+            if r.returncode != 0:
+                click.echo(f"rc={r.returncode}", err=True)
+        except subprocess.TimeoutExpired:
+            click.echo(f"Timeout de {timeout}s excedido para host {hid}", err=True)
+        except Exception as e:
+            click.echo(f"Erro no host {hid}: {e}", err=True)
 
 
 @srv.command("autoclean")

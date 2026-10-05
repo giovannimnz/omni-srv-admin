@@ -146,6 +146,17 @@ find_real_command() {
         fi
       fi
       ;;
+    go)
+      for candidate in "/usr/local/go/bin/go" "${HOME}/go/bin/go"; do
+        if [[ -x "$candidate" ]]; then
+          resolved="$(readlink -f "$candidate" 2>/dev/null || printf '%s\n' "$candidate")"
+          if [[ "$resolved" != "$wrapper_path" ]]; then
+            printf '%s\n' "$candidate"
+            return 0
+          fi
+        fi
+      done
+      ;;
   esac
   return 1
 }

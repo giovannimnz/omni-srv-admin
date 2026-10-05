@@ -1,12 +1,12 @@
-# Graph Report - omni-srv-admin  (2026-09-27)
+# Graph Report - omni-srv-admin  (2026-09-05)
 
 ## Corpus Check
-- 1142 files · ~2,779,213 words
+- 1178 files · ~2,815,744 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 14334 nodes · 20979 edges · 1239 communities (1060 shown, 179 thin omitted)
-- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 168 edges (avg confidence: 0.62)
+- 14539 nodes · 21224 edges · 1247 communities (1066 shown, 181 thin omitted)
+- Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 170 edges (avg confidence: 0.63)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
@@ -791,7 +791,7 @@
 - model-fs
 - agent
 - release-preflight.sh
-- fleet
+- main
 - dry_run_cmd
 - Local Hermes Skills Catalog
 - Related Docs
@@ -1099,8 +1099,8 @@
 - Security Domain
 - Vault Boundary
 - Recoverable Placement and Backup/Restore Plan Inputs
-- registry
-- trust_pki
+- SRV-1 — services stale, Certbot e apps Podman
+- SRV-1 — services stale, Certbot e apps Podman
 - config_cmd
 - list_ops
 - logs
@@ -1208,24 +1208,32 @@
 - 🏗️PM - Specification.chatmode.md
 - 🧪Test - Jest Test Engineer.chatmode.md
 - rulesProject.instructions.md
-- Git Worktree Fleet Closeout
-- Git Worktree Fleet Closeout
-- Phase 18: XRDP fleet review fix report
-- XRDP Keyboard Fleet Drift
-- test_remote_ops_cleanup.py
+- Reconciliação — `proc_37d55995c20b`
 - XRDP ABNT2 Fleet
 - Bootstrap de novo servidor OCI ARM64
 - OCI ARM64 New Server Bootstrap
 - Mudanças Recentes
-- backup-srv1-to-gdrive.sh
 - Phase 18: Code Review Report
-- oci
-- snapshot
-- restore
 - start-qbittorrent.sh
+- install-gdrive-backup-offload.sh
+- test_oci.py
+- test_fleet_pki.py
+- _new_server_transaction
+- phase54-closeout.py
+- 📋 Detalhes
+- collect_security_report
+- validate-edge-auth.py
+- test_remote_ops_cleanup.py
+- 4. Convenção de Displays / VNC / noVNC
+- agent
+- fleet
+- Full-suite disposition
+- registry
+- trust_pki
+- jenkins-healthcheck.sh
 
 ## God Nodes (most connected - your core abstractions)
-1. `Communities (1224 total, 176 thin omitted)` - 1018 edges
+1. `Communities (1235 total, 178 thin omitted)` - 1027 edges
 2. `Roadmap: Omni Srv Admin (omni-srv-admin)` - 55 edges
 3. `_edge_applier_module()` - 53 edges
 4. `Blocked` - 53 edges
@@ -1251,11 +1259,11 @@
 ## Import Cycles
 - 1-file cycle: `cli/omni/fleet.py -> cli/omni/fleet.py`
 
-## Communities (1239 total, 179 thin omitted)
+## Communities (1247 total, 181 thin omitted)
 
 ### Community 0 - "Communities (1179 total, 168 thin omitted)"
 Cohesion: 0.00
-Nodes (1018): Communities (1224 total, 176 thin omitted), Community 0 - "Communities (1179 total, 168 thin omitted)", Community 1000 - "47.1-08-PLAN.md", Community 1001 - "48-01-PLAN.md", Community 1002 - "48-02-PLAN.md", Community 1003 - "51-01-PLAN.md", Community 1004 - "51-02-PLAN.md", Community 1005 - "51-03-PLAN.md" (+1010 more)
+Nodes (1027): Communities (1235 total, 178 thin omitted), Community 0 - "Communities (1179 total, 168 thin omitted)", Community 1000 - "47.1-08-PLAN.md", Community 1001 - "48-01-PLAN.md", Community 1002 - "48-02-PLAN.md", Community 1003 - "51-01-PLAN.md", Community 1004 - "51-02-PLAN.md", Community 1005 - "51-03-PLAN.md" (+1019 more)
 
 ### Community 1 - "provision-keycloak-admin-readonly.mjs"
 Cohesion: 0.06
@@ -1267,7 +1275,7 @@ Nodes (75): containers(), containers_mirrors(), deploy_cmd(), detect_cmd(), disc
 
 ### Community 3 - "remote_ops.py"
 Cohesion: 0.09
-Nodes (35): autoclean(), _find_host(), _host_ids_for_arg(), _list_hosts(), list_servers(), _parse_host(), CompletedProcess, Path (+27 more)
+Nodes (38): autoclean(), _find_host(), _host_ids_for_arg(), _inventory(), _list_hosts(), list_servers(), _parse_host(), CompletedProcess (+30 more)
 
 ### Community 4 - "mt5-remote-auth-proxy.js"
 Cohesion: 0.06
@@ -1338,8 +1346,8 @@ Cohesion: 0.05
 Nodes (38): 09-01: Mission Guardian daemon (core), acceptance_criteria, action, objective, read_first, verification, 09-02: Disk fill forecasting + correlation analyzer, acceptance_criteria (+30 more)
 
 ### Community 21 - "validate_m004.py"
-Cohesion: 0.18
-Nodes (19): append_log(), apply_cgroup_limits(), handle_signal(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+11 more)
+Cohesion: 0.12
+Nodes (16): Blocker externo final, Causas, Certbot DNS-01 dry-run — 2026-09-05 19:33 BRT, Certbot DNS-01 emissão ativa — 2026-09-05 00:43–00:45 BRT, Closeout de pressão e disco — 2026-09-05, Correção, Evidência e rollback, Impacto (+8 more)
 
 ### Community 22 - "validate_phase52.py"
 Cohesion: 0.07
@@ -1390,8 +1398,8 @@ Cohesion: 0.05
 Nodes (39): 1. Telegram API Limits, 1. Telethon → PostgreSQL, 2. PostgreSQL → Backtesting, 2. PostgreSQL Constraints, 3. Exchange Rate Limits, 3. Order Execution → Exchange APIs, 4. Memory Constraints, 4. Real-Time Data → Frontend (+31 more)
 
 ### Community 34 - "Path"
-Cohesion: 0.14
-Nodes (27): _binding_checker_module(), _git_fixture(), _live_adapters_module(), _phase53_binding_chain_fixture(), Path, test_05e_descendant_source_binding_rejects_drift(), test_05e_housekeeping_receipt_is_explicit_current_and_symlink_safe(), test_apply_cli_negative_authority_has_zero_side_effect() (+19 more)
+Cohesion: 0.11
+Nodes (37): _binding_checker_module(), _FakeServerRunner, _git_fixture(), _live_adapters_module(), _new_server_transaction(), _phase53_binding_chain_fixture(), Path, _server_installer_module() (+29 more)
 
 ### Community 35 - "Phase 48: Codex OAuth and Wayland Remote ACP Convergence - Research"
 Cohesion: 0.05
@@ -1475,7 +1483,7 @@ Nodes (24): core — lógica de negócio do fork-sync., _cfg(), _clone(), _commi
 
 ### Community 55 - "_load_strict"
 Cohesion: 0.09
-Nodes (32): _assert_keys(), DuplicateKeyError, _load_strict(), _production_adapters_module(), ValueError, Raised when a JSON object contains a repeated member name., _reject_duplicate_keys(), test_contract_mutation_catalog_fails_closed() (+24 more)
+Nodes (33): _assert_keys(), DuplicateKeyError, _load_strict(), _production_adapters_module(), ValueError, Raised when a JSON object contains a repeated member name., _reject_duplicate_keys(), test_contract_mutation_catalog_fails_closed() (+25 more)
 
 ### Community 56 - "validate-phase53-dirty-baseline.py"
 Cohesion: 0.21
@@ -1645,10 +1653,6 @@ Nodes (23): M001: v1.0 — Domain Foundation ✅ DONE, M002: Fork Sync Integrati
 Cohesion: 0.23
 Nodes (22): _blocked_receipt(), _canonical_digest(), DuplicateKeyError, _load_json_file(), _load_observation(), main(), _parse_json(), Any (+14 more)
 
-### Community 98 - "phase52-horistic-live-drill.py"
-Cohesion: 0.19
-Nodes (17): Path, Tests for cli/omni/oci.py — dry-run, state machine, and parser safety.  These te, Point oci_mod at a temp inventory dir + temp state/log dirs., test_load_oci_host_basic(), test_load_oci_host_missing_field(), test_load_oci_host_rejects_non_oci(), test_preflight_plan_only(), test_restore_drill_accepts_explicit_real_id() (+9 more)
-
 ### Community 99 - "Phase 53: Primary Relay and Public Edge - Research"
 Cohesion: 0.09
 Nodes (22): Advance gate, ATIUS operational API, Candidate implementation artifacts, Edge and publication transaction, Evidence invariants, Exact local runtime sockets, Exact public edge, Executive result (+14 more)
@@ -1754,8 +1758,8 @@ Cohesion: 0.10
 Nodes (19): Agent Service, Audit, CLI-Anything Slash Commands, Cross-Server Monitoring, CVE/USN Reporting And Landscape Parity, Data Model, Direct IP Fallback, Heartbeat (+11 more)
 
 ### Community 126 - "test_m004_contract.py"
-Cohesion: 0.12
-Nodes (45): invoke_fleet(), test_agent_heartbeat_collects_resource_telemetry(), test_agent_once_executes_only_approved_allowlisted_plan(), test_agent_rejects_pending_unknown_and_wrong_host_commands(), test_apply_is_blocked_for_install_and_update_plan(), test_audit_command_filters_action_and_redacts_sensitive_values(), test_audit_invalid_json_redacts_raw_sensitive_line(), test_invalid_inventory_json_returns_non_zero() (+37 more)
+Cohesion: 0.05
+Nodes (75): _call(), collect_security_report(), _now(), Any, Read-only Ubuntu Pro security collectors for Omni Fleet., Collect local Pro security status and CVE view without applying fixes., omni — CLI unificada para administração de servidores e gestão de forks., invoke_fleet() (+67 more)
 
 ### Community 127 - "Phase 01 Plan 02: Apache2 Port Migration Summary"
 Cohesion: 0.10
@@ -1882,8 +1886,8 @@ Cohesion: 0.20
 Nodes (9): Current Delivery Order, Current Operator Queue, Historical Dependency Chain, Milestone Branch Matrix, Separation Rules, Shipped Milestones, v1.0 Fleet Governance / Domain Foundation Base, v1.1 M005 Follow-ups (+1 more)
 
 ### Community 158 - "server-analysis.py"
-Cohesion: 0.24
-Nodes (17): analyze_disk_deep(), analyze_trends(), auto_fix(), auto_fix_crash_loop(), auto_reclaim_disk(), detect_crash_loops(), log(), main() (+9 more)
+Cohesion: 0.19
+Nodes (21): analyze_disk_deep(), analyze_trends(), attempt_disk_cleanup(), auto_fix(), auto_fix_crash_loop(), auto_reclaim_disk(), detect_crash_loops(), log() (+13 more)
 
 ### Community 159 - "Feature Research"
 Cohesion: 0.11
@@ -1946,8 +1950,8 @@ Cohesion: 0.21
 Nodes (16): ClientVaultBlocked, fetch_ephemeral(), main(), Path, RuntimeError, Yield a mode-0600 tmpfs file and unlink it after the transaction., Raised when a reference or ephemeral channel violates the contract., Validate a target password reference without resolving its value. (+8 more)
 
 ### Community 174 - "offload-dotbackups-to-gdrive.sh"
-Cohesion: 0.23
-Nodes (9): archive_item(), copy_item(), log(), main(), retry_rclone(), offload-dotbackups-to-gdrive.sh script, should_archive_item(), verify_archive_item() (+1 more)
+Cohesion: 0.19
+Nodes (16): delete_item(), log(), main(), make_manifest(), old_enough(), prepare_config(), priv(), process_item() (+8 more)
 
 ### Community 175 - "Spike 005: Embedding Runtime CPU Efficiency"
 Cohesion: 0.12
@@ -1982,8 +1986,8 @@ Cohesion: 0.12
 Nodes (16): 📋 Arquivos Documentados, Bug #1: Type Mismatch em `offset_date` (Pylance), Bug #2: SQL Table Name (Backend API), 📊 Code Quality Metrics, 📞 Contact & Support, 📈 Estatísticas da Sessão, 🎉 FASE 1 CONCLUÍDA - Relatório Executivo, ✨ Features Habilitadas (+8 more)
 
 ### Community 183 - "test_fleet_pki.py"
-Cohesion: 0.23
-Nodes (13): invoke_fleet(), test_agent_runner_blocks_linux_live_mutation_from_non_target_platform(), test_agent_runner_reconcile_reports_missing_cert_without_mutation(), test_db_source_renders_host_from_db(), test_default_plan_includes_windows_trust_client_for_auto_update(), test_install_trust_all_includes_windows_ca_update_only(), test_onboard_host_approve_requires_execute_and_db(), test_onboard_host_dry_run_renders_full_sequence_without_secret_material() (+5 more)
+Cohesion: 0.20
+Nodes (9): 1. Inventário sem mutação, 2. Decisão para branches e árvores sujas, 3. Atualização e poda segura, 4. Storage e contenção de recursos, 5. Hooks e Graphify, 6. GBrain e Obsidian via MCP HTTP Streamable, 7. Critério de encerramento, Git Worktree Fleet Closeout (+1 more)
 
 ### Community 184 - "Atius SSO host-local lifecycle recovery"
 Cohesion: 0.12
@@ -2123,7 +2127,7 @@ Nodes (14): Accomplishments, Authentication Gates, Auto-fixed Issues, Decisions 
 
 ### Community 218 - "Active Context: Starboy Postgres"
 Cohesion: 0.13
-Nodes (10): Active Context: Starboy Postgres, Bloqueadores Conhecidos, Decisões Ativas, Fase Imediata: VALIDAÇÃO TRADINGVIEW, Fase Secundária: TESTES E VALIDAÇÃO, Links Relacionados, Métricas e Health, O que foi feito: (+2 more)
+Nodes (15): Active Context: Starboy Postgres, Bloqueadores Conhecidos, Código Modificado (Phase 2.1), Decisões Ativas, Documentação Criada, Fase Imediata: VALIDAÇÃO TRADINGVIEW, Fase Secundária: TESTES E VALIDAÇÃO, Links Relacionados (+7 more)
 
 ### Community 219 - "[TASK009] - DIVAP Signal Generator & PineScript Strategy"
 Cohesion: 0.13
@@ -2162,12 +2166,12 @@ Cohesion: 0.14
 Nodes (13): Common Mistakes, Fast Diagnosis, Hermes WSLInterop Restore, Immediate Live Repair, Persistence Proof, Persistent Self-Heal, Related Assets, Scope Classification (+5 more)
 
 ### Community 228 - "rclone-fleet-queue.sh"
-Cohesion: 0.41
+Cohesion: 0.43
 Nodes (13): cmd_clear(), cmd_drain(), cmd_enqueue(), cmd_run(), cmd_status(), err(), hdr(), log() (+5 more)
 
 ### Community 229 - "_load_host"
-Cohesion: 0.35
-Nodes (10): _FakeServerRunner, _new_server_transaction(), _server_installer_module(), test_candidate_runtime_rendering_is_owner_admission_bound(), test_identity_hydration_is_tmpfs_only_and_evidence_is_value_free(), test_linger_preexisting_yes_is_never_disabled_on_rollback(), test_phase53_server_installer_rejects_source_and_runtime_hbbs_tamper(), test_rollback_restores_units_linger_and_preserves_client_legacy_paths() (+2 more)
+Cohesion: 0.25
+Nodes (7): Causa raiz, Correções permanentes, Estado final observado, Recuperação live, Resultado, Risco residual, SRV-1 GDrive backup offload recovery — 2026-09-04
 
 ### Community 230 - "fleet — multi-computer operations"
 Cohesion: 0.14
@@ -2210,8 +2214,8 @@ Cohesion: 0.14
 Nodes (13): Added DB/CLI-Anything Contract, Agent Executor + Monitoring Scenarios, Automated Commands, DB/Table CamelCase Rename, Host Evidence, Live Read-Only Results, Live Repo + DB Rollout, Master/Slave Scenario Matrix (+5 more)
 
 ### Community 240 - "oci.py"
-Cohesion: 0.17
-Nodes (28): _append_log(), _ensure_dirs(), _host_path(), _load_oci_host(), _mirror_to_fleet_db(), _now_iso(), _oci_cli_available(), _oci_config_available() (+20 more)
+Cohesion: 0.06
+Nodes (59): default_fleet_db_env(), load_env_file(), psql_available(), Path, Shared fleet DB runtime helpers., run_sql(), _append_log(), _ensure_dirs() (+51 more)
 
 ### Community 241 - "Phase 13 Network, VPN, Port and Podman Map"
 Cohesion: 0.14
@@ -2410,8 +2414,8 @@ Cohesion: 0.26
 Nodes (12): cleanEnvironment(), exporterScenario(), failureScenario(), journalScenario(), LIVE_ADAPTER, main(), REPO_ROOT, run() (+4 more)
 
 ### Community 290 - "Tasks Index"
-Cohesion: 0.12
-Nodes (16): 📈 Burn-Down, ✅ Completed, 📋 Detalhes, 🚀 In Progress, ⏳ Pending, 🗺️ Roadmap Visual, 🔄 Status Legenda, 📊 Summary (+8 more)
+Cohesion: 0.15
+Nodes (8): 📈 Burn-Down, ✅ Completed, 🚀 In Progress, ⏳ Pending, 🗺️ Roadmap Visual, 🔄 Status Legenda, 📊 Summary, Tasks Index
 
 ### Community 291 - "[TASK007] - Feedback de Execução de Ordens no Painel Semi-Automático"
 Cohesion: 0.15
@@ -2603,7 +2607,7 @@ Nodes (10): APIs & External Services, Authentication & Identity, CI/CD & Deploym
 
 ### Community 338 - "Graph Report - omni-srv-admin  (2026-08-16)"
 Cohesion: 0.18
-Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-graphify-main-234111  (2026-08-16), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
+Nodes (10): Community Hubs (Navigation), Corpus Check, God Nodes (most connected - your core abstractions), Graph Freshness, Graph Report - omni-srv-admin  (2026-09-05), Import Cycles, Knowledge Gaps, Suggested Questions (+2 more)
 
 ### Community 339 - "Critical Pitfalls"
 Cohesion: 0.18
@@ -2762,8 +2766,8 @@ Cohesion: 0.40
 Nodes (9): main(), _pairs(), Path, Popen, _read_private_request(), _read_root_token(), _run_vault(), _runtime_path() (+1 more)
 
 ### Community 378 - "phase54-closeout.py"
-Cohesion: 0.40
-Nodes (9): _blocked(), closeout(), main(), _parity_current(), _parity_path(), Any, Path, Return a closeout verdict without writing any artifact. (+1 more)
+Cohesion: 0.25
+Nodes (7): Classificação e preservação, Consolidação e limpeza, Encerramento, Git Worktree Fleet Closeout, Hooks, Graphify e CPU, MCP HTTP Streamable e documentação, Preparação
 
 ### Community 379 - "Solucao Passo a Passo"
 Cohesion: 0.20
@@ -2958,8 +2962,8 @@ Cohesion: 0.56
 Nodes (8): apply_setting(), backup_sysctl(), check_root(), log_error(), log_info(), log_success(), log_warning(), optimize_network.sh script
 
 ### Community 427 - "cleanup-local.sh"
-Cohesion: 0.53
-Nodes (8): cleanup_caches(), cleanup_journal(), cleanup_logs(), cleanup_podman(), cleanup_tmp(), log(), PATH, cleanup-local.sh script
+Cohesion: 0.26
+Nodes (14): bkp(), build_unreadable_filter(), log(), run_bkp(), backup-srv1-to-gdrive.sh script, state(), cleanup_caches(), cleanup_journal() (+6 more)
 
 ### Community 428 - "XRDP ABNT2 Guard"
 Cohesion: 0.22
@@ -3226,8 +3230,8 @@ Cohesion: 0.25
 Nodes (7): Canonical References, Current Validation Snapshot, Incident Context To Preserve, Locked Decisions, Observed Gaps For Phase 24, Phase 24 Context, Phase Boundary
 
 ### Community 501 - "validate-edge-auth.py"
-Cohesion: 0.27
-Nodes (8): omni — CLI unificada para administração de servidores e gestão de forks., get_or_head(), looks_like_basic_challenge(), looks_like_cf_access_redirect(), main(), Issue a GET request, return (status_code, response_headers, body).      HEAD is, True when the response advertises WWW-Authenticate: Basic realm=ATIUS Admin., True when the response redirects to a Cloudflare Access login URL.
+Cohesion: 0.25
+Nodes (7): Classificação e preservação, Consolidação e limpeza, Encerramento, Git Worktree Fleet Closeout, Hooks, Graphify e CPU, MCP HTTP Streamable e documentação, Preparação
 
 ### Community 502 - "observability.py"
 Cohesion: 0.18
@@ -3338,8 +3342,8 @@ Cohesion: 0.25
 Nodes (8): "Preciso debugar um problema", "Preciso entender a arquitetura", "Preciso entender o projeto", "Preciso escrever testes", "Preciso fazer um novo feature", "Preciso integrar nova exchange", "Preciso otimizar performance", 🔍 Quicklinks por Caso de Uso
 
 ### Community 529 - "📋 Detalhes"
-Cohesion: 0.20
-Nodes (9): 1. Inventário sem mutação, 2. Decisão para branches e árvores sujas, 3. Atualização e poda segura, 4. Storage e contenção de recursos, 5. Hooks e Graphify, 6. GBrain e Obsidian via MCP HTTP Streamable, 7. Critério de encerramento, Git Worktree Fleet Closeout (+1 more)
+Cohesion: 0.25
+Nodes (7): Final live rollout, Fixed boundaries, Phase 18: XRDP fleet review fix report, Post-merge timer hotfix, Residual UAT, Result, Verification
 
 ### Community 530 - "Suggest Awesome GitHub Copilot Chatmodes"
 Cohesion: 0.25
@@ -3998,8 +4002,8 @@ Cohesion: 0.40
 Nodes (5): 3. Mapa de IPs (canônico), Casa Remote Gateway — current as-built 2026-07-19, Casa Remote Gateway — runtime ativo 2026-07-19, Home Edge / Residential, Ordem operacional de SSH e failover sem VPN
 
 ### Community 696 - "4. Convenção de Displays / VNC / noVNC"
-Cohesion: 0.40
-Nodes (5): 4. Convenção de Displays / VNC / noVNC, Layout SRV-1 (estado-alvo pós Phase 18), Layout SRV-2 (estado-alvo), Layout SRV-3 (estado-alvo), Matriz Display → Port (regra)
+Cohesion: 0.09
+Nodes (22): Aplicação/dados sem reabrir a porta pública, Autoridades, Backup, Backup/restore, CloudBeaver — estado final, Correção aplicada, Drift encontrado durante a reconciliação, Evidência (+14 more)
 
 ### Community 697 - "gbrain Embeddings - Registro historico superado"
 Cohesion: 0.40
@@ -4050,8 +4054,8 @@ Cohesion: 0.40
 Nodes (4): Add the next MT5 route, Install, MT5 remote SSO auth, Runtime contract
 
 ### Community 709 - "digest"
-Cohesion: 0.31
-Nodes (8): default_fleet_db_env(), load_env_file(), psql_available(), Path, Shared fleet DB runtime helpers., run_sql(), _psql(), Run psql with the fleet DB env; raise on error to keep callers explicit.
+Cohesion: 0.29
+Nodes (6): Auth e serialização, Contrato, Falhas que bloqueiam delete, GDrive backup offload — SRV-1, Operação, Rollback
 
 ### Community 710 - "qbt-postprocess.sh"
 Cohesion: 0.80
@@ -4309,13 +4313,9 @@ Nodes (5): Dicas Específicas por Linguagem/Framework, Java, .NET, Node.js, Pyth
 Cohesion: 0.40
 Nodes (5): 🎯 Execução Imediata (Próximas 2 Horas), Step 1: Preparar Estrutura de Testes, Step 2: Criar conftest.py Base, Step 3: Criar Primeiro Teste, Step 4: Executar e Validar
 
-### Community 776 - "agent"
-Cohesion: 0.33
-Nodes (4): agent(), monitor(), Node agent local: heartbeat, telemetria e execução de planos aprovados., Visão cross-server de status e recursos da frota.
-
-### Community 778 - "fleet"
-Cohesion: 0.50
-Nodes (3): Entry point: python -m omni.fleet_entry, fleet(), Inventário multi-host e contratos do Fleet Control Plane.
+### Community 778 - "main"
+Cohesion: 0.16
+Nodes (21): append_log(), apply_cgroup_limits(), handle_signal(), load_config(), load_json(), main(), other_watchdog_pids(), PerfWindow (+13 more)
 
 ### Community 779 - "dry_run_cmd"
 Cohesion: 0.50
@@ -4434,8 +4434,8 @@ Cohesion: 0.50
 Nodes (4): antivirus/scan.sh, ast_hash, mtime, semantic_hash
 
 ### Community 811 - "resource-governor-doctor.py"
-Cohesion: 0.19
-Nodes (28): build_cgroup(), collect(), cpu_psi_avg10(), expected_cpu_max(), expected_cpu_units(), externally_cpu_bounded(), hot_build_escapes(), json_file() (+20 more)
+Cohesion: 0.18
+Nodes (29): build_cgroup(), collect(), cpu_psi_avg10(), expected_cpu_max(), expected_cpu_units(), externally_cpu_bounded(), hot_build_escapes(), json_file() (+21 more)
 
 ### Community 812 - "cli/lib/model-history.sh"
 Cohesion: 0.50
@@ -4458,8 +4458,8 @@ Cohesion: 0.05
 Nodes (24): _canonical_scope(), _git(), MonkeyPatch, Path, _review_source_repo(), _statuses(), test_complete_fixture_bundle_materializes_all_contracts(), test_json_markdown_parity_and_atomic_outputs() (+16 more)
 
 ### Community 817 - "collect_security_report"
-Cohesion: 0.22
-Nodes (9): _call(), collect_security_report(), _now(), Any, Read-only Ubuntu Pro security collectors for Omni Fleet., Collect local Pro security status and CVE view without applying fixes., fake_runner(), test_security_report_collects_pro_json_without_mutation() (+1 more)
+Cohesion: 0.29
+Nodes (6): Current Focus, Eliminated, Evidence, Resolution, Symptoms, XRDP Keyboard Fleet Drift
 
 ### Community 818 - "fleet-defense-monitor.py"
 Cohesion: 0.22
@@ -4578,8 +4578,8 @@ Cohesion: 0.50
 Nodes (4): modules/fleet-control-plane/tools/validate_m004.py, ast_hash, mtime, semantic_hash
 
 ### Community 848 - "Phase52BackupBTests"
-Cohesion: 0.07
-Nodes (3): Phase52BackupBTests, CompletedProcess, Path
+Cohesion: 0.06
+Nodes (14): Phase52BackupBTests, CompletedProcess, Path, atomic_write(), main(), mutate(), now(), parser() (+6 more)
 
 ### Community 849 - "modules/fleet-network-watchdog/fleet-network-watchdog.sh"
 Cohesion: 0.50
@@ -4694,8 +4694,8 @@ Cohesion: 0.16
 Nodes (30): _gate_a_block_remote_fetch(), _gate_a_malicious_tar(), _gate_a_replace_retained_pair(), _gate_a_restore_fetch_must_not_run(), _gate_a_seventh_rollback_fixture(), MonkeyPatch, test_gate_a_eighth_cycle_backup_pair_invariants_are_strict(), test_gate_a_eighth_cycle_integer_schema_rejects_bool() (+22 more)
 
 ### Community 877 - "datetime"
-Cohesion: 0.15
-Nodes (18): _authority_builder_module(), _FakeClock, _live_backend_module(), _phase53_authority_observation(), datetime, test_05e_awaiting_owner_is_exit_zero_without_owner_or_journal(), test_05e_capacity_current_requires_six_ordered_samples(), test_05e_no_auto_apply_after_owner_record() (+10 more)
+Cohesion: 0.16
+Nodes (17): _authority_builder_module(), _FakeClock, _live_backend_module(), _phase53_authority_observation(), datetime, test_05e_awaiting_owner_is_exit_zero_without_owner_or_journal(), test_05e_capacity_current_requires_six_ordered_samples(), test_05e_no_auto_apply_after_owner_record() (+9 more)
 
 ### Community 878 - "modules/fork-sync/cli/fork_sync/core/repl.py"
 Cohesion: 0.50
@@ -5321,72 +5321,104 @@ Nodes (3): Approved references only, Hydration contract, Vault Boundary
 Cohesion: 0.67
 Nodes (3): Authoritative state set, Real restore acceptance sequence, Recoverable Placement and Backup/Restore Plan Inputs
 
+### Community 1087 - "SRV-1 — services stale, Certbot e apps Podman"
+Cohesion: 0.11
+Nodes (17): Blocker externo final, Causas, Certbot DNS-01 dry-run — 2026-09-05 19:33 BRT, Certbot DNS-01 emissão ativa — 2026-09-05 00:43–00:45 BRT, Closeout de pressão e disco — 2026-09-05, Correção, Evidência e rollback, Impacto (+9 more)
+
+### Community 1088 - "SRV-1 — services stale, Certbot e apps Podman"
+Cohesion: 0.11
+Nodes (17): Blocker externo final, Causas, Certbot DNS-01 dry-run — 2026-09-05 19:33 BRT, Certbot DNS-01 emissão ativa — 2026-09-05 00:43–00:45 BRT, Closeout de pressão e disco — 2026-09-05, Correção, Evidência e rollback, Impacto (+9 more)
+
 ### Community 1094 - "cli/setup.py"
 Cohesion: 0.36
 Nodes (5): build_py, install_lib, setup.py — omni CLI unificado.  Instalação:     pip install -e cli/  Uso:     om, Include the XRDP module assets in non-editable omni distributions., Carry module assets into the final wheel's omni package directory.
 
-### Community 1224 - "Git Worktree Fleet Closeout"
-Cohesion: 0.25
-Nodes (7): Classificação e preservação, Consolidação e limpeza, Encerramento, Git Worktree Fleet Closeout, Hooks, Graphify e CPU, MCP HTTP Streamable e documentação, Preparação
+### Community 1224 - "Reconciliação — `proc_37d55995c20b`"
+Cohesion: 0.20
+Nodes (9): Backup e rollback, Cadeia histórica, Classificação, Current proof, Current-tree sibling drift adotado, False-start desta reconciliação, Jenkins agents K3s, Limites (+1 more)
 
-### Community 1225 - "Git Worktree Fleet Closeout"
-Cohesion: 0.25
-Nodes (7): Classificação e preservação, Consolidação e limpeza, Encerramento, Git Worktree Fleet Closeout, Hooks, Graphify e CPU, MCP HTTP Streamable e documentação, Preparação
-
-### Community 1226 - "Phase 18: XRDP fleet review fix report"
-Cohesion: 0.25
-Nodes (7): Final live rollout, Fixed boundaries, Phase 18: XRDP fleet review fix report, Post-merge timer hotfix, Residual UAT, Result, Verification
-
-### Community 1227 - "XRDP Keyboard Fleet Drift"
-Cohesion: 0.29
-Nodes (6): Current Focus, Eliminated, Evidence, Resolution, Symptoms, XRDP Keyboard Fleet Drift
-
-### Community 1228 - "test_remote_ops_cleanup.py"
-Cohesion: 0.40
-Nodes (5): _autoclean_script(), Regression tests for the Podman-only fleet cleanup policy., test_autoclean_is_podman_only_and_preserves_tagged_images(), test_autoclean_requires_explicit_volume_opt_in(), test_storage_audit_is_podman_only()
-
-### Community 1229 - "XRDP ABNT2 Fleet"
+### Community 1225 - "XRDP ABNT2 Fleet"
 Cohesion: 0.33
 Nodes (5): Contract, Guardrails, Procedure, Read first, XRDP ABNT2 Fleet
 
-### Community 1230 - "Bootstrap de novo servidor OCI ARM64"
+### Community 1226 - "Bootstrap de novo servidor OCI ARM64"
 Cohesion: 0.40
 Nodes (4): Bootstrap de novo servidor OCI ARM64, Evidência de conclusão, Guardrails, Ordem obrigatória
 
-### Community 1231 - "OCI ARM64 New Server Bootstrap"
+### Community 1227 - "OCI ARM64 New Server Bootstrap"
 Cohesion: 0.40
 Nodes (4): Never do, OCI ARM64 New Server Bootstrap, Read first, Workflow
 
-### Community 1232 - "Mudanças Recentes"
-Cohesion: 0.40
-Nodes (5): Código Modificado (Phase 2.1), Documentação Criada, Mudanças Recentes, Padrões Aplicados, Testes Criados
+### Community 1228 - "Mudanças Recentes"
+Cohesion: 0.28
+Nodes (5): _jenkins(), _jenkins_agent(), Jenkins SRV-1 recovery, source, and network-boundary contracts., test_jenkins_agent_inventory_does_not_claim_live_registration(), test_jenkins_inventory_matches_canonical_runtime()
 
-### Community 1233 - "backup-srv1-to-gdrive.sh"
-Cohesion: 1.00
-Nodes (3): bkp(), log(), backup-srv1-to-gdrive.sh script
-
-### Community 1234 - "Phase 18: Code Review Report"
+### Community 1229 - "Phase 18: Code Review Report"
 Cohesion: 0.50
 Nodes (3): Narrative Findings (AI reviewer), Phase 18: Code Review Report, Summary
 
+### Community 1232 - "test_oci.py"
+Cohesion: 0.22
+Nodes (8): Backup e rollback, Classificação, Current proof, Disposition matrix, False-starts preservados, Limites, Processo histórico, Reconciliação — `proc_c911d3f83c90`
+
+### Community 1233 - "test_fleet_pki.py"
+Cohesion: 0.61
+Nodes (8): atomic_write_json(), main(), Any, Path, sanitize_document(), sanitize_file(), sanitize_mapping(), write_state()
+
+### Community 1234 - "_new_server_transaction"
+Cohesion: 0.29
+Nodes (3): _cloudbeaver(), CloudBeaver inventory contract for the SRV-1 Podman runtime., test_cloudbeaver_inventory_matches_canonical_srv1_runtime()
+
+### Community 1235 - "phase54-closeout.py"
+Cohesion: 0.40
+Nodes (9): _blocked(), closeout(), main(), _parity_current(), _parity_path(), Any, Path, Return a closeout verdict without writing any artifact. (+1 more)
+
+### Community 1236 - "📋 Detalhes"
+Cohesion: 0.25
+Nodes (8): 📋 Detalhes, TASK001 - Executar Validação de Backtesting, TASK002 - Validação de Integridade de Dados, TASK003 - Implementar Testes Automatizados, TASK004 - Otimizar Performance PostgreSQL, TASK005 - Documentação Técnica Critical, TASK_FIX_001 - Corrigir divap_backtest.py, TASK_SETUP_001 - Criar Memory Bank do Projeto
+
+### Community 1237 - "collect_security_report"
+Cohesion: 0.50
+Nodes (3): Failure node ids, Full-suite disposition, Targeted status
+
+### Community 1239 - "test_remote_ops_cleanup.py"
+Cohesion: 0.33
+Nodes (6): _autoclean_script(), _storage_audit_script(), Regression tests for the Podman-only fleet cleanup policy., test_autoclean_is_podman_only_and_preserves_tagged_images(), test_autoclean_requires_explicit_volume_opt_in(), test_storage_audit_is_podman_only()
+
+### Community 1240 - "4. Convenção de Displays / VNC / noVNC"
+Cohesion: 0.40
+Nodes (5): 4. Convenção de Displays / VNC / noVNC, Layout SRV-1 (estado-alvo pós Phase 18), Layout SRV-2 (estado-alvo), Layout SRV-3 (estado-alvo), Matriz Display → Port (regra)
+
+### Community 1241 - "agent"
+Cohesion: 0.33
+Nodes (4): agent(), monitor(), Node agent local: heartbeat, telemetria e execução de planos aprovados., Visão cross-server de status e recursos da frota.
+
+### Community 1242 - "fleet"
+Cohesion: 0.50
+Nodes (3): Entry point: python -m omni.fleet_entry, fleet(), Inventário multi-host e contratos do Fleet Control Plane.
+
+### Community 1243 - "Full-suite disposition"
+Cohesion: 0.50
+Nodes (3): Dirty paths outside t29, Failed nodes, Full-suite disposition
+
 ## Knowledge Gaps
-- **7488 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+7483 more)
+- **7590 isolated node(s):** `mtime`, `ast_hash`, `semantic_hash`, `mtime`, `ast_hash` (+7585 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **179 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **181 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `Communities (1224 total, 176 thin omitted)` connect `Communities (1179 total, 168 thin omitted)` to `Graph Report - omni-srv-admin  (2026-08-16)`?**
+- **Why does `Communities (1235 total, 178 thin omitted)` connect `Communities (1179 total, 168 thin omitted)` to `Graph Report - omni-srv-admin  (2026-08-16)`?**
   _High betweenness centrality (0.006) - this node is a cross-community bridge._
-- **Why does `_live_mesh_ping()` connect `test_m004_contract.py` to `resource-governor-hygiene-queue.py`?**
-  _High betweenness centrality (0.003) - this node is a cross-community bridge._
-- **Why does `status()` connect `resource-governor-hygiene-queue.py` to `test_m004_contract.py`?**
+- **Why does `output()` connect `fork_sync/cli.py` to `phase52_recovery.py`?**
+  _High betweenness centrality (0.004) - this node is a cross-community bridge._
+- **Why does `state_archive()` connect `phase52_recovery.py` to `fork_sync/cli.py`?**
   _High betweenness centrality (0.003) - this node is a cross-community bridge._
 - **What connects `mtime`, `ast_hash`, `semantic_hash` to the rest of the system?**
-  _7488 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _7590 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Communities (1179 total, 168 thin omitted)` be split into smaller, more focused modules?**
-  _Cohesion score 0.0019646365422396855 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.0019474196689386564 - nodes in this community are weakly interconnected._
 - **Should `provision-keycloak-admin-readonly.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.05995410212277682 - nodes in this community are weakly interconnected._
 - **Should `fork_sync/cli.py` be split into smaller, more focused modules?**

@@ -1,27 +1,27 @@
-name: Deploy Pipeline
+name: Governed Deploy Pipeline (DEV & PRD)
 
 on:
   push:
     branches:
       - main
-      - release
+      - develop
   workflow_dispatch:
     inputs:
       target_env:
-        description: 'Target Environment'
+        description: 'Target Environment (dev / prd)'
         required: true
-        default: 'production'
+        default: 'dev'
         type: choice
         options:
-          - production
-          - staging
+          - dev
+          - prd
 
 permissions:
   contents: read
 
 jobs:
   deploy:
-    name: Deploy to Atius Fleet (K3s / Podman)
+    name: Deploy to Atius Fleet K3s (${{ inputs.target_env || (github.ref == 'refs/heads/main' && 'prd' || 'dev') }})
     runs-on: [self-hosted, linux, atius-srv-4]
     timeout-minutes: 15
     steps:
@@ -37,4 +37,6 @@ jobs:
       - name: Execute Governed Deploy
         shell: bash
         run: |
-          ./scripts/ci/deploy-governed.sh "${{ inputs.target_env || 'production' }}"
+          TARGET_ENV="${{ inputs.target_env || (github.ref == 'refs/heads/main' && 'prd' || 'dev') }}"
+          echo "==> Triggering governed deploy for environment: $TARGET_ENV"
+          ./scripts/ci/deploy-governed.sh "$TARGET_ENV"

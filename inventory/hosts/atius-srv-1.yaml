@@ -105,9 +105,6 @@ apps:
     ports:
       - "127.0.0.1:8080:80"
       - "127.0.0.1:8090:80"
-      - "127.0.0.1:8747:5432"
-      - "10.11.1.11:8747:5432"
-      - "10.100.100.1:8747:5432"
     network: atius
     install_type: systemd-user-podman-compose
     current_version: "1.3.1"
@@ -115,13 +112,15 @@ apps:
     source: "https://github.com/makeplane/plane"
     managed_by: "omni-srv-admin"
     update_policy: "plan-first"
-    last_audited: "2026-09-05"
+    last_audited: "2026-09-27"
     migrations: 162
-    container_count: 13
+    container_count: 12
+    database: "PostgreSQL host via PgBouncer (10.11.1.11:6432)"
     notes:
-      - "Plane runs as 12 long-lived containers plus one successful migrator container."
+      - "Plane runs as 11 long-lived containers plus one successful migrator container."
+      - "Database plane migrated from isolated container to host PostgreSQL instance via PgBouncer (10.11.1.11:6432) with session pooling."
       - "plane-stack-up.sh waits for migrator exited:0 before requiring API 401 and root/setup/spaces 200."
-      - "Web and proxy host ports are loopback-only; PostgreSQL is loopback + OCI/DRG primary + wg100 reserve. Public access is through Cloudflare and Apache to 127.0.0.1:8090."
+      - "Web and proxy host ports are loopback-only. Public access is through Cloudflare and Apache to 127.0.0.1:8090."
   - id: redis
     runtime: podman
     image: docker.io/library/redis:7-alpine

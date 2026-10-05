@@ -7,6 +7,7 @@ Type=oneshot
 Environment=OMNI_SRV_ADMIN=/home/ubuntu/GitHub/omni-srv-admin
 Environment=OMNI_SRV_PUBLIC_FIRST=1
 ExecStart=/home/ubuntu/GitHub/omni-srv-admin/modules/fleet-autoclean/scripts/fleet-autoclean.sh audit all
+SuccessExitStatus=0 1
 Nice=10
 IOSchedulingClass=best-effort
 IOSchedulingPriority=6

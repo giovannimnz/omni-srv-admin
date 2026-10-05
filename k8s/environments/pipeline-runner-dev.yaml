@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: atius-pipeline-runner-dev
+  namespace: pipeline-dev
+  labels:
+    app: atius-pipeline-runner
+    environment: dev
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: atius-pipeline-runner
+      environment: dev
+  template:
+    metadata:
+      labels:
+        app: atius-pipeline-runner
+        environment: dev
+    spec:
+      nodeSelector:
+        ci-runner: "true"
+      containers:
+      - name: runner
+        image: docker.io/library/ubuntu:24.04
+        command:
+          - /bin/bash
+          - -c
+          - |
+            echo "Atius Pipeline Runner [DEV] Active on $(hostname)"
+            echo "Environment: DEV | Node: atius-srv-4 | Vault: https://10.13.1.13:8202"
+            while true; do sleep 3600; done
+        env:
+          - name: ATIUS_ENVIRONMENT
+            value: "dev"
+        envFrom:
+          - secretRef:
+              name: hashicorp-vault-creds
+        resources:
+          requests:
+            cpu: "500m"
+            memory: "1Gi"
+          limits:
+            cpu: "500m"
+            memory: "2Gi"
