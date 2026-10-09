@@ -40,7 +40,7 @@ set -euo pipefail
 CANONICAL_HOST="10.11.1.11"
 LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
 
-for TARGET_USER in ubuntu horistic; do
+for TARGET_USER in ubuntu horistic aln; do
     if ! id "${TARGET_USER}" >/dev/null 2>&1; then
         continue
     fi
@@ -68,12 +68,15 @@ for TARGET_USER in ubuntu horistic; do
         fi
     fi
 
-    # Symlinks canônicos — AGENTS.md atende todos os runtimes (Antigravity, Codex, Claude)
+    # Symlinks canônicos — AGENTS.md atende todos os runtimes (Antigravity, Codex, Claude, GBrain)
     LINKS=(
         "${TARGET_HOME}/AGENTS.md"
         "${TARGET_HOME}/.codex/AGENTS.md"
         "${TARGET_HOME}/.gemini/AGENTS.md"
         "${TARGET_HOME}/.claude/AGENTS.md"
+        "${TARGET_HOME}/.gbrain/AGENTS.md"
+        "${TARGET_HOME}/.gemini/antigravity-cli/AGENTS.md"
+        "${TARGET_HOME}/GitHub/AGENTS.md"
     )
 
     for link in "${LINKS[@]}"; do
