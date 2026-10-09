@@ -305,8 +305,7 @@ Cloudflare:
   sem Tunnel e sem WireGuard no caminho final.
 - `wayland.atius.com.br` → runtime Wayland no SRV-3 `0.0.0.0:25725`;
   `/api/auth/status` local e público retornaram `200` em 2026-07-05.
-- `mcp.atius.com.br/gbrain` → edge público para GBrain HTTP MCP no SRV-1,
-  backend local-only `127.0.0.1:3131`; `/health` retornou `200`.
+- `mcp.atius.com.br` e `mcp.atius.io` (dual-domain) → edge público para MCPs multiplexados (GBrain `127.0.0.1:3131`, Obsidian `10.11.1.11:27124`, OCI Admin `10.13.1.13:8090`). `/health` retornou `200`.
 - `landscape.atius.com.br` → público retorna `302`; listener `6554` não foi
   observado em `ss` no SRV-1/SRV-3 em 2026-07-05 e requer reconciliação do
   runbook de Landscape antes de documentar porta ativa.

@@ -109,7 +109,7 @@ Snapshot operacional principal:
 | `aion.atius.com.br` | A | `137.131.190.161` | proxied |
 | `router.atius.com.br` | A | `137.131.190.161` | proxied |
 | `wayland.atius.com.br` | A/CNAME | edge SRV-1 -> SRV-3 `25725` | proxied |
-| `mcp.atius.com.br` | A/CNAME | edge SRV-1 -> MCPs: GBrain `127.0.0.1:3131` via `/gbrain`, Obsidian `10.11.1.11:27124` via `/obsidian`, OCI Admin `10.13.1.13:8090` via `/oci-admin` | proxied |
+| `mcp.atius.com.br` / `mcp.atius.io` | A/CNAME | edge SRV-1 -> MCPs: GBrain `127.0.0.1:3131` via `/gbrain`, Obsidian `10.11.1.11:27124` via `/obsidian`, OCI Admin `10.13.1.13:8090` via `/oci-admin` (dual-domain parity) | proxied |
 | `landscape.atius.com.br` | A/CNAME | edge SRV-1/SRV-3, validar vhost | proxied |
 | `portainer.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
 | `docker.atius.com.br` | A/CNAME | K3s Portainer edge | proxied |
