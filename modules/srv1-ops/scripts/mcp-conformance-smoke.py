@@ -34,7 +34,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--targets", default=", ".join(TARGETS))
     parser.add_argument("--boundaries", default="n")
-    for name in ("backend-direct", "host-421", "single-allow", "tls-scope", "pm2-resurrect", "isolated-recovery", "omni-health"):
+    for name in ("backend-direct", "host-421", "single-allow", "tls-scope", "pm2-resurrect", "isolated-recovery", "omni-health", "spark-ingress"):
         parser.add_argument(f"--assert-{name}", action="store_true")
     parser.add_argument("--token", default="", help="optional token; never printed")
     args = parser.parse_args(argv)
@@ -70,6 +70,12 @@ def main(argv: list[str] | None = None) -> int:
             allow = raw_headers.get("allow", "")
             if allow.count(",") > 0:
                 failures.append(f"{target}: Allow has multiple values")
+        if args.assert_spark_ingress and args.token:
+            spark_url = f"https://mcp.atius.com.br/spark/{args.token}/{target}"
+            no_auth_headers = {"Accept": "application/json, text/event-stream", "Content-Type": "application/json", "Host": "mcp.atius.com.br"}
+            spark_status, _, _ = _post(spark_url, initialize, no_auth_headers)
+            if spark_status in {401, 403}:
+                failures.append(f"{target}: spark ingress failed with HTTP {spark_status}")
     if args.assert_tls_scope:
         apache = Path("deploy/apache/mcp-atius-oci-admin.conf.inc")
         if apache.exists() and "SSLProxyVerify none" in apache.read_text(encoding="utf-8"):
