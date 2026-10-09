@@ -68,18 +68,11 @@ for TARGET_USER in ubuntu horistic; do
         fi
     fi
 
-    # Symlinks canônicos
+    # Symlinks canônicos — AGENTS.md atende todos
     LINKS=(
         "${TARGET_HOME}/AGENTS.md"
-        "${TARGET_HOME}/GEMINI.md"
-        "${TARGET_HOME}/CLAUDE.md"
-        "${TARGET_HOME}/CODEX.md"
         "${TARGET_HOME}/.codex/AGENTS.md"
-        "${TARGET_HOME}/.codex/CODEX.md"
-        "${TARGET_HOME}/.claude/CLAUDE.md"
         "${TARGET_HOME}/.gemini/AGENTS.md"
-        "${TARGET_HOME}/.gemini/GEMINI.md"
-        "${TARGET_HOME}/.gemini/config/GEMINI.md"
     )
 
     for link in "${LINKS[@]}"; do
@@ -90,6 +83,16 @@ for TARGET_USER in ubuntu horistic; do
             ln -sf "${AGENTS_MD}" "${link}"
         fi
     done
+
+    # Remove redundâncias: se tem AGENTS.md não precisa de GEMINI.md/CLAUDE.md/CODEX.md
+    rm -f \
+        "${TARGET_HOME}/GEMINI.md" \
+        "${TARGET_HOME}/CLAUDE.md" \
+        "${TARGET_HOME}/CODEX.md" \
+        "${TARGET_HOME}/.codex/CODEX.md" \
+        "${TARGET_HOME}/.claude/CLAUDE.md" \
+        "${TARGET_HOME}/.gemini/GEMINI.md" \
+        "${TARGET_HOME}/.gemini/config/GEMINI.md"
 
     # .agents/AGENTS.md include
     AGENTS_SUB_DIR="${TARGET_HOME}/.agents"

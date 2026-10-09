@@ -84,7 +84,7 @@
     {
       "id": "sync-agent-instructions",
       "title": "omni::sync-agent-instructions",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "path": "sync-agent-instructions.sh",
       "interpreter": "/bin/bash",
       "username": "root",

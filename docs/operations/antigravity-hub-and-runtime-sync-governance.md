@@ -72,7 +72,7 @@ Em cada host Linux (`atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, 
 - **Script Executável:** `/usr/local/bin/omni-fleet-runtime-sync.sh`
 - **Ações:**
   1. Compara hash MD5 de `~/.gemini/config/AGENTS.md` com a fonte canônica (`10.11.1.11` via OCI DRG).
-  2. Atualiza symlinks canônicos (`GEMINI.md`, `CLAUDE.md`, `CODEX.md`).
+  2. Mantém os symlinks canônicos de `AGENTS.md` e purga links legados redundantes (`GEMINI.md`, `CLAUDE.md`, `CODEX.md`).
   3. Verifica contagem de skills (mínimo 315). Se defasado, extrai `fleet-skills.tar.gz`.
   4. Executa `git pull --ff-only origin main` em `~/GitHub/omni-srv-admin`.
   5. Ajusta permissões dos usuários locais (`ubuntu` e `horistic`).
