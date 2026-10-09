@@ -80,12 +80,12 @@ For more information about GSD agents, run `/gsd-help`.
 - `horistic-srv` usa uma chave SSH restrita para `ubuntu@atius-srv-3`, forcada para `/home/ubuntu/.local/bin/atius-vault-export-ssh`, apenas para export do Vault.
 - Se uma credencial ainda existir so em documentacao, `.env` ou `.zshrc`, usar isso apenas como evidencia de migracao; mover o segredo operacional para o HashiCorp Vault antes de tratar como estavel.
 - Nunca gravar valores de segredos em AGENTS.md, Markdown, logs, commits, Obsidian, GBrain ou chat. Documentar apenas paths do Vault, profiles, nomes de variaveis e evidencias de validacao.
-- Endpoints MCP canonicos do Codex:
-  - `gbrain_http`: `https://mcp.atius.com.br/gbrain`
-  - `obsidian_http`: `https://mcp.atius.com.br/obsidian`
-  - `oci_admin_http`: `https://mcp.atius.com.br/oci-admin`
+- Endpoints MCP canonicos do Antigravity / Codex:
+  - `gbrain_http`: `https://mcp.atius.com.br/gbrain` ou `https://mcp.atius.io/gbrain`
+  - `obsidian_http`: `https://mcp.atius.com.br/obsidian` ou `https://mcp.atius.io/obsidian`
+  - `oci_admin_http`: `https://mcp.atius.com.br/oci-admin` ou `https://mcp.atius.io/oci-admin`
 - Os tres MCPs usam `Authorization: Bearer $ATIUS_MCP_TOKEN`; carregar `ATIUS_MCP_TOKEN` do profile Vault `atius-mcp` (`kv/atius/atius-mcp/api`).
-- O nome client-side do OCI Admin e `oci_admin_http`; a identidade MCP continua `serverInfo.name=oci-admin`. O alias client-side `oci_admin` e aposentado.
+- O nome client-side do OCI Admin e `oci_admin_http`; a identidade MCP continua `serverInfo.name=oci-admin`. O alias client-side `oci_admin` ou `oci-admin` e expressamente aposentado/invalido.
 - O backend OCI Admin usa OCI/DRG `10.13.1.13:8090`; `10.100.100.3` e somente reserve/fallback.
 - O MCP do Obsidian e sessionful: depois de `initialize`, preservar `Mcp-Session-Id`, enviar `notifications/initialized`, e so entao chamar `tools/list` ou tools.
 - Material de browser-login/access-key fica no Vault path `kv/atius/browser-login/access-keys` e no registro Landscape `atius-browser-login-access-keys`. O Vault armazena e entrega o material; o navegador so reconhece a chave quando o perfil do browser, OS/hardware authenticator, provider/extensao, certificado cliente ou autenticador virtual CDP/Playwright estiver provisionado para o relying party.
