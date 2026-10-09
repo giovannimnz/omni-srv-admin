@@ -68,11 +68,12 @@ for TARGET_USER in ubuntu horistic; do
         fi
     fi
 
-    # Symlinks canônicos — AGENTS.md atende todos
+    # Symlinks canônicos — AGENTS.md atende todos os runtimes (Antigravity, Codex, Claude)
     LINKS=(
         "${TARGET_HOME}/AGENTS.md"
         "${TARGET_HOME}/.codex/AGENTS.md"
         "${TARGET_HOME}/.gemini/AGENTS.md"
+        "${TARGET_HOME}/.claude/AGENTS.md"
     )
 
     for link in "${LINKS[@]}"; do
