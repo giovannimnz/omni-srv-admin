@@ -100,3 +100,23 @@ For more information about GSD agents, run `/gsd-help`.
 - Preservar evidencia headless adequada, como output de comandos, traces, screenshots, snapshots ou artefatos de teste.
 
 <!-- codex-policy:parallel-headless:end -->
+
+## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
+
+- **Mandato Universal e Permanente:** Em todo e qualquer projeto, serviço, API, CLI, banco de dados ou interface frontend do ecossistema ATIUS onde houver cadastro, consulta ou filtro de nomes de pessoas, strings de texto livre ou documentos (CPF, RG, RENACH, CNPJ), é OBRIGATÓRIA a aplicação deste motor multi-tier. É expressamente proibido usar `LIKE %termo%` ingênuo sensível a acentos ou comparações estritas `==`.
+- **Accent-Folding Simétrico Bidirecional:** A busca DEVE normalizar texto com decomposição Unicode NFD e remoção de marcas diacríticas `[\u0300-\u036f]`. Digitar `lívia` DEVE encontrar `Livia Nascimento` e `Lívia Nascimento`; digitar `livia` DEVE encontrar `Lívia Nascimento` e `Livia Nascimento`.
+- **Hierarquia Estrita de Priorização (9 Tiers):**
+  1. **Tier 1 (Score 1.00):** Correspondência exata literal (mesmo case e acentos).
+  2. **Tier 2 (Score 0.99):** Correspondência exata case-insensitive.
+  3. **Tier 3 (Score 0.98):** Correspondência exata normalizada (desconsiderando acentos).
+  4. **Tier 4 (Score 0.97):** Multi-Token Match (todas as palavras da consulta constam no nome cadastrado).
+  5. **Tier 5 (Score 0.96):** Substring literal contínua.
+  6. **Tier 6 (Score 0.94):** Substring normalizada contínua.
+  7. **Tier 7 (Score 0.93):** Token individual exato (qualquer palavra do nome idêntica ao termo).
+  8. **Tier 8 (Score 0.90):** Prefixo de token (`liv` prefixo de `Livia`).
+  9. **Tier 9 (Score 0.70 a 0.88):** Similaridade Fuzzy / Proporção de Letras (`SequenceMatcher` / Levenshtein) para tolerância a pequenos erros de digitação (typos).
+- **Busca Numérica por Documentos:** Dígitos limpos (>= 3 caracteres) consultam CPF, RG, RENACH e CNPJ com scores `0.99` (exato) e `0.95` (parcial).
+- **Frontend / UX (/impeccable):** Filtro local instantâneo com micro-debounce (30ms a 50ms), fallback debounced (300ms) para API remota, empty state legível com termo buscado e botão de 1 clique para limpar busca, badge dinâmico de contagem de resultados.
+- **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
+- **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
+- **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).

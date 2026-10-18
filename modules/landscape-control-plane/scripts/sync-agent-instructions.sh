@@ -82,7 +82,7 @@ SEARCH_DIRECTIVE_BLOCK='
 - **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
 - **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).'
 
-for TARGET_USER in ubuntu horistic aln; do
+for TARGET_USER in ubuntu horistic aln muniz; do
     if ! id "${TARGET_USER}" >/dev/null 2>&1; then
         continue
     fi
