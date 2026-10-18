@@ -2,7 +2,8 @@
 # ==============================================================================
 # Script: sync-agent-instructions.sh
 # Purpose: Synchronize canonical AI agent instructions, skills, Landscape directives,
-#          and install recurring systemd auto-sync timer across all fleet hosts.
+#          Canonical Multi-Tier Search Directive, and install recurring systemd auto-sync timer
+#          across all fleet hosts.
 # Managed: Omni Landscape Control Plane
 # ==============================================================================
 set -euo pipefail
@@ -31,6 +32,26 @@ LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Pla
   - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
 - **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.'
 
+SEARCH_DIRECTIVE_BLOCK='## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
+
+- **Mandato Universal e Permanente:** Em todo e qualquer projeto, serviço, API, CLI, banco de dados ou interface frontend do ecossistema ATIUS onde houver cadastro, consulta ou filtro de nomes de pessoas, strings de texto livre ou documentos (CPF, RG, RENACH, CNPJ), é OBRIGATÓRIA a aplicação deste motor multi-tier. É expressamente proibido usar `LIKE %termo%` ingênuo sensível a acentos ou comparações estritas `==`.
+- **Accent-Folding Simétrico Bidirecional:** A busca DEVE normalizar texto com decomposição Unicode NFD e remoção de marcas diacríticas `[\u0300-\u036f]`. Digitar `lívia` DEVE encontrar `Livia Nascimento` e `Lívia Nascimento`; digitar `livia` DEVE encontrar `Lívia Nascimento` e `Livia Nascimento`.
+- **Hierarquia Estrita de Priorização (9 Tiers):**
+  1. **Tier 1 (Score 1.00):** Correspondência exata literal (mesmo case e acentos).
+  2. **Tier 2 (Score 0.99):** Correspondência exata case-insensitive.
+  3. **Tier 3 (Score 0.98):** Correspondência exata normalizada (desconsiderando acentos).
+  4. **Tier 4 (Score 0.97):** Multi-Token Match (todas as palavras da consulta constam no nome cadastrado).
+  5. **Tier 5 (Score 0.96):** Substring literal contínua.
+  6. **Tier 6 (Score 0.94):** Substring normalizada contínua.
+  7. **Tier 7 (Score 0.93):** Token individual exato (qualquer palavra do nome idêntica ao termo).
+  8. **Tier 8 (Score 0.90):** Prefixo de token (`liv` prefixo de `Livia`).
+  9. **Tier 9 (Score 0.70 a 0.88):** Similaridade Fuzzy / Proporção de Letras (`SequenceMatcher` / Levenshtein) para tolerância a pequenos erros de digitação (typos).
+- **Busca Numérica por Documentos:** Dígitos limpos (>= 3 caracteres) consultam CPF, RG, RENACH e CNPJ com scores `0.99` (exato) e `0.95` (parcial).
+- **Frontend / UX (/impeccable):** Filtro local instantâneo com micro-debounce (30ms a 50ms), fallback debounced (300ms) para API remota, empty state legível com termo buscado e botão de 1 clique para limpar busca, badge dinâmico de contagem de resultados.
+- **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
+- **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
+- **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).'
+
 # ─── 1. Cria script daemon autônomo de sincronização ──────────────────────────
 cat << 'RUNTIMESYNC' > /usr/local/bin/omni-fleet-runtime-sync.sh
 #!/usr/bin/env bash
@@ -39,6 +60,27 @@ set -euo pipefail
 
 CANONICAL_HOST="10.11.1.11"
 LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+
+SEARCH_DIRECTIVE_BLOCK='
+## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
+
+- **Mandato Universal e Permanente:** Em todo e qualquer projeto, serviço, API, CLI, banco de dados ou interface frontend do ecossistema ATIUS onde houver cadastro, consulta ou filtro de nomes de pessoas, strings de texto livre ou documentos (CPF, RG, RENACH, CNPJ), é OBRIGATÓRIA a aplicação deste motor multi-tier. É expressamente proibido usar `LIKE %termo%` ingênuo sensível a acentos ou comparações estritas `==`.
+- **Accent-Folding Simétrico Bidirecional:** A busca DEVE normalizar texto com decomposição Unicode NFD e remoção de marcas diacríticas `[\u0300-\u036f]`. Digitar `lívia` DEVE encontrar `Livia Nascimento` e `Lívia Nascimento`; digitar `livia` DEVE encontrar `Lívia Nascimento` e `Livia Nascimento`.
+- **Hierarquia Estrita de Priorização (9 Tiers):**
+  1. **Tier 1 (Score 1.00):** Correspondência exata literal (mesmo case e acentos).
+  2. **Tier 2 (Score 0.99):** Correspondência exata case-insensitive.
+  3. **Tier 3 (Score 0.98):** Correspondência exata normalizada (desconsiderando acentos).
+  4. **Tier 4 (Score 0.97):** Multi-Token Match (todas as palavras da consulta constam no nome cadastrado).
+  5. **Tier 5 (Score 0.96):** Substring literal contínua.
+  6. **Tier 6 (Score 0.94):** Substring normalizada contínua.
+  7. **Tier 7 (Score 0.93):** Token individual exato (qualquer palavra do nome idêntica ao termo).
+  8. **Tier 8 (Score 0.90):** Prefixo de token (`liv` prefixo de `Livia`).
+  9. **Tier 9 (Score 0.70 a 0.88):** Similaridade Fuzzy / Proporção de Letras (`SequenceMatcher` / Levenshtein) para tolerância a pequenos erros de digitação (typos).
+- **Busca Numérica por Documentos:** Dígitos limpos (>= 3 caracteres) consultam CPF, RG, RENACH e CNPJ com scores `0.99` (exato) e `0.95` (parcial).
+- **Frontend / UX (/impeccable):** Filtro local instantâneo com micro-debounce (30ms a 50ms), fallback debounced (300ms) para API remota, empty state legível com termo buscado e botão de 1 clique para limpar busca, badge dinâmico de contagem de resultados.
+- **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
+- **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
+- **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).'
 
 for TARGET_USER in ubuntu horistic aln; do
     if ! id "${TARGET_USER}" >/dev/null 2>&1; then
@@ -66,6 +108,11 @@ for TARGET_USER in ubuntu horistic aln; do
                 chown -R "${TARGET_USER}:${TARGET_USER}" "${SKILLS_DIR}"
             fi
         fi
+    fi
+
+    # Garante a diretriz canônica no AGENTS.md principal
+    if [ -f "${AGENTS_MD}" ] && ! grep -q "Sistema Universal de Busca Inteligente Multi-Tier" "${AGENTS_MD}"; then
+        echo "${SEARCH_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
     fi
 
     # Symlinks canônicos — AGENTS.md atende todos os runtimes (Antigravity, Codex, Claude, GBrain)
@@ -106,6 +153,19 @@ for TARGET_USER in ubuntu horistic aln; do
             echo "@${AGENTS_MD}" | cat - "${AGENTS_SUB_FILE}" 2>/dev/null > "${AGENTS_SUB_FILE}.tmp" || echo "@${AGENTS_MD}" > "${AGENTS_SUB_FILE}.tmp"
             mv "${AGENTS_SUB_FILE}.tmp" "${AGENTS_SUB_FILE}"
         fi
+    fi
+
+    # Aplica diretriz em todos os AGENTS.md de projetos no GitHub
+    if [ -d "${TARGET_HOME}/GitHub" ]; then
+        find "${TARGET_HOME}/GitHub" -maxdepth 3 -name "AGENTS.md" 2>/dev/null | while read -r repo_agent; do
+            if [ -L "${repo_agent}" ]; then
+                continue
+            fi
+            if ! grep -q "Sistema Universal de Busca Inteligente Multi-Tier" "${repo_agent}" 2>/dev/null; then
+                echo "${SEARCH_DIRECTIVE_BLOCK}" >> "${repo_agent}"
+                chown "${TARGET_USER}:${TARGET_USER}" "${repo_agent}" 2>/dev/null || true
+            fi
+        done
     fi
 
     # Sincronizar repositório omni-srv-admin se presente
@@ -157,4 +217,4 @@ systemctl enable --now omni-fleet-runtime-sync.timer
 # ─── 3. Execução imediata no host atual ───────────────────────────────────────
 /usr/local/bin/omni-fleet-runtime-sync.sh
 
-echo "[SUCCESS] Instruction and skills auto-sync timer active on $(hostname)"
+echo "[SUCCESS] Instruction, skills, and search directive auto-sync active on $(hostname)"
