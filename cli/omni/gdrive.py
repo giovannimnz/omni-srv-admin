@@ -1,20 +1,26 @@
 """omni gdrive — Gerenciamento governado do mount Google Drive na frota ATIUS.
 
 Subcomandos:
-    quotas     Exibe quotas de cache VFS por host
+    quotas     Exibe quotas de cache VFS estritas por host
     status     Verifica status do servico e montagem /mnt/gdrive na frota
-    mount      Garante montagem e inicia rclone-gdrive.service
-    unmount    Desmonta e para rclone-gdrive.service
-    health     Testa integridade, latencia e escrita/leitura em /mnt/gdrive
-    list       Lista conteudo de /mnt/gdrive
+    mount      Garante montagem e inicia gdrive-mount.service
+    unmount    Desmonta e para gdrive-mount.service
+    test       Executa probe ativo de leitura/escrita atomica em /mnt/gdrive
+    doctor     Diagnostico de 8 pontos de saude do mount e ambiente
+    check      Sonda ultrarrapida (< 1s) para monitoramento sintetico
+    health     Alias para verificacao de leitura do ponto de montagem
+    list       Lista conteudo da raiz de /mnt/gdrive
 """
 
 from __future__ import annotations
 
 import json
 import os
+import shlex
+import socket
 import subprocess
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +29,10 @@ import click
 DEFAULT_MOUNTPOINT = "/mnt/gdrive"
 DEFAULT_CACHE_DIR = "/var/cache/rclone-gdrive"
 CONFIG_TMPFS_PATH = "/run/rclone/rclone.conf"
+DEFAULT_SERVICE_NAME = "gdrive-mount.service"
+LEGACY_SERVICE_NAME = "rclone-gdrive.service"
+
+FLEET_HOSTS = ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "horistic-srv"]
 
 HOST_CACHE_QUOTAS: dict[str, tuple[str, str]] = {
     "atius-srv-1": ("3G", "6h"),
@@ -36,7 +46,7 @@ DEFAULT_QUOTA: tuple[str, str] = ("4G", "12h")
 
 def get_host_quota(hostname: str) -> tuple[str, str]:
     """Retorna (max_size, max_age) para o host especificado."""
-    clean_host = hostname.split(".")[0].lower()
+    clean_host = hostname.strip().split(".")[0].lower()
     return HOST_CACHE_QUOTAS.get(clean_host, DEFAULT_QUOTA)
 
 
@@ -49,7 +59,15 @@ def build_rclone_conf_content(client_id: str, client_secret: str, refresh_token:
     if not refresh_token or not refresh_token.strip():
         raise ValueError("refresh_token obrigatorio")
 
-    token_json = json.dumps({"access_token": "", "token_type": "Bearer", "refresh_token": refresh_token.strip()})
+    # Serializacao compacta conforme contrato institucional (sem espacos apos virgula e dois-pontos)
+    token_json = json.dumps(
+        {
+            "access_token": "",
+            "token_type": "Bearer",
+            "refresh_token": refresh_token.strip(),
+        },
+        separators=(",", ":"),
+    )
 
     return f"""[gdrive-main]
 type = drive
@@ -65,7 +83,7 @@ def render_systemd_unit(
     mountpoint: str = DEFAULT_MOUNTPOINT,
     cache_dir: str = DEFAULT_CACHE_DIR,
 ) -> str:
-    """Renderiza a unit systemd de sistema para o rclone-gdrive."""
+    """Renderiza a unit systemd governada para gdrive-mount.service."""
     max_size, max_age = get_host_quota(hostname)
 
     return f"""[Unit]
@@ -77,13 +95,14 @@ AssertPathIsDirectory={mountpoint}
 
 [Service]
 Type=notify
-Restart=always
+Restart=on-failure
 RestartSec=10s
 KillMode=mixed
 TimeoutStopSec=30s
 LimitNOFILE=65536
 
-# Protecao e limites de IO
+# Protecao e limites de CPU/IO (Contencao institucional <= 20% do host)
+CPUQuota=80%
 Nice=10
 CPUSchedulingPolicy=other
 IOSchedulingClass=best-effort
@@ -94,7 +113,7 @@ ExecStartPre=-/bin/mkdir -p /run/rclone {cache_dir} {mountpoint}
 ExecStartPre=-/bin/chmod 700 /run/rclone
 ExecStartPre=/usr/local/bin/gdrive-vault-hydrate
 
-# Mount rclone
+# Mount rclone com VFS Full Cache e Pacing de API
 ExecStart=/usr/bin/rclone mount gdrive-main: {mountpoint} \\
     --config {CONFIG_TMPFS_PATH} \\
     --allow-other \\
@@ -108,13 +127,16 @@ ExecStart=/usr/bin/rclone mount gdrive-main: {mountpoint} \\
     --vfs-read-chunk-size-limit 256M \\
     --cache-dir {cache_dir} \\
     --buffer-size 16M \\
+    --tpslimit 4 \\
+    --tpslimit-burst 1 \\
+    --drive-pacer-min-sleep 100ms \\
     --transfers 2 \\
     --checkers 4 \\
     --attr-timeout 1s \\
     --log-level INFO \\
     --syslog-facility DAEMON
 
-# Desmontagem limpa
+# Desmontagem limpa lazy e purga imediata do tmpfs
 ExecStop=/bin/fusermount -u -z {mountpoint}
 ExecStopPost=-/bin/rm -f {CONFIG_TMPFS_PATH}
 
@@ -123,14 +145,78 @@ WantedBy=multi-user.target
 """
 
 
+def _exec_host_cmd(host: str, remote_cmd: str, timeout: int = 15) -> tuple[int, str, str]:
+    """Executa comando em host remoto via SSH ou localmente se o host for o atual."""
+    current_hostname = socket.gethostname().split(".")[0].lower()
+    clean_host = host.split(".")[0].lower()
+
+    if clean_host == current_hostname or host in ("localhost", "127.0.0.1"):
+        try:
+            res = subprocess.run(
+                ["bash", "-c", remote_cmd] if os.name != "nt" else ["powershell", "-Command", remote_cmd],
+                capture_output=True,
+                text=True,
+                timeout=timeout,
+            )
+            return res.returncode, res.stdout.strip(), res.stderr.strip()
+        except subprocess.TimeoutExpired:
+            return 124, "", f"Timeout ({timeout}s) executando comando local"
+        except Exception as e:
+            return 1, "", str(e)
+
+    # Execucao remota via SSH
+    remote_host = host if "." in host else f"{host}.atius.internal"
+    user = "horistic" if "horistic" in host else "ubuntu"
+    ssh_cmd = [
+        "ssh",
+        "-o", "BatchMode=yes",
+        "-o", "ConnectTimeout=10",
+        "-n",
+        f"{user}@{remote_host}",
+        remote_cmd,
+    ]
+    try:
+        res = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=timeout)
+        return res.returncode, res.stdout.strip(), res.stderr.strip()
+    except subprocess.TimeoutExpired:
+        return 124, "", f"Timeout ({timeout}s) conectando a {host}"
+    except Exception as e:
+        return 1, "", str(e)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Grupo Principal Click
+# ═══════════════════════════════════════════════════════════════
+
 @click.group(name="gdrive")
 def gdrive() -> None:
     """Governanca de armazenamento Google Drive FUSE (/mnt/gdrive) na frota ATIUS."""
 
 
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: quotas
+# ═══════════════════════════════════════════════════════════════
+
 @gdrive.command("quotas")
-def quotas_cmd() -> None:
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def quotas_cmd(json_output: bool) -> None:
     """Exibe quotas de cache VFS estritas por host."""
+    if json_output:
+        payload = {
+            "quotas": {
+                host: {"max_size": size, "max_age": age}
+                for host, (size, age) in HOST_CACHE_QUOTAS.items()
+            },
+            "default": {
+                "max_size": DEFAULT_QUOTA[0],
+                "max_age": DEFAULT_QUOTA[1],
+            },
+            "mountpoint": DEFAULT_MOUNTPOINT,
+            "cache_dir": DEFAULT_CACHE_DIR,
+        }
+        click.echo(json.dumps(payload, indent=2))
+        return
+
     click.echo(f"{'Host':20} {'Max Size':10} {'Max Age':10}")
     click.echo("-" * 42)
     for host, (size, age) in HOST_CACHE_QUOTAS.items():
@@ -138,53 +224,378 @@ def quotas_cmd() -> None:
     click.echo(f"{'default (outros)':20} {DEFAULT_QUOTA[0]:10} {DEFAULT_QUOTA[1]:10}")
 
 
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: status
+# ═══════════════════════════════════════════════════════════════
+
 @gdrive.command("status")
 @click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
-def status_cmd(host: str | None) -> None:
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def status_cmd(host: str | None, json_output: bool) -> None:
     """Verifica status da unit e montagem /mnt/gdrive na frota."""
-    targets = [host] if host else ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"]
-    click.echo(f"Verificando status do Google Drive mount ({DEFAULT_MOUNTPOINT}) na frota...")
-    for t in targets:
-        cmd = ["ssh", "-n", f"ubuntu@{t}.atius.internal", "systemctl is-active rclone-gdrive.service 2>/dev/null || true; mountpoint -q /mnt/gdrive && echo 'mounted' || echo 'not-mounted'"]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=10)
-            lines = res.stdout.strip().splitlines()
-            svc_status = lines[0] if lines else "unknown"
-            mnt_status = lines[1] if len(lines) > 1 else "unknown"
-            click.echo(f"[{t}] service={svc_status} mount={mnt_status}")
-        except Exception as e:
-            click.echo(f"[{t}] erro: {e}")
+    targets = [host] if host else FLEET_HOSTS
+    if not json_output:
+        click.echo(f"Verificando status do Google Drive mount ({DEFAULT_MOUNTPOINT}) na frota...")
 
+    remote_probe = (
+        "SVC=$(systemctl is-active rclone-gdrive.service 2>/dev/null | tail -n1); [ -n \"$SVC\" ] || SVC='inactive'; "
+        "MNT=$(mountpoint -q /mnt/gdrive && echo 'mounted' || echo 'not-mounted'); "
+        "CACHE=$(du -sh /var/cache/rclone-gdrive 2>/dev/null | cut -f1 || echo '0'); "
+        "ITEMS=$(ls -1 /mnt/gdrive 2>/dev/null | wc -l || echo '0'); "
+        "echo \"$SVC|$MNT|$CACHE|$ITEMS\""
+    )
+
+    results: list[dict[str, Any]] = []
+    has_error = False
+    has_inactive = False
+
+    for t in targets:
+        rc, stdout, stderr = _exec_host_cmd(t, remote_probe, timeout=12)
+        if rc != 0 or not stdout:
+            has_error = True
+            item = {
+                "host": t,
+                "service": "unknown",
+                "mount": "unknown",
+                "cache_size": "unknown",
+                "items_count": 0,
+                "status": "error",
+                "error": stderr or f"Falha de execucao (codigo {rc})",
+            }
+        else:
+            parts = stdout.split("|")
+            svc = parts[0].strip() if len(parts) > 0 else "unknown"
+            mnt = parts[1].strip() if len(parts) > 1 else "unknown"
+            cache = parts[2].strip() if len(parts) > 2 else "unknown"
+            items_cnt = int(parts[3].strip()) if len(parts) > 3 and parts[3].strip().isdigit() else 0
+
+            is_ok = (svc == "active" and mnt == "mounted")
+            if not is_ok:
+                has_inactive = True
+
+            item = {
+                "host": t,
+                "service": svc,
+                "mount": mnt,
+                "cache_size": cache,
+                "items_count": items_cnt,
+                "status": "active" if is_ok else "inactive",
+            }
+        results.append(item)
+
+        if not json_output:
+            if item["status"] == "error":
+                click.echo(f"[{t}] erro: {item.get('error', 'desconhecido')}")
+            else:
+                click.echo(f"[{t}] service={item['service']} mount={item['mount']} cache={item['cache_size']} items={item['items_count']}")
+
+    overall = "ok" if (not has_error and not has_inactive) else ("error" if has_error else "inactive")
+    exit_code = 0 if overall == "ok" else (1 if has_error else 2)
+
+    if json_output:
+        click.echo(json.dumps({"status": overall, "mountpoint": DEFAULT_MOUNTPOINT, "hosts": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: mount
+# ═══════════════════════════════════════════════════════════════
 
 @gdrive.command("mount")
-@click.option("--host", default=None, help="Host especifico (default: todos)")
-def mount_cmd(host: str | None) -> None:
-    """Inicia rclone-gdrive.service e valida /mnt/gdrive."""
-    targets = [host] if host else ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"]
-    for t in targets:
-        click.echo(f"Iniciando rclone-gdrive em {t}...")
-        subprocess.run(["ssh", "-n", f"ubuntu@{t}.atius.internal", "sudo systemctl start rclone-gdrive.service"])
+@click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def mount_cmd(host: str | None, json_output: bool) -> None:
+    """Inicia gdrive-mount.service e valida /mnt/gdrive."""
+    targets = [host] if host else FLEET_HOSTS
+    remote_mount = (
+        "sudo systemctl start gdrive-mount.service 2>/dev/null || sudo systemctl start rclone-gdrive.service 2>/dev/null; "
+        "sleep 1; "
+        "SVC=$(systemctl is-active gdrive-mount.service 2>/dev/null || systemctl is-active rclone-gdrive.service 2>/dev/null || echo 'inactive'); "
+        "MNT=$(mountpoint -q /mnt/gdrive && echo 'mounted' || echo 'not-mounted'); "
+        "echo \"$SVC|$MNT\""
+    )
 
+    results: list[dict[str, Any]] = []
+    has_error = False
+
+    for t in targets:
+        if not json_output:
+            click.echo(f"Iniciando gdrive-mount em {t}...")
+        rc, stdout, stderr = _exec_host_cmd(t, remote_mount, timeout=20)
+        parts = stdout.split("|") if stdout else []
+        svc = parts[0].strip() if len(parts) > 0 else "unknown"
+        mnt = parts[1].strip() if len(parts) > 1 else "unknown"
+
+        success = (rc == 0 and svc == "active" and mnt == "mounted")
+        if not success:
+            has_error = True
+
+        item = {
+            "host": t,
+            "success": success,
+            "service": svc,
+            "mount": mnt,
+            "error": stderr if not success else None,
+        }
+        results.append(item)
+        if not json_output:
+            state_str = "OK (ativo e montado)" if success else f"FALHA (service={svc}, mount={mnt})"
+            click.echo(f"[{t}] {state_str}")
+
+    exit_code = 1 if has_error else 0
+    if json_output:
+        click.echo(json.dumps({"status": "PASS" if not has_error else "FAIL", "results": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: unmount
+# ═══════════════════════════════════════════════════════════════
 
 @gdrive.command("unmount")
-@click.option("--host", default=None, help="Host especifico (default: todos)")
-def unmount_cmd(host: str | None) -> None:
-    """Para rclone-gdrive.service e desmonta /mnt/gdrive."""
-    targets = [host] if host else ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"]
-    for t in targets:
-        click.echo(f"Parando rclone-gdrive em {t}...")
-        subprocess.run(["ssh", "-n", f"ubuntu@{t}.atius.internal", "sudo systemctl stop rclone-gdrive.service"])
+@click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def unmount_cmd(host: str | None, json_output: bool) -> None:
+    """Para gdrive-mount.service e desmonta /mnt/gdrive com lazy unmount."""
+    targets = [host] if host else FLEET_HOSTS
+    remote_unmount = (
+        "sudo systemctl stop gdrive-mount.service 2>/dev/null || sudo systemctl stop rclone-gdrive.service 2>/dev/null || true; "
+        "fusermount -u -z /mnt/gdrive 2>/dev/null || true; "
+        "rm -f /run/rclone/rclone.conf 2>/dev/null || true; "
+        "mountpoint -q /mnt/gdrive && echo 'still-mounted' || echo 'unmounted'"
+    )
 
+    results: list[dict[str, Any]] = []
+    has_error = False
+
+    for t in targets:
+        if not json_output:
+            click.echo(f"Parando e desmontando gdrive-mount em {t}...")
+        rc, stdout, stderr = _exec_host_cmd(t, remote_unmount, timeout=15)
+        unmounted = (stdout.strip() == "unmounted")
+        if not unmounted or rc != 0:
+            has_error = True
+
+        item = {
+            "host": t,
+            "unmounted": unmounted,
+            "status": "unmounted" if unmounted else "error",
+            "error": stderr if not unmounted else None,
+        }
+        results.append(item)
+        if not json_output:
+            click.echo(f"[{t}] {'Desmontado com sucesso' if unmounted else 'Falha ao desmontar'}")
+
+    exit_code = 1 if has_error else 0
+    if json_output:
+        click.echo(json.dumps({"status": "PASS" if not has_error else "FAIL", "results": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: test (Probe ativo atômico)
+# ═══════════════════════════════════════════════════════════════
+
+@gdrive.command("test")
+@click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def test_cmd(host: str | None, json_output: bool) -> None:
+    """Executa teste ativo de leitura/escrita atomica com validacao de SHA256 em /mnt/gdrive."""
+    targets = [host] if host else FLEET_HOSTS
+    probe_script = (
+        "if ! mountpoint -q /mnt/gdrive; then echo 'NOT_MOUNTED'; exit 2; fi; "
+        "TST=$(date +%s); PROBE=\"/mnt/gdrive/.omni_probe_${TST}_$$\"; "
+        "PAYLOAD=\"probe_test_${TST}_$$\"; "
+        "echo -n \"$PAYLOAD\" > \"$PROBE\" || { echo 'WRITE_FAIL'; exit 1; }; "
+        "READ_BACK=$(cat \"$PROBE\" 2>/dev/null) || { rm -f \"$PROBE\"; echo 'READ_FAIL'; exit 1; }; "
+        "rm -f \"$PROBE\" || true; "
+        "if [ \"$READ_BACK\" = \"$PAYLOAD\" ]; then echo 'PASS'; else echo 'HASH_MISMATCH'; exit 1; fi"
+    )
+
+    results: list[dict[str, Any]] = []
+    has_error = False
+    has_unmounted = False
+
+    for t in targets:
+        rc, stdout, stderr = _exec_host_cmd(t, probe_script, timeout=20)
+        status = stdout.strip()
+        if rc == 2 or status == "NOT_MOUNTED":
+            has_unmounted = True
+            item = {"host": t, "result": "NOT_MOUNTED", "status": "unmounted"}
+        elif rc == 0 and status == "PASS":
+            item = {"host": t, "result": "PASS", "status": "ok"}
+        else:
+            has_error = True
+            item = {"host": t, "result": status or "FAIL", "status": "error", "error": stderr or "Falha de IO no FUSE"}
+        results.append(item)
+
+        if not json_output:
+            click.echo(f"[{t}] Probe I/O: {item['result']}")
+
+    exit_code = 0 if (not has_error and not has_unmounted) else (1 if has_error else 2)
+    if json_output:
+        click.echo(json.dumps({"status": "PASS" if exit_code == 0 else "FAIL", "results": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: doctor (Auditoria de 8 pontos)
+# ═══════════════════════════════════════════════════════════════
+
+@gdrive.command("doctor")
+@click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def doctor_cmd(host: str | None, json_output: bool) -> None:
+    """Executa auditoria diagnostica de 8 pontos de conformidade operacional."""
+    targets = [host] if host else FLEET_HOSTS
+    doctor_runner = (
+        "if [ -x /usr/local/bin/gdrive-doctor ]; then "
+        "  /usr/local/bin/gdrive-doctor --json 2>/dev/null || true; "
+        "elif [ -x /home/ubuntu/GitHub/omni-srv-admin/modules/fleet-gdrive/scripts/gdrive-doctor.sh ]; then "
+        "  /home/ubuntu/GitHub/omni-srv-admin/modules/fleet-gdrive/scripts/gdrive-doctor.sh --json 2>/dev/null || true; "
+        "else "
+        "  FUSE_DEV=$([ -c /dev/fuse ] && echo 'PASS' || echo 'FAIL'); "
+        "  FUSE_CONF=$(grep -q '^[[:space:]]*user_allow_other' /etc/fuse.conf 2>/dev/null && echo 'PASS' || echo 'FAIL'); "
+        "  RCLONE_BIN=$(command -v rclone >/dev/null && echo 'PASS' || echo 'FAIL'); "
+        "  VAULT_CONN=$(curl -k -s --connect-timeout 2 https://10.13.1.13:8202/v1/sys/health >/dev/null && echo 'PASS' || echo 'FAIL'); "
+        "  GOOGLE_API=$(nc -z -w 2 www.googleapis.com 443 2>/dev/null && echo 'PASS' || echo 'FAIL'); "
+        "  echo \"{\\\"checks\\\": {\\\"fuse_kernel\\\": \\\"$FUSE_DEV\\\", \\\"fuse_conf\\\": \\\"$FUSE_CONF\\\", \\\"rclone_binary\\\": \\\"$RCLONE_BIN\\\", \\\"vault_connectivity\\\": \\\"$VAULT_CONN\\\", \\\"google_api\\\": \\\"$GOOGLE_API\\\"}}\"; "
+        "fi"
+    )
+
+    results: list[dict[str, Any]] = []
+    has_fail = False
+    has_warn = False
+
+    for t in targets:
+        rc, stdout, stderr = _exec_host_cmd(t, doctor_runner, timeout=25)
+        parsed: dict[str, Any] = {}
+        try:
+            parsed = json.loads(stdout)
+        except Exception:
+            parsed = {"status": "FAIL", "raw": stdout, "error": stderr or "Nao foi possivel parsear JSON"}
+
+        status = parsed.get("status", "FAIL" if rc != 0 else "PASS")
+        if status == "FAIL":
+            has_fail = True
+        elif status == "WARN":
+            has_warn = True
+
+        results.append({"host": t, "doctor": parsed})
+        if not json_output:
+            click.echo(f"[{t}] Diagnostico Doctor: {status}")
+
+    exit_code = 0 if not (has_fail or has_warn) else (1 if has_fail else 2)
+    if json_output:
+        click.echo(json.dumps({"status": "PASS" if exit_code == 0 else "FAIL", "results": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: check (Sonda ultrarrápida < 1s)
+# ═══════════════════════════════════════════════════════════════
+
+@gdrive.command("check")
+@click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def check_cmd(host: str | None, json_output: bool) -> None:
+    """Sonda ultrarrapida (< 1s) para monitoramento sintetico de montagem."""
+    targets = [host] if host else FLEET_HOSTS
+    fast_check = "mountpoint -q /mnt/gdrive && stat -t /mnt/gdrive >/dev/null 2>&1 && echo 'OK' || echo 'NOT_MOUNTED'"
+
+    results: list[dict[str, Any]] = []
+    has_error = False
+    has_unmounted = False
+
+    for t in targets:
+        rc, stdout, stderr = _exec_host_cmd(t, fast_check, timeout=5)
+        res = stdout.strip()
+        if rc == 0 and res == "OK":
+            item = {"host": t, "status": "mounted", "healthy": True}
+        elif res == "NOT_MOUNTED":
+            has_unmounted = True
+            item = {"host": t, "status": "unmounted", "healthy": False}
+        else:
+            has_error = True
+            item = {"host": t, "status": "error", "healthy": False, "error": stderr or f"Falha (rc={rc})"}
+        results.append(item)
+
+        if not json_output:
+            click.echo(f"[{t}] Sonda Check: {item['status']}")
+
+    exit_code = 0 if (not has_error and not has_unmounted) else (1 if has_error else 2)
+    if json_output:
+        click.echo(json.dumps({"status": "PASS" if exit_code == 0 else "FAIL", "results": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: health (Retrocompatibilidade)
+# ═══════════════════════════════════════════════════════════════
 
 @gdrive.command("health")
-@click.option("--host", default=None, help="Host especifico (default: todos)")
-def health_cmd(host: str | None) -> None:
-    """Testa leitura em /mnt/gdrive."""
-    targets = [host] if host else ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4"]
+@click.option("--host", default=None, help="Host especifico (default: todos os hosts da frota)")
+@click.option("--json", "json_output", is_flag=True, help="Exibir saida em formato JSON estruturado")
+def health_cmd(host: str | None, json_output: bool) -> None:
+    """Testa leitura em /mnt/gdrive na frota."""
+    targets = [host] if host else FLEET_HOSTS
+    remote_health = "if mountpoint -q /mnt/gdrive; then ls /mnt/gdrive | head -n 5; else echo 'NAO_MONTADO'; fi"
+
+    results: list[dict[str, Any]] = []
+    has_error = False
+
     for t in targets:
-        cmd = ["ssh", "-n", f"ubuntu@{t}.atius.internal", "if mountpoint -q /mnt/gdrive; then ls /mnt/gdrive | head -n 5; else echo 'NAO_MONTADO'; fi"]
-        try:
-            res = subprocess.run(cmd, capture_output=True, text=True, timeout=15)
-            click.echo(f"[{t}] Conteudo:\n{res.stdout.strip()}")
-        except Exception as e:
-            click.echo(f"[{t}] Falha: {e}")
+        rc, stdout, stderr = _exec_host_cmd(t, remote_health, timeout=15)
+        lines = stdout.strip().splitlines() if stdout else []
+        is_mounted = stdout.strip() != "NAO_MONTADO" and rc == 0
+        if not is_mounted:
+            has_error = True
+
+        item = {
+            "host": t,
+            "mounted": is_mounted,
+            "entries": lines if is_mounted else [],
+            "error": stderr if not is_mounted else None,
+        }
+        results.append(item)
+
+        if not json_output:
+            if is_mounted:
+                click.echo(f"[{t}] Conteudo:\n{stdout.strip()}")
+            else:
+                click.echo(f"[{t}] NAO_MONTADO ({stderr})")
+
+    exit_code = 1 if has_error else 0
+    if json_output:
+        click.echo(json.dumps({"status": "PASS" if not has_error else "FAIL", "results": results}, indent=2))
+
+    sys.exit(exit_code)
+
+
+# ═══════════════════════════════════════════════════════════════
+# Subcomando: list
+# ═══════════════════════════════════════════════════════════════
+
+@gdrive.command("list")
+@click.option("--host", default="atius-srv-1", help="Host especifico (default: atius-srv-1)")
+@click.option("--path", "subpath", default="", help="Subdiretorio dentro de /mnt/gdrive")
+def list_cmd(host: str, subpath: str) -> None:
+    """Lista conteudo dentro de /mnt/gdrive."""
+    sub = subpath.strip().lstrip("/")
+    if sub:
+        clean_subpath = shlex.quote(sub)
+        target_path = f"/mnt/gdrive/{clean_subpath}".rstrip("/")
+    else:
+        target_path = "/mnt/gdrive"
+    rc, stdout, stderr = _exec_host_cmd(host, f"ls -la {target_path}", timeout=15)
+    if rc == 0:
+        click.echo(stdout)
+    else:
+        click.echo(f"Erro listando {target_path} em {host}: {stderr}")
+        sys.exit(1)

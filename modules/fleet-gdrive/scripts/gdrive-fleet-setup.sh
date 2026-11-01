@@ -114,22 +114,29 @@ fi
 CLIENT_ID=""
 CLIENT_SECRET=""
 REFRESH_TOKEN=""
+TOKEN_JSON_RAW=""
 
 while IFS='=' read -r key val; do
     key=$(echo "${key}" | sed -e 's/^export //' | xargs)
     val=$(echo "${val}" | sed -e 's/^"//' -e 's/"$//' -e "s/^'//" -e "s/'$//")
     case "${key}" in
-        GDRIVE_CLIENT_ID) CLIENT_ID="${val}" ;;
-        GDRIVE_CLIENT_SECRET) CLIENT_SECRET="${val}" ;;
-        GDRIVE_REFRESH_TOKEN) REFRESH_TOKEN="${val}" ;;
+        GDRIVE_CLIENT_ID|client_id) CLIENT_ID="${val}" ;;
+        GDRIVE_CLIENT_SECRET|client_secret) CLIENT_SECRET="${val}" ;;
+        GDRIVE_REFRESH_TOKEN|refresh_token) REFRESH_TOKEN="${val}" ;;
+        GDRIVE_TOKEN_JSON|token_json) TOKEN_JSON_RAW="${val}" ;;
     esac
 done <<< "${ENV_OUTPUT}"
 
 [ -n "${CLIENT_ID}" ] || fail "GDRIVE_CLIENT_ID vazio no retorno do Vault"
 [ -n "${CLIENT_SECRET}" ] || fail "GDRIVE_CLIENT_SECRET vazio no retorno do Vault"
-[ -n "${REFRESH_TOKEN}" ] || fail "GDRIVE_REFRESH_TOKEN vazio no retorno do Vault"
 
-TOKEN_JSON=$(printf '{"access_token":"","token_type":"Bearer","refresh_token":"%s"}' "${REFRESH_TOKEN}")
+if [ -n "${TOKEN_JSON_RAW}" ] && echo "${TOKEN_JSON_RAW}" | grep -q 'refresh_token'; then
+    TOKEN_JSON="${TOKEN_JSON_RAW}"
+elif [ -n "${REFRESH_TOKEN}" ]; then
+    TOKEN_JSON=$(printf '{"access_token":"","token_type":"Bearer","refresh_token":"%s","expiry":"2000-01-01T00:00:00Z"}' "${REFRESH_TOKEN}")
+else
+    fail "Nem GDRIVE_TOKEN_JSON nem GDRIVE_REFRESH_TOKEN encontrados no Vault"
+fi
 
 cat <<EOF > "${CONF_FILE}"
 [gdrive-main]

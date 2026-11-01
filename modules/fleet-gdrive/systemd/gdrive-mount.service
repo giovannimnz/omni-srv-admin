@@ -1,0 +1,63 @@
+[Unit]
+Description=Atius Fleet Google Drive FUSE Mount
+Documentation=man:rclone(1) https://atius.com.br
+After=network-online.target
+Wants=network-online.target
+AssertPathIsDirectory=/mnt/gdrive
+
+[Service]
+Type=notify
+NotifyAccess=all
+Restart=on-failure
+RestartSec=10s
+KillMode=mixed
+TimeoutStopSec=30s
+LimitNOFILE=65536
+
+# Governanca de Recursos do Host (Contencao CPU <= 20% do total)
+CPUQuota=80%
+Nice=10
+CPUSchedulingPolicy=other
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+# Carga dinamica de quotas por host (com fallback seguro caso o arquivo nao exista)
+EnvironmentFile=-/etc/default/gdrive-mount
+Environment="CACHE_MAX_SIZE=4G"
+Environment="CACHE_MAX_AGE=12h"
+
+# Preparacao do tmpfs e injecao de credenciais Vault (Zero-Disk Footprint)
+ExecStartPre=-/bin/mkdir -p /run/rclone /var/cache/rclone-gdrive /mnt/gdrive
+ExecStartPre=-/bin/chmod 700 /run/rclone /var/cache/rclone-gdrive
+ExecStartPre=/usr/local/bin/gdrive-vault-hydrate
+
+# Rclone Mount com Full VFS Cache, Rate Pacing e Pacing de API
+ExecStart=/usr/bin/rclone mount gdrive-main: /mnt/gdrive \
+    --config /run/rclone/rclone.conf \
+    --allow-other \
+    --umask 022 \
+    --dir-cache-time 72h \
+    --poll-interval 1m \
+    --vfs-cache-mode full \
+    --vfs-cache-max-size ${CACHE_MAX_SIZE} \
+    --vfs-cache-max-age ${CACHE_MAX_AGE} \
+    --vfs-read-chunk-size 32M \
+    --vfs-read-chunk-size-limit 256M \
+    --cache-dir /var/cache/rclone-gdrive \
+    --buffer-size 16M \
+    --tpslimit 4 \
+    --tpslimit-burst 1 \
+    --drive-pacer-min-sleep 100ms \
+    --drive-pacer-burst 1 \
+    --transfers 2 \
+    --checkers 4 \
+    --attr-timeout 1s \
+    --log-level INFO \
+    --syslog-facility DAEMON
+
+# Desmontagem limpa lazy e purga imediata de credenciais efemeras em tmpfs
+ExecStop=/bin/fusermount -u -z /mnt/gdrive
+ExecStopPost=-/bin/rm -f /run/rclone/rclone.conf
+
+[Install]
+WantedBy=multi-user.target
