@@ -64,6 +64,39 @@ For more information about GSD agents, run `/gsd-help`.
 - Skills/scripts Hermes antigos e `modules/srv1-ops/legacy-scripts/fix-abnt2.sh`
   sao evidencia historica, nao entrypoints operacionais.
 
+## Canonical Fleet Operations & Landscape Control-Plane Directive
+
+- **Regra Mandatória para Múltiplos Servidores / Frota:** SEMPRE que qualquer operação, atualização, diagnóstico, instalação de pacotes APT, sincronização de arquivos, verificação ou execução envolver mais de um servidor (`atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, `horistic-srv`), NUNCA execute loops manuais seriais de SSH se a operação puder ser executada via **Landscape Control-Plane**.
+- **Comando Canônico de Execução Simultânea:**
+  ```bash
+  omni landscape run <script-id> --hosts all --wait --yes
+  ```
+  - Executa simultaneamente em todos os 5 nós da frota via Landscape Server self-hosted (`atius-srv-3`).
+  - Coleta e agrega status (`undelivered`, `in-progress`, `delivered`, `succeeded`), stdout, stderr e exit codes em tempo real.
+  - Para subconjunto de hosts, use `--hosts atius-srv-1,atius-srv-2...` ou `--query <custom-query>`.
+- **Scripts Versionados e Manifesto:**
+  - Diretório: `/home/ubuntu/GitHub/omni-srv-admin/modules/landscape-control-plane/scripts/`
+  - Manifesto: `/home/ubuntu/GitHub/omni-srv-admin/modules/landscape-control-plane/scripts/manifest.json`
+  - Para novo script: salve no diretório, adicione ao `manifest.json`, sincronize com `omni landscape scripts push <script-id> --yes` e dispare com `omni landscape run <script-id> --hosts all --wait --yes`.
+- **Comandos de Suporte e Inventário:**
+  - Listar computadores registrados: `omni landscape computers`
+  - Status da integração: `omni landscape status`
+  - Listar scripts cadastrados: `omni landscape scripts list`
+  - Consultar atividades: `omni landscape activities`
+- **Gatilhos de Acionamento Automático:**
+  - Palavras-chave: `em todos os servidores`, `nos servidores 1 a 4`, `na frota`, `fleet-wide`, `multi-host`, `multi-servidor`, `todos os hosts`, `atualizar servidores`, `instalar em todos`, `status da frota`, `diagnóstico em massa`.
+  - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
+- **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.
+- **Arquitetura & Hospedagem:**
+  - **Servidor Self-Hosted:** Host `atius-srv-3` (`10.13.1.13`), container LXC `landscape` (`10.65.172.253`).
+  - **Ingress Edge / Reverse Proxy:** Host `atius-srv-1` (`10.11.1.11`), Apache TLS com certificados Let's Encrypt em paridade dual-domain: `https://landscape.atius.com.br/` e `https://landscape.atius.io/`.
+  - **Client Endpoint:** `http://landscape.atius.com.br/ping` e `http://landscape.atius.io/ping` (HTTP puro obrigatório para comunicação do `landscape-client`; não redirecionar para HTTPS).
+- **Interfaces & Rotas Web:**
+  - **Classic UI (Padrão):** `/login` (reescrita canônica transparente no Apache do `atius-srv-1` com retorno aos segredos em `/account/standalone/secrets`).
+  - **Modern Dashboard:** `/new_dashboard/overview` — interface SPA moderna (React/Vite) servida estaticamente pelo container.
+  - **Skin & Tema Dark:** Template clássico customizado em `/opt/canonical/landscape/canonical/landscape/ui/skin/hokan/page.pt` (container LXC) com `<style id="atius-classic-dark">`, cobrindo overrides para formulários, cards e modal `.cookie-policy` (evitando texto branco em fundo branco).
+- **Documentação de Governança:** `docs/fleet/landscape-omni-governance.md`, `docs/fleet/landscape-omni-cli.md` e `docs/operations/LANDSCAPE-DRG-AND-FLEET-ROLLOUT.md`.
+
 ## Segredos ATIUS e MCP
 
 - Fonte autoritativa de segredos: HashiCorp Vault, nao `.env`, `.zshrc`, historico de shell, chat, Obsidian, GBrain ou arquivos do repo.
@@ -100,3 +133,31 @@ For more information about GSD agents, run `/gsd-help`.
 - Preservar evidencia headless adequada, como output de comandos, traces, screenshots, snapshots ou artefatos de teste.
 
 <!-- codex-policy:parallel-headless:end -->
+
+
+## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
+
+- **Mandato Universal e Permanente:** Em todo e qualquer projeto, serviço, API, CLI, banco de dados ou interface frontend do ecossistema ATIUS onde houver cadastro, consulta ou filtro de nomes de pessoas, strings de texto livre ou documentos (CPF, RG, RENACH, CNPJ), é OBRIGATÓRIA a aplicação deste motor multi-tier. É expressamente proibido usar `LIKE %termo%` ingênuo sensível a acentos ou comparações estritas `==`.
+- **Accent-Folding Simétrico Bidirecional:** A busca DEVE normalizar texto com decomposição Unicode NFD e remoção de marcas diacríticas `[\u0300-\u036f]`. Digitar `lívia` DEVE encontrar `Livia Nascimento` e `Lívia Nascimento`; digitar `livia` DEVE encontrar `Lívia Nascimento` e `Livia Nascimento`.
+- **Hierarquia Estrita de Priorização (9 Tiers):**
+  1. **Tier 1 (Score 1.00):** Correspondência exata literal (mesmo case e acentos).
+  2. **Tier 2 (Score 0.99):** Correspondência exata case-insensitive.
+  3. **Tier 3 (Score 0.98):** Correspondência exata normalizada (desconsiderando acentos).
+  4. **Tier 4 (Score 0.97):** Multi-Token Match (todas as palavras da consulta constam no nome cadastrado).
+  5. **Tier 5 (Score 0.96):** Substring literal contínua.
+  6. **Tier 6 (Score 0.94):** Substring normalizada contínua.
+  7. **Tier 7 (Score 0.93):** Token individual exato (qualquer palavra do nome idêntica ao termo).
+  8. **Tier 8 (Score 0.90):** Prefixo de token (`liv` prefixo de `Livia`).
+  9. **Tier 9 (Score 0.70 a 0.88):** Similaridade Fuzzy / Proporção de Letras (`SequenceMatcher` / Levenshtein) para tolerância a pequenos erros de digitação (typos).
+- **Busca Numérica por Documentos:** Dígitos limpos (>= 3 caracteres) consultam CPF, RG, RENACH e CNPJ com scores `0.99` (exato) e `0.95` (parcial).
+- **Frontend / UX (/impeccable):** Filtro local instantâneo com micro-debounce (30ms a 50ms), fallback debounced (300ms) para API remota, empty state legível com termo buscado e botão de 1 clique para limpar busca, badge dinâmico de contagem de resultados.
+- **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
+- **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
+- **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).
+
+
+## Teamwork Defaults (Permanente)
+
+- Ao invocar `/teamwork`: NÃO fazer entrevista de calibração de rotina. Usar [skip-interview] / defaults abaixo.
+- Quando for necessário relatório/documento: perguntar ao usuário destino via `ask_question` com timeout de 2 minutos. Sem resposta em 2 min, padrão = salvar em `.planning/` E `docs/` do repo (+ resumo inline).
+- Restrições padrão: sem SSH/Landscape na frota, sem imprimir segredos, somente-leitura exceto arquivos de relatório. Verificação padrão: rubrica por tópico com evidências rastreáveis. Idioma: PT-BR, caveman full.

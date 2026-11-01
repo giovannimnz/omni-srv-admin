@@ -181,3 +181,5 @@ graphify-out/manifest.json
 playwright-report/
 test-results/
 cli/build/
+
+.agents/teamwork/

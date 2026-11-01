@@ -7,6 +7,7 @@ operating, and removing Atius SSO integrations.
 
 Canonical reusable contract:
 
+- `docs/domain/atius-fleet-login-and-sso-governance.md`
 - `docs/domain/atius-sso-lifecycle-matrix.md`
 
 Runtime status: **live and visually sealed for the 2026-07-31 fleet scope**.
@@ -45,6 +46,7 @@ Exact neutral state is:
 
 ### Understand the architecture
 
+- `docs/domain/atius-fleet-login-and-sso-governance.md`
 - `docs/domain/atius-sso-learnings.md`
 - `docs/domain/atius-wide-sso.md`
 - `docs/domain/atius-sso-lifecycle-matrix.md`

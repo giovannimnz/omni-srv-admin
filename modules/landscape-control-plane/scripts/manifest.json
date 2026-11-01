@@ -84,7 +84,7 @@
     {
       "id": "sync-agent-instructions",
       "title": "omni::sync-agent-instructions",
-      "version": "1.3.0",
+      "version": "1.4.0",
       "path": "sync-agent-instructions.sh",
       "interpreter": "/bin/bash",
       "username": "root",
@@ -92,6 +92,19 @@
       "access_group": "global",
       "risk": "targeted-cleanup",
       "description": "Synchronizes canonical AI instructions, skills, Landscape directives, cross-harness symlinks and installs recurring auto-sync systemd timer across all fleet nodes."
+    },
+    {
+      "id": "skills-inventory",
+      "title": "omni::skills-inventory",
+      "version": "1.0.0",
+      "path": "skills-inventory.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 60,
+      "access_group": "global",
+      "risk": "read-only",
+      "category": "audit",
+      "description": "Read-only inventory of AI skills count, atius-vault-access propagation, ~/.agents/skills symlink health, and Landscape directive presence across the fleet."
     },
     {
       "id": "agy-sessions-list",
