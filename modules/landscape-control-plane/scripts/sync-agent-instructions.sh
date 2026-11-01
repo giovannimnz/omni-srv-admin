@@ -1,141 +1,175 @@
 #!/usr/bin/env bash
 # ==============================================================================
 # Script: sync-agent-instructions.sh
-# Purpose: Synchronize canonical AI agent instructions, skills, Landscape directives,
-#          cross-harness symlinks, and install recurring systemd auto-sync timer across all fleet hosts.
+# Purpose: Synchronize canonical AI agent instructions, skills, agents, and modular rules
+#          across all fleet hosts via multilateral Any-to-All Git state machine,
+#          and install recurring systemd auto-sync timer (15 min) across all fleet hosts.
 # Managed: Omni Landscape Control Plane
-# Version: 1.4.0
+# Version: 2.1.0
 # ==============================================================================
 set -euo pipefail
+export GIT_TERMINAL_PROMPT=0
+export GCM_INTERACTIVE=never
 
 # ─── 1. Cria script daemon autônomo de sincronização ──────────────────────────
 cat << 'RUNTIMESYNC' > /usr/local/bin/omni-fleet-runtime-sync.sh
 #!/usr/bin/env bash
-# Omni Fleet AI Runtime & Skills Auto-Sync v1.4.0
+# Omni Fleet AI Runtime & Skills Auto-Sync v2.1.0 (Multilateral Any-to-All)
 set -euo pipefail
 
-CANONICAL_HOST="10.11.1.11"
-LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+export GIT_TERMINAL_PROMPT=0
+export GCM_INTERACTIVE=never
+
+# Trava de exclusão mútua contra concorrência entre timer systemd e Landscape
+LOCK_FILE="/var/lock/omni-fleet-runtime-sync.lock"
+exec 200>"${LOCK_FILE}"
+if ! flock -n 200; then
+    echo "[WARN] Another sync worker instance is already running (${LOCK_FILE}). Skipping this cycle."
+    exit 0
+fi
+
 HOST_NAME="$(hostname -s 2>/dev/null || hostname)"
-
-LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Plane Directive
-
-- **Regra Mandatória para Múltiplos Servidores / Frota:** SEMPRE que qualquer operação, atualização, diagnóstico, instalação de pacotes APT, sincronização de arquivos, verificação ou execução envolver mais de um servidor (`atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, `horistic-srv`), NUNCA execute loops manuais seriais de SSH se a operação puder ser executada via **Landscape Control-Plane**.
-- **Comando Canônico de Execução Simultânea:**
-  ```bash
-  omni landscape run <script-id> --hosts all --wait --yes
-  ```
-  - Executa simultaneamente em todos os 5 nós da frota via Landscape Server self-hosted (`atius-srv-3`).
-  - Coleta e agrega status (`undelivered`, `in-progress`, `delivered`, `succeeded`), stdout, stderr e exit codes em tempo real.
-  - Para subconjunto de hosts, use `--hosts atius-srv-1,atius-srv-2...` ou `--query <custom-query>`.
-- **Scripts Versionados e Manifesto:**
-  - Diretório: `/home/ubuntu/GitHub/omni-srv-admin/modules/landscape-control-plane/scripts/`
-  - Manifesto: `/home/ubuntu/GitHub/omni-srv-admin/modules/landscape-control-plane/scripts/manifest.json`
-  - Para novo script: salve no diretório, adicione ao `manifest.json`, sincronize com `omni landscape scripts push <script-id> --yes` e dispare com `omni landscape run <script-id> --hosts all --wait --yes`.
-- **Comandos de Suporte e Inventário:**
-  - Listar computadores registrados: `omni landscape computers`
-  - Status da integração: `omni landscape status`
-  - Listar scripts cadastrados: `omni landscape scripts list`
-  - Consultar atividades: `omni landscape activities`
-- **Gatilhos de Acionamento Automático:**
-  - Palavras-chave: `em todos os servidores`, `nos servidores 1 a 4`, `na frota`, `fleet-wide`, `multi-host`, `multi-servidor`, `todos os hosts`, `atualizar servidores`, `instalar em todos`, `status da frota`, `diagnóstico em massa`.
-  - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
-- **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.'
+REMOTE_REPO_URL="https://github.com/giovannimnz/omni-agent-runtime.git"
 
 for TARGET_USER in ubuntu horistic muniz; do
     if ! id "${TARGET_USER}" >/dev/null 2>&1; then
         continue
     fi
     TARGET_HOME="$(eval echo ~${TARGET_USER})"
+    RUNTIME_REPO="${TARGET_HOME}/.local/share/omni-agent-runtime"
     GEMINI_CONFIG="${TARGET_HOME}/.gemini/config"
+    AGENTS_DIR="${TARGET_HOME}/.agents"
     AGENTS_MD="${GEMINI_CONFIG}/AGENTS.md"
-    SKILLS_DIR="${GEMINI_CONFIG}/skills"
 
-    mkdir -p "${GEMINI_CONFIG}" "${SKILLS_DIR}"
+    mkdir -p "${TARGET_HOME}/.local/share" "${GEMINI_CONFIG}" "${AGENTS_DIR}"
 
-    # A. SE FOR O HOST CANÔNICO (atius-srv-1): EMPACOTA SKILLS E PUBLICA MANIFESTO
-    if [ "${LOCAL_IP}" = "${CANONICAL_HOST}" ] || [ "${HOST_NAME}" = "atius-srv-1" ]; then
-        CURRENT_SKILLS_COUNT="$(find "${SKILLS_DIR}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
-        TAR_PATH="${GEMINI_CONFIG}/fleet-skills.tar.gz"
-        MANIFEST_PATH="${GEMINI_CONFIG}/runtime-manifest.json"
+    # A. Bootstrap/Clonagem do Repositório Canônico se não existir
+    if [ ! -d "${RUNTIME_REPO}/.git" ]; then
+        if su -s /bin/bash "${TARGET_USER}" -c "git clone --quiet '${REMOTE_REPO_URL}' '${RUNTIME_REPO}'" 2>/dev/null; then
+            echo "[INFO] Cloned omni-agent-runtime for ${TARGET_USER}"
+        else
+            # Inicialização local se clone remoto falhar (offline/sem acesso ainda)
+            mkdir -p "${RUNTIME_REPO}/skills" "${RUNTIME_REPO}/agents" "${RUNTIME_REPO}/rules/core" "${RUNTIME_REPO}/rules/platform-linux"
+            if [ -d "${GEMINI_CONFIG}/skills" ] && [ ! -L "${GEMINI_CONFIG}/skills" ]; then
+                cp -rn "${GEMINI_CONFIG}/skills/"* "${RUNTIME_REPO}/skills/" 2>/dev/null || true
+            fi
+            if [ -d "${GEMINI_CONFIG}/agents" ] && [ ! -L "${GEMINI_CONFIG}/agents" ]; then
+                cp -rn "${GEMINI_CONFIG}/agents/"* "${RUNTIME_REPO}/agents/" 2>/dev/null || true
+            fi
+            # V2 FIX: Chown imediato para evitar Permission Denied no git init executado pelo TARGET_USER
+            chown -R "${TARGET_USER}:${TARGET_USER}" "${RUNTIME_REPO}"
+            su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git init -b main --quiet && git config user.name 'Omni Runtime Sync' && git config user.email 'runtime-sync@atius.com.br' && git remote add origin '${REMOTE_REPO_URL}' 2>/dev/null || true"
+            if [ -n "$(su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git status --porcelain" 2>/dev/null)" ]; then
+                su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git add -A && git commit -m 'init(${HOST_NAME}): bootstrap local runtime' --quiet" 2>/dev/null || true
+            fi
+        fi
+    fi
 
-        # Gera tarball atualizado de skills
-        tar -czf "${TAR_PATH}.tmp" -C "${GEMINI_CONFIG}" skills
-        mv "${TAR_PATH}.tmp" "${TAR_PATH}"
-        chown "${TARGET_USER}:${TARGET_USER}" "${TAR_PATH}"
-
-        # Gera runtime-manifest.json com contagem real dinâmica e hashes
-        AGENTS_MD5="$(md5sum "${AGENTS_MD}" 2>/dev/null | awk '{print $1}' || echo "")"
-        TAR_MD5="$(md5sum "${TAR_PATH}" 2>/dev/null | awk '{print $1}' || echo "")"
-        cat << EOF > "${MANIFEST_PATH}.tmp"
-{
-  "version": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
-  "agents_md5": "${AGENTS_MD5}",
-  "skills_count": ${CURRENT_SKILLS_COUNT},
-  "skills_tar_md5": "${TAR_MD5}"
-}
-EOF
-        mv "${MANIFEST_PATH}.tmp" "${MANIFEST_PATH}"
-        chown "${TARGET_USER}:${TARGET_USER}" "${MANIFEST_PATH}"
-    else
-        # B. SE FOR NÓ CLIENTE: SINCRONIZA AGENTS.MD E SKILLS CONTRA atius-srv-1
-        if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/AGENTS.md ${AGENTS_MD}.tmp" 2>/dev/null; then
-            mv "${AGENTS_MD}.tmp" "${AGENTS_MD}"
-            chown "${TARGET_USER}:${TARGET_USER}" "${AGENTS_MD}"
+    # B. Máquina de Estados Git Multilateral Any-to-All
+    if [ -d "${RUNTIME_REPO}/.git" ]; then
+        # 0. Self-Heal: Abortar rebase pendente de execuções anteriores interrompidas
+        if [ -d "${RUNTIME_REPO}/.git/rebase-merge" ] || [ -d "${RUNTIME_REPO}/.git/rebase-apply" ]; then
+            echo "[WARN] Dirty rebase detected in ${RUNTIME_REPO}. Executing self-heal git rebase --abort..."
+            su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git rebase --abort" 2>/dev/null || true
+            rm -rf "${RUNTIME_REPO}/.git/rebase-merge" "${RUNTIME_REPO}/.git/rebase-apply" 2>/dev/null || true
         fi
 
-        LOCAL_COUNT="$(find "${SKILLS_DIR}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
-        REMOTE_COUNT=""
-
-        # Tenta obter contagem remota via runtime-manifest.json
-        if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/runtime-manifest.json /tmp/runtime-manifest.json" 2>/dev/null; then
-            REMOTE_COUNT="$(grep -o '"skills_count": [0-9]*' /tmp/runtime-manifest.json 2>/dev/null | awk '{print $2}' || echo "")"
-            rm -f /tmp/runtime-manifest.json
+        # 1. Commit de alterações locais
+        DIRTY="$(su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git status --porcelain" 2>/dev/null || true)"
+        if [ -n "${DIRTY}" ]; then
+            COMMIT_TS="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git add -A && git commit -m 'sync(${HOST_NAME}): ${COMMIT_TS}' --quiet" 2>/dev/null || true
         fi
 
-        # Fallback via SSH query direto se o manifesto falhar (sem número mágico estático)
-        if [ -z "${REMOTE_COUNT}" ]; then
-            REMOTE_COUNT="$(su -s /bin/bash "${TARGET_USER}" -c "ssh -o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST} 'find ~/.gemini/config/skills -mindepth 1 -maxdepth 1 -type d | wc -l'" 2>/dev/null || echo "")"
-        fi
-
-        # Se temos uma contagem remota válida (> 0) e divergência local
-        if [[ "${REMOTE_COUNT}" =~ ^[0-9]+$ ]] && [ "${REMOTE_COUNT}" -gt 0 ]; then
-            if [ "${LOCAL_COUNT}" -lt "${REMOTE_COUNT}" ]; then
-                if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=30 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/fleet-skills.tar.gz /tmp/fleet-skills.tar.gz" 2>/dev/null; then
-                    tar -xzf /tmp/fleet-skills.tar.gz -C "${GEMINI_CONFIG}/"
-                    rm -f /tmp/fleet-skills.tar.gz
-                    chown -R "${TARGET_USER}:${TARGET_USER}" "${SKILLS_DIR}"
+        # 2. Fetch e Rebase contra origin main
+        HAS_ORIGIN="$(su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git remote" 2>/dev/null | grep -E '^origin$' || true)"
+        if [ -n "${HAS_ORIGIN}" ]; then
+            if su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git fetch origin main --quiet" 2>/dev/null; then
+                if su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git pull --rebase origin main --quiet" 2>/dev/null; then
+                    # 3. Push de commits pendentes (Safe parsing & retry com quarentena)
+                    UNPUSHED_RAW="$(su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git rev-list origin/main..HEAD --count 2>/dev/null" 2>/dev/null || echo 0)"
+                    UNPUSHED="${UNPUSHED_RAW//[[:space:]]/}"
+                    if [[ "${UNPUSHED:-0}" =~ ^[0-9]+$ ]] && [ "${UNPUSHED:-0}" -gt 0 ]; then
+                        if ! su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git push origin main --quiet" 2>/dev/null; then
+                            echo "[WARN] Push rejected for ${TARGET_USER}. Retrying with fast rebase..."
+                            if su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git pull --rebase origin main --quiet" 2>/dev/null; then
+                                su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git push origin main --quiet" 2>/dev/null || echo "[WARN] Push retry failed for ${TARGET_USER}."
+                            else
+                                # Conflito no retry rebase: contingência idêntica ao rebase primário
+                                su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git rebase --abort" 2>/dev/null || true
+                                CONFLICT_BRANCH="conflict-${HOST_NAME}-$(date +%s)"
+                                su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git branch '${CONFLICT_BRANCH}' && git reset --hard origin/main" 2>/dev/null || true
+                                echo "[WARN] Retry rebase conflict in ${HOST_NAME} (${TARGET_USER}) quarantined to branch: ${CONFLICT_BRANCH}"
+                            fi
+                        fi
+                    fi
+                else
+                    # CONFLITO DETECTADO: Quarentena não-bloqueante
+                    su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git rebase --abort" 2>/dev/null || true
+                    CONFLICT_BRANCH="conflict-${HOST_NAME}-$(date +%s)"
+                    su -s /bin/bash "${TARGET_USER}" -c "cd '${RUNTIME_REPO}' && git branch '${CONFLICT_BRANCH}' && git reset --hard origin/main" 2>/dev/null || true
+                    echo "[WARN] Conflict in ${HOST_NAME} quarantined to branch: ${CONFLICT_BRANCH}"
                 fi
             fi
         fi
     fi
 
-    # C. INJEÇÃO IDEMPOTENTE DA DIRETRIZ LANDSCAPE NO AGENTS.MD
-    if [ -f "${AGENTS_MD}" ]; then
-        if ! grep -q "Canonical Fleet Operations & Landscape Control-Plane Directive" "${AGENTS_MD}"; then
-            echo "" >> "${AGENTS_MD}"
-            echo "${LANDSCAPE_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
+    # C. Padronização de Symlinks (skills e agents)
+    # Skills
+    if [ -e "${GEMINI_CONFIG}/skills" ] && [ ! -L "${GEMINI_CONFIG}/skills" ]; then
+        rm -rf "${GEMINI_CONFIG}/skills"
+    fi
+    ln -sfn "${RUNTIME_REPO}/skills" "${GEMINI_CONFIG}/skills"
+
+    if [ -e "${AGENTS_DIR}/skills" ] && [ ! -L "${AGENTS_DIR}/skills" ]; then
+        rm -rf "${AGENTS_DIR}/skills"
+    fi
+    ln -sfn "${RUNTIME_REPO}/skills" "${AGENTS_DIR}/skills"
+
+    # Agents
+    if [ -d "${RUNTIME_REPO}/agents" ]; then
+        if [ -e "${GEMINI_CONFIG}/agents" ] && [ ! -L "${GEMINI_CONFIG}/agents" ]; then
+            rm -rf "${GEMINI_CONFIG}/agents"
+        fi
+        ln -sfn "${RUNTIME_REPO}/agents" "${GEMINI_CONFIG}/agents"
+
+        if [ -e "${AGENTS_DIR}/agents" ] && [ ! -L "${AGENTS_DIR}/agents" ]; then
+            rm -rf "${AGENTS_DIR}/agents"
+        fi
+        ln -sfn "${RUNTIME_REPO}/agents" "${AGENTS_DIR}/agents"
+    fi
+
+    # D. Compilação Modular de AGENTS.md (core + platform-linux)
+    RULES_CORE="${RUNTIME_REPO}/rules/core"
+    RULES_LINUX="${RUNTIME_REPO}/rules/platform-linux"
+    if [ -d "${RULES_CORE}" ]; then
+        COMPILED_TMP="${AGENTS_MD}.tmp"
+        > "${COMPILED_TMP}"
+        for rf in "${RULES_CORE}"/*.md; do
+            if [ -f "${rf}" ]; then
+                cat "${rf}" >> "${COMPILED_TMP}"
+                echo -e "\n" >> "${COMPILED_TMP}"
+            fi
+        done
+        if [ -d "${RULES_LINUX}" ]; then
+            for rf in "${RULES_LINUX}"/*.md; do
+                if [ -f "${rf}" ]; then
+                    cat "${rf}" >> "${COMPILED_TMP}"
+                    echo -e "\n" >> "${COMPILED_TMP}"
+                fi
+            done
+        fi
+        # V1 FIX: Valida se o arquivo compilado não está vazio antes de sobrescrever AGENTS.md
+        if [ -s "${COMPILED_TMP}" ]; then
+            mv "${COMPILED_TMP}" "${AGENTS_MD}"
             chown "${TARGET_USER}:${TARGET_USER}" "${AGENTS_MD}"
-        fi
-    fi
-
-    # D. PADRONIZAÇÃO DO SYMLINK ~/.agents/skills -> ~/.gemini/config/skills
-    AGENTS_DIR="${TARGET_HOME}/.agents"
-    AGENTS_SKILLS="${AGENTS_DIR}/skills"
-    mkdir -p "${AGENTS_DIR}"
-
-    if [ -e "${AGENTS_SKILLS}" ] && [ ! -L "${AGENTS_SKILLS}" ]; then
-        if [ -d "${AGENTS_SKILLS}" ]; then
-            cp -rn "${AGENTS_SKILLS}/"* "${SKILLS_DIR}/" 2>/dev/null || true
-            rm -rf "${AGENTS_SKILLS}"
         else
-            rm -f "${AGENTS_SKILLS}"
+            rm -f "${COMPILED_TMP}"
+            echo "[WARN] Compiled rules empty for ${TARGET_USER}. Preserving existing AGENTS.md"
         fi
     fi
-    ln -sfn "${SKILLS_DIR}" "${AGENTS_SKILLS}"
-    chown -h "${TARGET_USER}:${TARGET_USER}" "${AGENTS_SKILLS}" 2>/dev/null || true
 
-    # E. SYMLINKS CANÔNICOS DE AGENTS.MD (Antigravity, Codex, Claude)
+    # E. Symlinks Canônicos de AGENTS.md (Antigravity, Codex, Claude)
     LINKS=(
         "${TARGET_HOME}/AGENTS.md"
         "${TARGET_HOME}/.codex/AGENTS.md"
@@ -179,13 +213,14 @@ EOF
         fi
     fi
 
+    chown -R "${TARGET_USER}:${TARGET_USER}" "${RUNTIME_REPO}" 2>/dev/null || true
     chown -R "${TARGET_USER}:${TARGET_USER}" "${GEMINI_CONFIG}" 2>/dev/null || true
     chown -R "${TARGET_USER}:${TARGET_USER}" "${AGENTS_DIR}" 2>/dev/null || true
 done
 RUNTIMESYNC
 chmod +x /usr/local/bin/omni-fleet-runtime-sync.sh
 
-# ─── 2. Configura e ativa systemd service & timer ──────────────────────────────
+# ─── 2. Configura e ativa systemd service & timer (15 minutos) ─────────────────
 cat << 'SERVICE' > /etc/systemd/system/omni-fleet-runtime-sync.service
 [Unit]
 Description=Omni Fleet AI Runtime and Skills Synchronization
@@ -195,9 +230,12 @@ Wants=network-online.target
 [Service]
 Type=oneshot
 ExecStart=/usr/local/bin/omni-fleet-runtime-sync.sh
+Environment="GIT_TERMINAL_PROMPT=0"
+Environment="GCM_INTERACTIVE=never"
 Nice=19
 IOSchedulingClass=best-effort
 IOSchedulingPriority=7
+CPUQuota=20%
 
 [Install]
 WantedBy=multi-user.target
@@ -205,12 +243,12 @@ SERVICE
 
 cat << 'TIMER' > /etc/systemd/system/omni-fleet-runtime-sync.timer
 [Unit]
-Description=Run Omni Fleet AI Runtime and Skills Synchronization every 2 hours
+Description=Run Omni Fleet AI Runtime and Skills Synchronization every 15 minutes
 After=network.target
 
 [Timer]
-OnBootSec=5min
-OnUnitActiveSec=2h
+OnBootSec=2min
+OnUnitActiveSec=15min
 Persistent=true
 
 [Install]
@@ -225,4 +263,4 @@ fi
 # ─── 3. Execução imediata no host atual ───────────────────────────────────────
 /usr/local/bin/omni-fleet-runtime-sync.sh
 
-echo "[SUCCESS] Instruction and skills auto-sync timer active on $(hostname)"
+echo "[SUCCESS] Any-to-All instruction and skills auto-sync timer (15m) active on $(hostname)"

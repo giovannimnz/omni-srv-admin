@@ -33,6 +33,7 @@ from omni.managed_apps import managed_apps
 from omni.landscape import landscape as landscape_group
 from omni.agent_content import agent_content
 from omni.routine import routine
+from omni.gdrive import gdrive
 
 
 @click.group()
@@ -53,6 +54,7 @@ cli.add_command(managed_apps)
 cli.add_command(landscape_group)
 cli.add_command(agent_content)
 cli.add_command(routine)
+cli.add_command(gdrive)
 
 # OCI snapshot/restore workflow (Phase 15 — M005 OCI Snapshots / M007 follow-up).
 # Exposed as a sub-group of `srv` so the canonical entrypoint is `omni srv oci ...`.
