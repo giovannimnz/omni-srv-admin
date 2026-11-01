@@ -1,0 +1,36 @@
+[Unit]
+Description=Atius Fleet Web Storage Frontend (Filebrowser)
+Documentation=https://filebrowser.org https://atius.com.br
+After=network.target gdrive-mount.service
+Wants=gdrive-mount.service
+AssertPathIsDirectory=/mnt/gdrive
+
+[Service]
+Type=simple
+User=root
+Group=root
+
+# Diretorios operacionais de configuracao e banco de dados SQLite
+ExecStartPre=-/bin/mkdir -p /etc/filebrowser /var/lib/filebrowser
+
+# Execucao do daemon Filebrowser apontando para a configuracao governada
+ExecStart=/usr/local/bin/filebrowser -c /etc/filebrowser/filebrowser.json
+
+Restart=on-failure
+RestartSec=5s
+TimeoutStopSec=15s
+
+# Governanca Institucional de Recursos (CPU <= 20% do Host)
+CPUQuota=40%
+Nice=10
+CPUSchedulingPolicy=other
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+
+# Limites de Descritores e Memoria
+LimitNOFILE=65536
+MemoryMax=512M
+MemoryHigh=256M
+
+[Install]
+WantedBy=multi-user.target

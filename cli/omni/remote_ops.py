@@ -155,9 +155,22 @@ def _ssh_run_any(path: Path, ssh_target: str, cmd: str | list[str], timeout: int
     return _ssh_run(ssh_target, cmd, timeout=timeout)
 
 
+def _is_local_host(hid: str) -> bool:
+    """Verifica se hid e de fato o host local executando em Linux."""
+    if os.environ.get("OMNI_SRV_FORCE_SSH", "0") == "1":
+        return False
+    if hid not in LOCAL_HOST_IDS:
+        return False
+    import platform, socket
+    if platform.system() != "Linux":
+        return False
+    h = socket.gethostname().lower()
+    return "atius-srv-1" in h or h == "srv1"
+
+
 def _run_host(path: Path, ssh_target: str, hid: str, cmd: str, timeout: int = 300) -> subprocess.CompletedProcess:
     """Executa localmente no SRV-1 quando aplicavel, senao por SSH."""
-    if hid in LOCAL_HOST_IDS and os.environ.get("OMNI_SRV_FORCE_SSH", "0") != "1":
+    if _is_local_host(hid):
         return subprocess.run(["bash", "-lc", cmd], capture_output=True, text=True, timeout=timeout)
     return _ssh_run_any(path, ssh_target, cmd, timeout=timeout)
 

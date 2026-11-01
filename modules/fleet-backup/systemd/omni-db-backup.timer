@@ -1,0 +1,12 @@
+[Unit]
+Description=Daily timer for Omni fleet database backup to Google Drive
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/modules/fleet-backup/README.md
+
+[Timer]
+# 03:30 BRT (06:30 UTC) with 15m randomized delay
+OnCalendar=*-*-* 06:30:00 UTC
+RandomizedDelaySec=15m
+Persistent=true
+
+[Install]
+WantedBy=timers.target

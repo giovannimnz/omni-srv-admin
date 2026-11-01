@@ -1,0 +1,17 @@
+[Unit]
+Description=Omni fleet database backup to Google Drive
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/modules/fleet-backup/README.md
+After=network-online.target rclone-gdrive.service
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=root
+Nice=10
+IOSchedulingClass=best-effort
+IOSchedulingPriority=7
+Environment=OMNI_SRV_ADMIN=/home/ubuntu/GitHub/omni-srv-admin
+ExecStart=/bin/bash /home/ubuntu/GitHub/omni-srv-admin/modules/fleet-backup/scripts/backup-databases.sh
+StandardOutput=journal
+StandardError=journal
+TimeoutSec=1800

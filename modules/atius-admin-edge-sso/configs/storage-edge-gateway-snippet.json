@@ -1,0 +1,21 @@
+{
+  "storage.atius.com.br": {
+    "publicOrigin": "https://storage.atius.com.br",
+    "appName": "Storage",
+    "authMode": "none",
+    "upstream": "http://127.0.0.1:8082",
+    "allowedEmails": [
+      "giovannimunizds@gmail.com"
+    ],
+    "requireAdmin": true
+  },
+  "storage.atius.io": {
+    "aliasOf": "storage.atius.com.br",
+    "publicOrigin": "https://storage.atius.io",
+    "appName": "Storage",
+    "allowedEmails": [
+      "giovannimunizds@gmail.com"
+    ],
+    "requireAdmin": true
+  }
+}

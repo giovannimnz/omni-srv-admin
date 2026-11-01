@@ -191,6 +191,18 @@
       "description": "Configura Tmux (OSC 52 clipboard, mouse scroll, sem travamento de tela) e aliases/funcao do Zellij (-c attach-or-create, -s session) na frota."
     },
     {
+      "id": "setup-fleet-gdrive",
+      "title": "omni::setup-fleet-gdrive",
+      "version": "1.0.0",
+      "path": "setup-fleet-gdrive.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Instala, configura e reconcilia o mount governado do Google Drive (/mnt/gdrive) via rclone, Vault e gdrive-mount.service na frota ATIUS."
+    },
+    {
       "id": "gdrive-fleet-setup",
       "title": "omni::gdrive-fleet-setup",
       "version": "1.0.0",
@@ -200,7 +212,31 @@
       "time_limit": 300,
       "access_group": "global",
       "risk": "reconcile",
-      "description": "Instala, configura e reconcilia o mount do Google Drive (/mnt/gdrive) via rclone e HashiCorp Vault em toda a frota com quotas de cache VFS estritas por host."
+      "description": "Alias para setup-fleet-gdrive. Instala, configura e reconcilia o mount do Google Drive (/mnt/gdrive) via rclone e HashiCorp Vault em toda a frota com quotas de cache VFS estritas por host."
+    },
+    {
+      "id": "fleet-backup-databases",
+      "title": "omni::fleet-backup-databases",
+      "version": "1.0.0",
+      "path": "fleet-backup-databases.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 1800,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Executa backup completo, seguro e com checksum de todos os bancos de dados da frota (PostgreSQL, MariaDB, Vault Raft, Vaultwarden, Mailu) para /mnt/gdrive."
+    },
+    {
+      "id": "fleet-autoclean-and-log-purge",
+      "title": "omni::fleet-autoclean-and-log-purge",
+      "version": "1.0.0",
+      "path": "fleet-autoclean-and-log-purge.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 600,
+      "access_group": "global",
+      "risk": "targeted-cleanup",
+      "description": "Limpeza automatica de espaco em disco, journald vacuum, purge de logs SSSD/PostgreSQL/XRDP, caches de build e containers podman/docker."
     }
   ]
 }

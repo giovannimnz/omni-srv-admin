@@ -1,0 +1,12 @@
+[Unit]
+Description=Weekly timer for Omni fleet autoclean and log purge
+Documentation=file:///home/ubuntu/GitHub/omni-srv-admin/docs/operations/fleet-autoclean.md
+
+[Timer]
+# Sunday at 04:00 BRT (07:00 UTC) with 30m randomized delay
+OnCalendar=Sun *-*-* 07:00:00 UTC
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
