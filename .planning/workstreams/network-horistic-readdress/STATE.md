@@ -2,7 +2,7 @@
 gsd_state_version: 1.0
 workstream: network-horistic-readdress
 current_phase: 54
-current_phase_name: Migração integral de rede OCI/DRG do Horistic para 10.31
+current_phase_name: Migração integral de rede OCI/DRG do Horistic para 10.41
 status: executing
 stopped_at: "Planejamento reenumerado; revalidar receipts legados e continuar pelo gate 54-02 sem inferir live apply"
 last_updated: "2026-07-23"

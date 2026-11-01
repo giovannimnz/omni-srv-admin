@@ -7,8 +7,8 @@
   `163.176.232.119` is currently attached to the older primary private IP
   `10.0.0.65`. Reuse therefore requires explicit reassignment to the new
   private-IP object after validation, not a text-only address edit.
-- The safest transition is additive: add `10.31.0.0/16`, create
-  `10.31.1.0/24`, attach a replacement VNIC/private IP `10.31.1.31`, run a
+- The safest transition is additive: add `10.41.0.0/16`, create
+  `10.41.1.0/24`, attach a replacement VNIC/private IP `10.41.1.21`, run a
   dual-path window, then retire `.21`. The existing `oci-admin` OperationPlan
   supports CIDR/subnet/route/private/public-IP operations but does not expose a
   compute VNIC-attachment action; that step needs a gated OCI CLI/SDK/console

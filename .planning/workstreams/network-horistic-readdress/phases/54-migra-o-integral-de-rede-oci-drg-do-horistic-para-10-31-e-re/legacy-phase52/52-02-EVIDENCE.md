@@ -10,13 +10,13 @@ Status: `BLOCKED` — no OCI network mutation was attempted.
 
 ## Read-only address matrix
 
-- Target VCN: `10.31.0.0/16`
-- Target subnet: `10.31.1.0/24`
-- Target host: `10.31.1.31`
+- Target VCN: `10.41.0.0/16`
+- Target subnet: `10.41.1.0/24`
+- Target host: `10.41.1.21`
 - Excluded/known blocks checked: `10.0.0.0/16`, `10.1.0.0/16`,
   `10.42.0.0/16`, `10.43.0.0/16`, `10.65.172.0/24`, `10.89.53.0/24`,
   `10.100.0.0/16`, `100.64.0.0/10`, and `192.168.1.0/24`.
-- Direct CIDR overlap for `10.31.0.0/16` against those excluded blocks: none.
+- Direct CIDR overlap for `10.41.0.0/16` against those excluded blocks: none.
 - Current DRG inventory: central DRG and four attached profiles.
 - Current LPG readiness: `BLOCKED` by the pre-existing `10.0.0.0/16`
   overlap between ATIUS-1 and ATIUS-2.

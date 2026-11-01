@@ -7,9 +7,9 @@
   "mutations_attempted": false,
   "previous_gate": "PASS:52-01",
   "target": {
-    "vcn_cidr": "10.31.0.0/16",
-    "subnet_cidr": "10.31.1.0/24",
-    "private_ip": "10.31.1.31"
+    "vcn_cidr": "10.41.0.0/16",
+    "subnet_cidr": "10.41.1.0/24",
+    "private_ip": "10.41.1.21"
   },
   "overlap": {
     "direct_target_overlap": false,

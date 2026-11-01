@@ -5,15 +5,15 @@
 ## Objective
 
 Executar um plano reversível para substituir o plano privado do Horistic por
-`10.31.0.0/16` / `10.31.1.0/24` / `10.31.1.31`, preservar a reserva pública
+`10.41.0.0/16` / `10.41.1.0/24` / `10.41.1.21`, preservar a reserva pública
 `163.176.232.119`, migrar os serviços e somente depois retirar a identidade
 antiga `.21`. Em paralelo, renumerar S23 e S20 nos planos WireGuard/BE3 sem
 confundir IP de túnel com reserva LAN.
 
 ## Locked decisions
 
-- O alvo OCI/DRG do Horistic é exatamente `10.31.1.31` dentro de
-  `10.31.0.0/16` e `10.31.1.0/24`; não substituir por `10.21.1.31`.
+- O alvo OCI/DRG do Horistic é exatamente `10.41.1.21` dentro de
+  `10.41.0.0/16` e `10.41.1.0/24`; não substituir por `10.21.1.31`.
 - A rede antiga `10.21.0.0/16`, a subnet `10.21.1.0/24` e o IP `.21` devem
   permanecer durante a janela de dual-path e ser removidos apenas após a
   verificação final e a janela de observação.
