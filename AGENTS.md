@@ -64,39 +64,6 @@ For more information about GSD agents, run `/gsd-help`.
 - Skills/scripts Hermes antigos e `modules/srv1-ops/legacy-scripts/fix-abnt2.sh`
   sao evidencia historica, nao entrypoints operacionais.
 
-## Canonical Fleet Operations & Landscape Control-Plane Directive
-
-- **Regra Mandatória para Múltiplos Servidores / Frota:** SEMPRE que qualquer operação, atualização, diagnóstico, instalação de pacotes APT, sincronização de arquivos, verificação ou execução envolver mais de um servidor (`atius-srv-1`, `atius-srv-2`, `atius-srv-3`, `atius-srv-4`, `horistic-srv`), NUNCA execute loops manuais seriais de SSH se a operação puder ser executada via **Landscape Control-Plane**.
-- **Comando Canônico de Execução Simultânea:**
-  ```bash
-  omni landscape run <script-id> --hosts all --wait --yes
-  ```
-  - Executa simultaneamente em todos os 5 nós da frota via Landscape Server self-hosted (`atius-srv-3`).
-  - Coleta e agrega status (`undelivered`, `in-progress`, `delivered`, `succeeded`), stdout, stderr e exit codes em tempo real.
-  - Para subconjunto de hosts, use `--hosts atius-srv-1,atius-srv-2...` ou `--query <custom-query>`.
-- **Scripts Versionados e Manifesto:**
-  - Diretório: `/home/ubuntu/GitHub/omni-srv-admin/modules/landscape-control-plane/scripts/`
-  - Manifesto: `/home/ubuntu/GitHub/omni-srv-admin/modules/landscape-control-plane/scripts/manifest.json`
-  - Para novo script: salve no diretório, adicione ao `manifest.json`, sincronize com `omni landscape scripts push <script-id> --yes` e dispare com `omni landscape run <script-id> --hosts all --wait --yes`.
-- **Comandos de Suporte e Inventário:**
-  - Listar computadores registrados: `omni landscape computers`
-  - Status da integração: `omni landscape status`
-  - Listar scripts cadastrados: `omni landscape scripts list`
-  - Consultar atividades: `omni landscape activities`
-- **Gatilhos de Acionamento Automático:**
-  - Palavras-chave: `em todos os servidores`, `nos servidores 1 a 4`, `na frota`, `fleet-wide`, `multi-host`, `multi-servidor`, `todos os hosts`, `atualizar servidores`, `instalar em todos`, `status da frota`, `diagnóstico em massa`.
-  - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
-- **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.
-- **Arquitetura & Hospedagem:**
-  - **Servidor Self-Hosted:** Host `atius-srv-3` (`10.13.1.13`), container LXC `landscape` (`10.65.172.253`).
-  - **Ingress Edge / Reverse Proxy:** Host `atius-srv-1` (`10.11.1.11`), Apache TLS com certificados Let's Encrypt em paridade dual-domain: `https://landscape.atius.com.br/` e `https://landscape.atius.io/`.
-  - **Client Endpoint:** `http://landscape.atius.com.br/ping` e `http://landscape.atius.io/ping` (HTTP puro obrigatório para comunicação do `landscape-client`; não redirecionar para HTTPS).
-- **Interfaces & Rotas Web:**
-  - **Classic UI (Padrão):** `/login` (reescrita canônica transparente no Apache do `atius-srv-1` com retorno aos segredos em `/account/standalone/secrets`).
-  - **Modern Dashboard:** `/new_dashboard/overview` — interface SPA moderna (React/Vite) servida estaticamente pelo container.
-  - **Skin & Tema Dark:** Template clássico customizado em `/opt/canonical/landscape/canonical/landscape/ui/skin/hokan/page.pt` (container LXC) com `<style id="atius-classic-dark">`, cobrindo overrides para formulários, cards e modal `.cookie-policy` (evitando texto branco em fundo branco).
-- **Documentação de Governança:** `docs/fleet/landscape-omni-governance.md`, `docs/fleet/landscape-omni-cli.md` e `docs/operations/LANDSCAPE-DRG-AND-FLEET-ROLLOUT.md`.
-
 ## Segredos ATIUS e MCP
 
 - Fonte autoritativa de segredos: HashiCorp Vault, nao `.env`, `.zshrc`, historico de shell, chat, Obsidian, GBrain ou arquivos do repo.
@@ -113,12 +80,12 @@ For more information about GSD agents, run `/gsd-help`.
 - `horistic-srv` usa uma chave SSH restrita para `ubuntu@atius-srv-3`, forcada para `/home/ubuntu/.local/bin/atius-vault-export-ssh`, apenas para export do Vault.
 - Se uma credencial ainda existir so em documentacao, `.env` ou `.zshrc`, usar isso apenas como evidencia de migracao; mover o segredo operacional para o HashiCorp Vault antes de tratar como estavel.
 - Nunca gravar valores de segredos em AGENTS.md, Markdown, logs, commits, Obsidian, GBrain ou chat. Documentar apenas paths do Vault, profiles, nomes de variaveis e evidencias de validacao.
-- Endpoints MCP canonicos do Codex:
-  - `gbrain_http`: `https://mcp.atius.com.br/gbrain`
-  - `obsidian_http`: `https://mcp.atius.com.br/obsidian`
-  - `oci_admin_http`: `https://mcp.atius.com.br/oci-admin`
+- Endpoints MCP canonicos do Antigravity / Codex:
+  - `gbrain_http`: `https://mcp.atius.com.br/gbrain` ou `https://mcp.atius.io/gbrain`
+  - `obsidian_http`: `https://mcp.atius.com.br/obsidian` ou `https://mcp.atius.io/obsidian`
+  - `oci_admin_http`: `https://mcp.atius.com.br/oci-admin` ou `https://mcp.atius.io/oci-admin`
 - Os tres MCPs usam `Authorization: Bearer $ATIUS_MCP_TOKEN`; carregar `ATIUS_MCP_TOKEN` do profile Vault `atius-mcp` (`kv/atius/atius-mcp/api`).
-- O nome client-side do OCI Admin e `oci_admin_http`; a identidade MCP continua `serverInfo.name=oci-admin`. O alias client-side `oci_admin` e aposentado.
+- O nome client-side do OCI Admin e `oci_admin_http`; a identidade MCP continua `serverInfo.name=oci-admin`. O alias client-side `oci_admin` ou `oci-admin` e expressamente aposentado/invalido.
 - O backend OCI Admin usa OCI/DRG `10.13.1.13:8090`; `10.100.100.3` e somente reserve/fallback.
 - O MCP do Obsidian e sessionful: depois de `initialize`, preservar `Mcp-Session-Id`, enviar `notifications/initialized`, e so entao chamar `tools/list` ou tools.
 - Material de browser-login/access-key fica no Vault path `kv/atius/browser-login/access-keys` e no registro Landscape `atius-browser-login-access-keys`. O Vault armazena e entrega o material; o navegador so reconhece a chave quando o perfil do browser, OS/hardware authenticator, provider/extensao, certificado cliente ou autenticador virtual CDP/Playwright estiver provisionado para o relying party.
@@ -133,7 +100,6 @@ For more information about GSD agents, run `/gsd-help`.
 - Preservar evidencia headless adequada, como output de comandos, traces, screenshots, snapshots ou artefatos de teste.
 
 <!-- codex-policy:parallel-headless:end -->
-
 
 ## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
 
@@ -154,7 +120,6 @@ For more information about GSD agents, run `/gsd-help`.
 - **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
 - **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
 - **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).
-
 
 ## Teamwork Defaults (Permanente)
 
