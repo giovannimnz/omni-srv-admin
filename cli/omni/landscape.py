@@ -1,4 +1,4 @@
-"""Landscape control-plane integration for omni.
+﻿"""Landscape control-plane integration for omni.
 
 This module keeps the repo as the reviewed source of truth for scripts while
 using Landscape as the Ubuntu machine execution plane.
@@ -42,6 +42,14 @@ HOST_ALIASES: dict[str, str] = {
     "w11": "giovanni-w11-wsl",
     "wsl": "giovanni-w11-wsl",
     "aln-srv-amd": "aln-srv",
+    "aln-srv-1": "aln-srv",
+    "aln-srv.atius.internal": "aln-srv",
+    "aln-srv-1.atius.internal": "aln-srv",
+    "atius-srv-1.atius.internal": "atius-srv-1",
+    "atius-srv-2.atius.internal": "atius-srv-2",
+    "atius-srv-3.atius.internal": "atius-srv-3",
+    "atius-srv-4.atius.internal": "atius-srv-4",
+    "horistic-srv.atius.internal": "horistic-srv",
 }
 READ_ONLY_ACTION_PREFIXES = ("Get",)
 

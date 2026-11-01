@@ -1,0 +1,133 @@
+
+/* 6. Pill Select: All / None (Image 1) */
+.selected-filter,
+#content .selected-filter,
+.filter-controls a.selected-filter,
+.computer-selection-select-none.selected-filter,
+.computer-selection-select-all.selected-filter,
+a#select-all.selected-filter,
+a#select-none.selected-filter,
+a#select-none-activities.selected-filter,
+a#select-none-pending.selected-filter,
+.rule-selection-select-none.selected-filter,
+.computer-selection-select-none.selected-filter {
+  background-color: #1e2b3a !important;
+  color: #7cc4ff !important;
+  border: 1px solid #3c4f65 !important;
+  border-radius: 12px !important;
+  padding: 3px 10px !important;
+  font-weight: 600 !important;
+  text-decoration: none !important;
+  display: inline-block !important;
+}
+.selected-filter:hover,
+#content .selected-filter:hover {
+  background-color: #27374a !important;
+  color: #ffffff !important;
+  border-color: #526b89 !important;
+}
+
+/* 7. Header Top Alerts Menu & Strip Cleanup (Image 2) */
+.strip,
+.strip li,
+.strip .yui3-menu-label,
+#header-user,
+.notifications-menu,
+.account-global-alerts-menu {
+  background-color: #0b1118 !important;
+}
+.strip .menu-horizontal li {
+  border-right: 1px solid #1a2530 !important;
+  box-shadow: none !important;
+}
+.strip .menu-horizontal li:first-child {
+  box-shadow: none !important;
+}
+.strip .notifications-menu .yui3-menu-label {
+  display: flex !important;
+  align-items: center !important;
+}
+.strip .notifications-menu .yui3-menu-label a:first-child {
+  padding-left: 36px !important;
+  padding-right: 10px !important;
+  background-position: 12px center !important;
+  color: #ff6b6b !important;
+  font-weight: 600 !important;
+}
+.account-global-alerts-menu,
+.account-global-alerts-menu .yui3-menu-content,
+#account-global-alerts-menu,
+#account-global-alerts-menu .yui3-menu-content {
+  background: #101720 !important;
+  background-color: #101720 !important;
+  border: 1px solid #2a3746 !important;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.85) !important;
+  border-radius: 0 0 6px 6px !important;
+}
+.account-global-alerts-menu .yui3-menuitem,
+#account-global-alerts-menu .yui3-menuitem {
+  background: #101720 !important;
+  background-color: #101720 !important;
+  border-bottom: 1px solid #1c2736 !important;
+}
+.account-global-alerts-menu .yui3-menuitem:last-child,
+#account-global-alerts-menu .yui3-menuitem:last-child {
+  border-bottom: none !important;
+}
+.account-global-alerts-menu .yui3-menuitem a,
+#account-global-alerts-menu .yui3-menuitem a {
+  padding: 12px 18px !important;
+  color: #7cc4ff !important;
+  font-size: 13px !important;
+}
+.account-global-alerts-menu .yui3-menuitem:hover,
+.account-global-alerts-menu .yui3-menuitem:hover a,
+#account-global-alerts-menu .yui3-menuitem:hover,
+#account-global-alerts-menu .yui3-menuitem:hover a {
+  background: #182330 !important;
+  background-color: #182330 !important;
+  color: #ffffff !important;
+}
+
+/* 8. Registration Key & Pre Code Blocks in Dialogs (Image 4 / New Attachment) */
+.yui3-dialog-content pre,
+.yui3-dialog pre,
+.p-modal pre,
+pre,
+code {
+  background: #080d12 !important;
+  background-color: #080d12 !important;
+  color: #7cc4ff !important;
+  border: 1px solid #2a3746 !important;
+  border-radius: 6px !important;
+  padding: 12px 16px !important;
+  font-family: 'Ubuntu Mono', monospace, Consolas !important;
+  font-size: 14px !important;
+  letter-spacing: 0.5px !important;
+  box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.5) !important;
+}
+.yui3-dialog-content,
+.yui3-panel-content,
+.yui3-widget-stdmod {
+  background: #101720 !important;
+  background-color: #101720 !important;
+  border-color: #2a3746 !important;
+  color: #eef4fb !important;
+}
+.yui3-dialog-content .yui3-widget-hd,
+.yui3-panel-content .yui3-widget-hd {
+  border-bottom: 1px solid #1c2736 !important;
+}
+.yui3-dialog-content .yui3-widget-hd h3 {
+  color: #ffffff !important;
+}
+
+/* 9. Sidebar Borders & Dividers refinement (Image 3) */
+#sidebar-body .yui3-menuitem,
+#sidebar .yui3-menuitem {
+  border-bottom: 1px solid #16202c !important;
+  border-top: none !important;
+}
+#sidebar-body .yui3-menuitem:first-child {
+  border-top: 1px solid #16202c !important;
+}
