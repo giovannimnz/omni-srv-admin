@@ -69,7 +69,7 @@ Em atendimento à solicitação do operador (`ORIGINAL_REQUEST.md`), mapeamento 
 - **Phase 53 (Gemini Spark MCP Skills Integration)**: Plano `53-01-PLAN.md` pronto em status `Planned` (exposição segura de GBrain, Obsidian e 337 skills ao Gemini Spark via OAuth 2.1 proxy).
 - **Phase 53 RustDesk Fleet (Plan 53-05)**: Workstream `rustdesk-fleet` em 89% (17/19 planos concluídos). Plano 53-05 parado antes de mutação live por falta de handlers no runner CLI.
 - **Phase 47.1 (FreeIPA Internal DNS Authority)**: 8 planos prontos, 0/8 executados. Pré-requisito impeditivo para Phase 48-03+.
-- **Phase 59 (Qwen3 Embedding/Rerank Cutover)**: Workstream `qwen-local-ai` (0/9 planos). Cutover aprovado pelo operador, mas aguarda bundle no SRV-1. Modelo GTE 768d segue titular ativo.
+- **Phase 59 (Qwen3 Embedding/Rerank Cutover)**: Workstream `qwen-local-ai` (0/9 planos). Cutover aprovado pelo operador, mas aguarda bundle no SRV-4. Modelo GTE 768d segue titular ativo.
 
 ### 2.3 Rede & Acesso Remoto
 - **Migração East-West K3s/Etcd**: Portas `6443/2379/2380` listadas em backlog de migração para malha privada DRG.
@@ -165,5 +165,5 @@ Em atendimento à solicitação do operador (`ORIGINAL_REQUEST.md`), mapeamento 
 | **P4** | **Correção Runner CLI RustDesk (Phase 53)**<br>- Resolver `runner stage mismatch` no Plano 53-05.<br>- Concluir os 2 planos restantes para ativação do relay no Horistic. | Implementer RustDesk | Conclui Milestone v1.9 (RustDesk Fleet). |
 | **P5** | **Execução Phase 47.1 (FreeIPA Internal DNS)**<br>- Executar os 8 planos prontos da Phase 47.1 para destravar a Phase 48-03+. | Implementer Runtime Trust | Destrava avanço do Milestone v1.8. |
 | **P6** | **Estruturação Canônica de Login & SSO**<br>- Criar pasta estruturada no Obsidian: `AiSecondBrain/Architecture/Authentication-And-SSO/`.<br>- Registrar fatos canônicos de arquitetura de login no GBrain.<br>- Consolidar skill canônica com referências cruzadas (`atius-sso`, `atius-dual-domain`, Landscape). | Worker / Documentação | Atende solicitação canônica do operador em `ORIGINAL_REQUEST.md`. |
-| **P7** | **Cutover AI Local Qwen3 (Phase 59)**<br>- Gerar bundle no SRV-1 e executar cutover de embedding/rerank autorizado pelo operador. | Local AI Specialist | Atualiza pipeline semântico para Qwen3. |
+| **P7** | **Cutover AI Local Qwen3 (Phase 59)**<br>- Gerar bundle no SRV-4 e executar cutover de embedding/rerank autorizado pelo operador. | Local AI Specialist | Atualiza pipeline semântico para Qwen3. |
 | **P8** | **Resolução de Acessos Móveis & RDP NLA**<br>- Atualizar rotas WireGuard S23/S20.<br>- Depurar handshake SSH Termux S23 porta `8322`.<br>- Injetar credencial Microsoft no Vault para RDP W11. | Operações de Rede / Vault | Restaura conectividade total de clientes móveis e desktop remoto. |

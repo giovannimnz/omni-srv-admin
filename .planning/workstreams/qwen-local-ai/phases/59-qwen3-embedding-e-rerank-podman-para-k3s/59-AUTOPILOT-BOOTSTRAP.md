@@ -48,17 +48,17 @@ python3 scripts/embeddings-bench/phase59-autopilot-bootstrap.py bundle \
 
 Readback de 2026-07-24, sem copiar ou instalar nada:
 
-- `atius-srv-1`: `gsd-execute-autopilot/SKILL.md` presente, SHA-256
+- `atius-srv-4`: `gsd-execute-autopilot/SKILL.md` presente, SHA-256
   `349ef8fe3b24095c232660c15cb0d2a3ccc81868b846446bb1883aa9b6483dd4`;
   `gsd-autonomous` também presente.
 - `atius-srv-2`: `gsd-execute-autopilot` ausente; `gsd-autonomous` presente.
 - `atius-srv-3`: ambas ausentes.
 
-Portanto o executor canônico da Phase 59 é exclusivamente o `atius-srv-1`.
+Portanto o executor canônico da Phase 59 é exclusivamente o `atius-srv-4`.
 Ausência nos outros hosts não autoriza replicar a skill durante esta fase; o
 hash live do srv1 deve ser novamente ligado ao receipt do doctor.
 
-No `atius-srv-1`, após instalar o bundle no path externo:
+No `atius-srv-4`, após instalar o bundle no path externo:
 
 ```bash
 python3 scripts/embeddings-bench/phase59-autopilot-bootstrap.py doctor \
