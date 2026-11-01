@@ -36,6 +36,13 @@ CONTROLLED_HOSTS = (
     "aln-srv",
     "giovanni-w11-wsl",
 )
+HOST_ALIASES: dict[str, str] = {
+    "giovanni-w11-pc": "giovanni-w11-wsl",
+    "giovanni-w11-pc.localdomain": "giovanni-w11-wsl",
+    "w11": "giovanni-w11-wsl",
+    "wsl": "giovanni-w11-wsl",
+    "aln-srv-amd": "aln-srv",
+}
 READ_ONLY_ACTION_PREFIXES = ("Get",)
 
 
@@ -277,7 +284,14 @@ class LandscapeClient:
 def _host_query(hosts: str | None, query: str | None = None) -> str:
     if query:
         return query
-    selected = CONTROLLED_HOSTS if not hosts or hosts == "all" else tuple(item.strip() for item in hosts.split(",") if item.strip())
+    if not hosts or hosts == "all":
+        selected = CONTROLLED_HOSTS
+    else:
+        selected = tuple(
+            HOST_ALIASES.get(item.strip().lower(), item.strip().lower())
+            for item in hosts.split(",")
+            if item.strip()
+        )
     unknown = [host for host in selected if host not in CONTROLLED_HOSTS]
     if unknown:
         raise LandscapeError(f"host fora do escopo controlado: {', '.join(unknown)}")
@@ -517,7 +531,8 @@ def _wait_for_activity_group(
                 elapsed = int(time.time() - start_time)
                 click.echo(f"[{elapsed:02d}s] Progresso: {summary_str}")
 
-            pending = [s for s in statuses if s in ("undelivered", "in-progress", "approved", "delivered")]
+            # Hosts reach delivered once script has been fetched by landscape-client
+            pending = [s for s in statuses if s in ("undelivered", "in-progress", "approved")]
             if not pending:
                 return children
         time.sleep(poll_interval)

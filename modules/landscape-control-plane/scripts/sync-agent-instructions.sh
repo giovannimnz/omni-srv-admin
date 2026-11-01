@@ -2,11 +2,21 @@
 # ==============================================================================
 # Script: sync-agent-instructions.sh
 # Purpose: Synchronize canonical AI agent instructions, skills, Landscape directives,
-#          Canonical Multi-Tier Search Directive, and install recurring systemd auto-sync timer
-#          across all fleet hosts.
+#          cross-harness symlinks, and install recurring systemd auto-sync timer across all fleet hosts.
 # Managed: Omni Landscape Control Plane
+# Version: 1.4.0
 # ==============================================================================
 set -euo pipefail
+
+# ─── 1. Cria script daemon autônomo de sincronização ──────────────────────────
+cat << 'RUNTIMESYNC' > /usr/local/bin/omni-fleet-runtime-sync.sh
+#!/usr/bin/env bash
+# Omni Fleet AI Runtime & Skills Auto-Sync v1.4.0
+set -euo pipefail
+
+CANONICAL_HOST="10.11.1.11"
+LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
+HOST_NAME="$(hostname -s 2>/dev/null || hostname)"
 
 LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Plane Directive
 
@@ -32,57 +42,7 @@ LANDSCAPE_DIRECTIVE_BLOCK='## Canonical Fleet Operations & Landscape Control-Pla
   - Skill canônica associada: `atius-fleet-landscape-ops` (`~/.gemini/config/skills/atius-fleet-landscape-ops/SKILL.md`).
 - **Conectividade OCI DRG:** Todo tráfego Landscape trafega pela rota direta privada OCI DRG (`10.13.1.13 landscape.atius.com.br`) com latência sub-milissegundo (~0.6 ms) sem custos de egress.'
 
-SEARCH_DIRECTIVE_BLOCK='## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
-
-- **Mandato Universal e Permanente:** Em todo e qualquer projeto, serviço, API, CLI, banco de dados ou interface frontend do ecossistema ATIUS onde houver cadastro, consulta ou filtro de nomes de pessoas, strings de texto livre ou documentos (CPF, RG, RENACH, CNPJ), é OBRIGATÓRIA a aplicação deste motor multi-tier. É expressamente proibido usar `LIKE %termo%` ingênuo sensível a acentos ou comparações estritas `==`.
-- **Accent-Folding Simétrico Bidirecional:** A busca DEVE normalizar texto com decomposição Unicode NFD e remoção de marcas diacríticas `[\u0300-\u036f]`. Digitar `lívia` DEVE encontrar `Livia Nascimento` e `Lívia Nascimento`; digitar `livia` DEVE encontrar `Lívia Nascimento` e `Livia Nascimento`.
-- **Hierarquia Estrita de Priorização (9 Tiers):**
-  1. **Tier 1 (Score 1.00):** Correspondência exata literal (mesmo case e acentos).
-  2. **Tier 2 (Score 0.99):** Correspondência exata case-insensitive.
-  3. **Tier 3 (Score 0.98):** Correspondência exata normalizada (desconsiderando acentos).
-  4. **Tier 4 (Score 0.97):** Multi-Token Match (todas as palavras da consulta constam no nome cadastrado).
-  5. **Tier 5 (Score 0.96):** Substring literal contínua.
-  6. **Tier 6 (Score 0.94):** Substring normalizada contínua.
-  7. **Tier 7 (Score 0.93):** Token individual exato (qualquer palavra do nome idêntica ao termo).
-  8. **Tier 8 (Score 0.90):** Prefixo de token (`liv` prefixo de `Livia`).
-  9. **Tier 9 (Score 0.70 a 0.88):** Similaridade Fuzzy / Proporção de Letras (`SequenceMatcher` / Levenshtein) para tolerância a pequenos erros de digitação (typos).
-- **Busca Numérica por Documentos:** Dígitos limpos (>= 3 caracteres) consultam CPF, RG, RENACH e CNPJ com scores `0.99` (exato) e `0.95` (parcial).
-- **Frontend / UX (/impeccable):** Filtro local instantâneo com micro-debounce (30ms a 50ms), fallback debounced (300ms) para API remota, empty state legível com termo buscado e botão de 1 clique para limpar busca, badge dinâmico de contagem de resultados.
-- **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
-- **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
-- **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).'
-
-# ─── 1. Cria script daemon autônomo de sincronização ──────────────────────────
-cat << 'RUNTIMESYNC' > /usr/local/bin/omni-fleet-runtime-sync.sh
-#!/usr/bin/env bash
-# Omni Fleet AI Runtime & Skills Auto-Sync
-set -euo pipefail
-
-CANONICAL_HOST="10.11.1.11"
-LOCAL_IP="$(hostname -I 2>/dev/null | awk '{print $1}')"
-
-SEARCH_DIRECTIVE_BLOCK='
-## Diretriz Canônica Permanente: Sistema Universal de Busca Inteligente Multi-Tier para Nomes, Strings e Documentos
-
-- **Mandato Universal e Permanente:** Em todo e qualquer projeto, serviço, API, CLI, banco de dados ou interface frontend do ecossistema ATIUS onde houver cadastro, consulta ou filtro de nomes de pessoas, strings de texto livre ou documentos (CPF, RG, RENACH, CNPJ), é OBRIGATÓRIA a aplicação deste motor multi-tier. É expressamente proibido usar `LIKE %termo%` ingênuo sensível a acentos ou comparações estritas `==`.
-- **Accent-Folding Simétrico Bidirecional:** A busca DEVE normalizar texto com decomposição Unicode NFD e remoção de marcas diacríticas `[\u0300-\u036f]`. Digitar `lívia` DEVE encontrar `Livia Nascimento` e `Lívia Nascimento`; digitar `livia` DEVE encontrar `Lívia Nascimento` e `Livia Nascimento`.
-- **Hierarquia Estrita de Priorização (9 Tiers):**
-  1. **Tier 1 (Score 1.00):** Correspondência exata literal (mesmo case e acentos).
-  2. **Tier 2 (Score 0.99):** Correspondência exata case-insensitive.
-  3. **Tier 3 (Score 0.98):** Correspondência exata normalizada (desconsiderando acentos).
-  4. **Tier 4 (Score 0.97):** Multi-Token Match (todas as palavras da consulta constam no nome cadastrado).
-  5. **Tier 5 (Score 0.96):** Substring literal contínua.
-  6. **Tier 6 (Score 0.94):** Substring normalizada contínua.
-  7. **Tier 7 (Score 0.93):** Token individual exato (qualquer palavra do nome idêntica ao termo).
-  8. **Tier 8 (Score 0.90):** Prefixo de token (`liv` prefixo de `Livia`).
-  9. **Tier 9 (Score 0.70 a 0.88):** Similaridade Fuzzy / Proporção de Letras (`SequenceMatcher` / Levenshtein) para tolerância a pequenos erros de digitação (typos).
-- **Busca Numérica por Documentos:** Dígitos limpos (>= 3 caracteres) consultam CPF, RG, RENACH e CNPJ com scores `0.99` (exato) e `0.95` (parcial).
-- **Frontend / UX (/impeccable):** Filtro local instantâneo com micro-debounce (30ms a 50ms), fallback debounced (300ms) para API remota, empty state legível com termo buscado e botão de 1 clique para limpar busca, badge dinâmico de contagem de resultados.
-- **Consultas em Banco de Dados:** SQL deve buscar tanto termos originais quanto desacentuados (`name ILIKE :term OR unaccent(name) ILIKE :term_unaccent`) com ranqueamento `ORDER BY CASE ...`.
-- **Implementação de Referência:** Módulos `app.core.search` (Python) e `app/static/js/app.js` (JavaScript) no repositório `XDriver-App`.
-- **Registro Canônico de Arquitetura:** Documentado no GBrain (fato #613) e no Obsidian (`AiSecondBrain/Operations/Diretriz-Canonica-Busca-Inteligente-Nomes-Strings.md`).'
-
-for TARGET_USER in ubuntu horistic aln muniz; do
+for TARGET_USER in ubuntu horistic muniz; do
     if ! id "${TARGET_USER}" >/dev/null 2>&1; then
         continue
     fi
@@ -93,37 +53,94 @@ for TARGET_USER in ubuntu horistic aln muniz; do
 
     mkdir -p "${GEMINI_CONFIG}" "${SKILLS_DIR}"
 
-    # Sincroniza AGENTS.md e skills se não for o host canônico srv-1
-    if [ "${LOCAL_IP}" != "${CANONICAL_HOST}" ] && [ "$(hostname)" != "atius-srv-1" ]; then
-        if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=5 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/AGENTS.md ${AGENTS_MD}.tmp" 2>/dev/null; then
+    # A. SE FOR O HOST CANÔNICO (atius-srv-1): EMPACOTA SKILLS E PUBLICA MANIFESTO
+    if [ "${LOCAL_IP}" = "${CANONICAL_HOST}" ] || [ "${HOST_NAME}" = "atius-srv-1" ]; then
+        CURRENT_SKILLS_COUNT="$(find "${SKILLS_DIR}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
+        TAR_PATH="${GEMINI_CONFIG}/fleet-skills.tar.gz"
+        MANIFEST_PATH="${GEMINI_CONFIG}/runtime-manifest.json"
+
+        # Gera tarball atualizado de skills
+        tar -czf "${TAR_PATH}.tmp" -C "${GEMINI_CONFIG}" skills
+        mv "${TAR_PATH}.tmp" "${TAR_PATH}"
+        chown "${TARGET_USER}:${TARGET_USER}" "${TAR_PATH}"
+
+        # Gera runtime-manifest.json com contagem real dinâmica e hashes
+        AGENTS_MD5="$(md5sum "${AGENTS_MD}" 2>/dev/null | awk '{print $1}' || echo "")"
+        TAR_MD5="$(md5sum "${TAR_PATH}" 2>/dev/null | awk '{print $1}' || echo "")"
+        cat << EOF > "${MANIFEST_PATH}.tmp"
+{
+  "version": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "agents_md5": "${AGENTS_MD5}",
+  "skills_count": ${CURRENT_SKILLS_COUNT},
+  "skills_tar_md5": "${TAR_MD5}"
+}
+EOF
+        mv "${MANIFEST_PATH}.tmp" "${MANIFEST_PATH}"
+        chown "${TARGET_USER}:${TARGET_USER}" "${MANIFEST_PATH}"
+    else
+        # B. SE FOR NÓ CLIENTE: SINCRONIZA AGENTS.MD E SKILLS CONTRA atius-srv-1
+        if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/AGENTS.md ${AGENTS_MD}.tmp" 2>/dev/null; then
             mv "${AGENTS_MD}.tmp" "${AGENTS_MD}"
             chown "${TARGET_USER}:${TARGET_USER}" "${AGENTS_MD}"
         fi
 
         LOCAL_COUNT="$(find "${SKILLS_DIR}" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | wc -l)"
-        if [ "${LOCAL_COUNT}" -lt 315 ]; then
-            if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=20 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/fleet-skills.tar.gz /tmp/fleet-skills.tar.gz" 2>/dev/null; then
-                tar -xzf /tmp/fleet-skills.tar.gz -C "${GEMINI_CONFIG}/"
-                rm -f /tmp/fleet-skills.tar.gz
-                chown -R "${TARGET_USER}:${TARGET_USER}" "${SKILLS_DIR}"
+        REMOTE_COUNT=""
+
+        # Tenta obter contagem remota via runtime-manifest.json
+        if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/runtime-manifest.json /tmp/runtime-manifest.json" 2>/dev/null; then
+            REMOTE_COUNT="$(grep -o '"skills_count": [0-9]*' /tmp/runtime-manifest.json 2>/dev/null | awk '{print $2}' || echo "")"
+            rm -f /tmp/runtime-manifest.json
+        fi
+
+        # Fallback via SSH query direto se o manifesto falhar (sem número mágico estático)
+        if [ -z "${REMOTE_COUNT}" ]; then
+            REMOTE_COUNT="$(su -s /bin/bash "${TARGET_USER}" -c "ssh -o ConnectTimeout=8 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST} 'find ~/.gemini/config/skills -mindepth 1 -maxdepth 1 -type d | wc -l'" 2>/dev/null || echo "")"
+        fi
+
+        # Se temos uma contagem remota válida (> 0) e divergência local
+        if [[ "${REMOTE_COUNT}" =~ ^[0-9]+$ ]] && [ "${REMOTE_COUNT}" -gt 0 ]; then
+            if [ "${LOCAL_COUNT}" -lt "${REMOTE_COUNT}" ]; then
+                if su -s /bin/bash "${TARGET_USER}" -c "scp -o ConnectTimeout=30 -o BatchMode=yes -o StrictHostKeyChecking=accept-new ubuntu@${CANONICAL_HOST}:~/.gemini/config/fleet-skills.tar.gz /tmp/fleet-skills.tar.gz" 2>/dev/null; then
+                    tar -xzf /tmp/fleet-skills.tar.gz -C "${GEMINI_CONFIG}/"
+                    rm -f /tmp/fleet-skills.tar.gz
+                    chown -R "${TARGET_USER}:${TARGET_USER}" "${SKILLS_DIR}"
+                fi
             fi
         fi
     fi
 
-    # Garante a diretriz canônica no AGENTS.md principal
-    if [ -f "${AGENTS_MD}" ] && ! grep -q "Sistema Universal de Busca Inteligente Multi-Tier" "${AGENTS_MD}"; then
-        echo "${SEARCH_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
+    # C. INJEÇÃO IDEMPOTENTE DA DIRETRIZ LANDSCAPE NO AGENTS.MD
+    if [ -f "${AGENTS_MD}" ]; then
+        if ! grep -q "Canonical Fleet Operations & Landscape Control-Plane Directive" "${AGENTS_MD}"; then
+            echo "" >> "${AGENTS_MD}"
+            echo "${LANDSCAPE_DIRECTIVE_BLOCK}" >> "${AGENTS_MD}"
+            chown "${TARGET_USER}:${TARGET_USER}" "${AGENTS_MD}"
+        fi
     fi
 
-    # Symlinks canônicos — AGENTS.md atende todos os runtimes (Antigravity, Codex, Claude, GBrain)
+    # D. PADRONIZAÇÃO DO SYMLINK ~/.agents/skills -> ~/.gemini/config/skills
+    AGENTS_DIR="${TARGET_HOME}/.agents"
+    AGENTS_SKILLS="${AGENTS_DIR}/skills"
+    mkdir -p "${AGENTS_DIR}"
+
+    if [ -e "${AGENTS_SKILLS}" ] && [ ! -L "${AGENTS_SKILLS}" ]; then
+        if [ -d "${AGENTS_SKILLS}" ]; then
+            cp -rn "${AGENTS_SKILLS}/"* "${SKILLS_DIR}/" 2>/dev/null || true
+            rm -rf "${AGENTS_SKILLS}"
+        else
+            rm -f "${AGENTS_SKILLS}"
+        fi
+    fi
+    ln -sfn "${SKILLS_DIR}" "${AGENTS_SKILLS}"
+    chown -h "${TARGET_USER}:${TARGET_USER}" "${AGENTS_SKILLS}" 2>/dev/null || true
+
+    # E. SYMLINKS CANÔNICOS DE AGENTS.MD (Antigravity, Codex, Claude)
     LINKS=(
         "${TARGET_HOME}/AGENTS.md"
         "${TARGET_HOME}/.codex/AGENTS.md"
         "${TARGET_HOME}/.gemini/AGENTS.md"
         "${TARGET_HOME}/.claude/AGENTS.md"
-        "${TARGET_HOME}/.gbrain/AGENTS.md"
-        "${TARGET_HOME}/.gemini/antigravity-cli/AGENTS.md"
-        "${TARGET_HOME}/GitHub/AGENTS.md"
     )
 
     for link in "${LINKS[@]}"; do
@@ -135,7 +152,7 @@ for TARGET_USER in ubuntu horistic aln muniz; do
         fi
     done
 
-    # Remove redundâncias: se tem AGENTS.md não precisa de GEMINI.md/CLAUDE.md/CODEX.md
+    # Remove redundâncias legadas
     rm -f \
         "${TARGET_HOME}/GEMINI.md" \
         "${TARGET_HOME}/CLAUDE.md" \
@@ -146,35 +163,24 @@ for TARGET_USER in ubuntu horistic aln muniz; do
         "${TARGET_HOME}/.gemini/config/GEMINI.md"
 
     # .agents/AGENTS.md include
-    AGENTS_SUB_DIR="${TARGET_HOME}/.agents"
-    if [ -d "${AGENTS_SUB_DIR}" ]; then
-        AGENTS_SUB_FILE="${AGENTS_SUB_DIR}/AGENTS.md"
+    if [ -d "${AGENTS_DIR}" ]; then
+        AGENTS_SUB_FILE="${AGENTS_DIR}/AGENTS.md"
         if [ ! -f "${AGENTS_SUB_FILE}" ] || ! grep -q "@${AGENTS_MD}" "${AGENTS_SUB_FILE}"; then
             echo "@${AGENTS_MD}" | cat - "${AGENTS_SUB_FILE}" 2>/dev/null > "${AGENTS_SUB_FILE}.tmp" || echo "@${AGENTS_MD}" > "${AGENTS_SUB_FILE}.tmp"
             mv "${AGENTS_SUB_FILE}.tmp" "${AGENTS_SUB_FILE}"
         fi
     fi
 
-    # Aplica diretriz em todos os AGENTS.md de projetos no GitHub
-    if [ -d "${TARGET_HOME}/GitHub" ]; then
-        find "${TARGET_HOME}/GitHub" -maxdepth 3 -name "AGENTS.md" 2>/dev/null | while read -r repo_agent; do
-            if [ -L "${repo_agent}" ]; then
-                continue
-            fi
-            if ! grep -q "Sistema Universal de Busca Inteligente Multi-Tier" "${repo_agent}" 2>/dev/null; then
-                echo "${SEARCH_DIRECTIVE_BLOCK}" >> "${repo_agent}"
-                chown "${TARGET_USER}:${TARGET_USER}" "${repo_agent}" 2>/dev/null || true
-            fi
-        done
-    fi
-
-    # Sincronizar repositório omni-srv-admin se presente
-    REPO_DIR="${TARGET_HOME}/GitHub/omni-srv-admin"
-    if [ -d "${REPO_DIR}/.git" ]; then
-        su -s /bin/bash "${TARGET_USER}" -c "cd '${REPO_DIR}' && git pull --ff-only origin main" 2>/dev/null || true
+    # F. Sincronizar repositório omni-srv-admin APENAS se permitido por política (R6)
+    if [ "${HOST_NAME}" != "horistic-srv" ] && [ "${HOST_NAME}" != "aln-srv" ] && [ "${TARGET_USER}" != "horistic" ]; then
+        REPO_DIR="${TARGET_HOME}/GitHub/omni-srv-admin"
+        if [ -d "${REPO_DIR}/.git" ]; then
+            su -s /bin/bash "${TARGET_USER}" -c "cd '${REPO_DIR}' && git pull --ff-only origin main" 2>/dev/null || true
+        fi
     fi
 
     chown -R "${TARGET_USER}:${TARGET_USER}" "${GEMINI_CONFIG}" 2>/dev/null || true
+    chown -R "${TARGET_USER}:${TARGET_USER}" "${AGENTS_DIR}" 2>/dev/null || true
 done
 RUNTIMESYNC
 chmod +x /usr/local/bin/omni-fleet-runtime-sync.sh
@@ -219,4 +225,4 @@ fi
 # ─── 3. Execução imediata no host atual ───────────────────────────────────────
 /usr/local/bin/omni-fleet-runtime-sync.sh
 
-echo "[SUCCESS] Instruction, skills, and search directive auto-sync active on $(hostname)"
+echo "[SUCCESS] Instruction and skills auto-sync timer active on $(hostname)"

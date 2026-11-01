@@ -18,6 +18,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -30,8 +31,15 @@ CANONICAL_HOST = "10.11.1.11"
 def run_cmd(cmd: list, env: dict = None) -> subprocess.CompletedProcess:
     full_env = os.environ.copy()
     full_env["PYTHONUTF8"] = "1"
+    cli_dir = str(REPO_ROOT / "cli")
+    if "PYTHONPATH" not in full_env:
+        full_env["PYTHONPATH"] = cli_dir
+    else:
+        full_env["PYTHONPATH"] = f"{cli_dir}{os.pathsep}{full_env['PYTHONPATH']}"
     if env:
         full_env.update(env)
+    if cmd and cmd[0] == "python":
+        cmd = [sys.executable] + cmd[1:]
     return subprocess.run(cmd, capture_output=True, text=True, env=full_env)
 
 
