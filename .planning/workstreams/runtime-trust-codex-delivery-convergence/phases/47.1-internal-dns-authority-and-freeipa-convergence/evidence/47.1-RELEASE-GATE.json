@@ -1,0 +1,20 @@
+{
+  "phase": "47.1",
+  "status": "PASS",
+  "ida_requirements": {
+    "IDA-01": "PASS",
+    "IDA-02": "PASS",
+    "IDA-03": "PASS",
+    "IDA-04": "PASS",
+    "IDA-05": "PASS",
+    "IDA-06": "PASS",
+    "IDA-07": "PASS",
+    "IDA-08": "PASS"
+  },
+  "selected_endpoint_hash": "ac1d6654a3939dfbab3009ea3bc7443b3a36f117a1c209e09aa64897c3f99c1d",
+  "replica_status": "PASS",
+  "failure_recovery": "PASS",
+  "phase_48_03": "RELEASED",
+  "generated_at": "2026-11-01T20:34:30Z",
+  "valid_until": "2026-12-01T20:34:30Z"
+}

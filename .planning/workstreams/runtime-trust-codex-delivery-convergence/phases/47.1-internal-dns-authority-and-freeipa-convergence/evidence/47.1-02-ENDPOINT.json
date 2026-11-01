@@ -1,0 +1,15 @@
+{
+  "phase": "47.1",
+  "plan": "02",
+  "layer": "endpoint",
+  "status": "PASS",
+  "applied_at": "2026-11-01T20:22:00Z",
+  "endpoint_verification": {
+    "private_tcp_53": "PASS",
+    "private_udp_53": "PASS",
+    "public_exposure": "DENIED",
+    "drg_reachability": "PASS",
+    "rollback_restoration_verified": true,
+    "reapply_verified": true
+  }
+}

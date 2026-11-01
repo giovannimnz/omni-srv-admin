@@ -1,0 +1,18 @@
+{
+  "phase": "47.1",
+  "plan": "03",
+  "layer": "freeipa",
+  "status": "PASS",
+  "applied_at": "2026-11-01T20:24:00Z",
+  "direct_probes": {
+    "forward_a_records": "PASS",
+    "reverse_ptr_records": "PASS",
+    "idm_records_soa_ns_srv_txt": "PASS",
+    "nxdomain_authoritative": "PASS",
+    "transport_udp_53": "PASS",
+    "transport_tcp_53": "PASS",
+    "dnssec_edns": "PASS",
+    "rollback_restoration_verified": true,
+    "reapply_verified": true
+  }
+}

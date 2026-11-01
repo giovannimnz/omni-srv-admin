@@ -1,0 +1,42 @@
+{
+  "valid_authority": {
+    "domain": "atius.internal",
+    "zones": [
+      "atius.internal",
+      "1.11.10.in-addr.arpa",
+      "1.12.10.in-addr.arpa",
+      "1.13.10.in-addr.arpa",
+      "1.21.10.in-addr.arpa"
+    ],
+    "hosts": [
+      {"id": "atius-srv-1", "fqdn": "atius-srv-1.atius.internal", "ip": "10.11.1.11", "owner": "ubuntu"},
+      {"id": "atius-srv-2", "fqdn": "atius-srv-2.atius.internal", "ip": "10.12.1.12", "owner": "ubuntu"},
+      {"id": "atius-srv-3", "fqdn": "atius-srv-3.atius.internal", "ip": "10.13.1.13", "owner": "ubuntu"},
+      {"id": "horistic-srv", "fqdn": "horistic-srv.atius.internal", "ip": "10.21.1.21", "owner": "horistic"}
+    ]
+  },
+  "forbidden_hosts_sample": [
+    {"id": "invalid-zero", "fqdn": "bad.atius.internal", "ip": "10.11.0.11", "owner": "ubuntu"},
+    {"id": "invalid-legacy", "fqdn": "legacy.atius.internal", "ip": "10.1.1.3", "owner": "ubuntu"}
+  ],
+  "valid_release_gate": {
+    "phase": "47.1",
+    "status": "PASS",
+    "ida_requirements": {
+      "IDA-01": "PASS",
+      "IDA-02": "PASS",
+      "IDA-03": "PASS",
+      "IDA-04": "PASS",
+      "IDA-05": "PASS",
+      "IDA-06": "PASS",
+      "IDA-07": "PASS",
+      "IDA-08": "PASS"
+    },
+    "selected_endpoint_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "replica_status": "PASS",
+    "failure_recovery": "PASS",
+    "phase_48_03": "RELEASED",
+    "generated_at": "2026-11-01T20:00:00Z",
+    "valid_until": "2026-12-01T20:00:00Z"
+  }
+}

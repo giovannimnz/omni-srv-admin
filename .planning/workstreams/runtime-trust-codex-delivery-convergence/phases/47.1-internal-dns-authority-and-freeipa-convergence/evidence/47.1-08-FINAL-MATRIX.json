@@ -1,0 +1,62 @@
+{
+  "phase": "47.1",
+  "plan": "08",
+  "layer": "all",
+  "status": "PASS",
+  "generated_at": "2026-11-01T20:34:10Z",
+  "coverage_matrix": {
+    "IDA-01": {
+      "name": "Sole Resilient FreeIPA Authority",
+      "status": "PASS",
+      "verified_by": ["47.1-01", "47.1-03", "47.1-04"]
+    },
+    "IDA-02": {
+      "name": "Source-Limited Authority Publishing",
+      "status": "PASS",
+      "verified_by": ["47.1-02", "47.1-03"]
+    },
+    "IDA-03": {
+      "name": "Conditional Frontends (CoreDNS & AdGuard)",
+      "status": "PASS",
+      "verified_by": ["47.1-05", "47.1-06"]
+    },
+    "IDA-04": {
+      "name": "Split Client Routing (Linux & Windows NRPT)",
+      "status": "PASS",
+      "verified_by": ["47.1-02", "47.1-07"]
+    },
+    "IDA-05": {
+      "name": "Immutable Transactions & Checkpoints",
+      "status": "PASS",
+      "verified_by": ["47.1-01", "47.1-02", "47.1-03", "47.1-04", "47.1-05", "47.1-06", "47.1-07", "47.1-08"]
+    },
+    "IDA-06": {
+      "name": "Identity Convergence & Host FQDNs",
+      "status": "PASS",
+      "verified_by": ["47.1-03", "47.1-07"]
+    },
+    "IDA-07": {
+      "name": "Distinct Failure-Domain Resilience & Recovery",
+      "status": "PASS",
+      "verified_by": ["47.1-04", "47.1-05", "47.1-06", "47.1-07"]
+    },
+    "IDA-08": {
+      "name": "Cross-Layer Rehearsal & Release Gate",
+      "status": "PASS",
+      "verified_by": ["47.1-01", "47.1-08"]
+    }
+  },
+  "endpoints_verified": {
+    "primary_freeipa": "10.13.1.13:53 (PASS)",
+    "replica_authority": "10.11.1.11:53 (PASS)",
+    "coredns_resolver": "10.11.1.11:53 (PASS)",
+    "adguard_public_filtering": "10.11.1.11:5353 (PASS)"
+  },
+  "dns_protocols_verified": {
+    "udp_53": "PASS",
+    "tcp_53": "PASS",
+    "edns_dnssec": "PASS",
+    "nxdomain_fail_closed": "PASS"
+  },
+  "overall_verdict": "PASS"
+}

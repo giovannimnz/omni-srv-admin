@@ -1,0 +1,63 @@
+{
+  "phase": "47.1",
+  "plan": "07",
+  "layer": "clients",
+  "status": "PASS",
+  "applied_at": "2026-11-01T20:32:45Z",
+  "targets_evaluated": {
+    "atius-srv-1": {
+      "class": "linux-host",
+      "owner": "ubuntu",
+      "policy_store": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+      "routing_domains": [
+        "~atius.internal",
+        "~1.11.10.in-addr.arpa",
+        "~1.12.10.in-addr.arpa",
+        "~1.13.10.in-addr.arpa",
+        "~1.21.10.in-addr.arpa"
+      ],
+      "query_resolution": "PASS",
+      "rollback_reapply_verified": true
+    },
+    "atius-srv-2": {
+      "class": "linux-host",
+      "owner": "ubuntu",
+      "policy_store": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+      "routing_domains": [
+        "~atius.internal",
+        "~1.11.10.in-addr.arpa",
+        "~1.12.10.in-addr.arpa",
+        "~1.13.10.in-addr.arpa",
+        "~1.21.10.in-addr.arpa"
+      ],
+      "query_resolution": "PASS",
+      "rollback_reapply_verified": true
+    },
+    "horistic-srv": {
+      "class": "partner-host",
+      "owner": "horistic",
+      "policy_store": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+      "routing_domains": [
+        "~atius.internal",
+        "~1.11.10.in-addr.arpa",
+        "~1.12.10.in-addr.arpa",
+        "~1.13.10.in-addr.arpa",
+        "~1.21.10.in-addr.arpa"
+      ],
+      "query_resolution": "PASS",
+      "rollback_reapply_verified": true
+    },
+    "giovanni-w11-pc": {
+      "class": "windows-client",
+      "owner": "muniz",
+      "policy_store": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows NT\\DnsClient\\DnsPolicyConfig",
+      "nrpt_namespace": ".atius.internal",
+      "nrpt_nameserver": "10.11.1.11",
+      "query_resolution": "PASS",
+      "rollback_reapply_verified": true
+    }
+  },
+  "critical_services_reachability": "PASS",
+  "no_boundary_leakage": true,
+  "overall_client_status": "PASS"
+}

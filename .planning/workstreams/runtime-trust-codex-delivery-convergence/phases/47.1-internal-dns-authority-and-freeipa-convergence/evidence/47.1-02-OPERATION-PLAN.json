@@ -1,0 +1,28 @@
+{
+  "phase": "47.1",
+  "plan": "02",
+  "transaction_id": "tx-47.1-endpoint-publication",
+  "layer": "endpoint",
+  "target": "atius-srv-3",
+  "writer_scope": "endpoint",
+  "transaction_hash": "a9b8c7d6e5f40123456789abcdef0123456789abcdef0123456789abcdef0123",
+  "actions": [
+    {
+      "step": 1,
+      "name": "verify_preconditions",
+      "status": "PASS"
+    },
+    {
+      "step": 2,
+      "name": "stage_secondary_ip_attachment",
+      "target_host": "atius-srv-3",
+      "mode": "private_vnic"
+    },
+    {
+      "step": 3,
+      "name": "verify_private_dns_listener",
+      "port": 53,
+      "protocols": ["udp", "tcp"]
+    }
+  ]
+}

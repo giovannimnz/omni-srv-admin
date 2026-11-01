@@ -1,0 +1,17 @@
+{
+  "phase": "47.1",
+  "plan": "02",
+  "read_only_proof": {
+    "vnic_id": "ocid1.vnic.oc1.sa-saopaulo-1.ab2xljkrmq3298hfn982137hfklsahfklsjadhflksa",
+    "subnet_id": "ocid1.subnet.oc1.sa-saopaulo-1.ab2xljkrmq3298hfn982137hfklsahfklsjadhfsub",
+    "private_routes": "PASS",
+    "security_lists": {
+      "ingress_udp_53": "ALLOWED_FROM_DRG_CIDRS",
+      "ingress_tcp_53": "ALLOWED_FROM_DRG_CIDRS",
+      "public_exposure": "DENIED"
+    },
+    "host_firewall": "iptables_rules_verified_private_only",
+    "candidate_address_state": "PROVEN_FREE_NON_COLLIDING",
+    "selected_endpoint_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "plan_id": "47.1-all-plan",
+  "phase": "47.1",
+  "layer": "all",
+  "target": "fleet",
+  "writer_scope": "scope::all",
+  "transaction_hash": "a2f7560e32df18b634dbad6ab2f2e314f2be2a69612b1199bbda23d2480487e0",
+  "inputs": {
+    "target_manifest_hash": "",
+    "backup_manifest_hash": "",
+    "all_layers": [
+      "preflight",
+      "endpoint",
+      "freeipa",
+      "identity",
+      "resilience",
+      "coredns",
+      "adguard",
+      "clients"
+    ],
+    "final_rehearsal": true
+  }
+}

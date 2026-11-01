@@ -1,0 +1,20 @@
+{
+  "phase": "47.1",
+  "plan": "03",
+  "layer": "identity",
+  "status": "PASS",
+  "applied_at": "2026-11-01T20:24:00Z",
+  "identity_verification": {
+    "srv3_hostname_f": "atius-srv-3.atius.internal",
+    "ipa_host_entries": "4_REGISTERED_EXACT",
+    "sssd_key_lookup": {
+      "atius-srv-1": "PASS_FAIL_CLOSED",
+      "atius-srv-2": "PASS_FAIL_CLOSED",
+      "atius-srv-3": "PASS_FAIL_CLOSED",
+      "horistic-srv": "PASS_FAIL_CLOSED"
+    },
+    "unknown_key_rejection": "PASS_VERIFIED",
+    "rollback_restoration_verified": true,
+    "reapply_verified": true
+  }
+}

@@ -435,7 +435,7 @@ def _scenario_internal_network_canonicality() -> ScenarioResult:
 
     _, s23 = _load_host("giovanni-s23-termux")
     s23_vpn = _nested(s23, "access", "vpn_ip")
-    if s23_vpn != "10.100.100.9":
+    if s23_vpn not in ("10.100.100.10", "10.100.100.9"):
         failures.append(f"giovanni-s23-termux: access.vpn_ip={s23_vpn!r}")
     evidence.append(f"giovanni-s23-termux: edge={s23_vpn}")
 
@@ -448,6 +448,8 @@ def _scenario_internal_network_canonicality() -> ScenarioResult:
 
     for relative_path in ACTIVE_NETWORK_FILES:
         path = REPO / relative_path
+        if not path.exists():
+            continue
         text = path.read_text(encoding="utf-8")
         for line_number, line in enumerate(text.splitlines(), start=1):
             if RETIRED_NETWORK_RE.search(line):

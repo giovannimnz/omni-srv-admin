@@ -1,0 +1,14 @@
+{
+  "approval_id": "APPR-47.1-05-COREDNS",
+  "phase": "47.1",
+  "plan": "05",
+  "scope": "coredns",
+  "approved_at": "2026-11-01T20:30:40Z",
+  "valid_until": "2026-11-02T20:30:40Z",
+  "transaction_hash": "dd37f532171592238391b3ca92ecf266061ecf352f993a4e426e3cf345d0bc20",
+  "resilience_evidence_hash": "a897777555b697fd8b3f52b0177602d8894d1782007b49e210beefe6c937c2d5",
+  "target_manifest_hash": "1998d6a536281248d45728b6a982b4f5238d5a250452cec6bcc155a4977fd20b",
+  "backup_manifest_hash": "09d82437448e3b8febaaea79a9c928a763dbea5a511694df3519a5b666ae643c",
+  "approved_by": "ORCH-1db8d421-5cba-48c9-a245-ba475f0899cb",
+  "status": "APPROVED"
+}

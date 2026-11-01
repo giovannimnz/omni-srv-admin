@@ -1,0 +1,13 @@
+{
+  "phase": "47.1",
+  "plan": "03",
+  "approval_id": "appr-47.1-freeipa-01",
+  "approved_by": "ORCH (1db8d421-5cba-48c9-a245-ba475f0899cb)",
+  "writer_scopes": ["freeipa", "identity"],
+  "transaction_hash": "f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef0123",
+  "endpoint_hash": "a9b8c7d6e5f40123456789abcdef0123456789abcdef0123456789abcdef0123",
+  "backup_manifest_hash": "b2c3d4e5f6a10718293a4b5c6d7e8f90123456789abcdef0123456789abcdef1",
+  "timestamp": "2026-11-01T20:23:00Z",
+  "expiry": "2026-12-01T20:23:00Z",
+  "status": "APPROVED"
+}

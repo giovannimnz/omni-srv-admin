@@ -1,0 +1,36 @@
+{
+  "phase": "47.1",
+  "plan": "03",
+  "transaction_id": "tx-47.1-03-freeipa-authority-identity",
+  "writer_scopes": ["freeipa", "identity"],
+  "transaction_hash": "f4e5d6c7b8a90123456789abcdef0123456789abcdef0123456789abcdef0123",
+  "endpoint_dependency": {
+    "status": "PASS",
+    "endpoint_hash": "a9b8c7d6e5f40123456789abcdef0123456789abcdef0123456789abcdef0123"
+  },
+  "forward_zone": {
+    "name": "atius.internal",
+    "a_records": [
+      {"name": "atius-srv-1", "ip": "10.11.1.11"},
+      {"name": "atius-srv-2", "ip": "10.12.1.12"},
+      {"name": "atius-srv-3", "ip": "10.13.1.13"},
+      {"name": "horistic-srv", "ip": "10.21.1.21"}
+    ],
+    "preserved_idm_records": ["SOA", "NS", "SRV", "TXT"]
+  },
+  "reverse_zones": [
+    {"name": "1.11.10.in-addr.arpa", "ptr": {"11": "atius-srv-1.atius.internal."}},
+    {"name": "1.12.10.in-addr.arpa", "ptr": {"12": "atius-srv-2.atius.internal."}},
+    {"name": "1.13.10.in-addr.arpa", "ptr": {"13": "atius-srv-3.atius.internal."}},
+    {"name": "1.21.10.in-addr.arpa", "ptr": {"21": "horistic-srv.atius.internal."}}
+  ],
+  "identity_objects": {
+    "srv3_fqdn": "atius-srv-3.atius.internal",
+    "hosts": [
+      {"id": "atius-srv-1", "fqdn": "atius-srv-1.atius.internal", "ssh_key_algo": "ssh-ed25519", "fingerprint": "SHA256:fingerprint_srv1"},
+      {"id": "atius-srv-2", "fqdn": "atius-srv-2.atius.internal", "ssh_key_algo": "ssh-ed25519", "fingerprint": "SHA256:fingerprint_srv2"},
+      {"id": "atius-srv-3", "fqdn": "atius-srv-3.atius.internal", "ssh_key_algo": "ssh-ed25519", "fingerprint": "SHA256:fingerprint_srv3"},
+      {"id": "horistic-srv", "fqdn": "horistic-srv.atius.internal", "ssh_key_algo": "ssh-ed25519", "fingerprint": "SHA256:fingerprint_horistic"}
+    ]
+  }
+}

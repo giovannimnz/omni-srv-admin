@@ -1,0 +1,21 @@
+{
+  "plan_id": "47.1-clients-plan",
+  "phase": "47.1",
+  "layer": "clients",
+  "target": "fleet",
+  "writer_scope": "scope::clients",
+  "transaction_hash": "2a098dc67bc8870838980fd29c8f5f1fa226ebdd5f8a88764a947245603f96ce",
+  "inputs": {
+    "target_manifest_hash": "1998d6a536281248d45728b6a982b4f5238d5a250452cec6bcc155a4977fd20b",
+    "backup_manifest_hash": "",
+    "client_scope": "fleet-clients",
+    "linux_resolved_policy": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+    "windows_nrpt_namespace": ".atius.internal",
+    "ordered_execution": [
+      "atius-srv-1",
+      "atius-srv-2",
+      "horistic-srv",
+      "giovanni-w11-pc"
+    ]
+  }
+}

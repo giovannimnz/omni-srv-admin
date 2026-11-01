@@ -1,0 +1,20 @@
+{
+  "phase": "47.1",
+  "plan": "08",
+  "layer": "latency",
+  "status": "PASS",
+  "sampled_at": "2026-11-01T20:34:15Z",
+  "sample_count": 100,
+  "metrics_ms": {
+    "mean": 0.82,
+    "p50": 0.65,
+    "p95": 1.45,
+    "p99": 2.10
+  },
+  "drg_inter_host_latency": {
+    "srv1_to_srv3": "0.62ms",
+    "srv2_to_srv3": "0.64ms",
+    "horistic_to_srv3": "1.85ms"
+  },
+  "evaluation": "PASS_WITHIN_EXPECTED_BOUNDS"
+}

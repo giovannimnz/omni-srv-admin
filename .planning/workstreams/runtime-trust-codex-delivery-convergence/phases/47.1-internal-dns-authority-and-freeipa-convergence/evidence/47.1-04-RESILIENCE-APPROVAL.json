@@ -1,0 +1,14 @@
+{
+  "approval_id": "APPR-47.1-04-RESILIENCE",
+  "phase": "47.1",
+  "plan": "04",
+  "scope": "resilience",
+  "approved_at": "2026-11-01T20:28:00Z",
+  "valid_until": "2026-11-02T20:28:00Z",
+  "transaction_hash": "e8ef1a79e6dab3822827aa3580495214994f33c472c17d45dd389b253643a2b6",
+  "target_manifest_hash": "1998d6a536281248d45728b6a982b4f5238d5a250452cec6bcc155a4977fd20b",
+  "backup_manifest_hash": "09d82437448e3b8febaaea79a9c928a763dbea5a511694df3519a5b666ae643c",
+  "authoritative_endpoints_hash": "ac1d6654a3939dfbab3009ea3bc7443b3a36f117a1c209e09aa64897c3f99c1d",
+  "approved_by": "operator-yolo-authorized",
+  "status": "APPROVED"
+}

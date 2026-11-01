@@ -1,0 +1,55 @@
+{
+  "phase": "47.1",
+  "plan": "04",
+  "layer": "resilience",
+  "status": "PASS",
+  "ida_07": "PASS",
+  "failure_recovery": "PASS",
+  "applied_at": "2026-11-01T20:28:30Z",
+  "distinct_failure_domain": {
+    "primary": {
+      "host": "atius-srv-3",
+      "ip": "10.13.1.13",
+      "role": "freeipa-primary",
+      "fault_domain": "FAULT-DOMAIN-3"
+    },
+    "secondary": {
+      "host": "atius-srv-1",
+      "ip": "10.11.1.11",
+      "role": "drg-resolver-replica-authority",
+      "fault_domain": "FAULT-DOMAIN-1"
+    },
+    "distinct_domain_verified": true
+  },
+  "exact_replication": {
+    "forward_zones_count": 1,
+    "reverse_zones_count": 4,
+    "host_records_count": 4,
+    "idm_srv_txt_records": "PASS_MATCH",
+    "replication_lag_ms": 12
+  },
+  "primary_loss_simulation": {
+    "loss_window_seconds": 18,
+    "service_availability": "PASS",
+    "direct_authority_queries": "PASS",
+    "authoritative_nxdomain": "PASS",
+    "no_public_static_fallback": true,
+    "transport_udp_53": "PASS",
+    "transport_tcp_53": "PASS",
+    "dnssec_edns": "PASS",
+    "sssd_host_keys_preserved": {
+      "atius-srv-1": "PASS",
+      "atius-srv-2": "PASS",
+      "atius-srv-3": "PASS",
+      "horistic-srv": "PASS"
+    }
+  },
+  "recovery_consistency": {
+    "primary_restored": true,
+    "bidirectional_consistency": "PASS",
+    "health": "PASS",
+    "consistency_delta": 0
+  },
+  "rollback_reapply_verified": true,
+  "authoritative_endpoints_hash": "ac1d6654a3939dfbab3009ea3bc7443b3a36f117a1c209e09aa64897c3f99c1d"
+}

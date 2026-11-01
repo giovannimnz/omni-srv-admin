@@ -1,0 +1,19 @@
+{
+  "phase": "47.1",
+  "plan": "02",
+  "generated_at": "2026-11-01T20:20:00Z",
+  "canary_record": {
+    "fqdn": "canary-check.atius.internal",
+    "status": "ABSENT_PROVEN",
+    "checked_locations": [
+      "/etc/hosts",
+      "coredns-static-hosts",
+      "adguard-rewrites"
+    ]
+  },
+  "current_dns_state": {
+    "coredns_listen": "10.11.1.11:53",
+    "adguard_forwarding": "active",
+    "freeipa_endpoint": "pending_private_endpoint_attachment"
+  }
+}

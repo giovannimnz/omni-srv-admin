@@ -1,0 +1,42 @@
+{
+  "phase": "47.1",
+  "plan": "05",
+  "layer": "coredns",
+  "status": "PASS",
+  "applied_at": "2026-11-01T20:30:55Z",
+  "resilience_gate_verified": true,
+  "upstream_forwarding": {
+    "zones": [
+      "atius.internal",
+      "1.11.10.in-addr.arpa",
+      "1.12.10.in-addr.arpa",
+      "1.13.10.in-addr.arpa",
+      "1.21.10.in-addr.arpa"
+    ],
+    "endpoints": [
+      "10.13.1.13:53",
+      "10.11.1.11:53"
+    ],
+    "forward_policy": "sequential_healthcheck"
+  },
+  "public_recursion": {
+    "target": "10.11.1.11:5353",
+    "provider": "AdGuard",
+    "public_filtering_preserved": true
+  },
+  "canary_and_matrix_trace": {
+    "canary_query": "PASS_FREEIPA",
+    "forward_a_records": "PASS",
+    "reverse_ptr_records": "PASS",
+    "idm_srv_txt_records": "PASS",
+    "authoritative_nxdomain": "PASS_FAIL_CLOSED_NO_PUBLIC_FALLBACK",
+    "transport_udp_53": "PASS",
+    "transport_tcp_53": "PASS",
+    "dnssec_edns": "PASS"
+  },
+  "duplicate_static_removal": {
+    "removed_duplicate_fqdns": true,
+    "short_names_retained": true
+  },
+  "rollback_reapply_verified": true
+}

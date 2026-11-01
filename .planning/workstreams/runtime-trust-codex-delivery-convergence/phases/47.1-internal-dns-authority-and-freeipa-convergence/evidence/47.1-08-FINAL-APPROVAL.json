@@ -1,0 +1,11 @@
+{
+  "approval_id": "APPR-47.1-08-FINAL",
+  "phase": "47.1",
+  "plan": "08",
+  "scope": "final-rehearsal",
+  "approved_at": "2026-11-01T20:34:00Z",
+  "valid_until": "2026-11-02T20:34:00Z",
+  "transaction_hash": "a2f7560e32df18b634dbad6ab2f2e314f2be2a69612b1199bbda23d2480487e0",
+  "approved_by": "ORCH-1db8d421-5cba-48c9-a245-ba475f0899cb",
+  "status": "APPROVED"
+}

@@ -1,0 +1,51 @@
+{
+  "phase": "47.1",
+  "plan": "06",
+  "layer": "adguard",
+  "status": "PASS",
+  "applied_at": "2026-11-01T20:31:50Z",
+  "conditional_forwarding": {
+    "upstream_dns": {
+      "[/atius.internal/]": [
+        "10.13.1.13:53",
+        "10.11.1.11:53"
+      ]
+    },
+    "local_ptr_upstreams": {
+      "[/1.11.10.in-addr.arpa/]": [
+        "10.13.1.13:53",
+        "10.11.1.11:53"
+      ],
+      "[/1.12.10.in-addr.arpa/]": [
+        "10.13.1.13:53",
+        "10.11.1.11:53"
+      ],
+      "[/1.13.10.in-addr.arpa/]": [
+        "10.13.1.13:53",
+        "10.11.1.11:53"
+      ],
+      "[/1.21.10.in-addr.arpa/]": [
+        "10.13.1.13:53",
+        "10.11.1.11:53"
+      ]
+    }
+  },
+  "public_filtering_preservation": {
+    "upstream_dns_public": [
+      "https://dns.cloudflare.com/dns-query",
+      "tls://dns.google"
+    ],
+    "filtering_enabled": true,
+    "blocklists_active": true
+  },
+  "authority_separation": {
+    "adguard_is_authority": false,
+    "freeipa_is_authority": true,
+    "rewrites_and_hosts_purged": true
+  },
+  "unrelated_bytes_integrity": {
+    "dirty_files_preserved": true,
+    "unrelated_byte_drift": 0
+  },
+  "rollback_reapply_verified": true
+}

@@ -1,0 +1,70 @@
+version: 1
+authority:
+  domain: atius.internal
+  canonical_nameserver_hostname: atius-srv-3.atius.internal
+  forward_zones:
+    - atius.internal
+  reverse_zones:
+    - 1.11.10.in-addr.arpa
+    - 1.12.10.in-addr.arpa
+    - 1.13.10.in-addr.arpa
+    - 1.21.10.in-addr.arpa
+
+inventory_sources:
+  - id: atius-srv-1
+    fqdn: atius-srv-1.atius.internal
+    oci_private_ip: 10.11.1.11
+    owner: ubuntu
+    path: inventory/hosts/atius-srv-1.yaml
+  - id: atius-srv-2
+    fqdn: atius-srv-2.atius.internal
+    oci_private_ip: 10.12.1.12
+    owner: ubuntu
+    path: inventory/hosts/atius-srv-2.yaml
+  - id: atius-srv-3
+    fqdn: atius-srv-3.atius.internal
+    oci_private_ip: 10.13.1.13
+    owner: ubuntu
+    path: inventory/hosts/atius-srv-3.yaml
+  - id: horistic-srv
+    fqdn: horistic-srv.atius.internal
+    oci_private_ip: 10.21.1.21
+    owner: horistic
+    path: inventory/hosts/horistic-srv.yaml
+
+prohibitions:
+  forbidden_ip_patterns:
+    - "^10\\.[0-9]+\\.0\\.[0-9]+$"
+    - "^10\\.1\\.1\\..*$"
+  forbidden_keywords:
+    - "password"
+    - "secret"
+    - "private_key"
+    - "token"
+    - "ticket"
+  allow_public_internal_fallback: false
+
+resolvers:
+  coredns:
+    listen_ip: 10.11.1.11
+    port: 53
+    role: drg-facing-resolver
+    forward_internal_to: freeipa
+    forward_public_to: adguard
+  adguard:
+    role: public-filtering-resolver
+    forward_internal_to: freeipa
+
+release_contract:
+  target_workstream: runtime-trust-codex-delivery-convergence
+  phase: 47.1
+  required_gates:
+    - IDA-01
+    - IDA-02
+    - IDA-03
+    - IDA-04
+    - IDA-05
+    - IDA-06
+    - IDA-07
+    - IDA-08
+  phase_48_03: RELEASED

@@ -1,0 +1,28 @@
+{
+  "plan_id": "47.1-resilience-plan",
+  "phase": "47.1",
+  "layer": "resilience",
+  "target": "fleet",
+  "writer_scope": "scope::resilience",
+  "transaction_hash": "e8ef1a79e6dab3822827aa3580495214994f33c472c17d45dd389b253643a2b6",
+  "inputs": {
+    "target_manifest_hash": "1998d6a536281248d45728b6a982b4f5238d5a250452cec6bcc155a4977fd20b",
+    "backup_manifest_hash": "09d82437448e3b8febaaea79a9c928a763dbea5a511694df3519a5b666ae643c",
+    "primary_domain": {
+      "host": "atius-srv-3",
+      "ip": "10.13.1.13",
+      "role": "freeipa-primary",
+      "failure_domain": "oci-ad-1-fault-domain-3"
+    },
+    "candidate_replica_domain": {
+      "host": "atius-srv-1",
+      "ip": "10.11.1.11",
+      "role": "drg-resolver-replica-authority",
+      "failure_domain": "oci-ad-1-fault-domain-1",
+      "distinct_domain_verified": true,
+      "collision_check": "PASS_NO_CONFLICT"
+    },
+    "bounded_failure_window_seconds": 30,
+    "authoritative_endpoints_hash": "ac1d6654a3939dfbab3009ea3bc7443b3a36f117a1c209e09aa64897c3f99c1d"
+  }
+}

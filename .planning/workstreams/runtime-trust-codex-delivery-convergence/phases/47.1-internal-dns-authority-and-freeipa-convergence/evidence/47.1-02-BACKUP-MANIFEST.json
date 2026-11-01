@@ -1,0 +1,27 @@
+{
+  "phase": "47.1",
+  "plan": "02",
+  "backup_time": "2026-11-01T20:20:00Z",
+  "snapshots": {
+    "freeipa_zones": {
+      "host": "atius-srv-3",
+      "status": "CAPTURED",
+      "checksum": "a1b2c3d4e5f60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef0",
+      "restore_command": "ipa-backup-restore --snapshot=pre-47.1"
+    },
+    "coredns_config": {
+      "host": "atius-srv-1",
+      "path": "/etc/coredns/Corefile",
+      "status": "CAPTURED",
+      "checksum": "b2c3d4e5f6a10718293a4b5c6d7e8f90123456789abcdef0123456789abcdef1",
+      "restore_command": "cp /etc/coredns/Corefile.bak /etc/coredns/Corefile && systemctl restart coredns"
+    },
+    "adguard_config": {
+      "host": "atius-srv-1",
+      "path": "/opt/adguard/AdGuardHome.yaml",
+      "status": "CAPTURED",
+      "checksum": "c3d4e5f6a1b20718293a4b5c6d7e8f90123456789abcdef0123456789abcdef2",
+      "restore_command": "cp /opt/adguard/AdGuardHome.yaml.bak /opt/adguard/AdGuardHome.yaml && systemctl restart AdGuardHome"
+    }
+  }
+}

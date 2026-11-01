@@ -1,0 +1,27 @@
+{
+  "phase": "47.1",
+  "plan": "08",
+  "layer": "rollback-rehearsal",
+  "status": "PASS",
+  "rehearsed_at": "2026-11-01T20:34:20Z",
+  "restoration_order": [
+    "clients (giovanni-w11-pc, horistic-srv, atius-srv-2, atius-srv-1)",
+    "adguard (opt/adguard/AdGuardHome.yaml)",
+    "coredns (etc/coredns/Corefile)",
+    "resilience (failover routes)",
+    "freeipa (bind-dyndb-ldap & named-pkcs11)",
+    "endpoint (security lists / iptables)"
+  ],
+  "reapply_order": [
+    "endpoint (10.13.1.13:53 published)",
+    "freeipa (5 zones + 4 hosts autoritativo)",
+    "resilience (replica + failure domain isolado)",
+    "coredns (conditional forwarding 5 zones)",
+    "adguard (conditional upstream + public filtering)",
+    "clients (Linux resolved + Windows NRPT)"
+  ],
+  "restoration_checksum_match": true,
+  "reapply_checksum_match": true,
+  "service_interruption_ms": 0,
+  "rollback_reapply_verdict": "PASS"
+}

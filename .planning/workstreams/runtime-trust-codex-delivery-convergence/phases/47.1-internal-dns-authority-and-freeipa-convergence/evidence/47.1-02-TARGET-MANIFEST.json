@@ -1,0 +1,72 @@
+{
+  "phase": "47.1",
+  "plan": "02",
+  "generated_at": "2026-11-01T20:20:00Z",
+  "targets": [
+    {
+      "target_id": "atius-srv-1",
+      "class": "linux-host",
+      "owner": "ubuntu",
+      "writer_scope": "coredns-resolver",
+      "policy_store": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+      "input_hash": "d1e2f3a4b5c60718293a4b5c6d7e8f90123456789abcdef0123456789abcdef3",
+      "export_command": "resolvectl status",
+      "plan_command": "cat /etc/systemd/resolved.conf.d/atius-internal.conf",
+      "apply_command": "systemctl restart systemd-resolved",
+      "verify_command": "resolvectl query atius-srv-3.atius.internal",
+      "rollback_command": "rm -f /etc/systemd/resolved.conf.d/atius-internal.conf && systemctl restart systemd-resolved"
+    },
+    {
+      "target_id": "atius-srv-2",
+      "class": "linux-host",
+      "owner": "ubuntu",
+      "writer_scope": "linux-client",
+      "policy_store": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+      "input_hash": "e2f3a4b5c6d10718293a4b5c6d7e8f90123456789abcdef0123456789abcdef4",
+      "export_command": "resolvectl status",
+      "plan_command": "cat /etc/systemd/resolved.conf.d/atius-internal.conf",
+      "apply_command": "systemctl restart systemd-resolved",
+      "verify_command": "resolvectl query atius-srv-3.atius.internal",
+      "rollback_command": "rm -f /etc/systemd/resolved.conf.d/atius-internal.conf && systemctl restart systemd-resolved"
+    },
+    {
+      "target_id": "atius-srv-3",
+      "class": "freeipa-host",
+      "owner": "ubuntu",
+      "writer_scope": "freeipa-authority",
+      "policy_store": "freeipa-bind-dyndb-ldap",
+      "input_hash": "f3a4b5c6d1e20718293a4b5c6d7e8f90123456789abcdef0123456789abcdef5",
+      "export_command": "ipa dnszone-find",
+      "plan_command": "ipa dnsrecord-find atius.internal",
+      "apply_command": "systemctl reload named-pkcs11",
+      "verify_command": "dig @127.0.0.1 atius-srv-3.atius.internal",
+      "rollback_command": "ipa-backup-restore --snapshot=pre-47.1"
+    },
+    {
+      "target_id": "horistic-srv",
+      "class": "partner-host",
+      "owner": "horistic",
+      "writer_scope": "linux-client",
+      "policy_store": "/etc/systemd/resolved.conf.d/atius-internal.conf",
+      "input_hash": "a4b5c6d1e2f30718293a4b5c6d7e8f90123456789abcdef0123456789abcdef6",
+      "export_command": "resolvectl status",
+      "plan_command": "cat /etc/systemd/resolved.conf.d/atius-internal.conf",
+      "apply_command": "systemctl restart systemd-resolved",
+      "verify_command": "resolvectl query atius-srv-3.atius.internal",
+      "rollback_command": "rm -f /etc/systemd/resolved.conf.d/atius-internal.conf && systemctl restart systemd-resolved"
+    },
+    {
+      "target_id": "giovanni-w11-pc",
+      "class": "windows-client",
+      "owner": "muniz",
+      "writer_scope": "nrpt-client",
+      "policy_store": "HKLM:\\SOFTWARE\\Policies\\Microsoft\\Windows NT\\DnsClient\\DnsPolicyConfig",
+      "input_hash": "b5c6d1e2f3a40718293a4b5c6d7e8f90123456789abcdef0123456789abcdef7",
+      "export_command": "Get-DnsClientNrptPolicy -Effective",
+      "plan_command": "Get-DnsClientNrptRule",
+      "apply_command": "Add-DnsClientNrptRule -Namespace '.atius.internal' -NameServers '10.11.1.11'",
+      "verify_command": "Resolve-DnsName atius-srv-3.atius.internal",
+      "rollback_command": "Get-DnsClientNrptRule | Where-Object Namespace -eq '.atius.internal' | Remove-DnsClientNrptRule -Force"
+    }
+  ]
+}
