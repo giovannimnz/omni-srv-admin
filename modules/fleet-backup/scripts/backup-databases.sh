@@ -80,8 +80,9 @@ if [ "${HOSTNAME_RAW}" = "atius-srv-2" ]; then
         if [ -n "$DBROOT" ]; then
             log "Executando mariadb-dump do Mailcow..."
             MYSQL_DUMP="${TARGET_DIR}/mailcow-mysql.sql.gz"
-            podman exec mailcowdockerized_mysql-mailcow_1 mariadb-dump -u root -p"${DBROOT}" --databases mailcow 2>/dev/null | gzip -9 > "${MYSQL_DUMP}" || \
-            podman exec mailcowdockerized_mysql-mailcow_1 mysqldump -u root -p"${DBROOT}" --databases mailcow 2>/dev/null | gzip -9 > "${MYSQL_DUMP}" || true
+            (sudo -u ubuntu podman exec mailcowdockerized_mysql-mailcow_1 mariadb-dump -u root -p"${DBROOT}" --databases mailcow 2>/dev/null || \
+             sudo -u ubuntu podman exec mailcowdockerized_mysql-mailcow_1 mysqldump -u root -p"${DBROOT}" --databases mailcow 2>/dev/null || \
+             podman exec mailcowdockerized_mysql-mailcow_1 mariadb-dump -u root -p"${DBROOT}" --databases mailcow 2>/dev/null) | gzip -9 > "${MYSQL_DUMP}" || true
             track_dump "${MYSQL_DUMP}"
 
             # Backup da configuracao mailcow.conf
