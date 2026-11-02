@@ -150,3 +150,22 @@ For more information about GSD agents, run `/gsd-help`.
 - Ao invocar `/teamwork`: NÃO fazer entrevista de calibração de rotina. Usar [skip-interview] / defaults abaixo.
 - Quando for necessário relatório/documento: perguntar ao usuário destino via `ask_question` com timeout de 2 minutos. Sem resposta em 2 min, padrão = salvar em `.planning/` E `docs/` do repo (+ resumo inline).
 - Restrições padrão: sem SSH/Landscape na frota, sem imprimir segredos, somente-leitura exceto arquivos de relatório. Verificação padrão: rubrica por tópico com evidências rastreáveis. Idioma: PT-BR, caveman full.
+
+## Omni Srv Admin CI & Fleet Multi-Agent Orchestrator (Canônico)
+
+- **Autoridade Central Soberana**: O **Orchestrator Central (`2251a1d9-3260-4bde-88e2-490063470338`)** é a **única autoridade máxima** responsável por:
+  - Tomada de decisão definitiva sobre infraestrutura, rede, DNS, Apache, K3s, segurança e arquitetura.
+  - Administração, ordenação, despacho e fiscalização da Fila de Tarefas de todos os Workers.
+  - Aprovação de revisões de código e sincronização dos branches/worktrees.
+  - **Serialização de Escrita (Writer Serialization)**: Apenas um agente modifica arquivos sobrepostos por vez.
+  - **Exclusividade de Git Commit & Push**: Nenhum worker ou subagente realiza commit ou `git push` direto para o branch principal (`main`). Todas as alterações devem ser homologadas e enviadas exclusivamente pelo Orchestrator.
+- **Regra de Ouro "Uma Execução por Vez" (Single-Run CI Verification)**:
+  - **Validação Pré-Push Local (5 Gates Canônicos)**:
+    ```bash
+    python3 scripts/pre_ci_check.py
+    ```
+    Nenhum commit/push é autorizado sem aprovação 5/5.
+  - **Acompanhamento Ativo**: Monitorar no GitHub Actions com `gh run watch` ou `gh run list --limit 5` até atingir `completed / success`.
+- **Protocolo Forense Pós-Falha (Root-Cause First)**: Em caso de falha, inspecionar imediatamente com `gh run view <run-id> --log-failed`. Proibido realizar pushes às cegas.
+- **Skill Canônica Vinculada**: `omni-ci-fleet-orchestrator` (`~/.gemini/config/skills/omni-ci-fleet-orchestrator/SKILL.md`).
+
