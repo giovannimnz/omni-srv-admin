@@ -1,4 +1,4 @@
-﻿"""Landscape control-plane integration for omni.
+"""Landscape control-plane integration for omni.
 
 This module keeps the repo as the reviewed source of truth for scripts while
 using Landscape as the Ubuntu machine execution plane.

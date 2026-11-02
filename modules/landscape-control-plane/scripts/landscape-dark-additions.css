@@ -131,3 +131,58 @@ code {
 #sidebar-body .yui3-menuitem:first-child {
   border-top: 1px solid #16202c !important;
 }
+
+/* 10. Activity & System Progress Bars (.bar-body, .bar-body-status) */
+.bar-body,
+#activity-detail .bar-body,
+#activities-table .bar-body,
+.activity-detail-table .bar-body,
+.bar-body-status {
+  background: #101720 !important;
+  background-color: #101720 !important;
+  border: 1px solid #2a3746 !important;
+  border-radius: 4px !important;
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.6) !important;
+}
+
+#activity-detail .bar-body-status {
+  background: #101720 !important;
+  background-color: #101720 !important;
+  border: 1px solid #2a3746 !important;
+  border-radius: 4px !important;
+  overflow: hidden !important;
+}
+
+.bar-body .good,
+.bar-body .good > .bar-body-block,
+.bar-body-block.good {
+  background-color: #16a34a !important;
+}
+
+.bar-body .warning,
+.bar-body .warning > .bar-body-block,
+.bar-body-block.warning {
+  background-color: #d97706 !important;
+}
+
+.bar-body .bad,
+.bar-body .bad > .bar-body-block,
+.bar-body-block.bad {
+  background-color: #dc2626 !important;
+}
+
+.bar-body-block.activity-status-queued,
+.bar-body-block.activity-status-delivered,
+.bar-body-block.activity-status-in-progress,
+.bar-body-block.activity-status-succeeded {
+  background-color: #2563eb !important;
+}
+
+.bar-body-block.activity-status-undelivered {
+  background-color: #1e293b !important;
+}
+
+#activity-detail table,
+.activity-detail-table {
+  background-color: transparent !important;
+}
