@@ -88,6 +88,11 @@ if [ "$IS_HUB" = "true" ]; then
   },
   \"app\": {
     \"baseUrl\": \"https://app.paseo.sh\"
+  },
+  \"features\": {
+    \"webUi\": {
+      \"enabled\": true
+    }
   }
 }
 EOF"
@@ -111,6 +116,11 @@ else
   },
   \"app\": {
     \"baseUrl\": \"https://app.paseo.sh\"
+  },
+  \"features\": {
+    \"webUi\": {
+      \"enabled\": true
+    }
   }
 }
 EOF"
@@ -126,6 +136,8 @@ Wants=network-online.target
 [Service]
 Type=simple
 Environment=NVM_DIR=%h/.nvm
+Environment=PASEO_HOSTNAMES=true
+Environment=PASEO_WEB_UI_ENABLED=true
 ExecStart=/bin/bash -c 'source \$NVM_DIR/nvm.sh && exec paseo daemon run --home %h/.paseo'
 Restart=on-failure
 RestartSec=5
