@@ -298,6 +298,42 @@
       "access_group": "global",
       "risk": "reconcile",
       "description": "Configura proxy APT centralizado via rota privada OCI DRG (10.13.1.13:3142) e persistencia em GDrive, eliminando downloads duplicados e divergencia de hashes na frota."
+    },
+    {
+      "id": "fleet-paseo-install",
+      "title": "omni::fleet-paseo-install",
+      "version": "1.0.0",
+      "path": "fleet-paseo-install.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 600,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Instalacao padronizada do runtime Paseo CLI, Server e ACP na frota via NVM Node 24, portas dedicadas e daemons systemd."
+    },
+    {
+      "id": "fleet-paseo-apache-edge",
+      "title": "omni::fleet-paseo-apache-edge",
+      "version": "1.0.0",
+      "path": "fleet-paseo-apache-edge.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Configura Edge Gateway Apache no atius-srv-1 para o Paseo Hub (10.14.1.14:37845) com Dual-Domain TLS e WebSocket Upgrade."
+    },
+    {
+      "id": "fleet-paseo-status",
+      "title": "omni::fleet-paseo-status",
+      "version": "1.0.0",
+      "path": "fleet-paseo-status.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 180,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Verifica status da CLI, servico systemd, porta dedicada e daemon local do Paseo na frota."
     }
   ]
 }
