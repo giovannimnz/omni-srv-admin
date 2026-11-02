@@ -138,3 +138,44 @@ Com a autorização soberana concedida pelo Orquestrador Central (`1db8d421-5cba
    - Host `atius-srv-1` agora opera com sua VNIC moderna em `10.1.0.11` carregando a totalidade do tráfego público e privado DRG.
 
 
+---
+
+## 6. Homologação da Frota e Resolução de VirtualHosts Dependentes (`horistic-srv`)
+
+**Data:** 2026-11-02 12:20 BRT  
+**Status:** CONCLUÍDO E HOMOLOGADO (100% ONLINE)
+
+### 6.1. Reendereçamento dos VirtualHosts Apache no `horistic-srv`
+Com a migração de `atius-srv-1` para `10.1.0.11`, os sites dependentes hospedados no `horistic-srv` apontavam para o IP legado `10.11.1.11` e foram reconfigurados:
+- Arquivos atualizados em `/etc/apache2/sites-available/`:
+  - `trade.horistic.com.conf` (`Define ATIUS_IP 10.1.0.11`, frontend porta 3050)
+  - `dashboard.horistic.com.conf` (`Define ATIUS_IP 10.1.0.11`, frontend porta 3050)
+  - `backtest.horistic.com.conf` (`Define ATIUS_IP 10.1.0.11`, frontend porta 3050)
+  - `painel.horistic.com.conf` (`Define ATIUS_IP 10.1.0.11`, frontend porta 3050)
+  - `horistic.com.conf` (`Define ATIUS_IP 10.1.0.11`, frontend porta 3050)
+  - `api.horistic.com.conf` (`Define ATIUS_IP 10.1.0.11`, backend porta 8050)
+  - `webhook.horistic.com.conf` (`Define WEBHOOK_IP 10.1.0.11`, porta 8099)
+- DNS de resolução interna `/etc/resolv.conf` em `horistic-srv` atualizado para `nameserver 10.1.0.11`.
+- Apache recarregado com `Syntax OK`.
+
+### 6.2. Persistência de Egress no Netplan (`atius-srv-1`)
+- `/etc/netplan/62-oci-target-vnic.yaml` persistido com rota padrão de saída no IP reservado:
+  ```yaml
+  routes:
+    - to: default
+      via: 10.1.0.1
+      metric: 50
+  ```
+- Egress de internet comprovado e imutável via `64.181.172.236` (garantindo compatibilidade com whitelists de IP em exchanges como Binance, Bybit e OKX).
+
+### 6.3. Auto-Cura e Estabilização PM2 (`atius-srv-1`)
+- Sincronização de versão do PM2 realizada (`pm2 update` + `pm2 save`), eliminando o descompasso de saída que afetava o parsing JSON dos launchers (`horistic-unified-bot-launcher` e `atius-unified-bot-launcher`).
+- Todos os 34 processos PM2 da infraestrutura Atius & Horistic operando com status ONLINE e 0 erros.
+
+### 6.4. Verificação E2E dos Endpoints Públicos
+- `https://trade.horistic.com/` $\rightarrow$ **HTTP 200 OK**
+- `https://dashboard.horistic.com/` $\rightarrow$ **HTTP 200 OK**
+- `https://backtest.horistic.com/` $\rightarrow$ **HTTP 200 OK**
+- `https://painel.horistic.com/` $\rightarrow$ **HTTP 200 OK**
+- `https://horistic.com/` $\rightarrow$ **HTTP 200 OK**
+- `https://api.horistic.com/v1/health` $\rightarrow$ **HTTP 200 OK** (`{"success":true,"status":"healthy"}`)
