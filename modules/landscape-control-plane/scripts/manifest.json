@@ -11,6 +11,18 @@
   ],
   "scripts": [
     {
+      "id": "fleet-health-check",
+      "title": "omni::fleet-health-check",
+      "version": "1.0.0",
+      "path": "fleet-health-check.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 300,
+      "access_group": "global",
+      "risk": "read-only",
+      "description": "Comprehensive fleet health check, D-state audit, stale IP check, and reconcile."
+    },
+    {
       "id": "fleet-status",
       "title": "omni::fleet-status",
       "version": "1.0.0",

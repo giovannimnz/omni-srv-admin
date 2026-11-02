@@ -16,7 +16,7 @@ cd "$compose_dir"
 
 # Pre-flight: ensure host database is reachable before starting stack
 for _ in $(seq 1 30); do
-  if timeout 2 bash -c '</dev/tcp/10.11.1.11/6432' 2>/dev/null; then
+  if timeout 2 bash -c '</dev/tcp/10.1.0.11/6432' 2>/dev/null; then
     break
   fi
   sleep 2
