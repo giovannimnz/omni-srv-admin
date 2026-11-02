@@ -8,10 +8,16 @@ iptables -N "$CHAIN" 2>/dev/null || true
 iptables -F "$CHAIN"
 iptables -A "$CHAIN" -i lo -j RETURN
 iptables -A "$CHAIN" -i wg100 -p tcp -s 10.100.100.0/24 --dport 6432 -j RETURN
+iptables -A "$CHAIN" -i wg0 -p tcp -s 10.1.1.0/24 --dport 6432 -j RETURN
+iptables -A "$CHAIN" -p tcp -s 10.11.0.0/16 --dport 6432 -j RETURN
 iptables -A "$CHAIN" -p tcp -s 10.12.0.0/16 --dport 6432 -j RETURN
 iptables -A "$CHAIN" -p tcp -s 10.13.0.0/16 --dport 6432 -j RETURN
 iptables -A "$CHAIN" -p tcp -s 10.14.0.0/16 --dport 6432 -j RETURN
 iptables -A "$CHAIN" -p tcp -s 10.21.0.0/16 --dport 6432 -j RETURN
+iptables -A "$CHAIN" -p tcp -s 10.31.0.0/16 --dport 6432 -j RETURN
+iptables -A "$CHAIN" -p tcp -s 10.41.0.0/16 --dport 6432 -j RETURN
+iptables -A "$CHAIN" -p tcp -s 10.89.0.0/16 --dport 6432 -j RETURN
+iptables -A "$CHAIN" -p tcp -s 10.10.0.0/16 --dport 6432 -j RETURN
 iptables -A "$CHAIN" -p tcp --dport 6432 -j REJECT --reject-with tcp-reset
 iptables -A "$CHAIN" -p tcp --dport 8745 -j REJECT --reject-with tcp-reset
 iptables -A "$CHAIN" -j RETURN

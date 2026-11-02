@@ -13,6 +13,25 @@ root_url="http://127.0.0.1:8090/"
 spaces_url="http://127.0.0.1:8090/spaces/"
 
 cd "$compose_dir"
+
+# Pre-flight: ensure host database is reachable before starting stack
+for _ in $(seq 1 30); do
+  if timeout 2 bash -c '</dev/tcp/10.11.1.11/6432' 2>/dev/null; then
+    break
+  fi
+  sleep 2
+done
+
+# Pre-flight: ensure pasta uplink is attached to rootless netns if needed
+if command -v pasta >/dev/null 2>&1; then
+  if ! pgrep -u "$(id -u)" -x pasta >/dev/null 2>&1; then
+    dns_pid="$(pgrep -u "$(id -u)" -x aardvark-dns | head -1 || true)"
+    if [ -n "$dns_pid" ]; then
+      pasta --config-net "$dns_pid" >/dev/null 2>&1 || true
+    fi
+  fi
+fi
+
 "$compose_bin" --podman-path "$podman_bin" --env-file "$env_file" \
   -f "$compose_file" up -d
 
