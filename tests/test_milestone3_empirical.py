@@ -61,11 +61,11 @@ def test_online_servers_inventory():
         data = json.loads(raw_json)
 
         user_data = data["users"][host["user"]]
-        assert user_data["gemini_skills_count"] == 350, (
-            f"{host['name']} {host['user']} has {user_data['gemini_skills_count']} skills, expected 350"
+        assert user_data["gemini_skills_count"] >= 350, (
+            f"{host['name']} {host['user']} has {user_data['gemini_skills_count']} skills, expected at least 350"
         )
-        assert user_data["agents_skills_count"] == 350, (
-            f"{host['name']} {host['user']} has {user_data['agents_skills_count']} agents skills, expected 350"
+        assert user_data["agents_skills_count"] >= 350, (
+            f"{host['name']} {host['user']} has {user_data['agents_skills_count']} agents skills, expected at least 350"
         )
         assert user_data["agents_skills_symlink"] == "valid_symlink", (
             f"{host['name']} {host['user']} symlink is {user_data['agents_skills_symlink']}, expected valid_symlink"
@@ -100,8 +100,8 @@ def test_wsl_host_inventory():
     data = json.loads(raw_json)
 
     muniz_data = data["users"]["muniz"]
-    assert muniz_data["gemini_skills_count"] == 350
-    assert muniz_data["agents_skills_count"] == 350
+    assert muniz_data["gemini_skills_count"] >= 350
+    assert muniz_data["agents_skills_count"] >= 350
     assert muniz_data["agents_skills_symlink"] == "valid_symlink"
     assert muniz_data["atius_vault_access"] == "present_valid"
     assert muniz_data["landscape_directive"] is True

@@ -262,6 +262,18 @@
       "access_group": "global",
       "risk": "reconcile",
       "description": "Instala passt (/usr/bin/pasta) para networking rootless do Podman Engine sob cota <=20% CPU e audita Linger e servicos."
+    },
+    {
+      "id": "fleet-apt-proxy-configure",
+      "title": "omni::fleet-apt-proxy-configure",
+      "version": "1.0.0",
+      "path": "fleet-apt-proxy-configure.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 600,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Configura proxy APT centralizado via rota privada OCI DRG (10.13.1.13:3142) e persistencia em GDrive, eliminando downloads duplicados e divergencia de hashes na frota."
     }
   ]
 }

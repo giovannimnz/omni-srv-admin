@@ -57,7 +57,8 @@ Registrado no runtime MCP do Antigravity IDE (`omni-routine` via stdio):
 
 ## Guardrails Invioláveis
 1. **CPU Guardrail:** Rotinas de perfil `builds` executam restritas a 20% do host via cgroup `omni-builds.slice` e `nice -n 19`.
-2. **Dispatcher Multi-Host Resiliente:** Execuções remotas utilizam fallback estrito de 3 vias:
+2. **Centralized APT Cache & GDrive Distribution:** Atualizações de pacotes na frota utilizam download único centralizado em `atius-srv-3` (`10.13.1.13:3142`), persistência em `/mnt/gdrive/apt-cache/` (5TB) e distribuição via rota privada OCI DRG, com fallback gracioso e zero divergência de hashes.
+3. **Dispatcher Multi-Host Resiliente:** Execuções remotas utilizam fallback estrito de 3 vias:
    - Rota 1: OCI DRG / Rede Privada
    - Rota 2: WireGuard VPN (`10.100.100.x`)
    - Rota 3: Casa WAN / NAT com porta dedicada (ex: `8122`, `8222`, `8322`)

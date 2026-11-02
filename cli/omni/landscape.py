@@ -434,7 +434,7 @@ def activities_show(activity_id: str, children: bool, json_output: bool) -> None
 @click.option("--json", "json_output", is_flag=True, help="Emite JSON.")
 def activities_recent(limit: int, status_name: str, json_output: bool) -> None:
     """Lista atividades recentes."""
-    query = f"status:{status_name}" if status_name else ""
+    query = f"status:{status_name}" if status_name else "created-after:2000-01-01"
     result = LandscapeClient().legacy("GetActivities", query=query, limit=limit)
     if json_output:
         _echo_json(result)

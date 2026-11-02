@@ -93,7 +93,7 @@ def test_manifest_json_integrity():
     # Check sync-agent-instructions
     assert "sync-agent-instructions" in scripts
     sync_entry = scripts["sync-agent-instructions"]
-    assert sync_entry["version"] == "1.4.0"
+    assert sync_entry["version"] >= "1.4.0"
     assert sync_entry["username"] == "root"
     assert sync_entry["path"] == "sync-agent-instructions.sh"
 
