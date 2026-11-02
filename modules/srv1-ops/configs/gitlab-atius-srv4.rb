@@ -36,6 +36,7 @@ gitlab_rails['omniauth_enabled'] = true
 gitlab_rails['omniauth_allow_single_sign_on'] = ['openid_connect']
 gitlab_rails['omniauth_block_auto_created_users'] = false
 gitlab_rails['omniauth_auto_link_user'] = ['openid_connect']
+gitlab_rails['omniauth_auto_sign_in_with_provider'] = 'openid_connect'
 gitlab_rails['omniauth_providers'] = [
   {
     name: "openid_connect",
