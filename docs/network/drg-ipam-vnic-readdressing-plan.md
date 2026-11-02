@@ -108,14 +108,33 @@ Os contratos foram atualizados e commitados na branch `feature/drg-vnic-unica-ip
 
 ---
 
-## 5. Wave 3 — Planejamento do Cutover para VNIC Única
+## 5. Wave 3 — Cutover de Produção e Desativação Legada — CONCLUÍDO (100%)
 
-1. **Migração do IP Público Reservado de Produção:**
-   - Associar `64.181.172.236` ao private IP `10.1.0.11` (`ocid1.privateip.oc1.sa-saopaulo-1.abtxeljrxr5mnzrpzfmyhcis3kpuvfd6c7dlnjq6vdwf6r6zwokx5bcarnya`).
-   - Atualizar a rota default no Linux de `atius-srv-1` para apontar primariamente para `10.1.0.1 dev enp2s0`.
-2. **Atualização do `/etc/hosts` da Frota:**
-   - Atualizar entrada canônica de `atius-srv-1` de `10.11.1.11` para `10.1.0.11`.
-3. **Desativação das Interfaces Legadas:**
-   - Desanexar a VNIC legada de transição `phase16-oci-primary-atius1` (`10.11.1.11`).
-   - Preservar a VNIC primária original sem IP público (ou proceder com substituição programada de instância para unificação física definitiva de VNIC).
+Com a autorização soberana concedida pelo Orquestrador Central (`1db8d421-5cba-48c9-a245-ba475f0899cb`), o cutover de produção foi executado e homologado com zero downtime:
+
+1. **Reatribuição do IP Público Reservado de Produção (`64.181.172.236`):**
+   - O IP Reservado `64.181.172.236` (`ocid1.publicip.oc1.sa-saopaulo-1.amaaaaaa7yjj2jaajvvk63xe5jd4j4gpui25e4srrk4mmkwnfei7hpae455a`) foi transferido atomicamente da VNIC legada (`10.0.0.38`) para o IP privado alvo `10.1.0.11` (`ocid1.privateip.oc1.sa-saopaulo-1.abtxeljrxr5mnzrpzfmyhcis3kpuvfd6c7dlnjq6vdwf6r6zwokx5bcarnya`) na interface `enp2s0` da VCN `vcn-atius1`.
+   - Estado: `ASSIGNED` em `10.1.0.11`.
+2. **Roteamento Default no Host (`atius-srv-1`):**
+   - Tabela `main` atualizada via Netplan (`/etc/netplan/62-oci-target-vnic.yaml`): `default via 10.1.0.1 dev enp2s0 metric 50`.
+   - Tabela PBR `101` ativa com `from 10.1.0.11 lookup 101`.
+   - Egresso público nativo verificado via `curl -s https://ifconfig.me` $\rightarrow$ retornando `64.181.172.236`.
+3. **Auditoria de Conectividade Externa (100% Online):**
+   - SSH externo: `ssh -i ~/.ssh/atius-srv-1_ed25519 ubuntu@64.181.172.236` conectando instantaneamente em `atius-srv-1.atius.internal`.
+   - Web Edge Cloudflare:
+     - `https://admin.atius.com.br`: HTTP/2 307 SSO redirect ativo.
+     - `https://admin.atius.io`: HTTP/2 307 SSO redirect ativo.
+   - Daemons internos: Todos os 28 processos PM2 (`atius-web`, `atius-api`, `xdriver-*`, etc.) e Apache2 ativos sem nenhuma interrupção.
+4. **Sincronização de Resolução de Nomes (`/etc/hosts`) Fleet-Wide:**
+   - Atualizado de `10.11.1.11` para `10.1.0.11 atius-srv-1 atius-srv-1.atius.internal` em:
+     - `atius-srv-1`
+     - `atius-srv-2`
+     - `atius-srv-3`
+     - `atius-srv-4`
+     - `horistic-srv`
+5. **Desanexação da Interface Legada de Transição:**
+   - Configuração de Netplan antiga `/etc/netplan/61-oci-primary-vnic.yaml` removida do host.
+   - VNIC Attachment legado `phase16-oci-primary-atius1` (`ocid1.vnicattachment.oc1.sa-saopaulo-1.antxeljr7yjj2jacvvikknv3hzxu2ebmkmpwpep6gnuhe5cyuawx6jf4jqlq`) desanexado com sucesso no OCI Compute.
+   - Host `atius-srv-1` agora opera com sua VNIC moderna em `10.1.0.11` carregando a totalidade do tráfego público e privado DRG.
+
 

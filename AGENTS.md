@@ -11,7 +11,7 @@ For more information about GSD agents, run `/gsd-help`.
 - **Repo name:** omni-srv-admin (formerly atius-srv)
 - **Display name:** Omni Srv Admin
 - **Domain:** atius.com.br (DNS preserved — production domain)
-- **Host:** 10.11.1.11 primary private/DRG service path, `10.100.100.1` reserve fallback (Oracle Cloud ARM64, Ubuntu 22.04)
+- **Host:** 10.1.0.11 primary private/DRG service path, `10.100.100.1` reserve fallback (Oracle Cloud ARM64, Ubuntu 22.04)
 
 ## SSH Reachability Fallback
 
