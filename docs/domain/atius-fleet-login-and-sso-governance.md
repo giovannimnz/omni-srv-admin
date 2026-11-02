@@ -171,30 +171,38 @@ Para integrar qualquer novo serviço, microserviço ou aplicação de terceiros 
 
 ---
 
-## 6. Especificação Canônica de Design UI/UX para Telas de Login
+## 6. Especificação Canônica de Design UI/UX para Telas de Login (Padrão-Ouro PM2)
 
-Toda interface de login da frota ATIUS deve aderir ao padrão geométrico, tipográfico e de acessibilidade homologado:
+Toda interface de login da frota ATIUS deve aderir ao padrão geométrico, tipográfico e de acessibilidade consagrado no **Modelo PM2** (`https://pm2.atius.io/login` e `https://pm2.atius.com.br/login`):
 
 ### 6.1 Geometria e Grid
 - **Container / Card Central**:
-  - Largura: `448px`.
+  - Largura: `min(448px, 100%)`.
   - Altura padrão de referência: `454.25px`.
-  - Padding: `32px` em todos os lados.
+  - Padding: `28px 24px` a `32px`.
   - Border-Radius: `12px`.
-  - Border: `1px solid rgba(255, 255, 255, 0.08)`.
-  - Background: `#121418` (Surface Dark).
+  - Border: `1px solid rgba(55, 65, 81, 0.3)` / `1px solid rgba(255, 255, 255, 0.08)`.
+  - Background: `#171b22` / `rgba(17, 24, 39, 0.35)`.
   - Box-Shadow: `0 8px 32px rgba(0, 0, 0, 0.45)`.
+  - **Zero Barras Azuis**: Proibida a exibição de bordas ou linhas azuis no topo do card (eliminação da anomalia PatternFly do Keycloak).
 - **Logotipo Atius**:
   - Dimensão: `44 × 44px`.
-  - Posição: Centralizado no topo do card, margem inferior de `24px`.
-  - Favicon: Favicon oficial Atius (`/favicon.ico`). Expressamente proibidos favicons legados ou emojis em abas de navegação.
+  - Posição: Centralizado no topo do card, seguido de subtítulo sutil "Atius SSO" em 11px (`#9ca3af`).
+  - Favicon: Favicon oficial Atius (`/_atius/favicon.svg` ou `/favicon.ico`). Expressamente proibidos favicons legados ou emojis em abas de navegação.
 
-### 6.2 Tipografia e Escala
-- **Título do Sistema**: `11px`, peso `400`, uppercase, letter-spacing `0.05em`, cor `#9aa0a6`.
-- **Hostname / Destino Seguro**: `14px`, peso `400`, fonte monoespaçada (`font-family: monospace`), cor `#f0f2f5`.
-- **Labels de Campos**: `14px`, peso `500`, cor `#d0d4dc`.
-- **Campos de Entrada (Inputs)**: `14px`, altura `44px`, background `#1a1d24`, border `1px solid rgba(255, 255, 255, 0.12)`, border-radius `8px`, cor `#f0f2f5`.
-- **Botão Primário de Ação**: `14px`, peso `500`, altura `44px`, background `#2563eb` (hover `#1d4ed8`), text-color `#ffffff`, border-radius `8px`.
+### 6.2 Tipografia e Componentes Interativos (Padrão PM2)
+- **Box "DESTINO SEGURO"**:
+  - Background: `rgba(31, 41, 55, 0.4)` / `#1b222c`, borda `1px solid rgba(55, 65, 81, 0.4)`.
+  - Label superior: `DESTINO SEGURO` em caixa alta, tamanho `11px`, cor `#9ca3af`.
+  - Linha de destino: Ícone de escudo SVG com check na cor laranja institucional Atius (`#f97316` / `#ff7112`), seguido do hostname puro do app atual (ex: `pm2.atius.io`, `gitlab.atius.io`) em `14px`, cor `#e5e7eb`.
+- **Labels de Campos**: `14px`, peso `500`, cor `#ffffff` / `#d0d4dc`.
+- **Campos de Entrada (Inputs com Ícones)**:
+  - Input "Email ou username": Ícone 👤 à esquerda (`icon-left`), altura `44px`, placeholder `"Digite seu email ou username"`, background `#1f2937` / `#1a1d24`, border `1px solid #4b5563`, border-radius `10px`, cor `#ffffff`.
+  - Input "Senha": Ícone 🔒 à esquerda (`icon-left`), altura `44px`, placeholder `"Digite sua senha"`, botão de olho 👁 à direita (`icon-right`) com toggle nativo de visibilidade (password <-> text).
+  - Foco: Contorno em laranja Atius (`border-color: #f97316; box-shadow: 0 0 0 1px rgba(249, 115, 22, 0.2)`).
+- **Botão Primário de Ação**:
+  - Altura `44px`, peso `500` / `600`, background Laranja Institucional Atius `#f97316` / `#ff7112` (hover `#ea580c` / `#e0600a`), text-color `#ffffff`, border-radius `10px`, largura 100%.
+  - Label oficial: `"Entrar com Atius SSO"`.
 
 ### 6.3 Acessibilidade & WCAG 2.2 AA
 - **Contraste de Cores**: Todo texto informativo deve manter relação de contraste de no mínimo `4.5:1` contra o fundo. Elementos interativos e bordas ativas devem satisfazer `3:1`.

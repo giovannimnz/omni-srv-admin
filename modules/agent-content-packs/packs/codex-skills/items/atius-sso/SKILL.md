@@ -1,274 +1,188 @@
 ---
 name: atius-sso
-description: Understand, mount, include, validate, operate, or remove Atius SSO integrations while preserving the canonical login and destination lifecycle.
+description: Diretriz canônica absoluta e manual de engenharia do Atius SSO, estabelecendo o Padrão PM2 (Same-Host App-Local Login Shell) em https://<app>.<dominio>/login como modelo universal obrigatório para 100% dos serviços web da frota ATIUS.
 ---
 
-# Atius SSO
+<antigravity_adapter>
+## Antigravity Tool Mapping (use instead of Codex tools)
 
-Use this single skill for cross-system Atius SSO work. Do not create a competing
-SSO skill.
+| Codex / Claude Code | Antigravity |
+|---|---|
+| `apply_patch` / `Write` / `Edit` | `write_file` / `edit_file` |
+| `exec_command` / `Bash` | `run_command` (runs Bash/sh on Linux) |
+| `rg` / `grep` / `Glob` / `list_files` | `run_command` (grep, find) / `read_file` |
+| `Read` / `read_file` | `read_file` |
+| `spawn_agent` / `Task()` / `Agent()` | `invoke_subagent` / `browser` |
+| `request_user_input` / `AskUserQuestion` | `ask_question` (prefer direct text) |
+| `web_search` | `search_web` |
 
-## Read first
+Paths on this host are Linux paths (`/home/ubuntu/...`).
+</antigravity_adapter>
 
-Always read:
+# Atius SSO — Diretriz Canônica Absoluta: O Modelo PM2 (Same-Host App-Local Login Shell)
 
-- `/home/ubuntu/GitHub/omni-srv-admin/docs/domain/atius-sso-manual-index.md`
-- `/home/ubuntu/GitHub/omni-srv-admin/docs/domain/atius-sso-operations-manual.md`
-- `/home/ubuntu/GitHub/omni-srv-admin/docs/domain/atius-wide-sso.md`
-- `/home/ubuntu/GitHub/omni-srv-admin/docs/domain/atius-sso-application-playbook.md`
-- `/home/ubuntu/GitHub/omni-srv-admin/docs/domain/atius-sso-lifecycle-matrix.md`
-- `/home/ubuntu/GitHub/obsidian-vault/AiSecondBrain/30-RECURSOS/atius/SSO-Atius-Guia-Canonico.md`
-- `/home/ubuntu/GitHub/omni-srv-admin/.planning/workstreams/runtime-trust-codex-delivery-convergence/phases/42-atius-wide-sso-login-on-sso-atius-com-br/42-LEARNINGS.md`
+> **Status Normativo**: **ABSOLUTO, CANÔNICO & MANDATÓRIO**  
+> **Autoridade**: Equipe de Arquitetura & Governança da Frota ATIUS  
+> **Referência Visual e Operacional Padrão-Ouro**: `https://pm2.atius.io/login` e `https://pm2.atius.com.br/login`
 
-For an app-specific job, also read its local SSO document if one exists.
+Esta skill estabelece a diretriz arquitetural definitiva para autenticação, telas de login e ciclo de vida do **Atius SSO**.  
+O modelo de redirecionamento para telas centrais externas (`https://sso.atius.com.br/login?return_to=...`, `https://sso.atius.io/login` ou `https://auth.atius.com.br/realms/...`) está **terminantemente depreciado e proibido** para os fluxos interativos de aplicação da frota.
 
-Then read:
+O padrão universal mandatório é o **Modelo PM2 (Same-Host App-Local Login Shell)**.
 
-- `references/source-of-truth.md`
-- `references/lifecycle-acceptance.md`
+---
 
-## Normative contract
+## 1. Princípio Fundamental: O Modelo PM2
 
-- The canonical human URL is `https://<app>.atius.com.br/login`.
-- `/login` uses an internal rewrite or a minimal proxy so the browser keeps
-  `/login` visible while the internal ATS shell is served.
-- `/sso` is internal or a controlled compatibility surface. Never publish an
-  external redirect from `/login` to `/sso`.
-- A legacy `/sso` request may bootstrap a validated same-origin destination,
-  but must land on a clean `/login`; the public app URL must not retain
-  `return_to`.
-- Destination state is explicit: `valid`, `missing`, or `rejected`. Only
-  `valid` contains an application URL. Missing, expired, or rejected context is
-  neutral and never implies `trade.atius.com.br`.
-- The visible `Destino seguro` value for a valid application is the bare
-  hostname only (`URL.hostname`). Never show scheme, port, trailing slash,
-  path, query, or fragment in that field. Example:
-  `https://ssh.atius.com.br/compute` renders as `ssh.atius.com.br`. Keep the
-  complete validated URL unchanged for allowlist enforcement, redirects,
-  logout, re-entry, and return. Direct central neutral state remains
-  `Nenhum destino selecionado`.
-- The validated lifecycle spans entry, login, logout-complete, re-entry, and
-  return.
-- The central host/path allowlist is authoritative. Validate scheme, exact host,
-  default HTTPS port, bounded path, encoding, suffix confusion, userinfo, and
-  protocol-relative input.
-- Canonical central logout is `POST https://sso.atius.com.br/api/sso/logout`
-  with the real browser `Origin`, `Content-Type: application/json`, and a
-  session-bound one-time `X-CSRF-Token`.
-- Logout rejects `GET`, missing or wrong Origin, wrong content type, missing or
-  invalid CSRF, and CSRF replay before mutation. Examples must never forge
-  `Origin`.
-- An app-local logout facade owns one exact operation only. It may proxy the
-  exact central logout endpoint and must never expose the general ATS API.
-- The central completion URL is `https://sso.atius.com.br/login`; application
-  context is carried separately in validated short-lived state.
+Quando qualquer usuário não autenticado tenta acessar qualquer aplicação ou console da frota (ex: `https://<app>.atius.io` ou `https://<app>.atius.com.br`), o sistema deve:
 
-Direct central `/login` with no valid destination has this exact neutral state:
+1. **Permanecer no Host da Própria Aplicação (Zero Domain Switching):**
+   - A barra de endereços do navegador deve exibir estritamente:
+     ```
+     https://<app>.atius.io/login        (para nós .io)
+     https://<app>.atius.com.br/login    (para nós .com.br)
+     ```
+   - É **proibido** redirecionar o navegador para `https://sso.atius.com.br/login`, `https://sso.atius.io/login` ou URLs OIDC externas durante o fluxo normal de login.
+2. **Zero Query Leak (URLs Limpas):**
+   - É **proibido** expor parâmetros de redirecionamento ou credenciais na URL visível (sem `?return_to=...`, sem `?client_id=...`, sem `?redirect_uri=...`).
+   - O destino pretendido é mantido exclusivamente via cookie transitório host-only (`atius_sso_login_return_to`) ou sessão interna do gateway.
+3. **Shell Canônico Idêntico e Unificado:**
+   - A tela servida em `https://<app>.<dominio>/login` é renderizada localmente (via Edge Gateway, Apache Rewrite, Next.js Middleware ou Facade) utilizando rigorosamente o shell HTML/CSS padronizado do PM2 (`renderCanonicalLoginShell`).
+   - O campo **DESTINO SEGURO** exibe com ícone de escudo (`shield`) exatamente o hostname puro da aplicação acessada (ex: `pm2.atius.io`, `gitlab.atius.io`, `painel.atius.com.br`, `grafana.atius.io`).
+   - Não há barras azuis (como a do PatternFly do Keycloak), nem elementos visuais destoantes.
 
-- heading: `Sessão Atius ativa`
-- body: `Você entrou com sucesso. Nenhum aplicativo de destino foi informado. Você pode fechar esta aba.`
-- label: `Destino seguro`
-- value: `Nenhum destino selecionado`
-- URL: `https://sso.atius.com.br/login`
-- no `Entrar novamente`, `Voltar para`, application link, or substitute
-  application control
+---
 
-The shared session cookie is `auth-token`. Session validation remains
-`GET https://api.atius.com.br/v1/auth/me`. HashiCorp Vault is the only secret
-source of truth.
+## 2. Contrato Visual e Estrutural do Shell de Login (Padrão PM2)
 
-## Job types
+A geometria e estilização do shell de login seguem com fidelidade absoluta a implementação do Edge Gateway (`atius-admin-edge-gateway.js`):
 
-Choose exactly one:
+### 2.1 Especificações Métricas & Geometria
+- **Card Central**: Largura máxima `448px` (`width: min(448px, 100%)`). Cantos arredondados com `border-radius: 12px`.
+- **Fundo do Card**: `#171b22` / `rgba(17,24,39,.35)` com borda sutil `border: 1px solid rgba(55,65,81,.3)`.
+- **Fundo da Página**: `#18191b` com gradiente suave (`linear-gradient(135deg, #1a1a1a 0%, #1f1f1f 50%, #1a1a1a 100%)`).
+- **Logotipo Oficial**: Atius Mark SVG oficial (triângulo gradiente ouro/verde ou estilizado canônico) com 44px de largura e subtítulo discreto `Atius SSO` em 11px (`color: #9ca3af`).
+- **Box "DESTINO SEGURO"**:
+  - Background: `rgba(31,41,55,.4)` / `#1b222c`, borda `1px solid rgba(55,65,81,.4)`.
+  - Label superior: `DESTINO SEGURO` em caixa alta, tamanho `11px`, peso normal, cor `#9ca3af`.
+  - Linha de destino: Ícone de escudo SVG com check na cor laranja Atius (`#f97316` / `#ff7112`), seguido do hostname puro (ex: `pm2.atius.io` ou `gitlab.atius.io`) em `14px`, cor `#e5e7eb`.
+- **Campos de Formulário (Inputs 44px)**:
+  - Input "Email ou username": Ícone 👤 à esquerda (`icon-left`), altura 44px, placeholder `"Digite seu email ou username"`, fundo `#1f2937` / `#1a1d24`, borda `#4b5563`, texto `#ffffff`.
+  - Input "Senha": Ícone 🔒 à esquerda, altura 44px, placeholder `"Digite sua senha"`, botão de olho 👁 à direita (`icon-right`) com funcionalidade nativa de toggle de visualização da senha (type="password" <-> type="text").
+  - Foco: Contorno em laranja Atius (`border-color: #f97316; box-shadow: 0 0 0 1px rgba(249,115,22,.2)`).
+- **Botão de Ação Primário**:
+  - Altura 44px, cantos arredondados 10px, fundo laranja institucional Atius (`#f97316` / `#ff7112`), texto branco `#ffffff` em negrito (`font-weight: 500`/`600`), largura 100% (`width: 100%`).
+  - Label: `"Entrar com Atius SSO"`.
+  - Hover: `#ea580c` / `#e0600a`.
 
-- `understand`
-- `mount`
-- `include`
-- `validate`
-- `operate`
-- `remove`
+### 2.2 Template HTML/CSS de Referência Absoluta
+O template canônico em JavaScript/Node.js que gera esta interface está consolidado em:
+`/home/ubuntu/GitHub/omni-srv-admin/modules/atius-admin-edge-sso/scripts/atius-admin-edge-gateway.js` nas funções `renderCanonicalLoginShell` e `CANONICAL_LOGIN_CSS`.
 
-`mount` means a new integration from zero. `include` means adding an app to an
-existing central contract. `operate` covers owner-side runtime work after the
-governed release gates.
+---
 
-## Mount or include
+## 3. Fluxo de Autenticação e Sessão Same-Host
 
-1. Classify the app:
-   - ATS-native host;
-   - app with its own backend;
-   - proxy for an internal resource.
-2. Define the exact public host, protected paths, and explicit public
-   exceptions.
-3. Define the internal backend and the name of the server-side credential.
-4. Update the central return policy in
-   `/home/ubuntu/GitHub/Atius-Capital/ats/frontend/src/lib/sso/redirects.ts`.
-5. Implement the exact app-local surface:
-   - canonical `/login` backed by internal rewrite/minimal proxy;
-   - controlled legacy `/sso` handling that lands cleanly on `/login`;
-   - fixed forwarded host/proto/port and exact ATS CORS origin;
-   - same-origin transient bootstrap with no persistent public query;
-   - local middleware/gate;
-   - local session-validation endpoint;
-   - authenticated server-side proxy for any private backend;
-   - exact/minimal local logout facade using POST/Origin/JSON/one-time CSRF.
-6. Run the complete lifecycle matrix in
-   `references/lifecycle-acceptance.md`.
-7. Record repo documentation and the canonical owner references. Obsidian and
-   GBrain synchronization occurs only in the governed knowledge closeout.
-
-The 2026-07-31 sealed recovery scope approved the live AdGuard app-local
-facade for that scope. Future AdGuard feature expansion still needs its own
-lifecycle evidence; a central allowlist entry alone is not approval.
-
-## Validate
-
-Validation is lifecycle-wide. A first redirect is never approval. A single login is also not approval for app-local SSO: for each public app host, run at least two consecutive browser cycles (anonymous access -> `/login` -> authenticated app -> logout -> `/login` -> relogin) and prove the visible origin never changes to `sso.atius.com.br` during the human app flow. The logout step must click the real visible app control; direct navigation to `/logout` does not prove the product UX. The authenticated screenshot must wait for an app-specific ready marker and reject loading/error states. For data dashboards, inspect every visible panel: `Sem dados`, `No data`, persistent loading, datasource errors, or query errors are FAIL even when other panels have data. A bounded E2E time window is allowed only when it renders real datasource series; never manufacture metric samples.
-
-For browser-based remote desktops, the SSO shell and logout control do not prove readiness. Require a non-blank framebuffer in the visible noVNC region, using stable desktop landmarks or a pixel-diversity/non-black gate with timeout. A black canvas is FAIL. Avoid version-specific canvas selectors unless the live noVNC DOM proves them; a viewport-region gate is more portable.
-
-When an app can complete same-origin authentication while Playwright is filling the login form, an input-detached error is not automatically failure or success. Accept it only after the browser is on the exact app origin outside `/login` and the app-specific authenticated ready marker passes. Origin change, staying on `/login`, or missing readiness remains FAIL.
-
-If the user provides a visual/login model such as `ssh.atius.com.br/login`, functional PASS is still incomplete until screenshot evidence is visually compared against that model and each app-local `/login` passes the required brand/layout elements.
-
-Session-validation adapters must not fan out `GET /v1/auth/me` per asset/request. Use a short positive cache and coalesce concurrent checks per token/origin. Preserve semantics: `401/403` means invalid/forbidden; `429`, `5xx`, timeout, or transport failure means temporary auth unavailability and must never be rendered as bad credentials. Do not weaken or raise the central rate limit to mask adapter amplification.
-
-URL-standard traps validated on 2026-07-31:
-
-- Do not treat a one-shot `atius_sso_login_return_to` cookie as persistent browser state. In the legacy `/sso?return_to=...` path, the HTTP response must set a short-lived `Secure; HttpOnly; SameSite=Lax; Max-Age=600` carrier, but the final browser-visible `/login` render should consume it and leave no persistent `return_to` cookie. Browser gates should verify clean final URL and no persistent cookie; use HTTP/header probes to prove the transient carrier.
-- Do not put `ProxyPassReverseCookiePath / /<app>/` at broad vhost scope when the same vhost proxies the ATS `/login` facade. It rewrites the SSO carrier cookie path and can prevent `/login` from receiving it. Scope cookie-path rewriting to the protected app location only, e.g. `<Location /mt5/> ProxyPassReverseCookiePath / /mt5/ </Location>`.
-
-Next.js middleware runs in the Edge runtime by default. Do not import server-only SDK code that uses `node:crypto`, `fs`, DB clients, or Node-only APIs into middleware. Use an edge-compatible adapter path (`crypto.subtle`, `fetch`, type-only imports from core) and keep Node/server SDKs behind route handlers or server components. Gate with both middleware bundle/typecheck and `next build` before declaring the Next adapter ready.
-
-Required automated and headless coverage:
-
-Before running the harness, always choose an exclusive evidence directory. Supported precedence is `--evidence-dir`, positional output directory, `E2E_OUTPUT_DIR`, then the legacy default. Never let an ad-hoc subset write into a historical/default evidence pack. If that happens, preserve a checksummed backup, identify the canonical owner, and remove only the contaminated untracked default.
-
-Any temporary `next start`/rollback smoke must use a non-production port and be reconciled at closeout. Before stopping a late process, compare PID, cwd, cgroup, listener, PM2/systemd ownership, Apache `ProxyPass`, and the production unit. A process with deleted rollback cwd, no supervisor owner, and no Apache reference is an orphan smoke; stop only that PID gracefully, prove its port released, then rerun the affected app lifecycle and visual review. Never infer production ownership from a matching UI or `Ready` line alone.
-
-1. anonymous entry;
-2. canonical `/login` stays visible;
-3. successful authentication reaches the same validated destination;
-4. central POST logout reaches the fixed completion URL;
-5. logout-complete displays the same validated destination;
-6. `Entrar novamente` reuses that destination;
-7. `Voltar para` returns to that destination;
-8. missing and rejected destination states render the exact neutral tuple;
-9. GET, wrong-Origin, wrong-content-type, missing/invalid/replayed-CSRF logout
-   requests fail closed without mutation;
-10. cross-origin, suffix, userinfo, protocol-relative, port, path, and encoding
-    destination inputs fail closed;
-11. browser automation is headless and retains sanitized evidence;
-12. rollback and reapply readbacks pass.
-
-Check the machine contract:
-
-```bash
-node /home/ubuntu/GitHub/omni-srv-admin/scripts/validate-atius-sso-lifecycle-contract.mjs \
-  --contract /home/ubuntu/GitHub/Atius-Capital/ats/tests/frontend/fixtures/sso-lifecycle-contract.json \
-  --report /path/to/private/report.json
+```
+[ Usuário Navega para https://<app>.<dominio>/ ]
+                       │
+                       ▼
+        [ Possui cookie auth-token válido? ]
+               ├── SIM ──► Serve a aplicação normalmente
+               └── NÃO
+                       │
+                       ▼
+        [ HTTP 302 / 307 Interno ]
+        Navegador permanece em: https://<app>.<dominio>/login
+        Renderiza: Shell Canônico Atius SSO (Destino Seguro: <app>.<dominio>)
+                       │
+                       ▼
+        [ Usuário digita credenciais e clica "Entrar com Atius SSO" ]
+        POST https://<app>.<dominio>/login (Action local)
+                       │
+                       ▼
+        [ Gateway / Facade / Middleware local intercepta ]
+        Valida credenciais contra API Central:
+        POST http://127.0.0.1:8015/v1/token/generate (ou OIDC Backend)
+                       │
+         ┌─────────────┴─────────────┐
+         ▼                           ▼
+[ Credenciais Inválidas ]   [ Autenticação Sucesso ]
+Renderiza /login com erro    Injeta Set-Cookie: auth-token=<jwt>
+"Não foi possível entrar.    - .atius.com.br (Domain=.atius.com.br)
+ Verifique as credenciais."  - .atius.io (Domain=<hostname> ou .atius.io)
+                             HTTP 302 Redirect para https://<app>.<dominio>/
 ```
 
-Do not call a new integration, expansion, or migration complete while its own
-runtime/browser promotion evidence is absent. Phase 10 plans 10-04 and 10-05 are
-materialized for the sealed 2026-07-31 fleet scope; future scopes need fresh
-evidence.
+---
 
-## Remove
+## 4. Matriz Canônica de Migração dos 29 Sistemas da Frota para o Modelo PM2
 
-1. Capture the current allowlist, facade, session, logout, docs, and runtime
-   readback plus a recoverable backup.
-2. Remove the exact host/path from the central allowlist.
-3. Remove or adapt app-local `/login`, legacy `/sso`, middleware, session,
-   logout, and authenticated proxy surfaces.
-4. Prove the app no longer depends on `auth-token`, `/v1/auth/me`, the central
-   login/logout endpoints, or an ATS-authenticated server-side proxy.
-5. Run positive survivors and negative removed-app cases across the complete
-   lifecycle.
-6. Roll back by restoring the backed-up policy/facade, rerunning the exact
-   contract audit, and proving readback. Do not improvise a parallel login.
-7. Update owner documentation; schedule Obsidian/GBrain/Graphify closeout
-   through the owning phase.
+| # | Sistema / Endpoint Web | Host / Nó | Padrão Atual | Padrão Alvo Canônico (Modelo PM2) | Ação de Migração para Modelo PM2 |
+|---|---|---|:---:|:---:|---|
+| **01** | `sso.atius.com.br`<br>`sso.atius.io` | `atius-srv-1` | Central Host | **Modelo PM2 (Raiz)** | Padrão nativo do SSO central. Opera como validador de sessão (`/v1/auth/me`) e emissor de tokens (`/v1/token/generate`). |
+| **02** | `trade.atius.com.br`<br>`trade.atius.io` | `atius-srv-1` | Redireciona sso | **`https://trade.atius.com.br/login`** | Ingress Apache / Next.js middleware atende `/login` localmente renderizando o shell PM2 com Destino Seguro `trade.atius.com.br`. |
+| **03** | `painel.atius.com.br`<br>`painel.atius.io` | `atius-srv-1` | Redireciona sso | **`https://painel.atius.com.br/login`** | Migrar de HTTP 307 para sso.atius.com.br para servir o shell PM2 diretamente na rota limpa `/login` do próprio painel. |
+| **04** | `dashboard.atius.com.br`<br>`dashboard.atius.io` | `atius-srv-1` | Redireciona sso | **`https://dashboard.atius.com.br/login`** | Ingress atende `/login` local com Destino Seguro `dashboard.atius.com.br`. |
+| **05** | `backtest.atius.com.br`<br>`backtest.atius.io` | `atius-srv-1` | Redireciona sso | **`https://backtest.atius.com.br/login`** | Ingress atende `/login` local com Destino Seguro `backtest.atius.com.br`. |
+| **06** | `strategy.atius.com.br`<br>`strategy.atius.io` | `atius-srv-1` | Redireciona sso | **`https://strategy.atius.com.br/login`** | Ingress atende `/login` local com Destino Seguro `strategy.atius.com.br`. |
+| **07** | `admin.atius.com.br`<br>`admin.atius.io` | `atius-srv-1` | Redireciona sso | **`https://admin.atius.com.br/login`** | Ingress atende `/login` local com Destino Seguro `admin.atius.com.br`. |
+| **08** | `talk.atius.com.br`<br>`talk.atius.io` | `atius-srv-1` | Apache Facade | **`https://talk.atius.com.br/login`** | Apache Ingress renderiza shell PM2 com Destino Seguro `talk.atius.com.br` e valida sessão antes de repassar para Nextcloud upstream :3101. |
+| **09** | `admin.talk.atius.com.br`<br>`admin.talk.atius.io` | `atius-srv-1` | Apache Facade | **`https://admin.talk.atius.com.br/login`** | Apache Ingress renderiza shell PM2 com Destino Seguro `admin.talk.atius.com.br`. |
+| **10** | `remote.atius.com.br`<br>`remote.atius.io` | `atius-srv-1` | SSO Proxy :8095 | **`https://remote.atius.com.br/login`** | SSO Proxy :8095 renderiza shell PM2 same-host antes de abrir o túnel WebSocket/noVNC para o MetaTrader 5. |
+| **11** | `oci.atius.com.br`<br>`oci.atius.io` | `atius-srv-1` | Apache Ingress | **`https://oci.atius.com.br/login`** | Ingress renderiza shell PM2 com Destino Seguro `oci.atius.com.br` e valida antes de encaminhar para OCI Admin DRG `10.13.1.13:8080`. |
+| **12** | `auth.atius.com.br` | `atius-srv-1` | Keycloak Standalone | **Keycloak Tema PM2** | Remover barra azul PatternFly (`.pf-v5-c-login__main::before`) e alinhar ícones dos inputs com o padrão PM2. |
+| **13** | `grafana.atius.com.br`<br>`grafana.atius.io` | `atius-srv-1` / `srv-3` | Edge Gateway :8210 | **`https://grafana.atius.io/login`** | **100% no Modelo PM2**. Gateway :8210 já renderiza o shell canônico e injeta Basic Auth upstream. |
+| **14** | `portainer.atius.com.br`<br>`portainer.atius.io` | `atius-srv-1` / `srv-2` | Edge Gateway :8210 | **`https://portainer.atius.io/login`** | **100% no Modelo PM2**. Gateway :8210 renderiza shell canônico e injeta Portainer JWT upstream. |
+| **15** | `docker.atius.com.br`<br>`docker.atius.io` | `atius-srv-1` / `srv-2` | Edge Gateway :8210 | **`https://docker.atius.io/login`** | **100% no Modelo PM2**. Alias direto de Portainer. |
+| **16** | `pm2.atius.com.br`<br>`pm2.atius.io` | `atius-srv-1` | Edge Gateway :8210 | **`https://pm2.atius.io/login`** | **PADRÃO-OURO DE REFERÊNCIA (100% IMPLEMENTADO)**. Destino seguro dinâmico, sem troca de domínio, inputs estilizados e zero query leak. |
+| **17** | `paseo.atius.com.br`<br>`paseo.atius.io` | `atius-srv-1` | Edge Gateway :8210 | **`https://paseo.atius.io/login`** | **100% no Modelo PM2**. Shell canônico integrado com allowlist de emails. |
+| **18** | `ssh.atius.com.br`<br>`ssh.atius.io` | `atius-srv-1` | Casa Remote :8088 | **`https://ssh.atius.com.br/login`** | Casa Remote Auth Gateway atende `/login` com shell PM2 antes de emitir ticket efêmero para ttyd web shell. |
+| **19** | `rdp.atius.com.br` | `atius-srv-1` / `W11` | Casa Remote :8196 | **`https://rdp.atius.com.br/login`** | Casa Remote Auth Gateway atende `/login` com shell PM2 antes de abrir túnel RustGuac/RDP para o Windows 11. |
+| **20** | `vpn.atius.com.br` | `atius-srv-1` | Next.js Facade | **`https://vpn.atius.com.br/login`** | Portal VPN renderiza shell PM2 localmente e limpa cookies residuais. |
+| **21** | `adguard.atius.com.br` | `atius-srv-1` | Node Gateway | **`https://adguard.atius.com.br/login`** | Portal AdGuard renderiza shell PM2 localmente antes de repassar chamadas para AdGuard Home. |
+| **22** | `landscape.atius.com.br`<br>`landscape.atius.io` | `atius-srv-1` / `srv-3` | Standalone Exceção | **`https://landscape.atius.com.br/login`** | Ingress Apache no SRV-1 intercepta acessos anônimos e reescreve `/login` com CSS dark adaptado (autenticação local Zope preservada). |
+| **23** | `vault.atius.com.br` | `atius-srv-1` / `srv-3` | Vaultwarden Nativo | **Standalone Exceção Segura** | Mantém autenticação com Master Password e criptografia Zero-Knowledge (proibido SSO por requisito de segurança criptográfica). |
+| **24** | `cockpit.atius.com.br`<br>`cockpit.atius.io` | `atius-srv-1` | PAM Linux Nativo | **Standalone Exceção SO** | Mantém autenticação PAM do Kernel Linux para delegação sudo. |
+| **25** | `casa.atius.com.br` | `atius-srv-1` / `BE3` | Firmware Iframe | **Standalone Exceção IoT** | Wrapper HTML institucional envelopando o roteador doméstico. |
+| **26** | `plane.atius.io` | `atius-srv-1` | Plane Auth Nativa | **Alvo: Modelo PM2 via Edge Gateway** | Rota para migração: colocar Plane atrás do Edge Gateway :8210 ou Ingress com shell PM2. |
+| **27** | `router.atius.com.br` | `atius-srv-1` | Router AI Nativo | **Alvo: Modelo PM2 via Ingress** | Integrar validação Atius SSO no middleware Go ou Apache Ingress com shell PM2. |
+| **28** | `mcp.atius.com.br`<br>`mcp.atius.io` | `atius-srv-1` | Bearer Token API | **API Sem UI** | Endpoints de integração com agentes de IA (FastMCP). Autenticação estática via Vault Bearer Token. |
+| **29** | `gitlab.atius.com.br`<br>`gitlab.atius.io` | `atius-srv-4` | OIDC Keycloak | **`https://gitlab.atius.io/login` (Modelo PM2)** | **PLANO DE TRANSIÇÃO DO GITLAB**: Substituir o redirecionamento externo para o Keycloak por fachada local em `gitlab.atius.io/login` que autentica contra o Keycloak/Atius SSO nos bastidores e completa o callback OIDC de forma transparente! |
 
-## Understand
+---
 
-Report:
+## 5. Plano Detalhado de Transição do GitLab (`gitlab.atius.io` / `gitlab.atius.com.br`)
 
-- which app host owns the visible `/login`;
-- which central host owns login/logout policy;
-- which host owns IdP/OIDC;
-- which service validates the ATS session;
-- which exact app targets are allowlisted;
-- how the five-stage destination lifecycle behaves;
-- how POST/Origin/JSON/one-time-CSRF logout behaves;
-- where secrets come from;
-- which rollback/readback gates remain.
+O caso de uso trazido pelo usuário ilustra a necessidade de eliminar a transição visual desarmônica no GitLab:
 
-Do not invent architecture beyond code, machine contract, owner manuals, and
-runtime evidence.
+1. **Como está hoje (Imagens 1 e 2):**
+   - Acesso a `https://gitlab.atius.io` -> redireciona para `https://gitlab.atius.io/users/sign_in`.
+   - Usuário clica em "Atius SSO" -> redireciona externamente para `https://auth.atius.com.br/realms/atius/protocol/openid-connect/auth?...`.
+   - Tela do Keycloak exibe barra azul no topo do card, inputs sem ícones e URL quilométrica.
+2. **Como deve ser no Modelo PM2 (Imagens 3 e 4):**
+   - Acesso a `https://gitlab.atius.io` sem sessão -> encaminhado para `https://gitlab.atius.io/login` (ou `/users/sign_in` estilizada).
+   - A tela renderizada é o **Shell Canônico PM2**:
+     - Sem barra azul!
+     - Logo oficial Atius SSO.
+     - **DESTINO SEGURO: `gitlab.atius.io`** com ícone de escudo laranja.
+     - Inputs dark com ícone 👤 de usuário e 🔒/👁 de senha.
+     - Botão primário laranja: `"Entrar com Atius SSO"`.
+   - O submit do form realiza a autenticação direta, obtém os tokens de claims OIDC e entrega o usuário autenticado na dashboard do GitLab em `https://gitlab.atius.io/`.
+   - A URL no navegador NUNCA exibe `auth.atius.com.br` para o operador humano.
 
-## Authorization control plane boundary
+---
 
-A central authorization control plane is planned in
-`/home/ubuntu/GitHub/atius-sso/.planning/phases/01-authorization-control-plane/`.
-Treat it as architecture/planning until implementation, governed rollout, and
-fresh browser/runtime evidence are complete.
+## 6. Checklist de Qualidade e Conformidade para Qualquer Integração SSO
 
-Locked planning boundary:
+Toda nova implementação, ajuste ou migração deve validar os seguintes pontos antes de ser considerada concluída:
 
-- admin UI: `https://sso.atius.com.br/admin/permissions`;
-- Keycloak remains identity/OIDC only;
-- `/v1/auth/me` remains the compatible session-validation endpoint;
-- fine authorization uses a separate `/v1/authz/*` boundary;
-- backend/gateway PEPs are authoritative; hidden UI is not enforcement;
-- app/resource/action catalogs come from versioned application manifests;
-- canonical actions are `view`, `read`, `write`, `execute`, `approve`, and
-  `manage`;
-- default deny, explicit deny over allow, fail closed on decision-path failure;
-- current live evidence remains host-local lifecycle evidence with
-  `centralOidcFlow=false`; do not claim the planned authorization plane is live;
-- live rollout and final fleet acceptance require the explicit human gates in
-  plans `01-09` and `01-10`.
-
-Authorization security proof must also cover:
-
-- cross-process revocation through a monotonic policy/user/session epoch; local
-  cache invalidation hooks alone do not prove the <=5s SLO;
-- established-channel revocation for WebSocket/SSE, noVNC/RDP, VPN peers, and
-  Docker/API sockets before claiming protocol/data-plane enforcement;
-- PostgreSQL role separation: migration/DDL owner, runtime resolver/auth-server
-  roles without direct policy/grant/audit DML, and a dedicated append-only audit
-  writer behind an allowlisted function;
-- operational break-glass independent of normal policy availability: sealed
-  loopback/local CLI, two humans plus MFA, minimal short-lived scope,
-  `BREAK_GLASS_APPROVED_UNTIL`, and a permission-restricted hash-chained local
-  spool when central audit is unavailable. Replay/readback to central audit is
-  mandatory before closure;
-- privileged OIDC negative cases: missing prelink, duplicate/unverified/changed
-  email, subject/link conflict, callback replay, and state/nonce mismatch.
-
-## Secret and evidence rules
-
-- Never print or persist passwords, cookies, tokens, client secrets, CSRF
-  values, or Vault values.
-- Record only Vault identifiers:
-  - profile: `browser-login`
-  - path: `kv/atius/browser-login/access-keys`
-  - fields: `username`, `password`, `totp_secret`
-- Evidence directories are private and reports are mode `0600`.
-- Browser evidence stores sanitized origin/path, cookie attributes, and
-  pass/fail results only.
-- GBrain readback uses the existing full slug
-  `aisecondbrain/30-recursos/atius/sso-atius-guia-canonico`; do not create a
-  duplicate short record.
-
-## Output
-
-Return:
-
-1. job type;
-2. current canonical contract;
-3. files changed;
-4. complete lifecycle validation evidence;
-5. backup and rollback/readback evidence;
-6. residual risks or blockers, especially pending 10-04/10-05 or Phase 11.
+- [ ] **Mesmo Host na Barra de Endereços**: O navegador nunca sai de `https://<app>.<dominio>/login`.
+- [ ] **Zero Redirecionamentos Externos**: Não há 302/307 visível para `sso.atius.com.br` ou `sso.atius.io`.
+- [ ] **Zero Query Leak**: A URL `/login` não possui parâmetros de query expostos.
+- [ ] **Destino Seguro Fiel**: Exibe estritamente o `URL.hostname` puro (ex: `pm2.atius.io`, `gitlab.atius.io`), com ícone de escudo laranja.
+- [ ] **Campos com Ícones e Toggle**: Input de usuário com ícone 👤 e input de senha com ícone 🔒 e botão 👁 funcional.
+- [ ] **Sem Barra Azul**: O card de login não possui borda ou barra azul no topo.
+- [ ] **Botão Laranja Institucional**: Botão com fundo `#f97316` / `#ff7112` e texto `"Entrar com Atius SSO"`.
+- [ ] **Dual-Domain Parity**: Comportamento idêntico em domínios `.com.br` e `.io`.
+- [ ] **Encerramento de Sessão Seguro**: Logout exclusivo via `POST` com CSRF e Origin validados.
