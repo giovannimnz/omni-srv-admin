@@ -12,14 +12,18 @@
       "upstream": "http://10.13.1.13:3005",
       "upstreamUsernameEnv": "ATIUS_ADMIN_EDGE_GRAFANA_USER",
       "upstreamPasswordEnv": "ATIUS_ADMIN_EDGE_GRAFANA_PASS",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "grafana.atius.io": {
       "aliasOf": "grafana.atius.com.br",
       "publicOrigin": "https://grafana.atius.io",
       "appName": "Grafana",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "portainer.atius.com.br": {
@@ -30,28 +34,36 @@
       "upstreamAuthUrl": "/api/auth",
       "upstreamUsernameEnv": "ATIUS_ADMIN_EDGE_PORTAINER_USER",
       "upstreamPasswordEnv": "ATIUS_ADMIN_EDGE_PORTAINER_PASS",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "portainer.atius.io": {
       "aliasOf": "portainer.atius.com.br",
       "publicOrigin": "https://portainer.atius.io",
       "appName": "Portainer",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "docker.atius.com.br": {
       "aliasOf": "portainer.atius.com.br",
       "publicOrigin": "https://docker.atius.com.br",
       "appName": "Docker",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "docker.atius.io": {
       "aliasOf": "portainer.atius.com.br",
       "publicOrigin": "https://docker.atius.io",
       "appName": "Docker",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "pm2.atius.com.br": {
@@ -59,14 +71,18 @@
       "appName": "PM2 Web",
       "authMode": "none",
       "upstream": "http://127.0.0.1:3210",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "pm2.atius.io": {
       "aliasOf": "pm2.atius.com.br",
       "publicOrigin": "https://pm2.atius.io",
       "appName": "PM2 Web",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "paseo.atius.com.br": {
@@ -74,14 +90,18 @@
       "appName": "Paseo",
       "authMode": "none",
       "upstream": "http://127.0.0.1:34150",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "paseo.atius.io": {
       "aliasOf": "paseo.atius.com.br",
       "publicOrigin": "https://paseo.atius.io",
       "appName": "Paseo",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "cockpit.atius.com.br": {
@@ -90,14 +110,56 @@
       "authMode": "none",
       "preserveHost": true,
       "upstream": "http://127.0.0.1:9090",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     },
     "cockpit.atius.io": {
       "aliasOf": "cockpit.atius.com.br",
       "publicOrigin": "https://cockpit.atius.io",
       "appName": "Cockpit",
-      "allowedEmails": ["giovannimunizds@gmail.com"],
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "requireAdmin": true
+    },
+    "admin.atius.com.br": {
+      "publicOrigin": "https://admin.atius.com.br",
+      "appName": "Omni Admin",
+      "authMode": "none",
+      "preserveHost": true,
+      "upstream": "http://127.0.0.1:9090",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "requireAdmin": true
+    },
+    "admin.atius.io": {
+      "aliasOf": "admin.atius.com.br",
+      "publicOrigin": "https://admin.atius.io",
+      "appName": "Omni Admin",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "requireAdmin": true
+    },
+    "omni.atius.com.br": {
+      "aliasOf": "admin.atius.com.br",
+      "publicOrigin": "https://omni.atius.com.br",
+      "appName": "Omni Admin",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "requireAdmin": true
+    },
+    "omni.atius.io": {
+      "aliasOf": "admin.atius.com.br",
+      "publicOrigin": "https://omni.atius.io",
+      "appName": "Omni Admin",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
       "requireAdmin": true
     }
   }
