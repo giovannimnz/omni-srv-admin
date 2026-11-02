@@ -11,6 +11,18 @@
   ],
   "scripts": [
     {
+      "id": "fleet-runtimes-upgrade",
+      "title": "omni::fleet-runtimes-upgrade",
+      "version": "1.0.0",
+      "path": "fleet-runtimes-upgrade.sh",
+      "interpreter": "/bin/bash",
+      "username": "root",
+      "time_limit": 900,
+      "access_group": "global",
+      "risk": "reconcile",
+      "description": "Atualizacao de Node 24 LTS via NVM, npm, pnpm, Bun, uv, Python 3.13, pip e GitHub CLI na frota."
+    },
+    {
       "id": "fleet-health-check",
       "title": "omni::fleet-health-check",
       "version": "1.0.0",
