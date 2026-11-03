@@ -158,8 +158,8 @@ chmod 755 "${HYDRATE_SCRIPT}"
 HOSTNAME_RAW=$(hostname -s | tr '[:upper:]' '[:lower:]')
 case "${HOSTNAME_RAW}" in
     atius-srv-1)
-        CACHE_MAX_SIZE="3G"
-        CACHE_MAX_AGE="6h"
+        CACHE_MAX_SIZE="5G"
+        CACHE_MAX_AGE="12h"
         ;;
     atius-srv-2)
         CACHE_MAX_SIZE="10G"
@@ -173,10 +173,6 @@ case "${HOSTNAME_RAW}" in
         CACHE_MAX_SIZE="30G"
         CACHE_MAX_AGE="48h"
         ;;
-    horistic-srv)
-        CACHE_MAX_SIZE="10G"
-        CACHE_MAX_AGE="24h"
-        ;;
     *)
         CACHE_MAX_SIZE="4G"
         CACHE_MAX_AGE="12h"
@@ -185,8 +181,8 @@ esac
 
 log "Host identificado como '${HOSTNAME_RAW}'. Quota VFS: size=${CACHE_MAX_SIZE}, age=${CACHE_MAX_AGE}"
 
-# 7. Criacao da unit systemd de sistema /etc/systemd/system/rclone-gdrive.service
-UNIT_FILE="/etc/systemd/system/rclone-gdrive.service"
+# 7. Criacao da unit systemd de sistema /etc/systemd/system/gdrive-mount.service
+UNIT_FILE="/etc/systemd/system/gdrive-mount.service"
 
 cat <<EOF_UNIT > "${UNIT_FILE}"
 [Unit]
@@ -205,6 +201,7 @@ TimeoutStopSec=30s
 LimitNOFILE=65536
 
 # Governanca de CPU e IO
+CPUQuota=20%
 Nice=10
 CPUSchedulingPolicy=other
 IOSchedulingClass=best-effort
@@ -246,16 +243,16 @@ EOF_UNIT
 chmod 644 "${UNIT_FILE}"
 
 # 8. Reload, enable e start do servico
-log "Recarregando systemd e iniciando servico rclone-gdrive..."
+log "Recarregando systemd e iniciando servico gdrive-mount..."
 systemctl daemon-reload
-systemctl enable rclone-gdrive.service
+systemctl enable gdrive-mount.service
 
 # Desmonta caso esteja montado anteriormente
 if mountpoint -q "${MOUNTPOINT}" 2>/dev/null; then
     fusermount -u -z "${MOUNTPOINT}" 2>/dev/null || true
 fi
 
-systemctl restart rclone-gdrive.service
+systemctl restart gdrive-mount.service
 
 # 9. Aguarda e valida inicializacao
 log "Aguardando mountpoint ficar disponivel..."
@@ -270,8 +267,8 @@ done
 
 if [ "${MOUNTED}" != "true" ]; then
     err "Mountpoint ${MOUNTPOINT} nao foi montado a tempo. Status da unit:"
-    systemctl status rclone-gdrive.service --no-pager || true
-    journalctl -u rclone-gdrive.service -n 20 --no-pager || true
+    systemctl status gdrive-mount.service --no-pager || true
+    journalctl -u gdrive-mount.service -n 20 --no-pager || true
     exit 1
 fi
 

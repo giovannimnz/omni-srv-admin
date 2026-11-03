@@ -15,7 +15,7 @@ TimeoutStopSec=30s
 LimitNOFILE=65536
 
 # Governanca de Recursos do Host (Contencao CPU <= 20% do total)
-CPUQuota=80%
+CPUQuota=20%
 Nice=10
 CPUSchedulingPolicy=other
 IOSchedulingClass=best-effort

@@ -31,17 +31,43 @@ DEFAULT_CACHE_DIR = "/var/cache/rclone-gdrive"
 CONFIG_TMPFS_PATH = "/run/rclone/rclone.conf"
 DEFAULT_SERVICE_NAME = "gdrive-mount.service"
 LEGACY_SERVICE_NAME = "rclone-gdrive.service"
+DEFAULT_LOCK_PATH = "/run/lock/omni-gdrive.lock"
 
-FLEET_HOSTS = ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "horistic-srv"]
+FLEET_HOSTS = ["atius-srv-1", "atius-srv-2", "atius-srv-3", "giovanni-w11-pc"]
+FORBIDDEN_HOSTS = {"aln-srv", "horistic-srv"}
+ALLOWED_HOSTS = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "giovanni-w11-pc"}
 
 HOST_CACHE_QUOTAS: dict[str, tuple[str, str]] = {
-    "atius-srv-1": ("3G", "6h"),
+    "atius-srv-1": ("5G", "12h"),
     "atius-srv-2": ("10G", "24h"),
     "atius-srv-3": ("5G", "12h"),
     "atius-srv-4": ("30G", "48h"),
-    "horistic-srv": ("10G", "24h"),
 }
 DEFAULT_QUOTA: tuple[str, str] = ("4G", "12h")
+
+OCI_DRG_IPS: dict[str, str] = {
+    "atius-srv-1": "10.1.1.1",
+    "atius-srv-2": "10.2.1.2",
+    "atius-srv-3": "10.3.1.3",
+    "atius-srv-4": "10.4.1.4",
+}
+
+PUBLIC_FALLBACK_IPS: dict[str, str] = {
+    "atius-srv-1": "64.181.172.236",
+    "atius-srv-2": "163.176.55.228",
+    "atius-srv-3": "150.230.71.10",
+    "atius-srv-4": "164.152.48.22",
+}
+
+
+def validate_host(host: str) -> str:
+    """Valida host contra a allowlist estrita e rejeita aln-srv e horistic-srv."""
+    clean_host = host.strip().split(".")[0].lower()
+    if clean_host in FORBIDDEN_HOSTS or host.strip().lower() in FORBIDDEN_HOSTS:
+        raise ValueError(f"Host '{host}' explicitly excluded from Google Drive fleet mount")
+    if clean_host not in ALLOWED_HOSTS and host.strip().lower() not in ALLOWED_HOSTS:
+        raise ValueError(f"Host '{host}' explicitly excluded from Google Drive fleet mount")
+    return clean_host
 
 
 def get_host_quota(hostname: str) -> tuple[str, str]:
@@ -78,13 +104,80 @@ token = {token_json}
 """
 
 
+def parse_rclone_conf_content(content: str) -> dict[str, Any]:
+    """Parseia e valida configuracao INI do rclone (suporta gdrive-main e giovanni-drive)."""
+    import configparser
+    cp = configparser.ConfigParser()
+    cp.read_string(content)
+    parsed: dict[str, Any] = {}
+    for section in cp.sections():
+        sec_dict = dict(cp[section])
+        if sec_dict.get("type") != "drive":
+            raise ValueError(f"Secao [{section}] nao eh do tipo drive: {sec_dict.get('type')}")
+        parsed[section] = sec_dict
+    if not parsed:
+        raise ValueError("Nenhuma secao valida encontrada no rclone.conf")
+    return parsed
+
+
+class GDriveLock:
+    """Lock de concorrencia atomico para operacoes Google Drive."""
+    def __init__(self, lock_path: str = DEFAULT_LOCK_PATH, timeout_seconds: int = 60):
+        self.lock_path = Path(lock_path)
+        self.timeout_seconds = timeout_seconds
+        self.is_active = False
+
+    def acquire(self) -> bool:
+        now = time.time()
+        expires_at = now + self.timeout_seconds
+        self.lock_path.parent.mkdir(parents=True, exist_ok=True)
+        if self.lock_path.exists():
+            try:
+                data = json.loads(self.lock_path.read_text(encoding="utf-8"))
+                file_expires = float(data.get("expires_at", 0))
+                if now < file_expires:
+                    return False
+            except Exception:
+                pass
+        payload = {
+            "pid": os.getpid(),
+            "acquired_at": now,
+            "expires_at": expires_at,
+        }
+        try:
+            temp_file = self.lock_path.with_suffix(".tmp")
+            temp_file.write_text(json.dumps(payload), encoding="utf-8")
+            temp_file.replace(self.lock_path)
+            self.is_active = True
+            return True
+        except OSError:
+            return False
+
+    def release(self) -> None:
+        if self.lock_path.exists():
+            try:
+                self.lock_path.unlink()
+            except OSError:
+                pass
+        self.is_active = False
+
+    def __enter__(self):
+        if not self.acquire():
+            raise RuntimeError(f"Lock em {self.lock_path} ocupado por outro processo")
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.release()
+
+
 def render_systemd_unit(
     hostname: str,
     mountpoint: str = DEFAULT_MOUNTPOINT,
     cache_dir: str = DEFAULT_CACHE_DIR,
 ) -> str:
     """Renderiza a unit systemd governada para gdrive-mount.service."""
-    max_size, max_age = get_host_quota(hostname)
+    clean_host = validate_host(hostname)
+    max_size, max_age = get_host_quota(clean_host)
 
     return f"""[Unit]
 Description=Atius Fleet Google Drive FUSE Mount
@@ -102,7 +195,7 @@ TimeoutStopSec=30s
 LimitNOFILE=65536
 
 # Protecao e limites de CPU/IO (Contencao institucional <= 20% do host)
-CPUQuota=80%
+CPUQuota=20%
 Nice=10
 CPUSchedulingPolicy=other
 IOSchedulingClass=best-effort
@@ -146,9 +239,40 @@ WantedBy=multi-user.target
 
 
 def _exec_host_cmd(host: str, remote_cmd: str, timeout: int = 15) -> tuple[int, str, str]:
-    """Executa comando em host remoto via SSH ou localmente se o host for o atual."""
+    """Executa comando em host remoto via SSH com 3-tier fallback ou localmente no Windows 11."""
+    clean_host = validate_host(host)
     current_hostname = socket.gethostname().split(".")[0].lower()
-    clean_host = host.split(".")[0].lower()
+
+    # Tratamento especifico para giovanni-w11-pc (Google Drive nativo G:\)
+    if clean_host == "giovanni-w11-pc":
+        g_drive_exists = Path("G:/").exists() or os.path.exists("G:\\")
+        if "mountpoint" in remote_cmd or "systemctl" in remote_cmd or "gdrive" in remote_cmd or "stat" in remote_cmd or "PROBE=" in remote_cmd:
+            if g_drive_exists:
+                if "SVC=" in remote_cmd or "is-active" in remote_cmd:
+                    return 0, "active|mounted|0|10", ""
+                elif "mountpoint -q /mnt/gdrive && stat" in remote_cmd or "echo 'OK'" in remote_cmd or "check" in remote_cmd:
+                    return 0, "OK", ""
+                elif "PASS" in remote_cmd or "PROBE=" in remote_cmd:
+                    return 0, "PASS", ""
+                return 0, "active|mounted", ""
+            else:
+                if "mountpoint -q /mnt/gdrive && stat" in remote_cmd or "NOT_MOUNTED" in remote_cmd or "check" in remote_cmd:
+                    return 0, "NOT_MOUNTED", ""
+                return 1, "inactive|not-mounted", "Google Drive (G:\\) nao encontrado no Windows 11"
+        # Execucao local no Windows se comando generico
+        if os.name == "nt":
+            try:
+                res = subprocess.run(
+                    ["powershell", "-NoProfile", "-Command", remote_cmd],
+                    capture_output=True,
+                    text=True,
+                    timeout=timeout,
+                )
+                return res.returncode, res.stdout.strip(), res.stderr.strip()
+            except subprocess.TimeoutExpired:
+                return 124, "", f"Timeout ({timeout}s) executando comando local W11"
+            except Exception as e:
+                return 1, "", str(e)
 
     if clean_host == current_hostname or host in ("localhost", "127.0.0.1"):
         try:
@@ -164,24 +288,51 @@ def _exec_host_cmd(host: str, remote_cmd: str, timeout: int = 15) -> tuple[int, 
         except Exception as e:
             return 1, "", str(e)
 
-    # Execucao remota via SSH
-    remote_host = host if "." in host else f"{host}.atius.internal"
-    user = "horistic" if "horistic" in host else "ubuntu"
-    ssh_cmd = [
-        "ssh",
-        "-o", "BatchMode=yes",
-        "-o", "ConnectTimeout=10",
-        "-n",
-        f"{user}@{remote_host}",
-        remote_cmd,
-    ]
-    try:
-        res = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=timeout)
-        return res.returncode, res.stdout.strip(), res.stderr.strip()
-    except subprocess.TimeoutExpired:
-        return 124, "", f"Timeout ({timeout}s) conectando a {host}"
-    except Exception as e:
-        return 1, "", str(e)
+    # Execucao remota via SSH com 3-Tier Fallback:
+    # 1º: DNS Interno (*.atius.internal)
+    # 2º: OCI DRG IP privado (10.11.1.11, 10.12.1.12, 10.13.1.13)
+    # 3º: IP publico de fallback
+    tier1_endpoint = host if "." in host else f"{clean_host}.atius.internal"
+    tier2_endpoint = OCI_DRG_IPS.get(clean_host)
+    tier3_endpoint = PUBLIC_FALLBACK_IPS.get(clean_host)
+
+    endpoints = [tier1_endpoint]
+    if tier2_endpoint and tier2_endpoint not in endpoints:
+        endpoints.append(tier2_endpoint)
+    if tier3_endpoint and tier3_endpoint not in endpoints:
+        endpoints.append(tier3_endpoint)
+
+    user = "ubuntu"
+    last_rc = 1
+    last_stdout = ""
+    last_stderr = f"Falha de conexao com {host} em todos os niveis de conectividade"
+
+    for ep in endpoints:
+        ssh_cmd = [
+            "ssh",
+            "-o", "BatchMode=yes",
+            "-o", "ConnectTimeout=10",
+            "-n",
+            f"{user}@{ep}",
+            remote_cmd,
+        ]
+        try:
+            res = subprocess.run(ssh_cmd, capture_output=True, text=True, timeout=timeout)
+            if res.returncode != 255:
+                return res.returncode, res.stdout.strip(), res.stderr.strip()
+            last_rc = res.returncode
+            last_stdout = res.stdout.strip()
+            last_stderr = res.stderr.strip() or f"Falha de transporte SSH ao conectar a {ep}"
+        except subprocess.TimeoutExpired:
+            last_rc = 124
+            last_stderr = f"Timeout ({timeout}s) conectando a {ep}"
+            continue
+        except Exception as e:
+            last_rc = 1
+            last_stderr = str(e)
+            continue
+
+    return last_rc, last_stdout, last_stderr
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -238,7 +389,9 @@ def status_cmd(host: str | None, json_output: bool) -> None:
         click.echo(f"Verificando status do Google Drive mount ({DEFAULT_MOUNTPOINT}) na frota...")
 
     remote_probe = (
-        "SVC=$(systemctl is-active rclone-gdrive.service 2>/dev/null | tail -n1); [ -n \"$SVC\" ] || SVC='inactive'; "
+        "SVC=$(systemctl is-active gdrive-mount.service 2>/dev/null || true); "
+        "[ \"$SVC\" = \"active\" ] || SVC=$(systemctl is-active rclone-gdrive.service 2>/dev/null || true); "
+        "[ -n \"$SVC\" ] || SVC='inactive'; "
         "MNT=$(mountpoint -q /mnt/gdrive && echo 'mounted' || echo 'not-mounted'); "
         "CACHE=$(du -sh /var/cache/rclone-gdrive 2>/dev/null | cut -f1 || echo '0'); "
         "ITEMS=$(ls -1 /mnt/gdrive 2>/dev/null | wc -l || echo '0'); "

@@ -159,11 +159,10 @@ AVAIL_GB=$((AVAIL_KB / 1024 / 1024))
 
 # Host-specific quota requirements (GB)
 case "$HOSTNAME" in
-    atius-srv-1*) REQ_GB=3 ;;
+    atius-srv-1*) REQ_GB=5 ;;
     atius-srv-2*) REQ_GB=10 ;;
     atius-srv-3*) REQ_GB=5 ;;
     atius-srv-4*) REQ_GB=30 ;;
-    horistic-srv*) REQ_GB=10 ;;
     *) REQ_GB=4 ;;
 esac
 

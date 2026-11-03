@@ -154,11 +154,10 @@ def test_host_cache_quotas_configuration():
 
     # Quotas de cada host
     expected_quotas = {
-        "atius-srv-1": ("3G", "6h"),
+        "atius-srv-1": ("5G", "12h"),
         "atius-srv-2": ("10G", "24h"),
         "atius-srv-3": ("5G", "12h"),
         "atius-srv-4": ("30G", "48h"),
-        "horistic-srv": ("10G", "24h"),
     }
 
     for host, (size, age) in expected_quotas.items():
@@ -169,6 +168,13 @@ def test_host_cache_quotas_configuration():
     # Default fallback
     assert 'CACHE_MAX_SIZE="4G"' in code or "CACHE_MAX_SIZE=4G" in code
     assert 'CACHE_MAX_AGE="12h"' in code or "CACHE_MAX_AGE=12h" in code
+
+    # CPUQuota governanca <= 20%
+    assert "CPUQuota=20%" in code
+
+    # Fail-fast check para hosts excluidos
+    assert "aln-srv*|horistic-srv*" in code
+    assert "host_explicitly_excluded" in code
 
 
 def test_aggregatable_json_output_contract():

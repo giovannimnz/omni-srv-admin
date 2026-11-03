@@ -29,11 +29,10 @@ from omni.landscape import _load_manifest
 
 def test_host_cache_quotas():
     """Valida as quotas de cache VFS estritas por host."""
-    assert HOST_CACHE_QUOTAS["atius-srv-1"] == ("3G", "6h")
+    assert HOST_CACHE_QUOTAS["atius-srv-1"] == ("5G", "12h")
     assert HOST_CACHE_QUOTAS["atius-srv-2"] == ("10G", "24h")
     assert HOST_CACHE_QUOTAS["atius-srv-3"] == ("5G", "12h")
     assert HOST_CACHE_QUOTAS["atius-srv-4"] == ("30G", "48h")
-    assert HOST_CACHE_QUOTAS["horistic-srv"] == ("10G", "24h")
 
     # Host desconhecido recebe cota conservadora default
     size, age = get_host_quota("unknown-host-x")
@@ -42,8 +41,8 @@ def test_host_cache_quotas():
 
     # Host conhecido
     size_srv1, age_srv1 = get_host_quota("atius-srv-1")
-    assert size_srv1 == "3G"
-    assert age_srv1 == "6h"
+    assert size_srv1 == "5G"
+    assert age_srv1 == "12h"
 
 
 def test_render_systemd_unit():
@@ -61,14 +60,14 @@ def test_render_systemd_unit():
     assert "Type=notify" in unit
     assert "/mnt/gdrive" in unit
     assert "--vfs-cache-mode full" in unit
-    assert "--vfs-cache-max-size 3G" in unit
-    assert "--vfs-cache-max-age 6h" in unit
+    assert "--vfs-cache-max-size 5G" in unit
+    assert "--vfs-cache-max-age 12h" in unit
     assert "--config /run/rclone/rclone.conf" in unit
     assert "--allow-other" in unit
     assert "ExecStop=/bin/fusermount -u -z /mnt/gdrive" in unit
     assert "Restart=on-failure" in unit
     assert "KillMode=mixed" in unit
-    assert "CPUQuota=80%" in unit
+    assert "CPUQuota=20%" in unit
     assert "Nice=10" in unit
     assert "--tpslimit 4" in unit
     assert "--drive-pacer-min-sleep 100ms" in unit
@@ -128,7 +127,7 @@ def test_gdrive_cli_quotas():
     result = runner.invoke(gdrive, ["quotas"])
     assert result.exit_code == 0
     assert "atius-srv-1" in result.output
-    assert "3G" in result.output
+    assert "5G" in result.output
     assert "atius-srv-4" in result.output
     assert "30G" in result.output
 
@@ -137,7 +136,7 @@ def test_gdrive_cli_quotas():
     assert res_json.exit_code == 0
     data = json.loads(res_json.output)
     assert "quotas" in data
-    assert data["quotas"]["atius-srv-1"]["max_size"] == "3G"
+    assert data["quotas"]["atius-srv-1"]["max_size"] == "5G"
     assert data["quotas"]["atius-srv-4"]["max_size"] == "30G"
     assert data["mountpoint"] == "/mnt/gdrive"
 
@@ -276,22 +275,17 @@ def test_exec_host_cmd_ssh_routing():
         _exec_host_cmd("atius-srv-1.atius.com.br", "ls")
         assert mock_run.call_args[0][0][6] == "ubuntu@atius-srv-1.atius.com.br"
 
-        # Host horistic-srv -> usa usuario horistic
-        _exec_host_cmd("horistic-srv", "ls")
-        assert mock_run.call_args[0][0][6] == "horistic@horistic-srv.atius.internal"
+        # Hosts excluidos -> geram ValueError
+        with pytest.raises(ValueError, match="explicitly excluded"):
+            _exec_host_cmd("horistic-srv", "ls")
 
-        # Host horistic com FQDN
-        _exec_host_cmd("horistic-srv.atius.internal", "ls")
-        assert mock_run.call_args[0][0][6] == "horistic@horistic-srv.atius.internal"
+        with pytest.raises(ValueError, match="explicitly excluded"):
+            _exec_host_cmd("aln-srv", "ls")
 
 
 def test_get_host_quota_whitespace_handling():
     """Valida que get_host_quota tolera espacos ao redor do hostname."""
     size, age = get_host_quota("  atius-srv-1  ")
-    assert size == "3G"
-    assert age == "6h"
-
-    size_h, age_h = get_host_quota("  horistic-srv \n")
-    assert size_h == "10G"
-    assert age_h == "24h"
+    assert size == "5G"
+    assert age == "12h"
 

@@ -96,8 +96,8 @@ CACHE_MAX_AGE="12h"
 
 case "${HOSTNAME}" in
     atius-srv-1*)
-        CACHE_MAX_SIZE="3G"
-        CACHE_MAX_AGE="6h"
+        CACHE_MAX_SIZE="5G"
+        CACHE_MAX_AGE="12h"
         ;;
     atius-srv-2*)
         CACHE_MAX_SIZE="10G"
@@ -110,10 +110,6 @@ case "${HOSTNAME}" in
     atius-srv-4*)
         CACHE_MAX_SIZE="30G"
         CACHE_MAX_AGE="48h"
-        ;;
-    horistic-srv*)
-        CACHE_MAX_SIZE="10G"
-        CACHE_MAX_AGE="24h"
         ;;
 esac
 
@@ -152,7 +148,7 @@ KillMode=mixed
 TimeoutStopSec=30s
 LimitNOFILE=65536
 
-CPUQuota=80%
+CPUQuota=20%
 Nice=10
 CPUSchedulingPolicy=other
 IOSchedulingClass=best-effort

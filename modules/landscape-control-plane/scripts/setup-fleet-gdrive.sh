@@ -14,6 +14,17 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
+# 0.1 Fail-fast: banir hosts expressamente excluidos
+CURRENT_HOSTNAME=$(hostname -s 2>/dev/null || cat /etc/hostname 2>/dev/null || echo "unknown-host")
+CURRENT_HOSTNAME_LOWER=$(echo "${CURRENT_HOSTNAME}" | tr '[:upper:]' '[:lower:]')
+case "${CURRENT_HOSTNAME_LOWER}" in
+    aln-srv*|horistic-srv*)
+        err "Host '${CURRENT_HOSTNAME}' explicitly excluded from Google Drive fleet mount."
+        printf '{"status": "FAIL", "reason": "host_explicitly_excluded", "host": "%s"}\n' "${CURRENT_HOSTNAME}"
+        exit 1
+        ;;
+esac
+
 # 1. Concurrency lock (/var/lock/setup-fleet-gdrive.lock)
 LOCKFILE="/var/lock/setup-fleet-gdrive.lock"
 exec 200>"$LOCKFILE"
@@ -430,8 +441,8 @@ HOSTNAME_LOWER=$(echo "${HOSTNAME_RAW}" | tr '[:upper:]' '[:lower:]')
 
 case "${HOSTNAME_LOWER}" in
     atius-srv-1*)
-        CACHE_MAX_SIZE="3G"
-        CACHE_MAX_AGE="6h"
+        CACHE_MAX_SIZE="5G"
+        CACHE_MAX_AGE="12h"
         ;;
     atius-srv-2*)
         CACHE_MAX_SIZE="10G"
@@ -444,10 +455,6 @@ case "${HOSTNAME_LOWER}" in
     atius-srv-4*)
         CACHE_MAX_SIZE="30G"
         CACHE_MAX_AGE="48h"
-        ;;
-    horistic-srv*)
-        CACHE_MAX_SIZE="10G"
-        CACHE_MAX_AGE="24h"
         ;;
     *)
         CACHE_MAX_SIZE="4G"
@@ -485,7 +492,7 @@ TimeoutStopSec=30s
 LimitNOFILE=65536
 
 # Governanca de Recursos do Host (Contencao CPU <= 20% do total)
-CPUQuota=80%
+CPUQuota=20%
 Nice=10
 CPUSchedulingPolicy=other
 IOSchedulingClass=best-effort
