@@ -25,7 +25,7 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 MANIFEST_PATH = REPO_ROOT / "modules" / "landscape-control-plane" / "scripts" / "manifest.json"
 SYNC_SCRIPT_PATH = REPO_ROOT / "modules" / "landscape-control-plane" / "scripts" / "sync-agent-instructions.sh"
 INVENTORY_SCRIPT_PATH = REPO_ROOT / "modules" / "landscape-control-plane" / "scripts" / "skills-inventory.sh"
-CANONICAL_HOST = "10.11.1.11"
+CANONICAL_HOST = "atius-srv-1"
 
 
 def run_cmd(cmd: list, env: dict = None) -> subprocess.CompletedProcess:

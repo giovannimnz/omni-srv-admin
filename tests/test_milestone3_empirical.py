@@ -28,11 +28,11 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 INVENTORY_SCRIPT = REPO_ROOT / "modules" / "landscape-control-plane" / "scripts" / "skills-inventory.sh"
 
 ONLINE_HOSTS = [
-    {"name": "atius-srv-1", "ssh": "ubuntu@10.11.1.11", "user": "ubuntu"},
-    {"name": "atius-srv-2", "ssh": "ubuntu@10.12.1.12", "user": "ubuntu"},
-    {"name": "atius-srv-3", "ssh": "ubuntu@10.13.1.13", "user": "ubuntu"},
-    {"name": "atius-srv-4", "ssh": "ubuntu@10.14.1.14", "user": "ubuntu"},
-    {"name": "horistic-srv", "ssh": "horistic@10.21.1.21", "user": "horistic"},
+    {"name": "atius-srv-1", "ssh": "ubuntu@atius-srv-1", "user": "ubuntu"},
+    {"name": "atius-srv-2", "ssh": "ubuntu@atius-srv-2", "user": "ubuntu"},
+    {"name": "atius-srv-3", "ssh": "ubuntu@atius-srv-3", "user": "ubuntu"},
+    {"name": "atius-srv-4", "ssh": "ubuntu@atius-srv-4-public", "user": "ubuntu"},
+    {"name": "horistic-srv", "ssh": "horistic@horistic-srv", "user": "horistic"},
 ]
 
 
