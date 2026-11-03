@@ -46,17 +46,15 @@ HOST_CACHE_QUOTAS: dict[str, tuple[str, str]] = {
 DEFAULT_QUOTA: tuple[str, str] = ("4G", "12h")
 
 OCI_DRG_IPS: dict[str, str] = {
-    "atius-srv-1": "10.1.1.1",
-    "atius-srv-2": "10.2.1.2",
-    "atius-srv-3": "10.3.1.3",
-    "atius-srv-4": "10.4.1.4",
+    "atius-srv-1": "10.11.1.11",
+    "atius-srv-2": "10.12.1.12",
+    "atius-srv-3": "10.13.1.13",
 }
 
 PUBLIC_FALLBACK_IPS: dict[str, str] = {
-    "atius-srv-1": "64.181.172.236",
-    "atius-srv-2": "163.176.55.228",
-    "atius-srv-3": "150.230.71.10",
-    "atius-srv-4": "164.152.48.22",
+    "atius-srv-1": "137.131.190.161",
+    "atius-srv-2": "129.148.47.32",
+    "atius-srv-3": "136.248.126.12",
 }
 
 
