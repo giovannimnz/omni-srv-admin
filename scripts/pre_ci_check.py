@@ -138,6 +138,8 @@ def gate_5_test_suite():
     return True
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
     print("========================================================")
     print(" OMNI-SRV-ADMIN: 5 CANONICAL PRE-CI GATES")
     print("========================================================")

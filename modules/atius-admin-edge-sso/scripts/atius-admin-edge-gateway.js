@@ -205,7 +205,9 @@ function sendHtml(res, statusCode, html, extraHeaders = {}) {
 function logoutBridgeScript() {
   return `(() => {
   const id = '__atius_sso_logout';
-  if (document.getElementById(id)) return;
+  const widgetId = '__atius_sso_widget';
+  if (document.getElementById(widgetId) || document.getElementById(id)) return;
+
   const wireVendorLogout = () => {
     for (const control of document.querySelectorAll('a[href="#!/logout"], a[href="/logout"], [data-cy="userMenu-logOut"]')) {
       if (control.id === id || control.dataset.atiusSsoWired === 'true') continue;
@@ -218,25 +220,134 @@ function logoutBridgeScript() {
       }, true);
     }
   };
+
+  const style = document.createElement('style');
+  style.id = '__atius_sso_styles';
+  style.textContent = \`
+    #\${widgetId} {
+      position: fixed !important;
+      top: 14px !important;
+      right: 16px !important;
+      z-index: 2147483646 !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      height: 34px !important;
+      max-width: 34px !important;
+      padding: 0 !important;
+      background: #171b22 !important;
+      border: 1px solid #f97316 !important;
+      border-radius: 17px !important;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.45) !important;
+      overflow: hidden !important;
+      white-space: nowrap !important;
+      transition: max-width 0.28s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.2s ease, box-shadow 0.2s ease !important;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif !important;
+      user-select: none !important;
+      box-sizing: border-box !important;
+    }
+    #\${widgetId}:hover,
+    #\${widgetId}:focus-within,
+    #\${widgetId}.is-expanded {
+      max-width: 200px !important;
+      border-color: #fb923c !important;
+      box-shadow: 0 6px 20px rgba(249,115,22,0.22), 0 4px 14px rgba(0,0,0,0.55) !important;
+    }
+    #\${widgetId} .atius-sso-toggle {
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      width: 32px !important;
+      min-width: 32px !important;
+      height: 32px !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      background: transparent !important;
+      border: none !important;
+      cursor: pointer !important;
+      color: #f97316 !important;
+      outline: none !important;
+    }
+    #\${widgetId} .atius-sso-toggle svg {
+      transition: transform 0.25s ease !important;
+    }
+    #\${widgetId}:hover .atius-sso-toggle svg,
+    #\${widgetId}.is-expanded .atius-sso-toggle svg {
+      transform: scale(1.05) !important;
+      color: #fb923c !important;
+    }
+    #\${id} {
+      display: inline-flex !important;
+      align-items: center !important;
+      height: 100% !important;
+      padding: 0 12px 0 2px !important;
+      color: #f3f4f6 !important;
+      font: 600 12.5px/1.2 system-ui, -apple-system, sans-serif !important;
+      text-decoration: none !important;
+      opacity: 0 !important;
+      pointer-events: none !important;
+      transition: opacity 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+      cursor: pointer !important;
+    }
+    #\${widgetId}:hover #\${id},
+    #\${widgetId}:focus-within #\${id},
+    #\${widgetId}.is-expanded #\${id} {
+      opacity: 1 !important;
+      pointer-events: auto !important;
+    }
+    #\${id}:hover {
+      color: #fb923c !important;
+      text-decoration: underline !important;
+    }
+  \`;
+  document.head.appendChild(style);
+
+  const container = document.createElement('div');
+  container.id = widgetId;
+  container.setAttribute('data-atius-sso-logout', 'true');
+
+  const toggleBtn = document.createElement('button');
+  toggleBtn.type = 'button';
+  toggleBtn.className = 'atius-sso-toggle';
+  toggleBtn.setAttribute('aria-label', 'Atius SSO - Expandir ou recolher');
+  toggleBtn.setAttribute('title', 'Atius SSO - Clique para fixar/recolher ou passe o mouse');
+  toggleBtn.innerHTML = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>';
+
   const link = document.createElement('a');
   link.id = id;
   link.href = '/logout';
   link.textContent = 'Sair do Atius SSO';
   link.setAttribute('aria-label', 'Sair do Atius SSO');
   link.setAttribute('data-atius-sso-logout', 'true');
-  link.style.cssText = [
-    'position:fixed', 'z-index:2147483646', 'right:16px', 'bottom:16px',
-    'display:inline-flex', 'align-items:center', 'min-height:36px',
-    'padding:8px 12px', 'border:1px solid #f97316', 'border-radius:8px',
-    'background:#171b22', 'color:#fff', 'font:600 13px/1.2 system-ui,sans-serif',
-    'text-decoration:none', 'box-shadow:0 4px 16px rgba(0,0,0,.35)'
-  ].join(';');
+
+  toggleBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    container.classList.toggle('is-expanded');
+  });
+
   link.addEventListener('click', (event) => {
     event.preventDefault();
     event.stopImmediatePropagation();
     window.location.assign('/logout');
   }, true);
-  document.body.appendChild(link);
+
+  container.appendChild(toggleBtn);
+  container.appendChild(link);
+  document.body.appendChild(container);
+
+  document.addEventListener('click', (e) => {
+    if (!container.contains(e.target)) {
+      container.classList.remove('is-expanded');
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && container.classList.contains('is-expanded')) {
+      container.classList.remove('is-expanded');
+      toggleBtn.blur();
+    }
+  });
+
   wireVendorLogout();
   new MutationObserver(wireVendorLogout).observe(document.documentElement, { childList: true, subtree: true });
 })();`;
