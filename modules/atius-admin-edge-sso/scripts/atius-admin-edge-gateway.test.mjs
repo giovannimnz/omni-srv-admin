@@ -9,6 +9,7 @@ import { fileURLToPath } from 'node:url';
 const require = createRequire(import.meta.url);
 const {
   filterCookieHeader,
+  handleLogin,
   injectLogoutBridge,
   logoutBridgeScript,
   proxyHttp,
@@ -506,5 +507,31 @@ test('proxyWebSocket selects secureConnect event for HTTPS upstreams and connect
   assert.equal(httpSite.upstream.protocol === 'https:' ? 'secureConnect' : 'connect', 'connect');
   assert.equal(httpsSite.upstream.protocol === 'https:' ? 'secureConnect' : 'connect', 'secureConnect');
 });
+
+test('handleLogin supports HEAD method and returns 200 without body', async () => {
+  const site = { publicOrigin: 'https://paseo.atius.io', loginPath: '/login' };
+  const config = { authApiUrl: 'http://127.0.0.1:8015', sites: { 'paseo.atius.io': site } };
+  let statusCode = 0;
+  let headers = {};
+  let ended = false;
+  const res = {
+    writeHead(code, h) {
+      statusCode = code;
+      headers = h;
+    },
+    end() {
+      ended = true;
+    },
+  };
+  const req = {
+    method: 'HEAD',
+    headers: { host: 'paseo.atius.io' },
+  };
+  await handleLogin(config, site, req, res);
+  assert.equal(statusCode, 200);
+  assert.equal(headers['Cache-Control'], 'no-store');
+  assert.equal(ended, true);
+});
+
 
 

@@ -314,14 +314,14 @@
     {
       "id": "fleet-paseo-apache-edge",
       "title": "omni::fleet-paseo-apache-edge",
-      "version": "1.0.0",
+      "version": "1.1.0",
       "path": "fleet-paseo-apache-edge.sh",
       "interpreter": "/bin/bash",
       "username": "root",
       "time_limit": 300,
       "access_group": "global",
       "risk": "reconcile",
-      "description": "Configura Edge Gateway Apache no atius-srv-1 para o Paseo Hub (10.14.1.14:37845) com Dual-Domain TLS e WebSocket Upgrade."
+      "description": "Configura Atius Admin Edge SSO (:8210) e Apache Edge Gateway no atius-srv-1 para o Paseo Hub (10.14.1.14:37845) no Padrão PM2 Canônico."
     },
     {
       "id": "fleet-paseo-status",

@@ -89,7 +89,8 @@
       "publicOrigin": "https://paseo.atius.com.br",
       "appName": "Paseo",
       "authMode": "none",
-      "upstream": "http://127.0.0.1:34150",
+      "preserveHost": true,
+      "upstream": "http://10.14.1.14:37845",
       "allowedEmails": [
         "giovannimunizds@gmail.com"
       ],

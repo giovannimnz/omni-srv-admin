@@ -639,13 +639,22 @@ async function proxyWebSocket(site, req, socket, head, config) {
 }
 
 async function handleLogin(config, site, req, res) {
-  if (req.method === 'GET') {
+  if (req.method === 'GET' || req.method === 'HEAD') {
     const session = await verifySession(config, site, req);
     if (session.ok) return redirect(res, 302, `${site.publicOrigin}/`);
+    if (req.method === 'HEAD') {
+      res.writeHead(200, {
+        'Cache-Control': 'no-store',
+        'Content-Type': 'text/html; charset=utf-8',
+        'Referrer-Policy': 'no-referrer',
+        'X-Content-Type-Options': 'nosniff',
+      });
+      return res.end();
+    }
     return sendHtml(res, 200, loginPage(site));
   }
   if (req.method !== 'POST') {
-    res.writeHead(405, { Allow: 'GET, POST' });
+    res.writeHead(405, { Allow: 'GET, HEAD, POST' });
     return res.end();
   }
   const rawBody = await readRequestBody(req);
@@ -754,6 +763,7 @@ if (require.main === module) main();
 module.exports = {
   clearAtiusCookies,
   filterCookieHeader,
+  handleLogin,
   injectLogoutBridge,
   logoutBridgeScript,
   proxyHttp,
