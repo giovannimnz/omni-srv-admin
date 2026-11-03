@@ -20,7 +20,9 @@ import shlex
 import socket
 import subprocess
 import sys
+import threading
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -32,10 +34,12 @@ CONFIG_TMPFS_PATH = "/run/rclone/rclone.conf"
 DEFAULT_SERVICE_NAME = "gdrive-mount.service"
 LEGACY_SERVICE_NAME = "rclone-gdrive.service"
 DEFAULT_LOCK_PATH = "/run/lock/omni-gdrive.lock"
+CENTRAL_STORAGE_HUB = "atius-srv-4"
 
-FLEET_HOSTS = ["atius-srv-1", "atius-srv-2", "atius-srv-3", "giovanni-w11-pc"]
+FLEET_HOSTS = ["atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "giovanni-w11-pc"]
 FORBIDDEN_HOSTS = {"aln-srv", "horistic-srv"}
-ALLOWED_HOSTS = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "giovanni-w11-pc"}
+ALLOWED_HOSTS = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "giovanni-w11-pc"}
+ALLOWED_DOMAIN_SUFFIXES: tuple[str, ...] = (".atius.internal", ".atius.com.br")
 
 HOST_CACHE_QUOTAS: dict[str, tuple[str, str]] = {
     "atius-srv-1": ("5G", "12h"),
@@ -49,21 +53,37 @@ OCI_DRG_IPS: dict[str, str] = {
     "atius-srv-1": "10.11.1.11",
     "atius-srv-2": "10.12.1.12",
     "atius-srv-3": "10.13.1.13",
+    "atius-srv-4": "10.14.1.14",
 }
 
 PUBLIC_FALLBACK_IPS: dict[str, str] = {
     "atius-srv-1": "137.131.190.161",
     "atius-srv-2": "129.148.47.32",
     "atius-srv-3": "136.248.126.12",
+    "atius-srv-4": "164.152.48.22",
 }
 
 
 def validate_host(host: str) -> str:
-    """Valida host contra a allowlist estrita e rejeita aln-srv e horistic-srv."""
-    clean_host = host.strip().split(".")[0].lower()
-    if clean_host in FORBIDDEN_HOSTS or host.strip().lower() in FORBIDDEN_HOSTS:
+    """Valida host contra allowlist estrita e sufixos institucionais (.atius.internal, .atius.com.br)."""
+    raw = host.strip().lower()
+    if not raw:
         raise ValueError(f"Host '{host}' explicitly excluded from Google Drive fleet mount")
-    if clean_host not in ALLOWED_HOSTS and host.strip().lower() not in ALLOWED_HOSTS:
+
+    clean_host = raw
+    if "." in raw:
+        matched_suffix = None
+        for suffix in ALLOWED_DOMAIN_SUFFIXES:
+            if raw.endswith(suffix):
+                matched_suffix = suffix
+                break
+        if not matched_suffix:
+            raise ValueError(f"Host '{host}' explicitly excluded from Google Drive fleet mount")
+        clean_host = raw[:-len(matched_suffix)]
+
+    if clean_host in FORBIDDEN_HOSTS or raw in FORBIDDEN_HOSTS:
+        raise ValueError(f"Host '{host}' explicitly excluded from Google Drive fleet mount")
+    if clean_host not in ALLOWED_HOSTS and raw not in ALLOWED_HOSTS:
         raise ValueError(f"Host '{host}' explicitly excluded from Google Drive fleet mount")
     return clean_host
 
@@ -105,7 +125,7 @@ token = {token_json}
 def parse_rclone_conf_content(content: str) -> dict[str, Any]:
     """Parseia e valida configuracao INI do rclone (suporta gdrive-main e giovanni-drive)."""
     import configparser
-    cp = configparser.ConfigParser()
+    cp = configparser.ConfigParser(interpolation=None)
     cp.read_string(content)
     parsed: dict[str, Any] = {}
     for section in cp.sections():
@@ -124,40 +144,113 @@ class GDriveLock:
         self.lock_path = Path(lock_path)
         self.timeout_seconds = timeout_seconds
         self.is_active = False
+        self.lock_id: str | None = None
+        self.acquired_at: float | None = None
+
+    def _is_stale(self, now: float) -> bool:
+        """Verifica se o lock existente esta expirado ou corrompido de forma segura."""
+        try:
+            if not self.lock_path.exists():
+                return False
+            raw = self.lock_path.read_text(encoding="utf-8")
+            if not raw.strip():
+                # Janela transitoria de criacao (os.open -> os.write): se arquivo recem-criado (< 2.0s),
+                # aguarda breve intervalo para confirmar se payload esta sendo gravado por thread ativa.
+                try:
+                    mtime = os.path.getmtime(str(self.lock_path))
+                    if (now - mtime) < 2.0:
+                        time.sleep(0.01)
+                        if self.lock_path.exists():
+                            raw2 = self.lock_path.read_text(encoding="utf-8")
+                            if raw2.strip():
+                                data = json.loads(raw2)
+                                return now >= float(data.get("expires_at", 0))
+                except OSError:
+                    return False
+                return True
+            data = json.loads(raw)
+            expires_at = float(data.get("expires_at", 0))
+            return now >= expires_at
+        except (json.JSONDecodeError, ValueError, KeyError):
+            try:
+                mtime = os.path.getmtime(str(self.lock_path))
+                if (now - mtime) < 2.0:
+                    time.sleep(0.01)
+                    if self.lock_path.exists():
+                        try:
+                            raw2 = self.lock_path.read_text(encoding="utf-8")
+                            if raw2.strip():
+                                data = json.loads(raw2)
+                                return now >= float(data.get("expires_at", 0))
+                        except Exception:
+                            pass
+            except OSError:
+                return False
+            return True
+        except OSError:
+            return False
 
     def acquire(self) -> bool:
         now = time.time()
         expires_at = now + self.timeout_seconds
         self.lock_path.parent.mkdir(parents=True, exist_ok=True)
-        if self.lock_path.exists():
-            try:
-                data = json.loads(self.lock_path.read_text(encoding="utf-8"))
-                file_expires = float(data.get("expires_at", 0))
-                if now < file_expires:
-                    return False
-            except Exception:
-                pass
+
+        lock_id = str(uuid.uuid4())
         payload = {
             "pid": os.getpid(),
+            "thread_id": threading.get_ident(),
+            "lock_id": lock_id,
             "acquired_at": now,
             "expires_at": expires_at,
         }
-        try:
-            temp_file = self.lock_path.with_suffix(".tmp")
-            temp_file.write_text(json.dumps(payload), encoding="utf-8")
-            temp_file.replace(self.lock_path)
-            self.is_active = True
-            return True
-        except OSError:
-            return False
+        payload_bytes = json.dumps(payload).encode("utf-8")
+
+        for attempt in range(2):
+            try:
+                # Criacao atomica exclusiva garantida por kernel (O_CREAT | O_EXCL)
+                fd = os.open(str(self.lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+                try:
+                    os.write(fd, payload_bytes)
+                finally:
+                    os.close(fd)
+                self.is_active = True
+                self.lock_id = lock_id
+                self.acquired_at = now
+                return True
+            except (FileExistsError, PermissionError):
+                if attempt == 1:
+                    return False
+
+                # Verificacao e recuperacao segura de stale lock com rename atomico (anti-stampede)
+                if self._is_stale(now):
+                    graveyard = self.lock_path.with_name(f"{self.lock_path.name}.stale.{uuid.uuid4()}")
+                    try:
+                        self.lock_path.rename(graveyard)
+                        graveyard.unlink(missing_ok=True)
+                    except OSError:
+                        return False
+                else:
+                    return False
+
+        return False
 
     def release(self) -> None:
-        if self.lock_path.exists():
-            try:
-                self.lock_path.unlink()
-            except OSError:
-                pass
-        self.is_active = False
+        if not self.is_active:
+            return
+        try:
+            if self.lock_path.exists():
+                try:
+                    raw = self.lock_path.read_text(encoding="utf-8")
+                    data = json.loads(raw)
+                    # Liberar apenas se o arquivo pertence a esta instancia ativa
+                    if data.get("lock_id") == self.lock_id:
+                        self.lock_path.unlink()
+                except Exception:
+                    self.lock_path.unlink(missing_ok=True)
+        except OSError:
+            pass
+        finally:
+            self.is_active = False
 
     def __enter__(self):
         if not self.acquire():

@@ -16,6 +16,16 @@ done
 HOSTNAME=$(hostname -s 2>/dev/null || cat /etc/hostname 2>/dev/null || echo "unknown-host")
 TIMESTAMP=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 
+# 0.1 Fail-fast: banir hosts expressamente excluidos
+CURRENT_HOSTNAME_LOWER=$(echo "${HOSTNAME}" | tr '[:upper:]' '[:lower:]')
+case "${CURRENT_HOSTNAME_LOWER}" in
+    aln-srv*|horistic-srv*)
+        echo "ERROR: Host '${HOSTNAME}' explicitly excluded from Google Drive fleet mount." >&2
+        printf '{"status": "FAIL", "reason": "host_explicitly_excluded", "host": "%s"}\n' "${HOSTNAME}"
+        exit 1
+        ;;
+esac
+
 # Contadores
 PASSED_COUNT=0
 WARN_COUNT=0

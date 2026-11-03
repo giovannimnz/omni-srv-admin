@@ -68,8 +68,8 @@ def test_forbidden_hosts_rejected():
 
 
 def test_allowed_hosts_allowlist():
-    """Valida que FLEET_HOSTS e ALLOWED_HOSTS contem estritamente a frota autorizada."""
-    expected = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "giovanni-w11-pc"}
+    """Valida que FLEET_HOSTS e ALLOWED_HOSTS contem estritamente a frota autorizada incluindo o hub atius-srv-4."""
+    expected = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "giovanni-w11-pc"}
     assert ALLOWED_HOSTS == expected
     assert set(FLEET_HOSTS) == expected
     assert "horistic-srv" not in FLEET_HOSTS
@@ -515,3 +515,52 @@ def test_get_host_quota_whitespace_handling():
     size_h, age_h = get_host_quota("  horistic-srv \n")
     assert size_h == "4G"
     assert age_h == "12h"
+
+
+def test_parse_rclone_conf_percent_and_special_chars():
+    """Valida parsing de credenciais com '%' e caracteres especiais sem crash."""
+    client_id = "test-id-123.apps.googleusercontent.com"
+    client_secret = "GOCSPX-secret_with_special!@#$%"
+    refresh_token = "1//04_token_with_pct%2Fand%2Bvalues"
+
+    conf = build_rclone_conf_content(client_id, client_secret, refresh_token)
+    parsed = parse_rclone_conf_content(conf)
+    assert parsed["gdrive-main"]["client_secret"] == client_secret
+    assert parsed["gdrive-main"]["type"] == "drive"
+    token_data = json.loads(parsed["gdrive-main"]["token"])
+    assert token_data["refresh_token"] == refresh_token
+
+
+@pytest.mark.parametrize("spoofed_host", [
+    "atius-srv-1.evil.com",
+    "atius-srv-1.attacker.com",
+    "atius-srv-2.local",
+    "atius-srv-3.internal",
+    "atius-srv-1.sub.atius.internal",
+    "atius-srv-1.evil.atius.com.br",
+    "evil-srv.atius.internal",
+    "random-host.atius.com.br",
+])
+def test_validate_host_domain_spoofing_rejected(spoofed_host: str):
+    """Valida rejeicao estrita de dominios externos e subdominios spoofados."""
+    with pytest.raises(ValueError, match="explicitly excluded"):
+        validate_host(spoofed_host)
+
+    with patch("subprocess.run") as mock_run:
+        with pytest.raises(ValueError, match="explicitly excluded"):
+            _exec_host_cmd(spoofed_host, "ls")
+        mock_run.assert_not_called()
+
+
+@pytest.mark.parametrize("valid_fqdn", [
+    "atius-srv-1.atius.internal",
+    "atius-srv-2.atius.internal",
+    "atius-srv-3.atius.internal",
+    "atius-srv-1.atius.com.br",
+    "atius-srv-2.atius.com.br",
+    "giovanni-w11-pc.atius.internal",
+])
+def test_validate_host_institutional_fqdn_accepted(valid_fqdn: str):
+    """Valida que FQDNs institucionais permitidos sao aceitos e normalizados."""
+    expected_short = valid_fqdn.split(".")[0].lower()
+    assert validate_host(valid_fqdn) == expected_short

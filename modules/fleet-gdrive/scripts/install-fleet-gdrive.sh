@@ -15,7 +15,18 @@ if [ "$(id -u)" -ne 0 ]; then
     exit 1
 fi
 
-HOSTNAME=$(hostname -s 2>/dev/null || cat /etc/hostname 2>/dev/null || echo "unknown-host")
+# 0.1 Fail-fast: banir hosts expressamente excluidos
+CURRENT_HOSTNAME=$(hostname -s 2>/dev/null || cat /etc/hostname 2>/dev/null || echo "unknown-host")
+CURRENT_HOSTNAME_LOWER=$(echo "${CURRENT_HOSTNAME}" | tr '[:upper:]' '[:lower:]')
+case "${CURRENT_HOSTNAME_LOWER}" in
+    aln-srv*|horistic-srv*)
+        err "Host '${CURRENT_HOSTNAME}' explicitly excluded from Google Drive fleet mount."
+        printf '{"status": "FAIL", "reason": "host_explicitly_excluded", "host": "%s"}\n' "${CURRENT_HOSTNAME}"
+        exit 1
+        ;;
+esac
+
+HOSTNAME="${CURRENT_HOSTNAME_LOWER}"
 log "Iniciando instalacao idempotente do Fleet Google Drive Storage no host '${HOSTNAME}'..."
 
 # 1. Dependencias do sistema
