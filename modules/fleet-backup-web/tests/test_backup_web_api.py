@@ -168,4 +168,4 @@ def test_index_page(client: TestClient):
     res = client.get("/")
     assert res.status_code == 200
     assert "text/html" in res.headers["content-type"]
-    assert "ATIUS FLEET" in res.text
+    assert "ATIUS STORAGE" in res.text

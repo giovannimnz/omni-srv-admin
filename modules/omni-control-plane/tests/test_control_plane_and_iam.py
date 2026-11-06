@@ -593,3 +593,46 @@ def test_email_aliases_and_partner_role_for_socios(client: TestClient) -> None:
     )
     assert patch_alias.status_code == 200
     assert "marina.quant@atius.io" in patch_alias.json()["user"]["email_aliases"]
+
+
+def test_omni_and_cluster_api_aliases_and_storage_branding(client: TestClient) -> None:
+    # 1. Test /api/v1/omni/ports and /api/v1/cluster/ports aliases
+    for path in ("/api/v1/omni/ports", "/api/v1/cluster/ports"):
+        res = client.get(path)
+        assert res.status_code == 200, f"Failed on {path}"
+        data = res.json()
+        assert data["collision_audit"]["control_plane_34805_active"] is True
+        # Check storage branding in canonical ports
+        storage_contract = next(c for c in data["canonical_port_contracts"] if "storage.atius" in c["subdomain"])
+        assert storage_contract["service"] == "Atius Storage & Backup Web"
+
+    # 2. Test /api/v1/omni/topology and /api/v1/cluster/topology aliases
+    for path in ("/api/v1/omni/topology", "/api/v1/cluster/topology", "/api/v1/omni/hosts", "/api/v1/cluster/hosts"):
+        res = client.get(path)
+        assert res.status_code == 200, f"Failed on {path}"
+        data = res.json()
+        assert data["network_architecture"] == "single-vcn-single-vnic"
+        assert data["cluster_architecture"] == "single-vcn-single-vnic"
+        assert data["omni_cluster"] == "atius-sovereign"
+        assert data["control_plane_port"] == 34805
+        assert data["total"] == 6
+
+    # 3. Test /api/v1/omni/search and /api/v1/cluster/search aliases
+    for path in ("/api/v1/omni/search", "/api/v1/cluster/search"):
+        res = client.get(path, params={"q": "storage"})
+        assert res.status_code == 200, f"Failed on {path}"
+        data = res.json()
+        assert any("storage.atius.io" in d["host"] for d in data.get("destinations", []))
+
+    # 4. Verify Atius Storage branding in destinations
+    dests_res = client.get("/api/v1/iam/destinations")
+    assert dests_res.status_code == 200
+    dests = {d["host"]: d for d in dests_res.json()["destinations"]}
+
+    storage_dest = dests["storage.atius.io"]
+    assert storage_dest["name"] == "Atius Storage & Backup Control"
+    assert storage_dest["category"] == "Atius Storage"
+
+    landscape_dest = dests["landscape.atius.io"]
+    assert landscape_dest["name"] == "Canonical Landscape Omni Cluster Server"
+    assert landscape_dest["category"] == "Omni Cluster Governance"

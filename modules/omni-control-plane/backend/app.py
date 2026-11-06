@@ -198,6 +198,8 @@ def create_app(state_file: Optional[Path] = None) -> FastAPI:
         }
 
     @app.get("/api/v1/fleet/ports")
+    @app.get("/api/v1/omni/ports")
+    @app.get("/api/v1/cluster/ports")
     def get_fleet_ports() -> Dict[str, Any]:
         return {
             "canonical_port_contracts": [
@@ -232,7 +234,7 @@ def create_app(state_file: Optional[Path] = None) -> FastAPI:
                 {
                     "subdomain": "storage.atius.io / storage.atius.com.br",
                     "aliases": ["backup.atius.io", "backup.atius.com.br"],
-                    "service": "Omni Backup & Storage Web",
+                    "service": "Atius Storage & Backup Web",
                     "bind_address": f"10.14.1.14:{CANONICAL_STORAGE_PORT}",
                     "port": CANONICAL_STORAGE_PORT,
                     "edge_gateway_port": CANONICAL_EDGE_GATEWAY_PORT,
@@ -249,6 +251,10 @@ def create_app(state_file: Optional[Path] = None) -> FastAPI:
 
     @app.get("/api/v1/fleet/hosts")
     @app.get("/api/v1/fleet/topology")
+    @app.get("/api/v1/omni/hosts")
+    @app.get("/api/v1/omni/topology")
+    @app.get("/api/v1/cluster/hosts")
+    @app.get("/api/v1/cluster/topology")
     def get_fleet_topology(q: Optional[str] = Query(default=None)) -> Dict[str, Any]:
         nodes = list(DEFAULT_FLEET_NODES)
         if q and q.strip():
@@ -260,6 +266,8 @@ def create_app(state_file: Optional[Path] = None) -> FastAPI:
             )
         return {
             "network_architecture": "single-vcn-single-vnic",
+            "cluster_architecture": "single-vcn-single-vnic",
+            "omni_cluster": "atius-sovereign",
             "subnet_pattern": "10.X.0.0/16",
             "host_ip_pattern": "10.X.1.1",
             "gateway_ip_pattern": "10.X.0.1",
@@ -271,6 +279,8 @@ def create_app(state_file: Optional[Path] = None) -> FastAPI:
         }
 
     @app.get("/api/v1/fleet/search")
+    @app.get("/api/v1/omni/search")
+    @app.get("/api/v1/cluster/search")
     def search_ecosystem(q: str = Query(default="")) -> Dict[str, Any]:
         matched_users = store.list_users(query=q)
         matched_destinations = rank_records(

@@ -14,7 +14,7 @@ from pydantic import BaseModel
 from .service import BackupScheduleService
 
 app = FastAPI(
-    title="Atius Fleet Backup & Schedule Control API",
+    title="Atius Storage & Backup Schedule Control API",
     version="1.0.0",
     description="API de governança de backups de bancos de dados e controle de agendamentos da frota ATIUS.",
 )
@@ -162,5 +162,5 @@ def index_page():
     """Serve a Single Page Application (SPA) do Dashboard."""
     index_file = _STATIC_DIR / "index.html"
     if not index_file.is_file():
-        return HTMLResponse("<h1>Atius Fleet Backup Dashboard</h1><p>Frontend não encontrado.</p>")
+        return HTMLResponse("<h1>Atius Storage Backup Dashboard</h1><p>Frontend não encontrado.</p>")
     return HTMLResponse(index_file.read_text(encoding="utf-8"))

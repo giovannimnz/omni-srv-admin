@@ -461,14 +461,14 @@
       <div class="brand-logo" aria-hidden="true">AT</div>
       <div class="brand-title">
         <h1>ATIUS Sovereign IAM &amp; Omni Control-Plane</h1>
-        <p>Keycloak Access Controller (<code>sso.atius.io :8015</code>) &bull; Infra Control-Plane (<code>admin.atius.io :34800</code>)</p>
+        <p>Keycloak Access Controller (<code>sso.atius.io :8015</code>) &bull; Infra Control-Plane (<code>admin.atius.io :34805</code>)</p>
       </div>
     </div>
     <div class="port-badges" aria-label="Status das portas canônicas">
-      <span class="port-pill accent"><span class="dot"></span>admin.atius.io &rarr; 127.0.0.1:34800</span>
+      <span class="port-pill accent"><span class="dot"></span>admin.atius.io &rarr; 127.0.0.1:34805</span>
       <span class="port-pill accent"><span class="dot"></span>sso.atius.io &rarr; 127.0.0.1:8015</span>
       <span class="port-pill"><span class="dot"></span>cockpit.atius.io &rarr; :9090 (PAM Isolado)</span>
-      <span class="port-pill"><span class="dot"></span>storage.atius.io &rarr; :8085</span>
+      <span class="port-pill"><span class="dot"></span>Atius Storage (storage.atius.io) &rarr; :8085</span>
     </div>
   </header>
 
@@ -476,7 +476,7 @@
     <section class="kpi-grid" aria-label="Resumo executivo de IAM e Control-Plane">
       <div class="kpi-card">
         <span class="label">Porta Omni Control-Plane</span>
-        <span class="value" id="kpi-cp-port">34800</span>
+        <span class="value" id="kpi-cp-port">34805</span>
         <span class="sub">Zero colisão com Cockpit (:9090)</span>
       </div>
       <div class="kpi-card">
@@ -614,7 +614,7 @@
       <section class="panel" aria-labelledby="heading-destinations">
         <div class="panel-header">
           <div>
-            <h2 id="heading-destinations">4. Mapeamento de Destinos &amp; Contratos de Portas (Omni Control-Plane <code>:34800</code>)</h2>
+            <h2 id="heading-destinations">4. Mapeamento de Destinos &amp; Contratos de Portas (Omni Control-Plane <code>:34805</code>)</h2>
             <p style="font-size:0.82rem;color:var(--text-secondary);">Segregação estrita de portas e perfis autorizados por aplicação do ecossistema ATIUS.</p>
           </div>
         </div>
@@ -639,7 +639,7 @@
         <div class="panel-header">
           <div>
             <h2 id="heading-audit">5. Trilha de Auditoria Unificada IAM &amp; Control-Plane</h2>
-            <p style="font-size:0.82rem;color:var(--text-secondary);">Registro imutável de emissões de token, bloqueios, mutações RBAC e execuções na porta <code>34800</code>.</p>
+            <p style="font-size:0.82rem;color:var(--text-secondary);">Registro imutável de emissões de token, bloqueios, mutações RBAC e execuções na porta <code>34805</code>.</p>
           </div>
         </div>
         <div class="table-wrap">
