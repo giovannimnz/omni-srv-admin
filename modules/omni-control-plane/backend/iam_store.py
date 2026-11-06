@@ -379,9 +379,15 @@ DEFAULT_FLEET_NODES: List[Dict[str, Any]] = [
 DEFAULT_USERS: List[Dict[str, Any]] = [
     {
         "id": "usr-giovanni-admin",
-        "email": "giovannimunizds@gmail.com",
+        "email": "giovanni@atius.io",
         "username": "giovanni",
         "name": "Giovanni Muniz",
+        "email_aliases": [
+            "giovanni.muniz@atius.io",
+            "admin.atius@gmail.com",
+            "giovannimunizds@gmail.com",
+            "holding.atius@gmail.com",
+        ],
         "role": "Admin",
         "roles": ["Admin"],
         "is_admin": True,
@@ -404,6 +410,7 @@ DEFAULT_USERS: List[Dict[str, Any]] = [
         "email": "livia.nascimento@atius.io",
         "username": "livia.operator",
         "name": "Lívia Nascimento",
+        "email_aliases": ["livia@atius.io"],
         "role": "Operator",
         "roles": ["Operator"],
         "is_admin": False,
@@ -433,6 +440,7 @@ DEFAULT_USERS: List[Dict[str, Any]] = [
         "email": "carlos.auditor@atius.io",
         "username": "carlos.viewer",
         "name": "Carlos Mendonça",
+        "email_aliases": ["carlos@atius.io"],
         "role": "Viewer",
         "roles": ["Viewer"],
         "is_admin": False,
@@ -456,10 +464,58 @@ DEFAULT_USERS: List[Dict[str, Any]] = [
         "updated_at": "2026-11-06T00:00:00+00:00",
     },
     {
-        "id": "usr-horistic-partner",
-        "email": "parceiro.quant@horistic.com",
-        "username": "horistic.partner",
-        "name": "Diego Horistic Partner",
+        "id": "usr-julio-partner",
+        "email": "julio@atius.io",
+        "username": "julio",
+        "name": "Julio Gambarra",
+        "email_aliases": ["julio.gambarra@atius.io", "jcgambarra2013@gmail.com"],
+        "role": "Partner",
+        "roles": ["Partner"],
+        "is_admin": False,
+        "status": "active",
+        "blocked": False,
+        "mfa_enabled": True,
+        "keycloak_realm": "atius-sovereign",
+        "cpf": "",
+        "cnpj": "",
+        "document": "",
+        "custom_permissions": ["partner:portal", "trade:execute", "backtest:execute", "strategy:read"],
+        "allowed_destinations": [
+            "dashboard.atius.io",
+            "dashboard.atius.com.br",
+            "painel.atius.io",
+            "painel.atius.com.br",
+            "trade.atius.io",
+            "trade.atius.com.br",
+            "backtest.atius.io",
+            "backtest.atius.com.br",
+            "strategy.atius.io",
+            "strategy.atius.com.br",
+            "remote.atius.io",
+            "remote.atius.com.br",
+        ],
+        "denied_destinations": [
+            "admin.atius.io",
+            "admin.atius.com.br",
+            "cockpit.atius.io",
+            "cockpit.atius.com.br",
+            "landscape.atius.io",
+            "landscape.atius.com.br",
+            "vault.atius.io",
+            "vault.atius.com.br",
+            "storage.atius.io",
+            "storage.atius.com.br",
+        ],
+        "password_hash": _hash_password("PartnerAtius#2026"),
+        "created_at": "2026-11-06T00:00:00+00:00",
+        "updated_at": "2026-11-06T00:00:00+00:00",
+    },
+    {
+        "id": "usr-diego-partner",
+        "email": "diego@atius.io",
+        "username": "diego",
+        "name": "Diego Carvalho",
+        "email_aliases": ["diego.carvalho@atius.io", "diegopolaroid01@gmail.com", "parceiro.quant@horistic.com"],
         "role": "Partner",
         "roles": ["Partner"],
         "is_admin": False,
@@ -470,15 +526,33 @@ DEFAULT_USERS: List[Dict[str, Any]] = [
         "cpf": "321.654.987-00",
         "cnpj": "45.678.912/0001-33",
         "document": "32165498700",
-        "custom_permissions": ["partner:portal", "trade:execute"],
+        "custom_permissions": ["partner:portal", "trade:execute", "backtest:execute", "strategy:read"],
         "allowed_destinations": [
+            "dashboard.atius.io",
+            "dashboard.atius.com.br",
+            "painel.atius.io",
+            "painel.atius.com.br",
             "trade.atius.io",
             "trade.atius.com.br",
             "backtest.atius.io",
+            "backtest.atius.com.br",
+            "strategy.atius.io",
+            "strategy.atius.com.br",
             "remote.atius.io",
-            "dashboard.atius.io",
+            "remote.atius.com.br",
         ],
-        "denied_destinations": ["admin.atius.io", "sso.atius.io", "cockpit.atius.io", "storage.atius.io"],
+        "denied_destinations": [
+            "admin.atius.io",
+            "admin.atius.com.br",
+            "cockpit.atius.io",
+            "cockpit.atius.com.br",
+            "landscape.atius.io",
+            "landscape.atius.com.br",
+            "vault.atius.io",
+            "vault.atius.com.br",
+            "storage.atius.io",
+            "storage.atius.com.br",
+        ],
         "password_hash": _hash_password("PartnerAtius#2026"),
         "created_at": "2026-11-04T00:00:00+00:00",
         "updated_at": "2026-11-06T00:00:00+00:00",
@@ -698,10 +772,12 @@ class IAMControlPlaneStore:
         if ident in self.users:
             return self.users[ident]
         for u in self.users.values():
+            aliases = [str(a).lower() for a in u.get("email_aliases", [])]
             if (
                 u["id"].lower() == ident
                 or u["email"].lower() == ident
                 or u.get("username", "").lower() == ident
+                or ident in aliases
             ):
                 return u
         return None
@@ -728,7 +804,7 @@ class IAMControlPlaneStore:
             items = rank_records(
                 items,
                 query=query,
-                text_fields=("name", "email", "username", "role", "allowed_destinations"),
+                text_fields=("name", "email", "username", "email_aliases", "role", "allowed_destinations"),
                 doc_fields=("cpf", "cnpj", "document", "rg", "renach"),
             )
         return items
@@ -742,6 +818,12 @@ class IAMControlPlaneStore:
             raise ValueError("User name is required")
         if self.find_user(email):
             raise ValueError(f"User with email '{email}' already exists")
+
+        raw_aliases = payload.get("email_aliases") or payload.get("aliases") or []
+        if isinstance(raw_aliases, str):
+            email_aliases = [a.strip().lower() for a in raw_aliases.split(",") if a.strip()]
+        else:
+            email_aliases = [str(a).strip().lower() for a in raw_aliases if str(a).strip()]
 
         raw_role = payload.get("role") or (payload.get("roles")[0] if payload.get("roles") else "Viewer")
         canon_role = self.canonical_role_name(raw_role)
@@ -775,6 +857,7 @@ class IAMControlPlaneStore:
             "cpf": str(payload.get("cpf") or ""),
             "cnpj": str(payload.get("cnpj") or ""),
             "document": str(payload.get("document") or payload.get("cpf") or ""),
+            "email_aliases": email_aliases,
             "custom_permissions": list(payload.get("custom_permissions") or []),
             "allowed_destinations": list(allowed_dests),
             "denied_destinations": list(payload.get("denied_destinations") or []),
@@ -804,6 +887,12 @@ class IAMControlPlaneStore:
             user["name"] = str(payload["name"]).strip()
         if "email" in payload and payload["email"]:
             user["email"] = str(payload["email"]).strip().lower()
+        if "email_aliases" in payload:
+            raw_aliases = payload["email_aliases"]
+            if isinstance(raw_aliases, str):
+                user["email_aliases"] = [a.strip().lower() for a in raw_aliases.split(",") if a.strip()]
+            elif isinstance(raw_aliases, list):
+                user["email_aliases"] = [str(a).strip().lower() for a in raw_aliases if str(a).strip()]
         if "role" in payload and payload["role"]:
             canon_role = self.canonical_role_name(payload["role"])
             user["role"] = canon_role

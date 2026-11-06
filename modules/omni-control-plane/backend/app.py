@@ -55,6 +55,7 @@ ALLOWED_CORS_ORIGINS = [
 class UserCreateRequest(BaseModel):
     id: Optional[str] = None
     email: str
+    email_aliases: Optional[List[str]] = Field(default_factory=list)
     username: Optional[str] = None
     name: str
     role: str = "Viewer"
@@ -75,6 +76,7 @@ class UserCreateRequest(BaseModel):
 class UserUpdateRequest(BaseModel):
     name: Optional[str] = None
     email: Optional[str] = None
+    email_aliases: Optional[List[str]] = None
     role: Optional[str] = None
     roles: Optional[List[str]] = None
     is_admin: Optional[bool] = None

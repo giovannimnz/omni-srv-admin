@@ -109,7 +109,8 @@ def test_sso_authentication_and_token_lifecycle(client: TestClient) -> None:
     assert me_res.status_code == 200
     me_data = me_res.json()
     assert me_data["authenticated"] is True
-    assert me_data["user"]["email"] == "giovannimunizds@gmail.com"
+    assert me_data["user"]["email"] == "giovanni@atius.io"
+    assert "giovannimunizds@gmail.com" in me_data["user"].get("email_aliases", [])
     assert me_data["user"]["role"] == "Admin"
     assert me_data["user"]["is_admin"] is True
 
@@ -438,3 +439,157 @@ def test_cross_process_state_sync_between_sso_8015_and_control_plane_34805(tmp_p
     sso_client.post("/api/sso/logout", headers={"Authorization": f"Bearer {tok}"})
     me_revoked = cp_client.get("/v1/auth/me", headers={"Authorization": f"Bearer {tok}"})
     assert me_revoked.status_code == 401
+
+
+def test_email_aliases_and_partner_role_for_socios(client: TestClient) -> None:
+    # 1. Giovanni Muniz (Admin Soberano) - all 5 aliases must login with same password
+    giovanni_aliases = [
+        "giovanni@atius.io",
+        "giovanni.muniz@atius.io",
+        "admin.atius@gmail.com",
+        "giovannimunizds@gmail.com",
+        "holding.atius@gmail.com",
+    ]
+    for g_login in giovanni_aliases:
+        res = client.post(
+            "/v1/token/generate",
+            json={"email": g_login, "password": "AtiusSovereign#2026"},
+        )
+        assert res.status_code == 200, f"Login failed for Giovanni alias {g_login}"
+        body = res.json()
+        assert body["user"]["email"] == "giovanni@atius.io"
+        assert body["user"]["role"] == "Admin"
+        assert body["user"]["is_admin"] is True
+        token = body["access_token"]
+
+        # Giovanni has sovereign access to control-plane execute and admin.atius.io
+        me = client.get("/v1/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert me.status_code == 200
+        assert me.json()["user"]["is_admin"] is True
+
+        exec_res = client.post(
+            "/api/v1/control-plane/execute",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"action": "test_alias_admin", "target_host": "atius-srv-1"},
+        )
+        assert exec_res.status_code == 200
+
+    # 2. Julio Gambarra (Partner / Sócio ATS) - all aliases authenticate with PartnerAtius#2026
+    julio_aliases = [
+        "julio@atius.io",
+        "julio.gambarra@atius.io",
+        "jcgambarra2013@gmail.com",
+    ]
+    for j_login in julio_aliases:
+        res = client.post(
+            "/v1/token/generate",
+            json={"email": j_login, "password": "PartnerAtius#2026"},
+        )
+        assert res.status_code == 200, f"Login failed for Julio alias {j_login}"
+        body = res.json()
+        assert body["user"]["email"] == "julio@atius.io"
+        assert body["user"]["role"] == "Partner"
+        assert body["user"]["is_admin"] is False
+        token = body["access_token"]
+
+        # Allowed on ATS destinations (dashboard, trade, backtest, remote, strategy, painel)
+        for ats_dest in ("dashboard.atius.io", "trade.atius.io", "backtest.atius.io", "remote.atius.io", "strategy.atius.io", "painel.atius.io"):
+            authz_ats = client.post(
+                "/api/v1/iam/authorize",
+                json={"token": token, "destination": ats_dest},
+            )
+            assert authz_ats.status_code == 200, f"Julio should access ATS {ats_dest}"
+
+        # STRICTLY REFUSED (403) on admin.atius.io, cockpit.atius.io, landscape, and control-plane execution
+        for blocked_dest in ("admin.atius.io", "cockpit.atius.io", "landscape.atius.io", "vault.atius.io", "storage.atius.io"):
+            authz_blocked = client.post(
+                "/api/v1/iam/authorize",
+                json={"token": token, "destination": blocked_dest},
+            )
+            assert authz_blocked.status_code == 403, f"Julio must NOT access {blocked_dest}"
+
+        exec_denied = client.post(
+            "/api/v1/control-plane/execute",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"action": "reboot", "target_host": "atius-srv-1"},
+        )
+        assert exec_denied.status_code == 403
+
+    # 3. Diego Carvalho (Partner / Sócio ATS) - all aliases authenticate with PartnerAtius#2026
+    diego_aliases = [
+        "diego@atius.io",
+        "diego.carvalho@atius.io",
+        "diegopolaroid01@gmail.com",
+        "parceiro.quant@horistic.com",
+    ]
+    for d_login in diego_aliases:
+        res = client.post(
+            "/v1/token/generate",
+            json={"email": d_login, "password": "PartnerAtius#2026"},
+        )
+        assert res.status_code == 200, f"Login failed for Diego alias {d_login}"
+        body = res.json()
+        assert body["user"]["email"] == "diego@atius.io"
+        assert body["user"]["role"] == "Partner"
+        assert body["user"]["is_admin"] is False
+        token = body["access_token"]
+
+        # ATS destinations authorized
+        for ats_dest in ("dashboard.atius.io", "trade.atius.io", "backtest.atius.io", "remote.atius.io"):
+            authz_ats = client.post(
+                "/api/v1/iam/authorize",
+                json={"token": token, "destination": ats_dest},
+            )
+            assert authz_ats.status_code == 200
+
+        # Control-plane & Admin forbidden
+        authz_admin = client.post(
+            "/api/v1/iam/authorize",
+            json={"token": token, "destination": "admin.atius.io"},
+        )
+        assert authz_admin.status_code == 403
+
+    # 4. Search by alias finds users
+    res_search_g = client.get("/api/v1/iam/users", params={"q": "admin.atius@gmail.com"})
+    assert res_search_g.status_code == 200
+    assert res_search_g.json()["users"][0]["name"] == "Giovanni Muniz"
+
+    res_search_j = client.get("/api/v1/iam/users", params={"q": "julio.gambarra@atius.io"})
+    assert res_search_j.status_code == 200
+    assert res_search_j.json()["users"][0]["name"] == "Julio Gambarra"
+
+    res_search_d = client.get("/api/v1/iam/users", params={"q": "diego.carvalho@atius.io"})
+    assert res_search_d.status_code == 200
+    assert res_search_d.json()["users"][0]["name"] == "Diego Carvalho"
+
+    # 5. Create new Partner user with aliases & verify CRUD
+    create_partner = client.post(
+        "/api/v1/iam/users",
+        json={
+            "email": "marina@atius.io",
+            "name": "Marina Costa",
+            "role": "Partner",
+            "email_aliases": ["marina.costa@atius.io", "marinacosta@gmail.com"],
+            "password": "PartnerMarina#2026",
+            "allowed_destinations": ["trade.atius.io", "dashboard.atius.io"],
+        },
+    )
+    assert create_partner.status_code == 201
+    created_id = create_partner.json()["user"]["id"]
+    assert "marina.costa@atius.io" in create_partner.json()["user"]["email_aliases"]
+
+    # Login via alias
+    login_alias = client.post(
+        "/v1/token/generate",
+        json={"email": "marinacosta@gmail.com", "password": "PartnerMarina#2026"},
+    )
+    assert login_alias.status_code == 200
+    assert login_alias.json()["user"]["email"] == "marina@atius.io"
+
+    # Update aliases via PATCH
+    patch_alias = client.patch(
+        f"/api/v1/iam/users/{created_id}",
+        json={"email_aliases": ["marina.costa@atius.io", "marinacosta@gmail.com", "marina.quant@atius.io"]},
+    )
+    assert patch_alias.status_code == 200
+    assert "marina.quant@atius.io" in patch_alias.json()["user"]["email_aliases"]

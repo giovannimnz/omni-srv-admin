@@ -527,21 +527,26 @@
             <input id="new-user-name" type="text" placeholder="Ex: Marina Costa" required />
           </div>
           <div class="form-field">
-            <label for="new-user-email">E-mail corporativo</label>
+            <label for="new-user-email">E-mail corporativo principal</label>
             <input id="new-user-email" type="email" placeholder="marina.costa@atius.io" required />
+          </div>
+          <div class="form-field">
+            <label for="new-user-aliases">Email Aliases (vírgula - login com mesma senha)</label>
+            <input id="new-user-aliases" type="text" placeholder="marina@atius.io, marinacosta@gmail.com" />
           </div>
           <div class="form-field">
             <label for="new-user-cpf">Documento (CPF/CNPJ)</label>
             <input id="new-user-cpf" type="text" placeholder="000.000.000-00" />
           </div>
           <div class="form-field">
-            <label for="new-user-role">Perfil RBAC</label>
+            <label for="new-user-role">Perfil RBAC / Categoria</label>
             <select id="new-user-role">
-              <option value="Admin">Admin</option>
-              <option value="Operator" selected>Operator</option>
-              <option value="Viewer">Viewer</option>
-              <option value="Partner">Partner</option>
+              <option value="Admin">Admin (Acesso Total Soberano)</option>
+              <option value="Operator">Operator (DevOps &amp; Infraestrutura)</option>
+              <option value="Viewer">Viewer (Auditoria &amp; Somente Leitura)</option>
+              <option value="Partner" selected>Partner (Sócios &amp; Mesa ATS Trading - Sem Terminal/Root)</option>
             </select>
+            <small style="font-size:0.72rem;color:var(--accent);display:block;margin-top:4px;">💡 <strong>Sócios Atius Capital:</strong> Use a categoria <strong>Partner</strong> para liberar Dashboard, Trade, Backtest e Remote MT5 sem acesso a terminais OS ou painéis de infra.</small>
           </div>
           <div class="form-field">
             <label for="new-user-dests">Destinos Autorizados (vírgula ou *)</label>
@@ -738,6 +743,7 @@
             <td>
               <div style="font-weight:700;">${escapeHtml(u.name)}</div>
               <div style="font-size:0.78rem;color:var(--text-secondary);">${escapeHtml(u.email)}</div>
+              ${Array.isArray(u.email_aliases) && u.email_aliases.length > 0 ? `<div style="font-size:0.72rem;color:var(--accent);margin-top:2px;">Aliases: ${u.email_aliases.map(a => escapeHtml(a)).join(', ')}</div>` : ''}
             </td>
             <td><code>${escapeHtml(u.cpf || u.cnpj || '-')}</code></td>
             <td><span class="role-badge role-${safeRole}">${safeRole}</span></td>
@@ -932,6 +938,8 @@
           ev.preventDefault();
           const name = document.getElementById('new-user-name').value.trim();
           const email = document.getElementById('new-user-email').value.trim();
+          const aliasesRaw = document.getElementById('new-user-aliases')?.value.trim() || '';
+          const email_aliases = aliasesRaw ? aliasesRaw.split(',').map(s => s.trim().toLowerCase()).filter(Boolean) : [];
           const cpf = document.getElementById('new-user-cpf').value.trim();
           const role = document.getElementById('new-user-role').value;
           const destRaw = document.getElementById('new-user-dests').value.trim();
@@ -941,11 +949,12 @@
           const res = await fetch('/api/v1/iam/users', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ name, email, cpf, role, allowed_destinations }),
+            body: JSON.stringify({ name, email, email_aliases, cpf, role, allowed_destinations }),
           });
           if (res.ok) {
             document.getElementById('new-user-name').value = '';
             document.getElementById('new-user-email').value = '';
+            if (document.getElementById('new-user-aliases')) document.getElementById('new-user-aliases').value = '';
             document.getElementById('new-user-cpf').value = '';
             await loadAllData();
           }
