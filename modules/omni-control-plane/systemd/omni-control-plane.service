@@ -1,0 +1,23 @@
+[Unit]
+Description=ATIUS Omni Control-Plane FastAPI Daemon (admin.atius.io :34805)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=ubuntu
+Group=ubuntu
+WorkingDirectory=/home/ubuntu/GitHub/omni-srv-admin
+Environment="OMNI_CONTROL_PLANE_HOST=127.0.0.1"
+Environment="OMNI_CONTROL_PLANE_PORT=34805"
+Environment="ATIUS_SSO_IAM_PORT=8015"
+Environment="ATIUS_IAM_STATE_FILE=/var/tmp/atius_iam_control_plane_state.json"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/usr/bin/env uvicorn app.main:app --host 127.0.0.1 --port 34805 --workers 1
+Restart=always
+RestartSec=3
+CPUQuota=20%
+MemoryMax=256M
+
+[Install]
+WantedBy=multi-user.target

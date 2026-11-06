@@ -148,8 +148,12 @@ apps:
     vault_integration: true
     vault_profile: pipeline
 network:
-  vcn_cidr: 10.14.0.0/16
-  subnet_cidr: 10.14.1.0/24
+  model: single-vcn-single-vnic
+  vcn_cidr: 10.4.0.0/16
+  subnet_cidr: 10.4.0.0/16
+  oci_gateway_ip: 10.4.0.1
+  oci_dns_ip: 10.4.0.2
+  target_oci_private_ip: 10.4.1.1
   subnet_route_table: Default Route Table for vcn-atius4
   drg_state: active
   wireguard_interface: wg100

@@ -33,13 +33,26 @@ function readConfig(configPath = process.env.ATIUS_ADMIN_EDGE_GATEWAY_CONFIG || 
     const base = cfg.aliasOf ? raws[cfg.aliasOf] : cfg;
     if (!base) throw new Error(`alias target missing for ${host}`);
     if (!base.publicOrigin && !cfg.publicOrigin) throw new Error(`site ${host} requires publicOrigin`);
+    const aliasTarget = cfg.aliasOf ? String(cfg.aliasOf).trim().toLowerCase() : null;
+    const rawDestAliases = new Set([host.toLowerCase()]);
+    if (aliasTarget) rawDestAliases.add(aliasTarget);
+    if (cfg.destinationId) rawDestAliases.add(String(cfg.destinationId).trim().toLowerCase());
+    if (base.destinationId) rawDestAliases.add(String(base.destinationId).trim().toLowerCase());
+    for (const h of Array.from(rawDestAliases)) {
+      if (h.endsWith('.atius.com.br')) rawDestAliases.add(h.replace(/\.atius\.com\.br$/, '.atius.io'));
+      if (h.endsWith('.atius.io')) rawDestAliases.add(h.replace(/\.atius\.io$/, '.atius.com.br'));
+    }
     const site = {
       appName: cfg.appName || base.appName || host,
       authMode: cfg.authMode || base.authMode,
+      destinationId: String(cfg.destinationId || base.destinationId || aliasTarget || host).trim().toLowerCase(),
+      destinationAliases: Array.from(rawDestAliases),
       loginPath: cfg.loginPath || base.loginPath || '/login',
       logoutPath: cfg.logoutPath || base.logoutPath || '/logout',
       publicOrigin: cfg.publicOrigin || base.publicOrigin,
       requiredPermission: cfg.requiredPermission || base.requiredPermission || null,
+      requiredRole: (cfg.requiredRole || base.requiredRole) ? String(cfg.requiredRole || base.requiredRole).trim().toLowerCase() : null,
+      allowedRoles: (cfg.allowedRoles || base.allowedRoles || []).map(v => String(v).trim().toLowerCase()).filter(Boolean),
       requireAdmin: Object.prototype.hasOwnProperty.call(cfg, 'requireAdmin') ? cfg.requireAdmin : (Object.prototype.hasOwnProperty.call(base, 'requireAdmin') ? base.requireAdmin : true),
       upstream: new URL(cfg.upstream || base.upstream),
       upstreamUsernameEnv: cfg.upstreamUsernameEnv || base.upstreamUsernameEnv || '',
@@ -510,11 +523,82 @@ async function verifySessionUncached(config, site, req, token) {
   if (response.statusCode === 401 || response.statusCode === 403) return { ok: false, reason: 'invalid_auth' };
   if (response.statusCode < 200 || response.statusCode > 299 || !response.body || response.body.authenticated !== true || !response.body.user) return { ok: false, reason: 'auth_unavailable' };
   const user = response.body.user;
+  if (
+    user.blocked === true ||
+    user.is_blocked === true ||
+    String(user.status || '').trim().toLowerCase() === 'blocked' ||
+    user.active === false ||
+    user.is_active === false
+  ) {
+    return { ok: false, reason: 'forbidden' };
+  }
   const email = String(user.email || '').trim().toLowerCase();
-  if (site.allowedEmails.length && !site.allowedEmails.includes(email)) return { ok: false, reason: 'forbidden' };
-  if (site.requireAdmin && user.is_admin !== true) return { ok: false, reason: 'forbidden' };
-  if (site.requiredPermission && !(user.is_admin === true || (user.permissions && user.permissions[site.requiredPermission] === true))) return { ok: false, reason: 'forbidden' };
-  return { ok: true, email };
+  const userRoles = new Set();
+  if (Array.isArray(user.roles)) {
+    for (const r of user.roles) {
+      if (r) userRoles.add(String(r).trim().toLowerCase());
+    }
+  }
+  if (user.role) userRoles.add(String(user.role).trim().toLowerCase());
+  if (user.persona) userRoles.add(String(user.persona).trim().toLowerCase());
+  if (user.is_admin === true && userRoles.size === 0) {
+    userRoles.add('admin');
+  }
+  const allowedEmails = Array.isArray(site.allowedEmails) ? site.allowedEmails : [];
+  const isAllowedEmail = allowedEmails.length > 0 && allowedEmails.includes(email);
+
+  const allowedRoles = Array.isArray(site.allowedRoles)
+    ? site.allowedRoles.map(r => String(r).trim().toLowerCase()).filter(Boolean)
+    : [];
+  const hasAllowedRole = allowedRoles.length > 0 && allowedRoles.some(r => userRoles.has(r));
+
+  if (allowedRoles.length > 0) {
+    if (!hasAllowedRole) {
+      return { ok: false, reason: 'forbidden' };
+    }
+  } else if (allowedEmails.length > 0 && !isAllowedEmail) {
+    return { ok: false, reason: 'forbidden' };
+  }
+  if (site.requiredRole && !userRoles.has(String(site.requiredRole).toLowerCase()) && !userRoles.has('admin')) {
+    return { ok: false, reason: 'forbidden' };
+  }
+  if (site.requireAdmin && user.is_admin !== true && !hasAllowedRole) {
+    return { ok: false, reason: 'forbidden' };
+  }
+
+  const rawDest = Array.isArray(user.allowed_destinations)
+    ? user.allowed_destinations
+    : (Array.isArray(user.destinations) ? user.destinations : null);
+  if (rawDest) {
+    const destSet = new Set(rawDest.map(d => String(d || '').trim().toLowerCase()).filter(Boolean));
+    const targetHost = new URL(site.publicOrigin).hostname.toLowerCase();
+    const targetDestId = String(site.destinationId || targetHost).toLowerCase();
+    const candidateHosts = new Set([
+      targetHost,
+      targetDestId,
+      ...(Array.isArray(site.destinationAliases) ? site.destinationAliases : []),
+    ]);
+    for (const h of Array.from(candidateHosts)) {
+      if (h.endsWith('.atius.com.br')) candidateHosts.add(h.replace(/\.atius\.com\.br$/, '.atius.io'));
+      if (h.endsWith('.atius.io')) candidateHosts.add(h.replace(/\.atius\.io$/, '.atius.com.br'));
+    }
+    const isDestAllowed = destSet.has('*') || Array.from(candidateHosts).some(h => destSet.has(h));
+    if (!isDestAllowed) {
+      return { ok: false, reason: 'forbidden' };
+    }
+  }
+
+  if (
+    site.requiredPermission &&
+    !(
+      user.is_admin === true ||
+      (Array.isArray(user.permissions) && user.permissions.includes(site.requiredPermission)) ||
+      (user.permissions && user.permissions[site.requiredPermission] === true)
+    )
+  ) {
+    return { ok: false, reason: 'forbidden' };
+  }
+  return { ok: true, email, roles: Array.from(userRoles) };
 }
 
 async function verifySessionToken(config, site, req, token) {
@@ -773,7 +857,10 @@ async function handleLogin(config, site, req, res) {
   const login = String(body.login || '').trim();
   const senha = String(body.senha || '');
   if (!login || !senha) return sendHtml(res, 400, loginPage(site, 'Informe email ou username e senha.'));
-  const tokenUrl = new URL('http://127.0.0.1:8015/v1/token/generate');
+  const authBase = (config && config.authCheckUrl)
+    ? new URL(config.authCheckUrl.toString())
+    : new URL((config && config.authApiUrl) || 'http://127.0.0.1:8015');
+  const tokenUrl = new URL('/v1/token/generate', authBase);
   const upstream = await postJson(tokenUrl, { login, senha }, { 'X-Forwarded-Host': new URL(site.publicOrigin).host, 'X-Forwarded-Proto': 'https' });
   if (upstream.statusCode === 401 || upstream.statusCode === 403) {
     return sendHtml(res, 401, loginPage(site, 'Não foi possível entrar. Verifique as credenciais.'));
@@ -782,20 +869,21 @@ async function handleLogin(config, site, req, res) {
   const siteHostname = new URL(site.publicOrigin).hostname;
   const isAtiusBr = siteHostname.endsWith('.atius.com.br');
   const setCookies = upstream.headers['set-cookie'];
+  const rawCookieList = Array.isArray(setCookies) ? setCookies : (setCookies ? [String(setCookies)] : []);
   const cookieHeaders = [];
-  if (Array.isArray(setCookies)) {
-    for (const c of setCookies) {
-      if (!isAtiusBr) {
-        cookieHeaders.push(c.replace(/Domain=[^;]+/i, `Domain=${siteHostname}`));
-      } else {
-        cookieHeaders.push(c);
-      }
-    }
-  } else if (setCookies) {
+  for (const c of rawCookieList) {
     if (!isAtiusBr) {
-      cookieHeaders.push(String(setCookies).replace(/Domain=[^;]+/i, `Domain=${siteHostname}`));
+      cookieHeaders.push(
+        /Domain=[^;]+/i.test(c)
+          ? c.replace(/Domain=[^;]+/i, `Domain=${siteHostname}`)
+          : `${c}; Domain=${siteHostname}`
+      );
     } else {
-      cookieHeaders.push(setCookies);
+      cookieHeaders.push(
+        /Domain=[^;]+/i.test(c)
+          ? c
+          : `${c}; Domain=.atius.com.br`
+      );
     }
   }
   if (isAtiusBr) {

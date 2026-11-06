@@ -130,9 +130,13 @@
       "appName": "Omni Admin",
       "authMode": "none",
       "preserveHost": true,
-      "upstream": "http://127.0.0.1:9090",
+      "upstream": "http://127.0.0.1:34805",
       "allowedEmails": [
         "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin",
+        "operator"
       ],
       "requireAdmin": true
     },
@@ -143,6 +147,10 @@
       "allowedEmails": [
         "giovannimunizds@gmail.com"
       ],
+      "allowedRoles": [
+        "admin",
+        "operator"
+      ],
       "requireAdmin": true
     },
     "omni.atius.com.br": {
@@ -152,6 +160,10 @@
       "allowedEmails": [
         "giovannimunizds@gmail.com"
       ],
+      "allowedRoles": [
+        "admin",
+        "operator"
+      ],
       "requireAdmin": true
     },
     "omni.atius.io": {
@@ -160,6 +172,94 @@
       "appName": "Omni Admin",
       "allowedEmails": [
         "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin",
+        "operator"
+      ],
+      "requireAdmin": true
+    },
+    "storage.atius.com.br": {
+      "publicOrigin": "https://storage.atius.com.br",
+      "appName": "Backup & Storage Control",
+      "authMode": "none",
+      "preserveHost": true,
+      "upstream": "http://10.14.1.14:8085",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin",
+        "operator",
+        "viewer"
+      ],
+      "requireAdmin": true
+    },
+    "storage.atius.io": {
+      "aliasOf": "storage.atius.com.br",
+      "publicOrigin": "https://storage.atius.io",
+      "appName": "Backup & Storage Control",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin",
+        "operator",
+        "viewer"
+      ],
+      "requireAdmin": true
+    },
+    "backup.atius.com.br": {
+      "aliasOf": "storage.atius.com.br",
+      "publicOrigin": "https://backup.atius.com.br",
+      "appName": "Backup & Storage Control",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin",
+        "operator",
+        "viewer"
+      ],
+      "requireAdmin": true
+    },
+    "backup.atius.io": {
+      "aliasOf": "storage.atius.com.br",
+      "publicOrigin": "https://backup.atius.io",
+      "appName": "Backup & Storage Control",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin",
+        "operator",
+        "viewer"
+      ],
+      "requireAdmin": true
+    },
+    "sso.atius.com.br": {
+      "publicOrigin": "https://sso.atius.com.br",
+      "appName": "Atius SSO Admin",
+      "authMode": "none",
+      "preserveHost": true,
+      "upstream": "http://127.0.0.1:8015",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin"
+      ],
+      "requireAdmin": true
+    },
+    "sso.atius.io": {
+      "aliasOf": "sso.atius.com.br",
+      "publicOrigin": "https://sso.atius.io",
+      "appName": "Atius SSO Admin",
+      "allowedEmails": [
+        "giovannimunizds@gmail.com"
+      ],
+      "allowedRoles": [
+        "admin"
       ],
       "requireAdmin": true
     }

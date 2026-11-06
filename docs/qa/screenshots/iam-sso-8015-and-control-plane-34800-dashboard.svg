@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="720" viewBox="0 0 1280 720">
+  <rect width="1280" height="720" fill="#090d16"/>
+  <rect x="32" y="28" width="1216" height="76" rx="12" fill="#111827" stroke="#24324b"/>
+  <text x="56" y="62" fill="#f8fafc" font-family="Segoe UI, Inter, sans-serif" font-size="22" font-weight="700">ATIUS Sovereign IAM (sso.atius.io :8015) &amp; Omni Control-Plane (admin.atius.io :34800)</text>
+  <text x="56" y="88" fill="#38bdf8" font-family="Consolas, monospace" font-size="14">LIVE QA VERIFICATION PASS • 12/12 Pytest • 25/25 Edge Gateway • 5/5 Pre-CI Gates • Zero Cockpit (:9090) Collision</text>
+
+  <rect x="32" y="124" width="290" height="110" rx="12" fill="#111827" stroke="#24324b"/>
+  <text x="52" y="154" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13" font-weight="600">OMNI CONTROL-PLANE PORT</text>
+  <text x="52" y="196" fill="#38bdf8" font-family="Consolas, monospace" font-size="32" font-weight="700">127.0.0.1:34800</text>
+  <text x="52" y="220" fill="#34d399" font-family="Segoe UI, sans-serif" font-size="13">admin.atius.io / .com.br (HTTP 200)</text>
+
+  <rect x="340" y="124" width="290" height="110" rx="12" fill="#111827" stroke="#24324b"/>
+  <text x="360" y="154" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13" font-weight="600">KEYCLOAK IAM GATEWAY PORT</text>
+  <text x="360" y="196" fill="#818cf8" font-family="Consolas, monospace" font-size="32" font-weight="700">127.0.0.1:8015</text>
+  <text x="360" y="220" fill="#34d399" font-family="Segoe UI, sans-serif" font-size="13">sso.atius.io / .com.br (HTTP 200)</text>
+
+  <rect x="648" y="124" width="290" height="110" rx="12" fill="#111827" stroke="#24324b"/>
+  <text x="668" y="154" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13" font-weight="600">RBAC PERSONAS &amp; DESTINATIONS</text>
+  <text x="668" y="196" fill="#f8fafc" font-family="Consolas, monospace" font-size="30" font-weight="700">4 Roles / 10 Apps</text>
+  <text x="668" y="220" fill="#34d399" font-family="Segoe UI, sans-serif" font-size="13">Admin • Operator • Viewer • Partner</text>
+
+  <rect x="956" y="124" width="292" height="110" rx="12" fill="#111827" stroke="#24324b"/>
+  <text x="976" y="154" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13" font-weight="600">9-TIER ACCENT-FOLDING SEARCH</text>
+  <text x="976" y="196" fill="#34d399" font-family="Consolas, monospace" font-size="30" font-weight="700">NFD + Fuzzy</text>
+  <text x="976" y="220" fill="#94a3b8" font-family="Segoe UI, sans-serif" font-size="13">"lívia" &lt;-&gt; "Livia" + CPF/CNPJ</text>
+
+  <rect x="32" y="254" width="1216" height="434" rx="12" fill="#111827" stroke="#24324b"/>
+  <text x="56" y="292" fill="#f8fafc" font-family="Segoe UI, sans-serif" font-size="18" font-weight="700">Live RBAC &amp; Destination Authorization Verification Matrix</text>
+
+  <text x="56" y="336" fill="#34d399" font-family="Consolas, monospace" font-size="15">[PASS 200] Admin (giovanni@atius.com.br)   -&gt; sso.atius.io (:8015)     | Allowed (Role: Admin)</text>
+  <text x="56" y="368" fill="#34d399" font-family="Consolas, monospace" font-size="15">[PASS 200] Admin (giovanni@atius.com.br)   -&gt; admin.atius.io (:34800)  | Allowed (Role: Admin)</text>
+  <text x="56" y="400" fill="#fbbf24" font-family="Consolas, monospace" font-size="15">[REFUSED 403] Operator (operator@atius.io) -&gt; sso.atius.io (:8015)     | Denied (Requires Admin)</text>
+  <text x="56" y="432" fill="#34d399" font-family="Consolas, monospace" font-size="15">[PASS 200] Operator (operator@atius.io)    -&gt; admin.atius.io (:34800)  | Allowed (Role: Operator)</text>
+  <text x="56" y="464" fill="#fbbf24" font-family="Consolas, monospace" font-size="15">[REFUSED 403] Viewer (viewer@atius.io)     -&gt; admin.atius.io (:34800)  | Denied (Role Not Authorized)</text>
+  <text x="56" y="496" fill="#34d399" font-family="Consolas, monospace" font-size="15">[PASS 200] Viewer (viewer@atius.io)        -&gt; storage.atius.io (:8085) | Allowed (Role: Viewer)</text>
+  <text x="56" y="528" fill="#fbbf24" font-family="Consolas, monospace" font-size="15">[REFUSED 403] Partner (partner@atius.io)   -&gt; admin.atius.io (:34800)  | Denied (Role Not Authorized)</text>
+  <text x="56" y="560" fill="#34d399" font-family="Consolas, monospace" font-size="15">[PASS 200] Partner (partner@atius.io)      -&gt; trade.atius.io (:3000)   | Allowed (Role: Partner)</text>
+  <text x="56" y="610" fill="#38bdf8" font-family="Consolas, monospace" font-size="15">[PASS] Single-VNIC Fleet Inventory: atius-srv-1 (10.1.1.1) • atius-srv-2 (10.1.1.2) • atius-srv-3 (10.1.1.3) • atius-srv-4 (10.1.1.4) • horistic-srv (10.52.1.1)</text>
+</svg>

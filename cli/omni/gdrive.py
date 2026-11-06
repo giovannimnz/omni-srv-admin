@@ -15,6 +15,7 @@ Subcomandos:
 from __future__ import annotations
 
 import json
+import math
 import os
 import shlex
 import socket
@@ -148,46 +149,69 @@ class GDriveLock:
         self.acquired_at: float | None = None
 
     def _is_stale(self, now: float) -> bool:
-        """Verifica se o lock existente esta expirado ou corrompido de forma segura."""
+        """Verifica se o lock existente esta expirado ou corrompido de forma segura.
+
+        Garantias:
+        1. Lock ativo e valido retorna False imediatamente.
+        2. Lock expirado e valido retorna True imediatamente.
+        3. Lock com escrita em transito (0 bytes ou json parcial) aguarda a conclusao do escritor ativo.
+           Se o escritor concluir gravacao valida, retorna expired (False se recem-criado).
+        4. Lock genuinamente corrompido ou abandonado (vazio, malformado, sem expires_at)
+           que permanece invalido apos as tentativas de leitura e recuperado retornando True.
+        """
         try:
             if not self.lock_path.exists():
                 return False
-            raw = self.lock_path.read_text(encoding="utf-8")
-            if not raw.strip():
-                # Janela transitoria de criacao (os.open -> os.write): se arquivo recem-criado (< 2.0s),
-                # aguarda breve intervalo para confirmar se payload esta sendo gravado por thread ativa.
+
+            def parse_payload(raw_content: str) -> tuple[bool, bool]:
+                if not raw_content.strip():
+                    return False, False
                 try:
-                    mtime = os.path.getmtime(str(self.lock_path))
-                    if (now - mtime) < 2.0:
-                        time.sleep(0.01)
-                        if self.lock_path.exists():
-                            raw2 = self.lock_path.read_text(encoding="utf-8")
-                            if raw2.strip():
-                                data = json.loads(raw2)
-                                return now >= float(data.get("expires_at", 0))
-                except OSError:
-                    return False
-                return True
-            data = json.loads(raw)
-            expires_at = float(data.get("expires_at", 0))
-            return now >= expires_at
-        except (json.JSONDecodeError, ValueError, KeyError):
+                    payload = json.loads(raw_content)
+                except Exception:
+                    return False, False
+                if not isinstance(payload, dict):
+                    return False, False
+                exp_val = payload.get("expires_at")
+                if exp_val is None:
+                    return False, False
+                try:
+                    exp_float = float(exp_val)
+                    if not math.isfinite(exp_float):
+                        return False, False
+                except (ValueError, TypeError):
+                    return False, False
+                return True, now >= exp_float
+
             try:
-                mtime = os.path.getmtime(str(self.lock_path))
-                if (now - mtime) < 2.0:
-                    time.sleep(0.01)
-                    if self.lock_path.exists():
-                        try:
-                            raw2 = self.lock_path.read_text(encoding="utf-8")
-                            if raw2.strip():
-                                data = json.loads(raw2)
-                                return now >= float(data.get("expires_at", 0))
-                        except Exception:
-                            pass
-            except OSError:
-                return False
+                raw = self.lock_path.read_text(encoding="utf-8")
+            except Exception:
+                raw = ""
+
+            valid, expired = parse_payload(raw)
+            if valid:
+                return expired
+
+            # Se payload invalido ou em voo (0 bytes ou json parcial),
+            # aguarda para que escritor ativo (se houver) conclua a gravacao.
+            for _ in range(3):
+                time.sleep(0.02)
+                if not self.lock_path.exists():
+                    return False
+                try:
+                    raw2 = self.lock_path.read_text(encoding="utf-8")
+                except Exception:
+                    raw2 = ""
+                valid2, expired2 = parse_payload(raw2)
+                if valid2:
+                    return expired2
+
+            # Se apos as tentativas o payload continuar invalido/vazio,
+            # trata-se de arquivo corrompido/abandonado (self-healing).
             return True
         except OSError:
+            return False
+        except Exception:
             return False
 
     def acquire(self) -> bool:
@@ -211,6 +235,7 @@ class GDriveLock:
                 fd = os.open(str(self.lock_path), os.O_CREAT | os.O_EXCL | os.O_WRONLY)
                 try:
                     os.write(fd, payload_bytes)
+                    os.fsync(fd)
                 finally:
                     os.close(fd)
                 self.is_active = True
@@ -243,10 +268,15 @@ class GDriveLock:
                     raw = self.lock_path.read_text(encoding="utf-8")
                     data = json.loads(raw)
                     # Liberar apenas se o arquivo pertence a esta instancia ativa
-                    if data.get("lock_id") == self.lock_id:
-                        self.lock_path.unlink()
+                    if isinstance(data, dict) and data.get("lock_id") == self.lock_id:
+                        for _ in range(3):
+                            try:
+                                self.lock_path.unlink(missing_ok=True)
+                                break
+                            except (PermissionError, OSError):
+                                time.sleep(0.01)
                 except Exception:
-                    self.lock_path.unlink(missing_ok=True)
+                    pass
         except OSError:
             pass
         finally:

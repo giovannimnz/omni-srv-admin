@@ -52,7 +52,8 @@ def gate_1_git_hygiene():
 
 def gate_2_python_syntax():
     log_gate(2, "Python Syntax & AST Compilation")
-    py_files = list(REPO_ROOT.glob("cli/**/*.py")) + \
+    py_files = list(REPO_ROOT.glob("app/**/*.py")) + \
+               list(REPO_ROOT.glob("cli/**/*.py")) + \
                list(REPO_ROOT.glob("modules/**/*.py")) + \
                list(REPO_ROOT.glob("scripts/**/*.py")) + \
                list(REPO_ROOT.glob("tests/**/*.py"))
@@ -127,7 +128,16 @@ def gate_4_manifest_and_inventory():
 
 def gate_5_test_suite():
     log_gate(5, "Automated Test Suite (pytest via uv)")
-    cmd = ["uv", "run", "--with", "pytest", "--with", "pyyaml", "pytest", "tests/test_fleet_runtimes_upgrade.py"]
+    cmd = [
+        "uv", "run",
+        "--with", "pytest",
+        "--with", "pyyaml",
+        "--with", "fastapi",
+        "--with", "httpx",
+        "pytest",
+        "tests/test_fleet_runtimes_upgrade.py",
+        "modules/omni-control-plane/tests/test_control_plane_and_iam.py",
+    ]
     success, stdout, stderr = run_cmd(cmd, check=False)
     if not success:
         print(f"[FAIL] Test execution failed:\n{stdout}\n{stderr}")

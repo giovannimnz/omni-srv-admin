@@ -88,13 +88,13 @@ A tabela abaixo documenta o inventário oficial e a classificação de todos os 
 
 | # | Endpoint / Subdomínio | Host Primário | Porta/Backend Upstream | Padrão | Mecanismo de Autenticação & Sessão | Observações de Governança |
 |---|---|---|---|---|---|---|
-| 1 | `sso.atius.com.br` | atius-srv-1 | 10.11.1.11:3015 | Padrão 1 | ATS Central SSO / Keycloak OIDC | Ponto focal de login e emissão de `auth-token`. |
+| 1 | `sso.atius.com.br` / `sso.atius.io` | atius-srv-1 | `127.0.0.1:8015` (via Edge `:8210`) | Padrão 1 / 2 | Keycloak IAM & Auth Gateway (`/v1/token/generate`, `/v1/auth/me`) | Controlador central de acessos, usuários, bloqueios, RBAC (`Admin`/`Operator`/`Viewer`/`Partner`) e destinos. |
 | 2 | `trade.atius.com.br` | atius-srv-1 | 10.11.1.11:3000 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Painel de trading institucional. |
 | 3 | `painel.atius.com.br` | atius-srv-1 | 10.11.1.11:3001 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Gestão corporativa Atius. |
 | 4 | `dashboard.atius.com.br` | atius-srv-1 | 10.11.1.11:3002 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Métricas e analytics de execução. |
 | 5 | `backtest.atius.com.br` | atius-srv-1 | 10.11.1.11:3003 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Motor de backtesting quantitativo. |
 | 6 | `strategy.atius.com.br` | atius-srv-1 | 10.11.1.11:3004 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Gestão de algoritmos de negociação. |
-| 7 | `admin.atius.com.br` | atius-srv-1 | 10.11.1.11:3005 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Console administrativo do ATS. |
+| 7 | `admin.atius.com.br` / `admin.atius.io` | atius-srv-1 | `127.0.0.1:34805` (via Edge `:8210`) | Padrão 2 | ATS SSO + Edge Gateway `:8210` (`allowedRoles: ["admin", "operator"]`) | Omni Control-Plane FastAPI centralizado (migrado da porta `8000` para `34805`, sem colisão com Cockpit `:9090`). |
 | 8 | `talk.atius.com.br` | atius-srv-1 | 10.11.1.11:3006 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Interface conversacional de IA. |
 | 9 | `admin-talk.atius.com.br` | atius-srv-1 | 10.11.1.11:3007 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Gestão administrativa do Talk. |
 | 10 | `remote.atius.com.br` | atius-srv-1 | 10.11.1.11:3008 | Padrão 1 | ATS SSO (`auth-token` + `/v1/auth/me`) | Conector de instâncias MT5 remotas. |

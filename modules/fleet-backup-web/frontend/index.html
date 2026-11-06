@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="pt-BR" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Atius Fleet — Backups & Schedule Control</title>
+  <!-- Tailwind CSS via CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eff6ff',
+              100: '#dbeafe',
+              500: '#3b82f6',
+              600: '#2563eb',
+              700: '#1d4ed8',
+              900: '#1e3a8a',
+            },
+            surface: {
+              900: '#0a0e17',
+              800: '#111827',
+              700: '#1f2937',
+              600: '#374151',
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Estilos adicionais e scrollbar escura */
+    body { background-color: #0a0e17; color: #f3f4f6; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #111827; }
+    ::-webkit-scrollbar-thumb { background: #374151; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #4b5563; }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col font-sans antialiased text-gray-100">
+
+  <!-- Top Bar / Header -->
+  <header class="border-b border-surface-700 bg-surface-800/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+      <div class="flex items-center space-x-3">
+        <div class="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 7v10c0 2.21 3.582 4 8 4s8-1.79 8-4V7M4 7c0 2.21 3.582 4 8 4s8-1.79 8-4M4 7c0-2.21 3.582-4 8-4s8 1.79 8 4m0 5c0 2.21-3.582 4-8 4s-8-1.79-8-4" />
+          </svg>
+        </div>
+        <div>
+          <span class="text-lg font-bold tracking-tight text-white">ATIUS FLEET</span>
+          <span class="text-xs ml-2 px-2 py-0.5 rounded-full bg-blue-900/60 text-blue-300 font-medium border border-blue-700/50">Storage & Timers</span>
+        </div>
+      </div>
+
+      <!-- User & Quick Controls -->
+      <div class="flex items-center space-x-4">
+        <div class="hidden sm:flex items-center space-x-2 text-xs text-gray-400">
+          <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+          <span>Google Drive (/mnt/gdrive) Conectado</span>
+        </div>
+        <button id="btn-refresh" onclick="fetchSummary()" class="p-2 rounded-lg bg-surface-700 hover:bg-surface-600 text-gray-300 transition">
+          <svg id="refresh-icon" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+          </svg>
+        </button>
+        <div class="text-xs px-3 py-1.5 rounded-lg bg-surface-700 border border-surface-600 text-gray-300">
+          giovanni@atius.com.br
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Metric Badges Row -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 w-full">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div class="p-4 rounded-xl bg-surface-800 border border-surface-700 shadow-sm">
+        <div class="text-xs font-medium text-gray-400 uppercase tracking-wider">Volume Total de Dumps</div>
+        <div id="stat-total-size" class="text-2xl font-bold text-white mt-1">Carregando...</div>
+        <div class="text-xs text-emerald-400 mt-1">Sincronizado no Google Drive</div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-800 border border-surface-700 shadow-sm">
+        <div class="text-xs font-medium text-gray-400 uppercase tracking-wider">Servidores Monitorados</div>
+        <div class="text-2xl font-bold text-white mt-1">4 <span class="text-sm font-normal text-gray-400">/ 4 Nós</span></div>
+        <div class="text-xs text-blue-400 mt-1">SRV-1 a SRV-4 Ativos</div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-800 border border-surface-700 shadow-sm">
+        <div class="text-xs font-medium text-gray-400 uppercase tracking-wider">Agendamento Diário</div>
+        <div class="text-2xl font-bold text-white mt-1">03:30 <span class="text-sm font-normal text-gray-400">BRT</span></div>
+        <div class="text-xs text-emerald-400 mt-1">Systemd Timer Ativo</div>
+      </div>
+
+      <div class="p-4 rounded-xl bg-surface-800 border border-surface-700 shadow-sm">
+        <div class="text-xs font-medium text-gray-400 uppercase tracking-wider">Política de Retenção</div>
+        <div class="text-2xl font-bold text-white mt-1">14 <span class="text-sm font-normal text-gray-400">Dias</span></div>
+        <div class="text-xs text-indigo-400 mt-1">Purga Automática Ativa</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navigation Tabs -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full">
+    <div class="border-b border-surface-700 flex space-x-6">
+      <button id="tab-btn-backups" onclick="switchTab('backups')" class="pb-3 text-sm font-semibold border-b-2 border-blue-500 text-blue-400 flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" /></svg>
+        <span>Backups de Bancos de Dados</span>
+      </button>
+
+      <button id="tab-btn-schedules" onclick="switchTab('schedules')" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+        <span>Controle de Agendamentos & Timers</span>
+      </button>
+
+      <button id="tab-btn-quotas" onclick="switchTab('quotas')" class="pb-3 text-sm font-semibold border-b-2 border-transparent text-gray-400 hover:text-gray-200 flex items-center space-x-2">
+        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" /></svg>
+        <span>Quotas VFS & Governança</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- Content Container -->
+  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-1">
+
+    <!-- TAB 1: FLEET BACKUPS -->
+    <section id="tab-content-backups" class="space-y-6">
+      <!-- Cards dos 4 Servidores -->
+      <div id="fleet-host-cards" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <!-- Renderizado dinamicamente via JS -->
+      </div>
+
+      <!-- Painel de Detalhes do Snapshot Selecionado -->
+      <div class="rounded-xl bg-surface-800 border border-surface-700 p-6 shadow-sm">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between pb-4 border-b border-surface-700 gap-3">
+          <div>
+            <h3 class="text-base font-semibold text-white flex items-center space-x-2">
+              <span id="selected-host-title">atius-srv-1</span>
+              <span class="text-xs px-2 py-0.5 rounded bg-surface-700 text-gray-300">Snapshots & Dumps</span>
+            </h3>
+            <p class="text-xs text-gray-400 mt-0.5">Integridade verificada com SHA256SUMS e manifesto JSON.</p>
+          </div>
+          <div class="flex items-center space-x-2">
+            <label class="text-xs text-gray-400">Data:</label>
+            <select id="select-snapshot-date" onchange="loadSnapshotDetails()" class="bg-surface-700 border border-surface-600 rounded-lg text-xs px-3 py-1.5 text-white focus:outline-none focus:ring-1 focus:ring-blue-500">
+              <!-- Datas dinâmicas -->
+            </select>
+            <button onclick="triggerBackupNow()" class="px-3 py-1.5 rounded-lg bg-blue-600 hover:bg-blue-500 text-xs font-medium text-white transition flex items-center space-x-1">
+              <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /></svg>
+              <span>Backup Agora</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dumps Table -->
+        <div class="overflow-x-auto mt-4">
+          <table class="w-full text-left text-xs">
+            <thead class="text-gray-400 uppercase tracking-wider bg-surface-900/50 border-b border-surface-700">
+              <tr>
+                <th class="py-3 px-4">Arquivo de Dump</th>
+                <th class="py-3 px-4">Tamanho</th>
+                <th class="py-3 px-4">Checksum SHA256</th>
+                <th class="py-3 px-4 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="dumps-table-body" class="divide-y divide-surface-700 font-mono">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 2: SCHEDULES & TIMERS -->
+    <section id="tab-content-schedules" class="hidden space-y-6">
+      <!-- Systemd Timers da Frota -->
+      <div class="rounded-xl bg-surface-800 border border-surface-700 p-6 shadow-sm">
+        <h3 class="text-base font-semibold text-white mb-1">Timers Canônicos Systemd da Frota</h3>
+        <p class="text-xs text-gray-400 mb-4">Temporizadores nativos do sistema operacional ativos em atius-srv-1 a 4.</p>
+        
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-gray-400 uppercase tracking-wider bg-surface-900/50 border-b border-surface-700">
+              <tr>
+                <th class="py-3 px-4">Temporizador (Timer)</th>
+                <th class="py-3 px-4">Servidores Alvo</th>
+                <th class="py-3 px-4">Agendamento</th>
+                <th class="py-3 px-4">Script Associado</th>
+                <th class="py-3 px-4">Status</th>
+                <th class="py-3 px-4 text-right">Ação</th>
+              </tr>
+            </thead>
+            <tbody id="timers-table-body" class="divide-y divide-surface-700">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Catálogo de Rotinas (omni routine) -->
+      <div class="rounded-xl bg-surface-800 border border-surface-700 p-6 shadow-sm">
+        <div class="flex items-center justify-between mb-4">
+          <div>
+            <h3 class="text-base font-semibold text-white">Catálogo de Rotinas Operacionais (omni routine)</h3>
+            <p class="text-xs text-gray-400 mt-0.5">Execuções soberanas com isolamento de locks e contenção de CPU (<= 20%).</p>
+          </div>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-left text-xs">
+            <thead class="text-gray-400 uppercase tracking-wider bg-surface-900/50 border-b border-surface-700">
+              <tr>
+                <th class="py-3 px-4">ID da Rotina</th>
+                <th class="py-3 px-4">Nome & Descrição</th>
+                <th class="py-3 px-4">Host</th>
+                <th class="py-3 px-4">Perfil</th>
+                <th class="py-3 px-4">Timeout</th>
+                <th class="py-3 px-4 text-right">Disparo</th>
+              </tr>
+            </thead>
+            <tbody id="routines-table-body" class="divide-y divide-surface-700">
+              <!-- Renderizado dinamicamente -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- TAB 3: QUOTAS & GOVERNANÇA -->
+    <section id="tab-content-quotas" class="hidden space-y-6">
+      <div class="rounded-xl bg-surface-800 border border-surface-700 p-6 shadow-sm">
+        <h3 class="text-base font-semibold text-white mb-2">Tabela Canônica de Quotas de Cache VFS Rclone</h3>
+        <p class="text-xs text-gray-400 mb-4">Limites estritos de cache para proteger o disco raiz (ext4) contra exaustão.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="p-4 rounded-lg bg-surface-900 border border-surface-700">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">atius-srv-1</span>
+              <span class="px-2 py-0.5 rounded text-xs bg-blue-900/50 text-blue-300">Quota: 3G | 6h</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Bancos de Dados Críticos (Postgres, Plane, Router AI). Partição restrita (~70% ocupada).</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-surface-900 border border-surface-700">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">atius-srv-2</span>
+              <span class="px-2 py-0.5 rounded text-xs bg-emerald-900/50 text-emerald-300">Quota: 10G | 24h</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">Servidor Mailcow MariaDB e relays de correio. Carga balanceada com retenção de 24 horas.</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-surface-900 border border-surface-700">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">atius-srv-3</span>
+              <span class="px-2 py-0.5 rounded text-xs bg-amber-900/50 text-amber-300">Quota: 5G | 12h</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">HashiCorp Vault & Landscape Control-Plane. Preserva containers LXD e banco do Landscape.</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-surface-900 border border-surface-700">
+            <div class="flex items-center justify-between">
+              <span class="font-bold text-white text-sm">atius-srv-4</span>
+              <span class="px-2 py-0.5 rounded text-xs bg-purple-900/50 text-purple-300">Quota: 30G | 48h</span>
+            </div>
+            <p class="text-xs text-gray-400 mt-2">K3s Cluster, GitLab Runner e Mailu SQLite. Amplo headroom de armazenamento (>130 GiB).</p>
+          </div>
+        </div>
+
+        <div class="mt-6 p-4 rounded-lg bg-blue-950/40 border border-blue-800/50 text-xs text-blue-200">
+          <span class="font-semibold">Segurança & Tmpfs:</span> O arquivo <code class="bg-blue-900/40 px-1 rounded">/run/rclone/rclone.conf</code> reside exclusivamente em RAM (<code class="bg-blue-900/40 px-1 rounded">0600</code>) hidratado dinamicamente pelo HashiCorp Vault. Zero credencial toca o disco permanente.
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Modal de Execução / Logs -->
+  <div id="modal-run" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden z-50 flex items-center justify-center p-4">
+    <div class="bg-surface-800 border border-surface-700 rounded-xl max-w-2xl w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-3 border-b border-surface-700">
+        <h4 id="modal-title" class="text-sm font-bold text-white">Executando Rotina...</h4>
+        <button onclick="closeModal()" class="text-gray-400 hover:text-white">&times;</button>
+      </div>
+      <div class="mt-4">
+        <pre id="modal-logs" class="bg-surface-900 p-4 rounded-lg text-xs font-mono text-gray-300 overflow-x-auto max-h-80 whitespace-pre-wrap">Aguardando saída...</pre>
+      </div>
+      <div class="mt-4 flex justify-end">
+        <button onclick="closeModal()" class="px-4 py-2 rounded-lg bg-surface-700 hover:bg-surface-600 text-xs font-medium text-white transition">Fechar</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Client-side Logic -->
+  <script>
+    let currentHost = 'atius-srv-1';
+    let summaryData = null;
+
+    function switchTab(tab) {
+      ['backups', 'schedules', 'quotas'].forEach(t => {
+        document.getElementById(`tab-content-${t}`).classList.add('hidden');
+        document.getElementById(`tab-btn-${t}`).classList.remove('border-blue-500', 'text-blue-400');
+        document.getElementById(`tab-btn-${t}`).classList.add('border-transparent', 'text-gray-400');
+      });
+      document.getElementById(`tab-content-${tab}`).classList.remove('hidden');
+      document.getElementById(`tab-btn-${tab}`).classList.add('border-blue-500', 'text-blue-400');
+      document.getElementById(`tab-btn-${tab}`).classList.remove('border-transparent', 'text-gray-400');
+
+      if (tab === 'schedules') {
+        loadSchedules();
+      }
+    }
+
+    async function fetchSummary() {
+      const refreshIcon = document.getElementById('refresh-icon');
+      refreshIcon.classList.add('animate-spin');
+      try {
+        const res = await fetch('/api/v1/backups/summary');
+        summaryData = await res.json();
+        renderSummary();
+      } catch (e) {
+        console.error('Falha ao obter sumário:', e);
+      } finally {
+        setTimeout(() => refreshIcon.classList.remove('animate-spin'), 600);
+      }
+    }
+
+    function renderSummary() {
+      if (!summaryData) return;
+      document.getElementById('stat-total-size').textContent = summaryData.total_fleet_size_formatted || '0 B';
+
+      const cardsContainer = document.getElementById('fleet-host-cards');
+      cardsContainer.innerHTML = '';
+
+      Object.values(summaryData.hosts).forEach(h => {
+        const isSelected = h.host_id === currentHost;
+        const statusColor = h.status === 'HEALTHY' ? 'text-emerald-400 bg-emerald-950/60 border-emerald-800' : 'text-amber-400 bg-amber-950/60 border-amber-800';
+        const card = document.createElement('div');
+        card.className = `p-4 rounded-xl bg-surface-800 border ${isSelected ? 'border-blue-500 ring-1 ring-blue-500' : 'border-surface-700'} cursor-pointer hover:border-surface-600 transition`;
+        card.onclick = () => selectHost(h.host_id);
+
+        card.innerHTML = `
+          <div class="flex items-center justify-between">
+            <span class="font-bold text-white text-sm">${h.host_id}</span>
+            <span class="text-[10px] px-2 py-0.5 rounded-full border ${statusColor} font-semibold">${h.status}</span>
+          </div>
+          <div class="text-xs text-gray-400 mt-2">Dumps: <span class="text-gray-200 font-semibold">${h.dumps_count}</span> (${h.total_size_formatted})</div>
+          <div class="text-[11px] text-gray-400 mt-1">Último: <span class="text-gray-300">${h.last_backup_date || 'Nenhum'}</span></div>
+          <div class="mt-3 pt-3 border-t border-surface-700/60 flex items-center justify-between">
+            <span class="text-[10px] text-gray-400">Quota: ${h.vfs_quota.max_size || 'N/A'}</span>
+            <button onclick="event.stopPropagation(); triggerHostBackup('${h.host_id}')" class="text-[11px] px-2 py-1 rounded bg-blue-600/80 hover:bg-blue-600 text-white font-medium">Backup</button>
+          </div>
+        `;
+        cardsContainer.appendChild(card);
+      });
+
+      loadHostDates(currentHost);
+    }
+
+    async function selectHost(hostId) {
+      currentHost = hostId;
+      document.getElementById('selected-host-title').textContent = hostId;
+      renderSummary();
+    }
+
+    async function loadHostDates(hostId) {
+      const select = document.getElementById('select-snapshot-date');
+      select.innerHTML = '';
+      try {
+        const res = await fetch(`/api/v1/backups/hosts/${hostId}`);
+        const snapshots = await res.json();
+        if (snapshots.length === 0) {
+          select.innerHTML = '<option value="">Nenhum snapshot</option>';
+          renderDumps([]);
+          return;
+        }
+        snapshots.forEach(s => {
+          const opt = document.createElement('option');
+          opt.value = s.date;
+          opt.textContent = `${s.date} (${s.size_formatted})`;
+          select.appendChild(opt);
+        });
+        loadSnapshotDetails();
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function loadSnapshotDetails() {
+      const date = document.getElementById('select-snapshot-date').value;
+      if (!date) return;
+      try {
+        const res = await fetch(`/api/v1/backups/hosts/${currentHost}/${date}`);
+        const data = await res.json();
+        renderDumps(data.dumps || []);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    function renderDumps(dumps) {
+      const tbody = document.getElementById('dumps-table-body');
+      tbody.innerHTML = '';
+      if (!dumps || dumps.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="py-4 text-center text-gray-400 font-sans">Nenhum dump registrado nesta data.</td></tr>`;
+        return;
+      }
+      const date = document.getElementById('select-snapshot-date').value;
+
+      dumps.forEach(d => {
+        const tr = document.createElement('tr');
+        tr.className = 'hover:bg-surface-700/30 transition';
+        const shortSha = d.sha256 ? d.sha256.substring(0, 16) + '...' : 'N/A';
+        tr.innerHTML = `
+          <td class="py-3 px-4 text-gray-200 font-medium">${d.filename}</td>
+          <td class="py-3 px-4 text-gray-300 font-sans">${d.size_formatted}</td>
+          <td class="py-3 px-4 text-gray-400" title="${d.sha256}">
+            <span class="cursor-pointer hover:text-blue-400" onclick="navigator.clipboard.writeText('${d.sha256}')">${shortSha}</span>
+          </td>
+          <td class="py-3 px-4 text-right">
+            <a href="/api/v1/backups/download/${currentHost}/${date}/${d.filename}" class="px-2.5 py-1 rounded bg-surface-700 hover:bg-surface-600 text-[11px] font-sans font-medium text-blue-400 hover:text-blue-300 transition" download>
+              Download
+            </a>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function loadSchedules() {
+      try {
+        const [timersRes, routinesRes] = await Promise.all([
+          fetch('/api/v1/schedules/timers'),
+          fetch('/api/v1/schedules/routines')
+        ]);
+        const timers = await timersRes.json();
+        const routines = await routinesRes.json();
+
+        // Render Timers
+        const timersTbody = document.getElementById('timers-table-body');
+        timersTbody.innerHTML = '';
+        timers.forEach(t => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-surface-700/30 transition';
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-semibold text-white">${t.name}<br><span class="text-[10px] text-gray-400 font-mono">${t.id}</span></td>
+            <td class="py-3 px-4 text-gray-300">${t.target_hosts.join(', ')}</td>
+            <td class="py-3 px-4 text-gray-300">${t.schedule}</td>
+            <td class="py-3 px-4 text-gray-400 font-mono text-[11px]">${t.script}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-emerald-950/80 text-emerald-300 border border-emerald-800">Ativo</span></td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="triggerTimer('${t.id}')" class="px-2.5 py-1 rounded bg-blue-600/80 hover:bg-blue-600 text-white font-medium text-[11px]">Rodar</button>
+            </td>
+          `;
+          timersTbody.appendChild(tr);
+        });
+
+        // Render Routines
+        const routinesTbody = document.getElementById('routines-table-body');
+        routinesTbody.innerHTML = '';
+        routines.forEach(r => {
+          const tr = document.createElement('tr');
+          tr.className = 'hover:bg-surface-700/30 transition';
+          tr.innerHTML = `
+            <td class="py-3 px-4 font-mono font-semibold text-blue-400">${r.id}</td>
+            <td class="py-3 px-4 text-white">${r.name}<br><span class="text-gray-400 text-[11px]">${r.description}</span></td>
+            <td class="py-3 px-4 text-gray-300">${r.target_host}</td>
+            <td class="py-3 px-4"><span class="px-2 py-0.5 rounded text-[10px] bg-surface-700 text-gray-300">${r.execution_profile}</span></td>
+            <td class="py-3 px-4 text-gray-400">${r.timeout_seconds}s</td>
+            <td class="py-3 px-4 text-right">
+              <button onclick="triggerRoutine('${r.id}')" class="px-2.5 py-1 rounded bg-blue-600 hover:bg-blue-500 text-white font-medium text-[11px]">Executar</button>
+            </td>
+          `;
+          routinesTbody.appendChild(tr);
+        });
+
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    async function triggerHostBackup(host) {
+      if (!confirm(`Deseja disparar backup imediato de banco de dados no host ${host}?`)) return;
+      openModal(`Disparando Backup em ${host}...`, 'Enviando solicitação via Landscape Script ID: 16...');
+      try {
+        const res = await fetch('/api/v1/backups/trigger', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({host: host, dry_run: false})
+        });
+        const data = await res.json();
+        document.getElementById('modal-logs').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        document.getElementById('modal-logs').textContent = 'Erro ao disparar: ' + e.message;
+      }
+    }
+
+    function triggerBackupNow() {
+      triggerHostBackup(currentHost);
+    }
+
+    async function triggerTimer(timerId) {
+      if (!confirm(`Deseja disparar o timer ${timerId} imediatamente?`)) return;
+      openModal(`Disparo do Timer: ${timerId}`, 'Disparando execução via Landscape / systemctl...');
+      try {
+        const res = await fetch('/api/v1/backups/trigger', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({host: 'all', dry_run: false})
+        });
+        const data = await res.json();
+        document.getElementById('modal-logs').textContent = JSON.stringify(data, null, 2);
+      } catch (e) {
+        document.getElementById('modal-logs').textContent = 'Erro: ' + e.message;
+      }
+    }
+
+    async function triggerRoutine(routineId) {
+      if (!confirm(`Deseja executar a rotina ${routineId}?`)) return;
+      openModal(`Executando Rotina: ${routineId}`, 'Adquirindo lock e executando sob cgroup CPU <= 20%...');
+      try {
+        const res = await fetch(`/api/v1/schedules/routines/${routineId}/run`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({dry_run: false})
+        });
+        const data = await res.json();
+        let out = `Status: ${data.status}\nExit Code: ${data.exit_code}\nDuração: ${data.duration_seconds}s\n\n--- STDOUT ---\n${data.stdout_tail || 'Sem saída.'}`;
+        if (data.stderr_tail) out += `\n\n--- STDERR ---\n${data.stderr_tail}`;
+        document.getElementById('modal-logs').textContent = out;
+      } catch (e) {
+        document.getElementById('modal-logs').textContent = 'Erro: ' + e.message;
+      }
+    }
+
+    function openModal(title, text) {
+      document.getElementById('modal-title').textContent = title;
+      document.getElementById('modal-logs').textContent = text;
+      document.getElementById('modal-run').classList.remove('hidden');
+    }
+
+    function closeModal() {
+      document.getElementById('modal-run').classList.add('hidden');
+    }
+
+    // Inicialização
+    fetchSummary();
+    // Auto-refresh a cada 45 segundos
+    setInterval(fetchSummary, 45000);
+  </script>
+</body>
+</html>

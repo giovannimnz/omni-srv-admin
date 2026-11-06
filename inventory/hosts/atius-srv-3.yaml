@@ -31,6 +31,17 @@ cleanup:
   pending:
     - inviolable-watchdog.timer active but service fails with status 203/EXEC because /home/ubuntu/scripts/inviolable-watchdog.sh is absent
     - Historical note only: old wg0-era aliases were retired after the wg100 cutover.
+network:
+  model: single-vcn-single-vnic
+  vcn_cidr: 10.3.0.0/16
+  subnet_cidr: 10.3.0.0/16
+  oci_gateway_ip: 10.3.0.1
+  oci_dns_ip: 10.3.0.2
+  target_oci_private_ip: 10.3.1.1
+  drg_state: active
+  wireguard_interface: wg100
+  wireguard_ip: 10.100.100.3
+  wireguard_role: reserve-fallback
 apps:
   - id: mosh
     runtime: binary

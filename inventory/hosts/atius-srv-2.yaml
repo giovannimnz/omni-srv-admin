@@ -32,6 +32,17 @@ cleanup:
   pending:
     - review Docker volumes before any volume prune
     - router is router-ai-zentrius under /home/ubuntu/docker/Atius/router-ai-zentrius, not router-ai-atius
+network:
+  model: single-vcn-single-vnic
+  vcn_cidr: 10.2.0.0/16
+  subnet_cidr: 10.2.0.0/16
+  oci_gateway_ip: 10.2.0.1
+  oci_dns_ip: 10.2.0.2
+  target_oci_private_ip: 10.2.1.1
+  drg_state: active
+  wireguard_interface: wg100
+  wireguard_ip: 10.100.100.2
+  wireguard_role: reserve-fallback
 apps:
   - id: mosh
     runtime: binary

@@ -128,3 +128,17 @@ Rollback rápido:
 
 - Este runbook substitui o Apache Basic Auth como plano principal.
 - O documento antigo `docs/operations/edge-auth.md` continua útil apenas como trilha histórica / fallback / hipótese Cloudflare Access, não como estado final desejado por Giovanni.
+
+## Extensão Soberana (2026-11-06): Controlador IAM (`sso.atius.io` `:8015`) e Omni Control-Plane (`admin.atius.io` `:34805`)
+
+- **`sso.atius.com.br` / `sso.atius.io` (`http://127.0.0.1:8015`):**
+  - Central de Governança de Identidade & IAM (Keycloak Auth Gateway + RBAC Controller).
+  - Expõe `POST /v1/token/generate`, `GET /v1/auth/me`, CRUD de usuários (`/api/v1/iam/users`), bloqueio/desbloqueio (`/block`, `/unblock`), personas RBAC (`Admin`, `Operator`, `Viewer`, `Partner`), matriz de destinos (`/api/v1/iam/destinations`) e simulador/autorizador (`/api/v1/iam/authorize`).
+- **`admin.atius.com.br` / `admin.atius.io` (`http://127.0.0.1:34805`):**
+  - Omni Control-Plane FastAPI migrado da porta legada `8000` para a porta canônica `34805`, eliminando colisão com o Cockpit (`:9090`).
+  - Protegido no Edge Gateway (`:8210`) com `allowedRoles: ["admin", "operator"]` e validação de destino `admin.atius.io`.
+- **`storage.atius.com.br` / `storage.atius.io` (`http://127.0.0.1:8085`):**
+  - Dashboard de Storage & RClone (`omni-backup-web`), protegido com `allowedRoles: ["admin", "operator", "viewer"]`.
+- **Segregação Cockpit (`cockpit.atius.io` `:9090`):**
+  - Mantido exclusivamente para o console Linux PAM na porta `:9090`, nunca roteado para `admin.atius.*`.
+

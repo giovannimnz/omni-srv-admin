@@ -68,8 +68,8 @@ def test_forbidden_hosts_rejected():
 
 
 def test_allowed_hosts_allowlist():
-    """Valida que FLEET_HOSTS e ALLOWED_HOSTS contem estritamente a frota autorizada."""
-    expected = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "giovanni-w11-pc"}
+    """Valida que FLEET_HOSTS e ALLOWED_HOSTS contem estritamente a frota autorizada incluindo o hub atius-srv-4."""
+    expected = {"atius-srv-1", "atius-srv-2", "atius-srv-3", "atius-srv-4", "giovanni-w11-pc"}
     assert ALLOWED_HOSTS == expected
     assert set(FLEET_HOSTS) == expected
     assert "horistic-srv" not in FLEET_HOSTS

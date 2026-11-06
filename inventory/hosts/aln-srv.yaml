@@ -21,12 +21,14 @@ platform:
   arch: x86_64
 status: active
 network:
-  oci_primary_vnic: ens3
-  oci_primary_ip: 10.31.0.31
-  oci_subnet_cidr: 10.31.0.0/24
-  oci_vcn_cidr: 10.31.0.0/16
+  model: single-vcn-single-vnic
+  vcn_cidr: 10.52.0.0/16
+  subnet_cidr: 10.52.0.0/16
+  oci_gateway_ip: 10.52.0.1
+  oci_dns_ip: 10.52.0.2
+  target_oci_private_ip: 10.52.1.1
   drg: Brasil - Sao Paulo (central)
-  dns_server: 10.11.1.11
+  drg_state: active
   tailscale_fallback: true
 notes:
   vault_project: 20-PROJETOS/21-PROJETOS-ATIVOS/omni-srv-admin

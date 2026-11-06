@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ATIUS Sovereign IAM (sso.atius.io :8015) &amp; Omni Control-Plane (admin.atius.io :34800)</title>
+  <style>
+    :root {
+      --bg-base: #0b0e14;
+      --bg-surface: #121722;
+      --bg-elevated: #19202e;
+      --border-subtle: #263147;
+      --border-focus: #f97316;
+      --text-primary: #f8fafc;
+      --text-secondary: #cbd5e1;
+      --text-muted: #94a3b8;
+      --accent-primary: #f97316;
+      --accent-hover: #fb923c;
+      --status-ok: #10b981;
+      --status-warn: #f59e0b;
+      --status-danger: #ef4444;
+      --status-info: #38bdf8;
+      --radius-md: 10px;
+      --radius-lg: 14px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      background-color: var(--bg-base);
+      color: var(--text-primary);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      line-height: 1.5;
+      overflow-x: hidden;
+      min-height: 100vh;
+    }
+
+    .skip-link {
+      position: absolute;
+      top: -999px;
+      left: 12px;
+      background: var(--accent-primary);
+      color: #000;
+      font-weight: 700;
+      padding: 10px 16px;
+      border-radius: var(--radius-md);
+      z-index: 9999;
+      text-decoration: none;
+    }
+    .skip-link:focus {
+      top: 12px;
+    }
+
+    header.topbar {
+      background: rgba(18, 23, 34, 0.94);
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 16px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(10px);
+    }
+
+    .brand-group {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+
+    .brand-logo {
+      width: 44px;
+      height: 44px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 18px;
+      color: #0b0e14;
+      flex-shrink: 0;
+    }
+
+    .brand-title h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-title p {
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .port-badges {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .port-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 600;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-primary);
+    }
+    .port-pill .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--status-ok);
+    }
+    .port-pill.accent {
+      border-color: rgba(249, 115, 22, 0.55);
+      background: rgba(249, 115, 22, 0.12);
+    }
+
+    main#main-content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+    }
+
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+      gap: 16px;
+    }
+
+    .kpi-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 18px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .kpi-card .label {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .kpi-card .value {
+      font-size: 1.65rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .kpi-card .sub {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    .toolbar {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex: 1 1 320px;
+    }
+
+    .search-input {
+      width: 100%;
+      min-height: 44px;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-size: 0.92rem;
+    }
+    .search-input:focus {
+      outline: 2px solid var(--border-focus);
+      border-color: transparent;
+    }
+
+    .badge-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 34px;
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      min-height: 44px;
+      min-width: 44px;
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.86rem;
+      font-weight: 600;
+      cursor: pointer;
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+      transition: background 0.15s ease, border-color 0.15s ease;
+    }
+    .btn:hover {
+      border-color: var(--accent-primary);
+    }
+    .btn:focus-visible {
+      outline: 2px solid var(--border-focus);
+      outline-offset: 2px;
+    }
+    .btn-primary {
+      background: var(--accent-primary);
+      color: #0b0e14;
+      border-color: var(--accent-primary);
+    }
+    .btn-primary:hover {
+      background: var(--accent-hover);
+    }
+    .btn-danger {
+      background: rgba(239, 68, 68, 0.16);
+      color: #fca5a5;
+      border-color: rgba(239, 68, 68, 0.45);
+    }
+
+    .section-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+
+    .panel {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .panel-header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--border-subtle);
+      padding-bottom: 12px;
+    }
+
+    .panel-header h2 {
+      font-size: 1.05rem;
+      font-weight: 700;
+    }
+
+    .table-wrap {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.88rem;
+    }
+
+    th, td {
+      padding: 12px 10px;
+      border-bottom: 1px solid var(--border-subtle);
+      vertical-align: middle;
+    }
+
+    th {
+      color: var(--text-secondary);
+      font-weight: 600;
+      font-size: 0.78rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .role-badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 999px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+    .role-Admin {
+      background: rgba(249, 115, 22, 0.18);
+      color: #fdba74;
+      border-color: rgba(249, 115, 22, 0.45);
+    }
+    .role-Operator {
+      background: rgba(56, 189, 248, 0.16);
+      color: #7dd3fc;
+      border-color: rgba(56, 189, 248, 0.45);
+    }
+    .role-Viewer {
+      background: rgba(16, 185, 129, 0.16);
+      color: #6ee7b7;
+      border-color: rgba(16, 185, 129, 0.45);
+    }
+    .role-Partner {
+      background: rgba(168, 85, 247, 0.16);
+      color: #d8b4fe;
+      border-color: rgba(168, 85, 247, 0.45);
+    }
+
+    .status-badge {
+      display: inline-block;
+      padding: 3px 9px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .status-active {
+      background: rgba(16, 185, 129, 0.18);
+      color: #6ee7b7;
+    }
+    .status-blocked {
+      background: rgba(239, 68, 68, 0.2);
+      color: #fca5a5;
+    }
+
+    .dest-chip {
+      display: inline-block;
+      padding: 2px 8px;
+      margin: 2px;
+      border-radius: 6px;
+      font-size: 0.74rem;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      color: var(--text-secondary);
+    }
+
+    .roles-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+    }
+
+    .role-card {
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .empty-state {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 32px 16px;
+      text-align: center;
+      border: 1px dashed var(--border-subtle);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+    }
+
+    .auth-sim-form {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+    .form-field {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      flex: 1 1 200px;
+    }
+    .form-field label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+    .form-field select, .form-field input {
+      min-height: 44px;
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-subtle);
+      background: var(--bg-base);
+      color: var(--text-primary);
+      font-size: 0.88rem;
+    }
+
+    #sim-result {
+      padding: 12px 16px;
+      border-radius: var(--radius-md);
+      font-size: 0.86rem;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      background: var(--bg-base);
+      border: 1px solid var(--border-subtle);
+      display: none;
+    }
+
+    @media (max-width: 640px) {
+      header.topbar, main#main-content {
+        padding: 14px;
+      }
+      th, td {
+        padding: 8px 6px;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a href="#main-content" class="skip-link">Pular para o conteúdo principal</a>
+
+  <header class="topbar" role="banner">
+    <div class="brand-group">
+      <div class="brand-logo" aria-hidden="true">AT</div>
+      <div class="brand-title">
+        <h1>ATIUS Sovereign IAM &amp; Omni Control-Plane</h1>
+        <p>Keycloak Access Controller (<code>sso.atius.io :8015</code>) &bull; Infra Control-Plane (<code>admin.atius.io :34800</code>)</p>
+      </div>
+    </div>
+    <div class="port-badges" aria-label="Status das portas canônicas">
+      <span class="port-pill accent"><span class="dot"></span>admin.atius.io &rarr; 127.0.0.1:34800</span>
+      <span class="port-pill accent"><span class="dot"></span>sso.atius.io &rarr; 127.0.0.1:8015</span>
+      <span class="port-pill"><span class="dot"></span>cockpit.atius.io &rarr; :9090 (PAM Isolado)</span>
+      <span class="port-pill"><span class="dot"></span>storage.atius.io &rarr; :8085</span>
+    </div>
+  </header>
+
+  <main id="main-content" role="main">
+    <section class="kpi-grid" aria-label="Resumo executivo de IAM e Control-Plane">
+      <div class="kpi-card">
+        <span class="label">Porta Omni Control-Plane</span>
+        <span class="value" id="kpi-cp-port">34800</span>
+        <span class="sub">Zero colisão com Cockpit (:9090)</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Gateway IAM Keycloak SSO</span>
+        <span class="value" id="kpi-sso-port">8015</span>
+        <span class="sub">Realm: <code>atius-sovereign</code></span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Usuários SSO Unificados</span>
+        <span class="value" id="kpi-users-count">4</span>
+        <span class="sub" id="kpi-users-sub">4 ativos &bull; 0 bloqueados</span>
+      </div>
+      <div class="kpi-card">
+        <span class="label">Destinos Mapeados &amp; Perfis</span>
+        <span class="value" id="kpi-dest-count">10</span>
+        <span class="sub">4 Personas RBAC (Admin, Operator, Viewer, Partner)</span>
+      </div>
+    </section>
+
+    <section class="toolbar" aria-label="Busca inteligente multi-tier 9-tiers">
+      <div class="search-box">
+        <label for="global-search" style="position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);">Buscar usuários, CPF/CNPJ, perfis ou destinos</label>
+        <input
+          id="global-search"
+          class="search-input"
+          type="search"
+          placeholder="Busca Inteligente 9-Tiers (ex: Lívia, livia, 555.666, Operator, admin.atius.io, 34800)..."
+          autocomplete="off"
+        />
+        <span id="search-count-badge" class="badge-count" aria-live="polite">4 usuários &bull; 10 destinos</span>
+        <button id="btn-reset-top" class="btn" type="button" title="Limpar filtro de busca">Limpar</button>
+      </div>
+    </section>
+
+    <div class="section-grid">
+      <!-- Módulo 1: Usuários SSO & Controle de Credenciais -->
+      <section class="panel" aria-labelledby="heading-users">
+        <div class="panel-header">
+          <div>
+            <h2 id="heading-users">1. Gestão de Usuários SSO &amp; Credenciais Unificadas (<code>sso.atius.io</code>)</h2>
+            <p style="font-size:0.82rem;color:var(--text-secondary);">Criação, atribuição de perfil RBAC, mapeamento de destinos e bloqueio instantâneo.</p>
+          </div>
+        </div>
+
+        <form id="user-create-form" class="auth-sim-form" aria-label="Criar novo usuário SSO">
+          <div class="form-field">
+            <label for="new-user-name">Nome completo</label>
+            <input id="new-user-name" type="text" placeholder="Ex: Marina Costa" required />
+          </div>
+          <div class="form-field">
+            <label for="new-user-email">E-mail corporativo</label>
+            <input id="new-user-email" type="email" placeholder="marina.costa@atius.io" required />
+          </div>
+          <div class="form-field">
+            <label for="new-user-cpf">Documento (CPF/CNPJ)</label>
+            <input id="new-user-cpf" type="text" placeholder="000.000.000-00" />
+          </div>
+          <div class="form-field">
+            <label for="new-user-role">Perfil RBAC</label>
+            <select id="new-user-role">
+              <option value="Admin">Admin</option>
+              <option value="Operator" selected>Operator</option>
+              <option value="Viewer">Viewer</option>
+              <option value="Partner">Partner</option>
+            </select>
+          </div>
+          <div class="form-field">
+            <label for="new-user-dests">Destinos Autorizados (vírgula ou *)</label>
+            <input id="new-user-dests" type="text" placeholder="admin.atius.io, storage.atius.io" value="admin.atius.io, storage.atius.io" />
+          </div>
+          <button type="submit" class="btn btn-primary">Criar Usuário SSO</button>
+        </form>
+
+        <div id="users-empty-state" class="empty-state" role="status">
+          <p>Nenhum usuário ou destino encontrado para o termo <strong id="empty-search-term">""</strong>.</p>
+          <button id="btn-clear-search" class="btn btn-primary" type="button">Limpar busca</button>
+        </div>
+
+        <div class="table-wrap" id="users-table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Nome / E-mail</th>
+                <th>Documento (CPF/CNPJ)</th>
+                <th>Perfil (Persona RBAC)</th>
+                <th>Destinos Autorizados</th>
+                <th>Status</th>
+                <th>Ação IAM</th>
+              </tr>
+            </thead>
+            <tbody id="users-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Módulo 1B: Simulador de Autorização RBAC & Mapeamento de Destinos -->
+      <section class="panel" aria-labelledby="heading-sim">
+        <div class="panel-header">
+          <div>
+            <h2 id="heading-sim">2. Validador de Controle de Acesso RBAC &amp; Destinos (Live Policy Engine)</h2>
+            <p style="font-size:0.82rem;color:var(--text-secondary);">Teste em tempo real a concessão (200 OK) ou recusa (403 Forbidden) por perfil, destino ou bloqueio.</p>
+          </div>
+        </div>
+        <form id="auth-sim-form" class="auth-sim-form">
+          <div class="form-field">
+            <label for="sim-user">Usuário SSO</label>
+            <select id="sim-user"></select>
+          </div>
+          <div class="form-field">
+            <label for="sim-dest">Destino ATIUS</label>
+            <select id="sim-dest"></select>
+          </div>
+          <button type="submit" class="btn btn-primary">Testar Acesso IAM</button>
+        </form>
+        <div id="sim-result" role="region" aria-live="polite"></div>
+      </section>
+
+      <!-- Módulo 1C: Níveis de Acesso & Perfis (Roles & Groups) -->
+      <section class="panel" aria-labelledby="heading-roles">
+        <div class="panel-header">
+          <div>
+            <h2 id="heading-roles">3. Matriz de Níveis de Acesso &amp; Perfis RBAC (Personas ATIUS)</h2>
+            <p style="font-size:0.82rem;color:var(--text-secondary);">Governança granular de permissões e destinos padrão por perfil.</p>
+          </div>
+        </div>
+        <div id="roles-container" class="roles-cards"></div>
+      </section>
+
+      <!-- Módulo 2: Destinos & Portas Canônicas (Omni Control-Plane :34800) -->
+      <section class="panel" aria-labelledby="heading-destinations">
+        <div class="panel-header">
+          <div>
+            <h2 id="heading-destinations">4. Mapeamento de Destinos &amp; Contratos de Portas (Omni Control-Plane <code>:34800</code>)</h2>
+            <p style="font-size:0.82rem;color:var(--text-secondary);">Segregação estrita de portas e perfis autorizados por aplicação do ecossistema ATIUS.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Subdomínio / Aliases</th>
+                <th>Serviço / Módulo</th>
+                <th>Upstream Canônico</th>
+                <th>Perfis Permitidos</th>
+                <th>Permissão Requerida</th>
+              </tr>
+            </thead>
+            <tbody id="destinations-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Módulo 3: Trilha de Auditoria IAM & Control-Plane -->
+      <section class="panel" aria-labelledby="heading-audit">
+        <div class="panel-header">
+          <div>
+            <h2 id="heading-audit">5. Trilha de Auditoria Unificada IAM &amp; Control-Plane</h2>
+            <p style="font-size:0.82rem;color:var(--text-secondary);">Registro imutável de emissões de token, bloqueios, mutações RBAC e execuções na porta <code>34800</code>.</p>
+          </div>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>ID / Timestamp</th>
+                <th>Ator</th>
+                <th>Evento IAM / Control-Plane</th>
+                <th>Alvo / Destino</th>
+              </tr>
+            </thead>
+            <tbody id="audit-tbody"></tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    (() => {
+      let allUsers = [];
+      let allRoles = [];
+      let allDestinations = [];
+      let allAuditLogs = [];
+      let debounceTimer = null;
+
+      function escapeHtml(val) {
+        return String(val ?? '')
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#39;');
+      }
+
+      function normalizeText(str) {
+        if (!str) return '';
+        return String(str)
+          .normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '')
+          .toLowerCase()
+          .trim();
+      }
+
+      function cleanDigits(str) {
+        return String(str || '').replace(/\D+/g, '');
+      }
+
+      function scoreMatch9Tier(query, candidate, docValues = []) {
+        if (!query) return 1.0;
+        const rawQ = query.trim();
+        const rawC = String(candidate || '').trim();
+        if (!rawQ) return 1.0;
+
+        const qDigits = cleanDigits(rawQ);
+        if (qDigits.length >= 3) {
+          for (const d of docValues) {
+            const dDigits = cleanDigits(d);
+            if (!dDigits) continue;
+            if (dDigits === qDigits) return 0.99;
+            if (dDigits.includes(qDigits)) return 0.95;
+          }
+        }
+
+        if (!rawC) return 0.0;
+        if (rawQ === rawC) return 1.00; // Tier 1
+        if (rawQ.toLowerCase() === rawC.toLowerCase()) return 0.99; // Tier 2
+        const normQ = normalizeText(rawQ);
+        const normC = normalizeText(rawC);
+        if (normQ === normC) return 0.98; // Tier 3
+
+        const qTokens = normQ.split(/\s+/).filter(Boolean);
+        const cTokens = normC.split(/[^\w]+/).filter(Boolean);
+        if (qTokens.length >= 2 && qTokens.every(qt => cTokens.some(ct => ct === qt || ct.startsWith(qt)))) {
+          return 0.97; // Tier 4
+        }
+        if (rawC.toLowerCase().includes(rawQ.toLowerCase())) return 0.96; // Tier 5
+        if (normC.includes(normQ)) return 0.94; // Tier 6
+        if (qTokens.some(qt => cTokens.includes(qt))) return 0.93; // Tier 7
+        if (qTokens.some(qt => qt.length >= 2 && cTokens.some(ct => ct.startsWith(qt)))) return 0.90; // Tier 8
+        return 0.0;
+      }
+
+      function renderUsers(users) {
+        const tbody = document.getElementById('users-tbody');
+        tbody.innerHTML = '';
+        for (const u of users) {
+          const tr = document.createElement('tr');
+          const destChips = (u.allowed_destinations || [])
+            .slice(0, 6)
+            .map(d => `<span class="dest-chip">${escapeHtml(d)}</span>`)
+            .join('');
+          const statusClass = u.blocked ? 'status-blocked' : 'status-active';
+          const statusLabel = u.blocked ? 'BLOQUEADO' : 'ATIVO';
+          const toggleLabel = u.blocked ? 'Desbloquear' : 'Bloquear';
+          const btnClass = u.blocked ? 'btn' : 'btn btn-danger';
+          const safeRole = escapeHtml(u.role);
+
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight:700;">${escapeHtml(u.name)}</div>
+              <div style="font-size:0.78rem;color:var(--text-secondary);">${escapeHtml(u.email)}</div>
+            </td>
+            <td><code>${escapeHtml(u.cpf || u.cnpj || '-')}</code></td>
+            <td><span class="role-badge role-${safeRole}">${safeRole}</span></td>
+            <td>${destChips}</td>
+            <td><span class="status-badge ${statusClass}">${statusLabel}</span></td>
+            <td>
+              <button type="button" class="${btnClass}" data-uid="${escapeHtml(u.id)}" data-blocked="${Boolean(u.blocked)}">
+                ${toggleLabel}
+              </button>
+            </td>
+          `;
+          const btn = tr.querySelector('button');
+          btn.addEventListener('click', async () => {
+            const action = u.blocked ? 'unblock' : 'block';
+            await fetch(`/api/v1/iam/users/${encodeURIComponent(u.id)}/${action}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ reason: 'Ação via Painel IAM sso.atius.io' }),
+            });
+            await loadAllData();
+          });
+          tbody.appendChild(tr);
+        }
+      }
+
+      function renderRoles(roles) {
+        const container = document.getElementById('roles-container');
+        container.innerHTML = '';
+        for (const r of roles) {
+          const card = document.createElement('div');
+          card.className = 'role-card';
+          const perms = (r.permissions || []).slice(0, 6).map(p => `<span class="dest-chip">${escapeHtml(p)}</span>`).join('');
+          const dests = (r.default_destinations || []).slice(0, 6).map(d => `<span class="dest-chip">${escapeHtml(d)}</span>`).join('');
+          const safeName = escapeHtml(r.name);
+          card.innerHTML = `
+            <div style="display:flex;justify-content:space-between;align-items:center;">
+              <span class="role-badge role-${safeName}">${safeName}</span>
+              <span style="font-size:0.76rem;color:var(--text-muted);">Nível ${escapeHtml(r.level)}</span>
+            </div>
+            <div style="font-weight:600;font-size:0.9rem;">${escapeHtml(r.label)}</div>
+            <p style="font-size:0.8rem;color:var(--text-secondary);">${escapeHtml(r.description)}</p>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Permissões:</div>
+            <div>${perms}</div>
+            <div style="font-size:0.75rem;color:var(--text-muted);margin-top:4px;">Destinos Padrão:</div>
+            <div>${dests}</div>
+          `;
+          container.appendChild(card);
+        }
+      }
+
+      function renderDestinations(destinations) {
+        const tbody = document.getElementById('destinations-tbody');
+        tbody.innerHTML = '';
+        for (const d of destinations) {
+          const tr = document.createElement('tr');
+          const rolesBadges = (d.allowed_roles || [])
+            .map(r => `<span class="role-badge role-${escapeHtml(r)}" style="margin-right:4px;">${escapeHtml(r)}</span>`)
+            .join('');
+          const aliases = (d.aliases || []).join(', ');
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight:700;">${escapeHtml(d.host)}</div>
+              <div style="font-size:0.76rem;color:var(--text-muted);">${escapeHtml(aliases)}</div>
+            </td>
+            <td>
+              <div>${escapeHtml(d.name)}</div>
+              <div style="font-size:0.76rem;color:var(--text-secondary);">${escapeHtml(d.category)}</div>
+            </td>
+            <td><code>${escapeHtml(d.upstream)}</code></td>
+            <td>${rolesBadges}</td>
+            <td><code>${escapeHtml(d.required_permission || 'public/authenticated')}</code></td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      function renderAuditLogs(logs) {
+        const tbody = document.getElementById('audit-tbody');
+        if (!tbody) return;
+        tbody.innerHTML = '';
+        for (const entry of (logs || []).slice(0, 12)) {
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>
+              <div style="font-weight:600;"><code>${escapeHtml(entry.id)}</code></div>
+              <div style="font-size:0.74rem;color:var(--text-muted);">${escapeHtml(entry.timestamp)}</div>
+            </td>
+            <td><code>${escapeHtml(entry.actor)}</code></td>
+            <td><span class="dest-chip">${escapeHtml(entry.action)}</span></td>
+            <td><code>${escapeHtml(entry.target)}</code></td>
+          `;
+          tbody.appendChild(tr);
+        }
+      }
+
+      function populateSimulator(users, destinations) {
+        const uSel = document.getElementById('sim-user');
+        const dSel = document.getElementById('sim-dest');
+        uSel.innerHTML = users.map(u => `<option value="${escapeHtml(u.email)}">${escapeHtml(u.name)} (${escapeHtml(u.role)}${u.blocked ? ' - BLOQUEADO' : ''})</option>`).join('');
+        dSel.innerHTML = destinations.map(d => `<option value="${escapeHtml(d.host)}">${escapeHtml(d.host)} (${escapeHtml(d.upstream)})</option>`).join('');
+      }
+
+      function applyFilter(query) {
+        const q = (query || '').trim();
+        let filteredUsers = allUsers;
+        let filteredDests = allDestinations;
+
+        if (q) {
+          filteredUsers = allUsers
+            .map(u => {
+              const sc = Math.max(
+                scoreMatch9Tier(q, u.name, [u.cpf, u.cnpj, u.document]),
+                scoreMatch9Tier(q, u.email),
+                scoreMatch9Tier(q, u.role),
+                scoreMatch9Tier(q, (u.allowed_destinations || []).join(' '))
+              );
+              return { u, sc };
+            })
+            .filter(item => item.sc >= 0.70)
+            .sort((a, b) => b.sc - a.sc)
+            .map(item => item.u);
+
+          filteredDests = allDestinations
+            .map(d => {
+              const sc = Math.max(
+                scoreMatch9Tier(q, d.host),
+                scoreMatch9Tier(q, d.name),
+                scoreMatch9Tier(q, d.upstream),
+                scoreMatch9Tier(q, (d.allowed_roles || []).join(' '))
+              );
+              return { d, sc };
+            })
+            .filter(item => item.sc >= 0.70)
+            .sort((a, b) => b.sc - a.sc)
+            .map(item => item.d);
+        }
+
+        renderUsers(filteredUsers);
+        renderDestinations(filteredDests);
+
+        const badge = document.getElementById('search-count-badge');
+        badge.textContent = `${filteredUsers.length} usuários • ${filteredDests.length} destinos`;
+
+        const emptyState = document.getElementById('users-empty-state');
+        const tableWrap = document.getElementById('users-table-wrap');
+        if (filteredUsers.length === 0 && filteredDests.length === 0) {
+          document.getElementById('empty-search-term').textContent = `"${q}"`;
+          emptyState.style.display = 'flex';
+          tableWrap.style.display = 'none';
+        } else {
+          emptyState.style.display = 'none';
+          tableWrap.style.display = 'block';
+        }
+      }
+
+      async function loadAllData() {
+        try {
+          const [sumRes, usrRes, rolRes, dstRes, audRes] = await Promise.all([
+            fetch('/api/v1/iam/summary'),
+            fetch('/api/v1/iam/users'),
+            fetch('/api/v1/iam/roles'),
+            fetch('/api/v1/iam/destinations'),
+            fetch('/api/v1/iam/audit?limit=15'),
+          ]);
+          const summary = await sumRes.json();
+          const usrData = await usrRes.json();
+          const rolData = await rolRes.json();
+          const dstData = await dstRes.json();
+          const audData = await audRes.json();
+
+          allUsers = usrData.users || [];
+          allRoles = rolData.roles || [];
+          allDestinations = dstData.destinations || [];
+          allAuditLogs = audData.audit_logs || [];
+
+          document.getElementById('kpi-users-count').textContent = summary.total_users;
+          document.getElementById('kpi-users-sub').textContent = `${summary.active_users} ativos • ${summary.blocked_users} bloqueados`;
+          document.getElementById('kpi-dest-count').textContent = summary.total_destinations;
+
+          renderRoles(allRoles);
+          renderAuditLogs(allAuditLogs);
+          populateSimulator(allUsers, allDestinations);
+          applyFilter(document.getElementById('global-search').value);
+        } catch (err) {
+          console.error('Failed to load IAM & Control-Plane data:', err);
+        }
+      }
+
+      const createForm = document.getElementById('user-create-form');
+      if (createForm) {
+        createForm.addEventListener('submit', async (ev) => {
+          ev.preventDefault();
+          const name = document.getElementById('new-user-name').value.trim();
+          const email = document.getElementById('new-user-email').value.trim();
+          const cpf = document.getElementById('new-user-cpf').value.trim();
+          const role = document.getElementById('new-user-role').value;
+          const destRaw = document.getElementById('new-user-dests').value.trim();
+          const allowed_destinations = destRaw
+            ? destRaw.split(',').map(s => s.trim()).filter(Boolean)
+            : null;
+          const res = await fetch('/api/v1/iam/users', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ name, email, cpf, role, allowed_destinations }),
+          });
+          if (res.ok) {
+            document.getElementById('new-user-name').value = '';
+            document.getElementById('new-user-email').value = '';
+            document.getElementById('new-user-cpf').value = '';
+            await loadAllData();
+          }
+        });
+      }
+
+      const searchInput = document.getElementById('global-search');
+      searchInput.addEventListener('input', () => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => applyFilter(searchInput.value), 35);
+      });
+
+      const clearSearch = () => {
+        searchInput.value = '';
+        applyFilter('');
+        searchInput.focus();
+      };
+      document.getElementById('btn-clear-search').addEventListener('click', clearSearch);
+      document.getElementById('btn-reset-top').addEventListener('click', clearSearch);
+
+      document.getElementById('auth-sim-form').addEventListener('submit', async (ev) => {
+        ev.preventDefault();
+        const user = document.getElementById('sim-user').value;
+        const destination = document.getElementById('sim-dest').value;
+        const box = document.getElementById('sim-result');
+        const res = await fetch('/api/v1/iam/authorize', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ user, destination }),
+        });
+        const data = await res.json();
+        box.style.display = 'block';
+        box.style.borderColor = data.authorized ? 'var(--status-ok)' : 'var(--status-danger)';
+        box.textContent = `HTTP ${res.status} — ${data.authorized ? 'ACESSO PERMITIDO' : 'ACESSO RECUSADO (' + data.reason + ')'} | Usuário: ${user} -> Destino: ${destination}`;
+      });
+
+      loadAllData();
+    })();
+  </script>
+</body>
+</html>

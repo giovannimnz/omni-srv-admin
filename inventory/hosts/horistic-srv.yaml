@@ -21,6 +21,17 @@ modules:
   - xrdp-abnt2
 operational_skill: xrdp-abnt2-fleet
 operational_skill_source: modules/agent-content-packs/packs/codex-skills/items/xrdp-abnt2-fleet/SKILL.md
+network:
+  model: single-vcn-single-vnic
+  vcn_cidr: 10.51.0.0/16
+  subnet_cidr: 10.51.0.0/16
+  oci_gateway_ip: 10.51.0.1
+  oci_dns_ip: 10.51.0.2
+  target_oci_private_ip: 10.51.1.1
+  drg_state: active
+  wireguard_interface: wg100
+  wireguard_ip: 10.100.100.4
+  wireguard_role: reserve-fallback
 apps:
   - id: mosh
     runtime: binary

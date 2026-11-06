@@ -1,0 +1,147 @@
+{
+  "timestamp": "2026-11-06T07:21:35.490575+00:00",
+  "status": "PASS",
+  "live_servers_verified": {
+    "sso_iam_gateway": {
+      "bind": "http://127.0.0.1:8015",
+      "domains": [
+        "sso.atius.io",
+        "sso.atius.com.br"
+      ],
+      "health": {
+        "status": "healthy",
+        "service": "atius-sso-iam-gateway",
+        "host": "sso.atius.io",
+        "canonical_port": 34800,
+        "sso_gateway_port": 8015,
+        "edge_gateway_port": 8210,
+        "cockpit_port": 9090,
+        "storage_port": 8085,
+        "zero_cockpit_collision": true,
+        "legacy_port_8000_migrated": true,
+        "iam_realm": "atius-sovereign",
+        "roles_available": [
+          "Admin",
+          "Operator",
+          "Viewer",
+          "Partner"
+        ],
+        "users_count": 4,
+        "destinations_count": 10
+      }
+    },
+    "omni_control_plane": {
+      "bind": "http://127.0.0.1:34800",
+      "domains": [
+        "admin.atius.io",
+        "admin.atius.com.br"
+      ],
+      "health": {
+        "status": "healthy",
+        "service": "omni-control-plane",
+        "host": "admin.atius.io",
+        "canonical_port": 34800,
+        "sso_gateway_port": 8015,
+        "edge_gateway_port": 8210,
+        "cockpit_port": 9090,
+        "storage_port": 8085,
+        "zero_cockpit_collision": true,
+        "legacy_port_8000_migrated": true,
+        "iam_realm": "atius-sovereign",
+        "roles_available": [
+          "Admin",
+          "Operator",
+          "Viewer",
+          "Partner"
+        ],
+        "users_count": 4,
+        "destinations_count": 10
+      }
+    }
+  },
+  "rbac_authorization_matrix": [
+    {
+      "persona": "admin",
+      "user": "giovannimunizds@gmail.com",
+      "destination": "sso.atius.io",
+      "http_status": 200,
+      "allowed": true,
+      "reason": "authorized"
+    },
+    {
+      "persona": "admin",
+      "user": "giovannimunizds@gmail.com",
+      "destination": "admin.atius.io",
+      "http_status": 200,
+      "allowed": true,
+      "reason": "authorized"
+    },
+    {
+      "persona": "operator",
+      "user": "livia.nascimento@atius.io",
+      "destination": "sso.atius.io",
+      "http_status": 403,
+      "allowed": false,
+      "reason": "destination_explicitly_denied"
+    },
+    {
+      "persona": "operator",
+      "user": "livia.nascimento@atius.io",
+      "destination": "admin.atius.io",
+      "http_status": 200,
+      "allowed": true,
+      "reason": "authorized"
+    },
+    {
+      "persona": "viewer",
+      "user": "carlos.auditor@atius.io",
+      "destination": "admin.atius.io",
+      "http_status": 403,
+      "allowed": false,
+      "reason": "destination_explicitly_denied"
+    },
+    {
+      "persona": "viewer",
+      "user": "carlos.auditor@atius.io",
+      "destination": "storage.atius.io",
+      "http_status": 200,
+      "allowed": true,
+      "reason": "authorized"
+    },
+    {
+      "persona": "partner",
+      "user": "parceiro.quant@horistic.com",
+      "destination": "admin.atius.io",
+      "http_status": 403,
+      "allowed": false,
+      "reason": "destination_explicitly_denied"
+    },
+    {
+      "persona": "partner",
+      "user": "parceiro.quant@horistic.com",
+      "destination": "trade.atius.io",
+      "http_status": 200,
+      "allowed": true,
+      "reason": "authorized"
+    }
+  ],
+  "control_plane_execution": {
+    "operator_status_code": 200,
+    "viewer_refusal_status_code": 403
+  },
+  "cross_process_sync_verified": {
+    "edge_login_senha_status": 200,
+    "blocked_on_8015_rejected_on_34800_status": 403
+  },
+  "headless_screenshot": {
+    "captured": true,
+    "path": "docs/qa/screenshots/iam-sso-8015-and-control-plane-34800-headless.png"
+  },
+  "search_9_tier_verification": {
+    "query": "livia",
+    "matched_count": 1,
+    "matched_names": [
+      "Lívia Nascimento"
+    ]
+  }
+}

@@ -285,6 +285,42 @@ test('readConfig parses cockpit site with preserveHost: true and authMode: none'
   assert.equal(cockpitIo.publicOrigin, 'https://cockpit.atius.io');
 });
 
+test('readConfig parses segregated admin, storage, and sso endpoints without mixing cockpit :9090', () => {
+  const config = readConfig(fileURLToPath(new URL('../configs/atius-admin-edge-gateway.json', import.meta.url)));
+
+  // admin.atius.* must point to Omni Control-Plane on canonical port 34805 (NOT :9090 or legacy :8000)
+  const adminBr = config.sites['admin.atius.com.br'];
+  const adminIo = config.sites['admin.atius.io'];
+  const omniBr = config.sites['omni.atius.com.br'];
+  const omniIo = config.sites['omni.atius.io'];
+  assert.ok(adminBr, 'admin.atius.com.br should be configured');
+  assert.notEqual(adminBr.upstream.origin, 'http://127.0.0.1:9090', 'admin must not point to cockpit');
+  assert.notEqual(adminBr.upstream.origin, 'http://127.0.0.1:8000', 'admin must not point to legacy port 8000');
+  assert.equal(adminBr.upstream.origin, 'http://127.0.0.1:34805');
+  assert.deepEqual(adminBr.allowedRoles, ['admin', 'operator']);
+  assert.ok(adminIo, 'admin.atius.io should be configured');
+  assert.equal(adminIo.upstream.origin, 'http://127.0.0.1:34805');
+  assert.equal(omniBr.upstream.origin, 'http://127.0.0.1:34805');
+  assert.equal(omniIo.upstream.origin, 'http://127.0.0.1:34805');
+
+  // storage.atius.* must point to omni-backup-web (:8085)
+  const storageBr = config.sites['storage.atius.com.br'];
+  const storageIo = config.sites['storage.atius.io'];
+  assert.ok(storageBr, 'storage.atius.com.br should be configured');
+  assert.equal(storageBr.upstream.origin, 'http://10.14.1.14:8085');
+  assert.ok(storageIo, 'storage.atius.io should be configured');
+  assert.equal(storageIo.upstream.origin, 'http://10.14.1.14:8085');
+
+  // sso.atius.* must point to Atius SSO Admin (:8015)
+  const ssoBr = config.sites['sso.atius.com.br'];
+  const ssoIo = config.sites['sso.atius.io'];
+  assert.ok(ssoBr, 'sso.atius.com.br should be configured');
+  assert.equal(ssoBr.upstream.origin, 'http://127.0.0.1:8015');
+  assert.deepEqual(ssoBr.allowedRoles, ['admin']);
+  assert.ok(ssoIo, 'sso.atius.io should be configured');
+  assert.equal(ssoIo.upstream.origin, 'http://127.0.0.1:8015');
+});
+
 test('proxyHttp preserves host, filters auth cookie, keeps cockpit cookie, and rewrites HTML with logout bridge', async () => {
   let receivedHeaders = null;
   const upstreamServer = http.createServer((req, res) => {
@@ -532,6 +568,287 @@ test('handleLogin supports HEAD method and returns 200 without body', async () =
   assert.equal(headers['Cache-Control'], 'no-store');
   assert.equal(ended, true);
 });
+
+test('verifySession enforces IAM blocked status, RBAC personas (Admin, Operator, Viewer, Partner), and destination mappings', async () => {
+  const tokenPayloads = {
+    'token-blocked': {
+      authenticated: true,
+      user: { email: 'blocked@atius.io', is_admin: true, role: 'Admin', blocked: true, status: 'blocked' },
+    },
+    'token-operator': {
+      authenticated: true,
+      user: {
+        email: 'operator@atius.io',
+        is_admin: false,
+        role: 'Operator',
+        roles: ['Operator'],
+        allowed_destinations: ['admin.atius.io', 'storage.atius.io'],
+      },
+    },
+    'token-partner': {
+      authenticated: true,
+      user: {
+        email: 'partner@atius.io',
+        is_admin: false,
+        role: 'Partner',
+        roles: ['Partner'],
+        allowed_destinations: ['trade.atius.io', 'remote.atius.io'],
+      },
+    },
+  };
+
+  const auth = http.createServer((req, res) => {
+    const cookie = String(req.headers.cookie || '');
+    const token = cookie.replace(/^auth-token=/, '').trim();
+    const payload = tokenPayloads[token];
+    res.writeHead(payload ? 200 : 401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(payload || { error: 'unauthorized' }));
+  });
+  const port = await listen(auth);
+
+  try {
+    const config = { authCheckUrl: new URL(`http://127.0.0.1:${port}/v1/auth/me`), authCookieName: 'auth-token' };
+    const adminSite = {
+      allowedEmails: [],
+      allowedRoles: ['admin', 'operator'],
+      destinationId: 'admin.atius.io',
+      publicOrigin: 'https://admin.atius.io',
+      requireAdmin: true,
+      requiredPermission: null,
+    };
+    const ssoSite = {
+      allowedEmails: [],
+      allowedRoles: ['admin'],
+      destinationId: 'sso.atius.io',
+      publicOrigin: 'https://sso.atius.io',
+      requireAdmin: true,
+      requiredPermission: null,
+    };
+    const cockpitSite = {
+      allowedEmails: [],
+      allowedRoles: ['admin', 'operator'],
+      destinationId: 'cockpit.atius.io',
+      publicOrigin: 'https://cockpit.atius.io',
+      requireAdmin: true,
+      requiredPermission: null,
+    };
+
+    // 1. Blocked admin is refused immediately
+    const blockedRes = await verifySession(config, adminSite, {
+      headers: { cookie: 'auth-token=token-blocked' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(blockedRes.ok, false);
+    assert.equal(blockedRes.reason, 'forbidden');
+
+    // 2. Operator with allowed role AND allowed destination succeeds on admin.atius.io
+    const opAdminRes = await verifySession(config, adminSite, {
+      headers: { cookie: 'auth-token=token-operator' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(opAdminRes.ok, true);
+    assert.deepEqual(opAdminRes.roles, ['operator']);
+
+    // 3. Operator without 'admin' role is refused on sso.atius.io
+    const opSsoRes = await verifySession(config, ssoSite, {
+      headers: { cookie: 'auth-token=token-operator' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(opSsoRes.ok, false);
+    assert.equal(opSsoRes.reason, 'forbidden');
+
+    // 4. Operator with allowed role but WITHOUT destination permission for cockpit.atius.io is refused
+    const opCockpitRes = await verifySession(config, cockpitSite, {
+      headers: { cookie: 'auth-token=token-operator' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(opCockpitRes.ok, false);
+    assert.equal(opCockpitRes.reason, 'forbidden');
+
+    // 5. Partner role is refused on admin.atius.io
+    const partnerAdminRes = await verifySession(config, adminSite, {
+      headers: { cookie: 'auth-token=token-partner' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(partnerAdminRes.ok, false);
+    assert.equal(partnerAdminRes.reason, 'forbidden');
+  } finally {
+    await new Promise((resolve) => auth.close(resolve));
+  }
+});
+
+test('verifySession with real atius-admin-edge-gateway.json allows Operator and Viewer roles despite legacy allowedEmails and resolves aliasOf destinations', async () => {
+  const realConfig = readConfig(fileURLToPath(new URL('../configs/atius-admin-edge-gateway.json', import.meta.url)));
+  const tokenPayloads = {
+    'tok-livia-operator': {
+      authenticated: true,
+      user: {
+        email: 'livia.nascimento@atius.io',
+        is_admin: false,
+        role: 'Operator',
+        roles: ['Operator'],
+        allowed_destinations: ['admin.atius.io', 'storage.atius.io'],
+      },
+    },
+    'tok-carlos-viewer': {
+      authenticated: true,
+      user: {
+        email: 'carlos.auditor@atius.io',
+        is_admin: false,
+        role: 'Viewer',
+        roles: ['Viewer'],
+        allowed_destinations: ['storage.atius.io'],
+      },
+    },
+    'tok-no-role': {
+      authenticated: true,
+      user: {
+        email: 'norole@atius.io',
+        is_admin: false,
+        roles: [],
+        allowed_destinations: ['admin.atius.io'],
+      },
+    },
+  };
+
+  const auth = http.createServer((req, res) => {
+    const cookie = String(req.headers.cookie || '');
+    const token = cookie.replace(/^auth-token=/, '').trim();
+    const payload = tokenPayloads[token];
+    res.writeHead(payload ? 200 : 401, { 'Content-Type': 'application/json' });
+    res.end(JSON.stringify(payload || { error: 'unauthorized' }));
+  });
+  const port = await listen(auth);
+  realConfig.authCheckUrl = new URL(`http://127.0.0.1:${port}/v1/auth/me`);
+
+  try {
+    // Operator granted 'admin.atius.io' succeeds on admin.atius.io, admin.atius.com.br, omni.atius.io, omni.atius.com.br
+    for (const host of ['admin.atius.io', 'admin.atius.com.br', 'omni.atius.io', 'omni.atius.com.br']) {
+      const res = await verifySession(realConfig, realConfig.sites[host], {
+        headers: { cookie: 'auth-token=tok-livia-operator' },
+        socket: { remoteAddress: '127.0.0.1' },
+      });
+      assert.equal(res.ok, true, `Operator should be allowed on ${host}`);
+    }
+
+    // Operator is refused on sso.atius.io and cockpit.atius.io
+    for (const host of ['sso.atius.io', 'cockpit.atius.io']) {
+      const res = await verifySession(realConfig, realConfig.sites[host], {
+        headers: { cookie: 'auth-token=tok-livia-operator' },
+        socket: { remoteAddress: '127.0.0.1' },
+      });
+      assert.equal(res.ok, false, `Operator should be refused on ${host}`);
+      assert.equal(res.reason, 'forbidden');
+    }
+
+    // Viewer granted 'storage.atius.io' succeeds on storage.atius.io, storage.atius.com.br, backup.atius.io, backup.atius.com.br
+    for (const host of ['storage.atius.io', 'storage.atius.com.br', 'backup.atius.io', 'backup.atius.com.br']) {
+      const res = await verifySession(realConfig, realConfig.sites[host], {
+        headers: { cookie: 'auth-token=tok-carlos-viewer' },
+        socket: { remoteAddress: '127.0.0.1' },
+      });
+      assert.equal(res.ok, true, `Viewer should be allowed on ${host}`);
+    }
+
+    // Viewer is refused on admin.atius.io
+    const viewerAdmin = await verifySession(realConfig, realConfig.sites['admin.atius.io'], {
+      headers: { cookie: 'auth-token=tok-carlos-viewer' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(viewerAdmin.ok, false);
+    assert.equal(viewerAdmin.reason, 'forbidden');
+
+    // User with empty roles is refused even if requireAdmin were false
+    const noRoleSite = { ...realConfig.sites['admin.atius.io'], requireAdmin: false };
+    const noRoleRes = await verifySession(realConfig, noRoleSite, {
+      headers: { cookie: 'auth-token=tok-no-role' },
+      socket: { remoteAddress: '127.0.0.1' },
+    });
+    assert.equal(noRoleRes.ok, false);
+    assert.equal(noRoleRes.reason, 'forbidden');
+  } finally {
+    await new Promise((resolve) => auth.close(resolve));
+  }
+});
+
+test('handleLogin POST submits {login, senha} to /v1/token/generate and sets proper domain cookies for .atius.com.br and .atius.io', async () => {
+  let receivedPayload = null;
+  const auth = http.createServer((req, res) => {
+    if (req.method === 'POST' && req.url === '/v1/token/generate') {
+      const chunks = [];
+      req.on('data', (c) => chunks.push(c));
+      req.on('end', () => {
+        receivedPayload = JSON.parse(Buffer.concat(chunks).toString('utf8'));
+        res.writeHead(200, {
+          'Content-Type': 'application/json',
+          'Set-Cookie': 'auth-token=issued-token-123; Path=/; HttpOnly; Secure; SameSite=Lax',
+        });
+        res.end(JSON.stringify({ access_token: 'issued-token-123' }));
+      });
+      return;
+    }
+    res.writeHead(404);
+    res.end();
+  });
+  const port = await listen(auth);
+
+  try {
+    const config = {
+      authCheckUrl: new URL(`http://127.0.0.1:${port}/v1/auth/me`),
+      authCookieName: 'auth-token',
+    };
+    const gateway = http.createServer((req, res) => {
+      const host = req.headers.host;
+      const site = {
+        publicOrigin: `https://${host}`,
+        loginPath: '/login',
+      };
+      handleLogin(config, site, req, res);
+    });
+    const gwPort = await listen(gateway);
+
+    try {
+      for (const host of ['admin.atius.com.br', 'admin.atius.io']) {
+        const formBody = 'login=giovannimunizds%40gmail.com&senha=AtiusSovereign%232026';
+        const loginRes = await new Promise((resolve, reject) => {
+          const clientReq = http.request({
+            host: '127.0.0.1',
+            port: gwPort,
+            path: '/login',
+            method: 'POST',
+            headers: {
+              host,
+              'content-type': 'application/x-www-form-urlencoded',
+              'content-length': Buffer.byteLength(formBody),
+            },
+          }, (res) => {
+            res.resume();
+            res.on('end', () => resolve({ statusCode: res.statusCode, headers: res.headers }));
+          });
+          clientReq.on('error', reject);
+          clientReq.write(formBody);
+          clientReq.end();
+        });
+
+        assert.equal(loginRes.statusCode, 302);
+        assert.equal(loginRes.headers.location, `https://${host}/`);
+        assert.deepEqual(receivedPayload, { login: 'giovannimunizds@gmail.com', senha: 'AtiusSovereign#2026' });
+        const cookies = loginRes.headers['set-cookie'];
+        assert.ok(Array.isArray(cookies) && cookies.length >= 1);
+        if (host.endsWith('.atius.com.br')) {
+          assert.match(cookies[0], /Domain=\.atius\.com\.br/i);
+        } else {
+          assert.match(cookies[0], /Domain=admin\.atius\.io/i);
+        }
+      }
+    } finally {
+      await new Promise((resolve) => gateway.close(resolve));
+    }
+  } finally {
+    await new Promise((resolve) => auth.close(resolve));
+  }
+});
+
 
 
 
